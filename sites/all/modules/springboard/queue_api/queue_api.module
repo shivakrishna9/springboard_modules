@@ -1,0 +1,85 @@
+<?php
+// $Id: queue_api.module,v 1.0 2009/12/21 18:58:04 pcave Exp $
+
+/**
+ * @file
+ * API methods for interacting with the Salesforce export queue. 
+ * 
+ */
+
+function sf_queue_insert($oid, $type, $action) {
+	// make sure object is not already in the queue
+	if (!_in_queue($oid, $type)) {
+		// remove from retry queue
+		sf_retry_queue_delete($oid, $type);
+		// remove from permanent failures
+		delete_from_permanent_failures($oid, $type);
+		
+		// lookup up sfid, fieldmap, and salesforce type
+		$salesforce = salesforce_management_api_id_load($type, $oid);
+	
+		$record = new stdClass();
+		$record->oid = $oid;
+		$record->type = $type;
+		$record->action = $action;
+		$record->fieldmap = $salesforce['fieldmap'];
+		$record->sfid = $salesforce['sfid'];
+		$record->created = time();
+	
+		drupal_write_record('sf_queue', $record);
+		watchdog('salesforce queue api', t('!type !oid successfully added to the salesforce queue.', array('!type' => ucfirst($type), '!oid' => $oid)), NULL, WATCHDOG_INFO);
+	}	
+}
+
+/** 
+ * Removes an item from the queue.
+ */
+function sf_queue_delete($oid, $type) {
+	db_query("DELETE FROM {sf_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+}
+
+/**
+ * Removes an item from the retry queue
+ */
+function sf_retry_queue_delete($oid, $type) {
+	if (_in_retry_queue($oid, $type)) {
+		db_query("DELETE FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+		sf_queue_log_insert(t('!type !oid removed from retry queue because it has been inserted into the normal queue', array('!type' => ucfirst($type), '!oid' => $oid)));
+	}
+}
+
+/**
+ * Determines whether or not an object is already in the queue. Prevents multiple records.
+ */
+function _in_queue($oid, $type) {
+	$result = db_query("SELECT id FROM {sf_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+	if (!$data = db_fetch_array($result)) {
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * Determines whether or not an object is already in the retry queue.
+ */
+function _in_retry_queue($oid, $type) {
+	$result = db_query("SELECT id FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+	if (!$data = db_fetch_array($result)) {
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * Determines whether or not an object is already on the heap. Prevents multiple records.
+ */
+function _in_heap($oid, $type) {
+	$result = db_query("SELECT id FROM {sf_heap} WHERE oid = %d AND type = '%s'", $oid, $type);
+	if (!$data = db_fetch_array($result)) {
+		return false;
+	}
+	
+	return true;
+}

@@ -1,0 +1,9 @@
+; $Id$
+name = Fundraiser
+description = Fundraising Module
+core = 6.x
+package = Jackson River SpringBoard
+dependencies[] = webform
+dependencies[] = uc_product
+
+version =  "alpha"

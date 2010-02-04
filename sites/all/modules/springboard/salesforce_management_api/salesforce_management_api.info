@@ -1,0 +1,7 @@
+; $Id$
+name = Salesforce Management API
+description = Defines an API that enables modules to interact with the Salesforce server.
+package = Jackson River SpringBoard
+core = 6.x
+
+version = "1.0-beta"

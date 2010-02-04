@@ -1,0 +1,9 @@
+; $Id$
+name = Salesforce Queue Processor
+description = Processes the Salesforce queue
+core = 6.x
+package = Jackson River SpringBoard
+dependencies[] = salesforce_management_api
+dependencies[] = queue_api
+
+version = "1.0-beta"

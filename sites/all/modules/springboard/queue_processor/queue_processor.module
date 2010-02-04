@@ -1,0 +1,827 @@
+<?php
+// $Id: queue_processor.module,v 1.0 2010/1/5 18:58:04 pcave Exp $
+
+/**
+ * @file
+ * API methods for processing with the Salesforce export queue. 
+ * 
+ */
+
+/**
+ * Implemenation of hook_menu().
+ */
+function queue_processor_menu() {
+	$items['admin/settings/salesforce-management/queue'] = array(
+		'title' => 'Queue processor settings',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('queue_processor_admin_settings'),
+		'access arguments' => array('configure salesforce queue processor'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
+	$items['admin/reports/salesforce'] = array(
+		'title' => 'Salesforce integration reports',
+		'page callback' => 'saleforce_integration_reports',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
+	$items['admin/reports/salesforce/current'] = array(
+		'title' => 'Currently queued items',
+		'page callback' => 'current_queue_report',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
+	$items['admin/reports/salesforce/batch'] = array(
+		'title' => 'Batch history',
+		'page callback' => 'batch_history_report',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
+	$items['admin/reports/salesforce/batch/%'] = array(
+		'title' => 'Batch detail',
+		'page callback' => 'batch_detail',
+		'page arguments' => array(4),
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_CALLBACK,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
+	return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function queue_processor_perm() {
+  return array('configure salesforce queue processor', 'view salesforce reports');
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function queue_processor_theme() {
+  return array(
+    'queue_processor_admin_settings' => array(
+      'arguments' => array('form' => array()),
+			'file' => 'queue_processor.admin.inc',
+    )
+  );
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function queue_processor_cron() {
+	// first, verify salesforce connection
+	$sf = salesforce_management_api_connect();
+	if ($sf) {
+		watchdog('salesforce queue processor', t('Queue processing started'), NULL, WATCHDOG_INFO);
+		// move all currently queued items to the heap
+		db_query("UPDATE {sf_queue} SET locked = 1");
+		$result = db_query("SELECT * FROM {sf_queue} WHERE locked = 1");
+	
+		while($data = db_fetch_object($result)) {
+			// if the record does not have a fieldmap expose a hook for other modules to respond to
+			if (empty($data->fieldmap)) {
+				module_invoke_all('fieldmap_assignment', $data);
+			} 
+
+			// make sure record is not already in heap before adding it
+			if (!_in_heap($data->oid, $data->type)) {
+				db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) VALUES (%d, '%s', '%s', %d, '%s', %d)",
+					$data->oid, $data->sfid, $data->type, $data->fieldmap, $data->action, time());
+			} 
+		}
+	
+		// delete locked records from the queue
+		db_query("DELETE FROM {sf_queue} WHERE locked = 1");
+
+		// load any retries that need to be processed onto the heap
+		move_retries_to_heap();
+		
+		// process the heap
+		process_heap();
+	}
+	else {
+		// could not connect to salesforce
+		watchdog('salesforce queue processor', t('Could not connect to Salesforce. The queue will not be processed at this time. Please verify that Salesforce is up and login credentials are correct'), NULL, WATCHDOG_CRITICAL);
+		
+		// fire connection_error trigger
+		module_invoke_all('queue_processor', 'connection_error');
+	}
+}
+
+/**
+ * Implemenation of hook_trigger_name().
+ */
+function queue_processor_queue_processor($op, $object = NULL, $response = NULL) {
+	$aids = _trigger_get_hook_aids('queue_processor', $op);
+	$context = array(
+		'hook' => 'queue_processor',
+		'op' => $op,
+		'object' => $object,
+		'response' => $response,
+	);
+	actions_do(array_keys($aids), $object, $context);
+}
+
+/**
+ * Function to process records in the active heap.
+ */
+function process_heap() {
+	watchdog('salesforce queue processor', t('Heap processing started'), NULL, WATCHDOG_INFO);
+	
+	// unlock records that may have been left on the heap
+	unlock_heap_records();
+	
+	$queue_processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+	$batch_size = variable_get('queue_batch_size', 200);
+	$batches_to_process = array(); // holds the ids of the batches to process once they have been created
+	
+	// loop over the order and create batches for each type
+	foreach($queue_processing_order as $type) {
+		// get the unique fieldmaps for each type
+		$result = db_query("SELECT DISTINCT fieldmap, action FROM {sf_heap} WHERE type = '%s'", $type);
+
+		while ($data = db_fetch_object($result)) {
+			// determine the number of batches we need to create
+			$count = db_result(db_query("SELECT count(id) FROM {sf_heap} WHERE type = '%s' AND fieldmap = %d AND action = '%s'", $type, $data->fieldmap, $data->action));
+			$number_of_batches = ceil($count / $batch_size);
+			watchdog('salesforce queue processor', t('!count batches needed for !type with fieldmap !fieldmap and action !action', array('!count' => $number_of_batches, '!type' => $type, '!fieldmap' => $data->fieldmap, '!action' => $data->action)), NULL, WATCHDOG_INFO);
+
+			// loop over the batches for this type
+			for ($i = 0; $i < $number_of_batches; $i++) {
+				// lock and create the first batch
+				lock_heap_records($type, $data->fieldmap, $data->action, $batch_size);
+				$batch = create_batch($type, $data->fieldmap, $data->action);
+				$batch_items = get_batch_items($batch);
+				save_batch_items($batch);
+				$batches_to_process[] = $batch['id'];
+			} // number of batches
+			
+		} // distinct fieldmaps
+		
+	} // queue processing order
+
+	// process the actual batches
+	process_batches($batches_to_process);
+}
+
+/**
+ * Processes the batches that were created during the cron run
+ *
+ * @param $ids
+ *   The ids of the batches to process
+ */
+function process_batches($ids) {
+	
+	// keep all processed batches for reporting. that way we don't have to reload them
+	$batches_processed = array();
+	
+	foreach($ids as $id) {
+		watchdog('salesforce queue processor', t('Batch !id processing started', array('!id' => $id)), NULL, WATCHDOG_INFO);
+		$batch = load_batch($id);
+
+		// record batch start time
+		log_batch_start_time($id);
+				
+		$objects = array();
+		// get all the objects out of the batch
+		foreach($batch['items'] as $item) {
+			$object = unserialize($item->data);
+			// give modules one last shot to modify the objects in the batch
+			$altered_object = module_invoke_all('queue_batch_item_alter', $object, $item->type, $batch['action'], $item->oid);
+			
+			// work around drupal's inability to pass by reference
+			if ($altered_object != null) {
+				array_push($objects, $altered_object);
+			}
+			else {
+				array_push($objects, $object);
+			}
+		}
+		
+		$sf = salesforce_management_api_connect();
+		if ($sf) {
+			try {
+				// ship the batch off to salesforce
+				switch ($batch['action']) {
+					
+					case 'upsert':
+						$response = $sf->client->upsert($batch['dedupe_key'], $objects, $batch['salesforce_type']);
+						watchdog('salesforce queue processor', t('Upsert was called on batch !id', array('!id' => $id)), NULL, WATCHDOG_INFO);
+						break;
+						
+					case 'create':
+						$response = $sf->client->create($objects, $batch['salesforce_type']);
+						watchdog('salesforce queue processor', t('Create was called on batch !id', array('!id' => $id)), NULL, WATCHDOG_INFO);
+						break;
+						
+					case 'delete':
+						$response = $sf->client->delete($batch['sfids']);
+						watchdog('salesforce queue processor', t('Delete was called on batch !id', array('!id' => $id)), NULL, WATCHDOG_INFO);
+						break;
+					
+				}
+			}
+			catch (Exception $e) {
+				watchdog('salesforce queue processor', t('An error occured while connecting to Salesforce during batch !id. Exception: !e', array('!id' => $id, '!e' => print_r($e, true))), NULL, WATCHDOG_CRITICAL);
+				module_invoke_all('queue_processor', 'soap_fault');
+			}
+		}
+		else {
+			// could not connect to salesforce. log it and bail
+			watchdog('salesforce queue processor', t('Could not connect to Salesforce. Batches !ids will be deleted. Items in the batch have been left on the heap so they will be re-processed on the next cron run.', array('!ids' => implode(',', $ids))), NULL, WATCHDOG_WARNING);
+			delete_batches($ids);
+			// fire connection_error trigger
+			module_invoke_all('queue_processor', 'connection_error');
+			return;
+		}
+		
+		// if we got a response, process it
+		if (!empty($response)) {
+			process_batch_response($batch, $response);
+		}
+		
+		array_push($batches_processed, $batch);
+	}
+	
+	// create a summary of the batches processed
+	create_summary_email($batches_processed);	
+	
+}
+
+/**
+ * Processes the results of a single batch
+ *
+ * @param $batch
+ *   A reference to the batch that was just sent to salesforce
+ * @param $response
+ * 	 A reference to the salesforce responses
+ */
+function process_batch_response(&$batch, &$response) {
+	watchdog('salesforce queue processor', t('Response processing started on batch !id', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+	$success_count = 0;
+	$failure_count = 0;
+	$fieldmap = $batch['fieldmap'];
+	
+	// normalize salesforce response
+	$responses = _normalize_salesforce_response($response);
+
+	// loop over and process reponses
+	$items_in_batch = count($batch['items']);
+	for ($i = 0; $i < $items_in_batch; $i++) {
+		// convenience vars
+		$oid = $batch['items'][$i]->oid;
+		$type = $batch['items'][$i]->type;
+		
+		if ($responses[$i]->success) {
+			// handle success
+			$success_count++;
+			delete_from_heap($oid, $type);
+			switch ($batch['action']) {
+				case 'upsert':
+				case 'create':
+					salesforce_management_api_id_save($type, $oid, $responses[$i]->id, $fieldmap);
+					break;
+					
+				case 'delete':
+					salesforce_management_api_id_delete($type, $oid);
+					break;
+			}
+			// mark item as successful
+			log_batch_item_status($batch['id'], $oid, 1);
+		}
+		else {
+			// handle failure
+			$failure_count++;
+			save_batch_errors($batch['id'], $oid, $type, $responses[$i]->errors);
+			log_batch_item_status($batch['id'], $oid, 0);
+			move_to_retry_queue($batch['items'][$i], $responses[$i]);
+			delete_from_heap($oid, $type);
+			// fire object_error trigger
+			module_invoke_all('queue_processor', 'object_error', $batch['items'][$i], $responses[$i]);
+		}
+	}
+	
+	watchdog('salesforce queue processor', t('Post processing called on batch !id. Success count: !successes. Failure count: !failures', array('!id' => $batch['id'], '!successes' => $success_count, '!failures' => $failure_count)), NULL, WATCHDOG_INFO);
+	// let any modules further process the results
+	module_invoke_all('queue_postprocess_batch', $batch, $responses, $items_in_batch);
+	
+	// add some additional information to the batch
+	$batch['success_count'] = $success_count;
+	$batch['failure_count'] = $failure_count;
+	
+	// record batch end
+	log_batch_end($batch['id'], $success_count, $failure_count);
+	watchdog('salesforce queue processor', t('Batch !id has finished processing', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+}
+
+/**
+ * Persists all the items in the batch to the database.
+ */
+function save_batch_items($batch) {
+	$oids = array();
+	
+	foreach($batch['records'] as $record) {
+		db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data) VALUES (%d, %d, '%s', '%s', '%s', '%s')",
+			$batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object));
+		$oids[] = $record->oid;
+	}
+	
+	// add the batch id to records in the heap
+	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN (%s) AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], implode(',', $oids), $record->type, $batch['action']);
+}
+
+/**
+ * Gets all records that are to go into the current batch
+ */
+function get_batch_items(&$batch) {
+	$result = db_query("SELECT * FROM {sf_heap} WHERE locked = 1 AND type = '%s' AND fieldmap = %d AND action = '%s' AND batch_id IS NULL", $batch['type'], $batch['fieldmap'], $batch['action']);
+	
+	while ($data = db_fetch_object($result)) {
+		$batch['records'][] = $data;
+		// for convenience, add an array of salesforce ids for records that have already been exported 
+		if (!empty($data->sfid)) {
+			// save the ids of any previously exported objects in case the other modules need them
+			$batch['sfids'][] = $data->sfid;
+		}
+	}
+	// allow the various modules to build out the objects
+	watchdog('salesforce queue processor', t('Preprocessing called on batch !id', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+	module_invoke_all('queue_preprocess_batch', $batch);
+	return $batch;
+}
+
+/**
+ * Creates a new batch
+ *
+ * @param $type
+ *   The type of drupal objects contained in the batch
+ * @param $fieldmap
+ * 	 The fieldmap assigned to the objects
+ * @return
+ *	 An array representing the batch
+ */
+function create_batch($type, $fieldmap, $action) {
+	$record_count = batch_size($type, $fieldmap);
+	$result = db_query("SELECT salesforce, dedupe_key FROM {salesforce_management_field_map} WHERE fieldmap = %d", $fieldmap);
+	
+	/* if this object exposes it's own map (like webform), then expose a hook the module can use to specific the salesforce object type
+	 * and dedupe key */	 
+	if (!$data = db_fetch_array($result)) {
+		$data = module_invoke_all('queue_salesforce_info');
+	}
+	
+	db_query("INSERT INTO {sf_batch} (type, salesforce_type, fieldmap, action, dedupe_key, created, record_count) 
+		VALUES ('%s', '%s', %d, '%s', '%s', %d, %d)", $type, $data['salesforce'], $fieldmap, $action, $data['dedupe_key'], time(), $record_count);
+		
+	$batch_id = db_last_insert_id('sf_batch', 'id');
+	
+	// create the batch
+	$batch = array(
+		'id' => $batch_id,
+		'type' => $type,
+		'fieldmap' => $fieldmap,
+		'dedupe_key' => $data['dedupe_key'],
+		'action' => $action,
+		'records' => array(),
+		'sfids' => array(),
+	);
+
+	return $batch;
+}
+
+/** 
+ * Marks a batch item as success for failure and sets the completed time
+ */
+function log_batch_item_status($batch_id, $oid, $status) {
+	db_query("UPDATE {sf_batch_item} SET success = %d, date_processed = %d WHERE batch_id = %d AND $oid = %d", 
+		$status, time(), $batch_id, $oid);
+}
+
+/**
+ * Unlocks records left on the heap
+ */
+function unlock_heap_records() {
+	db_query("UPDATE {sf_heap} SET locked = 0, batch_id = NULL");
+}
+
+/**
+ * Locks a specified number of items in the heap.
+ */
+function lock_heap_records($type, $fieldmap, $action, $count) {
+	db_query("UPDATE {sf_heap} SET locked = 1 WHERE type = '%s' AND fieldmap = %d AND action = '%s' AND locked = 0 AND batch_id IS NULL LIMIT %d", $type, $fieldmap, $action, $count);
+}
+
+/**
+ * Removes an item from the heap.
+ */
+function delete_from_heap($oid, $type) {
+	db_query("DELETE FROM {sf_heap} WHERE oid = %d and type = '%s'", $oid, $type);
+}
+
+/**
+ * Clears locked records from the heap
+ */
+function clear_heap() {
+	db_query("DELETE FROM {sf_heap} WHERE locked = 1");
+}
+
+/**
+ * Deletes a set of batches
+ */
+function delete_batches($ids) {
+	foreach($ids as $id) {
+		delete_batch($id);
+		unlock_heap($id);
+	}
+}
+
+/**
+ * Deletes a batch and all related records
+ */
+function delete_batch($id) {
+	db_query("DELETE FROM {sf_batch_item} WHERE batch_id = %d", $id);
+	db_query("DELETE FROM {sf_batch_error} WHERE batch_id = %d", $id);
+	db_query("DELETE FROM {sf_batch} WHERE id = %d", $id);
+}
+
+/**
+ * Unlocks heap records that were in a failed batch so they can be processed in the future
+ */
+function unlock_heap($batch_id) {
+	db_query("UPDATE {sf_heap} SET locked = 0, batch_id = NULL WHERE batch_id = %d", $batch_id);
+}
+
+/** 
+ * Returns the size of the current batch
+ */
+function batch_size($type, $fieldmap) {
+	return db_result(db_query("SELECT count(id) FROM {sf_heap} WHERE locked = 1 AND type = '%s' AND fieldmap = %d AND batch_id IS NULL", $type, $fieldmap));
+}
+
+/**
+ * Loads a batch from the database.
+ */
+function load_batch($id) {
+	$result = db_query("SELECT * FROM {sf_batch} WHERE id = %d", $id);
+	
+	if (!$data = db_fetch_array($result)) {
+    return array();
+  }
+  else {
+    // Otherwise load the items and return the populated batch
+    $data['items'] = load_batch_items($id);
+		// separate out the sfids 
+		$sfids = array();
+		foreach($data['items'] as $item) {
+			if (!empty($item->sfid)) {
+				$sfids[] = $item->sfid;
+			}
+		}
+		$data['sfids'] = $sfids;
+		return $data;
+  }
+}
+
+/**
+ * Loads the batch items from the database.
+ */
+function load_batch_items($id) {
+	$records = array();
+	$result = db_query("SELECT * FROM {sf_batch_item} WHERE batch_id = %d", $id);
+	while ($data = db_fetch_object($result)) {
+		$records[] = $data;
+	} 
+	return $records;
+}
+
+/**
+ * Loads unprocessed batches
+ */
+function load_unprocessed_batches() {
+	$result = db_query("SELECT id FROM {sf_batch} WHERE processed = 0");
+	$ids = array();
+	while ($data = db_fetch_object($result)) {
+		$ids[] = $data->id;
+	}
+	return $ids;
+}
+
+/**
+ * Saves a batch error record.
+ */
+function save_batch_errors($batch_id, $oid, $type, $errors) {
+	$errors = _normalize_salesforce_response($errors);
+	
+	foreach($errors as $error) {
+		$fields = NULL;
+		if (!empty($error->fields)) {
+			$fields = _normalize_salesforce_response($error->fields);
+			$fields = implode(',', $fields);
+		}
+		db_query("INSERT INTO {sf_batch_error} (batch_id, oid, type, status_code, message, fields) VALUES
+			(%d, %d, '%s', '%s', '%s', '%s')", $batch_id, $oid, $type, $error->statusCode, $error->message, $fields);
+	}
+}
+
+/**
+ * Loads all the errors that occured in a batch.
+ */
+function load_batch_errors($batch_id) {
+	$result = db_query("SELECT oid, type, status_code, message, fields FROM {sf_batch_error} WHERE batch_id = %d", $batch_id);
+	$errors = array();
+	while ($data = db_fetch_object($result)) {
+		array_push($errors, $data);
+	}
+	return $errors;
+}
+
+/**
+ * Helper function to normalize salesforce responses
+ */
+function _normalize_salesforce_response(&$response) {
+	$responses = array();
+	if (!is_array($response)) {
+		array_push($responses, $response);
+	}
+	else {
+		$responses = $response;
+	}
+	return $responses;
+}
+
+/**
+ * Helper function to record the time a batch was started.
+ */
+function log_batch_start_time($id) {
+	db_query("UPDATE {sf_batch} SET start_time = %d", time());
+}
+
+/**
+ * Helper function to record the time a batch ended.
+ */
+function log_batch_end($id, $success_count = 0, $failure_count = 0) {
+	db_query("UPDATE {sf_batch} SET processed = 1, end_time = %d, success_count = %d, failure_count = %d WHERE id = %d", time(), $success_count, $failure_count, $id);
+}
+
+/** 
+ * Moves a failed object to the retry queue
+ */
+function move_to_retry_queue(&$item, &$response) {
+	$oid = $item->oid;
+	$type = $item->type;
+	
+	// first, see if the record is already in the retry queue
+	$result = db_query("SELECT attempts FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+	$data = db_fetch_array($result);
+	$max_attempts = variable_get('queue_retry_max', 3);
+	
+	if (!empty($data)) {
+		db_query("UPDATE {sf_retry_queue} SET attempts = attempts + 1, retry_date = unix_timestamp(timestampadd(DAY, 1, from_unixtime(retry_date))) WHERE oid = %d AND type = '%s'", $oid, $type);
+		if ($data['attempts'] + 1 == $max_attempts) {
+			move_to_permanent_failure($item, $response);
+			delete_from_retry_queue($oid, $type);
+		}
+		else {
+			// fire moved_to_retry_queue trigger
+			module_invoke_all('queue_processor', 'moved_to_retry_queue', $item, $response);
+		}
+	}
+	else {
+		db_query("INSERT INTO {sf_retry_queue} (oid, sfid, type, fieldmap, action, created, retry_date) SELECT
+			oid, sfid, type, fieldmap, action, unix_timestamp(), unix_timestamp(timestampadd(DAY, 1, from_unixtime(unix_timestamp()))) FROM
+			{sf_heap} WHERE oid = %d and type = '%s'", $oid, $type);
+		
+		// fire moved_to_retry_queue trigger
+		module_invoke_all('queue_processor', 'moved_to_retry_queue', $item, $response);
+	}
+}
+
+/**
+ * Moves an item to permanent failures
+ */
+function move_to_permanent_failure(&$item, &$response) {
+	$oid = $item->oid;
+	$type = $item->type;
+	
+	db_query("INSERT INTO {sf_permanent_failure} (oid, type, fieldmap, action, date_added)
+		SELECT oid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE oid = %d and type = '%s'", $oid, $type);
+		
+	// fire permanent failure trigger
+	module_invoke_all('queue_processor', 'permanent_failure', $item, $response);
+}
+
+/**
+ * Moves objects that need to be retried back to the heap
+ */
+function move_retries_to_heap() {
+	$max_attempts = variable_get('queue_retry_max', 3);
+	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) SELECT
+		oid, sfid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d",
+		time(), $max_attempts);
+}
+
+/**
+ * Deletes an object from the retry queue
+ */
+function delete_from_retry_queue($oid, $type) {
+	db_query("DELETE FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+}
+
+/**
+ * Deletes and object from permanent failure
+ */
+function delete_from_permanent_failures($oid, $type) {
+	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = %d AND type = '%s'", $oid, $type);
+}
+
+/**
+ * Returns the details of an object in the retry queue
+ */
+function get_retry_queue_details($oid, $type) {
+	$result = db_query("SELECT retry_date, attempts FROM {sf_retry_queue} WHERE oid = %d and type = '%s'", $oid, $type);
+	$details = db_fetch_array($result);
+	$details['attempts_remaining'] = variable_get('queue_retry_max', 3) - $details['attempts'];
+	return $details;
+}
+
+/******************************************************************************
+ * TRIGGERS
+ *****************************************************************************/
+
+/**
+ * Implementation of hook_hook_info(). 
+ */
+function queue_processor_hook_info() {
+	return array(
+		'queue_processor' => array(
+			'queue_processor' => array(
+				'connection_error' => array(
+					'runs when' => t('A connection to Salesforce cannot be established'),
+				),
+				'object_error' => array(
+					'runs when' => t('An object fails to export to Salesforce'),
+				),
+				'moved_to_retry_queue' => array(
+					'runs when' => t('An object is moved to the retry queue'),
+				),
+				'permanent_failure' => array(
+					'runs when' => t('An object becomes a permanent failure'),
+				),
+				'soap_fault' => array(
+					'runs when' => t('A SOAP fault occurs'),
+				),
+			),
+		),
+	);
+}
+
+/***************************************
+ * CUSTOM ACTIONS
+ **************************************/
+/*
+* Implementation of hook_action_info().
+*/
+function queue_processor_action_info() {
+  return array(
+    'queue_processor_send_email' => array(
+    	'description' => t('Send queue processor email'),
+     	'type' => 'queue_processor',
+     	'configurable' => true,
+     	'hooks' => array(
+      	'queue_processor' => array('connection_error', 'object_error', 'moved_to_retry_queue', 'permanent_failure', 'soap_fault'),
+     	),
+    ),
+  );
+}
+
+
+/********************************************************************************
+ * ACTION CALLBACKS
+ *******************************************************************************/
+
+/**
+ * Sends a notification email
+ */
+function queue_processor_send_email(&$object, $context)
+{
+		switch ($context['op']) {
+			case 'connection_error':
+				drupal_mail('queue_processor', 'connection_error', $context['to'], language_default(), $context);
+				break;
+				
+			case 'object_error':
+				drupal_mail('queue_processor', 'object_error', $context['to'], language_default(), $context);
+				break;
+				
+			case 'moved_to_retry_queue':
+				drupal_mail('queue_processor', 'moved_to_retry_queue', $context['to'], language_default(), $context);
+				break;
+				
+			case 'permanent_failure':
+				drupal_mail('queue_processor', 'permanent_failure', $context['to'], language_default(), $context);
+				break;
+				
+			case 'soap_fault':
+				drupal_mail('queue_processor', 'soap_fault', $context['to'], language_default(), $context);
+				break;
+		}
+}
+
+/**
+ * Configurable action configuration form
+ */
+function queue_processor_send_email_form($context) {
+  $form['to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('To'),
+    '#description' => t('The email address of the recipient'),
+    '#default_value' => $context['to'],
+		'#required' => TRUE,
+  );
+  return $form;
+}
+
+/**
+ * Submit callback to configurable action configuration form
+ */
+function queue_processor_send_email_submit($form, $form_state) {
+  return array('to' => $form_state['values']['to']);
+}
+
+function queue_processor_mail($key, &$message, $params) {
+
+	module_load_include('inc', 'queue_processor', 'queue_processor.email');
+	
+	switch ($key) {
+		case 'connection_error':
+			$message['subject'] = t('Connection to Salesforce could not be established');
+			$message['body'][] = connection_error_email();
+			break;
+	
+		case 'object_error':
+			$object = $params['object'];
+			$response = $params['response'];
+			$errors = _normalize_salesforce_response($response->errors);
+			$message['subject'] = t('!type !oid failed to export to Salesforce', array('!type' => ucfirst($object->type), '!oid' => $object->oid));
+			$message['body'][] = object_error_email($object, $errors);
+			break;
+			
+		case 'moved_to_retry_queue':
+			$object = $params['object'];
+			$response = $params['response'];
+			$errors = _normalize_salesforce_response($response->errors);
+			$message['subject'] = t('!type !oid moved to the retry queue', array('!type' => ucfirst($object->type), '!oid' => $object->oid));
+			$message['body'][] = moved_to_retry_queue_email($object);
+			break;
+		
+		case 'permanent_failure':
+			$object = $params['object'];
+			$response = $params['response'];
+			$message['subject'] = t('!type !oid has been marked as a permanent failure', array('!type' => ucfirst($object->type), '!oid' => $object->oid));
+			$message['body'][] = permanent_failure_email($object);
+			break;
+			
+		case 'soap_fault':
+			$message['subject'] = t('A SOAP fault occured while connecting to Saleforce');
+			$message['body'][] = soap_fault_email();
+			break;
+			
+		case 'queue_summary_email':
+			$message['subject'] = t("Salesforce queue processor summary: !date", array('!date' => date('n/j/Y g:i:s a')));
+			$message['body'][] = queue_summary_email($params['batches']);
+			break;
+			break;
+	}
+}
+
+/**
+ * Creates a summary report of the cron run.
+ */
+function create_summary_email(&$batches_processed) {
+	//$subject = t("Salesforce queue processor summary: !date", array('!date' => date('n/j/Y g:i:s a')));
+		
+	$email_to = variable_get('queue_summary_email', NULL);
+	if ($email_to) {
+		drupal_mail('queue_processor', 'queue_summary_email', $email_to, language_default(), $params = array('batches' => $batches_processed), $from = NULL);
+	}
+	
+}
+
+function created_edit_link($oid, $type) {
+	global $base_url;
+
+	switch ($type) {
+		case 'user':
+			return $base_url . '/user/' . $oid . '/edit';
+	}
+}

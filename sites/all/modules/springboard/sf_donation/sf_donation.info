@@ -1,0 +1,13 @@
+; $Id: sf_donation.info,v 1.0.0.0 2009/08/14 06:44:28 pcave Exp $
+name = SF Donation Integration
+description = Integrates donations with the Salesforce API.
+dependencies[] = salesforce_management_api
+dependencies[] = webform
+dependencies[] = fundraiser
+dependencies[] = trigger
+
+
+package = Jackson River SpringBoard
+core = 6.x
+
+version = "alpha"
