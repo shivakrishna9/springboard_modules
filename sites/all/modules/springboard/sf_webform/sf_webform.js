@@ -7,13 +7,13 @@ $(document).ready(function() {
   	$.get(url);
   	
   	// check the action
-  	if (action == 'Remove') {
+  	if (action == 'Remove dedupe field') {
   		new_url = url.replace('remove', 'set');
   		text = 'Set as dedupe field';
   	}
   	else {
   		new_url = url.replace('set', 'remove');
-  		text = 'Remove';
+  		text = 'Remove dedupe field';
   		// set all others back to original state
   		$('.webform-dedupe').not(this).each(function(){
   			$(this).text('Set as dedupe field');

@@ -131,9 +131,14 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 					'#options' => $options,
 					'#default_value' => $node->sf_webform_map[$cid],
 				);
-				
+
 				if ($node->sf_webform_map[$cid]) {
-					$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] .'">Set as dedupe field</a>';
+					if ($node->sf_dedupe_key == $node->sf_webform_map[$cid]) {
+						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] .'">Remove dedupe field</a>';
+					}
+					else {
+						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] .'">Set as dedupe field</a>';
+					}
 				}
 				else {
 					$value = '';
@@ -363,7 +368,7 @@ function sf_webform_submit($form, &$form_state) {
 	$nid = $form_state['values']['details']['nid'];
 	if ($sid) {
 		// insert submission into queue
-		sf_queue_insert($sid, 'webform', 'create');
+		sf_queue_insert($sid, 'webform', 'upsert');
 	}
 }
 
@@ -400,14 +405,18 @@ function sf_webform_queue_preprocess_batch(&$batch) {
  */
 function sf_webform_fieldmap_assignment(&$data) {
 	if ($data->type == 'webform') {
-		if ($data->action == 'create') {
-			// lookup the fieldmap assigned to this webform. the drupal type is in the format 'webform:' + nid
-			// figure out which node this submission belongs to
-			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $data->oid));
-			$drupal = 'webform:' . $nid;
-			$result = db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);
-			$fieldmap = db_fetch_array($result);
-			$data->fieldmap = $fieldmap['fieldmap'];
+		// lookup the fieldmap assigned to this webform. the drupal type is in the format 'webform:' + nid
+		// figure out which node this submission belongs to
+		$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $data->oid));
+		$drupal = 'webform:' . $nid;
+		
+		$result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);
+		$fieldmap = db_fetch_array($result);
+		$data->fieldmap = $fieldmap['fieldmap'];
+		
+		// check the action. by default webforms go into the queue as upsert, but if the webform mapping has no dedupe key defined, revert to create
+		if (empty($fieldmap['dedupe_key'])) {
+			$data->action = 'create';
 		}
 	}
 }
