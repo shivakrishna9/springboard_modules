@@ -19,11 +19,28 @@ function sf_webform_menu() {
     'weight' => 36,
     'type' => MENU_LOCAL_TASK,
 	);
+	
 	$items['js/salesforce-object-fields'] = array(
     'page callback' => 'render_salesforce_object_fields',
     'access callback' => 'user_access',
     'access arguments' => array('Map webform submissions to Salesforce objects'),
     'type' => MENU_CALLBACK,
+  );
+  
+  $items['js/%/set-dedupe-field/%'] = array(
+  	'page callback' => 'sf_webform_set_dedupe_field',
+  	'page arguments' => array(1, 3),
+  	'access callback' => 'user_access',
+    'access arguments' => array('Map webform submissions to Salesforce objects'),
+  	'type' => MENU_CALLBACK,
+  );
+  
+  $items['js/%/remove-dedupe-field/%'] = array(
+  	'page callback' => 'sf_webform_remove_dedupe_field',
+  	'page arguments' => array(1, 3),
+  	'access callback' => 'user_access',
+    'access arguments' => array('Map webform submissions to Salesforce objects'),
+  	'type' => MENU_CALLBACK,
   );
 
 	return $items;
@@ -51,57 +68,14 @@ function sf_webform_theme() {
 /**
  * Implementation of hook_form_FORM_ID_alter().
  */
-/*
-function sf_webform_form_webform_node_form_alter(&$form, &$form_state) {
-  if ($form['#node']->nid) {
-    $relate_user_to_submission = $form['#node']->relate_user_to_submission;
-    $authenticate_submitters = $form['#node']->authenticate_submitters;
-    $related_object = $form['#node']->related_object;
-  }
-  else {
-    $relate_user_to_submission = 0;
-    $authenticate_submitters = 0;
-    $related_object = 'Contact';
-  }
 
-  $form['salesforce'] = array(
-    '#title' => t('Salesforce integration settings'),
-    '#type' => 'fieldset',
-    '#collapsible' => 1,
-    '#collapsed' => 0,
-    '#weight' => 1,
-    '#access' => 1,
-  );
-  
-  $form['salesforce']['relate_user_to_submission'] = array(
-    '#title' => t('Relate the user submitting the webform in Salesforce'),
-    '#type' => 'checkbox',
-    '#default_value' => $relate_user_to_submission,
-  );
-  
-  $form['salesforce']['related_object'] = array(
-  	'#title' => t('Salesforce object used in relationship'),
-  	'#type' => 'radios',
-  	'#options' => array(
-  		t('Contact'),
-  		t('Account'),
-  	),
-  	'#default_value' => $related_object,
-  	'#description' => t('If relating the submission, choose the object you want the submission related to in Salesforce.'),
-  );
-  
-  $form['salesforce']['authenticate_submitters'] = array(
-    '#title' => t('Authenticate form submitters based on e-mail address matches.'),
-    '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
-    '#type' => 'checkbox',
-    '#default_value' => $authenticate_submitters,
-  );
-}
-*/
 /**
  * Form to map salesforce objects to webform components
  */
 function sf_webform_mapping_form(&$form_state = NULL, $node) {
+	$base = drupal_get_path('module', 'sf_webform');
+	drupal_add_js($base .'/sf_webform.js');
+
 	$form = array(
     '#tree' => TRUE,
     '#node' => $node,
@@ -142,6 +116,8 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 		$object = !empty($node->sf_webform_object) ? $node->sf_webform_object : $form_state['values']['object'];
 		$options = _get_object_fields($object);
 		
+		$disabled = !empty($node->sf_webform_object) ? false : true;
+		
 		foreach($node->webform['components'] as $cid => $component) {
 			if($component['type'] != 'fieldset') {
 				// component
@@ -154,6 +130,16 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 					'#type' => 'select',
 					'#options' => $options,
 					'#default_value' => $node->sf_webform_map[$cid],
+				);
+				
+				if ($node->sf_webform_map[$cid]) {
+					$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] .'">Set as dedupe field</a>';
+				}
+				else {
+					$value = '';
+				}
+				$form['map']['dedupe'][$cid] = array(
+					'#value' => $value,
 				);
 			}
 		}
@@ -219,7 +205,7 @@ function render_salesforce_object_fields() {
  */
 function sf_webform_mapping_form_submit($form, &$form_state) {
 	if ($form_state['values']['map']['salesforce']) {
-		
+
 		_sf_webform_delete_map($form['#node']->nid);
 
 		$map = array();
@@ -234,7 +220,7 @@ function sf_webform_mapping_form_submit($form, &$form_state) {
 		$name = $form['#node']->title . " (webform map)";
 		$sql = "INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields) VALUES ('%s', '%s', '%s', '%s')";
 		db_query($sql, $name, $form['#node']->type . ':' . $form['#node']->nid, $form_state['values']['object'], serialize($map));
-		drupal_set_message(t('Salesforce mapping has been saved'));
+		drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
 	}
 }
 
@@ -264,15 +250,17 @@ function sf_webform_nodeapi(&$node, $op, $teaser, $page) {
 		$drupal = 'webform:' . $node->nid;
 		
 		if($op == 'load'){	
-			$result = db_query("select salesforce, fields from {salesforce_management_field_map} where drupal = '%s'", $drupal);
+			$result = db_query("select salesforce, fields, dedupe_key from {salesforce_management_field_map} where drupal = '%s'", $drupal);
 			while($row = db_fetch_object($result)) {
 				$object = $row->salesforce;
 				$map = unserialize($row->fields); 
+				$dedupe_key = $row->dedupe_key;
 			}
 			
 			$sf_map = array(
 				'sf_webform_map' => $map,
 				'sf_webform_object' => $object,
+				'sf_dedupe_key' => $dedupe_key,
 			);
 			return $sf_map;
 		}
@@ -335,11 +323,12 @@ function theme_sf_webform_mapping_form($form) {
 				$row = array();
 				$row[] = drupal_render($map['cid'][$key]);
 				$row[] = drupal_render($map['salesforce'][$key]);
+				$row[] = drupal_render($map['dedupe'][$key]);
 				$rows[] = $row;
 			}
 		}
 		
-		$header = array("Webform Component","Field");
+		$header = array("Webform Component","Salesforce Field", "Dedupe Field");
 		$output .= theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
 		// remove map so it's not rendered twice
 		unset($form['map']);
@@ -471,6 +460,17 @@ function _sf_webform_load_salesforce_map($sid) {
 	}
 	
 	return $salesforce_map;
+}
+
+/**
+ * Sets the dedupe field in the webform's fieldmap
+ */
+function sf_webform_set_dedupe_field($nid, $dedupe_key) {
+	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = '%s' WHERE substr(drupal, instr(drupal, 'webform:')+8,1) = %d", $dedupe_key, $nid);
+}
+
+function sf_webform_remove_dedupe_field($nid) {
+	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = NULL WHERE substr(drupal, instr(drupal, 'webform:')+8,1) = %d", $nid);
 }
 
 /**
