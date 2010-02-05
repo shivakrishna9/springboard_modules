@@ -215,8 +215,16 @@ function process_batches($ids) {
 				switch ($batch['action']) {
 					
 					case 'upsert':
-						$response = $sf->client->upsert($batch['dedupe_key'], $objects, $batch['salesforce_type']);
-						watchdog('salesforce queue processor', t('Upsert was called on batch !id', array('!id' => $id)), NULL, WATCHDOG_INFO);
+						// check for dedupe key. if no field is assigned, fall back to good old create and update
+						if (!empty($batch['dedupe_key'])) {
+							$response = $sf->client->upsert($batch['dedupe_key'], $objects, $batch['salesforce_type']);
+							watchdog('salesforce queue processor', t('Upsert was called on batch !id', array('!id' => $id)), NULL, WATCHDOG_INFO);
+						}
+						else {
+							watchdog('salesforce queue processor', t('An upsert call was attempted on batch !id with no dedupe key assigned. The batch will not be processed.', array('!id' => $id)), NULL, WATCHDOG_CRITICAL);
+							// TODO: What do we need to do here? Put the items back in the queue????
+						}
+						
 						break;
 						
 					case 'create':

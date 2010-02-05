@@ -380,6 +380,7 @@ function sf_webform_queue_preprocess_batch(&$batch) {
 		
 		switch ($batch['action']) {
 			
+			case 'upsert':
 			case 'create':
 				foreach($batch['records'] as $record) {
 					$map = _sf_webform_load_salesforce_map($record->oid);
