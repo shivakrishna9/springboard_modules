@@ -24,6 +24,26 @@ function bigbrother_menu() {
 	return $items;
 }
 
+/**
+ * Implementation of hook_perm().
+ */
+function bigbrother_menu_alter(&$items) {
+	// only show related object tab if the webform is bigbrother and a salesforce object has been mapped
+	$items['node/%webform_menu/edit/bigbrother']['access callback'] = '_bigbrother_check_settings';
+}
+
+/** 
+ * Only show the related object field tab if the form is bigbrother and it has been mapped to a salesforce object
+ */
+function _bigbrother_check_settings($op) {
+	if ($op == 'Map webform submissions to Salesforce objects') {
+		$node = node_load(arg(1));
+		if ($node->is_bigbrother && !empty($node->sf_webform_object)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * Implementation of hook_nodeapi().
@@ -56,8 +76,7 @@ function bigbrother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         break;
 
       case 'update':
-        // If the node hasn't been a petition form and it's set to be a petition
-        // form, make it one.
+        // If the node hasn't been a bigbrother form and it's set to be a bigbrother form, make it one.
         $current_node = node_load(array('nid' => $node->nid));
         if (!_bigbrother_is_bigbrother($current_node->nid, $current_node->vid) && $node->is_bigbrother && $current_node->webform['components'][1]['form_key'] != 'mail') {
           _bigbrother_create_webform_components($node);
