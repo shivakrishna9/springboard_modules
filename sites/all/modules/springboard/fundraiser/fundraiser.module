@@ -508,12 +508,12 @@ function array_search_recursive($needle, $haystack, $path=array())
 
 function fundraiser_webform_client_submit($form, &$form_state) {
 	
-  	$nid = $form['#parameters'][2]->nid;
+  $nid = $form['#parameters'][2]->nid;
 	
 	// remove sensitive field so that webform does not store them
-	webform_clear_value($form_state, array_search_recursive('card_number', $form_state));
-	webform_clear_value($form_state, array_search_recursive('card_cvv', $form_state));
-	webform_clear_value($form_state, array_search_recursive('card_expiration_date', $form_state));
+	webform_clear_value($form_state['values'], array_search_recursive('card_number', $form_state['values']));
+	webform_clear_value($form_state['values'], array_search_recursive('card_cvv', $form_state['values']));
+	webform_clear_value($form_state['values'], array_search_recursive('card_expiration_date', $form_state['values']));
 }
 
 function mapping_form_access() {
