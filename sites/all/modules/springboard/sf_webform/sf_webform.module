@@ -114,7 +114,14 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 	
 	if ($form_state['values']['object'] || !empty($node->sf_webform_object)) {
 		$object = !empty($node->sf_webform_object) ? $node->sf_webform_object : $form_state['values']['object'];
-		$options = _get_object_fields($object);
+		
+		// get the fields in the object
+		$fields = _get_object_fields($object);
+		
+		// create a drop down list friendly version of the sf fields
+		foreach($fields as $key => $value) {
+			$options[$key] = $value['label'];
+		}
 		
 		$disabled = !empty($node->sf_webform_object) ? false : true;
 		
@@ -131,8 +138,8 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 					'#options' => $options,
 					'#default_value' => $node->sf_webform_map[$cid],
 				);
-
-				if ($node->sf_webform_map[$cid]) {
+				
+				if ($node->sf_webform_map[$cid] && $fields[$node->sf_webform_map[$cid]]['idLookup']) {
 					if ($node->sf_dedupe_key == $node->sf_webform_map[$cid]) {
 						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] .'">Remove dedupe field</a>';
 					}
@@ -305,7 +312,10 @@ function _get_object_fields($object_name) {
 		//$object_fields = array('' => '--Select One--');
 		$object = $sf->client->describeSObject($object_name);
 		foreach($object->fields as $field) {
-			$object_fields[$field->name] = $field->label;
+			$object_fields[$field->name] = array(
+				'label' => $field->label,
+				'idLookup' => $field->idLookup,
+			);
 		}
 		$object_fields[] = '--Select One--';
 		asort($object_fields);
@@ -367,8 +377,15 @@ function sf_webform_submit($form, &$form_state) {
 	$sid = $form_state['values']['details']['sid'];
 	$nid = $form_state['values']['details']['nid'];
 	if ($sid) {
-		// insert submission into queue
-		sf_queue_insert($sid, 'webform', 'upsert');
+		// if the submission has already been mapped, change to a update call
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = %d AND drupal_type = 'webform'", $sid));
+		if (!empty($result['sfid'])) {
+			sf_queue_insert($sid, 'webform', 'update');
+		}
+		else {
+			// insert submission into queue
+			sf_queue_insert($sid, 'webform', 'upsert');
+		}
 	}
 }
 
@@ -380,10 +397,11 @@ function sf_webform_queue_preprocess_batch(&$batch) {
 		
 		switch ($batch['action']) {
 			
+			case 'update':
 			case 'upsert':
 			case 'create':
 				foreach($batch['records'] as $record) {
-					$map = _sf_webform_load_salesforce_map($record->oid);
+					$map = _sf_webform_load_salesforce_map($record->oid, $record->sfid);
 					if (is_array($record->object)) {
 						$record->object = array_merge($record->object, $map['fields']);	
 					}
@@ -426,7 +444,7 @@ function sf_webform_fieldmap_assignment(&$data) {
  * Loads the donation -> salesforce map for this webform and populates it
  * with data from the actual webform submission
  */
-function _sf_webform_load_salesforce_map($sid) {
+function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
 	$nid = _get_submission_nid($sid);
 	$drupal = 'webform:' . $nid;
 	$sql = "SELECT salesforce, fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
@@ -469,6 +487,11 @@ function _sf_webform_load_salesforce_map($sid) {
 		}
 	}
 	
+	// finally, add the sfid if its available
+	if (!empty($sfid)) {
+		$salesforce_map['fields']['Id'] = $sfid;
+	}
+
 	return $salesforce_map;
 }
 
