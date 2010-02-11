@@ -1,0 +1,8 @@
+; $Id$
+name = Sage Payment Solutions
+description = Process credit card payments using Sage Payment Solutions.
+dependencies[] = uc_payment
+dependencies[] = uc_credit
+package = Ubercart - payment
+core = 6.x
+php = 5.0
