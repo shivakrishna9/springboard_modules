@@ -86,18 +86,6 @@ function fundraiser_schema() {
 	      'type' => 'int',
 	      'not null' => TRUE,
 	    ),
-	    'data' => array(
-	      'description' => t('Serialized version of the record.'),
-	      'type' => 'text',
-	      'not null' => FALSE,
-	    ),
-	    'fee_amount' => array(
-	      'description' => t('The payment amount to be processed.'),
-	      'type' => 'numeric',
-	      'not null' => TRUE,
-	      'precision' => '15',
-	      'scale' => '3',
-	    ),
 	    'sf_opportunity_id' => array(
 	      'description' => t('TODO: please describe this field!'),
 	      'type' => 'varchar',
@@ -202,7 +190,13 @@ function fundraiser_schema() {
 	      'not null' => FALSE,
 	      'precision' => '15',
 	      'scale' => '3',
-	    ),	    
+	    ),
+	    'internal_name' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '255',
+	      'not null' => FALSE,
+	    ),
 	  ),
 	  'primary key' => array('nid', 'gateway'),
 	);

@@ -118,7 +118,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 					'#type' => 'checkbox',
 					'#title' => t('Render this webform as a donation form'),
 					'#description' => t('Selecting this option will output billing and credit card information fields on your webform.'),
-					'#default_value' => array($form['#node']->is_donation_form)
+					'#default_value' => $form['#node']->is_donation_form,
 				);
 			}
 			else {
@@ -801,453 +801,13 @@ function _create_amount_options($donation_amounts, $show_other_amount) {
 	return $formatted_amounts;
 }
 
+/** 
+ * Creates the neccessary webform components to support fundraising
+ */
 function create_webform_donation_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
-
-	// market source id
-	$market_source = array();
-	$market_source['nid'] = $nid;
-	$market_source['pid'] = 0; 
-	$market_source['value'] = 'default_ms';
-	$market_source['form_key'] = 'ms'; 
-	$market_source['name'] = 'Market Source';
-	$market_source['type'] = 'hidden';  
-	$market_source['extra'] = array(
-		'description' => '',
-	);
-	$market_source['mandatory'] = 1; 
-	$market_source['weight'] = 20; 
-	$market_source['email'] = 1;
-	
-	webform_component_insert($market_source);
-	
-	// if the sf_donation is installed, try to get the default campaign
-	if (variable_get('fundraiser_salesforce_integration', 0)) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
-	
-	// campaign id
-	$campaign = array();
-	$campaign['nid'] = $nid;
-	$campaign['pid'] = 0; 
-	$campaign['value'] = $default_campaign;
-	$campaign['form_key'] = 'cid'; 
-	$campaign['name'] = 'Campaign ID';
-	$campaign['type'] = 'hidden';  
-	$campaign['extra'] = array(
-		'description' => '',
-	);
-	$campaign['mandatory'] = 1; 
-	$campaign['weight'] = 21; 
-	$campaign['email'] = 1;
-	
-	webform_component_insert($campaign);
-
-	// donation amount
-	$donation = array();
-	$donation['nid'] = $nid;
-	$donation['pid'] = 0; 
-	$donation['form_key'] = 'donation'; 
-	$donation['name'] = 'Donation';
-	$donation['type'] = 'fieldset';  
-	$donation['extra'] = array(
-		'description' => '',
-	);
-	$donation['mandatory'] = 0; 
-	$donation['weight'] = 0; 
-	$donation['email'] = 0;
-	
-	$id = webform_component_insert($donation);
-
-	// determine the type of amount field to output
-	if ($donation_amounts) {
-		
-		$formatted_amounts = _create_amount_options($donation_amounts, $show_other_amount);
-		
-		if ($show_other_amount) {		
-			// other amount
-			$other_amount = array();
-			$other_amount['nid'] = $nid;
-			$other_amount['pid'] = $id; 
-			$other_amount['form_key'] = 'other_amount'; 
-			$other_amount['name'] = 'Other';
-			$other_amount['type'] = 'textfield';  
-			$other_amount['extra'] = array(
-				'description' => 'Minimum payment $' . $min_donation_amount . '.',
-				'width' => 10,
-				'field_prefix' => '$',
-			);
-			$other_amount['mandatory'] = 0; 
-			$other_amount['weight'] = 1; 
-			$other_amount['email'] = 1;
-
-			webform_component_insert($other_amount);
-		}
-
-		// ask amounts
-		$amount = array();
-		$amount['nid'] = $nid;
-		$amount['pid'] = $id; 
-		$amount['form_key'] = 'amount'; 
-		$amount['name'] = 'Please select your tax-deductable gift amount below';
-		$amount['type'] = 'select';  
-		$amount['extra'] = array(
-			'description' => '',
-			'items' => $formatted_amounts,
-			'multiple' => 0,
-		);
-		$amount['mandatory'] = 1; 
-		$amount['weight'] = 0; 
-		$amount['email'] = 1;
-		$amounts = explode(',', $donation_amounts);
-		$amount['value'] = array_shift($amounts); // select first value
-
-		webform_component_insert($amount);
-	}
-	else { // plain old textbox for donation amount
-		$amount = array();
-		$amount['nid'] = $nid;
-		$amount['pid'] = $id; 
-		$amount['form_key'] = 'amount'; 
-		$amount['name'] = 'Amount';
-		$amount['type'] = 'textfield';
-		$amount['extra'] = array(
-			'description' => '',
-			'width' => 10,
-			'field_prefix' => '$',
-		);
-		$amount['mandatory'] = 1; 
-		$amount['weight'] = 0; 
-		$amount['email'] = 1;
-
-		webform_component_insert($amount);
-	}
-	
-	/*
-	// quantity
-	$quantity = array();
-	$quantity['nid'] = $nid;
-	$quantity['pid'] = $id;
-	$quantity['form_key'] = 'quantity';
-	$quantity['name'] = 'Quantity';
-	$quantity['type'] = 'select';
-	$quantity['extra'] = array(
-		'description' => '',
-		'items' => "1\n2\n3\n4\n5\n",
-		'multiple' => 0,
-		'aslist' => 'Y',
-	);
-	$quantity['mandatory'] = 1;
-	$quantity['weight'] = 2;
-	$quantity['email'] = 1;
-	$quantity['value'] = 1;
-	
-	webform_component_insert($quantity);
-	*/
-	
-	// donor information
-	$donor_information = array();
-	$donor_information['nid'] = $nid;
-	$donor_information['pid'] = 0; 
-	$donor_information['form_key'] = 'donor_information'; 
-	$donor_information['name'] = 'Your Information';
-	$donor_information['type'] = 'fieldset';  
-	$donor_information['extra'] = array(
-		'description' => '',
-	);
-	$donor_information['mandatory'] = 0; 
-	$donor_information['weight'] = 1; 
-	$donor_information['email'] = 0;
-	
-	$id = webform_component_insert($donor_information);
-	
-	// first name
-	$first_name = array();
-	$first_name['nid'] = $nid;
-	$first_name['pid'] = $id; 
-	$first_name['form_key'] = 'first_name'; 
-	$first_name['name'] = 'First Name';
-	$first_name['type'] = 'textfield';  
-	$first_name['extra'] = array(
-		'description' => '',
-	);
-	$first_name['mandatory'] = 1; 
-	$first_name['weight'] = 0; 
-	$first_name['email'] = 1;
-	
-	webform_component_insert($first_name);
-	
-	// last name
-	$last_name = array();
-	$last_name['nid'] = $nid;
-	$last_name['pid'] = $id; 
-	$last_name['form_key'] = 'last_name'; 
-	$last_name['name'] = 'Last Name';
-	$last_name['type'] = 'textfield';  
-	$last_name['extra'] = array(
-		'description' => '',
-	);
-	$last_name['mandatory'] = 1; 
-	$last_name['weight'] = 1; 
-	$last_name['email'] = 1;
-	
-	webform_component_insert($last_name);
-
-	// email
-	$email = array();
-	$email['nid'] = $nid;
-	$email['pid'] = $id; 
-	$email['form_key'] = 'email'; 
-	$email['name'] = 'Email';
-	$email['type'] = 'textfield';  
-	$email['extra'] = array(
-		'description' => '',
-	);
-	$email['mandatory'] = 1; 
-	$email['weight'] = 2; 
-	$email['email'] = 1;
-	
-	webform_component_insert($email);
-	
-	// billing
-	$billing_information = array();
-	$billing_information['nid'] = $nid;
-	$billing_information['pid'] = 0; 
-	$billing_information['form_key'] = 'billing_information'; 
-	$billing_information['name'] = 'Credit Card Billing Information';
-	$billing_information['type'] = 'fieldset';  
-	$billing_information['extra'] = array(
-		'description' => '',
-	);
-	$billing_information['mandatory'] = 0; 
-	$billing_information['weight'] = 3; 
-	$billing_information['email'] = 0;
-	
-	$id = webform_component_insert($billing_information);
-	
-	// billing address
-	$billing_address = array();
-	$billing_address['nid'] = $nid;
-	$billing_address['pid'] = $id; 
-	$billing_address['form_key'] = 'billing_address'; 
-	$billing_address['name'] = 'Address';
-	$billing_address['type'] = 'textfield';  
-	$billing_address['extra'] = array(
-		'description' => '',
-	);
-	$billing_address['mandatory'] = 1; 
-	$billing_address['weight'] = 3; 
-	$billing_address['email'] = 1;
-	
-	webform_component_insert($billing_address);
-
-	// billing address 2
-	$billing_address_2 = array();
-	$billing_address_2['nid'] = $nid;
-	$billing_address_2['pid'] = $id; 
-	$billing_address_2['form_key'] = 'billing_address_2'; 
-	$billing_address_2['name'] = 'Address Line 2';
-	$billing_address_2['type'] = 'textfield';  
-	$billing_address_2['extra'] = array(
-		'description' => '',
-	);
-	$billing_address_2['mandatory'] = 0; 
-	$billing_address_2['weight'] = 4; 
-	$billing_address_2['email'] = 1;
-	
-	webform_component_insert($billing_address_2);
-
-	// city
-	$billing_city = array();
-	$billing_city['nid'] = $nid;
-	$billing_city['pid'] = $id; 
-	$billing_city['form_key'] = 'billing_city'; 
-	$billing_city['name'] = 'City';
-	$billing_city['type'] = 'textfield';  
-	$billing_city['extra'] = array(
-		'description' => '',
-	);
-	$billing_city['mandatory'] = 1; 
-	$billing_city['weight'] = 5; 
-	$billing_city['email'] = 1;
-	
-	webform_component_insert($billing_city);
-
-	$us = 840;
-	$ca = 124;
-
-	$include_all_countries = variable_get('fundraiser_all_countries', 0);
-	
-	// country
-	$countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
-	
-	// build option string for countries
-	$options = '';
-	if ($include_all_countries) {
-		foreach($countries['#options'] as $key => $value) {
-			$options .= $key .'|'. $value . "\n";
-		}
-	}
-	else {
-		foreach($countries['#options'] as $key => $value) {
-			if ($key == $us || $key == $ca) {
-				$options .= $key .'|'. $value . "\n";
-			}
-		}
-	}
-	
-	$billing_country = array();
-	$billing_country['nid'] = $nid;
-	$billing_country['pid'] = $id; 
-	$billing_country['form_key'] = 'billing_country'; 
-	$billing_country['name'] = 'Country';
-	$billing_country['type'] = 'select';  
-	$billing_country['extra'] = array(
-		'description' => '',
-		'items' => $options,
-		'multiple' => 0,
-		'aslist' => 'Y',
-	);
-	$billing_country['mandatory'] = 1; 
-	$billing_country['weight'] = 6; 
-	$billing_country['email'] = 1;
-	
-	webform_component_insert($billing_country);
-
-	// state
-	$zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $us, 'name', uc_address_field_required('zone'));
-	
-	// build option string for states
-	$options = '';
-	foreach($zones['#options'] as $key => $value) {
-		$options .= $key .'|'. $value . "\n";
-	}
-	
-	$billing_state = array();
-	$billing_state['nid'] = $nid;
-	$billing_state['pid'] = $id; 
-	$billing_state['form_key'] = 'billing_state'; 
-	$billing_state['name'] = 'State/Province';
-	$billing_state['type'] = 'select';  
-	$billing_state['extra'] = array(
-		'description' => '',
-		'items' => $options,
-		'multiple' => 0,
-		'aslist' => 'Y',
-	);
-	$billing_state['mandatory'] = 1; 
-	$billing_state['weight'] = 7; 
-	$billing_state['email'] = 1;
-	
-	webform_component_insert($billing_state);
-	
-	// zip code
-	$billing_zipcode = array();
-	$billing_zipcode['nid'] = $nid;
-	$billing_zipcode['pid']= $id; 
-	$billing_zipcode['form_key'] = 'billing_zipcode'; 
-	$billing_zipcode['name'] = 'ZIP/Postal Code';
-	$billing_zipcode['type'] = 'textfield';  
-	$billing_zipcode['extra'] = array(
-		'description' => '',
-		'width' => 10,
-		'maxlength' => 5,
-	);
-	$billing_zipcode['mandatory'] = 1; 
-	$billing_zipcode['weight'] = 8; 
-	$billing_zipcode['email'] = 1;
-	
-	webform_component_insert($billing_zipcode);
-	
-	// credit card information
-	$credit_card_information = array();
-	$credit_card_information['nid'] = $nid;
-	$credit_card_information['pid'] = 0; 
-	$credit_card_information['form_key'] = 'credit_card_information'; 
-	$credit_card_information['name'] = 'Credit Card Information';
-	$credit_card_information['type'] = 'fieldset';  
-	$credit_card_information['extra'] = array(
-		'description' => '',
-	);
-	$credit_card_information['mandatory'] = 0; 
-	$credit_card_information['weight'] = 5;
-	$credit_card_information['email'] = 0;
-	
-	$id = webform_component_insert($credit_card_information);
-
-	// credit card number
-	$card_number = array();
-	$card_number['nid'] = $nid;
-	$card_number['pid'] = $id; 
-	$card_number['form_key'] = 'card_number'; 
-	$card_number['name'] = 'Card Number';
-	$card_number['type'] = 'textfield';  
-	$card_number['extra'] = array(
-		'description' => '',
-		'width' => 20,
-	);
-	$card_number['mandatory'] = 1; 
-	$card_number['weight'] = 0; 
-	$card_number['email'] = 0;
-	
-	webform_component_insert($card_number);
-	
-	// expiration date
-	$expiration_date = array();
-	$expiration_date['nid'] = $nid;
-	$expiration_date['pid'] = $id; 
-	$expiration_date['form_key'] = 'card_expiration_date'; 
-	$expiration_date['name'] = 'Expiration Date';
-	$expiration_date['type'] = 'date';  
-	$expiration_date['value'] = '1 January';
-	$expiration_date['extra'] = array(
-		'description' => '',
-		'year_textfield' => 0,
-		'year_start' => date("Y"),
-		'year_end' => date("Y") + 6,
-		'timezone' => 'site',
-		'check_daylight_savings' => 0,
-	);
-	$expiration_date['mandatory'] = 1; 
-	$expiration_date['weight'] = 1; 
-	$expiration_date['email'] = 0;
-	
-	webform_component_insert($expiration_date);
-
-	// cvv
-	$card_cvv = array();
-	$card_cvv['nid'] = $nid;
-	$card_cvv['pid']= $id; 
-	$card_cvv['form_key'] = 'card_cvv'; 
-	$card_cvv['name'] = 'Card Security Code';
-	$card_cvv['type'] = 'textfield';  
-	$card_cvv['extra'] = array(
-		'description' => '',
-		'maxlength' => 4,
-		'width' => 5,
-	);
-	$card_cvv['mandatory'] = 1; 
-	$card_cvv['weight'] = 3; 
-	$card_cvv['email'] = 0;
-	
-	webform_component_insert($card_cvv);
-
-	// recurring donation
-	$recurs = array();
-	$recurs['nid'] = $nid;
-	$recurs['pid']= $id; 
-	$recurs['form_key'] = 'recurs_monthly'; 
-	$recurs['name'] = 'Recurring Payment';
-	$recurs['type'] = 'select';  
-	$recurs['extra'] = array(
-		'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
-		'items' => 'recurs|Yes',
-		'multiple' => 'Y',
-	);
-	$recurs['mandatory'] = 0; 
-	$recurs['weight'] = 4; 
-	$recurs['email'] = 0;
-	
-	webform_component_insert($recurs);
+	// include the field definition file
+	module_load_include('inc', 'fundraiser', 'fundraiser.fields');
+	fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount);
 }
 
 function delete_webform_donation_components($node) {
@@ -1532,32 +1092,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 	
  		//if monthly recurring checkbox is set, do the insert into the fundraiser_recurring_users table
  		if ($recurs) {
- 			$data = array(
-		    'billing_first_name' => $order->billing_first_name,
-		    'billing_last_name' => $order->billing_last_name,
-		    'billing_phone' => $order->billing_phone,
-		    'billing_company' => $order->billing_company,
-		    'billing_street1' => $order->billing_street1,
-		    'billing_street2' => $order->billing_street2,
-		    'billing_city' => $order->billing_city,
-		    'billing_zone' => $order->billing_zone,
-		    'billing_postal_code' => $order->billing_postal_code,
-		    'billing_country' => $order->billing_country,
-		  );
-		
-		  $fee = array(
-		    'next_charge' => strtotime('+'. '1 months'),
-		    'fee_amount' => $order->order_total, 				    
-		    'order_id' => $order->order_id,
-		    'data' => serialize($data),
-		    'cc_exp' => array(
-		    	'month' => $cc_expiration_month,
-		    	'year' => $cc_expiration_year,
- 				),
- 				'order' => $order,
-		  );
-		
-		  $fee['rfid'] = fundraiser_recurring_fee_save('user', $fee, $result['ref_id']);
+ 			fundraiser_create_future_orders($order->order_id);
  		}
  		
  		drupal_set_message($result['message'],'status');
@@ -1572,7 +1107,6 @@ function fundraiser_webform_submit($form, &$form_state) {
 		$form_state['values']['abort'] = TRUE;
  	}
 }
-
 
 /*
  * Saves mapped profile data
@@ -1609,63 +1143,44 @@ function _save_profile_map($uid, &$map) {
 	}
 }
 
-function fundraiser_recurring_fee_save($type, $data, $ref_id = NULL) {
-      
-      //get number of months to charge card
-      $counter = _months_between_dates($data['cc_exp']);
-      
-			// limit to 49 recurring donations (Salesforce limit. 49 because the first donation counts as one)
-			$counter = min($counter, 49);
-
-      //now that we have the number of times the card should be charged, lets use it as a counter to create orders
-      global $user;
-      $master_order_id = $data['order']->order_id;
-      unset($data['order']->order_id);
-      for($i=1;$i<=$counter;$i++){
-      	//insert orders
-      	$order = uc_order_new($user->uid);
-      	$new_order_id = $order->order_id;
-      	
-      	$order = $data['order'];
-      	$order->order_id = $new_order_id;
-
-      	//dprint_r($data['order']); die();
-      	$order->order_status = 'pending_future_payment';
+function fundraiser_create_future_orders($order_id) {
+	global $user;
+	
+	// reload the original order so we get any changes that have been made by the payment gateways
+	$order = uc_order_load($order_id);
+	
+	// determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
+	$counter = min(_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
+	
+	for($i = 1; $i <= $counter; $i++) {
+		$next_order = uc_order_new($user->uid);
+		// copy all values to new order
+		$new_id = $next_order->order_id;
+		$next_order = $order;
+		$next_order->order_id = $new_id;
+		$next_order->order_status = 'pending_future_payment';
 		
-				if ($ref_id) {
-					$order->data['ref_id'] = $ref_id;
-				}
-
-      	unset($order->products[0]->order_product_id);
-      	
-      	uc_order_save($order);
-      	
-      	$serialized = serialize($data);
-      	$next_charge = strtotime("+$i months");
+		unset($next_order->products[0]->order_product_id);
+		uc_order_save($next_order);
+		$next_charge = strtotime("+$i months");
 		
-				// testing code
-				//$next_charge = strtotime("+$i hours");
+		// make a record of the recurring order
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge) VALUES (%d, %d, '%s')", $order_id, $new_id, $next_charge);
 		
-      	db_query("insert into {fundraiser_recurring} set master_order_id=%d,order_id=%d, next_charge='%s', data='%s', fee_amount=%f",$master_order_id,$new_order_id, $next_charge, $data['data'], $data['fee_amount']);
-      	
-      }
-      /*dprint_r($data['order']);
-      echo $counter; die();*/
+		// add a comment to the order stating when it will be charged
+		uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
+	}
+	
 }
 
-/*
-Function returns months between today's datestamp and $exp_date -1
-$exp_date is an array with 2 keys:
-	month = int
-	year = int
-*/
-function _months_between_dates($exp_date){
-	$exp_mon = $exp_date['month'];
-	$exp_yr = $exp_date['year'];
+/**
+ * Function returns months between today's datestamp and $exp_date -1
+ */
+function _months_between_dates($exp_month, $exp_year){
 	$startDate = strtotime("now");
-    $stopDate = mktime(0,0,0, $exp_mon, 1, $exp_yr);
+  $stopDate = mktime(0,0,0, $exp_month, 1, $exp_year);
    
-    $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
+  $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
 	return  $nrmonths;
 }
 
@@ -1699,10 +1214,12 @@ function fundraiser_cron() {
   			$charge_function = $gateway['credit'];
   		}
   	}
-
+		
+		// get the id of the reference to the customers cc data
+		$ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
 		$data = array(
   		'txn_type' => 'reference_txn',
-			'ref_id' => $order->data['ref_id'],
+			'ref_id' => $ref_id,
   	);
 
 		// process the order
