@@ -1,0 +1,24 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function market_source_install() {
+  variable_set('market_source_validity_period', 0);
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function market_source_uninstall() {
+  variable_del('market_source_validity_period');
+}
+
+/**
+ * Add the validity period variable.
+ */
+function market_source_update_6000() {
+  variable_set('market_source_validity_period', 0);
+  return array();
+}

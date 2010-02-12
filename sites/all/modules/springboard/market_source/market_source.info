@@ -1,0 +1,7 @@
+; $Id$
+name = Market Source
+description = Provides a way to track which campaigns and market sources drive users to the site.
+package = Jackson River SpringBoard
+core = 6.x
+
+version = "1.0-beta"

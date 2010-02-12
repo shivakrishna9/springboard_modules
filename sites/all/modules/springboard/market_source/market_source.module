@@ -1,0 +1,184 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Provides a way to track which campaigns and market sources drive users to the
+ * site.
+ */
+
+define('MARKET_SOURCE_MS_MAX_LENGTH', 255);
+define('MARKET_SOURCE_CID_MAX_LENGTH', 255);
+define('MARKET_SOURCE_REFERRER_MAX_LENGTH', 255);
+define('MARKET_SOURCE_INITIAL_REFERRER_MAX_LENGTH', 255);
+
+/**
+ * Implementation of hook_menu().
+ */
+function market_source_menu() {
+  $items = array();
+
+  $items['admin/settings/market-source'] = array(
+    'title' => 'Market Source',
+    'description' => 'Configuration settings for the Market Source module.',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('market_source_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'market_source.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_boot().
+ */
+function market_source_boot() {
+  // Check to see if the market source values should expire.
+  if (variable_get('market_source_validity_period', 0) != 0) {
+    if (!isset($_SESSION['market_source_expiry_date'])) {
+      // Set the expiry date to the current datetime + validity period.
+      $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+    }
+    else {
+      // Check to see if the expiry date has passed.
+      if (isset($_SESSION['market_source_expiry_date']) && $_SESSION['market_source_expiry_date'] < time()) {
+        unset($_SESSION['ms']);
+        unset($_SESSION['cid']);
+        unset($_SESSION['referrer']);
+        unset($_SESSION['initial_referrer']);
+      }
+    }
+  }
+
+  foreach ($_GET as $key => $val) {
+    if (strtolower($key) == 'ms' && $val != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $val) && strlen($val) <= MARKET_SOURCE_MS_MAX_LENGTH) {
+      $_SESSION['ms'] = $val;
+      $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+      continue;
+    }
+
+    if (strtolower($key) == 'cid' && $val != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $val) && strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+      $_SESSION['cid'] = $val;
+      $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+      continue;
+    }
+  }
+
+  if (!isset($_SESSION['initial_referrer'])) {
+    $_SESSION['initial_referrer'] = isset($_SERVER['HTTP_REFERER']) ? substr($_SERVER['HTTP_REFERER'], 0, MARKET_SOURCE_INITIAL_REFERRER_MAX_LENGTH) : '';
+    $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    $_SESSION['referrer'] = isset($_SERVER['HTTP_REFERER']) ? substr($_SERVER['HTTP_REFERER'], 0, MARKET_SOURCE_REFERRER_MAX_LENGTH) : '';
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function market_source_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'register') {
+    $form = array();
+
+    if (market_source_get_ms()) {
+      $form['profile_ms'] = array(
+        '#type' => 'hidden',
+        '#value' => market_source_get_ms(),
+      );
+      $form['ms'] = $form['profile_ms'];
+    }
+
+    if (market_source_get_cid()) {
+      $form['profile_cid'] = array(
+        '#type' => 'hidden',
+        '#value' => market_source_get_cid(),
+      );
+      $form['cid'] = $form['profile_cid'];
+    }
+
+    if (market_source_get_referrer()) {
+      $form['profile_referrer'] = array(
+        '#type' => 'hidden',
+        '#value' => market_source_get_referrer(),
+      );
+      $form['referrer'] = $form['profile_referrer'];
+    }
+
+    if (market_source_get_initial_referrer()) {
+      $form['profile_initial_referrer'] = array(
+        '#type' => 'hidden',
+        '#value' => market_source_get_initial_referrer(),
+      );
+      $form['initial_referrer'] = $form['profile_initial_referrer'];
+    }
+
+    return $form;
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function market_source_form_alter(&$form, $form_state, $form_id) {
+  if (!isset($form['submission']) && module_exists('webform') && strpos($form_id, 'webform') === 0) {
+    if (isset($form['submitted']['ms']) && market_source_get_ms() != '') {
+      $form['submitted']['ms']['#value'] = market_source_get_ms();
+    }
+
+    if (isset($form['submitted']['cid']) && market_source_get_cid() != '') {
+      $form['submitted']['cid']['#value'] = market_source_get_cid();
+    }
+
+    if (isset($form['submitted']['referrer']) && market_source_get_referrer() != '') {
+      $form['submitted']['referrer']['#value'] = market_source_get_referrer();
+    }
+
+    if (isset($form['submitted']['initial_referrer']) && market_source_get_initial_referrer() != '') {
+      $form['submitted']['initial_referrer']['#value'] = market_source_get_initial_referrer();
+    }
+  }
+}
+
+/**
+ * Fetches the user's referring market source (if any).
+ *
+ * @return string
+ *   The referring market source. If not set, returns a blank string.
+ */
+function market_source_get_ms() {
+  return isset($_SESSION['ms']) ? $_SESSION['ms'] : '';
+}
+
+/**
+ * Fetches the user's referring campaign ID (if any).
+ *
+ * @return string
+ *   The referring campaign ID. If not set, returns a blank string.
+ */
+function market_source_get_cid() {
+  return isset($_SESSION['cid']) ? $_SESSION['cid'] : '';
+}
+
+/**
+ * Fetches the user's referring URL (if any).
+ *
+ * @return string
+ *   The referring URL. If not set, returns a blank string.
+ */
+function market_source_get_referrer() {
+  return isset($_SESSION['referrer']) ? $_SESSION['referrer'] : '';
+}
+
+/**
+ * Fetches the user's initial referring URL (if any).
+ *
+ * @return string
+ *   The initial referring URL. If not set, returns a blank string.
+ */
+function market_source_get_initial_referrer() {
+  return isset($_SESSION['initial_referrer']) ? $_SESSION['initial_referrer'] : '';
+}
