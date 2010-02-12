@@ -44,7 +44,7 @@ function sf_queue_delete($oid, $type) {
 function sf_retry_queue_delete($oid, $type) {
 	if (_in_retry_queue($oid, $type)) {
 		db_query("DELETE FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
-		sf_queue_log_insert(t('!type !oid removed from retry queue because it has been inserted into the normal queue', array('!type' => ucfirst($type), '!oid' => $oid)));
+		watchdog('salesforce queue api', t('!type !oid removed from retry queue because it has been inserted into the normal queue', array('!type' => ucfirst($type), '!oid' => $oid)), NULL, WATCHDOG_INFO);
 	}
 }
 
