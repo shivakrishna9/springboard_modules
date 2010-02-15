@@ -436,7 +436,7 @@ function sf_donation_cron() {
 		}
 		
 		// make sure user has been sync'd up
-		if ($user->profile_contact_id && $user->profile_salesforce_account_id) {
+		if ($user->salesforce_contact_id && $user->salesforce_account_id) {
 			// determine if donation is recurring
 			$donation_count = _recurring_donation_count($data->order_id, $user);
 			if ($donation_count > 0) {
