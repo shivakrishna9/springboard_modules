@@ -715,13 +715,13 @@ function _create_single_donation($order_id, &$user, $sid) {
 	// load up the payments because we need the received date of the payment
 	$payments = uc_payment_load_payments($order_id);
 	$donation = array(
-		'ContactId' => $user->profile_contact_id,
+		'ContactId' => $user->salesforce_contact_id,
 	);
 	
 	$donation['fields'] = array(
 		'Name' => 'Donation - ' . $order->order_id,
 		'Amount' => $order->order_total,
-		'AccountID' => $user->profile_salesforce_account_id,
+		'AccountID' => $user->salesforce_account_id,
 		'Order_ID__c' => $order->order_id,
 		'Donation_Form_Name__c' => $order->products[0]->title,
 		'Donation_Form_URL__c' => $base_url . '/node/' . $order->products[0]->nid,
@@ -773,7 +773,7 @@ function _create_recurring_donation($order_id, &$user, $count, $sid) {
 		'fields' =>	array(
 			'Name' => 'Donation - ' . $order->order_id,
 			'npe03__Amount__c' => $order->order_total,
-			'npe03__Contact__c' => $user->profile_contact_id,
+			'npe03__Contact__c' => $user->salesforce_contact_id,
 			'npe03__Installment_Period__c' => 'Monthly',
 			'npe03__Schedule_Type__c' => 'Multiply By',
 			'npe03__Installments__c' => $count,
