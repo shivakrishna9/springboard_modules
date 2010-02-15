@@ -544,7 +544,7 @@ function fundraiser_menu() {
 	);
 	
 	$items['node/%webform_menu/edit/mapping'] = array(
-	    'title' => 'Fundraiser Mapping',
+	    'title' => 'Fundraiser User Map',
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('fundraiser_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
@@ -862,8 +862,8 @@ function theme_fundraiser_mapping_form($form) {
 		$rows[] = $row;
 	
 		$header = array("Webform Component","Profile Field");
-	
-		$output = theme('table', $header, $rows, array('id' => 'fundraiser_mapping_form'));
+		$output = drupal_render($form['info']);
+		$output .= theme('table', $header, $rows, array('id' => 'fundraiser_mapping_form'));
 		$output .= drupal_render($form);
 	}
 	else {

@@ -11,6 +11,11 @@ function fundraiser_mapping_form($form_state, $node) {
     '#type' => 'value',
     '#value' => $node->nid,
   );
+  
+  $form['info'] = array(
+  	'#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the donation form is submitted, the user\'s profile will be updated with the values from the form.',
+  	'#weight' => 0, 
+  );
 
 	foreach ($node->webform['components']  as $cid =>$component){
 		if($component['type'] != 'fieldset'){
