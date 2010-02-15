@@ -19,7 +19,6 @@
  * @param $min_donation_amount
  *   A minimum value for the other amount field that will be validated upon submission
  */
- */
 function fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
 	// market source id
 	$market_source = array();
