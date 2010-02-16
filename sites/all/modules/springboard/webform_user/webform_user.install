@@ -1,16 +1,16 @@
 <?php
 // $Id$
 
-function bigbrother_install() {
-  drupal_install_schema('bigbrother');
+function webform_user_install() {
+  drupal_install_schema('webform_user');
 }
 
-function bigbrother_uninstall() {
-  drupal_uninstall_schema('bigbrother');
+function webform_user_uninstall() {
+  drupal_uninstall_schema('webform_user');
 }
 
-function bigbrother_schema() {
-  $schema['bigbrother'] = array(
+function webform_user_schema() {
+  $schema['webform_user'] = array(
 	  'description' => t('TODO: please describe this table!'),
 	  'fields' => array(
 	    'nid' => array(
@@ -27,7 +27,7 @@ function bigbrother_schema() {
 	      'not null' => TRUE,
 	      'default' => 0,
 	    ),
-	    'is_bigbrother' => array(
+	    'is_webform_user' => array(
 	      'description' => t('TODO: please describe this field!'),
 	      'type' => 'int',
 	      'unsigned' => TRUE,

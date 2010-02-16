@@ -1,5 +1,5 @@
 ; $Id$
-name = Big Brother
+name = Webform User
 description = Allows administrators to create webforms and attach the webform submissions to users.
 package = Jackson River SpringBoard
 core = 6.x

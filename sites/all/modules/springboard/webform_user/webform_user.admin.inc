@@ -3,16 +3,16 @@
 
 /**
  * @file
- * Administration page callbacks for the bigbrother module.
+ * Administration page callbacks for the webform_user module.
  */
 
 /**
  * Form builder. Select the salesforce object relationship field.
  */ 
-function bigbrother_field_selection_form(&$form_state = NULL, $node) {
+function webform_user_field_selection_form(&$form_state = NULL, $node) {
 	// only show the related field drop down if the webform has been related to a salesforce object
-	if (!empty($node->sf_webform_object) && $node->is_bigbrother) {
-		$form['bigbrother_related_field'] = array(
+	if (!empty($node->sf_webform_object) && $node->is_webform_user) {
+		$form['webform_user_related_field'] = array(
 			'#prefix' => t("<div>This webform is currently mapped to the <strong>$node->sf_webform_object</strong> object. Please select the field in this object that references the <strong>$node->related_object</strong> object.</div>"), 
 			'#type' => 'select',
 			'#options' => _get_object_relation_fields($node->sf_webform_object),
@@ -48,11 +48,11 @@ function bigbrother_field_selection_form(&$form_state = NULL, $node) {
 /**
  * Form submission handler.
  */
-function bigbrother_field_selection_form_submit($form, &$form_state) {
-	$foreign_key_field = $form_state['values']['bigbrother_related_field'];
+function webform_user_field_selection_form_submit($form, &$form_state) {
+	$foreign_key_field = $form_state['values']['webform_user_related_field'];
 	$nid = $form_state['values']['nid'];
 	$vid = $form_state['values']['vid'];
 	
-	db_query("UPDATE {bigbrother} SET foreign_key_field = '%s' WHERE nid = %d and vid = %d", $foreign_key_field, $nid, $vid);
+	db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d and vid = %d", $foreign_key_field, $nid, $vid);
 	drupal_set_message(t('Relationship field successfully set to !field', array('!field' => $foreign_key_field)));
 }
