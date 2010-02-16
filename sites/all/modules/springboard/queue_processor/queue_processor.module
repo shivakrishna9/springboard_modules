@@ -208,6 +208,9 @@ function process_batches($ids) {
 			}
 		}
 		
+		// clear out any previous responses
+		unset($response);
+		
 		$sf = salesforce_management_api_connect();
 		if ($sf) {
 			try {
