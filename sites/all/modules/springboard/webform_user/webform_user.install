@@ -1,0 +1,68 @@
+<?php
+// $Id$
+
+function bigbrother_install() {
+  drupal_install_schema('bigbrother');
+}
+
+function bigbrother_uninstall() {
+  drupal_uninstall_schema('bigbrother');
+}
+
+function bigbrother_schema() {
+  $schema['bigbrother'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'nid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'vid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'is_bigbrother' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'size' => 'tiny',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'authenticate_submitters' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'size' => 'tiny',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'related_object' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '10',
+	      'not null' => FALSE,
+	    ),
+	    'foreign_key_field' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '100',
+	      'not null' => FALSE,
+	    ),
+	  ),
+	  'primary key' => array('nid', 'vid'),
+	  'unique keys' => array(
+	    'vid' => array('vid')
+	  ),
+	  'indexes' => array(
+	    'nid' => array('nid'),
+	  ),
+	);
+  return $schema;
+}
