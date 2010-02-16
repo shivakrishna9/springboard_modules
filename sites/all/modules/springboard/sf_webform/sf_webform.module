@@ -11,7 +11,7 @@
  */
 function sf_webform_menu() {
 	$items['node/%webform_menu/edit/salesforce-map'] = array(
-	  'title' => 'Salesforce mapping',
+	  'title' => 'Salesforce map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_webform_mapping_form', 1),
 		'access callback' => 'user_access',
