@@ -6,6 +6,66 @@
  * Administration page callbacks for the queue processor module.
  */
 
+/** 
+ * Allows a user to add all objects of a given type to the queue
+ */
+function queue_processor_mass_add() {
+	
+	$types = array();
+	if (module_exists('sf_user')) {
+		$types['user'] = 'Users';
+	}
+	
+	/* TODO: Future enhancement
+	if (module_exists('sf_webform')) {
+		$types['webform'] = 'Webform submissions';
+	}
+	*/
+	
+	$form['warning'] = array(
+		'#value' => t('Please be sure all required <strong>fieldmaps</strong> are configured correctly before using this utility'),
+	);
+	
+	$form['objects_to_add'] = array(
+		'#type' => 'checkboxes',
+		'#title' => t('Types to mass add'),
+		'#description' => t('Choose the types of objects you want to add to the queue. Only those objects that have not yet been exported will be added.'),
+		'#options' => $types,
+	);
+	
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => 'Add objects to queue',
+	);
+	
+	return $form;
+}
+
+/** 
+ * Submission functions for mass add
+ */
+function queue_processor_mass_add_submit($form, &$form_state) {
+
+	foreach($form_state['values']['objects_to_add'] as $type) {
+		if ($type) {
+			switch ($type) {
+				case 'user' :
+					db_query("INSERT INTO {sf_queue} (oid, sfid, type, fieldmap, action, created, locked)
+										SELECT uid, NULL, 'user', 0, 'upsert', unix_timestamp(), 0 
+										FROM {users} 
+										WHERE uid NOT IN (SELECT oid FROM {salesforce_management_object_map} WHERE drupal_type = 'user') AND uid != 0
+										AND uid NOT IN (SELECT oid FROM {sf_queue} WHERE TYPE = 'user')");
+					drupal_set_message('All users that haven\'t been exported to Salesforce have been added to the queue');
+					break;
+					
+				case 'webform' :
+					print 'mass add webforms<br>';
+					break;
+			}
+		}
+	}
+}
+
 /**
  * Batch detail page
  */

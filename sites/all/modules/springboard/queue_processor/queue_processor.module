@@ -20,6 +20,15 @@ function queue_processor_menu() {
 		'file' => 'queue_processor.admin.inc',
 	);
 	
+	$items['admin/settings/salesforce-management/queue-mass-add'] = array(
+		'title' => t('Queue mass add'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('queue_processor_mass_add'),
+		'access arguments' => array('mass add'),
+		'type' => MENU_NORMAL_ITEMS,
+		'file' => 'queue_processor.admin.inc',
+	);
+	
 	$items['admin/reports/salesforce'] = array(
 		'title' => 'Salesforce integration reports',
 		'page callback' => 'saleforce_integration_reports',
@@ -60,7 +69,7 @@ function queue_processor_menu() {
  * Implementation of hook_perm().
  */
 function queue_processor_perm() {
-  return array('configure salesforce queue processor', 'view salesforce reports');
+  return array('configure salesforce queue processor', 'view salesforce reports', 'mass add');
 }
 
 /**
