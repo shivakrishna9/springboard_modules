@@ -66,6 +66,14 @@ function queue_processor_menu() {
 }
 
 /**
+ * Implemenation of hook_menu_alter().
+ */
+function queue_processor_menu_alter(&$items) {
+	// workaround for douchebaggy bug where only uid 1 can see custom triggers
+	$items['admin/build/trigger/queue_processor']['access callback'] = TRUE;
+}
+
+/**
  * Implementation of hook_perm().
  */
 function queue_processor_perm() {
