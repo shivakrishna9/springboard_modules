@@ -224,6 +224,9 @@ function process_batches($ids) {
 				array_push($objects, $object);
 			}
 		}
+
+		// apply validation
+		queue_validate_batch($objects, $batch['salesforce_type']);
 		
 		// clear out any previous responses
 		unset($response);
@@ -266,6 +269,11 @@ function process_batches($ids) {
 			catch (Exception $e) {
 				watchdog('salesforce queue processor', t('An error occured while connecting to Salesforce during batch !id. Exception: !e', array('!id' => $id, '!e' => print_r($e, true))), NULL, WATCHDOG_CRITICAL);
 				module_invoke_all('queue_processor', 'soap_fault');
+				// TODO: Put items in retry queue with a special designation
+				
+				// TODO: Delete from heap
+				
+				// TODO: Mark batch as failed
 			}
 		}
 		else {
@@ -405,7 +413,7 @@ function get_batch_items(&$batch) {
 function create_batch($type, $fieldmap, $action) {
 	$record_count = batch_size($type, $fieldmap);
 	$result = db_query("SELECT salesforce, dedupe_key FROM {salesforce_management_field_map} WHERE fieldmap = %d", $fieldmap);
-	
+
 	/* if this object exposes it's own map (like webform), then expose a hook the module can use to specific the salesforce object type
 	 * and dedupe key */	 
 	if (!$data = db_fetch_array($result)) {
@@ -421,6 +429,7 @@ function create_batch($type, $fieldmap, $action) {
 	$batch = array(
 		'id' => $batch_id,
 		'type' => $type,
+		'salesforce_type' => $data['salesforce'],
 		'fieldmap' => $fieldmap,
 		'dedupe_key' => $data['dedupe_key'],
 		'action' => $action,
@@ -684,6 +693,59 @@ function get_retry_queue_details($oid, $type) {
 	$details = db_fetch_array($result);
 	$details['attempts_remaining'] = variable_get('queue_retry_max', 3) - $details['attempts'];
 	return $details;
+}
+
+/** 
+ * Validates items in a batch against the salesforce object definition
+ */
+function queue_validate_batch(&$objects, $salesforce_type) {
+	$object_definition = salesforce_management_api_fieldmap_objects_load('salesforce', $salesforce_type);
+
+	// loop over each object
+	foreach($objects as &$object) {
+		// loop over each field
+		foreach($object as $field => &$value) {
+			$field_type = $object_definition['fields'][$field]['field_type'];
+			$length = $object_definition['fields'][$field]['length'];
+			$nillable = $object_definition['fields'][$field]['nillable'];
+
+			// control what we can control
+			switch ($field_type) {
+				case 'string':				
+					$value = substr($value, 0, $length); // truncate to max length
+					break;
+					
+				case 'datetime':
+					// make sure dates are formatted properly
+					$valid_date = strtotime($value);
+					// if the date is good, just assign it
+					if ($valid_date) {
+						$value = date('c', $valid_date);
+					}
+					else {
+						if ($nillable) {
+							$value = '';
+						}
+						else {
+							$value = date('c');
+						}
+					}
+					break;
+					
+				case 'boolean':
+					$value = !empty($value) ? $value : 0; // default to false
+					break;
+					
+				case 'double':
+				case 'int':
+					// first strip out everything but numbers and the period
+					$value = preg_replace("/[^0-9.]/", "", $value);
+					$value = is_numeric($value) ? $value : 0; // default numbers to 0 if not numeric
+					break;
+				
+			}
+		}
+	}
 }
 
 /******************************************************************************
