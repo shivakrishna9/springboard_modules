@@ -155,6 +155,50 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 				);
 			}
 		}
+
+		$form['node_map']['nid']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Node Id',
+		);
+		
+		$form['node_map']['nid']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['nid'],
+		);
+		
+		$form['node_map']['node_title']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Node Title',
+		);
+		
+		$form['node_map']['node_title']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['node_title'],
+		);
+		
+		$form['submission_map']['sid']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Submission Id',
+		);
+	
+		$form['submission_map']['sid']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['sid'],
+		);
+		
+		$form['submission_map']['submission_date']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Submission Date',
+		);
+	
+		$form['submission_map']['submission_date']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['submission_date'],
+		);
 		
 		$form['remove'] = array(
 			'#type' => 'submit',
@@ -194,17 +238,40 @@ function render_salesforce_object_fields() {
 	foreach ($map['cid'] as $key=>$cid) {
 		if (is_numeric($key)) {
 			$row = array();
-			$row[] = drupal_render($map['cid'][$key]);
+			$row[] = array('data' => drupal_render($map['cid'][$key]), 'width' => '300');
 			$row[] = drupal_render($map['salesforce'][$key]);
+			$row[] = drupal_render($map['dedupe'][$key]);
 			$rows[] = $row;
 		}
 	}
 
-	$header = array("Webform Component","Field");
+	$header = array("Webform Component","Salesforce Field","Dedupe Field");
 
 	$output = theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
+	
+	foreach($form['node_map'] as $key=>$field) {
+		if (substr($key, 0, 1) != '#') {
+			$node_row = array();
+			$node_row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+			$node_row[] = drupal_render($field['value']);
+			$node_rows[] = $node_row;
+		}
+	}
+	unset($form['node_map']);
+	$output .= theme('table', array('Node Property', 'Salesforce Field'), $node_rows);
+		
+	foreach($form['submission_map'] as $key=>$field) {
+		if (substr($key, 0, 1) != '#') {
+			$row = array();
+			$row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+			$row[] = drupal_render($field['value']);
+			$submission_rows[] = $row;
+		}
+	}
+	unset($form['submission_map']);
+	$output .= theme('table', array('Submission Property', 'Salesforce Field'), $submission_rows);
+	
 	$output .= drupal_render($form['submit']);
-
   //$output = drupal_render($map);
 
   // Final rendering callback.
@@ -218,9 +285,11 @@ function render_salesforce_object_fields() {
 function sf_webform_mapping_form_submit($form, &$form_state) {
 	if ($form_state['values']['map']['salesforce']) {
 
-		_sf_webform_delete_map($form['#node']->nid);
-
-		$map = array();
+		$nid = $form['#node']->nid;
+		$drupal_fieldmap_name = 'webform:' . $nid;
+		$fieldmap_id = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal_fieldmap_name));
+		
+		//_sf_webform_delete_map($form['#node']->nid);
 
 		// re-add mappings
 		foreach($form_state['values']['map']['salesforce'] as $key => $value) {
@@ -228,10 +297,32 @@ function sf_webform_mapping_form_submit($form, &$form_state) {
 				$map[$key] = $value;
 			}
 		}
+		
+		// add node fields
+		foreach($form_state['values']['node_map'] as $key => $value) {
+			if (!empty($value['value'])) {
+				$map[$key] = $value['value'];
+			}
+		}
+		
+		// add submission fields
+		foreach($form_state['values']['submission_map'] as $key => $value) {
+			if (!empty($value['value'])) {
+				$map[$key] = $value['value'];
+			}
+		}
+		
 		// insert serialized map
 		$name = $form['#node']->title . " (webform map)";
-		$sql = "INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields) VALUES ('%s', '%s', '%s', '%s')";
-		db_query($sql, $name, $form['#node']->type . ':' . $form['#node']->nid, $form_state['values']['object'], serialize($map));
+		
+		if (empty($fieldmap_id)) {
+			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields) VALUES ('%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], serialize($map));
+		}
+		else {
+			db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', fields = '%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], serialize($map), $fieldmap_id);
+		}
+			
+		//db_query($sql, $name, $form['#node']->type . ':' . $form['#node']->nid, $form_state['values']['object'], serialize($map));
 		drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
 	}
 }
@@ -336,7 +427,7 @@ function theme_sf_webform_mapping_form($form) {
 		foreach ($map['cid'] as $key=>$cid) {
 			if (is_numeric($key)) {
 				$row = array();
-				$row[] = drupal_render($map['cid'][$key]);
+				$row[] = array('data' => drupal_render($map['cid'][$key]), 'width' => '300');
 				$row[] = drupal_render($map['salesforce'][$key]);
 				$row[] = drupal_render($map['dedupe'][$key]);
 				$rows[] = $row;
@@ -344,9 +435,32 @@ function theme_sf_webform_mapping_form($form) {
 		}
 		
 		$header = array("Webform Component","Salesforce Field", "Dedupe Field");
-		$output .= theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
+		$output .= theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form', 'class' => 'sf_webform_mapping_form'));
 		// remove map so it's not rendered twice
 		unset($form['map']);
+		
+		foreach($form['node_map'] as $key=>$field) {
+			if (substr($key, 0, 1) != '#') {
+				$node_row = array();
+				$node_row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+				$node_row[] = drupal_render($field['value']);
+				$node_rows[] = $node_row;
+			}
+		}
+		unset($form['node_map']);
+		$output .= theme('table', array('Node Property', 'Salesforce Field'), $node_rows, array('class' => 'sf_webform_mapping_form'));
+			
+		foreach($form['submission_map'] as $key=>$field) {
+			if (substr($key, 0, 1) != '#') {
+				$row = array();
+				$row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+				$row[] = drupal_render($field['value']);
+				$submission_rows[] = $row;
+			}
+		}
+		unset($form['submission_map']);
+		$output .= theme('table', array('Submission Property', 'Salesforce Field'), $submission_rows, array('class' => 'sf_webform_mapping_form'));
+		
 		$output .= drupal_render($form['submit']);
 		$output .= drupal_render($form['remove']);
 		$output .= drupal_render($form);
@@ -487,12 +601,39 @@ function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
 		}
 	}
 	
+	// add extra fields that aren't components
+	_sf_webform_add_node_details($nid, $sid, $map, $salesforce_map);
+	return $salesforce_map;
+}
+
+/** 
+ * Add standard node and submission details to a fieldmap
+ */
+function _sf_webform_add_node_details($nid, $sid, &$map, &$salesforce_map) {
+	$node_info = db_fetch_array(db_query("SELECT w.uid, w.submitted, w.remote_addr, n.title FROM
+		{webform_submissions} w INNER JOIN {node} n on n.nid = w.nid WHERE w.sid = %d", $sid));
+		
+	// add in any node and submission fields
+	if (array_key_exists('nid', $map)) {
+		$salesforce_map['fields'][$map['nid']] = $nid;
+	}
+	
+	if (array_key_exists('node_title', $map)) {
+		$salesforce_map['fields'][$map['node_title']] = $node_info['title'];
+	}
+	
+	if (array_key_exists('sid', $map)) {
+		$salesforce_map['fields'][$map['sid']] = $sid;
+	}
+	
+	if (array_key_exists('submission_date', $map)) {
+		$salesforce_map['fields'][$map['submission_date']] = date('c', $node_info['submitted']);
+	}
+	
 	// finally, add the sfid if its available
 	if (!empty($sfid)) {
 		$salesforce_map['fields']['Id'] = $sfid;
 	}
-
-	return $salesforce_map;
 }
 
 /**
