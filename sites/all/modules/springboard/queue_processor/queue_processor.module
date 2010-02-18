@@ -841,12 +841,13 @@ function queue_processor_mail($key, &$message, $params) {
  */
 function create_summary_email(&$batches_processed) {
 	//$subject = t("Salesforce queue processor summary: !date", array('!date' => date('n/j/Y g:i:s a')));
-		
-	$email_to = variable_get('queue_summary_email', NULL);
-	if ($email_to) {
-		drupal_mail('queue_processor', 'queue_summary_email', $email_to, language_default(), $params = array('batches' => $batches_processed), $from = NULL);
+	// only send summary if some batches were actually processed
+	if (count($batches_processed > 0)) {	
+		$email_to = variable_get('queue_summary_email', NULL);
+		if ($email_to) {
+			drupal_mail('queue_processor', 'queue_summary_email', $email_to, language_default(), $params = array('batches' => $batches_processed), $from = NULL);
+		}
 	}
-	
 }
 
 function created_edit_link($oid, $type) {
