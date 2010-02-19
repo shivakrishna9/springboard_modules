@@ -736,7 +736,8 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 				case 'boolean':
 					$value = !empty($value) ? $value : 0; // default to false
 					break;
-					
+				
+				case 'currency':	
 				case 'double':
 				case 'int':
 					// first strip out everything but numbers and the period
