@@ -715,6 +715,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					$value = substr($value, 0, $length); // truncate to max length
 					break;
 					
+				case 'date':
 				case 'datetime':
 					// make sure dates are formatted properly
 					$valid_date = strtotime($value);
