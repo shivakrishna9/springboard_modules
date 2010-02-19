@@ -1068,12 +1068,11 @@ function fundraiser_webform_submit($form, &$form_state) {
  	}
  	
  	$result = $charge_function($order->order_id, $donation_amount, $transaction_type);
-	
+
  	if ($result['success']) {
  		
 		// complete the sale		
 		uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-
 		// update the vault if needed
 		if (variable_get('uc_sage_vault_status', FALSE) && variable_get('uc_sage_vault_checkout', 'none') == 'insert') {
 			db_query("update {uc_sage_vault} set uid = %d where guid = '%s'", $order->uid, $result['ref_id']);
@@ -1148,7 +1147,7 @@ function fundraiser_create_future_orders($order_id) {
 	
 	// reload the original order so we get any changes that have been made by the payment gateways
 	$order = uc_order_load($order_id);
-	
+
 	// determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
 	$counter = min(_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
 	
@@ -1156,7 +1155,7 @@ function fundraiser_create_future_orders($order_id) {
 		$next_order = uc_order_new($user->uid);
 		// copy all values to new order
 		$new_id = $next_order->order_id;
-		$next_order = $order;
+		$next_order = clone $order;
 		$next_order->order_id = $new_id;
 		$next_order->order_status = 'pending_future_payment';
 		
