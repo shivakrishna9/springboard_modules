@@ -34,7 +34,7 @@ function queue_processor_menu() {
 		'page callback' => 'saleforce_integration_reports',
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_NORMAL_ITEM,
-		'file' => 'queue_processor.admin.inc',
+		'file' => 'queue_processor.reports.inc',
 	);
 	
 	$items['admin/reports/salesforce/current'] = array(
@@ -42,7 +42,7 @@ function queue_processor_menu() {
 		'page callback' => 'current_queue_report',
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_NORMAL_ITEM,
-		'file' => 'queue_processor.admin.inc',
+		'file' => 'queue_processor.reports.inc',
 	);
 	
 	$items['admin/reports/salesforce/batch'] = array(
@@ -50,7 +50,25 @@ function queue_processor_menu() {
 		'page callback' => 'batch_history_report',
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_NORMAL_ITEM,
-		'file' => 'queue_processor.admin.inc',
+		'file' => 'queue_processor.reports.inc',
+	);
+	
+	$items['admin/reports/salesforce/retries'] = array(
+		'title' => 'Retry queue',
+		'page callback' => 'retry_queue_report',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 20,
+		'file' => 'queue_processor.reports.inc',
+	);
+	
+	$items['admin/reports/salesforce/permanent-failures'] = array(
+		'title' => 'Permanent failures',
+		'page callback' => 'permanent_failures_report',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 30,
+		'file' => 'queue_processor.reports.inc',
 	);
 	
 	$items['admin/reports/salesforce/batch/%'] = array(
@@ -59,7 +77,7 @@ function queue_processor_menu() {
 		'page arguments' => array(4),
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_CALLBACK,
-		'file' => 'queue_processor.admin.inc',
+		'file' => 'queue_processor.reports.inc',
 	);
 	
 	return $items;
