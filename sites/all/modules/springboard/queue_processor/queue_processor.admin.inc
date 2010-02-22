@@ -147,6 +147,14 @@ function saleforce_integration_reports() {
  * @see system_settings_form().
  */
 function queue_processor_admin_settings() {
+	$form['queue_max_to_process'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Maximum number of items to process each cron run'),
+		'#default_value' => variable_get('queue_max_to_process', 1000),
+		'#description' => t('The maximum number of items that will be processed each time cron runs. This number should be tuned for maximum performance.'),
+		'#size' => 6,
+	);
+	
 	$form['queue_batch_size'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Batch size'),
@@ -206,6 +214,10 @@ function queue_processor_admin_settings() {
  * Validates queue processor settings.
  */
 function queue_processor_admin_settings_validate($form, &$form_state) {
+	if (!is_numeric($form_state['values']['queue_max_to_process'])) {
+		form_set_error('queue_max_to_process', t('Maximum number to process must be numeric.'));
+	}
+	
 	if (!is_numeric($form_state['values']['queue_batch_size'])) {
 		form_set_error('queue_batch_size', t('Queue batch size must be numeric.'));
 	}
@@ -224,6 +236,7 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
 	// sort the types based on weights
 	uasort($ordered_types, "sort_weights");
   
+  variable_set('queue_max_to_process', $form_state['values']['queue_max_to_process']);
 	variable_set('queue_processing_order', array_keys($ordered_types));
 	variable_set('queue_batch_size', $form_state['values']['queue_batch_size']);
 	variable_set('queue_retry_max', $form_state['values']['queue_retry_max']);

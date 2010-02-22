@@ -21,7 +21,7 @@ function queue_processor_menu() {
 	);
 	
 	$items['admin/settings/salesforce-management/queue-mass-add'] = array(
-		'title' => t('Queue mass add'),
+		'title' => t('Queue bulk insert'),
 		'page callback' => 'drupal_get_form',
 		'page arguments' => array('queue_processor_mass_add'),
 		'access arguments' => array('mass add'),
@@ -98,10 +98,13 @@ function queue_processor_theme() {
 function queue_processor_cron() {
 	// first, verify salesforce connection
 	$sf = salesforce_management_api_connect();
+	$number_to_process = 0;
+	$max_to_process = variable_get('queue_max_to_process', 1000);
+	
 	if ($sf) {
 		watchdog('salesforce queue processor', t('Queue processing started'), NULL, WATCHDOG_INFO);
 		// move all currently queued items to the heap
-		db_query("UPDATE {sf_queue} SET locked = 1");
+		db_query("UPDATE {sf_queue} SET locked = 1 LIMIT %d", $max_to_process);
 		$result = db_query("SELECT * FROM {sf_queue} WHERE locked = 1");
 	
 		while($data = db_fetch_object($result)) {
@@ -115,13 +118,15 @@ function queue_processor_cron() {
 				db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) VALUES (%d, '%s', '%s', %d, '%s', %d)",
 					$data->oid, $data->sfid, $data->type, $data->fieldmap, $data->action, time());
 			} 
+			$number_to_process++;
 		}
 	
 		// delete locked records from the queue
 		db_query("DELETE FROM {sf_queue} WHERE locked = 1");
 
 		// load any retries that need to be processed onto the heap
-		move_retries_to_heap();
+		$number_remaining = $max_to_process - $number_to_process;
+		move_retries_to_heap($number_remaining);
 		
 		// process the heap
 		process_heap();
@@ -268,12 +273,8 @@ function process_batches($ids) {
 			}
 			catch (Exception $e) {
 				watchdog('salesforce queue processor', t('An error occured while connecting to Salesforce during batch !id. Exception: !e', array('!id' => $id, '!e' => print_r($e, true))), NULL, WATCHDOG_CRITICAL);
+				process_batch_failure($batch, $e); // TODO: Complete this function
 				module_invoke_all('queue_processor', 'soap_fault');
-				// TODO: Put items in retry queue with a special designation
-				
-				// TODO: Delete from heap
-				
-				// TODO: Mark batch as failed
 			}
 		}
 		else {
@@ -362,6 +363,37 @@ function process_batch_response(&$batch, &$response) {
 	// record batch end
 	log_batch_end($batch['id'], $success_count, $failure_count);
 	watchdog('salesforce queue processor', t('Batch !id has finished processing', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+}
+
+/**
+ * Handles a batch that failed because of a SOAP fault
+ */
+function process_batch_failure(&$batch, $exception) {
+	// loop over and process reponses
+	$items_in_batch = count($batch['items']);
+	$response = 'A SOAP fault occurred.';
+	$error = new stdClass;
+	$error->statusCode = "SOAP_FAULT";
+	$error->message = $exception->getMessage();
+	
+	for ($i = 0; $i < $items_in_batch; $i++) {
+		// convenience vars
+		$oid = $batch['items'][$i]->oid;
+		$type = $batch['items'][$i]->type;
+		$error->oid = $oid;
+		$error->type = $type;
+		save_batch_errors($batch['id'], $oid, $type, $error);
+		log_batch_item_status($batch['id'], $oid, 0);
+		move_to_retry_queue($batch['items'][$i], $response);
+		delete_from_heap($oid, $type);
+	}
+	
+	// record batch end
+	$batch['success_count'] = 0;
+	$batch['failure_count'] = $items_in_batch;
+	
+	log_batch_end($batch['id'], 0, $items_in_batch);
+	watchdog('salesforce queue processor', t('Batch !id failed because of a SOAP fault. !num items were moved to the retry queue.', array('!id' => $batch['id'], '!num' => $items_in_batch)), NULL, WATCHDOG_CRITICAL);
 }
 
 /**
@@ -664,11 +696,11 @@ function move_to_permanent_failure(&$item, &$response) {
 /**
  * Moves objects that need to be retried back to the heap
  */
-function move_retries_to_heap() {
+function move_retries_to_heap($max_items) {
 	$max_attempts = variable_get('queue_retry_max', 3);
 	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) SELECT
-		oid, sfid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d",
-		time(), $max_attempts);
+		oid, sfid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d LIMIT %d",
+		time(), $max_attempts, $max_items);
 }
 
 /**
@@ -711,8 +743,10 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 
 			// control what we can control
 			switch ($field_type) {
-				case 'string':				
-					$value = substr($value, 0, $length); // truncate to max length
+				case 'string':			
+					if (strlen($value) > $length) {	
+						$value = substr($value, 0, $length); // truncate to max length
+					}
 					break;
 					
 				case 'date':
@@ -725,10 +759,10 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					}
 					else {
 						if ($nillable) {
-							$value = '';
+							unset($object[$field]); // remove date completely
 						}
 						else {
-							$value = date('c');
+							$value = date('c'); // set default to now
 						}
 					}
 					break;
@@ -920,5 +954,8 @@ function created_edit_link($oid, $type) {
 	switch ($type) {
 		case 'user':
 			return $base_url . '/user/' . $oid . '/edit';
+		case 'webform':
+			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
+			return $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
 	}
 }
