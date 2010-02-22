@@ -28,7 +28,7 @@ function queue_processor_mass_add() {
 	
 	$form['objects_to_add'] = array(
 		'#type' => 'checkboxes',
-		'#title' => t('Types to mass add'),
+		'#title' => t('Types to bulk insert'),
 		'#description' => t('Choose the types of objects you want to add to the queue. Only those objects that have not yet been exported will be added.'),
 		'#options' => $types,
 	);
