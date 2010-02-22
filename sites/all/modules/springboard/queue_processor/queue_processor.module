@@ -230,8 +230,10 @@ function process_batches($ids) {
 			}
 		}
 
-		// apply validation
-		queue_validate_batch($objects, $batch['salesforce_type']);
+		// apply validation for create/upsert/update actions
+		if ($batch['action'] != 'delete') {
+			queue_validate_batch($objects, $batch['salesforce_type']);
+		}
 		
 		// clear out any previous responses
 		unset($response);
