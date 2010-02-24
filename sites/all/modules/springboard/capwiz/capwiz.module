@@ -1,0 +1,426 @@
+<?php
+// $Id$
+
+/**
+ * @file capwiz.module
+ * Integrate with Capwiz service.
+ *
+ * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
+ */
+
+
+/**
+ * Define overwrite rules.
+ *
+ * Overwrite rules are used when Capwiz accounts are merged with
+ * Drupal ones. Each individual profile field has a certain
+ * "permission level."
+ */
+define('CAPWIZ_OVERWRITE_NEVER',  'never');
+define('CAPWIZ_OVERWRITE_BLANK',  'blank'); // Overwrite only if blank
+define('CAPWIZ_OVERWRITE_ALWAYS', 'always');
+
+
+/*********\
+** Hooks **
+\*********/
+
+
+/**
+ * Implement hook_perm().
+ */
+function capwiz_perm() {
+
+  return array('administer basic capwiz settings', 'administer advanced capwiz settings');
+}
+
+
+/**
+ * Implement hook_menu().
+ */
+function capwiz_menu() {
+
+  $items = array();
+
+  $items['admin/user/capwiz'] = array(
+    'title' => 'Capwiz settings',
+    'description' => 'Integrate your Capwiz user base with your Drupal user base.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_settings_form'),
+    'access arguments' => array('administer basic capwiz settings'),
+    'file' => 'capwiz.admin.inc',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implement hook_theme().
+ */
+function capwiz_theme() {
+
+  return array(
+    'capwiz_settings_form' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'capwiz.admin.inc',
+    ),
+  );
+}
+
+
+if ((bool)variable_get('capwiz_cron', 1)) {
+
+  /**
+   * Implement hook_cron().
+   */
+  function capwiz_cron() {
+
+    include_once 'capwiz.cron.php';
+  }
+
+}
+
+
+/**************************\
+** User-related functions **
+\**************************/
+
+
+/**
+ * Merge Capwiz accounts into Drupal.
+ *
+ * Use direct database calls to minimize processing
+ * since this will be executed in potentially very large
+ * batches. user_save(), drupal_write_record(), etc. are
+ * intentionally not used.
+ *
+ * @param array $capwiz_accounts (optional)
+ *   An array of StdClass instances, if not provided,
+ *   accounts are fetched via the Capwiz API
+ * @return void
+ */
+function capwiz_merge_accounts($capwiz_accounts = NULL) {
+
+  if (is_null($capwiz_accounts)) {
+    require_once 'capwiz.api.inc';
+
+    CapwizApi::fetchAccounts();
+    $capwiz_accounts = &CapwizApi::$cachedAccounts;
+  }
+
+  if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
+
+    $total_accounts = count($capwiz_accounts);
+    for ($a = 0; $a < $total_accounts; $a++) {
+
+      $capwiz_account = $capwiz_accounts[$a];
+
+      if (!empty($capwiz_account->email_address) && !empty($capwiz_account->capwiz_id)) {
+
+        $drupal_account = user_load(array('mail' => $capwiz_account->email_address));
+
+        if (empty($drupal_account)) {
+          capwiz_add_account($capwiz_account);
+        }
+        else {
+          capwiz_update_account($capwiz_account, $drupal_account);
+        }
+      }
+
+      unset($capwiz_accounts[$a]);
+    }
+  }
+}
+
+
+/**
+ * Add a new account.
+ *
+ * @param StdClass $capwiz_account
+ * @return StdClass
+ *   A partial Drupal account, the full account
+ *   via user_save() is not returned to keep
+ *   processing down.
+ *
+ * @todo When advocacy actions are pulled down from Capwiz
+ *       for a user who does not exist, their account is
+ *       added, except for profile fields, which are
+ *       unavailable from the actions API call. If this
+ *       happens before the full user is pulled down,
+ *       fields that are set to never overwrite will never
+ *       be saved. This is an unlikely scenario, but needs
+ *       to be addressed.
+ */
+function capwiz_add_account($capwiz_account = NULL) {
+
+  if (!empty($capwiz_account->email_address) && !empty($capwiz_account->capwiz_id)) {
+
+    $drupal_account_password = user_password();
+    $drupal_account = array(
+      'name'    => $capwiz_account->email_address,
+      'pass'    => md5($drupal_account_password),
+      'mail'    => $capwiz_account->email_address,
+      'created' => $time = time(),
+      'access'  => $time,
+      'login'   => 0,
+      'status'  => 1,
+    );
+
+    db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status, data) VALUES ("%s", "%s", "%s", %d, %d, %d, %d, "%s")',
+      $drupal_account + array('data' => serialize(array('capwiz_id' => $capwiz_account->capwiz_id))));
+
+    $drupal_account = (object)$drupal_account;
+    $drupal_account->uid  = db_last_insert_id('users', 'uid');
+    $drupal_account->password = $drupal_account_password; // Provide the value for the !password token in emails.
+    $drupal_account->language = 'en'; // Needed to send the English version of email messages
+
+    static $email_message_op;
+    if (empty($email_message_op)) {
+      $email_message_options = capwiz_get_email_message_options();
+      $email_message_op = variable_get('capwiz_email_message', $email_message_options[variable_get('user_register', 1)]);
+    }
+
+    if ($email_message_op != 'register_none') {
+      _user_mail_notify($email_message_op, $drupal_account);
+    }
+
+    // Add the profile fields.
+    foreach (capwiz_get_mapping() as $capwiz_field => $field_mapping) {
+      $value = _capwiz_get_value($capwiz_account, $capwiz_field);
+      if ($value !== FALSE) {
+        db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+      }
+    }
+
+    return $drupal_account;
+  }
+}
+
+
+/**
+ * Update an existing account.
+ *
+ * @param StdClass $capwiz_account
+ * @param StdClass $drupal_account (optional)
+ * @return void
+ */
+function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
+
+  if (empty($drupal_account)) {
+    $drupal_account = user_load(array('mail' => $capwiz_account->email_address));
+  }
+
+  if (!empty($drupal_account->uid) && !empty($capwiz_account->capwiz_id)) {
+
+    // Make sure the Capwiz ID is correct.
+    $drupal_account_data = (array)unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $drupal_account->uid)));
+    $drupal_account_data['capwiz_id'] = $capwiz_account->capwiz_id;
+    db_query('UPDATE {users} SET data = "%s" WHERE uid = %d', serialize($drupal_account_data), $drupal_account->uid);
+
+    // Update the profile fields.
+    foreach (capwiz_get_mapping() as $capwiz_field => $field_mapping) {
+
+      // Ensure we abide by our overwrite rules.
+      if ($field_mapping['overwrite_rule'] != CAPWIZ_OVERWRITE_NEVER &&
+          !($field_mapping['overwrite_rule'] == CAPWIZ_OVERWRITE_BLANK && !empty($drupal_account->{$field_mapping['profile_field_name']}))) {
+
+        $value = _capwiz_get_value($capwiz_account, $capwiz_field);
+        if ($value !== FALSE) {
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Helper function: Get the value of a Capwiz personObject property.
+ *
+ * @param StdClass $capwiz_account
+ * @param string $capwiz_field
+ * @return string|bool
+ *   Value as a string; FALSE if value does not exist
+ */
+function _capwiz_get_value($capwiz_account, $capwiz_field) {
+
+  $value = FALSE;
+
+  // If it is a normal field:
+  if (isset($capwiz_account->$capwiz_field)) {
+    $value = $capwiz_account->$capwiz_field;
+  }
+
+  // If it is a custom field:
+  elseif (is_object($capwiz_account->custom_fields) && isset($capwiz_account->custom_fields->$capwiz_field)) {
+    $value = $capwiz_account->custom_fields->$capwiz_field;
+  }
+
+  return $value;
+}
+
+
+/***************************************\
+** (Advocacy) action-related functions **
+\***************************************/
+
+
+/**
+ * Save Capwiz advocacy actions.
+ *
+ * @param array $capwiz_actions (options)
+ *   An array of StdClass instances, if not provided,
+  *   actions are fetched via the Capwiz API
+ * @return void
+ */
+function capwiz_save_actions($capwiz_actions = NULL) {
+
+  if (is_null($capwiz_actions)) {
+    require_once 'capwiz.api.inc';
+
+    CapwizApi::fetchActions();
+    $capwiz_actions = &CapwizApi::$cachedActions;
+  }
+
+  if (!empty($capwiz_actions) && is_array($capwiz_actions)) {
+
+    // Store uids to avoid unnecessary db queries.
+    $uids = array();
+
+    $total_actions = count($capwiz_actions);
+    for ($a = 0; $a < $total_actions; $a++) {
+
+      $capwiz_action = $capwiz_actions[$a];
+
+      $uid = &$uids[$capwiz_action->email_address];
+      if (empty($uid)) {
+        $uid = db_result(db_query('SELECT uid FROM {users} WHERE mail = "%s"', $capwiz_action->email_address));
+
+        // (Just in case) If we get a user who has not been added yet,
+        // go ahead and add them even though they have no profile data.
+        if (empty($uid)) {
+          $drupal_account = capwiz_add_account((object)array('capwiz_id' => $capwiz_action->capwiz_id, 'email_address' => $capwiz_action->email_address));
+          $uid = $drupal_account->uid;
+        }
+      }
+
+      module_load_include('inc', 'capwiz', 'capwiz.api');
+      $db_query_arguments = array('uid' => $uid) + array_intersect_key((array)$capwiz_action, array_flip(CapwizApi::getActionFields()));
+      $db_query_fields = implode(', ', array_keys($db_query_arguments));
+      $db_query_tokens = '%d' . str_repeat(', "%s"', count($db_query_arguments) - 1);
+      db_query("REPLACE INTO {capwiz_actions} ($db_query_fields) VALUES ($db_query_tokens)", $db_query_arguments);
+
+      unset($capwiz_actions[$a]);
+    }
+  }
+}
+
+
+/*********************\
+** Utility functions **
+\*********************/
+
+
+/**
+ * Get the profile field mapping.
+ *
+ * @return array (statically cached)
+ */
+function capwiz_get_mapping() {
+
+  static $mapping = array();
+
+  if (empty($mapping)) {
+
+    $profile_fields = capwiz_get_profile_fields();
+    $capwiz_mapping = variable_get('capwiz_mapping', array());
+
+    foreach ($capwiz_mapping as $capwiz_field => $field_mapping) {
+
+      // Only worry about profile fields that actually exist.
+      if (isset($profile_fields[$field_mapping['profile_fid']])) {
+        $mapping[$capwiz_field] = $field_mapping;
+        $mapping[$capwiz_field]['profile_field_name'] = $profile_fields[$field_mapping['profile_fid']];
+      }
+    }
+  }
+
+  return $mapping;
+}
+
+
+/**
+ * Get all profile fields.
+ *
+ * _profile_get_fields() is not used because it requires a category
+ * and whether or not the field appears on the registration page.
+ * We need all fields unconditionally.
+ *
+ * @param bool $get_titles (optional)
+ *   Get titles instead of names when intended for UI presentation.
+ * @return array (statically cached)
+ */
+function capwiz_get_profile_fields($get_titles = FALSE) {
+
+  static $profile_fields = array();
+
+  // Get an integer version of $get_titles, so it can be an array key.
+  $get_titles = (int)(bool)$get_titles;
+
+  if (empty($profile_fields[$get_titles])) {
+
+    $profile_fields[$get_titles] = array();
+    $value_field = $get_titles ? 'title' : 'name';
+
+    $result = db_query("SELECT fid, $value_field FROM {profile_fields} ORDER BY $value_field");
+    while ($data = db_fetch_object($result)) {
+      $profile_fields[$get_titles][$data->fid] = $data->$value_field;
+    }
+  }
+
+  return $profile_fields[$get_titles];
+}
+
+
+/**
+ * Get new user email message options.
+ * 
+ * @param string $key_field
+ * @param string $value_field
+ *   Legal values for $key_field and $value_field:
+ *     id
+ *     name
+ *     title
+ * @return array|bool
+ *   FALSE if illegal arguments are supplied
+ */
+function capwiz_get_email_message_options($key_field = 'id', $value_field = 'name') {
+
+  static $legal_values = array('id', 'name', 'title');
+  if (in_array($key_field, $legal_values) && in_array($value_field, $legal_values)) {
+
+    static $id, $title;
+    static $name = array(
+      'register_admin_created',
+      'register_no_approval_required',
+      'register_pending_approval',
+      'register_none',
+    );
+
+    if (empty($id) || empty($title)) {
+      $id = range(0, 3);
+      $title = array(
+        t('Welcome, new user created by administrator'),
+        t('Welcome, no approval required'),
+        t('Welcome, awaiting administrator approval'),
+        t('Do not send an email'),
+      );
+    }
+
+    return array_combine($$key_field, $$value_field);
+  }
+
+  return FALSE;
+}
+

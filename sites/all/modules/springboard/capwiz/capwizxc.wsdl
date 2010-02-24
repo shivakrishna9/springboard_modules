@@ -1,0 +1,1024 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="capwizxc" targetNamespace="http://www.capwiz.com/XC/SOAP2/Services"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://www.capwiz.com/XC/SOAP2/Services"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    >
+  <wsdl:types>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://www.capwiz.com/XC/SOAP2/Services"
+                elementFormDefault="qualified"
+                >
+      <!-- test call types -->
+      <xsd:element name="test">
+        <xsd:complexType>
+          <xsd:sequence>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="testResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="testFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- test_auth call types -->
+      <xsd:element name="test_auth">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="test_authResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="test_authFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- reset_sync_window call types -->
+      <xsd:element name="reset_sync_window">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="reset_date" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="reset_sync_windowResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="status_msg" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="reset_sync_windowFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+
+      <!-- get_person_information types -->
+      <xsd:element name="get_person_information">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="id_type" type="xsd:string" />
+            <xsd:element name="id_value" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_informationResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="external_id" type="xsd:string"/>
+            <xsd:element name="capwiz_id" type="xsd:string"/>
+            <xsd:element name="email_address" type="xsd:string"/>
+            <xsd:element name="honorific" type="xsd:string"/>
+            <xsd:element name="first_name" type="xsd:string"/>
+            <xsd:element name="last_name" type="xsd:string"/>
+            <xsd:element name="subscription_status" type="xsd:string"/>
+            <xsd:element name="federal_district" type="xsd:string"/>
+            <xsd:element name="state_district_upper" type="xsd:string"/>
+                        <xsd:element name="state_district_lower" type="xsd:string" />
+                        <xsd:element name="address" type="xsd:string"/>
+            <xsd:element name="city" type="xsd:string"/>
+            <xsd:element name="state" type="xsd:string"/>
+            <xsd:element name="zip" type="xsd:string"/>
+            <xsd:element name="country" type="xsd:string"/>
+            <xsd:element name="phone" type="xsd:string"/>
+            <xsd:element name="fax" type="xsd:string"/>
+            <xsd:element name="last_update" type="xsd:string"/>
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_informationFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_person_information_plus types -->
+      <xsd:element name="get_person_information_plus">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="id_type" type="xsd:string" />
+            <xsd:element name="id_value" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_information_plusResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="external_id" type="xsd:string"/>
+            <xsd:element name="capwiz_id" type="xsd:string"/>
+            <xsd:element name="email_address" type="xsd:string"/>
+            <xsd:element name="honorific" type="xsd:string"/>
+            <xsd:element name="first_name" type="xsd:string"/>
+            <xsd:element name="last_name" type="xsd:string"/>
+            <xsd:element name="subscription_status" type="xsd:string"/>
+            <xsd:element name="federal_district" type="xsd:string"/>
+                        <xsd:element name="state_district_upper" type="xsd:string" />
+                        <xsd:element name="state_district_lower" type="xsd:string"/>
+            <xsd:element name="address" type="xsd:string"/>
+            <xsd:element name="city" type="xsd:string"/>
+            <xsd:element name="state" type="xsd:string"/>
+            <xsd:element name="zip" type="xsd:string"/>
+            <xsd:element name="country" type="xsd:string"/>
+            <xsd:element name="phone" type="xsd:string"/>
+            <xsd:element name="fax" type="xsd:string"/>
+            <xsd:element name="last_update" type="xsd:string"/>
+                        <xsd:element name="custom_fields" type="tns:custom_fields" />
+                        <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_information_plusFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_person_officials types -->
+      <xsd:element name="get_person_officials">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="id_type" type="xsd:string" />
+            <xsd:element name="id_value" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_officialsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="external_id" type="xsd:string"/>
+            <xsd:element name="capwiz_id" type="xsd:string"/>
+            <xsd:element name="email_address" type="xsd:string"/>
+            <xsd:element name="state" type="xsd:string"/>
+            <xsd:element name="state_house_rep_1" type="tns:rep_object"/>
+            <xsd:element name="state_senate_rep_1" type="tns:rep_object"/>
+            <xsd:element name="us_house_rep_1" type="tns:rep_object"/>
+            <xsd:element name="us_senator_1" type="tns:rep_object"/>
+            <xsd:element name="us_senator_2" type="tns:rep_object"/>
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_officialsFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+
+      <!-- get_person_activity types -->
+      <xsd:element name="get_person_activity">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="id_type" type="xsd:string" />
+            <xsd:element name="id_value" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_activityResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="external_id" type="xsd:string"/>
+            <xsd:element name="capwiz_id" type="xsd:string"/>
+            <xsd:element name="email_address" type="xsd:string"/>
+            <xsd:element name="actions_taken" type="tns:actions_taken"/>
+            <xsd:element name="messages_sent" type="tns:messages_sent"/>
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_person_activityFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_latest_people types -->
+      <xsd:element name="get_latest_people">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="throttle" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_peopleResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="people" type="tns:people" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_peopleFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_latest_people_plus types -->
+      <xsd:element name="get_latest_people_plus">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="throttle" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_people_plusResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="people" type="tns:people" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_people_plusFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_officials_for_latest_people -->
+      <xsd:element name="get_officials_for_latest_people">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="throttle" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_officials_for_latest_peopleResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="people_with_officials" type="tns:people_with_officials" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_officials_for_latest_peopleFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_officials_by_address -->
+      <xsd:element name="get_officials_by_address">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="street" type="xsd:string" />
+            <xsd:element name="city" type="xsd:string" />
+            <xsd:element name="state" type="xsd:string" />
+            <xsd:element name="zip" type="xsd:string" />
+            <xsd:element name="plus_gov" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_officials_by_addressResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="officials" type="tns:officials" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_officials_by_addressFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_latest_actions -->
+      <xsd:element name="get_latest_actions">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="throttle" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_actionsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="actions" type="tns:actions" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_actionsFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- get_latest_people_plus types -->
+      <xsd:element name="get_latest_messages">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authuser" type="xsd:string" />
+            <xsd:element name="authpass" type="xsd:string" />
+            <xsd:element name="client_id" type="xsd:string" />
+            <xsd:element name="throttle" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_messagesResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="status_msg" type="xsd:string" />
+            <xsd:element name="transaction_id" type="xsd:string" />
+            <xsd:element name="transaction_time" type="xsd:string" />
+            <xsd:element name="messages" type="tns:messages" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="get_latest_messagesFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- complex types -->
+
+      <!-- people type an array of the person type object -->
+      <xsd:complexType name="people">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="person" type="tns:person" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="officials">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="official" type="tns:official" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="actions_taken">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="action" type="tns:action" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="messages_sent">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="message" type="tns:message" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+
+      <xsd:complexType name="actions">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="action" type="tns:action" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="messages">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="message" type="tns:message" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:complexType name="people_with_officials">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="person_plus_officials" type="tns:person_plus_officials" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- person plus officials object -->
+      <xsd:complexType name="person_plus_officials">
+        <xsd:sequence>
+        	<xsd:element name="external_id" type="xsd:string" />
+        	<xsd:element name="capwiz_id" type="xsd:string" />
+        	<xsd:element name="email_address" type="xsd:string" />
+                    <xsd:element name="state" type="xsd:string"></xsd:element>
+                    <xsd:element name="state_house_rep_1" type="tns:rep_object" />
+        	<xsd:element name="state_senate_rep_1"
+        		type="tns:rep_object" />
+        	<xsd:element name="us_house_rep_1" type="tns:rep_object" />
+        	<xsd:element name="us_senator_1" type="tns:rep_object" />
+        	<xsd:element name="us_senator_2" type="tns:rep_object" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+
+      <!-- person type object -->
+      <xsd:complexType name="person">
+        <xsd:sequence>
+          <xsd:element name="external_id" type="xsd:string"/>
+          <xsd:element name="capwiz_id" type="xsd:string"/>
+          <xsd:element name="email_address" type="xsd:string"/>
+          <xsd:element name="honorific" type="xsd:string"/>
+          <xsd:element name="first_name" type="xsd:string"/>
+          <xsd:element name="last_name" type="xsd:string"/>
+          <xsd:element name="subscription_status" type="xsd:string"/>
+          <xsd:element name="federal_district" type="xsd:string"/>
+          <xsd:element name="state_district_upper" type="xsd:string"/>
+                    <xsd:element name="state_district_lower" type="xsd:string" />
+                    <xsd:element name="address" type="xsd:string"/>
+          <xsd:element name="city" type="xsd:string"/>
+          <xsd:element name="state" type="xsd:string"/>
+          <xsd:element name="zip" type="xsd:string"/>
+          <xsd:element name="country" type="xsd:string"/>
+          <xsd:element name="phone" type="xsd:string"/>
+          <xsd:element name="fax" type="xsd:string"/>
+          <xsd:element name="last_update" type="xsd:string"/>
+          <xsd:element name="custom_fields" type="tns:custom_fields" />
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- official object -->
+      <xsd:complexType name="official">
+        <xsd:sequence>
+          <xsd:element name="title" type="xsd:string"/>
+          <xsd:element name="first_name" type="xsd:string"/>
+          <xsd:element name="last_name" type="xsd:string"/>
+          <xsd:element name="full_name" type="xsd:string"/>
+          <xsd:element name="seat_id" type="xsd:string"/>
+          <xsd:element name="office" type="xsd:string"/>
+          <xsd:element name="party" type="xsd:string"/>
+          <xsd:element name="url" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- representative object -->
+      <xsd:complexType name="rep_object">
+        <xsd:sequence>
+        	<xsd:element name="title" type="xsd:string" />
+        	<xsd:element name="first_name" type="xsd:string" />
+        	<xsd:element name="last_name" type="xsd:string" />
+        	<xsd:element name="party" type="xsd:string" />
+        	<xsd:element name="office" type="xsd:string" />
+        	<xsd:element name="district" type="xsd:string" />
+        	<xsd:element name="url" type="xsd:string" />
+        	<xsd:element name="full_description" type="xsd:string" />
+        	<xsd:element name="seat_id" type="xsd:string" />
+        	<xsd:element name="recip_id" type="xsd:string"></xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- action object -->
+      <xsd:complexType name="action">
+        <xsd:sequence>
+        	<xsd:element name="external_id" type="xsd:string" />
+        	<xsd:element name="capwiz_id" type="xsd:string" />
+        	<xsd:element name="email_address" type="xsd:string" />
+        	<xsd:element name="action_date" type="xsd:string" />
+        	<xsd:element name="event_id" type="xsd:string"></xsd:element>
+        	<xsd:element name="recipient_full" type="xsd:string" />
+        	<xsd:element name="subject" type="xsd:string" />
+                    <xsd:element name="actual_delivery_method" type="xsd:string" />
+                    <xsd:element name="delivery_status" type="xsd:string" />
+                    <xsd:element name="intended_delivery_method"
+        		type="xsd:string" />
+                    <xsd:element name="alert" type="xsd:string" />
+                    <xsd:element name="alert_id" type="xsd:string" />
+        	<xsd:element name="message_id" type="xsd:string" />
+        	<xsd:element name="recip_id" type="xsd:string"></xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- message object -->
+      <xsd:complexType name="message">
+        <xsd:sequence>
+          <xsd:element name="external_id" type="xsd:string"/>
+          <xsd:element name="capwiz_id" type="xsd:string"/>
+          <xsd:element name="email_address" type="xsd:string"/>
+          <xsd:element name="date_sent" type="xsd:string"/>
+		  <xsd:element name="event_id" type="xsd:string"/>
+          <xsd:element name="subject" type="xsd:string"/>
+          <xsd:element name="delivery_status" type="xsd:string"/>
+          <xsd:element name="message_id" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- custom fields object will be different for every customer -->
+      <xsd:complexType name="custom_fields">
+        <xsd:sequence>
+          <xsd:element name="fld_age" type="xsd:string" />
+          <xsd:element name="fld_band" type="xsd:string" />
+          <xsd:element name="fld_car_type" type="xsd:string" />
+          <xsd:element name="fld_children" type="xsd:string" />
+          <xsd:element name="fld_client_field1" type="xsd:string" />
+          <xsd:element name="fld_client_field100" type="xsd:string" />
+          <xsd:element name="fld_client_field111" type="xsd:string" />
+          <xsd:element name="fld_client_field1234" type="xsd:string" />
+          <xsd:element name="fld_client_field2" type="xsd:string" />
+          <xsd:element name="fld_client_field3" type="xsd:string" />
+          <xsd:element name="fld_client_field30" type="xsd:string" />
+          <xsd:element name="fld_client_field4" type="xsd:string" />
+          <xsd:element name="fld_client_field_5" type="xsd:string" />
+          <xsd:element name="fld_client_hidden1" type="xsd:string" />
+          <xsd:element name="fld_date" type="xsd:string" />
+          <xsd:element name="fld_employed" type="xsd:string" />
+          <xsd:element name="fld_last" type="xsd:string" />
+          <xsd:element name="fld_maillist" type="xsd:string" />
+          <xsd:element name="fld_martial" type="xsd:string" />
+          <xsd:element name="fld_member" type="xsd:string" />
+          <xsd:element name="fld_member_ca" type="xsd:string" />
+          <xsd:element name="fld_organization" type="xsd:string" />
+          <xsd:element name="fld_question1" type="xsd:string" />
+          <xsd:element name="fld_read" type="xsd:string" />
+          <xsd:element name="fld_reply" type="xsd:string" />
+          <xsd:element name="fld_signup_date" type="xsd:string" />
+          <xsd:element name="fld_sports" type="xsd:string" />
+          <xsd:element name="fld_static1" type="xsd:string" />
+          <xsd:element name="fld_static2" type="xsd:string" />
+          <xsd:element name="fld_static3" type="xsd:string" />
+          <xsd:element name="fld_title" type="xsd:string" />
+          <xsd:element name="fld_vegetables" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+    </xsd:schema>
+  </wsdl:types>
+
+  <!-- test call messages -->
+  <wsdl:message name="testRequest">
+    <wsdl:part name="param" element="tns:test"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="testResponse">
+    <wsdl:part name="param" element="tns:testResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="testFault">
+    <wsdl:part name="reason" element="tns:testFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- test_auth call messages -->
+  <wsdl:message name="test_authRequest">
+    <wsdl:part name="param" element="tns:test_auth"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="test_authResponse">
+    <wsdl:part name="param" element="tns:test_authResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="test_authFault">
+    <wsdl:part name="reason" element="tns:test_authFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- reset_sync_window call messages -->
+  <wsdl:message name="reset_sync_windowRequest">
+    <wsdl:part name="param" element="tns:reset_sync_window"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="reset_sync_windowResponse">
+    <wsdl:part name="param" element="tns:reset_sync_windowResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="reset_sync_windowFault">
+    <wsdl:part name="reason" element="tns:reset_sync_windowFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_person_information call messages -->
+  <wsdl:message name="get_person_informationRequest">
+    <wsdl:part name="param" element="tns:get_person_information"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_informationResponse">
+    <wsdl:part name="param" element="tns:get_person_informationResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_informationFault">
+    <wsdl:part name="reason" element="tns:get_person_informationFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_person_information_plus call messages -->
+  <wsdl:message name="get_person_information_plusRequest">
+    <wsdl:part name="param" element="tns:get_person_information_plus"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_information_plusResponse">
+    <wsdl:part name="param" element="tns:get_person_information_plusResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_information_plusFault">
+    <wsdl:part name="reason" element="tns:get_person_information_plusFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_person_officials call messages -->
+  <wsdl:message name="get_person_officialsRequest">
+    <wsdl:part name="param" element="tns:get_person_officials"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_officialsResponse">
+    <wsdl:part name="param" element="tns:get_person_officialsResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_officialsFault">
+    <wsdl:part name="reason" element="tns:get_person_officialsFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_person_activity call messages -->
+  <wsdl:message name="get_person_activityRequest">
+    <wsdl:part name="param" element="tns:get_person_activity"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_activityResponse">
+    <wsdl:part name="param" element="tns:get_person_activityResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_person_activityFault">
+    <wsdl:part name="reason" element="tns:get_person_activityFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_latest_people messages -->
+  <wsdl:message name="get_latest_peopleRequest">
+    <wsdl:part name="param" element="tns:get_latest_people"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_latest_peopleResponse">
+    <wsdl:part name="param" element="tns:get_latest_peopleResponse"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:message name="get_latest_peopleFault">
+    <wsdl:part name="reason" element="tns:get_latest_peopleFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_latest_people_plus messages -->
+  <wsdl:message name="get_latest_people_plusRequest">
+    <wsdl:part name="param" element="tns:get_latest_people_plus"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_people_plusResponse">
+    <wsdl:part name="param" element="tns:get_latest_people_plusResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_people_plusFault">
+    <wsdl:part name="reason" element="tns:get_latest_people_plusFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_officials_for_latest_people messages -->
+  <wsdl:message name="get_officials_for_latest_peopleRequest">
+    <wsdl:part name="param" element="tns:get_officials_for_latest_people"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_officials_for_latest_peopleResponse">
+    <wsdl:part name="param" element="tns:get_officials_for_latest_peopleResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_officials_for_latest_peopleFault">
+    <wsdl:part name="reason" element="tns:get_officials_for_latest_peopleFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_officials_by_address messages -->
+  <wsdl:message name="get_officials_by_addressRequest">
+    <wsdl:part name="param" element="tns:get_officials_by_address"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_officials_by_addressResponse">
+    <wsdl:part name="param" element="tns:get_officials_by_addressResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_officials_by_addressFault">
+    <wsdl:part name="reason" element="tns:get_officials_by_addressFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_latest_actions -->
+  <wsdl:message name="get_latest_actionsRequest">
+    <wsdl:part name="param" element="tns:get_latest_actions"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_actionsResponse">
+    <wsdl:part name="param" element="tns:get_latest_actionsResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_actionsFault">
+    <wsdl:part name="reason" element="tns:get_latest_actionsFault"></wsdl:part>
+  </wsdl:message>
+
+  <!-- get_latest_messages -->
+  <wsdl:message name="get_latest_messagesRequest">
+    <wsdl:part name="param" element="tns:get_latest_messages"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_messagesResponse">
+    <wsdl:part name="param" element="tns:get_latest_messagesResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="get_latest_messagesFault">
+    <wsdl:part name="reason" element="tns:get_latest_messagesFault"></wsdl:part>
+  </wsdl:message>
+
+  <wsdl:portType name="capwizxcPortType">
+
+    <!-- test operation -->
+    <wsdl:operation name="test">
+      <wsdl:input message="tns:testRequest"></wsdl:input>
+      <wsdl:output message="tns:testResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- test_auth operation -->
+    <wsdl:operation name="test_auth">
+      <wsdl:input message="tns:test_authRequest"></wsdl:input>
+      <wsdl:output message="tns:test_authResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- reset_sync_window operation -->
+    <wsdl:operation name="reset_sync_window">
+      <wsdl:input message="tns:reset_sync_windowRequest"></wsdl:input>
+      <wsdl:output message="tns:reset_sync_windowResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_information operation -->
+    <wsdl:operation name="get_person_information">
+      <wsdl:input message="tns:get_person_informationRequest"></wsdl:input>
+      <wsdl:output message="tns:get_person_informationResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_information_plus operation -->
+    <wsdl:operation name="get_person_information_plus">
+      <wsdl:input message="tns:get_person_information_plusRequest"></wsdl:input>
+      <wsdl:output message="tns:get_person_information_plusResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_officials operation -->
+    <wsdl:operation name="get_person_officials">
+      <wsdl:input message="tns:get_person_officialsRequest"></wsdl:input>
+      <wsdl:output message="tns:get_person_officialsResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_activity operation -->
+    <wsdl:operation name="get_person_activity">
+      <wsdl:input message="tns:get_person_activityRequest"></wsdl:input>
+      <wsdl:output message="tns:get_person_activityResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_people operation -->
+    <wsdl:operation name="get_latest_people">
+      <wsdl:input message="tns:get_latest_peopleRequest"></wsdl:input>
+      <wsdl:output message="tns:get_latest_peopleResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_people_plus operation -->
+    <wsdl:operation name="get_latest_people_plus">
+      <wsdl:input message="tns:get_latest_people_plusRequest"></wsdl:input>
+      <wsdl:output message="tns:get_latest_people_plusResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_officials_for_latest_people operation -->
+    <wsdl:operation name="get_officials_for_latest_people">
+      <wsdl:input message="tns:get_officials_for_latest_peopleRequest"></wsdl:input>
+      <wsdl:output message="tns:get_officials_for_latest_peopleResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_officials_by_address operation -->
+    <wsdl:operation name="get_officials_by_address">
+      <wsdl:input message="tns:get_officials_by_addressRequest"></wsdl:input>
+      <wsdl:output message="tns:get_officials_by_addressResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_actions operation -->
+    <wsdl:operation name="get_latest_actions">
+      <wsdl:input message="tns:get_latest_actionsRequest"></wsdl:input>
+      <wsdl:output message="tns:get_latest_actionsResponse"></wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_messages operation -->
+    <wsdl:operation name="get_latest_messages">
+      <wsdl:input message="tns:get_latest_messagesRequest"></wsdl:input>
+      <wsdl:output message="tns:get_latest_messagesResponse"></wsdl:output>
+    </wsdl:operation>
+
+  </wsdl:portType>
+
+  <wsdl:binding name="capwizxcBinding" type="tns:capwizxcPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document" />
+
+
+    <!-- test binding -->
+    <wsdl:operation name="test">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#test" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- test_auth binding -->
+    <wsdl:operation name="test_auth">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#test_auth" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+
+    <!-- reset_sync_window binding -->
+    <wsdl:operation name="reset_sync_window">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#reset_sync_window" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_information binding -->
+    <wsdl:operation name="get_person_information">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_person_information" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_information_plus binding -->
+    <wsdl:operation name="get_person_information_plus">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_person_information_plus" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_officials binding -->
+    <wsdl:operation name="get_person_officials">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_person_officials" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_person_activity binding -->
+    <wsdl:operation name="get_person_activity">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_person_activity" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_people binding -->
+    <wsdl:operation name="get_latest_people">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_latest_people" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_people_plus binding -->
+    <wsdl:operation name="get_latest_people_plus">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_latest_people_plus" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_officials_for_latest_people binding -->
+    <wsdl:operation name="get_officials_for_latest_people">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_officials_for_latest_people" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_officials_by_address binding -->
+    <wsdl:operation name="get_officials_by_address">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_officials_by_address" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_actions binding -->
+    <wsdl:operation name="get_latest_actions">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_latest_actions" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+    <!-- get_latest_messages binding -->
+    <wsdl:operation name="get_latest_messages">
+      <soap:operation soapAction="http://www.capwiz.com/XC/SOAP2/Services#get_latest_messages" />
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+
+  </wsdl:binding>
+
+  <!-- CapwizXC Service -->
+  <wsdl:service name="capwizxc">
+    <wsdl:port binding="tns:capwizxcBinding" name="capwizxc" >
+      <soap:address location="https://ssl.capwiz.com/xcapi2_0/" />
+    </wsdl:port>
+  </wsdl:service>
+
+</wsdl:definitions>

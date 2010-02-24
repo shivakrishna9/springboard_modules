@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Salesforce.com Enterprise Web Services API Version 17.0
-Generated on 2010-02-04 21:21:03 +0000.
+Salesforce.com Enterprise Web Services API Version 18.0
+Generated on 2010-02-22 16:26:54 +0000.
 
 Package Versions:
 Recurring Donations (Version: 1.18, Namespace: npe03)
@@ -25,9 +25,20 @@ All Rights Reserved
             <complexType name="sObject">
                 <sequence>
                     <element name="fieldsToNull" type="xsd:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-                    <element name="Id" type="tns:ID" nillable="true" minOccurs="0" maxOccurs="1"/>
+                    <element name="Id" type="tns:ID" nillable="true"/>
                 </sequence>
             </complexType>
+
+            <complexType name="AggregateResult">
+                <complexContent>
+                    <extension base="ens:sObject">
+                        <sequence>
+                            <any namespace="##targetNamespace" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+                        </sequence>
+                    </extension>
+                </complexContent>
+            </complexType>
+
             <complexType name="Account">
                 <complexContent>
                     <extension base="ens:sObject">
@@ -54,6 +65,7 @@ All Rights Reserved
                         <element name="Description" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Events" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Fax" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="Highest_Online_Gift__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="Histories" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Industry" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="IsDeleted" nillable="true" minOccurs="0" type="xsd:boolean"/>
@@ -482,6 +494,7 @@ All Rights Reserved
                         <element name="CreatedBy" nillable="true" minOccurs="0" type="ens:Name"/>
                         <element name="CreatedById" nillable="true" minOccurs="0" type="tns:ID"/>
                         <element name="CreatedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
+                        <element name="Description" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="IsDeleted" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsPrivate" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="LastModifiedBy" nillable="true" minOccurs="0" type="ens:Name"/>
@@ -589,6 +602,7 @@ All Rights Reserved
                         <element name="LastModifiedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="Name" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="SystemModstamp" nillable="true" minOccurs="0" type="xsd:dateTime"/>
+                        <element name="Version" nillable="true" minOccurs="0" type="xsd:double"/>
                         </sequence>
                     </extension>
                 </complexContent>
@@ -1077,9 +1091,13 @@ All Rights Reserved
                         <element name="Events" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Fax" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="FirstName" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="First_Transaction_Date__c" nillable="true" minOccurs="0" type="xsd:date"/>
+                        <element name="Highest_Online_Gift__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="Histories" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="HomePhone" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Ice_Cream_Surveys__r" nillable="true" minOccurs="0" type="tns:QueryResult"/>
+                        <element name="Initial_Market_Source__c" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="Initial_Registration_Date__c" nillable="true" minOccurs="0" type="xsd:date"/>
                         <element name="IsDeleted" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="LastActivityDate" nillable="true" minOccurs="0" type="xsd:date"/>
                         <element name="LastCURequestDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
@@ -1089,6 +1107,7 @@ All Rights Reserved
                         <element name="LastModifiedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="LastName" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="LeadSource" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="Lifetime_Transaction_Total_Count__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="MailingCity" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="MailingCountry" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="MailingPostalCode" nillable="true" minOccurs="0" type="xsd:string"/>
@@ -1425,6 +1444,7 @@ All Rights Reserved
                         <element name="IsActive" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsAuthenticationRequired" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsErrorRoutingEnabled" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="IsTextAttachmentsAsBinary" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsTextTruncated" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsTlsRequired" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="LastModifiedBy" nillable="true" minOccurs="0" type="ens:User"/>
@@ -1513,7 +1533,6 @@ All Rights Reserved
                         <element name="DurationInMinutes" nillable="true" minOccurs="0" type="xsd:int"/>
                         <element name="EndDateTime" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="EventAttendees" nillable="true" minOccurs="0" type="tns:QueryResult"/>
-                        <element name="GroupEventType" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="IsAllDayEvent" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsArchived" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="IsChild" nillable="true" minOccurs="0" type="xsd:boolean"/>
@@ -1648,6 +1667,7 @@ All Rights Reserved
                         <element name="CreatedById" nillable="true" minOccurs="0" type="tns:ID"/>
                         <element name="CreatedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="DelegatedUsers" nillable="true" minOccurs="0" type="tns:QueryResult"/>
+                        <element name="DoesIncludeBosses" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="DoesSendEmailToMembers" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="Email" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="GroupMembers" nillable="true" minOccurs="0" type="tns:QueryResult"/>
@@ -1721,20 +1741,27 @@ All Rights Reserved
                         <element name="CreatedById" nillable="true" minOccurs="0" type="tns:ID"/>
                         <element name="CreatedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="Cup_or_Cone__c" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="Date_of_last_purchase__c" nillable="true" minOccurs="0" type="xsd:date"/>
                         <element name="Favorite_Flavor__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="IsDeleted" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="LastModifiedBy" nillable="true" minOccurs="0" type="ens:User"/>
                         <element name="LastModifiedById" nillable="true" minOccurs="0" type="tns:ID"/>
                         <element name="LastModifiedDate" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="Name" nillable="true" minOccurs="0" type="xsd:string"/>
+                        <element name="Node_Id__c" nillable="true" minOccurs="0" type="xsd:double"/>
+                        <element name="Node_Title__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Notes" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="NotesAndAttachments" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Owner" nillable="true" minOccurs="0" type="ens:Name"/>
                         <element name="OwnerId" nillable="true" minOccurs="0" type="tns:ID"/>
+                        <element name="Price_willing_to_pay__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="ProcessInstances" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="ProcessSteps" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Sprinkles__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="Submission_Date__c" nillable="true" minOccurs="0" type="xsd:dateTime"/>
+                        <element name="Submission_Id__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="SystemModstamp" nillable="true" minOccurs="0" type="xsd:dateTime"/>
+                        <element name="What_you_thinking__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         </sequence>
                     </extension>
                 </complexContent>
@@ -2663,7 +2690,9 @@ All Rights Reserved
                         <element name="PermissionsManageCssUsers" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageCustomReportTypes" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageDashboards" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="PermissionsManageDataCategories" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageDataIntegrations" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="PermissionsManageEmailClientConfig" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageLeads" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageMobile" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsManageRemoteAccess" nillable="true" minOccurs="0" type="xsd:boolean"/>
@@ -2685,6 +2714,7 @@ All Rights Reserved
                         <element name="PermissionsTransferAnyLead" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsUseTeamReassignWizards" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsViewAllData" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="PermissionsViewDataCategories" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="PermissionsViewSetup" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="SystemModstamp" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="UserLicense" nillable="true" minOccurs="0" type="ens:UserLicense"/>
@@ -3640,6 +3670,7 @@ All Rights Reserved
                     <enumeration value="NUMBER_OUTSIDE_VALID_RANGE"/>
                     <enumeration value="NUM_HISTORY_FIELDS_BY_SOBJECT_EXCEEDED"/>
                     <enumeration value="OPTED_OUT_OF_MASS_MAIL"/>
+                    <enumeration value="OP_WITH_INVALID_USER_TYPE_EXCEPTION"/>
                     <enumeration value="PACKAGE_LICENSE_REQUIRED"/>
                     <enumeration value="PORTAL_USER_ALREADY_EXISTS_FOR_CONTACT"/>
                     <enumeration value="PRIVATE_CONTACT_ON_ASSET"/>
@@ -3648,6 +3679,7 @@ All Rights Reserved
                     <enumeration value="REQUIRED_FIELD_MISSING"/>
                     <enumeration value="SELF_REFERENCE_FROM_TRIGGER"/>
                     <enumeration value="SHARE_NEEDED_FOR_CHILD_OWNER"/>
+                    <enumeration value="SINGLE_EMAIL_LIMIT_EXCEEDED"/>
                     <enumeration value="STANDARD_PRICE_NOT_DEFINED"/>
                     <enumeration value="STORAGE_LIMIT_EXCEEDED"/>
                     <enumeration value="STRING_TOO_LONG"/>
@@ -3847,7 +3879,7 @@ All Rights Reserved
                 </sequence>
             </complexType>
 
-			<!-- this is a subset of properties for each SObject that is returned by the describeGlobal call -->
+            <!-- this is a subset of properties for each SObject that is returned by the describeGlobal call -->
             <complexType name="DescribeGlobalSObjectResult">
                 <sequence>
                     <element name="activateable" type="xsd:boolean"/>
@@ -3860,12 +3892,12 @@ All Rights Reserved
                     <element name="label" type="xsd:string"/>
                     <element name="labelPlural" type="xsd:string"/>
                     <element name="layoutable" type="xsd:boolean"/>
-					<element name="mergeable" type="xsd:boolean"/>
+                    <element name="mergeable" type="xsd:boolean"/>
                     <element name="name" type="xsd:string"/>
                     <element name="queryable" type="xsd:boolean"/>
                     <element name="replicateable" type="xsd:boolean"/>
                     <element name="retrieveable" type="xsd:boolean"/>
-					<element name="searchable" type="xsd:boolean"/>
+                    <element name="searchable" type="xsd:boolean"/>
                     <element name="triggerable" type="xsd:boolean"/>
                     <element name="undeletable" type="xsd:boolean"/>
                     <element name="updateable" type="xsd:boolean"/>
@@ -3948,6 +3980,7 @@ All Rights Reserved
                     <element name="digits" type="xsd:int"/>
                     <element name="externalId" type="xsd:boolean" minOccurs="0"/>
                     <element name="filterable" type="xsd:boolean"/>
+                    <element name="groupable" type="xsd:boolean"/>
                     <element name="htmlFormatted" type="xsd:boolean" minOccurs="0"/>
                     <element name="idLookup" type="xsd:boolean"/>
                     <element name="inlineHelpText" type="xsd:string" minOccurs="0"/>
@@ -3983,6 +4016,41 @@ All Rights Reserved
                 </sequence>
             </complexType>
 
+            <complexType name="DescribeDataCategoryGroupResult">
+                <sequence>
+                    <element name="categoryCount" type="xsd:int"/>
+                    <element name="description" type="xsd:string"/>
+                    <element name="label" type="xsd:string"/>
+                    <element name="name" type="xsd:string"/>
+                    <element name="sobject" type="xsd:string"/>
+                </sequence>
+            </complexType>
+
+            <complexType name="DescribeDataCategoryGroupStructureResult">
+                <sequence>
+                    <element name="description" type="xsd:string"/>
+                    <element name="label" type="xsd:string"/>
+                    <element name="name" type="xsd:string"/>
+                    <element name="sobject" type="xsd:string"/>
+                    <element name="topCategories" type="tns:DataCategory" minOccurs="0" maxOccurs="unbounded"/>
+                </sequence>
+            </complexType>
+
+            <complexType name="DataCategoryGroupSobjectTypePair">
+                <sequence>
+                    <element name="dataCategoryGroupName" type="xsd:string"/>
+                    <element name="sobject" type="xsd:string"/>
+                </sequence>
+            </complexType>
+
+            <complexType name="DataCategory">
+                <sequence>
+                    <element name="childCategories" type="tns:DataCategory" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="label" type="xsd:string"/>
+                    <element name="name" type="xsd:string"/>
+                </sequence>
+            </complexType>
+
             <complexType name="DescribeSoftphoneLayoutResult">
                 <sequence>
                     <element name="callTypes" type="tns:DescribeSoftphoneLayoutCallType" maxOccurs="unbounded"/>
@@ -3995,7 +4063,17 @@ All Rights Reserved
                 <sequence>
                     <element name="infoFields" type="tns:DescribeSoftphoneLayoutInfoField" maxOccurs="unbounded"/>
                     <element name="name" type="xsd:string"/>
+                    <element name="screenPopOptions" type="tns:DescribeSoftphoneScreenPopOption" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="screenPopsOpenWithin" type="xsd:string" minOccurs="0"/>
                     <element name="sections" type="tns:DescribeSoftphoneLayoutSection" minOccurs="0" maxOccurs="unbounded"/>
+                </sequence>
+            </complexType>
+
+            <complexType name="DescribeSoftphoneScreenPopOption">
+                <sequence>
+                    <element name="matchType" type="xsd:string"/>
+                    <element name="screenPopData" type="xsd:string"/>
+                    <element name="screenPopType" type="xsd:string"/>
                 </sequence>
             </complexType>
 
@@ -4319,6 +4397,36 @@ All Rights Reserved
                 </complexType>
             </element>
 
+            <!-- Describe Data Category Groups Message Types -->
+            <element name="describeDataCategoryGroups">
+                <complexType>
+                    <sequence>
+                        <element name="sObjectType" type="xsd:string" minOccurs="0" maxOccurs="10"/>
+                    </sequence>
+                </complexType>
+            </element>
+            <element name="describeDataCategoryGroupsResponse">
+                <complexType>
+                    <sequence>
+                        <element name="result" type="tns:DescribeDataCategoryGroupResult" minOccurs="0" maxOccurs="100"/>
+                    </sequence>
+                </complexType>
+            </element>
+            <element name="describeDataCategoryGroupStructures">
+                <complexType>
+                    <sequence>
+                        <element name="pairs" type="tns:DataCategoryGroupSobjectTypePair" minOccurs="0" maxOccurs="100"/>
+                        <element name="topCategoriesOnly" type="xsd:boolean"/>
+                    </sequence>
+                </complexType>
+            </element>
+            <element name="describeDataCategoryGroupStructuresResponse">
+                <complexType>
+                    <sequence>
+                        <element name="result" type="tns:DescribeDataCategoryGroupStructureResult" minOccurs="0" maxOccurs="100"/>
+                    </sequence>
+                </complexType>
+            </element>
             <element name="describeLayout">
                 <complexType>
                     <sequence>
@@ -4929,6 +5037,7 @@ All Rights Reserved
                     <enumeration value="NO_SOFTPHONE_LAYOUT"/>
                     <enumeration value="NUMBER_OUTSIDE_VALID_RANGE"/>
                     <enumeration value="OPERATION_TOO_LARGE"/>
+                    <enumeration value="ORG_IN_MAINTENANCE"/>
                     <enumeration value="ORG_LOCKED"/>
                     <enumeration value="ORG_NOT_OWNED_BY_INSTANCE"/>
                     <enumeration value="PASSWORD_LOCKOUT"/>
@@ -5010,6 +5119,7 @@ All Rights Reserved
                     <enumeration value="fns:NO_SOFTPHONE_LAYOUT"/>
                     <enumeration value="fns:NUMBER_OUTSIDE_VALID_RANGE"/>
                     <enumeration value="fns:OPERATION_TOO_LARGE"/>
+                    <enumeration value="fns:ORG_IN_MAINTENANCE"/>
                     <enumeration value="fns:ORG_LOCKED"/>
                     <enumeration value="fns:ORG_NOT_OWNED_BY_INSTANCE"/>
                     <enumeration value="fns:PASSWORD_LOCKOUT"/>
@@ -5200,6 +5310,20 @@ All Rights Reserved
     </message>
     <message name="describeGlobalResponse">
         <part element="tns:describeGlobalResponse" name="parameters"/>
+    </message>
+
+    <message name="describeDataCategoryGroupsRequest">
+        <part element="tns:describeDataCategoryGroups" name="parameters"/>
+    </message>
+    <message name="describeDataCategoryGroupsResponse">
+        <part element="tns:describeDataCategoryGroupsResponse" name="parameters"/>
+    </message>
+
+    <message name="describeDataCategoryGroupStructuresRequest">
+        <part element="tns:describeDataCategoryGroupStructures" name="parameters"/>
+    </message>
+    <message name="describeDataCategoryGroupStructuresResponse">
+        <part element="tns:describeDataCategoryGroupStructuresResponse" name="parameters"/>
     </message>
 
     <message name="describeLayoutRequest">
@@ -5417,6 +5541,22 @@ All Rights Reserved
             <documentation>Describe the Global state</documentation>
             <input message="tns:describeGlobalRequest"/>
             <output message="tns:describeGlobalResponse"/>
+            <fault message="tns:UnexpectedErrorFault" name="UnexpectedErrorFault"/>
+        </operation>
+
+        <operation name="describeDataCategoryGroups">
+            <documentation>Describe all the data category groups available for a given set of types</documentation>
+            <input message="tns:describeDataCategoryGroupsRequest"/>
+            <output message="tns:describeDataCategoryGroupsResponse"/>
+            <fault message="tns:InvalidSObjectFault" name="InvalidSObjectFault"/>
+            <fault message="tns:UnexpectedErrorFault" name="UnexpectedErrorFault"/>
+        </operation>
+
+        <operation name="describeDataCategoryGroupStructures">
+            <documentation>Describe the data category group structures for a given set of pair of types and data category group name</documentation>
+            <input message="tns:describeDataCategoryGroupStructuresRequest"/>
+            <output message="tns:describeDataCategoryGroupStructuresResponse"/>
+            <fault message="tns:InvalidSObjectFault" name="InvalidSObjectFault"/>
             <fault message="tns:UnexpectedErrorFault" name="UnexpectedErrorFault"/>
         </operation>
 
@@ -5711,6 +5851,40 @@ All Rights Reserved
             <output>
                 <soap:body use="literal"/>
             </output>
+            <fault name="UnexpectedErrorFault">
+                <soap:fault name="UnexpectedErrorFault" use="literal"/>
+            </fault>
+        </operation>
+        <operation name="describeDataCategoryGroups">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:header use="literal" message="tns:Header" part="SessionHeader"/>
+                <soap:header use="literal" message="tns:Header" part="PackageVersionHeader"/>
+                <soap:body parts="parameters" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="InvalidSObjectFault">
+                <soap:fault name="InvalidSObjectFault" use="literal"/>
+            </fault>
+            <fault name="UnexpectedErrorFault">
+                <soap:fault name="UnexpectedErrorFault" use="literal"/>
+            </fault>
+        </operation>
+        <operation name="describeDataCategoryGroupStructures">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:header use="literal" message="tns:Header" part="SessionHeader"/>
+                <soap:header use="literal" message="tns:Header" part="PackageVersionHeader"/>
+                <soap:body parts="parameters" use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+            <fault name="InvalidSObjectFault">
+                <soap:fault name="InvalidSObjectFault" use="literal"/>
+            </fault>
             <fault name="UnexpectedErrorFault">
                 <soap:fault name="UnexpectedErrorFault" use="literal"/>
             </fault>
@@ -6236,7 +6410,7 @@ All Rights Reserved
     <service name="SforceService">
         <documentation>Sforce SOAP API</documentation>
         <port binding="tns:SoapBinding" name="Soap">
-            <soap:address location="https://www.salesforce.com/services/Soap/c/17.0/0DFA0000000TQS9"/>
+            <soap:address location="https://www.salesforce.com/services/Soap/c/18.0/0DFA0000000TQS9"/>
         </port>
     </service>
 </definitions>

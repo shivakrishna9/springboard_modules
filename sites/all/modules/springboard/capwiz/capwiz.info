@@ -1,0 +1,10 @@
+; $Id$
+
+name = Capwiz
+description = Provides integration with the Capwiz service
+package = Jackson River SpringBoard
+core = 6.x
+
+php = 5.1
+
+dependencies[] = profile
