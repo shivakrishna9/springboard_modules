@@ -20,13 +20,6 @@ function webform_user_schema() {
 	      'not null' => TRUE,
 	      'default' => 0,
 	    ),
-	    'vid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
 	    'is_webform_user' => array(
 	      'description' => t('TODO: please describe this field!'),
 	      'type' => 'int',
@@ -56,10 +49,7 @@ function webform_user_schema() {
 	      'not null' => FALSE,
 	    ),
 	  ),
-	  'primary key' => array('nid', 'vid'),
-	  'unique keys' => array(
-	    'vid' => array('vid')
-	  ),
+	  'primary key' => array('nid'),
 	  'indexes' => array(
 	    'nid' => array('nid'),
 	  ),

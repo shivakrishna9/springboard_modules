@@ -51,8 +51,7 @@ function webform_user_field_selection_form(&$form_state = NULL, $node) {
 function webform_user_field_selection_form_submit($form, &$form_state) {
 	$foreign_key_field = $form_state['values']['webform_user_related_field'];
 	$nid = $form_state['values']['nid'];
-	$vid = $form_state['values']['vid'];
 	
-	db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d and vid = %d", $foreign_key_field, $nid, $vid);
+	db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $foreign_key_field, $nid);
 	drupal_set_message(t('Relationship field successfully set to !field', array('!field' => $foreign_key_field)));
 }

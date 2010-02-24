@@ -78,18 +78,12 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       case 'update':
         // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
         $current_node = node_load(array('nid' => $node->nid));
-        if (!_webform_user_is_webform_user($current_node->nid, $current_node->vid) && $node->is_webform_user && $current_node->webform['components'][1]['form_key'] != 'mail') {
+        if (!_webform_user_is_webform_user($current_node->nid) && $node->is_webform_user && $current_node->webform['components'][1]['form_key'] != 'mail') {
           _webform_user_create_webform_components($node);
         }
-
-        if ($node->revision) {
-          // New revision; treat it as a new record.
-          _webform_user_set_values($node);
-        }
-        else {
-          // Same revision; update it in place.
-          _webform_user_update_values($node);
-        }
+				
+				// save the values
+        _webform_user_set_values($node);
         break;
 
       case 'delete revision':
@@ -101,23 +95,13 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         break;
 
       case 'load':
-      	$webform_user = _webform_user_load_webform_user($node->nid, $node->vid);
+      	$webform_user = _webform_user_load_webform_user($node->nid);
       	if ($webform_user) {
       		$node->is_webform_user = $webform_user['is_webform_user'];
       		$node->authenticate_submitters = $webform_user['authenticate_submitters'];
       		$node->related_object = $webform_user['related_object'];
       		$node->foreign_key_field = $webform_user['foreign_key_field'];
       	}
-      	
-      	/*
-        if (_webform_user_is_webform_user($node->nid, $node->vid)) {
-          $node->is_webform_user = 1;
-        }
-
-        if (_webform_user_authenticate_submitters($node->nid, $node->vid)) {
-          $node->authenticate_submitters = 1;
-        }
-        */
 
         // If the user is authenticated, populate the webform fields with values
         // from the user's profile fields.
@@ -393,8 +377,8 @@ function _webform_user_validate_checkbox($value) {
   }
 }
 
-function _webform_user_load_webform_user($nid, $vid) {
-	$result = db_fetch_array(db_query("SELECT * FROM {webform_user} WHERE nid = %d AND vid = %d", $nid, $vid));
+function _webform_user_load_webform_user($nid) {
+	$result = db_fetch_array(db_query("SELECT * FROM {webform_user} WHERE nid = %d", $nid));
 	return $result;
 }
 
@@ -403,18 +387,16 @@ function _webform_user_load_webform_user($nid, $vid) {
  *
  * @param $nid
  *   The ID of the selected node.
- * @param $vid
- *   The revision ID of the selected node.
  * @return bool
  *   Returns TRUE if is_webform_user is enabled, FALSE otherwise.
  */
-function _webform_user_is_webform_user($nid, $vid) {
+function _webform_user_is_webform_user($nid) {
   $result = db_fetch_array(
     db_query(
       'SELECT is_webform_user
        FROM {webform_user}
-       WHERE nid = %d AND vid = %d',
-      $nid, $vid
+       WHERE nid = %d',
+      $nid
     )
   );
 
@@ -427,18 +409,16 @@ function _webform_user_is_webform_user($nid, $vid) {
  *
  * @param $nid
  *   The ID of the selected node.
- * @param $vid
- *   The revision ID of the selected node.
  * @return bool
  *   Returns TRUE if authenticate_submitters is enabled, FALSE otherwise.
  */
-function _webform_user_authenticate_submitters($nid, $vid) {
+function _webform_user_authenticate_submitters($nid) {
   $result = db_fetch_array(
     db_query(
       'SELECT authenticate_submitters
        FROM {webform_user}
-       WHERE nid = %d AND vid = %d',
-      $nid, $vid
+       WHERE nid = %d',
+      $nid
     )
   );
 
@@ -458,11 +438,23 @@ function _webform_user_set_values(&$node) {
   $authenticate_submitters = $node->authenticate_submitters ? 1 : 0;
   $related_object = $node->related_object ? $node->related_object : 'none';
 
-  db_query(
-    "INSERT INTO {webform_user} (nid, vid, is_webform_user, authenticate_submitters, related_object)
-     VALUES (%d, %d, %d, %d, '%s')",
-    $node->nid, $node->vid, $is_webform_user, $authenticate_submitters, $related_object
-  );
+	$exists = db_result(db_query("SELECT count(*) FROM {webform_user} WHERE nid = %d", $node->nid));
+
+	if (!$exists) {
+	  db_query(
+	    "INSERT INTO {webform_user} (nid, is_webform_user, authenticate_submitters, related_object)
+	     VALUES (%d, %d, %d, '%s')",
+	    $node->nid, $is_webform_user, $authenticate_submitters, $related_object
+	  );
+	}
+  else {
+  	db_query(
+	    "UPDATE {webform_user}
+	     SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s'
+	     WHERE nid = %d",
+	    $is_webform_user, $authenticate_submitters, $related_object, $node->nid
+	  );
+  }
 }
 
 /**
@@ -480,20 +472,9 @@ function _webform_user_update_values(&$node) {
   db_query(
     "UPDATE {webform_user}
      SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s'
-     WHERE nid = %d AND vid = %d",
-    $is_webform_user, $authenticate_submitters, $related_object, $node->nid, $node->vid
+     WHERE nid = %d",
+    $is_webform_user, $authenticate_submitters, $related_object, $node->nid
   );
-}
-
-/**
- * Deletes the values of the is_webform_user and authenticate_submitters checkboxes
- * when the selected node revision is being deleted.
- *
- * @param $node
- *   An object representation of the selected node.
- */
-function _webform_user_delete_revision_values($node) {
-  db_query('DELETE FROM {webform_user} WHERE nid = %d AND vid = %d', $node->nid, $node->vid);
 }
 
 /**
