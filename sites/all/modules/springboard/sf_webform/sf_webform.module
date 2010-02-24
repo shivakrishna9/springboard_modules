@@ -116,7 +116,9 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 		$object = !empty($node->sf_webform_object) ? $node->sf_webform_object : $form_state['values']['object'];
 		
 		// get the fields in the object
-		$fields = _get_object_fields($object);
+		$object_details = _get_object_details($object);
+		$fields = $object_details['fields'];
+		$record_types = $object_details['record_types'];
 		
 		// create a drop down list friendly version of the sf fields
 		foreach($fields as $key => $value) {
@@ -124,6 +126,14 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 		}
 		
 		$disabled = !empty($node->sf_webform_object) ? false : true;
+		
+		$form['record_type'] = array(
+			'#type' => 'select',
+			'#title' => t('Record Type'),
+			'#description' => t('The type of !name to create', array('!name' => $node->sf_webform_object)),
+			'#options' => $record_types,
+			'#default_value' => $node->sf_webform_recordtype,
+		);
 		
 		foreach($node->webform['components'] as $cid => $component) {
 			if($component['type'] != 'fieldset') {
@@ -233,6 +243,8 @@ function render_salesforce_object_fields() {
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
+	$output = drupal_render($form['record_type']);
+
   $map = $form['map'];
 	
 	foreach ($map['cid'] as $key=>$cid) {
@@ -247,7 +259,7 @@ function render_salesforce_object_fields() {
 
 	$header = array("Webform Component","Salesforce Field","Dedupe Field");
 
-	$output = theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
+	$output .= theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
 	
 	foreach($form['node_map'] as $key=>$field) {
 		if (substr($key, 0, 1) != '#') {
@@ -288,8 +300,7 @@ function sf_webform_mapping_form_submit($form, &$form_state) {
 		$nid = $form['#node']->nid;
 		$drupal_fieldmap_name = 'webform:' . $nid;
 		$fieldmap_id = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal_fieldmap_name));
-		
-		//_sf_webform_delete_map($form['#node']->nid);
+		$record_type = $form_state['values']['record_type'];
 
 		// re-add mappings
 		foreach($form_state['values']['map']['salesforce'] as $key => $value) {
@@ -316,10 +327,10 @@ function sf_webform_mapping_form_submit($form, &$form_state) {
 		$name = $form['#node']->title . " (webform map)";
 		
 		if (empty($fieldmap_id)) {
-			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields) VALUES ('%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], serialize($map));
+			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields) VALUES ('%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map));
 		}
 		else {
-			db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', fields = '%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], serialize($map), $fieldmap_id);
+			db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), $fieldmap_id);
 		}
 			
 		//db_query($sql, $name, $form['#node']->type . ':' . $form['#node']->nid, $form_state['values']['object'], serialize($map));
@@ -353,17 +364,19 @@ function sf_webform_nodeapi(&$node, $op, $teaser, $page) {
 		$drupal = 'webform:' . $node->nid;
 		
 		if($op == 'load'){	
-			$result = db_query("select salesforce, fields, dedupe_key from {salesforce_management_field_map} where drupal = '%s'", $drupal);
+			$result = db_query("select salesforce, fields, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal);
 			while($row = db_fetch_object($result)) {
 				$object = $row->salesforce;
 				$map = unserialize($row->fields); 
 				$dedupe_key = $row->dedupe_key;
+				$recordtype_id = $row->recordtype_id;
 			}
 			
 			$sf_map = array(
 				'sf_webform_map' => $map,
 				'sf_webform_object' => $object,
 				'sf_dedupe_key' => $dedupe_key,
+				'sf_webform_recordtype' => $recordtype_id,
 			);
 			return $sf_map;
 		}
@@ -397,20 +410,38 @@ function _get_salesforce_objects() {
 /**
  * Function to return an array of object fields
  */
-function _get_object_fields($object_name) {
+function _get_object_details($object_name) {
 	$sf = salesforce_management_api_connect();
 	if ($sf) {
-		//$object_fields = array('' => '--Select One--');
+		$record_types = array();
+		
 		$object = $sf->client->describeSObject($object_name);
+		
+		// get object fields
 		foreach($object->fields as $field) {
 			$object_fields[$field->name] = array(
 				'label' => $field->label,
 				'idLookup' => $field->idLookup,
 			);
 		}
+
+		// get object record types
+		foreach($object->recordTypeInfos as $record_type) {
+			if ($record_type->available && $record_type->name != 'Master') {
+				$record_types[$record_type->recordTypeId] = $record_type->name;
+			}
+		}
+		
 		$object_fields[] = '--Select One--';
+		$record_types[] = '--Select One--';
+		
 		asort($object_fields);
-		return $object_fields;
+		asort($record_types);
+		
+		return array(
+			'fields' => $object_fields,
+			'record_types' => $record_types,
+		);
 	}	
 	return array();
 }
@@ -422,6 +453,7 @@ function theme_sf_webform_mapping_form($form) {
 	if ($form['map']['cid']) {
 		
 		$output = drupal_render($form['object']);
+		$output .= drupal_render($form['record_type']);
 		$map = $form['map'];
 
 		foreach ($map['cid'] as $key=>$cid) {
@@ -561,12 +593,13 @@ function sf_webform_fieldmap_assignment(&$data) {
 function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
 	$nid = _get_submission_nid($sid);
 	$drupal = 'webform:' . $nid;
-	$sql = "SELECT salesforce, fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
+	$sql = "SELECT salesforce, recordtype_id, fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
 	$result = db_query($sql, $drupal);
 	
 	while ($data = db_fetch_object($result)) {
 		$map = unserialize($data->fields);
 		$object = $data->salesforce;
+		$recordtype_id = $data->recordtype_id;
 	}
 	
 	// now get the submission data
@@ -603,6 +636,12 @@ function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
 	
 	// add extra fields that aren't components
 	_sf_webform_add_node_details($nid, $sid, $map, $salesforce_map);
+	
+	// finally, add recordtype_id if avaiable
+	if ($recordtype_id) {
+		$salesforce_map['fields']['RecordTypeId'] = $recordtype_id;
+	}
+	
 	return $salesforce_map;
 }
 
