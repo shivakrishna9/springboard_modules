@@ -1237,7 +1237,8 @@ function uc_cart_complete_sale($order, $login = FALSE) {
       // Update the order's uid in this request and in the database.
       $order->uid = $account->uid;
       unset($order->data['new_user']['pass']);
-      db_query("UPDATE {uc_orders} SET uid = %d, data = '%s' WHERE order_id = %d", $order->uid, serialize($order->data), $order->order_id);
+      //db_query("UPDATE {uc_orders} SET uid = %d, data = '%s' WHERE order_id = %d", $order->uid, serialize($order->data), $order->order_id);
+			db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);
 
       // Login the user if specified.
       if ($login) {
