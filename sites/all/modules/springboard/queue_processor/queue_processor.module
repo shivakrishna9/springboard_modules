@@ -177,7 +177,6 @@ function queue_processor_queue_processor($op, $object = NULL, $response = NULL) 
  */
 function process_heap() {
 	watchdog('salesforce queue processor', t('Heap processing started'), NULL, WATCHDOG_INFO);
-	
 	// unlock records that may have been left on the heap
 	unlock_heap_records();
 	
@@ -221,7 +220,6 @@ function process_heap() {
  *   The ids of the batches to process
  */
 function process_batches($ids) {
-	
 	// keep all processed batches for reporting. that way we don't have to reload them
 	$batches_processed = array();
 	
@@ -347,6 +345,10 @@ function process_batch_response(&$batch, &$response) {
 			// handle success
 			$success_count++;
 			delete_from_heap($oid, $type);
+			// if item was a retry, remove from retry queue
+			if ($batch['items'][$i]->is_retry) {
+				delete_from_retry_queue($oid, $type);
+			}
 			switch ($batch['action']) {
 				case 'upsert':
 				case 'create':
@@ -367,7 +369,7 @@ function process_batch_response(&$batch, &$response) {
 			log_batch_item_status($batch['id'], $oid, 0);
 			move_to_retry_queue($batch['items'][$i], $responses[$i]);
 			delete_from_heap($oid, $type);
-			// fire object_error trigger
+			// fire object_error 	
 			module_invoke_all('queue_processor', 'object_error', $batch['items'][$i], $responses[$i]);
 		}
 	}
@@ -423,8 +425,8 @@ function save_batch_items($batch) {
 	$oids = array();
 	
 	foreach($batch['records'] as $record) {
-		db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data) VALUES (%d, %d, '%s', '%s', '%s', '%s')",
-			$batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object));
+		db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data, is_retry) VALUES (%d, %d, '%s', '%s', '%s', '%s', %d)",
+			$batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object), $record->is_retry);
 		$oids[] = $record->oid;
 	}
 	
@@ -718,8 +720,8 @@ function move_to_permanent_failure(&$item, &$response) {
  */
 function move_retries_to_heap($max_items) {
 	$max_attempts = variable_get('queue_retry_max', 3);
-	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) SELECT
-		oid, sfid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d LIMIT %d",
+	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created, is_retry) SELECT
+		oid, sfid, type, fieldmap, action, unix_timestamp(), 1 FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d LIMIT %d",
 		time(), $max_attempts, $max_items);
 }
 
