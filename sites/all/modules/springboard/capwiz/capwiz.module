@@ -464,7 +464,7 @@ function capwiz_fieldmap_objects($type) {
  * @param stdObject $data
  * 	Represents the current item being placed onto the heap
  */
-function sf_capwiz_fieldmap_assignment(&$data) {
+function capwiz_fieldmap_assignment(&$data) {
 	if ($data->type == 'capiz_action') {
 		switch ($data->action) {
 			case 'create':
@@ -481,3 +481,34 @@ function sf_capwiz_fieldmap_assignment(&$data) {
 	}
 }
 
+/**
+ * Implementation of hook_queue_preprocess_batch().
+ *
+ * @param array $batch
+ *	The batch currently being processed
+ */
+function capwiz_queue_preprocess_batch(&$batch) {
+	if ($batch['type'] == 'capwiz_action') {
+		
+		switch ($batch['action']) {
+			// same no matter what			
+			case 'update':
+			case 'upsert':
+			case 'create':
+				foreach($batch['records'] as $record) {
+					// TODO: Create the Salesforce object using the assigned fieldmap $batch['fieldmap'] will hold the id of the fieldmap
+					// stored in the salesforce_management_field_map. The fields column in that table contains a serialized map array. The
+					// key is the Salesforce field and the value is the drupal field
+					
+					// if you want to try and use that generic salesforce object creation function that comes with the salesforce api, you can find it in
+					// salesforce_management_api/salesforce_management_api.module. the function is salesforce_management_api_fieldmap_export_create()
+					// it was meant for users and nodes so i'm not sure it will work
+					// when the salesforce object has been created (i think it can be an object or array) it needs to be assigned to $record->object
+					$record->object = 'THE SALEFORCE OBJECT THAT IS THE RESULT OF YOUR MAPPING ROUTINE';
+				}
+				
+				break;
+			}
+			
+	}
+}
