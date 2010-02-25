@@ -424,3 +424,60 @@ function capwiz_get_email_message_options($key_field = 'id', $value_field = 'nam
   return FALSE;
 }
 
+/**
+ * Implementation of hook_fieldmap_objects().
+ *
+ * @param string $type
+ * 	The type of object:
+ *		drupal
+ *		salesforce
+ *
+ * @return array
+ */
+function capwiz_fieldmap_objects($type) {
+  $objects = array();
+
+  // Define the data fields available for capwiz actions.
+  if ($type == 'drupal') {
+    $objects['capwiz_action'] = array(
+      'label' => t('Capwiz action'),
+      'fields' => array(
+        'uid' => array('label' => t('User ID')),
+        'event_id' => array('label' => t('Event ID')),
+        'alert_id' => array('label' => t('Alert ID')),
+        'alert' => array('label' => t('Alert')),
+        'recipient_full' => array('label' => t('Recipient')),
+        'action_date' => array('label' => t('Action Date')),
+        'subject' => array('label' => t('Subject')),
+        'intended_delivery_method' => array('label' => t('Intended Delivery Method')),
+        'actual_delivery_method' => array('label' => t('Actual Delivery Method')),
+        'delivery_status' => array('label' => t('Delivery Status')),
+      ),
+    );
+  }
+  return $objects;
+}
+
+/**
+ * Implemenation of hook_fieldmap_assignment().
+ *
+ * @param stdObject $data
+ * 	Represents the current item being placed onto the heap
+ */
+function sf_capwiz_fieldmap_assignment(&$data) {
+	if ($data->type == 'capiz_action') {
+		switch ($data->action) {
+			case 'create':
+			case 'upsert':
+				$options = salesforce_management_api_fieldmap_options('capwiz_action');
+				if (empty($options)) {
+					return; // can't do anything with any available fieldmaps
+				}
+				// if multiple fieldmaps were created, just use the first one
+				$fieldmap = array_keys(array_shift($options));
+				$data->fieldmap = array_pop($fieldmap);
+				break;
+		}
+	}
+}
+
