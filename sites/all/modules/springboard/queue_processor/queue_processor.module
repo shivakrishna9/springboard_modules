@@ -471,7 +471,7 @@ function create_batch($type, $fieldmap, $action) {
 	/* if this object exposes it's own map (like webform), then expose a hook the module can use to specific the salesforce object type
 	 * and dedupe key */	 
 	if (!$data = db_fetch_array($result)) {
-		$data = module_invoke_all('queue_salesforce_info');
+		$data = module_invoke_all('queue_salesforce_info', $type, $action);
 	}
 	
 	db_query("INSERT INTO {sf_batch} (type, salesforce_type, fieldmap, action, dedupe_key, created, record_count) 
@@ -781,7 +781,8 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					}
 					else {
 						if ($nillable) {
-							unset($object[$field]); // remove date completely
+						 	$value = null;
+							//unset($object[$field]); // remove date completely
 						}
 						else {
 							$value = date('c'); // set default to now
