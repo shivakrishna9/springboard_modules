@@ -36,6 +36,8 @@ function market_source_menu() {
  * Implementation of hook_boot().
  */
 function market_source_boot() {
+//  drupal_set_message('blah', 'error');
+
   // Check to see if the market source values should expire.
   if (variable_get('market_source_validity_period', 0) != 0) {
     if (!isset($_SESSION['market_source_expiry_date'])) {
@@ -53,6 +55,23 @@ function market_source_boot() {
     }
   }
 
+  // Pull the values from the cookies set via JavaScript, if any.
+  if (isset($_COOKIE['market_source_ms']) && $_COOKIE['market_source_ms'] != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $_COOKIE['market_source_ms']) && strlen($_COOKIE['market_source_ms']) <= MARKET_SOURCE_MS_MAX_LENGTH) {
+    $_SESSION['ms'] = $_COOKIE['market_source_ms'];
+    $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+  }
+
+  if (isset($_COOKIE['market_source_cid']) && $_COOKIE['market_source_cid'] != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $_COOKIE['market_source_cid']) && strlen($_COOKIE['market_source_cid']) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+    $_SESSION['cid'] = $_COOKIE['market_source_cid'];
+    $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+  }
+
+  if (isset($_COOKIE['market_source_initial_referrer']) && $_COOKIE['market_source_initial_referrer'] != '') {
+    $_SESSION['initial_referrer'] = substr($_COOKIE['market_source_initial_referrer'], 0, MARKET_SOURCE_INITIAL_REFERRER_MAX_LENGTH);
+    $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+  }
+
+  // Pull the values from the current request, if any.
   foreach ($_GET as $key => $val) {
     if (strtolower($key) == 'ms' && $val != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $val) && strlen($val) <= MARKET_SOURCE_MS_MAX_LENGTH) {
       $_SESSION['ms'] = $val;
@@ -75,6 +94,15 @@ function market_source_boot() {
   if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     $_SESSION['referrer'] = isset($_SERVER['HTTP_REFERER']) ? substr($_SERVER['HTTP_REFERER'], 0, MARKET_SOURCE_REFERRER_MAX_LENGTH) : '';
   }
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function market_source_init() {
+  // Add some JavaScript for pages in case they get cached.
+  $script = market_source_get_script();
+  drupal_add_js($script, 'inline', 'footer');
 }
 
 /**
@@ -181,4 +209,122 @@ function market_source_get_referrer() {
  */
 function market_source_get_initial_referrer() {
   return isset($_SESSION['initial_referrer']) ? $_SESSION['initial_referrer'] : '';
+}
+
+function market_source_get_script() {
+  if (variable_get('market_source_validity_period', 0) != 0) {
+    $validity_period = variable_get('market_source_validity_period', 0) / 24;
+  }
+
+  $script = <<<MS_SCRIPT
+/**
+ * helper functions borrowed from http://www.quirksmode.org/js/cookies.html
+ */
+
+function createCookie(name, value, days) {
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+		var expires = "; expires=" + date.toGMTString();
+	}
+	else {
+    var expires = "";
+  }
+
+	document.cookie = name + "=" + value + expires + "; path=/";
+}
+
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+
+	for(var i = 0; i < ca.length; i++) {
+		var c = ca[i];
+
+		while (c.charAt(0) == ' ') {
+      c = c.substring(1, c.length);
+    }
+
+		if (c.indexOf(nameEQ) == 0) {
+      return c.substring(nameEQ.length, c.length);
+    }
+	}
+
+	return null;
+}
+
+function eraseCookie(name) {
+	createCookie(name, "", -1);
+}
+
+
+/**
+ * helper function from http://prettycode.org/2009/04/21/javascript-query-string/
+ */
+
+window.location.querystring = (function() {
+  var collection = {};
+
+  // Gets the query string, starts with '?'
+  var querystring = window.location.search;
+
+  // Empty if no query string
+  if (!querystring) {
+    return { toString: function() { return ""; } };
+  }
+
+  // Decode query string and remove '?'
+  querystring = decodeURI(querystring.substring(1));
+
+  // Load the key/values of the return collection
+  var pairs = querystring.split("&");
+
+  for (var i = 0; i < pairs.length; i++) {
+    // Empty pair (e.g. ?key=val&&key2=val2)
+    if (!pairs[i]) {
+      continue;
+    }
+
+    // Don't use split("=") in case value has "=" in it
+    var seperatorPosition = pairs[i].indexOf("=");
+
+    if (seperatorPosition == -1) {
+      collection[pairs[i]] = "";
+    }
+    else {
+      collection[pairs[i].substring(0, seperatorPosition)] = pairs[i].substr(seperatorPosition + 1);
+    }
+  }
+
+  // toString() returns the key/value pairs concatenated
+  collection.toString = function() {
+    return "?" + querystring;
+  };
+
+  return collection;
+})();
+
+
+/**
+ * custom code for market_source
+ */
+
+jQuery(document).ready(function() {
+  var querystring = window.location.querystring;
+
+  if (querystring["ms"]) {
+    createCookie("market_source_ms", querystring["ms"], ${validity_period});
+  }
+
+  if (querystring["cid"]) {
+    createCookie("market_source_cid", querystring["cid"], ${validity_period});
+  }
+
+  if (readCookie("market_source_initial_referrer") == null) {
+    createCookie("market_source_initial_referrer", document.referrer, ${validity_period});
+  }
+});
+MS_SCRIPT;
+
+  return $script;
 }
