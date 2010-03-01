@@ -57,6 +57,7 @@ function sf_user_queue_preprocess_batch(&$batch) {
 		switch ($batch['action']) {
 			
 			case 'upsert':
+			case 'update':
 				// get any objects that have already been exported to salesforce. these will be used when generating the
 				// export objects and cut down on api calls
 				$objects = get_salesforce_objects_in_batch($batch['sfids'], $batch['fieldmap']);
@@ -323,7 +324,11 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 		
 		// submit
 		case 'submit':
-			sf_queue_insert($account->uid, 'user', 'upsert');
+			$action = 'update';
+			if (empty($account->profile_salesforce_contact_id)) {
+				$action = 'upsert';
+			}
+			sf_queue_insert($account->uid, 'user', $action);
 			break;
 			
 		// insert
