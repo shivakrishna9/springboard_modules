@@ -781,8 +781,12 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					}
 					else {
 						if ($nillable) {
-						 	$value = null;
-							//unset($object[$field]); // remove date completely
+						 	if (is_array($object)) {
+								unset($object[$field]); // remove date completely
+							}
+							else {
+								unset($object->$field);
+							}
 						}
 						else {
 							$value = date('c'); // set default to now
