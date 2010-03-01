@@ -628,17 +628,6 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
 		}
   }  
 
-	/*
-  if(($map['salesforce'] == 'Account') || ($map['salesforce'] == 'Campaign') || ($map['salesforce'] == 'Case') || ($map['salesforce'] == 'Contact') || ($map['salesforce'] == 'Contract') || ($map['salesforce'] == 'Lead') || ($map['salesforce'] == 'Opportunity')){
-	  $record_variable = unserialize(variable_get("sf_drupal_record_map",''));
-	
-	  foreach($record_variable as $id => $val)
-		if($id == $d_roles){
-		 $record_id = $val;
-		  break;
-		}
-  }
- */
 	// if $sfid is empty, the object is being exported for the first time
   if (empty($sfid)) {
   	// Loop through the fields on the fieldmap.
@@ -705,20 +694,17 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
 			}
 		} // foreach
 	}
-  
-/*
-	if ($map['salesforce']== 'User'){
-    $object->UserRoleId = $Sf_id?$Sf_id:'00E80000000mBGCEA2';
-  }	
-   
-  if (($map['salesforce'] == 'Account') || ($map['salesforce'] == 'Campaign') || ($map['salesforce'] == 'Case') || ($map['salesforce'] == 'Contact') || ($map['salesforce'] == 'Contract') || ($map['salesforce'] == 'Lead') || ($map['salesforce'] == 'Opportunity')){
-		$object->RecordTypeId = $record_id?$record_id:'';
-  }
-*/
+
 	// only add recordtype if a valid one is assigned to the fieldmap
 	if ($map['recordtype_id'] != 0) {
 		$object->RecordTypeId = $map['recordtype_id'];
 	}
+	
+	// add salesforce id if available
+	if (!empty($sfid)) {
+		$object->Id = $sfid;
+	}
+  
   return $object;
 }
 /**
