@@ -325,7 +325,7 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 		// submit
 		case 'submit':
 			$action = 'update';
-			if (empty($account->profile_salesforce_contact_id)) {
+			if (empty($account->salesforce['sfid'])) {
 				$action = 'upsert';
 			}
 			sf_queue_insert($account->uid, 'user', $action);
