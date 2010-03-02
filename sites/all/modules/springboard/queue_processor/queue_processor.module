@@ -773,8 +773,15 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					
 				case 'date':
 				case 'datetime':
-					// make sure dates are formatted properly
-					$valid_date = strtotime($value);
+					// make sure dates are formatted properly. we could get a string or unix timestamp!
+					$string_date = false;
+					$unix_timestamp = false;
+					
+					$string_date = strtotime($value);
+					$unix_timestamp = date($value);
+					
+					$valid_date = ($string_date) ? $string_date : $unix_timestamp;
+
 					// if the date is good, just assign it
 					if ($valid_date) {
 						$value = date('c', $valid_date);
