@@ -1093,8 +1093,6 @@ function fundraiser_webform_submit($form, &$form_state) {
  		if ($recurs) {
  			fundraiser_create_future_orders($order->order_id);
  		}
- 		
- 		drupal_set_message($result['message'],'status');
  	}
  	else { 
 		// failed to process credit cart
