@@ -20,7 +20,7 @@ $(document).ready(function(){
 	$('.node .webform-client-form #edit-submit').click(function() {
 	  $(this).hide();
 	  $('.fundraiser_submit_message').hide();
-    var path = Drupal.settings.basePath + 'sites/all/modules/fundraiser/';
+    var path = Drupal.settings.basePath + 'sites/all/modules/springboard/fundraiser/';
     $(this).after('<div style="clear: right; float: right; padding-right: 167px; height: 16px; width: 16px; background: url(' + path + 'loader.gif) no-repeat left top;"></style>').after('<p style="clear: right; float: right; margin: 0; padding: 0 75px 0.5em 0; text-align: center; width: 200px;">Thank you.</p><p style="clear: right; float: right; margin: 0; padding: 0 75px 1em 0; text-align: center; width: 200px;">Your donation is being processed.</p>');
 	});
 });
