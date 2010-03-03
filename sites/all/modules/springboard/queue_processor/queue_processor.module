@@ -431,7 +431,7 @@ function save_batch_items($batch) {
 	}
 	
 	// add the batch id to records in the heap
-	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN (%s) AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], '"' . implode('","', $oids) . '"', $record->type, $batch['action']);
+	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN ('%s') AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], implode("','", $oids), $record->type, $batch['action']);
 }
 
 /**
