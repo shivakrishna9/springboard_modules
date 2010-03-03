@@ -30,7 +30,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'sfid' => array(
@@ -85,7 +86,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'sfid' => array(
@@ -230,7 +232,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'type' => array(
@@ -294,7 +297,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'type' => array(
@@ -338,7 +342,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'sfid' => array(
@@ -395,7 +400,8 @@ function queue_api_schema() {
 	    ),
 	    'oid' => array(
 	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
+	      'type' => 'varchar',
+        'length' => '32',
 	      'not null' => TRUE,
 	    ),
 	    'type' => array(
@@ -427,3 +433,21 @@ function queue_api_schema() {
 		
 	return $schema;
 }
+
+/**
+ * Update 6101: Convert oid columns to strings, so they can store very large numbers and non-numeral characters.
+ */
+function queue_api_update_6101() {
+
+  $updates = array();
+
+  db_change_field($updates, 'sf_queue',             'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_heap',              'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_item',        'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_error',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_retry_queue',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_permanent_failure', 'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+
+  return $updates;
+}
+

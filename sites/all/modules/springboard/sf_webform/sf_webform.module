@@ -524,7 +524,7 @@ function sf_webform_submit($form, &$form_state) {
 	$nid = $form_state['values']['details']['nid'];
 	if ($sid) {
 		// if the submission has already been mapped, change to a update call
-		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = %d AND drupal_type = 'webform'", $sid));
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = 'webform'", $sid));
 		if (!empty($result['sfid'])) {
 			sf_queue_insert($sid, 'webform', 'update');
 		}

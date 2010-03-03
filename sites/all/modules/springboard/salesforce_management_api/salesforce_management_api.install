@@ -37,10 +37,10 @@ function salesforce_management_api_schema() {
       ),
       'oid' => array(
         'description' => 'Specific Drupal object identifier (e.g. node id or comment id)',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => '32',
         'not null' => TRUE,
-        'default' => 0
+        'default' => '0',
       ),
       'sfid' => array(
         'description' => 'Salesforce object identifier (e.g. "node", "comment")',
@@ -54,7 +54,7 @@ function salesforce_management_api_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => '0',
+        'default' => 0,
       ),
     ),
     'indexes' => array(
@@ -161,10 +161,10 @@ function salesforce_management_api_schema() {
       ),
       'did' => array(
         'description' => 'Specific Drupal object identifier (e.g. node id or user id)',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => '32',
         'not null' => TRUE,
-        'default' => 0
+        'default' => '0',
       ),
       'error' => array(
         'description' => 'Salesforce error',
@@ -185,4 +185,17 @@ function salesforce_management_api_schema() {
     ),
    );
    return $schema;
+}
+
+/**
+ * Update 6101: Convert oid columns to strings, so they can store very large numbers and non-numeral characters.
+ */
+function salesforce_management_api_update_6101() {
+
+  $updates = array();
+
+  db_change_field($updates, 'salesforce_management_object_map', 'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'default' => '0', 'not null' => TRUE));
+  db_change_field($updates, 'salesforce_management_api_error',  'did', 'did', array('type' => 'varchar', 'length' => 32, 'default' => '0', 'not null' => TRUE));
+
+  return $updates;
 }

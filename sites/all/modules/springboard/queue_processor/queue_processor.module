@@ -133,7 +133,7 @@ function queue_processor_cron() {
 
 			// make sure record is not already in heap before adding it
 			if (!_in_heap($data->oid, $data->type)) {
-				db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) VALUES (%d, '%s', '%s', %d, '%s', %d)",
+				db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created) VALUES ('%s', '%s', '%s', %d, '%s', %d)",
 					$data->oid, $data->sfid, $data->type, $data->fieldmap, $data->action, time());
 			} 
 			$number_to_process++;
@@ -425,13 +425,13 @@ function save_batch_items($batch) {
 	$oids = array();
 	
 	foreach($batch['records'] as $record) {
-		db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data, is_retry) VALUES (%d, %d, '%s', '%s', '%s', '%s', %d)",
+		db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data, is_retry) VALUES (%d, '%s', '%s', '%s', '%s', '%s', %d)",
 			$batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object), $record->is_retry);
 		$oids[] = $record->oid;
 	}
 	
 	// add the batch id to records in the heap
-	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN (%s) AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], implode(',', $oids), $record->type, $batch['action']);
+	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN (%s) AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], '"' . implode('","', $oids) . '"', $record->type, $batch['action']);
 }
 
 /**
@@ -498,7 +498,7 @@ function create_batch($type, $fieldmap, $action) {
  * Marks a batch item as success for failure and sets the completed time
  */
 function log_batch_item_status($batch_id, $oid, $status) {
-	db_query("UPDATE {sf_batch_item} SET success = %d, date_processed = %d WHERE batch_id = %d AND $oid = %d", 
+	db_query("UPDATE {sf_batch_item} SET success = %d, date_processed = %d WHERE batch_id = %d AND $oid = '%s'", 
 		$status, time(), $batch_id, $oid);
 }
 
@@ -520,7 +520,7 @@ function lock_heap_records($type, $fieldmap, $action, $count) {
  * Removes an item from the heap.
  */
 function delete_from_heap($oid, $type) {
-	db_query("DELETE FROM {sf_heap} WHERE oid = %d and type = '%s'", $oid, $type);
+	db_query("DELETE FROM {sf_heap} WHERE oid = '%s' and type = '%s'", $oid, $type);
 }
 
 /**
@@ -624,7 +624,7 @@ function save_batch_errors($batch_id, $oid, $type, $errors) {
 			$fields = implode(',', $fields);
 		}
 		db_query("INSERT INTO {sf_batch_error} (batch_id, oid, type, status_code, message, fields) VALUES
-			(%d, %d, '%s', '%s', '%s', '%s')", $batch_id, $oid, $type, $error->statusCode, $error->message, $fields);
+			(%d, '%s', '%s', '%s', '%s', '%s')", $batch_id, $oid, $type, $error->statusCode, $error->message, $fields);
 	}
 }
 
@@ -676,12 +676,12 @@ function move_to_retry_queue(&$item, &$response) {
 	$type = $item->type;
 	
 	// first, see if the record is already in the retry queue
-	$result = db_query("SELECT attempts FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+	$result = db_query("SELECT attempts FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
 	$data = db_fetch_array($result);
 	$max_attempts = variable_get('queue_retry_max', 3);
 	
 	if (!empty($data)) {
-		db_query("UPDATE {sf_retry_queue} SET attempts = attempts + 1, retry_date = unix_timestamp(timestampadd(DAY, 1, from_unixtime(retry_date))) WHERE oid = %d AND type = '%s'", $oid, $type);
+		db_query("UPDATE {sf_retry_queue} SET attempts = attempts + 1, retry_date = unix_timestamp(timestampadd(DAY, 1, from_unixtime(retry_date))) WHERE oid = '%s' AND type = '%s'", $oid, $type);
 		if ($data['attempts'] + 1 == $max_attempts) {
 			move_to_permanent_failure($item, $response);
 			delete_from_retry_queue($oid, $type);
@@ -694,7 +694,7 @@ function move_to_retry_queue(&$item, &$response) {
 	else {
 		db_query("INSERT INTO {sf_retry_queue} (oid, sfid, type, fieldmap, action, created, retry_date) SELECT
 			oid, sfid, type, fieldmap, action, unix_timestamp(), unix_timestamp(timestampadd(DAY, 1, from_unixtime(unix_timestamp()))) FROM
-			{sf_heap} WHERE oid = %d and type = '%s'", $oid, $type);
+			{sf_heap} WHERE oid = '%s' and type = '%s'", $oid, $type);
 		
 		// fire moved_to_retry_queue trigger
 		module_invoke_all('queue_processor', 'moved_to_retry_queue', $item, $response);
@@ -709,7 +709,7 @@ function move_to_permanent_failure(&$item, &$response) {
 	$type = $item->type;
 	
 	db_query("INSERT INTO {sf_permanent_failure} (oid, type, fieldmap, action, date_added)
-		SELECT oid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE oid = %d and type = '%s'", $oid, $type);
+		SELECT oid, type, fieldmap, action, unix_timestamp() FROM {sf_retry_queue} WHERE oid = '%s' and type = '%s'", $oid, $type);
 		
 	// fire permanent failure trigger
 	module_invoke_all('queue_processor', 'permanent_failure', $item, $response);
@@ -729,21 +729,21 @@ function move_retries_to_heap($max_items) {
  * Deletes an object from the retry queue
  */
 function delete_from_retry_queue($oid, $type) {
-	db_query("DELETE FROM {sf_retry_queue} WHERE oid = %d AND type = '%s'", $oid, $type);
+	db_query("DELETE FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
 }
 
 /**
  * Deletes and object from permanent failure
  */
 function delete_from_permanent_failures($oid, $type) {
-	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = %d AND type = '%s'", $oid, $type);
+	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = '%s' AND type = '%s'", $oid, $type);
 }
 
 /**
  * Returns the details of an object in the retry queue
  */
 function get_retry_queue_details($oid, $type) {
-	$result = db_query("SELECT retry_date, attempts FROM {sf_retry_queue} WHERE oid = %d and type = '%s'", $oid, $type);
+	$result = db_query("SELECT retry_date, attempts FROM {sf_retry_queue} WHERE oid = '%s' and type = '%s'", $oid, $type);
 	$details = db_fetch_array($result);
 	$details['attempts_remaining'] = variable_get('queue_retry_max', 3) - $details['attempts'];
 	return $details;

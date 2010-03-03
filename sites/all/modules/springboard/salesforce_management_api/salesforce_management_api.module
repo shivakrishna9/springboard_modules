@@ -763,7 +763,7 @@ function salesforce_management_api_fieldmap_control($rule, $fieldKey, $drupal = 
  */
 function salesforce_management_api_id_load($type, $id) {
   // Query the main ID table for the associated data.
-  $result = db_query("SELECT sfid, fieldmap FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = %d", $type, $id);
+  $result = db_query("SELECT sfid, fieldmap FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = '%s'", $type, $id);
 
   // Return an empty array if no data was found.
   if (!$data = db_fetch_array($result)) {
@@ -801,12 +801,12 @@ function salesforce_management_api_fieldmap_rid_load($rid) {
  *   The index of the fieldmap used to generate the export.
  */
 function salesforce_management_api_id_save($drupal_type, $oid, $sfid, $fieldmap) {
-  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = %d", $drupal_type, $oid);
-  db_query("INSERT INTO {salesforce_management_object_map} (drupal_type, oid, sfid, fieldmap) VALUES ('%s', %d, '%s', %d)", $drupal_type, $oid, $sfid, $fieldmap);
+  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = '%s'", $drupal_type, $oid);
+  db_query("INSERT INTO {salesforce_management_object_map} (drupal_type, oid, sfid, fieldmap) VALUES ('%s', '%s', '%s', %d)", $drupal_type, $oid, $sfid, $fieldmap);
 }
 
 function salesforce_management_api_id_delete($drupal_type, $oid) {
-	db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = %d", $drupal_type, $oid);
+	db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = '%s'", $drupal_type, $oid);
 }
 
 /**
