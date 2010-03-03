@@ -746,7 +746,7 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
 function _webform_user_load_user_salesforce_ids($sid) {
 	$result = db_query("SELECT substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18) AS salesforce_account_id,
 		substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18) AS salesforce_contact_id FROM {users} u 
-		INNER JOIN {webform_submissions} w ON w.uid = u.uid WHERE w.sid = %d", $sid);
+		INNER JOIN {webform_submissions} w ON w.uid = u.uid WHERE w.sid = %d", (int) $sid);
 		
 	return db_fetch_object($result);
 }
@@ -756,7 +756,7 @@ function _webform_user_load_user_salesforce_ids($sid) {
  */
 function _webform_user_get_relationship($sid) {
 	return db_fetch_object(db_query("SELECT b.related_object, b.foreign_key_field FROM {webform_submissions} w 
-		INNER JOIN {webform_user} b ON b.nid = w.nid WHERE w.sid = %d", $sid));
+		INNER JOIN {webform_user} b ON b.nid = w.nid WHERE w.sid = %d", (int) $sid));
 }
 
 /**
