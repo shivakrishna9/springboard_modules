@@ -128,7 +128,7 @@ function queue_processor_cron() {
 		while($data = db_fetch_object($result)) {
 			// if the record does not have a fieldmap expose a hook for other modules to respond to
 			if (empty($data->fieldmap)) {
-				module_invoke_all('fieldmap_assignment', $data);
+				drupal_alter('queue_fieldmap_assignment', $data);
 			} 
 
 			// make sure record is not already in heap before adding it
@@ -231,19 +231,13 @@ function process_batches($ids) {
 		log_batch_start_time($id);
 				
 		$objects = array();
+		
 		// get all the objects out of the batch
 		foreach($batch['items'] as $item) {
 			$object = unserialize($item->data);
-			// give modules one last shot to modify the objects in the batch
-			$altered_object = module_invoke_all('queue_batch_item_alter', $object, $item->type, $batch['action'], $item->oid);
-			
-			// work around drupal's inability to pass by reference
-			if ($altered_object != null) {
-				array_push($objects, $altered_object);
-			}
-			else {
-				array_push($objects, $object);
-			}
+			// give modules one last chance to modify the object before shipping it to salesforce
+			drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
+			array_push($objects, $object);
 		}
 
 		// apply validation for create/upsert/update actions
@@ -450,7 +444,7 @@ function get_batch_items(&$batch) {
 	}
 	// allow the various modules to build out the objects
 	watchdog('salesforce queue processor', t('Preprocessing called on batch !id', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
-	module_invoke_all('queue_preprocess_batch', $batch);
+	drupal_alter('queue_preprocess_batch', $batch);
 	return $batch;
 }
 

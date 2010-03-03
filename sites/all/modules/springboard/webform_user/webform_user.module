@@ -715,7 +715,7 @@ function _webform_user_create_webform_components(&$node) {
 }
 
 /**
- * Implementation of hook_queue_batch_item_alter().
+ * Implementation of queue_batch_item_alter().
  */
 function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
 	if ($type == 'webform' && $action == 'create') {
@@ -733,12 +733,10 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
 			if ($id) {
 				// add the extra relationship field
 				$object[$relationship->foreign_key_field] = $id;
-				return $object;
 			}
 		}
 	}
 }
-
 
 /**
  * Returns user that made the webform submission

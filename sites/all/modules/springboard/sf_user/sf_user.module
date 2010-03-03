@@ -49,9 +49,9 @@ function sf_user_queue_report_item_title(&$row) {
 }
 
 /**
- * Implemenation of hook_queue_preprocess_batch().
+ * Implemenation of queue_preprocess_batch_alter().
  */
-function sf_user_queue_preprocess_batch(&$batch) {
+function sf_user_queue_preprocess_batch_alter(&$batch) {
 	if ($batch['type'] == 'user') {
 		
 		switch ($batch['action']) {
@@ -82,7 +82,7 @@ function sf_user_queue_preprocess_batch(&$batch) {
 /**
  * Implemenation of hook_queue_postprocess_batch().
  */
-function sf_user_queue_postprocess_batch(&$batch, &$responses, $item_count) {
+function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
 	if ($batch['type'] == 'user') {
 		switch ($batch['action']) {
 			
@@ -234,9 +234,9 @@ function get_salesforce_objects_in_batch($sfids, $fieldmap) {
 }
 
 /**
- * Implemenation of hook_fieldmap_assignment().
+ * Implemenation of queue_fieldmap_assignment_alter().
  */
-function sf_user_fieldmap_assignment(&$data) {
+function sf_user_queue_fieldmap_assignment_alter(&$data) {
 	if ($data->type == 'user') {
 		if ($data->action == 'upsert') {
 			$user = user_load((int)$data->oid);
@@ -255,7 +255,7 @@ function sf_user_fieldmap_assignment(&$data) {
 			}
 		}
 		else {
-			return $data->fieldmap = 0;
+			$data->fieldmap = 0;
 		}
 	}
 }

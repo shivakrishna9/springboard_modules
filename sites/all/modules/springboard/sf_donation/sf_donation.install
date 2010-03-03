@@ -16,6 +16,32 @@ function sf_donation_uninstall() {
 }
 
 /**
+ * Implementation of hook_enable().
+ */
+function sf_donation_enable() {
+	
+	// add donation and recurring_donation to the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  array_push($processing_order, 'donation');
+  array_push($processing_order, 'recurring_donation');
+  variable_set('queue_processing_order', $processing_order);
+
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function sf_donation_disable() {
+
+	// remove donation and recurring donation from the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  $processing_order = array_values(array_diff($processing_order, array('donation')));
+  $processing_order = array_values(array_diff($processing_order, array('recurring_donation')));
+  variable_set('queue_processing_order', $processing_order);
+	
+}
+
+/**
  * Implementation of hook_schema().
  */
 function sf_donation_schema() {
