@@ -44,7 +44,7 @@ function sf_user_menu() {
  */
 function sf_user_queue_report_item_title(&$row) {
 	if ($row['type'] == 'user') {
-		return db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $row['oid']));	
+		return db_result(db_query("SELECT name FROM {users} WHERE uid = %d", (int)$row['oid']));	
 	}
 }
 
@@ -63,7 +63,7 @@ function sf_user_queue_preprocess_batch(&$batch) {
 				$objects = get_salesforce_objects_in_batch($batch['sfids'], $batch['fieldmap']);
 
 				foreach($batch['records'] as $record) {
-					$user = user_load($record->oid);
+					$user = user_load((int)$record->oid);
 					// determine which users have already been exported. use their sfids to create an array of salesforce objects
 					// to pass to the object creation function
 					$object = salesforce_management_api_fieldmap_export_create($record->fieldmap, $user, $record->sfid, $objects);
@@ -239,7 +239,7 @@ function get_salesforce_objects_in_batch($sfids, $fieldmap) {
 function sf_user_fieldmap_assignment(&$data) {
 	if ($data->type == 'user') {
 		if ($data->action == 'upsert') {
-			$user = user_load($data->oid);
+			$user = user_load((int)$data->oid);
 		
 			// if the user has more than 1 role, it means they are assigned to something other than the authenticated user role.
 			$rids = array_keys($user->roles);
