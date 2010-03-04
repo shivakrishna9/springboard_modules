@@ -239,11 +239,10 @@ function get_salesforce_objects_in_batch($sfids, $fieldmap) {
 function sf_user_queue_fieldmap_assignment_alter(&$data) {
 	if ($data->type == 'user') {
 		if ($data->action == 'upsert') {
-			$user = user_load((int)$data->oid);
-		
-			// if the user has more than 1 role, it means they are assigned to something other than the authenticated user role.
-			$rids = array_keys($user->roles);
-		
+
+			// instead of the overhead of loading the entire user, lets just get the user's roles
+			$rids = sf_user_get_role_ids((int)$data->oid);
+
 			// start at the end of the array, and pop role ids off until we find a fieldmap
 			while (!empty($rids)) {
 				$rid = array_pop($rids);
@@ -259,6 +258,25 @@ function sf_user_queue_fieldmap_assignment_alter(&$data) {
 		}
 	}
 }
+
+/**
+ * Returns an array of role ids for a given user.
+ */
+function sf_user_get_role_ids($uid) {
+
+	$rids = array();
+	// add the authenticated rid first
+	array_push($rids, DRUPAL_AUTHENTICATED_RID);
+
+	$result = db_query('SELECT r.rid FROM {role} r INNER JOIN {users_roles} ur ON ur.rid = r.rid WHERE ur.uid = %d', $uid);
+	while ($role = db_fetch_object($result)) {
+  	array_push($rids, $role->rid);
+ 	}	
+ 	
+ 	return $rids;
+ 	
+}
+
 
 /**
  * Implementation of hook_user_operations().
