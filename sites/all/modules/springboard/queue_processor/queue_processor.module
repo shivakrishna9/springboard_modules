@@ -652,7 +652,7 @@ function _normalize_salesforce_response(&$response) {
  * Helper function to record the time a batch was started.
  */
 function log_batch_start_time($id) {
-	db_query("UPDATE {sf_batch} SET start_time = %d", time());
+	db_query("UPDATE {sf_batch} SET start_time = %d WHERE id = %d", time(), $id);
 }
 
 /**
