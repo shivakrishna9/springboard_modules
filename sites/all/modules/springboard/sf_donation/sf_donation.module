@@ -6,6 +6,7 @@
  * Integrates webform submissions with the Salesforce API.
  */
 
+
 /**
  * Implementation of hook_menu().
  */
@@ -413,97 +414,11 @@ function sf_donation_hook_info() {
 }
 
 /**
- * Implemenation of hook_queue_salesforce_info().
- */
-function sf_donation_queue_salesforce_info($type, $action) {
-
-	// since donations do not use fieldmaps in a traditional sense, we manually assign their Salesforce types here
-	switch ($type) {
-		
-		case FUNDRAISER_SINGLE_DONATION_TYPE:
-			
-			$data = array(
-				'salesforce' => 'Opportunity',
-				'dedupe_key' => '',
-			);
-			break;
-			
-		case FUNDRAISER_RECURRING_DONATION_TYPE:
-			$data = array(
-				'salesforce' => 'npe03__Recurring_Donation__c',
-				'dedupe_key' => '',
-			);
-			break;
-		
-	}
-	
-	return $data;
-	
-}
-
-
-/**
- * Implementation of hook_queue_preprocess_batch().
- */
-function sf_donation_queue_preprocess_batch(&$batch) {
-
-	if ($batch['type'] == 'donation' || $batch['type'] == 'recurring_donation') {
-		foreach($batch['records'] as $record) {
-			// get additional details about the order
-			$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_webform_order} f ON f.order_id = u.order_id WHERE u.order_id = %d", $record->oid));
-			$user_ids = _sf_donation_load_user_salesforce_ids($details->uid);
-			
-			switch ($batch['type']) {
-				case FUNDRAISER_SINGLE_DONATION_TYPE:
-					$record->object = _create_single_donation($record->oid, $user_ids->salesforce_account_id, $details->sid);
-					break;
-					
-				case FUNDRAISER_RECURRING_DONATION_TYPE:
-					$donation_count = _recurring_donation_count($record->oid, $user);
-					$donation_count++; // account for original order
-					$record->object = _create_recurring_donation($record->oid, $user_ids->salesforce_contact_id, $donation_count);
-					break;
-			}
-		}
-	}
-
-}
-
-/**
- * Implemenation of hook_queue_postprocess_batch().
- */
-function sf_donation_queue_postprocess_batch(&$batch, &$responses, $item_count) {
-	
-	switch ($batch['type']) {
-		case FUNDRAISER_SINGLE_DONATION_TYPE:
-		
-			break;
-			
-		case FUNDRAISER_RECURRING_DONATION_TYPE:
-			
-			break;	
-	}
-	
-}
-
-/**
- * Returns the salesforce ids of a given user (prevents having to call node_load())
- */
-function _sf_donation_load_user_salesforce_ids($uid) {
-	$result = db_query("SELECT substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18) AS salesforce_account_id,
-		substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18) AS salesforce_contact_id FROM {users} u 
-		WHERE u.uid = %d", $uid);
-		
-	return db_fetch_object($result);
-}
-
-/**
  * Implemenation of hook_cron().
  *
  * Exports ubercart orders that were created prior to now that have not previously been sync'd.
  * This function handles both single and recurring donations
  */
-/*
 function sf_donation_cron() {
 
 	$orders = db_query("select u.order_id, f.sid, u.uid from {uc_orders} u inner join {fundraiser_webform_order} f 
@@ -543,7 +458,6 @@ function sf_donation_cron() {
 		_export_recurring_donations($recurring_donations_to_create);
 	}
 }
-*/
 
 /**
  * Exports recurring donations to salesforce. Not only does it create the recurring donation object,
@@ -792,7 +706,7 @@ function _export_single_donations($donations) {
 /*
  * Creates an array that represents a salesforce opportunity object
  */
-function _create_single_donation($order_id, $account_id, $sid) {
+function _create_single_donation($order_id, &$user, $sid) {
 	global $base_url;
 
 	// load up the order 
@@ -800,14 +714,14 @@ function _create_single_donation($order_id, $account_id, $sid) {
 
 	// load up the payments because we need the received date of the payment
 	$payments = uc_payment_load_payments($order_id);
-	//$donation = array(
-	//	'ContactId' => $user->salesforce_contact_id,
-	//);
-	
 	$donation = array(
+		'ContactId' => $user->salesforce_contact_id,
+	);
+	
+	$donation['fields'] = array(
 		'Name' => 'Donation - ' . $order->order_id,
 		'Amount' => $order->order_total,
-		'AccountID' => $account_id,
+		'AccountID' => $user->salesforce_account_id,
 		'Order_ID__c' => $order->order_id,
 		'Donation_Form_Name__c' => $order->products[0]->title,
 		'Donation_Form_URL__c' => $base_url . '/node/' . $order->products[0]->nid,
@@ -827,13 +741,13 @@ function _create_single_donation($order_id, $account_id, $sid) {
 	if ($payments) {
 		// deal with sf date handling
 		$transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
-		$donation['CloseDate'] = date('Y-m-d', $transaction_date);
-		$donation['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
-		$donation['Probability'] = 100.00;
-		$donation['StageName'] = 'Posted';
+		$donation['fields']['CloseDate'] = date('Y-m-d', $transaction_date);
+		$donation['fields']['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
+		$donation['fields']['Probability'] = 100.00;
+		$donation['fields']['StageName'] = 'Posted';
 	}
 	
-	$donation = array_merge($donation, _load_salesforce_map($sid));
+	$donation['fields'] = array_merge($donation['fields'], _load_salesforce_map($sid));
 	
 	// clear the credit card cache
 	uc_credit_cache('clear');
@@ -849,30 +763,21 @@ function _convert_billing_country($country_id) {
 /*
  * Creates an array that represents a salesforce recurring donation object
  */
-function _create_recurring_donation($order_id, $contact_id, $count) {
+function _create_recurring_donation($order_id, &$user, $count, $sid) {
 	//print "recurring donation: $count<br>";
 	$order = uc_order_load($order_id);
-	/*
+
 	$recurring_donation = array(
 		'order_id' => $order->order_id, // store the order id because we'll need it later
 		'sid' => $sid,
 		'fields' =>	array(
 			'Name' => 'Donation - ' . $order->order_id,
 			'npe03__Amount__c' => $order->order_total,
-			'npe03__Contact__c' => $contact_id,
+			'npe03__Contact__c' => $user->salesforce_contact_id,
 			'npe03__Installment_Period__c' => 'Monthly',
 			'npe03__Schedule_Type__c' => 'Multiply By',
 			'npe03__Installments__c' => $count,
 		),
-	);
-	*/
-	$recurring_donation = array(
-		'Name' => 'Donation - ' . $order->order_id,
-		'npe03__Amount__c' => $order->order_total,
-		'npe03__Contact__c' => $contact_id,
-		'npe03__Installment_Period__c' => 'Monthly',
-		'npe03__Schedule_Type__c' => 'Multiply By',
-		'npe03__Installments__c' => $count,
 	);
 	
 	// clear the credit card cache
