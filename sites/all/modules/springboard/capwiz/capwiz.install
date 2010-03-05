@@ -43,7 +43,6 @@ function capwiz_requirements($phase) {
 function capwiz_install() {
 
   drupal_install_schema('capwiz');
-  
 }
 
 
@@ -60,32 +59,32 @@ function capwiz_uninstall() {
   variable_del('capwiz_mapping');
   variable_del('capwiz_email_message');
   variable_del('capwiz_cron');
-  
 }
+
 
 /** 
  * Implement hook_enable().
  */
 function capwiz_enable() {
 
-	// add capwiz to the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  array_push($processing_order, 'capwiz');
+  // Add capwiz to the queue processing order array
+  $processing_order = variable_get('queue_processing_order', array());
+  array_push($processing_order, 'capwiz_action');
   variable_set('queue_processing_order', $processing_order);
-
 }
+
 
 /**
  * Implement hook_disable().
  */
 function capwiz_disable() {
 
-	// remove capwiz from the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  $processing_order = array_values(array_diff($processing_order, array('capwiz')));
+  // Remove capwiz from the queue processing order array
+  $processing_order = variable_get('queue_processing_order', array());
+  $processing_order = array_values(array_diff($processing_order, array('capwiz_action')));
   variable_set('queue_processing_order', $processing_order);
-	
 }
+
 
 /**
  * Implement hook_schema().

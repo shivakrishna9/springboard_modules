@@ -105,7 +105,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$cachedAccounts;
   }
 
@@ -193,6 +193,11 @@ function capwiz_add_account($capwiz_account = NULL) {
       }
     }
 
+    // If Salesforce integration modules are enabled:
+    if (function_exists('sf_queue_insert')) {
+      sf_queue_insert($drupal_account->uid, 'user', 'upsert');
+    }
+
     return $drupal_account;
   }
 }
@@ -231,6 +236,11 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
         }
       }
     }
+
+    // If Salesforce integration modules are enabled:
+    if (function_exists('sf_queue_insert')) {
+      sf_queue_insert($drupal_account->uid, 'user', 'update');
+    }
   }
 }
 
@@ -246,6 +256,7 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
 function _capwiz_get_value($capwiz_account, $capwiz_field) {
 
   $value = FALSE;
+$custom_fields = $capwiz_account->custom_fields;
 
   // If it is a normal field:
   if (isset($capwiz_account->$capwiz_field)) {
@@ -271,7 +282,7 @@ function _capwiz_get_value($capwiz_account, $capwiz_field) {
  *
  * @param array $capwiz_actions (options)
  *   An array of StdClass instances, if not provided,
-  *   actions are fetched via the Capwiz API
+ *   actions are fetched via the Capwiz API
  * @return void
  */
 function capwiz_save_actions($capwiz_actions = NULL) {
@@ -310,6 +321,11 @@ function capwiz_save_actions($capwiz_actions = NULL) {
       $db_query_fields = implode(', ', array_keys($db_query_arguments));
       $db_query_tokens = '%d' . str_repeat(', "%s"', count($db_query_arguments) - 1);
       db_query("REPLACE INTO {capwiz_actions} ($db_query_fields) VALUES ($db_query_tokens)", $db_query_arguments);
+
+      // If Salesforce integration modules are enabled:
+      if (function_exists('sf_queue_insert')) {
+        sf_queue_insert($capwiz_action->event_id, 'capwiz_action', 'upsert');
+      }
 
       unset($capwiz_actions[$a]);
     }
@@ -424,24 +440,33 @@ function capwiz_get_email_message_options($key_field = 'id', $value_field = 'nam
   return FALSE;
 }
 
+
+/**************************\
+** Salesforce integration **
+\**************************/
+
+
 /**
- * Implementation of hook_fieldmap_objects().
+ * Implement hook_fieldmap_objects().
  *
  * @param string $type
- * 	The type of object:
- *		drupal
- *		salesforce
- *
+ *    The type of object:
+ *     drupal
+ *     salesforce
  * @return array
  */
 function capwiz_fieldmap_objects($type) {
+
   $objects = array();
 
   // Define the data fields available for capwiz actions.
   if ($type == 'drupal') {
+
     $objects['capwiz_action'] = array(
       'label' => t('Capwiz action'),
       'fields' => array(
+
+        // Capwiz Action database fields
         'uid' => array('label' => t('User ID')),
         'event_id' => array('label' => t('Event ID')),
         'alert_id' => array('label' => t('Alert ID')),
@@ -452,63 +477,130 @@ function capwiz_fieldmap_objects($type) {
         'intended_delivery_method' => array('label' => t('Intended Delivery Method')),
         'actual_delivery_method' => array('label' => t('Actual Delivery Method')),
         'delivery_status' => array('label' => t('Delivery Status')),
+
+        // Salesforce fields
+        'ContactId' => array('label' => t('Contact ID')),
       ),
     );
   }
+
   return $objects;
 }
 
+
 /**
- * Implemenation of hook_fieldmap_assignment().
+ * Implement hook_fieldmap_assignment().
  *
- * @param stdObject $data
- * 	Represents the current item being placed onto the heap
+ * @param StdObject $data
+ *    Represents the current item being placed onto the heap
+ * @return void
  */
-function capwiz_fieldmap_assignment(&$data) {
-	if ($data->type == 'capiz_action') {
-		switch ($data->action) {
-			case 'create':
-			case 'upsert':
-				$options = salesforce_management_api_fieldmap_options('capwiz_action');
-				if (empty($options)) {
-					return; // can't do anything with any available fieldmaps
-				}
-				// if multiple fieldmaps were created, just use the first one
-				$fieldmap = array_keys(array_shift($options));
-				$data->fieldmap = array_pop($fieldmap);
-				break;
-		}
+function capwiz_queue_fieldmap_assignment_alter(&$data) {
+
+  if ($data->type == 'capwiz_action' && $data->action == 'upsert') {
+    $data->fieldmap = db_result(db_query('SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = "capwiz_action"'));
+  }
+}
+
+
+/**
+ * Implement hook_queue_preprocess_batch().
+ *
+ * @param array $batch
+ *   The batch currently being processed
+ * @return void
+ */
+function capwiz_queue_preprocess_batch_alter(&$batch) {
+
+  if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'upsert') {
+
+    foreach($batch['records'] as &$record) {
+
+      $sf_fieldmap = _capwiz_sf_fieldmap($batch['fieldmap']);
+      if (!empty($sf_fieldmap)) {
+
+        $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_actions} WHERE event_id = %d', $record->oid));
+        if (!empty($capwiz_action)) {
+
+          $sf_object = new StdClass();
+          foreach ($sf_fieldmap as $sf_field => $drupal_field) {
+
+            switch ($drupal_field) {
+
+              // Store the Drupal user's ID in the Salesforce Contact ID field *temporarily*.
+              // The real Salesforce Contact ID will be retrieved in hook_queue_batch_item_alter(),
+              // because we have to wait until the Drupal users are sent to Salesforce and brought
+              // back down. Otherwise, there is no Salesforce Contact ID to retrieve.
+              case 'ContactId':
+                $sf_object->$sf_field = $capwiz_action->uid;
+                break;
+
+              default:
+                $sf_object->$sf_field = $capwiz_action->$drupal_field;
+            }
+          }
+
+          $record->object = $sf_object;
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Implementation of queue_batch_item_alter().
+ */
+function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
+
+	if ($type == 'capwiz_action' && $action == 'upsert') {
+
+	  // Set the Salesforce object's Contact ID to the real one.
+    // It is currently the Drupal user's ID, because
+    // hook_queue_preprocess_batch_alter() runs before the users
+    // are saved in Salesforce and brought back down.
+    $sf_fieldmap = _capwiz_sf_fieldmap();
+    $field = array_search('ContactId', $sf_fieldmap);
+
+    // Make sure the Salesforce Contact ID is actually mapped
+    // and is a Drupal user ID before we do anything.
+    if (property_exists($object, $field) && is_numeric($object->$field)) {
+
+      $sf_info_sql = <<< SQL
+SELECT
+  SUBSTRING(
+    u.data,
+    INSTR(u.data, 'salesforce_contact_id') + 29,
+    18) AS ContactId
+
+FROM
+  {users} u
+
+WHERE
+  u.uid = %d
+SQL;
+
+      $object->$field = db_result(db_query($sf_info_sql, $object->$field));
+    }
 	}
 }
 
+
 /**
- * Implementation of hook_queue_preprocess_batch().
- *
- * @param array $batch
- *	The batch currently being processed
+ * Helper function: Get the Capwiz fieldmap for Salesforce.
  */
-function capwiz_queue_preprocess_batch(&$batch) {
-	if ($batch['type'] == 'capwiz_action') {
-		
-		switch ($batch['action']) {
-			// same no matter what			
-			case 'update':
-			case 'upsert':
-			case 'create':
-				foreach($batch['records'] as $record) {
-					// TODO: Create the Salesforce object using the assigned fieldmap $batch['fieldmap'] will hold the id of the fieldmap
-					// stored in the salesforce_management_field_map. The fields column in that table contains a serialized map array. The
-					// key is the Salesforce field and the value is the drupal field
-					
-					// if you want to try and use that generic salesforce object creation function that comes with the salesforce api, you can find it in
-					// salesforce_management_api/salesforce_management_api.module. the function is salesforce_management_api_fieldmap_export_create()
-					// it was meant for users and nodes so i'm not sure it will work
-					// when the salesforce object has been created (i think it can be an object or array) it needs to be assigned to $record->object
-					$record->object = 'THE SALEFORCE OBJECT THAT IS THE RESULT OF YOUR MAPPING ROUTINE';
-				}
-				
-				break;
-			}
-			
-	}
+function _capwiz_sf_fieldmap($sf_fieldmap_id = NULL) {
+
+  static $sf_fieldmap;
+
+  if (empty($sf_fieldmap) && $sf_fieldmap_id !== NULL) {
+
+    $result = db_result(db_query('SELECT fields FROM {salesforce_management_field_map} WHERE fieldmap = %d', $sf_fieldmap_id));
+    if ($result !== FALSE) {
+      $sf_fieldmap = unserialize($result);
+    }
+  }
+
+  return $sf_fieldmap;
 }
+

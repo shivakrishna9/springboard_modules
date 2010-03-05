@@ -238,7 +238,7 @@ function get_salesforce_objects_in_batch($sfids, $fieldmap) {
  */
 function sf_user_queue_fieldmap_assignment_alter(&$data) {
 	if ($data->type == 'user') {
-		if ($data->action == 'upsert') {
+		if (in_array($data->action, array('create', 'upsert'))) {
 
 			// instead of the overhead of loading the entire user, lets just get the user's roles
 			$rids = sf_user_get_role_ids((int)$data->oid);
