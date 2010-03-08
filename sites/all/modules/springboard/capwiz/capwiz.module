@@ -16,7 +16,7 @@
  * Drupal ones. Each individual profile field has a certain
  * "permission level."
  */
-define('CAPWIZ_OVERWRITE_NEVER',  'never');
+define('CAPWIZ_OVERWRITE_NEVER',  'never'); // Only set the value when adding a new account; never overwrite it
 define('CAPWIZ_OVERWRITE_BLANK',  'blank'); // Overwrite only if blank
 define('CAPWIZ_OVERWRITE_ALWAYS', 'always');
 
@@ -31,7 +31,7 @@ define('CAPWIZ_OVERWRITE_ALWAYS', 'always');
  */
 function capwiz_perm() {
 
-  return array('administer basic capwiz settings', 'administer advanced capwiz settings');
+  return array('administer capwiz', 'administer capwiz credentials', 'administer capwiz advanced settings');
 }
 
 
@@ -47,7 +47,7 @@ function capwiz_menu() {
     'description' => 'Integrate your Capwiz user base with your Drupal user base.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('capwiz_settings_form'),
-    'access arguments' => array('administer basic capwiz settings'),
+    'access arguments' => array('administer capwiz'),
     'file' => 'capwiz.admin.inc',
   );
 
@@ -105,7 +105,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$cachedAccounts;
   }
 

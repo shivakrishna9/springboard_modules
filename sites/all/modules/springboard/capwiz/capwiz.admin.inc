@@ -28,6 +28,7 @@ function capwiz_settings_form(&$form_state) {
   $form['capwiz_account'] = array(
     '#type' => 'fieldset',
     '#title' => t('Capwiz API account'),
+    '#access' => user_access('administer capwiz credentials'),
     '#collapsible' => !$account_not_setup, 
     '#collapsed' => !$account_not_setup,
     'client_id' => array(
@@ -115,7 +116,7 @@ T;
   $form['capwiz_syncing'] = array(
     '#type' => 'fieldset',
     '#title' => t('Syncing'),
-    '#access' => user_access('administer advanced capwiz settings'),
+    '#access' => user_access('administer capwiz advanced settings'),
     '#collapsible' => TRUE, 
     '#collapsed' => TRUE,
     'drupal_cron' => array(
@@ -163,7 +164,7 @@ function capwiz_settings_form_submit($form, &$form_state) {
 
   // Custom fields
   $custom_fields = explode("\n", trim($form_values['custom_fields']));
-  variable_set('capwiz_custom_fields', array_map('trim', $custom_fields));
+  variable_set('capwiz_custom_fields', array_map('trim', array_filter($custom_fields)));
 
   // Email notifications
   variable_set('capwiz_email_message', $form_values['email_message']);
