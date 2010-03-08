@@ -459,7 +459,7 @@ function get_batch_items(&$batch) {
  *	 An array representing the batch
  */
 function create_batch($type, $fieldmap, $action) {
-	$record_count = batch_size($type, $fieldmap);
+	$record_count = batch_size($type, $fieldmap, $action);
 	$result = db_query("SELECT salesforce, dedupe_key FROM {salesforce_management_field_map} WHERE fieldmap = %d", $fieldmap);
 
 	/* if this object exposes it's own map (like webform), then expose a hook the module can use to specific the salesforce object type
@@ -553,8 +553,8 @@ function unlock_heap($batch_id) {
 /** 
  * Returns the size of the current batch
  */
-function batch_size($type, $fieldmap) {
-	return db_result(db_query("SELECT count(id) FROM {sf_heap} WHERE locked = 1 AND type = '%s' AND fieldmap = %d AND batch_id IS NULL", $type, $fieldmap));
+function batch_size($type, $fieldmap, $action) {
+	return db_result(db_query("SELECT count(id) FROM {sf_heap} WHERE locked = 1 AND type = '%s' AND fieldmap = %d AND action = '%s' AND batch_id IS NULL", $type, $fieldmap, $action));
 }
 
 /**
