@@ -101,7 +101,7 @@ $db_prefix = '';
  * check. After finishing the upgrade, be sure to open this file again
  * and change the TRUE back to a FALSE!
  */
-$update_free_access = TRUE;
+$update_free_access = FALSE;
 
 /**
  * Base URL (optional).
