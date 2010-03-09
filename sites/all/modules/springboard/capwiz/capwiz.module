@@ -239,7 +239,7 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
 
     // If Salesforce integration modules are enabled:
     if (function_exists('sf_queue_insert')) {
-      sf_queue_insert($drupal_account->uid, 'user', 'update');
+      sf_queue_insert($drupal_account->uid, 'user', 'upsert');
     }
   }
 }
