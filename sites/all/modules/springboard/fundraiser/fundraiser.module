@@ -1293,19 +1293,18 @@ function jprint_r($array){
 	print "</pre>";
 }
 
-function fundraiser_mail_alter(&$message){
+function fundraiser_mail_alter(&$message) {
 	$parts = explode("/",$_GET['q']);
 	$nid=$parts[1];
 	$node=node_load($nid);
 	
 	if ($message['id'] == 'uc_order_action-mail') {
-		$message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->fundraiser['confirmation_email_from_name'] . ' <' .$node->fundraiser['confirmation_email_from_email'] . '>';
-		$message['from'] = $node->fundraiser['confirmation_email_from_name'] . ' <' .$node->fundraiser['confirmation_email_from_email'] . '>';
+		$message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
+		$message['from'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
 		
-		$message['subject'] = $node->fundraiser['confirmation_email_subject'];
+		$message['subject'] = $node->confirmation_email_subject;
 		
-		//$message['body'] = token_replace($node->fundraiser['confirmation_email_message'], $type = 'order', $message['params']['replacements']['order'], $leading = '[', $trailing = ']');
-		$message['params']['replacements']['order']->confirmation_email_message = $node->fundraiser['confirmation_email_message'];
+		$message['params']['replacements']['order']->confirmation_email_message = $node->confirmation_email_message;
 		$output = uc_order_load_invoice($message['params']['replacements']['order'],'checkout-mail');
 	}
 }
