@@ -21,7 +21,43 @@ function webform_user_menu() {
     'file' => 'webform_user.admin.inc',
 	);
 	
+	$items['admin/content/webform-user'] = array(
+		'title' => 'User webforms',
+		'title callback' => 'webform_user_title',
+		'page callback' => 'webform_user_list',
+		'access callback' => 'user_access',
+		'access arguments' => array('Map webform submissions to Salesforce objects'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'webform_user.admin.inc',
+		'weight' => 100,
+	);
+	
+	$items['admin/content/clone-webform-user/%'] = array(
+		'title' => 'Clone user weboform',
+		'page callback' => 'webform_user_clone',
+		'page arguments' => array(3),
+		'access arguments' => array('Map webform submissions to Salesforce objects'),
+		'type' => MENU_CALLBACK,
+		'file' => 'webform_user.admin.inc',
+	);
+	
+	$items['admin/settings/salesforce-management/webform-user'] = array(
+		'title' => t('Webform user settings'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('webform_user_settings_form'),
+		'access arguments' => array('Map webform submissions to Salesforce objects'),
+		'type' => MENU_NORMAL_ITEMS,
+		'file' => 'webform_user.admin.inc',
+	);
+	
 	return $items;
+}
+
+/**
+ * Defines a custom title for the list of webform_user forms
+ */
+function webform_user_title() {
+	return variable_get('webform_user_menu_name', 'User webforms');
 }
 
 /**
@@ -71,7 +107,10 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       case 'insert':
         if ($node->is_webform_user || $node->authenticate_submitters) {
           _webform_user_set_values($node);
-          _webform_user_create_webform_components($node);
+          if (!$node->is_being_cloned) {
+          	_webform_user_create_webform_components($node);
+          }
+          
         }
         break;
 
@@ -265,6 +304,9 @@ function webform_user_webform_submit($form, &$form_state) {
           // Log the user in.
           user_external_login($account);
         }
+        
+        // Send the e-mail through the user module.
+        //drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
       }
     }
   }
@@ -440,7 +482,7 @@ function _webform_user_set_values(&$node) {
 
 	$exists = db_result(db_query("SELECT count(*) FROM {webform_user} WHERE nid = %d", $node->nid));
 
-	if (!$exists) {
+	if (!$exists && $is_webform_user) {
 	  db_query(
 	    "INSERT INTO {webform_user} (nid, is_webform_user, authenticate_submitters, related_object)
 	     VALUES (%d, %d, %d, '%s')",
