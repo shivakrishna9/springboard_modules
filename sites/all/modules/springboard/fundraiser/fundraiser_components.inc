@@ -134,7 +134,7 @@ function fundraiser_recurring_master_order_overview(){
 	
 	if(empty($rows[1])){
 		//we're actually looking at the order id and not the master_order_id
-		$resource = db_query("select fundraiser_recurring.*, name  from fundraiser_recurring
+		$resource = db_query("select fundraiser_recurring.*, name, uc_orders.order_total  from fundraiser_recurring
 		inner join uc_orders on fundraiser_recurring.order_id=uc_orders.order_id
 		inner join users on users.uid=uc_orders.uid
 		where master_order_id=(select master_order_id from fundraiser_recurring where order_id=%d)
@@ -152,7 +152,7 @@ function fundraiser_recurring_master_order_overview(){
 		else {
 			$class = 'odd';
 		}
-		$rows[$i]['fee_amount'] = number_format($rows[$i]['fee_amount'],2,'.','');
+		$rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'],2,'.','');
 		if ($rows[$i]['gateway_resp'] == 'canceled') {
 			$next_charge = 'Canceled';
 		}
@@ -176,7 +176,7 @@ function fundraiser_recurring_master_order_overview(){
 
 function fundraiser_recurring_user_overview(){
 	
-	$resource = db_query("select master_order_id,fundraiser_recurring.order_id,fee_amount, next_charge,uid, gateway_resp
+	$resource = db_query("select master_order_id,fundraiser_recurring.order_id,uc_orders.order_total, next_charge,uid, gateway_resp
 		from {fundraiser_recurring}
 		inner join uc_orders on uc_orders.order_id=fundraiser_recurring.order_id
 		where uc_orders.uid=%d
@@ -211,7 +211,7 @@ function fundraiser_recurring_user_overview(){
 		$processed = $rows[$i]['gateway_resp'] == "success" ? "Yes" : "No";
 		$output.= "<tr class='$class'>
 		<td>".$rows[$i][order_id]."</td>
-		<td>".$rows[$i][fee_amount]."</td>
+		<td>".$rows[$i][order_total]."</td>
 		<td>$next_charge</td>
 		<td>$processed</td>
 		<td><a href='/user/".$rows[$i]['uid']."/recurring/edit/".$rows[$i][master_order_id]."'>Edit Payment Info</a></td>
@@ -462,8 +462,8 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
 
 function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
 	// get the amount of a pending donation because the older ones may be out of date
-	$donation_amount = db_result(db_query("select fee_amount from {fundraiser_recurring} 
-		where master_order_id = %d and gateway_resp is null limit 1", $master_order_id));
+	$donation_amount = db_result(db_query("select order_total from {uc_orders} 
+		where order_id = %d", $master_order_id));
 	
 	$form = array(
 		'#tree' => TRUE,
@@ -544,9 +544,6 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
 		uc_order_save($order);
 		uc_order_comment_save($order->order_id, $user->uid, "Donation amount changed from 
 			$old_amount to $amount by an administrator.", 'admin');
-		
-		// update fundraiser
-		db_query("UPDATE {fundraiser_recurring} SET fee_amount = %f WHERE order_id = %d", money_format('%i', $amount), $row->order_id);
 	}
 	
 	// call out to saleforce module if installed
