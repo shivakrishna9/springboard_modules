@@ -237,6 +237,8 @@ function process_batches($ids) {
 			$object = unserialize($item->data);
 			// give modules one last chance to modify the object before shipping it to salesforce
 			drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
+			// update the data field so we have an exact copy of what was sent
+			db_query("UPDATE {sf_batch_item} SET data = '%s' WHERE batch_id = %d AND oid = '%s' AND type = '%s'", serialize($object), $id, $item->oid, $item->type);
 			array_push($objects, $object);
 		}
 
