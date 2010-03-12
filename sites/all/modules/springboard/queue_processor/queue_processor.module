@@ -494,7 +494,7 @@ function create_batch($type, $fieldmap, $action) {
  * Marks a batch item as success for failure and sets the completed time
  */
 function log_batch_item_status($batch_id, $oid, $status) {
-	db_query("UPDATE {sf_batch_item} SET success = %d, date_processed = %d WHERE batch_id = %d AND $oid = '%s'", 
+	db_query("UPDATE {sf_batch_item} SET success = %d, date_processed = %d WHERE batch_id = %d AND oid = '%s'", 
 		$status, time(), $batch_id, $oid);
 }
 
