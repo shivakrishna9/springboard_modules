@@ -105,7 +105,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$cachedAccounts;
   }
 
