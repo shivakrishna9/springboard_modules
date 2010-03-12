@@ -206,12 +206,12 @@ function fundraiser_recurring_user_overview(){
 		else {
 			$class = 'odd';
 		}
-		$rows[$i]['fee_amount'] = number_format($rows[$i]['fee_amount'],2,'.','');
+
 		$next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
 		$processed = $rows[$i]['gateway_resp'] == "success" ? "Yes" : "No";
 		$output.= "<tr class='$class'>
 		<td>".$rows[$i][order_id]."</td>
-		<td>".$rows[$i][order_total]."</td>
+		<td>".number_format($rows[$i][order_total], 2, '.', '')."</td>
 		<td>$next_charge</td>
 		<td>$processed</td>
 		<td><a href='/user/".$rows[$i]['uid']."/recurring/edit/".$rows[$i][master_order_id]."'>Edit Payment Info</a></td>
