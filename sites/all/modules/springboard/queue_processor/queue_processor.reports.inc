@@ -54,27 +54,64 @@ function batch_history_report() {
  * Batch detail page
  */
 function batch_detail($id) {
+
+	$base = drupal_get_path('module', 'queue_processor');
+	drupal_add_js($base .'/queue_processor.js');
+	drupal_add_css($base .'/queue_processor.css');
+
 	//$output = 'Batch detail ' . $id . '<pre>';
 	$batch = load_batch($id);
-	//$output .= print_r($batch, true);
+	
 	//$output .= '</pre>';
+	$output = '<div id="batch-details">';
+	$output .= '<h2>Batch ' . $batch['id'] . '</h2>';
+	$output .= 'Action: ' . $batch['action'] . '<br/>';
+	$output .= 'Drupal Type: <span class="object-type">' . ucfirst($batch['type']) . '</span><br/>';
+	$output .= 'Salesforce Type: <span class="object-type">' . ucfirst($batch['salesforce_type']) . '</span><br/>';
+	$output .= '<h4>Items</h4>';
+	$output .= '</div>';
+
+	//$output .= '<pre>' . print_r($batch, true) . '</pre>';
 	
-	$output = '<h2>Batch #' . $batch['id'] . '</h2>';
-	$output .= '<h4>Type: ' . ucfirst($batch['type']) . '</h4>';
 	
-	$header = array('Drupal Id', 'Type', 'Success', 'Date Processed');
-	$items = array();
 	foreach($batch['items'] as $item) {
-		$items[] = array(
-			'oid' => $item->oid,
-			'type' => $item->type,
-			'success' => $item->success,
-			'date_processed' => $item->date_processed,
-		);
+		$rows = array();
+		$object = unserialize($item->data);
+		foreach($object as $field => $value) {
+			$rows[] = array(
+				'field' => $field,
+				'value' => $value,
+			);
+		}	
+		
+		asort($rows);
+		$retry = ($item->is_retry == 1) ? 'Yes' : 'No';
+		$success = ($item->success == 1) ? 'Yes' : 'No';
+		$output .= '<div id="batch-item-container">';
+		$output .= '<h5>' . ucfirst($batch['type']) . ' ' . $item->oid . '</h5>';
+		$output .= '<div class="batch-item">';
+		$output .= '<span>Success:</span>' . $success . '<br/>';
+		
+		if (!$item->success) {
+			$error = load_batch_error($batch['id'], $item->oid, $batch['type']);
+			$output .= '<div class="item-error">';
+			$output .= '<span>Error message:</span>' . $error->message . '<br/>';
+			$output .= '<span>Status code:</span>' . $error->status_code . '<br/>';
+			$output .= '<span>Fields:</span>' . $error->fields . '<br/>';
+			$output .= '</div>';
+		}
+		
+		$output .= '<span>Processed:</span>' . date('n/j/Y g:i:s a', $item->date_processed) . '<br/>';
+		$output .= '<span>Was retry:</span>' . $retry . '<br/>';
+		$output .= '<a href="#">Click for object details</a>';
+		$output .= '<div class="batch-item-fields">';
+		$output .= theme('table', array('Field', 'Value'), $rows);
+		$output .= '</div>';
+		$output .= '</div>';
+		$output .= '</div>';
+		//$output .= '</div>';
 	}
 	
-	$output .= '<h4>Items</h4>';
-	$output .= theme('table', $header, $items);
 	return $output;
 }
 
