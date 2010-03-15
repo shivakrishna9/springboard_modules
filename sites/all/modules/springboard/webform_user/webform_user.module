@@ -787,8 +787,14 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
  * Returns user that made the webform submission
  */
 function _webform_user_load_user_salesforce_ids($sid) {
-	$result = db_query("SELECT substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18) AS salesforce_account_id,
-		substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18) AS salesforce_contact_id FROM {users} u 
+	$result = db_query("SELECT
+		CASE WHEN instr(u.data, 'salesforce_account_id') THEN substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18) 
+		ELSE NULL
+		END AS salesforce_account_id,
+		CASE WHEN instr(u.data, 'salesforce_contact_id') THEN substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18)
+		ELSE NULL
+		END	AS salesforce_contact_id
+		FROM {users} u 
 		INNER JOIN {webform_submissions} w ON w.uid = u.uid WHERE w.sid = %d", (int) $sid);
 		
 	return db_fetch_object($result);
