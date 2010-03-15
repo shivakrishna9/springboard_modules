@@ -295,6 +295,7 @@ function capwiz_save_actions($capwiz_actions = NULL) {
   }
 
   if (!empty($capwiz_actions) && is_array($capwiz_actions)) {
+echo '<pre>' . print_r($capwiz_actions, 1) . '</pre>';
 
     // Store uids to avoid unnecessary db queries.
     $uids = array();
