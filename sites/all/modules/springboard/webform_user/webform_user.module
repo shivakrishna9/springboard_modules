@@ -270,7 +270,8 @@ function webform_user_webform_submit($form, &$form_state) {
       if ($account = user_load(array('mail' => $fields['mail']))) {
         // Update the existing user account.
         _webform_user_update_user_profile_fields($account->uid, $fields);
-
+				$sid = $form_state['values']['details']['sid'];
+        db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
         if ($node->authenticate_submitters) {
           // Log the user in.
           user_external_login($account);
@@ -294,7 +295,6 @@ function webform_user_webform_submit($form, &$form_state) {
         
         // Update the new user account.
         _webform_user_update_user_profile_fields($account->uid, $fields, TRUE);
-        
         // Update the submission record with the id of the new user
         $sid = $form_state['values']['details']['sid'];
         db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
@@ -395,6 +395,9 @@ function _webform_user_update_user_profile_fields($uid, $form_fields, $all = FAL
     db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field['fid'], $uid);
     db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field['fid'], $uid, $field['value']);
   }
+  
+  // Insert into queue
+  sf_queue_insert($uid, 'user', 'upsert');
 }
 
 function _webform_user_log_user_in($fields) {
