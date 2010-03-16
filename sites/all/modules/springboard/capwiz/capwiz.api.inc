@@ -226,7 +226,6 @@ class CapwizApi
     }
 
     $response = self::_callFunction('get_latest_people_plus', array(), TRUE, TRUE);
-echo 'response<pre>' . print_r($response, 1) . '</pre>';
 
     return self::_fetchObjects($response, 'people', 'person', 'accounts');
   }

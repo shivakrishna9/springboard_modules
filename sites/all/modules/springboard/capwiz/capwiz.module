@@ -105,12 +105,11 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
-echo '<pre>' . print_r($capwiz_accounts, 1) . '</pre>';
 
     $total_accounts = count($capwiz_accounts);
     for ($a = 0; $a < $total_accounts; $a++) {
@@ -182,7 +181,9 @@ function capwiz_add_account($capwiz_account = NULL) {
       $email_message_op = variable_get('capwiz_email_message', $email_message_options[variable_get('user_register', 1)]);
     }
 
+echo 'email_message_op<pre>' . print_r($email_message_op, 1) . '</pre>';
     if ($email_message_op != 'register_none') {
+echo 'drupal_account<pre>' . print_r($drupal_account, 1) . '</pre>';
       _user_mail_notify($email_message_op, $drupal_account);
     }
 
@@ -296,7 +297,6 @@ function capwiz_save_actions($capwiz_actions = NULL) {
   }
 
   if (!empty($capwiz_actions) && is_array($capwiz_actions)) {
-echo '<pre>' . print_r($capwiz_actions, 1) . '</pre>';
 
     // Store uids to avoid unnecessary db queries.
     $uids = array();
@@ -562,13 +562,15 @@ function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
     // hook_queue_preprocess_batch_alter() runs before the users
     // are saved in Salesforce and brought back down.
     $sf_fieldmap = _capwiz_sf_fieldmap();
-    $field = array_search('ContactId', $sf_fieldmap);
+    if (is_array($sf_fieldmap)) {
 
-    // Make sure the Salesforce Contact ID is actually mapped
-    // and is a Drupal user ID before we do anything.
-    if (property_exists($object, $field) && is_numeric($object->$field)) {
+      $field = array_search('ContactId', $sf_fieldmap);
 
-      $sf_info_sql = <<< SQL
+      // Make sure the Salesforce Contact ID is actually mapped
+      // and is a Drupal user ID before we do anything.
+      if (property_exists($object, $field) && is_numeric($object->$field)) {
+
+        $sf_info_sql = <<< SQL
 SELECT
   CASE
     WHEN INSTR(u.data, 'salesforce_contact_id') THEN 
@@ -587,9 +589,10 @@ WHERE
   u.uid = %d
 SQL;
 
-      $object->$field = db_result(db_query($sf_info_sql, $object->$field));
-    }
-	}
+        $object->$field = db_result(db_query($sf_info_sql, $object->$field));
+      }
+  	}
+  }
 }
 
 
