@@ -168,10 +168,12 @@ class CapwizApi
    *   The parent property in the response (e.g. 'actions', 'people')
    * @param string $child
    *   The child property in the response (e.g. 'action', 'person')
+   * @param string $static_property
+   *   The name of the static property to dump the objects into
    * @return array|bool
    *   An array of objects, FALSE on error
    */
-  private static function _fetchObjects($response, $parent, $child) {
+  private static function _fetchObjects($response, $parent, $child, $static_property) {
 
     if (!empty($response) && is_object($response) && property_exists($response, $parent)) {
 
@@ -181,10 +183,10 @@ class CapwizApi
         $objects = array($objects);
       }
 
-      $objects = array_merge(self::$$parent, $objects);
+      $objects = array_merge(self::$$static_property, $objects);
 
       if (!empty($objects)) {
-        self::$$parent = $objects;
+        self::$$static_property = $objects;
       }
 
       return $objects;
@@ -225,7 +227,7 @@ class CapwizApi
 
     $response = self::_callFunction('get_latest_people_plus', array(), TRUE, TRUE);
 
-    return self::_fetchObjects($response, 'people', 'person');
+    return self::_fetchObjects($response, 'people', 'person', 'accounts');
   }
 
 
@@ -247,7 +249,7 @@ class CapwizApi
 
     $response = self::_callFunction('get_latest_actions', array(), TRUE, TRUE);
 
-    return self::_fetchObjects($response, 'actions', 'action');
+    return self::_fetchObjects($response, 'actions', 'action', 'actions');
   }
 
 
