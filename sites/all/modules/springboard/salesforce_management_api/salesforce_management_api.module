@@ -724,22 +724,20 @@ function salesforce_management_api_fieldmap_control($rule, $fieldKey, $drupal = 
 		case 'blank':
 			// if SF object value is null then overwrite 
 			if ($data->$fieldKey == '') {
-				// TODO: Apply validation rule before returning the drupal value
 				return $drupal;
 			}
 			else {
-				return '';
+				return $data->$fieldKey;
 			}
 			break;
 
 		case 'append':
 			// append with the SF object value
-			return $data->$fieldKey . ' ' . $drupal; // TODO: Apply validation rule before returning drupal value
+			return $data->$fieldKey . ' ' . $drupal; 
 			break;
 
 		case 'always':
 			// always overwrite with the SF value with the drupal value
-			// TODO: Apply validation rule before returning the drupal value
 			return $drupal;
 			break;
 
