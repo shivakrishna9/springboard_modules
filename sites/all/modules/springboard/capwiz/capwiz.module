@@ -109,8 +109,8 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
-  if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
 echo '<pre>' . print_r($capwiz_accounts, 1) . '</pre>';
+  if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
 
     $total_accounts = count($capwiz_accounts);
     for ($a = 0; $a < $total_accounts; $a++) {
