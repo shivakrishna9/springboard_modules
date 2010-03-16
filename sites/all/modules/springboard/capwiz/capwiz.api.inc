@@ -181,10 +181,10 @@ class CapwizApi
         $objects = array($objects);
       }
 
-      $objects = array_merge(self::{$parent}, $objects);
+      $objects = array_merge(self::$parent, $objects);
 
       if (!empty($objects)) {
-        self::{$parent} = $objects;
+        self::$parent = $objects;
       }
 
       return $objects;
