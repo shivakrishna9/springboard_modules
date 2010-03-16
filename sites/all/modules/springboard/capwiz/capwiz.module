@@ -105,11 +105,10 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts(TRUE);
+    CapwizApi::fetchAccounts();
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
-#echo '<pre>' . print_r($capwiz_accounts, 1) . '</pre>';
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
 
     $total_accounts = count($capwiz_accounts);
@@ -120,7 +119,6 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
       if (!empty($capwiz_account->email_address) && !empty($capwiz_account->capwiz_id)) {
 
         $drupal_account = user_load(array('mail' => $capwiz_account->email_address));
-#echo '<pre>' . print_r($drupal_account, 1) . '</pre>';
 
         if (empty($drupal_account)) {
           capwiz_add_account($capwiz_account);
@@ -180,16 +178,11 @@ function capwiz_add_account($capwiz_account = NULL) {
     static $email_message_op;
     if (empty($email_message_op)) {
       $email_message_options = capwiz_get_email_message_options();
-echo 'email_message_options<pre>' . print_r($email_message_options, 1) . '</pre>';
       $email_message_op_code = (int)variable_get('capwiz_email_message', variable_get('user_register', 1));
-echo 'email_message_op_code<pre>' . print_r($email_message_op_code, 1) . '</pre>';
       $email_message_op      = $email_message_options[$email_message_op_code];
-echo 'email_message_op<pre>' . print_r($email_message_op, 1) . '</pre>';
     }
 
-echo 'email_message_op<pre>' . print_r($email_message_op, 1) . '</pre>';
     if ($email_message_op != 'register_none') {
-echo 'drupal_account<pre>' . print_r($drupal_account, 1) . '</pre>';
       _user_mail_notify($email_message_op, $drupal_account);
     }
 
