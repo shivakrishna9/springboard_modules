@@ -18,8 +18,8 @@ class CapwizApi
 
   private static $_authenticationArguments;
 
-  public static $cachedAccounts;
-  public static $cachedActions;
+  public static $accounts;
+  public static $actions;
 
   private static $_uninitialized = TRUE;
 
@@ -48,8 +48,8 @@ class CapwizApi
         $cache  = cache_get('capwiz');
         $cached = !empty($cache) && is_array($cache->data);
 
-        self::$cachedAccounts = $cached && isset($cache->data['accounts']) ? $cache->data['accounts'] : array();
-        self::$cachedActions  = $cached && isset($cache->data['actions'])  ? $cache->data['actions']  : array();
+        self::$accounts = $cached && isset($cache->data['accounts']) ? $cache->data['accounts'] : array();
+        self::$actions  = $cached && isset($cache->data['actions'])  ? $cache->data['actions']  : array();
 
         // Register a shutdown function to cache any unsaved Capwiz data.
         register_shutdown_function(array('CapwizApi', 'saveCache'));
@@ -159,6 +159,42 @@ class CapwizApi
   }
 
 
+  /**
+   * Helper method: Fetch a Capwiz object.
+   * 
+   * @param StdClass $response
+   *   The response of a Capwiz API call
+   * @param string $parent
+   *   The parent property in the response (e.g. 'actions', 'people')
+   * @param string $child
+   *   The child property in the response (e.g. 'action', 'person')
+   * @return array|bool
+   *   An array of objects, FALSE on error
+   */
+  private static function _fetchObjects($response, $parent, $child) {
+
+    if (!empty($response) && is_object($response) && property_exists($response, $parent)) {
+
+      $objects = is_object($response->$parent) && property_exists($response->$parent, $child) ? $response->$parent->$child : array();
+      
+      if (is_object($objects)) {
+        $objects = array($objects);
+      }
+
+      $objects = array_merge(self::{$parent}, $objects);
+
+      if (!empty($objects)) {
+        self::{$parent} = $objects;
+      }
+
+      return $objects;
+    }
+
+    return FALSE;
+  }
+
+
+
   /*********************\
   ** Public-facing API **
   \*********************/
@@ -179,6 +215,7 @@ class CapwizApi
    *   Returns FALSE if accounts could not be retrieved
    *
    * @see _callFunction()
+   * @see _fetchObjects()
    */
   public static function fetchAccounts($get_all_accounts = FALSE) {
 
@@ -188,19 +225,7 @@ class CapwizApi
 
     $response = self::_callFunction('get_latest_people_plus', array(), TRUE, TRUE);
 
-    if (!empty($response) && is_object($response) && property_exists($response, 'people')) {
-
-      $accounts = is_object($response->people) && property_exists($response->people, 'person') ? (array)$response->people->person : array();
-      $accounts = array_merge(self::$cachedAccounts, $accounts);
-
-      if (!empty($accounts)) {
-        self::$cachedAccounts = $accounts;
-      }
-
-      return $accounts;
-    }
-
-    return FALSE;
+    return self::_fetchObjects($response, 'people', 'person');
   }
 
 
@@ -216,24 +241,13 @@ class CapwizApi
    *   Returns FALSE if actions could not be retrieved
    *
    * @see _callFunction()
+   * @see _fetchObjects()
    */
   public static function fetchActions() {
 
     $response = self::_callFunction('get_latest_actions', array(), TRUE, TRUE);
 
-    if (!empty($response) && is_object($response) && property_exists($response, 'actions')) {
-
-      $actions = is_object($response->actions) && property_exists($response->actions, 'action') ? (array)$response->actions->action : array();
-      $actions = array_merge(self::$cachedActions, $actions);
-
-      if (!empty($actions)) {
-        self::$cachedActions = $actions;
-      }
-
-      return $actions;
-    }
-
-    return FALSE;
+    return self::_fetchObjects($response, 'actions', 'action');
   }
 
 
@@ -311,13 +325,13 @@ class CapwizApi
 
     $data = array();
 
-    if (!empty(self::$cachedAccounts)) {
-      $data['accounts'] = self::$cachedAccounts;
+    if (!empty(self::$accounts)) {
+      $data['accounts'] = self::$accounts;
       self::_logCacheMessage(count($data['accounts']), 'accounts');
     }
 
-    if (!empty(self::$cachedActions)) {
-      $data['actions'] = self::$cachedActions;
+    if (!empty(self::$actions)) {
+      $data['actions'] = self::$actions;
       self::_logCacheMessage(count($data['actions']), 'actions');
     }
 
