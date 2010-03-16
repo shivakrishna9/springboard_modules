@@ -106,7 +106,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
     require_once 'capwiz.api.inc';
 
     CapwizApi::fetchAccounts();
-    $capwiz_accounts = &CapwizApi::$cachedAccounts;
+    $capwiz_accounts = &CapwizApi::$accounts;
   }
 
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
@@ -292,7 +292,7 @@ function capwiz_save_actions($capwiz_actions = NULL) {
     require_once 'capwiz.api.inc';
 
     CapwizApi::fetchActions();
-    $capwiz_actions = &CapwizApi::$cachedActions;
+    $capwiz_actions = &CapwizApi::$actions;
   }
 
   if (!empty($capwiz_actions) && is_array($capwiz_actions)) {
