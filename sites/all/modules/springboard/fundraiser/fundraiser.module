@@ -1137,6 +1137,13 @@ function _save_profile_map($uid, &$map) {
 		}
 		// update last_updated date so user will be re-synced on next cron run
 		user_save($user_to_update, array('last_updated' => time()));
+		
+		// insert user back into queue
+		$action = 'update';
+		if (empty($user_to_update->salesforce_contact_id)) {
+			$action = 'upsert';
+		}
+		sf_queue_insert($user_to_update->uid, 'user', $action);
 	}
 }
 
