@@ -110,6 +110,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   }
 
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
+echo '<pre>' . print_r($capwiz_accounts, 1) . '</pre>';
 
     $total_accounts = count($capwiz_accounts);
     for ($a = 0; $a < $total_accounts; $a++) {
