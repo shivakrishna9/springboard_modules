@@ -87,19 +87,20 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
 		switch ($batch['action']) {
 			
 			case 'upsert':
+			case 'update':
 				// create an array of ids for the newly exported users
-				$new_sfids = array();
+				$sfids = array();
 
 				for ($i = 0; $i < $item_count; $i++) {
-					if ($responses[$i]->created) {
-						$new_sfids[$responses[$i]->id] = $batch['items'][$i]->oid;
+					if ($responses[$i]->success) {
+						$sfids[$responses[$i]->id] = $batch['items'][$i]->oid;
 					}
 				}
 
-				watchdog('salesforce user', t('Importing !count new user records', array('!count' => count($new_sfids))), NULL, WATCHDOG_INFO);
+				watchdog('salesforce user', t('Importing !count user records', array('!count' => count($sfids))), NULL, WATCHDOG_INFO);
 				
-				// import the new users
-				import_user_updates($new_sfids, $batch['fieldmap']);
+				// import the users
+				import_user_updates($sfids, $batch['fieldmap']);
 				break;
 				
 			case 'delete':
@@ -128,8 +129,7 @@ function import_user_updates($sfids, $fieldmap) {
 				$objects = _normalize_salesforce_response($sf->retrieve(array_keys($sfids), $fieldmap, $extra_fields)); // grab all salesforce objects in the batch
 			}
 			catch (Exception $e) {
-				drupal_set_message(print_r($e, true));
-				// TODO: LOG ERROR MOVE RECORDS TO A PLACE WHERE THEY CAN BE IMPORTED LATER
+				watchdog('salesforce user', t('Failed to retrieve objects from Salesforce. Drupal users will not be updated.'), NULL, WATCHDOG_CRITICAL);
 			}	
 			// load the fieldmap data.
 			$map = salesforce_management_api_fieldmap_load($fieldmap);
@@ -153,8 +153,8 @@ function import_user_updates($sfids, $fieldmap) {
 			}
 		}
 		else {
-			// TODO: LOG ERROR. MOVE RECORDS TO A PLACE WHERE THEY CAN BE IMPORTED LATER
-			
+			watchdog('salesforce user', t('Failed to connect to Salesforce. Drupal users will not be updated.'), NULL, WATCHDOG_CRITICAL);
+			// TODO: MOVE RECORDS TO A PLACE WHERE THEY CAN BE IMPORTED LATER
 		}
 	}
 }
@@ -196,6 +196,7 @@ function update_user_values(&$user, &$object, &$extra_data, $map, $drupal, $sale
         }
       }
     }
+
 		// save the user object
 		if (!empty($extra_data)) {
     	user_save($user, $extra_data);
@@ -384,20 +385,6 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 			else {
 				sf_queue_delete($account->uid, 'user'); 
 			}
-			/*
-			
-			salesforce_management_api_id_delete('user', $account->uid);
-		
-			if ($account->salesforce_contact_id) {
-				$sf = salesforce_management_api_connect();
-				try {
-					$sf->client->delete(array($account->salesforce_contact_id));
-				}
-				catch (Exception $e) {
-					// TODO: LOG UNABLE TO DELETE IN SALESFORCE
-				}
-			}
-			*/
     	break;					
   }
 }
