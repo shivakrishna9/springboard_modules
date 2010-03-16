@@ -140,6 +140,7 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       		$node->authenticate_submitters = $webform_user['authenticate_submitters'];
       		$node->related_object = $webform_user['related_object'];
       		$node->foreign_key_field = $webform_user['foreign_key_field'];
+      		$node->send_new_user_email = $webform_user['send_new_user_email'];
       	}
 
         // If the user is authenticated, populate the webform fields with values
@@ -161,11 +162,13 @@ function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
   if ($form['#node']->nid) {
     $is_webform_user = $form['#node']->is_webform_user;
     $authenticate_submitters = $form['#node']->authenticate_submitters;
+    $send_new_user_email = $form['#node']->send_new_user_email;
     $related_object = $form['#node']->related_object ? $form['#node']->related_object : 'none';
   }
   else {
     $is_webform_user = 0;
     $authenticate_submitters = 0;
+    $send_new_user_email = 0;
     $related_object = 'none';
   }
 
@@ -204,6 +207,13 @@ function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
     '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
     '#type' => 'checkbox',
     '#default_value' => $authenticate_submitters,
+  );
+  
+  $form['webform_user']['send_new_user_email'] = array(
+  	'#title' => t('Send new users a e-mail with their account details.'),
+  	'#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
+  	'#type' => 'checkbox',
+  	'#default_value' => $send_new_user_email,
   );
 }
 
@@ -306,7 +316,9 @@ function webform_user_webform_submit($form, &$form_state) {
         }
         
         // Send the e-mail through the user module.
-        //drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
+        if ($node->send_new_user_email) {
+        	drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
+        }
       }
     }
   }
@@ -482,45 +494,27 @@ function _webform_user_set_values(&$node) {
   $is_webform_user = $node->is_webform_user ? 1 : 0;
   $authenticate_submitters = $node->authenticate_submitters ? 1 : 0;
   $related_object = $node->related_object ? $node->related_object : 'none';
+	$send_new_user_email = $node->send_new_user_email ? 1 : 0;
 
 	$exists = db_result(db_query("SELECT count(*) FROM {webform_user} WHERE nid = %d", $node->nid));
 
 	if (!$exists && $is_webform_user) {
 	  db_query(
-	    "INSERT INTO {webform_user} (nid, is_webform_user, authenticate_submitters, related_object)
-	     VALUES (%d, %d, %d, '%s')",
-	    $node->nid, $is_webform_user, $authenticate_submitters, $related_object
+	    "INSERT INTO {webform_user} (nid, is_webform_user, authenticate_submitters, related_object, send_new_user_email)
+	     VALUES (%d, %d, %d, '%s', %d)",
+	    $node->nid, $is_webform_user, $authenticate_submitters, $related_object, $send_new_user_email
 	  );
 	}
   else {
   	db_query(
 	    "UPDATE {webform_user}
-	     SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s'
+	     SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s', send_new_user_email = %d
 	     WHERE nid = %d",
-	    $is_webform_user, $authenticate_submitters, $related_object, $node->nid
+	    $is_webform_user, $authenticate_submitters, $related_object, $send_new_user_email, $node->nid
 	  );
   }
 }
 
-/**
- * Updates the values of the is_webform_user and authenticate_submitters checkboxes
- * when the selected node is updated.
- *
- * @param $node
- *   An object representation of the selected node.
- */
-function _webform_user_update_values(&$node) {
-  $is_webform_user = $node->is_webform_user ? 1 : 0;
-  $authenticate_submitters = $node->authenticate_submitters ? 1 : 0;
-	$related_object = $node->related_object ? $node->related_object : 'none';
-
-  db_query(
-    "UPDATE {webform_user}
-     SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s'
-     WHERE nid = %d",
-    $is_webform_user, $authenticate_submitters, $related_object, $node->nid
-  );
-}
 
 /**
  * Deletes the values of the is_webform_user and authenticate_submitters checkboxes

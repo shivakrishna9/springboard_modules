@@ -48,6 +48,12 @@ function webform_user_schema() {
 	      'length' => '100',
 	      'not null' => FALSE,
 	    ),
+	    'send_new_user_email' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
 	  ),
 	  'primary key' => array('nid'),
 	  'indexes' => array(
@@ -55,4 +61,16 @@ function webform_user_schema() {
 	  ),
 	);
   return $schema;
+}
+
+/**
+ * Update 6101: Add send_new_user_email field
+ */
+function webform_user_update_6101() {
+
+  $updates = array();
+
+  db_add_field($updates, 'webform_user', 'send_new_user_email', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
+  return $updates;
+  
 }
