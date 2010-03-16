@@ -181,8 +181,8 @@ function capwiz_add_account($capwiz_account = NULL) {
     if (empty($email_message_op)) {
       $email_message_options = capwiz_get_email_message_options();
 echo 'email_message_options<pre>' . print_r($email_message_options, 1) . '</pre>';
-      $email_message_op_code = variable_get('capwiz_email_message', variable_get('user_register', 1));
-echo 'email_message_op_code<pre>' . print_r((int)$email_message_op_code, 1) . '</pre>';
+      $email_message_op_code = (int)variable_get('capwiz_email_message', variable_get('user_register', 1));
+echo 'email_message_op_code<pre>' . print_r($email_message_op_code, 1) . '</pre>';
       $email_message_op      = $email_message_options[$email_message_op_code];
 echo 'email_message_op<pre>' . print_r($email_message_op, 1) . '</pre>';
     }
