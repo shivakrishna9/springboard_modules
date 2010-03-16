@@ -120,7 +120,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
       if (!empty($capwiz_account->email_address) && !empty($capwiz_account->capwiz_id)) {
 
         $drupal_account = user_load(array('mail' => $capwiz_account->email_address));
-echo '<pre>' . print_r($drupal_account, 1) . '</pre>';
+#echo '<pre>' . print_r($drupal_account, 1) . '</pre>';
 
         if (empty($drupal_account)) {
           capwiz_add_account($capwiz_account);
