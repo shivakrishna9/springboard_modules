@@ -7,51 +7,51 @@
  */
 function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 	
-	if($node->type == 'webform'){
-		$parts = explode("/",$_GET['q']);
-		
-		if($parts[0]=='node' && $parts[2]=='edit' && $parts[3] == 'mapping' && $op == 'load'){
-			$result = db_query("select cid,map_id from fundraiser_component_map where nid=$node->nid");
-			while($row=db_fetch_array($result)){
-				$map['map'][$row['cid']] = $row['map_id'];
-			}
-			return $map;
-		}
-		else{
+	if ($node->type == 'webform') {
+
+		switch ($op) {
+			case 'insert':
+		  	fundraiser_node_insert($node);
+				break;
+		     
+			case 'load':
+				$array = fundraiser_node_load($node->nid);
+				$node->is_donation_form = $array['is_donation_form'];
+				$node->donation_amounts = $array['donation_amounts'];
+				$node->show_other_amount = $array['show_other_amount'];
+				$node->minimum_donation_amount = $array['minimum_donation_amount'];
+				$node->gateway = $array['gateway'];
+				$node->confirmation_email_from_name = $array['confirmation_email_from_name'];
+				$node->confirmation_email_from_email = $array['confirmation_email_from_email'];
+				$node->confirmation_email_message = $array['confirmation_email_message'];
+				$node->confirmation_email_subject = $array['confirmation_email_subject'];
+				$node->internal_name = $array['internal_name'];
+				
+				// if we're on the mapping tab, load up the map too
+				if (arg(0) == 'node' && arg(2) == 'edit' && arg(3) == 'mapping') {
+					$result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
+					while($row = db_fetch_array($result)){
+						$map[$row['cid']] = $row['map_id'];
+					}
+					$node->map = $map;
+				}
+				break;
 			
-			switch ($op) {
-				case 'insert':
-			  	fundraiser_node_insert($node);
-					break;
-			     
-				case 'load':
-					$array = fundraiser_node_load($node->nid);
-					$node->is_donation_form = $array['is_donation_form'];
-					$node->donation_amounts = $array['donation_amounts'];
-					$node->show_other_amount = $array['show_other_amount'];
-					$node->minimum_donation_amount = $array['minimum_donation_amount'];
-					$node->gateway = $array['gateway'];
-					$node->confirmation_email_from_name = $array['confirmation_email_from_name'];
-					$node->confirmation_email_from_email = $array['confirmation_email_from_email'];
-					$node->confirmation_email_message = $array['confirmation_email_message'];
-					$node->confirmation_email_subject = $array['confirmation_email_subject'];
-					$node->internal_name = $array['internal_name'];
-					break;
-				
-				case 'update':
-					fundraiser_node_update($node);
-					break;
-				
-				case 'delete':
-					fundraiser_node_delete($node->nid);
-				
-			}
+			case 'update':
+				fundraiser_node_update($node);
+				break;
+			
+			case 'delete':
+				fundraiser_node_delete($node->nid);
+				break;	
 		}
+
 	}
-	if($node->type =='page'){
-		switch ($op){
+	
+	if ($node->type =='page') {
+		switch ($op) {
 			case 'view':				
-				if(isset($_GET['sid']) && is_numeric($_GET['sid'])){
+				if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
 					
 					global $user;
 					$sql = "select max(order_id) as order_id
@@ -65,9 +65,7 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 					$node->content['body']['#value'] = token_replace($node->content['body']['#value'], $type = 'order', $order,
 	                $leading = '[', $trailing = ']');
 				}
-				
 				break;
-				
 		}
 	}
 
