@@ -14,8 +14,8 @@ function sf_webform_menu() {
 	  'title' => 'Salesforce map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_webform_mapping_form', 1),
-		'access callback' => 'user_access',
-    'access arguments' => array('Map webform submissions to Salesforce objects'),
+		'access callback' => 'sf_webform_mapping_access',
+		'access arguments' => array(1),
     'weight' => 36,
     'type' => MENU_LOCAL_TASK,
 	);
@@ -44,6 +44,13 @@ function sf_webform_menu() {
   );
 
 	return $items;
+}
+
+/** 
+ * Determines if the 'Salesforce map' tab should be displayed on a webform
+ */
+function sf_webform_mapping_access($node) {
+	return !$node->is_donation_form && user_access('Map webform submissions to Salesforce objects');
 }
 
 /**
