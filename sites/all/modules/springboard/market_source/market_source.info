@@ -1,5 +1,5 @@
 ; $Id$
 name = Market Source
 description = Provides a way to track which campaigns and market sources drive users to the site.
-project = Salesforce Integration
+package = Jackson River SpringBoard
 core = 6.x

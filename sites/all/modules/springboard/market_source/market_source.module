@@ -61,7 +61,7 @@ function market_source_boot() {
     $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
   }
 
-  if (isset($_COOKIE['market_source_cid']) && $_COOKIE['market_source_cid'] != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $_COOKIE['market_source_cid']) && strlen($_COOKIE['market_source_cid']) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+  if (isset($_COOKIE['market_source_cid']) && market_source_is_valid_cid($_COOKIE['market_source_cid'])) {
     $_SESSION['cid'] = $_COOKIE['market_source_cid'];
     $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
   }
@@ -79,7 +79,7 @@ function market_source_boot() {
       continue;
     }
 
-    if (strtolower($key) == 'cid' && $val != '' && preg_match('/^[a-zA-Z0-9_+-]+$/', $val) && strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+    if (strtolower($key) == 'cid' && market_source_is_valid_cid($val)) {
       $_SESSION['cid'] = $val;
       $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
       continue;
@@ -94,6 +94,32 @@ function market_source_boot() {
   if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     $_SESSION['referrer'] = isset($_SERVER['HTTP_REFERER']) ? substr($_SERVER['HTTP_REFERER'], 0, MARKET_SOURCE_REFERRER_MAX_LENGTH) : '';
   }
+}
+
+/** 
+ * Function to make sure a campaign id is valid
+ */
+function market_source_is_valid_cid($val) {
+	
+	// make sure value is not empty
+	if ($val == '') { 
+		return false; 
+	}
+	
+	// make sure it only contains valid characters
+	if (!preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) 
+	{ 
+		return false; 
+	}
+	
+	// make sure it doesn't exceed max length
+	if (strlen($val) > MARKET_SOURCE_CID_MAX_LENGTH) { 
+		return false; 
+	}
+	
+	// made it this far, good to go
+	return true;
+	
 }
 
 /**
@@ -188,7 +214,21 @@ function market_source_get_ms() {
  *   The referring campaign ID. If not set, returns a blank string.
  */
 function market_source_get_cid() {
-  return isset($_SESSION['cid']) ? $_SESSION['cid'] : '';
+
+  if (isset($_SESSION['cid'])) {
+		// save SF for last, since it is most intensive
+		$validate_salesforce = variable_get('market_source_validate_sf_campaigns', 0);
+		if ($validate_salesforce) {
+			$campaigns = salesforce_management_api_get_campaigns();
+			return array_key_exists($_SESSION['cid'], $campaigns) ? $_SESSION['cid'] : '';
+		} 
+		else {
+			return $_SESSION['cid'];
+		} 
+  }
+  else {
+  	return '';
+  }
 }
 
 /**
