@@ -1011,6 +1011,34 @@ function salesforce_management_api_get_object_recordtypes($object) {
 	return $types;
 }
 
+/**
+ * Returns all campaigns defined in Salesforce. The campaigns are cached for 24 hours.
+ */
+function salesforce_management_api_get_campaigns() {
+
+	$cid = 'salesforce_campaigns';
+	
+	$campaigns = cache_get($cid);
+	if ($campaigns) {
+		return $campaigns->data;
+	}	
+	
+	$sf = salesforce_management_api_connect();
+	$campaigns = array();
+	// only continue if we got a valid connection
+	if ($sf) {
+		$results = $sf->client->query("select Id, Name from Campaign Order By Name");
+		if (count($results->records)) {
+			foreach($results->records as $campaign) {
+				$campaigns[$campaign->Id] = $campaign->Name;
+			}
+		}
+	}
+
+	cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
+	return $campaigns->data;
+}
+
 function salesforce_management_api_map_record_form_submit($form, &$form_state) {
   $drupal_roles = user_roles();
   $record_type = array();
