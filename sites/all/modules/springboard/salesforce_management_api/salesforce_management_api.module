@@ -20,6 +20,7 @@ define('SALESFORCE_DIR_WSDL', SALESFORCE_DIR .'/wsdl');
 // Define Drupal paths for various parts of the Salesforce UI.
 define('SALESFORCE_PATH_ADMIN', 'admin/settings/salesforce-management');
 define('SALESFORCE_PATH_FIELDMAPS', 'admin/settings/salesforce-management/fieldmap');
+define('SALESFORCE_PATH_UPDATE_WSDL', 'admin/settings/salesforce-management/update-wsdl');
 define('SALESFORCE_PATH_DEMO', 'admin/settings/salesforce-management/demo');
 
 // Define field importing requirements.
@@ -85,6 +86,19 @@ function salesforce_management_api_menu() {
     
   );
   */
+  
+  // Add tab for WSDL upload
+  $items[SALESFORCE_PATH_UPDATE_WSDL] = array(
+    'title' => 'Update WSDL',
+    'description' => 'Upload a new WSDL XML file',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_management_api_update_wsdl_form'),
+    'access arguments' => array('administer salesforce management'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'salesforce_management_api.admin.inc',
+  );
+
+  
   
   $items[SALESFORCE_PATH_ADMIN .'/demo'] = array(
     'title' => 'Test/Demo',

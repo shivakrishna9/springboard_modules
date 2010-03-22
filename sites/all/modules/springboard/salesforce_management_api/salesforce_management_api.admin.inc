@@ -700,6 +700,104 @@ function salesforce_management_api_fieldmap_dedupe_form_submit($form, &$form_sta
   db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = '%s' WHERE fieldmap = %d", $dedupe_key, $fieldmap);
 }
 
+
+/**
+ * Show form for admin to upload a new WSDL file
+ */
+function salesforce_management_api_update_wsdl_form() {
+  $form = array();
+  
+  // Need to set the form type so file upload will work
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  
+  $form['salesforce_management_api_wsdl_file'] = array(
+    '#type' => 'file',
+    '#title' => t('WSDL File'),
+    '#description' => t('Select the new enterprise.wsdl.xml'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Upload WSDL'),
+  );
+  
+  return $form;
+}
+
+
+/**
+ * Validate the WSDL file upload - check upload error code and file extension
+ */
+function salesforce_management_api_update_wsdl_form_validate($form, &$form_state) {
+  $source = 'salesforce_management_api_wsdl_file';
+  if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
+    // Check for file upload errors and return FALSE if a
+    // lower level system error occurred.
+    switch ($_FILES['files']['error'][$source]) {
+      // @see http://php.net/manual/en/features.file-upload.errors.php
+      case UPLOAD_ERR_OK:
+        break;
+
+      case UPLOAD_ERR_INI_SIZE:
+      case UPLOAD_ERR_FORM_SIZE:
+        drupal_set_message(t('The file %file could not be saved, because it exceeds %maxsize, the maximum allowed size for uploads.', array('%file' => $source, '%maxsize' => format_size(file_upload_max_size()))), 'error');
+        return 0;
+
+      case UPLOAD_ERR_PARTIAL:
+      case UPLOAD_ERR_NO_FILE:
+        drupal_set_message(t('The file %file could not be saved, because the upload did not complete.', array('%file' => $source)), 'error');
+        return 0;
+
+        // Unknown error
+      default:
+        drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
+        return 0;
+    }
+    
+    // Check the file extension
+    $pathParts = pathinfo($_FILES['files']['name'][$source]);
+    if(!in_array($pathParts['extension'], array('xml', 'wsdl'))) {
+      form_set_error($source, t('File upload error. Invalid file extension - please upload an XML file.'));
+      return 0;
+    }
+  }
+}
+
+/**
+ * Process form when an admin uploads a WSDL file.
+ * This function SHOULD use file_save_upload(), but unfortunately, that function calls 
+ * file_create_path() which calls file_check_location() - which fails on any destination 
+ * dir that isn't in the default file upload dir. And since the enterprise.wsdl.xml file 
+ * needs to go into a sub-dir in the module directory, that won't do.
+ */
+function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) {
+  // Find the dir the file should go into
+  $dir = dirname(__FILE__) . '/toolkit/soapclient/';
+
+  // Upload file path
+  $file = $dir . 'enterprise.wsdl.xml';
+
+  // Array key for the file element
+  $source = 'salesforce_management_api_wsdl_file';
+  
+  // Make sure the directory is writeable
+  if( file_check_directory( $dir ) ) {  
+    // Try to move the uploaded file into the right place
+    if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
+         form_set_error($source, t('File upload error. Could not move uploaded file.'));
+         watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
+         return 0;
+    }
+    else {
+      drupal_set_message('The WSDL file has been successfully uploaded');
+    }
+  } 
+  else {
+    drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.', 'status') );
+    return 0;
+  }
+}
+
 /******************************************************************************
  * AHAH FUNCTIONS
  ******************************************************************************/
