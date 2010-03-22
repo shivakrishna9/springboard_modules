@@ -713,7 +713,7 @@ function salesforce_management_api_update_wsdl_form() {
   $form['salesforce_management_api_wsdl_file'] = array(
     '#type' => 'file',
     '#title' => t('WSDL File'),
-    '#description' => t('Select the new enterprise.wsdl.xml'),
+    '#description' => t('Upload the new WSDL definition file. The name of the file is irrelevent, but it must end with an XML or WSDL extension.'),
   );
 
   $form['submit'] = array(
@@ -756,8 +756,8 @@ function salesforce_management_api_update_wsdl_form_validate($form, &$form_state
     
     // Check the file extension
     $pathParts = pathinfo($_FILES['files']['name'][$source]);
-    if(!in_array($pathParts['extension'], array('xml', 'wsdl'))) {
-      form_set_error($source, t('File upload error. Invalid file extension - please upload an XML file.'));
+    if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
+      form_set_error($source, t('File upload error: invalid file extension. Please upload a file with an XML or WSDL  extension.'));
       return 0;
     }
   }
