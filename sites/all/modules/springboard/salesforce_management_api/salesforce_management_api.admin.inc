@@ -807,6 +807,7 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
   } 
   else {
     drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
+    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
     return 0;
   }
 }
