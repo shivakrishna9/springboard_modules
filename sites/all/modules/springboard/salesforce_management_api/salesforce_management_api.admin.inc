@@ -790,10 +790,23 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
     }
     else {
       drupal_set_message('The WSDL file has been successfully uploaded');
+      
+      // Clear the cache
+      drupal_flush_all_caches();
+      
+      // Clear WSDL files from tmp directory
+      $tmpDir = file_directory_temp();
+      // Make sure the tmp dir exists and isn't the root, just to be safe
+      if(is_dir($tmpDir) && $tmpDir != '/') {
+        $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
+        $execOutput = exec($cmd);
+      }
+      
+      drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
     }
   } 
   else {
-    drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.', 'status') );
+    drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
     return 0;
   }
 }
