@@ -104,7 +104,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts(TRUE);
+    CapwizApi::fetchAccounts();
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
@@ -556,44 +556,13 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
       }
     }
   }
-  elseif ($batch['type'] == 'user' && in_array($batch['action'], array('insert', 'update', 'upsert'))) {
-
-    foreach($batch['records'] as &$record) {
-
-      $sf_fieldmap = _capwiz_sf_fieldmap($batch['fieldmap']);
-      if (!empty($sf_fieldmap)) {
-
-        $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_actions} WHERE event_id = %d', $record->oid));
-        if (!empty($capwiz_action)) {
-
-          $sf_object = new StdClass();
-          foreach ($sf_fieldmap as $sf_field => $drupal_field) {
-
-            switch ($drupal_field) {
-
-              // Store the Drupal user's ID in the Salesforce Contact ID field *temporarily*.
-              // The real Salesforce Contact ID will be retrieved in hook_queue_batch_item_alter(),
-              // because we have to wait until the Drupal users are sent to Salesforce and brought
-              // back down. Otherwise, there is no Salesforce Contact ID to retrieve.
-              case 'ContactId':
-                $sf_object->$sf_field = $capwiz_action->uid;
-                break;
-
-              default:
-                $sf_object->$sf_field = $capwiz_action->$drupal_field;
-            }
-          }
-
-          $record->object = $sf_object;
-        }
-      }
-    }
-  }
 }
 
 
 /**
  * Implementation of queue_batch_item_alter().
+ * 
+ * @todo Make CapWiz ID not the assumed Salesforce property.
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
 
@@ -638,6 +607,15 @@ SQL;
   	else {
   	  watchdog('capwiz', 'Could not load the Salesforce fieldmap');
   	}
+  }
+  elseif ($oid > 430 && $type == 'user' && in_array($action, array('insert', 'update', 'upsert'))) {
+    
+    $sf_info_sql = 'SELECT data FROM {users} WHERE uid = %d';
+    $data = unserialize(db_result(db_query($sf_info_sql, $oid)));
+
+    if (!empty($data) && array_key_exists('capwiz_id', $data)) {
+      $object->CapWiz_ID__c = $data['capwiz_id'];
+    }
   }
 }
 
