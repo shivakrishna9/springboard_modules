@@ -1,5 +1,3 @@
-; $Id$
-
 name = Capwiz
 description = Provides integration with the Capwiz service
 package = Jackson River SpringBoard

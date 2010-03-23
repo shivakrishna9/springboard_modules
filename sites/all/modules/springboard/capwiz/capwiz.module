@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file capwiz.module
@@ -105,7 +104,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
@@ -281,29 +280,40 @@ $custom_fields = $capwiz_account->custom_fields;
 /**
  * Save Capwiz advocacy actions.
  *
- * @param array $capwiz_actions (options)
+ * @param array $capwiz_actions_all (optional)
  *   An array of StdClass instances, if not provided,
  *   actions are fetched via the Capwiz API
  * @return void
  */
-function capwiz_save_actions($capwiz_actions = NULL) {
+function capwiz_save_actions($capwiz_actions_all = NULL) {
 
-  if (is_null($capwiz_actions)) {
+  if (is_null($capwiz_actions_all)) {
     require_once 'capwiz.api.inc';
 
     CapwizApi::fetchActions();
-    $capwiz_actions = &CapwizApi::$actions;
+    $capwiz_actions_all = &CapwizApi::$actions;
   }
 
-  if (!empty($capwiz_actions) && is_array($capwiz_actions)) {
+  if (!empty($capwiz_actions_all) && is_array($capwiz_actions_all)) {
+
+    // Log only one action per user/alert pair.
+    $capwiz_actions = array();
+    $alerts_to_log  = array();
+
+    foreach ($capwiz_actions_all as $key => $capwiz_action) {
+      if (empty($alerts_to_log[$capwiz_action->capwiz_id][$capwiz_action->alert_id])) {
+        $capwiz_actions[$key] = $capwiz_action;
+        $alerts_to_log[$capwiz_action->capwiz_id][$capwiz_action->alert_id] = TRUE;
+      }
+      else {
+        unset($capwiz_actions_all[$key]);
+      }
+    }
 
     // Store uids to avoid unnecessary db queries.
     $uids = array();
 
-    $total_actions = count($capwiz_actions);
-    for ($a = 0; $a < $total_actions; $a++) {
-
-      $capwiz_action = $capwiz_actions[$a];
+    foreach ($capwiz_actions as $key => $capwiz_action) {
 
       $uid = &$uids[$capwiz_action->email_address];
       if (empty($uid)) {
@@ -328,7 +338,7 @@ function capwiz_save_actions($capwiz_actions = NULL) {
         sf_queue_insert($capwiz_action->event_id, 'capwiz_action', 'upsert');
       }
 
-      unset($capwiz_actions[$a]);
+      unset($capwiz_actions_all[$key]);
     }
   }
 }
@@ -514,6 +524,39 @@ function capwiz_queue_fieldmap_assignment_alter(&$data) {
 function capwiz_queue_preprocess_batch_alter(&$batch) {
 
   if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'upsert') {
+
+    foreach($batch['records'] as &$record) {
+
+      $sf_fieldmap = _capwiz_sf_fieldmap($batch['fieldmap']);
+      if (!empty($sf_fieldmap)) {
+
+        $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_actions} WHERE event_id = %d', $record->oid));
+        if (!empty($capwiz_action)) {
+
+          $sf_object = new StdClass();
+          foreach ($sf_fieldmap as $sf_field => $drupal_field) {
+
+            switch ($drupal_field) {
+
+              // Store the Drupal user's ID in the Salesforce Contact ID field *temporarily*.
+              // The real Salesforce Contact ID will be retrieved in hook_queue_batch_item_alter(),
+              // because we have to wait until the Drupal users are sent to Salesforce and brought
+              // back down. Otherwise, there is no Salesforce Contact ID to retrieve.
+              case 'ContactId':
+                $sf_object->$sf_field = $capwiz_action->uid;
+                break;
+
+              default:
+                $sf_object->$sf_field = $capwiz_action->$drupal_field;
+            }
+          }
+
+          $record->object = $sf_object;
+        }
+      }
+    }
+  }
+  elseif ($batch['type'] == 'user' && in_array($batch['action'], array('insert', 'update', 'upsert'))) {
 
     foreach($batch['records'] as &$record) {
 

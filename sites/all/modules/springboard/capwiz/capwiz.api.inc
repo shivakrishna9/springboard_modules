@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file capwiz.api.inc
@@ -267,7 +266,7 @@ class CapwizApi
   public static function getAccountFields() {
 
     return array(
-      // 'external_id', Not used
+      'external_id',
       // 'capwiz_id', Managed automatically
       // 'email_address', Managed automatically
       'honorific',
@@ -284,7 +283,7 @@ class CapwizApi
       'country',
       'phone',
       'fax',
-      // 'last_update', Not used
+      'last_update',
     );
   }
 
@@ -301,8 +300,8 @@ class CapwizApi
   public static function getActionFields() {
 
     return array(
-      // 'external_id', Not used
-      // 'capwiz_id', Based on uid instead
+      // 'external_id',   Based on uid instead
+      // 'capwiz_id',     Based on uid instead
       // 'email_address', Based on uid instead
       'event_id',
       'alert_id',
@@ -313,7 +312,7 @@ class CapwizApi
       'intended_delivery_method',
       'actual_delivery_method',
       'delivery_status',
-      // 'message_id', Not used
+      'message_id',
     );
   }
 

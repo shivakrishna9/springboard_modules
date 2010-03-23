@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file capwiz.install
@@ -102,14 +101,15 @@ function capwiz_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'event_id' => array(
-        'description' => t('Unique ID for this action'),
+      'alert_id' => array(
+        'description' => t('Uniquely identifies the alert. Can be plugged into the url http://capwiz.com/[client_id]/issues/alert/?alertid=[alert_id] to visit the original alert'),
         'type' => 'varchar',
         'length' => '16',
         'not null' => TRUE,
+        'default' => '0',
       ),
-      'alert_id' => array(
-        'description' => t('Uniquely identifies the alert. Can be plugged into the url http://capwiz.com/[client_id]/issues/alert/?alertid=[alert_id] to visit the original alert'),
+      'event_id' => array(
+        'description' => t('Uniquely identifies this action'),
         'type' => 'varchar',
         'length' => '16',
         'not null' => FALSE,
@@ -155,13 +155,39 @@ function capwiz_schema() {
         'length' => '9',
         'not null' => FALSE,
       ),
+      'message_id' => array(
+        'description' => t('Uniquely identifies the message'),
+        'type' => 'varchar',
+        'length' => '16',
+        'not null' => FALSE,
+      ),
     ),
-    'primary key' => array('event_id'),
-    'indexes' => array(
-      'uid' => array('uid'),
-    ),
+    'primary key' => array('uid', 'alert_id'),
   );
 
   return $schema;
+}
+
+
+/**
+ * Update: Add message ID and reconfigure indices and primary key.
+ */
+function capwiz_update_6101() {
+
+  $updates = array();
+
+  // Remove Event ID as primary key.
+  db_drop_primary_key($updates, 'capwiz_actions');
+  db_change_field($updates, 'capwiz_actions', 'event_id', 'event_id', array('type' => 'varchar', 'length' => '16', 'not null' => FALSE));
+
+  // Make uid and Alert ID pairs as primary key.
+  db_change_field($updates, 'capwiz_actions', 'alert_id', 'alert_id', array('type' => 'varchar', 'length' => '16', 'not null' => TRUE, 'default' => '0'));
+  db_drop_index($updates, 'capwiz_actions', 'uid');
+  db_add_primary_key($updates, 'capwiz_actions', array('uid', 'alert_id'));
+
+  // Add Message ID field.
+  db_add_field   ($updates, 'capwiz_actions', 'message_id',           array('type' => 'varchar', 'length' => '16', 'not null' => FALSE));
+
+  return $updates;
 }
 
