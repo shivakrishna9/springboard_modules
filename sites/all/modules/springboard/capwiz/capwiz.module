@@ -507,11 +507,8 @@ function capwiz_fieldmap_objects($type) {
  * @return void
  */
 function capwiz_queue_fieldmap_assignment_alter(&$data) {
-watchdog('capwiz', "capwiz_queue_fieldmap_assignment_alter (data->type) = <pre>{$data->type}</pre>", array(), WATCHDOG_DEBUG);
-watchdog('capwiz', "capwiz_queue_fieldmap_assignment_alter (data->action) = <pre>{$data->action}</pre>", array(), WATCHDOG_DEBUG);
 
   if ($data->type == 'capwiz_action' && $data->action == 'create') {
-watchdog('capwiz', "I'm in capwiz_queue_fieldmap_assignment_alter()", array(), WATCHDOG_DEBUG);
     $data->fieldmap = db_result(db_query('SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = "capwiz_action"'));
   }
 }
@@ -525,11 +522,8 @@ watchdog('capwiz', "I'm in capwiz_queue_fieldmap_assignment_alter()", array(), W
  * @return void
  */
 function capwiz_queue_preprocess_batch_alter(&$batch) {
-watchdog('capwiz', "capwiz_queue_preprocess_batch_alter (batch['type']) = <pre>{$batch['type']}</pre>", array(), WATCHDOG_DEBUG);
-watchdog('capwiz', "capwiz_queue_preprocess_batch_alter (batch['action']) = <pre>{$batch['action']}</pre>", array(), WATCHDOG_DEBUG);
 
   if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'create') {
-watchdog('capwiz', "I'm in capwiz_queue_preprocess_batch_alter()", array(), WATCHDOG_DEBUG);
 
     foreach($batch['records'] as &$record) {
 
@@ -571,11 +565,8 @@ watchdog('capwiz', "I'm in capwiz_queue_preprocess_batch_alter()", array(), WATC
  * @todo Make CapWiz ID not the assumed Salesforce property.
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
-watchdog('capwiz', "capwiz_queue_batch_item_alter (type) = <pre>$type</pre>", array(), WATCHDOG_DEBUG);
-watchdog('capwiz', "capwiz_queue_batch_item_alter (action) = <pre>$action</pre>", array(), WATCHDOG_DEBUG);
 
 	if ($type == 'capwiz_action' && $action == 'create') {
-watchdog('capwiz', "I'm in capwiz_queue_batch_item_alter()", array(), WATCHDOG_DEBUG);
 
 	  // Set the Salesforce object's Contact ID to the real one.
     // It is currently the Drupal user's ID, because
