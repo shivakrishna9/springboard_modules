@@ -335,7 +335,7 @@ function capwiz_save_actions($capwiz_actions_all = NULL) {
 
       // If Salesforce integration modules are enabled:
       if (function_exists('sf_queue_insert')) {
-        sf_queue_insert($capwiz_action->event_id, 'capwiz_action', 'upsert');
+        sf_queue_insert($capwiz_action->event_id, 'capwiz_action', 'create');
       }
 
       unset($capwiz_actions_all[$key]);
@@ -508,7 +508,7 @@ function capwiz_fieldmap_objects($type) {
  */
 function capwiz_queue_fieldmap_assignment_alter(&$data) {
 
-  if ($data->type == 'capwiz_action' && $data->action == 'upsert') {
+  if ($data->type == 'capwiz_action' && $data->action == 'create') {
     $data->fieldmap = db_result(db_query('SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = "capwiz_action"'));
   }
 }
@@ -523,7 +523,7 @@ function capwiz_queue_fieldmap_assignment_alter(&$data) {
  */
 function capwiz_queue_preprocess_batch_alter(&$batch) {
 
-  if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'upsert') {
+  if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'create') {
 
     foreach($batch['records'] as &$record) {
 
@@ -566,7 +566,7 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
 
-	if ($type == 'capwiz_action' && $action == 'upsert') {
+	if ($type == 'capwiz_action' && $action == 'create') {
 
 	  // Set the Salesforce object's Contact ID to the real one.
     // It is currently the Drupal user's ID, because
@@ -608,7 +608,7 @@ SQL;
   	  watchdog('capwiz', 'Could not load the Salesforce fieldmap');
   	}
   }
-  elseif ($oid > 430 && $type == 'user' && in_array($action, array('insert', 'update', 'upsert'))) {
+  elseif ($type == 'user' && in_array($action, array('create', 'update', 'upsert'))) {
     
     $sf_info_sql = 'SELECT data FROM {users} WHERE uid = %d';
     $data = unserialize(db_result(db_query($sf_info_sql, $oid)));
