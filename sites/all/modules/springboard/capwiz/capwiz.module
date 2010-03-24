@@ -507,8 +507,11 @@ function capwiz_fieldmap_objects($type) {
  * @return void
  */
 function capwiz_queue_fieldmap_assignment_alter(&$data) {
+echo "capwiz_queue_fieldmap_assignment_alter (data->type) = <pre>{$data->type}</pre>";
+echo "capwiz_queue_fieldmap_assignment_alter (data->action) = <pre>{$data->action}</pre>";
 
   if ($data->type == 'capwiz_action' && $data->action == 'create') {
+echo "I'm in capwiz_queue_fieldmap_assignment_alter()";
     $data->fieldmap = db_result(db_query('SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = "capwiz_action"'));
   }
 }
@@ -522,8 +525,11 @@ function capwiz_queue_fieldmap_assignment_alter(&$data) {
  * @return void
  */
 function capwiz_queue_preprocess_batch_alter(&$batch) {
+echo "capwiz_queue_preprocess_batch_alter (batch['type']) = <pre>{$batch['type']}</pre>";
+echo "capwiz_queue_preprocess_batch_alter (batch['action']) = <pre>{$batch['action']}</pre>";
 
   if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'create') {
+echo "I'm in capwiz_queue_preprocess_batch_alter()";
 
     foreach($batch['records'] as &$record) {
 
@@ -565,8 +571,11 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
  * @todo Make CapWiz ID not the assumed Salesforce property.
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
+echo "capwiz_queue_batch_item_alter (type) = <pre>$type</pre>";
+echo "capwiz_queue_batch_item_alter (action) = <pre>$action</pre>";
 
 	if ($type == 'capwiz_action' && $action == 'create') {
+echo "I'm in capwiz_queue_batch_item_alter()";
 
 	  // Set the Salesforce object's Contact ID to the real one.
     // It is currently the Drupal user's ID, because
