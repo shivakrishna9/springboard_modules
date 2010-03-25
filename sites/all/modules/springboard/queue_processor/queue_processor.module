@@ -229,12 +229,16 @@ function process_batches($ids) {
 
 		// record batch start time
 		log_batch_start_time($id);
+	
+		// preprocess the batch. this is where the various modules build out the salesforce object
+		watchdog('salesforce queue processor', t('Preprocessing called on batch !id', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+		drupal_alter('queue_preprocess_batch', $batch);
 				
 		$objects = array();
-		
+
 		// get all the objects out of the batch
-		foreach($batch['items'] as $item) {
-			$object = unserialize($item->data);
+		foreach($batch['records'] as $item) {
+			$object = $item->object;
 			// give modules one last chance to modify the object before shipping it to salesforce
 			drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
 			// update the data field so we have an exact copy of what was sent
@@ -331,18 +335,18 @@ function process_batch_response(&$batch, &$response) {
 	$responses = _normalize_salesforce_response($response);
 
 	// loop over and process reponses
-	$items_in_batch = count($batch['items']);
+	$items_in_batch = count($batch['records']);
 	for ($i = 0; $i < $items_in_batch; $i++) {
 		// convenience vars
-		$oid = $batch['items'][$i]->oid;
-		$type = $batch['items'][$i]->type;
+		$oid = $batch['records'][$i]->oid;
+		$type = $batch['records'][$i]->type;
 		
 		if ($responses[$i]->success) {
 			// handle success
 			$success_count++;
 			delete_from_heap($oid, $type);
 			// if item was a retry, remove from retry queue
-			if ($batch['items'][$i]->is_retry) {
+			if ($batch['records'][$i]->is_retry) {
 				delete_from_retry_queue($oid, $type);
 			}
 			switch ($batch['action']) {
@@ -363,10 +367,10 @@ function process_batch_response(&$batch, &$response) {
 			$failure_count++;
 			save_batch_errors($batch['id'], $oid, $type, $responses[$i]->errors);
 			log_batch_item_status($batch['id'], $oid, 0);
-			move_to_retry_queue($batch['items'][$i], $responses[$i]);
+			move_to_retry_queue($batch['records'][$i], $responses[$i]);
 			delete_from_heap($oid, $type);
 			// fire object_error 	
-			module_invoke_all('queue_processor', 'object_error', $batch['items'][$i], $responses[$i]);
+			module_invoke_all('queue_processor', 'object_error', $batch['records'][$i], $responses[$i]);
 		}
 	}
 	
@@ -388,7 +392,7 @@ function process_batch_response(&$batch, &$response) {
  */
 function process_batch_failure(&$batch, $exception) {
 	// loop over and process reponses
-	$items_in_batch = count($batch['items']);
+	$items_in_batch = count($batch['records']);
 	$response = 'A SOAP fault occurred.';
 	$error = new stdClass;
 	$error->statusCode = "SOAP_FAULT";
@@ -396,13 +400,13 @@ function process_batch_failure(&$batch, $exception) {
 	
 	for ($i = 0; $i < $items_in_batch; $i++) {
 		// convenience vars
-		$oid = $batch['items'][$i]->oid;
-		$type = $batch['items'][$i]->type;
+		$oid = $batch['records'][$i]->oid;
+		$type = $batch['records'][$i]->type;
 		$error->oid = $oid;
 		$error->type = $type;
 		save_batch_errors($batch['id'], $oid, $type, $error);
 		log_batch_item_status($batch['id'], $oid, 0);
-		move_to_retry_queue($batch['items'][$i], $response);
+		move_to_retry_queue($batch['records'][$i], $response);
 		delete_from_heap($oid, $type);
 	}
 	
@@ -434,6 +438,7 @@ function save_batch_items($batch) {
  * Gets all records that are to go into the current batch
  */
 function get_batch_items(&$batch) {
+	
 	$result = db_query("SELECT * FROM {sf_heap} WHERE locked = 1 AND type = '%s' AND fieldmap = %d AND action = '%s' AND batch_id IS NULL", $batch['type'], $batch['fieldmap'], $batch['action']);
 	
 	while ($data = db_fetch_object($result)) {
@@ -444,10 +449,9 @@ function get_batch_items(&$batch) {
 			$batch['sfids'][] = $data->sfid;
 		}
 	}
-	// allow the various modules to build out the objects
-	watchdog('salesforce queue processor', t('Preprocessing called on batch !id', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
-	drupal_alter('queue_preprocess_batch', $batch);
+
 	return $batch;
+	
 }
 
 /**
@@ -570,10 +574,10 @@ function load_batch($id) {
   }
   else {
     // Otherwise load the items and return the populated batch
-    $data['items'] = load_batch_items($id);
+    $data['records'] = load_batch_items($id);
 		// separate out the sfids 
 		$sfids = array();
-		foreach($data['items'] as $item) {
+		foreach($data['records'] as $item) {
 			if (!empty($item->sfid)) {
 				$sfids[] = $item->sfid;
 			}

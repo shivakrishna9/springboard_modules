@@ -74,7 +74,7 @@ function batch_detail($id) {
 	//$output .= '<pre>' . print_r($batch, true) . '</pre>';
 	
 	
-	foreach($batch['items'] as $item) {
+	foreach($batch['records'] as $item) {
 		$rows = array();
 		$object = unserialize($item->data);
 		foreach($object as $field => $value) {
