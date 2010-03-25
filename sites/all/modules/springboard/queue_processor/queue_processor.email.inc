@@ -96,7 +96,7 @@ function queue_summary_email(&$batches) {
 		$message .= t("Type: !type\n\r", array('!type' => $batch['type']));
 		$message .= t("Field Map: !fieldmap\n\r", array('!fieldmap' => $batch['fieldmap']));
 		$message .= t("Dedupe Key: !dedupe_key\n\r", array('!dedupe_key' => $batch['dedupe_key']));
-		$message .= t("Number of items: !count\n\r", array('!count' => count($batch['items'])));
+		$message .= t("Number of items: !count\n\r", array('!count' => count($batch['records'])));
 		$message .= t("Success count: !success_count\n\r", array('!success_count' => $batch['success_count']));
 		$message .= t("Failure count: !failure_count\n\r", array('!failure_count' => $batch['failure_count']));
 		
