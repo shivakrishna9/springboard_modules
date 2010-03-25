@@ -546,6 +546,12 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
                 $sf_object->$sf_field = $capwiz_action->uid;
                 break;
 
+              // For RecordTypeId, the value in the field map is the actual value (not the name of
+              // the Drupal field that contains the value).
+              case 'RecordTypeId':
+                $sf_object->$sf_field = $drupal_field;
+                break;
+
               default:
                 $sf_object->$sf_field = $capwiz_action->$drupal_field;
             }
@@ -629,9 +635,10 @@ function _capwiz_sf_fieldmap($sf_fieldmap_id = NULL) {
 
   if (empty($sf_fieldmap) && $sf_fieldmap_id !== NULL) {
 
-    $result = db_result(db_query('SELECT fields FROM {salesforce_management_field_map} WHERE fieldmap = %d', $sf_fieldmap_id));
+    $result = db_object(db_query('SELECT fields, recordtype_id FROM {salesforce_management_field_map} WHERE fieldmap = %d', $sf_fieldmap_id));
     if ($result !== FALSE) {
-      $sf_fieldmap = unserialize($result);
+      $sf_fieldmap = unserialize($result->fields);
+      $sf_fieldmap->RecordTypeId = $result->recordtype_id;
     }
   }
 
