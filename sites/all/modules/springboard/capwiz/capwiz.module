@@ -635,7 +635,7 @@ function _capwiz_sf_fieldmap($sf_fieldmap_id = NULL) {
 
   if (empty($sf_fieldmap) && $sf_fieldmap_id !== NULL) {
 
-    $result = db_object(db_query('SELECT fields, recordtype_id FROM {salesforce_management_field_map} WHERE fieldmap = %d', $sf_fieldmap_id));
+    $result = db_fetch_object(db_query('SELECT fields, recordtype_id FROM {salesforce_management_field_map} WHERE fieldmap = %d', $sf_fieldmap_id));
     if ($result !== FALSE) {
       $sf_fieldmap = unserialize($result->fields);
       $sf_fieldmap->RecordTypeId = $result->recordtype_id;
