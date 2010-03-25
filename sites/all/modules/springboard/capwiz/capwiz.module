@@ -533,9 +533,9 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
         $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_actions} WHERE event_id = %d', $record->oid));
         if (!empty($capwiz_action)) {
 
-watchdog('capwiz', '$sf_fieldmap - capwiz_queue_preprocess_batch_alter()<pre>' . print_r($sf_fieldmap, 1) . '</pre>', array(), WATCHDOG_DEBUG);
           $sf_object = new StdClass();
           foreach ($sf_fieldmap as $sf_field => $drupal_field) {
+watchdog('capwiz', "$sf_field => $drupal_field", array(), WATCHDOG_DEBUG);
 
             switch ($drupal_field) {
 
@@ -550,6 +550,7 @@ watchdog('capwiz', '$sf_fieldmap - capwiz_queue_preprocess_batch_alter()<pre>' .
               // For RecordTypeId, the value in the field map is the actual value (not the name of
               // the Drupal field that contains the value).
               case 'RecordTypeId':
+watchdog('capwiz', "*RecordTypeId* => $drupal_field", array(), WATCHDOG_DEBUG);
                 $sf_object->$sf_field = $drupal_field;
                 break;
 
@@ -643,7 +644,6 @@ function _capwiz_sf_fieldmap($sf_fieldmap_id = NULL) {
       $sf_fieldmap['RecordTypeId'] = $result->recordtype_id;
     }
   }
-watchdog('capwiz', '$sf_fieldmap - _capwiz_sf_fieldmap()<pre>' . print_r($sf_fieldmap, 1) . '</pre>', array(), WATCHDOG_DEBUG);
 
   return $sf_fieldmap;
 }
