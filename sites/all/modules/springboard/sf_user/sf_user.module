@@ -303,6 +303,8 @@ function sf_user_wipe_user($accounts) {
     'profile_contact_id' => NULL, 
     'profile_salesforce_account_id' => NULL, 
     'last_sf_import' => NULL,
+    'salesforce_account_id' => NULL,
+    'salesforce_contact_id' => NULL,
   );
   
   foreach ($accounts as $account) {
