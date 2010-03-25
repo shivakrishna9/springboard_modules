@@ -66,7 +66,7 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
 					$user = user_load((int)$record->oid);
 					// determine which users have already been exported. use their sfids to create an array of salesforce objects
 					// to pass to the object creation function
-					$object = salesforce_management_api_fieldmap_export_create($record->fieldmap, $user, $record->sfid, $objects);
+					$object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $user, $record->sfid, $objects);
 					// add the object to the batch record
 					$record->object = $object;
 				}
@@ -93,7 +93,7 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
 
 				for ($i = 0; $i < $item_count; $i++) {
 					if ($responses[$i]->success) {
-						$sfids[$responses[$i]->id] = $batch['items'][$i]->oid;
+						$sfids[$responses[$i]->id] = $batch['records'][$i]->oid;
 					}
 				}
 
