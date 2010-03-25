@@ -547,15 +547,16 @@ watchdog('capwiz', "$sf_field => $drupal_field", array(), WATCHDOG_DEBUG);
                 $sf_object->$sf_field = $capwiz_action->uid;
                 break;
 
-              // For RecordTypeId, the value in the field map is the actual value (not the name of
-              // the Drupal field that contains the value).
-              case 'RecordTypeId':
-watchdog('capwiz', "*RecordTypeId* => $drupal_field", array(), WATCHDOG_DEBUG);
-                $sf_object->$sf_field = $drupal_field;
-                break;
-
               default:
-                $sf_object->$sf_field = $capwiz_action->$drupal_field;
+
+                // For RecordTypeId, the value in the field map is the actual value (not the name of
+                // the Drupal field that contains the value).
+                if ($sf_field == 'RecordTypeId') {
+                  $sf_object->$sf_field = $drupal_field;
+                }
+                else {
+                  $sf_object->$sf_field = $capwiz_action->$drupal_field;
+                }
             }
           }
 watchdog('capwiz', '$sf_object<pre>' . print_r($sf_object, 1) . '</pre>', array(), WATCHDOG_DEBUG);
