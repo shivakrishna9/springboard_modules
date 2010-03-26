@@ -1033,7 +1033,7 @@ function salesforce_management_api_get_campaigns() {
 	$cid = 'salesforce_campaigns';
 	
 	$campaigns = cache_get($cid);
-	if ($campaigns) {
+	if ($campaigns->data) {
 		return $campaigns->data;
 	}	
 	
@@ -1050,7 +1050,7 @@ function salesforce_management_api_get_campaigns() {
 	}
 
 	cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
-	return $campaigns->data;
+	return $campaigns;
 }
 
 function salesforce_management_api_map_record_form_submit($form, &$form_state) {
