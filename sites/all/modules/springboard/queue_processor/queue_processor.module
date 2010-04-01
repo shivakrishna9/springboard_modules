@@ -773,6 +773,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 			// control what we can control
 			switch ($field_type) {
 				case 'string':			
+				case 'textarea':
 					if (strlen($value) > $length) {	
 						$value = substr($value, 0, $length); // truncate to max length
 					}
