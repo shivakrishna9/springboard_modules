@@ -3,7 +3,7 @@
 
 <!--
 Salesforce.com Enterprise Web Services API Version 18.0
-Generated on 2010-03-03 18:56:39 +0000.
+Generated on 2010-04-01 15:46:54 +0000.
 
 Package Versions:
 Recurring Donations (Version: 1.18, Namespace: npe03)
@@ -1125,6 +1125,7 @@ All Rights Reserved
                         <element name="AssistantName" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="AssistantPhone" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Attachments" nillable="true" minOccurs="0" type="tns:QueryResult"/>
+                        <element name="Big_Pimp__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="Birthdate" nillable="true" minOccurs="0" type="xsd:date"/>
                         <element name="CampaignMembers" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="Campaign__c" nillable="true" minOccurs="0" type="tns:ID"/>
@@ -1807,6 +1808,7 @@ All Rights Reserved
                         <element name="Node_Title__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Notes" nillable="true" minOccurs="0" type="tns:QueryResult"/>
                         <element name="NotesAndAttachments" nillable="true" minOccurs="0" type="tns:QueryResult"/>
+                        <element name="Notes__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Owner" nillable="true" minOccurs="0" type="ens:Name"/>
                         <element name="OwnerId" nillable="true" minOccurs="0" type="tns:ID"/>
                         <element name="Price_willing_to_pay__c" nillable="true" minOccurs="0" type="xsd:double"/>
@@ -1818,6 +1820,7 @@ All Rights Reserved
                         <element name="Submission_Date__c" nillable="true" minOccurs="0" type="xsd:dateTime"/>
                         <element name="Submission_Id__c" nillable="true" minOccurs="0" type="xsd:double"/>
                         <element name="SystemModstamp" nillable="true" minOccurs="0" type="xsd:dateTime"/>
+                        <element name="Text_Area__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="What_you_thinking__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         </sequence>
                     </extension>
