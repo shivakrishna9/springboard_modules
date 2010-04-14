@@ -35,7 +35,7 @@ function market_source_admin_settings() {
       672 => t('4 Weeks'),
       0 => t('Always Valid'),
     ),
-    '#default_value' => variable_get('market_source_validity_period', 0),
+    '#default_value' => variable_get('market_source_validity_period', 6),
   );
   
   if (module_exists('salesforce_management_api')) {
