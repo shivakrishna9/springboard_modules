@@ -16,31 +16,36 @@ function sf_donation_uninstall() {
 }
 
 /**
+ * Implementation of hook_enable().
+ */
+function sf_donation_enable() {
+	
+	// add donation and recurring_donation to the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  array_push($processing_order, 'donation');
+  array_push($processing_order, 'recurring_donation');
+  variable_set('queue_processing_order', $processing_order);
+
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function sf_donation_disable() {
+
+	// remove donation and recurring donation from the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  $processing_order = array_values(array_diff($processing_order, array('donation')));
+  $processing_order = array_values(array_diff($processing_order, array('recurring_donation')));
+  variable_set('queue_processing_order', $processing_order);
+	
+}
+
+/**
  * Implementation of hook_schema().
  */
 function sf_donation_schema() {
-	$schema['fundraiser_salesforce_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'cid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'map_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '50',
-	      'not null' => TRUE,
-	    ),
-	  ),
-	);
-	
+
 	$schema['sf_donation_log'] = array(
 	  'description' => t('TODO: please describe this table!'),
 	  'fields' => array(
@@ -73,5 +78,54 @@ function sf_donation_schema() {
 	  ),
 	);
 	
+	$schema['sf_donation_opportunity_contact_role'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'contact_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'opportunity_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '32',
+	      'not null' => TRUE,
+	      'default' => '',
+	    ),
+	    'role' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '55',
+	      'not null' => TRUE,
+	      'default' => '',
+	    ),
+	    'exported' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	  ),
+	);
+	
 	return $schema;
+}
+
+/**
+ * Update 6101: Add a table for storing opportunity contact roles
+ */
+function sf_donation_update_6101() {
+
+  $updates = array();
+  $updates[] = update_sql("
+		CREATE TABLE {sf_donation_opportunity_contact_role} (
+  	contact_id varchar(32) NOT NULL,
+  	opportunity_id varchar(32) NOT NULL default '',
+  	role varchar(55) NOT NULL default '',
+  	exported int(11) NOT NULL default '0'
+	)");
+
+  return $updates;
 }

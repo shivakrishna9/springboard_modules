@@ -6,7 +6,6 @@
  * Integrates webform submissions with the Salesforce API.
  */
 
-
 /**
  * Implementation of hook_menu().
  */
@@ -414,299 +413,252 @@ function sf_donation_hook_info() {
 }
 
 /**
- * Implemenation of hook_cron().
- *
- * Exports ubercart orders that were created prior to now that have not previously been sync'd.
- * This function handles both single and recurring donations
+ * Implemenation of hook_queue_salesforce_info().
  */
-function sf_donation_cron() {
+function sf_donation_queue_salesforce_info($type, $action) {
 
-	$orders = db_query("select u.order_id, f.sid, u.uid from {uc_orders} u inner join {fundraiser_webform_order} f 
-		on f.order_id = u.order_id where u.created < now() and f.sfid is null order by u.uid limit 200");
+	// since donations do not use fieldmaps in a traditional sense, we manually assign their Salesforce types here
+	switch ($type) {
 		
-	// array used to hold all the donations we are going to create. this will cut down
-	// on the number of api calls
-	$donations_to_create = array();	
-	$recurring_donations_to_create = array();	
+		case FUNDRAISER_SINGLE_DONATION_TYPE:
+			
+			$data = array(
+				'salesforce' => 'Opportunity',
+				'dedupe_key' => '',
+			);
+			break;
+			
+		case FUNDRAISER_RECURRING_DONATION_TYPE:
+			$data = array(
+				'salesforce' => 'npe03__Recurring_Donation__c',
+				'dedupe_key' => '',
+			);
+			break;
 		
-	while ($data = db_fetch_object($orders)) {
-		// first we need to see if the user is sync'd
-		if ($user->uid != $data->uid && $data->uid != 0) {
-			$user = user_load($data->uid); // prevent re-loading of user every loop
-		}
-		
-		// make sure user has been sync'd up
-		if ($user->salesforce_contact_id && $user->salesforce_account_id) {
-			// determine if donation is recurring
-			$donation_count = _recurring_donation_count($data->order_id, $user);
-			if ($donation_count > 0) {
-				$donation_count++; // account for original order
-				$recurring_donations_to_create[] = _create_recurring_donation($data->order_id, $user, $donation_count, $data->sid);
-			}
-			else {
-				$donations_to_create[] = _create_single_donation($data->order_id, $user, $data->sid);
-			}
-		}
-	}
-
-	// export them
-	if (!empty($donations_to_create)) {
-		_export_single_donations($donations_to_create);
 	}
 	
-	if (!empty($recurring_donations_to_create)) {
-		_export_recurring_donations($recurring_donations_to_create);
+	return $data;
+	
+}
+
+
+/**
+ * Implementation of queue_preprocess_batch_alter().
+ */
+function sf_donation_queue_preprocess_batch_alter(&$batch) {
+
+	if ($batch['type'] == 'donation' || $batch['type'] == 'recurring_donation') {
+		foreach($batch['records'] as $record) {
+			// get additional details about the order
+			$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_webform_order} f ON f.order_id = u.order_id WHERE u.order_id = %d", $record->oid));
+		
+			// if empty, then the donation was part of a recurring series
+			if (empty($details)) {
+				$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_recurring} fr ON fr.order_id = u.order_id INNER JOIN
+					{fundraiser_webform_order} f on f.order_id = fr.master_order_id WHERE u.order_id = %d", $record->oid));
+			}
+			
+			$user_ids = _sf_donation_load_user_salesforce_ids($details->uid);
+			
+			switch ($batch['type']) {
+				case FUNDRAISER_SINGLE_DONATION_TYPE:
+					$object = _create_single_donation($record->oid, $user_ids->salesforce_account_id, $details->sid);
+					if ($batch['action'] == 'update' && !empty($record->sfid)) {
+						$object['Id'] = $record->sfid;
+					}
+					$record->object = $object;
+					break;
+					
+				case FUNDRAISER_RECURRING_DONATION_TYPE:
+					$donation_count = _recurring_donation_count($record->oid, $user);
+					$donation_count++; // account for original order
+					$record->object = _create_recurring_donation($record->oid, $user_ids->salesforce_contact_id, $donation_count);
+					break;
+			}
+		}
 	}
+
 }
 
 /**
- * Exports recurring donations to salesforce. Not only does it create the recurring donation object,
- * but it also attempts to update all the opportunity objects that are automatically generated
+ * Implemenation of hook_queue_postprocess_batch().
  */
-function _export_recurring_donations($donations) {
-	global $base_url;
-	global $user;
+function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 	
-	if (variable_get('sf_donation_debug', 0)) {
-		// log the activity
-		$semaphore = variable_get('cron_semaphore', FALSE);
-		$number_of_donations = count($donations);
-		$data = print_r($donations, true);
-		$sql = "insert into {sf_donation_log} (cron_semaphore, uid, type, number_of_donations, data) values (%d, %d, '%s', %d, '%s')";
-		db_query($sql, $semaphore, $user->uid, 'recurring', $number_of_donations, $data);
+	switch ($batch['type']) {
+		case FUNDRAISER_SINGLE_DONATION_TYPE:
+
+			if ($batch['action'] == create) {
+				
+				for ($i = 0; $i < $item_count; $i++) {
+					if ($responses[$i]->success) {	
+						$sfid = $responses[$i]->id;
+						db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
+						$user_ids = _sf_donation_load_user_salesforce_ids_from_order((int)$batch['records'][$i]->oid);
+						
+						// create and save the contact roles						
+						$table = 'sf_donation_opportunity_contact_role';
+						$record = new stdClass();
+						$record->contact_id = $user_ids->salesforce_contact_id;
+						$record->opportunity_id = $sfid;
+						$record->role = 'Donor';
+						drupal_write_record($table, $record);
+								
+					}
+				}
+				
+				// export them
+				sf_donation_export_opportunity_contact_roles();	
+			}
+			break;
+			
+		case FUNDRAISER_RECURRING_DONATION_TYPE:
+
+			$sf = salesforce_management_api_connect();
+			// only continue if we got a valid connection
+			if ($sf) {	
+				for ($i = 0; $i < $item_count; $i++) {
+					if ($responses[$i]->success) {
+						// we need to re-query salesforce and get all the opportunities that were created
+						$sfid = $responses[$i]->id;
+						$master_order_id = (int)$batch['records'][$i]->oid;
+
+						$opportunities = $sf->client->query("select Id, Name, CloseDate from Opportunity WHERE npe03__Recurring_Donation__c = '$sfid' ORDER BY CloseDate");
+						
+						// get all recurring orders in drupal
+						$result = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge", $master_order_id);
+						$recurring_orders = array();
+						
+						// add all recurring orders to an array in the same orders as the opportunities
+						while ($data = db_fetch_object($result)) {
+							$recurring_orders[] = $data;
+						}
+						
+						// loop over the donations that were created
+						for ($j = 0; $j < $opportunities->size; $j++) {
+							if ($j == 0) {
+								// first opportunity is the master. now that we have it's opportunity id, add it  
+								db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $master_order_id);
+								//db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $master_order_id);
+								salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $master_order_id, $opportunities->records[$j]->Id, 0);
+								sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+							}
+							else {
+								db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $recurring_orders[$j-1]->order_id);
+								salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $recurring_orders[$j-1]->order_id, $opportunities->records[$j]->Id, 0);
+								sf_queue_insert($recurring_orders[$j-1]->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+							}	
+						}
+					}
+				}
+			}	
+			
+			break;	
 	}
 	
-	$donations_to_create = array();
-	foreach ($donations as $value) {
-		$donations_to_create[] = $value['fields'];
-	}
+}
+
+/**
+ * Exports opportunity contact role objects to Salesforce
+ */
+function sf_donation_export_opportunity_contact_roles() {
 
 	$sf = salesforce_management_api_connect();
 	// only continue if we got a valid connection
-	if ($sf) {
-		$results = $sf->client->create($donations_to_create, 'npe03__Recurring_Donation__c');
-		$count = count($donations);
-		for ($i=0; $i < $count; $i++) {
-			// salesforce does not return an array if only one object is created
-			if ($count == 1) {
-				$success = $results->success;
-				$sfid = $results->id;
-				$errors = $results->errors;
-			}
-			else {
-				$success = $results[$i]->success;
-				$sfid = $results[$i]->id;
-				$errors = $results[$i]->errors;
-			}
-			if ($success) {
-				// load up the original order
-				$order = uc_order_load($donations[$i]['order_id']);
-			
-				// we need to re-query salesforce and get all the opportunities that were created
-				$opportunities = $sf->client->query("select Id, Name, CloseDate from Opportunity WHERE npe03__Recurring_Donation__c = '$sfid'");
-				
-				// get payment info for transaction date
-				$payments = uc_payment_load_payments($order->order_id);
-
-				// load up the map
-				$map = _load_salesforce_map($donations[$i]['sid']);
-				$child_donations = array();
-			
-				// get the number of recurring donations that were created
-				$donation_count = count($opportunities->records);
-			
-				for ($j = 0; $j < $donation_count; $j++) {
-					$donation = array();
-					if ($j == 0) { 
-						// the first donation has already been posted so update transaction date and stagename
-						// deal with sf date handling
-						$transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
-						$donation['StageName'] = 'Posted';
-						$donation['CloseDate'] = date('Y-m-d', $transaction_date);
-						$donation['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
-						$donation['Probability'] = 100.00;
-						$donation['Order_ID__c'] = $order->order_id;
-						db_query("update {fundraiser_webform_order} set sfid = '%s' where order_id = %d", $opportunities->records[$j]->Id, $order->order_id);
-					}
-					else {
-						// look up the recurring order based on date
-						$order_id = db_result(db_query("select order_id from {fundraiser_recurring} where master_order_id = %d and 
-							sf_opportunity_id is null order by next_charge asc limit 1", $order->order_id));
-						$donation['Order_ID__c'] = $order_id;
-						// update local fundraiser table
-						$sql = "update {fundraiser_recurring} set sf_opportunity_id = '%s' where order_id = %d";
-						db_query($sql, $opportunities->records[$j]->Id, $order_id);
-					}
-				
-					$donation['Id'] = $opportunities->records[$j]->Id;
-					$donation['Donation_Form_Name__c'] = $order->products[0]->title;
-					$donation['Donation_Form_URL__c'] = $base_url . '/node/' . $order->products[0]->nid;
-					$donation['CC_Last_4__c'] = !empty($order->payment_details['cc_number']) ? substr($order->payment_details['cc_number'], -4) : '';
-					$donation['CC_Exp_Month__c'] = $order->payment_details['cc_exp_month'];
-					$donation['CC_Exp_Year__c'] = $order->payment_details['cc_exp_year'];
-					$donation['CC_Type__c'] = $order->payment_details['cc_type'];
-					$donation['Billing_Street__c'] = $order->billing_street1;
-					$donation['Billing_Street_Line_2__c'] = $order->billing_street2;
-					$donation['Billing_City__c'] = $order->billing_city;
-					$donation['Billing_Country__c'] = _convert_billing_country($order->billing_country);
-					$donation['Billing_State__c'] = uc_get_zone_code($order->billing_zone);
-					$donation['Billing_Zip__c'] = $order->billing_postal_code;
-					$donation['Type'] = 'Donation';
-					// merge in mapped data
-					$donation = array_merge($donation, $map);
-					$child_donations[] = $donation;
-				}
-				// update all child donations
-				$donations_updated = $sf->client->update($child_donations, 'Opportunity');
-			
-				// process results
-				_process_recurring_donation_updates($donations_updated, $child_donations);
-				
-				// clear the credit card cache
-				uc_credit_cache('clear');
-				
-			} // success
-			else {
-				$order_id = $donations[$i]['order_id'];
-				$errors = print_r($errors, true);
-				$errors .= ' Object: ' . print_r($donations[$i], true);
-				watchdog('error', "The recurring donation object for order $order_id was not created in salesforce. Errors: $errors");
-				// pull trigger
-				//module_invoke_all('sf_donation', 'fails', $order_id, NULL, "The recurring donation object for order $order_id was not created in salesforce. Errors: $errors");
-				$params = array(
-					'order_id' => $order_id,
-					'errors' => $errors,
-					'donation' => print_r($donations[$i], true),
-				);
-				drupal_mail('sf_donation', 'recurring_donation_failure', 'phillip.cave@jacksonriver.com,tom.williamson@jacksonriver.com,tj.griffin@jacksonriver.com', language_default(), $params);
-			}
-		}
-	} // if ($sf)
-}
-
-/*
- * Processes the results of a recurring donation salesforce sync
- */
-function _process_recurring_donation_updates(&$results, &$donations) {
-	$count = count($donations);
-	/*
-	 *
-	 * WHAT DO WE WANT TO DO WITH THE RESULTS?
-	 *
-	 */
-	for ($i = 0; $i < $count; $i++) {
-		if ($count == 1) {
-			$success = $results->success;
-			$sfid = $results->id;
-			$errors = $results->$errors;
-		}
-		else {
-			$success = $results[$i]->success;
-			$sfid = $results[$i]->id;
-			$errors = $results[$i]->errors;
-		}
+	if ($sf) {	
 		
-		$order_id = $donations[$i]['Order_ID__c'];
-		
-		if ($success) {
-			// write to log
-			uc_order_comment_save($order_id, 0, "Order successfully exported to salesforce opportunity. SFID = $sfid", 'admin');
-		}
-		else {
-			// id of salesforce opportunity 
-			$opp_id = $donations[$i]['Id'];
-			// pull trigger
-			module_invoke_all('sf_donation', 'fails', $order_id, $opp_id, "Donation object $opp_id was not updated in salesforce. The order id is $order_id."); 
-			// failed to sync
-			$errors = print_r($errors, true);
-			watchdog('error', "Donation object $opp_id was not updated in salesforce. The order id is $order_id. Errors: $errors");
-			$params = array(
-				'order_id' => $order_id,
-				'errors' => $errors,
-				'donation' => print_r($donations[$i], true),
+		// get all un-exported records
+		$result = db_query("SELECT contact_id, opportunity_id, role FROM {sf_donation_opportunity_contact_role} WHERE exported = %d", 0);
+		$contact_roles = array();
+		while ($data = db_fetch_object($result)) {
+			// create the object
+			$contact_roles[] = array(
+				'ContactId' => $data->contact_id,
+				'OpportunityId' => $data->opportunity_id,
+				'Role' => $data->role,
 			);
-			drupal_mail('sf_donation', 'recurring_donation_update_failure', 'phillip.cave@jacksonriver.com,tom.williamson@jacksonriver.com,tj.griffin@jacksonriver.com', language_default(), $params);
+		}
+	
+		// divide them up if we've got more than 200
+		$pieces = ceil(count($contact_roles) / 200);
+		$batches = array_split($contact_roles, $pieces);
+		
+		foreach($batches as $batch) {
+			$response = _normalize_salesforce_response($sf->client->create($batch, 'OpportunityContactRole'));
+
+			// Process responses
+			$items_in_batch = count($batch);
+			for ($i = 0; $i < $items_in_batch; $i++) {
+				if ($response[$i]->success) {
+					db_query("UPDATE {sf_donation_opportunity_contact_role} SET exported = %d WHERE contact_id = '%s' AND opportunity_id = '%s'", 1, $batch[$i]['ContactId'], $batch[$i]['OpportunityId']);
+				}
+				else {
+					watchdog('salesforce donation', t('Unable to create opportunity contact roles for opportunity !id.', array('!id' => $batch[$i]['OpportunityId'])), NULL, WATCHDOG_CRITICAL);		
+				}
+			}
 		}
 	}
+	else {
+		watchdog('salesforce donation', t('Could not connect to Salesforce. Opportunity Contact Roles were not created at this time. They have been saved and will be exported with the next donation.'), NULL, WATCHDOG_CRITICAL);
+	}
+
 }
 
 /**
- * Exports an array of opportunity objects to salesforce
+ * Splits an array into a specified number of new arrays
  */
-function _export_single_donations($donations) {
-	global $user;
-	
-	if (variable_get('sf_donation_debug', 0)) {
-		// log the activity
-		$semaphore = variable_get('cron_semaphore', FALSE);
-		$number_of_donations = count($donations);
-		$data = print_r($donations, true);
-		$sql = "insert into {sf_donation_log} (cron_semaphore, uid, type, number_of_donations, data) values (%d, %d, '%s', %d, '%s')";
-		db_query($sql, $semaphore, $user->uid, 'single', $number_of_donations, $data);
+function array_split($array, $pieces=2)
+{  
+	if ($pieces < 2) {
+		return array($array);
 	}
 	
-	$donations_to_create = array();
-	foreach ($donations as $value) {
-		$donations_to_create[] = $value['fields'];
-	}
+	$newCount = ceil(count($array)/$pieces);
+	$a = array_slice($array, 0, $newCount);
+	$b = array_split(array_slice($array, $newCount), $pieces-1);
+	return array_merge(array($a),$b);
+} 
 
-  $sf = salesforce_management_api_connect();
-	// only continue if we got a valid connection
-	if ($sf) {
-		$results = $sf->client->create($donations_to_create, 'Opportunity');
-		// indices in results should match original donations
-		$contact_roles = array();
+/**
+ * Returns the salesforce ids of a given user (prevents having to call node_load())
+ */
+function _sf_donation_load_user_salesforce_ids($uid) {
+
+	$result = db_query("SELECT 
+		CASE WHEN instr(u.data, 'salesforce_account_id') THEN substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18)
+		ELSE NULL
+		END AS salesforce_account_id,
+		CASE WHEN instr(u.data, 'salesforce_contact_id') THEN substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18)
+		ELSE NULL
+		END AS salesforce_contact_id 
+		FROM {users} u 
+		WHERE u.uid = %d", $uid);
 		
-		$count = count($donations);
-		for ($i=0; $i < $count; $i++) {
-			// salesforce does not return an array if only one object is created
-			if ($count == 1) {
-				$success = $results->success;
-				$sfid = $results->id;
-				$errors = $results->errors;
-			}
-			else {
-				$success = $results[$i]->success;
-				$sfid = $results[$i]->id;
-				$errors = $results[$i]->errors;
-			}
-			if ($success) {
-				// create an array of contact opportunity roles
-				$contact_roles[] = array(
-					'ContactId' => $donations[$i]['ContactId'],
-					'OpportunityId' => $sfid,
-					'Role' => 'Donor',
-				);
-				_update_webform_order($donations_to_create[$i]['Order_ID__c'], $sfid);
-				uc_order_comment_save($donations_to_create[$i]['Order_ID__c'], 0, "Order successfully exported to salesforce opportunity. SFID = $sfid", 'admin');
-			}
-			else {
-				$order_id = $donations_to_create[$i]['Order_ID__c'];
-				// log failure
-				$errors = print_r($errors, true);
-				watchdog('error', "The opportunity object for order $order_id was not created in salesforce. Errors: $errors");
-				// pull trigger
-				//module_invoke_all('sf_donation', 'fails', $order_id, NULL, "The opportunity object for order $order_id was not created in salesforce. Errors: $errors");
-				// manually send email - TODO: change to trigger/action
-				// call mail function and send email
-				$params = array(
-					'order_id' => $order_id,
-					'errors' => $errors,
-					'donation' => print_r($donations_to_create[$i], true),
-				);
-				drupal_mail('sf_donation', 'single_donation_failure', 'phillip.cave@jacksonriver.com,tom.williamson@jacksonriver.com,tj.griffin@jacksonriver.com', language_default(), $params);
-			}
-		}
-		// create all roles
-		$sf->client->create($contact_roles, 'OpportunityContactRole');
-		watchdog('salesforce', t('Creating contact roles: !roles', array('!roles' => print_r($contact_roles, true))));
-	} // if ($sf)
+	return db_fetch_object($result);
+	
+}
+
+function _sf_donation_load_user_salesforce_ids_from_order($order_id) {
+
+	$result = db_query("SELECT 
+		CASE WHEN instr(u.data, 'salesforce_account_id') THEN substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18)
+		ELSE NULL
+		END AS salesforce_account_id,
+		CASE WHEN instr(u.data, 'salesforce_contact_id') THEN substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18)
+		ELSE NULL
+		END AS salesforce_contact_id 
+		FROM {users} u INNER JOIN
+		{uc_orders} o ON o.uid = u.uid WHERE o.order_id = %d", $order_id);
+		
+	return db_fetch_object($result);
+
 }
 
 /*
  * Creates an array that represents a salesforce opportunity object
  */
-function _create_single_donation($order_id, &$user, $sid) {
+function _create_single_donation($order_id, $account_id, $sid) {
+
 	global $base_url;
 
 	// load up the order 
@@ -714,14 +666,12 @@ function _create_single_donation($order_id, &$user, $sid) {
 
 	// load up the payments because we need the received date of the payment
 	$payments = uc_payment_load_payments($order_id);
-	$donation = array(
-		'ContactId' => $user->salesforce_contact_id,
-	);
+	$donation_name = t('Donation - !first !last (!date)', array('!first' => $order->billing_first_name, '!last' => $order->billing_last_name, '!date' => gmdate('Y-m-d H:i:s\Z', $order->created)));
 	
-	$donation['fields'] = array(
-		'Name' => 'Donation - ' . $order->order_id,
+	$donation = array(
+		'Name' => $donation_name,
 		'Amount' => $order->order_total,
-		'AccountID' => $user->salesforce_account_id,
+		'AccountID' => $account_id,
 		'Order_ID__c' => $order->order_id,
 		'Donation_Form_Name__c' => $order->products[0]->title,
 		'Donation_Form_URL__c' => $base_url . '/node/' . $order->products[0]->nid,
@@ -741,19 +691,20 @@ function _create_single_donation($order_id, &$user, $sid) {
 	if ($payments) {
 		// deal with sf date handling
 		$transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
-		$donation['fields']['CloseDate'] = date('Y-m-d', $transaction_date);
-		$donation['fields']['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
-		$donation['fields']['Probability'] = 100.00;
-		$donation['fields']['StageName'] = 'Posted';
+		$donation['CloseDate'] = date('Y-m-d', $transaction_date);
+		$donation['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
+		$donation['Probability'] = 100.00;
+		$donation['StageName'] = 'Posted';
 	}
 	
-	$donation['fields'] = array_merge($donation['fields'], _load_salesforce_map($sid));
+	$donation = array_merge($donation, _load_salesforce_map($sid));
 	
 	// clear the credit card cache
 	uc_credit_cache('clear');
-	
+
 	// add in any mapped fields
 	return $donation;
+
 }
 
 function _convert_billing_country($country_id) {
@@ -763,26 +714,24 @@ function _convert_billing_country($country_id) {
 /*
  * Creates an array that represents a salesforce recurring donation object
  */
-function _create_recurring_donation($order_id, &$user, $count, $sid) {
-	//print "recurring donation: $count<br>";
-	$order = uc_order_load($order_id);
+function _create_recurring_donation($order_id, $contact_id, $count) {
 
-	$recurring_donation = array(
-		'order_id' => $order->order_id, // store the order id because we'll need it later
-		'sid' => $sid,
-		'fields' =>	array(
-			'Name' => 'Donation - ' . $order->order_id,
-			'npe03__Amount__c' => $order->order_total,
-			'npe03__Contact__c' => $user->salesforce_contact_id,
-			'npe03__Installment_Period__c' => 'Monthly',
-			'npe03__Schedule_Type__c' => 'Multiply By',
-			'npe03__Installments__c' => $count,
-		),
+	$order = uc_order_load($order_id);
+	$donation_name = t('Recurring Donation - !first !last (!date)', array('!first' => $order->billing_first_name, '!last' => $order->billing_last_name, '!date' => gmdate('Y-m-d H:i:s\Z', $order->created)));
+	
+	$donation = array(
+		'Name' => $donation_name,
+		'npe03__Amount__c' => $order->order_total,
+		'npe03__Contact__c' => $contact_id,
+		'npe03__Installment_Period__c' => 'Monthly',
+		'npe03__Schedule_Type__c' => 'Multiply By',
+		'npe03__Installments__c' => $count,
 	);
 	
 	// clear the credit card cache
 	uc_credit_cache('clear');
-	return $recurring_donation;
+	return $donation;
+
 }
 
 /* 
