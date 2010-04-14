@@ -1,6 +1,8 @@
 <?php
 // $Id: fundraiser.module$ a.k.a kashgiser
 
+define('FUNDRAISER_SINGLE_DONATION_TYPE',  'donation');
+define('FUNDRAISER_RECURRING_DONATION_TYPE',  'recurring_donation');
 
 /**
  * Implementaion of hook_nodeapi().
@@ -1045,7 +1047,6 @@ function fundraiser_webform_submit($form, &$form_state) {
   uc_credit_cache('save', $order->payment_details, FALSE);
  	// save the order
  	uc_order_save($order);
-	//$order = uc_order_load($order->order_id);
 
  	$transaction_type = array(
  		'txn_type' => 'auth_capture'
@@ -1079,7 +1080,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 		// enter the payment
 		uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL, 'Payment processed by the fundraiser module.');
 	
-		db_query("update {uc_orders} set order_status='payment_received' where order_id = %d",$order->order_id);
+		// mark payment as received
+		db_query("update {uc_orders} set order_status='payment_received' where order_id = %d", $order->order_id);
  		
 		// save any mapped profile fields
 		_save_profile_map($order->uid, $map);
@@ -1087,10 +1089,25 @@ function fundraiser_webform_submit($form, &$form_state) {
 		// add the order_id to the form_state for further processing
 		$form_state['values']['details']['order_id'] = $order->order_id;
 	
+ 		// determine if the donation should be added to the queue
+ 		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
+ 		
  		//if monthly recurring checkbox is set, do the insert into the fundraiser_recurring_users table
  		if ($recurs) {
  			fundraiser_create_future_orders($order->order_id);
+ 			// add to queue as a recurring donation
+ 			if ($add_to_queue) {
+	 			sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
+	 		}
  		}
+ 		else {
+ 			if ($add_to_queue) {
+	 			// add to queue as a donation
+	 			sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+			} 			
+ 		}
+ 		
+ 		drupal_set_message($result['message'],'status');
  	}
  	else { 
 		// failed to process credit cart
@@ -1236,8 +1253,7 @@ function fundraiser_cron() {
 
 			// Check for Salesforce Fundraiser module and update order status
 			if (module_exists('sf_donation')) {
-				// may have to load the module file, not sure
-				sf_donation_update_donation_status($order_id);
+				sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
 			}
 		}
 		else {
@@ -1298,7 +1314,7 @@ function jprint_r($array){
 	print "</pre>";
 }
 
-function fundraiser_mail_alter(&$message) {
+function fundraiser_mail_alter(&$message){
 	$parts = explode("/",$_GET['q']);
 	$nid=$parts[1];
 	$node=node_load($nid);
@@ -1358,5 +1374,14 @@ function _get_cc_type($cardnumber) {
 function fundraiser_clone_node_alter(&$node, $original_node, $method) {
 	if ($method == 'prepopulate') {
 		$node->internal_name = 'Clone of ' . $original_node->internal_name;
+	}
+}
+
+/**
+ * Implemenation of queue_report_item_name().
+ */
+function fundraiser_queue_report_item_title(&$row) {
+	if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
+		return 'Order ' . $row['oid'];
 	}
 }

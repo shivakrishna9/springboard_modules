@@ -651,7 +651,11 @@ function _recurring_donation_edit_forms($master_order_id) {
 	$output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
 	// render 3 forms
 	$output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
-	$output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
+	
+	// 4/5/2010 - commented out for time being because authorize.net does not support updating
+	// 						CIM profiles at this time
+	// $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
+	
 	$output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
 	
 	return $output;
