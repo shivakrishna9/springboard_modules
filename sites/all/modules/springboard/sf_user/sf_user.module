@@ -40,7 +40,7 @@ function sf_user_menu() {
 }
 
 /**
- * Implemenation of queue_report_item_name().
+ * Implementation of queue_report_item_name().
  */
 function sf_user_queue_report_item_title(&$row) {
 	if ($row['type'] == 'user') {
@@ -108,6 +108,38 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
 				break;
 		}
 	}
+}
+
+/**
+ * Implemenation of sf_import_updated_objects().
+ */
+function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_new_objects) {
+	
+	if ($type == 'user') {
+		// load the fieldmap data.
+		$map = salesforce_management_api_fieldmap_load($fieldmap);
+		// load drupal object definition
+		$drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
+		// load salesforce object definition
+		$salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
+		
+		foreach($objects->records as $object) {
+			// look up the user's id
+			$uid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = 'user'", $object->Id));
+			if ($uid) {
+				$user = user_load($uid);
+				$extra_data = array();
+				update_user_values($user, $object, $extra_data, $map, $drupal, $salesforce);
+			}
+			else {
+				if ($import_new_objects) {
+					// TODO: Handle new object imports in the future
+					
+				}
+			}
+		}
+	}
+	
 }
 
 /**
