@@ -1,0 +1,9 @@
+; $Id$
+name = Salesforce Importer
+description = Import objects from Salesforce based on criteria entered by the user 
+package = Jackson River SpringBoard
+core = 6.x
+
+dependencies[] = salesforce_management_api
+
+version = "1.0-beta"
