@@ -89,7 +89,7 @@ function salesforce_management_api_settings_form_submit($form, &$form_state) {
 // Displays an admin table for fieldmaps.
 function salesforce_management_api_fieldmap_admin() {
   // Define the header for the admin table.
-  $header = array(t('Index'), t('Name'), t('Drupal object'), t('Salesforce object'), array('data' => t('Operations'), 'colspan' => 3));
+  $header = array(t('Index'), t('Name'), t('Drupal object'), t('Salesforce object'), array('data' => t('Operations'), 'colspan' => 4));
   $rows = array();
 
   // Loop through all the indexed field maps.
@@ -103,14 +103,15 @@ function salesforce_management_api_fieldmap_admin() {
       salesforce_management_api_fieldmap_object_label('salesforce', $map['salesforce']),
       l(t('edit'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/edit'),
       l(t('delete'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/delete'),
-	  l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/dedupe'),
+	  	l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/dedupe'),
+	  	l(t('import'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/import'),
     );
   }
 
   // Add a message if no objects have been mapped.
   if (count($rows) == 0) {
     $rows[] = array(
-      array('data' => t('You have not yet defined any fieldmaps.'), 'colspan' => 7),
+      array('data' => t('You have not yet defined any fieldmaps.'), 'colspan' => 8),
     );
   }
 
