@@ -753,6 +753,41 @@ function _webform_user_create_webform_components(&$node) {
   );
 
   webform_component_insert($cid_field);
+  
+  	// referrer
+	$referrer = array(
+    'nid' => $node->nid,
+    'pid' => 0,
+	'value' => '',
+    'form_key' => 'referrer',
+    'name' => 'Referrer',
+    'type' => 'hidden',
+    'mandatory' => 0,
+    'weight' => 22,
+    'email' => 1,
+    'extra' => array(
+      'description' => '',
+    ),
+  );
+	webform_component_insert($referrer);
+	
+	// initial referrer
+	$initial_referrer = array(
+    'nid' => $node->nid,
+    'pid' => 0,
+	'value' => '',
+    'form_key' => 'initial referrer',
+    'name' => 'Initial Referrer',
+    'type' => 'hidden',
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'extra' => array(
+      'description' => '',
+    ),
+  );
+
+	webform_component_insert($initial_referrer);
 }
 
 /**
