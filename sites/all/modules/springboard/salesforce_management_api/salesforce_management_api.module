@@ -272,8 +272,15 @@ function salesforce_management_api_fieldmap_objects($type) {
 						$sf_objects[] = $object->name;
 					}
 				}
-				
-      $result = $sf->client->describeSObjects($sf_objects);
+			
+			// We need to limit this to 100 objects at a time
+			$chunked_objects = array_chunk($sf_objects, 100);
+			$result = array();
+			foreach($chunked_objects as $object_set) {
+				$tmp = $sf->client->describeSObjects($object_set);
+				$result = array_merge($result, $tmp);
+			}
+			
       foreach ($result as $key => $object) {
         $objects[$sf_objects[$key]] = array(
           'label' => t($sf_objects[$key]),
