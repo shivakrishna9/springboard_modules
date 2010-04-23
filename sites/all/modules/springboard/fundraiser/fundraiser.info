@@ -6,4 +6,4 @@ package = Jackson River SpringBoard
 dependencies[] = webform
 dependencies[] = uc_product
 
-version =  "alpha"
+version =  2.0

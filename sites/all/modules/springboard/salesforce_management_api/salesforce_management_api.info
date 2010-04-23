@@ -4,4 +4,4 @@ description = Defines an API that enables modules to interact with the Salesforc
 package = Jackson River SpringBoard
 core = 6.x
 
-version = "1.0-beta"
+version = 2.0

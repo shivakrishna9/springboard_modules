@@ -1,5 +1,0 @@
-;$Id$
-name = "Salesforce User Import Service"
-description = "Imports users based on outgoing messages from Salesforce"
-core = 6.x
-dependencies[] = services

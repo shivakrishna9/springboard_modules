@@ -7,4 +7,4 @@ dependencies[] = salesforce_management_api
 dependencies[] = queue_api
 dependencies[] = trigger
 
-version = "1.0-beta"
+version = 2.0
