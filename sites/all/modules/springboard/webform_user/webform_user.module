@@ -847,7 +847,7 @@ function _get_object_relation_fields($object_name) {
 	if ($sf) {
 		$object = $sf->client->describeSObject($object_name);
 		foreach($object->fields as $field) {
-			if ($field->type == 'reference' && $field->updateable) {
+			if ($field->type == 'reference') {
 				$object_fields[$field->name] = $field->label;
 			}
 		}
