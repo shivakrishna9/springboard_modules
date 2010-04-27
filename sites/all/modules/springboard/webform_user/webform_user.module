@@ -345,8 +345,7 @@ function webform_user_webform_submit($form, &$form_state) {
  *   Returns TRUE if the e-mail address is valid; FALSE otherwise.
  */
 function _webform_user_validate_email($mail) {
-  // now using drupal's built-in email address validation
-  return valid_email_address($mail);
+  return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 }
 
 /**
