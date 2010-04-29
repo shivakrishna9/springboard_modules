@@ -166,11 +166,15 @@ function sf_import_settings_form_submit($form, &$form_state) {
 	$record->import_new_objects = $form_state['values']['criteria']['import_new_objects'];
 	$record->frequency = $form_state['values']['frequency']['interval'];
 	$record->frequency_type = $form_state['values']['frequency']['interval_type'];
+	
 	if ($form_state['values']['is_new']) {
 		$record->next_import = strtotime('+'. $record->frequency . ' ' . $record->frequency_type);
+		drupal_write_record($table, $record);
 	}
-
-	drupal_write_record($table, $record, 'fieldmap');
+	else {
+		drupal_write_record($table, $record, 'fieldmap');
+	}
+	
 	drupal_set_message('Import settings saved.');
 	
 }
