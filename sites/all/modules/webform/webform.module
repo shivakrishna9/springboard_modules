@@ -1676,6 +1676,10 @@ function webform_client_form_validate($form, $form_state) {
 }
 
 function webform_client_form_submit($form, &$form_state) {
+	if (!empty($form_state['values']['abort'])) {
+		return;
+	}
+	
   global $user, $base_url;
   module_load_include('inc', 'webform', 'webform_submissions');
   webform_load_components();

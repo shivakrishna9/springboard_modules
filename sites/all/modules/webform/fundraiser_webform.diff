@@ -1,0 +1,15 @@
+Index: webform.module
+===================================================================
+--- webform.module	(revision 2)
++++ webform.module	(working copy)
+@@ -1676,6 +1676,10 @@
+ }
+ 
+ function webform_client_form_submit($form, &$form_state) {
++	if (!empty($form_state['values']['abort'])) {
++		return;
++	}
++	
+   global $user, $base_url;
+   module_load_include('inc', 'webform', 'webform_submissions');
+   webform_load_components();
