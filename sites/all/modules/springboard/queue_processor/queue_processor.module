@@ -429,9 +429,17 @@ function save_batch_items($batch) {
 			$batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object), $record->is_retry);
 		$oids[] = $record->oid;
 	}
-	
+
+	$sql = "UPDATE {sf_heap} SET batch_id = %d WHERE oid IN (" . db_placeholders($oids, 'varchar') . ") AND type = '%s' AND action = '%s' AND locked = 1";
 	// add the batch id to records in the heap
-	db_query("UPDATE {sf_heap} SET batch_id = %d WHERE oid IN ('%s') AND type = '%s' AND action = '%s' AND locked = 1", $batch['id'], implode("','", $oids), $record->type, $batch['action']);
+	$args = array();
+	$args[] = $batch['id'];
+	foreach($oids as $oid) {
+		$args[] = $oid;
+	}
+	$args[] = $record->type;
+	$args[] = $batch['action'];
+	db_query($sql, $args);
 }
 
 /**
