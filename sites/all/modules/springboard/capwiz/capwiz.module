@@ -181,7 +181,7 @@ function capwiz_add_account($capwiz_account = NULL) {
       $email_message_op      = $email_message_options[$email_message_op_code];
     }
 
-    if ($email_message_op != 'register_none') {
+    if ($email_message_op_code != 'register_none') {
       _user_mail_notify($email_message_op, $drupal_account);
     }
 
