@@ -104,7 +104,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
   if (is_null($capwiz_accounts)) {
     require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
+    CapwizApi::fetchAccounts(TRUE);
     $capwiz_accounts = &CapwizApi::$accounts;
   }
 
@@ -176,12 +176,21 @@ function capwiz_add_account($capwiz_account = NULL) {
 
     static $email_message_op;
     if (empty($email_message_op)) {
-      $email_message_options = capwiz_get_email_message_options();
-      $email_message_op_code = (int)variable_get('capwiz_email_message', variable_get('user_register', 1));
-      $email_message_op      = $email_message_options[$email_message_op_code];
-    }
 
-    if ($email_message_op_code != 'register_none') {
+      $email_message_op = variable_get('capwiz_email_message', NULL);
+
+      if (empty($email_message_op)) {
+        $email_message_op_code = (int)variable_get('user_register', 1);
+        $email_message_options = capwiz_get_email_message_options();
+        $email_message_op      = $email_message_options[$email_message_op_code];
+      }
+    }
+pv($email_message_op, '$email_message_op');
+pv($email_message_op_code, '$email_message_op_code');
+pv($email_message_options, '$email_message_options');
+
+    if ($email_message_op != 'register_none') {
+pv('Mail fired!');
       _user_mail_notify($email_message_op, $drupal_account);
     }
 
@@ -256,7 +265,7 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
 function _capwiz_get_value($capwiz_account, $capwiz_field) {
 
   $value = FALSE;
-$custom_fields = $capwiz_account->custom_fields;
+  $custom_fields = $capwiz_account->custom_fields;
 
   // If it is a normal field:
   if (isset($capwiz_account->$capwiz_field)) {
