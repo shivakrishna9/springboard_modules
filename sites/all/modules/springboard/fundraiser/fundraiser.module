@@ -1133,7 +1133,7 @@ function _save_profile_map($uid, &$map) {
 		else {
 			$user_to_update = $user;
 		}
-		
+
 		if(module_exists('profile')){
 			$cat_array = profile_categories();
 		
@@ -1146,7 +1146,7 @@ function _save_profile_map($uid, &$map) {
 					}
 				}
 				// save profile
-				profile_save_profile($updates, $user_to_update, $cat['name'], FALSE);
+				_fundraiser_profile_save_profile($updates, $user_to_update, $cat['name']);
 			}				
 		}
 		// update last_updated date so user will be re-synced on next cron run
@@ -1391,4 +1391,20 @@ function fundraiser_queue_report_item_title(&$row) {
 function _fundraiser_profile_get_fields($category) {
   $sql = "SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') ORDER BY category, weight";
   return db_query($sql, $category);
+}
+
+/** 
+ * Version of profile_save_profile that includes hidden profile fields 
+ */
+function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
+  $result = _fundraiser_profile_get_fields($category);
+  while ($field = db_fetch_object($result)) {
+    if (_profile_field_serialize($field->type)) {
+      $edit[$field->name] = serialize($edit[$field->name]);
+    }
+    db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $user->uid);
+    db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
+    // Mark field as handled (prevents saving to user->data).
+    $edit[$field->name] = NULL;
+  }
 }
