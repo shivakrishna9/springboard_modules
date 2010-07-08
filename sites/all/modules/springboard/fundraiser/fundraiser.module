@@ -1139,8 +1139,7 @@ function _save_profile_map($uid, &$map) {
 		
 			foreach ($cat_array as $cat) {
 				$updates = array(); // array for storing updates to each profile category
-				$result = _profile_get_fields($cat['name']);
-			
+				$result = _fundraiser_profile_get_fields($cat['name']);
 				while ($row = db_fetch_array($result)) {
 					if (array_key_exists($row['name'], $map)) {
 						$updates[$row['name']] = $map[$row['name']];
@@ -1152,7 +1151,7 @@ function _save_profile_map($uid, &$map) {
 		}
 		// update last_updated date so user will be re-synced on next cron run
 		user_save($user_to_update, array('last_updated' => time()));
-		
+
 		// insert user back into queue
 		$action = 'update';
 		if (empty($user_to_update->salesforce_contact_id)) {
@@ -1384,4 +1383,12 @@ function fundraiser_queue_report_item_title(&$row) {
 	if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
 		return 'Order ' . $row['oid'];
 	}
+}
+
+/** 
+ * Version of _profile_get_fields that includes hidden profile fields by default
+ */
+function _fundraiser_profile_get_fields($category) {
+  $sql = "SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') ORDER BY category, weight";
+  return db_query($sql, $category);
 }
