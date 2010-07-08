@@ -542,6 +542,8 @@ function fundraiser_update_1() {
 	$items = array();
 	$items[] = update_sql("ALTER TABLE {fundraiser_gateway} ADD internal_name varchar(255)");
 	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD cancellation_reason varchar(500)");
+	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP data");
+	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP fee_amount");
 	return $items;
 }
 
