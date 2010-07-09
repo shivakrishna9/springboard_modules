@@ -89,7 +89,7 @@
  *   $db_url = 'mysqli://username:password@localhost/databasename';
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  */
-$db_url = 'mysql://springboard_user:pl2kk@localhost/springboard';
+$db_url = 'mysql://springboarddev:W3i1rda1UHF@localhost/springboard-dev';
 $db_prefix = '';
 
 /**
