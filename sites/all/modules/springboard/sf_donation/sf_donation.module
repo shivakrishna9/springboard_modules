@@ -697,6 +697,13 @@ function _create_single_donation($order_id, $account_id, $sid) {
 		$donation['StageName'] = 'Posted';
 	}
 	
+	// 7/19/2010 - pcave: Bug fix. If this order was part of a recurring donation series, make sure the correct CloseDate is set in Salesforce in case the
+	// 									  order doesn't export on the day it was created
+	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
+	if ($close_date) {
+		$donation['CloseDate'] = date('Y-m-d', $close_date);
+	}
+	
 	$donation = array_merge($donation, _load_salesforce_map($sid));
 	
 	// clear the credit card cache
