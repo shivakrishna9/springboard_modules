@@ -1,0 +1,50 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Webform Creation Re-order
+ *
+ * Re-orders some elements in the webform creation form so it makes more sense for users.
+ * 
+ * If a form type is supplied in the URL - either donation or springboard - open 
+ * the appropriate fieldset for that form type
+ * 
+ * URL for Springboard forms:
+ *    /node/add/webform/springboard
+ * 
+ * URL for Donation forms:
+ *    /node/add/webform/donation
+ */
+
+/**
+ * Implementation of hook_form_alter()
+ * Re-order some elements in the Webform edit form
+ * If a form type is supplied in the URL - either donation or springboard - open 
+ * the appropriate fieldset for that form type
+ */
+function webform_reorder_form_alter(&$form, &$form_state, $form_id) {
+  if($form_id == 'webform_node_form') {
+    // Move Fundraising Settings to top
+    $form['fundraiser']['#weight'] = 0;
+    $form['fundraiser']['#title'] = t('Fundraising Settings');
+    
+    // Spring Webform Settings - near top
+    $form['webform_user']['#weight'] = 1;
+    $form['webform_user']['#title'] = t('Springboard Webform Settings');
+    
+    // Move Webform Access Control to the bottom of webform fields
+    $form['webform']['role_control']['#weight'] = 10;
+    
+    // Check if a type of form was specified
+    // If Springboard, expand Springboard Webform Settings fieldset
+    // If Donation, expand Fundraising Settings fieldset
+    $form_type = arg(3);
+    if($form_type == 'springboard') {
+      $form['webform_user']['#collapsed'] = FALSE;
+    }
+    elseif($form_type == 'donation') {
+      $form['fundraiser']['#collapsed'] = FALSE;
+    }
+  }
+}
