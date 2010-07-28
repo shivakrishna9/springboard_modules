@@ -35,6 +35,14 @@ function sf_user_menu() {
 		'file' => 'sf_user_report.inc',
 		'type' => MENU_NORMAL_ITEM,
 	);
+	
+	$items['admin/reports/salesforce/users-no-last-names'] = array(
+		'title' => 'Users with no last name',
+		'page callback' => 'sf_user_no_last_name_report',
+		'access arguments' => array('view salesforce reports'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'sf_user_report.inc',
+	);
 
   return $items;
 }

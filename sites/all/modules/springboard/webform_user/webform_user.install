@@ -9,6 +9,30 @@ function webform_user_uninstall() {
   drupal_uninstall_schema('webform_user');
 }
 
+/**
+ * Implementation of hook_enable().
+ */
+function webform_user_enable() {
+	
+	// add webform_user to the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  array_push($processing_order, 'webform_user');
+  variable_set('queue_processing_order', $processing_order);
+
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function webform_user_disable() {
+
+	// remove webform_user from the queue processing order array
+	$processing_order = variable_get('queue_processing_order', array());
+  $processing_order = array_values(array_diff($processing_order, array('webform_user')));
+  variable_set('queue_processing_order', $processing_order);
+	
+}
+
 function webform_user_schema() {
   $schema['webform_user'] = array(
 	  'description' => t('TODO: please describe this table!'),

@@ -25,7 +25,10 @@ function sf_queue_insert($oid, $type, $action) {
 		$record->fieldmap = $salesforce['fieldmap'];
 		$record->sfid = $salesforce['sfid'];
 		$record->created = time();
-	
+		
+		// allow other modules to alter the queue record before it is inserted
+		drupal_alter('queue_api_insert', $record);
+		
 		drupal_write_record('sf_queue', $record);
 		watchdog('salesforce queue api', t('!type !oid successfully added to the salesforce queue.', array('!type' => ucfirst($type), '!oid' => $oid)), NULL, WATCHDOG_INFO);
 	}	

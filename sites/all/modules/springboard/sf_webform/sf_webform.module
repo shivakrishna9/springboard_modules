@@ -546,7 +546,7 @@ function sf_webform_submit($form, &$form_state) {
  * Implementation of queue_preprocess_batch_alter().
  */
 function sf_webform_queue_preprocess_batch_alter(&$batch) {
-	if ($batch['type'] == 'webform') {
+	if ($batch['type'] == 'webform' || $batch['type'] == 'webform_user') {
 		
 		switch ($batch['action']) {
 			
@@ -576,7 +576,7 @@ function sf_webform_queue_preprocess_batch_alter(&$batch) {
  * Implementation of queue_fieldmap_assignment_alter().
  */
 function sf_webform_queue_fieldmap_assignment_alter(&$data) {
-	if ($data->type == 'webform') {
+	if ($data->type == 'webform' || $data->type == 'webform_user') {
 		// lookup the fieldmap assigned to this webform. the drupal type is in the format 'webform:' + nid
 		// figure out which node this submission belongs to
 		$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $data->oid));

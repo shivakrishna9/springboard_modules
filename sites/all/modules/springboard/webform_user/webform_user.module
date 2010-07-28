@@ -805,7 +805,7 @@ function _webform_user_create_webform_components(&$node) {
  * Implementation of queue_batch_item_alter().
  */
 function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
-	if ($type == 'webform' && $action == 'create') {
+	if ($type == 'webform_user' && $action == 'create') {
 		$relationship = _webform_user_get_relationship($oid);
 		if (!empty($relationship)) {
 			$user = _webform_user_load_user_salesforce_ids($oid);
@@ -867,4 +867,20 @@ function _get_object_relation_fields($object_name) {
 		return $object_fields;
 	}	
 	return array();
+}
+
+/** 
+ * Implemenation of queue_api_insert_alter()
+ */
+function webform_user_queue_api_insert_alter(&$record) {
+	if ($record->type == 'webform') {
+		// check to see if it is a webform user
+		$is_webform_user = db_result(db_query("SELECT w.is_webform_user FROM {webform_user} w 
+			INNER JOIN {webform_submissions} s ON s.nid = w.nid WHERE s.sid = %d", (int)$record->oid));
+		
+		if ($is_webform_user) {
+			$record->type = 'webform_user';
+		}
+	}
+		
 }
