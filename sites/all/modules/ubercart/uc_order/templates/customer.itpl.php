@@ -37,7 +37,15 @@
         <tr valign="top">
           <td>
 
-            <?php if ($thank_you_message) { ?>
+            <?php if ($thank_you_message) { 
+			
+
+            	if(isset($order->confirmation_email_message) && !empty($order->confirmation_email_message)){
+            		echo $order->confirmation_email_message;
+            	}
+							else 
+							{
+            ?>
             <p><b><?php echo t('Thank you for your gift, [order-first-name]!'); ?></b></p>
 
             <?php if (isset($_SESSION['new_user'])) { ?>
