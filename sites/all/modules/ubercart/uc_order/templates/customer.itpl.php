@@ -40,11 +40,10 @@
             <?php if ($thank_you_message) { 
 			
 
-            	if(isset($order->confirmation_email_message) && !empty($order->confirmation_email_message)){
-            		echo $order->confirmation_email_message;
-            	}
-							else 
-							{
+					if(isset($order->confirmation_email_message) && !empty($order->confirmation_email_message)){
+						echo $order->confirmation_email_message;
+					}	else {
+				
             ?>
             <p><b><?php echo t('Thank you for your gift, [order-first-name]!'); ?></b></p>
 
@@ -58,7 +57,7 @@
             <?php echo t('If you need to check the status of your order, please visit our home page at [store-link] and click on "My account" in the menu or login with the following link:'); ?>
             <br /><br />[site-login]</p>
             <?php } ?>
-
+            <?php } ?>
             <table cellpadding="4" cellspacing="0" border="0" width="100%" style="font-family: verdana, arial, helvetica; font-size: small;">
               <tr>
                 <td colspan="2" bgcolor="#006699" style="color: white;">
