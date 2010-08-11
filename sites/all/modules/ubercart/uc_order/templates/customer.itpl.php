@@ -107,6 +107,15 @@
                 </td>
               </tr>
               <tr>
+              <tr>
+                <td nowrap="nowrap">
+                  <b><?php echo t('Transaction #:'); ?></b>
+                </td>
+                <td width="98%">
+                  <b> [order-link]</b>
+                </td>
+              </tr>
+              <tr>
                 <td nowrap="nowrap">
                   <b><?php echo t('Payment Method:'); ?></b>
                 </td>
