@@ -422,7 +422,11 @@ function _webform_user_update_user_profile_fields($uid, $form_fields, $all = FAL
   }
   
   // Insert into queue
-  sf_queue_insert($uid, 'user', 'upsert');
+  $action = 'update';
+  if (empty($user->salesforce['sfid'])) {
+    $action = 'upsert';
+  }
+  sf_queue_insert($uid, 'user', $action);
 }
 
 function _webform_user_log_user_in($fields) {
