@@ -142,23 +142,6 @@ class CapwizApi
 
 
   /**
-   * Reset the "date from" for getting Capwiz accounts.
-   *
-   * This method ensures *all* accounts are retrieved
-   * on the next Capwiz::getAccounts() call.
-   *
-   * @return void
-   *
-   * @see _callFunction()
-   */
-  private static function _resetApiTimestamp() {
-
-    $arguments = array('reset_date' => NULL);
-    self::_callFunction('reset_sync_window', $arguments, TRUE);
-  }
-
-
-  /**
    * Helper method: Fetch a Capwiz object.
    * 
    * @param StdClass $response
@@ -202,6 +185,23 @@ class CapwizApi
 
 
   /**
+   * Reset the "date from" for getting Capwiz accounts.
+   *
+   * This method ensures *all* accounts are retrieved
+   * on the next Capwiz::getAccounts() call.
+   *
+   * @return void
+   *
+   * @see _callFunction()
+   */
+  public static function resetApiTimestamp() {
+
+    $arguments = array('reset_date' => NULL);
+    self::_callFunction('reset_sync_window', $arguments, TRUE);
+  }
+
+
+  /**
    * Get Capwiz user accounts and cache them.
    *
    * Capwiz API function: get_latest_people_plus
@@ -221,7 +221,7 @@ class CapwizApi
   public static function fetchAccounts($get_all_accounts = FALSE) {
 
     if ((bool)$get_all_accounts) {
-      self::_resetApiTimestamp();
+      self::resetApiTimestamp();
     }
 
     $response = self::_callFunction('get_latest_people_plus', array(), TRUE, TRUE);
