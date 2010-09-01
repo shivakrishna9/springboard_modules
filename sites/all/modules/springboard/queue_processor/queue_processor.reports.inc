@@ -77,11 +77,13 @@ function batch_detail($id) {
 	foreach($batch['records'] as $item) {
 		$rows = array();
 		$object = unserialize($item->data);
-		foreach($object as $field => $value) {
-			$rows[] = array(
-				'field' => $field,
-				'value' => $value,
-			);
+		if ($batch['action'] != 'delete') {
+  		foreach($object as $field => $value) {
+  			$rows[] = array(
+  				'field' => $field,
+  				'value' => $value,
+  			);
+  		}	
 		}	
 		
 		asort($rows);

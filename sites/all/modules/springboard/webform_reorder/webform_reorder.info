@@ -1,4 +1,4 @@
-; $Id$
+; $Id: webform_reorder.info 208 2010-07-20 14:16:27Z brockboland $
 name = Webform Creation Re-order
 description = Re-orders some elements in the webform creation form so it makes more sense for users.
 

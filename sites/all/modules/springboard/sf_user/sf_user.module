@@ -68,7 +68,7 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
 			case 'update':
 				// get any objects that have already been exported to salesforce. these will be used when generating the
 				// export objects and cut down on api calls
-				$objects = get_salesforce_objects_in_batch($batch['sfids'], $batch['fieldmap']);
+				$objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
 
 				foreach($batch['records'] as $record) {
 					$user = user_load((int)$record->oid);
@@ -242,36 +242,6 @@ function update_user_values(&$user, &$object, &$extra_data, $map, $drupal, $sale
     	user_save($user, $extra_data);
 		}
   }
-}
-
-/**
- * Updates a drupal user based on an object from salesforce using fieldmap rules
- *
- * @param $sfids
- *   The salesforce object ids to retrieve
- * @param $fieldmap
- * 	 The fieldmap used to limit the fields in the objects
- * @return 
- *   An array of salesforce sobjects	
- */
-function get_salesforce_objects_in_batch($sfids, $fieldmap) {
-	// grab all existing objects that we are going to export
-	$objects = array();
-	if (!empty($sfids)) {
-		$sf = salesforce_management_api_connect();
-		if ($sf) {
-			try {
-				$objects = _normalize_salesforce_response($sf->retrieve($sfids, $fieldmap));
-			}
-			catch  (Exception $e) {
-				// TODO: LOG ERROR
-			}
-		}
-		else {
-			// TODO: LOG ERROR
-		}
-	}
-	return $objects;
 }
 
 /**
