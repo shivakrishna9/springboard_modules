@@ -1320,8 +1320,12 @@ function fundraiser_mail_alter(&$message){
 	
 	if ($message['id'] == 'uc_order_action-mail') {
 		$message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
+    $bcc = variable_get('fundraiser_receipt_bcc', '');
+    if (!empty($bcc)) {
+      $message['headers']['Bcc'] = $bcc;
+    }
+
 		$message['from'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
-		
 		$message['subject'] = $node->confirmation_email_subject;
 		
 		$message['params']['replacements']['order']->confirmation_email_message = $node->confirmation_email_message;
