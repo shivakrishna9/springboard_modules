@@ -91,6 +91,13 @@ function fundraiser_admin_settings() {
 		'#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. When unchecked, on U.S and Canda will be inserted.'),
 	);
 	
+	$form['fundraiser_receipt_bcc'] = array(
+	 '#type' => 'textfield',
+	 '#title' => t('Donation receipt bcc email address'),
+	 '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
+	 '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
+	);
+	
 	return system_settings_form($form);
 }
 
