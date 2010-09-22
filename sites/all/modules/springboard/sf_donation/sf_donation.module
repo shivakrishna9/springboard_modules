@@ -202,6 +202,9 @@ function sf_donation_theme() {
 	);
 }
 
+/** 
+ * Form to map the webform/donation to the Salesforce opportunity object
+ */
 function sf_donation_mapping_form($form_state, $node) {
 	$form = array(
     '#tree' => TRUE,
@@ -213,9 +216,28 @@ function sf_donation_mapping_form($form_state, $node) {
     '#type' => 'value',
     '#value' => $node->nid,
   );
-
+  
 	$sf = salesforce_management_api_connect();
 	$donation = $sf->client->describeSObject("Opportunity");
+	
+	// get record types
+	$record_types = array();
+	foreach($donation->recordTypeInfos as $record_type) {
+		if ($record_type->available && $record_type->name != 'Master') {
+			$record_types[$record_type->recordTypeId] = $record_type->name;
+		}
+	}
+	$record_types[] = '--Select One--';
+  asort($record_types);
+	
+  $form['record_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Salesforce record type',
+    '#description' => t('The type of Opportunity to create when the donation is exported to Salesforce.'),
+    '#options' => $record_types,
+    '#default_value' => $node->recordtype_id,
+  );
+	
 	$donation_fields = array('' => '--Select One--');
 	$mapping_config = _get_mapping_config();
 
@@ -231,30 +253,54 @@ function sf_donation_mapping_form($form_state, $node) {
 	);
 	
 	$form['user_mappings'] = array(
-		'#value' => '<h3>User Mappings</h3><div>Use this form to map additional fields to the opportunity object in salesforce.</div>',
+		'#value' => '<h3>Donation Mappings</h3><div>Use this form to map fields to the <strong>Opportunity</strong> object in Salesforce.</div>',
 		'#weight' => -1,
 	);
 
 	foreach($donation->fields as $field) {
 		// exclude pre-mapped fields
-		if (!in_array($field->name, $mapping_config['unmappable'])) {
+		//if (!in_array($field->name, $mapping_config['unmappable'])) {
 			$donation_fields[$field->name] = $field->label;
-		}
+		//}
 	}
 	
+	asort($donation_fields);
+	
 	$node = $form['#node'];
+	//_create_donation_map($node->webform['components']);
+	
+	require_once 'donation.php';
+	//$donation = new Donation(21, 322);
+	//$o = $donation->map();
+	//print "<pre>".print_r($o, TRUE)."</pre>";die();
+	$properties = Donation::get_mappable_properties();
+
+	asort($properties);
+	
+	foreach($properties as $key => $value) {
+	 $form['mapping']['donation'][$key] = array(
+	   '#type' => 'item',
+	   '#description' => $value,
+	 );
+	 $form['mapping']['salesforce'][$key] = array(
+  		'#type' => 'select',
+  		'#options' => $donation_fields,
+  		'#default_value' => $node->salesforce_map[$key],
+  	);
+	}
+	
 	foreach($node->webform['components'] as $cid => $component) {
 		if($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
 			// component
-			$form['mapping']['cid'][$cid] = array(
+			$form['mapping']['component'][$component['form_key']] = array(
 			'#type' => 'item',
 			'#description' => t($component['name']." - (".$component['type'].")"),
 			);
 			// opportunity field
-			$form['mapping']['salesforce'][$cid] = array(
+			$form['mapping']['salesforce'][$component['form_key']] = array(
 				'#type' => 'select',
 				'#options' => $donation_fields,
-				'#default_value' => $node->salesforce_map[$cid],
+				'#default_value' => $node->salesforce_map[$component['form_key']],
 			);
 		}
 	}
@@ -278,13 +324,22 @@ function sf_donation_mapping_form_submit($form, &$form_state) {
 	// remove salesforce mappings
 	$sql = "delete from {fundraiser_salesforce_map} where nid = %d";
 	db_query($sql, $form['#node']->nid);
+	
+	$map = array();
+	
 	// re-add mappings
 	foreach($form_state['values']['mapping']['salesforce'] as $key => $value) {
 		if (!empty($value)) {
-			$sql = "insert into {fundraiser_salesforce_map} set nid = %d, cid = %d, map_id = '%s'";
-			db_query($sql, $form['#node']->nid, $key, $value);
+		  $map[$value] = $key;
+			//$sql = "insert into {fundraiser_salesforce_map} set nid = %d, cid = %d, map_id = '%s'";
+			//$sql = "INSERT INTO {fundraiser_salesforce_map} VALUES (%d, %d, '%s', '%s', '%s')";
+			//db_query($sql, $form['#node']->nid, 0, '', $key, $value);
 		}
 	}
+	db_query("INSERT INTO {fundraiser_salesforce_map} VALUES (%d, '%s', '%s')", 
+	 $form['#node']->nid, $form_state['values']['record_type'], serialize($map));
+	 
+	//print "<pre>".print_r($map, TRUE)."</pre>";
 	drupal_set_message(t('Salesforce mapping has been saved'));
 }
 
@@ -390,6 +445,14 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
 				'#description' => t('The default campaign to which donations will be assigned.'),
 				'#options' => $campaigns,
 				'#default_value' => variable_get('sf_donation_default_campaign', ''),
+			);
+			
+			$form['sf_donation']['sf_donation_backend'] = array(
+        '#type' => 'select',
+        '#title' => t('Salesforce Donation Application'),
+        '#description' => t('The application Salesforce is using to process donations'),
+        '#options' => array('npsp' => 'Nonprofit Starter Pack', 'common_ground' => 'Convio Common Ground'),
+        '#default_value' => variable_get('sf_donation_backend', 'npsp'),
 			);
 
 
@@ -513,6 +576,9 @@ function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 			break;
 			
 		case FUNDRAISER_RECURRING_DONATION_TYPE:
+
+      $type = variable_get('sf_donation_recurring_processor_engine', 'NPSP');
+      include 'processors/' . $type . 'inc';
 
 			$sf = salesforce_management_api_connect();
 			// only continue if we got a valid connection
@@ -659,6 +725,14 @@ function _sf_donation_load_user_salesforce_ids_from_order($order_id) {
  */
 function _create_single_donation($order_id, $account_id, $sid) {
 
+  require_once('donation.php');
+  $donation = new Donation($order_id, $sid);
+	return $donation->map();
+	/**
+	print "<pre>".print_r($object, TRUE)."</pre>";die();
+	
+
+
 	global $base_url;
 
 	// load up the order 
@@ -711,7 +785,7 @@ function _create_single_donation($order_id, $account_id, $sid) {
 
 	// add in any mapped fields
 	return $donation;
-
+  */
 }
 
 function _convert_billing_country($country_id) {
@@ -960,29 +1034,52 @@ function _update_webform_order($order_id, $sfid) {
  */
 function theme_sf_donation_mapping_form($form) {
 	$output = drupal_render($form['user_mappings']);
-	
-	if ($form['mapping']['cid']) {
-		foreach ($form['mapping']['cid'] as $key=>$cid) {
-			if (is_numeric($key)) {
+	$output .= drupal_render($form['record_type']);
+	//if ($form['mapping']['component']) {
+		
+		$row = array();
+		$row[] = 'Donation Properties';
+		$row[] = '&nbsp;';
+		$rows[] = $row;
+		foreach ($form['mapping']['donation'] as $property=>$value) {
+		  if (strpos($property, '#') === FALSE) {
+        $row = array();
+        $row[] = drupal_render($form['mapping']['donation'][$property]);
+        $row[] = drupal_render($form['mapping']['salesforce'][$property]);
+        $rows[] = $row;
+			}
+		}
+		
+		$row = array();
+		$row[] = 'Webform Components';
+		$row[] = '&nbsp;';
+		$rows[] = $row;
+		foreach ($form['mapping']['component'] as $key => $cid) {
+			//if (is_numeric($key)) {
+			if (strpos($key, '#') === FALSE) {
 				$row = array();
-				$row[] = drupal_render($form['mapping']['cid'][$key]);
+				$row[] = drupal_render($form['mapping']['component'][$key]);
 				$row[] = drupal_render($form['mapping']['salesforce'][$key]);
 				$rows[] = $row;
 			}
 		}
+		
 		$row = array();
 		$row[] = drupal_render($form['submit']);
 		$row[] = '&nbsp;';
 		$rows[] = $row;
-	
-		$header = array("Webform Component","Opportunity Field");
+
+		
+		$header = array("Drupal Field", "Opportunity Field");
 	
 		$output .= theme('table', $header, $rows, array('id' => 'sf_donation_mapping_form'));
+		
 		$output .= drupal_render($form);
-	}
-	else {
-		$output = "<p>You must add some fields to the webform before you can map them.</p>";
-	}
+	//}
+	
+	//else {
+	//	$output = "<p>You must add some fields to the webform before you can map them.</p>";
+	//}
 	return $output;
 }
 
@@ -1026,6 +1123,7 @@ function sf_donation_mail($key, &$message, $params) {
 	$message['body'][] = t("API Error\n\n!errors", array('!errors' => $params['errors']));
 	$message['body'][] = t("Failed Object\n\n!object", array('!object' => $params['donation']));
 }
+
 function _get_mapping_config() {
 	$fields = array(
 		'unmappable' => array(
@@ -1054,7 +1152,55 @@ function _get_mapping_config() {
 			'billing_country' => 'Billing_Country__c',
 			'billing_state' => 'Billing_State__c',
 			'billing_zipcode' => 'Billing_Zip__c',
+			'recurs_monthly' => 'NOT MAPPED',
+			'card_cvv' => 'NOT MAPPED',
+			'other_amount' => 'NOT MAPPED',
+      'first_name' => 'NOT MAPPED',
+      'last_name' => 'NOT MAPPED',
+      'email' => 'NOT MAPPED'
 		),
 	);
 	return $fields;
+}
+
+function _create_donation_map($components) {
+  // get all mappable user fields
+  $fields = array(
+    'user' => array(
+      'uid' => 'Donor\'s user ID',
+      'mail' => 'Donor\'s email',
+      'name' => 'Donor\'s username',
+      'salesforce_account_id' => 'Donor\'s Salesforce Account ID',
+      'salesforce_contact_id' => 'Donor\'s Salesforce Contact ID',
+    ),
+  );
+  
+  $mapping_config = _get_mapping_config();
+  foreach($components as $cid => $component) {
+    if($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
+      $fields['webform'][$component['form_key']] = $component['name'];
+    }
+	}
+	
+	$fields['order']['order_total'] = 'Donation Amount';
+	$fields['order']['cc_last_4'] = 'Credit Card Last 4';
+	$fields['order']['cc_expiration_month'] = 'Credit Card Expiration Month';
+	$fields['order']['cc_expiration_year'] = 'Credit Card Expiration Year';
+	$fields['order']['cc_type'] = 'Credit Card Type';
+	$fields['order']['donation_form_name'] = 'Donation Form Name';
+	$fields['order']['donation_form_url'] = 'Donation Form Url';
+	$fields['order']['order_id'] = 'Order Id';
+	$fields['order']['order_status'] = 'Order Status';
+	$fields['order']['billing_first_name'] = 'Billing First Name';
+	$fields['order']['billing_last_name'] = 'Billing Last Name';
+  $fields['order']['billing_street1'] = 'Billing Street';
+  $fields['order']['billing_street2'] = 'Billing Street 2';
+  $fields['order']['billing_city'] = 'Billing City';
+  $fields['order']['billing_zone'] = 'Billing State';
+  $fields['order']['billing_postal_code'] = 'Billing Postal Code';
+  $fields['order']['billing_country'] = 'Billing Country';
+	$fields['payment']['received'] = 'Payment Received Date';
+	
+	
+	//print "<pre>".print_r($fields, TRUE)."</pre>";
 }
