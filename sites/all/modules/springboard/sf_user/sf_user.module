@@ -50,9 +50,10 @@ function sf_user_menu() {
 /**
  * Implementation of queue_report_item_name().
  */
-function sf_user_queue_report_item_title(&$row) {
+function sf_user_queue_report_item_title_alter(&$row) {
 	if ($row['type'] == 'user') {
-		return db_result(db_query("SELECT name FROM {users} WHERE uid = %d", (int)$row['oid']));	
+		$title = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", (int)$row['oid']));	
+		$row['title'] = $title;
 	}
 }
 
