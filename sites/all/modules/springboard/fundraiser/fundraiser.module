@@ -1383,9 +1383,10 @@ function fundraiser_clone_node_alter(&$node, $original_node, $method) {
 /**
  * Implemenation of queue_report_item_name().
  */
-function fundraiser_queue_report_item_title(&$row) {
+function fundraiser_queue_report_item_title_alter(&$row) {
 	if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
-		return 'Order ' . $row['oid'];
+		$title = 'Order ' . $row['oid'];
+		$row['title'] = $title;
 	}
 }
 

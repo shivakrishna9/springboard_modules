@@ -205,9 +205,10 @@ function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
  * Implementation of queue_report_item_name().
  */
 function sf_node_queue_report_item_title_alter(&$row) {
-	if (strpos($batch['type'], 'node_') >= 0) {
+  $pos = strpos($row['type'], 'node_');
+	if (!($pos === FALSE)) {
 		$title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));	
-		$row['title'] = $title;
+    $row['title'] = $title;
 	}
 }
 
