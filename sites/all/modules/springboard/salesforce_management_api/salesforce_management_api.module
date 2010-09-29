@@ -55,38 +55,6 @@ function salesforce_management_api_menu() {
     'weight' => -10,
   );
 
-	/*
-  $items[SALESFORCE_PATH_ADMIN .'/map_role'] = array(
-    'title' => 'Map/Role',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_management_api_map_role_form'),
-    'access arguments' => array('administer salesforce management'),
-    'type' => MENU_LOCAL_TASK,
-    
-  );
-  */
-
-	/*
-	$items[SALESFORCE_PATH_ADMIN .'/map_user_role'] = array(
-		'title' => 'Map User Roles',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('salesforce_management_api_map_user_role_form'),
-		'access arguments' => array('administer salesforce management'),
-		'type' => MENU_LOCAL_TASK,
-	);
-	*/
-	
-	/* 
-  $items[SALESFORCE_PATH_ADMIN .'/map_record_type'] = array(
-    'title' => 'Map/Record Type',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_management_api_map_record_form'),
-    'access arguments' => array('administer salesforce management'),
-    'type' => MENU_LOCAL_TASK,
-    
-  );
-  */
-  
   // Add tab for WSDL upload
   $items[SALESFORCE_PATH_UPDATE_WSDL] = array(
     'title' => 'Update WSDL',
@@ -96,9 +64,7 @@ function salesforce_management_api_menu() {
     'access arguments' => array('administer salesforce management'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'salesforce_management_api.admin.inc',
-  );
-
-  
+  );  
   
   $items[SALESFORCE_PATH_ADMIN .'/demo'] = array(
     'title' => 'Test/Demo',
