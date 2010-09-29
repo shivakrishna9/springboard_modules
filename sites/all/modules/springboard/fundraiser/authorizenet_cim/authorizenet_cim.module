@@ -1,0 +1,139 @@
+<?php
+// $Id: authorizenet_com.module,v 2.0 2010/10/28 18:58:04 pcave Exp $
+
+/**
+ * @file
+ * Methods for updating authorize.net CIM profiles. 
+ * 
+ */
+
+/**
+ * Main function to update a Authorize.net CIM profile with new billing information.
+ */
+function authorizenet_cim_update($profile_id, $billing_info) {
+  // first, we need the profile so we can get the payment profile id
+  $profile = authorizenet_cim_profile_get($profile_id);
+  $result = NULL;
+  if ($profile) {
+    $payment_profile_id = $profile->profile->paymentProfiles->customerPaymentProfileId;
+    // get the payment profile
+    $payment_profile = authorizenet_cim_payment_profile_get($profile_id, $payment_profile_id);
+    if ($payment_profile) {
+      $result = authorizenet_cim_update_payment_profile($profile_id, $payment_profile->paymentProfile, $billing_info);
+    }
+  }
+  // result will be null if an error occured during the process
+  return $result;
+}
+
+/**
+ * Updates a CIM payment profile with new billing and credit card information.
+ */
+function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, $billing_info) {
+  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+
+  // format expirdation date for API
+  $expiration_date = $billing_info['cc_info']['card_exp_date']['year'] . '-' . sprintf("%02d", $billing_info['cc_info']['card_exp_date']['month']);
+  
+  // create the updateCustomerPaymentProfileRequest xml request
+  $request = array(
+    'customerProfileId' => $profile_id,
+    'paymentProfile' => array(
+      'billTo' => array(
+        'firstName' => !empty($billing_info['first_name']) ? $billing_info['first_name'] : $payment_profile->billTo->firstName,
+        'lastName' => !empty($billing_info['last_name']) ? $billing_info['last_name'] : $payment_profile->billTo->lastName,
+        'address' => !empty($billing_info['address_1']) ? $billing_info['address_1'] : $payment_profile->billTo->address,
+        'city' => !empty($billing_info['city']) ? $billing_info['city'] : $payment_profile->billTo->city,
+        'state' => !empty($billing_info['state']) ? _authorizenet_cim_convert_state($billing_info['state']) : $payment_profile->billTo->state,
+        'zip' => !empty($billing_info['zipcode']) ? $billing_info['zipcode'] : $payment_profile->zip,
+        'country' => !empty($billing_info['country']) ? _authorizenet_cim_convert_country($billing_info['country']) : $payment_profile->country,
+      ),
+      'payment' => array(
+        'creditCard' => array(
+          'cardNumber' => $billing_info['cc_info']['card_num'],
+          'expirationDate' => $expiration_date,
+          'cardCode' => $billing_info['cc_info']['card_cvv'],
+        ),
+      ),
+      'customerPaymentProfileId' => $payment_profile->customerPaymentProfileId,
+    ),
+  );
+  
+  $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',  _uc_authorizenet_array_to_xml($request));
+  $response = uc_authorizenet_xml_api($server, $xml);
+  $response = _authorizenet_cim_strip_namespace($response);
+  $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
+
+  return authorizenet_cim_process_xml($xml_raw);
+}
+
+function authorizenet_cim_profile_get($profile_id) {
+  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+  $request = array(
+    'customerProfileId' => $profile_id,
+  );
+
+  // Request a profile from auth.net.
+  $xml = _uc_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _uc_authorizenet_array_to_xml($request));
+
+  // Parse the response.
+  $response = uc_authorizenet_xml_api($server, $xml);
+  $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
+  $xml_raw = strstr($response, '<getCustomerProfileResponse');
+  
+  return authorizenet_cim_process_xml($xml_raw);
+}
+
+/**
+ * Get a CIM payment profile stored at auth.net.
+ */
+function authorizenet_cim_payment_profile_get($profile_id, $payment_profile_id) {
+  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+  $request = array(
+    'customerProfileId' => $profile_id,
+    'customerPaymentProfileId' => $payment_profile_id,
+  );
+
+  // Request a profile from auth.net.
+  $xml = _uc_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _uc_authorizenet_array_to_xml($request));
+  // Parse the response.
+  $response = uc_authorizenet_xml_api($server, $xml);
+  $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
+  
+  // someone at ubercart thought it would be awesome to include the http headers in the response. so let's parse out the stuff we need
+  $xml_raw = strstr($response, '<getCustomerPaymentProfileResponse');
+  
+  return authorizenet_cim_process_xml($xml_raw);
+}
+
+/** 
+ * Generic function to process the XML messages return from API.
+ */
+function authorizenet_cim_process_xml($xml) {
+  try {
+    $xml_data = simplexml_load_string($xml);
+    if ($xml_data->messages->resultCode == 'Error') {
+      watchdog('fundraiser', t('Authorize.Net: API Error.<br />@error - @text', array('@error' => $xml_data->messages->message->code, '@text' => $xml_data->messages->message->text), NULL, WATCHDOG_ALERT));
+      $xml_data = NULL;
+    }
+  }
+  catch (Exception $e) {
+    watchdog('fundraiser', t('Authorize.Net: Error parsing API response.<br />@error', array('@error' => $e->getMessage()), NULL, WATCHDOG_CRITICAL));
+    $xml_data = NULL;
+  }
+  
+  // return a valid response or NULL
+  return $xml_data;
+}
+
+function _authorizenet_cim_strip_namespace($xml) {
+  return str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $xml);
+}
+
+function _authorizenet_cim_convert_state($state) {
+  return db_result(db_query("select zone_code from {uc_zones} where zone_id = %d", $state));
+}
+
+function _authorizenet_cim_convert_country($country) {
+  return db_result(db_query("select country_iso_code_2 from {uc_countries} where country_id = %d", $country));
+}

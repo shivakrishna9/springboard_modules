@@ -390,74 +390,83 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
 	}
 }
 
+/**
+ * Returns the payment gateway and transaction reference used for a recurring donation
+ */
+function fundraiser_get_payment_details($order_id) {
+  $order = uc_order_load($order_id);
+  $details = array();
+  $gateway = '';
+  
+  // first, try to get the gateway from individual order
+  if ($order->data['gateway']) {
+    $gateway = $order->data['gateway'];
+  }
+  else {
+    // next, revert to the donation form that created the order
+    $donation_form_nid = $order->products[0]->nid;
+    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_gateway} WHERE nid = %d", $donation_form_nid));
+  }
+  
+  // get the gateway's details
+  $details['gateway'] = fundraiser_lookup_gateway_details($gateway);
+  
+  // get the txn reference from the order
+  foreach ($order->data['cc_txns']['references'] as $k => $v) {
+    $details['reference_id'] = $k;
+  }
+  
+  return $details;
+}
+
+/** 
+ * Look up a payment gateway's details based on it's id
+ */
+function fundraiser_lookup_gateway_details($gateway) {
+  $gateways = _payment_gateway_list('', TRUE);
+  
+  // use the name to look up the gateway
+  foreach ($gateways as $k => $v) {
+    if ($v['id'] == $gateway){
+      return $v;
+    }
+  }
+  return FALSE;
+}
+
+/** 
+ * Updates all pending donations with new billing information
+ */
 function fundraiser_billing_update_form_submit($form, &$form_state) {
-	global $user;
+	include_once 'fundraiser_billing.inc';
+	$orders_changed = array();
 	
 	$master_order_id = $form_state['values']['master_order_id'];
-	$orders = _get_pending_recurring_orders($master_order_id);
-	$orders_changed = array();
-	$vault_guid = '';
+	$payment_details = fundraiser_get_payment_details($master_order_id);
 	
-	while($row = db_fetch_object($orders)) {
-		// update ubercart orders first
-		$order = uc_order_load($row->order_id);
-
-		$vault_guid = $order->data['ref_id'];
-		$orders_changed[] = $order->order_id;
-		
-		$order->primary_email = $form_state['values']['billing_info']['email'];
-  		$order->billing_first_name =  $form_state['values']['billing_info']['first_name'];
-	  	$order->billing_last_name = $form_state['values']['billing_info']['last_name'];
-	  	$order->billing_city = $form_state['values']['billing_info']['city'];
-	  	$order->billing_street1 = $form_state['values']['billing_info']['address_1'];
-	  	$order->billing_street2 = $form_state['values']['billing_info']['address_2'];
-	  	$order->billing_postal_code = $form_state['values']['billing_info']['zipcode'];
-	  	$order->billing_zone = $form_state['values']['billing_info']['state'];
-	  	$order->billing_country = $form_state['values']['billing_info']['country'];
-	  	$order->payment_method = 'credit';
-	  	$order->payment_details = array(
-	  		'cc_type' => '',
-	  		'cc_owner' => '',
-	  		'cc_number' => $form_state['values']['billing_info']['cc_info']['card_num'],
-	  		'cc_start_month' => '',
-	  		'cc_start_year' => '',
-	  		'cc_exp_month' => $form_state['values']['billing_info']['cc_info']['card_exp_date']['month'],
-	  		'cc_exp_year' => $form_state['values']['billing_info']['cc_info']['card_exp_date']['year'],
-	  		'cc_issue' => '',
-	  		'cc_cvv' => $form_state['values']['billing_info']['cc_info']['card_cvv'],
-	  		'cc_bank' => '',
-	  	);
-
-		uc_order_save($order);
-		uc_order_comment_save($order->order_id, $user->uid, "Billing information updated."); 
+	// we can only continue if we have a gateway and reference_id
+	if ($payment_details['gateway'] && $payment_details['reference_id']) {
+    $result = fundraiser_update_billing_info($payment_details['gateway']['id'], $payment_details['reference_id'], $form_state['values']['billing_info']);
+    if ($result) {
+      watchdog('fundraiser', t('Billing information was updated for profile @profile', array('@profile' => $payment_details['reference_id']), NULL, WATCHDOG_INFO));
+      $orders = _get_pending_recurring_orders($master_order_id); 
+      while($row = db_fetch_object($orders)) {
+    		$order = _update_order_billing_info($row->order_id, $form_state);
+    		$orders_changed[] = $order->order_id;
+    	}
+      drupal_set_message(t('Billing information successfully updated'));
+      return;
+    }
+    else {
+      drupal_set_message(t('Unable to update billing information at this time'));
+    }
+    
 	}
 	
-	// if the order contains a vault_guid. update the vault
-	if (!empty($vault_guid)) {
-		$vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $vault_guid));
-		$data = array(
-			'uid' => $order->uid,
-			'billing_name' => $order->billing_first_name . ' ' . $order->billing_last_name,
-			'billing_street1' => $order->billing_street1,
-			'billing_street2' => $order->billing_street2,
-			'billing_city' => $order->billing_city,
-			'billing_zone' => $order->billing_zone,
-			'billing_postal_code' => $order->billing_postal_code,
-			'billing_country' => $order->billing_country,
-			'cc_number' => $order->payment_details['cc_number'],
-			'cc_exp_month' => $order->payment_details['cc_exp_month'],
-			'cc_exp_year' => $order->payment_details['cc_exp_year'],
-		);
-
-		uc_sage_vault_update($vault_id, $data);
-	}	
-
-	// Check for Salesforce Fundraiser module and update billing information
+	// Check for donation integration module so that donations can be updated in salesforce
 	if (module_exists('sf_donation')) {
 		sf_donation_update_donation_billing($orders_changed);
 	}
-	
-	drupal_set_message('Billing information for all pending orders has been updated.');
 }
 
 function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
@@ -654,7 +663,7 @@ function _recurring_donation_edit_forms($master_order_id) {
 	
 	// 4/5/2010 - commented out for time being because authorize.net does not support updating
 	// 						CIM profiles at this time
-	// $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
+	$output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
 	
 	$output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
 	
@@ -695,5 +704,40 @@ function _get_pending_recurring_orders($order_id) {
 		(gateway_resp IS NULL OR gateway_resp = 'failed')";
 		
 	 return db_query($sql, $order_id);
+}
+
+/**
+ * Loads an order and updates it's billing information from a form
+ */
+function _update_order_billing_info($order_id, &$form_state) {
+  global $user;
+  
+  $order = uc_order_load($order_id);
+  $order->primary_email = $form_state['values']['billing_info']['email'];
+	$order->billing_first_name =  $form_state['values']['billing_info']['first_name'];
+	$order->billing_last_name = $form_state['values']['billing_info']['last_name'];
+	$order->billing_city = $form_state['values']['billing_info']['city'];
+	$order->billing_street1 = $form_state['values']['billing_info']['address_1'];
+	$order->billing_street2 = $form_state['values']['billing_info']['address_2'];
+	$order->billing_postal_code = $form_state['values']['billing_info']['zipcode'];
+	$order->billing_zone = $form_state['values']['billing_info']['state'];
+	$order->billing_country = $form_state['values']['billing_info']['country'];
+	$order->payment_method = 'credit';
+	$order->payment_details = array(
+		'cc_type' => '',
+		'cc_owner' => '',
+		'cc_number' => $form_state['values']['billing_info']['cc_info']['card_num'],
+		'cc_start_month' => '',
+		'cc_start_year' => '',
+		'cc_exp_month' => $form_state['values']['billing_info']['cc_info']['card_exp_date']['month'],
+		'cc_exp_year' => $form_state['values']['billing_info']['cc_info']['card_exp_date']['year'],
+		'cc_issue' => '',
+		'cc_cvv' => $form_state['values']['billing_info']['cc_info']['card_cvv'],
+		'cc_bank' => '',
+	);
+	
+	uc_order_save($order);
+	uc_order_comment_save($order->order_id, $user->uid, "Billing information updated."); 
+  return $order;
 }
 
