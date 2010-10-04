@@ -443,6 +443,8 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
 	
 	$master_order_id = $form_state['values']['master_order_id'];
 	$payment_details = fundraiser_get_payment_details($master_order_id);
+	$exp_month = $form_state['values']['billing_info']['cc_info']['card_exp_date']['month'];
+	$exp_year = $form_state['values']['billing_info']['cc_info']['card_exp_date']['year'];
 	
 	// we can only continue if we have a gateway and reference_id
 	if ($payment_details['gateway'] && $payment_details['reference_id']) {
@@ -452,20 +454,27 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
       $orders = _get_pending_recurring_orders($master_order_id); 
       while($row = db_fetch_object($orders)) {
     		$order = _update_order_billing_info($row->order_id, $form_state);
+    		// put order back in queue
+    		if (module_exists('sf_donation') && module_exists('queue_api')) {
+          sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+        }
     		$orders_changed[] = $order->order_id;
     	}
+    	
+    	// Check for donation integration module so that donations can be updated in salesforce
+    	//if (module_exists('sf_donation')) {
+    	//	sf_donation_update_donation_billing($orders_changed);
+    	//}
+      
+      // create new orders based on expiration date
+      fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year);  	
+      
       drupal_set_message(t('Billing information successfully updated'));
-      return;
     }
     else {
       drupal_set_message(t('Unable to update billing information at this time'));
     }
     
-	}
-	
-	// Check for donation integration module so that donations can be updated in salesforce
-	if (module_exists('sf_donation')) {
-		sf_donation_update_donation_billing($orders_changed);
 	}
 }
 
@@ -724,7 +733,7 @@ function _update_order_billing_info($order_id, &$form_state) {
 	$order->billing_country = $form_state['values']['billing_info']['country'];
 	$order->payment_method = 'credit';
 	$order->payment_details = array(
-		'cc_type' => '',
+		'cc_type' => _get_cc_type($form_state['values']['billing_info']['cc_info']['card_num']),
 		'cc_owner' => '',
 		'cc_number' => $form_state['values']['billing_info']['cc_info']['card_num'],
 		'cc_start_month' => '',
@@ -736,7 +745,9 @@ function _update_order_billing_info($order_id, &$form_state) {
 		'cc_bank' => '',
 	);
 	
+  uc_credit_cache('save', $order->payment_details, FALSE);
 	uc_order_save($order);
+	uc_credit_cache('clear');
 	uc_order_comment_save($order->order_id, $user->uid, "Billing information updated."); 
   return $order;
 }

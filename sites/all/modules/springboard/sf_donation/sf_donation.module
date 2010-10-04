@@ -448,7 +448,7 @@ function sf_donation_queue_salesforce_info($type, $action) {
 function sf_donation_queue_preprocess_batch_alter(&$batch) {
 
 	if ($batch['type'] == 'donation' || $batch['type'] == 'recurring_donation') {
-		foreach($batch['records'] as $record) {
+		foreach ($batch['records'] as $record) {
 			// get additional details about the order
 			$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_webform_order} f ON f.order_id = u.order_id WHERE u.order_id = %d", $record->oid));
 		
@@ -687,7 +687,16 @@ function _create_single_donation($order_id, $account_id, $sid) {
 		'Billing_Zip__c' => $order->billing_postal_code,
 		'Type' => 'Donation',
 	);
+
+   // if this donation is part of a recurring series it will have some additional information that needs to be added
+	$recurring_details = _sf_donation_get_recurring_details($order_id);
+	if (!empty($recurring_details)) {
+    $donation['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
+    $donation['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
+    $donation['StageName'] = 'Pledged'; 
+	}
 	
+	// add payment details if available
 	if ($payments) {
 		// deal with sf date handling
 		$transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
@@ -696,24 +705,43 @@ function _create_single_donation($order_id, $account_id, $sid) {
 		$donation['Probability'] = 100.00;
 		$donation['StageName'] = 'Posted';
 	}
-	
-	// 7/19/2010 - pcave: Bug fix. If this order was part of a recurring donation series, make sure the correct CloseDate is set in Salesforce in case the
-	// 									  order doesn't export on the day it was created
-	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
-	if ($close_date) {
-		$donation['CloseDate'] = date('Y-m-d', $close_date);
-	}
-	
+  
+  // merge in any additional mapped fields	
 	$donation = array_merge($donation, _load_salesforce_map($sid));
 	
 	// clear the credit card cache
 	uc_credit_cache('clear');
 
-	// add in any mapped fields
 	return $donation;
-
 }
 
+/**
+ * Returns the SFID and close date of a recurring donation for an individual order
+ */
+function _sf_donation_get_recurring_details($order_id) {
+  $recurring_info = array();
+  
+  $result = db_query(
+    "
+      SELECT f.next_charge, s.sfid 
+      FROM {salesforce_management_object_map} s
+      INNER JOIN {fundraiser_recurring} f ON f.master_order_id = s.oid
+      WHERE f.order_id = %d AND s.drupal_type = 'recurring_donation'
+    ",
+    $order_id
+  );
+  
+  while ($data = db_fetch_object($result)) {
+    $recurring_info['close_date'] = $data->next_charge;
+    $recurring_info['sfid'] = $data->sfid;
+  }
+  
+  return $recurring_info;
+}
+
+/**
+ * Converts a numeric country id to it's ISO code.
+ */
 function _convert_billing_country($country_id) {
 	return db_result(db_query("select country_iso_code_2 from {uc_countries} where country_id = %d", $country_id));
 }
@@ -827,61 +855,8 @@ function sf_donation_update_donation_amount($order_ids, $amount) {
 }
 
 /**
- * Updates billing information for recurring orders
+ * Updates an opportunity to cancelled.
  */
-function sf_donation_update_donation_billing($order_ids) {
-	
-	// load up one of orders to get the billing information
-	$order = uc_order_load($order_ids[0]);
-	
-	// get all of the recurring donations that have not been processed
-	$sql = "select sf_opportunity_id from {fundraiser_recurring} where order_id in (%s)";
-	
-	$results = db_query($sql, implode(",", $order_ids));
-	$donations = array();
-	
-	while($data = db_fetch_object($results)) {
-		$donation = array(
-			'Id' => $data->sf_opportunity_id,
-			'Billing_Street__c' => $order->billing_street1,
-			'Billing_Street_Line_2__c' => $order->billing_street2,
-			'Billing_State__c' => uc_get_zone_code($order->billing_zone),
-			'Billing_Country__c' => _convert_billing_country($order->billing_country),
-			'Billing_City__c' => $order->billing_city,
-			'Billing_Zip__c' => $order->billing_postal_code,
-			'CC_Last_4__c' => !empty($order->payment_details['cc_number']) ? substr($order->payment_details['cc_number'], -4) : '',
-			'CC_Exp_Year__c' => $order->payment_details['cc_exp_year'],
-			'CC_Exp_Month__c' => $order->payment_details['cc_exp_month'],
-		);
-		$donations[] = $donation;
-	}
-	
-	$sf = salesforce_management_api_connect();
-	$results = $sf->client->update($donations, 'Opportunity');
-	
-	// process results
-	$count = count($donations);
-	for ($i=0; $i < $count; $i++) {
-		// salesforce does not return an array if only one object is created
-		if ($count == 1) {
-			$success = $results->success;
-			$sfid = $results->id;
-			$errors = $results->errors;
-		}
-		else {
-			$success = $results[$i]->success;
-			$sfid = $results[$i]->id;
-			$errors = $results[$i]->errors;
-		}
-		if (!$success) {
-			// Log failure
-			watchdog('error', "Billing information for opportunity $sfid was not updated in salesforce. Errors: $errors");
-			// Trigger failure
-			module_invoke_all('sf_donation', 'fails', NULL, $sfid, "Billing information for opportunity $sfid was not updated in salesforce. Errors: $errors");
-		}
-	}
-}
-
 function sf_donation_canel_recurring_donations($order_id) {
 	$sql = "select sf_opportunity_id, cancellation_reason from {fundraiser_recurring} where master_order_id = %d and gateway_resp = 'canceled'";
 		

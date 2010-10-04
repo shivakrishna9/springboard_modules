@@ -3,6 +3,7 @@
 
 define('FUNDRAISER_SINGLE_DONATION_TYPE',  'donation');
 define('FUNDRAISER_RECURRING_DONATION_TYPE',  'recurring_donation');
+define('RECURRING_DONATION_STATUS', 'pending_future_payment');
 
 /**
  * Implementaion of hook_nodeapi().
@@ -1161,6 +1162,52 @@ function _save_profile_map($uid, &$map) {
 	}
 }
 
+/** 
+ * Extends a current recurring donation series out to a new credit card expiration date.
+ */
+function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
+  // determine the date of the last order, and the number of orders to create out to the new expiration date
+  $exp = $exp_year . sprintf("%02d", $exp_month)  ;
+  $result = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(%d, date_format(from_unixtime(max(next_charge)),'%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = %d", $exp, $order_id);
+  
+  while ($data = db_fetch_object($result)) {
+    $last_order_id = $data->last_order_id;
+    $last_charge_date = $data->last_charge_date;
+    $new_order_count = $data->new_order_count; 
+  }
+
+  // load up the last order since it will have the most recent changes
+  $order = uc_order_load($last_order_id);
+  
+  for ($i = 1; $i <= $new_order_count; $i++) {
+    $new_order_id = fundraiser_clone_order($order);
+    $charge_date = strtotime("+$i months", $last_charge_date);
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge) VALUES (%d, %d, '%s')", $order_id, $new_order_id, $charge_date);
+		uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
+		// add these new orders to the queue
+		if (module_exists('sf_donation') && module_exists('queue_api')) {
+      sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+    }
+  }
+}
+
+/**
+ * Returns a duplicate of a given order
+ */
+function fundraiser_clone_order($order) {
+  $cloned_order = uc_order_new($order->uid);
+  $id = $cloned_order->order_id;
+  $cloned_order = clone $order;
+  $cloned_order->order_id = $id;
+  $cloned_order->order_status = RECURRING_DONATION_STATUS;
+  unset($cloned_order->products[0]->order_product_id);
+  uc_order_save($cloned_order);
+  return $cloned_order->order_id;
+}
+
+/**
+ * Creates future order based on the the order's credit card expiration date. 
+ */
 function fundraiser_create_future_orders($order_id) {
 	global $user;
 	
