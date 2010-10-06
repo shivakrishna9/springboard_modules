@@ -666,6 +666,7 @@ function _create_single_donation($order_id, $account_id, $sid) {
 
 	// load up the payments because we need the received date of the payment
 	$payments = uc_payment_load_payments($order_id);
+	$txn_details = _sf_donation_get_transaction_details($order_id);
 	$donation_name = t('Donation - !first !last (!date)', array('!first' => $order->billing_first_name, '!last' => $order->billing_last_name, '!date' => gmdate('Y-m-d H:i:s\Z', $order->created)));
 	
 	$donation = array(
@@ -686,6 +687,8 @@ function _create_single_donation($order_id, $account_id, $sid) {
 		'Billing_State__c' => uc_get_zone_code($order->billing_zone),
 		'Billing_Zip__c' => $order->billing_postal_code,
 		'Type' => 'Donation',
+		'Payment_Gateway__c' => $txn_details['gateway'],
+    'Transaction_Id__c' => $txn_details['txn_id'],
 	);
 
    // if this donation is part of a recurring series it will have some additional information that needs to be added
@@ -693,7 +696,7 @@ function _create_single_donation($order_id, $account_id, $sid) {
 	if (!empty($recurring_details)) {
     $donation['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
     $donation['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
-    $donation['StageName'] = 'Pledged'; 
+    $donation['StageName'] = 'Pledged';
 	}
 	
 	// add payment details if available
@@ -713,6 +716,31 @@ function _create_single_donation($order_id, $account_id, $sid) {
 	uc_credit_cache('clear');
 
 	return $donation;
+}
+
+/**
+ * Gets the transaction details for a specific order.
+ */
+function _sf_donation_get_transaction_details($order_id) {
+  $details = array();
+  $result = db_query(
+    "
+      SELECT order_id, gateway, txn_id 
+      FROM {fundraiser_webform_order} 
+      WHERE order_id = %d
+      UNION
+      SELECT order_id, gateway, txn_id
+      FROM {fundraiser_recurring}
+      WHERE order_id = %d
+    ",
+    $order_id, $order_id
+  );
+      
+  while ($data = db_fetch_object($result)) {
+    $details['gateway'] = $data->gateway;
+    $details['txn_id'] = $data->txn_id;
+  }
+  return $details;
 }
 
 /**

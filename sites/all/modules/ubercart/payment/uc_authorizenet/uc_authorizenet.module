@@ -335,8 +335,10 @@ function _uc_authorizenet_cim_profile_charge($order, $amount, $data) {
 
     // Transaction succeeded.
     else {
+      $direct_response = explode(',', $response['directResponse']);
       $result = array(
         'success' => TRUE,
+        'data' => array('module' => 'uc_authorizenet', 'txn_type' => $direct_response[11], 'txn_id' => $direct_response[6]),
       );
 
       // Build info message.

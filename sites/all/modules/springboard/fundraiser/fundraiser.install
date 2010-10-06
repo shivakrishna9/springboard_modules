@@ -39,92 +39,122 @@ function fundraiser_disable() {
  */
 function fundraiser_schema() {
 	$schema['fundraiser_webform_order'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'webform_nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'order_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'sid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'sfid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '40',
-	      'not null' => FALSE,
-	    ),
-	  ),
-	  'primary key' => array('webform_nid', 'order_id'),
-	);
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'webform_nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sfid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '40',
+        'not null' => FALSE,
+      ),
+      'gateway' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'txn_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('webform_nid', 'order_id'),
+  );
 	
 	$schema['fundraiser_recurring'] = array(
-	  'description' => t('Table to store data about recurring orders.'),
-	  'fields' => array(
-	    'master_order_id' => array(
-	      'description' => t('The id of the main order in the series.'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'order_id' => array(
-	      'description' => t('The id of this order.'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'next_charge' => array(
-	      'description' => t('The date the order should be processed for payment.'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'sf_opportunity_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '40',
-	      'not null' => FALSE,
-	    ),
-	    'sf_recurring_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'sf_stagename' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '255',
-	      'not null' => FALSE,
-	    ),
-	    'sf_sync_status' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'gateway_resp' => array(
-	      'description' => t('Status of the payment from the gateway (success or failure).'),
-	      'type' => 'varchar',
-	      'length' => '255',
-	      'not null' => FALSE,
-	    ),
-			'attempts' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	      'default' => 0,
-	    ),
-	  ),
-	  'primary key' => array('order_id'),
-	);
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'master_order_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'next_charge' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sf_opportunity_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '40',
+        'not null' => FALSE,
+      ),
+      'sf_recurring_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'sf_stagename' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'sf_sync_status' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'gateway_resp' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'attempts' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'cancellation_reason' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '500',
+        'not null' => FALSE,
+      ),
+      'gateway' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'txn_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('order_id'),
+  );
 	
 	$schema['fundraiser_gateway'] = array(
 	  'description' => t('TODO: please describe this table!'),
@@ -563,4 +593,15 @@ function fundraiser_update_2() {
 		INNER JOIN {fundraiser_recurring} r ON r.master_order_id = f.order_id");
 		
 	return $items;
+}
+
+// Version 2.1 - Add the ability to store gateway and approval ids with individual orders
+function fundraiser_update_6210() {
+  $items = array();
+  $items[] = update_sql("ALTER TABLE {fundraiser_webform_order} ADD gateway varchar(100)");
+  $items[] = update_sql("ALTER TABLE {fundraiser_webform_order} ADD txn_id varchar(55)");
+  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
+  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
+  
+  return $items;
 }
