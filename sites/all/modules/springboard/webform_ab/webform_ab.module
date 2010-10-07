@@ -1,0 +1,104 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Webform A/B Testing
+ *
+ * Adds a content type for an A/B test of webforms.
+ */
+
+/**
+ * Add content type
+ * Define views
+ * Hook called when form is submitted
+ * Permissions: declare winner? Start/end test?
+ */
+
+/**
+ * Implementation of hook_node_info().
+ */
+function webform_ab_node_info() {
+  return array(
+    'webform_ab' => array(
+      'name' => t('Webform A/B Test'),
+      'module' => 'webform_ab',
+      'description' => t('An A/B test for Webforms'),
+      'title_label' => t('Test Name'),
+      'body_label' => t('Admin Description'),
+      'locked' => TRUE
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function webform_ab_perm() {
+  return array('create webform_ab', 'edit own webform_ab', 'edit any webform_ab', 'delete own webform_ab', 'delete any webform_ab');
+}
+
+
+function webform_ab_menu_alter(&$items) {
+  /**
+   * @todo Make sure "create webform_ab" permission is checked for create menu item
+   */
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function webform_ab_access($op, $node, $account) {
+  $is_author = $account->uid == $node->uid;
+  
+  switch ($op) {
+    case 'create':
+      return user_access('create webform_ab', $account);
+      break;
+    
+    case 'update':
+      return (user_access('edit own webform_ab', $account) && $is_author) || user_access('edit any webform_ab', $account);
+      break;
+    
+    case 'delete':
+      return (user_access('delete own webform_ab', $account) && $is_author) || user_access('delete any webform_ab', $account);
+      break;
+  }
+}
+
+
+/**
+ * Implementation of hook_form().
+ */
+function webform_ab_form(&$node, $form_state) {
+  $type = node_get_types('type', $node);
+  
+  $form['test_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('A/B Test Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['test_settings']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#weight' => -5,
+    '#default_value' => $node->title
+  );
+  
+  $form['test_settings']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#cols' => 60,
+    '#rows' => 5,
+    '#description' => t('Description for admin use. This is not displayed to the public.')
+  );
+  
+  
+  return $form;
+}

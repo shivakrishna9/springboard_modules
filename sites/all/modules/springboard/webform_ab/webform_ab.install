@@ -1,0 +1,43 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ *   Webform A/B install/schema hooks
+ */
+
+/**
+ * Implements hook_install().
+ */
+function webform_ab_install() {
+  drupal_install_schema('webform_ab');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function webform_ab_uninstall() {
+  drupal_uninstall_schema('webform_ab');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function webform_ab_schema() {
+  $schema = array();
+  $schema['webform_ab'] = array(
+    'description' => 'Stores Webform A/B test configurations',
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'description' => t('The {node}.nid'),
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE
+      ),
+    ),
+    'primary key' => array('nid')
+  );
+  return $schema;
+}
+

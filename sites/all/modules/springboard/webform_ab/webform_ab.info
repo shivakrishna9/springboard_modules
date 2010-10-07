@@ -1,0 +1,10 @@
+; $Id$
+name = Webform A/B Testing
+description = "Adds a content type for an A/B test of webforms."
+
+; Core version (required)
+core = 6.x
+
+package = Jackson River SpringBoard
+
+dependencies[] = webform
