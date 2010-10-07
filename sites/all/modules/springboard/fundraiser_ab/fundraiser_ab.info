@@ -1,0 +1,11 @@
+; $Id$
+name = Fundraiser A/B Test
+description = "Adds special functionality to the Webform A/B Test module for use with Fundraising forms."
+
+; Core version (required)
+core = 6.x
+
+package = Jackson River SpringBoard
+
+dependencies[] = webform_ab
+dependencies[] = fundraiser
