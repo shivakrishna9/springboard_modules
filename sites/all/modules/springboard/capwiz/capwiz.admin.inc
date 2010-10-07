@@ -106,18 +106,17 @@ T;
     'email_message' => array(
       '#type' => 'select',
       '#title' => t('Email message for newly created Drupal users'),
-      '#default_value' => variable_get('capwiz_email_message', ''),
+      '#default_value' => variable_get('capwiz_email_message', 'register_none'), // Default to sending no email.
       '#description' => $email_message_description,
       '#options' => array('' => t('[ System default ]')) + capwiz_get_email_message_options('name', 'title')),
   );
 
-  // Syncing - if we go to a queueing system, those settings would go here
   $form['capwiz_syncing'] = array(
     '#type' => 'fieldset',
     '#title' => t('Syncing'),
     '#access' => user_access('administer capwiz advanced settings'),
     '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
+    '#collapsed' => !$account_not_setup,
     'drupal_cron' => array(
       '#type' => 'checkbox',
       '#title' => t('Let Drupal do the syncing'),
@@ -128,6 +127,10 @@ T;
       '#title' => t('Custom fields'),
       '#default_value' => implode("\n", $custom_fields),
       '#description' => t('Write one custom field name per line. Custom field names must be exact or they will not be able to sync up.')),
+    'reset_api_timestamp' => array(
+      '#type' => 'submit',
+      '#value' => t('Reset Capwiz API'),
+      '#suffix' => '<span class="description">&nbsp;&nbsp;' . t('Use when first syncing to pull all data from Capwiz.') . '</span>'),
   );
 
   $form['buttons']['submit'] = array(
@@ -173,6 +176,14 @@ function capwiz_settings_form_submit($form, &$form_state) {
 
   // Let the user know the save was successful.
   drupal_set_message(t('The Capwiz settings have been saved.'));
+
+  if ($form_state['clicked_button']['#parents'][0] == 'reset_api_timestamp') {
+
+    require_once 'capwiz.api.inc';
+    CapwizApi::resetApiTimestamp();
+
+    drupal_set_message(t('The Capwiz API has been reset. All users and advocacy actions will be synced.'));
+  }
 }
 
 

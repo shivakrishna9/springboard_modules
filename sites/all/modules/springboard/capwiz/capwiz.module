@@ -99,14 +99,12 @@ if ((bool)variable_get('capwiz_cron', 1)) {
  *   accounts are fetched via the Capwiz API
  * @return void
  */
-function capwiz_merge_accounts($capwiz_accounts = NULL) {
+function capwiz_merge_accounts($fetch_all_accounts = FALSE) {
 
-  if (is_null($capwiz_accounts)) {
-    require_once 'capwiz.api.inc';
+  require_once 'capwiz.api.inc';
 
-    CapwizApi::fetchAccounts();
-    $capwiz_accounts = &CapwizApi::$accounts;
-  }
+  CapwizApi::fetchAccounts((bool)$fetch_all_accounts);
+  $capwiz_accounts = &CapwizApi::$accounts;
 
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
 
@@ -151,7 +149,7 @@ function capwiz_merge_accounts($capwiz_accounts = NULL) {
  *       be saved. This is an unlikely scenario, but needs
  *       to be addressed.
  */
-function capwiz_add_account($capwiz_account = NULL) {
+function capwiz_add_account($capwiz_account) {
 
   if (!empty($capwiz_account->email_address) && !empty($capwiz_account->capwiz_id)) {
 

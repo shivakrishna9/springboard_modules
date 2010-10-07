@@ -55,38 +55,6 @@ function salesforce_management_api_menu() {
     'weight' => -10,
   );
 
-	/*
-  $items[SALESFORCE_PATH_ADMIN .'/map_role'] = array(
-    'title' => 'Map/Role',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_management_api_map_role_form'),
-    'access arguments' => array('administer salesforce management'),
-    'type' => MENU_LOCAL_TASK,
-    
-  );
-  */
-
-	/*
-	$items[SALESFORCE_PATH_ADMIN .'/map_user_role'] = array(
-		'title' => 'Map User Roles',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('salesforce_management_api_map_user_role_form'),
-		'access arguments' => array('administer salesforce management'),
-		'type' => MENU_LOCAL_TASK,
-	);
-	*/
-	
-	/* 
-  $items[SALESFORCE_PATH_ADMIN .'/map_record_type'] = array(
-    'title' => 'Map/Record Type',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_management_api_map_record_form'),
-    'access arguments' => array('administer salesforce management'),
-    'type' => MENU_LOCAL_TASK,
-    
-  );
-  */
-  
   // Add tab for WSDL upload
   $items[SALESFORCE_PATH_UPDATE_WSDL] = array(
     'title' => 'Update WSDL',
@@ -96,9 +64,7 @@ function salesforce_management_api_menu() {
     'access arguments' => array('administer salesforce management'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'salesforce_management_api.admin.inc',
-  );
-
-  
+  );  
   
   $items[SALESFORCE_PATH_ADMIN .'/demo'] = array(
     'title' => 'Test/Demo',
@@ -342,9 +308,13 @@ function salesforce_management_api_fieldmap_system_fields() {
  *       target fields (as values).
  */
 function salesforce_management_api_fieldmap_save(&$map) {
+  $op = 'insert';
+  
   if ($map['fieldmap']) {
     $primary_keys = array('fieldmap');
+    $op = 'update';
   }
+  
   if (is_array($map['fields'])) {
     $map['fields'] = serialize($map['fields']);
 	
@@ -363,6 +333,9 @@ function salesforce_management_api_fieldmap_save(&$map) {
 	}
 
   drupal_write_record('salesforce_management_field_map', $map, $primary_keys);
+  
+  // fire a hook so that other modules can respond to fieldmap updates
+  module_invoke_all('salesforce_management_field_map', $op, $map['drupal'], $map['salesforce']);
   
 }
 
@@ -438,8 +411,17 @@ function salesforce_management_api_fieldmap_clone($fieldmap, $action) {
  *   The index of the fieldmap to delete.
  */
 function salesforce_management_api_fieldmap_delete($fieldmap) {
+  $result = db_query("SELECT drupal, salesforce FROM  {salesforce_management_field_map} WHERE fieldmap = %d", $fieldmap);
+  while ($data = db_fetch_object($result)) {
+    $salesforce = $data->salesforce;
+    $drupal = $data->drupal;
+  }
+  
   db_query("DELETE FROM {salesforce_management_field_map} WHERE fieldmap = %d", $fieldmap);
   db_query("DELETE FROM {salesforce_management_object_map} WHERE fieldmap = %d", $fieldmap);
+  
+  // fire a hook so that other modules can respond to fieldmap deletes
+  module_invoke_all('salesforce_management_field_map', 'delete', $drupal, $salesforce);
 }
 
 /**
@@ -1085,4 +1067,15 @@ function search_object_array($needle_key, $needle_val, $haystack)
 	}
 	// no match found
 	return false;
+}
+
+/**
+ * Determines whether or not an object has a fieldmap
+ */
+function salesforce_manangement_api_fieldmap_exists($drupal_type) {
+  $count = db_result(db_query("SELECT COUNT(fieldmap) FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal_type));
+  if ($count > 0) {
+    return TRUE;
+  }
+  return FALSE;
 }

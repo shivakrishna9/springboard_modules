@@ -1,4 +1,30 @@
 <?php
+
+/**
+ * Displays a list of users with no last name
+ */
+function sf_user_no_last_name_report() {
+	$result = db_query("SELECT uid FROM {users}");
+	
+	$headers = array('UID', 'Email', 'First Name', 'Last Name', 'Account ID', 'Contact ID');
+	$rows = array();
+	
+	while ($data = db_fetch_object($result)) {
+		$user = user_load($data->uid);
+		if (empty($user->profile_lastname)) {
+			$rows[] = array(
+				$user->uid,
+				$user->mail,
+				$user->profile_firstname,
+				$user->profile_lastname,
+				$user->profile_salesforce_account_id,
+				$user->profile_contact_id,
+			);	
+		}
+	}
+	return theme_table($headers, $rows);
+}
+
 /**
  * Form to configure the download of CSV files.
  */

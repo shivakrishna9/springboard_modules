@@ -838,6 +838,26 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 	}
 }
 
+function queue_processor_get_objects_in_batch($sfids, $fieldmap) {
+	// grab all existing objects that we are going to export
+	$objects = array();
+	if (!empty($sfids)) {
+		$sf = salesforce_management_api_connect();
+		if ($sf) {
+			try {
+				$objects = _normalize_salesforce_response($sf->retrieve($sfids, $fieldmap));
+			}
+			catch  (Exception $e) {
+				// TODO: LOG ERROR
+			}
+		}
+		else {
+			// TODO: LOG ERROR
+		}
+	}
+	return $objects;
+}
+
 /******************************************************************************
  * TRIGGERS
  *****************************************************************************/

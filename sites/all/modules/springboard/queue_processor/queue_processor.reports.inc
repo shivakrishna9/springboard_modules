@@ -12,14 +12,15 @@
 function current_queue_report() {
 	$pager_num = 0;
 	
-	$result = pager_query(db_rewrite_sql("SELECT oid, 'Unknown' as title, sfid, type, action, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p') FROM {sf_queue} ORDER BY created desc"), 20, $pager_num);
+	$result = pager_query("SELECT oid, 'Unknown' as title, sfid, type, action, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p') FROM {sf_queue} ORDER BY created desc", 20, $pager_num);
 	$rows = array();
 	
 	// loop over each item in queue and allow individual modules a chance to add the title
 	while ($row = db_fetch_array($result)) {
-		$row['title'] = array_shift(module_invoke_all('queue_report_item_title', $row));
+		drupal_alter('queue_report_item_title', $row);
 		$rows[] = $row;
 	}
+
 	$header = array('Drupal Id', 'Title', 'SFID', 'Type', 'Action', 'Date Added');
 	
 	$output = 'These items are currently queued up and will be exported to Salesforce during the next cron run.';
@@ -34,8 +35,8 @@ function current_queue_report() {
 function batch_history_report() {
 	$pager_num = 0;
 	
-	$result = pager_query(db_rewrite_sql("SELECT id, type, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p'), record_count, success_count, failure_count,
-	 	from_unixtime(start_time, '%m/%e/%Y %h:%i:%S %p'), from_unixtime(end_time, '%m/%e/%Y %h:%i:%S %p') FROM {sf_batch} ORDER BY created desc"), 20, $pager_num);
+	$result = pager_query("SELECT id, type, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p'), record_count, success_count, failure_count,
+	 	from_unixtime(start_time, '%m/%e/%Y %h:%i:%S %p'), from_unixtime(end_time, '%m/%e/%Y %h:%i:%S %p') FROM {sf_batch} ORDER BY created desc", 20, $pager_num);
 	$rows = array();
 	
 	while($row = db_fetch_array($result)) {
@@ -77,11 +78,13 @@ function batch_detail($id) {
 	foreach($batch['records'] as $item) {
 		$rows = array();
 		$object = unserialize($item->data);
-		foreach($object as $field => $value) {
-			$rows[] = array(
-				'field' => $field,
-				'value' => $value,
-			);
+		if ($batch['action'] != 'delete') {
+  		foreach($object as $field => $value) {
+  			$rows[] = array(
+  				'field' => $field,
+  				'value' => $value,
+  			);
+  		}	
 		}	
 		
 		asort($rows);
@@ -131,7 +134,7 @@ function retry_queue_report() {
 	$pager_num = 0;
 	
 	$rows = array();
-	$result = pager_query(db_rewrite_sql("SELECT oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC"), 20, $pager_num);
+	$result = pager_query("SELECT oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC", 20, $pager_num);
 	
 	while ($row = db_fetch_array($result)) {
 		$rows[] = $row;
@@ -150,7 +153,7 @@ function permanent_failures_report() {
 	$pager_num = 0;
 	
 	$rows = array();
-	$result = pager_query(db_rewrite_sql("SELECT oid, type, fieldmap, action, from_unixtime(date_added, '%m/%e/%Y %h:%i:%S %p') FROM {sf_permanent_failure} ORDER BY date_added DESC"), 20, $pager_num);
+	$result = pager_query("SELECT oid, type, fieldmap, action, from_unixtime(date_added, '%m/%e/%Y %h:%i:%S %p') FROM {sf_permanent_failure} ORDER BY date_added DESC", 20, $pager_num);
 	while ($row = db_fetch_array($result)) {
 		$rows[] = $row;
 	}
