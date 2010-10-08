@@ -9,10 +9,13 @@
  */
 
 /**
- * Add content type
- * Define views
- * Hook called when form is submitted
- * Permissions: declare winner? Start/end test?
+ * @todo
+ *  Make sure all fields are being validated
+ *  Add JS to enable Win Criteria value textboxes based on the chosen radio
+ *  Define hook_view() to show overview of admin settings
+ *  Define tabs within the form
+ *  Hook called when form is submitted
+ *  Permissions: declare winner? Start/end test?
  */
 
 /**
@@ -71,6 +74,9 @@ function webform_ab_access($op, $node, $account) {
  * Implementation of hook_form().
  */
 function webform_ab_form(&$node, $form_state) {
+  // Add styling for the form
+  drupal_add_css(drupal_get_path('module', 'webform_ab') . '/webform_ab.css');
+  
   $type = node_get_types('type', $node);
   
   $form['test_settings'] = array(
@@ -99,6 +105,266 @@ function webform_ab_form(&$node, $form_state) {
     '#description' => t('Description for admin use. This is not displayed to the public.')
   );
   
+  $webform_node_type = node_get_types('type', 'webform');
+  
+  $form['test_settings']['form_types'] = array(
+    '#type' => 'radios',
+    '#title' => t('Which types of forms will this test use?'),
+    '#description' => t('Once set, this cannot be changed.'),
+    '#options' => array('webform' => check_plain($webform_node_type->name)),
+    '#default_value' => $node->form_types,
+  );
+  
+  $form['winning_conditions'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Winning Conditions'),
+    '#description' => t('Conditions necessary for a form to win the test.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE
+  );
+  
+  $form['winning_conditions']['minimum_hits'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum Hits'),
+    '#description' => t('The form must be seen by this many users before it can be declared the winner. This prevents a winner from being declared before enough data has been collected.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => empty($node->minimum_hits) ? 100 : $node->minimum_hits
+  );
+  
+  
+  $form['winning_conditions']['win_type'] = array(
+    '#type' => 'item',
+    '#title' => t('Win Criteria'),
+    '#prefix' => '<div class="win_type_container">',
+    '#suffix' => '</div>',
+    '#required' => TRUE,
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group'] = array(
+    '#prefix' => '<div class="container form-item">',
+    '#suffix' => '</div>'
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group']['total_conversions_radio'] = array(
+    '#type' => 'radio',
+    '#title' => t('Total Conversions'),
+    '#description' => t('This many conversions must be made before the form is declared the winner.'),
+    '#return_value' => 'total_conversions',
+    '#parents' => array('win_type'),
+    '#default_value' => $node->win_type,
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group']['total_conversions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number'),
+    '#description' => t('Number of conversions'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->total_conversions,
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group'] = array(
+    '#prefix' => '<div class="container form-item">',
+    '#suffix' => '</div>'
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions_radio'] = array(
+    '#type' => 'radio',
+    '#title' => t('Conversion Percentage'),
+    '#description' => t('Once the percentage of conversions reaches this, and the minimum hits is reached, form is declared the winner.'),
+    '#return_value' => 'percent_conversions',
+    '#parents' => array('win_type'),
+    '#default_value' => $node->win_type,
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Percentage'),
+    '#description' => t('Percentage of hits that become conversions. Enter either as 25% or 0.25.'),
+    '#size' => 10,
+    '#maxlength' => 255,
+    '#default_value' => $node->percent_conversions,
+  );
+  
+  
+  $form['notifications'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Notifications'),
+    '#description' => t('The following options are specific to this test. You can also set default values for future tests in the Webform A/B Test module settings page.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE
+  );
+  
+  $form['notifications']['daily_summaries'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily Summaries'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['notifications']['daily_summaries']['daily_notification_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send daily reports by email to'),
+    '#description' => t('Separate e-mail addresses with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->daily_notification_email,
+  );
+
+  $form['notifications']['daily_summaries']['daily_notification_sms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send daily reports by SMS to'),
+    '#description' => t('Separate cell phone numbers with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->daily_notification_sms,
+  );
+  
+  
+  $form['notifications']['winning_notice'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Winning Notice'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['notifications']['winning_notice']['win_notification_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send winning notice by email to'),
+    '#description' => t('Separate e-mail addresses with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->win_notification_email,
+  );
+
+  $form['notifications']['winning_notice']['win_notification_sms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send winning notice by SMS to'),
+    '#description' => t('Separate cell phone numbers with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->win_notification_sms,
+  );
+
+  
   
   return $form;
+}
+
+
+/**
+ * Implementation of hook_validate().
+ * Check values on the node form
+ */
+function webform_ab_validate($node, &$form) {
+  // Make sure they chose a win criteria
+  if (empty($node->win_type)) {
+    form_set_error('win_type', t('Please choose a Win Criteria'));
+  }
+
+  // Validate daily summary email addresses
+  if(trim($node->daily_notification_email) != '') {
+    $addresses = explode(',', $node->daily_notification_email);
+    $invalid = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $invalid[] = $address;
+      }
+    }
+    if (!empty($invalid)) {
+      form_set_error('daily_notification_email', t('Invalid e-mail address(es) given for daily summaries: %email', array('%email' => implode(', ', $invalid))));
+    }
+  }
+  
+  // Validate winning notice
+  if(trim($node->win_notification_email) != '') {
+    $addresses = explode(',', $node->win_notification_email);
+    $invalid = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $invalid[] = $address;
+      }
+    }
+    if (!empty($invalid)) {
+      form_set_error('win_notification_email', t('Invalid e-mail address(es) given for winning notice: %email', array('%email' => implode(', ', $invalid))));
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_insert().
+ * Save new Webform A/B Test nodes. Just calls webform_ab_update
+ */
+function webform_ab_insert($node) {
+  return webform_ab_update($node, TRUE);
+}
+
+
+/**
+ * Implementation of hook_update().
+ * Update existing or insert new Webform A/B Test nodes
+ */
+function webform_ab_update($node, $is_insert = FALSE) {
+  $replacement_values = array(
+    $node->nid,
+    $node->form_types,
+    $node->minimum_hits,
+    $node->win_type,
+    $node->{$node->win_type},
+    $node->daily_notification_email,
+    $node->daily_notification_sms,
+    $node->win_notification_email,
+    $node->win_notification_sms
+  );
+  
+  if($is_insert) {
+    $sql = "INSERT INTO {webform_ab} (nid, form_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s')";
+  }
+  else {
+    $sql = "UPDATE {webform_ab} SET nid=%d, form_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s' WHERE nid=%d";
+    $replacement_values[] = $node->nid;
+  }
+    
+  db_query($sql, $replacement_values);
+}
+
+
+function _webform_ab_prep_node_for_save(&$node) {
+  // Remove any spaces from lists of e-mail addresses
+  // Daily summary
+  if(trim($node->daily_notification_email) != '') {
+    $addresses = explode(',', $node->daily_notification_email);
+    $fixed = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $fixed[] = $address;
+      }
+    }
+    $node->daily_notification_email = implode(',', $fixed);
+  }
+  
+  // Win notice
+  if(trim($node->win_notification_email) != '') {
+    $addresses = explode(',', $node->win_notification_email);
+    $fixed = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $fixed[] = $address;
+      }
+    }
+    $node->win_notification_email = implode(',', $fixed);
+  }
+}
+
+
+/**
+ * Implementation of hook_load().
+ */
+function webform_ab_load(&$node) {
+  $load = db_fetch_object(db_query('SELECT * FROM {webform_ab} WHERE nid = %d', $node->nid));
+  $load->{$load->win_type} = $load->win_value;
+  dsm($load, 'loaded');
+  return $load;
 }
