@@ -16,6 +16,8 @@
  *  Define tabs within the form
  *  Hook called when form is submitted
  *  Permissions: declare winner? Start/end test?
+ * 
+ *  Instead of using a form alter, should other modules implement a hook to define what types of webforms can be included from them (ie, fundraiser_ab, webform_user)
  */
 
 /**
