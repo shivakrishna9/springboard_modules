@@ -487,11 +487,20 @@ function webform_ab_delete(&$node) {
  * Implementation of hook_view().
  */
 function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
-  $node = node_prepare($node, $teaser);
-  
-  // @todo: redirect to either the winning form or a random one
-  
-  return $node;
+  if (empty($node->included_forms)) {
+    $node = node_prepare($node, $teaser);
+    $node->content['no_webforms'] = array(
+      '#value' => t('There are no webforms in this A/B test.')
+    );
+    return $node;
+  }
+  else {
+    if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid])) {
+      $key = array_rand($node->included_forms);
+      $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
+    }
+    drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
+  }
 }
 
 
@@ -502,4 +511,32 @@ function webform_ab_webform_ab_valid_forms($form_types) {
     $forms[] = $row;
   }
   return $forms;
+}
+
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function webform_ab_form_alter(&$form, $form_state, $form_id) {  
+  foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
+    $test_webform_id = 'webform_client_form_' . $webform_nid;
+    if ($test_webform_id == $form_id) {
+      $form['#submit'][] = 'webform_ab_webform_submit';
+      $form['test_nid'] = array(
+        '#type' => 'hidden',
+        '#value' => $test_nid
+      );
+      $form['webform_nid'] = array(
+        '#type' => 'hidden',
+        '#value' => $webform_nid
+      );
+      db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($_GET['test_nid'], $webform_nid, time()));
+      break;
+    }
+  }
+}
+
+
+function webform_ab_webform_submit($form, &$form_state) {
+  db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
 }
