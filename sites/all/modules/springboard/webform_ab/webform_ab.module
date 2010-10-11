@@ -22,6 +22,9 @@
  * Test permission settings
  */
 
+define('WEBFORM_AB_WEBFORM_STATUS_ACTIVE', 1);
+define('WEBFORM_AB_WEBFORM_STATUS_WINNER', 2);
+
 /**
  * Implementation of hook_node_info().
  */
@@ -539,4 +542,40 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
 
 function webform_ab_webform_submit($form, &$form_state) {
   db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+  webform_ab_check_for_win($form_state['values']['test_nid']);
+}
+
+
+function webform_ab_check_for_win($test_nid) {
+  $node = node_load($test_nid);
+  
+  // Check if there is already a winner
+  $winner_found = FALSE;
+  foreach ($node->included_forms as $webform_nid => $details) {
+    if ($details['status'] == WEBFORM_AB_WEBFORM_STATUS_WINNER) {
+      $winner_found = TRUE;
+      break;
+    }
+  }
+  
+  if (!$winner_found) {
+    module_invoke_all('webform_ab_check_win_condition', $node);
+  }
+}
+
+function webform_ab_webform_ab_check_win_condition($node) {
+  switch ($node->win_type) {
+    case 'total_conversions':
+      $conversions_per_form = array();
+      $result = db_query("SELECT webform.title, con.webform_nid, count(sid) as conversions FROM webform_ab_conversion con LEFT JOIN node webform ON webform.nid = con.webform_nid WHERE con.test_nid = %d GROUP BY con.test_nid;", array($node->nid));
+      while ($row = db_fetch_object($result)) {
+        if ($row->conversions >= $node->total_conversions) {
+          // Win!
+          watchdog('webform_ab', "Winner declared in A/B test %testname: %winner", array('%testname' => $node->title, '%winner' => $row->title), WATCHDOG_NOTICE);
+          db_query("UPDATE {webform_ab_forms} SET status = %d WHERE test_nid = %d AND webform_nid = %d", array(WEBFORM_AB_WEBFORM_STATUS_WINNER, $node->nid, $row->webform_nid));
+          break;
+        }
+      }
+      break;
+  }
 }
