@@ -1187,11 +1187,11 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
 
   // load up the last order since it will have the most recent changes
   $order = uc_order_load($last_order_id);
-  
+  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
   for ($i = 1; $i <= $new_order_count; $i++) {
     $new_order_id = fundraiser_clone_order($order);
     $charge_date = strtotime("+$i months", $last_charge_date);
-		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge) VALUES (%d, %d, '%s')", $order_id, $new_order_id, $charge_date);
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_order_id, $charge_date, $gateway);
 		uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
 		// add these new orders to the queue
 		if (module_exists('sf_donation') && module_exists('queue_api')) {

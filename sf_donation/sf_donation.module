@@ -496,6 +496,9 @@ function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 						db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
 						$user_ids = _sf_donation_load_user_salesforce_ids_from_order((int)$batch['records'][$i]->oid);
 						
+						// the single order may be an extension to an existing recurring donation series, so try and update it there as well
+						db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
+						
 						// create and save the contact roles						
 						$table = 'sf_donation_opportunity_contact_role';
 						$record = new stdClass();
