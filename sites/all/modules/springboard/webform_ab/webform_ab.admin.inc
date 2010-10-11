@@ -8,7 +8,47 @@
 
 
 function webform_ab_test_reports($node) {
-  return 'Reporting for ' . $node->title;
+  $return = '';
+  
+  $hit_counts_result = db_query("SELECT webform_nid, count(hit_id) hits FROM {webform_ab_hits} WHERE test_nid = %d GROUP BY test_nid, webform_nid", $node->nid);
+  $hit_counts = array();
+  while ($row = db_fetch_object($hit_counts_result)) {
+    $hit_counts[$row->webform_nid] = $row->hits;
+  }
+  
+  $conversion_counts_result = db_query("SELECT webform_nid, count(sid) conversions FROM {webform_ab_conversion} WHERE test_nid = %d GROUP BY test_nid, webform_nid", $node->nid);
+  $conversion_counts = array();
+  while ($row = db_fetch_object($conversion_counts_result)) {
+    $conversion_counts[$row->webform_nid] = $row->conversions;
+  }
+  
+  
+  // Show the list of currently-included forms
+  $headers = array(
+    t('Name'), 
+    t('Hits'), 
+    t('Conversions'), 
+    t('Conversion %'),
+    t('Pre-win Conversion %'),
+    t('Post-win Conversion %'),
+  );
+  $rows = array();
+  foreach ($node->included_forms as $webform_nid => $form_details) {
+    $rows[] = array(
+      $form_details['title'], 
+      $hit_counts[$webform_nid],
+      $conversion_counts[$webform_nid],
+      ($hit_counts[$webform_nid] > 0) ? round(100 * $conversion_counts[$webform_nid] / $hit_counts[$webform_nid]) . '%' : '0%'
+    );
+  }
+  
+  
+  if (count($rows) == 0) {
+    $rows[] = array(array('data' => t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.', array('!forms_tab' => l('Included Webforms', 'node/' . $node->nid . '/forms'))), 'colspan' => count($headers)));
+  }
+  $return .= theme('table', $headers, $rows);
+  
+  return $return;  
 }
 
 
@@ -51,11 +91,14 @@ function webform_ab_form_list_add(&$form_state, $node) {
   // Re-index the array to use the nid as the key and title as the value.
   $indexed_forms = array();
   foreach ($flat_forms as $f) {
-    $indexed_forms[$f['nid']] = $f['title'];
+    // Don't add a webform in the list if it's already included in the test
+    if (!isset($node->included_forms[$f['nid']])) {
+      $indexed_forms[$f['nid']] = $f['title'];
+    }
   }
-
-
+  
   $form = array();
+
   $form['add_form_id'] = array(
     '#type' => 'select',
     '#title' => t('Add webform'),
@@ -67,11 +110,18 @@ function webform_ab_form_list_add(&$form_state, $node) {
     '#type' => 'hidden',
     '#value' => $node->nid,
   );
-  
   $form['add'] = array(
     '#type' => 'submit',
     '#value' => t('Add'),
   );
+
+  // If there are no more webforms that may be added, disable the form
+  if (count($indexed_forms) == 0) {
+    $form['add_form_id']['#disabled'] = TRUE;
+    $form['add_form_id']['#description'] = 'There are no more webforms available to be added to this A/B test.';
+    unset($form['add']);
+  }
+
   return $form;
 }
 

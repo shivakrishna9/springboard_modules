@@ -16,6 +16,7 @@
  *  Define tabs within the form
  *  Trigger a hook called when one of the forms in the test is submitted
  *  Permissions: declare winner? Start/end test?
+ *  Finish reporting tab
  * 
  *  Instead of using a form alter, should other modules implement a hook to define what types of webforms can be included from them (ie, fundraiser_ab, webform_user)
  * Test permission settings
