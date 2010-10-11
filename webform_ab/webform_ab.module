@@ -22,7 +22,9 @@
  * Test permission settings
  */
 
+// Active status, for webforms within a test
 define('WEBFORM_AB_WEBFORM_STATUS_ACTIVE', 1);
+// Win status for webforms within a test - only one webform per test should have this
 define('WEBFORM_AB_WEBFORM_STATUS_WINNER', 2);
 
 /**
@@ -98,6 +100,7 @@ function webform_ab_menu() {
   return $items;
 }
 
+
 /**
  * Check if the current user can view the reports on a given Webform A/B Test
  */
@@ -107,6 +110,7 @@ function webform_ab_can_view_reports($node) {
   
   return (user_access('view own webform_ab reports', $user) && $is_author) || user_access('view any webform_ab reports', $user);
 }
+
 
 /**
  * Menu loader callback. Load a Webform A/B Test node if the given nid is for 
@@ -132,6 +136,7 @@ function webform_ab_menu_alter(&$items) {
    */
 }
 
+
 /**
  * Implementation of hook_access().
  */
@@ -156,6 +161,7 @@ function webform_ab_access($op, $node, $account) {
 
 /**
  * Implementation of hook_form().
+ * Return the form for admins to edit webform_ab nodes
  */
 function webform_ab_form(&$node, $form_state) {
   // Add styling for the form
@@ -332,15 +338,13 @@ function webform_ab_form(&$node, $form_state) {
     '#default_value' => $node->win_notification_sms,
   );
 
-  
-  
   return $form;
 }
 
 
 /**
  * Implementation of hook_validate().
- * Check values on the node form
+ * Check values from the node edit form
  */
 function webform_ab_validate($node, &$form) {
   // Make sure they chose a win criteria
@@ -353,6 +357,9 @@ function webform_ab_validate($node, &$form) {
       // Based on the chosen win type, find the title of the field
       $field_title = $form['winning_conditions']['win_type'][$node->win_type . '_group'][$node->win_type . '_radio']['#title'];
       form_set_error($node->win_type, t('You must define a value for %criteria', array('%criteria' => $field_title)));
+    }
+    else {
+      // @todo Validate the value given for the win criteria. For total conversions, check for int. For percentage, check value
     }
   }
   
@@ -431,8 +438,7 @@ function webform_ab_update($node, $is_insert = FALSE) {
  * Clean up fields before saving them to the DB
  */
 function _webform_ab_prep_node_for_save(&$node) {
-  // Remove any spaces from lists of e-mail addresses
-  // Daily summary
+  // Remove any spaces from lists of daily summary e-mail addresses
   if(trim($node->daily_notification_email) != '') {
     $addresses = explode(',', $node->daily_notification_email);
     $fixed = array();
@@ -442,7 +448,7 @@ function _webform_ab_prep_node_for_save(&$node) {
     $node->daily_notification_email = implode(',', $fixed);
   }
   
-  // Win notice
+  // Remove any spaces from lists of win notice e-mail addresses
   if(trim($node->win_notification_email) != '') {
     $addresses = explode(',', $node->win_notification_email);
     $fixed = array();
@@ -451,6 +457,8 @@ function _webform_ab_prep_node_for_save(&$node) {
     }
     $node->win_notification_email = implode(',', $fixed);
   }
+  
+  // @todo: convert percent_conversions to a decimal if it's an int (ie, 50%8)
 }
 
 
@@ -507,7 +515,12 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
 }
 
 
-function webform_ab_webform_ab_valid_forms($form_types) {
+/**
+ * Implementation of hook_webform_ab_valid_webforms().
+ * Return an array of webforms of the given form type that may be included in an
+ * A/B Test.
+ */
+function webform_ab_webform_ab_valid_webforms($form_types) {
   $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s'", array('webform'));
   $forms = array();
   while ($row = db_fetch_array($result)) {
@@ -540,13 +553,25 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
 }
 
 
+/**
+ * Handle the submission of a webform that is part of a test
+ */
 function webform_ab_webform_submit($form, &$form_state) {
   db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
-  webform_ab_check_for_win($form_state['values']['test_nid']);
+  _webform_ab_check_for_win($form_state['values']['test_nid']);
 }
 
 
-function webform_ab_check_for_win($test_nid) {
+/**
+ * Check if the given A/B Test has a winning webform
+ * This function checks to see if a webform has already been declared the winner.
+ * If not, it invokes hook_webform_ab_check_win_condition() so that other modules
+ * can check their winning conditions, if chosen.
+ * This module also implements hook_webform_ab_check_win_condition() below, to
+ * check for the basic Total Conversions and Conversion Percentage criteria
+ * @todo Check the minimum hit count, too
+ */
+function _webform_ab_check_for_win($test_nid) {
   $node = node_load($test_nid);
   
   // Check if there is already a winner
@@ -560,9 +585,17 @@ function webform_ab_check_for_win($test_nid) {
   
   if (!$winner_found) {
     module_invoke_all('webform_ab_check_win_condition', $node);
+    // @todo Hook implementations should return the ID of the winning form, not update the DB directly
   }
 }
 
+
+/**
+ * Implementation of hook_webform_ab_check_win_condition().
+ * Check which win criteria is being used by the given A/B Test. If it's one of
+ * the ones defined by this module, see if any of the webforms in the test have
+ * won.
+ */
 function webform_ab_webform_ab_check_win_condition($node) {
   switch ($node->win_type) {
     case 'total_conversions':
@@ -571,11 +604,15 @@ function webform_ab_webform_ab_check_win_condition($node) {
       while ($row = db_fetch_object($result)) {
         if ($row->conversions >= $node->total_conversions) {
           // Win!
+          // @todo This should return some data back to _webform_ab_check_for_win() for processing there
           watchdog('webform_ab', "Winner declared in A/B test %testname: %winner", array('%testname' => $node->title, '%winner' => $row->title), WATCHDOG_NOTICE);
           db_query("UPDATE {webform_ab_forms} SET status = %d WHERE test_nid = %d AND webform_nid = %d", array(WEBFORM_AB_WEBFORM_STATUS_WINNER, $node->nid, $row->webform_nid));
           break;
         }
       }
       break;
+    
+    case 'percent_conversions':
+      // @todo: fill in
   }
 }
