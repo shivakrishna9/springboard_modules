@@ -70,7 +70,7 @@ function webform_ab_menu() {
   );
   
   $items['node/%webform_menu_ab/forms'] = array(
-    'title' => 'Included Forms',
+    'title' => 'Included Webforms',
     'page callback' => 'webform_ab_test_forms',
     'page arguments' => array(1),
     'access callback' => 'node_access',
@@ -78,6 +78,17 @@ function webform_ab_menu() {
     'file' => 'webform_ab.admin.inc',
     'weight' => 3,
     'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['node/%webform_menu_ab/forms/remove'] = array(
+    'title' => 'Remove Form',
+    'page callback' => 'webform_ab_test_remove_form',
+    'page arguments' => array(1),    
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'webform_ab.admin.inc',
+    'weight' => 3,
+    'type' => MENU_CALLBACK,
   );
   
   return $items;
