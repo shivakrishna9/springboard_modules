@@ -14,10 +14,11 @@
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
  *  Define hook_view() to show overview of admin settings
  *  Define tabs within the form
- *  Hook called when form is submitted
+ *  Trigger a hook called when one of the forms in the test is submitted
  *  Permissions: declare winner? Start/end test?
  * 
  *  Instead of using a form alter, should other modules implement a hook to define what types of webforms can be included from them (ie, fundraiser_ab, webform_user)
+ * Test permission settings
  */
 
 /**
@@ -40,8 +41,74 @@ function webform_ab_node_info() {
  * Implementation of hook_perm().
  */
 function webform_ab_perm() {
-  return array('create webform_ab', 'edit own webform_ab', 'edit any webform_ab', 'delete own webform_ab', 'delete any webform_ab');
+  return array(
+    'create webform_ab', 
+    'edit own webform_ab', 
+    'edit any webform_ab', 
+    'delete own webform_ab', 
+    'delete any webform_ab', 
+    'view own webform_ab reports',
+    'view any webform_ab reports',
+  );
 }
+
+/**
+ * Implementation of hook_menu().
+ */
+function webform_ab_menu() {
+  $items = array();
+
+  $items['node/%webform_menu_ab/reports'] = array(
+    'title' => 'Reports and Monitoring',
+    'page callback' => 'webform_ab_test_reports',
+    'page arguments' => array(1),
+    'access callback' => 'webform_ab_can_view_reports',
+    'access arguments' => array(1),
+    'file' => 'webform_ab.admin.inc',
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['node/%webform_menu_ab/forms'] = array(
+    'title' => 'Included Forms',
+    'page callback' => 'webform_ab_test_forms',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'webform_ab.admin.inc',
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Check if the current user can view the reports on a given Webform A/B Test
+ */
+function webform_ab_can_view_reports($node) {
+  global $user;
+  $is_author = $user->uid == $node->uid;
+  
+  return (user_access('view own webform_ab reports', $user) && $is_author) || user_access('view any webform_ab reports', $user);
+}
+
+/**
+ * Menu loader callback. Load a Webform A/B Test node if the given nid is for 
+ * the right node type.
+ */
+function webform_menu_ab_load($nid) {
+  if (!is_numeric($nid)) {
+    return FALSE;
+  }
+  $node = node_load($nid);
+  if (!isset($node->type) || $node->type != 'webform_ab') {
+    return FALSE;
+  }
+  return $node;
+}
+
+
 
 
 function webform_ab_menu_alter(&$items) {
@@ -115,6 +182,7 @@ function webform_ab_form(&$node, $form_state) {
     '#description' => t('Once set, this cannot be changed.'),
     '#options' => array('webform' => check_plain($webform_node_type->name)),
     '#default_value' => $node->form_types,
+    '#required' => TRUE,
   );
   
   $form['winning_conditions'] = array(
@@ -262,10 +330,19 @@ function webform_ab_form(&$node, $form_state) {
 function webform_ab_validate($node, &$form) {
   // Make sure they chose a win criteria
   if (empty($node->win_type)) {
-    form_set_error('win_type', t('Please choose a Win Criteria'));
+    form_set_error('win_type', t('Please choose a Win Criteria.'));
   }
+  else {
+    // Make sure they entered a value for the win criteria
+    if (empty($node->{$node->win_type})) {
+      // Based on the chosen win type, find the title of the field
+      $field_title = $form['winning_conditions']['win_type'][$node->win_type . '_group'][$node->win_type . '_radio']['#title'];
+      form_set_error($node->win_type, t('You must define a value for %criteria', array('%criteria' => $field_title)));
+    }
+  }
+  
 
-  // Validate daily summary email addresses
+  // Validate daily summary email address(es)
   if(trim($node->daily_notification_email) != '') {
     $addresses = explode(',', $node->daily_notification_email);
     $invalid = array();
@@ -279,7 +356,7 @@ function webform_ab_validate($node, &$form) {
     }
   }
   
-  // Validate winning notice
+  // Validate winning notice email address(es)
   if(trim($node->win_notification_email) != '') {
     $addresses = explode(',', $node->win_notification_email);
     $invalid = array();
@@ -309,6 +386,8 @@ function webform_ab_insert($node) {
  * Update existing or insert new Webform A/B Test nodes
  */
 function webform_ab_update($node, $is_insert = FALSE) {
+  _webform_ab_prep_node_for_save($node);
+  
   $replacement_values = array(
     $node->nid,
     $node->form_types,
@@ -333,6 +412,9 @@ function webform_ab_update($node, $is_insert = FALSE) {
 }
 
 
+/**
+ * Clean up fields before saving them to the DB
+ */
 function _webform_ab_prep_node_for_save(&$node) {
   // Remove any spaces from lists of e-mail addresses
   // Daily summary
@@ -340,9 +422,7 @@ function _webform_ab_prep_node_for_save(&$node) {
     $addresses = explode(',', $node->daily_notification_email);
     $fixed = array();
     foreach ($addresses as $address) {
-      if (!valid_email_address(trim($address))) {
-        $fixed[] = $address;
-      }
+      $fixed[] = trim($address);
     }
     $node->daily_notification_email = implode(',', $fixed);
   }
@@ -352,9 +432,7 @@ function _webform_ab_prep_node_for_save(&$node) {
     $addresses = explode(',', $node->win_notification_email);
     $fixed = array();
     foreach ($addresses as $address) {
-      if (!valid_email_address(trim($address))) {
-        $fixed[] = $address;
-      }
+      $fixed[] = trim($address);
     }
     $node->win_notification_email = implode(',', $fixed);
   }
@@ -366,7 +444,50 @@ function _webform_ab_prep_node_for_save(&$node) {
  */
 function webform_ab_load(&$node) {
   $load = db_fetch_object(db_query('SELECT * FROM {webform_ab} WHERE nid = %d', $node->nid));
-  $load->{$load->win_type} = $load->win_value;
-  dsm($load, 'loaded');
+  if (!empty($load->win_type)) {
+    $load->{$load->win_type} = $load->win_value;
+  }
+  
+  $result = db_query('SELECT f.webform_nid, f.status, n.title FROM {webform_ab_forms} f LEFT JOIN {node} n ON n.nid = f.webform_nid WHERE test_nid = %d', $node->nid);
+  $included_forms = array();
+  while ($row = db_fetch_array($result)) {
+    $included_forms[$row['webform_nid']] = $row;
+  }
+  
+  $load->included_forms = $included_forms;
   return $load;
+}
+
+
+/**
+ * Implementation of hook_delete().
+ * Delete all data for a test
+ */
+function webform_ab_delete(&$node) {
+  db_query('DELETE FROM {webform_ab} WHERE nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_conversion} WHERE test_nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_forms} WHERE test_nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_hits} WHERE test_nid=%d', array($node->nid));
+}
+
+
+/**
+ * Implementation of hook_view().
+ */
+function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
+  $node = node_prepare($node, $teaser);
+  
+  // @todo: redirect to either the winning form or a random one
+  
+  return $node;
+}
+
+
+function webform_ab_webform_ab_valid_forms($form_types) {
+  $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s'", array('webform'));
+  $forms = array();
+  while ($row = db_fetch_array($result)) {
+    $forms[] = $row;
+  }
+  return $forms;
 }
