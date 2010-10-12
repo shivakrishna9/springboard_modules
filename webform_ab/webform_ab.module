@@ -17,6 +17,7 @@
  *  Trigger a hook called when one of the forms in the test is submitted
  *  Permissions: declare winner? Start/end test?
  *  Finish reporting tab
+ *  Only track one hit on a form per session ID
  * 
  *  Instead of using a form alter, should other modules implement a hook to define what types of webforms can be included from them (ie, fundraiser_ab, webform_user)
  * Test permission settings
@@ -535,23 +536,32 @@ function webform_ab_delete(&$node) {
  * Implementation of hook_view().
  */
 function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
-  if (empty($node->included_webforms)) {
+  // If the current user has permission to modify this test, show them the overview
+  // page instead of directing them to one of the webforms in the test
+  if (node_access('update', $node)) {
+    // @todo Show admin overview page
+    return $node;
+  }
+  
+  // Only continue to a webform if there are webforms to choose from
+  elseif (!empty($node->included_webforms)) {
+    // See if they already have a webform nid in their $_SESSION for this test, and
+    // that it's still a valid webform nid for this test (in case the webform was
+    // removed from the test)
+    if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
+      // Pick a random webform nid from the ones in this test
+      $key = array_rand($node->included_webforms);
+      // Save it to the $_SESSION so this user always gets the same one
+      $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
+    }
+    drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
+  }
+  else {
     $node = node_prepare($node, $teaser);
     $node->content['no_webforms'] = array(
       '#value' => t('There are no webforms in this A/B test.')
     );
     return $node;
-  }
-  else {
-    if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
-      $key = array_rand($node->included_webforms);
-      $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
-      dsm('Setting random webform to ' . $key);
-    }
-    else {
-      dsm('Existing webform: ' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
-    }
-    drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
   }
 }
 
