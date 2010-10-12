@@ -197,12 +197,12 @@ function webform_ab_form(&$node, $form_state) {
   
   $webform_node_type = node_get_types('type', 'webform');
   
-  $form['test_settings']['form_types'] = array(
+  $form['test_settings']['webform_types'] = array(
     '#type' => 'radios',
     '#title' => t('Which types of forms will this test use?'),
     '#description' => t('Once set, this cannot be changed.'),
     '#options' => array('webform' => check_plain($webform_node_type->name)),
-    '#default_value' => $node->form_types,
+    '#default_value' => $node->webform_types,
     '#required' => TRUE,
   );
   
@@ -352,14 +352,41 @@ function webform_ab_validate($node, &$form) {
     form_set_error('win_type', t('Please choose a Win Criteria.'));
   }
   else {
+    // Based on the chosen win type, find the title of the field
+    $field_title = $form['winning_conditions']['win_type'][$node->win_type . '_group'][$node->win_type . '_radio']['#title'];
+
     // Make sure they entered a value for the win criteria
     if (empty($node->{$node->win_type})) {
-      // Based on the chosen win type, find the title of the field
-      $field_title = $form['winning_conditions']['win_type'][$node->win_type . '_group'][$node->win_type . '_radio']['#title'];
       form_set_error($node->win_type, t('You must define a value for %criteria', array('%criteria' => $field_title)));
     }
     else {
-      // @todo Validate the value given for the win criteria. For total conversions, check for int. For percentage, check value
+      $win_value = trim($node->{$node->win_type});
+      
+      // Validate value given for a Total Conversions win criteria
+      if ($node->win_type == 'total_conversions') {
+        if (!($win_value > 0) || !ctype_digit($win_value)) {
+          form_set_error($node->win_type, t('You must define an integer value for %criteria', array('%criteria' => $field_title)));
+        }
+      }
+      // Validate value given for a Conversion Percentage win criteria
+      elseif ($node->win_type == 'percent_conversions') {
+        // If it's between 0 and 1, it's a decimal and OK
+        if ($win_value > 0 && $win_value <= 1) {
+          // Fine
+        }
+        // See if the string ends with a percentage
+        elseif (substr($win_value, -1) == '%') {
+          // Strip the percent sign
+          $number = substr($win_value, 0, strlen($win_value) - 1);
+          if (!($number > 0 && $number <= 100)) {
+            form_set_error($node->win_type, t('Please enter a valid percentage for %criteria. You can either enter it as a percentage (e.g., 45%) or a decimal value (e.g., 0.45).', array('%criteria' => $field_title)));
+          }
+        }
+        // Otherise, failed
+        else {
+          form_set_error($node->win_type, t('Please enter a valid percentage for %criteria. You can either enter it as a percentage (e.g., 45%) or a decimal value (e.g., 0.45).', array('%criteria' => $field_title)));
+        }
+      }
     }
   }
   
@@ -412,7 +439,7 @@ function webform_ab_update($node, $is_insert = FALSE) {
   
   $replacement_values = array(
     $node->nid,
-    $node->form_types,
+    $node->webform_types,
     $node->minimum_hits,
     $node->win_type,
     $node->{$node->win_type},
@@ -423,10 +450,10 @@ function webform_ab_update($node, $is_insert = FALSE) {
   );
   
   if($is_insert) {
-    $sql = "INSERT INTO {webform_ab} (nid, form_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s')";
+    $sql = "INSERT INTO {webform_ab} (nid, webform_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s')";
   }
   else {
-    $sql = "UPDATE {webform_ab} SET nid=%d, form_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s' WHERE nid=%d";
+    $sql = "UPDATE {webform_ab} SET nid=%d, webform_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s' WHERE nid=%d";
     $replacement_values[] = $node->nid;
   }
     
@@ -458,7 +485,10 @@ function _webform_ab_prep_node_for_save(&$node) {
     $node->win_notification_email = implode(',', $fixed);
   }
   
-  // @todo: convert percent_conversions to a decimal if it's an int (ie, 50%8)
+  // If the percent_conversions is a decimal less than 1, convert to a full number
+  if ($node->percent_conversions > 0 && $node->percent_conversions <= 1) {
+    $node->percent_conversions = $node->percent_conversions * 100;
+  }
 }
 
 
@@ -471,13 +501,20 @@ function webform_ab_load(&$node) {
     $load->{$load->win_type} = $load->win_value;
   }
   
-  $result = db_query('SELECT f.webform_nid, f.status, n.title FROM {webform_ab_forms} f LEFT JOIN {node} n ON n.nid = f.webform_nid WHERE test_nid = %d', $node->nid);
-  $included_forms = array();
+  $result = db_query('SELECT f.webform_nid, f.status, n.title, COUNT(DISTINCT hits.hit_id) as hits, COUNT(DISTINCT con.sid) AS conversions
+    FROM {webform_ab_forms} f
+    LEFT JOIN {node} n ON n.nid = f.webform_nid
+    LEFT JOIN {webform_ab_hits} hits ON hits.test_nid = f.test_nid AND hits.webform_nid = f.webform_nid
+    LEFT JOIN  {webform_ab_conversion} con ON con.test_nid = f.test_nid AND con.webform_nid = f.webform_nid
+    WHERE f.test_nid = %d
+    GROUP BY f.test_nid, f.webform_nid', $node->nid);
+  $included_webforms = array();
   while ($row = db_fetch_array($result)) {
-    $included_forms[$row['webform_nid']] = $row;
+    $included_webforms[$row['webform_nid']] = $row;
   }
   
-  $load->included_forms = $included_forms;
+  $load->included_webforms = $included_webforms;
+  
   return $load;
 }
 
@@ -498,7 +535,7 @@ function webform_ab_delete(&$node) {
  * Implementation of hook_view().
  */
 function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
-  if (empty($node->included_forms)) {
+  if (empty($node->included_webforms)) {
     $node = node_prepare($node, $teaser);
     $node->content['no_webforms'] = array(
       '#value' => t('There are no webforms in this A/B test.')
@@ -506,9 +543,13 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
     return $node;
   }
   else {
-    if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid])) {
-      $key = array_rand($node->included_forms);
+    if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
+      $key = array_rand($node->included_webforms);
       $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
+      dsm('Setting random webform to ' . $key);
+    }
+    else {
+      dsm('Existing webform: ' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
     }
     drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
   }
@@ -520,7 +561,7 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
  * Return an array of webforms of the given form type that may be included in an
  * A/B Test.
  */
-function webform_ab_webform_ab_valid_webforms($form_types) {
+function webform_ab_webform_ab_valid_webforms($webform_types) {
   $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s'", array('webform'));
   $forms = array();
   while ($row = db_fetch_array($result)) {
@@ -534,20 +575,22 @@ function webform_ab_webform_ab_valid_webforms($form_types) {
  * Implementation of hook_form_alter().
  */
 function webform_ab_form_alter(&$form, $form_state, $form_id) {  
-  foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
-    $test_webform_id = 'webform_client_form_' . $webform_nid;
-    if ($test_webform_id == $form_id) {
-      $form['#submit'][] = 'webform_ab_webform_submit';
-      $form['test_nid'] = array(
-        '#type' => 'hidden',
-        '#value' => $test_nid
-      );
-      $form['webform_nid'] = array(
-        '#type' => 'hidden',
-        '#value' => $webform_nid
-      );
-      db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($_GET['test_nid'], $webform_nid, time()));
-      break;
+  if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
+    foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
+      $test_webform_id = 'webform_client_form_' . $webform_nid;
+      if ($test_webform_id == $form_id) {
+        $form['#submit'][] = 'webform_ab_webform_submit';
+        $form['test_nid'] = array(
+          '#type' => 'hidden',
+          '#value' => $test_nid
+        );
+        $form['webform_nid'] = array(
+          '#type' => 'hidden',
+          '#value' => $webform_nid
+        );
+        db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($_GET['test_nid'], $webform_nid, time()));
+        break;
+      }
     }
   }
 }
@@ -576,16 +619,29 @@ function _webform_ab_check_for_win($test_nid) {
   
   // Check if there is already a winner
   $winner_found = FALSE;
-  foreach ($node->included_forms as $webform_nid => $details) {
+  foreach ($node->included_webforms as $webform_nid => $details) {
     if ($details['status'] == WEBFORM_AB_WEBFORM_STATUS_WINNER) {
-      $winner_found = TRUE;
+      //$winner_found = TRUE;
       break;
     }
   }
   
   if (!$winner_found) {
-    module_invoke_all('webform_ab_check_win_condition', $node);
-    // @todo Hook implementations should return the ID of the winning form, not update the DB directly
+    // Call a hook to check for wins on all modules that define winning conditions
+    $winning_details = module_invoke_all('webform_ab_check_win_condition', $node);
+
+    // Return values of hook implementations are put into a flat array. Loop over and
+    // see if any of the returns is a webform nid. Modules that don't find a win will
+    // return 0, when they do find a win it will return the webform nid
+    foreach ($winning_details as $webform_nid) {
+      // See if the webform nid is in the included_webforms array
+      if ($node->included_webforms[$webform_nid]) {
+        $winning_webform = $node->included_webforms[$webform_nid];
+        $node->included_webforms[$webform_nid]['status'] = WEBFORM_AB_WEBFORM_STATUS_WINNER;
+        watchdog('webform_ab', "Winner declared in A/B test %testname: %winner", array('%testname' => $winning_webform['title'], '%winner' => $node->title), WATCHDOG_NOTICE);
+        db_query("UPDATE {webform_ab_forms} SET status = %d WHERE test_nid = %d AND webform_nid = %d", array(WEBFORM_AB_WEBFORM_STATUS_WINNER, $node->nid, $webform_nid));
+      }
+    }
   }
 }
 
@@ -599,20 +655,28 @@ function _webform_ab_check_for_win($test_nid) {
 function webform_ab_webform_ab_check_win_condition($node) {
   switch ($node->win_type) {
     case 'total_conversions':
-      $conversions_per_form = array();
-      $result = db_query("SELECT webform.title, con.webform_nid, count(sid) as conversions FROM webform_ab_conversion con LEFT JOIN node webform ON webform.nid = con.webform_nid WHERE con.test_nid = %d GROUP BY con.test_nid;", array($node->nid));
-      while ($row = db_fetch_object($result)) {
-        if ($row->conversions >= $node->total_conversions) {
+      // Loop over each included webform and check the conversion count
+      foreach ($node->included_webforms as $webform_nid => $webform_details) {
+        if ($webform_details['conversions'] >= $node->total_conversions) {
           // Win!
-          // @todo This should return some data back to _webform_ab_check_for_win() for processing there
-          watchdog('webform_ab', "Winner declared in A/B test %testname: %winner", array('%testname' => $node->title, '%winner' => $row->title), WATCHDOG_NOTICE);
-          db_query("UPDATE {webform_ab_forms} SET status = %d WHERE test_nid = %d AND webform_nid = %d", array(WEBFORM_AB_WEBFORM_STATUS_WINNER, $node->nid, $row->webform_nid));
+          return $webform_nid;
           break;
         }
       }
       break;
     
     case 'percent_conversions':
-      // @todo: fill in
+      foreach ($node->included_webforms as $webform_nid => $webform_details) {
+        if (100 * ($webform_details['conversions'] / $webform_details['hits']) > $node->percent_conversions) {
+          // Win!
+          return $webform_nid;
+          break;          
+        }
+      }
+      break;
+    
+    default:
+      dsm($node->win_type, 'win type');
   }
+  return 0;
 }

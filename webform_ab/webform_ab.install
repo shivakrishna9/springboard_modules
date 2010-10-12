@@ -39,7 +39,7 @@ function webform_ab_schema() {
         'not null' => TRUE,
         'unsigned' => TRUE,
       ),
-      'form_types' => array(
+      'webform_types' => array(
         'type' => 'varchar',
         'length' => 255,
         'description' => 'Type of webforms to use in this test.',

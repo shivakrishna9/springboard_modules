@@ -1,4 +1,4 @@
-hook_webform_ab_valid_webforms($form_types)
+hook_webform_ab_valid_webforms($webform_types)
 
 hook_webform_ab_valid_webforms_alter($forms)
 

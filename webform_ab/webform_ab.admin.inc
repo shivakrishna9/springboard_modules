@@ -33,7 +33,7 @@ function webform_ab_test_reports($node) {
     t('Post-win Conversion %'),
   );
   $rows = array();
-  foreach ($node->included_forms as $webform_nid => $form_details) {
+  foreach ($node->included_webforms as $webform_nid => $form_details) {
     $rows[] = array(
       $form_details['title'], 
       $hit_counts[$webform_nid],
@@ -58,7 +58,7 @@ function webform_ab_test_forms($node) {
   // Show the list of currently-included forms
   $headers = array(t('Name'), t('Status'), t('Operations'));
   $rows = array();
-  foreach ($node->included_forms as $webform_nid => $form_details) {
+  foreach ($node->included_webforms as $webform_nid => $form_details) {
     $rows[] = array(
       $form_details['title'], 
       $form_details['status'], 
@@ -82,7 +82,7 @@ function webform_ab_test_forms($node) {
 
 function webform_ab_form_list_add(&$form_state, $node) {
   // Get all valid forms for the form type from other modules
-  $flat_forms = module_invoke_all('webform_ab_valid_webforms', $node->form_types);
+  $flat_forms = module_invoke_all('webform_ab_valid_webforms', $node->webform_types);
   drupal_alter('webform_ab_valid_webforms', $flat_forms);
 
   // Since module_invoke_all() will wipe out numeric array indices, the
@@ -92,7 +92,7 @@ function webform_ab_form_list_add(&$form_state, $node) {
   $indexed_forms = array();
   foreach ($flat_forms as $f) {
     // Don't add a webform in the list if it's already included in the test
-    if (!isset($node->included_forms[$f['nid']])) {
+    if (!isset($node->included_webforms[$f['nid']])) {
       $indexed_forms[$f['nid']] = $f['title'];
     }
   }
