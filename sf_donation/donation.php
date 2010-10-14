@@ -100,14 +100,19 @@ class Donation
 
   }
   
-  
+  /**
+   *
+   * Retrieves the fieldmap for a specific donation form.
+   *
+   */
   private function _get_donation_map($nid) {
-    $sql = "SELECT f.recordtype_id, f.fields FROM {fundraiser_salesforce_map} f WHERE f.nid = %d";
+    $sql = "SELECT f.single_recordtype_id, f.recurring_recordtype_id, f.fields, f.salesforce FROM {fundraiser_salesforce_map} f WHERE f.nid = %d";
     $result = db_query($sql, $nid);
     
     $data = db_fetch_object($result);
     return array(
-      'recordtype_id' => $data->recordtype_id,
+      'single_recordtype_id' => $data->single_recordtype_id,
+      'recurring_recordtype_id' => $data->recurring_recordtype_id,
       'fields' => unserialize($data->fields),
     );
   }
@@ -118,7 +123,7 @@ class Donation
    *
    * @return    An array that represents a Salesforce opportunity
    */
-  public function map() {
+  public function map($type = 'single') {
     $map = $this->_get_donation_map($this->donation_form_nid);
     $object = array();
     
@@ -126,9 +131,14 @@ class Donation
       $object[$salesforce] = $this->{$drupal};
     }
     
-    // add recordtype id if available
-    if (!empty($map['recordtype_id'])) {
-      $object['RecordTypeId'] = $map['recordtype_id'];
+    // add single recordtype id if available
+    if ($type == 'single' && !empty($map['single_recordtype_id'])) {
+      $object['RecordTypeId'] = $map['single_recordtype_id'];
+    }
+    
+    // add recurring recordtype id if available
+    if ($type == 'recurring' && !empty($map['recurring_recordtype_id'])) {
+      $object['RecordTypeId'] = $map['recurring_recordtype_id'];
     }
     
     return $object;
