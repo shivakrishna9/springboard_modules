@@ -6,16 +6,22 @@
  * Webform A/B Testing admin functions
  */
 
-
+/**
+ * Menu callback for the Reports and Monitoring tab on Test A/B
+ * 
+ * @param $node Node object
+ */
 function webform_ab_test_reports($node) {
   $return = '';
   
+  // Get total hit counts for all webforms
   $hit_counts_result = db_query("SELECT webform_nid, count(hit_id) hits FROM {webform_ab_hits} WHERE test_nid = %d GROUP BY test_nid, webform_nid", $node->nid);
   $hit_counts = array();
   while ($row = db_fetch_object($hit_counts_result)) {
     $hit_counts[$row->webform_nid] = $row->hits;
   }
   
+  // Get total conversions for all webforms
   $conversion_counts_result = db_query("SELECT webform_nid, count(sid) conversions FROM {webform_ab_conversion} WHERE test_nid = %d GROUP BY test_nid, webform_nid", $node->nid);
   $conversion_counts = array();
   while ($row = db_fetch_object($conversion_counts_result)) {
@@ -43,15 +49,13 @@ function webform_ab_test_reports($node) {
     $post_win_conversion_data = db_fetch_array($result);
   }
   
-  
   // Status labels
   $webform_ab_status_labels = array(
     WEBFORM_AB_WEBFORM_STATUS_ACTIVE => t('Active'),
     WEBFORM_AB_WEBFORM_STATUS_WINNER => t('Winner'),
     WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
-  );
-  
-  
+  );  
+    
   // Show the list of currently-included forms
   $headers = array(
     t('Status'),
@@ -67,6 +71,8 @@ function webform_ab_test_reports($node) {
     t('Post-win Conversion %'),
   );
   $rows = array();
+  
+  // Loop over the webforms and add a row to the report table
   foreach ($node->included_webforms as $webform_nid => $webform_details) {
     $line = array(
       $webform_ab_status_labels[$webform_details['status']],
@@ -95,9 +101,9 @@ function webform_ab_test_reports($node) {
     $rows[] = $line;
   }
   
-  
+  // If there were no rows, show an empty message
   if (count($rows) == 0) {
-    $rows[] = array(array('data' => t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.', array('!forms_tab' => l('Included Webforms', 'node/' . $node->nid . '/forms'))), 'colspan' => count($headers)));
+    $rows[] = array(array('data' => t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.', array('!forms_tab' => l('Included Webforms', 'node/' . $node->nid . '/webforms'))), 'colspan' => count($headers)));
   }
   $return .= theme('table', $headers, $rows);
   
@@ -105,8 +111,20 @@ function webform_ab_test_reports($node) {
 }
 
 
-function webform_ab_test_forms($node) {
+/**
+ * Menu callback for the Included Forms tab on A/B Test nodes
+ * 
+ * @param $node Node object
+ */
+function webform_ab_test_webforms($node) {
   $return = '';
+  
+  // Status labels
+  $webform_ab_status_labels = array(
+    WEBFORM_AB_WEBFORM_STATUS_ACTIVE => t('Active'),
+    WEBFORM_AB_WEBFORM_STATUS_WINNER => t('Winner'),
+    WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
+  );
   
   // Show the list of currently-included forms
   $headers = array(t('Name'), t('Status'), t('Operations'));
@@ -114,26 +132,33 @@ function webform_ab_test_forms($node) {
   foreach ($node->included_webforms as $webform_nid => $webform_details) {
     $rows[] = array(
       $webform_details['title'], 
-      $webform_details['status'], 
+      $webform_ab_status_labels[$webform_details['status']],
       l('edit', 'node/' . $webform_nid . '/edit') . ' | ' .
-        l('remove', 'node/' . $node->nid . '/forms/remove/' . $webform_nid)
+        l('remove', 'node/' . $node->nid . '/webforms/remove/' . $webform_nid)
     );
   }
+  
+  // If there are no webforms included, show an empty message
   if (count($rows) == 0) {
     $rows[] = array(array('data' => t('No webforms have been added to this A/B test. Select a webform in the dropdown below and click the Add button.'), 'colspan' => count($headers)));
   }
   $return .= theme('table', $headers, $rows);
   
   // Show a form to add more
-  $form = drupal_get_form('webform_ab_form_list_add', $node);
+  $form = drupal_get_form('webform_ab_webform_list_add', $node);
   $return .= $form;
   
   return $return;
 }
 
 
-
-function webform_ab_form_list_add(&$form_state, $node) {
+/**
+ * Form to add webforms to the A/B Test
+ * 
+ * @param $form_state
+ * @param $node   Node object
+ */
+function webform_ab_webform_list_add(&$form_state, $node) {
   // Get all valid forms for the form type from other modules
   $flat_forms = module_invoke_all('webform_ab_valid_webforms', $node->webform_types);
   drupal_alter('webform_ab_valid_webforms', $flat_forms);
@@ -179,38 +204,38 @@ function webform_ab_form_list_add(&$form_state, $node) {
 }
 
 
-function webform_ab_form_list_add_submit($form, &$form_state) {
+/**
+ * Handle submission of the form to add a webform to an A/B Test
+ */
+function webform_ab_webform_list_add_submit($form, &$form_state) {
+  // Only continue if they actually selected a webform
   if ($form_state['values']['add_form_id'] > 0) {
-    webform_ab_add_form_to_test($form_state['values']['test_nid'], $form_state['values']['add_form_id']);
+    // Make sure the chosen webform isn't already in the test
+    // It wouldn't have been an option if it was already in the test, but be on the safe side
+    $exists = db_result(db_query('SELECT COUNT(*) FROM {webform_ab_forms} WHERE test_nid = %d AND webform_nid = %d', array($form_state['values']['test_nid'], $form_state['values']['add_form_id']))) > 0;
+
+    if (!$exists) {
+      db_query('INSERT INTO {webform_ab_forms} (test_nid, webform_nid, status) VALUES(%d, %d, %d)', array($form_state['values']['test_nid'], $form_state['values']['add_form_id'], WEBFORM_AB_WEBFORM_STATUS_ACTIVE));
+    }
   }
 }
-
-
-
-
-function webform_ab_add_form_to_test($test_nid, $webform_nid) {
-  $exists = db_result(db_query('SELECT COUNT(*) FROM {webform_ab_forms} WHERE test_nid = %d AND webform_nid = %d', array($test_nid, $webform_nid))) > 0;
-  
-  if (!$exists) {
-    db_query('INSERT INTO {webform_ab_forms} (test_nid, webform_nid, status) VALUES(%d, %d, %d)', array($test_nid, $webform_nid, WEBFORM_AB_WEBFORM_STATUS_ACTIVE));
-  }
-}
-
-
 
 
 /**
  * Show a confirmation form when a user tries to remove a webform from a test
  */
 function webform_ab_test_remove_webform($node, $webform_nid) {
+  // Make sure the webform they want to remove is actually in the test
   $form_is_included = db_result(db_query('SELECT COUNT(*) FROM {webform_ab_forms} WHERE test_nid = %d AND webform_nid = %d', array($node->nid, $webform_nid))) > 0;
   
   if ($form_is_included) {
+    // Show a confirmation form
     return drupal_get_form('webform_ab_test_remove_webform_confirm', $node->nid, $webform_nid);
   }
   else {
+    // Somehow tried to remove a webform that isn't in the test
     drupal_set_message(t('That form is not in this A/B test.'), 'error');
-    drupal_goto('node/' . $node->nid . '/forms');
+    drupal_goto('node/' . $node->nid . '/webforms');
   }
 }
 
@@ -225,7 +250,7 @@ function webform_ab_test_remove_webform_confirm(&$form_state, $test_nid, $webfor
   return confirm_form(
     $form,
     t('Are you sure you want to remove webform %title from the A/B test?', array('%title' => $title)),
-    'node/' . $test_nid . '/forms',
+    'node/' . $test_nid . '/webforms',
     t('This action cannot be undone.'),
     t('Remove'),
     t('Cancel'),
@@ -240,8 +265,8 @@ function webform_ab_test_remove_webform_confirm_submit($form, &$form_state) {
   db_query('DELETE FROM {webform_ab_forms} WHERE test_nid = %d AND webform_nid = %d', array($form['#test_nid'], $form['#webform_nid']));
   
   drupal_set_message(t('The webform has been removed.'));
-
-  $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/forms';
+  // Redirect back to the list of webforms
+  $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/webforms';
 }
 
 
@@ -263,7 +288,8 @@ function webform_ab_clear_test_data_confirm(&$form_state, $node) {
 
 
 /**
- * Clear the data
+ * Clear the data in the test. Removes hits, conversions, and returns all webforms to
+ * the active status
  */
 function webform_ab_clear_test_data_confirm_submit($form, &$form_state) {
   db_query('DELETE FROM {webform_ab_conversion} WHERE test_nid = %d', array($form['#test_nid']));

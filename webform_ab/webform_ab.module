@@ -10,6 +10,7 @@
 
 /**
  * @todo
+ *  Option to start the test and lock down the edits
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
  *  Trigger a hook called when one of the forms in the test is submitted
  *  Permissions: declare winner? Start/end test?
@@ -79,9 +80,9 @@ function webform_ab_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
-  $items['node/%webform_ab_menuitem/forms'] = array(
+  $items['node/%webform_ab_menuitem/webforms'] = array(
     'title' => 'Included Webforms',
-    'page callback' => 'webform_ab_test_forms',
+    'page callback' => 'webform_ab_test_webforms',
     'page arguments' => array(1),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
@@ -90,7 +91,7 @@ function webform_ab_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
-  $items['node/%webform_ab_menuitem/forms/remove'] = array(
+  $items['node/%webform_ab_menuitem/webforms/remove'] = array(
     'title' => 'Remove Form',
     'page callback' => 'webform_ab_test_remove_webform',
     'page arguments' => array(1),    
@@ -209,8 +210,6 @@ function webform_ab_form(&$node, $form_state) {
     '#rows' => 5,
     '#description' => t('Description for admin use. This is not displayed to the public.')
   );
-  
-  $webform_node_type = node_get_types('type', 'webform');
   
   $form['test_settings']['webform_types'] = array(
     '#type' => 'radios',
@@ -559,7 +558,129 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
   // If the current user has permission to modify this test, show them the overview
   // page instead of directing them to one of the webforms in the test
   if (node_access('update', $node)) {
-    // @todo Show admin overview page
+    $type = node_get_types('type', $node);
+
+    $node->content['description'] = array(
+      '#value' => "This is the admin overview of the A/B Test. If an unpriveleged or anonymous user visits this same URL, they will be redirected to one of the webforms within the test.",
+    '#weight' => -10,
+    );
+
+    $node->content['test_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('A/B Test Settings'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#weight' => 0,
+    );
+
+    $node->content['test_settings']['title'] = array(
+      '#type' => 'item',
+      '#title' => check_plain($type->title_label),
+      '#value' => $node->title,
+      '#weight' => 0,
+    );
+
+    $node->content['test_settings']['body'] = array(
+      '#type' => 'item',
+      '#title' => check_plain($type->body_label),
+      '#value' => $node->body,
+      '#weight' => 1,
+    );
+
+    $webform_types = module_invoke_all('webform_ab_get_webform_types');
+    
+    $node->content['test_settings']['webform_types'] = array(
+      '#type' => 'item',
+      '#title' => t('Which types of webforms will this test use?'),
+      '#value' => $webform_types[$node->webform_types],
+      '#weight' => 2,
+    );
+    
+    $node->content['winning_conditions'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Winning Conditions'),
+      '#description' => t('Conditions necessary for a form to win the test.'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#weight' => 10,
+    );
+
+    $node->content['winning_conditions']['minimum_hits'] = array(
+      '#type' => 'item',
+      '#title' => t('Minimum Hits'),
+      '#value' => $node->minimum_hits,
+      '#weight' => 0,
+    );
+
+
+    $node->content['winning_conditions']['win_type'] = array(
+      '#type' => 'item',
+      '#title' => t('Win Criteria'),
+      '#value' => $node->win_type,
+      '#weight' => 1,
+    );
+
+    $node->content['winning_conditions']['win_value'] = array(
+      '#type' => 'item',
+      '#title' => t('Win Value'),
+      '#value' => $node->{$node->win_type},
+      '#weight' => 2,
+    );
+    
+    $node->content['notifications'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Notifications'),
+    	'#description' => t('The following options are specific to this test. You can also set default values for future tests in the Webform A/B Test module settings page.'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 20,
+    );
+
+    $node->content['notifications']['daily_summaries'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Daily Summaries'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 0,
+    );
+
+    $node->content['notifications']['daily_summaries']['daily_notification_email'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send daily reports by email to'),
+    	'#value' => $node->daily_notification_email,
+    	'#weight' => 1,
+    );
+
+    $node->content['notifications']['daily_summaries']['daily_notification_sms'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send daily reports by SMS to'),
+    	'#value' => $node->daily_notification_sms,
+    	'#weight' => 2,
+    );
+
+
+    $node->content['notifications']['winning_notice'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Winning Notice'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 3,
+    );
+
+    $node->content['notifications']['winning_notice']['win_notification_email'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send winning notice by email to'),
+    	'#value' => $node->win_notification_email,
+    	'#weight' => 4,
+    );
+
+    $node->content['notifications']['winning_notice']['win_notification_sms'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send winning notice by SMS to'),
+    	'#value' => $node->win_notification_sms,
+    	'#weight' => 5,
+    );
+
     return $node;
   }
   
