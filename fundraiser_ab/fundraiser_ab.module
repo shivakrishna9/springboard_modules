@@ -10,23 +10,13 @@
  */
 
 /**
- * Implement post-submit hook from webform_ab
- * Add condition for total amount collected?
+ * Add win condition for total amount collected?
  */
 
 
 /**
- * Implementation of hook_form_alter().
- * @todo Change this to a hook implementation once the webform_ab module has been updated to include the hook call for this
+ * Implementation of hook_webform_ab_get_webform_types().
  */
-function fundraiser_ab_form_alter(&$form, $form_state, $form_id) {
-  switch ($form_id) {
-    // Webform A/B node form
-    case 'webform_ab_node_form':
-      // Add Fundraiser form to type list on Webform A/B node form.
-      // This only applies when the webform_ab module is enabled
-      $form['webform_types']['#options']['fundraiser'] = 'Fundraiser';
-      break;
-  }
+function fundraiser_ab_webform_ab_get_webform_types() {
+  return array('fundraiser' => 'Fundraiser');
 }
-
