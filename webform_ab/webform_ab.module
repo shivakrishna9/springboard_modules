@@ -12,16 +12,14 @@
  * @todo
  *  Option to start the test and lock down the edits
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
- *  Trigger a hook called when one of the forms in the test is submitted
  *  Permissions: declare winner? Start/end test?
- *  Finish reporting tab
  *  Only track one hit on a form per session ID
  *  Define admin settings page, to set the default notifications
  *  Validate SMS phone numbers
  *  Find SMS library to send notices
  *  Define daily cron to send summaries
+ *  Define a hook for other modules to add win criteria
  * 
- *  Instead of using a form alter, should other modules implement a hook to define what types of webforms can be included from them (ie, fundraiser_ab, webform_user)
  * Test permission settings
  */
 
@@ -80,6 +78,12 @@ function webform_ab_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
+  $items['node/%webform_ab_menuitem/reports/reports'] = array(
+    'title' => 'Reports',
+    'weight' => 0,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
   $items['node/%webform_ab_menuitem/webforms'] = array(
     'title' => 'Included Webforms',
     'page callback' => 'webform_ab_test_webforms',
@@ -91,6 +95,19 @@ function webform_ab_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
+  // @todo This menu item isn't appearing as a local task
+  $items['node/%webform_ab_menuitem/reports/clear_data'] = array(
+    'title' => 'Clear Data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ab_clear_test_data_confirm', 1),
+    'access callback' => 'webform_ab_can_view_reports',
+    'access arguments' => array(1),
+    'file' => 'webform_ab.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+    
+    
   $items['node/%webform_ab_menuitem/webforms/remove'] = array(
     'title' => 'Remove Form',
     'page callback' => 'webform_ab_test_remove_webform',
@@ -101,18 +118,8 @@ function webform_ab_menu() {
     'type' => MENU_CALLBACK,
   );
   
-  // @todo This menu item isn't appearing as a local task
-  $items['node/%webform_ab_menuitem/reports/clear_data'] = array(
-    'title' => 'Clear Data',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_ab_clear_test_data_confirm', 1),
-    'access callback' => 'webform_ab_can_view_reports',
-    'access arguments' => array(1),
-    'file' => 'webform_ab.admin.inc',
-    'weight' => 0,
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-    
+  
+  
   return $items;
 }
 
@@ -557,12 +564,22 @@ function webform_ab_delete(&$node) {
 function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
   // If the current user has permission to modify this test, show them the overview
   // page instead of directing them to one of the webforms in the test
-  if (node_access('update', $node)) {
+  // If view_webform is set in the URL, don't show the overview
+  if (node_access('update', $node) && $_GET['view_webform'] != 1) {
     $type = node_get_types('type', $node);
 
     $node->content['description'] = array(
       '#value' => "This is the admin overview of the A/B Test. If an unpriveleged or anonymous user visits this same URL, they will be redirected to one of the webforms within the test.",
-    '#weight' => -10,
+      '#weight' => -10,
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+    );
+
+    $node->content['view_link'] = array(
+      '#value' => l('View the test as a regular user would', $_GET['q'], array('query' => array('view_webform' => 1), 'absolute' => TRUE)),
+      '#weight' => -9,
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
     );
 
     $node->content['test_settings'] = array(
