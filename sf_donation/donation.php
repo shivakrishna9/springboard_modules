@@ -2,14 +2,59 @@
 
 /**
  * @file donation.php
- * Class to represent a Springboard donation
+ * Classes to represent a Springboard donation
  *
  * @author Phillip Cave <phillip.cave@jacksonriver.com>
  */
 
+class DonationFactory 
+{
+  public static function Create($id, $order_id, $sid) {
+    switch ($id) {
+      case 'npsp':
+        return new NPSPDonation($order_id, $sid);
+        
+      case 'common_ground':
+        return new CommonGroundDonation($order_id, $sid);
+    }
+  }
+}
 
+/**
+ *  Represents a Non Profit Starter Pack specfic donation
+ */
+class NPSPDonation extends Donation
+{
+  public function _get_stages() {
+    return array(
+      'payment_received' => 'Posted',
+      'payment_withdrawn' => 'Withdrawn',
+      'payment_pending' => 'Pledged',
+    );
+  }
+}
+
+/**
+ * Represents a Common Ground donation
+ */
+class CommonGroundDonation extends Donation
+{
+  public function _get_stages() {
+    return array(
+      'payment_received' => 'Received',
+      'payment_withdrawn' => 'Withdrawn',
+      'payment_pending' => 'Not Received',
+    );
+  }
+}
+
+/**
+ * Generic donation class
+ */
 class Donation
 {
+  private $_stage_posted = 'Posted';
+  private $_stage_pledged = 'Pledged';
   
   public $donor_uid;
   public $donor_email;
@@ -39,14 +84,16 @@ class Donation
   public $close_date = null;
   public $transaction_date_gm = null;
   public $probability = 50.00;
-  public $stage = 'Pledged';
-
+  public $stage;
+  
   function __construct($order_id, $sid) {
   
     global $base_url;
     
     // set the order id
     $this->order_id = $order_id;
+    
+    $stages = $this->_get_stages();
     
     // load items required to populate the object
     $order = uc_order_load($this->order_id);
@@ -77,6 +124,7 @@ class Donation
     $this->billing_zone = uc_get_zone_code($order->billing_zone);
     $this->billing_country = $this->_convert_country($order->billing_country);
     $this->billing_postal_code = $order->billing_postal_code;
+    $this->stage = $stages['payment_pending'];
     
     // check for payments
     if ($payments) {
@@ -85,7 +133,7 @@ class Donation
       $this->close_date = date('Y-m-d', $this->transaction_date);
       $this->transaction_date_gm = gmdate('c', $this->transaction_date);
       $this->probability = 100.00;
-      $this->stage = 'Posted';
+      $this->stage = $stages['payment_received'];
   	}
     
     uc_credit_cache('clear');
@@ -222,6 +270,14 @@ class Donation
       'card_expiration_date',
       'card_cvv',
       'recurs_monthly',
+    );
+  }
+  
+  public function _get_stages() {
+    return array(
+      'payment_received' => 'Posted',
+      'payment_withdrawn' => 'Withdrawn',
+      'payment_pending' => 'Pledged',
     );
   }
   
