@@ -38,7 +38,7 @@ function sb_npsp_donation_integration() {
 function sb_npsp_create_donation($order_id, $account_id, $sid) {
   $path = drupal_get_path('module', 'sf_donation');
   require_once($path . '/donation.php');
-  $donation = DonationFactory::Create('npsp', $order_id, $sid);//;new Donation($order_id, $sid);
+  $donation = DonationFactory::Create('npsp', $order_id, $sid);
 	return $donation->map();
 }
 

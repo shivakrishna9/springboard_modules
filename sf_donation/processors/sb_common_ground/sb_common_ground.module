@@ -38,7 +38,7 @@ function sb_common_ground_donation_integration() {
 function sb_common_ground_create_donation($order_id, $account_id, $sid) {
   $path = drupal_get_path('module', 'sf_donation');
   require_once($path . '/donation.php');
-  $donation = DonationFactory::Create('common_ground', $order_id, $sid); //$donation = new Donation($order_id, $sid);
+  $donation = DonationFactory::Create('common_ground', $order_id, $sid);
   
   // if this donation was part of a recurring series, look up the recurring gift id
   $recurring_gift_sfid = db_result(db_query(
