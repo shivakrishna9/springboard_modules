@@ -151,3 +151,47 @@ function sf_donation_update_6101() {
 
   return $updates;
 }
+
+/**
+ * Update 6202: Reorganize fundraiser salesforce maps
+ */
+function sf_donation_update_6202() {
+  // first add some new fields
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN fields text");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN salesforce varchar(50)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN remove int(11)");
+  db_query("UPDATE {fundraiser_salesforce_map} SET remove = 1");
+  
+  // update existing fieldmaps to the new format
+  sf_donation_upgrade_fieldmaps();
+  
+  $updates = array();
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN remove");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN cid");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN map_id");
+  
+  return $updates;
+}
+
+function sf_donation_upgrade_fieldmaps() {
+  // get unique nids for each defined map
+  $result = db_query("SELECT DISTINCT nid FROM {fundraiser_salesforce_map}");
+  
+  while ($data = db_fetch_object($result)) {
+    // get all fields in the map
+    $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m 
+                      INNER JOIN webform_component w ON m.cid = w.cid AND m.nid = w.nid
+                      WHERE w.nid = %d", $data->nid);
+    
+    $fields = array();
+    while ($field = db_fetch_object($map)) {
+      $fields[$field->map_id] = $field->form_key;
+    }
+    
+    db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES (%d, '%s', '%s')", $data->nid, serialize($fields), 'Opportunity');
+    db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);                  
+  }
+  
+}
