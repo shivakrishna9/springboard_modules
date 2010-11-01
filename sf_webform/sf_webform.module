@@ -686,11 +686,17 @@ function _sf_webform_add_node_details($nid, $sid, &$map, &$salesforce_map) {
  * Sets the dedupe field in the webform's fieldmap
  */
 function sf_webform_set_dedupe_field($nid, $dedupe_key) {
-	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = '%s' WHERE substr(drupal, instr(drupal, 'webform:')+8,1) = %d", $dedupe_key, $nid);
+  if($nid > 0) {
+    $drupal = 'webform:' . $nid;
+  	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = '%s' WHERE drupal = '%s'", $dedupe_key, $drupal);
+  }
 }
 
 function sf_webform_remove_dedupe_field($nid) {
-	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = NULL WHERE substr(drupal, instr(drupal, 'webform:')+8,1) = %d", $nid);
+  if($nid > 0) {
+    $drupal = 'webform:' . $nid;
+  	db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = NULL WHERE drupal = '%s'", $drupal);
+	}
 }
 
 /**
