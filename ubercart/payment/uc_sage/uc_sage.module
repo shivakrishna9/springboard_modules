@@ -466,13 +466,13 @@ function uc_sage_vault_insert($order, $cc_number = NULL, $cc_exp_month = NULL, $
  */
 function uc_sage_vault_update($vault_id, $update) {
   $guid = db_result(db_query("SELECT guid FROM {uc_sage_vault} WHERE vault_id = %d", $vault_id));
-
+  //print "<pre>".print_r($update, TRUE)."</pre>";
   // Perform the appropriate updates in the Sage Vault.
   if (isset($update['cc_number'])) {
     $data = array(
       'GUID' => $guid,
       'CARDNUMBER' => $update['cc_number'],
-      'EXPIRATION_DATE' => sprintf("%02d", intval($cc_exp_month)) . substr($cc_exp_year, -2),
+      'EXPIRATION_DATE' => sprintf("%02d", intval($update['cc_exp_month'])) . substr($update['cc_exp_year'], -2),
     );
 
     $response = uc_sage_api_request($data, UC_SAGE_SERVICE_VAULT, 'UPDATE_CREDIT_CARD_DATA');
@@ -489,8 +489,8 @@ function uc_sage_vault_update($vault_id, $update) {
 
   // Put the vault_id and updated timestamp into the update array.
   $update += array('vault_id' => $vault_id, 'updated' => time());
-
   drupal_write_record('uc_sage_vault', $update, 'vault_id');
+  return $response;
 }
 
 /**

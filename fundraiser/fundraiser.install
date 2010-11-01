@@ -74,6 +74,12 @@ function fundraiser_schema() {
         'length' => '55',
         'not null' => FALSE,
       ),
+      'recurring_status' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
@@ -597,11 +603,12 @@ function fundraiser_update_2() {
 
 // Version 2.1 - Add the ability to store gateway and approval ids with individual orders
 function fundraiser_update_6210() {
-  $items = array();
-  $items[] = update_sql("ALTER TABLE {fundraiser_webform_order} ADD gateway varchar(100)");
-  $items[] = update_sql("ALTER TABLE {fundraiser_webform_order} ADD txn_id varchar(55)");
-  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
-  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
-  
-  return $items;
+  // do it the old fashioned way because we need to update some data
+  db_query("ALTER TABLE {fundraiser_webform_order} ADD gateway varchar(100)");
+  db_query("ALTER TABLE {fundraiser_webform_order} ADD txn_id varchar(55)");
+  db_query("ALTER TABLE {fundraiser_webform_order} ADD recurring_status int(11) DEFAULT 0");
+  db_query("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
+  db_query("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
+ 
+  db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})");
 }

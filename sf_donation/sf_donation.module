@@ -699,7 +699,13 @@ function _create_single_donation($order_id, $account_id, $sid) {
 	if (!empty($recurring_details)) {
     $donation['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
     $donation['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
-    $donation['StageName'] = 'Pledged';
+    if ($recurring_details['status'] == 'canceled') {
+      $donation['StageName'] = 'Withdrawn';  
+      $donation['Cancellation_Reason__c'] = $recurring_details['cancellation_reason'];
+    }
+    else {
+      $donation['StageName'] = 'Pledged';
+    }
 	}
 	
 	// add payment details if available
@@ -712,7 +718,13 @@ function _create_single_donation($order_id, $account_id, $sid) {
 		$donation['StageName'] = 'Posted';
 	}
   
-  // merge in any additional mapped fields	
+	// 7/19/2010 - pcave: Bug fix. If this order was part of a recurring donation series, make sure the correct CloseDate is set in Salesforce in case the
+	// 									  order doesn't export on the day it was created
+	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
+	if ($close_date) {
+		$donation['CloseDate'] = date('Y-m-d', $close_date);
+	}
+	
 	$donation = array_merge($donation, _load_salesforce_map($sid));
 	
 	// clear the credit card cache
@@ -754,7 +766,7 @@ function _sf_donation_get_recurring_details($order_id) {
   
   $result = db_query(
     "
-      SELECT f.next_charge, s.sfid 
+      SELECT f.next_charge, s.sfid, f.gateway_resp, f.cancellation_reason 
       FROM {salesforce_management_object_map} s
       INNER JOIN {fundraiser_recurring} f ON f.master_order_id = s.oid
       WHERE f.order_id = %d AND s.drupal_type = 'recurring_donation'
@@ -765,6 +777,8 @@ function _sf_donation_get_recurring_details($order_id) {
   while ($data = db_fetch_object($result)) {
     $recurring_info['close_date'] = $data->next_charge;
     $recurring_info['sfid'] = $data->sfid;
+    $recurring_info['status'] = $data->gateway_resp;
+    $recurring_info['cancellation_reason'] = $data->cancellation_reason;
   }
   
   return $recurring_info;

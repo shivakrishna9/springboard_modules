@@ -37,6 +37,22 @@ function authorizenet_update_billing_information($reference_id, $billing_info) {
  * Sage billing information update function.
  */
 function sage_update_billing_information($reference_id, $billing_info) {
-  print 'sage vault specific code will go here';
+  $vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $reference_id));
+	$data = array(
+		'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
+		'billing_street1' => $billing_info['address_1'],
+		'billing_street2' => $billing_info['address_2'],
+		'billing_city' => $billing_info['city'],
+		'billing_zone' => $billing_info['state'],
+		'billing_postal_code' => $billing_info['zipcode'],
+		'billing_country' => $billing_info['country'],
+		'cc_number' => $billing_info['card_num'],
+		'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
+		'cc_exp_year' => $billing_info['card_exp_date']['year'],
+	);
+
+  $response = uc_sage_vault_update($vault_id, $data);
+  // TODO: Need to add some better returns to the uc_sage module
+  return true;
 }
 

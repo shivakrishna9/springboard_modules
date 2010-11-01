@@ -33,7 +33,7 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, 
   $server = variable_get('uc_authnet_cim_mode', 'disabled');
 
   // format expirdation date for API
-  $expiration_date = $billing_info['cc_info']['card_exp_date']['year'] . '-' . sprintf("%02d", $billing_info['cc_info']['card_exp_date']['month']);
+  $expiration_date = $billing_info['card_exp_date']['year'] . '-' . sprintf("%02d", $billing_info['card_exp_date']['month']);
   
   // create the updateCustomerPaymentProfileRequest xml request
   $request = array(
@@ -50,9 +50,9 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, 
       ),
       'payment' => array(
         'creditCard' => array(
-          'cardNumber' => $billing_info['cc_info']['card_num'],
+          'cardNumber' => $billing_info['card_num'],
           'expirationDate' => $expiration_date,
-          'cardCode' => $billing_info['cc_info']['card_cvv'],
+          'cardCode' => $billing_info['card_cvv'],
         ),
       ),
       'customerPaymentProfileId' => $payment_profile->customerPaymentProfileId,
@@ -63,7 +63,6 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, 
   $response = uc_authorizenet_xml_api($server, $xml);
   $response = _authorizenet_cim_strip_namespace($response);
   $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
-
   return authorizenet_cim_process_xml($xml_raw);
 }
 
