@@ -161,8 +161,7 @@ function webform_ab_test_webforms($node) {
 function webform_ab_webform_list_add(&$form_state, $node) {
   // Get all valid forms for the form type from other modules
   $flat_forms = module_invoke_all('webform_ab_valid_webforms', $node->webform_types);
-  drupal_alter('webform_ab_valid_webforms', $flat_forms);
-
+  
   // Since module_invoke_all() will wipe out numeric array indices, the
   // implementations of hook_webform_ab_valid_webforms() have to return the nid
   // and title within a sub-array, rather than using the nid as an array key.
@@ -174,6 +173,9 @@ function webform_ab_webform_list_add(&$form_state, $node) {
       $indexed_forms[$f['nid']] = $f['title'];
     }
   }
+  
+  // Allow modules to alter the list of forms
+  drupal_alter('webform_ab_valid_webforms', $indexed_forms, $node->webform_types);
   
   $form = array();
 

@@ -4,7 +4,7 @@ hook_webform_ab_get_webform_types()
 hook_webform_ab_valid_webforms($webform_types)
 	Given the webform types being used for a test, return an array of webforms that can be added to the test. Return should be a flat array. Each element should be another array, with nid and title keys.
 
-hook_webform_ab_valid_webforms_alter($forms)
+hook_webform_ab_valid_webforms_alter(&$forms, $webform_types)
 	Alter hook for the valid webforms list collected by hook_webform_ab_valid_webforms() 
 
 hook_webform_ab_check_win_condition($win_type, $webforms_to_check, $node)

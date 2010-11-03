@@ -34,3 +34,18 @@ function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node
     return TRUE;
   }
 }
+
+
+/**
+ * Implementation of webform_ab_valid_webforms_alter().
+ * If the $webform_types is NOT fundraiser, remove any fundraiser forms from 
+ * the list
+ */
+function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_types) {
+  if ($webform_types != 'fundraiser') {
+    $result = db_query("SELECT nid FROM {fundraiser_gateway}");
+    while ($row = db_fetch_object($result)) {
+      unset($forms[$row->nid]);
+    }
+  }
+}
