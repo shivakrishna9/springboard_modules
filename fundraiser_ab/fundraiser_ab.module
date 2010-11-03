@@ -29,21 +29,33 @@ function fundraiser_ab_webform_ab_get_webform_types() {
  * conversions
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
-  dsm($form_state, 'form_state');
   if ($webform_types == 'fundraiser') {
-    return TRUE;
+    // If abort is TRUE, the payment failed. 
+    // Only return TRUE if the abort flag is NOT set to TRUE
+    return ($form_state['values']['abort'] !== TRUE);
   }
 }
 
 
 /**
  * Implementation of webform_ab_valid_webforms_alter().
- * If the $webform_types is NOT fundraiser, remove any fundraiser forms from 
- * the list
+ * Based on $webform_types:
+ *    If fundraiser, remove non-fundraising forms
+ *    If NOT fundraiser, remove any fundraiser forms from the list
  */
 function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_types) {
-  if ($webform_types != 'fundraiser') {
-    $result = db_query("SELECT nid FROM {fundraiser_gateway}");
+  $result = db_query("SELECT nid FROM {fundraiser_gateway}");
+
+  if ($webform_types == 'fundraiser') {
+    // Add all fundraiser forms to a new array and reset the $forms array to that
+    $valid_forms = array();
+    while ($row = db_fetch_object($result)) {
+      $valid_forms[$row->nid] = $forms[$row->nid];
+    }
+    $forms = $valid_forms;
+  }
+  else {
+    // Remove fundraising forms from the list
     while ($row = db_fetch_object($result)) {
       unset($forms[$row->nid]);
     }
