@@ -20,3 +20,17 @@
 function fundraiser_ab_webform_ab_get_webform_types() {
   return array('fundraiser' => 'Fundraiser');
 }
+
+
+/**
+ * Implementation of hook_webform_ab_validate_conversion().
+ * Only returns TRUE if the webform type is fundraiser and the donation payment 
+ * was successful. This way, failed credit card payments are not counted as
+ * conversions
+ */
+function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
+  dsm($form_state, 'form_state');
+  if ($webform_types == 'fundraiser') {
+    return TRUE;
+  }
+}

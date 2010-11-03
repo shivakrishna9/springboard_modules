@@ -799,8 +799,31 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
  * Handle the submission of a webform that is part of a test
  */
 function webform_ab_webform_submit($form, &$form_state) {
-  db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+  // @todo Trigger a hook so that the conversion can be determined based on the webform type for this test
+  $test_nid = $form_state['values']['test_nid'];
+  $test_node = node_load($test_nid);
+  $conversion_check_results = module_invoke_all('webform_ab_validate_conversion', $test_node->webform_types, $test_node, $form_state);
+  
+  // Loop over the returned values from the hook and log a conversion if any of
+  // them returned TRUE
+  foreach ($conversion_check_results as $val) {
+    if ($val === TRUE) {
+      db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+    }
+  }
+  
   _webform_ab_check_for_win($form_state['values']['test_nid']);
+}
+
+/**
+ * Implementation of hook_webform_ab_validate_conversion().
+ * If the A/B Test is using standard webforms, just return TRUE, since a form
+ * submission counts as a conversion
+ */
+function webform_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
+  if ($webform_types == 'webform') {
+    return TRUE;
+  }
 }
 
 
