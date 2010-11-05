@@ -24,6 +24,10 @@ function fundraiser_recurring_user_overview($uid) {
  * Loads a specific order for the my recurring payments tab.
  */
 function fundraiser_recurring_user_edit_forms($uid, $order_id) {
+  
+  $base = drupal_get_path('module', 'fundraiser');
+  drupal_add_js($base .'/sustainer.js');
+
   // gather all information for the page and send it through a theme function
   $orders = _fundraiser_get_recurring_orders($uid);
   $order = _fundraiser_get_unprocessed_order($order_id);
@@ -188,4 +192,54 @@ function _fundraiser_get_last_charge_date($order_id) {
  */
 function _fundraiser_get_start_date($order_id) {
   return db_result(db_query("SELECT created FROM {uc_orders} WHERE order_id = %d", $order_id));
+}
+
+/**
+ * Override of Drupal core expand_date found in includes/form.inc
+ */
+function _fundraiser_expand_date($element) {
+  // Default to current date
+  if (empty($element['#value'])) {
+    $element['#value'] = array('day' => format_date(time(), 'custom', 'j'),
+                            'month' => format_date(time(), 'custom', 'n'),
+                            'year' => format_date(time(), 'custom', 'Y'));
+  }
+
+  $element['#tree'] = TRUE;
+
+  // Determine the order of day, month, year in the site's chosen date format.
+  $format = variable_get('date_format_short', 'm/d/Y - H:i');
+  $sort = array();
+  $sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
+  $sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
+  $sort['year'] = strpos($format, 'Y');
+  asort($sort);
+  $order = array_keys($sort);
+
+  $current_year = date('Y');
+
+  // Output multi-selector for date.
+  foreach ($order as $type) {
+    switch ($type) {
+      case 'day':
+        $options = drupal_map_assoc(range(1, 31));
+        break;
+      case 'month':
+        $options = drupal_map_assoc(range(1, 12), 'map_month');
+        break;
+      case 'year':
+        $options = drupal_map_assoc(range($current_year, $current_year+10));
+        break;
+    }
+    $parents = $element['#parents'];
+    $parents[] = $type;
+    $element[$type] = array(
+      '#type' => 'select',
+      '#value' => $element['#value'][$type],
+      '#attributes' => $element['#attributes'],
+      '#options' => $options,
+    );
+  }
+
+  return $element;
 }

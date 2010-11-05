@@ -124,6 +124,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
   	'#required' => TRUE,
   	'#title' => 'Expiration Date',
   	'#default_value' => array('year' => date('Y'), 'month' => 1, 'day' => 1),
+  	'#process' => array('_fundraiser_expand_date'),
   );
   
   $form['cc_info']['card_cvv'] = array(
@@ -230,13 +231,14 @@ function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid, $
 	);
 	
 	$amount = money_format('%i', $donation_amount);
+	$minimum = money_format('%i', _minimum_donation_amount($nid));
 	$form['fee_amount'] = array(
 		'#type' => 'textfield',
 		'#title' => "Donation Amount",
 		'#default_value' => $amount,
 		'#size' => 10,
 		'#required' => TRUE,
-		'#description' => "Your current donation amount is $$amount",
+		'#description' => "<span id='current'>Your current donation amount is $$amount</span> <span id='minimum'>Minimum donation $$minimum</span>",
 		'#field_prefix' => '$',
 	);
 	 
@@ -252,13 +254,14 @@ function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid, $
  * Valdation for amount update form.
  */
 function fundraiser_donation_amount_form_validate($form, &$form_state) {
+  $form_state['values']['fee_amount'] = preg_replace("/[^\d\.]/i", "", $form_state['values']['fee_amount']);
 	if (!is_numeric($form_state['values']['fee_amount'])) {
 		form_set_error('amount', t('Donation amount must be a valid number.'));
 	}
 	
 	// get minimum amount
-	$minimum = db_result(db_query("select minimum_donation_amount from {fundraiser_gateway} where nid = %d", $form_state['values']['amount']['nid']));
-	if ($form_state['values']['fee_amount'] <= $minimum) {
+	$minimum = _minimum_donation_amount($form_state['values']['nid']);
+	if ($form_state['values']['fee_amount'] < $minimum) {
 		$minimum = money_format('%i', $minimum);
 		form_set_error('amount', t("Donation amount must be greater than $$minimum"));
 	}
@@ -381,6 +384,13 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
  * Helper functions
  *
  *--------------------------------------------------------------------------------*/
+
+/**
+ * Gets the minimum donation amount for a given donation form
+ */
+function _minimum_donation_amount($nid) {
+  return db_result(db_query("SELECT minimum_donation_amount FROM {fundraiser_gateway} where nid = %d", $nid));
+}
 
 /**
  * Loads an order and updates it's billing information from a form
