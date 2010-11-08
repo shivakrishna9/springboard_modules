@@ -264,7 +264,7 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
  */
 function webform_user_webform_validate($form, &$form_state) {
 	$node = node_load(array('nid' => $form_state['values']['details']['nid']));
-	$fields = _webform_user_flatten_tree($form_state['values']['submitted']);
+	$fields = _webform_user_flatten_tree($form_state['values']['submitted'], $node->nid);
 	if ($node->is_webform_user && !_webform_user_validate_email($fields['mail'])) {
 		form_set_error('mail', t('Please enter a valid email address.'));
 	}
@@ -281,7 +281,7 @@ function webform_user_webform_submit($form, &$form_state) {
   // Only process if the form is completed and it's a webform_user form.
   $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
   if ($form_state['values']['op'] == $submit_op && $node->is_webform_user) {
-    $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree']);
+    $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     // Authenticated user.
     if ($user->uid) {
       // Update the existing user account.
@@ -352,13 +352,16 @@ function _webform_user_validate_email($mail) {
 /**
  * Flatten a tree into a flat list. Note: date values are not flattened.
  */
-function _webform_user_flatten_tree($tree) {
+function _webform_user_flatten_tree($tree, $nid = NULL) {
   $items = array();
 
   foreach ($tree as $key => $val) {
+		// look up the type of component
+		$type = db_result(db_query("SELECT type FROM {webform_component} WHERE nid = %d AND form_key = '%s'", $nid, $key));
+		
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
-      if (isset($val[0]) && isset($val[1]) && isset($val[2])) {
+      if ($type == 'date') {
         if ($val[0] && $val[1] && $val[2]) {
           $val['month'] = $val[0];
           $val['day'] = $val[1];
@@ -370,8 +373,23 @@ function _webform_user_flatten_tree($tree) {
           continue;
         }
       }
+			elseif ($type == 'select') {
+				$values = array();
+				foreach($val as $k => $v) {
+					$values[] = $v;
+				}
+				if (count($values) == 1) { // single item select (aka checkbox)
+					$items[$key] = array_shift($values);
+				}
+				elseif (count($values) == 0) { // no value, reset
+					$items[$key] = NULL;
+				}
+				else {
+					$items[$key] = $values;
+				}
+			}
       else {
-        $items = array_merge($items, _webform_user_flatten_tree($val));
+        $items = array_merge($items, _webform_user_flatten_tree($val, $nid));
       }
     }
     elseif (!empty($val)) {
@@ -394,7 +412,10 @@ function _webform_user_flatten_tree($tree) {
  */
 function _webform_user_update_user_profile_fields($uid, $form_fields, $all = FALSE) {
   $user = user_load(array('uid' => $uid));
-
+  //print '<pre>';
+	//print_r($form_fields);
+	//print '</pre>';
+	//die();
   $profile_fields = array();
   
   // Get existing profile fields.
