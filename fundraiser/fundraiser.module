@@ -1282,6 +1282,7 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
 		// add these new orders to the queue
 		if (module_exists('sf_donation') && module_exists('queue_api')) {
       sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+      sf_queue_insert($order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'update');
     }
   }
 }
