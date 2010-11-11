@@ -101,12 +101,13 @@ function batch_detail($id) {
 			$output .= '<span>Error message:</span>' . $error->message . '<br/>';
 			$output .= '<span>Status code:</span>' . $error->status_code . '<br/>';
 			$output .= '<span>Fields:</span>' . $error->fields . '<br/>';
+			$output .= l(t('Click to edit object'), created_edit_link($item->oid, $item->type, 'admin/reports/salesforce/batch/' . $batch['id']));
 			$output .= '</div>';
 		}
 		
 		$output .= '<span>Processed:</span>' . date('n/j/Y g:i:s a', $item->date_processed) . '<br/>';
 		$output .= '<span>Was retry:</span>' . $retry . '<br/>';
-		$output .= '<a href="#">Click for object details</a>';
+		$output .= '<a href="#">Click for object details</a><br />';
 		$output .= '<div class="batch-item-fields">';
 		$output .= theme('table', array('Field', 'Value'), $rows);
 		$output .= '</div>';
