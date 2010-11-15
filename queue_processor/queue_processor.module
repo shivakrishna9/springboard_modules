@@ -1024,22 +1024,24 @@ function create_summary_email(&$batches_processed) {
 
 function created_edit_link($oid, $type, $return_url = null) {
 	global $base_url;
-  $url = '';
+  $url = null;
 	
 	switch ($type) {
 		case 'user':
 			$url = $base_url . '/user/' . $oid . '/edit';
 		case 'webform':
+			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
+      $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
+      break;
     case FUNDRAISER_SINGLE_DONATION_TYPE:
     case FUNDRAISER_RECURRING_DONATION_TYPE:
-			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
-			$url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
+			break;
 		case 'node':
 			$url = $base_url . '/node/' . $oid . '/edit';
 			break;
 	}
 	
-	if (null !== $return_url) {
+	if ((null !== $return_url) && (null !== $url)) {
 		$url .= '?destination=' . $return_url;
 	}
 	
