@@ -691,6 +691,14 @@ function fundraiser_menu() {
 }
 
 /**
+ * Implemenation of hook_menu_alter().
+ */
+function fundraiser_menu_alter(&$items) {
+	// workaround for douchebaggy bug where only uid 1 can see custom triggers
+	$items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+}
+
+/**
  * Determines if a user has any recurring donations.
  */
 function fundraiser_user_has_recurring_orders($user) {
@@ -1434,6 +1442,8 @@ function fundraiser_cron() {
 				// log this failure
 				watchdog('fundraiser', t('Payment for recurring donation !id has failed !attempts times. It will be processed again in 1 day. Gateway message: !message', array('!id' => $order->order_id, '!attempts' => $attempt_count, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
 			}
+			// fire sustainer payment failure trigger
+			module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
 		}
 		// clear the credit card cache between orders
 		uc_credit_cache('clear');
@@ -1615,5 +1625,50 @@ function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
     db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
     // Mark field as handled (prevents saving to user->data).
     $edit[$field->name] = NULL;
+  }
+}
+
+/******************************************************************************
+ * TRIGGERS
+ *****************************************************************************/
+
+/**
+ * Implementation of hook_hook_info(). 
+ */
+function fundraiser_hook_info() {
+	return array(
+		'fundraiser' => array(
+			'fundraiser' => array(
+				'sustainer_payment_declined' => array(
+					'runs when' => t('A sustainer\'s credit card payment is declined'),
+				),
+		  ),
+		),
+	);
+}
+
+/**
+ * Implementation of hook_fundraiser().
+ */
+function fundraiser_fundraiser($op, $order) {
+  $aids = _trigger_get_hook_aids('fundraiser', $op);
+  $context = array(
+    'hook' => 'fundraiser',
+    'op' => $op,
+    'order' => $order,
+  );
+	$dummy = new stdClass();
+  actions_do(array_keys($aids), $dummy, $context);
+}
+
+/**
+ * Implementation of hook_drupal_alter().
+ */
+function fundraiser_action_info_alter(&$info) {
+  if (isset($info['token_actions_send_email_action']['hooks']['fundraiser'])) {
+    array_merge($info['token_actions_send_email_action']['hooks']['fundraiser'], array('sustainer_payment_declined'));
+  }
+  else {
+    $info['token_actions_send_email_action']['hooks']['fundraiser'] = array('sustainer_payment_declined');
   }
 }
