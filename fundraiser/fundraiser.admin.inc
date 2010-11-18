@@ -98,6 +98,37 @@ function fundraiser_admin_settings() {
 	 '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
 	);
 	
+	$form['fundraiser_cc_expiration_message'] = array(
+	 '#type' => 'fieldset',
+	 '#title' => t('Credit card expiration email'),
+	 '#collapsible' => TRUE,
+	);
+	
+	$form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
+	 '#type' => 'textfield',
+	 '#title' => t('Email subject'),
+	 '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
+	);
+	
+	$form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
+	 '#type' => 'textarea',
+	 '#title' => t('Email body'),
+	 '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
+	 '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
+	);
+	
+	$form['fundraiser_cc_expiration_message']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donor replacement tokens'),
+    '#description' => t('The following tokens are available for donor'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
+    '#value' => theme('token_help', 'user'),
+  );
+	
 	return system_settings_form($form);
 }
 

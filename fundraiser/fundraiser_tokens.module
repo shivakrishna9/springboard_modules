@@ -1,0 +1,42 @@
+<?php
+
+// $Id: fundraiser_tokens.module,v 1.0.0.0 2010/11/16 16:06:47 pcave Exp $
+
+/**
+ * @file
+ * The Fundraiser Tokens module.
+ *
+ * This module exposes fundraiser and additional ubercart tokens.
+ *
+ * @ingroup token
+ */
+
+/**
+ * Implementation of hook_token_list().
+ */
+function fundraiser_tokens_token_list($type = 'all') {
+  if ($type == 'order' || $type == 'all') {
+    $tokens['order']['order-cc-last-four']  = t('The last four digits of the credit card used for the order.');
+    $tokens['order']['order-cc-card-exp-month'] = t('The credit card expiration month.');
+    $tokens['order']['order-cc-card-exp-year'] = t('The credit card expiration year.');
+    $tokens['order']['order-cc-card-type'] = t('The credit card type used for the order.');
+  }
+  return $tokens;
+}
+
+/**
+ * Implementation of hook_token_values().
+ */
+function fundraiser_tokens_token_values($type, $object = NULL) {
+  $values = array();
+  switch ($type) {
+    case 'order':
+      $values['order-cc-last-four'] = substr($object->payment_details['cc_number'], -4); // support cc debug mode
+      $values['order-cc-card-exp-month'] = $object->payment_details['cc_exp_month'];
+      $values['order-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
+      $values['order-cc-card-type'] = ucfirst($object->payment_details['cc_type']); 
+      break;
+  }
+  return $values;
+}
+

@@ -1,0 +1,9 @@
+; $Id$
+name = Authorize.net CIM Management
+description = Provides CIM management functionality for Authorize.net CIM profiles
+core = 6.x
+package = Jackson River SpringBoard
+dependencies[] = fundraiser
+dependencies[] = uc_authorizenet
+
+version = 2.0
