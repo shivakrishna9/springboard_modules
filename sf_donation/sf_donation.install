@@ -78,27 +78,43 @@ function sf_donation_schema() {
 	  ),
 	);
 	
-	$schema['fundraiser_salesforce_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'cid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	    ),
-	    'map_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '50',
-	      'not null' => TRUE,
-	    ),
-	  ),
-	);
+  $schema['fundraiser_salesforce_map'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'single_recordtype_id' => array(
+        'type' => 'varchar',
+        'description' => t('Single Recordtype ID'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 18,
+      ),
+      'recurring_recordtype_id' => array(
+        'type' => 'varchar',
+        'description' => t('Recurring Recordtype ID'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 18,
+      ),
+      'fields' => array(
+        'type' => 'text',
+        'description' => t('Fields'),
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'salesforce' => array(
+        'type' => 'varchar',
+        'description' => t('Salesforce'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 50,
+      ),
+    ),
+  );
 	
 	$schema['sf_donation_opportunity_contact_role'] = array(
 	  'description' => t('TODO: please describe this table!'),
