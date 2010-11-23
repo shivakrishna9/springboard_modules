@@ -38,6 +38,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	webform_component_insert($market_source);
 	
 	// if the sf_donation is installed, try to get the default campaign
+	$default_campaign = '';
 	if (variable_get('fundraiser_salesforce_integration', 0)) {
 		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
 	}
@@ -343,7 +344,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	webform_component_insert($billing_country);
 
 	// state
-	$zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $us, 'name', uc_address_field_required('zone'));
+	$zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $us, 'name', uc_address_field_required('zone'));
 	
 	// build option string for states
 	$options = '';

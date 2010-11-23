@@ -38,7 +38,7 @@ function fundraiser_mapping_form($form_state, $node) {
 			}
 			
 			$options['User Fields'] = array(
-				'email' => t("Email Address"),
+				'mail' => t("Email Address"),
 			);
 			
 			$form['mapping']['type'][$cid] = array(

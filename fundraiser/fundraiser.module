@@ -10,7 +10,6 @@ define('FUNDRAISER_RECURRING_DONATION_TYPE',  'recurring_donation');
 function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 	
 	if ($node->type == 'webform') {
-
 		switch ($op) {
 			case 'insert':
 		  	fundraiser_node_insert($node);
@@ -71,10 +70,12 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 		}
 	}
 
+  /*
 	if ($op == 'view' && $node->type == 'webform' && $node->fundraiser['is_donation_form'] && $page) {
     $node->donation_message = check_markup($node->body, 2, FALSE);
     $node->content['body']['#value'] = '';
   }
+  */
 }
 
 /**
@@ -213,31 +214,13 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			
 		break;
 		
-		case 'page_node_form':{
-			if (module_exists('token')) {
-		    $form['body_field']['view']['token_help'] = array(
-		      '#title' => t('Replacement patterns'),
-		      '#type' => 'fieldset',
-		      '#collapsible' => TRUE,
-		      '#collapsed' => TRUE,
-		//      '#description' => t('Prefer raw-text replacements for text to avoid problems with HTML entities!'),
-		      );
-		
-		    $form['body_field']['view']['token_help']['help'] = array(
-		      '#value' => theme('token_help', 'order'),
-		      );
-		  }
-			//jprint_r($form); die();
-		}
-		
-		
 	}
 	
-	
-	if(strstr($form_id,'webform_client_form')) {
+	if (strstr($form_id, 'webform_client_form')) {
 
 		global $user;
-		
+    profile_load_profile($user); /* explicitly load profile as of Drupal 6.19 */
+
 		// get fundraiser info 
 		$fundraiser = fundraiser_node_load($form['#parameters'][2]->nid);
 
@@ -247,63 +230,45 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			$base = drupal_get_path('module', 'fundraiser');
 			drupal_add_js($base .'/jquery.alphanumeric.js');
 			drupal_add_js($base .'/fundraiser.js');
+	
+			$nid = $form['#parameters'][2]->nid;
+			$components = $form['#parameters'][2]->webform['components'];
+      // create an data structure that will tell us exactly where each webform component lives in the FAPI array
+      $component_hierarchy = fundraiser_parse_components($nid, $components);     			
 			
 			// preload any fields if the user is logged in
-			if (user_is_logged_in()) {
-				
+      if (user_is_logged_in()) {
+        // TODO: This whole thing can go way if we use the default value fields in the webform components themselves.
 				// load up map
-				$sql = "select w.form_key, f.cid, f.map_id, w.type from webform_component w inner join 
-					fundraiser_component_map f on f.cid = w.cid and f.nid = w.nid where f.nid = %d order by f.cid";
-				$result = db_query($sql, $form['#parameters'][2]->nid);
-				
-				$map = array();
-				while($row = db_fetch_array($result)){
-					$map[$row['form_key']] = $row['map_id'];
-				}
-
+				$map = fundraiser_user_map($nid);
 				// load up any mapped profile fields
 				foreach($map as $field_key => $profile_key) {
-					webform_set_value($form, array_search_recursive($field_key, $form), $user->$profile_key);
-				}
-				
-				// try to set email
-				webform_set_value($form, array_search_recursive('email', $form), $user->mail);
-				
-				// see if the user has any other orders
-				$sql = "select billing_first_name, billing_last_name, billing_street1, billing_street2, billing_city, billing_zone, billing_postal_code, billing_country from {uc_orders} u where uid = %d and order_status = 'payment_received' order by created desc limit 1";
-				$results = db_query($sql, $user->uid);
-				while ($data = db_fetch_object($results)) {
-					webform_set_value($form, array_search_recursive('first_name', $form), $data->billing_first_name);
-					webform_set_value($form, array_search_recursive('last_name', $form), $data->billing_last_name);
-					webform_set_value($form, array_search_recursive('billing_address', $form), $data->billing_street1);
-					webform_set_value($form, array_search_recursive('billing_address_2', $form), $data->billing_street2);
-					webform_set_value($form, array_search_recursive('billing_city', $form), $data->billing_city);
-					webform_set_value($form, array_search_recursive('billing_state', $form), $data->billing_zone);
-					webform_set_value($form, array_search_recursive('billing_zipcode', $form), $data->billing_postal_code);
-					webform_set_value($form, array_search_recursive('billing_country', $form), $data->billing_country);
+				  $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
+				  $field['#default_value'] = $user->$profile_key;
 				}
 			}
 			
 			// alter country drop down to populate zone drop down via ahah
-			$country_drop_down = array_search_recursive('billing_country', $form);
-			webform_set_key_value($form, $country_drop_down, '#ahah', array('path' => 'zones/js', 'wrapper' => 'zone-select-wrapper'));
-			
-			$zone_drop_down = array_search_recursive('billing_state', $form);
-			webform_set_key_value($form, $zone_drop_down, '#prefix', '<div id="zone-select-wrapper">');
-			webform_set_key_value($form, $zone_drop_down, '#suffix', '</div>');
-			
+			$country_field =& fundraiser_find_field($form, $component_hierarchy['billing_country']);
+			$country_field['#ahah'] = array('path' => 'zones/js', 'wrapper' => 'zone-select-wrapper');
+
+      // add a wrapper around the state field so it can be replaced via ajax			
+			$state_field =& fundraiser_find_field($form, $component_hierarchy['billing_state']);
+			$state_field['#prefix'] = '<div id="zone-select-wrapper">'; 
+			$state_field['#suffix'] = '</div>'; 
+      
+      // flatten form state array so that it is easier to work with			
 			$fields = array_flatten($form_state);
-			
-			if ($fields['billing_country']) {
-				// reset country back to user select country instead of default
-				webform_set_value($form, $country_drop_down, $fields['billing_country']);
+			// country/state dependant drop down code
+			if (array_key_exists('billing_country', $fields)) {
+				$country_field['#default_value'] = $fields['billing_country']; // user selected country
 				// populate via Ahah!
-				webform_set_key_value($form, $zone_drop_down, '#options', get_country_zones($fields['billing_country']));
+				$state_field['#options'] = get_country_zones($fields['billing_country']);
 			}
 			else {
-				webform_set_key_value($form, $zone_drop_down, '#options', get_country_zones(webform_get_value($form, $country_drop_down)));
+        $state_field['#options'] = get_country_zones($country_field['#default_value']); // default country as defined in the component definition
 			}
-			
+
 			// add a second submit handler to remove credit card information
 			$form['#submit'][] = 'fundraiser_webform_client_submit';
 			$form['#submit'][] = 'fundraiser_webform_submit';
@@ -316,6 +281,85 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 	return $form;
 }
 
+/**
+ * Creates an array to map webform component fields to user profile fields.
+ */
+function fundraiser_user_map($nid) {
+  $map = array();
+  $result = db_query(
+    "
+      SELECT w.form_key, f.cid, f.map_id, w.type
+      FROM {webform_component} w
+      INNER JOIN {fundraiser_component_map} f ON f.cid = w.cid AND f.nid = w.nid
+      WHERE f.nid = %d 
+      ORDER BY f.cid
+    ",
+    $nid
+  );
+  
+  while ($row = db_fetch_array($result)) {
+    $map[$row['form_key']] = $row['map_id'];
+  }
+  
+  return $map;
+}
+
+/**
+ * Returns a reference to an element of a FAPI array based on a known path.
+ */
+function &fundraiser_find_field(&$form, $path) {
+  foreach(array_keys($path) as $v) {
+    if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
+      return fundraiser_find_field($form[$v], $path[$v]);
+    }
+    else {
+      return $form[$v];
+    }
+  }
+}
+
+/**
+ * Creates a nested array of where components exist in the FAPI array for all components in a weblform. 
+ * This is needed because the fundraiser module allows the user to move components around. Therefore
+ * we must be able to find them if they are not in their usual spot.
+ */
+function fundraiser_parse_components($nid, $components) {
+  $component_hierarchy = array();
+  foreach($components as $cid => $component) {
+    $component_path = 'submitted[' . implode('][', fundraiser_walk_component_hierarchy($nid, $cid)) . ']';
+    parse_str($component_path, $output); // convert string to a nested array
+    $component_hierarchy[$component['form_key']] = $output;
+  }
+  return $component_hierarchy;
+}
+
+/**
+ * Creates a nested array of where a component exists in the FAPI array.
+ */
+function fundraiser_parse_component($nid, $form_key) {
+  $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d and form_key = '%s'", $nid, $form_key));
+  $component_path = 'submitted[' . implode('][', fundraiser_walk_component_hierarchy($nid, $cid)) . ']';
+  parse_str($component_path, $output); // convert string to a nested array
+  return $output;
+}
+
+/**
+ * Builds a path from the webform component to it's topmost parent.
+ */
+function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
+  $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = %d and cid = %d", $nid, $cid);
+  while ($data = db_fetch_object($result)) {
+    array_unshift($path, $data->form_key);
+    if ($data->pid > 0) {
+      fundraiser_walk_component_hierarchy($nid, $data->pid, $path);
+    }
+  }
+  return $path;
+}
+
+/**
+ * Ahah callback for populating the state drop down list based on the selected country.
+ */
 function zones_ahah_render() {
 	$form_state    = array('storage' => NULL, 'submitted' => FALSE);
 	$form_build_id = $_POST['form_build_id'];
@@ -338,10 +382,10 @@ function zones_ahah_render() {
     // For the default "{$form_id}_validate" and "{$form_id}_submit" handlers.
     $form['#validate'] = NULL;
     $form['#submit'] = NULL;
-    // For customly set #validate and #submit handlers.
-    $form_state['submit_handlers'] = NULL;
+    // For customly set #validate and #submit handlers.    $form_state['submit_handlers'] = NULL;
     $form_state['validate_handlers'] = NULL;
     // Disable #required and #element_validate validation.
+
     _ahah_helper_disable_validation($form);
   }
 
@@ -360,12 +404,13 @@ function zones_ahah_render() {
 
 	// Rebuild the form.
 	$form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-
-	$zone_drop_down = array_search_recursive('billing_state', $form);
-	$field = webform_get_deepest_key_value($form, $zone_drop_down);
+  
+  // figure out the path to the billing state drop down component
+  $nid = $form['#parameters'][2]->nid;
+	$field = fundraiser_find_field($form, fundraiser_parse_component($nid, 'billing_state'));
 	unset($field['#prefix'], $field['#suffix']); // prevent duplicate wrappers
 	$output = $field;
-
+	
 	// Get the JS settings so we can merge them.
 	$javascript = drupal_add_js(NULL, NULL, 'header');
 	$settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
@@ -548,7 +593,6 @@ function fundraiser_menu() {
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('fundraiser_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
-	    //'access arguments' => array(arg(1)),
 	    'file' => 'fundraiser_components.inc',
 	    'weight' => 30,
 	    'type' => MENU_LOCAL_TASK,
@@ -561,7 +605,7 @@ function fundraiser_menu() {
 	);
 	
 	$items['zones/js'] = array(
-    'type' => MENU_CALBACK,
+    'type' => MENU_CALLBACK,
     'page callback' => 'zones_ahah_render',
     'access callback' => TRUE,
   );
@@ -711,23 +755,12 @@ function fundraiser_recurring_admin_logs(){
 }
 
 function get_country_zones($country_id) {
-	$zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $country_id, 'name', uc_address_field_required('zone'));
+	$zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $country_id, 'name', uc_address_field_required('zone'));
 	$zone_array = array();
 	foreach ($zones['#options'] as $key => $value) {
 		$zone_array[$key] = $value;
 	}
 	return $zone_array;
-}
-
-function fundraiser_changestate(){
-	drupal_set_header('Content-Type: text/javascript; charset=utf-8');
-	$zones= uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $_GET['country_id'], 'name', uc_address_field_required('zone'));
-	$output = "[";
-	foreach ($zones['#options'] as $key=>$val){
-		$output .= "{optionValue:'$key', optionDisplay: '$val'},";
-	}
-	$output .= "]";
-	echo $output;
 }
 
 function fundraiser_node_insert($node){
@@ -752,7 +785,7 @@ function fundraiser_node_insert($node){
 
 	if ($node->is_donation_form && (!$node->is_being_cloned && arg(2) != 'clone')) {
 		// call create_webform_donation_components
-		create_webform_donation_components($node->nid, $node->donation_amounts, $node->show_other_amount[1], $node->minimum_donation_amount);
+		create_webform_donation_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
 	}
 }
 
@@ -821,13 +854,13 @@ function delete_webform_donation_components($node) {
 }
 
 function fundraiser_node_load($nid) {
-	$result = db_query("select * from fundraiser_gateway where nid = %d", $nid);
+	$result = db_query("SELECT * FROM {fundraiser_gateway} WHERE nid = %d", $nid);
 	$row = db_fetch_array($result);
 	return $row;
 }
 
 function fundraiser_node_delete($nid){
-	db_query("delete from fundraiser_gateway where nid = %d", $nid);
+	db_query("DELETE FROM {fundraiser_gateway} WHERE nid = %d", $nid);
 }
 
 function fundraiser_node_validate($node){
@@ -1053,7 +1086,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	);
  	
  	//go get the Payment Gateway assigned to this node
- 	$sql = "select gateway from fundraiser_gateway where nid = %d";
+ 	$sql = "select gateway from {fundraiser_gateway} where nid = %d";
  	$result = db_query($sql, $form['#parameters'][2]->nid);
  	$row = db_fetch_array($result);
  	$gateway_key = $row['gateway'];
@@ -1412,4 +1445,34 @@ function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
     // Mark field as handled (prevents saving to user->data).
     $edit[$field->name] = NULL;
   }
+}
+
+/**
+ * Implemenation of hook_webform_select_options_info().
+ */
+function fundraiser_webform_select_options_info() {
+  $items = array();
+  include 'includes/fundraiser.options.inc';
+  return _fundraiser_webform_select_options_info();
+}
+
+/**
+ * Does the very standard things that must be done in any normal callback. Used by each callback in this module.
+ */
+function ahah_callback_helper() {
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  // Enable the submit/validate handlers to determine whether AHAH-submittted.
+  $form_state['ahah_submission'] = TRUE;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  return $form;
 }
