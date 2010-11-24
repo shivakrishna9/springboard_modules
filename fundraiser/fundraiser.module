@@ -238,12 +238,12 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			
 			// preload any fields if the user is logged in
       if (user_is_logged_in()) {
-        // TODO: This whole thing can go way if we use the default value fields in the webform components themselves.
 				// load up map
 				$map = fundraiser_user_map($nid);
 				// load up any mapped profile fields
 				foreach($map as $field_key => $profile_key) {
 				  $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
+				  // TODO: Do not overwrite if field already has a default value!!!!
 				  $field['#default_value'] = $user->$profile_key;
 				}
 			}
@@ -269,15 +269,13 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $state_field['#options'] = get_country_zones($country_field['#default_value']); // default country as defined in the component definition
 			}
 
-			// add a second submit handler to remove credit card information
-			$form['#submit'][] = 'fundraiser_webform_client_submit';
-			$form['#submit'][] = 'fundraiser_webform_submit';
-			$form['#submit'] = array_reverse($form['#submit']);
-			$form['#submit'][] = 'fundraiser_webform_create_order';
+			// add an additional submit and validation handler
+			array_unshift($form['#submit'], 'fundraiser_webform_submit'); // creates order
 			$form['#validate'][] = 'fundraiser_webform_validate';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
 		}
 	}
+
 	return $form;
 }
 
@@ -454,111 +452,23 @@ function array_smart_merge($array, $override) {
   return $array;
 }
 
-function fundraiser_webform_create_order($form, &$form_state) {
-	if (!empty($form_state['values']['abort'])) {
-		return;
-	}
-	
-	$sid = $form_state['values']['details']['sid'];
-	$nid = $form_state['values']['details']['nid'];
-	$order_id = $form_state['values']['details']['order_id'];
-
-	$sql = "insert into fundraiser_webform_order (webform_nid, order_id, sid) values (%d, %d, %d)";
-	db_query($sql, $nid, $order_id, $sid);
+/**
+ * Implementation of hook_webform_submission_insert().
+ */
+function fundraiser_webform_submission_insert($node, $submission) {
+  // insert a record to relate the webform submission to the ubercart order
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid) VALUES (%d, %d, %d)", $node->nid, $node->order_id, $submission->sid);
 }
 
-function webform_set_key_value(&$webform, $parents, $key, $value) {
-	$parent = array_shift($parents);
-  if (empty($parents)) {
-    	$webform[$parent][$key] = $value;
-	}
-  else {
-    if (!isset($webform[$parent])) {
-      $webform[$parent] = array();
-    }
-    webform_set_key_value($webform[$parent], $parents, $key, $value);
+/**
+ * Implementation of hook_webform_submission_presave(). 
+ */
+function fundraiser_webform_submission_presave($node, &$submission) {
+  // remove senstive form data before the submission is saved to the database
+  $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
+  while ($data = db_fetch_object($result)) {
+    $submission->data[$data->cid]['value'][0] = NULL;
   }
-}
-
-function webform_get_deepest_key_value(&$webform, $parents) {
-	$parent = array_shift($parents);
-  if (empty($parents)) {
-    	return $webform[$parent];
-	}
-  else {
-    if (!isset($webform[$parent])) {
-      $webform[$parent] = array();
-    }
-    return webform_get_deepest_key_value($webform[$parent], $parents);
-  }
-}
-
-function webform_set_value(&$webform, $parents, $value) {
-  $parent = array_shift($parents);
-  if (empty($parents)) {
-		if ($webform[$parent]['#type'] != 'checkboxes') {
-    	$webform[$parent]['#default_value'] = $value;
-  	}
-	}
-  else {
-    if (!isset($webform[$parent])) {
-      $webform[$parent] = array();
-    }
-    webform_set_value($webform[$parent], $parents, $value);
-  }
-}
-
-function webform_get_value(&$webform, $parents) {
-  $parent = array_shift($parents);
-  if (empty($parents)) {
-  	 return $webform[$parent]['#default_value'];
-	}
-  else {
-    if (!isset($webform[$parent])) {
-      $webform[$parent] = array();
-    }
-    return webform_get_value($webform[$parent], $parents);
-  }
-}
-
-
-function webform_clear_value(&$webform, $parents) {
-  $parent = array_shift($parents);
-  if (empty($parents)) {
-    unset($webform[$parent]);
-  }
-  else {
-    if (!isset($webform[$parent])) {
-      $webform[$parent] = array();
-    }
-    webform_clear_value($webform[$parent], $parents);
-  }
-}
-
-function array_search_recursive($needle, $haystack, $path=array())
-{
-    foreach($haystack as $id => $val)
-    {
-         $path2=$path;
-         $path2[] = $id;
- 			
-         if($id === $needle)
-              return $path2;
-         else if(is_array($val))				
-              if($ret = array_search_recursive($needle, $val, $path2))
-                   return $ret;
-      }
-      return false;
-}
-
-function fundraiser_webform_client_submit($form, &$form_state) {
-	
-  $nid = $form['#parameters'][2]->nid;
-	
-	// remove sensitive field so that webform does not store them
-	webform_clear_value($form_state['values'], array_search_recursive('card_number', $form_state['values']));
-	webform_clear_value($form_state['values'], array_search_recursive('card_cvv', $form_state['values']));
-	webform_clear_value($form_state['values'], array_search_recursive('card_expiration_date', $form_state['values']));
 }
 
 function mapping_form_access() {
@@ -1121,6 +1031,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 
 		// add the order_id to the form_state for further processing
 		$form_state['values']['details']['order_id'] = $order->order_id;
+		$form['#node']->order_id = $order->order_id;
 	
  		// determine if the donation should be added to the queue
  		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
@@ -1454,25 +1365,4 @@ function fundraiser_webform_select_options_info() {
   $items = array();
   include 'includes/fundraiser.options.inc';
   return _fundraiser_webform_select_options_info();
-}
-
-/**
- * Does the very standard things that must be done in any normal callback. Used by each callback in this module.
- */
-function ahah_callback_helper() {
-  $form_state = array(
-    'storage' => NULL,
-    'submitted' => FALSE,
-  );
-  $form_build_id = $_POST['form_build_id'];
-  $form = form_get_cache($form_build_id, $form_state);
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  // Enable the submit/validate handlers to determine whether AHAH-submittted.
-  $form_state['ahah_submission'] = TRUE;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-  drupal_process_form($form_id, $form, $form_state);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  return $form;
 }
