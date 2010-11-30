@@ -111,7 +111,7 @@ class DrupalSalesforce {
     }
 
     // Log the message to the watchdog.
-    watchdog('salesforce', $message, $severity, $link);
+    watchdog('salesforce', $message, array(), $severity, $link);
   }
 
   /**
