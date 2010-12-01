@@ -10,8 +10,8 @@
  * Implementation of hook_menu().
  */
 function sf_donation_menu() {
-	$items['node/%webform_menu/edit/salesforce-donation-mapping'] = array(
-	    'title' => 'Salesforce Donation Mapping',
+	$items['node/%webform_menu/webform/salesforce-donation-mapping'] = array(
+	    'title' => 'Donation map',
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('sf_donation_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
@@ -37,6 +37,20 @@ function sf_donation_menu() {
 	);
 
 	return $items;
+}
+
+/**
+ * Implmentation of hook_fundraiser_form_insert().
+ */
+function sf_donation_fundraiser_form_insert($node, $components) {
+  require_once 'donation.php';
+  $integrator = _current_donation_integrator();
+  $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
+	// insert the default map record
+	db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES
+	 (%d, '%s', '%s')", $node->nid, serialize($default_map), $integrator['donation_object']['type']);
+	
+  drupal_set_message("Salesforce donation fields have been mapped. Use the Donation map tab to edit the map.");
 }
 
 /**
@@ -206,6 +220,7 @@ function sf_donation_theme() {
  * Form to map the webform/donation to the Salesforce opportunity object
  */
 function sf_donation_mapping_form($form_state, $node) {
+
 	$form = array(
     '#tree' => TRUE,
     '#node' => $node,
@@ -368,7 +383,7 @@ function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
 	if($node->type == 'webform') {
 		$parts = explode("/",$_GET['q']);
 		
-		if($parts[0]=='node' && $parts[2]=='edit' && $parts[3] == 'salesforce-donation-mapping' && $op == 'load'){
+		if($parts[0]=='node' && $parts[2]=='webform' && $parts[3] == 'salesforce-donation-mapping' && $op == 'load'){
 			$result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
 			
 			while($row = db_fetch_object($result)) {

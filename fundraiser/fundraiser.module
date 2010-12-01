@@ -29,7 +29,7 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 				$node->internal_name = $array['internal_name'];
 				
 				// if we're on the mapping tab, load up the map too
-				if (arg(0) == 'node' && arg(2) == 'edit' && arg(3) == 'mapping') {
+				if (arg(0) == 'node' && arg(2) == 'webform' && arg(3) == 'mapping') {
 					$result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
 					while($row = db_fetch_array($result)){
 						$map[$row['cid']] = $row['map_id'];
@@ -243,8 +243,9 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 				// load up any mapped profile fields
 				foreach($map as $field_key => $profile_key) {
 				  $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
-				  // TODO: Do not overwrite if field already has a default value!!!!
-				  $field['#default_value'] = $user->$profile_key;
+				  if (empty($field['#default_value'])) {
+				    $field['#default_value'] = $user->$profile_key;
+				  }
 				}
 			}
 			
@@ -498,8 +499,8 @@ function fundraiser_menu() {
 		'file' => 'fundraiser.admin.inc',
 	);
 	
-	$items['node/%webform_menu/edit/mapping'] = array(
-	    'title' => 'Fundraiser User Map',
+	$items['node/%webform_menu/webform/mapping'] = array(
+	    'title' => 'User map',
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('fundraiser_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
@@ -695,7 +696,12 @@ function fundraiser_node_insert($node){
 
 	if ($node->is_donation_form && (!$node->is_being_cloned && arg(2) != 'clone')) {
 		// call create_webform_donation_components
-		create_webform_donation_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
+		$components = create_webform_donation_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
+		// map the user profile fields
+		fundraiser_user_map_create($node->nid, $components);
+		
+		// fire a hook that other modules can utilize to add additional processing when a donation form is created
+		module_invoke_all('fundraiser_form_insert', $node, $components);
 	}
 }
 
@@ -744,13 +750,25 @@ function _create_amount_options($donation_amounts, $show_other_amount) {
 	return $formatted_amounts;
 }
 
+/**
+ * Automatically maps predefined webform components to user profile fields.
+ */
+function fundraiser_user_map_create($nid, $components) {
+  foreach($components as $cid => $component) {
+    if (array_key_exists('maps_to', $component)) {
+      db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $nid, $cid, $component['maps_to']);
+    }
+  }
+  drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
+}
+
 /** 
  * Creates the neccessary webform components to support fundraising
  */
 function create_webform_donation_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
 	// include the field definition file
 	module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-	fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount);
+	return fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount);
 }
 
 function delete_webform_donation_components($node) {
