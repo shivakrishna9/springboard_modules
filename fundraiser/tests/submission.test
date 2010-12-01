@@ -1,0 +1,88 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Fundraiser module submission tests.
+ */
+
+include_once(dirname(__FILE__) . '/fundraiser.test');
+
+class FundraiserSubmissionTestCase extends FundraiserTestCase {
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Fundraiser submission'),
+      'description' => t('Submits a sample donation form and checks the database integrity.'),
+      'group' => t('Springboard'),
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp();
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  function tearDown() {
+    parent::tearDown();
+  }
+  
+  function testDonationSubmission() {
+    $node = $this->testFundraiserForm();
+    $this->pass(var_export($node, TRUE));
+    $first_name = $this->randomName(7);
+    $last_name = $this->randomName(5);
+    $mail = $first_name . '.' . $last_name . '@example.com';
+    $address = $this->randomName(25);
+    $city = $this->randomName(15);
+    $state = 44;
+    $country = 840;
+    $zipcode = '55555';
+    $cc_number = '4111111111111111';
+    $cc_cvv = '111';
+    
+    $tomorrow = strtotime("+1 day");
+    
+    $edit1["submitted[donation][amount]"] = 10;
+    $edit1["submitted[donor_information][first_name]"] = $first_name;
+    $edit1["submitted[donor_information][last_name]"] = $last_name;
+    $edit1["submitted[donor_information][email]"] = $mail;
+    $edit1["submitted[billing_information][billing_address]"] = $address;
+    $edit1["submitted[billing_information][billing_city]"] = $city;
+    $edit1["submitted[billing_information][billing_state]"] = $state;
+    $edit1["submitted[billing_information][billing_country]"] = $country;
+    $edit1["submitted[billing_information][billing_zipcode]"] = $zipcode;
+    $edit1["submitted[credit_card_information][card_number]"] = $cc_number;
+    $edit1["submitted[credit_card_information][card_expiration_date][month]"] = date('n', $tomorrow);
+    $edit1["submitted[credit_card_information][card_expiration_date][day]"] = date('j', $tomorrow);
+    $edit1["submitted[credit_card_information][card_expiration_date][year]"] = date('Y', $tomorrow);
+    $edit1["submitted[credit_card_information][card_cvv]"] = $cc_cvv; 
+    
+    //$this->pass(var_export($edit, TRUE));
+     
+
+    $this->drupalGet('node/' . $node->nid);
+    
+    $this->drupalPost(NULL, $edit1, t('Submit'));
+    
+    $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
+      
+    // Get the SID of the new submission.
+    $matches = array();
+    preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
+    $sid = $matches[1];  
+    
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+     
+    $this->pass(var_export($order_id, TRUE)); 
+             
+  }
+  
+}

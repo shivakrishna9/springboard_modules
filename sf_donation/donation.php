@@ -21,6 +21,22 @@ class DonationFactory
 }
 
 /**
+ * Class to define maps for the different donation types
+ */
+class DonationMapper
+{
+  public static function GetDefaultMap($id) {
+    switch ($id) {
+      case 'npsp':
+        return NPSPDonation::default_map();
+        
+      case 'common_ground':
+        return CommonGroundDonation::default_map();
+    }
+  }  
+}
+
+/**
  *  Represents a Non Profit Starter Pack specfic donation
  */
 class NPSPDonation extends Donation
@@ -30,6 +46,35 @@ class NPSPDonation extends Donation
       'payment_received' => 'Posted',
       'payment_withdrawn' => 'Withdrawn',
       'payment_pending' => 'Pledged',
+    );
+  }
+  
+  static function default_map() {
+    return array(
+      'donor_salesforce_account_id' => 'AccountId',
+      'name' => 'Name',
+      'amount' => 'Amount',
+      'cc_last_4' => 'CC_Last_4__c',
+      'cc_expiration_month' => 'CC_Exp_Month__c',
+      'cc_expiration_year' => 'CC_Exp_Year__c',
+      'cc_type' => 'CC_Type__c',
+      'donation_form_name' => 'Donation_Form_Name__c',
+      'donation_form_url' => 'Donation_Form_URL__c',
+      'order_id' => 'Order_ID__c',
+      'close_date' => 'CloseDate',
+      'transaction_date_gm' => 'Transaction_Date_Time__c',
+      'probability' => 'Probability',
+      'stage' => 'StageName',
+      'billing_street1' => 'Billing_Street__c',
+      'billing_street2' => 'Billing_Street_Line_2__c',
+      'billing_city' => 'Billing_City__c',
+      'billing_zone' => 'Billing_State__c',
+      'billing_postal_code' => 'Billing_Zip__c',
+      'billing_country' => 'Billing_Country__c',
+      'cid' => 'CampaignId',
+      'referrer' => 'Referrer__c',
+      'initial_referrer' => 'Initial_Referrer__c',
+      'ms' => 'Market_Source__c',
     );
   }
 }
@@ -45,6 +90,10 @@ class CommonGroundDonation extends Donation
       'payment_withdrawn' => 'Withdrawn',
       'payment_pending' => 'Not Received',
     );
+  }
+  
+  static function default_map() {
+    return array();
   }
 }
 

@@ -11,6 +11,7 @@
  * Implementation of hook_menu().
  */
 function sf_node_menu() {
+  /*
   $items['node/%/salesforce-management'] = array(
     'title' => 'Salesforce Management',
     'page callback' => 'drupal_get_form',
@@ -30,6 +31,7 @@ function sf_node_menu() {
   );
 
   return $items;
+  */
 }
 
 /**
