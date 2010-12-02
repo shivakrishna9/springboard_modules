@@ -569,7 +569,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 				case FUNDRAISER_RECURRING_DONATION_TYPE:
 					$donation_count = _recurring_donation_count($record->oid, $user);
 					$donation_count++; // account for original order
-					$object = _create_recurring_donation($record->oid, $user_ids->salesforce_contact_id, $donation_count);
+					$object = _create_recurring_donation($record->oid, $user_ids, $donation_count);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
@@ -891,7 +891,7 @@ function _sf_donation_get_recurring_details($order_id) {
  */
 function _create_recurring_donation($order_id, $user_ids, $count) {
 	$order = uc_order_load($order_id);
-	
+
 	// determine integrator
 	$integrator = _current_donation_integrator();
   $function = $integrator['recurring_donation_object']['create'];
