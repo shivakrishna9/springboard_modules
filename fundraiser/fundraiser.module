@@ -456,7 +456,9 @@ function array_smart_merge($array, $override) {
  */
 function fundraiser_webform_submission_insert($node, $submission) {
   // insert a record to relate the webform submission to the ubercart order
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, gateway, txn_id, recurring_status) VALUES (%d, %d, %d, '%s', '%s', %d)", $node->nid, $node->order_id, $submission->sid, $node->gateway, $node->txn_id, empty($node->recurring_order) ? DONATION_NON_RECURRING : DONATION_RECURRING);
+  if ($node->is_donation_form) {
+    db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, gateway, txn_id, recurring_status) VALUES (%d, %d, %d, '%s', '%s', %d)", $node->nid, $node->order_id, $submission->sid, $node->gateway, $node->txn_id, empty($node->recurring_order) ? DONATION_NON_RECURRING : DONATION_RECURRING);
+  }
 }
 
 /**
@@ -464,9 +466,11 @@ function fundraiser_webform_submission_insert($node, $submission) {
  */
 function fundraiser_webform_submission_presave($node, &$submission) {
   // remove senstive form data before the submission is saved to the database
-  $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
-  while ($data = db_fetch_object($result)) {
-    $submission->data[$data->cid]['value'][0] = NULL;
+  if ($node->is_donation_form) {
+    $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
+    while ($data = db_fetch_object($result)) {
+      $submission->data[$data->cid]['value'][0] = NULL;
+    }
   }
 }
 

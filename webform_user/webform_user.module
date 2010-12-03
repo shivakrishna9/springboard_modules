@@ -10,7 +10,7 @@
  * Implementation of hook_menu().
  */
 function webform_user_menu() {
-	$items['node/%webform_menu/edit/webform_user'] = array(
+	$items['node/%webform_menu/webform/webform_user'] = array(
 	  'title' => 'Related object field',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_field_selection_form', 1),
@@ -145,11 +145,12 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
         // If the user is authenticated, populate the webform fields with values
         // from the user's profile fields.
-        if ($user->uid && arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'edit') {
+        if ($user->uid && arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'webform') {
           _webform_user_add_webform_defaults($node, $user);
         }
 
         break;
+        
     }
   }
 }
@@ -232,9 +233,8 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
 function _webform_user_add_webform_defaults(&$node, &$user) {
   // Reload user object to ensure profile field values are present.
   $user = user_load(array('uid' => $user->uid));
-
+  
   $fields = _webform_user_get_profile_fields();
-
   foreach ($node->webform['components'] as $ckey => $component) {
     foreach ($fields as $fkey => $field) {
       // Handle e-mail.
@@ -904,7 +904,10 @@ function webform_user_queue_api_insert_alter(&$record) {
 			INNER JOIN {webform_submissions} s ON s.nid = w.nid WHERE s.sid = %d", (int)$record->oid));
 		
 		if ($is_webform_user) {
+		  $salesforce = salesforce_management_api_id_load('webform_user', $record->oid);
 			$record->type = 'webform_user';
+			$record->fieldmap = $salesforce['fieldmap'];
+      $record->sfid = $salesforce['sfid'];
 		}
 	}
 		

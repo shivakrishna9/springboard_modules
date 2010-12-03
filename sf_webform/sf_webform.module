@@ -10,7 +10,7 @@
  * Implemenation of hook_menu().
  */
 function sf_webform_menu() {
-	$items['node/%webform_menu/edit/salesforce-map'] = array(
+	$items['node/%webform_menu/webform/salesforce-map'] = array(
 	  'title' => 'Salesforce map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_webform_mapping_form', 1),
@@ -531,7 +531,7 @@ function sf_webform_submit($form, &$form_state) {
 	$nid = $form_state['values']['details']['nid'];
 	if ($sid) {
 		// if the submission has already been mapped, change to a update call
-		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = 'webform'", $sid));
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND (drupal_type = 'webform' OR drupal_type = 'webform_user')", $sid));
 		if (!empty($result['sfid'])) {
 			sf_queue_insert($sid, 'webform', 'update');
 		}
@@ -561,6 +561,10 @@ function sf_webform_queue_preprocess_batch_alter(&$batch) {
 					else {
 						$record->object = $map['fields'];
 					}
+					// add the salesforce id to the object on updates
+				  if ($batch['action'] == 'update') {
+				    $record->object['Id'] = $record->sfid;
+				  }
 				}
 				break;
 				
@@ -586,8 +590,9 @@ function sf_webform_queue_fieldmap_assignment_alter(&$data) {
 		$fieldmap = db_fetch_array($result);
 		$data->fieldmap = $fieldmap['fieldmap'];
 		
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = 'webform' OR drupal_type = 'webform_user'", $sid));
 		// check the action. by default webforms go into the queue as upsert, but if the webform mapping has no dedupe key defined, revert to create
-		if (empty($fieldmap['dedupe_key'])) {
+		if (empty($fieldmap['dedupe_key']) && empty($result['sfid'])) {
 			$data->action = 'create';
 		}
 	}
