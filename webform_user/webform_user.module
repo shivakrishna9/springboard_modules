@@ -141,16 +141,14 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       		$node->related_object = $webform_user['related_object'];
       		$node->foreign_key_field = $webform_user['foreign_key_field'];
       		$node->send_new_user_email = $webform_user['send_new_user_email'];
+      	 
+          // If the user is authenticated, populate the webform fields with values
+          // from the user's profile fields.
+          if ($user->uid && arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'webform') {
+            _webform_user_add_webform_defaults($node, $user);
+          }
       	}
-
-        // If the user is authenticated, populate the webform fields with values
-        // from the user's profile fields.
-        if ($user->uid && arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'webform') {
-          _webform_user_add_webform_defaults($node, $user);
-        }
-
         break;
-        
     }
   }
 }

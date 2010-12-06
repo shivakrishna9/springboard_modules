@@ -1333,6 +1333,14 @@ function _fundraiser_charge_function($order_id, $nid) {
  * Implementation of hook_cron().
  */
 function fundraiser_cron() {
+  // TODO: Add a check for a file key before processing donations
+  fundraiser_process_recurring_donations();
+}
+
+/**
+ * Submits recurring donations for payment
+ */
+function fundraiser_process_recurring_donations() {
   
   $successes = 0;
   $fails = 0;
@@ -1376,7 +1384,7 @@ function fundraiser_cron() {
 		}
 		else {
 			$fails++;
-			db_query("UPDATE uc_orders SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
+			db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
 			db_query("UPDATE {fundraiser_recurring} SET 
 				gateway_resp = 'failed', 
 				attempts = attempts + 1,
