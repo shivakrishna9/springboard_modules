@@ -242,7 +242,9 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 				foreach($map as $field_key => $profile_key) {
 				  $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
 				  if (empty($field['#default_value'])) {
-				    $field['#default_value'] = $user->$profile_key;
+				    if (property_exists($user, $profile_key)) {
+				      $field['#default_value'] = $user->$profile_key;
+				    }
 				  }
 				}
 			}
