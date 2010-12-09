@@ -1106,12 +1106,12 @@ function fundraiser_webform_submit($form, &$form_state) {
  	);
  	
  	//go get the Payment Gateway assigned to this node
- 	$sql = "select gateway from {fundraiser_gateway} where nid = %d";
+ 	$sql = "SELECT gateway FROM {fundraiser_gateway} WHERE nid = %d";
  	$result = db_query($sql, $form['#parameters'][2]->nid);
  	$row = db_fetch_array($result);
  	$gateway_key = $row['gateway'];
  	
- 	$gateways = _payment_gateway_list('',TRUE);
+ 	$gateways = _payment_gateway_list('', TRUE);
  	
  	foreach ($gateways as $key => $gateway) {
  		if ($gateway['id'] == $gateway_key) {
@@ -1488,10 +1488,15 @@ function fundraiser_mail($key, &$message, &$params) {
   }
 }
 
+/**
+ * Implemenation of hook_mail_alter().
+ *
+ * Change the from address and subject for donation receipt emails.
+ */
 function fundraiser_mail_alter(&$message){
 	$parts = explode("/",$_GET['q']);
-	$nid=$parts[1];
-	$node=node_load($nid);
+	$nid = $parts[1];
+	$node = node_load($nid);
 	
 	if ($message['id'] == 'uc_order_action-mail') {
 		$message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
@@ -1502,10 +1507,23 @@ function fundraiser_mail_alter(&$message){
 
 		$message['from'] = $node->confirmation_email_from_name . ' <' .$node->confirmation_email_from_email . '>';
 		$message['subject'] = $node->confirmation_email_subject;
-		
-		$message['params']['replacements']['order']->confirmation_email_message = $node->confirmation_email_message;
-		$output = uc_order_load_invoice($message['params']['replacements']['order'],'checkout-mail');
 	}
+}
+
+ /**
+ * Implementation of hook_preprocess_uc_order().
+ *
+ * Adds additional variables for use in donation receipt emails.
+ *
+ */
+function fundraiser_preprocess_uc_order(&$variables) {
+  switch ($variables['op']) {
+    case 'checkout-mail':
+      $nid = $variables['order']->products[0]->nid;
+      $message = db_result(db_query("SELECT confirmation_email_message FROM {fundraiser_gateway} WHERE nid = %d", $nid));
+      $variables['fundraiser_message'] = $message;
+      break;
+  }
 }
 
 function _credit_card_expirations() {
