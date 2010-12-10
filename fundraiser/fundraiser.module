@@ -315,7 +315,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 	return $form;
 }
 
-function theme_fundraiser_credit_card_expiration_date(&$element) {
+function theme_fundraiser_credit_card_expiration_date($element) {
   $element['card_expiration_month']['#title'] = t('Expiration Date');
   $month = drupal_render($element['card_expiration_month']);
   $element['card_expiration_year']['#title'] = '';
