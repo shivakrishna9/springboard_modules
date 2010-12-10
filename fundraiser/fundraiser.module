@@ -315,6 +315,9 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 	return $form;
 }
 
+/**
+ * Theme the credit card expiration date form field.
+ */
 function theme_fundraiser_credit_card_expiration_date($element) {
   $element['card_expiration_month']['#title'] = t('Expiration Date');
   $month = drupal_render($element['card_expiration_month']);
@@ -1393,7 +1396,14 @@ function _fundraiser_charge_function($order_id, $nid) {
  */
 function fundraiser_cron() {
   // TODO: Add a check for a file key before processing donations
-  fundraiser_process_recurring_donations();
+  if (fundraiser_processor_key_match()) {
+    fundraiser_process_recurring_donations();
+  }
+  else {
+    $message = t('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.');
+    drupal_set_message($message, 'warning');
+    watchdog('fundraiser', $message, NULL, WATCHDOG_CRITICAL);
+  }
 }
 
 /**
@@ -1715,4 +1725,42 @@ function fundraiser_webform_select_options_info() {
   $items = array();
   include 'includes/fundraiser.options.inc';
   return _fundraiser_webform_select_options_info();
+}
+
+/**
+ * Loads the recurring donation processor key.
+ *
+ * @return FALSE if no key is found or the key domain does not match the current domain.
+ */
+function fundraiser_processor_key_match() {
+  static $key;
+
+  if (!empty($key)) {
+    return ($key == $_SERVER['HTTP_HOST']);
+  }
+
+  $dir = variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+  if (!empty($dir) && $dir !== t('Not configured, see below.')) {
+    $filename = rtrim($dir, '/\\') .'/sustainer.key';
+
+    if (file_exists($filename)) {
+      if (!$file = fopen($filename, 'r')) {
+        return FALSE;
+      }
+
+      $key = fread($file, filesize($filename));
+      if (trim($key) != trim($_SERVER['HTTP_HOST'])) {
+        return FALSE;
+      }
+      fclose($file);
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    return FALSE;
+  }
+
+  return TRUE;
 }
