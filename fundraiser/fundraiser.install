@@ -612,3 +612,25 @@ function fundraiser_update_6210() {
  
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})");
 }
+
+/** 
+ * Version 3.0 - Remove the credit card expiration date from donation forms and replace it with
+ * 2 separate field for month and year.
+ */
+function fundraiser_update_6300() {
+  module_load_include('inc', 'fundraiser', 'fundraiser.fields');
+  $result = db_query("SELECT * FROM {webform_component} WHERE form_key = 'card_expiration_date'");
+  while ($data = db_fetch_object($result)) {
+    // create the new month field
+    $month_field = fundraiser_create_month_field($data->nid, $data->pid);
+    $month_field['#weight'] = $data->weight;
+    // create the new day field
+    $year_field = fundraiser_create_year_field($data->nid, $data->pid);
+    $year_field['#weight'] = $data->weight + 1;
+    // save both fields
+    $month_cid = webform_component_insert($month_field);
+    $year_cid = webform_component_insert($year_field);
+    // delete old field
+    db_query("DELETE FROM {webform_component} WHERE cid = %d and nid = %d", $data->cid, $data->nid);
+  }
+}

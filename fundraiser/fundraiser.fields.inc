@@ -459,28 +459,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$id = webform_component_insert($card_number);
 	$components[$id] = $card_number;
 	
-	// expiration date
-	$expiration_date = array();
-	$expiration_date['nid'] = $nid;
-	$expiration_date['pid'] = $pid; 
-	$expiration_date['form_key'] = 'card_expiration_date'; 
-	$expiration_date['name'] = 'Expiration Date';
-	$expiration_date['type'] = 'date';  
-	$expiration_date['value'] = '1 January';
-	$expiration_date['extra'] = array(
-		'description' => '',
-		'year_textfield' => 0,
-		'year_start' => date("Y"),
-		'year_end' => date("Y") + 6,
-		'timezone' => 'site',
-		'check_daylight_savings' => 0,
-	);
-	$expiration_date['mandatory'] = 1; 
-	$expiration_date['weight'] = 1; 
-	$expiration_date['email'] = 0;
+	// expiration month
+	$expiration_month = fundraiser_create_month_field($nid, $pid);
+	$id = webform_component_insert($expiration_month);
+	$components[$id] = $expiration_month;
 	
-	$id = webform_component_insert($expiration_date);
-	$components[$id] = $expiration_date;
+	// expiration year
+	$expiration_year = fundraiser_create_year_field($nid, $pid);
+	$id = webform_component_insert($expiration_year);
+	$components[$id] = $expiration_year;
 
 	// cvv
 	$card_cvv = array();
@@ -521,4 +508,69 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$components[$id] = $recurs;
 	
 	return $components;
+}
+
+/**
+ * Creates a year expiration drop down field to be used in donation forms.
+ */
+function fundraiser_create_year_field($nid, $pid) {
+  $this_year = date('Y');
+	$years = $this_year . "\n";
+	for ($i = 1; $i <= 5; $i++) {
+    $years .= ($this_year + $i) . "\n";  
+  }
+	
+	// expiration date
+	$expiration_year = array();
+	$expiration_year['nid'] = $nid;
+	$expiration_year['pid'] = $pid; 
+	$expiration_year['form_key'] = 'card_expiration_year'; 
+	$expiration_year['name'] = 'Expiration Year';
+	$expiration_year['type'] = 'select';  
+	$expiration_year['extra'] = array(
+		'description' => '',
+		'items' => $years,
+		'multiple' => 0,
+		'aslist' => 'Y',
+  );
+	$expiration_year['mandatory'] = 1; 
+	$expiration_year['weight'] = 2; 
+	$expiration_year['email'] = 0;
+	return $expiration_year;
+}
+
+/**
+ * Creates a month expiration drop down field to be used in donation forms.
+ */
+function fundraiser_create_month_field($nid, $pid) {
+  // expiration month
+  $months = "1|January\n";
+  $months .= "2|Feburary\n";
+	$months .= "3|March\n";
+	$months .= "4|April\n";
+	$months .= "5|May\n";
+	$months .= "6|June\n";
+	$months .= "7|July\n";
+	$months .= "8|August\n";
+	$months .= "9|September\n";
+	$months .= "10|October\n";
+	$months .= "11|November\n";
+	$months .= "12|December\n";
+	
+	$expiration_month = array();
+	$expiration_month['nid'] = $nid;
+	$expiration_month['pid'] = $pid; 
+	$expiration_month['form_key'] = 'card_expiration_month'; 
+	$expiration_month['name'] = 'Expiration Month';
+	$expiration_month['type'] = 'select';
+	$expiration_month['extra'] = array(
+		'description' => '',
+		'items' => $months,
+		'multiple' => 0,
+		'aslist' => 'Y',
+  );
+	$expiration_month['mandatory'] = 1; 
+	$expiration_month['weight'] = 1; 
+	$expiration_month['email'] = 0;
+	return $expiration_month;
 }

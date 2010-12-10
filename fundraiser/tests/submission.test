@@ -92,7 +92,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->assertEqual($order->billing_country, $data['country'], t('Make sure the country submitted equals billing country in order'));
     $this->assertEqual($order->payment_details['cc_number'], $data['cc_number'], t('Make sure the credit card number submitted equals credit card number in order'));
     $this->assertEqual($order->payment_details['cc_exp_month'], $data['cc_exp_month'], t('Make sure the credit card expiration month submitted equals credit card expiration month in order'));
-    $this->assertEqual($order->payment_details['cc_exp_year'], $data['cc_exp_year'], t('Make sure the credit card expiration submitted equals credit card expiration year in order'));
+    $this->assertEqual($order->payment_details['cc_exp_year'], $data['cc_exp_year'], t('Make sure the credit card expiration year submitted equals credit card expiration year in order'));
     $this->assertEqual($order->payment_details['cc_cvv'], $data['cc_cvv'], t('Make sure the credit card cvv submitted equals credit card cvv in order'));
     $this->assertEqual($order->payment_details['cc_type'], 'visa', t('Make sure the credit card type submitted is visa'));
     $this->assertEqual($order->products[0]->nid, $node->nid, t('Make sure the product\'s node id is equal to the node id of the donation form'));
@@ -125,9 +125,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     
     // change credit card expiration date 3 months into the future
     $submission["submitted[credit_card_information][recurs_monthly][recurs]"] = 'recurs';
-    $submission["submitted[credit_card_information][card_expiration_date][month]"] = $cc_exp_month;
-    $submission["submitted[credit_card_information][card_expiration_date][day]"] = $cc_exp_day;
-    $submission["submitted[credit_card_information][card_expiration_date][year]"] = $cc_exp_year;
+    $submission["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $cc_exp_month;
+    $submission["submitted[credit_card_information][expiration_date][card_expiration_year]"] = $cc_exp_year;
     
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
@@ -353,9 +352,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $edit1["submitted[billing_information][billing_country]"] = $data['country'];
     $edit1["submitted[billing_information][billing_zipcode]"] = $data['zipcode'];
     $edit1["submitted[credit_card_information][card_number]"] = $data['cc_number'];
-    $edit1["submitted[credit_card_information][card_expiration_date][month]"] = $data['cc_exp_month'];
-    $edit1["submitted[credit_card_information][card_expiration_date][day]"] = $data['cc_exp_day'];
-    $edit1["submitted[credit_card_information][card_expiration_date][year]"] = $data['cc_exp_year'];
+    $edit1["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $data['cc_exp_month'];
+    $edit1["submitted[credit_card_information][expiration_date][card_expiration_year]"] = $data['cc_exp_year'];
     $edit1["submitted[credit_card_information][card_cvv]"] = $data['cc_cvv'];
     return $edit1;
   }

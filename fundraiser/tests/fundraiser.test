@@ -205,8 +205,11 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $valid = in_array('card_number', $keys);
     $this->assertTrue($valid, t('Verify the credit card number component is added to the donation form'));
     
-    $valid = in_array('card_expiration_date', $keys);
-    $this->assertTrue($valid, t('Verify the credit card expiration date component is added to the donation form'));
+    $valid = in_array('card_expiration_month', $keys);
+    $this->assertTrue($valid, t('Verify the credit card expiration month component is added to the donation form'));
+    
+    $valid = in_array('card_expiration_year', $keys);
+    $this->assertTrue($valid, t('Verify the credit card expiration year component is added to the donation form'));
     
     $valid = in_array('card_cvv', $keys);
     $this->assertTrue($valid, t('Verify the credit card cvv component is added to the donation form'));
