@@ -574,3 +574,26 @@ function fundraiser_create_month_field($nid, $pid) {
 	$expiration_month['email'] = 0;
 	return $expiration_month;
 }
+
+function fundraiser_required_fields() {
+  return array(
+    'ms',
+    'cid',
+    'referrer',
+    'initial_referrer',
+    'amount',
+    'first_name',
+    'last_name',
+    'email',
+    'billing_address',
+    'billing_address_2',
+    'billing_city',
+    'billing_country',
+    'billing_state',
+    'billing_zipcode',
+    'card_number',
+    'card_expiration_year',
+    'card_expiration_month',
+    'card_cvv',
+  );
+}
