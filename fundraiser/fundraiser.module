@@ -76,6 +76,11 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 	}
 }
 
+function fundraiser_form_webform_component_delete_form_alter(&$form,  &$form_state) {
+  $form['description']['#value'] = t('What the fuck do you think you\'re doing????????????????');
+  //  print "<pre>".print_r($form, TRUE)."</pre>";
+}
+
 /**
  * Implementation of hook_form_alter().
  */
@@ -1551,6 +1556,18 @@ function fundraiser_mail($key, &$message, &$params) {
       
       $message['subject'] = variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire');
       $message['body'] = $body;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_order().
+ */
+function fundraiser_order($op, &$arg1, $arg2) {
+  switch ($op) {
+    case 'delete':
+      // remove the order from fundraiser tables
+      db_query("DELETE FROM {fundraiser_recurring} WHERE order_id = %d", $arg1->order_id);
       break;
   }
 }

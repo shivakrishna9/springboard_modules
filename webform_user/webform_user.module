@@ -65,7 +65,7 @@ function webform_user_title() {
  */
 function webform_user_menu_alter(&$items) {
 	// only show related object tab if the webform is webform_user and a salesforce object has been mapped
-	$items['node/%webform_menu/edit/webform_user']['access callback'] = '_webform_user_check_settings';
+	$items['node/%webform_menu/webform/webform_user']['access callback'] = '_webform_user_check_settings';
 }
 
 /** 
