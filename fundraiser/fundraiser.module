@@ -12,7 +12,7 @@ define('DONATION_CANCELLED', 2);
 /**
  * Implementaion of hook_nodeapi().
  */
-function fundraiser_nodeapi(&$node,$op,$teaser,$page){
+function fundraiser_nodeapi(&$node, $op, $teaser, $page) {
 	
 	if ($node->type == 'webform') {
 		switch ($op) {
@@ -50,6 +50,24 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 			case 'delete':
 				fundraiser_node_delete($node->nid);
 				break;	
+				
+		  case 'view':
+		    if ($page && $node->is_donation_form) {
+		      if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
+		        // replace the donation form with a message to the user
+		        $message = '<h2>We\'re sorry.</h2>';
+		        $message .= '<p>The donation form you are trying to access has not been secured properly. The safekeeping of your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.</p>';
+		        $message .= '<p>An administrator has been notified and will correct the issue as soon as possible.</p>';
+		        $message .= '<p>Thanks for your understanding.</p>';
+		        $node->content['webform']['#value'] = $message;
+		        watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.', array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+		      }
+		      // set a reminder to turn off development mode
+		      if (variable_get('fundraiser_development_mode', 0)) {
+		        drupal_set_message(t('Fundraiser is currently running in development mode. Remember to !link this feature on production websites.', array('!link' => l('turn off', 'admin/settings/fundraiser'))));
+		      }
+		    }
+		    break;
 		}
 
 	}
@@ -74,6 +92,13 @@ function fundraiser_nodeapi(&$node,$op,$teaser,$page){
 				break;
 		}
 	}
+}
+
+/**
+ * Check if the current page is SSL
+ */
+function fundraiser_is_secure() {
+  return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? TRUE : FALSE;
 }
 
 /** 

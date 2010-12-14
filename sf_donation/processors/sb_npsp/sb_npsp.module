@@ -40,7 +40,7 @@ function sb_npsp_create_donation($order_id, $account_id, $sid) {
   require_once($path . '/donation.php');
   $donation = DonationFactory::Create('npsp', $order_id, $sid);
 	$object = $donation->map();
-	
+
 	// if this donation is part of a recurring series it will have some additional information that needs to be added
   $recurring_details = _sf_donation_get_recurring_details($order_id);
   if (!empty($recurring_details)) {

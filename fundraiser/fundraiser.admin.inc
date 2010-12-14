@@ -75,6 +75,13 @@ function fundraiser_admin_settings() {
 		$description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
 		$attributes['disabled'] = 'disabled';
 	}
+	
+	$form['fundraiser_development_mode'] = array(
+	 '#type' => 'checkbox',
+	 '#title' => t('Development mode'),
+	 '#default_value' => variable_get('fundraiser_development_mode', 0),
+	 '#description' => t('Development mode allows you to access donation forms over HTTP.'),
+	);
 		
 	$form['fundraiser_salesforce_integration'] = array(
 		'#type' => 'checkbox',
