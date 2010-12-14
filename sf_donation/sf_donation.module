@@ -361,16 +361,17 @@ function sf_donation_mapping_form_submit($form, &$form_state) {
  */
 function sf_donation_clone_map($nid, $new_nid) {
 	// get profile map for the original donation form
-	$result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_salesforce_map} f inner join
-		{webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = %d", $nid);
+	$result = db_fetch_array(db_query("SELECT nid, single_recordtype_id, recurring_recordtype_id, fields, salesforce FROM {fundraiser_salesforce_map} WHERE nid = %d", $nid));
 	
-	// loop over mapped components and find new component in cloned donation form
-	while ($data = db_fetch_object($result)) {
-		$cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = '%s' AND nid = %d", $data->form_key, $new_nid));
-		if ($cid) {
-			db_query("INSERT INTO {fundraiser_salesforce_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id);
-		}
-	}
+	db_query(
+	"
+	 INSERT INTO {fundraiser_salesforce_map} 
+	 (nid, single_recordtype_id, recurring_recordtype_id, fields, salesforce)
+	 VALUES
+	 (%d, '%s', '%s', '%s', '%s')
+  ",
+  $new_nid, $result['single_recordtype_id'], $result['recurring_recordtype_id'], $result['fields'], $result['salesforce']
+  );
 }
 
 /**
@@ -393,6 +394,9 @@ function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
 			}
 			
 			return $map;
+		}
+		elseif ($node->is_donation_form && $op == 'delete') {
+		  db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
 		}
 	}
 }
