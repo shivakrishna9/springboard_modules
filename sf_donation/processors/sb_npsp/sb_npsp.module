@@ -39,7 +39,16 @@ function sb_npsp_create_donation($order_id, $account_id, $sid) {
   $path = drupal_get_path('module', 'sf_donation');
   require_once($path . '/donation.php');
   $donation = DonationFactory::Create('npsp', $order_id, $sid);
-	return $donation->map();
+	$object = $donation->map();
+	
+	// if this donation is part of a recurring series it will have some additional information that needs to be added
+  $recurring_details = _sf_donation_get_recurring_details($order_id);
+  if (!empty($recurring_details)) {
+    $object['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
+    $object['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
+    $object['StageName'] = 'Pledged'; 
+  }
+  return $object;
 }
 
 /**
@@ -60,6 +69,31 @@ function sb_npsp_create_recurring_donation(&$order, $user_ids, $count) {
 	
 	return $donation;
 
+}
+
+/**
+ * Implementation of the postprocess method for a batch of single donations.
+ */
+function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
+	for ($i = 0; $i < $item_count; $i++) {
+		if ($responses[$i]->success) {	
+			$sfid = $responses[$i]->id;
+			db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
+			$user_ids = _sf_donation_load_user_salesforce_ids_from_order((int)$batch['records'][$i]->oid);
+			
+			// create and save the contact roles						
+			$table = 'sf_donation_opportunity_contact_role';
+			$record = new stdClass();
+			$record->contact_id = $user_ids->salesforce_contact_id;
+			$record->opportunity_id = $sfid;
+			$record->role = 'Donor';
+			drupal_write_record($table, $record);
+					
+		}
+	}
+	
+	// export them
+	sf_donation_export_opportunity_contact_roles();
 }
 
 /**

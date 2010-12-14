@@ -294,9 +294,8 @@ class Donation
       'billing_zone' => 'Billing Zone',
       'billing_postal_code' => 'Billing Postal Code',
       'billing_country' => 'Billing Country',
-      'transaction_date' => 'Transaction Date',
       'close_date' => 'Close Date',
-      'transaction_date_gm' => 'Transaction Date in GMT Format',
+      'transaction_date_gm' => 'Transaction Date/Time',
       'probability' => 'Probability',
       'stage' => 'Stage',
     );
