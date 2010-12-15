@@ -1006,8 +1006,11 @@ function salesforce_management_api_map_record_form(){
 }
 
 function salesforce_management_api_get_object_recordtypes($object) {
-	$sf = salesforce_management_api_connect();
+  if (empty($object)) {
+    return array();
+  }
   
+	$sf = salesforce_management_api_connect();
 	if ($sf) {
 		$result = $sf->client->describeSObjects(array($object));
 		if (count($result->recordTypeInfos)) {
@@ -1016,6 +1019,10 @@ function salesforce_management_api_get_object_recordtypes($object) {
 			}
 		}
 	}
+	else {
+	 return array();
+	}
+	
 	return $types;
 }
 

@@ -54,13 +54,10 @@ function fundraiser_nodeapi(&$node, $op, $teaser, $page) {
 		  case 'view':
 		    if ($page && $node->is_donation_form) {
 		      if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
-		        // replace the donation form with a message to the user
-		        $message = '<h2>We\'re sorry.</h2>';
-		        $message .= '<p>The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.</p>';
-		        $message .= '<p>An administrator has been notified and will correct the issue as soon as possible.</p>';
-		        $message .= '<p>Thanks for your understanding.</p>';
-		        $node->content['webform']['#value'] = $message;
+		        // return a 404
 		        watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.', array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+		        drupal_not_found();
+		        exit();
 		      }
 		      // set a reminder to turn off development mode
 		      if (variable_get('fundraiser_development_mode', 0)) {
