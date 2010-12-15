@@ -2,9 +2,9 @@
 name = Salesforce Queue Processor
 description = Processes the Salesforce queue
 core = 6.x
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 dependencies[] = salesforce_management_api
 dependencies[] = queue_api
 dependencies[] = trigger
 
-version = 2.0
+version = SPRINGBOARD_VERSION

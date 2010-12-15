@@ -9,6 +9,11 @@
  * 2. Get the Toolkit.
  * 3. Download your WSDL.
  */
+ 
+ /**
+ * The current system version.
+ */
+define('SPRINGBOARD_VERSION', '3.0-beta');
 
 ini_set("soap.wsdl_cache_enabled", "0");
 // Define directory paths for the Toolkit and WSDL files.
