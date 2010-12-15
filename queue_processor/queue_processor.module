@@ -1029,6 +1029,7 @@ function created_edit_link($oid, $type, $return_url = null) {
 	switch ($type) {
 		case 'user':
 			$url = $base_url . '/user/' . $oid . '/edit';
+			break;
 		case 'webform':
 			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
       $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
