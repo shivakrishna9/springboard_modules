@@ -78,6 +78,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     variable_set('uc_pg_test_gateway_cc_txn_type', 'auth_capture');
     variable_set('uc_payment_credit_gateway', 'test_gateway');
     variable_set('uc_credit_debug', 1);
+    variable_set('fundraiser_development_mode', 1);
   }
   
   /**
