@@ -1,0 +1,177 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Fundraiser module tests.
+ */
+
+class SalesforceUserTestCase extends DrupalWebTestCase {
+  private $_fundraiser_node;
+  public $_user;
+  public $_fieldmap;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Salesforce User Integration',
+      'description' => 'Tests Drupal user integration with Salesforce.',
+      'group' => 'Springboard',
+    );
+  }
+  
+  /**
+   * Implemenation of setUp().
+   */
+  function setUp() {
+    parent::setUp(
+      'salesforce_management_api',
+      'queue_api',
+      'queue_processor',
+      'profile',
+      'trigger',
+      'sf_user'
+    ); 
+    
+    variable_set('salesforce_management_api_token', 'mmUvKKXBSJAAurqBHrlcVYfN3');
+    variable_set('salesforce_management_api_username', 'apiguy@21demo.com');
+    variable_set('salesforce_management_api_password', 'J@ckson5!');
+    
+    // create profile fields
+    $this->setupProfileFields();
+    
+    // create user fieldmap
+    $this->setupUserFieldmap();
+    
+    // change uid field on users table so we don't get id collisions in Salesforce
+    $starting_id = rand(1000, 10000);
+    db_query("ALTER TABLE {users} AUTO_INCREMENT = %d", $starting_id);
+    
+  }
+  
+  /**
+   * Implementation of tearDown().
+   */
+  function tearDown() {
+    // Delete users
+    $result = db_query('SELECT uid FROM {users}');
+    while ($user = db_fetch_array($result)) {
+      user_delete(array(), $user->uid);
+    }
+    
+    db_query("DELETE FROM {saleforce_management_object_map}");
+    db_query("DELETE FROM {salesforce_management_field_map}");
+    db_query("DELETE FROM {profile_fields}");
+
+    parent::tearDown();
+  }
+
+  function testSalesforceConnection() {
+    $sf = salesforce_management_api_connect();
+    $this->assertTrue($sf, t('Make a connection to Salesforce can be made.'));
+  }
+  
+  function testFieldmapCreated() {
+    $result = db_fetch_object(db_query("SELECT * from {salesforce_management_field_map}"));
+    $this->assertEqual($result->name, 'User fieldmap', t('Make sure fieldmap name is User fieldmap.'));
+    $this->_fieldmap = $result->fieldmap;
+  }
+  
+  function testUserQueueInsertion() {
+    $name = $this->randomName();
+    $mail = "$name@example.com";
+    $edit = array(
+      'name' => $name,
+      'mail' => $mail,
+      'profile_first_name' => 'John',
+      'profile_last_name' => 'Doe',
+    );
+    
+    $this->drupalPost('user/register', $edit, 'Create new account');
+    $result = db_fetch_object(db_query("SELECT * from {sf_queue}"));
+    
+    // process the queue
+    queue_processor_process();
+
+    $user = user_load(array('name' => $name));
+    
+    // make sure the user gets their salesforce account and contact ids set
+    $this->assertNotNull($user->salesforce_account_id, t('Make sure Drupal user gets a Salesforce account id.'));
+    $this->assertNotNull($user->salesforce_contact_id, t('Make sure Drupal user gets a Salesforce contact id.'));
+    
+    // make sure the contact that got created in Salesforce has the correct values
+    $sf = salesforce_management_api_connect();
+    $contact = $sf->retrieve(array($user->salesforce_contact_id), $this->_fieldmap);
+    
+    $this->assertEqual($user->uid, $contact->Drupal_User_ID__c, t('Make sure email Drupal user uid matches contact Drupal_User_ID__c.'));
+    $this->assertEqual(strtolower($user->mail), strtolower($contact->Email), t('Make sure email Drupal user email matches contact email.'));
+    $this->assertEqual($user->profile_first_name, $contact->FirstName, t('Make sure email Drupal user first name matches contact first name.'));
+    $this->assertEqual($user->profile_last_name, $contact->LastName, t('Make sure email Drupal user last name matches contact last name.'));
+    $this->assertEqual($user->salesforce_account_id, $contact->AccountId, t('Make sure the correct Salesforce account id is stored on the user.'));
+    $this->assertEqual($user->salesforce_contact_id, $contact->Id, t('Make sure the correct Salesforce contact id is stored on the user.'));
+
+    // finally, check the id in the object map table
+    $mapped_object = db_fetch_object(db_query("SELECT * FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = 'user'", $user->uid));
+    $this->assertEqual($mapped_object->sfid, $contact->Id, t('Make sure the id stored in the object map table is correct.'));
+    
+  }
+  
+  function setupProfileFields() {
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Address', 'profile_address', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Address Line 2', 'profile_address_line_2', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('City', 'profile_city', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('State', 'profile_state', 'Personal Information', 'selection', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Zip', 'profile_zip', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Country', 'profile_country', 'Personal Information', 'textfield', 2, 1)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Campaign Id', 'profile_cid', 'System', 'textfield', 4, 0)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Market Source', 'profile_ms', 'System', 'textfield', 4, 0)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Referrer', 'profile_referrer', 'System', 'textfield', 4, 0)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Initial Referrer', 'profile_initial_referrer', 'System', 'textfield', 4, 0)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4, 0)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4, 0)");
+  }
+  
+  function setupUserFieldmap() {
+    $map = array(
+      'name' => 'User fieldmap',
+      'drupal' => 'user',
+      'salesforce' => 'Contact',
+      'automatic' => 0,
+      'dedupe_key' => 'Email',
+      'rid' => 2,
+      'recordtype_id' => 0,
+      'fields' => array(
+        'Id' => 'profile_salesforce_contact_id',
+        'AccountId' => 'profile_salesforce_account_id',
+        'LastName' => 'profile_last_name',
+        'FirstName' => 'profile_first_name',
+        'Salutation' => 'profile_salutation',
+        'Email' => 'mail',
+        'Initial_Registration_Date__c' => 'created',
+        'Drupal_User_ID__c' => 'uid',
+      ),
+      
+      'business' => array(
+        'Id' => 'never',
+        'AccountId' => 'never',
+        'LastName' => 'always',
+        'FirstName' => 'always',
+        'Email' => 'always',
+        'Drupal_User_ID__c' => 'always',
+        'Initial_Registration_Date__c' => 'always',
+      ),
+      
+      'businessSD' => array(
+        'Id' => 'always',
+        'AccountId' => 'always',
+        'LastName' => 'always',
+        'FirstName' => 'always',
+        'Email' => 'never',
+        'Drupal_User_ID__c' => 'never',
+        'Initial_Registration_Date__c' => 'never',
+      ),
+    );
+    salesforce_management_api_fieldmap_save($map);
+  }
+}

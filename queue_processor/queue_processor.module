@@ -114,6 +114,13 @@ function queue_processor_theme() {
  * Implementation of hook_cron().
  */
 function queue_processor_cron() {
+  queue_processor_process();
+}
+
+/**
+ * Processes the queue.
+ */
+function queue_processor_process() {
 	// first, verify salesforce connection
 	$sf = salesforce_management_api_connect();
 	$number_to_process = 0;
