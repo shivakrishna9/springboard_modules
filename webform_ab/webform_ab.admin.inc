@@ -6,6 +6,31 @@
  * Webform A/B Testing admin functions
  */
 
+
+function webform_ab_admin_settings(&$form_state) {
+  $form = array();
+  
+  $roles = user_roles();
+  $form['webform_ab_ignore_hits_from_roles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Roles to ignore hits from'),
+    '#description' => t('Hits and conversions will be ignored from users of the chosen roles.'),
+    '#options' => $roles,
+    '#default_value' => variable_get('webform_ab_ignore_hits_from_roles', ''),
+  );
+  $form['webform_ab_ignore_hits_from_ips'] = array(
+    '#type' => 'textarea',
+    '#title' => t('IPs to ignore hits from'),
+    '#description' => t('Ignore webform hits and conversions from users in the listed IPs. List one IP per row.'),
+    '#cols' => 60,
+    '#rows' => 5,
+    '#default_value' => variable_get('webform_ab_ignore_hits_from_ips', ''),
+  );
+  
+  
+  return system_settings_form($form);
+}
+
 /**
  * Menu callback for the Reports and Monitoring tab on Test A/B
  * 
@@ -150,7 +175,6 @@ function webform_ab_test_webforms($node) {
   
   return $return;
 }
-
 
 /**
  * Form to add webforms to the A/B Test

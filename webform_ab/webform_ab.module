@@ -14,13 +14,12 @@
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
  *  Permissions: declare winner? Start/end test?
  *  Only track one hit on a form per session ID
- *  Define admin settings page, to set the default notifications
+ *  Add options for default notification settings to admin settings form
  *  Validate SMS phone numbers
  *  Find SMS library to send notices
  *  Define daily cron to send summaries
  *  Define a hook for other modules to add win criteria
- * 
- * Test permission settings
+ *  Test permission settings
  */
 
 // Active status, for webforms within a test
@@ -51,6 +50,8 @@ function webform_ab_node_info() {
  */
 function webform_ab_perm() {
   return array(
+    'administer webform_ab', 
+    'reset webform_ab test data', 
     'create webform_ab', 
     'edit own webform_ab', 
     'edit any webform_ab', 
@@ -95,16 +96,14 @@ function webform_ab_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
-  // @todo This menu item isn't appearing as a local task
-  $items['node/%webform_ab_menuitem/reports/clear_data'] = array(
-    'title' => 'Clear Data',
+  $items['node/%webform_ab_menuitem/reports/reset'] = array(
+    'title' => 'Reset Data',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_ab_clear_test_data_confirm', 1),
-    'access callback' => 'webform_ab_can_view_reports',
-    'access arguments' => array(1),
+    'access arguments' => array('reset webform_ab test data'),
     'file' => 'webform_ab.admin.inc',
     'type' => MENU_LOCAL_TASK,
-    'weight' => 1,
+    'weight' => 5,
   );
     
     
@@ -118,8 +117,15 @@ function webform_ab_menu() {
     'type' => MENU_CALLBACK,
   );
   
-  
-  
+  $items['admin/settings/webform_ab'] = array(
+    'title' => 'Webform A/B Test Settings',
+    'description' => 'Settings for Webform A/B Tests',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ab_admin_settings'),
+    'access arguments' => array('administer webform_ab'),
+    'file' => 'webform_ab.admin.inc',
+  );
+
   return $items;
 }
 
@@ -772,23 +778,28 @@ function webform_ab_webform_ab_valid_webforms($webform_types) {
 
 /**
  * Implementation of hook_form_alter().
+ * Log a hit to the webform
  */
-function webform_ab_form_alter(&$form, $form_state, $form_id) {  
-  if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
-    foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
-      $test_webform_id = 'webform_client_form_' . $webform_nid;
-      if ($test_webform_id == $form_id) {
-        $form['#submit'][] = 'webform_ab_webform_submit';
-        $form['test_nid'] = array(
-          '#type' => 'hidden',
-          '#value' => $test_nid
-        );
-        $form['webform_nid'] = array(
-          '#type' => 'hidden',
-          '#value' => $webform_nid
-        );
-        db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($test_nid, $webform_nid, time()));
-        break;
+function webform_ab_form_alter(&$form, $form_state, $form_id) {
+    if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
+      foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
+        $test_webform_id = 'webform_client_form_' . $webform_nid;
+        if ($test_webform_id == $form_id) {
+          // Determine if this hit should be logged
+          if (webform_ab_should_log_hits()) {
+            $form['#submit'][] = 'webform_ab_webform_submit';
+            $form['test_nid'] = array(
+              '#type' => 'hidden',
+              '#value' => $test_nid
+            );
+            $form['webform_nid'] = array(
+              '#type' => 'hidden',
+              '#value' => $webform_nid
+            );
+            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($test_nid, $webform_nid, time()));
+            break;
+          }
+        }
       }
     }
   }
@@ -796,23 +807,27 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
 
 
 /**
- * Handle the submission of a webform that is part of a test
+ * Handle the submission of a webform that is part of a test. Log the conversion 
+ * if appropriate.
  */
 function webform_ab_webform_submit($form, &$form_state) {
-  // @todo Trigger a hook so that the conversion can be determined based on the webform type for this test
-  $test_nid = $form_state['values']['test_nid'];
-  $test_node = node_load($test_nid);
-  $conversion_check_results = module_invoke_all('webform_ab_validate_conversion', $test_node->webform_types, $test_node, $form_state);
+  // Determine if this conversion should be logged
+  if (webform_ab_should_log_hits()) {
+    $test_nid = $form_state['values']['test_nid'];
+    $test_node = node_load($test_nid);
+    $conversion_check_results = module_invoke_all('webform_ab_validate_conversion', $test_node->webform_types, $test_node, $form_state);
   
-  // Loop over the returned values from the hook and log a conversion if any of
-  // them returned TRUE
-  foreach ($conversion_check_results as $val) {
-    if ($val === TRUE) {
-      db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+    // Loop over the returned values from the hook and log a conversion if any of
+    // them returned TRUE
+    foreach ($conversion_check_results as $val) {
+      if ($val === TRUE) {
+        db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+      }
     }
+    
+    // Check if a form should be declared the winner in this A/B Test
+    _webform_ab_check_for_win($form_state['values']['test_nid']);
   }
-  
-  _webform_ab_check_for_win($form_state['values']['test_nid']);
 }
 
 /**
@@ -925,4 +940,66 @@ function webform_ab_webform_ab_check_win_condition($win_type, $webforms_to_check
  */
 function webform_ab_webform_ab_get_webform_types() {
   return array('webform' => 'Standard Webform');
+}
+
+
+/**
+ * Determine if hits/conversions from the current user should be logged
+ * The admin form at admin/settings/webform_ab allows admins to choose roles and 
+ * IPs to exclude from logging
+ * Returns true if hits/conversions SHOULD be logged, and false if not
+ * 
+ * @return  bool  Returns true if hits/conversions SHOULD be logged, and 
+ *                false if not
+ */
+function webform_ab_should_log_hits() {
+  global $user;
+  $ips = variable_get('webform_ab_ignore_hits_from_ips', '');
+  $roles = variable_get('webform_ab_ignore_hits_from_roles', '');
+  
+  // Check the user roles
+  if ($roles != '') {
+    // Convert the array of roles (which are role_id => 0 or 1) to a flat array 
+    // of role IDs that should be excluded
+    $roles_to_exclude = array();
+    foreach ($roles as $role_id => $enabled) {
+      if ($enabled > 0) {
+        $roles_to_exclude[] = $role_id;
+      }
+    }
+    
+    // Loop over the user's roles and see if any are excluded
+    foreach ($user->roles as $role_id => $role_name) {
+      if (in_array($role_id, $roles_to_exclude)) {
+        // This role should not have hits/conversions logged, so return false
+        return false;
+      }
+    }
+  }
+
+
+  // Check the user IP
+  if ($ips != '') {
+    $user_ip = $_SERVER['REMOTE_ADDR'];
+    // Split IPs by new line and comma
+    $ips_to_exclude = preg_split("/\\n|,/", $ips);
+    // Trim off any spaces
+    array_walk($ips_to_exclude, 'trim_byref');
+    // See if the user's IP is excluded
+    if (in_array($user_ip, $ips_to_exclude)) {
+      return false;
+    }
+  }  
+  
+  // User didn't qualify for any of the exceptions, so their hits/conversions
+  // should be recorded
+  return true;
+}
+
+
+// Define a trim function for use with array_walk()
+if (!function_exists('trim_byref')) {
+  function trim_byref(&$string) {
+    $string = trim($string);
+  }
 }
