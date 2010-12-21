@@ -10,12 +10,11 @@
 function webform_ab_admin_settings(&$form_state) {
   $form = array();
   
-  $roles = user_roles();
   $form['webform_ab_ignore_hits_from_roles'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Roles to ignore hits from'),
     '#description' => t('Hits and conversions will be ignored from users of the chosen roles.'),
-    '#options' => $roles,
+    '#options' => user_roles(),
     '#default_value' => variable_get('webform_ab_ignore_hits_from_roles', ''),
   );
   $form['webform_ab_ignore_hits_from_ips'] = array(
