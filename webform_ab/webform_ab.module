@@ -781,24 +781,23 @@ function webform_ab_webform_ab_valid_webforms($webform_types) {
  * Log a hit to the webform
  */
 function webform_ab_form_alter(&$form, $form_state, $form_id) {
-    if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
-      foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
-        $test_webform_id = 'webform_client_form_' . $webform_nid;
-        if ($test_webform_id == $form_id) {
-          // Determine if this hit should be logged
-          if (webform_ab_should_log_hits()) {
-            $form['#submit'][] = 'webform_ab_webform_submit';
-            $form['test_nid'] = array(
-              '#type' => 'hidden',
-              '#value' => $test_nid
-            );
-            $form['webform_nid'] = array(
-              '#type' => 'hidden',
-              '#value' => $webform_nid
-            );
-            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($test_nid, $webform_nid, time()));
-            break;
-          }
+  if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
+    foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
+      $test_webform_id = 'webform_client_form_' . $webform_nid;
+      if ($test_webform_id == $form_id) {
+        // Determine if this hit should be logged
+        if (webform_ab_should_log_hits()) {
+          $form['#submit'][] = 'webform_ab_webform_submit';
+          $form['test_nid'] = array(
+            '#type' => 'hidden',
+            '#value' => $test_nid
+          );
+          $form['webform_nid'] = array(
+            '#type' => 'hidden',
+            '#value' => $webform_nid
+          );
+          db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($test_nid, $webform_nid, time()));
+          break;
         }
       }
     }
