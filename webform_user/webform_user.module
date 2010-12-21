@@ -46,7 +46,7 @@ function webform_user_menu() {
 		'page callback' => 'drupal_get_form',
 		'page arguments' => array('webform_user_settings_form'),
 		'access arguments' => array('Map webform submissions to Salesforce objects'),
-		'type' => MENU_NORMAL_ITEMS,
+		'type' => MENU_NORMAL_ITEM,
 		'file' => 'webform_user.admin.inc',
 	);
 	

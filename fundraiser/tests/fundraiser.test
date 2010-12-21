@@ -45,7 +45,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'access all webform results',
       'edit all webform submissions',
       'delete all webform submissions',
-      'create donation forms',
+      'create donation form',
     );
     
     // Create and log in our privileged user.
@@ -227,7 +227,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     }
 
     $settings = array(
-     'type' => 'webform',
+     'type' => 'donation_form',
      'language' => '',
      'uid' => '1',
      'status' => '1',
@@ -243,10 +243,10 @@ class FundraiserTestCase extends DrupalWebTestCase {
      'format' => '1',
      'is_donation_form' => '1',
      'gateway' => 'test_gateway',
-     'confirmation_email_from_name' => 'Test',
-     'confirmation_email_from_email' => 'test@jacksonriver.com',
-     'confirmation_email_subject' => 'Thanks',
-     'confirmation_email_message' => 'Thanks',
+     'receipt_email_from' => 'Test',
+     'receipt_email_address' => 'test@jacksonriver.com',
+     'receipt_email_subject' => 'Thanks',
+     'receipt_email_message' => 'Thanks',
      'donation_amounts' => '10,20,30',
      'show_other_amount' => '1',
      'minimum_donation_amount' => '10',

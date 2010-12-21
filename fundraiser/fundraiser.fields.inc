@@ -20,6 +20,7 @@
  *   A minimum value for the other amount field that will be validated upon submission
  */
 function fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
   
   // create an array to hold all of the created components
   $components = array();

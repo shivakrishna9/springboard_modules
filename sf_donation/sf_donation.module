@@ -375,12 +375,10 @@ function sf_donation_clone_map($nid, $new_nid) {
  * Implementaion of hook_nodeapi().
  */
 function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
-	if($node->type == 'webform' && $node->is_donation_form) {
-		//$parts = explode("/", $_GET['q']);
-		
-		//if($parts[0]=='node' && $parts[2]=='webform' && $parts[3] == 'salesforce-donation-mapping' && $op == 'load'){
-			$result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-			
+	if ($node->type == 'donation_form') {
+  switch ($op) {
+    case 'load':
+      $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
 			while($row = db_fetch_object($result)) {
         $fields = unserialize($row->fields);
         foreach($fields as $k => $v) {
@@ -389,13 +387,14 @@ function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
         $map['single_recordtype_id'] = $row->single_recordtype_id;			   
         $map['recurring_recordtype_id'] = $row->recurring_recordtype_id;
 			}
-			
 			return $map;
-		}
-		elseif ($node->is_donation_form && $op == 'delete') {
-		  db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-		}
-	
+      break;
+      
+    case 'delete':
+       db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
+      break;
+    }
+  }
 }
 
 /**

@@ -24,6 +24,9 @@ function fundraiser_uninstall() {
 function fundraiser_enable() {
 	configure_ubercart_settings();
 	create_countries();
+	$result = variable_get('webform_node_types', array());
+  $result[] = 'donation_form';
+  variable_set('webform_node_types', $result);
 }
 
 /** 
@@ -38,6 +41,73 @@ function fundraiser_disable() {
  * Implementation of hook_schema().
  */
 function fundraiser_schema() {
+  $schema['fundraiser'] = array(
+    'description' => t('Stores data for donation_form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'description' => t('The payment gateway the donation form uses to process credit cards.'),
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+      ),
+      'receipt_email_from' => array(
+        'description' => t('The name that will appear in the from line in the receipt email.'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'receipt_email_address' => array(
+        'description' => t('The from email address that will be used in the receipt email.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'receipt_email_subject' => array(
+        'description' => t('The subject line of the receipt email.'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'receipt_email_message' => array(
+        'description' => t('The message that will appear in the receipt email.'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'donation_amounts' => array(
+        'description' => t('A comma delimited string of ask amounts to be displayed on the donation form.'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'show_other_amount' => array(
+        'description' => t('Flag to toggle the other amount field on and off.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'minimum_donation_amount' => array(
+        'description' => t('The minimum donation amount the donation form will accept.'),
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
+      'internal_name' => array(
+        'description' => t('Another name for the donation form that will not be displayed to end users.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
 	$schema['fundraiser_webform_order'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -633,4 +703,47 @@ function fundraiser_update_6300() {
     // delete old field
     db_query("DELETE FROM {webform_component} WHERE cid = %d and nid = %d", $data->cid, $data->nid);
   }
+}
+
+/**
+ * Convert donation froms to a real node type.
+ */
+function fundraiser_update_6301() {
+  // create table for storing new donation form nodes
+  db_query(
+    "
+      CREATE TABLE {fundraiser} (
+      nid int(10) unsigned NOT NULL,
+      gateway varchar(50) NOT NULL,
+      receipt_email_from varchar(100) default NULL,
+      receipt_email_address varchar(255) default NULL,
+      receipt_email_subject varchar(100) default NULL,
+      receipt_email_message text,
+      donation_amounts varchar(100) default NULL,
+      show_other_amount tinyint(4) default '0',
+      is_donation_form tinyint(4) default '0',
+      minimum_donation_amount decimal(15,3) default NULL,
+      internal_name varchar(255) default NULL,
+      PRIMARY KEY (nid))
+    "
+  );
+
+  // convert donation form to a node type
+  $result = variable_get('webform_node_types', array());
+  $result[] = 'donation_form';
+  variable_set('webform_node_types', $result);
+  
+  // make a copy of all items in fundraiser_gateway
+  db_query(
+    "
+      INSERT INTO {fundraiser} 
+      (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name)
+      SELECT 
+      nid, gateway, confirmation_email_from_name, confirmation_email_from_email, confirmation_email_subject, confirmation_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name from {fundraiser_gateway}
+    "
+  );
+  
+  // change all donation form webforms to the new donation_form content type   
+  db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
+  db_query("DROP TABLE {fundraiser_gateway}");
 }
