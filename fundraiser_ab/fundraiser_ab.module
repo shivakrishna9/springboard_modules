@@ -47,12 +47,21 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_types) 
   $result = db_query("SELECT nid FROM {fundraiser_gateway}");
 
   if ($webform_types == 'fundraiser') {
-    // Add all fundraiser forms to a new array and reset the $forms array to that
+    // Remove non-fundraiser forms from the list of forms
+    
+    // Determine the fundraiser form nid's
     $valid_forms = array();
     while ($row = db_fetch_object($result)) {
-      $valid_forms[$row->nid] = $forms[$row->nid];
+      $valid_forms[] = $row->nid;
     }
-    $forms = $valid_forms;
+    
+    // Loop over all the forms that can be added, and remove any that are not
+    // fundraiser forms
+    foreach ($forms as $nid => $title) {
+      if (!in_array($nid, $valid_forms)) {
+        unset($forms[$nid]);
+      }
+    }
   }
   else {
     // Remove fundraising forms from the list
