@@ -172,6 +172,19 @@ function webform_ab_schema() {
         'default' => 0,
         'not null' => TRUE,
       ),
+      'uid' => array(
+        'type' => 'int',
+        'description' => 'UID of user who hit the form',
+        'default' => 0,
+        'not null' => TRUE,
+      ),
+      'ip' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'IP of user who hit the form',
+        'default' => '',
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('hit_id'),
     'indexes' => array(
@@ -217,4 +230,15 @@ function webform_ab_schema() {
   
   
   return $schema;
+}
+
+
+/**
+ * Add webform hit uid and ip fields
+ */
+function webform_ab_update_6001() {
+  $updates = array();
+  db_add_field($updates, 'webform_ab_hits', 'uid', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
+  db_add_field($updates, 'webform_ab_hits', 'ip', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  return $updates;  
 }

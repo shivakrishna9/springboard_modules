@@ -796,7 +796,24 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
             '#type' => 'hidden',
             '#value' => $webform_nid
           );
-          db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time) VALUES(%d, %d, %d)", array($test_nid, $webform_nid, time()));
+          
+          global $user;
+          $log_hit = TRUE;
+          
+          // If repeat hits from a user should be ignore, check if this user has
+          // already hit the form
+          $ignore_repeat_hits = variable_get('webform_ab_ignore_repeat_hits', '1');
+          if ($ignore_repeat_hits > 0) {
+            $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND uid=%d AND ip='%s'", array($test_nid, $webform_nid, $user->uid, ip_address())));
+            if ($existing_hit['hit_id'] > 0) {
+              $log_hit = FALSE;
+            }
+          }
+          
+          // If the hit should be logged, do so
+          if ($log_hit) {
+            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time, uid, ip) VALUES(%d, %d, %d, %d, '%s')", array($test_nid, $webform_nid, time(), $user->uid, ip_address()));
+          }
           break;
         }
       }

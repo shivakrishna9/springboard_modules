@@ -25,7 +25,12 @@ function webform_ab_admin_settings(&$form_state) {
     '#rows' => 5,
     '#default_value' => variable_get('webform_ab_ignore_hits_from_ips', ''),
   );
-  
+  $form['webform_ab_ignore_repeat_hits'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log only one hit per user per form'),
+    '#description' => t('If checked, hits on a webform will only be logged once per user.'),
+    '#default_value' => variable_get('webform_ab_ignore_repeat_hits', '1'),
+  );
   
   return system_settings_form($form);
 }
@@ -110,7 +115,13 @@ function webform_ab_test_reports($node) {
     if ($winning_webform_nid == $webform_nid) {
       $line[] = $post_win_hit_data['pre_win'];
       $line[] = $post_win_conversion_data['pre_win'];
-      $line[] = round(100 * $post_win_conversion_data['pre_win'] / $post_win_hit_data['pre_win']) . '%';
+      // Only divide if greater than 0
+      if ($post_win_hit_data['pre_win'] > 0) {
+        $line[] = round(100 * $post_win_conversion_data['pre_win'] / $post_win_hit_data['pre_win']) . '%';
+      }
+      else {
+        $line[] = '0%';
+      }
       $line[] = $post_win_hit_data['post_win'];
       $line[] = $post_win_conversion_data['post_win'];
       $line[] = round(100 * $post_win_conversion_data['post_win'] / $post_win_hit_data['post_win']) . '%';
