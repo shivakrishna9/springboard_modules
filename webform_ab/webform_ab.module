@@ -13,13 +13,14 @@
  *  Option to start the test and lock down the edits
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
  *  Permissions: declare winner? Start/end test?
- *  Only track one hit on a form per session ID
  *  Add options for default notification settings to admin settings form
  *  Validate SMS phone numbers
  *  Find SMS library to send notices
  *  Define daily cron to send summaries
- *  Define a hook for other modules to add win criteria
- *  Test permission settings
+ *  Define a hook for other modules to add their own win cases
+ *      For example, instead conversion count or percentage, could declare a winner
+ *      once a donation form reaches $2,000 in donations
+ *  Further test permission settings
  */
 
 // Active status, for webforms within a test
@@ -154,15 +155,6 @@ function webform_ab_menuitem_load($nid) {
     return FALSE;
   }
   return $node;
-}
-
-
-
-
-function webform_ab_menu_alter(&$items) {
-  /**
-   * @todo Make sure "create webform_ab" permission is checked for create menu item
-   */
 }
 
 
@@ -868,7 +860,6 @@ function webform_ab_webform_ab_validate_conversion($webform_types, $test_node, $
  * can check their winning conditions, if chosen.
  * This module also implements hook_webform_ab_check_win_condition() below, to
  * check for the basic Total Conversions and Conversion Percentage criteria
- * @todo Check the minimum hit count, too
  */
 function _webform_ab_check_for_win($test_nid) {
   // Check if there is already a winner, and gather a list of forms that have reached the minimum number of hits
