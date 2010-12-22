@@ -785,7 +785,7 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
     foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
       $test_webform_id = 'webform_client_form_' . $webform_nid;
       if ($test_webform_id == $form_id) {
-        // Determine if this hit should be logged
+        // Determine if this hits and conversions should be logged
         if (webform_ab_should_log_hits()) {
           $form['#submit'][] = 'webform_ab_webform_submit';
           $form['test_nid'] = array(
@@ -800,10 +800,13 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
           global $user;
           $log_hit = TRUE;
           
+          // If this form load is an AJAX call or post-submit, don't log a hit
+          if (!empty($form_state['storage']) || !empty($form_state['post'])) {
+            $log_hit = FALSE;
+          }
           // If repeat hits from a user should be ignore, check if this user has
           // already hit the form
-          $ignore_repeat_hits = variable_get('webform_ab_ignore_repeat_hits', '1');
-          if ($ignore_repeat_hits > 0) {
+          elseif (variable_get('webform_ab_ignore_repeat_hits', '1') > 0) {
             $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND uid=%d AND ip='%s'", array($test_nid, $webform_nid, $user->uid, ip_address())));
             if ($existing_hit['hit_id'] > 0) {
               $log_hit = FALSE;
