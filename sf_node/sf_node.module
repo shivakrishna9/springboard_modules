@@ -424,21 +424,24 @@ function import_node_updates($sfids, $fieldmap) {
  *   The nid of the imported node or FALSE on failure.
  */
 function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
-
   // Loop through the fields on the fieldmap.
   foreach ($map['fields'] as $value => $key) {
-    // If a handler is specified for importing a value from Salesforce.
+    // Otherwise set the field on the export object to the value of the source field if it's present on the source object.
+    $sf_value = $object->$value;
+    $rule = $map['businessSD'][$value];
+    
+    // Pull the current Drupal value of the field
+    $drupal_value = $drupal['fields'][$key]['export'] ? $drupal['fields'][$key]['export']($node, $key, $object, $value) : $node->$key;
+    
+    // Pick which value to apply
+    $map_value = salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value, $node, $drupal_value);
+    
+    // Let the import handler do it's work
     if (isset($drupal['fields'][$key]['import'])) {
-      // Get the value for the field from the handler function.
-      $drupal['fields'][$key]['import']($node, $key, $object, $value);
+      $drupal['fields'][$key]['import']($node, $key, $object, $map_value);
     }
-    elseif (isset($object->$value)) {
-      // Otherwise set the field on the export object to the value of the source field if it's present on the source object.
-      $sfValue = $object->$value;
-      $rule = $map['businessSD'][$value];
-      $fieldKey = $key;
-      $mapValue = salesforce_management_api_import_fieldmap_control($rule, $fieldKey, $sfValue, $node);
-  		  $node->$key = $mapValue;
+    else {
+      $node->$key = $map_value;
     }
   }
   // add something to the node we can check on nodeapi so that we don't put it back into the queue
@@ -510,33 +513,23 @@ function _sf_node_load_user_salesforce_ids($uid) {
 /**
  * Set business rule to map SF values with Drupal object and fieldmap.
  */
-function salesforce_management_api_import_fieldmap_control($rule, $fieldKey, $sfValue = NULL, &$node) {
+function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value = NULL, &$node, $drupal_value = null) {
+  switch ($rule) {
+    case 'blank':
+      // if Drupal object value is null then overwrite 
+      return ($drupal_value == '' ? $sf_value : $drupal_value);   
 
-	switch ($rule) {
-		case 'blank':
-			// if Drupal object value is null then overwrite 
-			if ($node->$fieldKey == '') {
-		    return $sfValue;
-			}
-			else {
-        return $node->$fieldKey;
-			}
-      break;
-			
-		case 'append':
-			// append with the Drupal object value
-			return $node->$fieldKey.' '.$sfValue;
-      break;
-			
-		case 'always':
-			// always overwrite with the Drupal value
-      return $sfValue;
-			break;
-		
-		case 'never':
-			// never overwrite with the Drupal value
-			return $node->$fieldKey;
-		  break;
-	}
-	
+    case 'append':
+      // append with the Drupal object value
+      return $drupal_value.' '.$sf_value;
+
+    case 'always':
+      // always overwrite with the Drupal value
+      return $sf_value;
+
+    case 'never':
+      // never overwrite with the Drupal value
+      return $drupal_value;
+  }
+  
 }
