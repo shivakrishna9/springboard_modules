@@ -15,6 +15,7 @@ function sf_donation_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_donation_mapping_form', 1),
     'access callback' => 'mapping_form_access',
+    'access arguments' => array(1),
     'weight' => 35,
     'type' => MENU_LOCAL_TASK,
   );

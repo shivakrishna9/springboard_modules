@@ -609,10 +609,12 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   }
 }
 
-function mapping_form_access() {
+function mapping_form_access($node) {
+  //$node = node_load($nid)
 	//$is_donation_form = db_result(db_query("select is_donation_form from {fundraiser_gateway} where nid = %d", arg(1)));
 	//return $is_donation_form;
-	return TRUE;
+	//return TRUE;
+	return $node->type == 'donation_form';
 }
 
 /**
@@ -642,6 +644,7 @@ function fundraiser_menu() {
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('fundraiser_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
+	    'access arguments' => array(1),
 	    'file' => 'fundraiser_components.inc',
 	    'weight' => 30,
 	    'type' => MENU_LOCAL_TASK,
