@@ -134,6 +134,8 @@ class Donation
   public $transaction_date_gm = null;
   public $probability = 50.00;
   public $stage;
+  public $payment_gateway;
+  public $payment_transaction_id;
   
   function __construct($order_id, $sid) {
   
@@ -186,6 +188,11 @@ class Donation
   	}
     
     uc_credit_cache('clear');
+    
+    // add gateway and transaction id
+    $txn_details = $this->_load_transaction_details($this->order_id);
+    $this->payment_gateway = $txn_details['gateway'];
+    $this->payment_transaction_id = $txn_details['txn_id'];
     
     // if this is a recurring donation, make sure we get the right close date  	
   	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
@@ -264,6 +271,31 @@ class Donation
     }	
   }
   
+  /**
+   * Gets the transaction details for a specific order.
+   */
+  function _load_transaction_details($order_id) {
+    $details = array();
+    $result = db_query(
+      "
+        SELECT order_id, gateway, txn_id 
+        FROM {fundraiser_webform_order} 
+        WHERE order_id = %d
+        UNION
+        SELECT order_id, gateway, txn_id
+        FROM {fundraiser_recurring}
+        WHERE order_id = %d
+      ",
+      $order_id, $order_id
+    );
+        
+    while ($data = db_fetch_object($result)) {
+      $details['gateway'] = $data->gateway;
+      $details['txn_id'] = $data->txn_id;
+    }
+    return $details;
+  }
+  
   private function _convert_country($id) {
     return db_result(db_query("SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d", $id));
   }
@@ -294,11 +326,12 @@ class Donation
       'billing_zone' => 'Billing Zone',
       'billing_postal_code' => 'Billing Postal Code',
       'billing_country' => 'Billing Country',
-      'transaction_date' => 'Transaction Date',
       'close_date' => 'Close Date',
-      'transaction_date_gm' => 'Transaction Date in GMT Format',
+      'transaction_date_gm' => 'Transaction Date/Time',
       'probability' => 'Probability',
       'stage' => 'Stage',
+      'payment_gateway' => 'Payment Gateway',
+      'payment_transaction_id' => 'Payment Transaction ID',
     );
   }
   

@@ -13,7 +13,7 @@ $(document).ready(function(){
 	
 	$('#edit-submitted-donation-other-amount').change(function() {
 		if ($(this).val() != '') {
-			$('#edit-submitted-donation-amount-other').attr('checked', true);
+			$(':radio[value=other]').attr('checked', true);
 		}
 	});
 	

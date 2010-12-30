@@ -523,7 +523,7 @@ function fundraiser_donation_amount_form_validate($form, &$form_state) {
 	}
 	
 	// get minimum amount
-	$minimum = db_result(db_query("select minimum_donation_amount from {fundraiser_gateway} where nid = %d", $form_state['values']['amount']['nid']));
+	$minimum = db_result(db_query("select minimum_donation_amount from {fundraiser} where nid = %d", $form_state['values']['amount']['nid']));
 	if ($form_state['values']['amount']['fee_amount'] <= $minimum) {
 		$minimum = money_format('%i', $minimum);
 		form_set_error('amount', t("Donation amount must be greater than $$minimum"));

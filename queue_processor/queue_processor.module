@@ -114,6 +114,13 @@ function queue_processor_theme() {
  * Implementation of hook_cron().
  */
 function queue_processor_cron() {
+  queue_processor_process();
+}
+
+/**
+ * Processes the queue.
+ */
+function queue_processor_process() {
 	// first, verify salesforce connection
 	$sf = salesforce_management_api_connect();
 	$number_to_process = 0;
@@ -1029,6 +1036,7 @@ function created_edit_link($oid, $type, $return_url = null) {
 	switch ($type) {
 		case 'user':
 			$url = $base_url . '/user/' . $oid . '/edit';
+			break;
 		case 'webform':
 			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
       $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';

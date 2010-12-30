@@ -45,7 +45,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'access all webform results',
       'edit all webform submissions',
       'delete all webform submissions',
-      'create donation forms',
+      'create donation form',
     );
     
     // Create and log in our privileged user.
@@ -53,6 +53,8 @@ class FundraiserTestCase extends DrupalWebTestCase {
     
     // Create ubercart settings
     $this->setupPayment();
+    $this->setupProfileFields();
+    $this->setProfileFields();
   }
   
   /**
@@ -75,6 +77,45 @@ class FundraiserTestCase extends DrupalWebTestCase {
     variable_set('uc_pg_test_gateway_enabled', 1);
     variable_set('uc_pg_test_gateway_cc_txn_type', 'auth_capture');
     variable_set('uc_payment_credit_gateway', 'test_gateway');
+    variable_set('uc_credit_debug', 1);
+    variable_set('fundraiser_development_mode', 1);
+  }
+  
+  /**
+   * Creates the stanard profile fields used by the fundraiser module.
+   */
+  function setupProfileFields() {
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Address', 'profile_address', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Address Line 2', 'profile_address_line_2', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('City', 'profile_city', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('State', 'profile_state', 'Personal Information', 'selection', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Zip', 'profile_zip', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Country', 'profile_country', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Campaign Id', 'profile_cid', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Market Source', 'profile_ms', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Referrer', 'profile_referrer', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Initial Referrer', 'profile_initial_referrer', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4)");
+  }
+  
+  function setProfileFields() {
+    $personal = array();
+    $personal['profile_first_name'] = 'John';
+    $personal['profile_last_name'] = 'Doe';
+    $personal['profile_address'] = '100 Elm Street';
+    $personal['profile_address_line_2'] = '#5';
+    $personal['profile_city'] = 'Washington';
+    $personal['profile_state'] = 16;
+    $personal['profile_zip'] = 20009;
+    $personal['profile_country'] = 840;
+    _fundraiser_profile_save_profile($personal, $this->_user, 'Personal Information');
+    $system = array();
+    $system['profile_cid'] = '';
+    $system['profile_ms'] = 'market-source';
+    $system['profile_referrer'] = '';
   }
   
   /**
@@ -165,8 +206,11 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $valid = in_array('card_number', $keys);
     $this->assertTrue($valid, t('Verify the credit card number component is added to the donation form'));
     
-    $valid = in_array('card_expiration_date', $keys);
-    $this->assertTrue($valid, t('Verify the credit card expiration date component is added to the donation form'));
+    $valid = in_array('card_expiration_month', $keys);
+    $this->assertTrue($valid, t('Verify the credit card expiration month component is added to the donation form'));
+    
+    $valid = in_array('card_expiration_year', $keys);
+    $this->assertTrue($valid, t('Verify the credit card expiration year component is added to the donation form'));
     
     $valid = in_array('card_cvv', $keys);
     $this->assertTrue($valid, t('Verify the credit card cvv component is added to the donation form'));
@@ -183,7 +227,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     }
 
     $settings = array(
-     'type' => 'webform',
+     'type' => 'donation_form',
      'language' => '',
      'uid' => '1',
      'status' => '1',
@@ -199,10 +243,10 @@ class FundraiserTestCase extends DrupalWebTestCase {
      'format' => '1',
      'is_donation_form' => '1',
      'gateway' => 'test_gateway',
-     'confirmation_email_from_name' => 'Test',
-     'confirmation_email_from_email' => 'test@jacksonriver.com',
-     'confirmation_email_subject' => 'Thanks',
-     'confirmation_email_message' => 'Thanks',
+     'receipt_email_from' => 'Test',
+     'receipt_email_address' => 'test@jacksonriver.com',
+     'receipt_email_subject' => 'Thanks',
+     'receipt_email_message' => 'Thanks',
      'donation_amounts' => '10,20,30',
      'show_other_amount' => '1',
      'minimum_donation_amount' => '10',

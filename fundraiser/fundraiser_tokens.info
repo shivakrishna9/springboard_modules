@@ -1,8 +1,8 @@
 ; $Id: fundraiser_tokens.info,v 1.0.0.0 2010/11/16 21:31:24 pcave Exp $
 name = Fundraiser Tokens
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 description = Provides additional tokens for fundraiser and ubercart
 dependencies[] = token
 dependencies[] = uc_order
 core = 6.x
-version =  2.0
+version =  SPRINGBOARD_VERSION

@@ -75,6 +75,13 @@ function fundraiser_admin_settings() {
 		$description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
 		$attributes['disabled'] = 'disabled';
 	}
+	
+	$form['fundraiser_development_mode'] = array(
+	 '#type' => 'checkbox',
+	 '#title' => t('Development mode'),
+	 '#default_value' => variable_get('fundraiser_development_mode', 0),
+	 '#description' => t('Development mode allows you to access donation forms over HTTP.'),
+	);
 		
 	$form['fundraiser_salesforce_integration'] = array(
 		'#type' => 'checkbox',
@@ -136,7 +143,7 @@ function fundraiser_admin_settings() {
  * Creates a list of all donation forms on the site
  */
 function fundraiser_donation_form_list() {
-	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser_gateway} f
+	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f
 		ON f.nid = n.nid ORDER BY n.changed DESC");
 		
 	$header = array('Title', 'Internal Name', 'Last Modified', '', '', '');

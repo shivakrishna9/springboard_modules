@@ -1,9 +1,0 @@
-; $Id: sf_node_import.info,v 1.0.0.0 2009/09/17 06:44:28 pcave Exp $
-name = SF Node Import
-description = Imports objects from salesforce with the Salesforce API.
-dependencies[] = salesforce_management_api
-dependencies[] = sf_node
-
-package = Jackson River SpringBoard
-core = 6.x
-version = "1.0-beta"

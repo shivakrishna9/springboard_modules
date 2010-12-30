@@ -2,7 +2,7 @@
 name = SF Node Integration
 description = Integrates the core node object and various node related modules with the Salesforce API.
 dependencies[] = salesforce_management_api
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 core = 6.x
 
-version = "alpha"
+version = SPRINGBOARD_VERSION
