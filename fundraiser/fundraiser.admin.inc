@@ -143,7 +143,7 @@ function fundraiser_admin_settings() {
  * Creates a list of all donation forms on the site
  */
 function fundraiser_donation_form_list() {
-	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser_gateway} f
+	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f
 		ON f.nid = n.nid ORDER BY n.changed DESC");
 		
 	$header = array('Title', 'Internal Name', 'Last Modified', '', '', '');

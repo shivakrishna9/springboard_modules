@@ -179,15 +179,16 @@ function fundraiser_insert($node) {
     $node->minimum_donation_amount
   );
   
-  // TOD - check cloning !$node->is_being_cloned && arg(2) != 'clone'))
-  
-  // add webform components
-  module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-  $components = fundraiser_create_webform_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
-	// automap
-	fundraiser_user_map_create($node->nid, $components);
-  // fire a hook that other modules can utilize to add additional processing when a donation form is created
-  module_invoke_all('fundraiser_form_insert', $node, $components);
+  // skip some steps if the form is being cloned
+  if (!$node->is_being_cloned) {
+    // add webform components
+    module_load_include('inc', 'fundraiser', 'fundraiser.fields');
+    $components = fundraiser_create_webform_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
+  	// automap
+  	fundraiser_user_map_create($node->nid, $components);
+    // fire a hook that other modules can utilize to add additional processing when a donation form is created
+    module_invoke_all('fundraiser_form_insert', $node, $components);
+  }
 }
 
 /**
@@ -296,10 +297,28 @@ function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_stat
 }
 
 /**
+ * Submit handler for donation form cloning.
+ */
+function fundraiser_clone_form($form, &$form_state) {
+  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+  $nid = $form['nid']['#value'];
+  fundraiser_clone_donation_form($nid);
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function fundraiser_form_alter(&$form, $form_state, $form_id) {
-			
+  if ($form_id == 'donation_form_node_form') {
+    // TODO: write submit handler, check permissions before displaying button
+    $form['buttons']['clone'] = array(
+      '#type' => 'submit',
+      '#value' => 'Clone',
+      '#submit' => array('fundraiser_clone_form'),
+      '#weight' => 100,
+    );
+  }
+  			
 	if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
 		global $user;
@@ -609,11 +628,10 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   }
 }
 
+/**
+ * Provides access to the mapping tabs if node type is donation form.
+ */
 function mapping_form_access($node) {
-  //$node = node_load($nid)
-	//$is_donation_form = db_result(db_query("select is_donation_form from {fundraiser_gateway} where nid = %d", arg(1)));
-	//return $is_donation_form;
-	//return TRUE;
 	return $node->type == 'donation_form';
 }
 
@@ -745,7 +763,7 @@ function fundraiser_menu() {
 	$items['admin/content/donation-forms'] = array(
 		'title' => 'Donation Forms',
 		'page callback' => 'fundraiser_donation_form_list',
-		'access arguments' => array('create donation forms'),
+		'access arguments' => array('create donation form'),
 		'type' => MENU_NORMAL_ITEM,
 		'weight' => 20,
 		'file' => 'fundraiser.admin.inc',

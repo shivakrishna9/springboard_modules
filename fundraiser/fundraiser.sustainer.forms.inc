@@ -389,7 +389,7 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
  * Gets the minimum donation amount for a given donation form
  */
 function _minimum_donation_amount($nid) {
-  return db_result(db_query("SELECT minimum_donation_amount FROM {fundraiser_gateway} where nid = %d", $nid));
+  return db_result(db_query("SELECT minimum_donation_amount FROM {fundraiser} where nid = %d", $nid));
 }
 
 /**
@@ -445,7 +445,7 @@ function _fundraiser_get_payment_details($order_id) {
   else {
     // next, revert to the donation form that created the order
     $donation_form_nid = $order->products[0]->nid;
-    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_gateway} WHERE nid = %d", $donation_form_nid));
+    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = %d", $donation_form_nid));
   }
   
   // get the gateway's details
