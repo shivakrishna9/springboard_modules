@@ -10,7 +10,8 @@
  */
 
 /**
- * Add win condition for total amount collected?
+ * @todo
+ *    Add win condition for total amount collected?
  */
 
 
@@ -38,35 +39,16 @@ function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node
 
 
 /**
- * Implementation of webform_ab_valid_webforms_alter().
- * Based on $webform_types:
- *    If fundraiser, remove non-fundraising forms
- *    If NOT fundraiser, remove any fundraiser forms from the list
+ * Implementation of hook_webform_ab_valid_webforms().
+ * Return an array of donation forms that may be included in an A/B Test.
  */
-function fundraiser_ab_webform_ab_valid_webforms_alter(&$forms, $webform_types) {
-  $result = db_query("SELECT nid FROM {fundraiser_gateway}");
-
+function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
   if ($webform_types == 'fundraiser') {
-    // Remove non-fundraiser forms from the list of forms
-    
-    // Determine the fundraiser form nid's
-    $valid_forms = array();
-    while ($row = db_fetch_object($result)) {
-      $valid_forms[] = $row->nid;
+    $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s' ORDER BY title", array('donation_form'));
+    $forms = array();
+    while ($row = db_fetch_array($result)) {
+      $forms[] = $row;
     }
-    
-    // Loop over all the forms that can be added, and remove any that are not
-    // fundraiser forms
-    foreach ($forms as $nid => $title) {
-      if (!in_array($nid, $valid_forms)) {
-        unset($forms[$nid]);
-      }
-    }
-  }
-  else {
-    // Remove fundraising forms from the list
-    while ($row = db_fetch_object($result)) {
-      unset($forms[$row->nid]);
-    }
+    return $forms;
   }
 }

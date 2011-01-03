@@ -759,12 +759,14 @@ function _webform_ab_has_winner_already($node_or_nid) {
  * A/B Test.
  */
 function webform_ab_webform_ab_valid_webforms($webform_types) {
-  $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s'", array('webform'));
-  $forms = array();
-  while ($row = db_fetch_array($result)) {
-    $forms[] = $row;
+  if ($webform_types == 'webform') {
+    $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s' ORDER BY title", array('webform'));
+    $forms = array();
+    while ($row = db_fetch_array($result)) {
+      $forms[] = $row;
+    }
+    return $forms;
   }
-  return $forms;
 }
 
 
