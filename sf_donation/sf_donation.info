@@ -7,7 +7,7 @@ dependencies[] = fundraiser
 dependencies[] = trigger
 
 
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 core = 6.x
 
-version = 2.0
+version = SPRINGBOARD_VERSION

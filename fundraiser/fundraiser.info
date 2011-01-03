@@ -2,8 +2,8 @@
 name = Fundraiser
 description = Fundraising Module
 core = 6.x
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 dependencies[] = webform
 dependencies[] = uc_product
 
-version =  2.0
+version =  SPRINGBOARD_VERSION

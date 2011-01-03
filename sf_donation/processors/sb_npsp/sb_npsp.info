@@ -1,0 +1,8 @@
+; $Id$
+name = Non Profit Starter Pack Integration
+description = Processes donations using the NPSP Package
+core = 6.x
+package = Jackson River Springboard
+dependencies[] = sf_donation
+
+version = SPRINGBOARD_VERSION

@@ -322,6 +322,8 @@ function sf_user_wipe_user($accounts) {
     $user = user_load(array('uid' => $account));
     user_save($user, $fields);
 		salesforce_management_api_id_delete('user', $user->uid);
+		// put user back into the queue
+		sf_queue_insert($user->uid, 'user', 'upsert');
   }
 }
 
@@ -330,6 +332,29 @@ function sf_user_wipe_user($accounts) {
  */
 function sf_user_perm() {
   return array('sync users with salesforce');
+}
+
+/**
+ * Alter the user profile form and add a button for deleting Salesforce data.
+ */
+function sf_user_form_user_profile_form_alter(&$form, &$form_state) {
+  if (user_access('sync users with salesforce')) {
+    $form['clear_salesforce_data'] = array(
+      '#type' => 'submit',
+      '#value' => t('Clear Salesforce Data'),
+      '#weight' => 32,
+      '#submit' => array('sf_user_delete_salesforce_data'),
+    );
+  }
+}
+
+/**
+ * Submission handler for Clear Salesforce Data button on profile edit form.
+ */
+function sf_user_delete_salesforce_data($form, &$form_state) {
+  $uid = $form_state['values']['_account']->uid;
+  sf_user_wipe_user(array($uid));
+  drupal_set_message(t('Salesforce data has been cleared and the user has been put back into the queue.'));
 }
 
 /**

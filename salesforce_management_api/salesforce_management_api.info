@@ -1,7 +1,7 @@
 ; $Id$
 name = Salesforce Management API
 description = Defines an API that enables modules to interact with the Salesforce server.
-package = Jackson River SpringBoard
+package = Jackson River Springboard
 core = 6.x
 
-version = 2.0
+version = SPRINGBOARD_VERSION

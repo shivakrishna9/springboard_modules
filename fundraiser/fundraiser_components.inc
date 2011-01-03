@@ -1,4 +1,14 @@
 <?php
+// $Id: fundraiser.components.inc,v 2.0.1 2010/11/29 20:22:15 pcave Exp $
+
+/**
+ * @file
+ * Additional administration pages provided by Fundraiser module.
+ */
+
+/**
+ * User mapping form.
+ */
 function fundraiser_mapping_form($form_state, $node) {
   $form = array(
     '#tree' => TRUE,
@@ -6,7 +16,6 @@ function fundraiser_mapping_form($form_state, $node) {
     'mapping' => array(),
   );
   
-
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
@@ -38,7 +47,7 @@ function fundraiser_mapping_form($form_state, $node) {
 			}
 			
 			$options['User Fields'] = array(
-				'email' => t("Email Address"),
+				'mail' => t("Email Address"),
 			);
 			
 			$form['mapping']['type'][$cid] = array(
@@ -57,7 +66,6 @@ function fundraiser_mapping_form($form_state, $node) {
 }
 
 function fundraiser_mapping_form_submit($form, &$form_state){
-	//dprint_r($form); die();
 	$sql = "delete from fundraiser_component_map where nid=".$form['#node']->nid;
 	db_query($sql);
 
@@ -515,7 +523,7 @@ function fundraiser_donation_amount_form_validate($form, &$form_state) {
 	}
 	
 	// get minimum amount
-	$minimum = db_result(db_query("select minimum_donation_amount from {fundraiser_gateway} where nid = %d", $form_state['values']['amount']['nid']));
+	$minimum = db_result(db_query("select minimum_donation_amount from {fundraiser} where nid = %d", $form_state['values']['amount']['nid']));
 	if ($form_state['values']['amount']['fee_amount'] <= $minimum) {
 		$minimum = money_format('%i', $minimum);
 		form_set_error('amount', t("Donation amount must be greater than $$minimum"));

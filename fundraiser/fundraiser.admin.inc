@@ -75,6 +75,13 @@ function fundraiser_admin_settings() {
 		$description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
 		$attributes['disabled'] = 'disabled';
 	}
+	
+	$form['fundraiser_development_mode'] = array(
+	 '#type' => 'checkbox',
+	 '#title' => t('Development mode'),
+	 '#default_value' => variable_get('fundraiser_development_mode', 0),
+	 '#description' => t('Development mode allows you to access donation forms over HTTP.'),
+	);
 		
 	$form['fundraiser_salesforce_integration'] = array(
 		'#type' => 'checkbox',
@@ -98,6 +105,37 @@ function fundraiser_admin_settings() {
 	 '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
 	);
 	
+	$form['fundraiser_cc_expiration_message'] = array(
+	 '#type' => 'fieldset',
+	 '#title' => t('Credit card expiration email'),
+	 '#collapsible' => TRUE,
+	);
+	
+	$form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
+	 '#type' => 'textfield',
+	 '#title' => t('Email subject'),
+	 '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
+	);
+	
+	$form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
+	 '#type' => 'textarea',
+	 '#title' => t('Email body'),
+	 '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
+	 '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
+	);
+	
+	$form['fundraiser_cc_expiration_message']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donor replacement tokens'),
+    '#description' => t('The following tokens are available for donor'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
+    '#value' => theme('token_help', 'user'),
+  );
+	
 	return system_settings_form($form);
 }
 
@@ -105,7 +143,7 @@ function fundraiser_admin_settings() {
  * Creates a list of all donation forms on the site
  */
 function fundraiser_donation_form_list() {
-	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser_gateway} f
+	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f
 		ON f.nid = n.nid ORDER BY n.changed DESC");
 		
 	$header = array('Title', 'Internal Name', 'Last Modified', '', '', '');

@@ -20,6 +20,11 @@
  *   A minimum value for the other amount field that will be validated upon submission
  */
 function fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+  
+  // create an array to hold all of the created components
+  $components = array();
+
 	// market source id
 	$market_source = array();
 	$market_source['nid'] = $nid;
@@ -34,10 +39,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$market_source['mandatory'] = 1; 
 	$market_source['weight'] = 20; 
 	$market_source['email'] = 1;
+	$market_source['maps_to'] = 'profile_ms';
 	
-	webform_component_insert($market_source);
+	$id = webform_component_insert($market_source);
+	$components[$id] = $market_source;
 	
 	// if the sf_donation is installed, try to get the default campaign
+	$default_campaign = '';
 	if (variable_get('fundraiser_salesforce_integration', 0)) {
 		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
 	}
@@ -56,9 +64,11 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$campaign['mandatory'] = 1; 
 	$campaign['weight'] = 21; 
 	$campaign['email'] = 1;
+	$campaign['maps_to'] = 'profile_cid';
 	
-	webform_component_insert($campaign);
-
+	$id = webform_component_insert($campaign);
+  $components[$id] = $campaign;
+  
 	// referrer
 	$referrer = array();
 	$referrer['nid'] = $nid;
@@ -73,8 +83,10 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$referrer['mandatory'] = 0; 
 	$referrer['weight'] = 22; 
 	$referrer['email'] = 1;
+	$referrer['maps_to'] = 'profile_referrer';
 	
-	webform_component_insert($referrer);
+	$id = webform_component_insert($referrer);
+	$components[$id] = $referrer;
 	
 	// initial referrer
 	$initial_referrer = array();
@@ -90,8 +102,10 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$initial_referrer['mandatory'] = 0; 
 	$initial_referrer['weight'] = 23; 
 	$initial_referrer['email'] = 1;
+	$initial_referrer['maps_to'] = 'profile_initial_referrer';
 	
-	webform_component_insert($initial_referrer);
+	$id = webform_component_insert($initial_referrer);
+	$components[$id] = $initial_referrer;
 	
 	// donation amount
 	$donation = array();
@@ -107,7 +121,8 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$donation['weight'] = 0; 
 	$donation['email'] = 0;
 	
-	$id = webform_component_insert($donation);
+	$pid = webform_component_insert($donation);
+	$components[$pid] = $donation;
 
 	// determine the type of amount field to output
 	if ($donation_amounts) {
@@ -118,7 +133,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 			// other amount
 			$other_amount = array();
 			$other_amount['nid'] = $nid;
-			$other_amount['pid'] = $id; 
+			$other_amount['pid'] = $pid; 
 			$other_amount['form_key'] = 'other_amount'; 
 			$other_amount['name'] = 'Other';
 			$other_amount['type'] = 'textfield';  
@@ -131,13 +146,14 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 			$other_amount['weight'] = 1; 
 			$other_amount['email'] = 1;
 
-			webform_component_insert($other_amount);
+			$id = webform_component_insert($other_amount);
+			$components[$id] = $other_amount;
 		}
 
 		// ask amounts
 		$amount = array();
 		$amount['nid'] = $nid;
-		$amount['pid'] = $id; 
+		$amount['pid'] = $pid; 
 		$amount['form_key'] = 'amount'; 
 		$amount['name'] = 'Please select your tax-deductable gift amount below';
 		$amount['type'] = 'select';  
@@ -152,12 +168,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		$amounts = explode(',', $donation_amounts);
 		$amount['value'] = array_shift($amounts); // select first value
 
-		webform_component_insert($amount);
+		$id = webform_component_insert($amount);
+		$components[$id] = $amount;
 	}
 	else { // plain old textbox for donation amount
 		$amount = array();
 		$amount['nid'] = $nid;
-		$amount['pid'] = $id; 
+		$amount['pid'] = $pid; 
 		$amount['form_key'] = 'amount'; 
 		$amount['name'] = 'Amount';
 		$amount['type'] = 'textfield';
@@ -170,7 +187,8 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		$amount['weight'] = 0; 
 		$amount['email'] = 1;
 
-		webform_component_insert($amount);
+		$id = webform_component_insert($amount);
+		$components[$id] = $amount;
 	}
 	
 	// donor information
@@ -187,12 +205,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$donor_information['weight'] = 1; 
 	$donor_information['email'] = 0;
 	
-	$id = webform_component_insert($donor_information);
+	$pid = webform_component_insert($donor_information);
+	$components[$pid] = $donor_information;
 	
 	// first name
 	$first_name = array();
 	$first_name['nid'] = $nid;
-	$first_name['pid'] = $id; 
+	$first_name['pid'] = $pid; 
 	$first_name['form_key'] = 'first_name'; 
 	$first_name['name'] = 'First Name';
 	$first_name['type'] = 'textfield';  
@@ -202,13 +221,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$first_name['mandatory'] = 1; 
 	$first_name['weight'] = 0; 
 	$first_name['email'] = 1;
+	$first_name['maps_to'] = 'profile_first_name';
 	
-	webform_component_insert($first_name);
+	$id = webform_component_insert($first_name);
+	$components[$id] = $first_name;
 	
 	// last name
 	$last_name = array();
 	$last_name['nid'] = $nid;
-	$last_name['pid'] = $id; 
+	$last_name['pid'] = $pid; 
 	$last_name['form_key'] = 'last_name'; 
 	$last_name['name'] = 'Last Name';
 	$last_name['type'] = 'textfield';  
@@ -218,13 +239,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$last_name['mandatory'] = 1; 
 	$last_name['weight'] = 1; 
 	$last_name['email'] = 1;
+	$last_name['maps_to'] = 'profile_last_name';
 	
-	webform_component_insert($last_name);
+	$id = webform_component_insert($last_name);
+	$components[$id] = $last_name;
 
 	// email
 	$email = array();
 	$email['nid'] = $nid;
-	$email['pid'] = $id; 
+	$email['pid'] = $pid; 
 	$email['form_key'] = 'email'; 
 	$email['name'] = 'Email';
 	$email['type'] = 'textfield';  
@@ -234,8 +257,10 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$email['mandatory'] = 1; 
 	$email['weight'] = 2; 
 	$email['email'] = 1;
+	$email['maps_to'] = 'mail';
 	
-	webform_component_insert($email);
+	$id = webform_component_insert($email);
+	$components[$id] = $email;
 	
 	// billing
 	$billing_information = array();
@@ -251,12 +276,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_information['weight'] = 3; 
 	$billing_information['email'] = 0;
 	
-	$id = webform_component_insert($billing_information);
+	$pid = webform_component_insert($billing_information);
+	$components[$pid] = $billing_information;
 	
 	// billing address
 	$billing_address = array();
 	$billing_address['nid'] = $nid;
-	$billing_address['pid'] = $id; 
+	$billing_address['pid'] = $pid; 
 	$billing_address['form_key'] = 'billing_address'; 
 	$billing_address['name'] = 'Address';
 	$billing_address['type'] = 'textfield';  
@@ -266,13 +292,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_address['mandatory'] = 1; 
 	$billing_address['weight'] = 3; 
 	$billing_address['email'] = 1;
+	$billing_address['maps_to'] = 'profile_address';
 	
-	webform_component_insert($billing_address);
+	$id = webform_component_insert($billing_address);
+	$components[$id] = $billing_address;
 
 	// billing address 2
 	$billing_address_2 = array();
 	$billing_address_2['nid'] = $nid;
-	$billing_address_2['pid'] = $id; 
+	$billing_address_2['pid'] = $pid; 
 	$billing_address_2['form_key'] = 'billing_address_2'; 
 	$billing_address_2['name'] = 'Address Line 2';
 	$billing_address_2['type'] = 'textfield';  
@@ -282,13 +310,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_address_2['mandatory'] = 0; 
 	$billing_address_2['weight'] = 4; 
 	$billing_address_2['email'] = 1;
+	$billing_address_2['maps_to'] = 'profile_address_line_2';
 	
-	webform_component_insert($billing_address_2);
+	$id = webform_component_insert($billing_address_2);
+	$components[$id] = $billing_address_2;
 
 	// city
 	$billing_city = array();
 	$billing_city['nid'] = $nid;
-	$billing_city['pid'] = $id; 
+	$billing_city['pid'] = $pid; 
 	$billing_city['form_key'] = 'billing_city'; 
 	$billing_city['name'] = 'City';
 	$billing_city['type'] = 'textfield';  
@@ -298,8 +328,10 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_city['mandatory'] = 1; 
 	$billing_city['weight'] = 5; 
 	$billing_city['email'] = 1;
+	$billing_city['maps_to'] = 'profile_city';
 	
-	webform_component_insert($billing_city);
+	$id = webform_component_insert($billing_city);
+	$components[$id] = $billing_city;
 
 	$us = 840;
 	$ca = 124;
@@ -326,7 +358,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	
 	$billing_country = array();
 	$billing_country['nid'] = $nid;
-	$billing_country['pid'] = $id; 
+	$billing_country['pid'] = $pid; 
 	$billing_country['form_key'] = 'billing_country'; 
 	$billing_country['name'] = 'Country';
 	$billing_country['type'] = 'select';  
@@ -339,11 +371,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_country['mandatory'] = 1; 
 	$billing_country['weight'] = 6; 
 	$billing_country['email'] = 1;
+	$billing_country['maps_to'] = 'profile_country';
 	
-	webform_component_insert($billing_country);
+	$id = webform_component_insert($billing_country);
+	$components[$id] = $billing_country;
 
 	// state
-	$zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $us, 'name', uc_address_field_required('zone'));
+	$zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $us, 'name', uc_address_field_required('zone'));
 	
 	// build option string for states
 	$options = '';
@@ -353,7 +387,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	
 	$billing_state = array();
 	$billing_state['nid'] = $nid;
-	$billing_state['pid'] = $id; 
+	$billing_state['pid'] = $pid; 
 	$billing_state['form_key'] = 'billing_state'; 
 	$billing_state['name'] = 'State/Province';
 	$billing_state['type'] = 'select';  
@@ -366,13 +400,15 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_state['mandatory'] = 1; 
 	$billing_state['weight'] = 7; 
 	$billing_state['email'] = 1;
+	$billing_state['maps_to'] = 'profile_state';
 	
-	webform_component_insert($billing_state);
+	$id = webform_component_insert($billing_state);
+	$components[$id] = $billing_state;
 	
 	// zip code
 	$billing_zipcode = array();
 	$billing_zipcode['nid'] = $nid;
-	$billing_zipcode['pid']= $id; 
+	$billing_zipcode['pid']= $pid; 
 	$billing_zipcode['form_key'] = 'billing_zipcode'; 
 	$billing_zipcode['name'] = 'ZIP/Postal Code';
 	$billing_zipcode['type'] = 'textfield';  
@@ -384,8 +420,10 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_zipcode['mandatory'] = 1; 
 	$billing_zipcode['weight'] = 8; 
 	$billing_zipcode['email'] = 1;
+	$billing_zipcode['maps_to'] = 'profile_zip';
 	
-	webform_component_insert($billing_zipcode);
+	$id = webform_component_insert($billing_zipcode);
+	$components[$id] = $billing_zipcode;
 	
 	// credit card information
 	$credit_card_information = array();
@@ -401,12 +439,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$credit_card_information['weight'] = 5;
 	$credit_card_information['email'] = 0;
 	
-	$id = webform_component_insert($credit_card_information);
+	$pid = webform_component_insert($credit_card_information);
+	$components[$pid] = $credit_card_information;
 
 	// credit card number
 	$card_number = array();
 	$card_number['nid'] = $nid;
-	$card_number['pid'] = $id; 
+	$card_number['pid'] = $pid; 
 	$card_number['form_key'] = 'card_number'; 
 	$card_number['name'] = 'Card Number';
 	$card_number['type'] = 'textfield';  
@@ -418,34 +457,23 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$card_number['weight'] = 0; 
 	$card_number['email'] = 0;
 	
-	webform_component_insert($card_number);
+	$id = webform_component_insert($card_number);
+	$components[$id] = $card_number;
 	
-	// expiration date
-	$expiration_date = array();
-	$expiration_date['nid'] = $nid;
-	$expiration_date['pid'] = $id; 
-	$expiration_date['form_key'] = 'card_expiration_date'; 
-	$expiration_date['name'] = 'Expiration Date';
-	$expiration_date['type'] = 'date';  
-	$expiration_date['value'] = '1 January';
-	$expiration_date['extra'] = array(
-		'description' => '',
-		'year_textfield' => 0,
-		'year_start' => date("Y"),
-		'year_end' => date("Y") + 6,
-		'timezone' => 'site',
-		'check_daylight_savings' => 0,
-	);
-	$expiration_date['mandatory'] = 1; 
-	$expiration_date['weight'] = 1; 
-	$expiration_date['email'] = 0;
+	// expiration month
+	$expiration_month = fundraiser_create_month_field($nid, $pid);
+	$id = webform_component_insert($expiration_month);
+	$components[$id] = $expiration_month;
 	
-	webform_component_insert($expiration_date);
+	// expiration year
+	$expiration_year = fundraiser_create_year_field($nid, $pid);
+	$id = webform_component_insert($expiration_year);
+	$components[$id] = $expiration_year;
 
 	// cvv
 	$card_cvv = array();
 	$card_cvv['nid'] = $nid;
-	$card_cvv['pid']= $id; 
+	$card_cvv['pid']= $pid; 
 	$card_cvv['form_key'] = 'card_cvv'; 
 	$card_cvv['name'] = 'Card Security Code';
 	$card_cvv['type'] = 'textfield';  
@@ -458,12 +486,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$card_cvv['weight'] = 3; 
 	$card_cvv['email'] = 0;
 	
-	webform_component_insert($card_cvv);
+	$id = webform_component_insert($card_cvv);
+	$components[$id] = $card_cvv;
 
 	// recurring donation
 	$recurs = array();
 	$recurs['nid'] = $nid;
-	$recurs['pid']= $id; 
+	$recurs['pid']= $pid; 
 	$recurs['form_key'] = 'recurs_monthly'; 
 	$recurs['name'] = 'Recurring Payment';
 	$recurs['type'] = 'select';  
@@ -476,5 +505,96 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$recurs['weight'] = 4; 
 	$recurs['email'] = 0;
 	
-	webform_component_insert($recurs);
+	$id = webform_component_insert($recurs);
+	$components[$id] = $recurs;
+	
+	return $components;
+}
+
+/**
+ * Creates a year expiration drop down field to be used in donation forms.
+ */
+function fundraiser_create_year_field($nid, $pid) {
+  $this_year = date('Y');
+	$years = $this_year . "\n";
+	for ($i = 1; $i <= 5; $i++) {
+    $years .= ($this_year + $i) . "\n";  
+  }
+	
+	// expiration date
+	$expiration_year = array();
+	$expiration_year['nid'] = $nid;
+	$expiration_year['pid'] = $pid; 
+	$expiration_year['form_key'] = 'card_expiration_year'; 
+	$expiration_year['name'] = 'Expiration Year';
+	$expiration_year['type'] = 'select';  
+	$expiration_year['extra'] = array(
+		'description' => '',
+		'items' => $years,
+		'multiple' => 0,
+		'aslist' => 'Y',
+  );
+	$expiration_year['mandatory'] = 1; 
+	$expiration_year['weight'] = 2; 
+	$expiration_year['email'] = 0;
+	return $expiration_year;
+}
+
+/**
+ * Creates a month expiration drop down field to be used in donation forms.
+ */
+function fundraiser_create_month_field($nid, $pid) {
+  // expiration month
+  $months = "1|January\n";
+  $months .= "2|Feburary\n";
+	$months .= "3|March\n";
+	$months .= "4|April\n";
+	$months .= "5|May\n";
+	$months .= "6|June\n";
+	$months .= "7|July\n";
+	$months .= "8|August\n";
+	$months .= "9|September\n";
+	$months .= "10|October\n";
+	$months .= "11|November\n";
+	$months .= "12|December\n";
+	
+	$expiration_month = array();
+	$expiration_month['nid'] = $nid;
+	$expiration_month['pid'] = $pid; 
+	$expiration_month['form_key'] = 'card_expiration_month'; 
+	$expiration_month['name'] = 'Expiration Month';
+	$expiration_month['type'] = 'select';
+	$expiration_month['extra'] = array(
+		'description' => '',
+		'items' => $months,
+		'multiple' => 0,
+		'aslist' => 'Y',
+  );
+	$expiration_month['mandatory'] = 1; 
+	$expiration_month['weight'] = 1; 
+	$expiration_month['email'] = 0;
+	return $expiration_month;
+}
+
+function fundraiser_required_fields() {
+  return array(
+    'ms',
+    'cid',
+    'referrer',
+    'initial_referrer',
+    'amount',
+    'first_name',
+    'last_name',
+    'email',
+    'billing_address',
+    'billing_address_2',
+    'billing_city',
+    'billing_country',
+    'billing_state',
+    'billing_zipcode',
+    'card_number',
+    'card_expiration_year',
+    'card_expiration_month',
+    'card_cvv',
+  );
 }
