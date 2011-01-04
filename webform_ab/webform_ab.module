@@ -10,6 +10,8 @@
 
 /**
  * @todo
+ *  Implement notifications
+ *    Fields are in place, but commented out
  *  Option to start the test and lock down the edits
  *  Add JS to enable Win Criteria value textboxes based on the chosen radio
  *  Permissions: declare winner? Start/end test?
@@ -299,6 +301,8 @@ function webform_ab_form(&$node, $form_state) {
   );
   
   
+  /* Notifications won't be implemented till v2. Leaving these out for now.
+  
   $form['notifications'] = array(
     '#type' => 'fieldset',
     '#title' => t('Notifications'),
@@ -357,6 +361,7 @@ function webform_ab_form(&$node, $form_state) {
     '#maxlength' => 255,
     '#default_value' => $node->win_notification_sms,
   );
+  */
 
   return $form;
 }
@@ -415,6 +420,7 @@ function webform_ab_validate($node, &$form) {
   }
   
 
+  /* Notifications won't be implemented till v2. Leaving these out for now.
   // Validate daily summary email address(es)
   if(trim($node->daily_notification_email) != '') {
     $addresses = explode(',', $node->daily_notification_email);
@@ -442,6 +448,7 @@ function webform_ab_validate($node, &$form) {
       form_set_error('win_notification_email', t('Invalid e-mail address(es) given for winning notice: %email', array('%email' => implode(', ', $invalid))));
     }
   }
+  */
 }
 
 
@@ -642,6 +649,7 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
       '#weight' => 2,
     );
     
+    /* Notifications won't be implemented till v2. Leaving these out for now.
     $node->content['notifications'] = array(
     	'#type' => 'fieldset',
     	'#title' => t('Notifications'),
@@ -695,6 +703,7 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
     	'#value' => $node->win_notification_sms,
     	'#weight' => 5,
     );
+    */
 
     return $node;
   }
