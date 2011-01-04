@@ -711,7 +711,6 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
   // Only continue to a webform if there are webforms to choose from
   elseif (!empty($node->included_webforms)) {
     if (($winner_webform_id = _webform_ab_has_winner_already($node)) > 0) {
-      dsm('Redirection to already-declared winner: ' . $winner_webform_id);
       drupal_goto('node/' . $winner_webform_id);
     }
     // See if they already have a webform nid in their $_SESSION for this test, and
