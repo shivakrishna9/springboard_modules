@@ -212,7 +212,6 @@ function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
 
 /**
  * Implementation of hook_form_alter().
- * @todo Change this to a hook implementation once the webform_ab module has been updated to include the hook call for this
  */
 function webform_user_form_alter(&$form, $form_state, $form_id) {
   if (strpos($form_id, "webform_client") !== FALSE) {
@@ -258,12 +257,6 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
   	$form['#validate'][] = 'webform_user_webform_validate';
     // Add new submit handler.
     $form['#submit'][] = 'webform_user_webform_submit';
-  }
-  
-  // Add Webform User to type list on Webform A/B node form.
-  // This only applies when the webform_ab module is enabled
-  if($form_id == 'webform_ab_node_form') {
-    $form['webform_types']['#options']['webform_user'] = 'Webform User';
   }
 }
 
