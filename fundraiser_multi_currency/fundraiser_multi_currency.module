@@ -70,7 +70,8 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
   if ($node->multiple_currency_support == 'show') {
     $default_currencies = "USD|US Dollars
 CAD|Canadian dollars
-GBP|British pounds";
+GBP|British pounds
+EUR|Euros";
     
   	$currency['type'] = 'select';  
   	$currency['extra']['items'] = $default_currencies;
@@ -83,4 +84,11 @@ GBP|British pounds";
   }
   
   webform_component_insert($currency);
+}
+
+/**
+ * Implementation of hook_fundraiser_add_order_fields().
+ */
+function fundraiser_multi_currency_fundraiser_add_order_fields($fundraiser_fields) {
+  return array('currency' => $fundraiser_fields['currency']);
 }
