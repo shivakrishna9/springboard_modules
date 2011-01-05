@@ -1202,6 +1202,13 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	$order->line_items = array();
 
+ 	// Allow other modules to add additional fields to the order before processing
+ 	// the payment
+  $additional_order_fields = module_invoke_all('fundraiser_add_order_fields', $fundraiser_fields);
+  foreach ($additional_order_fields as $field => $value) {
+    $order->data[$field] = $value;
+  }
+
  	// Cache the CC details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
  	// save the order
