@@ -178,10 +178,10 @@ function webform_ab_schema() {
         'default' => 0,
         'not null' => TRUE,
       ),
-      'ip' => array(
+      'session_id' => array(
         'type' => 'varchar',
         'length' => '255',
-        'description' => 'IP of user who hit the form',
+        'description' => 'Session ID of user who hit the form',
         'default' => '',
         'not null' => TRUE,
       ),
@@ -240,5 +240,15 @@ function webform_ab_update_6001() {
   $updates = array();
   db_add_field($updates, 'webform_ab_hits', 'uid', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
   db_add_field($updates, 'webform_ab_hits', 'ip', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
-  return $updates;  
+  return $updates;
+}
+
+/**
+ * Switch ip to session_id in the webform_ab_hits table
+ */
+function webform_ab_update_6002() {
+  $updates = array();
+  $updates[] = update_sql("ALTER TABLE `webform_ab_hits` CHANGE  `ip`  `session_id` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT  ''");
+  $updates[] = update_sql("UPDATE `webform_ab_hits` SET `session_id`=''");
+  return $updates;
 }
