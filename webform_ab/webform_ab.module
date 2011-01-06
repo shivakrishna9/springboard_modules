@@ -246,6 +246,7 @@ function webform_ab_form(&$node, $form_state) {
   );
   
   
+  $win_conditions = _webform_ab_available_win_conditions();
   $form['winning_conditions']['win_type'] = array(
     '#type' => 'item',
     '#title' => t('Win Criteria'),
@@ -261,7 +262,7 @@ function webform_ab_form(&$node, $form_state) {
   
   $form['winning_conditions']['win_type']['total_conversions_group']['total_conversions_radio'] = array(
     '#type' => 'radio',
-    '#title' => t('Total Conversions'),
+    '#title' => $win_conditions['total_conversions'],
     '#description' => t('This many conversions must be made by a webform before it is declared the winner.'),
     '#return_value' => 'total_conversions',
     '#parents' => array('win_type'),
@@ -284,7 +285,7 @@ function webform_ab_form(&$node, $form_state) {
   
   $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions_radio'] = array(
     '#type' => 'radio',
-    '#title' => t('Conversion Percentage'),
+    '#title' => $win_conditions['total_conversions'],
     '#description' => t('A webform must reach this percentage of conversions to be declared the winner.'),
     '#return_value' => 'percent_conversions',
     '#parents' => array('win_type'),
@@ -634,18 +635,24 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
       '#weight' => 0,
     );
 
-
+    $win_conditions = _webform_ab_available_win_conditions();
     $node->content['winning_conditions']['win_type'] = array(
       '#type' => 'item',
       '#title' => t('Win Criteria'),
-      '#value' => $node->win_type,
+      '#value' => $win_conditions[$node->win_type],
       '#weight' => 1,
     );
 
+    if ($node->win_type == 'percent_conversions') {
+      $win_value = $node->{$node->win_type} . '%';
+    }
+    else {
+      $win_value = $node->{$node->win_type};
+    }
     $node->content['winning_conditions']['win_value'] = array(
       '#type' => 'item',
       '#title' => t('Win Value'),
-      '#value' => $node->{$node->win_type},
+      '#value' => $win_value,
       '#weight' => 2,
     );
     
@@ -1034,6 +1041,16 @@ function webform_ab_should_log_hits() {
   // User didn't qualify for any of the exceptions, so their hits/conversions
   // should be recorded
   return true;
+}
+
+/**
+ * Return an array of the valid win conditions with labels
+ */
+function _webform_ab_available_win_conditions() {
+  return array(
+    'total_conversions' => t('Total Conversions'),
+    'percent_conversions' => t('Conversion Percentage'),
+  );
 }
 
 
