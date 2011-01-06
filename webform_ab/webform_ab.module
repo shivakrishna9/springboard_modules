@@ -718,10 +718,25 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
     // removed from the test)
     else {
       if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
-        // Pick a random webform nid from the ones in this test
-        $key = array_rand($node->included_webforms);
+        // See if this user has hit this test before, and use the same webform as
+        // the last time
+        global $user;
+        if ($user->uid > 0) {
+          $previous_test_hit = db_fetch_array(db_query("SELECT webform_nid FROM {webform_ab_hits} WHERE test_nid=%d AND uid=%d", array($node->nid, $user->uid)));
+          if ($previous_test_hit['webform_nid'] > 0) {
+            $webform_nid_to_view = $previous_test_hit['webform_nid'];
+          }
+        }
+        
+        // If the webform wasn't picked by a user's previous visit, pick 
+        // one at random
+        if (empty($webform_nid_to_view)) {
+          // Pick a random webform nid from the ones in this test
+          $webform_nid_to_view = array_rand($node->included_webforms);          
+        }
+        
         // Save it to the $_SESSION so this user always gets the same one
-        $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
+        $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $webform_nid_to_view;
       }
       drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
     }
@@ -809,7 +824,12 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
           // If repeat hits from a user should be ignore, check if this user has
           // already hit the form
           elseif (variable_get('webform_ab_ignore_repeat_hits', '1') > 0) {
-            $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND uid=%d AND ip='%s'", array($test_nid, $webform_nid, $user->uid, ip_address())));
+            if ($user->uid > 0) {
+              $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND uid=%d", array($test_nid, $webform_nid, $user->uid)));
+            }
+            else {
+              $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND session_id='%s'", array($test_nid, $webform_nid, session_id())));
+            }            
             if ($existing_hit['hit_id'] > 0) {
               $log_hit = FALSE;
             }
@@ -817,7 +837,7 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
           
           // If the hit should be logged, do so
           if ($log_hit) {
-            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time, uid, ip) VALUES(%d, %d, %d, %d, '%s')", array($test_nid, $webform_nid, time(), $user->uid, ip_address()));
+            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time, uid, session_id) VALUES(%d, %d, %d, %d, '%s')", array($test_nid, $webform_nid, time(), $user->uid, session_id()));
           }
           break;
         }
