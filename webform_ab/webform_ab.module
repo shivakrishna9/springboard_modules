@@ -1,0 +1,1025 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Webform A/B Testing
+ *
+ * Adds a content type for an A/B test of webforms.
+ */
+
+/**
+ * @todo
+ *  Implement notifications
+ *    Fields are in place, but commented out
+ *  Option to start the test and lock down the edits
+ *  Add JS to enable Win Criteria value textboxes based on the chosen radio
+ *  Permissions: declare winner? Start/end test?
+ *  Add options for default notification settings to admin settings form
+ *  Validate SMS phone numbers
+ *  Find SMS library to send notices
+ *  Define daily cron to send summaries
+ *  Define a hook for other modules to add their own win cases
+ *      For example, instead conversion count or percentage, could declare a winner
+ *      once a donation form reaches $2,000 in donations
+ *  Further test permission settings
+ */
+
+// Active status, for webforms within a test
+define('WEBFORM_AB_WEBFORM_STATUS_ACTIVE', 1);
+// Win status for webforms within a test - only one webform per test should have this
+define('WEBFORM_AB_WEBFORM_STATUS_WINNER', 2);
+// Retired status for webforms within a test - means that a different webform won the test
+define('WEBFORM_AB_WEBFORM_STATUS_RETIRED', 3);
+
+/**
+ * Implementation of hook_node_info().
+ */
+function webform_ab_node_info() {
+  return array(
+    'webform_ab' => array(
+      'name' => t('Webform A/B Test'),
+      'module' => 'webform_ab',
+      'description' => t('An A/B test for Webforms'),
+      'title_label' => t('Test Name'),
+      'body_label' => t('Admin Description'),
+      'locked' => TRUE
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function webform_ab_perm() {
+  return array(
+    'administer webform_ab', 
+    'reset webform_ab test data', 
+    'create webform_ab', 
+    'edit own webform_ab', 
+    'edit any webform_ab', 
+    'delete own webform_ab', 
+    'delete any webform_ab', 
+    'view own webform_ab reports',
+    'view any webform_ab reports',
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function webform_ab_menu() {
+  $items = array();
+
+  $items['node/%webform_ab_menuitem/reports'] = array(
+    'title' => 'Reports and Monitoring',
+    'page callback' => 'webform_ab_test_reports',
+    'page arguments' => array(1),
+    'access callback' => 'webform_ab_can_view_reports',
+    'access arguments' => array(1),
+    'file' => 'webform_ab.admin.inc',
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['node/%webform_ab_menuitem/reports/reports'] = array(
+    'title' => 'Reports',
+    'weight' => 0,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  $items['node/%webform_ab_menuitem/webforms'] = array(
+    'title' => 'Included Webforms',
+    'page callback' => 'webform_ab_test_webforms',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'webform_ab.admin.inc',
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['node/%webform_ab_menuitem/reports/reset'] = array(
+    'title' => 'Reset Data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ab_clear_test_data_confirm', 1),
+    'access arguments' => array('reset webform_ab test data'),
+    'file' => 'webform_ab.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
+  );
+    
+    
+  $items['node/%webform_ab_menuitem/webforms/remove'] = array(
+    'title' => 'Remove Form',
+    'page callback' => 'webform_ab_test_remove_webform',
+    'page arguments' => array(1),    
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'webform_ab.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['admin/settings/webform_ab'] = array(
+    'title' => 'Webform A/B Test Settings',
+    'description' => 'Settings for Webform A/B Tests',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ab_admin_settings'),
+    'access arguments' => array('administer webform_ab'),
+    'file' => 'webform_ab.admin.inc',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Check if the current user can view the reports on a given Webform A/B Test
+ */
+function webform_ab_can_view_reports($node) {
+  global $user;
+  $is_author = $user->uid == $node->uid;
+  
+  return (user_access('view own webform_ab reports', $user) && $is_author) || user_access('view any webform_ab reports', $user);
+}
+
+
+/**
+ * Menu loader callback. Load a Webform A/B Test node if the given nid is for 
+ * the right node type.
+ */
+function webform_ab_menuitem_load($nid) {
+  if (!is_numeric($nid)) {
+    return FALSE;
+  }
+  $node = node_load($nid);
+  if (!isset($node->type) || $node->type != 'webform_ab') {
+    return FALSE;
+  }
+  return $node;
+}
+
+
+/**
+ * Implementation of hook_access().
+ */
+function webform_ab_access($op, $node, $account) {
+  $is_author = $account->uid == $node->uid;
+  
+  switch ($op) {
+    case 'create':
+      return user_access('create webform_ab', $account);
+      break;
+    
+    case 'update':
+      return (user_access('edit own webform_ab', $account) && $is_author) || user_access('edit any webform_ab', $account);
+      break;
+    
+    case 'delete':
+      return (user_access('delete own webform_ab', $account) && $is_author) || user_access('delete any webform_ab', $account);
+      break;
+  }
+}
+
+
+/**
+ * Implementation of hook_form().
+ * Return the form for admins to edit webform_ab nodes
+ */
+function webform_ab_form(&$node, $form_state) {
+  // Add styling for the form
+  drupal_add_css(drupal_get_path('module', 'webform_ab') . '/webform_ab.css');
+  
+  $type = node_get_types('type', $node);
+  
+  $form['test_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('A/B Test Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['test_settings']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#weight' => -5,
+    '#default_value' => $node->title
+  );
+  
+  $form['test_settings']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#cols' => 60,
+    '#rows' => 5,
+    '#description' => t('Description for admin use. This is not displayed to the public.')
+  );
+  
+  $form['test_settings']['webform_types'] = array(
+    '#type' => 'radios',
+    '#title' => t('Which types of webforms will this test use?'),
+    '#description' => t('Once set, this cannot be changed.'),
+    '#options' => module_invoke_all('webform_ab_get_webform_types'),
+    '#default_value' => $node->webform_types,
+    '#required' => TRUE,
+  );
+  
+  $form['winning_conditions'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Winning Conditions'),
+    '#description' => t('Conditions necessary for a form to win the test.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE
+  );
+  
+  $form['winning_conditions']['minimum_hits'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum Hits'),
+    '#description' => t('A webform must be seen by this many users before it can be declared the winner. This prevents a winner from being declared before enough data has been collected.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => empty($node->minimum_hits) ? 100 : $node->minimum_hits,
+    '#required' => TRUE,
+  );
+  
+  
+  $form['winning_conditions']['win_type'] = array(
+    '#type' => 'item',
+    '#title' => t('Win Criteria'),
+    '#prefix' => '<div class="win_type_container">',
+    '#suffix' => '</div>',
+    '#required' => TRUE,
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group'] = array(
+    '#prefix' => '<div class="container form-item">',
+    '#suffix' => '</div>'
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group']['total_conversions_radio'] = array(
+    '#type' => 'radio',
+    '#title' => t('Total Conversions'),
+    '#description' => t('This many conversions must be made by a webform before it is declared the winner.'),
+    '#return_value' => 'total_conversions',
+    '#parents' => array('win_type'),
+    '#default_value' => $node->win_type,
+  );
+  
+  $form['winning_conditions']['win_type']['total_conversions_group']['total_conversions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number'),
+    '#description' => t('Number of conversions'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->total_conversions,
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group'] = array(
+    '#prefix' => '<div class="container form-item">',
+    '#suffix' => '</div>'
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions_radio'] = array(
+    '#type' => 'radio',
+    '#title' => t('Conversion Percentage'),
+    '#description' => t('A webform must reach this percentage of conversions to be declared the winner.'),
+    '#return_value' => 'percent_conversions',
+    '#parents' => array('win_type'),
+    '#default_value' => $node->win_type,
+  );
+  
+  $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Percentage'),
+    '#description' => t('Percentage of hits that become conversions. Enter either as 25% or 0.25.'),
+    '#size' => 10,
+    '#maxlength' => 255,
+    '#default_value' => ($node->percent_conversions) ? ($node->percent_conversions . '%') : '',
+  );
+  
+  
+  /* Notifications won't be implemented till v2. Leaving these out for now.
+  
+  $form['notifications'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Notifications'),
+    '#description' => t('The following options are specific to this test. You can also set default values for future tests in the Webform A/B Test module settings page.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE
+  );
+  
+  $form['notifications']['daily_summaries'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily Summaries'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['notifications']['daily_summaries']['daily_notification_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send daily reports by email to'),
+    '#description' => t('Separate e-mail addresses with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->daily_notification_email,
+  );
+
+  $form['notifications']['daily_summaries']['daily_notification_sms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send daily reports by SMS to'),
+    '#description' => t('Separate cell phone numbers with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->daily_notification_sms,
+  );
+  
+  
+  $form['notifications']['winning_notice'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Winning Notice'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['notifications']['winning_notice']['win_notification_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send winning notice by email to'),
+    '#description' => t('Separate e-mail addresses with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->win_notification_email,
+  );
+
+  $form['notifications']['winning_notice']['win_notification_sms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send winning notice by SMS to'),
+    '#description' => t('Separate cell phone numbers with a comma.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $node->win_notification_sms,
+  );
+  */
+
+  return $form;
+}
+
+
+/**
+ * Implementation of hook_validate().
+ * Check values from the node edit form
+ */
+function webform_ab_validate($node, &$form) {
+  // Make sure the minimum hits field is an int
+  if (!ctype_digit($node->minimum_hits) || !($node->minimum_hits > 0)) {
+    form_set_error('minimum_hits', t('Please enter an integer for Minimum Hits.'));
+  }
+  // Make sure they chose a win criteria
+  if (empty($node->win_type)) {
+    form_set_error('win_type', t('Please choose a Win Criteria.'));
+  }
+  else {
+    // Based on the chosen win type, find the title of the field
+    $field_title = $form['winning_conditions']['win_type'][$node->win_type . '_group'][$node->win_type . '_radio']['#title'];
+
+    // Make sure they entered a value for the win criteria
+    if (empty($node->{$node->win_type})) {
+      form_set_error($node->win_type, t('You must define a value for %criteria', array('%criteria' => $field_title)));
+    }
+    else {
+      $win_value = trim($node->{$node->win_type});
+      
+      // Validate value given for a Total Conversions win criteria
+      if ($node->win_type == 'total_conversions') {
+        if (!($win_value > 0) || !ctype_digit($win_value)) {
+          form_set_error($node->win_type, t('You must define an integer value for %criteria', array('%criteria' => $field_title)));
+        }
+      }
+      // Validate value given for a Conversion Percentage win criteria
+      elseif ($node->win_type == 'percent_conversions') {
+        // If it's between 0 and 1, it's a decimal and OK
+        if ($win_value > 0 && $win_value <= 1) {
+          // Fine
+        }
+        // See if the string ends with a percentage
+        elseif (substr($win_value, -1) == '%') {
+          // Strip the percent sign
+          $number = substr($win_value, 0, strlen($win_value) - 1);
+          if (!($number > 0 && $number <= 100)) {
+            form_set_error($node->win_type, t('Please enter a valid percentage for %criteria. You can either enter it as a percentage (e.g., 45%) or a decimal value (e.g., 0.45).', array('%criteria' => $field_title)));
+          }
+        }
+        // Otherise, failed
+        else {
+          form_set_error($node->win_type, t('Please enter a valid percentage for %criteria. You can either enter it as a percentage (e.g., 45%) or a decimal value (e.g., 0.45).', array('%criteria' => $field_title)));
+        }
+      }
+    }
+  }
+  
+
+  /* Notifications won't be implemented till v2. Leaving these out for now.
+  // Validate daily summary email address(es)
+  if(trim($node->daily_notification_email) != '') {
+    $addresses = explode(',', $node->daily_notification_email);
+    $invalid = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $invalid[] = $address;
+      }
+    }
+    if (!empty($invalid)) {
+      form_set_error('daily_notification_email', t('Invalid e-mail address(es) given for daily summaries: %email', array('%email' => implode(', ', $invalid))));
+    }
+  }
+  
+  // Validate winning notice email address(es)
+  if(trim($node->win_notification_email) != '') {
+    $addresses = explode(',', $node->win_notification_email);
+    $invalid = array();
+    foreach ($addresses as $address) {
+      if (!valid_email_address(trim($address))) {
+        $invalid[] = $address;
+      }
+    }
+    if (!empty($invalid)) {
+      form_set_error('win_notification_email', t('Invalid e-mail address(es) given for winning notice: %email', array('%email' => implode(', ', $invalid))));
+    }
+  }
+  */
+}
+
+
+/**
+ * Implementation of hook_insert().
+ * Save new Webform A/B Test nodes. Just calls webform_ab_update
+ */
+function webform_ab_insert($node) {
+  return webform_ab_update($node, TRUE);
+}
+
+
+/**
+ * Implementation of hook_update().
+ * Update existing or insert new Webform A/B Test nodes
+ */
+function webform_ab_update($node, $is_insert = FALSE) {
+  _webform_ab_prep_node_for_save($node);
+  
+  $replacement_values = array(
+    $node->nid,
+    $node->webform_types,
+    $node->minimum_hits,
+    $node->win_type,
+    $node->{$node->win_type},
+    $node->daily_notification_email,
+    $node->daily_notification_sms,
+    $node->win_notification_email,
+    $node->win_notification_sms
+  );
+  
+  if($is_insert) {
+    $sql = "INSERT INTO {webform_ab} (nid, webform_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s')";
+  }
+  else {
+    $sql = "UPDATE {webform_ab} SET nid=%d, webform_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s' WHERE nid=%d";
+    $replacement_values[] = $node->nid;
+  }
+    
+  db_query($sql, $replacement_values);
+}
+
+
+/**
+ * Clean up fields before saving them to the DB
+ */
+function _webform_ab_prep_node_for_save(&$node) {
+  // Remove any spaces from lists of daily summary e-mail addresses
+  if(trim($node->daily_notification_email) != '') {
+    $addresses = explode(',', $node->daily_notification_email);
+    $fixed = array();
+    foreach ($addresses as $address) {
+      $fixed[] = trim($address);
+    }
+    $node->daily_notification_email = implode(',', $fixed);
+  }
+  
+  // Remove any spaces from lists of win notice e-mail addresses
+  if(trim($node->win_notification_email) != '') {
+    $addresses = explode(',', $node->win_notification_email);
+    $fixed = array();
+    foreach ($addresses as $address) {
+      $fixed[] = trim($address);
+    }
+    $node->win_notification_email = implode(',', $fixed);
+  }
+  
+  // If the percent_conversions is a decimal less than 1, convert to a full number
+  if ($node->percent_conversions > 0 && $node->percent_conversions <= 1) {
+    $node->percent_conversions = $node->percent_conversions * 100;
+  }
+}
+
+
+/**
+ * Implementation of hook_load().
+ */
+function webform_ab_load(&$node) {
+  $load = db_fetch_object(db_query('SELECT * FROM {webform_ab} WHERE nid = %d', $node->nid));
+  if (!empty($load->win_type)) {
+    $load->{$load->win_type} = $load->win_value;
+  }
+  
+  $result = db_query('SELECT f.webform_nid, f.status, n.title, COUNT(DISTINCT hits.hit_id) as hits, COUNT(DISTINCT con.sid) AS conversions
+    FROM {webform_ab_forms} f
+    LEFT JOIN {node} n ON n.nid = f.webform_nid
+    LEFT JOIN {webform_ab_hits} hits ON hits.test_nid = f.test_nid AND hits.webform_nid = f.webform_nid
+    LEFT JOIN  {webform_ab_conversion} con ON con.test_nid = f.test_nid AND con.webform_nid = f.webform_nid
+    WHERE f.test_nid = %d
+    GROUP BY f.test_nid, f.webform_nid
+    ORDER BY f.status, n.title', $node->nid);
+  $included_webforms = array();
+  while ($row = db_fetch_array($result)) {
+    $included_webforms[$row['webform_nid']] = $row;
+  }
+  
+  $load->included_webforms = $included_webforms;
+  
+  return $load;
+}
+
+
+/**
+ * Implementation of hook_delete().
+ * Delete all data for a test
+ */
+function webform_ab_delete(&$node) {
+  db_query('DELETE FROM {webform_ab} WHERE nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_conversion} WHERE test_nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_forms} WHERE test_nid=%d', array($node->nid));
+  db_query('DELETE FROM {webform_ab_hits} WHERE test_nid=%d', array($node->nid));
+}
+
+
+/**
+ * Implementation of hook_view().
+ */
+function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
+  // If the current user has permission to modify this test, show them the overview
+  // page instead of directing them to one of the webforms in the test
+  // If view_webform is set in the URL, don't show the overview
+  if (node_access('update', $node) && $_GET['view_webform'] != 1) {
+    $type = node_get_types('type', $node);
+
+    $node->content['description'] = array(
+      '#value' => "This is the admin overview of the A/B Test. If an unpriveleged or anonymous user visits this same URL, they will be redirected to one of the webforms within the test.",
+      '#weight' => -10,
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+    );
+
+    $node->content['view_link'] = array(
+      '#value' => l('View the test as a regular user would', $_GET['q'], array('query' => array('view_webform' => 1), 'absolute' => TRUE)),
+      '#weight' => -9,
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+    );
+
+    $node->content['test_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('A/B Test Settings'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#weight' => 0,
+    );
+
+    $node->content['test_settings']['title'] = array(
+      '#type' => 'item',
+      '#title' => check_plain($type->title_label),
+      '#value' => $node->title,
+      '#weight' => 0,
+    );
+
+    $node->content['test_settings']['body'] = array(
+      '#type' => 'item',
+      '#title' => check_plain($type->body_label),
+      '#value' => $node->body,
+      '#weight' => 1,
+    );
+
+    $webform_types = module_invoke_all('webform_ab_get_webform_types');
+    
+    $node->content['test_settings']['webform_types'] = array(
+      '#type' => 'item',
+      '#title' => t('Which types of webforms will this test use?'),
+      '#value' => $webform_types[$node->webform_types],
+      '#weight' => 2,
+    );
+    
+    $node->content['winning_conditions'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Winning Conditions'),
+      '#description' => t('Conditions necessary for a form to win the test.'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#weight' => 10,
+    );
+
+    $node->content['winning_conditions']['minimum_hits'] = array(
+      '#type' => 'item',
+      '#title' => t('Minimum Hits'),
+      '#value' => $node->minimum_hits,
+      '#weight' => 0,
+    );
+
+
+    $node->content['winning_conditions']['win_type'] = array(
+      '#type' => 'item',
+      '#title' => t('Win Criteria'),
+      '#value' => $node->win_type,
+      '#weight' => 1,
+    );
+
+    $node->content['winning_conditions']['win_value'] = array(
+      '#type' => 'item',
+      '#title' => t('Win Value'),
+      '#value' => $node->{$node->win_type},
+      '#weight' => 2,
+    );
+    
+    /* Notifications won't be implemented till v2. Leaving these out for now.
+    $node->content['notifications'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Notifications'),
+    	'#description' => t('The following options are specific to this test. You can also set default values for future tests in the Webform A/B Test module settings page.'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 20,
+    );
+
+    $node->content['notifications']['daily_summaries'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Daily Summaries'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 0,
+    );
+
+    $node->content['notifications']['daily_summaries']['daily_notification_email'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send daily reports by email to'),
+    	'#value' => $node->daily_notification_email,
+    	'#weight' => 1,
+    );
+
+    $node->content['notifications']['daily_summaries']['daily_notification_sms'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send daily reports by SMS to'),
+    	'#value' => $node->daily_notification_sms,
+    	'#weight' => 2,
+    );
+
+
+    $node->content['notifications']['winning_notice'] = array(
+    	'#type' => 'fieldset',
+    	'#title' => t('Winning Notice'),
+    	'#collapsible' => FALSE,
+    	'#collapsed' => FALSE,
+    	'#weight' => 3,
+    );
+
+    $node->content['notifications']['winning_notice']['win_notification_email'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send winning notice by email to'),
+    	'#value' => $node->win_notification_email,
+    	'#weight' => 4,
+    );
+
+    $node->content['notifications']['winning_notice']['win_notification_sms'] = array(
+    	'#type' => 'item',
+    	'#title' => t('Send winning notice by SMS to'),
+    	'#value' => $node->win_notification_sms,
+    	'#weight' => 5,
+    );
+    */
+
+    return $node;
+  }
+  
+  // Only continue to a webform if there are webforms to choose from
+  elseif (!empty($node->included_webforms)) {
+    if (($winner_webform_id = _webform_ab_has_winner_already($node)) > 0) {
+      drupal_goto('node/' . $winner_webform_id);
+    }
+    // See if they already have a webform nid in their $_SESSION for this test, and
+    // that it's still a valid webform nid for this test (in case the webform was
+    // removed from the test)
+    else {
+      if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
+        // Pick a random webform nid from the ones in this test
+        $key = array_rand($node->included_webforms);
+        // Save it to the $_SESSION so this user always gets the same one
+        $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $key;
+      }
+      drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
+    }
+  }
+  else {
+    $node = node_prepare($node, $teaser);
+    $node->content['no_webforms'] = array(
+      '#value' => t('There are no webforms in this A/B test.')
+    );
+    return $node;
+  }
+}
+
+
+/**
+ * Check to see if the given node already has a declared winner webform
+ */
+function _webform_ab_has_winner_already($node_or_nid) {
+  // If a node object was passed as the argument...
+  if (is_object($node_or_nid)) {
+    foreach ($node_or_nid->included_webforms as $webform_nid => $details) {
+      // Check if this webform was already declared the winner
+      if ($details['status'] == WEBFORM_AB_WEBFORM_STATUS_WINNER) {
+        return $webform_nid;
+      }
+    }
+  }
+  // Node ID passed as argument
+  elseif ($node_or_nid > 0) {
+    // @todo Test this
+    $webform_nid = db_result(db_query('SELECT webform_nid FROM {webform_ab_forms} WHERE test_nid = %d AND status = %d', $node_or_nid, WEBFORM_AB_WEBFORM_STATUS_WINNER));
+    if ($webform_nid > 0) {
+      return $webform_nid;
+    }
+  }
+  return false;
+}
+
+
+/**
+ * Implementation of hook_webform_ab_valid_webforms().
+ * Return an array of webforms of the given form type that may be included in an
+ * A/B Test.
+ */
+function webform_ab_webform_ab_valid_webforms($webform_types) {
+  if ($webform_types == 'webform') {
+    $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s' ORDER BY title", array('webform'));
+    $forms = array();
+    while ($row = db_fetch_array($result)) {
+      $forms[] = $row;
+    }
+    return $forms;
+  }
+}
+
+
+/**
+ * Implementation of hook_form_alter().
+ * Log a hit to the webform
+ */
+function webform_ab_form_alter(&$form, $form_state, $form_id) {
+  if (is_array($_SESSION['webform_ab']['webform_for_tests'])) {
+    foreach ($_SESSION['webform_ab']['webform_for_tests'] as $test_nid => $webform_nid) {
+      $test_webform_id = 'webform_client_form_' . $webform_nid;
+      if ($test_webform_id == $form_id) {
+        // Determine if this hits and conversions should be logged
+        if (webform_ab_should_log_hits()) {
+          $form['#submit'][] = 'webform_ab_webform_submit';
+          $form['test_nid'] = array(
+            '#type' => 'hidden',
+            '#value' => $test_nid
+          );
+          $form['webform_nid'] = array(
+            '#type' => 'hidden',
+            '#value' => $webform_nid
+          );
+          
+          global $user;
+          $log_hit = TRUE;
+          
+          // If this form load is an AJAX call or post-submit, don't log a hit
+          if (!empty($form_state['storage']) || !empty($form_state['post'])) {
+            $log_hit = FALSE;
+          }
+          // If repeat hits from a user should be ignore, check if this user has
+          // already hit the form
+          elseif (variable_get('webform_ab_ignore_repeat_hits', '1') > 0) {
+            $existing_hit = db_fetch_array(db_query("SELECT hit_id FROM {webform_ab_hits} WHERE test_nid=%d AND webform_nid=%d AND uid=%d AND ip='%s'", array($test_nid, $webform_nid, $user->uid, ip_address())));
+            if ($existing_hit['hit_id'] > 0) {
+              $log_hit = FALSE;
+            }
+          }
+          
+          // If the hit should be logged, do so
+          if ($log_hit) {
+            db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time, uid, ip) VALUES(%d, %d, %d, %d, '%s')", array($test_nid, $webform_nid, time(), $user->uid, ip_address()));
+          }
+          break;
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Handle the submission of a webform that is part of a test. Log the conversion 
+ * if appropriate.
+ */
+function webform_ab_webform_submit($form, &$form_state) {
+  // Determine if this conversion should be logged
+  if (webform_ab_should_log_hits()) {
+    $test_nid = $form_state['values']['test_nid'];
+    $test_node = node_load($test_nid);
+    $conversion_check_results = module_invoke_all('webform_ab_validate_conversion', $test_node->webform_types, $test_node, $form_state);
+  
+    // Loop over the returned values from the hook and log a conversion if any of
+    // them returned TRUE
+    foreach ($conversion_check_results as $val) {
+      if ($val === TRUE) {
+        db_query("INSERT INTO {webform_ab_conversion} (test_nid, webform_nid, sid) VALUES(%d, %d, %d)", array($form_state['values']['test_nid'], $form_state['values']['webform_nid'], $form_state['values']['details']['sid']));
+      }
+    }
+    
+    // Check if a form should be declared the winner in this A/B Test
+    _webform_ab_check_for_win($form_state['values']['test_nid']);
+  }
+}
+
+/**
+ * Implementation of hook_webform_ab_validate_conversion().
+ * If the A/B Test is using standard webforms, just return TRUE, since a form
+ * submission counts as a conversion
+ */
+function webform_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
+  if ($webform_types == 'webform') {
+    return TRUE;
+  }
+}
+
+
+/**
+ * Check if the given A/B Test has a winning webform
+ * This function checks to see if a webform has already been declared the winner.
+ * If not, it invokes hook_webform_ab_check_win_condition() so that other modules
+ * can check their winning conditions, if chosen.
+ * This module also implements hook_webform_ab_check_win_condition() below, to
+ * check for the basic Total Conversions and Conversion Percentage criteria
+ */
+function _webform_ab_check_for_win($test_nid) {
+  // Check if there is already a winner, and gather a list of forms that have reached the minimum number of hits
+  $winner_found = _webform_ab_has_winner_already($test_nid);
+
+  // If there is no winner yet, see if any webforms have reached the minimum_hits 
+  // threshhold and ask other modules if any of those webforms has won
+  if (!$winner_found) {
+    $node = node_load($test_nid);
+    
+    $winnable_webforms = array();
+    foreach ($node->included_webforms as $webform_nid => $details) {
+      // Check if this webform was already declared the winner
+      if ($details['status'] == WEBFORM_AB_WEBFORM_STATUS_WINNER) {
+        $winner_found = TRUE;
+        break;
+      }
+
+      // Not the winner - check if it has reached minimum hits yet
+      if ($details['hits'] >= $node->minimum_hits) {
+        $winnable_webforms[$webform_nid] = $details;
+      }
+    }
+    
+    if (count($winnable_webforms) > 0) {
+      // Call a hook to check for wins on all modules that define winning conditions
+      $winning_details = module_invoke_all('webform_ab_check_win_condition', $node->win_type, $winnable_webforms, $node);
+
+      // Return values of hook implementations are put into a flat array. Loop over and
+      // see if any of the returns is a webform nid. Modules that don't find a win will
+      // return 0, when they do find a win it will return the webform nid
+      foreach ($winning_details as $webform_nid) {
+        // Double-check that the winning webform nid is in the included_webforms array
+        if ($node->included_webforms[$webform_nid]) {
+          $winning_webform = $node->included_webforms[$webform_nid];
+          // Log the win
+          watchdog('webform_ab', "Winner declared in A/B test %testname: %winner", array('%testname' => $winning_webform['title'], '%winner' => $node->title), WATCHDOG_NOTICE);
+          // Save the winning webform to the DB
+          db_query("UPDATE {webform_ab_forms} SET status = %d, win_time = %d WHERE test_nid = %d AND webform_nid = %d", array(WEBFORM_AB_WEBFORM_STATUS_WINNER, time(), $node->nid, $webform_nid));
+          // Update the status on the other forms to be retired
+          db_query("UPDATE {webform_ab_forms} SET status = %d, win_time = %d WHERE test_nid = %d AND webform_nid != %d", array(WEBFORM_AB_WEBFORM_STATUS_RETIRED, 0, $node->nid, $webform_nid));
+        
+          // @todo Send email and SMS notices
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_webform_ab_check_win_condition().
+ * Check which win criteria is being used by the given A/B Test. If it's one of
+ * the ones defined by this module, see if any of the webforms in the test have
+ * won.
+ */
+function webform_ab_webform_ab_check_win_condition($win_type, $webforms_to_check, $node) {
+  switch ($win_type) {
+    case 'total_conversions':
+      // Loop over each included webform and check the conversion count
+      foreach ($webforms_to_check as $webform_nid => $webform_details) {
+        if ($webform_details['conversions'] >= $node->total_conversions) {
+          // Win!
+          return $webform_nid;
+          break;
+        }
+      }
+      break;
+    
+    case 'percent_conversions':
+      // Loop over each included webform and check the conversion percentage
+      foreach ($webforms_to_check as $webform_nid => $webform_details) {
+        if (100 * ($webform_details['conversions'] / $webform_details['hits']) > $node->percent_conversions) {
+          // Win!
+          return $webform_nid;
+          break;          
+        }
+      }
+      break;
+  }
+  return 0;
+}
+
+
+
+/**
+ * Implementation of hook_webform_ab_get_webform_types().
+ */
+function webform_ab_webform_ab_get_webform_types() {
+  return array('webform' => 'Standard Webform');
+}
+
+
+/**
+ * Determine if hits/conversions from the current user should be logged
+ * The admin form at admin/settings/webform_ab allows admins to choose roles and 
+ * IPs to exclude from logging
+ * Returns true if hits/conversions SHOULD be logged, and false if not
+ * 
+ * @return  bool  Returns true if hits/conversions SHOULD be logged, and 
+ *                false if not
+ */
+function webform_ab_should_log_hits() {
+  global $user;
+  $ips = variable_get('webform_ab_ignore_hits_from_ips', '');
+  $roles = variable_get('webform_ab_ignore_hits_from_roles', '');
+  
+  // Check the user roles
+  if ($roles != '') {
+    // Convert the array of roles (which are role_id => 0 or 1) to a flat array 
+    // of role IDs that should be excluded
+    $roles_to_exclude = array();
+    foreach ($roles as $role_id => $enabled) {
+      if ($enabled > 0) {
+        $roles_to_exclude[] = $role_id;
+      }
+    }
+    
+    // Loop over the user's roles and see if any are excluded
+    foreach ($user->roles as $role_id => $role_name) {
+      if (in_array($role_id, $roles_to_exclude)) {
+        // This role should not have hits/conversions logged, so return false
+        return false;
+      }
+    }
+  }
+
+
+  // Check the user IP
+  if ($ips != '') {
+    $user_ip = $_SERVER['REMOTE_ADDR'];
+    // Split IPs by new line and comma
+    $ips_to_exclude = preg_split("/\\n|,/", $ips);
+    // Trim off any spaces
+    array_walk($ips_to_exclude, 'trim_byref');
+    // See if the user's IP is excluded
+    if (in_array($user_ip, $ips_to_exclude)) {
+      return false;
+    }
+  }  
+  
+  // User didn't qualify for any of the exceptions, so their hits/conversions
+  // should be recorded
+  return true;
+}
+
+
+// Define a trim function for use with array_walk()
+if (!function_exists('trim_byref')) {
+  function trim_byref(&$string) {
+    $string = trim($string);
+  }
+}

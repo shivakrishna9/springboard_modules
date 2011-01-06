@@ -1,0 +1,54 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Fundraiser A/B Test
+ *
+ * Adds special functionality to the Webform A/B Test module for use with Fundraising
+ * forms.
+ */
+
+/**
+ * @todo
+ *    Add win condition for total amount collected?
+ */
+
+
+/**
+ * Implementation of hook_webform_ab_get_webform_types().
+ */
+function fundraiser_ab_webform_ab_get_webform_types() {
+  return array('fundraiser' => 'Fundraiser');
+}
+
+
+/**
+ * Implementation of hook_webform_ab_validate_conversion().
+ * Only returns TRUE if the webform type is fundraiser and the donation payment 
+ * was successful. This way, failed credit card payments are not counted as
+ * conversions
+ */
+function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
+  if ($webform_types == 'fundraiser') {
+    // If abort is TRUE, the payment failed. 
+    // Only return TRUE if the abort flag is NOT set to TRUE
+    return ($form_state['values']['abort'] !== TRUE);
+  }
+}
+
+
+/**
+ * Implementation of hook_webform_ab_valid_webforms().
+ * Return an array of donation forms that may be included in an A/B Test.
+ */
+function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
+  if ($webform_types == 'fundraiser') {
+    $result = db_query("SELECT nid, title FROM {node} WHERE status > 0 AND type='%s' ORDER BY title", array('donation_form'));
+    $forms = array();
+    while ($row = db_fetch_array($result)) {
+      $forms[] = $row;
+    }
+    return $forms;
+  }
+}

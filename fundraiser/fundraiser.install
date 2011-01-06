@@ -24,7 +24,18 @@ function fundraiser_uninstall() {
 function fundraiser_enable() {
 	configure_ubercart_settings();
 	create_countries();
-	$result = variable_get('webform_node_types', array());
+	
+	/**
+	 *  Add the donation_form node type to the array of node types handled
+	 * by the webform module.
+	 * 
+	 * The default value is array('webform') because this variable starts
+	 * off empty, until an admin chooses webform node types at
+	 * admin/settings/webform. If you save the webform_node_types as an
+	 * array with ONLY donation_form, then webform nodes will not be
+	 * handled as webforms.
+	 */
+	$result = variable_get('webform_node_types', array('webform'));
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
 }
@@ -35,6 +46,19 @@ function fundraiser_enable() {
 function fundraiser_disable() {
 	remove_ubercart_settings();
 	remove_countries();
+	
+	// Remove donation_form from the list of webform_node_types.
+	// Not really necessary, but still good to clean up after ourselves
+	$result = variable_get('webform_node_types', array('webform'));
+  if (is_array($result)) {
+    foreach ($result as $index => $type) {
+      if ($type == 'donation_form') {
+        unset($result[$index]);
+        variable_set('webform_node_types', $result);
+        break;
+      }
+    }
+  }
 }
 
 /**
@@ -231,81 +255,6 @@ function fundraiser_schema() {
     ),
     'primary key' => array('order_id'),
   );
-	
-	$schema['fundraiser_gateway'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'gateway' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '50',
-	      'not null' => TRUE,
-	    ),
-	    'confirmation_email_from_name' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'confirmation_email_from_email' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'confirmation_email_subject' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'confirmation_email_message' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => FALSE,
-	    ),
-	    'donation_amounts' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'show_other_amount' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'size' => 'tiny',
-	      'not null' => FALSE,
-	      'default' => 0,
-	    ),
-	    'is_donation_form' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'size' => 'tiny',
-	      'not null' => FALSE,
-	      'default' => 0,
-	    ),
-	    'minimum_donation_amount' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'numeric',
-	      'not null' => FALSE,
-	      'precision' => '15',
-	      'scale' => '3',
-	    ),
-	    'internal_name' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '255',
-	      'not null' => FALSE,
-	    ),
-	  ),
-	  'primary key' => array('nid', 'gateway'),
-	);
 	
 	$schema['fundraiser_component_map'] = array(
 	  'description' => t('TODO: please describe this table!'),

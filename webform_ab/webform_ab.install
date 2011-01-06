@@ -1,0 +1,244 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ *   Webform A/B install/schema hooks
+ */
+
+/**
+ * Implements hook_install().
+ */
+function webform_ab_install() {
+  drupal_install_schema('webform_ab');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function webform_ab_uninstall() {
+  drupal_uninstall_schema('webform_ab');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function webform_ab_schema() {
+  $schema = array();
+
+  /**
+   * Settings/configuration for each Webform A/B Test
+   */
+  $schema['webform_ab'] = array(
+    'description' => 'Stores Webform A/B test configurations',
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'webform_types' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Type of webforms to use in this test.',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'minimum_hits' => array(
+        'type' => 'int',
+        'description' => 'The minimum number of hits to a form before a winner can be declared.',
+        'default' => '0',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'win_type' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'The type of win condition that will be used for this test, such as total conversions, percent conversions, etc',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'win_value' => array(
+        'type' => 'float',
+        'description' => 'The value for the winning condition, used with win_type - for example, if win_type is total conversions, this might be 50. If win_type is percent conversions, this might be 0.15.',
+        'default' => 0,
+        'not null' => FALSE,
+      ),
+      'daily_notification_email' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Emails to send daily summaries to.',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'daily_notification_sms' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Cell phone numbers to send daily summaries to.',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'win_notification_email' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Emails to send a win notification to.',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'win_notification_sms' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Cell phone numbers to send a win notification to .',
+        'default' => '',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid')
+  );
+  
+
+  /**
+   * Forms included in Webform A/B Test nodes
+   */
+  $schema['webform_ab_forms'] = array(
+    'description' => 'Stores the forms included within Webform A/B tests',
+    'fields' => array(
+      'test_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'webform_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform node included in the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'description' => 'Status of this form within the Test',
+        'default' => '0',
+        'not null' => TRUE,
+      ),
+      'win_time' => array(
+        'type' => 'int',
+        'description' => 'Timestamp when this form won, to determine pre-win and post-win stats. Only set for the form that wins the Test.',
+        'default' => 0,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('test_nid', 'webform_nid'),
+    'indexes' => array(
+      'test_nid' => array('test_nid'),
+      'webform_nid' => array('webform_nid')
+    ),
+  );
+  
+  
+  /**
+   * Webform A/B Test hits table
+   */
+  $schema['webform_ab_hits'] = array(
+    'description' => 'Hit stats for each form in a Webform A/B Test',
+    'fields' => array(
+      'hit_id' => array(
+        'type' => 'serial',
+        'description' => 'ID for the row',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'test_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'webform_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform node included in the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'time' => array(
+        'type' => 'int',
+        'description' => 'Timestamp of form hit',
+        'default' => 0,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'description' => 'UID of user who hit the form',
+        'default' => 0,
+        'not null' => TRUE,
+      ),
+      'ip' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'IP of user who hit the form',
+        'default' => '',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('hit_id'),
+    'indexes' => array(
+      'test_nid' => array('test_nid'),
+      'webform_nid' => array('webform_nid')
+    ),
+  );
+  
+  /**
+   * Webform A/B Test conversions
+   */
+  $schema['webform_ab_conversion'] = array(
+    'description' => 'Conversion stats for each form in a Webform A/B Test',
+    'fields' => array(
+      'test_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'webform_nid' => array(
+        'type' => 'int',
+        'description' => 'The {node}.nid of the Webform node included in the Webform A/B Test node',
+        'default' => 0,
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'The submission ID, matches to {webform_submissions}.sid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('test_nid', 'webform_nid', 'sid'),
+    'indexes' => array(
+      'test_nid' => array('test_nid'),
+      'webform_nid' => array('webform_nid')
+    ),
+  );
+  
+  
+  return $schema;
+}
+
+
+/**
+ * Add webform hit uid and ip fields
+ */
+function webform_ab_update_6001() {
+  $updates = array();
+  db_add_field($updates, 'webform_ab_hits', 'uid', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
+  db_add_field($updates, 'webform_ab_hits', 'ip', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  return $updates;  
+}
