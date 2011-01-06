@@ -152,7 +152,7 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_form_FORM_ID_alter().
  */
 function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
-  if ($form['#node']->nid) {
+  if ($form['#node']->nid && (arg(2) != 'submission')) {
     $is_webform_user = $form['#node']->is_webform_user;
     $authenticate_submitters = $form['#node']->authenticate_submitters;
     $send_new_user_email = $form['#node']->send_new_user_email;
