@@ -179,7 +179,7 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_form_FORM_ID_alter().
  */
 function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
-  if ($form['#node']->nid && ('submission' != arg(2))) {
+  if ($form['#node']->nid && (arg(2) != 'submission')) {
     $is_webform_user = $form['#node']->is_webform_user;
     $authenticate_submitters = $form['#node']->authenticate_submitters;
     $send_new_user_email = $form['#node']->send_new_user_email;
@@ -969,7 +969,15 @@ function _webform_user_create_webform_components(&$node) {
     ),
   );
 
-  webform_component_insert($mail_field);
+  $cid = webform_component_insert($mail_field);
+    
+    // Add the component mapping record
+    $map = array(
+      'nid' => $node->nid,
+      'cid' => $cid,
+      'map_id' => 'mail',
+    );
+    drupal_write_record('webform_user_component_map', $map);
 
   // Process fieldset results.
   foreach ($fieldsets as $fieldset) {
@@ -1045,7 +1053,15 @@ function _webform_user_create_webform_components(&$node) {
     }
 
     // Add the component to the Webform.
-    webform_component_insert($item);
+    $cid = webform_component_insert($item);
+    
+    // Add the component mapping record
+    $map = array(
+      'nid' => $node->nid,
+      'cid' => $cid,
+      'map_id' => $field['name'],
+    );
+    drupal_write_record('webform_user_component_map', $map);
   }
 
   // Add the Market Source field.
