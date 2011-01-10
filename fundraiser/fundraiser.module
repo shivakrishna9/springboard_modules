@@ -324,14 +324,59 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     global $user;
     profile_load_profile($user); /* explicitly load profile as of Drupal 6.19 */
 
-    // make sure this is a donation form
+    // get fundraiser info 
+    $node = $form['#parameters'][2];
+
+    // handle donation form submissions
+    if ($node->type == 'donation_form' && arg(2) == 'submission') {
+      // Set up a view only display of the donation amount
+      $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
+      $form['submitted']['donation']['display_amount'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . '$' . number_format($amount, 2) . '</div>',
+      );
+      
+      // Show whether or not it's a recurring donation
+      if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
+        $recurs = $form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs' ? t('Yes') : t('No');
+        $form['submitted']['donation']['recurring'] = array(
+          '#type' => 'markup',
+          '#value' => '<div class="form-item"><label>' . t('Recurring Donation?') . ':</label>' . $recurs . '</div>',
+        );
+      }
+      unset($form['submitted']['donation']['amount']);
+      unset($form['submitted']['donation']['other_amount']);
+      unset($form['submitted']['credit_card_information']);
+      
+      // Clean up the donor info section - replace the form fields with read only info
+      $form['submitted']['donor_information']['#title'] = t('Donor Information');   
+      
+      $form['submitted']['donor_information']['first_name_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' . $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
+      );
+      $form['submitted']['donor_information']['last_name_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' . $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
+      );
+      $form['submitted']['donor_information']['email_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
+      );
+      unset($form['submitted']['donor_information']['first_name']);
+      unset($form['submitted']['donor_information']['last_name']);
+      unset($form['submitted']['donor_information']['email']);
+    }
+    
+    // handle the donation form itself
     if ($node->type == 'donation_form' && arg(2) != 'submission')
-    {
-      $base = drupal_get_path('module', 'fundraiser');
-      drupal_add_js($base .'/jquery.alphanumeric.js');
-      drupal_add_js($base .'/fundraiser.js');
-  
-      $components = $node->webform['components'];
+		{
+			$base = drupal_get_path('module', 'fundraiser');
+			drupal_add_js($base .'/jquery.alphanumeric.js');
+			drupal_add_js($base .'/fundraiser.js');
+	
+			$components = $node->webform['components'];
+
       // create an data structure that will tell us exactly where each webform component lives in the FAPI array
       $component_hierarchy = fundraiser_parse_components($node->nid, $components);          
       
