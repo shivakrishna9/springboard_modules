@@ -220,6 +220,8 @@ function sf_donation_theme() {
 
 /**
  * Form for mapping webform component fields to a Salesforce object.
+ * Used for the "Donation map" local task tab when editing the Webform settings 
+ * on a Donation form
  */
 function sf_donation_mapping_form($form_state, $node) {
 
@@ -234,12 +236,23 @@ function sf_donation_mapping_form($form_state, $node) {
     '#value' => $node->nid,
   );
   
+  // Determine the current donation integrator (NPSP or Common Ground)
+  // Returns the array of info that the integrator module returns in its
+  // implementation of hook_donation_integration().
   $integrator = _current_donation_integrator();
+  
+  // Get the integrator object type for donations
+  // For Salesforce NPSP and Common Ground, this is 'Opportunity'
   $type = $integrator['donation_object']['type'];
+	
 	$sf = salesforce_management_api_connect();
+	
+	// Connect to Salesforce and get info on the object type
 	$donation = $sf->client->describeSObject($type);
 	
-	// get record types
+	// Build an array of record types, with the format typeID => typeName
+	// The recordTypeInfos array will include things like Donation, Grant, Major 
+	// Gift, Matching Donation
 	foreach($donation->recordTypeInfos as $record_type) {
 		if ($record_type->available && $record_type->name != 'Master') {
 			$record_types[$record_type->recordTypeId] = $record_type->name;
@@ -249,6 +262,11 @@ function sf_donation_mapping_form($form_state, $node) {
 	$record_types[] = '--Select One--';
   asort($record_types);
 	
+	$form['user_mappings'] = array(
+		'#value' => t('<h3>Donation Mappings</h3><div>Use this form to map fields to the <strong>@type</strong> object in Salesforce. The current donation storage system is <strong>@integrator</strong>.</div>', array('@type' => $type, '@integrator' => $integrator['name'])),
+		'#weight' => -1,
+	);
+
   $form['single_record_type'] = array(
     '#type' => 'select',
     '#title' => 'Single donation record type',
@@ -264,16 +282,10 @@ function sf_donation_mapping_form($form_state, $node) {
     '#options' => $record_types,
     '#default_value' => $node->recurring_recordtype_id,
   );
-	
+  
+  // Build a simple array of the fields available in the SF object
 	$donation_fields = array('' => '--Select One--');
-	$mapping_config = _get_mapping_config();
-	
-	$form['user_mappings'] = array(
-		'#value' => t('<h3>Donation Mappings</h3><div>Use this form to map fields to the <strong>@type</strong> object in Salesforce. The current donation storage system is <strong>@integrator</strong>.</div>', array('@type' => $type, '@integrator' => $integrator['name'])),
-		'#weight' => -1,
-	);
-
-	foreach($donation->fields as $field) {
+  foreach($donation->fields as $field) {
     $donation_fields[$field->name] = $field->label;
 	}
 	
@@ -283,29 +295,37 @@ function sf_donation_mapping_form($form_state, $node) {
 	$node = $form['#node'];
 	
 	require_once 'donation.php';
+	
+	// Get a list of built-in Donation form fields that can be mapped to SF fields
 	$properties = Donation::get_mappable_properties();
 	asort($properties);
 	
+	// For each Donation form field, show a dropdown of all SF fields
 	foreach($properties as $key => $value) {
-	 $form['mapping']['donation'][$key] = array(
-	   '#type' => 'item',
-	   '#description' => $value,
-	 );
-	 $form['mapping']['salesforce'][$key] = array(
-  		'#type' => 'select',
-  		'#options' => $donation_fields,
-  		'#default_value' => $node->salesforce_map[$key],
-  	);
+    $form['mapping']['donation'][$key] = array(
+      '#type' => 'item',
+      '#description' => $value,
+    );
+    $form['mapping']['salesforce'][$key] = array(
+      '#type' => 'select',
+      '#options' => $donation_fields,
+      '#default_value' => $node->salesforce_map[$key],
+    );
 	}
 	
+	// Get pre-defined field mappings
+	$mapping_config = _get_mapping_config();
+	
+	// Add mapping dropdowns for the 'special' donation form fields, like Market
+	// Source, Campaign ID, and Referrers
 	foreach($node->webform['components'] as $cid => $component) {
 		if($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
-			// component
+			// Webform component
 			$form['mapping']['component'][$component['form_key']] = array(
 			'#type' => 'item',
 			'#description' => t($component['name']." - (".$component['type'].")"),
 			);
-			// opportunity field
+			// SF object field
 			$form['mapping']['salesforce'][$component['form_key']] = array(
 				'#type' => 'select',
 				'#options' => $donation_fields,
@@ -319,39 +339,46 @@ function sf_donation_mapping_form($form_state, $node) {
 	return $form;
 }
 
-/**
- * Implementation of hook_perm().
- */
-function sf_donation_perm() {
-  return array('sync donations with salesforce');
-}
 
 /*
- * Saves salesforce donation map
+ * Save the SF donation field mapping for a Donation form
  */
 function sf_donation_mapping_form_submit($form, &$form_state) {
-	$integrator = _current_donation_integrator();
+	// Determine the current donation integrator (NPSP or Common Ground)
+  // Returns the array of info that the integrator module returns in its
+  // implementation of hook_donation_integration().
+  $integrator = _current_donation_integrator();
 	$nid = $form['#node']->nid;
 	
-	// remove salesforce mappings
+	// Remove old Salesforce mappings
 	db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $nid);
 	
-	// re-add mappings
+	// Re-create mappings
 	foreach($form_state['values']['mapping']['salesforce'] as $key => $value) {
 		if (!empty($value)) {
 		  $map[$value] = $key;
 		}
 	}
 	
-	$salesforce = $integrator['donation_object']['type'];
+	// Determine the SF object type for this integrator
+	$salesforce_type = $integrator['donation_object']['type'];
+	
+	// Look for the donation record types from the dropdowns in the form
 	$single_recordtype_id = $form_state['values']['single_record_type'];
 	$recurring_recordtype_id = $form_state['values']['recurring_record_type']; 
 	
-	// save the map
+	// Save the mapping
 	db_query("INSERT INTO {fundraiser_salesforce_map} (nid, single_recordtype_id, recurring_recordtype_id, fields, salesforce) VALUES
-	 (%d, '%s', '%s', '%s', '%s')", $nid, $single_recordtype_id, $recurring_recordtype_id, serialize($map), $salesforce);
+	 (%d, '%s', '%s', '%s', '%s')", $nid, $single_recordtype_id, $recurring_recordtype_id, serialize($map), $salesforce_type);
 
 	drupal_set_message(t('Salesforce mapping has been saved'));
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function sf_donation_perm() {
+  return array('sync donations with salesforce');
 }
 
 /**
@@ -976,6 +1003,10 @@ function theme_sf_donation_mapping_form($form) {
 	return $output;
 }
 
+/**
+ * Get In Progress campaigns from Salesforce
+ * Returns an array in the format campaignID => campaignName
+ */
 function _get_campaigns() {
 	$sf = salesforce_management_api_connect();
 	$campaigns = array();
@@ -1018,23 +1049,25 @@ function sf_donation_mail($key, &$message, $params) {
 }
 
 /**
- * Returns an array of predefined mapped fields so that they do not show up twice in the mapping list.
+ * Returns an array of predefined mapped fields so that they do not show up twice 
+ * in the mapping list.
  */
 function _get_mapping_config() {
 	$fields = array(
 		'predefined' => array(
-			'card_number' => 'CC_Last_4__c',
-			'card_expiration_date' => 'CC_Exp_Month__c',
-			'amount' => 'Amount',
-			'billing_address' => 'Billing_Street__c',
-			'billing_address_2' => 'Billing_Street_Line_2__c',
-			'billing_city' => 'Billing_City__c',
-			'billing_country' => 'Billing_Country__c',
-			'billing_state' => 'Billing_State__c',
-			'billing_zipcode' => 'Billing_Zip__c',
-			'recurs_monthly' => 'NOT MAPPED',
-			'card_cvv' => 'NOT MAPPED',
-			'other_amount' => 'NOT MAPPED',
+      'card_number' => 'CC_Last_4__c',
+      'card_expiration_date' => 'CC_Exp_Month__c',
+      'amount' => 'Amount',
+      'currency' => 'CurrencyIsoCode',
+      'billing_address' => 'Billing_Street__c',
+      'billing_address_2' => 'Billing_Street_Line_2__c',
+      'billing_city' => 'Billing_City__c',
+      'billing_country' => 'Billing_Country__c',
+      'billing_state' => 'Billing_State__c',
+      'billing_zipcode' => 'Billing_Zip__c',
+      'recurs_monthly' => 'NOT MAPPED',
+      'card_cvv' => 'NOT MAPPED',
+      'other_amount' => 'NOT MAPPED',
       'first_name' => 'NOT MAPPED',
       'last_name' => 'NOT MAPPED',
       'email' => 'NOT MAPPED',
@@ -1046,7 +1079,7 @@ function _get_mapping_config() {
 }
 
 /**
- * Returns information aboue all installed donation integrators.
+ * Returns information about all installed donation integrators.
  */
 function _donation_integration_list() {
   $integrators = module_invoke_all('donation_integration');
