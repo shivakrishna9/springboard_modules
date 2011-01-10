@@ -969,7 +969,15 @@ function _webform_user_create_webform_components(&$node) {
     ),
   );
 
-  webform_component_insert($mail_field);
+  $cid = webform_component_insert($mail_field);
+    
+    // Add the component mapping record
+    $map = array(
+      'nid' => $node->nid,
+      'cid' => $cid,
+      'map_id' => 'mail',
+    );
+    drupal_write_record('webform_user_component_map', $map);
 
   // Process fieldset results.
   foreach ($fieldsets as $fieldset) {
@@ -1045,7 +1053,15 @@ function _webform_user_create_webform_components(&$node) {
     }
 
     // Add the component to the Webform.
-    webform_component_insert($item);
+    $cid = webform_component_insert($item);
+    
+    // Add the component mapping record
+    $map = array(
+      'nid' => $node->nid,
+      'cid' => $cid,
+      'map_id' => $field['name'],
+    );
+    drupal_write_record('webform_user_component_map', $map);
   }
 
   // Add the Market Source field.
