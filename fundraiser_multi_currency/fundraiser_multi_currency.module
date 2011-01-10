@@ -1,0 +1,94 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Fundraiser Multiple Currency Support
+ *
+ * Adds multiple currency support to donation forms.
+ */
+
+/**
+ * Implementation of hook_form_alter().
+ * Add the multi-currency option to the Donation node add form.
+ */
+function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'donation_form_node_form':
+      // Only add teh multi-currency option to the form when creating a donation
+      // form, not when editing it
+      if (!($form['#node']->nid > 0)) {
+        $form['multiple_currency_support'] = array(
+          '#type' => 'radios',
+          '#title' => t('Support multiple currencies'),
+          '#description' => t('Should this form support multiple currencies?'),
+          '#options' => array(
+            'hide' => t('Hide currency from user and always use the default.'),
+            'show' => t('Allow the user to choose their currency from a dropdown.')
+          ),
+          '#default_value' => 'hide',
+          '#weight' => -4.65,
+        );
+        $form['default_currency'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Default currency'),
+          '#description' => t('If you give users the option to choose their currency, this will be selected by default. Otherwise, this will be used for all donations.'),
+          '#size' => 40,
+          '#maxlength' => 10,
+          '#default_value' => 'USD',
+          '#weight' => -4.64,
+          '#required' => TRUE,
+        );
+      }
+      break;
+  }
+}
+
+
+/**
+ * Implmentation of hook_fundraiser_form_insert().
+ */
+function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+  
+  // Start creating a currency component for the webform
+  $currency = array();
+  $currency['nid'] = $node->nid;
+  $currency['pid'] = 0;
+  $currency['value'] = $node->default_currency;
+  $currency['form_key'] = 'currency';
+  $currency['name'] = 'Currency';
+  $currency['mandatory'] = 1;
+  $currency['weight'] = 0;
+  $currency['email'] = 1;
+  $currency['maps_to'] = '';
+  $currency['extra'] = array(
+  	'description' => '',
+  );
+  
+  // If they chose to allow users to pick their currency, add a dropdown for currencies
+  if ($node->multiple_currency_support == 'show') {
+    $default_currencies = "USD|US Dollars
+CAD|Canadian dollars
+GBP|British pounds
+EUR|Euros";
+    
+  	$currency['type'] = 'select';  
+  	$currency['extra']['items'] = $default_currencies;
+  	$currency['extra']['multiple'] = 0;
+  	$currency['extra']['aslist'] = 'Y';
+  }
+  // Otherwise, hide the currency
+  else {
+    $currency['type'] = 'hidden';  
+  }
+  
+  webform_component_insert($currency);
+}
+
+/**
+ * Implementation of hook_fundraiser_add_order_fields().
+ */
+function fundraiser_multi_currency_fundraiser_add_order_fields($fundraiser_fields) {
+  return array('currency' => $fundraiser_fields['currency']);
+}

@@ -438,8 +438,13 @@ function _uc_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   }
 
   // Variable currency... not used atm.
-  $currency = variable_get('uc_cybersource_currency', 'usd');
-
+  if (!empty($order->data['currency'])) {
+    $currency = strtolower($order->data['currency']);
+  }
+  else {
+    $currency = variable_get('uc_cybersource_currency', 'usd');
+  }
+  
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
 
