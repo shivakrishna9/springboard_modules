@@ -132,8 +132,15 @@ function webform_user_update_6101() {
 function webform_user_update_6102() {
 	$updates = array();
 	
-	$schema = drupal_get_schema('webform_user_component_map');	
-	db_create_table($updates, 'webform_user_component_map', $schema);
+	$sql = <<<SQL
+	CREATE TABLE `webform_user_component_map` (
+	  `nid` int(10) unsigned NOT NULL,
+	  `cid` int(10) unsigned NOT NULL,
+	  `map_id` varchar(100) NOT NULL,
+	  PRIMARY KEY (`nid`,`cid`)
+	)
+SQL;
+  $updates[] = update_sql($sql);
 	
 	return $updates;
 }
