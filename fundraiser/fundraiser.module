@@ -1320,7 +1320,11 @@ function _save_profile_map($uid, &$map) {
 		if (empty($user_to_update->salesforce_contact_id)) {
 			$action = 'upsert';
 		}
-		sf_queue_insert($user_to_update->uid, 'user', $action);
+		
+		// If the SF Queue API is enabled, insert this user into the queue
+		if (module_exists('queue_api')) {
+		  sf_queue_insert($user_to_update->uid, 'user', $action);
+		}		
 	}
 }
 
