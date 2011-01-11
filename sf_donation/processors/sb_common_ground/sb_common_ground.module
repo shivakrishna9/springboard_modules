@@ -81,6 +81,7 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
     'cv__Contact__c' => $user_ids->salesforce_contact_id,
     'cv__Start_Date__c' => date('Y-m-d', $order->created),
     'cv__Recurring_Amount__c' => $order->order_total,
+		'CurrencyIsoCode' => $order->data['currency'],
     'cv__Recurring_Amount_Precise__c' => $order->order_total,
     'cv__Recurring_Gift_Status__c' => 'Active',
     'cv__Campaign__c' => $campaign_id,
