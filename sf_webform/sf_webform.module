@@ -710,3 +710,14 @@ function sf_webform_remove_dedupe_field($nid) {
 function _get_submission_nid($sid) {
 	return db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $sid));
 }
+
+/**
+ * Delete submissions from queue when a submission is deleted
+ */
+function sf_webform_webform_submission_delete($node, $submission) {
+	// Check to see if this form is mapped to Salesforce
+  if ($fieldmap = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = 'webform:%d'", $node->nid))) {
+  	db_query("DELETE FROM {sf_queue} WHERE type = 'webform' AND oid = %d", $submission->sid);
+  	db_query("DELETE FROM {sf_retry_queue} WHERE type = 'webform' AND oid = %d", $submission->sid);
+  }	
+}
