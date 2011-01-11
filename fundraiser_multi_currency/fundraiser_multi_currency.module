@@ -70,6 +70,7 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
   if ($node->multiple_currency_support == 'show') {
     $default_currencies = "USD|US Dollars
 CAD|Canadian dollars
+AUD|Australian dollars
 GBP|British pounds
 EUR|Euros";
     
