@@ -210,7 +210,7 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       $form['submitted']['ms']['#type'] = 'textfield';
       $form['submitted']['cid']['#type'] = 'textfield';
       $form['submitted']['referrer']['#type'] = 'textfield';
-      $form['submitted']['initial referrer']['#type'] = 'textfield';
+      $form['submitted']['initial_referrer']['#type'] = 'textfield';
     }
   }
 }
