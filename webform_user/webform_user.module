@@ -1120,7 +1120,7 @@ function _webform_user_create_webform_components(&$node) {
     'nid' => $node->nid,
     'pid' => 0,
 	'value' => '',
-    'form_key' => 'initial referrer',
+    'form_key' => 'initial_referrer',
     'name' => 'Initial Referrer',
     'type' => 'hidden',
     'mandatory' => 0,

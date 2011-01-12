@@ -144,3 +144,15 @@ SQL;
 	
 	return $updates;
 }
+
+/**
+ * Update 6103: Rename 'initial referrer' form keys to 'initial_referrer'
+ */
+function webform_user_update_6103() {
+	$updates = array();
+	
+	$sql = "update webform_component SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
+	$updates[] = update_sql($sql);
+	
+	return $updates;
+}
