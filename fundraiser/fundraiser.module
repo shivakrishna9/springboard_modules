@@ -328,7 +328,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     $node = $form['#parameters'][2];
 
     // handle donation form submissions
-    if ($node->type == 'donation_form' && arg(2) == 'submission') {
+    if ($node->type == 'donation_form' && arg(2) == 'submission') {    	
       // Set up a view only display of the donation amount
       $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
       $form['submitted']['donation']['display_amount'] = array(
@@ -656,6 +656,17 @@ function fundraiser_webform_submission_insert($node, $submission) {
   // insert a record to relate the webform submission to the ubercart order
   if ($node->type == 'donation_form') {
     db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, gateway, txn_id, recurring_status) VALUES (%d, %d, %d, '%s', '%s', %d)", $node->nid, $node->order_id, $submission->sid, $node->gateway, $node->txn_id, empty($node->recurring_order) ? DONATION_NON_RECURRING : DONATION_RECURRING);
+  }
+}
+
+/**
+ * Implementation of hook_webform_submission_update()
+ */
+function fundraiser_webform_submission_update($node, $submission) {
+  if ($node->type == 'donation_form') {
+	  if ($order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE webform_nid = %d AND sid = %d", $node->nid, $submission->sid))) {
+	    sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+	  }
   }
 }
 
