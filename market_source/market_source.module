@@ -178,7 +178,11 @@ function market_source_user($op, &$edit, &$account, $category = NULL) {
  * Implementation of hook_form_alter().
  */
 function market_source_form_alter(&$form, $form_state, $form_id) {
-  if (!isset($form['submission']) && module_exists('webform') && strpos($form_id, 'webform') === 0) {
+  if (!isset($form['submission']) 
+      && module_exists('webform') 
+      && (strpos($form_id, 'webform') === 0)
+      && (('submission' != arg(2)) && ('edit' == arg(4))) // This check ensures that we don't modify a submissions's values on edit
+      ) {
     if (isset($form['submitted']['ms']) && market_source_get_ms() != '') {
       $form['submitted']['ms']['#value'] = market_source_get_ms();
     }
@@ -193,6 +197,20 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
 
     if (isset($form['submitted']['initial_referrer']) && market_source_get_initial_referrer() != '') {
       $form['submitted']['initial_referrer']['#value'] = market_source_get_initial_referrer();
+    }
+  }
+  
+  // Expose Market Source fields for editting
+  if (strstr($form_id, 'webform_client_form')) {    
+    if (arg(2) == 'submission') {
+    	// Moving these makes it easier to read the form - things are more neatly ordered
+      $form['submitted']['mail']['#weight'] = -100;
+      $form['submitted']['personal_information']['#weight'] = 100;
+      
+      $form['submitted']['ms']['#type'] = 'textfield';
+      $form['submitted']['cid']['#type'] = 'textfield';
+      $form['submitted']['referrer']['#type'] = 'textfield';
+      $form['submitted']['initial referrer']['#type'] = 'textfield';
     }
   }
 }
