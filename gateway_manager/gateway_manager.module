@@ -1,0 +1,212 @@
+<?php
+// $Id: gateway_manager.module,v 1.0 2010/12/30 18:58:04 pcave Exp $
+
+/**
+ * @file
+ * This module provides functionality for creating multiple versions of the same payment gateway with different settings. 
+ * 
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function gateway_manager_menu() {
+  $items['admin/settings/fundraiser/gateways'] = array(
+    'title' => t('Payment gateways'),
+    'page callback' => 'gateway_manager_list',
+    'access callback' => 'user_access',
+    'access arguments' => array('view payment gateway list'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'gateway_manager.admin.inc',
+  );
+  $items['admin/settings/fundraiser/gateways/list'] = array(
+    'title' => t('List'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view payment gateway list'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );  
+  $items['admin/settings/fundraiser/gateways/add'] = array(
+    'title' => t('Add payment gateway'),
+    'page callback' => 'gateway_manager_gateway_add',
+    'access callback' => 'user_access',
+    'access arguments' => array('create payment gateway'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'gateway_manager.admin.inc',
+    'weight' => 1,
+  );
+  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
+    'title' => t('Edit payment gateway'),
+    'page callback' => 'gateway_manager_gateway_edit',
+    'page arguments' => array(4),
+    'type' => MENU_CALLBACK,
+    'access callback' => 'user_access',
+    'access arguments' => array('edit any payment gateway'),
+    'file' => 'gateway_manager.admin.inc',
+  );
+  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
+    'title' => t('Delete payment gateway'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gateway_managed_gateway_delete_form', 4),
+    'type' => MENU_CALLBACK,
+    'access callback' => 'gateway_manager_gateway_can_be_deleted',
+    'access arguments' => array(arg(4)),
+    'file' => 'gateway_manager.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Loads a payment gateway configuration by id.
+ */
+function gateway_manager_gateway_load($id) {
+  $gateway = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
+  $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
+  while ($data = db_fetch_array($result)) {
+    $gateway->terms[] = $data['tid'];
+  }
+  return $gateway;
+}
+
+/**
+ * Implemenation of hook_perm().
+ */
+function gateway_manager_perm() {
+  return array('view payment gateway list', 'create payment gateway', 'edit any payment gateway', 'delete any payment gateway');
+}
+
+/**
+ * Build a list of payment gateway types defined in the enabled modules.
+ */
+function _managed_gateway_list() {
+  return module_invoke_all('payment_gateway_managed');
+}
+
+/**
+ * Adds a special submit handler to all managed payment gateway forms.
+ */
+function gateway_mananger_settings_form($form) {
+  $form['buttons']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+  
+  // only show the delete button if the payment gateway isn't in use
+  if (isset($form['id']['#value']) && gateway_manager_gateway_can_be_deleted($form['id']['#value'])) {
+    $form['buttons']['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+    );
+  }
+  $form['#submit'][] = 'gateway_manager_settings_form_submit';
+  return $form;
+}
+
+/**
+ * Submission handler for saving gateway configurations.
+ */
+function gateway_manager_settings_form_submit($form, &$form_state) {
+  // check to see if the gateway is being deleted
+  if ($form_state['values']['op'] == 'Delete') {
+    drupal_goto('admin/settings/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
+  }
+  
+  $id = $form_state['values']['id'];
+  $name = $form_state['values']['name'];
+  $type = $form_state['values']['type'];
+  $terms = $form_state['values']['terms'];
+  $config = gateway_manager_extract_config($form_state);
+
+  if (empty($id)) {
+    gateway_manager_settings_insert($name, $type, $terms, $config);
+  }
+  else {
+    gateway_manager_settings_update($id, $name, $type, $terms, $config);
+  }
+}
+
+/**
+ * Creates a new payment gateway record.
+ */
+function gateway_manager_settings_insert($name, $type, $terms, $config) {
+  global $user;
+  $record = new stdClass;
+  $record->name = $name;
+  $record->uid = $user->uid;
+  $record->type = $type;
+  $record->created = time();
+  $record->updated = time();
+  $record->config = serialize($config);
+  
+  $result = drupal_write_record('gateway_manager_gateways', $record);
+  if ($result) {
+    gateway_manager_settings_save_terms($record->id, $terms);
+    drupal_set_message(t('Payment gateway @name created successfully.', array('@name' => $name)));
+    drupal_goto('admin/settings/fundraiser/gateways');
+  }
+}
+
+/**
+ * Updates an existing payment gateway record.
+ */
+function gateway_manager_settings_update($id, $name, $type, $terms, $config) {
+  global $user;
+  $record->id = $id;
+  $record->name = $name;
+  $record->uid = $user->uid;
+  $record->updated = time();
+  $record->config = serialize($config);
+  
+  $result = drupal_write_record('gateway_manager_gateways', $record, array('id'));
+  if ($result) {
+    gateway_manager_settings_save_terms($id, $terms);
+    drupal_set_message(t('Payment gateway @name updated successfully.', array('@name' => $name)));
+    drupal_goto('admin/settings/fundraiser/gateways');
+  }
+}
+
+/**
+ * Deletes an existing payment gateway record.
+ */
+function gateway_manager_delete_gateway($id) {
+  db_query("DELETE FROM {gateway_manager_gateways} WHERE id = %d", $id);
+  // fire hook so other modules can react when a payment gateway is deleted.
+  module_invoke_all('gateway_manager_gateway_delete', $id);
+  drupal_set_message(t('Payment gateway successfully deleted.'));
+  drupal_goto('admin/settings/fundraiser/gateways');
+}
+
+/**
+ * Saves terms associated with a managed gateway.
+ */
+function gateway_manager_settings_save_terms($gid, $terms) {
+  db_query("DELETE FROM {term_gateway} WHERE gid = %d", $gid);
+  foreach($terms as $term) {
+    db_query("INSERT INTO {term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
+  }
+}
+
+/**
+ * Extracts a payment gateways configuration variables from a settings form.
+ */
+function gateway_manager_extract_config(&$form_state) {
+  $exclusions = array('name', 'type', 'op', 'submit', 'form_build_id', 'form_token', 'form_id');
+  $config = array();
+  // loop over form values and only save those
+  foreach($form_state['values'] as $k => $v) {
+    if (!in_array($k, $exclusions)) {
+      $config[$k] = $v;
+    }
+  }
+  return $config;
+}
+
+/**
+ * Determines whether or not a payment gateway is currently assigned to
+ * any donation forms or recurring orders.
+ */
+function gateway_manager_gateway_can_be_deleted($id) {
+  // TODO: write function that checks if gateway is in use!
+  return user_access('delete any payment gateway');
+}
