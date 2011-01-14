@@ -143,6 +143,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#type' => 'textfield',
     '#title' => t('Name'),
     '#required' => TRUE,
+    '#weight' => 1,
     '#default_value' => $name,
     '#description' => t('The recognizable name of the payment gateway.'),
   );
@@ -151,21 +152,42 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#title' => t('Gateway type'),
     '#required' => TRUE,
     '#options' => $gateway_types,
+    '#weight' => 2,
     '#default_value' => $type,
     '#description' => t('Select the type of gateway to create.'),
   );
   
   $vid = _gateway_manager_get_vid();
-  $form['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
-  unset($form['terms']['#weight']);
+  $form['taxononmy'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Taxonomy'),
+    '#collapsible' => TRUE,
+    '#weight' => 3,
+  );
+  
+  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
+  $form['taxononmy']['terms']['#weight'] = 3;
+  //$form['terms']['#collapsible'] = TRUE;
+  //$form['terms']['#collapsed'] = TRUE;
   
   // if type has been selected, get the settings form for that type 
   if (isset($type)) {
+    $title = _gateway_manager_get_gateway_title($gateways, $type);
     $settings_function = _gateway_manager_get_settings_function($gateways, $type);
     if (function_exists($settings_function)) {
       $gateway_settings = $settings_function($config);
       if (is_array($gateway_settings)) {
-        $form = array_merge($form, $gateway_settings);
+        $form['settings'] = array(
+          '#type' => 'fieldset',
+          '#title' => t($title . ' settings'),
+          '#weight' => 4,
+          '#collapsible' => TRUE,
+        );
+        $form['settings'][] = $gateway_settings;
+        //$gateway_settings = null;
+        //print "<pre>".print_r($form, TRUE)."</pre>";
+        //print "<pre>".print_r($gateway_settings, TRUE)."</pre>";
+        //$form = array_merge($form, $form['settings']);
       }
     }
     // return the form wrapped in a function that will save the configuration.
@@ -174,6 +196,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   else {
     $form['submit'] = array(
       '#type' => 'submit',
+      '#weight' => 5,
       '#value' => 'Continue',
     );
     return $form;

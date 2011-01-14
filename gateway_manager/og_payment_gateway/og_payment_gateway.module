@@ -1,0 +1,95 @@
+<?php
+// $Id: og_payment_gateway.module,v 1.0 2011/01/13 18:58:04 pcave Exp $
+
+/**
+ * @file
+ * This module allows payment gateways to be assigned to organic groups. 
+ * 
+ */
+
+/**
+ * Implmentation of hook_form_alter().
+ */
+function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'gateway_manager_edit_form':
+      $id = $form['id']['#value'];
+      $gids = array();
+      // if editing, see if there are assigned groups
+      if (!empty($id)) {
+        $result = db_query("SELECT gid, group_nid FROM {og_payment_gateway} WHERE gid = %d", $id);
+        while ($data = db_fetch_array($result)) {
+          $gids[] = $data['group_nid'];
+        }
+      }
+      elseif (isset($form_state['values'])) { // look for selected groups in form_state
+        foreach($form_state['values']['og_groups'] as $k => $v) {
+          if ($k) {
+            $gids[] = $v;
+          }
+        }
+      }
+      $form_state['og_gids'][0] = implode(',', $gids);
+      og_form_add_og_audience($form, $form_state);
+      $form['access'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Access control'),
+        '#collapsible' => TRUE,
+        '#weight' => 3.5, 
+      );
+      
+      $form['og_nodeapi']['#weight'] = 3.5;
+      $form['og_nodeapi']['visible']['og_groups']['#title'] = t('Groups');
+      $form['og_nodeapi']['visible']['og_groups']['#description'] = t('Select the groups that can utilize this payment gateway.');
+      $form['access'][] = $form['og_nodeapi'];
+      unset($form['og_nodeapi']);
+      //print "<pre>".print_r($form, TRUE)."</pre>";
+      break;
+  }
+}
+
+/**
+ * Implemenation of hook_gateway_manager_gateway_load().
+ */
+function og_payment_gateway_gateway_manager_gateway_load(&$gateway) {
+  $result = db_query("SELECT group_nid FROM {og_payment_gateway} WHERE gid = %d", $gateway->id);
+  $groups = array();
+  // add groups to the gateway object when it is loaded
+  while ($data = db_fetch_array($result)) {
+    $groups[] = $data['group_nid'];
+  }
+  $gateway->groups = $groups;
+}
+
+/**
+ * Implemenation of hook_gateway_manager_gateway_create().
+ */
+function og_payment_gateway_gateway_manager_gateway_create($gateway, $config) {
+  og_payment_gateway_save_groups($gateway->id, $config['og_groups']);
+}
+
+/**
+ * Implemenation of hook_gateway_manager_gateway_update().
+ */
+function og_payment_gateway_gateway_manager_gateway_update($gateway, $config) {
+  og_payment_gateway_save_groups($gateway->id, $config['og_groups']);
+}
+
+/**
+ * Implementation of hook_gateway_manager_gateway_delete().
+ */
+function og_payment_gateway_gateway_manager_gateway_delete($id) {
+  db_query("DELETE FROM {og_payment_gateway} WHERE gid = %d", $id);
+}
+
+/**
+ * Saves the groups that a payment gateway is assigned to.
+ */
+function og_payment_gateway_save_groups($gateway_id, $groups) {
+  db_query("DELETE FROM {og_payment_gateway} WHERE gid = %d", $gateway_id);
+  foreach($groups as $k => $v) {
+    if ($v) {
+      db_query("INSERT INTO {og_payment_gateway} (gid, group_nid) VALUES (%d, %d)", $gateway_id, $v);
+    }
+  }
+}
