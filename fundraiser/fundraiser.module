@@ -1205,19 +1205,26 @@ function fundraiser_webform_submit($form, &$form_state) {
  	// save the order
  	uc_order_save($order);
 
- 	$transaction_type = array(
- 		'txn_type' => 'auth_capture'
+  // additional data to pass to the payment gateway's charge function
+ 	$data = array(
+ 		'txn_type' => 'auth_capture',
  	);
  	
- 	//go get the Payment Gateway assigned to this node
- 	$gateways = _payment_gateway_list('', TRUE);
- 	foreach ($gateways as $key => $gateway) {
- 		if ($gateway['id'] == $node->gateway) {
- 			$charge_function = $gateway['credit'];
- 		}
- 	}
+ 	// varaible to hold the name of the payment gateway charge function we need to call
+ 	$charge_function = NULL;
  	
- 	$result = $charge_function($order->order_id, $donation_amount, $transaction_type);
+ 	// if the gateway manager module is in use, attempt to extract the charge function from there
+ 	if (module_exists('gateway_manager')) {
+ 	  $info = gateway_manager_gateway_info($node->gateway);
+ 	  $charge_function = $info['charge_function'];
+ 	  $data['config'] = $info['config'];
+ 	}
+ 	else {
+ 	  $charge_function = fundraiser_charge_function($node->gateway);
+ 	}
+
+  // call the charge function and store the result
+  $result = $charge_function($order->order_id, $donation_amount, $data);
 
  	if ($result['success']) {
  		$form_state['values']['details']['txn_id'] = $result['data']['txn_id'];
@@ -1272,6 +1279,19 @@ function fundraiser_webform_submit($form, &$form_state) {
 		$form_state['rebuild'] = TRUE;
 		$form_state['values']['abort'] = TRUE;
  	}
+}
+
+/**
+ * Returns the charge function associated with the specified gateway
+ */
+function fundraiser_charge_function($type) {
+  $gateways = _payment_gateway_list('', TRUE);
+  foreach ($gateways as $key => $gateway) {
+   if ($gateway['id'] == $type) {
+  	  return $gateway['credit'];
+   }
+  }
+  return NULL;
 }
 
 /*
