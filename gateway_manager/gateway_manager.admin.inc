@@ -25,7 +25,7 @@ function gateway_manager_list() {
     $gateway = array();
     $gateway['name'] = l($row['name'], 'admin/settings/fundraiser/gateways/' . $row['id'] . '/edit');
     $gateway['type'] = _gateway_manager_get_gateway_title($gateways, $row['type']);;
-    $gateway['form_count'] = rand(1, 12);
+    $gateway['form_count'] = _gateway_manager_form_count($row['id']);
     $gateway['user'] = $row['user'];
     $gateway['created'] = $row['created'];
     $gateway['updated'] = $row['updated']; 
