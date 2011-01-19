@@ -183,7 +183,7 @@ function gm_authorizenet_charge($order_id, $amount, $data) {
     // Set a reference only.
     case UC_CREDIT_REFERENCE_SET:
       // Return the error message if this failed.
-      if ($message = _gm_authorizenet_cim_profile_create($order)) {
+      if ($message = _gm_authorizenet_cim_profile_create($order, $data)) {
         return array('success' => FALSE, 'message' => $message);
       }
       else {
@@ -199,14 +199,14 @@ function gm_authorizenet_charge($order_id, $amount, $data) {
 /**
  * Create a CIM profile using an order's data.
  */
-function _gm_authorizenet_cim_profile_create($order) {
-  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+function _gm_authorizenet_cim_profile_create($order, $data) {
+  $server = $data['config']['gm_authnet_cim_mode'];
 
   // Help build the request.
   $request = _gm_authorizenet_cim_profile_create_request($order);
 
   // Request a profile from auth.net.
-  $xml = _gm_authorizenet_xml_api_wrapper('createCustomerProfileRequest', _gm_authorizenet_array_to_xml($request));
+  $xml = _gm_authorizenet_xml_api_wrapper('createCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
 
   // Parse the response.
   $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
@@ -253,7 +253,7 @@ function _gm_authorizenet_cim_profile_create_request($order) {
  */
 function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
   global $user;
-  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+  $server = $data['config']['gm_authnet_cim_mode'];
 
   // Help build the request.
   $request = _gm_authorizenet_cim_profile_charge_request($order, $amount, $data);
@@ -270,7 +270,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
   else {
 
     // Request a profile from auth.net.
-    $xml = _gm_authorizenet_xml_api_wrapper('createCustomerProfileTransactionRequest', _gm_authorizenet_array_to_xml($request));
+    $xml = _gm_authorizenet_xml_api_wrapper('createCustomerProfileTransactionRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
 
     // Parse the response.
     $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
@@ -316,7 +316,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
  * Helper for building the request for a CIM profile charge.
  */
 function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
-  $profile = _gm_authorizenet_cim_profile_get($order, $data['ref_id']);
+  $profile = _gm_authorizenet_cim_profile_get($order, $data['ref_id'], $data['config']);
   if ($profile['resultCode'] == 'Error') {
     return $profile;
   }
@@ -340,14 +340,14 @@ function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
 /**
  * Get a CIM profile stored at Authorize.Net.
  */
-function _gm_authorizenet_cim_profile_get($order, $profile_id) {
-  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+function _gm_authorizenet_cim_profile_get($order, $profile_id, $config) {
+  $server = $config['gm_authnet_cim_mode'];
   $request = array(
     'customerProfileId' => $profile_id,
   );
 
   // Request a profile from auth.net.
-  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _gm_authorizenet_array_to_xml($request));
+  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
 
   // Parse the response.
   $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
@@ -358,14 +358,14 @@ function _gm_authorizenet_cim_profile_get($order, $profile_id) {
 /**
  * Get a CIM payment profile stored at auth.net.
  */
-function _gm_authorizenet_cim_payment_profile_get($order, $profile_id, $payment_profile_id) {
-  $server = variable_get('uc_authnet_cim_mode', 'disabled');
+function _gm_authorizenet_cim_payment_profile_get($order, $profile_id, $payment_profile_id, $config) {
+  $server = $config['gm_authnet_cim_mode'];
   $request = array(
     'customerProfileId' => $profile_id,
   );
 
   // Request a profile from auth.net.
-  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _gm_authorizenet_array_to_xml($request));
+  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
   // Parse the response.
   $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
   return $response['resultCode'] == 'Error' ? FALSE : $response;
@@ -399,8 +399,8 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   // Build the POST data for the transaction.
   $submit_data = array(
     // Merchant Information
-    'x_login' => variable_get('uc_authnet_api_login_id', ''),
-    'x_tran_key' => variable_get('uc_authnet_api_transaction_key', ''),
+    'x_login' => $data['config']['gm_authnet_api_login_id'],
+    'x_tran_key' => $data['config']['gm_authnet_api_transaction_key'],
 
     // Transaction Information
     'x_version' => '3.1',
@@ -414,8 +414,8 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_card_code' => $order->payment_details['cc_cvv'],
     // 'x_trans_id' => '',
     // 'x_auth_code' => '',
-    'x_test_request' => variable_get('uc_authnet_aim_txn_mode', 'live_test') == 'live_test' ? 'TRUE' : 'FALSE',
-    'x_duplicate_window' => variable_get('uc_authnet_duplicate_window', 120),
+    'x_test_request' => $data['config']['gm_authnet_aim_txn_mode'] == 'live_test' ? 'TRUE' : 'FALSE',
+    'x_duplicate_window' => $data['config']['gm_authnet_duplicate_window'],
 
     // Order Information
     'x_invoice_num' => $order->order_id,
@@ -451,7 +451,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_delim_char' => '|',
     'x_encap_char' => '"',
     'x_relay_response' => 'FALSE',
-    'x_email_customer' => variable_get('uc_authnet_aim_email_customer', FALSE) ? 'TRUE' : 'FALSE',
+    'x_email_customer' => $data['config']['gm_authnet_aim_email_customer'] ? 'TRUE' : 'FALSE',
   );
 
   if ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
@@ -459,13 +459,11 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   }
 
   // Determine the correct URL based on the transaction mode.
-  if (variable_get('uc_authnet_aim_txn_mode', 'live_test') == 'developer_test') {
-    $post_url = variable_get('uc_authnet_api_test_gateway_url',
-                             gm_authorizenet_TEST_GATEWAY_URL);
+  if ($data['config']['gm_authnet_aim_txn_mode'] == 'developer_test') {
+    $post_url = $data['config']['gm_authnet_api_test_gateway_url'];
   }
   else {
-    $post_url = variable_get('uc_authnet_api_live_gateway_url',
-                             gm_authorizenet_LIVE_GATEWAY_URL);
+    $post_url = $data['config']['gm_authnet_api_live_gateway_url'];
   }
 
   // Translate the data array into a string we can POST.
@@ -495,8 +493,8 @@ function _gm_authorizenet_charge($order, $amount, $data) {
 
   $response = explode('|', $result);
 
-  if (variable_get('uc_authnet_response_debug', FALSE)) {
-    watchdog('uc_authorizenet', 'Debug response: !data', array('!data' => '<pre>'. check_plain(print_r($response, TRUE)) .'</pre>'));
+  if ($data['config']['gm_authnet_response_debug']) {
+    watchdog('gm_authorizenet', 'Debug response: !data', array('!data' => '<pre>'. check_plain(print_r($response, TRUE)) .'</pre>'));
   }
 
   // Trim off the encapsulating character from the results.
@@ -535,7 +533,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
       'success' => TRUE,
       'comment' => $message,
       'message' => $message,
-      'data' => array('module' => 'uc_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
+      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
       'uid' => $user->uid,
     );
 
@@ -550,9 +548,9 @@ function _gm_authorizenet_charge($order, $amount, $data) {
 
     // Create a transaction reference if specified in the payment gateway
     // settings and this is an appropriate transaction type.
-    if (variable_get('uc_authnet_cim_profile', FALSE) && in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE))) {
+    if ($data['config']['gm_authnet_cim_profile'] && in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE))) {
       // Ignore the returned message for now; that will appear in the comments.
-      _gm_authorizenet_cim_profile_create($order);
+      _gm_authorizenet_cim_profile_create($order, $data);
     }
   }
 
@@ -578,45 +576,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
 
   return $result;
-}
-
-/**
- * Implementation of hook_recurring_fee().
- */
-function gm_authorizenet_recurring_fee($order, $fee) {
-  // Don't process the fee if ARB is disabled in the gateway settings.
-  if (variable_get('uc_authnet_arb_mode', 'disabled') == 'disabled') {
-    return FALSE;
-  }
-
-  return gm_authorizenet_arb_create($order, $fee);
-}
-
-/**
- * Implementation of hook_recurring_fee_ops().
- */
-function gm_authorizenet_recurring_fee_ops($context, $fee) {
-  $ops = array();
-
-  switch ($context) {
-    case 'fee_admin':
-      if ($fee['remaining_intervals'] > 0) {
-        $ops[] = l(t('update'), 'admin/store/orders/recurring/'. $fee['rfid'] .'/arb-update');
-        $ops[] = l(t('cancel'), 'admin/store/orders/recurring/'. $fee['rfid'] .'/arb-cancel');
-      }
-      else {
-        $ops[] = l(t('delete'), 'admin/store/orders/recurring/'. $fee['rfid'] .'/delete');
-      }
-      break;
-
-    case 'user':
-      $ops[] = l(t('update'), 'user/'. $fee['uid'] .'/recurring/'. $fee['rfid'] .'/arb-update');
-      $ops[] = l(t('cancel'), 'user/'. $fee['uid'] .'/recurring/'. $fee['rfid'] .'/arb-cancel');
-      break;
-  }
-
-
-  return $ops;
 }
 
 /**
@@ -654,7 +613,7 @@ function gm_authorizenet_xml_api($server, $xml) {
 
   // Log any errors to the watchdog.
   if ($error = curl_error($ch)) {
-    watchdog('uc_authorizenet', 'cURL error: @error', array('@error' => $error), WATCHDOG_ERROR);
+    watchdog('gm_authorizenet', 'cURL error: @error', array('@error' => $error), WATCHDOG_ERROR);
     return FALSE;
   }
   curl_close($ch);
@@ -663,267 +622,14 @@ function gm_authorizenet_xml_api($server, $xml) {
 }
 
 /**
- * Sends an ARB Create request via the XML API.
- *
- * @param $order
- *   The order object containing billing and shipping information.
- * @param $fee
- *   An array of data describing the recurring fee.
- * @return
- *   TRUE or FALSE indicating the success of the request.
- */
-function gm_authorizenet_arb_create($order, $fee) {
-  $server = variable_get('uc_authnet_arb_mode', 'disabled');
-
-  // Setup variables for the payment schedule.
-  list($length, $unit) = explode(' ', $fee->regular_interval);
-  list($trial_length, $trial_unit) = explode(' ', $fee->initial_charge);
-
-  // Convert weeks and years to days.
-  if ($unit == 'weeks') {
-    $length *= 7;
-    $unit = 'days';
-  }
-  elseif ($unit == 'years') {
-    $length *= 365;
-    $unit = 'days';
-  }
-
-  // Get a default SKU if none was supplied.
-  if (empty($fee->model)) {
-    $fee->model = db_result(db_query("SELECT model FROM {uc_products} WHERE nid = %d", $fee->nid));
-  }
-
-  // Make sure we have valid values for Authorize.Net.
-  if ($length <= 0 || $unit == 'days' && $length > 365 || $unit == 'months' && $length > 12) {
-    watchdog('uc_authorizenet', 'Product @sku has invalid interval settings for Authorize.Net - @length @unit', array('@sku' => $fee->model, '@length' => $length, '@unit' => $unit), WATCHDOG_ERROR);
-    return FALSE;
-  }
-
-  // Get the country data for the billing and shipping information.
-  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
-  $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
-
-  // Build the data array for the request.
-  $data = array(
-    'refId' => substr($order->order_id .'-'. time(), 0, 20),
-    'subscription' => array(
-      'name' => substr(t('Order @order_id', array('@order_id' => $order->order_id)), 0, 50),
-      'paymentSchedule' => array(
-        'interval' => array(
-          'length' => $length,
-          'unit' => $unit,
-        ),
-        'startDate' => date('Y-m-d', strtotime('+ '. $fee->initial_charge)),
-        'totalOccurrences' => $fee->number_intervals,
-        'trialOccurrences' => '0',
-      ),
-      'amount' => round($fee->fee_amount, 2),
-      'trialAmount' => 0,
-      'payment' => array(), // Data inserted below based on payment method.
-      'order' => array(
-        'invoiceNumber' => substr($order->order_id, 0, 20),
-        'description' => substr(t('Order @order_id - @sku', array('@order_id' => $order->order_id, '@sku' => $fee->model)), 0, 255),
-      ),
-      'customer' => array(
-        'id' => substr($order->uid, 0, 20),
-        'email' => substr($order->primary_email, 0, 255),
-        'phoneNumber' => substr($order->billing_phone, 0, 25),
-        // 'faxNumber' => '',
-      ),
-      'billTo' => array(
-        'firstName' => substr($order->billing_first_name, 0, 50),
-        'lastName' => substr($order->billing_last_name, 0, 50),
-        'company' => substr($order->billing_company, 0, 50),
-        'address' => substr($order->billing_street1, 0, 60),
-        'city' => substr($order->billing_city, 0, 40),
-        'state' => substr(uc_get_zone_code($order->billing_zone), 0, 2),
-        'zip' => substr($order->billing_postal_code, 0, 20),
-        'country' => !$billing_country ? '' : $billing_country[0]['country_iso_code_2'],
-      ),
-      'shipTo' => array(
-        'firstName' => substr($order->delivery_first_name, 0, 50),
-        'lastName' => substr($order->delivery_last_name, 0, 50),
-        'company' => substr($order->delivery_company, 0, 50),
-        'address' => substr($order->delivery_street1, 0, 60),
-        'city' => substr($order->delivery_city, 0, 40),
-        'state' => substr(uc_get_zone_code($order->delivery_zone), 0, 2),
-        'zip' => substr($order->delivery_postal_code, 0, 20),
-        'country' => !$delivery_country ? '' : $delivery_country[0]['country_iso_code_2'],
-      ),
-    ),
-  );
-
-  // Strip out the shipping info if it isn't necessary.
-  if (empty($data['subscription']['shipTo']['firstName'])) {
-    unset($data['subscription']['shipTo']);
-  }
-
-  // Add the payment information to the data array based on the payment method.
-  if ($order->payment_method == 'credit') {
-    if ($order->payment_details['cc_exp_month'] < 10) {
-      $order->payment_details['cc_exp_month'] = '0'. $order->payment_details['cc_exp_month'];
-    }
-
-    $data['subscription']['payment'] = array(
-      'creditCard' => array(
-        'cardNumber' => $order->payment_details['cc_number'],
-        'expirationDate' => $order->payment_details['cc_exp_year'] .'-'. $order->payment_details['cc_exp_month'],
-      ),
-    );
-  }
-
-  // Build the XML string.
-  $xml = _gm_authorizenet_xml_api_wrapper('ARBCreateSubscriptionRequest', _gm_authorizenet_array_to_xml($data));
-
-  // Send the request off to the server and get the response.
-  $response = gm_authorizenet_xml_api($server, $xml);
-
-  // Fail if the response is empty or FALSE.
-  if (!$response) {
-    return FALSE;
-  }
-
-  // Parse the response into a data array.
-  $data = _gm_authorizenet_arb_parse_response($response);
-
-  if ($data['resultCode'] == 'Error') {
-    uc_order_comment_save($order->order_id, 0, t('Authorize.Net: Recurring fee for @model failed.<br />@error - @text', array('@model' => $fee->model, '@error' => $data['code'], '@text' => $data['text'])), 'admin');
-    return FALSE;
-  }
-
-  $user_fee = array(
-    'rfid' => 0,
-    'uid' => $order->uid,
-    'fee_handler' => 'uc_authorizenet',
-    'next_charge' => strtotime('+'. $fee->initial_charge),
-    'fee_amount' => $fee->fee_amount,
-    'regular_interval' => $fee->regular_interval,
-    'remaining_intervals' => $fee->number_intervals,
-    'charged_intervals' => 0,
-    'order_id' => $order->order_id,
-    'data' => $data['subscriptionId'],
-  );
-
-  uc_recurring_fee_save('user', $user_fee);
-
-  uc_order_comment_save($order->order_id, 0, t('Authorize.Net: Recurring fee setup for @model.<br />Subscription ID: @subscription_id', array('@model' => $fee->model, '@subscription_id' => $data['subscriptionId'])), 'admin');
-
-  return TRUE;
-}
-
-/**
- * Updates an ARB subscription; for simplicity's sake, payment schedule
- *   information cannot be updated at this time.
- *
- * @param $subscription_id
- *   The ID of the subscription at Authorize.Net.
- * @param $updates
- *   An array of data to update using key/value pairs from the XML API for ARB;
- *     keys should be children of the subscription element in the XML.
- *   See the ARB_guide.pdf from Authorize.Net for ARBCreateSubscriptionRequests.
- * @return
- *   TRUE or FALSE indicating the success of the cancellation.
- */
-function gm_authorizenet_arb_update($subscription_id, $updates, $order_id = NULL) {
-  $server = variable_get('uc_authnet_arb_mode', 'disabled');
-
-  unset($updates['paymentSchedule']);
-
-  // Build the data array for the request.
-  $data = array(
-    'refId' => substr($order->order_id .'-'. time(), 0, 20),
-    'subscriptionId' => $subscription_id,
-    'subscription' => $updates
-  );
-
-  // Build the XML string.
-  $xml = _gm_authorizenet_xml_api_wrapper('ARBUpdateSubscriptionRequest', _gm_authorizenet_array_to_xml($data));
-
-  // Send the request off to the server and get the response.
-  $response = gm_authorizenet_xml_api($server, $xml);
-
-  // Fail if the response is empty or FALSE.
-  if (!$response) {
-    return FALSE;
-  }
-
-  // Parse the response into a data array.
-  $data = _gm_authorizenet_arb_parse_response($response);
-
-  if ($data['resultCode'] == 'Error') {
-    if (!empty($order_id)) {
-      uc_order_comment_save($order_id, 0, t('Authorize.Net: Subscription @subscription_id updated failed.<br />@error - @text', array('@subscription_id' => $subscription_id, '@error' => $data['code'], '@text' => $data['text'])), 'admin');
-    }
-    return FALSE;
-  }
-
-  uc_order_comment_save($order_id, 0, t('Authorize.Net: Subscription @subscription_id updated.', array('@subscription_id' => $subscription_id)), 'admin');
-
-  return TRUE;
-}
-
-/**
- * Cancels an ARB subscription.
- *
- * @param $subscription
- *   The ID of the subscription at Authorize.Net.
- * @param $order_id
- *   Optional. The ID of the order the recurring fee was attached to.
- * @param $fee
- *   Optional. The data array for the recurring fee being canceled.
- * @return
- *   TRUE or FALSE indicating the success of the cancellation.
- */
-function gm_authorizenet_arb_cancel($subscription_id, $order_id = NULL, $fee = array()) {
-  $server = variable_get('uc_authnet_arb_mode', 'disabled');
-
-  // Build the data array for the request.
-  $data = array(
-    'refId' => substr($order->order_id .'-'. time(), 0, 20),
-    'subscriptionId' => $subscription_id,
-  );
-
-  // Build the XML string.
-  $xml = _gm_authorizenet_xml_api_wrapper('ARBCancelSubscriptionRequest', _gm_authorizenet_array_to_xml($data));
-
-  // Send the request off to the server and get the response.
-  $response = gm_authorizenet_xml_api($server, $xml);
-
-  // Fail if the response is empty or FALSE.
-  if (!$response) {
-    return FALSE;
-  }
-
-  // Parse the response into a data array.
-  $data = _gm_authorizenet_arb_parse_response($response);
-
-  if ($data['resultCode'] == 'Error') {
-    if (!empty($order_id)) {
-      uc_order_comment_save($order_id, 0, t('Authorize.Net: Subscription @subscription_id cancellation failed.<br />@error - @text', array('@subscription_id' => $subscription_id, '@error' => $data['code'], '@text' => $data['text'])), 'admin');
-    }
-    return FALSE;
-  }
-
-  uc_order_comment_save($order_id, 0, t('Authorize.Net: Subscription @subscription_id cancelled.', array('@subscription_id' => $subscription_id)), 'admin');
-
-  // Let other modules act on the canceled fee.
-  if (!empty($fee)) {
-    module_invoke_all('uc_arb_cancel', $fee);
-  }
-
-  return TRUE;
-}
-
-/**
  * Wraps XML API request child elements in the request element and includes the
  *   merchant authentication information.
  */
-function _gm_authorizenet_xml_api_wrapper($request, $xml) {
+function _gm_authorizenet_xml_api_wrapper($request, $xml, $config) {
   return '<?xml version="1.0" encoding="utf-8"?><'. $request
         .' xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"><merchantAuthentication>'
-        .'<name>'. variable_get('uc_authnet_api_login_id', '') .'</name>'
-        .'<transactionKey>'. variable_get('uc_authnet_api_transaction_key', '')
+        .'<name>'. $config['gm_authnet_api_login_id'] .'</name>'
+        .'<transactionKey>'. $config['gm_authnet_api_transaction_key']
         .'</transactionKey></merchantAuthentication>'. $xml .'</'. $request .'>';
 }
 
@@ -1158,7 +864,7 @@ function _gm_authorizenet_login_data() {
     }
 
     // Store any errors.
-    uc_store_encryption_errors($crypt, 'uc_authorizenet');
+    uc_store_encryption_errors($crypt, 'gm_authorizenet');
   }
 
   $data = array(

@@ -1,0 +1,11 @@
+; $Id: gm_test_gateway.info,v 1.0.0.0 2011/01/18 21:13:22 pcave Exp $
+name = Test Gateway Managed
+description = Process payments using a test gateway.
+dependencies[] = fundraiser
+dependencies[] = gateway_manager
+;dependencies[] = uc_payment
+;dependencies[] = uc_credit
+
+package = Jackson River Springboard - payment
+core = 6.x
+php = 5.0

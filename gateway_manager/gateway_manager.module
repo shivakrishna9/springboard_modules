@@ -58,6 +58,39 @@ function gateway_manager_menu() {
 }
 
 /**
+ * Implementation of hook_form_alter().
+ */
+function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'donation_form_node_form':
+      // change the list of options in the payment gateway list
+      $form['gateway']['#options'] = _gateway_manager_gateway_list();
+      $form['gateway']['#prefix'] = '<div id="gateway">';
+      $form['gateway']['#suffix'] = '</div>';
+      break;
+  }
+}
+
+/**
+ * Returns the charge function for the given gateway.
+ */
+function gateway_manager_gateway_info($id) {
+  $gateway_types = _managed_gateway_list();
+  $gateway = gateway_manager_gateway_load($id);
+  $gateway_info = array();
+  
+  $gateway_info['config'] = unserialize($gateway->config);
+  
+  foreach($gateway_types as $options) {
+    if ($options['id'] == $gateway->type) {
+      $gateway_info['charge_function'] = $options['credit'];
+    }
+  }
+  
+  return $gateway_info;
+}
+
+/**
  * Loads a payment gateway configuration by id.
  */
 function gateway_manager_gateway_load($id) {
@@ -196,7 +229,7 @@ function gateway_manager_settings_save_terms($gid, $terms) {
  * Extracts a payment gateways configuration variables from a settings form.
  */
 function gateway_manager_extract_config(&$form_state) {
-  $exclusions = array('name', 'type', 'op', 'submit', 'form_build_id', 'form_token', 'form_id');
+  $exclusions = array('name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
   $config = array();
   // loop over form values and only save those
   foreach($form_state['values'] as $k => $v) {
@@ -214,4 +247,16 @@ function gateway_manager_extract_config(&$form_state) {
 function gateway_manager_gateway_can_be_deleted($id) {
   // TODO: write function that checks if gateway is in use!
   return user_access('delete any payment gateway');
+}
+
+/**
+ * Builds an array of gateways that can be selected when creating a payment gateway.
+ */
+function _gateway_manager_gateway_list() {
+  $result = db_query(db_rewrite_sql("SELECT g.id, g.name FROM {gateway_manager_gateways} g ORDER BY g.name", 'gateway_manager_gateways', 'id'));
+  $gateways = array();
+  while ($data = db_fetch_object($result)) {
+    $gateways[$data->id] = $data->name;
+  }
+  return $gateways;
 }

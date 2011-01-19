@@ -8,9 +8,32 @@
  */
 
 /**
+ * Implemenation of hook_menu().
+ */
+function og_payment_gateway_menu() {
+   $items['og-payment-gateway/filter/ahah'] = array(
+    'title' => t('Filter payment gateways'),
+    'page callback' => 'og_payment_gateway_filter_ahah',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implemenation of hook_init().
+ */
+function og_payment_gateway_init() {
+  drupal_add_css(drupal_get_path('module', 'og_payment_gateway') . '/og_payment_gateway.css');
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  
   switch ($form_id) {
     case 'gateway_manager_edit_form':
       $id = $form['id']['#value'];
@@ -45,6 +68,73 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       unset($form['og_nodeapi']);
       //print "<pre>".print_r($form, TRUE)."</pre>";
       break;
+      
+    case 'donation_form_node_form':
+      // if the current user belongs to more than 1 group, add a group filter
+      if (count($user->og_groups) > 1) {
+        $options = array('' => t('-- Select --'));
+        foreach($user->og_groups as $id => $group) {
+          $options[$id] = $group['title'];
+        }
+        $weight = $form['gateway']['#weight'] - .01;
+        $form['groups'] = array(
+          '#type' => 'select',
+          '#title' => t('Group'),
+          '#weight' => $weight,
+          '#description' => t('Select a group to filter the available payment gateways.'),
+          '#options' => $options,
+          '#ahah' => array(
+            'path' => 'og-payment-gateway/filter/ahah',  
+            'wrapper' => 'gateway',
+            'event' => 'change',  
+            'message' => t('Getting payment gateways...'),
+          ),
+        );
+      }
+      break;
+  }
+}
+
+/**
+ * AHAH callback for the group filter list.
+ */
+function og_payment_gateway_filter_ahah() {
+  include_once 'modules/node/node.pages.inc';
+  $form_state = array('storage' => NULL, 'rebuild' => TRUE);
+  
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+  $form['#validate'] = NULL;
+  $form_state['validate_handlers'] = NULL;
+  _og_payment_gateway_disable_validation($form);
+  
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+
+  $group_nid = $form_state['post']['groups'];
+
+  $changed_elements = $form['gateway'];
+  unset($changed_elements['#prefix'], $changed_elements['suffix']); // we'll unset the div to make sure it won't be repeated!
+  $changed_elements['#options'] = og_payment_gateway_filter_gateways($group_nid);
+  $output = drupal_render($changed_elements);
+  
+  // Final rendering callback.
+  print drupal_json(array('status' => TRUE, 'data' => $output));
+  exit(); 
+}
+
+/**
+ * Helper function to disable all form validation when the form is submitted via AHAH.
+ */
+function _og_payment_gateway_disable_validation(&$form) {
+  foreach (element_children($form) as $child) {
+    $form[$child]['#validated'] = TRUE;
+    _ahah_helper_disable_validation($form[$child]);
   }
 }
 
@@ -92,4 +182,41 @@ function og_payment_gateway_save_groups($gateway_id, $groups) {
       db_query("INSERT INTO {og_payment_gateway} (gid, group_nid) VALUES (%d, %d)", $gateway_id, $v);
     }
   }
+}
+
+/**
+ * Implemenation of hook_db_rewrite_sql().
+ *
+ * Restricts the list of available payment gateways to those assigned to the same organic groups
+ * as the user.
+ */
+function og_payment_gateway_db_rewrite_sql($query, $primary_table, $primary_field, $args) {
+  global $user;
+  switch ($primary_table) {
+    case 'gateway_manager_gateways':
+      $array['join'] = 'INNER JOIN {og_payment_gateway} o ON o.gid = g.id';
+      $array['join'] .= ' INNER JOIN {og_uid} u on u.nid = o.group_nid';
+      $array['where'] = 'u.uid = ' . $user->uid;
+      return $array;
+      break;
+  }
+}
+
+/**
+ * Returns a list of payment gateways filtered by group.
+ */
+function og_payment_gateway_filter_gateways($nid = NULL) {
+  global $user;
+  $sql = 'SELECT g.id, g.name FROM {gateway_manager_gateways} g INNER JOIN {og_payment_gateway} o ON o.gid = g.id INNER JOIN og_uid u ON u.nid = o.group_nid WHERE u.uid = %d';
+  if (!empty($nid)) {
+    $sql .= ' AND o.group_nid = %d';
+  }
+
+  $result = db_query($sql, $user->uid, $nid);
+  
+  $gateways = array();
+  while ($data = db_fetch_object($result)) {
+    $gateways[$data->id] = $data->name;
+  }
+  return $gateways;
 }
