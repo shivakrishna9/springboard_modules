@@ -1255,7 +1255,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  		//if monthly recurring checkbox is set, do the insert into the fundraiser_recurring_users table
  		if ($recurs) {
       $form['#node']->recurring_order = 1;
- 			fundraiser_create_future_orders($order->order_id, $gateway_key);
+ 			fundraiser_create_future_orders($order->order_id, $node->gateway);
  			// add to queue as a recurring donation
  			if ($add_to_queue) {
 	 			sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
