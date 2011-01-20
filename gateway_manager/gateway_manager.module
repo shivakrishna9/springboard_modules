@@ -152,7 +152,7 @@ function gateway_mananger_settings_form($form) {
       '#value' => t('Delete'),
     );
   }
-  else {
+  elseif (isset($form['id']['#value'])) {
     $form['buttons']['delete_notice'] = array(
       '#value' => t('* This payment gateway cannot be deleted because donation forms are assigned to it or there are pending recurring donations.'),
       '#prefix' => '<div class="description">',
