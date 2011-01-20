@@ -50,7 +50,7 @@ function gateway_manager_menu() {
     'page arguments' => array('gateway_managed_gateway_delete_form', 4),
     'type' => MENU_CALLBACK,
     'access callback' => 'gateway_manager_gateway_can_be_deleted',
-    'access arguments' => array(arg(4)),
+    'access arguments' => array(4),
     'file' => 'gateway_manager.admin.inc',
   );
 
@@ -268,9 +268,12 @@ function gateway_manager_extract_config(&$form_state) {
  * Determines whether or not a payment gateway is currently assigned to
  * any donation forms or recurring orders.
  */
-function gateway_manager_gateway_can_be_deleted($id) {
+function gateway_manager_gateway_can_be_deleted($gateway) {
+  $id = is_object($gateway) ? $gateway->id : $gateway;
+  $has_access = user_access('delete any payment gateway');
+  $in_use = _gateway_manager_gateway_in_use($id);
   // Check that the user has the correct permission, and that the gateway is not in use
-  return user_access('delete any payment gateway') && !_gateway_manager_gateway_in_use($id);
+  return $has_access && !$in_use;
 }
 
 /**
@@ -325,6 +328,7 @@ function _gateway_manager_gateway_in_use($id) {
   if ($form_count > 0 || $donation_count > 0) {
     return TRUE;
   }
+  
   return FALSE;
 }
 
