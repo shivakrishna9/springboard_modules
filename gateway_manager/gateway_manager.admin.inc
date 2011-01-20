@@ -132,9 +132,14 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     $config = unserialize($gateway->config);
   }
   
+  $disabled = FALSE;
+  if (isset($gateway)) {
+    $disabled = TRUE;
+  }
+  
   $gateways = _managed_gateway_list();
   
-  $gateway_types = array('none' => '--select--');
+  $gateway_types = array('' => '--select--');
   foreach ($gateways as $gateway) {
     $gateway_types[$gateway['id']] = $gateway['title'];
   }
@@ -154,6 +159,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#options' => $gateway_types,
     '#weight' => 2,
     '#default_value' => $type,
+    '#disabled' => $disabled,
     '#description' => t('Select the type of gateway to create.'),
   );
   
@@ -167,8 +173,6 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   
   $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
   $form['taxononmy']['terms']['#weight'] = 3;
-  //$form['terms']['#collapsible'] = TRUE;
-  //$form['terms']['#collapsed'] = TRUE;
   
   // if type has been selected, get the settings form for that type 
   if (isset($type)) {
@@ -184,10 +188,6 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
           '#collapsible' => TRUE,
         );
         $form['settings'][] = $gateway_settings;
-        //$gateway_settings = null;
-        //print "<pre>".print_r($form, TRUE)."</pre>";
-        //print "<pre>".print_r($gateway_settings, TRUE)."</pre>";
-        //$form = array_merge($form, $form['settings']);
       }
     }
     // return the form wrapped in a function that will save the configuration.

@@ -152,6 +152,13 @@ function gateway_mananger_settings_form($form) {
       '#value' => t('Delete'),
     );
   }
+  else {
+    $form['buttons']['delete_notice'] = array(
+      '#value' => t('* This payment gateway cannot be deleted because donation forms are assigned to it or there are pending recurring donations.'),
+      '#prefix' => '<div class="description">',
+      '#suffix' => '</div>',
+    );
+  }
   $form['#submit'][] = 'gateway_manager_settings_form_submit';
   return $form;
 }
@@ -262,8 +269,8 @@ function gateway_manager_extract_config(&$form_state) {
  * any donation forms or recurring orders.
  */
 function gateway_manager_gateway_can_be_deleted($id) {
-  // TODO: write function that checks if gateway is in use!
-  return user_access('delete any payment gateway');
+  // Check that the user has the correct permission, and that the gateway is not in use
+  return user_access('delete any payment gateway') && !_gateway_manager_gateway_in_use($id);
 }
 
 /**
@@ -304,6 +311,25 @@ function _gateway_manager_form_count($id) {
   }
   
   return 0;  
+}
+
+/**
+ * Determines whether or not a payment gateway is currently assigned to any donation forms
+ * or pending recurring donations.
+ */
+function _gateway_manager_gateway_in_use($id) {
+  $form_count = _gateway_manager_form_count($id);
+  $donation_count = _gateway_manager_pending_donation_count($id);
+
+  // if either count is greater than 0, the gateway is in use
+  if ($form_count > 0 || $donation_count > 0) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+function _gateway_manager_pending_donation_count($id) {
+  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE gateway = '%s' AND txn_id IS NULL", $id));
 }
 
 /**
