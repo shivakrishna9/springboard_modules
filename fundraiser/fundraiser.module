@@ -670,7 +670,7 @@ function fundraiser_webform_submission_insert($node, $submission) {
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
 	  if ($order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE webform_nid = %d AND sid = %d", $node->nid, $submission->sid))) {
-	    sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+	    sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'upsert');
 	  }
   }
 }
