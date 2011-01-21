@@ -363,9 +363,14 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'markup',
         '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
       );
-      unset($form['submitted']['donor_information']['first_name']);
-      unset($form['submitted']['donor_information']['last_name']);
-      unset($form['submitted']['donor_information']['email']);
+      
+      $form['submitted']['donor_information']['first_name']['#prefix'] = 
+        $form['submitted']['donor_information']['last_name']['#prefix'] = 
+        $form['submitted']['donor_information']['email']['#prefix'] = '<div style="display:none">';
+         
+      $form['submitted']['donor_information']['first_name']['#suffix'] = 
+        $form['submitted']['donor_information']['last_name']['#suffix'] = 
+        $form['submitted']['donor_information']['email']['#suffix'] = '</div>';        
     }
     
     // handle the donation form itself
