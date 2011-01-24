@@ -324,8 +324,57 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 		global $user;
     profile_load_profile($user); /* explicitly load profile as of Drupal 6.19 */
 
-		// make sure this is a donation form
-		if ($node->type == 'donation_form' && arg(2) != 'submission')
+    // get fundraiser info 
+    $node = $form['#parameters'][2];
+
+    // handle donation form submissions
+    if ($node->type == 'donation_form' && arg(2) == 'submission') {    	
+      // Set up a view only display of the donation amount
+      $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
+      $form['submitted']['donation']['display_amount'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . '$' . number_format($amount, 2) . '</div>',
+      );
+      
+      // Show whether or not it's a recurring donation
+      if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
+        $recurs = $form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs' ? t('Yes') : t('No');
+        $form['submitted']['donation']['recurring'] = array(
+          '#type' => 'markup',
+          '#value' => '<div class="form-item"><label>' . t('Recurring Donation?') . ':</label>' . $recurs . '</div>',
+        );
+      }
+      unset($form['submitted']['donation']['amount']);
+      unset($form['submitted']['donation']['other_amount']);
+      unset($form['submitted']['credit_card_information']);
+      
+      // Clean up the donor info section - replace the form fields with read only info
+      $form['submitted']['donor_information']['#title'] = t('Donor Information');   
+      
+      $form['submitted']['donor_information']['first_name_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' . $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
+      );
+      $form['submitted']['donor_information']['last_name_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' . $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
+      );
+      $form['submitted']['donor_information']['email_readonly'] = array(
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
+      );
+      
+      $form['submitted']['donor_information']['first_name']['#prefix'] = 
+        $form['submitted']['donor_information']['last_name']['#prefix'] = 
+        $form['submitted']['donor_information']['email']['#prefix'] = '<div style="display:none">';
+         
+      $form['submitted']['donor_information']['first_name']['#suffix'] = 
+        $form['submitted']['donor_information']['last_name']['#suffix'] = 
+        $form['submitted']['donor_information']['email']['#suffix'] = '</div>';        
+    }
+    
+    // handle the donation form itself
+    if ($node->type == 'donation_form' && arg(2) != 'submission')
 		{
 			$base = drupal_get_path('module', 'fundraiser');
 			drupal_add_js($base .'/jquery.alphanumeric.js');
@@ -616,6 +665,17 @@ function fundraiser_webform_submission_insert($node, $submission) {
 }
 
 /**
+ * Implementation of hook_webform_submission_update()
+ */
+function fundraiser_webform_submission_update($node, $submission) {
+  if ($node->type == 'donation_form') {
+	  if ($order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE webform_nid = %d AND sid = %d", $node->nid, $submission->sid))) {
+	    sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'upsert');
+	  }
+  }
+}
+
+/**
  * Implementation of hook_webform_submission_presave(). 
  */
 function fundraiser_webform_submission_presave($node, &$submission) {
@@ -798,7 +858,9 @@ function fundraiser_menu() {
  */
 function fundraiser_menu_alter(&$items) {
 	// workaround for douchebaggy bug where only uid 1 can see custom triggers
-	$items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+	if (module_exists('trigger')) {
+	  $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+	}
 }
 
 /**
@@ -1200,6 +1262,13 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	$order->line_items = array();
 
+ 	// Allow other modules to add additional fields to the order before processing
+ 	// the payment
+  $additional_order_fields = module_invoke_all('fundraiser_add_order_fields', $fundraiser_fields);
+  foreach ($additional_order_fields as $field => $value) {
+    $order->data[$field] = $value;
+  }
+
  	// Cache the CC details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
  	// save the order
@@ -1331,7 +1400,11 @@ function _save_profile_map($uid, &$map) {
 		if (empty($user_to_update->salesforce_contact_id)) {
 			$action = 'upsert';
 		}
-		sf_queue_insert($user_to_update->uid, 'user', $action);
+		
+		// If the SF Queue API is enabled, insert this user into the queue
+		if (module_exists('queue_api')) {
+		  sf_queue_insert($user_to_update->uid, 'user', $action);
+		}		
 	}
 }
 

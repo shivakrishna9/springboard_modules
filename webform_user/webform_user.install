@@ -84,6 +84,33 @@ function webform_user_schema() {
 	    'nid' => array('nid'),
 	  ),
 	);
+	
+	$schema['webform_user_component_map'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'nid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	    ),
+	    'cid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	    ),
+	    'map_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '100',
+	      'not null' => TRUE,
+	    ),
+	  ),
+	  'primary key' => array('nid', 'cid'),
+	);
+	
+	
   return $schema;
 }
 
@@ -97,4 +124,35 @@ function webform_user_update_6101() {
   db_add_field($updates, 'webform_user', 'send_new_user_email', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
   return $updates;
   
+}
+
+/**
+ * Update 6102: Add webform_user_component_map
+ */
+function webform_user_update_6102() {
+	$updates = array();
+	
+	$sql = <<<SQL
+	CREATE TABLE `webform_user_component_map` (
+	  `nid` int(10) unsigned NOT NULL,
+	  `cid` int(10) unsigned NOT NULL,
+	  `map_id` varchar(100) NOT NULL,
+	  PRIMARY KEY (`nid`,`cid`)
+	)
+SQL;
+  $updates[] = update_sql($sql);
+	
+	return $updates;
+}
+
+/**
+ * Update 6103: Rename 'initial referrer' form keys to 'initial_referrer'
+ */
+function webform_user_update_6103() {
+	$updates = array();
+	
+	$sql = "update webform_component SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
+	$updates[] = update_sql($sql);
+	
+	return $updates;
 }

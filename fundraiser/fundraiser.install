@@ -24,7 +24,18 @@ function fundraiser_uninstall() {
 function fundraiser_enable() {
 	configure_ubercart_settings();
 	create_countries();
-	$result = variable_get('webform_node_types', array());
+	
+	/**
+	 *  Add the donation_form node type to the array of node types handled
+	 * by the webform module.
+	 * 
+	 * The default value is array('webform') because this variable starts
+	 * off empty, until an admin chooses webform node types at
+	 * admin/settings/webform. If you save the webform_node_types as an
+	 * array with ONLY donation_form, then webform nodes will not be
+	 * handled as webforms.
+	 */
+	$result = variable_get('webform_node_types', array('webform'));
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
 }
@@ -35,6 +46,19 @@ function fundraiser_enable() {
 function fundraiser_disable() {
 	remove_ubercart_settings();
 	remove_countries();
+	
+	// Remove donation_form from the list of webform_node_types.
+	// Not really necessary, but still good to clean up after ourselves
+	$result = variable_get('webform_node_types', array('webform'));
+  if (is_array($result)) {
+    foreach ($result as $index => $type) {
+      if ($type == 'donation_form') {
+        unset($result[$index]);
+        variable_set('webform_node_types', $result);
+        break;
+      }
+    }
+  }
 }
 
 /**

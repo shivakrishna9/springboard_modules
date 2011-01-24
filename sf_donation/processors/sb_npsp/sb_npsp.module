@@ -61,6 +61,7 @@ function sb_npsp_create_recurring_donation(&$order, $user_ids, $count) {
 	$donation = array(
 		'Name' => $donation_name,
 		'npe03__Amount__c' => $order->order_total,
+		'CurrencyIsoCode' => $order->data['currency'],
 		'npe03__Contact__c' => $user_ids->salesforce_contact_id,
 		'npe03__Installment_Period__c' => 'Monthly',
 		'npe03__Schedule_Type__c' => 'Multiply By',

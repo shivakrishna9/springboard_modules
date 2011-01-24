@@ -1037,13 +1037,17 @@ function created_edit_link($oid, $type, $return_url = null) {
 		case 'user':
 			$url = $base_url . '/user/' . $oid . '/edit';
 			break;
-		case 'webform':
+		case 'webform':		
 			$nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
-      $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
+      $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';    
       break;
     case FUNDRAISER_SINGLE_DONATION_TYPE:
     case FUNDRAISER_RECURRING_DONATION_TYPE:
-			break;
+    	if ($result = db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $oid)) {      
+        $data = db_fetch_array($result);
+        $url = $base_url .'/node/' . $data['webform_nid'] . '/submission/' . $data['sid'] . '/edit';
+    	}
+      break;
 		case 'node':
 			$url = $base_url . '/node/' . $oid . '/edit';
 			break;
