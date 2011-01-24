@@ -23,9 +23,10 @@ function gm_authorizenet_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'gm_authorizenet.pages.inc',
   );
-
+  
   return $items;
 }
+
 
 // Make sure Authorize.Net always has access to send Silent POSTs.
 function gm_authorizenet_silent_post_access() {
@@ -42,6 +43,7 @@ function gm_authorizenet_payment_gateway_managed() {
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
     'settings' => 'gm_authorizenet_settings_form',
     'credit' => 'gm_authorizenet_charge',
+    'credit_refund' => 'gm_authorizenet_refund',
     'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
   );
 
@@ -454,7 +456,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_email_customer' => $data['config']['gm_authnet_aim_email_customer'] ? 'TRUE' : 'FALSE',
   );
 
-  if ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+  if (in_array($data['txn_type'], array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_CREDIT, UC_CREDIT_VOID))) {
     $submit_data['x_trans_id'] = $data['auth_id'];
   }
 
@@ -471,7 +473,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   foreach ($submit_data as $key => $value) {
     $post_fields[] = $key .'='. urlencode($value);
   }
-
+  
   // Setup the cURL request.
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $post_url);
@@ -872,4 +874,27 @@ function _gm_authorizenet_login_data() {
   );
 
   return $data;
+}
+
+
+/**
+ * Issue a refund
+ */
+function gm_authorizenet_refund($order_id, $amount, $data) {
+  $amount = (float)$amount;
+  // Make the charge amount negative
+  if ($amount > 0) {
+    $amount = $amount * -1;
+  }
+  
+  if ($order_id > 0) {
+    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+    
+    // Set the transaction type to credit, and the ID of the previous charge to refund against
+    $data['txn_type'] = UC_CREDIT_CREDIT;
+    $data['auth_id'] = $payment_details->txn_id;
+    
+    return gm_authorizenet_charge($order_id, $amount, $data);
+ }
+  return array();
 }

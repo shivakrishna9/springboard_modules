@@ -56,3 +56,127 @@ function sage_update_billing_information($reference_id, $billing_info) {
   return true;
 }
 
+
+/**
+ * Refund tab on Orders
+ */
+function fundraiser_refund(&$form_state, $order) {
+  $form = array();
+  $form['#order_id'] = $order->order_id;
+  $form['explanation'] = array(
+    '#value' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+  );
+  
+  $form['full_refund'] = array(
+    '#type' => 'radio',
+    '#title' => t('Full Refund'),
+    '#return_value' => 'full',
+    '#parents' => array('refund_type'),
+  );
+  $form['partial_refund'] = array(
+    '#type' => 'radio',
+    '#title' => t('Partial Refund'),
+    '#return_value' => 'partial',
+    '#parents' => array('refund_type'),
+  );
+  
+  $form['amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount to Refund'),
+    '#size' => 40,
+    '#maxlength' => 255,
+  );
+  $form['refund_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Refund Notes'),
+    '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+    '#cols' => 60,
+    '#rows' => 5,
+  );
+  $form['issue_refund'] = array(
+    '#type' => 'submit',
+    '#value' => t('Issue Refund'),
+  );
+  
+  return $form;
+}
+
+
+/**
+ * Validate the form
+ */
+function fundraiser_refund_validate($form, &$form_state) {
+  if ($form_state['values']['refund_type'] == 'partial') {
+    $amount = $form_state['values']['amount'];
+    if (!($amount > 0)) {
+      form_set_error('amount', t('Enter a refund amount.'));
+    }
+  }
+}
+
+
+/**
+ * Submit the refund form
+ */
+function fundraiser_refund_submit($form, &$form_state) {
+  $order_id = $form['#order_id'];
+  $order = uc_order_load($order_id);
+  
+  // Determine how much has been paid, less previous refunds
+  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
+  $total_paid = db_result(db_query($sql, array($order_id)));
+  
+  if ($form_state['values']['refund_type'] == 'partial') {
+    $amount = (float)$form_state['values']['amount'];
+    // Can't refund more than they've paid
+    if ($amount > $total_paid) {
+      $amount = $total_paid;
+    }
+  }
+  else {
+    $amount = $total_paid;
+  }
+  // Make the charge amount negative
+  if ($amount > 0) {
+    $amount = $amount * -1;
+  }
+  
+  
+  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+  
+  if (module_exists('gateway_manager')) {
+ 	  $info = gateway_manager_gateway_info($payment_details->gateway);
+ 	  $refund_function = $info['refund_function'];
+ 	  $data['config'] = $info['config'];
+ 	}
+ 	else {
+ 	  $refund_function = fundraiser_refund_function($node->gateway);
+ 	}
+ 	
+ 	// call the refund function and store the result
+  $result = $refund_function($order->order_id, $amount, $data);
+  
+  if ($result['success']) {
+		// enter the payment
+		uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
+	
+		// mark payment as received
+		// @todo - what should this be?
+		//db_query("update {uc_orders} set order_status='payment_received' where order_id = %d", $order->order_id);
+    
+ 		// determine if the donation should be added to the queue
+ 		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
+ 		
+ 		drupal_set_message($result['message'],'status');
+ 	}
+ 	else { 
+		// failed to process credit cart
+		$log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
+		watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
+		drupal_set_message($result['message']);
+		$form_state['rebuild'] = TRUE;
+		$form_state['values']['abort'] = TRUE;
+ 	}
+}
