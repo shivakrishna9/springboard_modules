@@ -323,6 +323,18 @@ function _fundraiser_statuses() {
 			'locked' => 1,
 			'weight' => -20,
 		),
+    'refunded' => array(
+      'title' => 'Refunded',
+      'state' => 'post_checkout',
+      'locked' => 1,
+      'weight' => -21,
+    ),
+    'partially_refunded' => array(
+      'title' => 'Partially Refunded',
+      'state' => 'post_checkout',
+      'locked' => 1,
+      'weight' => -21,
+    ),
 	);
 	
 	return $fundraiser_statuses;
@@ -695,4 +707,14 @@ function fundraiser_update_6301() {
   // change all donation form webforms to the new donation_form content type   
   db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
   db_query("DROP TABLE {fundraiser_gateway}");
+}
+
+/**
+ * Add new refund statuses
+ */
+function fundraiser_update_6302() {
+  $updates = array();
+  $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('refunded', 'Refunded', 'post_checkout', -21, 1)");
+  $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('partially_refunded', 'Partially Refunded', 'post_checkout', -21, 1)");
+  return $updates;
 }

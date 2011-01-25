@@ -1930,3 +1930,22 @@ function fundraiser_processor_key_match() {
 
   return TRUE;
 }
+
+
+/**
+ * Implementation of hook_order_actions().
+ * Add a refund action to the Order list
+ */
+function fundraiser_order_actions($order) {
+  if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status))) {
+    $module_path = base_path() . drupal_get_path('module', 'fundraiser');
+    $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
+    $actions[] = array(
+      'name' => t('Refund'),
+      'url' => 'admin/store/orders/'. $order->order_id .'/refund',
+      'icon' => '<img src="'. $module_path .'/images/refund.gif" alt="'. $title .'" />',
+      'title' => $title,
+    );
+    return $actions;
+  }
+}

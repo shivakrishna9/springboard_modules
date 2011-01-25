@@ -69,9 +69,18 @@ function fundraiser_refund(&$form_state, $order) {
     '#suffix' => '</div>',
   );
   
+  // Determine how much has been paid, less previous refunds
+  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
+  $total_paid = db_result(db_query($sql, array($order->order_id)));
+  
+  $context = array(
+    'revision' => 'formatted-original',
+    'type' => 'amount',
+  );
+  
   $form['full_refund'] = array(
     '#type' => 'radio',
-    '#title' => t('Full Refund'),
+    '#title' => t('Full Refund (%amount)', array('%amount' => uc_price($total_paid, $context))),
     '#return_value' => 'full',
     '#parents' => array('refund_type'),
   );
@@ -121,6 +130,8 @@ function fundraiser_refund_validate($form, &$form_state) {
  * Submit the refund form
  */
 function fundraiser_refund_submit($form, &$form_state) {
+  global $user;
+  
   $refund_notes = check_plain($form_state['values']['refund_notes']);
   $order_id = $form['#order_id'];
   $order = uc_order_load($order_id);
@@ -129,15 +140,19 @@ function fundraiser_refund_submit($form, &$form_state) {
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
   $total_paid = db_result(db_query($sql, array($order_id)));
   
+  $new_order_status = 'partially_refunded';
+  
   if ($form_state['values']['refund_type'] == 'partial') {
     $amount = (float)$form_state['values']['amount'];
     // Can't refund more than they've paid
     if ($amount > $total_paid) {
       $amount = $total_paid;
+      $new_order_status = 'refunded';
     }
   }
   else {
     $amount = $total_paid;
+    $new_order_status = 'refunded';
   }
   // Make the charge amount negative
   if ($amount > 0) {
@@ -162,15 +177,30 @@ function fundraiser_refund_submit($form, &$form_state) {
   if ($result['success']) {
 		// enter the payment
 		uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
+		
+		// Add the comment
+	  $context = array(
+      'revision' => 'formatted-original',
+      'type' => 'amount',
+    );
+    // Make the charge amount positive again, for nice display in the admin comment
+    if ($amount < 0) {
+      $amount = $amount * -1;
+    }
+  	$amount_formatted = uc_price($amount, $context);
+		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user.', array('%amount' => $amount_formatted, '%user' => $user->name)), 'admin');
 	
-		// mark payment as received
-		db_query("update {uc_orders} set order_status='payment_withdrawn' where order_id = %d", $order_id);
+		// Set order status to Refunded or Partially Refunded
+		db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
     
- 		// determine if the donation should be added to the queue
- 		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
+ 		// If using the Salesforce queue, queue up the updates
+ 		if (module_exists('queue_api')) {
+ 		  // Update the original order
+ 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+ 		}
  		
  		drupal_set_message(t('Refund has been issued.'),'status');
- 		drupal_goto('admin/store/orders/' . $order_id . '/payments');
+ 		drupal_goto('admin/store/orders/' . $order_id);
  	}
  	else { 
 		// failed to process credit cart
