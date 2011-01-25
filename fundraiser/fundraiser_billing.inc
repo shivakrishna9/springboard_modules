@@ -121,6 +121,7 @@ function fundraiser_refund_validate($form, &$form_state) {
  * Submit the refund form
  */
 function fundraiser_refund_submit($form, &$form_state) {
+  $refund_notes = check_plain($form_state['values']['refund_notes']);
   $order_id = $form['#order_id'];
   $order = uc_order_load($order_id);
   
@@ -163,13 +164,13 @@ function fundraiser_refund_submit($form, &$form_state) {
 		uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
 	
 		// mark payment as received
-		// @todo - what should this be?
-		//db_query("update {uc_orders} set order_status='payment_received' where order_id = %d", $order->order_id);
+		db_query("update {uc_orders} set order_status='payment_withdrawn' where order_id = %d", $order_id);
     
  		// determine if the donation should be added to the queue
  		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
  		
- 		drupal_set_message($result['message'],'status');
+ 		drupal_set_message(t('Refund has been issued.'),'status');
+ 		drupal_goto('admin/store/orders/' . $order_id . '/payments');
  	}
  	else { 
 		// failed to process credit cart
