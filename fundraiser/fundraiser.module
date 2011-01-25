@@ -772,8 +772,8 @@ function fundraiser_menu() {
 
   $items['admin/store/orders/%uc_order/refund'] = array(
     'title' => 'Refund',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('fundraiser_refund', 3),
+		'page callback' => 'fundraiser_show_refund_form',
+		'page arguments' => array(3),
     'access arguments' => array('edit orders'),
     'file' => 'fundraiser_billing.inc',
     'weight' => 3,

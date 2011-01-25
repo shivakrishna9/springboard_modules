@@ -57,18 +57,26 @@ function sage_update_billing_information($reference_id, $billing_info) {
 }
 
 
+
+
 /**
  * Refund tab on Orders
+ */
+function fundraiser_show_refund_form($order) {
+  $module_path = drupal_get_path('module', 'fundraiser') . '/';
+  drupal_add_css($module_path . 'refund.css');
+  drupal_add_js($module_path . 'refund.js');
+  return drupal_get_form('fundraiser_refund', $order);
+}
+
+
+/**
+ * Refund form
  */
 function fundraiser_refund(&$form_state, $order) {
   $form = array();
   $form['#order_id'] = $order->order_id;
-  $form['explanation'] = array(
-    '#value' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-  );
-  
+
   // Determine how much has been paid, less previous refunds
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
   $total_paid = db_result(db_query($sql, array($order->order_id)));
@@ -78,35 +86,86 @@ function fundraiser_refund(&$form_state, $order) {
     'type' => 'amount',
   );
   
-  $form['full_refund'] = array(
+  $payment_info = db_fetch_array(db_query('SELECT ucpr.receipt_id, ucpr.amount, ucpr.received, fwo.txn_id FROM {uc_payment_receipts ucpr} LEFT JOIN {fundraiser_webform_order} fwo ON ucpr.order_id = fwo.order_id WHERE ucpr.amount > 0 AND ucpr.order_id=%d', $order->order_id));
+  
+  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
+  $previous_refunds = db_result(db_query($sql, array($order->order_id)));
+  
+  
+  $form['total_paid'] = array(
+    '#type' => 'hidden',
+    '#value' => number_format($total_paid, 2),
+  );
+  
+  $form['payment_summary'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Summary'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  $form['payment_summary']['payment_number'] = array(
+    '#type' => 'item',
+    '#title' => t('Payment #'),
+    '#value' => $payment_info['receipt_id'],
+  );
+  $form['payment_summary']['payment_date'] = array(
+    '#type' => 'item',
+    '#title' => t('Payment Date'),
+    '#value' => format_date($payment_info['received']),
+  );
+  $form['payment_summary']['payment_total'] = array(
+    '#type' => 'item',
+    '#title' => t('Payment Total'),
+    '#value' => uc_price($payment_info['amount'], $context),
+  );
+  if ($previous_refunds < 0) {
+    $form['payment_summary']['total_refunded'] = array(
+      '#type' => 'item',
+      '#title' => t('Total Previously Refunded'),
+      '#value' => uc_price($previous_refunds, $context),
+    );    
+  }
+  
+  
+  
+  $form['refund_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refund Options'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['refund_options']['full_refund'] = array(
     '#type' => 'radio',
     '#title' => t('Full Refund (%amount)', array('%amount' => uc_price($total_paid, $context))),
     '#return_value' => 'full',
     '#parents' => array('refund_type'),
   );
-  $form['partial_refund'] = array(
+  $form['refund_options']['partial_refund'] = array(
     '#type' => 'radio',
     '#title' => t('Partial Refund'),
     '#return_value' => 'partial',
     '#parents' => array('refund_type'),
   );
   
-  $form['amount'] = array(
+  $form['refund_options']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Amount to Refund'),
     '#size' => 40,
     '#maxlength' => 255,
   );
-  $form['refund_notes'] = array(
+  $form['refund_options']['refund_notes'] = array(
     '#type' => 'textarea',
     '#title' => t('Refund Notes'),
     '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
     '#cols' => 60,
     '#rows' => 5,
   );
-  $form['issue_refund'] = array(
+  $form['refund_options']['issue_refund'] = array(
     '#type' => 'submit',
     '#value' => t('Issue Refund'),
+    '#required' => TRUE,
   );
   
   return $form;
@@ -117,7 +176,12 @@ function fundraiser_refund(&$form_state, $order) {
  * Validate the form
  */
 function fundraiser_refund_validate($form, &$form_state) {
-  if ($form_state['values']['refund_type'] == 'partial') {
+  // Make sure they chose a refund type
+  if (empty($form_state['values']['refund_type'])) {
+    form_set_error('refund_type', t('Choose a refund type.'));
+  }
+  // If it isn't a full refund, make sure they entered a valid value
+  elseif ($form_state['values']['refund_type'] != 'full') {
     $amount = $form_state['values']['amount'];
     if (!($amount > 0)) {
       form_set_error('amount', t('Enter a refund amount.'));
@@ -140,9 +204,10 @@ function fundraiser_refund_submit($form, &$form_state) {
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
   $total_paid = db_result(db_query($sql, array($order_id)));
   
-  $new_order_status = 'partially_refunded';
   
-  if ($form_state['values']['refund_type'] == 'partial') {
+  // Partial refund
+  if ($form_state['values']['refund_type'] != 'full') {
+    $new_order_status = 'partially_refunded';
     $amount = (float)$form_state['values']['amount'];
     // Can't refund more than they've paid
     if ($amount > $total_paid) {
@@ -150,16 +215,18 @@ function fundraiser_refund_submit($form, &$form_state) {
       $new_order_status = 'refunded';
     }
   }
+  // Full refund
   else {
-    $amount = $total_paid;
     $new_order_status = 'refunded';
+    $amount = $total_paid;
   }
+
   // Make the charge amount negative
   if ($amount > 0) {
     $amount = $amount * -1;
   }
-  
-  
+
+  // Get details on the original payment so we can load the payment gateway details
   $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
   
   if (module_exists('gateway_manager')) {
