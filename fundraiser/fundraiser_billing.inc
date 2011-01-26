@@ -90,13 +90,7 @@ function fundraiser_refund(&$form_state, $order) {
   
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
   $previous_refunds = db_result(db_query($sql, array($order->order_id)));
-  
-  
-  $form['total_paid'] = array(
-    '#type' => 'hidden',
-    '#value' => number_format($total_paid, 2),
-  );
-  
+    
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
     '#title' => t('Payment Summary'),
@@ -161,12 +155,19 @@ function fundraiser_refund(&$form_state, $order) {
     '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
     '#cols' => 60,
     '#rows' => 5,
+    '#required' => TRUE,
   );
   $form['refund_options']['issue_refund'] = array(
     '#type' => 'submit',
     '#value' => t('Issue Refund'),
     '#required' => TRUE,
   );
+  
+  $form['total_paid'] = array(
+    '#type' => 'hidden',
+    '#value' => number_format($total_paid, 2),
+  );
+  
   
   return $form;
 }
@@ -182,10 +183,26 @@ function fundraiser_refund_validate($form, &$form_state) {
   }
   // If it isn't a full refund, make sure they entered a valid value
   elseif ($form_state['values']['refund_type'] != 'full') {
-    $amount = $form_state['values']['amount'];
+    $amount = (float)$form_state['values']['amount'];
     if (!($amount > 0)) {
       form_set_error('amount', t('Enter a refund amount.'));
     }
+    else {
+      // Make sure they don't try to refund more than was paid
+      $order_id = $form['#order_id'];
+      // Determine how much has been paid, less previous refunds
+      $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
+      $total_paid = db_result(db_query($sql, array($order_id)));
+      if ($amount > $total_paid) {
+        $context = array(
+          'revision' => 'formatted-original',
+          'type' => 'amount',
+        );
+        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no more than that can be refunded.', array('@paid' => uc_price($total_paid, $context))));
+      }
+    }
+    
+    
   }
 }
 
@@ -210,7 +227,9 @@ function fundraiser_refund_submit($form, &$form_state) {
     $new_order_status = 'partially_refunded';
     $amount = (float)$form_state['values']['amount'];
     // Can't refund more than they've paid
-    if ($amount > $total_paid) {
+    // Use >= so that the status is set properly if they choose Partial Refund
+    // but refund the entire amount
+    if ($amount >= $total_paid) {
       $amount = $total_paid;
       $new_order_status = 'refunded';
     }
