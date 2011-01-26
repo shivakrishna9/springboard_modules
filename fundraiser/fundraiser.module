@@ -765,15 +765,26 @@ function fundraiser_menu() {
 	    'type' => MENU_CALLBACK,
 		);
 	
-	$items['admin/store/orders/%uc_order/recurring/edit'] = array(
-		'title' => 'Edit Recurring Donations',
-		'page callback' => 'fundraiser_recurring_edit_forms',
+  $items['admin/store/orders/%uc_order/recurring/edit'] = array(
+    'title' => 'Edit Recurring Donations',
+    'page callback' => 'fundraiser_recurring_edit_forms',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'file' => 'fundraiser_components.inc',
     'weight' => 2,
     'type' => MENU_NORMAL_ITEM,
-	);
+  );
+
+  $items['admin/store/orders/%uc_order/refund'] = array(
+    'title' => 'Refund',
+		'page callback' => 'fundraiser_show_refund_form',
+		'page arguments' => array(3),
+    'access arguments' => array('edit orders'),
+    'file' => 'fundraiser_billing.inc',
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+  );
+
 	/*	
 	$items['user/%user/recurring/edit/%uc_order'] = array(
 		'title' => 'My Recurring Payments',
@@ -1362,8 +1373,21 @@ function fundraiser_charge_function($type) {
   $gateways = _payment_gateway_list('', TRUE);
   foreach ($gateways as $key => $gateway) {
    if ($gateway['id'] == $type) {
-  	  return $gateway['credit'];
+      return $gateway['credit'];
    }
+  }
+  return NULL;
+}
+
+/**
+ * Returns the refund function associated with the specified gateway
+ */
+function fundraiser_refund_function($type) {
+  $gateways = _payment_gateway_list('', TRUE);
+  foreach ($gateways as $key => $gateway) {
+    if ($gateway['id'] == $type && $gateway['credit_refund']) {
+      return $gateway['credit_refund'];
+    }
   }
   return NULL;
 }
@@ -1910,4 +1934,23 @@ function fundraiser_processor_key_match() {
   }
 
   return TRUE;
+}
+
+
+/**
+ * Implementation of hook_order_actions().
+ * Add a refund action to the Order list
+ */
+function fundraiser_order_actions($order) {
+  if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status))) {
+    $module_path = base_path() . drupal_get_path('module', 'fundraiser');
+    $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
+    $actions[] = array(
+      'name' => t('Refund'),
+      'url' => 'admin/store/orders/'. $order->order_id .'/refund',
+      'icon' => '<img src="'. $module_path .'/images/refund.gif" alt="'. $title .'" />',
+      'title' => $title,
+    );
+    return $actions;
+  }
 }
