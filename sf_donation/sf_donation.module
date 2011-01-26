@@ -578,13 +578,21 @@ function sf_donation_queue_salesforce_info($type, $action) {
 			);
 			break;
 			
-		case FUNDRAISER_RECURRING_DONATION_TYPE:
-			$data = array(
-				'salesforce' => $integrator['recurring_donation_object']['type'],
-				'dedupe_key' => $integrator['recurring_donation_object']['dedupe_key'],
-			);
-			break;
-		
+    case FUNDRAISER_RECURRING_DONATION_TYPE:
+      $data = array(
+        'salesforce' => $integrator['recurring_donation_object']['type'],
+        'dedupe_key' => $integrator['recurring_donation_object']['dedupe_key'],
+      );
+      break;
+    
+    case FUNDRAISER_DONATION_REFUND_TYPE:
+      // For refunds, use the same object as donations
+      $data = array(
+        'salesforce' => $integrator['donation_object']['type'],
+        'dedupe_key' => '',
+      );
+      break;
+    
 	}
 	
 	return $data;
@@ -597,22 +605,31 @@ function sf_donation_queue_salesforce_info($type, $action) {
  */
 function sf_donation_queue_preprocess_batch_alter(&$batch) {
 
-	if ($batch['type'] == 'donation' || $batch['type'] == 'recurring_donation') {
+	if (in_array($batch['type'], array(FUNDRAISER_SINGLE_DONATION_TYPE, FUNDRAISER_RECURRING_DONATION_TYPE, FUNDRAISER_DONATION_REFUND_TYPE))) {
 		foreach ($batch['records'] as $record) {
+		  // If it's a refund, load the order ID from the refund record
+		  if ($batch['type'] == FUNDRAISER_DONATION_REFUND_TYPE) {
+		    $refund = db_fetch_object(db_query('SELECT * FROM {fundraiser_refund} WHERE refund_id = %d', array($record->oid)));
+		    $order_id = $refund->oid;
+		  }
+		  else {
+		    $order_id = $record->oid;
+		  }
+		  		  
 			// get additional details about the order
-			$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_webform_order} f ON f.order_id = u.order_id WHERE u.order_id = %d", $record->oid));
+			$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_webform_order} f ON f.order_id = u.order_id WHERE u.order_id = %d", $order_id));
 		
 			// if empty, then the donation was part of a recurring series
 			if (empty($details)) {
 				$details = db_fetch_object(db_query("SELECT f.sid, u.uid FROM {uc_orders} u INNER JOIN {fundraiser_recurring} fr ON fr.order_id = u.order_id INNER JOIN
-					{fundraiser_webform_order} f on f.order_id = fr.master_order_id WHERE u.order_id = %d", $record->oid));
+					{fundraiser_webform_order} f on f.order_id = fr.master_order_id WHERE u.order_id = %d", $order_id));
 			}
 			
 			$user_ids = _sf_donation_load_user_salesforce_ids($details->uid);
 			
 			switch ($batch['type']) {
 				case FUNDRAISER_SINGLE_DONATION_TYPE:
-					$object = _create_single_donation($record->oid, $user_ids->salesforce_account_id, $details->sid);
+					$object = _create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
@@ -620,18 +637,34 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					break;
 					
 				case FUNDRAISER_RECURRING_DONATION_TYPE:
-					$donation_count = _recurring_donation_count($record->oid, $user);
+					$donation_count = _recurring_donation_count($order_id, $user);
 					$donation_count++; // account for original order
-					$object = _create_recurring_donation($record->oid, $user_ids, $donation_count);
+					$object = _create_recurring_donation($order_id, $user_ids, $donation_count);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
 					$record->object = $object;
 					break;
+				
+				case FUNDRAISER_DONATION_REFUND_TYPE:
+				  // Get a regular Donation opportunity object
+					$object = _create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
+					if ($batch['action'] == 'update' && !empty($record->sfid)) {
+						$object['Id'] = $record->sfid;
+					}
+					
+					// Set refund-specific values
+					$object['Amount'] = abs($refund->amount) * -1;
+					$object['StageName'] = 'Refunded'; 
+					$object['Cancellation_Reason__c'] = $refund->reason; 
+					unset($object['CurrencyIsoCode']);
+					
+					$record->object = $object;
+					break;
+			
 			}
 		}
 	}
-
 }
 
 /**

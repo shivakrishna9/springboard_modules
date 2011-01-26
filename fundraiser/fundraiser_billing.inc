@@ -213,7 +213,6 @@ function fundraiser_refund_validate($form, &$form_state) {
 function fundraiser_refund_submit($form, &$form_state) {
   global $user;
   
-  $refund_notes = check_plain($form_state['values']['refund_notes']);
   $order_id = $form['#order_id'];
   $order = uc_order_load($order_id);
   
@@ -241,9 +240,7 @@ function fundraiser_refund_submit($form, &$form_state) {
   }
 
   // Make the charge amount negative
-  if ($amount > 0) {
-    $amount = $amount * -1;
-  }
+  $amount = abs($amount) * -1;
 
   // Get details on the original payment so we can load the payment gateway details
   $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
@@ -269,12 +266,20 @@ function fundraiser_refund_submit($form, &$form_state) {
       'revision' => 'formatted-original',
       'type' => 'amount',
     );
+    
     // Make the charge amount positive again, for nice display in the admin comment
-    if ($amount < 0) {
-      $amount = $amount * -1;
-    }
+    $amount = abs($amount);
+
   	$amount_formatted = uc_price($amount, $context);
 		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user.', array('%amount' => $amount_formatted, '%user' => $user->name)), 'admin');
+		
+		// Save refund data
+		$refund = new stdClass();
+		$refund->order_id = $order_id;
+		$refund->amount = $amount;
+		$refund->txn_id = $result['data']['txn_id'];
+		$refund->reason = check_plain($form_state['values']['refund_notes']);
+		drupal_write_record('fundraiser_refund', $refund);
 	
 		// Set order status to Refunded or Partially Refunded
 		db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
@@ -282,7 +287,9 @@ function fundraiser_refund_submit($form, &$form_state) {
  		// If using the Salesforce queue, queue up the updates
  		if (module_exists('queue_api')) {
  		  // Update the original order
- 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+ 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'upsert');
+ 		  // Create the refund
+ 		  sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
  		}
  		
  		drupal_set_message(t('Refund has been issued.'),'status');

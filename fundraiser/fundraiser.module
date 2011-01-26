@@ -3,6 +3,7 @@
 
 define('FUNDRAISER_SINGLE_DONATION_TYPE',  'donation');
 define('FUNDRAISER_RECURRING_DONATION_TYPE',  'recurring_donation');
+define('FUNDRAISER_DONATION_REFUND_TYPE',  'refund');
 define('RECURRING_DONATION_STATUS', 'pending_future_payment');
 
 define('DONATION_NON_RECURRING', 0);

@@ -24,6 +24,7 @@ function sf_donation_enable() {
 	$processing_order = variable_get('queue_processing_order', array());
   array_push($processing_order, 'donation');
   array_push($processing_order, 'recurring_donation');
+  array_push($processing_order, 'refund');
   variable_set('queue_processing_order', $processing_order);
 
 }
@@ -210,4 +211,17 @@ function sf_donation_upgrade_fieldmaps() {
     db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);                  
   }
   
+}
+
+
+/**
+ * Update 6203: Add refunds to the queue_processing_order variable
+ */
+function sf_donation_update_6203() {
+  $processing_order = variable_get('queue_processing_order', array());
+  if (!in_array('refund', $processing_order)) {
+    array_push($processing_order, 'refund');
+    variable_set('queue_processing_order', $processing_order);
+  }
+  return array();
 }
