@@ -273,6 +273,9 @@ function market_source_get_script() {
   if (variable_get('market_source_validity_period', 0) != 0) {
     $validity_period = variable_get('market_source_validity_period', 0) / 24;
   }
+  else {
+    $validity_period = 0;
+  }
 
   $script = <<<MS_SCRIPT
 /**
