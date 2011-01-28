@@ -297,7 +297,7 @@ function fundraiser_refund_submit($form, &$form_state) {
  		// If using the Salesforce queue, queue up the updates
  		if (module_exists('queue_api')) {
  		  // Update the original order
- 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'upsert');
+ 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
  		  // Create the refund
  		  sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
  		}
