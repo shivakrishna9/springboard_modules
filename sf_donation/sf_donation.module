@@ -658,6 +658,10 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					$object['StageName'] = 'Refunded'; 
 					$object['Cancellation_Reason__c'] = $refund->reason; 
 					
+					// Link the refund to the original donation
+					//$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+					//$object['npe03__Recurring_Donation__c'] = $donation_sfid;
+
 					$record->object = $object;
 					break;
 			
@@ -673,7 +677,7 @@ function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 	
 	switch ($batch['type']) {
 		case FUNDRAISER_SINGLE_DONATION_TYPE:
-
+		case FUNDRAISER_DONATION_REFUND_TYPE:
 			if ($batch['action'] == create) {
 				// determine integrator
 	      $integrator = _current_donation_integrator();

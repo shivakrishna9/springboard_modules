@@ -81,10 +81,21 @@ function sb_npsp_create_recurring_donation(&$order, $user_ids, $count) {
  */
 function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
 	for ($i = 0; $i < $item_count; $i++) {
-		if ($responses[$i]->success) {	
+		if ($responses[$i]->success) {
 			$sfid = $responses[$i]->id;
-			db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
-			$user_ids = _sf_donation_load_user_salesforce_ids_from_order((int)$batch['records'][$i]->oid);
+
+		  // Handle refunds
+		  if ($batch['records'][$i]->type == FUNDRAISER_DONATION_REFUND_TYPE) {
+		    $refund_id = (int)$batch['records'][$i]->oid;
+		    $order_id = db_result(db_query('SELECT order_id FROM {fundraiser_refund} WHERE refund_id = %d', array($refund_id)));
+	    }
+	    // Handle donations
+	    else {
+	      $order_id = (int)$batch['records'][$i]->oid;
+  			db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, $order_id);
+	    }
+	    
+			$user_ids = _sf_donation_load_user_salesforce_ids_from_order($order_id);
 			
 			// create and save the contact roles						
 			$table = 'sf_donation_opportunity_contact_role';
@@ -93,7 +104,6 @@ function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
 			$record->opportunity_id = $sfid;
 			$record->role = 'Donor';
 			drupal_write_record($table, $record);
-					
 		}
 	}
 	
