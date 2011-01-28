@@ -610,7 +610,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 		  // If it's a refund, load the order ID from the refund record
 		  if ($batch['type'] == FUNDRAISER_DONATION_REFUND_TYPE) {
 		    $refund = db_fetch_object(db_query('SELECT * FROM {fundraiser_refund} WHERE refund_id = %d', array($record->oid)));
-		    $order_id = $refund->oid;
+		    $order_id = $refund->order_id;
 		  }
 		  else {
 		    $order_id = $record->oid;
