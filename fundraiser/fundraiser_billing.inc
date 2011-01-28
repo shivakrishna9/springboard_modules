@@ -86,7 +86,7 @@ function fundraiser_refund(&$form_state, $order) {
     'type' => 'amount',
   );
   
-  $payment_info = db_fetch_array(db_query('SELECT ucpr.receipt_id, ucpr.amount, ucpr.received, fwo.txn_id FROM {uc_payment_receipts ucpr} LEFT JOIN {fundraiser_webform_order} fwo ON ucpr.order_id = fwo.order_id WHERE ucpr.amount > 0 AND ucpr.order_id=%d', $order->order_id));
+  $payment_info = db_fetch_array(db_query('SELECT ucpr.receipt_id, ucpr.amount, ucpr.received, fwo.txn_id FROM {uc_payment_receipts} ucpr LEFT JOIN {fundraiser_webform_order} fwo ON ucpr.order_id = fwo.order_id WHERE ucpr.amount > 0 AND ucpr.order_id=%d', $order->order_id));
   
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
   $previous_refunds = db_result(db_query($sql, array($order->order_id)));
