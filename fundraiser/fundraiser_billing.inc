@@ -86,40 +86,47 @@ function fundraiser_refund(&$form_state, $order) {
     'type' => 'amount',
   );
   
-  $payment_info = db_fetch_array(db_query('SELECT ucpr.receipt_id, ucpr.amount, ucpr.received, fwo.txn_id FROM {uc_payment_receipts} ucpr LEFT JOIN {fundraiser_webform_order} fwo ON ucpr.order_id = fwo.order_id WHERE ucpr.amount > 0 AND ucpr.order_id=%d', $order->order_id));
-  
-  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
-  $previous_refunds = db_result(db_query($sql, array($order->order_id)));
-    
-  $form['payment_summary'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Payment Summary'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-  $form['payment_summary']['payment_number'] = array(
-    '#type' => 'item',
-    '#title' => t('Payment #'),
-    '#value' => $payment_info['receipt_id'],
-  );
-  $form['payment_summary']['payment_date'] = array(
-    '#type' => 'item',
-    '#title' => t('Payment Date'),
-    '#value' => format_date($payment_info['received']),
-  );
-  $form['payment_summary']['payment_total'] = array(
-    '#type' => 'item',
-    '#title' => t('Payment Total'),
-    '#value' => uc_price($payment_info['amount'], $context),
-  );
-  if ($previous_refunds < 0) {
-    $form['payment_summary']['total_refunded'] = array(
-      '#type' => 'item',
-      '#title' => t('Total Previously Refunded'),
-      '#value' => uc_price($previous_refunds, $context),
-    );    
+  // Get payment info
+  $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));
+
+  // If not payment info was found, check if it was a recurring order
+  if (!$payment_info) {
+    $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));  
   }
   
+  if ($payment_info) {
+    $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
+    $previous_refunds = db_result(db_query($sql, array($order->order_id)));
+    
+    $form['payment_summary'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Payment Summary'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+    );
+    $form['payment_summary']['payment_number'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment #'),
+      '#value' => $payment_info['receipt_id'],
+    );
+    $form['payment_summary']['payment_date'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Date'),
+      '#value' => format_date($payment_info['received']),
+    );
+    $form['payment_summary']['payment_total'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Total'),
+      '#value' => uc_price($payment_info['amount'], $context),
+    );
+    if ($previous_refunds < 0) {
+      $form['payment_summary']['total_refunded'] = array(
+        '#type' => 'item',
+        '#title' => t('Total Previously Refunded'),
+        '#value' => uc_price($previous_refunds, $context),
+      );    
+    }
+  }
   
   
   $form['refund_options'] = array(
@@ -243,7 +250,10 @@ function fundraiser_refund_submit($form, &$form_state) {
   $amount = abs($amount) * -1;
 
   // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+  $sql = 'SELECT gateway, txn_id FROM fundraiser_webform_order WHERE order_id = %d
+    UNION
+    SELECT gateway, txn_id FROM fundraiser_recurring WHERE order_id = %d';
+  $payment_details = db_fetch_object(db_query($sql, array($order_id, $order_id)));
   
   if (module_exists('gateway_manager')) {
  	  $info = gateway_manager_gateway_info($payment_details->gateway);
