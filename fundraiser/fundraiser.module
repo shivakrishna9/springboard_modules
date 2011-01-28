@@ -258,7 +258,7 @@ function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
   $node = node_prepare($node, $teaser);
   
   // check to see if the form is being accessed over HTTPS
-  if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
+  if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0) && $page) {
     // return a 404
     watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.', array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
     drupal_not_found();
