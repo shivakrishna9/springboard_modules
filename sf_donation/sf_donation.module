@@ -657,7 +657,6 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					$object['Amount'] = abs($refund->amount) * -1;
 					$object['StageName'] = 'Refunded'; 
 					$object['Cancellation_Reason__c'] = $refund->reason; 
-					unset($object['CurrencyIsoCode']);
 					
 					$record->object = $object;
 					break;

@@ -81,7 +81,6 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
     'cv__Contact__c' => $user_ids->salesforce_contact_id,
     'cv__Start_Date__c' => date('Y-m-d', $order->created),
     'cv__Recurring_Amount__c' => $order->order_total,
-		'CurrencyIsoCode' => $order->data['currency'],
     'cv__Recurring_Amount_Precise__c' => $order->order_total,
     'cv__Recurring_Gift_Status__c' => 'Active',
     'cv__Campaign__c' => $campaign_id,
@@ -93,6 +92,11 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
     'cv__Type__c' => 'Individual Gift',
     'cv__Recurrence_Description__c' => t('Occurs monthly on day @day of every 1 month effective @created', array('@day' => date('d', $order->created), '@created' => date('m/d/Y', $order->created))),
 	);
+	// Only add the CurrencyIsoCode if multi_currency support is enabled
+  if (module_exists('fundraiser_multi_currency')) {
+    $donation['CurrencyIsoCode'] = $order->data['currency'];
+  }
+  
 	
 	return $donation;
 }
