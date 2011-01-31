@@ -78,7 +78,8 @@ function gm_cybersource_payment_gateway_managed() {
     'description' => t('Process credit card payments using the Silent Order POST service of CyberSource.'),
     'settings' => 'gm_cybersource_settings_form',
     'credit' => 'gm_cybersource_charge',
-    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
+    'credit_refund' => 'gm_cybersource_refund',
+    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN, UC_CREDIT_CREDIT),
   );
 
   return $gateways;
@@ -597,7 +598,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     $business = new stdClass();
     $business->ignoreAVSResult = $data['config']['gm_cybersource_avs'] == 'true' ? 'false' : 'true';
     $request->businessRules = $business;
-
+    
     // Send the request to CyberSource and get the reply.
     $reply = $soapClient->runTransaction($request);
   }
@@ -667,6 +668,15 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
       elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
         uc_credit_log_prior_auth_capture($order->order_id, $data['auth_id']);
       }
+      elseif ($data['txn_type'] == UC_CREDIT_AUTH_CAPTURE || $data['txn_type'] == UC_CREDIT_REFERENCE_TXN) {
+        // Add credit transaction details so they can be used for refunds
+        $order->data['cybersource']['credit'] = array(
+          'requestId' => $reply->requestID,
+          'requestToken' => $reply->requestToken,
+        );
+        // Save the updated data array to the database.
+        db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);   
+      }
     }
     else {
       $result = array(
@@ -690,6 +700,94 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   }
 
   return $result;
+}
+
+function gm_cybersource_refund($order_id, $amount, $data) {
+  global $user;
+  
+  require_once(drupal_get_path('module', 'gm_cybersource') .'/gm_cybersource.soap.inc');
+
+  // Set the URL for the CyberSource SOAP Toolkit API WSDL.
+  if ($data['config']['gm_cybersource_server'] == 'test') {
+    $url = 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.38.wsdl';
+  }
+  else {
+    $url = 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.38.wsdl';
+  }
+  
+  // Get some original order's requestId and requestToken
+  $credit = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $credit = unserialize($credit);
+  
+  // Get the requestId and token from the order
+  $requestId = $credit['cybersource']['credit']['requestId'];
+  $requestToken = $credit['cybersource']['credit']['requestToken'];
+  
+  // Determine this order's currency
+  if (!empty($data['currency'])) {
+    $currency = strtolower($data['currency']);
+  }
+  else {
+    $currency = !empty($data['config']['gm_cybersource_currency']) ? $data['config']['gm_cybersource_currency'] : 'usd';
+  }
+  
+  // Only continue if we have both pieces of information
+  if (!empty($requestId) && !empty($requestToken)) {
+    drupal_set_message(t('Refunding order @id using requestId @requestId and requestToken @requestToken', array('@id' => $order_id, '@requestId' => $requestId, '@requestToken' => $requestToken)));
+    
+    $login = _gm_cybersource_soap_login_data($data['config']);
+    $soapClient = new CyberSourceSoapClient($url, array('merchant_id' => $login['merchant_id'], 'transaction_key' => $login['transaction_key']));
+    
+    // Create the request with some meta data.
+    $request = new stdClass();
+    $request->merchantID = $login['merchant_id'];
+    $request->merchantReferenceCode = $order_id;
+    $request->orderRequestToken = $requestToken;
+    $ccCreditService = new stdClass();
+    $ccCreditService->run = 'true';
+    $ccCreditService->captureRequestID = $requestId;
+    $request->ccCreditService = $ccCreditService;
+    
+    // Add the order total information.
+    $purchaseTotals = new stdClass();
+    $purchaseTotals->currency = $currency;
+    $request->purchaseTotals = $purchaseTotals;
+    $obj = $request->item[] = new stdClass();
+    $obj->unitPrice = abs($amount);
+    $obj->id = 0;
+
+    try {
+      // Send the request to CyberSource and get the reply.
+      $reply = $soapClient->runTransaction($request);
+      if (isset($reply) && $reply->decision == 'ACCEPT') {
+        $result = array(
+          'success' => TRUE,
+          'comment' => $message,
+          'message' => $message,
+          'data' => array('module' => 'gm_cybersource', 'txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $reply->ccCreditReply->reconciliationID),
+          'uid' => $user->uid,
+        );
+        
+        return $result;
+      }
+      elseif (isset($reply) && $reply->decision == 'REJECT') {
+        $result = array(
+          'message' => t('The refund was rejected by Cybersource. Reason code: @code.', array('@code' => $reply->reasonCode)),
+        );
+        
+        return $result;
+      }
+    } 
+    catch (SoapFault $exception) { 
+      $result = array(
+        'message' => t('A SOAP FAULT occurred while attempting to refund the order. Details: @details', array('@details' => $exception->getMessage())),
+      );
+      
+      return $result;
+    }
+  }
+  
+  return FALSE; 
 }
 
 // Displays the taxes for an order.

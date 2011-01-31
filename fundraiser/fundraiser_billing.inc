@@ -256,7 +256,7 @@ function fundraiser_refund_submit($form, &$form_state) {
  	else {
  	  $refund_function = fundraiser_refund_function($node->gateway);
  	}
- 	
+
  	// call the refund function and store the result
   $result = $refund_function($order->order_id, $amount, $data);
   

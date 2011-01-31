@@ -66,30 +66,24 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       $form['og_nodeapi']['visible']['og_groups']['#description'] = t('Select the groups that can utilize this payment gateway.');
       $form['access'][] = $form['og_nodeapi'];
       unset($form['og_nodeapi']);
-      //print "<pre>".print_r($form, TRUE)."</pre>";
       break;
       
     case 'donation_form_node_form':
+      // move the gateway selector into the groups fieldset
+      $form['og_nodeapi']['gateway'] = $form['gateway'];
+      $form['og_nodeapi']['gateway']['#weight'] = 1;
+      $form['og_nodeapi']['visible']['og_groups']['#ahah'] = array(
+        'path' => 'og-payment-gateway/filter/ahah',  
+        'wrapper' => 'gateway',
+        'event' => 'change',  
+      );
+      unset($form['gateway']);
       // if the current user belongs to more than 1 group, add a group filter
       if (count($user->og_groups) > 1) {
         $options = array('' => t('-- Select --'));
         foreach($user->og_groups as $id => $group) {
           $options[$id] = $group['title'];
         }
-        $weight = $form['gateway']['#weight'] - .01;
-        $form['groups'] = array(
-          '#type' => 'select',
-          '#title' => t('Group'),
-          '#weight' => $weight,
-          '#description' => t('Select a group to filter the available payment gateways.'),
-          '#options' => $options,
-          '#ahah' => array(
-            'path' => 'og-payment-gateway/filter/ahah',  
-            'wrapper' => 'gateway',
-            'event' => 'change',  
-            'message' => t('Getting payment gateways...'),
-          ),
-        );
       }
       break;
   }
@@ -116,13 +110,12 @@ function og_payment_gateway_filter_ahah() {
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
-  $group_nid = $form_state['post']['groups'];
+  $group_nid = $form_state['post']['og_groups'];
 
-  $changed_elements = $form['gateway'];
+  $changed_elements = $form['og_nodeapi']['gateway'];
   unset($changed_elements['#prefix'], $changed_elements['suffix']); // we'll unset the div to make sure it won't be repeated!
-  $changed_elements['#options'] = og_payment_gateway_filter_gateways($group_nid);
+  $changed_elements['#options'] = og_payment_gateway_filter_gateways(array_keys($group_nid));
   $output = drupal_render($changed_elements);
-  
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
   exit(); 
@@ -205,14 +198,13 @@ function og_payment_gateway_db_rewrite_sql($query, $primary_table, $primary_fiel
 /**
  * Returns a list of payment gateways filtered by group.
  */
-function og_payment_gateway_filter_gateways($nid = NULL) {
+function og_payment_gateway_filter_gateways($nids = array()) {
   global $user;
   $sql = 'SELECT g.id, g.name FROM {gateway_manager_gateways} g INNER JOIN {og_payment_gateway} o ON o.gid = g.id INNER JOIN og_uid u ON u.nid = o.group_nid WHERE u.uid = %d';
-  if (!empty($nid)) {
-    $sql .= ' AND o.group_nid = %d';
+  if (count($nids)) {
+    $sql .= ' AND o.group_nid IN (%s)'; // TODO: change to in clause because multiple group nodes may be selected.
   }
-
-  $result = db_query($sql, $user->uid, $nid);
+  $result = db_query($sql, $user->uid, implode(',', $nids));
   
   $gateways = array();
   while ($data = db_fetch_object($result)) {
