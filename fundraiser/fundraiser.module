@@ -70,14 +70,14 @@ function fundraiser_form($node) {
     '#title' => t('Show other amount option'),
     '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
     '#weight' => -4.9,
-    '#default_value' => $node->show_other_amount,
+    '#default_value' => !empty($node->show_other_amount) ? $node->show_other_amount : TRUE,
   );
   $form['minimum_donation_amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
     '#weight' => -4.8,
-    '#default_value' => number_format($node->minimum_donation_amount, 2),
+    '#default_value' => !empty($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00), 2),
   );
   $form['gateway'] = array(
     '#type' => 'select',
