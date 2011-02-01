@@ -114,7 +114,7 @@ function og_payment_gateway_filter_ahah() {
 
   $changed_elements = $form['og_nodeapi']['gateway'];
   unset($changed_elements['#prefix'], $changed_elements['suffix']); // we'll unset the div to make sure it won't be repeated!
-  $changed_elements['#options'] = og_payment_gateway_filter_gateways(array_keys($group_nid));
+  $changed_elements['#options'] = og_payment_gateway_filter_gateways(array_values($group_nid));
   $output = drupal_render($changed_elements);
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
@@ -202,7 +202,7 @@ function og_payment_gateway_filter_gateways($nids = array()) {
   global $user;
   $sql = 'SELECT g.id, g.name FROM {gateway_manager_gateways} g INNER JOIN {og_payment_gateway} o ON o.gid = g.id INNER JOIN og_uid u ON u.nid = o.group_nid WHERE u.uid = %d';
   if (count($nids)) {
-    $sql .= ' AND o.group_nid IN (%s)'; // TODO: change to in clause because multiple group nodes may be selected.
+    $sql .= ' AND o.group_nid IN (%s)';
   }
   $result = db_query($sql, $user->uid, implode(',', $nids));
   
