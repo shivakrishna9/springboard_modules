@@ -246,7 +246,7 @@ function fundraiser_refund_submit($form, &$form_state) {
   }
 
   // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order_id, $order_id));
   
   if (module_exists('gateway_manager')) {
  	  $info = gateway_manager_gateway_info($payment_details->gateway);

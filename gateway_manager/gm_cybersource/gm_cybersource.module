@@ -702,6 +702,9 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   return $result;
 }
 
+/**
+ * Refund implementation.
+ */
 function gm_cybersource_refund($order_id, $amount, $data) {
   global $user;
   
@@ -733,8 +736,6 @@ function gm_cybersource_refund($order_id, $amount, $data) {
   
   // Only continue if we have both pieces of information
   if (!empty($requestId) && !empty($requestToken)) {
-    drupal_set_message(t('Refunding order @id using requestId @requestId and requestToken @requestToken', array('@id' => $order_id, '@requestId' => $requestId, '@requestToken' => $requestToken)));
-    
     $login = _gm_cybersource_soap_login_data($data['config']);
     $soapClient = new CyberSourceSoapClient($url, array('merchant_id' => $login['merchant_id'], 'transaction_key' => $login['transaction_key']));
     
