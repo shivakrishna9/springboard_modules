@@ -659,8 +659,13 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					$object['Cancellation_Reason__c'] = $refund->reason; 
 					
 					// Link the refund to the original donation
-					//$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
-					//$object['npe03__Recurring_Donation__c'] = $donation_sfid;
+					/* Not working
+					$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+					$object['npe03__Recurring_Donation__c'] = $donation_sfid;
+					*/
+					
+					// Since it's a refund, the probability is 0
+					$object['Probability'] = 0;
 
 					$record->object = $object;
 					break;

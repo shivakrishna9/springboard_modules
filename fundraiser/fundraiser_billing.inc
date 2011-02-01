@@ -280,15 +280,17 @@ function fundraiser_refund_submit($form, &$form_state) {
     // Make the charge amount positive again, for nice display in the admin comment
     $amount = abs($amount);
 
+    $reason = check_plain($form_state['values']['refund_notes']);
+
   	$amount_formatted = uc_price($amount, $context);
-		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user.', array('%amount' => $amount_formatted, '%user' => $user->name)), 'admin');
+		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
 		
 		// Save refund data
 		$refund = new stdClass();
 		$refund->order_id = $order_id;
 		$refund->amount = $amount;
 		$refund->txn_id = $result['data']['txn_id'];
-		$refund->reason = check_plain($form_state['values']['refund_notes']);
+		$refund->reason = $reason;
 		drupal_write_record('fundraiser_refund', $refund);
 	
 		// Set order status to Refunded or Partially Refunded
