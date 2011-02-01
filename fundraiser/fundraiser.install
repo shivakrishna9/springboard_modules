@@ -177,6 +177,41 @@ function fundraiser_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
+  
+  $schema['fundraiser_refund'] = array(
+    'description' => t('Stores information about refunds made on donations'),
+    'fields' => array(
+      'refund_id' => array(
+        'description' => 'Primary key: refund ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => t('Ubercart order ID the refund applies to'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'amount' => array(
+        'description' => t('Amount of the refund (positive)'),
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'txn_id' => array(
+        'description' => t('Transaction ID of the refund'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+      'reason' => array(
+        'description' => t('Reason for the refund'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('refund_id'),
+    'indexes' => array('refund_order_id' => array('order_id')),
+  );
 	
 	$schema['fundraiser_recurring'] = array(
     'description' => t('TODO: please describe this table!'),
@@ -717,4 +752,20 @@ function fundraiser_update_6302() {
   $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('refunded', 'Refunded', 'post_checkout', -21, 1)");
   $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('partially_refunded', 'Partially Refunded', 'post_checkout', -21, 1)");
   return $updates;
+}
+
+
+/**
+ * Add the table to store refund info
+ */
+function fundraiser_update_6303() {
+  $schema['fundraiser_refund'] = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
+  _drupal_initialize_schema('fundraiser', $schema);
+
+  $ret = array();
+  $table = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
+  $table['module'] = 'fundraiser';
+  $table['name'] = 'fundraiser_refund';
+  db_create_table($ret, 'fundraiser_refund', $table);
+  return $ret;
 }
