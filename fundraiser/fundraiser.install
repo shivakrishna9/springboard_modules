@@ -192,6 +192,11 @@ function fundraiser_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'receipt_id' => array(
+        'description' => t('Ubercart receipt ID of the payment'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
       'amount' => array(
         'description' => t('Amount of the refund (positive)'),
         'type' => 'float',

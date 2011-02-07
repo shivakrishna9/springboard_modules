@@ -652,6 +652,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
         'comment' => $p_comment,
         'message' => $o_comment,
         'uid' => $user->uid,
+        'data' => array('module' => 'gm_cybersource', 'txn_type' => UC_CREDIT_AUTH_CAPTURE, 'txn_id' => $reply->ccCaptureReply->reconciliationID),
       );
 
       // If this was an authorization only transaction...

@@ -344,3 +344,12 @@ function _gateway_manager_clear_cache() {
   $cid = 'gateway_manager_form_count';
   cache_clear_all($cid, 'cache');
 }
+
+/**
+ * Implemenation of donation_transaction_details().
+ */
+function gateway_manager_donation_transaction_details_alter(&$details) {
+  // look up the name of the gateway
+  $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
+  $details['gateway'] = $gateway->name;
+}
