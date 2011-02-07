@@ -1836,6 +1836,11 @@ function fundraiser_queue_report_item_title_alter(&$row) {
 		$title = 'Order ' . $row['oid'];
 		$row['title'] = $title;
 	}
+  elseif ($row['type'] == 'refund') {
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = %d", $row['oid']));
+    $title = 'Order ' . $order_id;
+		$row['title'] = $title;
+  }
 }
 
 /** 

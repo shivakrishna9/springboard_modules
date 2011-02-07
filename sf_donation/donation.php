@@ -56,7 +56,6 @@ class NPSPDonation extends Donation
       'donor_salesforce_account_id' => 'AccountId',
       'name' => 'Name',
       'amount' => 'Amount',
-      'currency' => 'CurrencyIsoCode',
       'cc_last_4' => 'CC_Last_4__c',
       'cc_expiration_month' => 'CC_Exp_Month__c',
       'cc_expiration_year' => 'CC_Exp_Year__c',
@@ -78,6 +77,9 @@ class NPSPDonation extends Donation
       'referrer' => 'Referrer__c',
       'initial_referrer' => 'Initial_Referrer__c',
       'ms' => 'Market_Source__c',
+      'payment_gateway' => 'Payment_Gateway__c',
+      'payment_transaction_id' => 'Gateway_Reference__c',
+      
     );
   }
 }
@@ -296,6 +298,9 @@ class Donation
       $details['gateway'] = $data->gateway;
       $details['txn_id'] = $data->txn_id;
     }
+    
+    // allow other modules to alter the details
+    drupal_alter('donation_transaction_details', $details);
     return $details;
   }
   

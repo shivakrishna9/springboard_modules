@@ -282,9 +282,20 @@ function fundraiser_refund_submit($form, &$form_state) {
   	$amount_formatted = uc_price($amount, $context);
 		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
 		
+		// get the receipt_id that belongs to this refund
+		$receipt_id = NULL;
+		$payments = uc_payment_load_payments($order_id);
+		foreach ($payments as $payment) {
+		  $data = unserialize($payment->data);
+		  if ($data['txn_id'] == $result['data']['txn_id']) {
+		    $receipt_id = $payment->receipt_id;
+		  }
+		}
+		
 		// Save refund data
 		$refund = new stdClass();
 		$refund->order_id = $order_id;
+		$refund->receipt_id = $receipt_id;
 		$refund->amount = $amount;
 		$refund->txn_id = $result['data']['txn_id'];
 		$refund->reason = $reason;
