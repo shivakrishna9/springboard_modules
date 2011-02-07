@@ -218,6 +218,15 @@ function webform_ab_form(&$node, $form_state) {
     '#description' => t('Description for admin use. This is not displayed to the public.')
   );
   
+  $form['test_settings']['public_teaser'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Public Teaser'),
+    '#default_value' => $node->public_teaser,
+    '#cols' => 60,
+    '#rows' => 5,
+    '#description' => t('Teaser for public use. This is is shown if this Webform A/B Test node is shown in a list of nodes where only the teaser is displayed. This might be a description like, "Donate to our orgnization."'),
+  );
+  
   $form['test_settings']['webform_types'] = array(
     '#type' => 'radios',
     '#title' => t('Which types of webforms will this test use?'),
@@ -478,14 +487,15 @@ function webform_ab_update($node, $is_insert = FALSE) {
     $node->daily_notification_email,
     $node->daily_notification_sms,
     $node->win_notification_email,
-    $node->win_notification_sms
+    $node->win_notification_sms,
+    $node->public_teaser
   );
   
   if($is_insert) {
-    $sql = "INSERT INTO {webform_ab} (nid, webform_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s')";
+    $sql = "INSERT INTO {webform_ab} (nid, webform_types, minimum_hits, win_type, win_value, daily_notification_email, daily_notification_sms, win_notification_email, win_notification_sms, public_teaser) VALUES(%d, '%s', %d, '%s', %f, '%s', '%s', '%s', '%s', '%s')";
   }
   else {
-    $sql = "UPDATE {webform_ab} SET nid=%d, webform_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s' WHERE nid=%d";
+    $sql = "UPDATE {webform_ab} SET nid=%d, webform_types='%s', minimum_hits=%d, win_type='%s', win_value=%f, daily_notification_email='%s', daily_notification_sms='%s', win_notification_email='%s', win_notification_sms='%s', public_teaser='%s' WHERE nid=%d";
     $replacement_values[] = $node->nid;
   }
     
@@ -610,6 +620,13 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
       '#weight' => 1,
     );
 
+    $node->content['test_settings']['public_teaser'] = array(
+      '#type' => 'item',
+      '#title' => t('Public Teaser'),
+      '#value' => $node->public_teaser,
+      '#weight' => 1,
+    );
+
     $webform_types = module_invoke_all('webform_ab_get_webform_types');
     
     $node->content['test_settings']['webform_types'] = array(
@@ -715,37 +732,50 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
     return $node;
   }
   
-  // Only continue to a webform if there are webforms to choose from
+  // Only continue to a webform if there are webforms to choose from, and is
+  // the full node view (not teaser)
   elseif (!empty($node->included_webforms)) {
-    if (($winner_webform_id = _webform_ab_has_winner_already($node)) > 0) {
-      drupal_goto('node/' . $winner_webform_id);
+    // If showing a teaser, don't redirect to the other form
+    if ($teaser) {
+      $node = node_prepare($node, $teaser);
+      // Don't show the body field - it's the admin description
+      unset($node->content['body']);
+      $node->content['public_teaser'] = array(
+        '#value' => $node->public_teaser
+      );
+      return $node;
     }
-    // See if they already have a webform nid in their $_SESSION for this test, and
-    // that it's still a valid webform nid for this test (in case the webform was
-    // removed from the test)
     else {
-      if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
-        // See if this user has hit this test before, and use the same webform as
-        // the last time
-        global $user;
-        if ($user->uid > 0) {
-          $previous_test_hit = db_fetch_array(db_query("SELECT webform_nid FROM {webform_ab_hits} WHERE test_nid=%d AND uid=%d", array($node->nid, $user->uid)));
-          if ($previous_test_hit['webform_nid'] > 0) {
-            $webform_nid_to_view = $previous_test_hit['webform_nid'];
-          }
-        }
-        
-        // If the webform wasn't picked by a user's previous visit, pick 
-        // one at random
-        if (empty($webform_nid_to_view)) {
-          // Pick a random webform nid from the ones in this test
-          $webform_nid_to_view = array_rand($node->included_webforms);          
-        }
-        
-        // Save it to the $_SESSION so this user always gets the same one
-        $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $webform_nid_to_view;
+      if (($winner_webform_id = _webform_ab_has_winner_already($node)) > 0) {
+        drupal_goto('node/' . $winner_webform_id);
       }
-      drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
+      // See if they already have a webform nid in their $_SESSION for this test, and
+      // that it's still a valid webform nid for this test (in case the webform was
+      // removed from the test)
+      else {
+        if (empty($_SESSION['webform_ab']['webform_for_tests'][$node->nid]) || empty($node->included_webforms[$_SESSION['webform_ab']['webform_for_tests'][$node->nid]])) {
+          // See if this user has hit this test before, and use the same webform as
+          // the last time
+          global $user;
+          if ($user->uid > 0) {
+            $previous_test_hit = db_fetch_array(db_query("SELECT webform_nid FROM {webform_ab_hits} WHERE test_nid=%d AND uid=%d", array($node->nid, $user->uid)));
+            if ($previous_test_hit['webform_nid'] > 0) {
+              $webform_nid_to_view = $previous_test_hit['webform_nid'];
+            }
+          }
+        
+          // If the webform wasn't picked by a user's previous visit, pick 
+          // one at random
+          if (empty($webform_nid_to_view)) {
+            // Pick a random webform nid from the ones in this test
+            $webform_nid_to_view = array_rand($node->included_webforms);          
+          }
+        
+          // Save it to the $_SESSION so this user always gets the same one
+          $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $webform_nid_to_view;
+        }
+        drupal_goto('node/' . $_SESSION['webform_ab']['webform_for_tests'][$node->nid]);
+      }
     }
   }
   else {
