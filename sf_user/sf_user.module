@@ -103,6 +103,11 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
 				for ($i = 0; $i < $item_count; $i++) {
 					if ($responses[$i]->success) {
 						$sfids[$responses[$i]->id] = $batch['records'][$i]->oid;
+						// in order to allow the 'overwrite when blank' rule to apply, we need to put those
+            // users back in the queue as an update
+						if ($batch['action'] == 'upsert') {
+						  sf_queue_insert($batch['records'][$i]->oid, 'user', 'update');
+						}
 					}
 				}
 
