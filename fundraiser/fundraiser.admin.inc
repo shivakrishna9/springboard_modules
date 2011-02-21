@@ -7,6 +7,165 @@
  */
 
 /**
+ * Form for fundraiser confirmation settings.
+ */
+function fundraiser_confirmation_settings_form(&$form_state, $node) {
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
+  
+  /* Start edit form */
+  $form['confirmation_page'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Confirmation page settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['confirmation_page']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page title'),
+    '#default_value' => $node->confirmation_page_title,
+  );
+  $form['confirmation_page']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Confirmation message'),
+    '#default_value' => $node->confirmation_page_body,
+  );
+  $form['confirmation_page']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available confirmation message tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['confirmation_page']['tokens']['help'] = array(
+    '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+  );
+  
+  // Redirection settings.
+  if (strpos($node->redirect_url, '<') === 0) {
+    $redirect = trim($node->redirect_url, '<>');
+    // Redirection is set to front page.
+    if ($redirect == 'front') {
+      $redirect = 'url';
+      $redirect_url = $node->redirect_url;
+    }
+    else {
+      $redirect_url = '';
+    }
+  }
+  else {
+    $redirect = 'url';
+    $redirect_url = $node->redirect_url;
+  }
+  $form['confirmation_page']['redirection'] = array(
+    '#type' => 'item',
+    '#title' => t('Redirection location'),
+    '#theme' => 'webform_advanced_redirection_form',
+    '#description' => t('Choose where to redirect the user upon successful submission.'),
+  );
+  $form['confirmation_page']['redirection']['redirect']= array(
+    '#type' => 'radios',
+    '#default_value' => $redirect,
+    '#options' => array(
+      'confirmation' => t('Confirmation page'),
+      'url' => t('Custom URL'),
+    ),
+  );
+  $form['confirmation_page']['redirection']['redirect_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect URL'),
+    '#description' => t('URL to redirect the user to upon successful submission.'),
+    '#default_value' => $redirect_url,
+    '#maxlength' => 255,
+  );
+  
+  $form['email'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Confirmation email settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['email']['receipt_email_address'] = array(
+		'#type' => 'textfield',
+		'#title'=> t('Receipt Email Address'),
+		'#description' => t('The email address that the receipt email will come from.'),
+		'#weight' => -4.6,
+		'#maxlength' => 255,
+		'#default_value' => $node->receipt_email_address,
+		'#required' => TRUE,
+	);
+	$form['email']['receipt_email_from'] = array(
+		'#type' => 'textfield',
+		'#title'=> t('Receipt Email From'),
+		'#description' => t('The name that is associated with the receipt email address.'),
+		'#weight' => -4.5,
+		'#default_value' => $node->receipt_email_from,
+		'#required' => TRUE,
+	);
+	$form['email']['receipt_email_subject'] = array(
+		'#type' => 'textfield',
+		'#title'=> t('Receipt Email Subject'),
+		'#description' => t('The subject of the donation receipt email.'),
+		'#weight' => -4.4,
+		'#default_value' => $node->receipt_email_subject,
+		'#required' => TRUE,
+	);
+	$form['email']['receipt_email_message'] = array(
+		'#type' => 'textarea',
+		'#title'=> t('Confirmation Email Message'),
+		'#weight' => -4.3,
+		'#default_value' => $node->receipt_email_message,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+    '#weight' => 300,
+  );
+  
+  return $form;
+}
+
+function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
+  // validate email
+  if (!_validate_email($form_state['values']['receipt_email_address'])) {
+    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
+  }
+
+  // Ensure the entered redirect URL is valid.
+  if ($form_state['values']['redirect'] == 'url') {
+    $redirect_url = trim($form_state['values']['redirect_url']);
+    if (empty($redirect_url)) {
+      form_error($form['confirmation_page']['redirection']['redirect_url'], t('A valid URL is required for custom redirection.'));
+    }
+    elseif (strpos($redirect_url, 'http') === 0 && !valid_url($redirect_url, TRUE)) {
+      form_error($form['confirmation_page']['redirection']['redirect_url'], t('The entered URL is not a valid address.'));
+    }
+    else {
+      form_set_value($form['confirmation_page']['redirection']['redirect_url'], $redirect_url, $form_state);
+    }
+  }
+  elseif ($form_state['values']['redirect'] == 'confirmation') {
+    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
+  }
+  else {
+    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
+  }
+}
+
+function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
+  $node = node_load($form_state['values']['nid']);
+  $node->confirmation_page_title = check_plain($form_state['values']['title']);
+  $node->confirmation_page_body = $form_state['values']['body'];
+  $node->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
+  $node->receipt_email_address = $form_state['values']['receipt_email_address']; 
+  $node->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
+  $node->receipt_email_message = $form_state['values']['receipt_email_message'];
+  $node->redirect_url = $form_state['values']['redirect_url'];
+  node_save($node);
+
+  drupal_set_message(t('Confirmation settings have been updated.'));
+}
+
+/**
  * Clones a donation form and related fieldmaps
  */
 function fundraiser_clone_donation_form($nid) {
