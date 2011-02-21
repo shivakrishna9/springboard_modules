@@ -794,3 +794,30 @@ function fundraiser_update_6303() {
   db_create_table($ret, 'fundraiser_refund', $table);
   return $ret;
 }
+
+/**
+ * Add the confirmation fields
+ */
+function fundraiser_update_6304() {
+  $updates = array();
+  db_add_field($updates, 'fundraiser', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255));
+  db_add_field($updates, 'fundraiser', 'confirmation_page_body', array('type' => 'text'));
+  db_add_field($updates, 'fundraiser', 'redirect_url', array('type' => 'varchar', 'length' => 255));
+  
+  // update existing donation forms
+  $result = db_query(
+    "
+      SELECT f.nid, n.title, w.confirmation, w.redirect_url FROM {webform} w
+      INNER JOIN {fundraiser} f ON f.nid = w.nid
+      INNER JOIN {node} n on n.nid = w.nid
+    "
+  );
+  
+  // update each donation form with values from the webform
+  while ($data = db_fetch_object($result)) {
+    db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d",
+      $data->title, $data->confirmation, $data->redirect_url, $data->nid);
+  }
+  
+  return $updates;
+}
