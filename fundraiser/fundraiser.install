@@ -194,6 +194,46 @@ function fundraiser_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
+  
+  $schema['fundraiser_refund'] = array(
+    'description' => t('Stores information about refunds made on donations'),
+    'fields' => array(
+      'refund_id' => array(
+        'description' => 'Primary key: refund ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => t('Ubercart order ID the refund applies to'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'receipt_id' => array(
+        'description' => t('Ubercart receipt ID of the payment'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'amount' => array(
+        'description' => t('Amount of the refund (positive)'),
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'txn_id' => array(
+        'description' => t('Transaction ID of the refund'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+      'reason' => array(
+        'description' => t('Reason for the refund'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('refund_id'),
+    'indexes' => array('refund_order_id' => array('order_id')),
+  );
 	
 	$schema['fundraiser_recurring'] = array(
     'description' => t('TODO: please describe this table!'),
@@ -340,6 +380,18 @@ function _fundraiser_statuses() {
 			'locked' => 1,
 			'weight' => -20,
 		),
+    'refunded' => array(
+      'title' => 'Refunded',
+      'state' => 'post_checkout',
+      'locked' => 1,
+      'weight' => -21,
+    ),
+    'partially_refunded' => array(
+      'title' => 'Partially Refunded',
+      'state' => 'post_checkout',
+      'locked' => 1,
+      'weight' => -21,
+    ),
 	);
 	
 	return $fundraiser_statuses;
@@ -715,4 +767,57 @@ function fundraiser_update_6301() {
   // change all donation form webforms to the new donation_form content type   
   db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
   db_query("DROP TABLE {fundraiser_gateway}");
+}
+
+/**
+ * Add new refund statuses
+ */
+function fundraiser_update_6302() {
+  $updates = array();
+  $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('refunded', 'Refunded', 'post_checkout', -21, 1)");
+  $updates[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('partially_refunded', 'Partially Refunded', 'post_checkout', -21, 1)");
+  return $updates;
+}
+
+
+/**
+ * Add the table to store refund info
+ */
+function fundraiser_update_6303() {
+  $schema['fundraiser_refund'] = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
+  _drupal_initialize_schema('fundraiser', $schema);
+
+  $ret = array();
+  $table = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
+  $table['module'] = 'fundraiser';
+  $table['name'] = 'fundraiser_refund';
+  db_create_table($ret, 'fundraiser_refund', $table);
+  return $ret;
+}
+
+/**
+ * Add the confirmation fields
+ */
+function fundraiser_update_6304() {
+  $updates = array();
+  db_add_field($updates, 'fundraiser', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255));
+  db_add_field($updates, 'fundraiser', 'confirmation_page_body', array('type' => 'text'));
+  db_add_field($updates, 'fundraiser', 'redirect_url', array('type' => 'varchar', 'length' => 255));
+  
+  // update existing donation forms
+  $result = db_query(
+    "
+      SELECT f.nid, n.title, w.confirmation, w.redirect_url FROM {webform} w
+      INNER JOIN {fundraiser} f ON f.nid = w.nid
+      INNER JOIN {node} n on n.nid = w.nid
+    "
+  );
+  
+  // update each donation form with values from the webform
+  while ($data = db_fetch_object($result)) {
+    db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d",
+      $data->title, $data->confirmation, $data->redirect_url, $data->nid);
+  }
+  
+  return $updates;
 }
