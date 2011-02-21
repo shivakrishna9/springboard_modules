@@ -129,6 +129,23 @@ function fundraiser_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
+      'confirmation_page_title' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'confirmation_page_body' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'redirect_url' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),  
     ),
     'primary key' => array('nid'),
   );
@@ -673,6 +690,9 @@ function fundraiser_update_6301() {
       is_donation_form tinyint(4) default '0',
       minimum_donation_amount decimal(15,3) default NULL,
       internal_name varchar(255) default NULL,
+      confirmation_page_title varchar(255) default NULL,
+      confirmation_page_body text,
+      redirect_url varchar(255) default NULL,
       PRIMARY KEY (nid))
     "
   );
