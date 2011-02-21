@@ -88,38 +88,7 @@ function fundraiser_form($node) {
 		'#weight' => -4.7,
 		'#default_value' => $node->gateway,
 		'#required' => TRUE,
-	);
-	$form['receipt_email_address'] = array(
-		'#type' => 'textfield',
-		'#title'=> t('Receipt Email Address'),
-		'#description' => t('The email address that the receipt email will come from.'),
-		'#weight' => -4.6,
-		'#maxlength' => 255,
-		'#default_value' => $node->receipt_email_address,
-		'#required' => TRUE,
-	);
-	$form['receipt_email_from'] = array(
-		'#type' => 'textfield',
-		'#title'=> t('Receipt Email From'),
-		'#description' => t('The name that is associated with the receipt email address.'),
-		'#weight' => -4.5,
-		'#default_value' => $node->receipt_email_from,
-		'#required' => TRUE,
-	);
-	$form['receipt_email_subject'] = array(
-		'#type' => 'textfield',
-		'#title'=> t('Receipt Email Subject'),
-		'#description' => t('The subject of the donation receipt email.'),
-		'#weight' => -4.4,
-		'#default_value' => $node->receipt_email_subject,
-		'#required' => TRUE,
-	);
-	$form['receipt_email_message'] = array(
-		'#type' => 'textarea',
-		'#title'=> t('Confirmation Email Message'),
-		'#weight' => -4.3,
-		'#default_value' => $node->receipt_email_message,
-  );
+	);	
   $form['body_filter']['#weight'] = -4.2;
   $form['body_filter']['body'] = array(
     '#type' => 'textarea',
@@ -130,6 +99,36 @@ function fundraiser_form($node) {
     '#required' => FALSE,
   );
   $form['body_filter']['filter'] = filter_form($node->format);
+  
+  /* hidden fields */
+  $form['confirmation_page_title'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_title,
+  );
+  $form['confirmation_page_body'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_body,
+  );
+  $form['receipt_email_from'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_from,
+  );
+  $form['receipt_email_address'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_address,
+  );
+  $form['receipt_email_subject'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_subject,
+  );
+  $form['receipt_email_message'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_message,
+  );
+  $form['redirect_url'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->redirect_url,
+  );
   return $form;
 }
 
@@ -137,11 +136,6 @@ function fundraiser_form($node) {
  * Implementation of hook_validate().
  */
 function fundraiser_validate($node) {
-  // validate email
-  if (!_validate_email($node->receipt_email_address)) {
-    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
-  }
-  
   // ask amounts
   if (strlen($node->donation_amounts)) {
     $amounts_valid = TRUE;
@@ -164,20 +158,20 @@ function fundraiser_insert($node) {
   db_query(
     "
       INSERT INTO {fundraiser} 
-      (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount)
+      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, redirect_url)
       VALUES
-      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d)
+      (%d, '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s')
     ",
     $node->nid, 
     $node->gateway,
-    $node->receipt_email_from, 
-    $node->receipt_email_address, 
-    $node->receipt_email_subject, 
-    $node->receipt_email_message, 
     $node->donation_amounts,
     $node->show_other_amount,
     $node->internal_name,
-    $node->minimum_donation_amount
+    $node->minimum_donation_amount,
+    variable_get('site_name', ''),
+    variable_get('site_mail', ''),
+    t('Thank you for your donation'),
+    '<confirmation>'
   );
   
   // skip some steps if the form is being cloned
@@ -204,9 +198,12 @@ function fundraiser_update($node) {
       minimum_donation_amount = %d, 
       gateway = '%s',
       receipt_email_from = '%s',
-  		receipt_email_address = '%s',
-  		receipt_email_subject = '%s',
-  		receipt_email_message = '%s' 
+      receipt_email_address = '%s',
+      receipt_email_subject = '%s',
+      receipt_email_message = '%s',
+      confirmation_page_title = '%s',
+      confirmation_page_body = '%s',
+      redirect_url = '%s'
   		WHERE nid = %d
     ",
     $node->internal_name, 
@@ -217,6 +214,9 @@ function fundraiser_update($node) {
     $node->receipt_email_address,
     $node->receipt_email_subject,
     $node->receipt_email_message,
+    $node->confirmation_page_title,
+    $node->confirmation_page_body,
+    $node->redirect_url,
     $node->nid
   );
   
@@ -240,7 +240,7 @@ function fundraiser_delete(&$node) {
  * Implementation of hook_load().
  */
 function fundraiser_load($node) {
-  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount FROM {fundraiser} WHERE nid = %d", $node->nid));
+  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
   // get the user profile map
   $result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
 	while($row = db_fetch_array($result)){
@@ -318,6 +318,14 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       '#submit' => array('fundraiser_clone_form'),
       '#weight' => 100,
     );
+  }
+  elseif ($form_id == 'webform_configure_form') {
+    $form['submission']['title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Confirmation page title'),
+      '#weight' => -1,
+    );
+    //print "<pre>".print_r($form, TRUE)."</pre>";
   }
   			
 	if (strstr($form_id, 'webform_client_form')) {
@@ -459,6 +467,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			// add an additional submit and validation handler
 			array_unshift($form['#submit'], 'fundraiser_webform_submit'); // creates order
 			$form['#validate'][] = 'fundraiser_webform_validate';
+			$form['#submit'][] = 'fundraiser_confirmation';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
 		}
 	}
@@ -724,7 +733,7 @@ function fundraiser_menu() {
 	);
 	
 	$items['node/%webform_menu/webform/mapping'] = array(
-	    'title' => 'User map',
+	    'title' => t('User map'),
 	    'page callback' => 'drupal_get_form',
 	    'page arguments' => array('fundraiser_mapping_form', 1),
 	    'access callback' => 'mapping_form_access',
@@ -732,6 +741,17 @@ function fundraiser_menu() {
 	    'file' => 'fundraiser_components.inc',
 	    'weight' => 30,
 	    'type' => MENU_LOCAL_TASK,
+	);
+	
+	$items['node/%webform_menu/webform/confirmations'] = array(
+	 'title' => t('Confirmations'),
+	 'page callback' => 'drupal_get_form',
+	 'page arguments' => array('fundraiser_confirmation_settings_form', 1),
+	 'access callback' => 'fundraiser_confirmations_perm',
+	 'access arguments' => array('update', 1),
+	 'file' => 'fundraiser.admin.inc',
+	 'type' => MENU_LOCAL_TASK,
+	 'weight' => 1,
 	);
 	
 	$items['fundraiser_changestate/js'] = array(
@@ -855,17 +875,14 @@ function fundraiser_menu() {
 		'file' => 'fundraiser.admin.inc',
 	);
 
-	// FUTURE CONFIRMATION PAGE
-	/*
-	$items['node/%webform_menu/confirmation/%webform_submission'] = array(
+	$items['node/%webform_menu/confirmation'] = array(
     'title' => 'Webform submission',
     'load arguments' => array(1),
     'page callback' => 'fundraiser_donation_confirmation',
-    'page arguments' => array(1, 3),
+    'page arguments' => array(1),
     'access arguments' => array("access content"),
     'type' => MENU_CALLBACK,
   );
-	*/
 
   return $items;
 }
@@ -878,6 +895,30 @@ function fundraiser_menu_alter(&$items) {
 	if (module_exists('trigger')) {
 	  $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
 	}
+	
+	// alter some built-in webform menu items
+	$items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
+	$items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
+}
+
+/**
+ * Permission check for webform form settings tab.
+ */
+function fundraiser_webform_configure_access($perm, $node) {
+  // don't show the 'Form settings' tab on donation forms
+  if ($node->type == 'donation_form') {
+    return false;
+  }
+  else { // run normal permission check
+    return node_access($perm, $node);
+  }
+}
+
+function fundraiser_confirmations_perm($perm, $node) {
+  if (($node->type == 'donation_form') && node_access($perm, $node)) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -899,12 +940,17 @@ function fundraiser_user_has_recurring_orders($user) {
   return FALSE;
 }
 
-// FUTURE CONFIRMATION PAGE
-/*
-function fundraiser_donation_confirmation($node, $submission) {
-	return "booya!";
+/**
+ * Fundraiser confirmation page.
+ */
+function fundraiser_donation_confirmation($node) {
+  drupal_set_title(check_plain($node->confirmation_page_title));
+  if (empty($output)) {
+    $output = theme(array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'), $node, $_GET['sid']);
+  }
+  return $output;
 }
-*/
+
 
 /**
  * Implementation of hook_perm().
@@ -1066,7 +1112,34 @@ function fundraiser_theme() {
     'fundraiser_credit_card_expiration_date' => array(
       'arguments' => array(),
     ),
+    'fundraiser_confirmation' => array(
+      'arguments' => array('node' => NULL, 'sid' => NULL),
+      'template' => 'templates/fundraiser-confirmation',
+      'pattern' => 'fundraiser_confirmation_[0-9]+',
+    ),
   );
+}
+
+/**
+ * Implemenation of hook_preprocess_fundraiser_confirmation().
+ */
+function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
+  $sid = $vars['sid'];
+  if ($sid) {
+    // load up the id of the order
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order = uc_order_load($order_id);
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $sid);
+    $message = $vars['node']->confirmation_page_body;
+    // replace any submission level tokens
+    $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE);
+    // replace any order tokens
+    $message = token_replace($message, 'order', $order);
+    
+    // set a variable that can be used in the template
+    $vars['confirmation_message'] = $message;
+  }
 }
 
 function fundraiser_preprocess_sustainer_management_page(&$vars) {
@@ -1365,6 +1438,33 @@ function fundraiser_webform_submit($form, &$form_state) {
 		$form_state['rebuild'] = TRUE;
 		$form_state['values']['abort'] = TRUE;
  	}
+}
+
+/**
+ * Handles the final destination redirect (even after webform).
+ */
+function fundraiser_confirmation($form, &$form_state) {
+  // everything is good, lets do our redirect
+  $node = $form['#node'];
+  $sid = $form_state['values']['details']['sid'];
+  $redirect_url = trim($node->redirect_url);
+  
+  // Remove the domain name from the redirect.
+  $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+  
+  if ($redirect_url == '<confirmation>') {
+    $redirect = array('node/' . $node->nid . '/confirmation', 'sid=' . $sid);
+  }
+  elseif (valid_url($redirect_url, TRUE)) {
+    $redirect = $redirect_url;
+  }
+  elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+    $parts = parse_url($redirect_url);
+    $query = $parts['query'] ? ($parts['query'] . '&sid=' . $sid) : ('sid=' . $sid);
+    $redirect = array($parts['path'], $query, $parts['fragment']);
+  }
+  
+  $form_state['redirect'] = $redirect;
 }
 
 /**
