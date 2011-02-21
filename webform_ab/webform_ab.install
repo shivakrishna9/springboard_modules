@@ -94,6 +94,11 @@ function webform_ab_schema() {
         'default' => '',
         'not null' => FALSE,
       ),
+      'public_teaser' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Public teaser for the test.',
+      ),
     ),
     'primary key' => array('nid')
   );
@@ -250,5 +255,15 @@ function webform_ab_update_6002() {
   $updates = array();
   $updates[] = update_sql("ALTER TABLE `webform_ab_hits` CHANGE  `ip`  `session_id` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT  ''");
   $updates[] = update_sql("UPDATE `webform_ab_hits` SET `session_id`=''");
+  return $updates;
+}
+
+
+/**
+ * Add a teaser
+ */
+function webform_ab_update_6003() {
+  $updates = array();
+  db_add_field($updates, 'webform_ab', 'public_teaser', array('type' => 'text', 'not null' => FALSE));
   return $updates;
 }
