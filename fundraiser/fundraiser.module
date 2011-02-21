@@ -319,14 +319,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 100,
     );
   }
-  elseif ($form_id == 'webform_configure_form') {
-    $form['submission']['title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Confirmation page title'),
-      '#weight' => -1,
-    );
-    //print "<pre>".print_r($form, TRUE)."</pre>";
-  }
   			
 	if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
