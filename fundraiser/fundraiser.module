@@ -284,16 +284,19 @@ function fundraiser_is_secure() {
  * Alter the webform component delete form to prevent the deletion of required fundraiser fields
  */
 function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state) {
-  module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-  $required_fields = fundraiser_required_fields();
-  
-  $cid = arg(4);
-  $component = $form['node']['#value']->webform['components'][$cid];
-  // check to see if the form_key is in our required fields array
-  if (in_array($component['form_key'], $required_fields)) {
-    $message = t('<strong>!name</strong> is a required fundraiser field and cannot be deleted from this form.', array('!name' => $component['name']));
-    $form['description']['#value'] = $message;
-    unset($form['actions']['submit']);
+  // makes sure we are dealing with a donation form
+  if ($form['node']['#value']->type == 'donation_form') {
+    module_load_include('inc', 'fundraiser', 'fundraiser.fields');
+    $required_fields = fundraiser_required_fields();
+    
+    $cid = arg(4);
+    $component = $form['node']['#value']->webform['components'][$cid];
+    // check to see if the form_key is in our required fields array
+    if (in_array($component['form_key'], $required_fields)) {
+      $message = t('<strong>!name</strong> is a required fundraiser field and cannot be deleted from this form.', array('!name' => $component['name']));
+      $form['description']['#value'] = $message;
+      unset($form['actions']['submit']);
+    }
   }
 }
 
