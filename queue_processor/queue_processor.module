@@ -834,6 +834,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 				
 				case 'currency':	
 				case 'double':
+				case 'percent':
 				case 'int':
 					// first strip out everything but numbers and the period
 					$value = preg_replace("/[^0-9.]/", "", $value);
