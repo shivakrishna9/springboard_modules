@@ -590,7 +590,7 @@ function sf_webform_queue_fieldmap_assignment_alter(&$data) {
 		$fieldmap = db_fetch_array($result);
 		$data->fieldmap = $fieldmap['fieldmap'];
 		
-		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = 'webform' OR drupal_type = 'webform_user'", $sid));
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND (drupal_type = 'webform' OR drupal_type = 'webform_user')", $sid));
 		// check the action. by default webforms go into the queue as upsert, but if the webform mapping has no dedupe key defined, revert to create
 		if (empty($fieldmap['dedupe_key']) && empty($result['sfid'])) {
 			$data->action = 'create';
