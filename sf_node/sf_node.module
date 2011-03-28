@@ -271,11 +271,21 @@ function sf_node_fieldmap_objects($type) {
             // case 'text':
               // For example, I might set a handler for text fields that takes
               // the selected input format into account.
+            case 'filefield':
+							$export_handler = '_sf_node_export_cck_file';
+							$import_handler = '_sf_node_import_cck_file';
+							break;
+							
             case 'nodereference':
               $export_handler = '_sf_node_export_cck_nodereference';
               $import_handler = '_sf_node_import_cck_nodereference';
               break;  
             
+            case 'link':
+            	$export_handler = '_sf_node_export_cck_link';
+            	$import_handler = '_sf_node_import_cck_link';
+            	break;
+            	
             default:
               $export_handler = '_sf_node_export_cck_default';
               $import_handler = '_sf_node_import_cck_default';
@@ -361,6 +371,49 @@ function _sf_node_import_cck_todate(&$node, $key, $source, $field) {
 
   $data[0]['value2'] = $source->$field;
 
+  $node->$key = $data;
+}
+
+// Returns the url of a CCK file field.
+function _sf_node_export_cck_file($source, $field) {
+	GLOBAL $base_url;
+	// Get the data array for the field.
+  $data = $source->$field;
+
+  // Return the first value; currently doesn't support multiple value fields.
+	if (!empty($data[0]['filepath'])) {
+  	return $base_url . '/' . $data[0]['filepath'];
+	}
+	return '';
+}
+
+function _sf_node_import_cck_file(&$node, $key, $source, $field) {
+	GLOBAL $base_url;
+	// drupal_* string functions are not necessary since these are machine names.
+  $key = substr($key, 0, strlen($key) - 7);
+
+  $data = $node->$key;
+
+  $data[0]['filepath'] = str_replace($base_url .'/', '', $source->$field); // strip the base url if found
+
+  $node->$key = $data;
+}
+
+// Returns the url value of a CCK link.
+function _sf_node_export_cck_link($source, $field) {
+  // Get the data array for the field.
+  $data = $source->$field;
+
+  // Return the first value; currently doesn't support multiple value fields.
+  return $data[0]['url'];
+}
+
+// Sets the url and title values of a CCK link.
+function _sf_node_import_cck_link(&$node, $key, $source, $field) {
+  $data = $node->$key;
+  
+  $data[0]['title'] = $data[0]['url'] = $source->field;
+  
   $node->$key = $data;
 }
 
