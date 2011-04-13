@@ -46,6 +46,8 @@ class NPSPDonation extends Donation
       'payment_received' => 'Posted',
       'payment_withdrawn' => 'Withdrawn',
       'payment_pending' => 'Pledged',
+      'partially_refunded' => 'Partially Refunded',
+      'refunded' => 'Refunded',
     );
   }
   
@@ -75,6 +77,9 @@ class NPSPDonation extends Donation
       'referrer' => 'Referrer__c',
       'initial_referrer' => 'Initial_Referrer__c',
       'ms' => 'Market_Source__c',
+      'payment_gateway' => 'Payment_Gateway__c',
+      'payment_transaction_id' => 'Gateway_Reference__c',
+      
     );
   }
 }
@@ -177,16 +182,16 @@ class Donation
     $this->billing_postal_code = $order->billing_postal_code;
     $this->stage = $stages['payment_pending'];
     
-    // check for payments
-    if ($payments) {
+    // Only set these fields if it's paid
+    if ($order->order_status == 'payment_received') {
   		// deal with sf date handling
   		$this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
       $this->close_date = date('Y-m-d', $this->transaction_date);
       $this->transaction_date_gm = gmdate('c', $this->transaction_date);
       $this->probability = 100.00;
-      $this->stage = $stages['payment_received'];
   	}
-    
+	  $this->stage = $stages[$order->order_status];
+  	    
     uc_credit_cache('clear');
     
     // add gateway and transaction id
@@ -293,6 +298,9 @@ class Donation
       $details['gateway'] = $data->gateway;
       $details['txn_id'] = $data->txn_id;
     }
+    
+    // allow other modules to alter the details
+    drupal_alter('donation_transaction_details', $details);
     return $details;
   }
   
@@ -309,6 +317,7 @@ class Donation
       'donor_salesforce_contact_id' => 'Donor\'s Salesforce Contact ID',
       'name' => 'Donation Name',
       'amount' => 'Donation Amount',
+      'currency' => 'Currency',
       'cc_last_4' => 'Credit Card Last 4',
       'cc_expiration_month' => 'Credit Card Expiration Month',
       'cc_expiration_year' => 'Credit Card Expiration Year',
@@ -360,6 +369,8 @@ class Donation
       'payment_received' => 'Posted',
       'payment_withdrawn' => 'Withdrawn',
       'payment_pending' => 'Pledged',
+      'partially_refunded' => 'Partially Refunded',
+      'refunded' => 'Refunded',
     );
   }
   

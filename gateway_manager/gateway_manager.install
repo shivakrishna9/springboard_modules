@@ -1,0 +1,116 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install file for the gateway manager module. 
+ * 
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function gateway_manager_install() {
+	drupal_install_schema('gateway_manager');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function gateway_manager_uninstall() {
+	drupal_uninstall_schema('gateway_manager');
+  $vid = variable_get('gateway_manager_vocabulary', '');
+  taxonomy_del_vocabulary($vid);
+}
+
+/**
+ * Implemenation of hook_enable().
+ */
+function gateway_manager_enable() {
+  $vid = variable_get('gateway_manager_vocabulary', '');
+  if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
+    $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'gateway_manager'"));
+    if (!$vid) {
+      $vocabulary = array(
+        'name' => t('Payment Gateway Terms'),
+        'multiple' => '1',
+        'required' => '0',
+        'hierarchy' => '0',
+        'relations' => '0',
+        'module' => 'gateway_manager',
+      );
+      taxonomy_save_vocabulary($vocabulary);
+    }
+    variable_set('gateway_manager_vocabulary', $vid);
+  }
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function gateway_manager_schema() {
+  $schema['gateway_manager_gateways'] = array(
+    'description' => t('Table that contains configured payment gateways.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('Unique payment gateway id.'),
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('The recognizable name of the payment gateway.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'uid' => array(
+        'description' => t('UID of the user that created the payment gateway.'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'type' => array(
+        'description' => t('The type of payment gateway (authorizenet, cybersource, etc.).'),
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => t('Timestamp of when the payment gateway was created.'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'updated' => array(
+        'description' => t('Timestamp of when the gateway was last updated.'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'config' => array(
+        'description' => t('Serialized configuration data for the gateway.'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['term_gateway'] = array(
+    'description' => t('Table to store gateway related terms.'),
+    'fields' => array(
+      'gid' => array(
+        'description' => t('The id of the payment gateway.'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'tid' => array(
+        'description' => t('The id of the taxonomy term.'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('gid', 'tid'),
+  );
+  
+  return $schema;
+}

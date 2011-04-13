@@ -1,0 +1,9 @@
+; $Id$
+name = Organic groups payment gateway
+description = Allows payment gateways to be assigned to organic groups
+core = 6.x
+package = Jackson River Springboard - payment
+dependencies[] = og
+dependencies[] = gateway_manager
+
+version = SPRINGBOARD_VERSION
