@@ -1,0 +1,8 @@
+; $Id$
+name = Secure Pre-populate
+description = Uses an encrypted url string to pre-populate form fields.
+core = 6.x
+package = Jackson River Springboard
+dependencies[] = webform
+
+version = SPRINGBOARD_VERSION
