@@ -57,6 +57,7 @@ function fundraiser_form($node) {
     '#weight' => -4.99,
     '#maxlength' => 255,
   );
+  /* add #aha */
   if (empty($node->donation_amounts)) { // don't show amounts when updating because the have to be changed via the component
     $form['donation_amounts'] = array (
   		'#type' => 'textfield',
