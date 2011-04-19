@@ -155,7 +155,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		$amount['nid'] = $nid;
 		$amount['pid'] = $pid; 
 		$amount['form_key'] = 'amount'; 
-		$amount['name'] = 'Please select your tax-deductable gift amount below';
+		$amount['name'] = 'Please select your tax-deductible gift amount below';
 		$amount['type'] = 'select';  
 		$amount['extra'] = array(
 			'description' => '',

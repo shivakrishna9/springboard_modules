@@ -241,6 +241,13 @@ function fundraiser_admin_settings() {
 	 '#default_value' => variable_get('fundraiser_development_mode', 0),
 	 '#description' => t('Development mode allows you to access donation forms over HTTP.'),
 	);
+	
+	$form['fundraiser_default_minimum'] = array(
+	 '#type' => 'textfield',
+	 '#title' => t('Default minimum donation amount'),
+	 '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
+	 '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
+	);
 		
 	$form['fundraiser_salesforce_integration'] = array(
 		'#type' => 'checkbox',
