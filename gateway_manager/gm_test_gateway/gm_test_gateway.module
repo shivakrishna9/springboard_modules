@@ -16,7 +16,7 @@ function gm_test_gateway_payment_gateway_managed() {
     'id' => 'test_gateway',
     'title' => t('Test Gateway'),
     'description' => t('Process credit card payments through the Test Gateway.'),
-    'credit' => 'test_gateway_charge',
+    'credit' => 'gm_test_gateway_charge',
   );
 
   return $gateways;
@@ -61,7 +61,7 @@ function gm_test_gateway_charge($order_id, $amount, $data) {
     'comment' => t('Card charged, resolution code: 0022548315'),
     'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
-    // 'data' => $data,
+    'data' => array('txn_id' => 'TEST-TXNID-001'),
   );
 
   return $result;
