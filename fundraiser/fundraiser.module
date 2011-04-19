@@ -459,11 +459,13 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $state_field['#options'] = get_country_zones($country_field['#default_value']); // default country as defined in the component definition
 			}
 
-			// add an additional submit and validation handler
-			array_unshift($form['#submit'], 'fundraiser_webform_submit'); // creates order
+			// add a validation handler and two additional submit handlers
 			$form['#validate'][] = 'fundraiser_webform_validate';
+			$form['#submit'][] = 'fundraiser_webform_submit';
 			$form['#submit'][] = 'fundraiser_confirmation';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
+      
+      //print "<pre>".print_r($form['#submit'], TRUE)."</pre>";
 		}
 	}
 
@@ -657,16 +659,6 @@ function array_smart_merge($array, $override) {
     }
   }
   return $array;
-}
-
-/**
- * Implementation of hook_webform_submission_insert().
- */
-function fundraiser_webform_submission_insert($node, $submission) {
-  // insert a record to relate the webform submission to the ubercart order
-  if ($node->type == 'donation_form') {
-    db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, gateway, txn_id, recurring_status) VALUES (%d, %d, %d, '%s', '%s', %d)", $node->nid, $node->order_id, $submission->sid, $node->gateway, $node->txn_id, empty($node->recurring_order) ? DONATION_NON_RECURRING : DONATION_RECURRING);
-  }
 }
 
 /**
@@ -1069,7 +1061,6 @@ function theme_fundraiser_mapping_form($form) {
 	if ($form['mapping']['cid']) {
 		foreach ($form['mapping']['cid'] as $key=>$cid) {
 			if (is_numeric($key)) {
-				//dprint_r($form['mapping']['type'][$key]); die();
 				$row = array();
 				$row[] = drupal_render($form['mapping']['cid'][$key]);
 				$row[] = drupal_render($form['mapping']['type'][$key]);
@@ -1137,13 +1128,17 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
   }
 }
 
+/**
+ * Theme function for the sustainer management page.
+ *
+ * @param $vars
+ *   The variables passed into the theme function
+ */
 function fundraiser_preprocess_sustainer_management_page(&$vars) {
   global $user;
   // convert the array of orders to a nice data table
   $header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
   $rows = array();
-  
-  //print "<pre>".print_r($vars['orders'], TRUE)."</pre>";
   
   // format the dates 
   $class = '';
@@ -1268,18 +1263,18 @@ function fundraiser_webform_validate($form, &$form_state) {
  * Submission handler for donation forms.
  */
 function fundraiser_webform_submit($form, &$form_state) {
+  global $user;
+  
   $node = $form['#parameters'][2];
-	$fundraiser_fields = array_flatten($form_state['values']['submitted']);
+	$fundraiser_fields = array_flatten($form_state['values']['submitted_tree']);
 	$node_id = $form_state['values']['details']['nid'];
-	$map = _get_map($form_state['values']['details']['nid'], $form_state['values']['submitted']);
 	
-	// collect all of our donation fields
+	// pick out the values we need to generate an order
 	$donation_amount = $fundraiser_fields['amount'];
 	$cc_number = $fundraiser_fields['card_number'];
 	$cc_cvv = $fundraiser_fields['card_cvv'];
 	$cc_expiration_month = $fundraiser_fields['card_expiration_month'];
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-	$recurs = $fundraiser_fields['recurs'];
 	$first_name = $fundraiser_fields['first_name'];
 	$last_name = $fundraiser_fields['last_name'];
 	$email = $fundraiser_fields['email'];
@@ -1290,22 +1285,28 @@ function fundraiser_webform_submit($form, &$form_state) {
 	$billing_state = $fundraiser_fields['billing_state'];
 	$billing_zipcode = $fundraiser_fields['billing_zipcode'];
 	$quantity = $fundraiser_fields['quantity'];
-	
-	// add an additional check for recurs_monthly. this value will be set when the recurring options are
-	// set to display as radio buttons
-	if (!empty($fundraiser_fields['recurs_monthly'])) {
-		$recurs = $fundraiser_fields['recurs_monthly'];
+
+	// lets jump through some hoops to see if this was a recurring donation
+	$recurs = FALSE;
+	$recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $node->nid));
+	if (!empty($recurs_cid)) {
+    $value = $form_state['values']['submitted'][$recurs_cid];
+    if (is_array($value)) { // if this is an array, then it is a single item checkbox
+      $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
+    }
+    else {
+      $recurs = $value == 'recurs' ? TRUE : FALSE;
+    }
 	}
+	// end jumping through hoops
 	
 	// look for other amount
 	if ($donation_amount == "other") {
 		$donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
 	}
-
-	global $user;
-
+  
+  // create a new order
  	$order = uc_order_new($user->uid);
- 	
  	$order->products[0] = uc_product_load($node);	  	
  	$order->products[0]->price = $donation_amount;
  	$order->products[0]->qty = empty($quantity) ? 1 : $quantity;
@@ -1317,10 +1318,13 @@ function fundraiser_webform_submit($form, &$form_state) {
 		'varprice' => $donation_amount,
 		'module' => 'uc_product',
 	); 
+	
 	// multiple amount by quantity if available
 	if (!empty($quantity)) {
 		$donation_amount = $donation_amount * $quantity;
 	}
+	
+	// set order properties
  	$order->primary_email = $email;
  	$order->order_total = $donation_amount;
  	$order->billing_first_name = $first_name;
@@ -1347,18 +1351,20 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	$order->line_items = array();
 
- 	// Allow other modules to add additional fields to the order before processing
- 	// the payment
+ 	// Allow other modules to add additional fields to the order before processing the payment
   $additional_order_fields = module_invoke_all('fundraiser_add_order_fields', $fundraiser_fields);
   foreach ($additional_order_fields as $field => $value) {
     $order->data[$field] = $value;
   }
 
- 	// Cache the CC details stored by the handler.
+ 	// cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
  	// save the order
  	uc_order_save($order);
-
+  
+  // relate the order to submission before we try and process the payment
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING);  
+  
   // additional data to pass to the payment gateway's charge function
  	$data = array(
  		'txn_type' => 'auth_capture',
@@ -1381,59 +1387,149 @@ function fundraiser_webform_submit($form, &$form_state) {
   $result = $charge_function($order->order_id, $donation_amount, $data);
 
  	if ($result['success']) {
- 		$form_state['values']['details']['txn_id'] = $result['data']['txn_id'];
- 		
-		// complete the sale		
-		uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-		// update the vault if needed
-		if (variable_get('uc_sage_vault_status', FALSE) && variable_get('uc_sage_vault_checkout', 'none') == 'insert') {
-			db_query("update {uc_sage_vault} set uid = %d where guid = '%s'", $order->uid, $result['ref_id']);
-		}
-
-		// enter the payment
-		uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL, 'Payment processed by the fundraiser module.');
-	
-		// mark payment as received
-		db_query("update {uc_orders} set order_status='payment_received' where order_id = %d", $order->order_id);
- 		
-		// save any mapped profile fields
-		_save_profile_map($order->uid, $map);
-
-    // save some additional information so it can be utilized later
-  	$form['#node']->order_id = $order->order_id;
-    $form['#node']->txn_id = $result['data']['txn_id'];
-    
- 		// determine if the donation should be added to the queue
- 		$add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
- 		
- 		//if monthly recurring checkbox is set, do the insert into the fundraiser_recurring_users table
- 		if ($recurs) {
-      $form['#node']->recurring_order = 1;
- 			fundraiser_create_future_orders($order->order_id, $node->gateway);
- 			// add to queue as a recurring donation
- 			if ($add_to_queue) {
-	 			sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
-	 		}
- 		}
- 		else {
- 			if ($add_to_queue) {
-	 			// add to queue as a donation
-	 			sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-			} 			
- 		}
- 		
- 		drupal_set_message($result['message'],'status');
+ 	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
  	}
  	else { 
 		// failed to process credit cart
- 		db_query("update uc_orders set order_status='failed' where order_id = $order->order_id");
-		$log_error = 'Order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
-		watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
-		drupal_set_message($result['message']);
+		fundraiser_order_decline($order->order_id, $result['message']);
+		// rebuild the form
 		$form_state['rebuild'] = TRUE;
-		$form_state['values']['abort'] = TRUE;
  	}
 }
+
+/**
+ * Completes the processing of an accepted order.
+ *
+ * @param $order_id
+ *   The id of the order.
+ * @param $transaction_id
+ *   The id of the transaction that was returned from the gateway.
+ * @param $message
+ *   Any message that was returned by the gateway.
+ */ 
+function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
+  // reload the order
+  $order = uc_order_load($order_id);
+  
+  // use order_id to find the nid and then go ahead and load up the node
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $node = node_load($webform->webform_nid);
+  
+  // complete the sale
+  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+  
+  // enter the payment
+  uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
+	
+	// mark payment as received
+  db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", 'payment_received', $order_id);
+  
+  // update the order/webform relationship
+  db_query("UPDATE {fundraiser_webform_order} SET gateway = '%s', txn_id = '%s' WHERE order_id = %d", $node->gateway, $transaction_id, $order_id);
+  
+  // update the user's profile
+  fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
+  
+  // if it's recurring, spawn all the future orders
+  if (fundraiser_is_recurring_order($order_id)) {
+    fundraiser_create_future_orders($order_id, $node->gateway);
+  }
+  
+  // TODO: This should be changed to a hook (hook_donation_successful) and another module can put it in the queue.
+  fundraiser_add_to_queue($order);
+  
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+ 	  drupal_set_message($message);
+  }
+}
+
+/**
+ * Completes the processing of an declined order.
+ *
+ * @param $order_id
+ *   The id of the order.
+ * @param $message
+ *   Any message that was returned by the gateway.
+ */ 
+function fundraiser_order_decline($order_id, $message) {
+  // make the order as failed
+ 	db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+ 	// make a log entry
+  watchdog('fundraiser', t('Order !id was declined by the payment gateway. Reason: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_DEBUG, NULL);
+  
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($message);
+  }
+}
+
+/**
+ * Completes the processing of an order when an error occurs.
+ *
+ * @param $order_id
+ *   The id of the order.
+ * @param $message
+ *   Any message that was returned by the gateway.
+ */ 
+function fundraiser_order_exception($order_id, $message) {
+  // make the order as failed
+ 	db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+ 	// make a log entry
+ 	watchdog('fundraiser', t('An error occurred while processing order !id. Error: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_ERROR, NULL);
+  
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($message);
+  }
+}
+
+/**
+ * Completes the processing of an order when it is cancelled by the user.
+ *
+ * @param $order_id
+ *   The id of the order.
+ * @param $message
+ *   Any message that was returned by the gateway.
+ */ 
+function fundraiser_order_cancel($order_id) {
+  // make the order as canceled
+ 	db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = %d", $order_id);
+  // make a comment on the order
+  uc_order_comment_save($order_id, 0, t('Payment was canceled during checkout by the user.')); 
+  // make a log entry
+  watchdog('fundraiser', t('Order !id was canceled by the user.', array('!id' => $order_id)), NULL, WATCHDOG_DEBUG, NULL);
+  
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message(t('Your payment has been canceled')); 
+  }  
+}
+
+/**
+ * Adds an order to the Salesforce queue.
+ *
+ * @param $order
+ *   The order to add to the queue.
+ */
+function fundraiser_add_to_queue($order) {
+  // TODO: This should really be moved to the SF Donation module where it can listen for new orders being created.
+  $add_to_queue = (module_exists('queue_api')) ? TRUE : FALSE;
+ 		
+	if ($add_to_queue) {
+  	if (fundraiser_is_recurring_order($order->order_id)) {
+      sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
+    }
+    else {
+      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+    }
+  }
+}
+
 
 /**
  * Handles the final destination redirect (even after webform).
@@ -1488,49 +1584,86 @@ function fundraiser_refund_function($type) {
   return NULL;
 }
 
-/*
- * Saves mapped profile data
+/**
+ * Determines if an order is a recurring order.
+ *
+ * @param $order_id
+ *   The order id to check.
+ */
+function fundraiser_is_recurring_order($order_id) {
+  $status = db_result(db_query("SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id)); 
+  return $status == DONATION_RECURRING;
+}
+
+/**
+ * Updates the profile of user that submitted the donation.
+ *
+ * @param $uid
+ *   The id of the user that made the donation.
+ * @param $nid
+ *   The nid of the webform node.
+ * @param $sid
+ *   The id of the webform submission that contains the values.
  */ 
-function _save_profile_map($uid, &$map) {
-	if ($map) {
-		global $user;
-		
-		if ($user->uid == 0) {
-			$user_to_update = user_load($uid);
-		}
-		else {
-			$user_to_update = $user;
-		}
-
-		if(module_exists('profile')){
-			$cat_array = profile_categories();
-		
-			foreach ($cat_array as $cat) {
-				$updates = array(); // array for storing updates to each profile category
-				$result = _fundraiser_profile_get_fields($cat['name']);
-				while ($row = db_fetch_array($result)) {
-					if (array_key_exists($row['name'], $map)) {
-						$updates[$row['name']] = $map[$row['name']];
-					}
-				}
-				// save profile
-				_fundraiser_profile_save_profile($updates, $user_to_update, $cat['name']);
-			}				
-		}
-		// update last_updated date so user will be re-synced on next cron run
-		user_save($user_to_update, array('last_updated' => time()));
-
-		// insert user back into queue
-		$action = 'update';
-		if (empty($user_to_update->salesforce_contact_id)) {
-			$action = 'upsert';
-		}
-		
-		// If the SF Queue API is enabled, insert this user into the queue
-		if (module_exists('queue_api')) {
-		  sf_queue_insert($user_to_update->uid, 'user', $action);
-		}		
+function fundraiser_update_user_profile($uid, $nid, $sid) {
+	global $user;
+  $map = fundraiser_create_profile_values_map($nid, $sid);
+  		
+	if ($user->uid == 0) {
+		$user = user_load($uid);
 	}
+  
+  // make sure the profile module is enabled
+	if (module_exists('profile')) {
+		$cat_array = profile_categories();
+	
+		foreach ($cat_array as $cat) {
+			$updates = array(); // array for storing updates to each profile category
+			$result = _fundraiser_profile_get_fields($cat['name']);
+			while ($row = db_fetch_array($result)) {
+				if (array_key_exists($row['name'], $map)) {
+					$updates[$row['name']] = $map[$row['name']];
+				}
+			}
+			// save profile
+			_fundraiser_profile_save_profile($updates, $user, $cat['name']);
+		}				
+	}
+	
+	// update last_updated date so user will be re-synced on next cron run
+	user_save($user, array('last_updated' => time()));
+
+	// insert user back into queue
+	$action = 'update';
+	if (empty($user->salesforce_contact_id)) {
+		$action = 'upsert';
+	}
+	
+	// If the SF Queue API is enabled, insert this user into the queue
+	if (module_exists('queue_api')) {
+	  sf_queue_insert($user->uid, 'user', $action);
+	}		
+	
+}
+
+/**
+ * Creates a map of profile fields with their corrosponding values.
+ *
+ * @param $nid
+ *   The nid of the webform node.
+ * @param $sid
+ *   The id of the webform submission that contains the values.
+ */
+function fundraiser_create_profile_values_map($nid, $sid) {
+  $map = array();
+  $mapped_fields = db_query("SELECT f.map_id, d.data FROM {fundraiser_component_map} f INNER JOIN {webform_submitted_data} d on d.cid = f.cid WHERE f.nid = %d and d.sid = %d", $nid, $sid);
+  
+  // create an array in the format of profile_field => value 
+  while ($row = db_fetch_object($mapped_fields)) {
+    $map[$row->map_id] = $row->data;
+  }
+
+  return $map;
 }
 
 /** 

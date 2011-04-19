@@ -257,6 +257,13 @@ function fundraiser_admin_settings() {
 		'#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. When unchecked, on U.S and Canda will be inserted.'),
 	);
 	
+	$form['fundraiser_gateway_messages'] = array(
+	 '#type' => 'checkbox',
+	 '#title' => t('Display gateway messages'),
+	 '#default_value' => variable_get('fundraiser_gateway_messages', 1),
+	 '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
+	);
+	
 	$form['fundraiser_receipt_bcc'] = array(
 	 '#type' => 'textfield',
 	 '#title' => t('Donation receipt bcc email address'),
