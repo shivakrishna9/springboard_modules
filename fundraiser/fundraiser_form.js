@@ -1,4 +1,10 @@
-$(document).ready(function(e) {
+$(document).ready(function() {
+
+  $("#edit-title").blur(function() {
+    $title = $(this).attr('value');
+    $("#edit-internal-name").val($title);
+  });
+
   $("#ask-amounts .form-submit").click(function(e) {
     $(this).hide();
     $name = $(this).attr('id');
