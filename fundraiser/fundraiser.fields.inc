@@ -613,6 +613,50 @@ function fundraiser_required_fields() {
  * Default selected value for amount radios.
  */
 function _fundraiser_update_amount_webform_component($node, $formatted_amounts, $value) {
+
   $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
   db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+  $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
+  $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
+
+  if ($node->show_other_amount) {
+
+    if ($result) {
+      // Pre-existing entry in the DB for this form component and it's still enabled so we update.
+      $extra = array(
+        'description' => 'Minimum payment $' . $minimum_donation_amount . '.',
+        'width' => 10,
+        'field_prefix' => '$',
+      );
+      db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid=%d AND form_key = 'other_amount'", serialize($extra), $node->nid);
+      $message .= t('Other donation amount options have been updated.');
+    }
+    else {
+      // Other amount has been enabled so we need to add the component data to the DB.
+      $pid = db_result(db_query('SELECT DISTINCT cid FROM {webform_component} WHERE form_key="donation"'));
+      $other_amount = array();
+      $other_amount['nid'] = $node->nid;
+      $other_amount['pid'] = $pid; 
+      $other_amount['form_key'] = 'other_amount'; 
+      $other_amount['name'] = 'Other';
+      $other_amount['type'] = 'textfield';  
+      $other_amount['extra'] = array(
+        'description' => 'Minimum payment $' . $node->minimum_donation_amount . '.',
+        'width' => 10,
+        'field_prefix' => '$',
+      );
+      $other_amount['mandatory'] = 0; 
+      $other_amount['weight'] = 1;
+      $other_amount['email'] = 1;
+      webform_component_insert($other_amount);
+      $message .= t('Other amount options have been added to the form.');
+    }
+  }
+  elseif ($result) {
+    // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
+    // associated form element(s) being rendered by webform.
+    db_query('DELETE FROM {webform_component} WHERE nid=%d AND form_key ="other_amount"', $node->nid);
+    $message .= t('Other amount options have been disabled on the form.');
+  }
+  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, "node/$node->nid");
 }
