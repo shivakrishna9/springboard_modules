@@ -202,23 +202,23 @@ function fundraiser_form($node, $edit = NULL) {
 /**
  * Implementation of hook_validate().
  */
-function fundraiser_validate($node) {
-  $amounts_valid  = TRUE;
+function fundraiser_validate(&$node) {
+
   //drupal_set_message('node:' . print_r($node, TRUE));
   // sneak the ask amounts and labels back into the $node property where they belong.
   for($i = 0; $i < $node->amount_delta; ++$i) {
     $value = 'amount_' . $i;
     if ($node->$value) {
       if (is_numeric($node->$value)) {
-        drupal_set_message('value:' . $node->$value);
         $donation_amounts[] = $node->$value;
       }
       else {
-      form_set_error($value, t('Ask amounts must be numeric, you entered "@s".', array("@s" => $node->$value)));
+        form_set_error($value, t('Ask amounts must be numeric, you entered "@s".', array("@s" => $node->$value)));
         break;
       }
     }
   }
+  $node->donation_amounts = implode(',', $donation_amounts);
 }
 
 /**
@@ -257,8 +257,7 @@ function fundraiser_insert($node) {
       }
       ksort($donation_amounts, SORT_NUMERIC);
     }
-  /*  $node->donation_amounts = implode(',', $donation_amounts);
-    drupal_set_message('donation amounts:' . $node->donation_amounts); */
+    
     $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
   	// automap
   	fundraiser_user_map_create($node->nid, $components);
@@ -320,8 +319,6 @@ function fundraiser_update($node) {
 
   $formatted_values = _create_amount_options($values, NULL);
   $keys = array_keys($values);
-  drupal_set_message('values:' . print_r($values, TRUE));
-  drupal_set_message('keys:' . print_r($keys, TRUE));
   _fundraiser_update_amount_webform_component($node, $formatted_values, $keys[0]);
 
   // update the label on the minimum donation amount
