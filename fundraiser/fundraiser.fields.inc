@@ -67,7 +67,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$campaign['maps_to'] = 'profile_cid';
 	
 	$id = webform_component_insert($campaign);
-  $components[$id] = $campaign;
+    $components[$id] = $campaign;
   
 	// referrer
 	$referrer = array();
@@ -126,7 +126,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
 	// determine the type of amount field to output
 	if ($donation_amounts) {
-		
+		ksort($donation_amounts, SORT_NUMERIC); 
 		$formatted_amounts = _create_amount_options($donation_amounts, $show_other_amount);
 		
 		if ($show_other_amount) {		
@@ -162,11 +162,12 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 			'items' => $formatted_amounts,
 			'multiple' => 0,
 		);
+		$keys = array_keys($donation_amounts);
 		$amount['mandatory'] = 1; 
 		$amount['weight'] = 0; 
 		$amount['email'] = 1;
-		$amounts = explode(',', $donation_amounts);
-		$amount['value'] = array_shift($amounts); // select first value
+		$amounts = array_keys($donation_amounts);
+		$amount['value'] = array_shift($keys);
 
 		$id = webform_component_insert($amount);
 		$components[$id] = $amount;
@@ -597,4 +598,22 @@ function fundraiser_required_fields() {
     'card_expiration_month',
     'card_cvv',
   );
+}
+
+/**
+ * Updates ask amount and show other amount webform components.
+ * 
+ * @param $node
+ * Donation form node object.
+ * 
+ * @param $formatted_amounts
+ * A preformatted string of amount|label pairs.
+ * 
+ * @params $value
+ * Default selected value for amount radios.
+ */
+function _fundraiser_update_amount_webform_component($node, $formatted_amounts, $value) {
+  $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
+  drupal_set_message('value:' . $value);
+  db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
 }
