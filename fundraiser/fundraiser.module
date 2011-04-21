@@ -31,7 +31,10 @@ function fundraiser_node_info() {
 /**
  * Implementation of hook_form().
  */
-function fundraiser_form($node) {
+function fundraiser_form($node, $edit = NULL) {
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all', FALSE);
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
+
   $type = node_get_types('type', $node);
 
   // payment gateway list
@@ -57,15 +60,79 @@ function fundraiser_form($node) {
     '#weight' => -4.99,
     '#maxlength' => 255,
   );
-  if (empty($node->donation_amounts)) { // don't show amounts when updating because the have to be changed via the component
-    $form['donation_amounts'] = array (
-  		'#type' => 'textfield',
-  		'#title' => t('Ask Amounts'),
-  		'#description' => t('If you want the user to choose from a predetermined list donation amounts, enter them here. Seperate each amount by a comma. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.'),
-  		'#weight' => -4.98,
-  		'#default_value' => $node->donation_amounts,
-  	);
-	}
+
+  /* add amount #aha */
+  $form['amount_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Ask Amounts'),
+    //'#collapsible' => TRUE,
+    '#weight' => -4.98,
+    '#prefix' => '<div class="clear-block" id="ask-wrapper">',
+    '#suffix' => '</div>',
+  );
+
+  $form['amount_wrapper']['amounts'] = array(
+    '#prefix' => '<div id="ask-amounts">',
+    '#suffix' => '</div>',
+    '#theme' => 'fundraiser_ask_amounts',
+  );
+  
+ 
+  
+  // Retrieve saved values if available
+  $amount_values = array();
+  if (is_numeric($node->nid)) {
+    $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
+    $amount_values = unserialize(db_result($results));
+    $amount_values = preg_split('/\n/', trim($amount_values['items']));
+    if ($node->show_other_amount) {
+      unset ($amount_values[count($amount_values) -1]);
+    }
+  }
+
+ // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
+ // how many field sets to build. 
+ if ($edit['values']['amount_delta']) {
+    $delta = $edit['values']['amount_delta'];
+  }
+  // Otherwise we start by generating enough fields to house the data currently in the database.
+  elseif (count($amount_values)) {
+    $delta = count($amount_values);
+  }
+  // New forms default to three sets of amount|label fields.
+  else {
+    $delta = 3;
+  }
+  
+  $form['amount_wrapper']['amounts']['amount_delta'] = array(
+    '#type' => 'value',
+    '#value' => $delta,
+  );
+  
+  for ($i = 0; $i < $delta; ++$i ) {
+    $form['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $edit, $amount_values);
+  }
+  
+  $form['amount_wrapper']['amount_more'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add another'),
+    '#description' => t("Click here to add more choices."),
+    '#weight' => 1,
+    '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
+    '#ahah' => array(
+      'path' => 'fundraiser_ask/js',
+      'wrapper' => 'ask-amounts',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  
+  $form['amount_wrapper']['help'] = array(
+    '#weight' => 2,
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>', 
+  );
+
+
   $form['show_other_amount'] = array (
 		'#type' => 'checkbox',
 		'#title' => t('Show other amount option'),
@@ -136,17 +203,20 @@ function fundraiser_form($node) {
  * Implementation of hook_validate().
  */
 function fundraiser_validate($node) {
-  // ask amounts
-  if (strlen($node->donation_amounts)) {
-    $amounts_valid = TRUE;
-    $amounts = explode(',', $node->donation_amounts);
-    foreach($amounts as $amount) {
-      if (!is_numeric($amount)) {
-        $amounts_valid = FALSE;
+  $amounts_valid  = TRUE;
+  //drupal_set_message('node:' . print_r($node, TRUE));
+  // sneak the ask amounts and labels back into the $node property where they belong.
+  for($i = 0; $i < $node->amount_delta; ++$i) {
+    $value = 'amount_' . $i;
+    if ($node->$value) {
+      if (is_numeric($node->$value)) {
+        drupal_set_message('value:' . $node->$value);
+        $donation_amounts[] = $node->$value;
       }
-    }
-    if (!$amounts_valid) {
-      form_set_error('donation_amounts', t('Ask amounts must be numeric.'));
+      else {
+      form_set_error($value, t('Ask amounts must be numeric, you entered "@s".', array("@s" => $node->$value)));
+        break;
+      }
     }
   }
 }
@@ -176,9 +246,20 @@ function fundraiser_insert($node) {
   
   // skip some steps if the form is being cloned
   if (!$node->is_being_cloned) {
+    $donation_amounts = array();
     // add webform components
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-    $components = fundraiser_create_webform_components($node->nid, $node->donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
+    for($i = 0; $i < $node->amount_delta; ++$i) {
+      $value = 'amount_' . $i;
+      $label = 'label_' . $i;
+      if ($node->$value) {
+      $donation_amounts[$node->$value] = $node->$label;
+      }
+      ksort($donation_amounts, SORT_NUMERIC);
+    }
+  /*  $node->donation_amounts = implode(',', $donation_amounts);
+    drupal_set_message('donation amounts:' . $node->donation_amounts); */
+    $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
   	// automap
   	fundraiser_user_map_create($node->nid, $components);
     // fire a hook that other modules can utilize to add additional processing when a donation form is created
@@ -190,6 +271,7 @@ function fundraiser_insert($node) {
  * Implemenation of hook_update().
  */
 function fundraiser_update($node) {
+  module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
       UPDATE {fundraiser} SET 
@@ -220,9 +302,31 @@ function fundraiser_update($node) {
     $node->nid
   );
   
+  // Update donation amounts and labels.
+  $values = array();
+  for ($i = 0; $i < $node->amount_delta; ++$i) {
+    $amount = 'amount_' . $i;
+    $label = 'label_' . $i;
+    if ($node->$amount) {
+      $values[$node->$amount] = $node->$label;
+    }
+  }
+
+  ksort($values, SORT_NUMERIC);
+
+  if ($node->show_other_amount) {
+    $values['other'] = 'Other';
+  }
+
+  $formatted_values = _create_amount_options($values, NULL);
+  $keys = array_keys($values);
+  drupal_set_message('values:' . print_r($values, TRUE));
+  drupal_set_message('keys:' . print_r($keys, TRUE));
+  _fundraiser_update_amount_webform_component($node, $formatted_values, $keys[0]);
+
   // update the label on the minimum donation amount
   if ($node->show_other_amount) {
-		$extra = db_result(db_query("SELECT extra FROM {webform_component} WHERE nid = %d and form_key = 'other_amount'", $node->nid));
+		$extra = db_result(db_query("SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = 'other_amount'", $node->nid));
 		$extra = unserialize($extra);
 		$extra['description'] = 'Minimum payment $' . $node->minimum_donation_amount . '.';
 		db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND form_key = 'other_amount'", serialize($extra), $node->nid);
@@ -488,6 +592,7 @@ function theme_fundraiser_credit_card_expiration_date($element) {
   return $expiration_date . drupal_render($element); // Always end any form theming with drupal_render() for cleanup.
 }
 
+
 /**
  * Creates an array to map webform component fields to user profile fields.
  */
@@ -740,7 +845,13 @@ function fundraiser_menu() {
 	 'type' => MENU_LOCAL_TASK,
 	 'weight' => 1,
 	);
-	
+
+	$items['fundraiser_ask/js'] = array(
+	  'page callback' => '_fundraiser_ask_ahah',
+	  'access callback' => TRUE,
+	  'type' => MENU_CALLBACK,
+	);
+
 	$items['fundraiser_changestate/js'] = array(
 		'page callback' => 'fundraiser_changestate',
 	    'type' => MENU_CALLBACK,
@@ -1004,26 +1115,40 @@ function get_country_zones($country_id) {
 	return $zone_array;
 }
 
-// Creates a webform specific string of donations amount to be used in the amount component
+/**
+ * Creates a webform specific string of donations amount to be used in the amount component
+ * 
+ * @param $donation_amounts
+ * Array of amount => label values.
+ * 
+ * @param $show_other_amount
+ * Indicates other amount field is in use by the current donation form.
+ * 
+ * @return
+ * Returns a formatted string of amount|value pairs in the format required bo {webform_component}.extra
+ */ 
 function _create_amount_options($donation_amounts, $show_other_amount) {
-	$amounts = explode(',', $donation_amounts);
+  $formatted_amounts = '';
+
+  // Convert to nice dollar format if label isn't present.
+  
+  foreach($donation_amounts as $amount => $label) {
+
+    if (!$label) {
+      $formatted_amounts .= $amount .'|$'. $amount;
+    }
+    else {
+      $formatted_amounts .= $amount . '|' . $label;
+    }
+
+    $formatted_amounts .= "\n";
+  }
 	
-	$formatted_amounts = '';
-	// convert to nice dollar format
-	foreach($amounts as $amount) {
-		$amount = explode('|', $amount);
-		$formatted_amounts .= $amount[0] .'|$'. $amount[0];
-		if (!empty($amount[1])) {
-			$formatted_amounts .= " - " . $amount[1];
-		}
-		$formatted_amounts .= "\n";
-	}
-	
-	if ($show_other_amount) {
-		$formatted_amounts .= 'other|Other';
-	}
-	
-	return $formatted_amounts;
+  if ($show_other_amount) {
+    $formatted_amounts .= 'other|Other';
+  }
+
+  return $formatted_amounts;
 }
 
 /**
@@ -2203,4 +2328,108 @@ function fundraiser_order_actions($order) {
     );
     return $actions;
   }
+}
+
+/**
+ * Callback handler for the donation ask amount form #ahah.
+ */
+function _fundraiser_ask_ahah() {
+  module_load_include('inc', 'node', 'node.pages');
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $amount_delta = $form_state['values']['amount_delta'];
+  $form = form_get_cache($form_build_id, $form_state);
+  
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+  
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  $amount_form = $form['amount_wrapper']['amounts'];
+  unset($amount_form['#prefix'], $amount_form['#suffix']);
+ 
+  $output = theme('status_messages') . drupal_render($amount_form);
+
+  $form_state = array('submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+/**
+ * Generate donation ask amount fields, used by donation form #ahah
+ * 
+ * @param $delta
+ * Expects an integer value, used for namespacing individual sets of fields.
+ * 
+ * @param $edit
+ * Node $edit array.
+ * 
+ * @param $amount_values
+ * An array of donation amounts taken from {webform_component}.
+ * 
+ *  @return
+ *  Returns ask, label and remove form elements namespaced by delta.
+ */
+function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
+
+  // Workaround for bogus blank fields being added if user first deletes a set or sets before adding a set.
+  if (!$edit['post']['amount_' . $delta] && $delta < $edit['values']['amount_delta'] - 1) {
+    return FALSE;
+  }
+  
+  $form = array();
+  $fields = array(
+    'amount_' => 'Ask amount', 
+    'label_' => 'Label'
+  );
+  $weight = 0;
+  
+  foreach ($fields as $key => $value) {
+
+    $form[$key . $delta] = array(
+      '#type' => 'textfield',
+      '#title' => t($value),
+      '#size' => 10,
+      '#weight' => $weight,
+    );
+
+    // Post values take precedence as they're fresh from the form. We defer to values retrieved from the DB only during 
+    // initial form generation.
+    if (!$edit['post'] && count($amount_values)) {
+      $values = explode('|', $amount_values[$delta]);
+      $form[$key . $delta]['#default_value'] = $values[$weight];
+    }
+    else {
+      $form[$key . $delta]['#default_value'] = $edit['post'][$key . $delta];
+    }
+    ++$weight;
+
+  }
+
+  $form['remove_' . $delta] = array(
+    '#type' => 'button',
+    '#value' => t('remove'),
+    '#weight' => 2,
+    '#suffix' => '<div class="clear-block"></div>',
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for ask amount more button.
+ */
+function _fundraiser_amount_ahah_submit($form, &$form_state) {
+  unset($form_state['submit_handlers']);
+  $delta = $form_state['values']['amount_delta'];
+  for ($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
+    if (!$form_state['values']['amount_' . $i]) {
+      --$delta;
+    }
+  }
+  ++$form_state['values']['amount_delta'];
+  form_execute_handlers('submit', $form, $form_state);
+  $values = $form_state['values'];
+  $form_state['rebuild'] = TRUE;
 }
