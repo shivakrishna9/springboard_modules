@@ -614,6 +614,5 @@ function fundraiser_required_fields() {
  */
 function _fundraiser_update_amount_webform_component($node, $formatted_amounts, $value) {
   $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
-  drupal_set_message('value:' . $value);
   db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
 }
