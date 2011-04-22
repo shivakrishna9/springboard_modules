@@ -131,46 +131,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		
 		if ($show_other_amount) {		
 			// other amount
-			$other_amount = array();
-			$other_amount['nid'] = $nid;
-			$other_amount['pid'] = $pid; 
-			$other_amount['form_key'] = 'other_amount'; 
-			$other_amount['name'] = 'Other';
-			$other_amount['type'] = 'textfield';  
-			$other_amount['extra'] = array(
-				'description' => 'Minimum payment $' . $min_donation_amount . '.',
-				'width' => 10,
-				'field_prefix' => '$',
-			);
-			$other_amount['mandatory'] = 0; 
-			$other_amount['weight'] = 1; 
-			$other_amount['email'] = 1;
-
-			$id = webform_component_insert($other_amount);
-			$components[$id] = $other_amount;
+		    $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
+			$components[$component['id']] = $component['other_amount'];
 		}
 
 		// ask amounts
-		$amount = array();
-		$amount['nid'] = $nid;
-		$amount['pid'] = $pid; 
-		$amount['form_key'] = 'amount'; 
-		$amount['name'] = 'Please select your tax-deductible gift amount below';
-		$amount['type'] = 'select';  
-		$amount['extra'] = array(
-			'description' => '',
-			'items' => $formatted_amounts,
-			'multiple' => 0,
-		);
-		$keys = array_keys($donation_amounts);
-		$amount['mandatory'] = 1; 
-		$amount['weight'] = 0; 
-		$amount['email'] = 1;
-		$amounts = array_keys($donation_amounts);
-		$amount['value'] = array_shift($keys);
-
-		$id = webform_component_insert($amount);
-		$components[$id] = $amount;
+		$component = _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
+		$components[$component['id']] = $component['amount'];
 	}
 	else { // plain old textbox for donation amount
 		$amount = array();
@@ -606,23 +573,59 @@ function fundraiser_required_fields() {
  * @param $node
  * Donation form node object.
  * 
- * @param $formatted_amounts
- * A preformatted string of amount|label pairs.
+ * @param $donation_amounts
+ * An array of amount|label pairs.
  * 
  * @params $value
  * Default selected value for amount radios.
  */
-function _fundraiser_update_amount_webform_component($node, $formatted_amounts, $value) {
+function _fundraiser_update_amount_webform_component($node, $donation_amounts = array(), $value) {
+  $pid = db_result(db_query('SELECT cid FROM {webform_component} WHERE nid = %d AND form_key="donation"', $node->nid));
+  // Amount webform component should be a textfield if no donation amounts are available.
+  if (!count($donation_amounts)) {
+    $has_select = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "amount" AND type = "select"', $node->nid));
+    if ($has_select) {
+      $amount = array();
+      $amount['nid'] = $node->nid;
+      $amount['pid'] = $pid; 
+      $amount['form_key'] = 'amount'; 
+      $amount['name'] = 'Amount';
+      $amount['type'] = 'textfield';
+      $amount['extra'] = array(
+        'description' => '',
+        'width' => 10,
+        'field_prefix' => '$',
+      );
+      $amount['mandatory'] = 1; 
+      $amount['weight'] = 0; 
+      $amount['email'] = 1;
+      db_query('DELETE FROM {webform_component} WHERE nid =%d AND form_key = "amount"', $node->nid);
+      webform_component_insert($amount);
+    }
+  }
+  else {
+    $formatted_amounts =  _create_amount_options($donation_amounts, $node->show_other_amount);
+    $field_type = db_result(db_query('SELECT type FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
 
-  $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
-  db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
-  $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
-  $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
-
+    // If the current component is a select update with current donation amount values.
+    if (!strcmp($field_type, 'select')) {
+      $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
+      db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
+      $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
+    }
+    
+    // Since we have donation amounts we need to convert the amount component from textfield to select
+    else {
+      db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
+      _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $node->show_other_amounts);
+    }
+  }
+  
+  $result = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
   if ($node->show_other_amount) {
-
+    // Pre-existing entry in the DB for this form component and it's still enabled so we update.
     if ($result) {
-      // Pre-existing entry in the DB for this form component and it's still enabled so we update.
       $extra = array(
         'description' => 'Minimum payment $' . $minimum_donation_amount . '.',
         'width' => 10,
@@ -631,32 +634,93 @@ function _fundraiser_update_amount_webform_component($node, $formatted_amounts, 
       db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid=%d AND form_key = 'other_amount'", serialize($extra), $node->nid);
       $message .= t('Other donation amount options have been updated.');
     }
+    
+    // Other amount has been enabled so we need to add the component data to the DB.
     else {
-      // Other amount has been enabled so we need to add the component data to the DB.
-      $pid = db_result(db_query('SELECT DISTINCT cid FROM {webform_component} WHERE form_key="donation"'));
-      $other_amount = array();
-      $other_amount['nid'] = $node->nid;
-      $other_amount['pid'] = $pid; 
-      $other_amount['form_key'] = 'other_amount'; 
-      $other_amount['name'] = 'Other';
-      $other_amount['type'] = 'textfield';  
-      $other_amount['extra'] = array(
-        'description' => 'Minimum payment $' . $node->minimum_donation_amount . '.',
-        'width' => 10,
-        'field_prefix' => '$',
-      );
-      $other_amount['mandatory'] = 0; 
-      $other_amount['weight'] = 1;
-      $other_amount['email'] = 1;
-      webform_component_insert($other_amount);
+
       $message .= t('Other amount options have been added to the form.');
     }
   }
+
+  // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
+  // associated form element(s) being rendered by webform.
   elseif ($result) {
-    // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
-    // associated form element(s) being rendered by webform.
     db_query('DELETE FROM {webform_component} WHERE nid=%d AND form_key ="other_amount"', $node->nid);
     $message .= t('Other amount options have been disabled on the form.');
   }
   watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, "node/$node->nid");
+}
+
+/**
+ * Inserts amount webform component
+ * 
+ * @param $nid
+ * Donation form node ID.
+ * 
+ * @param $pid
+ * ID of parent webform component. This is typically the donation component.
+ * 
+ * @param $donation_amounts
+ * An array of amount|label pairs.
+ * 
+ * @param $show_other_amount
+ * Int (0, 1) indicating if show other amounts is enabled. 
+ * 
+ * @return
+ * Returns a keyed array containing the ID of the component created and a keyed array of values used to create the component.
+ */
+function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = array(), $show_other_amount) {
+  $formatted_amounts = _create_amount_options($donation_amounts, $show_other_amount);
+  $amount = array();
+  $amount['nid'] = $nid;
+  $amount['pid'] = $pid; 
+  $amount['form_key'] = 'amount'; 
+  $amount['name'] = 'Please select your tax-deductible gift amount below';
+  $amount['type'] = 'select';
+  $amount['extra'] = array(
+    'description' => '',
+    'items' => $formatted_amounts,
+    'multiple' => 0,
+  );
+  $keys = array_keys($donation_amounts);
+  $amount['mandatory'] = 1; 
+  $amount['weight'] = 0; 
+  $amount['email'] = 1;
+  $amount['value'] = $keys[0];
+  $id = webform_component_insert($amount);
+  return array('amount' => $amount, 'id' => $id);
+}
+
+/**
+ *  Inserts other_amount webform component
+ *  
+ *  @param $nid
+ *  Node id.
+ *  
+ *  @param $pid
+ *  ID of parent webform component. This is typically the donation component.
+ *  
+ *  @param $min_donation_amount
+ *  Minimum donation amount for the other amount component.
+ *  
+ *  @return
+ *  Returns a keyed array containing the component values and the id of the created component.
+ */
+function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount) {
+  $other_amount = array();
+  $other_amount['nid'] = $nid;
+  $other_amount['pid'] = $pid; 
+  $other_amount['form_key'] = 'other_amount'; 
+  $other_amount['name'] = 'Other';
+  $other_amount['type'] = 'textfield';  
+  $other_amount['extra'] = array(
+    'description' => 'Minimum payment $' . $min_donation_amount . '.',
+    'width' => 10,
+    'field_prefix' => '$',
+  );
+  $other_amount['mandatory'] = 0; 
+  $other_amount['weight'] = 1;
+  $other_amount['email'] = 1;
+  $id =  webform_component_insert($other_amount);
+  return array('id' => $id, 'other_amount' => $other_amount);
 }
