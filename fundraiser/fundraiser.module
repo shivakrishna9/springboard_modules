@@ -2237,8 +2237,8 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
   
   $form = array();
   $fields = array(
-    'amount_' => 'Ask amount', 
-    'label_' => 'Label'
+    'amount_' => array('label' => 'Ask amount', 'size' => 10), 
+    'label_' => array('label' => 'Label', 'size' => 30),
   );
   $weight = 0;
   
@@ -2246,8 +2246,8 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
 
     $form[$key . $delta] = array(
       '#type' => 'textfield',
-      '#title' => t($value),
-      '#size' => 10,
+      '#title' => t($value['label']),
+      '#size' => $value['size'],
       '#weight' => $weight,
     );
 
