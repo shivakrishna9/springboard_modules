@@ -678,7 +678,7 @@ function zones_ahah_render() {
 	// Wim Leers' AHAH Helper Module has more in-depth information.
 	// @see the ahah_helper project
 	$form_state['submitted'] = TRUE;
-	if (!isset($_POST['op'])) {
+  if (!isset($_POST['op'])) {
     // For the default "{$form_id}_validate" and "{$form_id}_submit" handlers.
     $form['#validate'] = NULL;
     $form['#submit'] = NULL;
@@ -2200,6 +2200,11 @@ function _fundraiser_ask_ahah() {
   $form_id = array_shift($args);
   $form_state['post'] = $form['#post'] = $_POST;
   $form['#programmed'] = $form['#redirect'] = FALSE;
+
+  // Disable validation
+  $form['#validate'] = NULL;
+  $form_state['validate_handlers'] = NULL;
+  _ahah_helper_disable_validation($form);
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
@@ -2277,7 +2282,7 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
 /**
  * Submit handler for ask amount more button.
  */
-function _fundraiser_amount_ahah_submit($form, &$form_state) {
+function _fundraiser_amount_ahah_submit(&$form, &$form_state) {
   unset($form_state['submit_handlers']);
   $delta = $form_state['values']['amount_delta'];
   for ($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
@@ -2286,6 +2291,7 @@ function _fundraiser_amount_ahah_submit($form, &$form_state) {
     }
   }
   ++$form_state['values']['amount_delta'];
+
   form_execute_handlers('submit', $form, $form_state);
   $values = $form_state['values'];
   $form_state['rebuild'] = TRUE;
