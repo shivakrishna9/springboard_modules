@@ -637,7 +637,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     
     // Other amount has been enabled so we need to add the component data to the DB.
     else {
-
+      _fundraiser_insert_other_amount_component($node->nid, $pid, $node->minimum_donation_amount);
       $message .= t('Other amount options have been added to the form.');
     }
   }
@@ -707,6 +707,7 @@ function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = arr
  *  Returns a keyed array containing the component values and the id of the created component.
  */
 function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount) {
+  drupal_set_message('other amount insert invoked');
   $other_amount = array();
   $other_amount['nid'] = $nid;
   $other_amount['pid'] = $pid; 
