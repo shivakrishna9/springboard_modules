@@ -2237,8 +2237,8 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
   
   $form = array();
   $fields = array(
-    'amount_' => array('label' => 'Ask amount', 'size' => 10), 
-    'label_' => array('label' => 'Label', 'size' => 30),
+    'amount_' => array('label' => 'Ask amount', 'size' => 10, 'class' => 'amount_field'), 
+    'label_' => array('label' => 'Label', 'size' => 30, 'class' => 'label_field'),
   );
   $weight = 0;
   
@@ -2249,6 +2249,7 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
       '#title' => t($value['label']),
       '#size' => $value['size'],
       '#weight' => $weight,
+      '#attributes' => array('class' => $value['class']),
     );
 
     // Post values take precedence as they're fresh from the form. We defer to values retrieved from the DB only during 
