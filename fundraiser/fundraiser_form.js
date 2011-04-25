@@ -1,5 +1,4 @@
-$(document).ready(function() {
-
+Drupal.behaviors.fundraiserBehavior = function() {
   $("#edit-title").blur(function() {
     $title = $(this).attr('value');
     $("#edit-internal-name").val($title);
@@ -15,4 +14,5 @@ $(document).ready(function() {
     $("#edit-label-" + $delta + "-wrapper, #edit-amount-" + $delta + "-wrapper").remove();
     e.preventDefault(); // Thanks for the link Brock!
   });
-});
+};
+
