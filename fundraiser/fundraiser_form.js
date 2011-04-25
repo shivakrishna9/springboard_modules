@@ -30,7 +30,6 @@ Drupal.behaviors.fundraiserBehavior = function() {
   // Auto-populate label fields when amount is entered
   $("#ask-amounts .amount_field").blur(function() {
     $id = $(this).attr('id');
-    alert ('prev value:' + window.fundraiser_amount.amount);
     $prev_amount = $fundraiser[$id];
     $id = $id.split('-');
     $delta = $id[2];
