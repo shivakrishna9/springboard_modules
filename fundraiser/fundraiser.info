@@ -6,5 +6,6 @@ package = Jackson River Springboard
 dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = profile
+dependencies[] = queue_api
 
 version =  SPRINGBOARD_VERSION
