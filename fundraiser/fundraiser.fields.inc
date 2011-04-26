@@ -725,3 +725,74 @@ function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amo
   $id =  webform_component_insert($other_amount);
   return array('id' => $id, 'other_amount' => $other_amount);
 }
+
+
+/**
+ * Helper function to fetch fids for the country and state profile fields.
+ * 
+ * @return
+ * Returns a keyed array of location fields or an empty array if there was an error.
+ */
+function _fundraiser_get_profile_location_fields() {
+  // TODO: this is brittle and will break in any instances where fundraiser is depoyed for a country that doesn't use states/provinces.
+  $country_fid = variable_get('fundraiser_country_profile_field', NULL);
+  $state_fid = variable_get('fundraiser_state_profile_field', NULL);
+  
+  if (!$country_fid || !$state_fid) {
+    $results = db_query('SELECT fid,name FROM {profile_fields} WHERE name IN ("profile_country", "profile_state")');
+
+    while ($profile_field = db_fetch_object($results)) {
+      if ($profile_field->name == 'profile_country') {
+        variable_set('fundraiser_country_profile_field', $profile_field->fid);
+        $country_fid = $profile_field->fid;
+      }
+      if ($profile_field->name == 'profile_state') {
+        variable_set('fundraiser_state_profile_field', $profile_field->fid);
+        $state_fid = $profile_field->fid;
+      }
+    }
+  }
+  return array('country' => $country_fid, 'state' => $state_fid);
+}
+
+
+/**
+ * Helper function to update user profile fields based on contry/state selected on the donation form.
+ *  
+ *  @param $submission
+ *  Webform submission object.
+ *  
+ */
+function _fundraiser_update_profile_location($submission) {
+  global $user;
+  $fids = _fundraiser_get_profile_location_fields();
+  // TODO: replace hardcoded array references with retrieved values from webform config (if possible).
+  $country_code = $submission->data['16']['value'][0];
+  $state_code = $submission->data['17']['value'][0];
+  
+  if ($fids['country']) {
+    $country_name = db_result(db_query('SELECT country_name FROM {uc_countries} WHERE country_id = %d', $country_code));
+    $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['country']));
+    if ($has_country) {
+      $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $user->uid, $fids['country']);
+    }
+    else {
+      $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $user->uid, $country_name);
+    }
+    drupal_set_message("query:" . $query);
+    db_query($query);
+  }
+
+  if ($fids['state']) {
+    $state_name = db_result(db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = %d AND zone_country_id = %d', $state_code, $country_code));
+    $has_state = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['state']));
+    if ($has_state) {
+      $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $user->uid, $fids['state']);
+    }
+    else {
+      $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $user->uid, $state_name);
+    }
+    drupal_set_message("query:" . $query);
+    db_query($query);
+  }
+}
