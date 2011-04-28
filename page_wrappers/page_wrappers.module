@@ -1,13 +1,7 @@
 <?php
 // $Id$
 
-/**
- * @file
- * Page Wrappers Feature
- *
- * Adds the ability for users to create custom page templates that can be assigned to specific nodes
- * in order the change their appearance.
- */
+ 
 
 // include feature
 include_once('page_wrappers.features.inc');
@@ -48,9 +42,21 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
  * Implementation of hook_preprocess_page().
  */
 function page_wrappers_preprocess_page(&$vars) {
-  // TODO: Check to see if this node has a page template assigned to it.
-  if ($vars['node']->type == 'donation_form') {
-    $vars['template_file'] = 'page-fancy-page';     
+  // get out of here if we're on the edit page
+  if (arg(0) == 'node' && arg(2) == 'edit') {
+    return;
+  }
+
+  // get the list of node types that can have wrappers
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  
+  // if the node type is wrapper enabled and actually has one assigned
+  if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
+    $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
+    // make sure template actually exists
+    if (_page_wrappers_template_exists($template)) {
+      $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
+    }
   }
 }
 
@@ -58,17 +64,129 @@ function page_wrappers_preprocess_page(&$vars) {
  * Implementation of hook_nodeapi().
  */
 function page_wrappers_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  // only response to page wrappers
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  
+  // page wrapper specific
   if ($node->type == 'page_wrapper') {
     switch ($op) {
       case 'insert':
+        $template = _page_wrappers_create_template($node);
+        db_query("INSERT INTO {page_wrappers} (nid, template) VALUES (%d, '%s')", $node->nid, $template);
+        
       case 'update':
-        _page_wrappers_create_template($node);
+        $template = _page_wrappers_create_template($node);
+        break;
+        
+      case 'delete':
+        // remove the template from any nodes that are assigned to it
+        db_query("DELETE FROM {node_page_wrappers} WHERE wrapper_nid = %d", $node->nid);
+        // remove the wrapper
+        db_query("DELETE FROM {page_wrappers} WHERE nid = %d", $node->nid);
+        break;
+    }
+  }
+  elseif (in_array($node->type, $enabled_types)) {
+    switch ($op) {
+      // insert/update
+      case 'insert':
+      case 'update':
+        if (isset($node->wrapper)) {
+          _page_wrappers_assign_wrapper($node->nid, $node->wrapper);
+        }
+        break;
+      
+      // delete
+      case 'delete':
+        db_query("DELETE FROM {node_page_wrappers} WHERE nid = %d", $node->nid);
+        break;
+      
+      // load  
+      case 'load':
+        $wrapper = db_result(db_query("SELECT wrapper_nid FROM {node_page_wrappers} WHERE nid = %d", $node->nid));
+        if (!empty($wrapper)) {
+          $node->wrapper = $wrapper;
+        }
         break;
     }
   }
 }
 
+/**
+ * Implementation of hook_form_alter().
+ */
+function page_wrappers_form_alter(&$form, $form_state, $form_id) {
+  // get the node types that can utilize a page wrapper
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  
+  // make sure we're dealing with a node edit form and the node type is in the enabled types array
+  if ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types)) {
+    $form['wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Page wrapper settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    
+    $wrapper = $form['#node']->wrapper;
+    $form['wrapper']['wrapper'] = array(
+      '#type' => 'select',
+      '#title' => t('Page wrapper'),
+      '#default_value' => $wrapper,
+      '#options' => _page_wrappers_available_wrappers(),
+      '#description' => t('Select the page wrapper to use when displaying this node.'),
+    );
+  }
+}
+
+/**
+ * Gets all configured wrappers.
+ */
+function _page_wrappers_available_wrappers() {
+  $result = db_query("SELECT n.title, p.nid, p.template FROM {page_wrappers} p INNER JOIN {node} n ON n.nid = p.nid");
+  $wrappers = array(t('-- Select --'));
+  while ($data = db_fetch_object($result)) {
+    $wrappers[$data->nid] = $data->title;
+  }
+  
+  return $wrappers;
+}
+
+/**
+ * Assigns a page wrapper to a node.
+ *
+ * @param $nid
+ *   The id of the node that is being assigned the wrapper.
+ * @param $wrapper_nid
+ *   The id of the wrapper being assigned.
+ */
+function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
+  // check if there is an existing entry at all for this node.
+  $exists = db_result(db_query('SELECT nid FROM {node_page_wrappers} WHERE nid = %d', $nid));
+  
+  // if a valid wrapper is being assigned  
+  if ($wrapper_nid) {
+    if (!$exists) {
+      db_query("INSERT INTO {node_page_wrappers} (nid, wrapper_nid) VALUES (%d, %d)", $nid, $wrapper_nid);
+    }
+    else {
+      db_query("UPDATE {node_page_wrappers} SET wrapper_nid = %d WHERE nid = %d", $wrapper_nid, $nid);
+    }
+  }
+  else {
+    // remove it
+    db_query("DELETE FROM {node_page_wrappers} WHERE nid = %d", $nid);
+  }
+}
+
+/**
+ * Creates a template file.
+ *
+ * This function will create a template file in the /theme subdirectory of the module. It uses
+ * the title of the node to generate a unique template filename.
+ *
+ * @param $node
+ *   The page wrapper node.
+ */
 function _page_wrappers_create_template($node) {
   // get the full path to the wrappers directory
   $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
@@ -82,4 +200,21 @@ function _page_wrappers_create_template($node) {
   fputs($file, $node->body);
   
   fclose($file);
+  
+  return $filename;
+}
+
+/**
+ * Determines if a wrapper template file actually exists on disk.
+ *
+ * @param $template
+ *   The template filename.
+ */
+function _page_wrappers_template_exists($template) {
+  $path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme/' . $template;
+
+  if (file_exists($path)) {
+    return TRUE;
+  }
+  return FALSE;
 }
