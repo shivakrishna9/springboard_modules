@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * @file
+ *
+ */
+
+require_once('springboard.admin.inc');
+
+/**
+ * Implements hook_perm()
+ */
+function springboard_perm() {
+  return array('administer springboard', 'access springboard dashboard');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_menu() {
+  $itesm = array();
+  $items['admin/settings/springboard'] = array(
+    'title' => 'Springboard settings',
+    'description' => 'Access reports and site maintenance tasks.',
+    'access arguements' => array('administer springboard'),
+    'page_callback' => 'drupal_get_form',
+    'page arguments' => 'springboard_admin',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['springboard'] = array(
+    'title' => 'Dashboard',
+    'description' => 'Springboard dashboard.',
+    'access arguments' => array('access springboard dashboard'),
+    'page callback' => 'springboard_dashboard',
+    'type' => MENU_NORMAL_ITEM,
+  );
+ 
+  return $items;
+}
+
+/**
+ * Dashboard page
+ */
+function springboard_dashboard() {
+  if (arg(0) == 'springboard') {
+    $breadcrumbs = array();
+    $breadcrumbs[] = l(t('Home'), '<front');
+    $breadcrumbs[] = l(t('Dashboard'), 'springboard');
+  }
+  drupal_set_breadcrumb($breadcrumbs);
+  $output = 'hello world';
+  // Pull in themed blocks
+  return $output;
+}
