@@ -79,7 +79,13 @@ function queue_processor_menu() {
 		'type' => MENU_CALLBACK,
 		'file' => 'queue_processor.reports.inc',
 	);
-	
+  if (variable_get('queue_processor_standalone_cron_enabled', TRUE)) {
+    $items['queue_processor_cron'] = array(
+      'page callback' => 'queue_processor_cron',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+  }
 	return $items;
 }
 
@@ -114,6 +120,10 @@ function queue_processor_theme() {
  * Implementation of hook_cron().
  */
 function queue_processor_cron() {
+  // Bail on normal cron run if standalone cron is enabled.
+  if (variable_get('queue_processor_standalone_cron_enabled', TRUE) && preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+    return 0;
+  }
   queue_processor_process();
 }
 

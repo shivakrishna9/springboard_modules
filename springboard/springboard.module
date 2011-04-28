@@ -6,7 +6,7 @@
  */
 
 require_once('springboard.admin.inc');
-require_once('springboard.pages.inc');
+
 /**
  * Implements hook_perm()
  */
@@ -49,5 +49,6 @@ function springboard_dashboard() {
   }
   drupal_set_breadcrumb($breadcrumbs);
   $output = 'hello world';
+  // Pull in themed blocks
   return $output;
 }
