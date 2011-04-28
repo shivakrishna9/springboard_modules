@@ -120,7 +120,21 @@ function queue_processor_admin_settings() {
 			'#default_value' => $key,
 		);
 	}
-	
+
+  $form['queue_processor_cron'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Configure cron settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['queue_processor_cron']['queue_processor_standalone_cron_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable standalone cron.'),
+    '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/queue_processor_cron'),
+    '#default_value' => variable_get('queue_processor_standalone_cron_enabled', 0),
+  );
+
 	// Actions
   $form['submit'] = array(
     '#type'   => 'submit',
@@ -133,8 +147,8 @@ function queue_processor_admin_settings() {
     '#value'  => 'Reset to defaults',
     '#submit' => array('queue_processor_admin_settings_reset'),
   );
-	
-	return $form;
+
+  return $form;
 }
 
 /**
@@ -158,6 +172,11 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
  * Submit action for settings page
  */
 function queue_processor_admin_settings_submit($form, &$form_state) {
+    $cron_enabled = variable_get('queue_processor_standalone_cron_enabled', 0);
+    if ($form_state['values']['queue_processor_standalone_cron_enabled'] != $cron_enabled) {
+      variable_set('queue_processor_standalone_cron_enabled', $form_state['values']['queue_processor_standalone_cron_enabled']);
+      menu_rebuild(); 
+    }
 	$ordered_types = $form_state['values']['type_processing_order'];
 	
 	// sort the types based on weights

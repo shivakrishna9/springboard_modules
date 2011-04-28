@@ -308,8 +308,23 @@ function fundraiser_admin_settings() {
   $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
     '#value' => theme('token_help', 'user'),
   );
-	
-	return system_settings_form($form);
+
+  $form['fundraiser_cron'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cron settings'),
+    '#description' => t('Configure cron settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['fundraiser_cron']['fundraiser_standalone_cron_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable standalone cron.'),
+    '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/fundraiser_cron'),
+    '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
+  );
+     $form['#submit'] =  array('fundraiser_update_cron_settings');
+  return system_settings_form($form);
 }
 
 /*
@@ -550,4 +565,16 @@ function decrypt_credit_card($data) {
 	$cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
 	$cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
 	return $cc_data;
+}
+
+/**
+ * Submit handler updates cron menu handler.
+ */
+function fundraiser_update_cron_settings($form, $form_state) {
+  $cron_enabled = variable_get('fundraiser_standalone_cron_enabled', 0);
+  if ($cron_enabled != $form_state['values']['fundraiser_standalone_cron_enabled']) {
+    variable_set('fundraiser_standalone_cron_enabled', $form_state['values']['fundraiser_standalone_cron_enabled']);
+    // Refresh menu cache.
+    menu_rebuild();
+  }
 }

@@ -869,6 +869,15 @@ function fundraiser_menu() {
 	    'access arguments' => array("access content"),	
 	);
 	
+	// Add the cron handler if it's enabled.
+    if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
+      drupal_set_message('custom cron enabled:' . variable_get('fundraiser_standalone_cron_enabled', 0));
+      $items['fundraiser_cron'] = array(
+        'page callback' => 'fundraiser_cron',
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+      );
+    }
 	$items['zones/js'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'zones_ahah_render',
@@ -1786,6 +1795,9 @@ function _fundraiser_charge_function($order_id, $nid, &$data) {
  */
 function fundraiser_cron() {
   // Check for a file key before processing donations
+  if (variable_get('fundraiser_standalone_cron_enabled', 0) && preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+    return 0;
+  }
   if (fundraiser_processor_key_match()) {
     fundraiser_process_recurring_donations();
   }
