@@ -29,65 +29,66 @@ function gm_ogone_ecommerce_build_form($order) {
 
 function gm_ogone_ecommerce_post_form(&$form_state, $order) {
   $url = 'https://secure.ogone.com/ncol/test/orderstandard.asp';
+  $sha_in_phrase = "thisismyINpassphrase?";
+  $sha_out_phrase = "thisismyOUTpassphrase!";
+  
+  $url_base = current(parse_url($_SERVER['HTTP_REFERER'])).'://'.$_SERVER['HTTP_HOST'].url();
+  
+  //Make SHA1 string for pre payment verification
+  $arguments = array(
+    'ACCEPTURL' => '',
+    'AMOUNT' => $order->order_total * 100,
+    'BGCOLOR' => '',
+    'BRAND' => '',
+    'BUTTONBGCOLOR' => '',
+    'BUTTONTXTCOLOR' => '',
+    'CANCELURL' => '',
+    'CATALOGURL' => '',
+    'CN' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'COM' => '',
+    'CURRENCY' => 'EUR',
+    'DECLINEURL' => '',
+    'EMAIL' => $order->primary_email,
+    'EXCEPTIONURL' => '',
+    'FONTTYPE' => '',
+    'HOMEURL' => $url_base,
+    'LANGUAGE' => 'en_US',
+    'LOGO' => '',
+    'ORDERID' => $order->order_id,
+    'OWNERADDRESS' => $order->billing_street1 . ' ' . $order->billing_street2,
+    'OWNERCTY' => $order->billing_country,
+    'OWNERTOWN' => $order->billing_city,
+    'OWNERZIP' => $order->billing_postal_code,
+    'PM' => '',
+    'PSPID' => 'brockbolandcommerce',
+    'TBLBGCOLOR' => '',
+    'TBLTXTCOLOR' => '',
+    'TITLE' => '',
+    'TP' => '',
+    'TXTCOLOR' => ''
+  );
+  
+  $sha1_signature = '';
+  foreach ($arguments as $param_name => $param_value) {
+    $param_value = trim($param_value);
+    $param_name = strtoupper($param_name);
+    if (strlen($param_value) > 0) {
+        $sha1_signature .= $param_name . '=' . $param_value . $sha_in_phrase;
+        $form[$param_name] = array(
+          '#type' => 'hidden',
+          '#value' => $param_value,
+        );
+    }
+  }
+  $form['SHASign'] = array(
+    '#type' => 'hidden',
+    '#value' => sha1($sha1_signature),
+  );
+  
   
   $form['#action'] = $url;
   $form['#id'] = 'ogone-ecommerce-post';
   
-  $form['PSPID'] = array(
-    '#type' => 'hidden',
-    '#value' => 'brockbolandcommerce',
-  );
-  
-  $form['orderID"'] = array(
-    '#type' => 'hidden',
-    '#value' => 101, //$order->order_id,
-  );
-  
-    $form['amount'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->order_total,
-    );
-
-    $form['currency'] = array(
-      '#type' => 'hidden',
-      '#value' => 'USD',
-    );
-    $form['language'] = array(
-      '#type' => 'hidden',
-      '#value' => 'en_US',
-    );
-
-    $form['CN'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->billing_first_name . ' ' . $order->billing_last_name,
-    );
-
-    $form['EMAIL"'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->primary_email,
-    );
-
-    $form['ownerZIP'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->billing_postal_code,
-    );
-
-    $form['owneraddress'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->billing_street1,
-    );
-
-
-    $form['ownercty'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->billing_country,
-    );
-
-    $form['ownertown'] = array(
-      '#type' => 'hidden',
-      '#value' => $order->billing_city,
-    );
-
   return $form;
 }
 
