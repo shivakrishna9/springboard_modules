@@ -36,6 +36,7 @@ function page_wrappers_perm() {
 function page_wrappers_theme_registry_alter(&$theme_registry) {
   // tell the theme registry to look in this module's directory for theme files
   $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'page_wrappers') . '/theme';
+  $theme_registry['page']['theme paths'][] = 'sites/default/files/page_wrappers/tpl';
 }
 
 /**
@@ -56,6 +57,12 @@ function page_wrappers_preprocess_page(&$vars) {
     // make sure template actually exists
     if (_page_wrappers_template_exists($template)) {
       $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
+      // remove all the stylesheets and add the style specific to this wrapper if available
+      $wrapper_node = node_load($vars['node']->wrapper);
+      //print "<pre>".print_r($vars['styles'], TRUE)."</pre>";
+      $vars['styles'] = '<link type="text/css" rel="stylesheet" media="all" href="/' . $wrapper_node->field_css_file[0]['filepath'] . '?z" />';
+      $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
+      //print "<pre>".print_r($wrapper_node, TRUE)."</pre>";
     }
   }
 }
@@ -139,6 +146,52 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
+ * Implementation of hook_file_insert().
+ */
+function page_wrappers_file_insert(&$file) {
+  // js file rename back to .js
+  if ($file->source == 'group_files_field_js_file_0' || $file->source == 'group_files_field_css_file_0') {
+    
+    $filepath = $file->filepath;
+    $new_filepath = $file->filepath;
+    $filename = $file->filename;
+    
+    // for .js files, strip off the .txt extension that gets added
+    if ($file->source == 'group_files_field_js_file_0') {
+      $new_filepath = substr($filepath, 0, strlen($filepath) - 4);
+      $filename = substr($file->filename, 0, strlen($file->filename) - 4);
+    }
+    
+    // append a timestamp to the filename to ensure uniqueness
+    $new_filepath = _page_wrappers_add_timestamp($new_filepath);
+    
+    if (file_move($filepath, $new_filepath)) {
+      // update the file
+      $file->filepath = $filepath;
+      $file->filename = $filename;
+      $file->filemime = file_get_mimetype($file->filename);
+      $file->destination = $file->filepath;
+      $file->status = FILE_STATUS_TEMPORARY;
+      drupal_write_record('files', $file, 'fid');
+    }
+    
+  }
+}
+
+/**
+ * Adds a timestamp to a filename.
+ *
+ * @param $filename
+ *   The filename to add the timestamp to.
+ */
+function _page_wrappers_add_timestamp($filename) {
+  $parts = explode('.', $filename);
+  $parts[0] = $parts[0] . '-' . time();
+  return implode('.', $parts); // glue the parts back together with a period
+}
+ 
+
+/**
  * Gets all configured wrappers.
  */
 function _page_wrappers_available_wrappers() {
@@ -179,6 +232,27 @@ function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
 }
 
 /**
+ * Returns the path to where all page wrapper files are stored.
+ */
+function _page_wrappers_base_path() {
+  //return $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
+  //return drupal_get_path('module', 'page_wrappers') . '/theme';
+  return $_SERVER['DOCUMENT_ROOT'] . '/' . 'sites/default/files/page_wrappers';
+}
+
+function _page_wrappers_template_path() {
+  return _page_wrappers_base_path() . '/tpl';
+}
+
+function _page_wrappers_css_path() {
+  return _page_wrappers_base_path() . '/css';
+}
+
+function _page_wrappers_js_path() {
+  return _page_wrappers_base_path() . '/js';
+}
+
+/**
  * Creates a template file.
  *
  * This function will create a template file in the /theme subdirectory of the module. It uses
@@ -188,20 +262,47 @@ function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
  *   The page wrapper node.
  */
 function _page_wrappers_create_template($node) {
-  // get the full path to the wrappers directory
-  $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
+  $base_path = _page_wrappers_base_path();
   
-  // create a template file name based on title
-  $filename = 'page-' . strtolower(str_replace(' ', '-', $node->title)) . '.tpl.php'; // TODO: Better filename creator
-  $full_path = $base_path . '/' . $filename;
+  // see if a template file already exists for this node
+  $filename = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $node->nid));  
+
+  if (empty($filename)) {
+    // create a template file name based on title
+    $filename = 'page-' . strtolower(str_replace(' ', '-', $node->title)) . '-' . time() . '.tpl.php'; // TODO: Better filename creator  
+  }  
   
-  // open the file for writing
-  $file = fopen($full_path, 'w');
-  fputs($file, $node->body);
+  $full_path = $base_path . '/tpl';
+
+  if (file_check_directory($full_path, 1)) {
+    $full_path = $full_path . '/' . $filename;
+    // open the file for writing
+    $file = fopen($full_path, 'w');
+    fputs($file, _page_wrappers_tokens($node->body));
+    
+    fclose($file);
+    
+    return $filename;
+  }
   
-  fclose($file);
+  return FALSE;  
   
-  return $filename;
+}
+
+/**
+ * Replaces tokens in the template content.
+ *
+ * @param $content
+ *   The content that contains the tokens.
+ */ 
+function _page_wrappers_tokens($content) {
+  $tokens = array('[content]', '[styles]', '[scripts]');
+  $replaces = array(
+    '<?php print $content; ?>',
+    '<?php print $styles; ?>',
+    '<?php print $scripts; ?>',
+  );
+  return str_replace($tokens, $replaces, $content);
 }
 
 /**
@@ -211,7 +312,7 @@ function _page_wrappers_create_template($node) {
  *   The template filename.
  */
 function _page_wrappers_template_exists($template) {
-  $path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme/' . $template;
+  $path = _page_wrappers_template_path() . '/' . $template;
 
   if (file_exists($path)) {
     return TRUE;

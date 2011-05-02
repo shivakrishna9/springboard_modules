@@ -43,7 +43,7 @@ function page_wrappers_content_default_fields() {
     'description_field' => '0',
     'widget' => array(
       'file_extensions' => 'css',
-      'file_path' => 'page_wrapper_css_files/[user]',
+      'file_path' => 'page_wrappers/css',
       'progress_indicator' => 'bar',
       'max_filesize_per_file' => '',
       'max_filesize_per_node' => '',
@@ -92,7 +92,7 @@ function page_wrappers_content_default_fields() {
     'description_field' => '0',
     'widget' => array(
       'file_extensions' => 'js',
-      'file_path' => 'page_wrapper_js_files/[user]',
+      'file_path' => 'page_wrappers/js',
       'progress_indicator' => 'bar',
       'max_filesize_per_file' => '',
       'max_filesize_per_node' => '',
