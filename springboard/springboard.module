@@ -18,23 +18,227 @@ function springboard_perm() {
  * Implements hook_menu().
  */
 function springboard_menu() {
-  $itesm = array();
-  $items['admin/settings/springboard'] = array(
+  $items = array();
+  $items['admin/springboard'] = array(
     'title' => 'Springboard settings',
     'description' => 'Access reports and site maintenance tasks.',
-    'access arguements' => array('administer springboard'),
-    'page_callback' => 'drupal_get_form',
-    'page arguments' => 'springboard_admin',
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'springboard.admin.inc',
+  );
+    $items['admin/springboard/forms'] = array(
+    'title' => t('Forms'),
+    'description' => t('Do stuff with forms.'),
+    'weight' => -10,
+    'page callback' => 'springboard_admin',
+    'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['springboard'] = array(
-    'title' => 'Dashboard',
-    'description' => 'Springboard dashboard.',
-    'access arguments' => array('access springboard dashboard'),
-    'page callback' => 'springboard_dashboard',
+  $items['admin/springboard/reports'] = array(
+    'title' => t('Reports'),
+    'description' => t('Do stuff with reports.'),
+    'weight' => -9,
+    'page callback' => 'springboard_admin',
+    'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
- 
+  $items['admin/springboard/settings'] = array(
+    'title' => t('Settings'),
+    'description' => t('Do stuff with settings.'),
+    'weight' => -8,
+    'page callback' => 'springboard_admin',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/confirmation'] = array(
+    'title' => t('Confirmation & Notifications'),
+    'description' => t('Do stuff with confirmation & notifications.'),
+    'weight' => -7,
+    'page callback' => 'springboard_admin',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/fieldmaps'] = array(
+    'title' => t('Salesforce Fieldmaps'),
+    'description' => t('Do stuff with Salesforce Fieldmaps.'),
+    'weight' => -6,
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/salesforce-management/fieldmap'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/help'] = array(
+    'title' => t('Help'),
+    'description' => t('OMG I\'m drowning!'),
+    'page callback' => 't',
+    'page arguments' => array('hello world'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // Forms submenu
+  $items['admin/springboard/forms/donation'] = array(
+    'title' => t('Donation Forms'),
+    'description' => t('Do stuff with donation forms.'),
+    'weight' => -10,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/content/donation-forms'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/forms/webforms'] = array(
+    'title' => t('Webforms'),
+    'description' => t('Do stuff with webforms.'),
+    'weight' => -9,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/content/webform-user'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/forms/donation_add'] = array(
+    'title' => t('Create donation form'),
+    'description' => t('Add a new donation form.'),
+    'weight' => -8,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('node/add/donation-form'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/forms/webform_add'] = array(
+    'title' => t('Create a webform'),
+    'description' => t('Add a new webform.'),
+    'weight' => -7,
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('node/add/webform'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/reports/batch'] = array(
+    'title' => t('Batch History'),
+    'description' => t('Do stuff with batch history.'),
+    'weight' => -10,
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/reports/salesforce/batch'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/reports/queued'] = array(
+    'title' => t('Queued Items'),
+    'description' => t('Do stuff with queued items.'),
+    'weight' => -9,
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/reports/salesforce/current'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/reports/retries'] = array(
+    'title' => t('Retries'),
+    'description' => t('Do stuff with retries.'),
+    'weight' => -8,
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/reports/salesforce/retries'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/reports/failures'] = array(
+    'title' => t('Permanent Failures'),
+    'description' => t('Do stuff with permanent failures.'),
+    'weight' => -7,
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/reports/salesforce/permanent-failures'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // Settings submenu
+  $items['admin/springboard/settings/salesforce'] = array(
+    'title' => t('Salesforce API Credentials'),
+    'description' => t('Do stuff with Salesforce.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/salesforce-management'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/fundraiser'] = array(
+    'title' => t('Fundraiser Settings'),
+    'description' => t('Do stuff with fundraiser.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/fundraiser'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/marketsource'] = array(
+    'title' => t('Market Source Settings'),
+    'description' => t('Do stuff with Market Source.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/market-source'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/donation'] = array(
+    'title' => t('Donation Integration Settings'),
+    'description' => t('Do stuff with donation integration.'),
+    'page callback' => 't',
+    'page arguments' => array('hello world'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/salesforce_wsdl'] = array(
+    'title' => t('Update Salesforce WSDL'),
+    'description' => t('Do stuff with settings.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/salesforce-management/update-wsdl'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/queue'] = array(
+    'title' => t('Queue Processor'),
+    'description' => t('Do stuff with queue processor.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/salesforce-management/queue'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/gateways'] = array(
+    'title' => t('Payment Gateways'),
+    'description' => t('Do stuff with payment gateways.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/store/settings/payment/edit/gateways'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/settings/webform_ab'] = array(
+    'title' => t('Webform A/B Settings'),
+    'description' => t('Do stuff with Webform A/B.'),
+    'page callback' => 'drupal_goto',
+    'page arguments' => array('admin/settings/webform_ab'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // Confirmation submenu
+  $items['admin/springboard/confirmation/email'] = array(
+    'title' => t('Email Templates'),
+    'description' => t('Do stuff with email templates.'),
+    'page callback' => 't',
+    'page arguments' => array('hello world'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/confirmation/notifications'] = array(
+    'title' => t('Notifications'),
+    'description' => t('Do stuff with notifications.'),
+    'page callback' => 't',
+    'page arguments' => array('hello world'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/confirmation/pages'] = array(
+    'title' => t('Web Pages'),
+    'description' => t('Do stuff with web pages.'),
+    'page callback' => 't',
+    'page arguments' => array('hello world'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
 }
 
