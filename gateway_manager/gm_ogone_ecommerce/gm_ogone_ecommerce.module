@@ -8,6 +8,14 @@
  *    Redirect user to order page?
  *  Admin interface to set PSPID, sha in and sha out for both test and production, test/prod flag
  *  Remove credit card field from the donation form
+ *  Webform submissions not being saved
+ * 
+ * Charge function can either return the array, or do drupal_goto
+ *    Return: saves the webform submission, but doesn't redirect to ogone
+ *    Redirect: doesn't save the webform submission
+ * 
+ * Options:
+ *  Should the webform submission even be saved before the payment is complete? Maybe the webform submission should be fake-created after the payment is made. Or, the confirmation page should redirect to ogone
  */
  
 /**
@@ -147,7 +155,8 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
 }
 
 function ogone_ecommerce_charge($order_id, $amount, $data) {
-  drupal_goto('ogone/post/' . $order_id);
+  return array('success' => TRUE, 'message' => t('Redirecting to Ogone'));
+  //drupal_goto('ogone/post/' . $order_id);
 }
 
 
