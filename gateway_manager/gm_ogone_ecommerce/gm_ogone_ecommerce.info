@@ -1,4 +1,3 @@
-; $Id: gm_test_gateway.info,v 1.0.0.0 2011/01/18 21:13:22 pcave Exp $
 name = Ogone Ecommerce Gateway Managed
 description = Process payments using Ogone's e-commerce payment method.
 dependencies[] = fundraiser

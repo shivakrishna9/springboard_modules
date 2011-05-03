@@ -1,10 +1,13 @@
 <?php
-// $Id: gm_ogone_ecommerce.module,v 1.0.0.0 2011/04/13 21:27:56 pcave Exp $
-
 /**
  * @file
- * A test version of the Ogone ecommerce payment gateway.
+ * Ogone ecommerce payment gateway.
  *
+ * Todo:
+ *  Return callbacks:
+ *    Redirect user to order page?
+ *  Admin interface to set PSPID, sha in and sha out for both test and production, test/prod flag
+ *  Remove credit card field from the donation form
  */
  
 /**
@@ -19,20 +22,50 @@ function gm_ogone_ecommerce_menu() {
     'type' => MENU_CALLBACK,
   );
   
+  // Callbacks for responses from Ogone
+  $items['ogone/feedback/accept'] = array(
+    'title' => 'Ogone Response: Accepted',
+    'description' => 'Shown when an Ogone payment is authorized, accepted, or pending.',
+    'page callback' => 'gm_ogone_ecommerce_feedback_accepted',
+    'access callback' => TRUE,
+  );
+  $items['ogone/feedback/decline'] = array(
+    'title' => 'Ogone Response: Declined',
+    'description' => 'Shown when an Ogone payment is declined.',
+    'page callback' => 'gm_ogone_ecommerce_feedback_declined',
+    'access callback' => TRUE,
+  );
+  $items['ogone/feedback/exception'] = array(
+    'title' => 'Ogone Response: Exception',
+    'description' => 'Shown when an Ogone payment result is uncertain.',
+    'page callback' => 'gm_ogone_ecommerce_feedback_exception',
+    'access callback' => TRUE,
+  );
+  $items['ogone/feedback/cancel'] = array(
+    'title' => 'Ogone Response: Cancelled',
+    'description' => 'Shown when an Ogone payment is cancelled by the user.',
+    'page callback' => 'gm_ogone_ecommerce_feedback_cancelled',
+    'access callback' => TRUE,
+  );
+
+  
   return $items;
 }
 
+/**
+ * Build the form that will auto-submit to Ogone
+ */
 function gm_ogone_ecommerce_build_form($order) {
   drupal_add_js(drupal_get_path('module', 'gm_ogone_ecommerce') . '/gm_ogone_ecommerce.js');
   return drupal_get_form('gm_ogone_ecommerce_post_form', $order);
 }
 
+/**
+ * Return the form for the auto-submit form that goes to Ogone
+ */
 function gm_ogone_ecommerce_post_form(&$form_state, $order) {
   $url = 'https://secure.ogone.com/ncol/test/orderstandard.asp';
   $sha_in_phrase = "thisismyINpassphrase?";
-  $sha_out_phrase = "thisismyOUTpassphrase!";
-  
-  $url_base = current(parse_url($_SERVER['HTTP_REFERER'])).'://'.$_SERVER['HTTP_HOST'].url();
   
   //Make SHA1 string for pre payment verification
   $arguments = array(
@@ -51,7 +84,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'EMAIL' => $order->primary_email,
     'EXCEPTIONURL' => '',
     'FONTTYPE' => '',
-    'HOMEURL' => $url_base,
+    'HOMEURL' => url('<front>', array('asbolute' => TRUE)),
     'LANGUAGE' => 'en_US',
     'LOGO' => '',
     'ORDERID' => $order->order_id,
@@ -65,8 +98,13 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'TBLTXTCOLOR' => '',
     'TITLE' => '',
     'TP' => '',
-    'TXTCOLOR' => ''
+    'TXTCOLOR' => '',
+    'ACCEPTURL' => url('ogone/feedback/accept', array('absolute' => TRUE)),
+    'DECLINEURL' => url('ogone/feedback/decline', array('absolute' => TRUE)),
+    'EXCEPTIONURL' => url('ogone/feedback/exception', array('absolute' => TRUE)),
+    'CANCELURL' => url('ogone/feedback/cancel', array('absolute' => TRUE)),
   );
+  ksort($arguments);
   
   $sha1_signature = '';
   foreach ($arguments as $param_name => $param_value) {
@@ -92,6 +130,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
   return $form;
 }
 
+
 /*******************************************************************************
  * Hook Functions (Ubercart)
  ******************************************************************************/
@@ -108,8 +147,92 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
 }
 
 function ogone_ecommerce_charge($order_id, $amount, $data) {
-  //global $user;
-  //$order = uc_order_load($order_id);
-  
   drupal_goto('ogone/post/' . $order_id);
+}
+
+
+
+
+
+/*******************************************************************************
+ * Ogone Feedback Functions
+ ******************************************************************************/
+function gm_ogone_ecommerce_feedback_accepted() {
+  _gm_ogone_ecommerce_check_feedback_sha();
+  return "Accepted<pre>" . print_r($_GET, true) . '</pre>';
+}
+
+function gm_ogone_ecommerce_feedback_declined() {
+  _gm_ogone_ecommerce_check_feedback_sha();
+  return "Declined<pre>" . print_r($_GET, true) . '</pre>';
+}
+
+function gm_ogone_ecommerce_feedback_exception() {
+  _gm_ogone_ecommerce_check_feedback_sha();
+  return "Exception<pre>" . print_r($_GET, true) . '</pre>';
+}
+
+function gm_ogone_ecommerce_feedback_cancelled() {
+  _gm_ogone_ecommerce_check_feedback_sha();
+  return "Cancelled<pre>" . print_r($_GET, true) . '</pre>';
+}
+
+
+/**
+ * Check if the SHA value from the payment processor is correct
+ */
+function _gm_ogone_ecommerce_check_feedback_sha() {
+  $sha_out_phrase = "thisismyOUTpassphrase!";
+  $return_values = _gm_ogone_ecommerce_get_returned_values();
+  ksort($return_values);
+  
+  $sha1_signature = '';
+  foreach ($return_values as $param_name => $param_value) {
+    if (strlen($param_value) > 0) {
+      $sha1_signature .= $param_name . '=' . $param_value . $sha_out_phrase;
+    }
+  }
+  $sha1_signature = sha1($sha1_signature);
+  if (strtoupper($sha1_signature) == $_GET['SHASIGN']) {
+    return true;
+  }
+  else {
+    drupal_set_message(t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'), 'error');
+    dsm($sha1_signature, 'calculated');
+    dsm($_GET['SHASIGN'], 'provided');
+    return false;
+  }
+}
+
+
+/**
+ * Get an array of the data passed back from the payment processor
+ */
+function _gm_ogone_ecommerce_get_returned_values() {
+  static $return_values;
+  if (empty($return_values)) {
+    $return_values = array(
+      'AAVCHECK' => trim($_GET['AAVCheck']),
+      'ACCEPTANCE' => trim($_GET['ACCEPTANCE']),
+      'AMOUNT' => trim($_GET['amount']),
+      'BRAND' => trim($_GET['BRAND']),
+      'CARDNO' => trim($_GET['CARDNO']),
+      'CCCTY'=> trim($_GET['CCCTY']),
+      'CN' => trim($_GET['CN']),
+      'CURRENCY' => trim($_GET['currency']),
+      'CVCCHECK' => trim($_GET['CVCCheck']),
+      'ECI' => trim($_GET['ECI']),
+      'ED' => trim($_GET['ED']),
+      'IP' => trim($_GET['IP']),
+      'IPCTY' => trim($_GET['IPCTY']),
+      'NCERROR' => trim($_GET['NCERROR']),
+      'ORDERID' => trim($_GET['orderID']),
+      'PAYID' => trim($_GET['PAYID']),
+      'PM' => trim($_GET['PM']),
+      'STATUS' => trim($_GET['STATUS']),
+      'TRXDATE' => trim($_GET['TRXDATE']),
+      'VC' => trim($_GET['VC']),
+    );
+  }
+  return $return_values;
 }
