@@ -871,7 +871,6 @@ function fundraiser_menu() {
 	
 	// Add the cron handler if it's enabled.
     if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-      drupal_set_message('custom cron enabled:' . variable_get('fundraiser_standalone_cron_enabled', 0));
       $items['fundraiser_cron'] = array(
         'page callback' => 'fundraiser_cron',
         'access callback' => TRUE,
@@ -2340,7 +2339,7 @@ function _fundraiser_amount_ahah_submit(&$form, &$form_state) {
 function fundraiser_access_clone() {
   global $user;
   $nid = arg(1);
-  drupal_set_message('arg 1:' . arg(1));
+
   if (is_numeric($nid)) {
     $type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $nid));
     if (user_access('clone donation form') && !strcmp($type, 'donation_form')) { 
