@@ -49,20 +49,27 @@ function page_wrappers_preprocess_page(&$vars) {
   }
 
   // get the list of node types that can have wrappers
-  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form', 'page_wrapper'));
   
   // if the node type is wrapper enabled and actually has one assigned
   if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
     $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
+    
     // make sure template actually exists
     if (_page_wrappers_template_exists($template)) {
       $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
       // remove all the stylesheets and add the style specific to this wrapper if available
       $wrapper_node = node_load($vars['node']->wrapper);
-      //print "<pre>".print_r($vars['styles'], TRUE)."</pre>";
-      $vars['styles'] = '<link type="text/css" rel="stylesheet" media="all" href="/' . $wrapper_node->field_css_file[0]['filepath'] . '?z" />';
-      $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
-      //print "<pre>".print_r($wrapper_node, TRUE)."</pre>";
+      
+      // if the wrapper has it's own stylesheet, overwrite all others
+      if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
+        $vars['styles'] = '<link type="text/css" rel="stylesheet" media="all" href="/' . $wrapper_node->field_css_file[0]['filepath'] . '?z" />';
+      }
+      
+      // add javascript if available
+      if (!empty($wrapper_node->field_js_file[0]['filepath'])) {
+        $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
+      }
     }
   }
 }
@@ -70,7 +77,7 @@ function page_wrappers_preprocess_page(&$vars) {
 /**
  * Implementation of hook_nodeapi().
  */
-function page_wrappers_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
   $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
   
   // page wrapper specific
@@ -89,6 +96,24 @@ function page_wrappers_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         db_query("DELETE FROM {node_page_wrappers} WHERE wrapper_nid = %d", $node->nid);
         // remove the wrapper
         db_query("DELETE FROM {page_wrappers} WHERE nid = %d", $node->nid);
+        break;
+        
+      case 'load':
+        $wrapper = db_result(db_query("SELECT nid FROM {page_wrappers} WHERE nid = %d", $node->nid));
+        $node->wrapper = $wrapper;        
+        break;
+        
+      case 'view':
+        if (!$teaser) {
+          unset($node->content);
+          $node->content['preview'] = array(
+            '#value' => drupal_get_form('_page_wrapper_preview_form'),
+          );
+          unset($node->content['[field_css_file]']);
+          unset($node->content['field_js_file']);
+          //$node->content['body'] = 'blah';
+          //print "<pre>".print_r($node, TRUE)."</pre>";
+        }
         break;
     }
   }
@@ -318,4 +343,109 @@ function _page_wrappers_template_exists($template) {
     return TRUE;
   }
   return FALSE;
+}
+
+/**
+ * Returns a fake form for previewing wrappers.
+ */
+function _page_wrapper_preview_form() {
+  $form['donation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation'),
+    '#weight' => 1,
+  );
+  
+  $form['donation']['amount'] = array(
+    '#type' => 'radios',
+    '#title' => t('Please select your tax-deductible gift amount below'),
+    '#options' => array('$10', '$20', '$50', '$100'),
+  );
+  
+  $form['personal'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Your Information',
+    '#weight' => 2,
+  );
+  $form['personal']['firstname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('First Name'),
+  );
+  
+  $form['personal']['lastname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Last Name'),
+  );
+  
+  $form['personal']['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+  );
+  
+  $form['billing'] = array(
+    '#type' => 'fielset',
+    '#title' => t('Credit Card Billing Information'),
+    '#weight' => 3,
+  );
+  
+  $form['billing']['address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address'),
+  );
+  
+  $form['billing']['address2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address Line 2'),
+  );
+  
+  $form['billing']['city'] = array(
+    '#type' => 'textfield',
+    '#title' => t('City'),
+  );
+  
+  $form['billing']['country'] = array(
+    '#type' => 'select',
+    '#title' => t('Country'),
+    '#options' => array('United States'),
+  );
+  
+  $form['billing']['state'] = array(
+    '#type' => 'select',
+    '#title' => t('State/Province'),
+    '#options' => array('Alabama', 'Alaska'),
+  );
+  
+  $form['billing']['zip'] = array(
+    '#type' => 'textfield',
+    '#title' => t('ZIP/Postal Code'),
+  );
+  
+  $form['cc'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Credit Card Information'),
+    '#weight' => 4,
+  );
+  
+  $form['cc']['number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Card Number'),
+  );
+  
+  $form['cc']['expdate'] = array(
+    '#type' => 'date',
+    '#title' => t('Expiration Date'),
+  );
+  
+  $form['cc']['cvv'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Card Security Code'),
+  );
+  
+  $form['cc']['recurs'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Recurring Payment'),
+    '#options' => array('Yes'),
+    '#multiple' => TRUE,
+  );
+  
+  return $form;
 }
