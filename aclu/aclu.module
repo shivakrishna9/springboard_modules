@@ -11,10 +11,13 @@ function aclu_perm() {
  * Implements hook_menu_alter().
  */
 function aclu_menu_alter(&$items) {
-
+module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   // Remove access to the form components UI in the webform tab for donation forms.
   $items['node/%webform_menu/webform']['page callback'] = 'aclu_webform_page';
   $items['node/%webform_menu/webform/components']['access callback'] = 'aclu_component_access';
+  $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
+  $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
+  $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
 }
 
 /**
@@ -22,15 +25,10 @@ function aclu_menu_alter(&$items) {
  */
 function aclu_webform_page() {
   $args = func_get_args();
-  global $user;
   $node = $args[0];
-  if (!user_access('form components - no access') || $user->uid == 1) {
-    return webform_components_page($node);
-  }
-  else {
-    module_load_include('inc', 'fundraiser', 'fundraiser.admin');
-    return drupal_get_form('fundraiser_confirmation_settings_form', $node);
-  }
+  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+  return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  
 }
 
 /**
@@ -44,5 +42,8 @@ function aclu_component_access() {
   if ($user->uid != 1 && !strcmp($node->type, 'donation_form') && user_access('form components - no access', $user)) {
     return FALSE;
   }
-  return TRUE;
+
+  // If no special conditions apply defer to original access function for this menu item.
+  return node_access('update', $node);
 }
+
