@@ -18,6 +18,8 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
+  $items['node/%webform_menu/webform/mapping']['access callback'] = 'aclu_component_access';
+  $items['node/%webform_menu/webform/mapping']['access arguments'] = array(NULL, 1);
 }
 
 /**
@@ -42,7 +44,6 @@ function aclu_component_access() {
   if ($user->uid != 1 && !strcmp($node->type, 'donation_form') && user_access('form components - no access', $user)) {
     return FALSE;
   }
-
   // If no special conditions apply defer to original access function for this menu item.
   return node_access('update', $node);
 }
