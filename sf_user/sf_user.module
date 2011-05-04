@@ -243,11 +243,67 @@ function update_user_values(&$user, &$object, &$extra_data, $map, $drupal, $sale
       }
     }
 
-		// save the user object
+    // save the value of any profile fields found in extra_data to the correct place.
+    _sf_user_profile_save_profile($user, $extra_data);
+
+		// save the user object if we've got anything left
 		if (!empty($extra_data)) {
     	user_save($user, $extra_data);
 		}
   }
+}
+
+/**
+ * Saves updated data to the user's profile.
+ *
+ * This function will check for any profile fields in the map. When found
+ * they will be saved to their rightful place in the profile_values table.
+ * The element is then removed from the $map array so that the values
+ * don't get stored in the user object as well.
+ *
+ * @param $user
+ *   The user to update.
+ * @param $map
+ *   An array of key/value pairs that represents profile data.
+ */
+function _sf_user_profile_save_profile($user, &$map) {
+  if (module_exists('profile')) {
+    $profile_fields = _sf_user_profile_get_fields();
+    foreach($map as $key => $value) {
+      if (array_key_exists($key, $profile_fields)) {
+        // get the id of the profile field and it's type
+        $fid = $profile_fields[$key]['fid'];
+        $type = $profile_fields[$key]['type'];
+        
+        // make sure the field has a value
+        if (!empty($value)) {
+          // serialize if required
+          if (_profile_field_serialize($type)) {
+            $value = serialize($value);
+          }
+          // update profile value
+          db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $fid, $user->uid);
+          db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fid, $user->uid, $value);
+          unset($map[$key]); // prevent from saving to user
+        }      
+      }
+    }
+  }
+}
+
+/**
+ * Returns all defined profile fields.
+ */
+function _sf_user_profile_get_fields() {
+  $fields = array();
+  $result = db_query("SELECT fid, name, type FROM {profile_fields}");
+  while ($data = db_fetch_object($result)) {
+    $fields[$data->name] = array(
+      'fid' => $data->fid,
+      'type' => $data->type,
+    );  
+  }
+  return $fields;
 }
 
 /**
