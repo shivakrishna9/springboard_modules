@@ -12,6 +12,13 @@ define('DONATION_CANCELLED', 2);
 require_once('fundraiser.fields.inc');
 
 /**
+ * Implementation of hook_perm().
+ */
+function fundraiser_perm() {
+  return array('create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form');
+}
+
+/**
  * Implementation of hook_node_info().
  */
 function fundraiser_node_info() {
@@ -1078,14 +1085,6 @@ function fundraiser_donation_confirmation($node) {
     $output = theme(array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'), $node, $_GET['sid']);
   }
   return $output;
-}
-
-
-/**
- * Implementation of hook_perm().
- */
-function fundraiser_perm() {
-  return array('create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form');
 }
 
 /**

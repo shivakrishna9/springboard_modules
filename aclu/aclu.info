@@ -1,0 +1,8 @@
+; $Id$
+name = ACLU
+description = ACLU customizations to the Fundraising Module
+core = 6.x
+package = Jackson River Springboard
+dependencies[] = fundraiser
+
+version =  0.1-dev

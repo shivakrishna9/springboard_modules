@@ -349,7 +349,7 @@ function fundraiser_donation_form_list() {
       $edit_link = l('edit', 'node/' . $data->nid . '/edit');
     }
     $view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
-    if (user_access('clone donation form', $user) || user_access('create donation form')) {
+    if (user_access('clone donation form', $user)) {
       $clone_link = l('clone', 'admin/content/clone-form/'. $data->nid);
     }
     $rows[] = array($data->title, $data->internal_name, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
