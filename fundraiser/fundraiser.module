@@ -1009,14 +1009,26 @@ function fundraiser_menu() {
  * Implemenation of hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
-	// workaround for douchebaggy bug where only uid 1 can see custom triggers
-	if (module_exists('trigger')) {
-	  $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
-	}
-	
-	// alter some built-in webform menu items
-	$items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
-	$items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
+  // workaround for douchebaggy bug where only uid 1 can see custom triggers
+  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
+  if (module_exists('trigger')) {
+    $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+  }
+
+  // alter some built-in webform menu items
+  $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
+  $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
+
+  // Add "clone" menu item to donation form local tasks 
+  $items['node/%node/clone_form'] = array(
+    'title' => 'Clone',
+	'description' => 'Create a new donation form that inherits settings from this form.',
+	'access callback' => 'fundraiser_access_clone',
+	'page callback' => 'fundraiser_clone_donation_form',
+    'page arguments' => array(1),
+	'type' => MENU_LOCAL_TASK,
+	'file' => 'fundraiser.admin.inc',
+  );
 }
 
 /**
@@ -2320,4 +2332,20 @@ function _fundraiser_amount_ahah_submit(&$form, &$form_state) {
   form_execute_handlers('submit', $form, $form_state);
   $values = $form_state['values'];
   $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Access callback, determines if the "clone" link should be displayed on a donation form.
+ */
+function fundraiser_access_clone() {
+  global $user;
+  $nid = arg(1);
+  drupal_set_message('arg 1:' . arg(1));
+  if (is_numeric($nid)) {
+    $type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $nid));
+    if (user_access('clone donation form') && !strcmp($type, 'donation_form')) { 
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
