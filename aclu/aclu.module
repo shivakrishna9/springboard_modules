@@ -4,8 +4,20 @@
  * Implements hook_perm().
  */
 function aclu_perm() {
-  return array('form components - no access', 'form components - limited access');
+  return array('form components - no access', 'form components - limited access', 'access user/sf mappings');
 }
+
+/**
+ * Implements hook_form_alter().
+ */
+function aclu_form_alter(&$form, $form_state, $form_id) {
+  global $user;
+  if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
+    if ($form['form_key']['#default_value']) {
+      $form['form_key']['#type'] = 'hidden';
+    }
+  }
+}  
 
 /**
  * Implements hook_menu_alter().
@@ -18,8 +30,8 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
-  $items['node/%webform_menu/webform/mapping']['access callback'] = 'aclu_component_access';
-  $items['node/%webform_menu/webform/mapping']['access arguments'] = array(NULL, 1);
+  $items['node/%webform_menu/webform/mapping']['access callback'] = 'user_access';
+  $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
 
 /**
