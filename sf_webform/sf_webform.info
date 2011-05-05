@@ -7,4 +7,4 @@ dependencies[] = queue_processor
 
 package = Jackson River Springboard
 core = 6.x
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1

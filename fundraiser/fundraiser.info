@@ -8,4 +8,4 @@ dependencies[] = uc_product
 dependencies[] = profile
 dependencies[] = queue_api
 
-version =  SPRINGBOARD_VERSION
+version =  6.x-3.0-beta1

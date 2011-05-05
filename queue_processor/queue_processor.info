@@ -7,4 +7,4 @@ dependencies[] = salesforce_management_api
 dependencies[] = queue_api
 dependencies[] = trigger
 
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1
