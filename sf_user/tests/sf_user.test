@@ -32,9 +32,9 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
       'sf_user'
     ); 
     
-    variable_set('salesforce_management_api_token', 'mmUvKKXBSJAAurqBHrlcVYfN3');
-    variable_set('salesforce_management_api_username', 'apiguy@21demo.com');
-    variable_set('salesforce_management_api_password', 'J@ckson5!');
+    variable_set('salesforce_management_api_token', '2PNmURNmVEEvXRamGQ3OsLuj');
+    variable_set('salesforce_management_api_username', 'phillip.cave@4demo.com');
+    variable_set('salesforce_management_api_password', 'pl2kk123');
     
     // create profile fields
     $this->setupProfileFields();
@@ -115,6 +115,43 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
     
   }
   
+  function testProfileSave() {
+    $contact = $this->createSalesforceContact();
+    
+    // now create a Drupal user with the same info
+    $edit = array(
+      'name' => $contact['Email'],
+      'mail' => $contact['Email'],
+      'profile_first_name' => $contact['FirstName'],
+      'profile_last_name' => $contact['LastName'],
+      'profile_address' => '101 Elm Street',
+    );
+    
+    $this->drupalPost('user/register', $edit, 'Create new account');
+    
+    // process the queue
+    queue_processor_process();
+    
+    // Load the user back up
+    $user = user_load(array('name' => $contact['Email']));
+    
+    $this->pass(var_export($user, TRUE));
+    
+    $profile = array();
+    $result = db_query("SELECT f.name, v.value FROM {profile_values} v INNER JOIN {profile_fields} f ON f.fid = v.fid WHERE v.uid = %d", $user->uid);
+    
+    while ($data = db_fetch_object($result)) {
+      $profile[$data->name] = $data->value;
+    }
+    
+    $this->pass(var_export($profile, TRUE));
+    
+    $this->assertEqual($profile['profile_city'], 'Boston', t('Make sure profile_city value equals MailingCity from Salesforce.'));
+    $this->assertEqual($profile['profile_address'], '101 Elm Street', t('Make sure profile_address equals value used when creating user.'));
+    $this->assertEqual($profile['profile_first_name'], $edit['profile_first_name'], t('Make sure profile_first_name equals value used when creating user'));
+    $this->assertEqual($profile['profile_last_name'], $edit['profile_last_name'], t('Make sure profile_last_name equals value used when creating user'));
+  }
+  
   function setupProfileFields() {
     db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2, 1)");
     db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2, 1)");
@@ -132,6 +169,24 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
     db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility, register) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4, 0)");
   }
   
+  function createSalesforceContact() {
+    $name = $this->randomName();
+    
+    $contact = array(
+      'LastName' => $name,
+      'FirstName' => 'John',
+      'Email' => $name . '@example.com',
+      'MailingCity' => 'Boston',
+    );
+    
+    $objects = array($contact);
+    
+    $sf = salesforce_management_api_connect();
+    $response = $sf->client->create($objects, 'Contact');
+    
+    return $contact;
+  }
+  
   function setupUserFieldmap() {
     $map = array(
       'name' => 'User fieldmap',
@@ -147,6 +202,8 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
         'LastName' => 'profile_last_name',
         'FirstName' => 'profile_first_name',
         'Salutation' => 'profile_salutation',
+        'MailingCity' => 'profile_city',
+        'MailingStreet' => 'profile_address',
         'Email' => 'mail',
         'Initial_Registration_Date__c' => 'created',
         'Drupal_User_ID__c' => 'uid',
@@ -157,6 +214,8 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
         'AccountId' => 'never',
         'LastName' => 'always',
         'FirstName' => 'always',
+        'MailingCity' => 'always',
+        'MailingStreet' => 'always',
         'Email' => 'always',
         'Drupal_User_ID__c' => 'always',
         'Initial_Registration_Date__c' => 'always',
@@ -167,6 +226,8 @@ class SalesforceUserTestCase extends DrupalWebTestCase {
         'AccountId' => 'always',
         'LastName' => 'always',
         'FirstName' => 'always',
+        'MailingCity' => 'always',
+        'MailingStreet' => 'always',
         'Email' => 'never',
         'Drupal_User_ID__c' => 'never',
         'Initial_Registration_Date__c' => 'never',
