@@ -5,4 +5,4 @@ description = Provides additional tokens for fundraiser and ubercart
 dependencies[] = token
 dependencies[] = uc_order
 core = 6.x
-version =  SPRINGBOARD_VERSION
+version =  6.x-3.0-beta1

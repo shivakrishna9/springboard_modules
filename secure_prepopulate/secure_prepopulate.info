@@ -5,4 +5,4 @@ core = 6.x
 package = Jackson River Springboard
 dependencies[] = webform
 
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1
