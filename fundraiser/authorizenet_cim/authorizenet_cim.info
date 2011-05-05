@@ -6,4 +6,4 @@ package = Jackson River Springboard
 dependencies[] = fundraiser
 dependencies[] = uc_authorizenet
 
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1

@@ -3,4 +3,4 @@ name = Market Source
 description = Provides a way to track which campaigns and market sources drive users to the site.
 package = Jackson River Springboard
 core = 6.x
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1

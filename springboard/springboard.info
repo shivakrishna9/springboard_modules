@@ -4,4 +4,4 @@ description = Springboard provides a coherent interface for administering your s
 core = 6.x
 package = Jackson River Springboard
 
-version =  SPRINGBOARD_VERSION
+version =  6.x-3.0-beta1
