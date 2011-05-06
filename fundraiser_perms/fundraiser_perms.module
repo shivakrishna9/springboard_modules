@@ -3,14 +3,14 @@
 /**
  * Implements hook_perm().
  */
-function aclu_perm() {
+function fundraiser_perm_perm() {
   return array('form components - no access', 'form components - limited access', 'access user/sf mappings');
 }
 
 /**
  * Implements hook_form_alter().
  */
-function aclu_form_alter(&$form, $form_state, $form_id) {
+function fundraiser_perm_form_alter(&$form, $form_state, $form_id) {
   global $user;
   if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
     if ($form['form_key']['#default_value']) {
@@ -22,7 +22,7 @@ function aclu_form_alter(&$form, $form_state, $form_id) {
 /**
  * Implements hook_menu_alter().
  */
-function aclu_menu_alter(&$items) {
+function fundraiser_perm_menu_alter(&$items) {
 module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   // Remove access to the form components UI in the webform tab for donation forms.
   $items['node/%webform_menu/webform']['page callback'] = 'aclu_webform_page';
@@ -37,7 +37,7 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
 /**
  * Custom page callback for the webform link on donation form pages.
  */
-function aclu_webform_page() {
+function fundraiser_perm_webform_page() {
   $args = func_get_args();
   $node = $args[0];
   module_load_include('inc', 'fundraiser', 'fundraiser.admin');
@@ -48,7 +48,7 @@ function aclu_webform_page() {
 /**
  * Custom access function for form component menu item.
  */
-function aclu_component_access() {
+function fundraiser_perm_component_access() {
   $args = func_get_args();
   $node = $args[1];
   global $user;
