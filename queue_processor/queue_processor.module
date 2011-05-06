@@ -765,13 +765,6 @@ function delete_from_retry_queue($oid, $type) {
 }
 
 /**
- * Deletes and object from permanent failure
- */
-function delete_from_permanent_failures($oid, $type) {
-	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = '%s' AND type = '%s'", $oid, $type);
-}
-
-/**
  * Returns the details of an object in the retry queue
  */
 function get_retry_queue_details($oid, $type) {
