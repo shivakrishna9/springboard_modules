@@ -1,0 +1,24 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install file for the og page wrappers module. 
+ * 
+ */
+
+/**
+ * Implementation of hook_enable().
+ */
+function og_page_wrappers_enable() {
+  // let og new the page wrappers node type is a standard post
+  variable_set('og_content_type_usage_page_wrapper', 'group_post_standard');
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function og_page_wrappers_disable() {
+  // when disabled, don't allow page wrappers to be assigned to groups
+  variable_set('og_content_type_usage_page_wrapper', 'omitted');
+}

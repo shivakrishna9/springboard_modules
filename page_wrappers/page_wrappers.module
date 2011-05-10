@@ -152,21 +152,24 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   
   // make sure we're dealing with a node edit form and the node type is in the enabled types array
   if ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types)) {
-    $form['wrapper'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Page wrapper settings'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    
-    $wrapper = $form['#node']->wrapper;
-    $form['wrapper']['wrapper'] = array(
-      '#type' => 'select',
-      '#title' => t('Page wrapper'),
-      '#default_value' => $wrapper,
-      '#options' => _page_wrappers_available_wrappers(),
-      '#description' => t('Select the page wrapper to use when displaying this node.'),
-    );
+    $wrappers = _page_wrappers_available_wrappers();
+    if (count($wrappers) > 1) {
+      $form['wrapper'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Page wrapper settings'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      
+      $wrapper = $form['#node']->wrapper;
+      $form['wrapper']['wrapper'] = array(
+        '#type' => 'select',
+        '#title' => t('Page wrapper'),
+        '#default_value' => $wrapper,
+        '#options' => $wrappers,
+        '#description' => t('Select the page wrapper to use when displaying this node.'),
+      );
+    }
   }
 }
 
@@ -220,12 +223,14 @@ function _page_wrappers_add_timestamp($filename) {
  * Gets all configured wrappers.
  */
 function _page_wrappers_available_wrappers() {
-  $result = db_query("SELECT n.title, p.nid, p.template FROM {page_wrappers} p INNER JOIN {node} n ON n.nid = p.nid");
+  $result = db_query(db_rewrite_sql("SELECT n.title, p.nid, p.template FROM {page_wrappers} p INNER JOIN {node} n ON n.nid = p.nid"));
   $wrappers = array(t('-- Select --'));
   while ($data = db_fetch_object($result)) {
     $wrappers[$data->nid] = $data->title;
   }
   
+  // allow other modules to alter the array of available templates
+  drupal_alter('available_page_wrappers', $wrappers);
   return $wrappers;
 }
 

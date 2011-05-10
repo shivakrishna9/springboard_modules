@@ -1,0 +1,10 @@
+; $Id$
+name = Organic groups page wrappers
+description = Allows page wrappers to be assigned to organic groups
+core = 6.x
+package = Jackson River Springboard - extras
+dependencies[] = og
+dependencies[] = og_views
+dependencies[] = page_wrappers
+
+version = 6.x-3.0-beta1
