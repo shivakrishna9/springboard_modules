@@ -3,14 +3,14 @@
 /**
  * Implements hook_perm().
  */
-function fundraiser_perms_perm() {
+function fundraiser_adv_permissions_perm() {
   return array('form components - no access', 'form components - limited access', 'access user/sf mappings');
 }
 
 /**
  * Implements hook_form_alter().
  */
-function fundraiser_perms_form_alter(&$form, $form_state, $form_id) {
+function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
   global $user;
   if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
     if ($form['form_key']['#default_value']) {
@@ -22,11 +22,11 @@ function fundraiser_perms_form_alter(&$form, $form_state, $form_id) {
 /**
  * Implements hook_menu_alter().
  */
-function fundraiser_perms_menu_alter(&$items) {
+function fundraiser_adv_permissions_menu_alter(&$items) {
 module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   // Remove access to the form components UI in the webform tab for donation forms.
-  $items['node/%webform_menu/webform']['page callback'] = 'fundraiser_perms_webform_page';
-  $items['node/%webform_menu/webform/components']['access callback'] = 'fundraiser_perms_component_access';
+  $items['node/%webform_menu/webform']['page callback'] = 'fundraiser_adv_permissions_webform_page';
+  $items['node/%webform_menu/webform/components']['access callback'] = 'fundraiser_adv_permissions_component_access';
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
@@ -37,7 +37,7 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
 /**
  * Custom page callback for the webform link on donation form pages.
  */
-function fundraiser_perms_webform_page() {
+function fundraiser_adv_permissions_webform_page() {
   $args = func_get_args();
   $node = $args[0];
   module_load_include('inc', 'fundraiser', 'fundraiser.admin');
@@ -48,7 +48,7 @@ function fundraiser_perms_webform_page() {
 /**
  * Custom access function for form component menu item.
  */
-function fundraiser_perms_component_access() {
+function fundraiser_adv_permissions_component_access() {
   $args = func_get_args();
   $node = $args[1];
   global $user;
