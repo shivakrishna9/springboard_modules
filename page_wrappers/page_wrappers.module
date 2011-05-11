@@ -78,11 +78,15 @@ function page_wrappers_preprocess_page(&$vars) {
  * Implementation of hook_nodeapi().
  */
 function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
+
   $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
   
   // page wrapper specific
   if ($node->type == 'page_wrapper') {
     switch ($op) {
+      case 'presave':
+        page_wrappers_clean_markup($node);
+        break;
       case 'insert':
         $template = _page_wrappers_create_template($node);
         db_query("INSERT INTO {page_wrappers} (nid, template) VALUES (%d, '%s')", $node->nid, $template);
@@ -100,7 +104,9 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
         
       case 'load':
         $wrapper = db_result(db_query("SELECT nid FROM {page_wrappers} WHERE nid = %d", $node->nid));
-        $node->wrapper = $wrapper;        
+        if (arg(2) != 'clone' && arg(2) != 'delete') {
+          $node->wrapper = $wrapper;
+        }        
         break;
         
       case 'view':
@@ -308,7 +314,13 @@ function _page_wrappers_create_template($node) {
     $full_path = $full_path . '/' . $filename;
     // open the file for writing
     $file = fopen($full_path, 'w');
-    fputs($file, _page_wrappers_tokens($node->body));
+    
+    // build up template markup
+    $body = _page_wrappers_default_header();
+    $body .= _page_wrappers_tokens($node->body);
+    $body .= _page_wrappers_default_footer();
+    
+    fputs($file, $body);
     
     fclose($file);
     
@@ -317,6 +329,18 @@ function _page_wrappers_create_template($node) {
   
   return FALSE;  
   
+}
+
+/**
+ * Cleans up unwanted user created markup in the node body.
+ *
+ * @param $node
+ *   The page wrapper node to clean up.
+ */
+function page_wrappers_clean_markup(&$node) {
+  // remove any header the user may have entered
+  $node->teaser = '';
+  $node->body = preg_replace('/<html.*?>(.|\n)*?<body>/i', '', $node->body);
 }
 
 /**
@@ -348,6 +372,66 @@ function _page_wrappers_template_exists($template) {
     return TRUE;
   }
   return FALSE;
+}
+
+/**
+ * Implementation of hook_clone_node_alter().
+ *
+ * Make a copy of the css and js files when a node is cloned.
+ */
+function page_wrappers_clone_node_alter(&$node, $original_node, $method) {
+  if ($method == 'save-edit') {
+    // make copies of any css and js files accordingly
+    if ($original_node->field_js_file[0]['fid']) {
+      if ($file = _page_wrappers_clone_file($original_node->field_js_file[0], 'js', _page_wrappers_add_timestamp($original_node->field_js_file[0]['filename']))) {
+        $node->field_js_file[0]['filepath'] = $file->filepath;
+        $node->field_js_file[0]['fid'] = $file->fid;
+      }
+    }
+    if ($original_node->field_css_file[0]['fid']) {
+      if ($file = _page_wrappers_clone_file($original_node->field_css_file[0], 'css', _page_wrappers_add_timestamp($original_node->field_css_file[0]['filename']))) {
+        $node->field_css_file[0]['filepath'] = $file->filepath;
+        $node->field_css_file[0]['fid'] = $file->fid;
+      }
+    }
+  }
+}
+
+/**
+ * Clones a file associated with a page wrapper.
+ *
+ * @param $original
+ *   The original file being cloned.
+ * @param $type
+ *   The type of file (js or css).
+ * @param $new_filename
+ *   The filename to use for the cloned file.
+ */
+function _page_wrappers_clone_file($original, $type, $new_filename) {
+  global $user;
+  
+  // create a new filename for the file
+  $filepath = 'sites/default/files/page_wrappers/' . $type . '/' . $new_filename;
+  
+  // if it copies, create a new file
+  if (file_copy($original['filepath'], $filepath)) {
+    $file = new stdClass();
+    $file->uid = $user->uid;
+    $file->filename = $original['filename'];
+    $file->filepath = $filepath;
+    $file->filemime = $original['filemime'];
+    $file->filesize = $original['filesize'];
+    $file->status = $original['status'];
+    $file->timestamp = $original['timestamp'];
+    $file->list = $original['list'];
+    
+    // save the new file
+    if (drupal_write_record('files', $file)) {
+      return $file;
+    }
+  }
+  
+  return FALSE; // couldn't copy file   
 }
 
 /**
@@ -453,4 +537,35 @@ function _page_wrapper_preview_form() {
   );
   
   return $form;
+}
+
+/**
+ * Creates the required markup for the template header.
+ */
+function _page_wrappers_default_header() {
+  $head = <<<EOT
+  <html xmlns="http://www.w3.org/1999/xhtml" lang="<?php print \$language->language ?>" xml:lang="<?php print \$language->language ?>" dir="<?php print \$language->dir ?>">
+  <head>
+    <?php print \$head ?>
+    <title><?php print \$head_title ?></title>
+    <?php print \$styles ?>
+    <?php print \$scripts ?>
+    </head>
+  <body>
+EOT;
+
+  return $head;
+}
+
+/**
+ * Creates the required markup for the template footer.
+ */
+function _page_wrappers_default_footer() {
+  $footer = <<<EOT
+  <?php print \$closure ?>
+  </body>
+  </html>
+EOT;
+
+  return $footer;
 }

@@ -1,0 +1,16 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install routine for page wrappers module.
+ *
+ */
+
+/**
+ * Implementation hook_install().
+ */
+function page_wrappers_install() {
+  // change the clone module's cloning method to save-edit cause that's the way we like it.
+  variable_set('clone_method', 'save-edit');
+}
