@@ -48,8 +48,43 @@ function page_wrappers_views_default_views() {
       'field' => 'title',
       'relationship' => 'none',
     ),
+    'name' => array(
+      'label' => 'Created by',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'link_to_user' => 0,
+      'overwrite_anonymous' => 0,
+      'anonymous_text' => '',
+      'exclude' => 0,
+      'id' => 'name',
+      'table' => 'users',
+      'field' => 'name',
+      'override' => array(
+        'button' => 'Override',
+      ),
+      'relationship' => 'none',
+    ),
     'created' => array(
-      'label' => 'Post date',
+      'label' => 'Created date',
       'alter' => array(
         'alter_text' => 0,
         'text' => '',
@@ -78,9 +113,12 @@ function page_wrappers_views_default_views() {
       'table' => 'node',
       'field' => 'created',
       'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
     ),
     'changed' => array(
-      'label' => 'Updated date',
+      'label' => 'Update date',
       'alter' => array(
         'alter_text' => 0,
         'text' => '',
@@ -109,6 +147,9 @@ function page_wrappers_views_default_views() {
       'table' => 'node',
       'field' => 'changed',
       'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
     ),
     'edit_node' => array(
       'label' => '',
