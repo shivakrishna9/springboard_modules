@@ -5,7 +5,8 @@
  * Implementation of hook_install().
  */
 function fundraiser_install() {
-	drupal_install_schema('fundraiser');
+  variable_set('fundraiser_development_mode', 1);
+  drupal_install_schema('fundraiser');
 	
 }
 
