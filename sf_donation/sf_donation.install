@@ -4,15 +4,17 @@
 /**
  * Implementation of hook_install().
  */
-function sf_donation_install() {
-	drupal_install_schema('sf_donation');
+function sf_donation_install() 
+  // Set default backend.
+  variable_set('sf_donation_backend', 'npsp');
+  drupal_install_schema('sf_donation');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function sf_donation_uninstall() {
-	drupal_uninstall_schema('sf_donation');
+  drupal_uninstall_schema('sf_donation');
 }
 
 /**
