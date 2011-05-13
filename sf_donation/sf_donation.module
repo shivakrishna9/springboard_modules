@@ -1063,10 +1063,11 @@ function theme_sf_donation_mapping_form($form) {
  * Returns an array in the format campaignID => campaignName
  */
 function _get_campaigns() {
+
 	$sf = salesforce_management_api_connect();
 	$campaigns = array();
 	// only continue if we got a valid connection
-	if ($sf) {
+	if (is_object($sf)) {
 		$results = $sf->client->query("select Id, Name from Campaign where Status = 'In Progress'");
 		if (count($results->records)) {
 			foreach($results->records as $campaign) {

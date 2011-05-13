@@ -9,7 +9,7 @@
  * 2. Get the Toolkit.
  * 3. Download your WSDL.
  */
- 
+ // TODO: remove these path constants because they make me sad when I'm examining hook_menu().
 ini_set("soap.wsdl_cache_enabled", "0");
 // Define directory paths for the Toolkit and WSDL files.
 define('SALESFORCE_DIR', drupal_get_path('module', 'salesforce_management_api'));
