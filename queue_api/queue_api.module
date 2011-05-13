@@ -161,3 +161,10 @@ function _in_heap($oid, $type) {
 	
 	return true;
 }
+
+/**
+ * Deletes and object from permanent failure
+ */
+function delete_from_permanent_failures($oid, $type) {
+	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+}

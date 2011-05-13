@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * Implements hook_perm().
+ */
+function fundraiser_adv_permissions_perm() {
+  return array('form components - no access', 'form components - limited access', 'access user/sf mappings');
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
+  global $user;
+  if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
+    if ($form['form_key']['#default_value']) {
+      $form['form_key']['#type'] = 'hidden';
+    }
+  }
+}  
+
+/**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_adv_permissions_menu_alter(&$items) {
+module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+  // Remove access to the form components UI in the webform tab for donation forms.
+  $items['node/%webform_menu/webform']['page callback'] = 'fundraiser_adv_permissions_webform_page';
+  $items['node/%webform_menu/webform/components']['access callback'] = 'fundraiser_adv_permissions_component_access';
+  $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
+  $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
+  $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
+  $items['node/%webform_menu/webform/mapping']['access callback'] = 'user_access';
+  $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
+}
+
+/**
+ * Custom page callback for the webform link on donation form pages.
+ */
+function fundraiser_adv_permissions_webform_page() {
+  $args = func_get_args();
+  $node = $args[0];
+  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+  return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  
+}
+
+/**
+ * Custom access function for form component menu item.
+ */
+function fundraiser_adv_permissions_component_access() {
+  $args = func_get_args();
+  $node = $args[1];
+  global $user;
+
+  if ($user->uid != 1 && !strcmp($node->type, 'donation_form') && user_access('form components - no access', $user)) {
+    return FALSE;
+  }
+  // If no special conditions apply defer to original access function for this menu item.
+  return node_access('update', $node);
+}
+

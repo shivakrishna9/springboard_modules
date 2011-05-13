@@ -167,11 +167,18 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
 
 /**
  * Clones a donation form and related fieldmaps
+ * 
+ * @param $nid
+ * Integer Node ID
  */
 function fundraiser_clone_donation_form($nid) {
-	if (is_numeric($nid)) {
-    global $user;
+  // hackish, gets around issues with nid argument not getting passed by menu handler.
+  if (!is_numeric($nid)) {
+    $nid = arg(1);
+  }
 
+  if (is_numeric($nid)) {
+    global $user;
     $node = node_load($nid);
     if (isset($node->nid)) {
       $original_node = drupal_clone($node);
@@ -186,8 +193,8 @@ function fundraiser_clone_donation_form($nid) {
       $node->path = NULL;
       $node->files = array();
       $node->title = t('Clone of !title', array('!title' => $node->title));
-			$node->internal_name = 'Clone of ' . $original_node->internal_name;
-			$node->is_being_cloned = true;
+      $node->internal_name = 'Clone of ' . $original_node->internal_name;
+      $node->is_being_cloned = true;
 
       if (variable_get('clone_reset_'. $node->type, FALSE)) {
         $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
@@ -308,29 +315,48 @@ function fundraiser_admin_settings() {
   $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
     '#value' => theme('token_help', 'user'),
   );
-	
-	return system_settings_form($form);
+
+  $form['fundraiser_cron'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cron settings'),
+    '#description' => t('Configure cron settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['fundraiser_cron']['fundraiser_standalone_cron_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable standalone cron.'),
+    '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/fundraiser_cron'),
+    '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
+  );
+     $form['#submit'] =  array('fundraiser_update_cron_settings');
+  return system_settings_form($form);
 }
 
 /*
  * Creates a list of all donation forms on the site
  */
 function fundraiser_donation_form_list() {
-	$result = db_query("SELECT n.nid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f
-		ON f.nid = n.nid ORDER BY n.changed DESC");
-		
-	$header = array('Title', 'Internal Name', 'Last Modified', '', '', '');
-	$rows = array();
-	
-	while ($data = db_fetch_object($result)) {
-		$edit_link = l('edit', 'node/' . $data->nid . '/edit');
-		$view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
-		$clone_link = l('clone', 'admin/content/clone-form/'. $data->nid);
-		$rows[] = array($data->title, $data->internal_name, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
-	}
-	
-	$output = theme('table', $header, $rows);
-	return $output;
+  global $user;
+  $result = db_query("SELECT n.nid, n.uid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid ORDER BY n.changed DESC");
+
+  $header = array('Title', 'Internal Name', 'Last Modified', '', '', '');
+  $rows = array();
+
+  while ($data = db_fetch_object($result)) {
+    if (user_access('edit any donation form', $user) || ($data->uid == $user->uid && user_access('edit own donation form', $user))) {
+      $edit_link = l('edit', 'node/' . $data->nid . '/edit');
+    }
+    $view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
+    if (user_access('clone donation form', $user)) {
+      $clone_link = l('clone', 'admin/content/clone-form/'. $data->nid);
+    }
+    $rows[] = array($data->title, $data->internal_name, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
+  }
+
+  $output = theme('table', $header, $rows);
+  return $output;
 }
 
 function fundraiser_monthly_report() {
@@ -550,4 +576,16 @@ function decrypt_credit_card($data) {
 	$cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
 	$cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
 	return $cc_data;
+}
+
+/**
+ * Submit handler updates cron menu handler.
+ */
+function fundraiser_update_cron_settings($form, $form_state) {
+  $cron_enabled = variable_get('fundraiser_standalone_cron_enabled', 0);
+  if ($cron_enabled != $form_state['values']['fundraiser_standalone_cron_enabled']) {
+    variable_set('fundraiser_standalone_cron_enabled', $form_state['values']['fundraiser_standalone_cron_enabled']);
+    // Refresh menu cache.
+    menu_rebuild();
+  }
 }

@@ -9,4 +9,4 @@ dependencies[] = webform
 dependencies[] = queue_processor
 dependencies[] = salesforce_management_api
 
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1

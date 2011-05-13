@@ -8,7 +8,7 @@ package = Jackson River Springboard
 core = 6.x
 
 ; Information added by drupal.org packaging script on 2009-05-30
-version = SPRINGBOARD_VERSION
+version = 6.x-3.0-beta1
 core = "6.x"
 project = "salesforce_management"
 datestamp = "1243642894"
