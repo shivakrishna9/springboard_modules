@@ -4,7 +4,7 @@
 /**
  * Implementation of hook_install().
  */
-function sf_donation_install() 
+function sf_donation_install() {
   // Set default backend.
   variable_set('sf_donation_backend', 'npsp');
   drupal_install_schema('sf_donation');

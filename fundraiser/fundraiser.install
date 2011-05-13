@@ -6,8 +6,7 @@
  */
 function fundraiser_install() {
   variable_set('fundraiser_development_mode', 1);
-  drupal_install_schema('fundraiser');
-	
+  drupal_install_schema('fundraiser');	
 }
 
 /**

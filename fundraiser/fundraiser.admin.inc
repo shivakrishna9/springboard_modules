@@ -126,7 +126,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
 
 function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
   // validate email
-  if (!_validate_email($form_state['values']['receipt_email_address'])) {
+  if (!fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
     form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
   }
 
