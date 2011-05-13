@@ -5,10 +5,11 @@
  *
  * Todo:
  *  Return callbacks:
- *    Redirect user to order page?
+ *    Redirect user to order page? Get them to the confirmation page somewhow
  *  Admin interface to set PSPID, sha in and sha out for both test and production, test/prod flag
  *  Remove credit card field from the donation form
  *  Webform submissions not being saved
+ *  Run $_GET vars through check_plain
  * 
  * Charge function can either return the array, or do drupal_goto
  *    Return: saves the webform submission, but doesn't redirect to ogone
@@ -36,24 +37,28 @@ function gm_ogone_ecommerce_menu() {
     'description' => 'Shown when an Ogone payment is authorized, accepted, or pending.',
     'page callback' => 'gm_ogone_ecommerce_feedback_accepted',
     'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
   $items['ogone/feedback/decline'] = array(
     'title' => 'Ogone Response: Declined',
     'description' => 'Shown when an Ogone payment is declined.',
     'page callback' => 'gm_ogone_ecommerce_feedback_declined',
     'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
   $items['ogone/feedback/exception'] = array(
     'title' => 'Ogone Response: Exception',
     'description' => 'Shown when an Ogone payment result is uncertain.',
     'page callback' => 'gm_ogone_ecommerce_feedback_exception',
     'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
   $items['ogone/feedback/cancel'] = array(
     'title' => 'Ogone Response: Cancelled',
     'description' => 'Shown when an Ogone payment is cancelled by the user.',
     'page callback' => 'gm_ogone_ecommerce_feedback_cancelled',
     'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
 
   
@@ -155,8 +160,7 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
 }
 
 function ogone_ecommerce_charge($order_id, $amount, $data) {
-  return array('success' => TRUE, 'message' => t('Redirecting to Ogone'));
-  //drupal_goto('ogone/post/' . $order_id);
+  drupal_goto('ogone/post/' . $order_id);
 }
 
 
@@ -167,22 +171,55 @@ function ogone_ecommerce_charge($order_id, $amount, $data) {
  * Ogone Feedback Functions
  ******************************************************************************/
 function gm_ogone_ecommerce_feedback_accepted() {
-  _gm_ogone_ecommerce_check_feedback_sha();
+  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+  $order_id = $payment_values['orderID'];
+  $transaction_id = $payment_values['PAYID'];
+
+  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+    fundraiser_order_accept($order_id, $transaction_id);
+  }
+  else {
+    fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
+  }
   return "Accepted<pre>" . print_r($_GET, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_declined() {
-  _gm_ogone_ecommerce_check_feedback_sha();
+  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+  $order_id = $payment_values['orderID'];
+  
+  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+    fundraiser_order_decline($order_id, $message);
+  }
+  else {
+    fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
+  }
   return "Declined<pre>" . print_r($_GET, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_exception() {
-  _gm_ogone_ecommerce_check_feedback_sha();
+  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+  $order_id = $payment_values['orderID'];
+  
+  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+    fundraiser_order_exception($order_id, '');
+  }
+  else {
+    fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
+  }
   return "Exception<pre>" . print_r($_GET, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_cancelled() {
-  _gm_ogone_ecommerce_check_feedback_sha();
+  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+  $order_id = $payment_values['orderID'];
+  
+  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+    fundraiser_order_cancel($order_id);
+  }
+  else {
+    fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
+  }
   return "Cancelled<pre>" . print_r($_GET, true) . '</pre>';
 }
 
@@ -206,9 +243,6 @@ function _gm_ogone_ecommerce_check_feedback_sha() {
     return true;
   }
   else {
-    drupal_set_message(t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'), 'error');
-    dsm($sha1_signature, 'calculated');
-    dsm($_GET['SHASIGN'], 'provided');
     return false;
   }
 }
