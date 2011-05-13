@@ -46,7 +46,11 @@ function sf_donation_menu() {
 function sf_donation_fundraiser_form_insert($node, $components) {
   require_once 'donation.php';
   $integrator = _current_donation_integrator();
-  $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
+  $default_map = DonationMapper::GetDefaultMap($integrator['id']);
+  if (is_array($default_map)) {
+    drupal_set_message('its an array:' . pritn_r($default_map, TRUE));
+    $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
+  }
   $single = variable_get('sf_donation_default_single_donation_recordtype', '');
   $recurring = variable_get('sf_donation_default_recurring_donation_recordtype', '');
   
@@ -244,31 +248,32 @@ function sf_donation_mapping_form($form_state, $node) {
   // Get the integrator object type for donations
   // For Salesforce NPSP and Common Ground, this is 'Opportunity'
   $type = $integrator['donation_object']['type'];
-	
-	$sf = salesforce_management_api_connect();
-	
-	// Connect to Salesforce and get info on the object type
-	$donation = $sf->client->describeSObject($type);
 
-	// Calling methods on non-object variables is bad.
-	if (is_object($donation)) {
-	  // Build an array of record types, with the format typeID => typeName
-	  // The recordTypeInfos array will include things like Donation, Grant, Major 
-	  // Gift, Matching Donation
-	  foreach($donation->recordTypeInfos as $record_type) {
-		  if ($record_type->available && $record_type->name != 'Master') {
-			  $record_types[$record_type->recordTypeId] = $record_type->name;
-		  }
-	  }
-	}
-	
-	$record_types[] = '--Select One--';
+  $sf = salesforce_management_api_connect();
+
+  // Connect to Salesforce and get info on the object type
+  if (is_object($sf) && method_exists($sf->client, 'describeSObject')) {
+    $donation = $sf->client->describeSObject($type);
+  }
+  // Calling methods on non-object variables is bad.
+  if (is_object($donation)) {
+    // Build an array of record types, with the format typeID => typeName
+    // The recordTypeInfos array will include things like Donation, Grant, Major 
+    // Gift, Matching Donation
+    foreach($donation->recordTypeInfos as $record_type) {
+      if ($record_type->available && $record_type->name != 'Master') {
+        $record_types[$record_type->recordTypeId] = $record_type->name;
+      }
+    }
+  }
+
+  $record_types[] = '--Select One--';
   asort($record_types);
-	
-	$form['user_mappings'] = array(
-		'#value' => t('<h3>Donation Mappings</h3><div>Use this form to map fields to the <strong>@type</strong> object in Salesforce. The current donation storage system is <strong>@integrator</strong>.</div>', array('@type' => $type, '@integrator' => $integrator['name'])),
-		'#weight' => -1,
-	);
+
+  $form['user_mappings'] = array(
+    '#value' => t('<h3>Donation Mappings</h3><div>Use this form to map fields to the <strong>@type</strong> object in Salesforce. The current donation storage system is <strong>@integrator</strong>.</div>', array('@type' => $type, '@integrator' => $integrator['name'])),
+    '#weight' => -1,
+  );
 
   $form['single_record_type'] = array(
     '#type' => 'select',
@@ -277,7 +282,7 @@ function sf_donation_mapping_form($form_state, $node) {
     '#options' => $record_types,
     '#default_value' => $node->single_recordtype_id,
   );
-  
+
   $form['recurring_record_type'] = array(
     '#type' => 'select',
     '#title' => 'Recurring donation record type',
@@ -285,19 +290,21 @@ function sf_donation_mapping_form($form_state, $node) {
     '#options' => $record_types,
     '#default_value' => $node->recurring_recordtype_id,
   );
-  
+
   // Build a simple array of the fields available in the SF object
-	$donation_fields = array('' => '--Select One--');
-  foreach($donation->fields as $field) {
-    $donation_fields[$field->name] = $field->label;
-	}
-	
-	// sort the fields alphabetically
-	asort($donation_fields);
-	
-	$node = $form['#node'];
-	
-	require_once 'donation.php';
+  $donation_fields = array('' => '--Select One--');
+    if (is_array($donation->fields)) {
+    foreach($donation->fields as $field) {
+      $donation_fields[$field->name] = $field->label;
+    }
+  }
+
+  // sort the fields alphabetically
+  asort($donation_fields);
+
+  $node = $form['#node'];
+
+  require_once 'donation.php';
 	
 	// Get a list of built-in Donation form fields that can be mapped to SF fields
 	$properties = Donation::get_mappable_properties();
