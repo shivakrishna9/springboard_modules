@@ -11,12 +11,7 @@
  *  Webform submissions not being saved
  *  Run $_GET vars through check_plain
  * 
- * Charge function can either return the array, or do drupal_goto
- *    Return: saves the webform submission, but doesn't redirect to ogone
- *    Redirect: doesn't save the webform submission
- * 
- * Options:
- *  Should the webform submission even be saved before the payment is complete? Maybe the webform submission should be fake-created after the payment is made. Or, the confirmation page should redirect to ogone
+ * The $data array has gateway config info, but it's needed later on (after the goto) when the form is being built
  */
  
 /**
@@ -175,7 +170,6 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#type' => 'textfield',
     '#title' => t('PSPID'),
     '#description' => t('Ogone PSPID.'),
-    '#size' => 40,
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_ecommerce_pspid'],
   );
@@ -183,24 +177,70 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
   $form['security_keys'] = array(
     '#type' => 'fieldset',
     '#title' => t('Security keys'),
-    '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone.'),
+    '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone. Live and test transactions must use different keys. These keys are configured in the Ogone admin, under Technical Information. The SHA-IN phrase is set on the "Data and origin verification tab," and the SHA-OUT is set on the "Transaction Feedback" tab.'),
   );
-  $form['security_keys']['gm_ogone_ecommerce_shain'] = array(
+  
+  $form['security_keys']['test'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Test'),
+    '#description' => t('Security keys used for test transactions'),
+  );  
+  $form['security_keys']['test']['gm_ogone_ecommerce_shain_test'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-IN Pass Phrase'),
     '#description' => t('Used to validate data sent to Ogone.'),
-    '#size' => 40,
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shain'],
+    '#default_value' => $config['gm_ogone_ecommerce_shain_test'],
   );
-  $form['security_keys']['gm_ogone_ecommerce_shaout'] = array(
+  $form['security_keys']['test']['gm_ogone_ecommerce_shaout_test'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-OUT Pass Phrase'),
     '#description' => t('Used to validate data sent back from Ogone after payment process.'),
-    '#size' => 40,
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shaout'],
+    '#default_value' => $config['gm_ogone_ecommerce_shaout_test'],
   );
+  
+  $form['security_keys']['live'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Live'),
+    '#description' => t('Security keys used for live transactions'),
+  );  
+  $form['security_keys']['live']['gm_ogone_ecommerce_shain_live'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SHA-IN Pass Phrase'),
+    '#description' => t('Used to validate data sent to Ogone.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shain_live'],
+  );
+  $form['security_keys']['live']['gm_ogone_ecommerce_shaout_live'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SHA-OUT Pass Phrase'),
+    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shaout_live'],
+  );
+  
+  
+  $form['urls'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('URLs'),
+    '#description' => t('The URLs to use for test and live transactions. The defaults are https://secure.ogone.com/ncol/test/orderstandard.asp for test, and https://secure.ogone.com/ncol/prod/orderstandard.asp for live. Clearing either field will reset it to the default.')
+  );
+  $form['urls']['gm_ogone_ecommerce_url_test'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Test transaction URL'),
+    '#description' => t('The target URL for test transactions.'),
+    '#maxlength' => 255,
+    '#default_value' => (!empty($config['gm_ogone_ecommerce_url_test'])) ? $config['gm_ogone_ecommerce_url_test'] : 'https://secure.ogone.com/ncol/test/orderstandard.asp',
+  );
+  $form['urls']['gm_ogone_ecommerce_url_live'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Live transaction URL'),
+    '#description' => t('The target URL for live transactions.'),
+    '#maxlength' => 255,
+    '#default_value' => (!empty($config['gm_ogone_ecommerce_url_live'])) ? $config['gm_ogone_ecommerce_url_live'] : 'https://secure.ogone.com/ncol/prod/orderstandard.asp',
+  );
+  
   
   
   
