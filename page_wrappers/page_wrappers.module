@@ -43,6 +43,8 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
  * Implementation of hook_preprocess_page().
  */
 function page_wrappers_preprocess_page(&$vars) {
+  //$css = drupal_add_css();
+  //print "<pre>".print_r($css, TRUE)."</pre>";
   // get out of here if we're on the edit page
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
@@ -60,7 +62,6 @@ function page_wrappers_preprocess_page(&$vars) {
       $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
       // remove all the stylesheets and add the style specific to this wrapper if available
       $wrapper_node = node_load($vars['node']->wrapper);
-      
       // if the wrapper has it's own stylesheet, overwrite all others
       if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
         $vars['styles'] = '<link type="text/css" rel="stylesheet" media="all" href="/' . $wrapper_node->field_css_file[0]['filepath'] . '?z" />';

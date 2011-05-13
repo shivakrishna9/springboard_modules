@@ -1,14 +1,8 @@
 <?php
-
-/**
- * Implementation of hook_views_default_views().
- */
-function page_wrappers_views_default_views() {
-  $views = array();
-
-  // Exported view: page_wrappers
+function og_page_wrappers_views_default_views() {
   $view = new view;
-  $view->name = 'page_wrappers';
+  $view = new view;
+  $view->name = 'og_page_wrappers';
   $view->description = 'Admin view of all page wrappers configured in the site.';
   $view->tag = '';
   $view->view_php = '';
@@ -81,6 +75,36 @@ function page_wrappers_views_default_views() {
       'override' => array(
         'button' => 'Override',
       ),
+      'relationship' => 'none',
+    ),
+    'group_nid' => array(
+      'label' => 'Affiliates/Groups',
+      'alter' => array(
+        'alter_text' => FALSE,
+        'text' => '',
+        'make_link' => FALSE,
+        'path' => '',
+        'alt' => '',
+        'link_class' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'trim' => FALSE,
+        'max_length' => '',
+        'word_boundary' => TRUE,
+        'ellipsis' => TRUE,
+        'strip_tags' => FALSE,
+        'html' => FALSE,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'type' => 'separator',
+      'separator' => ', ',
+      'exclude' => 0,
+      'id' => 'group_nid',
+      'table' => 'og_ancestry',
+      'field' => 'group_nid',
       'relationship' => 'none',
     ),
     'created' => array(
@@ -309,6 +333,7 @@ function page_wrappers_views_default_views() {
   $handler->override_option('empty_format', '1');
   $handler->override_option('items_per_page', 20);
   $handler->override_option('use_pager', '1');
+  $handler->override_option('distinct', 1);
   $handler->override_option('style_plugin', 'table');
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->override_option('header', '<a href="/node/add/page-wrapper">Create New Page Wrapper</a>');
@@ -330,7 +355,7 @@ function page_wrappers_views_default_views() {
     'name' => 'navigation',
   ));
 
+  // 
   $views[$view->name] = $view;
-
   return $views;
 }
