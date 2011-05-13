@@ -249,14 +249,17 @@ function sf_donation_mapping_form($form_state, $node) {
 	
 	// Connect to Salesforce and get info on the object type
 	$donation = $sf->client->describeSObject($type);
-	
-	// Build an array of record types, with the format typeID => typeName
-	// The recordTypeInfos array will include things like Donation, Grant, Major 
-	// Gift, Matching Donation
-	foreach($donation->recordTypeInfos as $record_type) {
-		if ($record_type->available && $record_type->name != 'Master') {
-			$record_types[$record_type->recordTypeId] = $record_type->name;
-		}
+
+	// Calling methods on non-object variables is bad.
+	if (is_object($donation)) {
+	  // Build an array of record types, with the format typeID => typeName
+	  // The recordTypeInfos array will include things like Donation, Grant, Major 
+	  // Gift, Matching Donation
+	  foreach($donation->recordTypeInfos as $record_type) {
+		  if ($record_type->available && $record_type->name != 'Master') {
+			  $record_types[$record_type->recordTypeId] = $record_type->name;
+		  }
+	  }
 	}
 	
 	$record_types[] = '--Select One--';
@@ -403,19 +406,21 @@ function sf_donation_clone_map($nid, $new_nid) {
  * Implementaion of hook_nodeapi().
  */
 function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
-	if ($node->type == 'donation_form') {
+  if ($node->type == 'donation_form') {
   switch ($op) {
     case 'load':
       $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-			while($row = db_fetch_object($result)) {
+      while($row = db_fetch_object($result)) {
         $fields = unserialize($row->fields);
-        foreach($fields as $k => $v) {
-          $map['salesforce_map'][$v] = $k;  
+        if (is_array($fields)) {
+          foreach($fields as $k => $v) {
+            $map['salesforce_map'][$v] = $k;  
+          }
         }
         $map['single_recordtype_id'] = $row->single_recordtype_id;			   
         $map['recurring_recordtype_id'] = $row->recurring_recordtype_id;
-			}
-			return $map;
+      }
+	  return $map;
       break;
       
     case 'delete':
