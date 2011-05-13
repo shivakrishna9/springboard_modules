@@ -314,7 +314,7 @@ function page_wrappers_views_default_views() {
   $handler->override_option('header', '<a href="/node/add/page-wrapper">Create New Page Wrapper</a>');
   $handler->override_option('header_format', '1');
   $handler->override_option('header_empty', 1);
-  $handler->override_option('path', 'admin/build/page-wrappers');
+  $handler->override_option('path', '');
   $handler->override_option('menu', array(
     'type' => 'normal',
     'title' => 'Page Wrappers',

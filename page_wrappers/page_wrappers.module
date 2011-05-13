@@ -178,6 +178,13 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
       );
     }
   }
+  
+  // page_wrapper_node_form
+  if ($form_id == 'page_wrapper_node_form') {
+    // add some help the body (Template HTML) field
+    $form['body_field']['#suffix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt; or &lt;head&gt tags in the template. ');
+    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output.');
+  }
 }
 
 /**
