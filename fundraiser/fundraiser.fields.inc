@@ -127,7 +127,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	// determine the type of amount field to output
 	if ($donation_amounts) {
 		ksort($donation_amounts, SORT_NUMERIC); 
-		$formatted_amounts = _create_amount_options($donation_amounts, $show_other_amount);
+		$formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
 		
 		if ($show_other_amount) {		
 			// other amount
@@ -604,7 +604,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     }
   }
   else {
-    $formatted_amounts =  _create_amount_options($donation_amounts, $node->show_other_amount);
+    $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
     $field_type = db_result(db_query('SELECT type FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
 
     // If the current component is a select update with current donation amount values.
@@ -670,7 +670,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
  * Returns a keyed array containing the ID of the component created and a keyed array of values used to create the component.
  */
 function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = array(), $show_other_amount) {
-  $formatted_amounts = _create_amount_options($donation_amounts, $show_other_amount);
+  $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
   $amount = array();
   $amount['nid'] = $nid;
   $amount['pid'] = $pid; 

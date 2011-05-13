@@ -410,7 +410,7 @@ function _update_order_billing_info($order_id, &$form_state) {
 	$order->billing_country = $form_state['values']['country'];
 	$order->payment_method = 'credit';
 	$order->payment_details = array(
-		'cc_type' => _get_cc_type($form_state['values']['card_num']),
+		'cc_type' => _fundraiser_get_cc_type($form_state['values']['card_num']),
 		'cc_owner' => '',
 		'cc_number' => $form_state['values']['card_num'],
 		'cc_start_month' => '',

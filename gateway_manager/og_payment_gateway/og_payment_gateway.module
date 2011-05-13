@@ -127,7 +127,7 @@ function og_payment_gateway_filter_ahah() {
 function _og_payment_gateway_disable_validation(&$form) {
   foreach (element_children($form) as $child) {
     $form[$child]['#validated'] = TRUE;
-    _ahah_helper_disable_validation($form[$child]);
+    fundraiser_ahah_helper_disable_validation($form[$child]);
   }
 }
 
