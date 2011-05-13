@@ -153,15 +153,60 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
     'id' => 'ogone_ecommerce',
     'title' => t('Ogone Ecommerce'),
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
-    'credit' => 'ogone_ecommerce_charge',
+    'credit' => 'gm_ogone_ecommerce_charge',
+    'settings' => 'gm_ogone_ecommerce_settings_form',
   );
 
   return $gateways;
 }
 
-function ogone_ecommerce_charge($order_id, $amount, $data) {
+function gm_ogone_ecommerce_charge($order_id, $amount, $data) {
   drupal_goto('ogone/post/' . $order_id);
 }
+
+
+
+function gm_ogone_ecommerce_settings_form($config = array()) {
+  $form['login_credentials'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Login credentials'),
+  );
+  $form['login_credentials']['gm_ogone_ecommerce_pspid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('PSPID'),
+    '#description' => t('Ogone PSPID.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_pspid'],
+  );
+  
+  $form['security_keys'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Security keys'),
+    '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone.'),
+  );
+  $form['security_keys']['gm_ogone_ecommerce_shain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SHA-IN Pass Phrase'),
+    '#description' => t('Used to validate data sent to Ogone.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shain'],
+  );
+  $form['security_keys']['gm_ogone_ecommerce_shaout'] = array(
+    '#type' => 'textfield',
+    '#title' => t('SHA-OUT Pass Phrase'),
+    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shaout'],
+  );
+  
+  
+  
+  return $form;
+}
+
 
 
 
