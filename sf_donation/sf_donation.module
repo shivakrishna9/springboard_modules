@@ -20,24 +20,24 @@ function sf_donation_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-	$items['admin/store/orders/%uc_order/export'] = array(
-		'title' => t('Export to Salesforce'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('sf_donation_export_confirm_form'),
-		'access callback' => 'check_order_export_status',
-		'access arguments' => array(3),
-		'weight' => 20,
-		'type' => MENU_LOCAL_TASK,
-	);
-	
-	$items['fix_one_offs'] = array(
-		'title' => 'Fix one off donation errors',
-		'page callback' => 'fix_one_off_errors',
-		'access callback' => TRUE,
-		'type' => MENU_CALLBACK,
-	);
+  $items['admin/store/orders/%uc_order/export'] = array(
+    'title' => t('Export to Salesforce'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sf_donation_export_confirm_form'),
+    'access callback' => 'sf_donation_check_order_export_status',
+    'access arguments' => array(3),
+    'weight' => 20,
+    'type' => MENU_LOCAL_TASK,
+  );
 
-	return $items;
+  $items['fix_one_offs'] = array(
+    'title' => 'Fix one off donation errors',
+    'page callback' => 'fix_one_off_errors',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
 }
 
 /**
@@ -45,7 +45,7 @@ function sf_donation_menu() {
  */
 function sf_donation_fundraiser_form_insert($node, $components) {
   require_once 'donation.php';
-  $integrator = _current_donation_integrator();
+  $integrator = _sf_donation_current_donation_integrator();
   $default_map = DonationMapper::GetDefaultMap($integrator['id']);
   if (is_array($default_map)) {
     drupal_set_message('its an array:' . pritn_r($default_map, TRUE));
@@ -64,7 +64,7 @@ function sf_donation_fundraiser_form_insert($node, $components) {
 /**
  * Function to check whether or not an order has been exported to salesforce
  */
-function check_order_export_status($order) {
+function sf_donation_check_order_export_status($order) {
 	$sfid = db_result(db_query("SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d UNION
 		SELECT sf_opportunity_id AS sfid FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id, $order->order_id));
 
@@ -82,7 +82,7 @@ function sf_donation_export_confirm_form() {
 	$order_id = arg(3);
 	// get the user
 	$user = db_fetch_object(db_query("SELECT billing_first_name, billing_last_name FROM {uc_orders} WHERE order_id = %d", $order_id));
-	$donations = get_orders_for_export($order_id);
+	$donations = sf_donation_get_orders_for_export($order_id);
 	
 	// get recurring donations for close dates
 	$result = db_query("SELECT order_id, next_charge FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id);
@@ -121,7 +121,7 @@ function sf_donation_export_confirm_form_submit($form, &$form_state) {
 	
 	// get the webform submission id for mapped fields
 	$order_id = $form_state['values']['order_id'];
-	$donations = get_orders_for_export($order_id);
+	$donations = sf_donation_get_orders_for_export($order_id);
 	
 	// pop off the actual objects
 	$donations_to_update = array();
@@ -161,54 +161,62 @@ function sf_donation_export_confirm_form_submit($form, &$form_state) {
 	$form_state['redirect'] = 'admin/store/orders/' . $order_id;
 }
 
-function get_orders_for_export($order_id) {
-	
-	// only allow export en-mass (e.g., don't allow a single donation in a series, instead, get the whole series)
-	$count = db_result(db_query("SELECT count(order_id) FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
-	if ($count == 0) {
-		$order_id = db_result(db_query("SELECT master_order_id FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
-	}
-	
-	$result = db_query("SELECT f.sid, f.sfid, u.uid FROM {fundraiser_webform_order} f INNER JOIN 
-		{uc_orders} u on u.order_id = f.order_id WHERE f.order_id = %d", $order_id);
-	
-	while ($data = db_fetch_object($result)) {
-		$sid = $data->sid;
-		$uid = $data->uid;
-		$sfid = $data->sfid;
-	}
-	
-	$order_ids_to_export[] = array(
-		'order_id' => $order_id,
-		'sfid' => $sfid,
-	);
-	
-	// see if it is a recurring donation
-	$result = db_query("SELECT order_id, sf_opportunity_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id);
-	
-	while ($data = db_fetch_object($result)) {
-		$order_ids_to_export[] = array(
-			'order_id' => $data->order_id,
-			'sfid' => $data->sf_opportunity_id,
-		);
-	}
+/**
+ * 
+ * @param $order_id
+ * Int
+ * 
+ * @return 
+ * Array
+ */
+function sf_donation_get_orders_for_export($order_id) {
 
-	$donations = array();
-	
-	if ($sid) {
-		// load the user
-		$user = user_load($uid);
-		foreach($order_ids_to_export as $key => $value) {			
-			$donation = _create_single_donation($value['order_id'], $user, $sid);
-			// remove the name because we don't want to overwrite what was set orginally
-			unset($donation['fields']['Name']);
-			$donation['order_id'] = $value['order_id'];
-			$donation['fields']['Id'] = $value['sfid'];
-			$donations[] = $donation;
-		}
-	}
+  // only allow export en-mass (e.g., don't allow a single donation in a series, instead, get the whole series)
+  $count = db_result(db_query("SELECT count(order_id) FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  if ($count == 0) {
+    $order_id = db_result(db_query("SELECT master_order_id FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
+  }
 
-	return $donations;
+  $result = db_query("SELECT f.sid, f.sfid, u.uid FROM {fundraiser_webform_order} f INNER JOIN 
+    {uc_orders} u on u.order_id = f.order_id WHERE f.order_id = %d", $order_id);
+
+  while ($data = db_fetch_object($result)) {
+    $sid = $data->sid;
+    $uid = $data->uid;
+    $sfid = $data->sfid;
+  }
+
+  $order_ids_to_export[] = array(
+    'order_id' => $order_id,
+    'sfid' => $sfid,
+  );
+
+  // see if it is a recurring donation
+  $result = db_query("SELECT order_id, sf_opportunity_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id);
+
+  while ($data = db_fetch_object($result)) {
+    $order_ids_to_export[] = array(
+      'order_id' => $data->order_id,
+      'sfid' => $data->sf_opportunity_id,
+    );
+  }
+
+  $donations = array();
+
+  if ($sid) {
+    // load the user
+    $user = user_load($uid);
+    foreach($order_ids_to_export as $key => $value) {			
+      $donation = _sf_donation_create_single_donation($value['order_id'], $user, $sid);
+      // remove the name because we don't want to overwrite what was set orginally
+      unset($donation['fields']['Name']);
+      $donation['order_id'] = $value['order_id'];
+      $donation['fields']['Id'] = $value['sfid'];
+      $donations[] = $donation;
+    }
+  }
+
+  return $donations;
 }
 
 /**
@@ -243,7 +251,7 @@ function sf_donation_mapping_form($form_state, $node) {
   // Determine the current donation integrator (NPSP or Common Ground)
   // Returns the array of info that the integrator module returns in its
   // implementation of hook_donation_integration().
-  $integrator = _current_donation_integrator();
+  $integrator = _sf_donation_current_donation_integrator();
   
   // Get the integrator object type for donations
   // For Salesforce NPSP and Common Ground, this is 'Opportunity'
@@ -324,7 +332,7 @@ function sf_donation_mapping_form($form_state, $node) {
 	}
 	
 	// Get pre-defined field mappings
-	$mapping_config = _get_mapping_config();
+	$mapping_config = _sf_donation_get_mapping_config();
 	
 	// Add mapping dropdowns for the 'special' donation form fields, like Market
 	// Source, Campaign ID, and Referrers
@@ -357,7 +365,7 @@ function sf_donation_mapping_form_submit($form, &$form_state) {
 	// Determine the current donation integrator (NPSP or Common Ground)
   // Returns the array of info that the integrator module returns in its
   // implementation of hook_donation_integration().
-  $integrator = _current_donation_integrator();
+  $integrator = _sf_donation_current_donation_integrator();
 	$nid = $form['#node']->nid;
 	
 	// Remove old Salesforce mappings
@@ -465,74 +473,74 @@ function sf_donation_menu_alter(&$items) {
  * Implementation of hook_form_alter().
  */
 function sf_donation_form_alter(&$form, $form_state, $form_id) {
-	switch($form_id) {
-		case 'webform_component_edit_form':
-			if ($form['advanced']['form_key']['#default_value'] == 'cid') {
-				// turn it into a select field
-				// get campaigns from salesforce
-				$campaigns = _get_campaigns();
-				if (!empty($campaigns)) {
-					$form['value']['#type'] = 'select';
-					$form['value']['#options'] = $campaigns;
-				}
-			}
-			break;
-			
-		case 'salesforce_management_api_settings_form':
-			// get campaigns from salesforce
-			$campaigns = _get_campaigns();
-			$integrator = _current_donation_integrator();
-			if (empty($integrator)) {
-		    drupal_set_message('The <strong>Salesforce Donation Application</strong> has not been set. Some options in the Donation integration section will not be available until one has been selected.');
-			}
+  switch($form_id) {
+    case 'webform_component_edit_form':
+      if ($form['advanced']['form_key']['#default_value'] == 'cid') {
+        // turn it into a select field
+        // get campaigns from salesforce
+        $campaigns = _sf_donation_get_campaigns();
+        if (!empty($campaigns)) {
+          $form['value']['#type'] = 'select';
+          $form['value']['#options'] = $campaigns;
+        }
+      }
+      break;
+
+    case 'salesforce_management_api_settings_form':
+      // get campaigns from salesforce
+      $campaigns = _sf_donation_get_campaigns();
+      $integrator = _sf_donation_current_donation_integrator();
+      if (empty($integrator)) {
+        drupal_set_message('The <strong>Salesforce Donation Application</strong> has not been set. Some options in the Donation integration section will not be available until one has been selected.');
+      }
       $type = $integrator['donation_object']['type'];
-			array_unshift($campaigns, '-- Please select --');
-			
-			$form['sf_donation'] = array(
-	      '#type' => 'fieldset',
-	      '#title' => t('Donation integration'),
-	      '#description' => t('Fundraiser module integration settings.'),
-	      '#collapsible' => TRUE,
-	      '#collapsed' => TRUE,
-	      '#weight' => -1,
-	    );
+      array_unshift($campaigns, '-- Please select --');
 
-			$form['sf_donation']['sf_donation_debug'] = array(
-				'#type' => 'checkbox',
-				'#title' => t('Debug mode'),
-				'#description' => t('Log detailed information about each API call.'),
-				'#default_value' => variable_get('sf_donation_debug', 0),
-			);
+      $form['sf_donation'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Donation integration'),
+        '#description' => t('Fundraiser module integration settings.'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#weight' => -1,
+      );
 
-			$form['sf_donation']['sf_donation_default_campaign'] = array(
-				'#type' => 'select',
-				'#title' => t('Default campaign'),
-				'#description' => t('The default campaign to which donations will be assigned.'),
-				'#options' => $campaigns,
-				'#default_value' => variable_get('sf_donation_default_campaign', ''),
-			);
-			
-			// get a list of installed donation integration modules
-			$integrators = _donation_integration_list();
-			$options = array();
-			foreach ($integrators as $integrator) {
+      $form['sf_donation']['sf_donation_debug'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Debug mode'),
+        '#description' => t('Log detailed information about each API call.'),
+        '#default_value' => variable_get('sf_donation_debug', 0),
+      );
+
+      $form['sf_donation']['sf_donation_default_campaign'] = array(
+        '#type' => 'select',
+        '#title' => t('Default campaign'),
+        '#description' => t('The default campaign to which donations will be assigned.'),
+        '#options' => $campaigns,
+        '#default_value' => variable_get('sf_donation_default_campaign', ''),
+      );
+
+      // get a list of installed donation integration modules
+      $integrators = _sf_donation_integration_list();
+      $options = array();
+      foreach ($integrators as $integrator) {
         $options[$integrator['id']] = $integrator['name'];
-			}
-			
-			if (count($options) == 0) {
-			 $message = t('There are no donation integration modules enabled. Donations will not be exported until one is enabled');
-			 drupal_set_message($message);
-			 watchdog('salesforce donation', $message, NULL, WATCHDOG_INFO);
-			}
-			
-			$form['sf_donation']['sf_donation_backend'] = array(
+      }
+
+      if (count($options) == 0) {
+        $message = t('There are no donation integration modules enabled. Donations will not be exported until one is enabled');
+        drupal_set_message($message);
+        watchdog('salesforce donation', $message, NULL, WATCHDOG_INFO);
+      }
+
+      $form['sf_donation']['sf_donation_backend'] = array(
         '#type' => 'select',
         '#title' => t('Salesforce Donation Application'),
         '#description' => t('The application Salesforce is using to process donations.'),
         '#options' => $options,
         '#default_value' => variable_get('sf_donation_backend', 'npsp'),
-			);
-			
+      );
+
       $type = $integrator['donation_object']['type'];
       $record_types = salesforce_management_api_get_object_recordtypes($type);
       // default single donation record type
@@ -543,7 +551,7 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
         '#options' => $record_types,
         '#default_value' => variable_get('sf_donation_default_single_donation_recordtype', ''),
       );
-      
+
       // default recurring donation record type
       $form['sf_donation']['sf_donation_default_recurring_donation_recordtype'] = array(
         '#type' => 'select',
@@ -578,7 +586,7 @@ function sf_donation_hook_info() {
 function sf_donation_queue_salesforce_info($type, $action) {
 
 	// since donations do not use fieldmaps in a traditional sense, we manually assign their Salesforce types here
-	$integrator = _current_donation_integrator();
+	$integrator = _sf_donation_current_donation_integrator();
 	
 	switch ($type) {
 		
@@ -641,7 +649,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 			
 			switch ($batch['type']) {
 				case FUNDRAISER_SINGLE_DONATION_TYPE:
-					$object = _create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
+					$object = _sf_donation_create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
@@ -649,9 +657,9 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					break;
 					
 				case FUNDRAISER_RECURRING_DONATION_TYPE:
-					$donation_count = _recurring_donation_count($order_id, $user);
+					$donation_count = _sf_donation_recurring_donation_count($order_id, $user);
 					$donation_count++; // account for original order
-					$object = _create_recurring_donation($order_id, $user_ids, $donation_count);
+					$object = _sf_donation_create_recurring_donation($order_id, $user_ids, $donation_count);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
@@ -660,7 +668,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 				
 				case FUNDRAISER_DONATION_REFUND_TYPE:
 				  // Get a regular Donation opportunity object
-					$object = _create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
+					$object = _sf_donation_create_single_donation($order_id, $user_ids->salesforce_account_id, $details->sid);
 					if ($batch['action'] == 'update' && !empty($record->sfid)) {
 						$object['Id'] = $record->sfid;
 					}
@@ -699,7 +707,7 @@ function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 		case FUNDRAISER_DONATION_REFUND_TYPE:
 			if ($batch['action'] == create) {
 				// determine integrator
-	      $integrator = _current_donation_integrator();
+	      $integrator = _sf_donation_current_donation_integrator();
 	      $function = $integrator['donation_object']['postprocess'];
 	      $function($batch, $responses, $item_count);
 			}
@@ -708,7 +716,7 @@ function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 		case FUNDRAISER_RECURRING_DONATION_TYPE:
 
       // determine integrator
-      $integrator = _current_donation_integrator();
+      $integrator = _sf_donation_current_donation_integrator();
       $function = $integrator['recurring_donation_object']['postprocess'];
       $function($batch, $responses, $item_count);
 			
@@ -740,7 +748,7 @@ function sf_donation_export_opportunity_contact_roles() {
 	
 		// divide them up if we've got more than 200
 		$pieces = ceil(count($contact_roles) / 200);
-		$batches = array_split($contact_roles, $pieces);
+		$batches = _sf_donation_array_split($contact_roles, $pieces);
 		
 		foreach($batches as $batch) {
 			$response = _normalize_salesforce_response($sf->client->create($batch, 'OpportunityContactRole'));
@@ -763,20 +771,6 @@ function sf_donation_export_opportunity_contact_roles() {
 
 }
 
-/**
- * Splits an array into a specified number of new arrays
- */
-function array_split($array, $pieces = 2)
-{  
-	if ($pieces < 2) {
-		return array($array);
-	}
-	
-	$newCount = ceil(count($array)/$pieces);
-	$a = array_slice($array, 0, $newCount);
-	$b = array_split(array_slice($array, $newCount), $pieces-1);
-	return array_merge(array($a),$b);
-} 
 
 /**
  * Returns the salesforce ids of a given user (prevents having to call node_load())
@@ -814,9 +808,21 @@ function _sf_donation_load_user_salesforce_ids_from_order($order_id) {
 
 /**
  * Creates an array that represents a salesforce opportunity object
+ * 
+ * @param $order_id
+ * Int
+ * 
+ * @param $account_id
+ * Int
+ * 
+ * @param $sid
+ * Int
+ * 
+ * @return
+ * 
  */
-function _create_single_donation($order_id, $account_id, $sid) {
-  $integrator = _current_donation_integrator();
+function _sf_donation_create_single_donation($order_id, $account_id, $sid) {
+  $integrator = _sf_donation_current_donation_integrator();
   $function = $integrator['donation_object']['create'];
   return $function($order_id, $account_id, $sid);
 }
@@ -824,24 +830,17 @@ function _create_single_donation($order_id, $account_id, $sid) {
 /*
  * Creates an array that represents a salesforce recurring donation object
  */
-function _create_recurring_donation($order_id, $user_ids, $count) {
+function _sf_donation_create_recurring_donation($order_id, $user_ids, $count) {
 	$order = uc_order_load($order_id);
 
 	// determine integrator
-	$integrator = _current_donation_integrator();
+	$integrator = _sf_donation_current_donation_integrator();
   $function = $integrator['recurring_donation_object']['create'];
   $donation = $function($order, $user_ids, $count);
 	
   // clear the credit card cache
 	uc_credit_cache('clear');
 	return $donation;
-}
-
-/**
- * Returns the ISO code for a give country id.
- */
-function _convert_billing_country($country_id) {
-	return db_result(db_query("SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d", $country_id));
 }
 
 /* 
@@ -977,7 +976,7 @@ function sf_donation_canel_recurring_donations($order_id) {
  * Loads the donation -> salesforce map for this webform and populates it
  * with data from the actual webform submission
  */
-function _load_salesforce_map($sid) {
+function _sf_donation_load_salesforce_map($sid) {
 	$map = array();
 	
 	$results = db_query(
@@ -1001,14 +1000,15 @@ function _load_salesforce_map($sid) {
 /*
  * Gets the number of times a given donation recurs
  */
-function _recurring_donation_count($order_id) {
+function _sf_donation_recurring_donation_count($order_id) {
 	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d", $order_id));
 }
 
 /*
  * Updates a webform created order with the id from salesforce
+ * TODO: is this function still in use?
  */
-function _update_webform_order($order_id, $sfid) {
+function _sf_donation_update_webform_order($order_id, $sfid) {
 	db_query("update {fundraiser_webform_order} set sfid = '%s' where order_id = %d", $sfid, $order_id);
 }
 
@@ -1062,7 +1062,7 @@ function theme_sf_donation_mapping_form($form) {
  * Get In Progress campaigns from Salesforce
  * Returns an array in the format campaignID => campaignName
  */
-function _get_campaigns() {
+function _sf_donation_get_campaigns() {
 
 	$sf = salesforce_management_api_connect();
 	$campaigns = array();
@@ -1108,9 +1108,9 @@ function sf_donation_mail($key, &$message, $params) {
  * Returns an array of predefined mapped fields so that they do not show up twice 
  * in the mapping list.
  */
-function _get_mapping_config() {
-	$fields = array(
-		'predefined' => array(
+function _sf_donation_get_mapping_config() {
+  $fields = array(
+    'predefined' => array(
       'card_number' => 'CC_Last_4__c',
       'card_expiration_date' => 'CC_Exp_Month__c',
       'amount' => 'Amount',
@@ -1128,15 +1128,15 @@ function _get_mapping_config() {
       'email' => 'NOT MAPPED',
       'card_expiration_month' => 'NOT MAPPED',
       'card_expiration_year' => 'NOT MAPPED',
-		),
-	);
-	return $fields;
+    ),
+  );
+  return $fields;
 }
 
 /**
  * Returns information about all installed donation integrators.
  */
-function _donation_integration_list() {
+function _sf_donation_integration_list() {
   $integrators = module_invoke_all('donation_integration');
   return $integrators;
 }
@@ -1144,8 +1144,8 @@ function _donation_integration_list() {
 /**
  * Returns the currently configured donation integrator.
  */
-function _current_donation_integrator() {
-  $integrators = _donation_integration_list();
+function _sf_donation_current_donation_integrator() {
+  $integrators = _sf_donation_integration_list();
   $current_integrator = variable_get('sf_donation_backend', 'npsp');
   // find the currently selected integrator and return it
   foreach ($integrators as $integrator) {
@@ -1153,7 +1153,7 @@ function _current_donation_integrator() {
       return $integrator;
     }
   }
-  
+
   return NULL;
 }
 
@@ -1180,3 +1180,18 @@ function _sf_donation_get_recurring_details($order_id) {
   
   return $recurring_info;
 }
+
+/**
+ * Splits an array into a specified number of new arrays
+ */
+function _sf_donation_array_split($array, $pieces = 2)
+{  
+	if ($pieces < 2) {
+		return array($array);
+	}
+	
+	$newCount = ceil(count($array)/$pieces);
+	$a = array_slice($array, 0, $newCount);
+	$b = _sf_donation_array_split(array_slice($array, $newCount), $pieces-1);
+	return array_merge(array($a),$b);
+} 
