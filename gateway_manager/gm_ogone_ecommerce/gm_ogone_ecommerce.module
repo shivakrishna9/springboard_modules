@@ -152,6 +152,7 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
     'credit' => 'gm_ogone_ecommerce_charge',
     'settings' => 'gm_ogone_ecommerce_settings_form',
+    'hide_cc_fields' => TRUE,
   );
 
   return $gateways;
@@ -421,3 +422,19 @@ function _gm_ogone_ecommerce_get_config_for_order($order_or_id) {
   }
   return $config;
 }
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function gm_ogone_ecommerce_form_alter(&$form, &$form_state, $form_id) {
+  if (strpos($form_id, 'webform_client_form_') === 0) {
+    if ($form['#node']->type == 'donation_form' && $form['#node']->gateway > 0) {
+      $gateway = gateway_manager_gateway_info($form['#node']->gateway);
+      if ($gateway['gateway_details']['hide_cc_fields']) {
+        unset($form['submitted']['credit_card_information']);
+      }
+    }
+  }
+}
+

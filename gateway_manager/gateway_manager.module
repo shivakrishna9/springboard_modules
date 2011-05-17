@@ -97,11 +97,13 @@ function gateway_manager_gateway_info($id) {
   $gateway_info = array();
   
   $gateway_info['config'] = unserialize($gateway->config);
+  $gateway_info['type'] = $gateway->type;
   
   foreach($gateway_types as $options) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
       $gateway_info['refund_function'] = $options['credit_refund'];
+      $gateway_info['gateway_details'] = $options;
     }
   }
   
