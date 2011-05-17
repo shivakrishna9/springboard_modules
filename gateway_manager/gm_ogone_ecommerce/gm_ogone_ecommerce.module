@@ -6,11 +6,8 @@
  * Todo:
  *  Return callbacks:
  *    Redirect user to order page? Get them to the confirmation page somewhow
- *  Admin interface to set PSPID, sha in and sha out for both test and production, test/prod flag
  *  Remove credit card field from the donation form
- *  Webform submissions not being saved
  *  Run $_GET vars through check_plain
- *  Add live/test switch to config on gateway, and check when pulling config vals
  */
  
 /**
@@ -71,14 +68,9 @@ function gm_ogone_ecommerce_build_form($order) {
  * Return the form for the auto-submit form that goes to Ogone
  */
 function gm_ogone_ecommerce_post_form(&$form_state, $order) {
-  $gateway = gateway_manager_gateway_for_order($order);
-  $gateway_config = $gateway['config'];
+  $gateway_config = _gm_ogone_ecommerce_get_config_for_order($order);
   
-  
-  $url = $gateway_config['gm_ogone_ecommerce_url_test'];
-  $sha_in_phrase = $gateway_config['gm_ogone_ecommerce_shain_test'];
-  
-  //Make SHA1 string for pre payment verification
+  // Gather arguments that will be sent
   $arguments = array(
     'ACCEPTURL' => '',
     'AMOUNT' => $order->order_total * 100,
@@ -104,7 +96,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'OWNERTOWN' => $order->billing_city,
     'OWNERZIP' => $order->billing_postal_code,
     'PM' => '',
-    'PSPID' => $gateway_config['gm_ogone_ecommerce_pspid'],
+    'PSPID' => $gateway_config['pspid'],
     'TBLBGCOLOR' => '',
     'TBLTXTCOLOR' => '',
     'TITLE' => '',
@@ -115,14 +107,19 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'EXCEPTIONURL' => url('ogone/feedback/exception', array('absolute' => TRUE)),
     'CANCELURL' => url('ogone/feedback/cancel', array('absolute' => TRUE)),
   );
+  // Sort the arguments by the key. This needs to be done for the SHA-1 verification
   ksort($arguments);
   
   $sha1_signature = '';
+
+  // Loop over the arguments being sent. For each, add a hidden form value, and
+  // add it to a string that will be used to calculate the SHA-1 for the values
+  // being sent.
   foreach ($arguments as $param_name => $param_value) {
     $param_value = trim($param_value);
     $param_name = strtoupper($param_name);
     if (strlen($param_value) > 0) {
-        $sha1_signature .= $param_name . '=' . $param_value . $sha_in_phrase;
+        $sha1_signature .= $param_name . '=' . $param_value . $gateway_config['sha_in'];
         $form[$param_name] = array(
           '#type' => 'hidden',
           '#value' => $param_value,
@@ -135,7 +132,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
   );
   
   
-  $form['#action'] = $url;
+  $form['#action'] = $gateway_config['url'];
   $form['#id'] = 'ogone-ecommerce-post';
   
   return $form;
@@ -145,7 +142,9 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
 /*******************************************************************************
  * Hook Functions (Ubercart)
  ******************************************************************************/
-
+/**
+ * Implementation of hook_payment_gateway_managed().
+ */
 function gm_ogone_ecommerce_payment_gateway_managed() {
   $gateways[] = array(
     'id' => 'ogone_ecommerce',
@@ -158,33 +157,51 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
   return $gateways;
 }
 
+/**
+ * Charge callback. This is called from fundraiser_webform_submit()
+ */
 function gm_ogone_ecommerce_charge($order_id, $amount, $data) {
   drupal_goto('ogone/post/' . $order_id);
 }
 
 
-
+/**
+ * Settings form for an Ogone gateway
+ */
 function gm_ogone_ecommerce_settings_form($config = array()) {
-  $form['login_credentials'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Login credentials'),
-  );
-  $form['login_credentials']['gm_ogone_ecommerce_pspid'] = array(
+  $form['gm_ogone_ecommerce_pspid'] = array(
     '#type' => 'textfield',
     '#title' => t('PSPID'),
     '#description' => t('Ogone PSPID.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_ecommerce_pspid'],
+    '#required' => TRUE,
   );
+
+
+  $form['gm_ogone_ecommerce_transaction_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Transaction Mode'),
+    '#description' => t('Should transactions be made in a live or test environment? This setting will determine which of the options below are used: live or test.'),
+    '#options' => array(
+      'test' => t('Test'),
+      'live' => t('Live'),
+    ),
+    '#default_value' => $config['gm_ogone_ecommerce_transaction_mode'],
+    '#required' => TRUE,
+  );
+  
   
   $form['security_keys'] = array(
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
     '#title' => t('Security keys'),
     '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone. Live and test transactions must use different keys. These keys are configured in the Ogone admin, under Technical Information. The SHA-IN phrase is set on the "Data and origin verification tab," and the SHA-OUT is set on the "Transaction Feedback" tab.'),
   );
   
   $form['security_keys']['test'] = array(
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
     '#title' => t('Test'),
     '#description' => t('Security keys used for test transactions'),
   );  
@@ -205,6 +222,7 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
   
   $form['security_keys']['live'] = array(
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
     '#title' => t('Live'),
     '#description' => t('Security keys used for live transactions'),
   );  
@@ -226,6 +244,7 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
   
   $form['urls'] = array(
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
     '#title' => t('URLs'),
     '#description' => t('The URLs to use for test and live transactions. The defaults are https://secure.ogone.com/ncol/test/orderstandard.asp for test, and https://secure.ogone.com/ncol/prod/orderstandard.asp for live. Clearing either field will reset it to the default.')
   );
@@ -266,7 +285,7 @@ function gm_ogone_ecommerce_feedback_accepted() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Accepted<pre>" . print_r($_GET, true) . '</pre>';
+  return "Accepted<pre>" . print_r($payment_values, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_declined() {
@@ -279,7 +298,7 @@ function gm_ogone_ecommerce_feedback_declined() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Declined<pre>" . print_r($_GET, true) . '</pre>';
+  return "Declined<pre>" . print_r($payment_values, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_exception() {
@@ -292,7 +311,7 @@ function gm_ogone_ecommerce_feedback_exception() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Exception<pre>" . print_r($_GET, true) . '</pre>';
+  return "Exception<pre>" . print_r($payment_values, true) . '</pre>';
 }
 
 function gm_ogone_ecommerce_feedback_cancelled() {
@@ -305,7 +324,7 @@ function gm_ogone_ecommerce_feedback_cancelled() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Cancelled<pre>" . print_r($_GET, true) . '</pre>';
+  return "Cancelled<pre>" . print_r($payment_values, true) . '</pre>';
 }
 
 
@@ -313,8 +332,8 @@ function gm_ogone_ecommerce_feedback_cancelled() {
  * Check if the SHA value from the payment processor is correct
  */
 function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
-  $gateway = gateway_manager_gateway_for_order_id($return_values['ORDERID']);
-  $sha_out_phrase = $gateway['config']['gm_ogone_ecommerce_shaout_test'];
+  $gateway_config = _gm_ogone_ecommerce_get_config_for_order($return_values['ORDERID']);
+  $sha_out_phrase = $gateway_config['sha_out'];
   
   ksort($return_values);
   
@@ -325,7 +344,7 @@ function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
     }
   }
   $sha1_signature = sha1($sha1_signature);
-  if (strtoupper($sha1_signature) == $_GET['SHASIGN']) {
+  if (strtoupper($sha1_signature) == $return_values['SHASIGN']) {
     return true;
   }
   else {
@@ -364,4 +383,40 @@ function _gm_ogone_ecommerce_get_returned_values() {
     );
   }
   return $return_values;
+}
+
+
+/**
+ * Get the Ogone config variables for the given order
+ * 
+ * This function checks if the gateway is configured to use live or test
+ * transactions, and returns the appropriate variables.
+ * 
+ * @param $order_or_id
+ *   Ubercart order object, or an order ID
+ * @return
+ *   Array of gateway config info
+ */
+function _gm_ogone_ecommerce_get_config_for_order($order_or_id) {
+  // Load gateway details
+  $gateway = gateway_manager_gateway_for_order($order_or_id);
+  $gateway_config = $gateway['config'];
+ 
+  $config = array(
+    'pspid' => $gateway_config['gm_ogone_ecommerce_pspid'],
+  );
+  
+  // If using the live transaction mode, load live vars
+  if ($gateway_config['gm_ogone_ecommerce_transaction_mode'] == 'live') {
+    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_live'];
+    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_live'];
+    $config['url'] = $gateway_config['gm_ogone_ecommerce_url_live'];
+  }
+  // Not using live transactions, so use test vars
+  else {
+    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_test'];
+    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_test'];
+    $config['url'] = $gateway_config['gm_ogone_ecommerce_url_test'];
+  }
+  return $config;
 }

@@ -356,21 +356,24 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
 
 
 /**
- * Get the payment gateway for the given order object
+ * Get the payment gateway for the given order object or order ID
+ * 
+ * @param $order_or_orderid
+ *   Ubercart order object, or an order ID: either will be handled
+ * 
+ * @return
+ *   Array of gateway details
  */
-function gateway_manager_gateway_for_order($order) {
+function gateway_manager_gateway_for_order($order_or_orderid) {
+  if (is_object($order_or_orderid)) {
+    $order = $order_or_orderid;
+  }
+  elseif ($order_or_orderid > 0) {
+    $order = uc_order_load($order_or_orderid);
+  }
+
   if ($order->data['gateway'] > 0) {
     return gateway_manager_gateway_info($order->data['gateway']);
   }
   return null;
-}
-
-/**
- * Get the payment gateway for the given order ID
- * 
- * This function just loads the order object and calls
- * gateway_manager_gateway_for_order()
- */
-function gateway_manager_gateway_for_order_id($order_id) {
-  return gateway_manager_gateway_for_order(uc_order_load($order_id));
 }
