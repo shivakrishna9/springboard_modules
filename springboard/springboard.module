@@ -272,7 +272,7 @@ function springboard_menu() {
   );
 
   // Add a landing page for additonal configuration tasks if SF integration is enabled during installation.
-  if (variable_get('springboard_config_homepage', 0)) {
+  /*if (variable_get('springboard_config_homepage', 0)) {
     $items['springboard'] = array(
       'title' => t('Welcome to Springboard'),
       'description' => t('Lorum ipsum dolor amet.'),
@@ -281,7 +281,7 @@ function springboard_menu() {
       'access arguments' => array('administer springboard'),
       'type' => MENU_NORMAL_ITEM,
     );
-  }
+  }*/
   return $items;
 }
 
