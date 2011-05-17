@@ -339,7 +339,7 @@ function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
   
   $sha1_signature = '';
   foreach ($return_values as $param_name => $param_value) {
-    if (strlen($param_value) > 0) {
+    if (strlen($param_value) > 0 && $param_name != 'SHASIGN') {
       $sha1_signature .= $param_name . '=' . $param_value . $sha_out_phrase;
     }
   }
@@ -380,6 +380,7 @@ function _gm_ogone_ecommerce_get_returned_values() {
       'STATUS' => trim($_GET['STATUS']),
       'TRXDATE' => trim($_GET['TRXDATE']),
       'VC' => trim($_GET['VC']),
+      'SHASIGN' => trim($_GET['SHASIGN']),
     );
   }
   return $return_values;
