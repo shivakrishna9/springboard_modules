@@ -353,3 +353,24 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
   $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
   $details['gateway'] = $gateway->name;
 }
+
+
+/**
+ * Get the payment gateway for the given order object
+ */
+function gateway_manager_gateway_for_order($order) {
+  if ($order->data['gateway'] > 0) {
+    return gateway_manager_gateway_info($order->data['gateway']);
+  }
+  return null;
+}
+
+/**
+ * Get the payment gateway for the given order ID
+ * 
+ * This function just loads the order object and calls
+ * gateway_manager_gateway_for_order()
+ */
+function gateway_manager_gateway_for_order_id($order_id) {
+  return gateway_manager_gateway_for_order(uc_order_load($order_id));
+}

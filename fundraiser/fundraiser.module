@@ -1400,6 +1400,11 @@ function fundraiser_webform_submit($form, &$form_state) {
   foreach ($additional_order_fields as $field => $value) {
     $order->data[$field] = $value;
   }
+  
+  if (module_exists('gateway_manager')) {
+ 	  $order->data['gateway'] = $node->gateway;
+  }
+ 	
 
  	// cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);

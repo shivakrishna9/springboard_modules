@@ -10,8 +10,7 @@
  *  Remove credit card field from the donation form
  *  Webform submissions not being saved
  *  Run $_GET vars through check_plain
- * 
- * The $data array has gateway config info, but it's needed later on (after the goto) when the form is being built
+ *  Add live/test switch to config on gateway, and check when pulling config vals
  */
  
 /**
@@ -72,8 +71,12 @@ function gm_ogone_ecommerce_build_form($order) {
  * Return the form for the auto-submit form that goes to Ogone
  */
 function gm_ogone_ecommerce_post_form(&$form_state, $order) {
-  $url = 'https://secure.ogone.com/ncol/test/orderstandard.asp';
-  $sha_in_phrase = "thisismyINpassphrase?";
+  $gateway = gateway_manager_gateway_for_order($order);
+  $gateway_config = $gateway['config'];
+  
+  
+  $url = $gateway_config['gm_ogone_ecommerce_url_test'];
+  $sha_in_phrase = $gateway_config['gm_ogone_ecommerce_shain_test'];
   
   //Make SHA1 string for pre payment verification
   $arguments = array(
@@ -101,7 +104,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'OWNERTOWN' => $order->billing_city,
     'OWNERZIP' => $order->billing_postal_code,
     'PM' => '',
-    'PSPID' => 'brockbolandcommerce',
+    'PSPID' => $gateway_config['gm_ogone_ecommerce_pspid'],
     'TBLBGCOLOR' => '',
     'TBLTXTCOLOR' => '',
     'TITLE' => '',
@@ -241,9 +244,6 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#default_value' => (!empty($config['gm_ogone_ecommerce_url_live'])) ? $config['gm_ogone_ecommerce_url_live'] : 'https://secure.ogone.com/ncol/prod/orderstandard.asp',
   );
   
-  
-  
-  
   return $form;
 }
 
@@ -260,7 +260,7 @@ function gm_ogone_ecommerce_feedback_accepted() {
   $order_id = $payment_values['orderID'];
   $transaction_id = $payment_values['PAYID'];
 
-  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_accept($order_id, $transaction_id);
   }
   else {
@@ -273,7 +273,7 @@ function gm_ogone_ecommerce_feedback_declined() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
   $order_id = $payment_values['orderID'];
   
-  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_decline($order_id, $message);
   }
   else {
@@ -286,7 +286,7 @@ function gm_ogone_ecommerce_feedback_exception() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
   $order_id = $payment_values['orderID'];
   
-  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_exception($order_id, '');
   }
   else {
@@ -299,7 +299,7 @@ function gm_ogone_ecommerce_feedback_cancelled() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
   $order_id = $payment_values['orderID'];
   
-  if (_gm_ogone_ecommerce_check_feedback_sha()) {
+  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_cancel($order_id);
   }
   else {
@@ -312,9 +312,10 @@ function gm_ogone_ecommerce_feedback_cancelled() {
 /**
  * Check if the SHA value from the payment processor is correct
  */
-function _gm_ogone_ecommerce_check_feedback_sha() {
-  $sha_out_phrase = "thisismyOUTpassphrase!";
-  $return_values = _gm_ogone_ecommerce_get_returned_values();
+function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
+  $gateway = gateway_manager_gateway_for_order_id($return_values['ORDERID']);
+  $sha_out_phrase = $gateway['config']['gm_ogone_ecommerce_shaout_test'];
+  
   ksort($return_values);
   
   $sha1_signature = '';
