@@ -1,22 +1,13 @@
 <?php
 
-/**
- * Implements hook_perm.
- */
-function fundraiser_confirmation_perm() {
-
-}
-
-/**
- * Confirmation template node type
- */
+include_once('email_confirmation.features.inc');
 
 /**
  * Implements hook_form_alter().
  */
-function fundraiser_confirmation_form_alter(&$form, $form_state, $form_id) {
+function email_confirmation_form_alter(&$form, $form_state, $form_id) {
   drupal_set_message('form id:' . $form_id);
-  if ($form_id == '') {
+  if ($form_id == 'donation_form_node_form') {
    /* email template configuration, see #133*/
   // TODO: replace variable_get() with appropriate $node property
   $form['confirmation'] = array(
@@ -28,7 +19,7 @@ function fundraiser_confirmation_form_alter(&$form, $form_state, $form_id) {
   $form['confirmation']['email_template'] = array(
     '#type' => 'select',
     '#title' => t('Confirmation Email Template'),
-    '#options' => fundraiser_confirmation_list_templates(),
+    '#options' => email_confirmation_list_templates(),
   );
   $form['confirmation']['confirmation_from_name'] = array(
     '#type' => 'textfield',
@@ -74,7 +65,7 @@ function fundraiser_confirmation_form_alter(&$form, $form_state, $form_id) {
 /**
  * Lists available confirmation templates based on user's group membership and other permissions
  */
-function fundraiser_confirmation_list_templates() {
+function email_confirmation_list_templates() {
   global $user;
   return array();
 }
