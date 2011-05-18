@@ -294,16 +294,23 @@ function secure_prepopulate_parse_qs($qs) {
   if (module_exists('uc_store')) {
     // look for billing_country, billing_state specifically
     if (array_key_exists('billing_country', $result)) {
-      $result['billing_country'] = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $result['billing_country']));
+      $result['billing_country'] = _secure_prepopulate_convert_country($result['billing_country']);
     }
     if (array_key_exists('billing_state', $result)) {
-      $result['billing_state'] = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $result['billing_state']));
+      $result['billing_state'] = _secure_prepopulate_convert_state($result['billing_state']);
+    }
+    if (array_key_exists('country', $result)) {
+      $result['country'] = _secure_prepopulate_convert_country($result['country']);
+    }
+    if (array_key_exists('state', $result)) {
+      $result['state'] = _secure_prepopulate_convert_country($result['state']);
     }
   }
   
   // return an array of key/value pairs or an empty array
   return $result;
 }
+
 
 /**
  * Determines if an encrypted query string has already been used.
@@ -345,6 +352,36 @@ function secure_prepopulate_expire($qs) {
  */
 function secure_prepopulate_clear_session($nid) {
   unset($_SESSION['secure_prepopulate_values'][$nid]);
+}
+
+/**
+ * Converts a 2 character iso country code to an ubercart country id.
+ *
+ * @parm $country
+ *   The country code to convert.
+ */
+function _secure_prepopulate_convert_country($country) {
+  $code = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $country));
+  if (!empty($code)) {
+    return $code;
+  }
+  // nothing found, return original
+  return $country;
+}
+
+/**
+ * Converts a 2 character state abbreviation to an ubercart zone code.
+ *
+ * @parm $state
+ *   The state abbreviation to convert.
+ */
+function _secure_prepopulate_convert_state($state) {
+  $code = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $state));  
+  if (!empty($code)) {
+    return $code;
+  }
+  // nothing found, return original
+  return $state;
 }
 
 /****************************************************************
