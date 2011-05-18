@@ -141,21 +141,24 @@ function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
  */
 function secure_prepopulate_after_build($form, &$form_state) {
   $node = $form['#parameters'][2];
-
+  
   // see if the user has any pre-popluate data for this node in their session
   $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
   $precedence = variable_get('secure_prepopulate_precedence', 'url');
   $components = $node->webform['components'];
-
   // create an data structure that will tell us exactly where each webform component lives in the FAPI array
   $component_hierarchy = _secure_prepopulate_parse_form($node->nid, $components);
-  
+
   // try to prepopulate any fields found in the prepopulate_data array
   foreach ($prepopulate_data as $form_key => $value) {
     if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
       switch ($field['#type']) {
         case 'checkboxes':
           $value = array($value);
+          // if single checkbox, there will be a inner checkbox field
+          if (array_key_exists($form_key, $field)) {
+            $field[$form_key]['#value'] = $value;
+          }
           break;
         case 'date':
           $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
