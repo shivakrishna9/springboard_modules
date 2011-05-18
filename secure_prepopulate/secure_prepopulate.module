@@ -153,12 +153,18 @@ function secure_prepopulate_after_build($form, &$form_state) {
   foreach ($prepopulate_data as $form_key => $value) {
     if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
       switch ($field['#type']) {
-        case 'checkboxes':
-          $value = array($value);
-          // if single checkbox, there will be a inner checkbox field
-          if (array_key_exists($form_key, $field)) {
-            $field[$form_key]['#value'] = $value;
+        case 'radios':
+          // radios will have individual radio form fields inside them
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#value'] = $value; 
           }
+          break;
+        case 'checkboxes':
+          // if single checkbox, there will be a inner checkbox field
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#value'] = $value;
+          }
+          $value = array($value);
           break;
         case 'date':
           $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
