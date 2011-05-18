@@ -43,8 +43,6 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
  * Implementation of hook_preprocess_page().
  */
 function page_wrappers_preprocess_page(&$vars) {
-  //$css = drupal_add_css();
-  //print "<pre>".print_r($css, TRUE)."</pre>";
   // get out of here if we're on the edit page
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
@@ -64,7 +62,21 @@ function page_wrappers_preprocess_page(&$vars) {
       $wrapper_node = node_load($vars['node']->wrapper);
       // if the wrapper has it's own stylesheet, overwrite all others
       if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
-        $vars['styles'] = '<link type="text/css" rel="stylesheet" media="all" href="/' . $wrapper_node->field_css_file[0]['filepath'] . '?z" />';
+        $stylesheets = drupal_add_css();
+        // remove module stylesheets
+        unset($stylesheets['all']['module'] ['modules/aggregator/aggregator.css']);
+        unset($stylesheets['all']['module'] ['modules/node/node.css']);
+        unset($stylesheets['all']['module'] ['modules/system/defaults.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system-menus.css']);
+        unset($stylesheets['all']['module'] ['modules/taxonomy/taxonomy.css']);
+        unset($stylesheets['all']['module'] ['modules/user/user.css']);
+        // remove the theme stylesheet
+        unset($stylesheets['all']['theme']);
+        // add the new theme stylesheet
+        $stylesheets['all']['theme'][$wrapper_node->field_css_file[0]['filepath']] = 1;
+        // regenerate styles
+        $vars['styles'] = drupal_get_css($stylesheets);
       }
       
       // add javascript if available
