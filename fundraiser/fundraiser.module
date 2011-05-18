@@ -315,7 +315,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
-    '#weight' => -5,
+    '#weight' => -5.1,
     '#maxlength' => 255,
   );
   $form['internal_name'] = array(
@@ -323,15 +323,17 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => t('Internal Name'),
     '#required' => TRUE,
     '#default_value' => $node->internal_name,
-    '#weight' => -4.99,
+    '#weight' => -5.0,
     '#maxlength' => 255,
   );
 
   /* email template configuration, see #133*/
+  // TODO: replace variable_get() with appropriate $node property
   $form['confirmation'] = array(
-    '#type' => 'fielset',
+    '#type' => 'fieldset',
     '#title' => t('Email Confirmation'),
     '#collapsible' => TRUE,
+    '#weight' => -4.99,
   );
   $form['confirmation']['email_template'] = array(
     '#type' => 'select',
@@ -371,10 +373,11 @@ function fundraiser_form($node, $edit = NULL) {
     '#default_value' => variable_get('', NULL),
   );
   // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
-  $form['confirmation']['preview'] = array(
+  $form['confirmation_fieldset']['preview'] = array(
     '#type' => 'button',
     '#value' => t('Preview Confirmation'),
   );
+  
   /* add amount #aha */
   $form['amount_wrapper'] = array(
     '#type' => 'fieldset',
@@ -2489,4 +2492,13 @@ function _fundraiser_array_smart_merge($array, $override) {
 function fundraiser_validate_email($mail) {
 	return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
+}
+
+
+/**
+ * Lists available confirmation templates based on user's group membership and other permissions
+ */
+function fundraiser_list_confirmation_templates() {
+  global $user;
+  return array();
 }
