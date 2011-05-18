@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * Implements hook_perm.
+ */
+function fundraiser_confirmation_perm() {
+
+}
+
+/**
+ * Confirmation template node type
+ */
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_confirmation_form_alter(&$form, $form_state, $form_id) {
+  drupal_set_message('form id:' . $form_id);
+  if ($form_id == '') {
+   /* email template configuration, see #133*/
+  // TODO: replace variable_get() with appropriate $node property
+  $form['confirmation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Email Confirmation'),
+    '#collapsible' => TRUE,
+    '#weight' => -4.99,
+  );
+  $form['confirmation']['email_template'] = array(
+    '#type' => 'select',
+    '#title' => t('Confirmation Email Template'),
+    '#options' => fundraiser_confirmation_list_templates(),
+  );
+  $form['confirmation']['confirmation_from_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('From Name'),
+    '#default_value' => variable_get('', NULL),
+  );
+  $form['confirmation']['confirmation_from_email'] = array(
+    '#type' => 'From Email',
+    '#title' => t('textfield'),
+    '#default_value' => variable_get('', NULL),
+  );
+  $form['confirmation']['confirmation_reply_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reply To Email'),
+    '#default_value' => variable_get('', NULL),
+  );
+  $form['confirmation']['confirmation_bcc_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('BCC Email'),
+    '#default_value' => variable_get('', NULL),
+  );
+  // TODO: add input type filters?
+  // TODO: list available tokens in description of text fields or as separate form element.
+  $form['confirmation']['confirmation_html_email_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('HTML Email Message'),
+    '#default_value' => variable_get('', NULL),
+  );
+  $form['confirmation']['confirmation_text_email_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Text Email Message'),
+    '#default_value' => variable_get('', NULL),
+  );
+  // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
+  $form['confirmation_fieldset']['preview'] = array(
+    '#type' => 'button',
+    '#value' => t('Preview Confirmation'),
+  );
+  } 
+}
+
+
+/**
+ * Lists available confirmation templates based on user's group membership and other permissions
+ */
+function fundraiser_confirmation_list_templates() {
+  global $user;
+  return array();
+}
