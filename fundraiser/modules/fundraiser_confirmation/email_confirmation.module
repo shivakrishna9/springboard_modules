@@ -8,56 +8,57 @@ include_once('email_confirmation.features.inc');
 function email_confirmation_form_alter(&$form, $form_state, $form_id) {
   drupal_set_message('form id:' . $form_id);
   if ($form_id == 'donation_form_node_form') {
-   /* email template configuration, see #133*/
-  // TODO: replace variable_get() with appropriate $node property
-  $form['confirmation'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Email Confirmation'),
-    '#collapsible' => TRUE,
-    '#weight' => -4.99,
-  );
-  $form['confirmation']['email_template'] = array(
-    '#type' => 'select',
-    '#title' => t('Confirmation Email Template'),
-    '#options' => email_confirmation_list_templates(),
-  );
-  $form['confirmation']['confirmation_from_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('From Name'),
-    '#default_value' => variable_get('', NULL),
-  );
-  $form['confirmation']['confirmation_from_email'] = array(
-    '#type' => 'From Email',
-    '#title' => t('textfield'),
-    '#default_value' => variable_get('', NULL),
-  );
-  $form['confirmation']['confirmation_reply_email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Reply To Email'),
-    '#default_value' => variable_get('', NULL),
-  );
-  $form['confirmation']['confirmation_bcc_email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('BCC Email'),
-    '#default_value' => variable_get('', NULL),
-  );
-  // TODO: add input type filters?
-  // TODO: list available tokens in description of text fields or as separate form element.
-  $form['confirmation']['confirmation_html_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('HTML Email Message'),
-    '#default_value' => variable_get('', NULL),
-  );
-  $form['confirmation']['confirmation_text_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Text Email Message'),
-    '#default_value' => variable_get('', NULL),
-  );
-  // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
-  $form['confirmation_fieldset']['preview'] = array(
-    '#type' => 'button',
-    '#value' => t('Preview Confirmation'),
-  );
+     /* email template configuration, see #133*/
+    // TODO: replace variable_get() with appropriate $node property
+    $form['confirmation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Email Confirmation'),
+      '#collapsible' => TRUE,
+      '#weight' => -4.99,
+    );
+    $form['confirmation']['email_template'] = array(
+      '#type' => 'select',
+      '#title' => t('Confirmation Email Template'),
+      '#options' => email_confirmation_list_templates(),
+    );
+    $form['confirmation']['confirmation_from_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('From Name'),
+      '#default_value' => variable_get('', NULL),
+    );
+    $form['confirmation']['confirmation_from_email'] = array(
+      '#type' => 'From Email',
+      '#title' => t('textfield'),
+      '#default_value' => variable_get('', NULL),
+    );
+    $form['confirmation']['confirmation_reply_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Reply To Email'),
+      '#default_value' => variable_get('', NULL),
+    );
+    $form['confirmation']['confirmation_bcc_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('BCC Email'),
+      '#default_value' => variable_get('', NULL),
+    );
+    // TODO: add input type filters?
+    // TODO: list available tokens in description of text fields or as separate form element.
+    $form['confirmation']['confirmation_html_email_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('HTML Email Message'),
+      '#default_value' => variable_get('', NULL),
+    );
+    $form['confirmation']['confirmation_text_email_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Text Email Message'),
+      '#default_value' => variable_get('', NULL),
+    );
+    // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
+    $form['confirmation_fieldset']['preview'] = array(
+      '#type' => 'button',
+      '#value' => t('Preview Confirmation'),
+    );
+
   } 
 }
 
@@ -67,5 +68,22 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
  */
 function email_confirmation_list_templates() {
   global $user;
-  return array();
+  $templates = array();
+  if (module_exists('og')) {
+    drupal_set_message('og enabled');
+    //List user's groups
+    $group_nids = array();
+    $results = db_query('SELECT DISTINCT nid FROM {og_uid} WHERE uid = %d', $user->uid);
+    while ($nid = db_result($results)) {
+      $group_nids[] = $nid;
+    }
+    //pull list of template nodes assigned to these groups
+    $results = db_query("SELECT n.nid, n.title FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid = oa.nid  WHERE oa.group_nid IN ('%s') AND n.type = 'confirmation_template'", implode(',', $group_nids));
+    while ($node = db_fetch_object($results)) {
+      $templates[$node->nid] = $node->title;    
+    }
+  }
+  drupal_set_message('templates:' . print_r($templates, TRUE));
+  // check any additional perms and build list of additional templates if warranted.
+  return $templates;
 }
