@@ -13,4 +13,56 @@
 function page_wrappers_install() {
   // change the clone module's cloning method to save-edit cause that's the way we like it.
   variable_set('clone_method', 'save-edit');
+  drupal_install_schema('page_wrappers');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function page_wrappers_uninstall() {
+	drupal_uninstall_schema('page_wrappers');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function page_wrappers_schema() {
+  $schema['page_wrappers'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'template' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  $schema['node_page_wrappers'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'wrapper_nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
 }
