@@ -23,6 +23,37 @@ function email_confirmation_menu() {
 function email_confirmation_form_alter(&$form, $form_state, $form_id) {
 
   if ($form_id == 'confirmation_template_node_form') {
+    // Add token display to fields
+    $text_field = $form['#field_info']['field_confirmation_text'];
+    $form['text_field'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Text Template Settings'),
+    );
+    $form['text_field']['field_confirmation_text'] = $form['field_confirmation_text'];
+    unset($form['field_confirmation_text']);
+    $form['text_field']['text_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 50,
+    );
+    $form['text_field']['text_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+    
+    $form['body_field']['#type'] = 'fieldset';
+    $form['body_field']['#title'] = t('HTML Template Settings');
+    $form['body_field']['html_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['body_field']['html_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+  
     // We need to make sure there is only one  default confirmation template per group.
      if (module_exists('og')) {
        $form['#submit'][] = 'email_confirmation_defaults';
@@ -124,10 +155,28 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('HTML Email Message'),
       '#default_value' => $defaults->html,
     );
+    $form['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
     $form['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Text Email Message'),
       '#default_value' => $defaults->field_confirmation_text_value,
+    );
+   $form['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
     // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
     $form['confirmation']['template_wrapper']['preview'] = array(
@@ -203,7 +252,7 @@ function _email_confirmation_template_ahah() {
 }
 
 /**
- * 
+ * Submit handler for confirmation fields.
  */
 function email_confirmation_donation_form_submit($form, $form_state) {
 
