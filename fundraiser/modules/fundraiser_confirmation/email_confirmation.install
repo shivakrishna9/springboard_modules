@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function email_confirmation_install() {
+  drupal_set_message('install invoked');
+  drupal_install_schema('email_confirmation');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function email_confirmation_schema() {
+  drupal_set_message('schema invoked');
+  $schema['fundraiser_confirmations'] = array(
+    'description' => t('Stores data for donation_form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The donation form node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'tid' => array(
+        'description' => t('The template node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'from_name' => array(
+        'description' => t('From: email address.'),
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'reply_to_email' => array(
+        'description' => t('Reply To: email address.'),
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'bcc_email' => array(
+        'description' => t('BCC email addresses'),
+        'type' => 'text',
+      ),
+      'html_body' => array(
+        'description' => t('HTML version of the email body.'),
+        'type' => 'text',
+      ),
+      'text_body' => array(
+        'description' => t('Text version of the email body.'),
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
+}
