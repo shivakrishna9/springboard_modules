@@ -170,7 +170,7 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
   
   // make sure we're dealing with a node edit form and the node type is in the enabled types array
-  if ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types)) {
+  if (!empty($form['#node']) && ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types))) {
     $wrappers = _page_wrappers_available_wrappers();
     if (count($wrappers) > 1) {
       $form['wrapper'] = array(
