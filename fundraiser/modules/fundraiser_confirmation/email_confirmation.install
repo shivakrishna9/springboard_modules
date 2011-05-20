@@ -28,6 +28,10 @@ function email_confirmation_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'subject' => array(
+        'description' => t('Email subject line.'),
+        'type' => 'text',
+      ),
       'from_name' => array(
         'description' => t('From: email address.'),
         'type' => 'varchar',

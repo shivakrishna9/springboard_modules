@@ -79,13 +79,15 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
     }
     // Otherwise get defaults from db.
     else {
+      drupal_set_message('attempting to load defaults from table');
       $nid = $form['nid']['#value'];
 
       if ($nid) {
-        drupal_set_message('nid' . $nid);
+ 
         $result = db_query('
           SELECT 
-            tid AS nid, 
+            tid AS nid,
+            subject AS field_confirmation_subject_value, 
             from_name AS field_confirmation_from_name_value, 
             reply_to_email AS field_confirmation_reply_email_email, 
             bcc_email AS bcc, 
@@ -96,10 +98,10 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
 
         $defaults = db_fetch_object($result);
       }
-      drupal_set_message('defaults:' . print_r($defaults, TRUE));
+ 
       // TODO: retrieve default values from wherever they're being stored, possibly the fundraiser table.
     }
-  
+    drupal_set_message('defaults:' . print_r($defaults, TRUE));
      /* email template configuration, see #133*/
     // TODO: replace variable_get() with appropriate $node property
     $form['confirmation'] = array(
@@ -125,6 +127,11 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
         'effect' => 'fade',
       ),
       '#default_value' => $defaults->nid,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subject'),
+      '#default_value' => $defaults->field_confirmation_subject_value,
     );
     $form['confirmation']['template_wrapper']['confirmation_from_name'] = array(
       '#type' => 'textfield',
@@ -257,8 +264,10 @@ function _email_confirmation_template_ahah() {
 function email_confirmation_donation_form_submit($form, $form_state) {
 
   $values = $form_state['values']['template_wrapper'];
+    drupal_set_message('subject:' . $values['confirmation_subject']);
   $nid = $form_state['values']['nid'];
   $tid = $values['email_template'];
+  $subject = $values['confirmation_subject'];
   $from_name =  $values['confirmation_from_name'];
   $reply_to_email = $values['confirmation_reply_email'];
   $bcc_email = $values['confirmation_bcc_email'];
@@ -266,9 +275,79 @@ function email_confirmation_donation_form_submit($form, $form_state) {
   $text_body = $values['confirmation_text_email_message'];
 
   if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $nid))) {
-    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_body = '%s', text_body = '%s' WHERE nid = %d", $tid, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $nid);
+    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_body = '%s', text_body = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $nid);
   }
   else {
-    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, from_name, reply_to_email, bcc_email, html_body, text_body) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')", $nid, $tid, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_body, text_body) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
   }
+}
+
+/**
+ * Implements hook_fundraiser_order_success().
+ */
+function email_confirmation_fundraiser_order_success($order) {
+
+  $template = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
+
+  $message = array();
+  $message['from_name'] = $template->from_name;
+  $message['from_address'] = $template->reply_to_email;
+  $message['subject'] = $template->subject;
+  $message['html_body'] = token_replace($template->html_body, 'order', $order);
+  $message['html_body'] = token_replace($message['html_body']);
+  $message['text_body'] = token_replace($template->text_body, 'order', $order);
+  $message['text_body'] = token_replace($message['text_body']);
+  $message['bcc'] = $template->bcc_email;
+  $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+}
+
+/**
+ * Implements hook_mail().
+ */
+function email_confirmation_mail($key, &$message, $params) {
+  
+  // To make the HTML email work, implement all our own headers
+  $boundary = '----=_NextPart_'.md5(uniqid());
+  
+  $headers = array(
+   'MIME-Version' => '1.0',
+   'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
+   'Content-Transfer-Encoding' => '8Bit',
+   'X-Mailer' => 'Drupal',
+  );
+
+  $default_from = $params['from_name'] . ' <' . $params['from_address'] . '>';
+  $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
+  
+  if (!empty($params->bcc_address)) {
+    $headers['Bcc'] = $params['bcc_address'];
+  }
+  //
+  // Now create the message, with an HTML component and a plaintext component
+  //
+
+  $body_html = $params['html_body'];
+  $body_text = $params['text_body'];
+
+  $multi_body  = "
+
+This is a multi-part message in MIME format.
+
+--$boundary
+Content-Type: text/plain; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_text
+
+--$boundary
+Content-Type: text/html; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_html
+
+";
+
+  $message['subject'] = $params['subject'];
+  $message['body'][] = $multi_body;
+  $message['headers'] = $headers;
 }
