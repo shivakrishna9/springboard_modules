@@ -251,7 +251,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_address = array();
 	$billing_address['nid'] = $nid;
 	$billing_address['pid'] = $pid; 
-	$billing_address['form_key'] = 'billing_address'; 
+	$billing_address['form_key'] = 'address'; 
 	$billing_address['name'] = 'Address';
 	$billing_address['type'] = 'textfield';  
 	$billing_address['extra'] = array(
@@ -269,7 +269,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_address_2 = array();
 	$billing_address_2['nid'] = $nid;
 	$billing_address_2['pid'] = $pid; 
-	$billing_address_2['form_key'] = 'billing_address_2'; 
+	$billing_address_2['form_key'] = 'address_line_2'; 
 	$billing_address_2['name'] = 'Address Line 2';
 	$billing_address_2['type'] = 'textfield';  
 	$billing_address_2['extra'] = array(
@@ -287,7 +287,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_city = array();
 	$billing_city['nid'] = $nid;
 	$billing_city['pid'] = $pid; 
-	$billing_city['form_key'] = 'billing_city'; 
+	$billing_city['form_key'] = 'city'; 
 	$billing_city['name'] = 'City';
 	$billing_city['type'] = 'textfield';  
 	$billing_city['extra'] = array(
@@ -327,7 +327,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_country = array();
 	$billing_country['nid'] = $nid;
 	$billing_country['pid'] = $pid; 
-	$billing_country['form_key'] = 'billing_country'; 
+	$billing_country['form_key'] = 'country'; 
 	$billing_country['name'] = 'Country';
 	$billing_country['type'] = 'select';  
 	$billing_country['extra'] = array(
@@ -356,7 +356,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_state = array();
 	$billing_state['nid'] = $nid;
 	$billing_state['pid'] = $pid; 
-	$billing_state['form_key'] = 'billing_state'; 
+	$billing_state['form_key'] = 'state'; 
 	$billing_state['name'] = 'State/Province';
 	$billing_state['type'] = 'select';  
 	$billing_state['extra'] = array(
@@ -377,7 +377,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$billing_zipcode = array();
 	$billing_zipcode['nid'] = $nid;
 	$billing_zipcode['pid']= $pid; 
-	$billing_zipcode['form_key'] = 'billing_zipcode'; 
+	$billing_zipcode['form_key'] = 'zip'; 
 	$billing_zipcode['name'] = 'ZIP/Postal Code';
 	$billing_zipcode['type'] = 'textfield';  
 	$billing_zipcode['extra'] = array(
@@ -554,12 +554,12 @@ function fundraiser_required_fields() {
     'first_name',
     'last_name',
     'email',
-    'billing_address',
-    'billing_address_2',
-    'billing_city',
-    'billing_country',
-    'billing_state',
-    'billing_zipcode',
+    'address',
+    'address_line_2',
+    'city',
+    'country',
+    'state',
+    'zip',
     'card_number',
     'card_expiration_year',
     'card_expiration_month',
@@ -765,13 +765,17 @@ function _fundraiser_get_profile_location_fields() {
  */
 function _fundraiser_update_profile_location($submission) {
   global $user;
-  $fids = _fundraiser_get_profile_location_fields();
-  // TODO: replace hardcoded array references with retrieved values from webform config (if possible).
-  $country_code = $submission->data['16']['value'][0];
-  $state_code = $submission->data['17']['value'][0];
+  $fids = _fundraiser_get_profile_location_fields();  
+  
+  // get the ids of the country and state webform components for node
+  $country_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'country'", $submission->nid));
+  $state_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'state'", $submission->nid));
+  
+  $country_code = $submission->data[$country_cid]['value'][0];
+  $state_code = $submission->data[$state_cid]['value'][0];
   
   if ($fids['country']) {
-    $country_name = db_result(db_query('SELECT country_name FROM {uc_countries} WHERE country_id = %d', $country_code));
+    $country_name = db_result(db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d', $country_code));
     $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['country']));
     if ($has_country) {
       $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $user->uid, $fids['country']);
@@ -779,7 +783,7 @@ function _fundraiser_update_profile_location($submission) {
     else {
       $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $user->uid, $country_name);
     }
-    drupal_set_message("query:" . $query);
+
     db_query($query);
   }
 
@@ -792,7 +796,7 @@ function _fundraiser_update_profile_location($submission) {
     else {
       $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $user->uid, $state_name);
     }
-    drupal_set_message("query:" . $query);
+
     db_query($query);
   }
 }

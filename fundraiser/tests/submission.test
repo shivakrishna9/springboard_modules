@@ -43,18 +43,22 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalLogin($this->_user);
     profile_load_profile($this->_user);
 
+    // convert user profile state and country fields to numeric codes before testing
+    $state = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $this->_user->profile_state));
+    $country = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $this->_user->profile_country)); 
+    
     $node = $this->testFundraiserForm();
     $this->drupalGet('node/' . $node->nid); 
     $this->pass(var_export($this->drupalGetContent(), TRUE)); 
     $this->assertFieldById('edit-submitted-donor-information-first-name', $this->_user->profile_first_name, 'The First Name field is set correctly.');
     $this->assertFieldById('edit-submitted-donor-information-last-name', $this->_user->profile_last_name, 'The Last Name field is set correctly.');
     $this->assertFieldById('edit-submitted-donor-information-email', $this->_user->mail, 'The Email field is set correctly.');
-    $this->assertFieldById('edit-submitted-billing-information-billing-address', $this->_user->profile_address, 'The Address field is set correctly.');
-    $this->assertFieldById('edit-submitted-billing-information-billing-address-2', $this->_user->profile_address_line_2, 'The Address Line 2 field is set correctly.');
-    $this->assertFieldById('edit-submitted-billing-information-billing-city', $this->_user->profile_city, 'The City field is set correctly.');
-    $this->assertFieldById('edit-submitted-billing-information-billing-zipcode', $this->_user->profile_zip, 'The Zip/Postal Code field is set correctly.');
-    $this->assertFieldById('edit-submitted-billing-information-billing-country', $this->_user->profile_country, "The Country field is set correctly.");
-    $this->assertFieldById('edit-submitted-billing-information-billing-state', $this->_user->profile_state, "The State field is set correctly.");
+    $this->assertFieldById('edit-submitted-billing-information-address', $this->_user->profile_address, 'The Address field is set correctly.');
+    $this->assertFieldById('edit-submitted-billing-information-address-line-2', $this->_user->profile_address_line_2, 'The Address Line 2 field is set correctly.');
+    $this->assertFieldById('edit-submitted-billing-information-city', $this->_user->profile_city, 'The City field is set correctly.');
+    $this->assertFieldById('edit-submitted-billing-information-zip', $this->_user->profile_zip, 'The Zip/Postal Code field is set correctly.');
+    $this->assertFieldById('edit-submitted-billing-information-country', $country, "The Country field is set correctly.");
+    $this->assertFieldById('edit-submitted-billing-information-state', $state, "The State field is set correctly.");
   }
   
   /**
@@ -346,11 +350,11 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $edit1["submitted[donor_information][first_name]"] = $data['first_name'];
     $edit1["submitted[donor_information][last_name]"] = $data['last_name'];
     $edit1["submitted[donor_information][email]"] = $data['mail'];
-    $edit1["submitted[billing_information][billing_address]"] = $data['address'];
-    $edit1["submitted[billing_information][billing_city]"] = $data['city'];
-    $edit1["submitted[billing_information][billing_state]"] = $data['state'];
-    $edit1["submitted[billing_information][billing_country]"] = $data['country'];
-    $edit1["submitted[billing_information][billing_zipcode]"] = $data['zipcode'];
+    $edit1["submitted[billing_information][address]"] = $data['address'];
+    $edit1["submitted[billing_information][city]"] = $data['city'];
+    $edit1["submitted[billing_information][state]"] = $data['state'];
+    $edit1["submitted[billing_information][country]"] = $data['country'];
+    $edit1["submitted[billing_information][zip]"] = $data['zipcode'];
     $edit1["submitted[credit_card_information][card_number]"] = $data['cc_number'];
     $edit1["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $data['cc_exp_month'];
     $edit1["submitted[credit_card_information][expiration_date][card_expiration_year]"] = $data['cc_exp_year'];

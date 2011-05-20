@@ -108,9 +108,9 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $personal['profile_address'] = '100 Elm Street';
     $personal['profile_address_line_2'] = '#5';
     $personal['profile_city'] = 'Washington';
-    $personal['profile_state'] = 16;
+    $personal['profile_state'] = 'DC';
     $personal['profile_zip'] = 20009;
-    $personal['profile_country'] = 840;
+    $personal['profile_country'] = 'US';
     _fundraiser_profile_save_profile($personal, $this->_user, 'Personal Information');
     $system = array();
     $system['profile_cid'] = '';
@@ -130,8 +130,8 @@ class FundraiserTestCase extends DrupalWebTestCase {
     foreach ($node->webform['components'] as $cid => $component) {
       if ($component['form_key'] == 'amount') {
         $amounts = explode("\n", $component['extra']['items']);
-        $items = count($amounts); // there should be 4 (3 amounts and other)
-        $this->assertEqual($items, 4, t('Verify the donation form has 4 donation amounts'));
+        $items = count($amounts); // there should be 5 (4 amounts and other)
+        $this->assertEqual($items, 5, t('Verify the donation form has 4 donation amounts'));
         
         $amount = explode('|', $amounts[0]);
         $this->assertEqual($amount[0], 10, t('Verify the first donation amount is 10'));
@@ -140,9 +140,12 @@ class FundraiserTestCase extends DrupalWebTestCase {
         $this->assertEqual($amount[0], 20, t('Verify the second donation amount is 20'));
         
         $amount = explode('|', $amounts[2]);
-        $this->assertEqual($amount[0], 30, t('Verify the third donation amount is 30'));
+        $this->assertEqual($amount[0], 50, t('Verify the third donation amount is 50'));
         
         $amount = explode('|', $amounts[3]);
+        $this->assertEqual($amount[0], 100, t('Verify the third donation amount is 100'));
+        
+        $amount = explode('|', $amounts[4]);
         $this->assertEqual($amount[0], 'other', t('Verify the last donation amount is other'));
       }
     }
@@ -185,22 +188,22 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $valid = in_array('email', $keys);
     $this->assertTrue($valid, t('Verify the email component is added to the donation form'));
     
-    $valid = in_array('billing_address', $keys);
+    $valid = in_array('address', $keys);
     $this->assertTrue($valid, t('Verify the billing address component is added to the donation form'));
     
-    $valid = in_array('billing_address_2', $keys);
+    $valid = in_array('address_line_2', $keys);
     $this->assertTrue($valid, t('Verify the billing address 2 component is added to the donation form'));
     
-    $valid = in_array('billing_city', $keys);
+    $valid = in_array('city', $keys);
     $this->assertTrue($valid, t('Verify the billing city component is added to the donation form'));
     
-    $valid = in_array('billing_country', $keys);
+    $valid = in_array('country', $keys);
     $this->assertTrue($valid, t('Verify the billing country component is added to the donation form'));
     
-    $valid = in_array('billing_state', $keys);
+    $valid = in_array('state', $keys);
     $this->assertTrue($valid, t('Verify the billing state component is added to the donation form'));
     
-    $valid = in_array('billing_zipcode', $keys);
+    $valid = in_array('zip', $keys);
     $this->assertTrue($valid, t('Verify the billing zipcode component is added to the donation form'));
     
     $valid = in_array('card_number', $keys);
