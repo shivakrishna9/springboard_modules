@@ -1,0 +1,353 @@
+<?php
+
+include_once('email_confirmation.features.inc');
+
+/**
+ * Implements hook_menu().
+ */
+function email_confirmation_menu() {
+  $items = array();
+  /* #AHAH callback for the email template form elements */
+  $items['email_confirmation/js'] = array(
+    'page callback' => '_email_confirmation_template_ahah',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function email_confirmation_form_alter(&$form, $form_state, $form_id) {
+
+  if ($form_id == 'confirmation_template_node_form') {
+    // Add token display to fields
+    $text_field = $form['#field_info']['field_confirmation_text'];
+    $form['text_field'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Text Template Settings'),
+    );
+    $form['text_field']['field_confirmation_text'] = $form['field_confirmation_text'];
+    unset($form['field_confirmation_text']);
+    $form['text_field']['text_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 50,
+    );
+    $form['text_field']['text_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+    
+    $form['body_field']['#type'] = 'fieldset';
+    $form['body_field']['#title'] = t('HTML Template Settings');
+    $form['body_field']['html_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['body_field']['html_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+  
+    // We need to make sure there is only one  default confirmation template per group.
+     if (module_exists('og')) {
+       $form['#submit'][] = 'email_confirmation_defaults';
+     }
+  }
+
+  if ($form_id == 'donation_form_node_form') {
+    $template_nid = $form_state['values']['template_wrapper']['email_template'];
+    $bcc = array();
+ 
+    // We need to update default values if a user selects a new email template.
+    if ($template_nid) {
+      // Get default values from template.
+
+      $defaults = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $template_nid));
+      $results = db_query('SELECT delta, field_confirmation_bcc_email FROM {content_field_confirmation_bcc} ORDER BY delta DESC');
+      while ($item = db_fetch_object($results)) {
+        $bcc[$item->delta] = $item->field_confirmation_bcc_email;
+      }
+      drupal_set_message('nid:' . $defaults->nid);
+      $defaults->bcc = implode(';', $bcc);
+      $defaults->html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n ON n.vid = nr.vid WHERE n.nid=%d', $defaults->nid));
+    }
+    // Otherwise get defaults from db.
+    else {
+      drupal_set_message('attempting to load defaults from table');
+      $nid = $form['nid']['#value'];
+
+      if ($nid) {
+ 
+        $result = db_query('
+          SELECT 
+            tid AS nid,
+            subject AS field_confirmation_subject_value, 
+            from_name AS field_confirmation_from_name_value, 
+            reply_to_email AS field_confirmation_reply_email_email, 
+            bcc_email AS bcc, 
+            html_body AS html,
+            text_body AS field_confirmation_text_value
+          FROM {fundraiser_confirmations}
+          WHERE nid = %d', $nid);
+
+        $defaults = db_fetch_object($result);
+      }
+ 
+      // TODO: retrieve default values from wherever they're being stored, possibly the fundraiser table.
+    }
+    drupal_set_message('defaults:' . print_r($defaults, TRUE));
+     /* email template configuration, see #133*/
+    // TODO: replace variable_get() with appropriate $node property
+    $form['confirmation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Email Confirmation'),
+      '#collapsible' => TRUE,
+      '#weight' => -4.99,
+    );
+    $form['confirmation']['template_wrapper'] = array(
+      '#tree' => TRUE,
+      '#prefix' => '<div id="template-wrapper">',
+      '#suffix' => '</div>',
+      '#theme' => 'email_confirmation_template_wrapper',
+    );
+    $form['confirmation']['template_wrapper']['email_template'] = array(
+      '#type' => 'select',
+      '#title' => t('Confirmation Email Template'),
+      '#options' => email_confirmation_list_templates(),
+      '#ahah' => array(
+        'path' => 'emaiL_confirmation/js',
+        'wrapper' => 'template-wrapper',
+        'method' => 'replace',
+        'effect' => 'fade',
+      ),
+      '#default_value' => $defaults->nid,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subject'),
+      '#default_value' => $defaults->field_confirmation_subject_value,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_from_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('From Name'),
+      '#default_value' => $defaults->field_confirmation_from_name_value,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_from_email'] = array(
+      '#type' => 'From Email',
+      '#title' => t('textfield'),
+      '#default_value' => $defaults->field_confirmation_from_email_email,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_reply_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Reply To Email'),
+      '#default_value' => $defaults->field_confirmation_reply_email_email,
+    );
+
+    $form['confirmation']['template_wrapper']['confirmation_bcc_email' . $delta] = array(
+      '#type' => 'textfield',
+      '#title' => t('BCC Email'),
+      '#default_value' => $defaults->bcc,
+    );
+
+    // TODO: add input type filters?
+    // TODO: list available tokens in description of text fields or as separate form element.
+    $form['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('HTML Email Message'),
+      '#default_value' => $defaults->html,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+    $form['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Text Email Message'),
+      '#default_value' => $defaults->field_confirmation_text_value,
+    );
+   $form['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+    // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
+    $form['confirmation']['template_wrapper']['preview'] = array(
+      '#type' => 'button',
+      '#value' => t('Preview Confirmation'),
+    );
+
+    $form['#submit'][] = 'email_confirmation_donation_form_submit';
+  } 
+}
+
+
+/**
+ * Lists available confirmation templates based on user's group membership and other permissions
+ */
+function email_confirmation_list_templates() {
+  global $user;
+  $templates = array('0' => ' - select -');
+  if (module_exists('og')) {
+ 
+    //List user's groups
+    $group_nids = array();
+    $results = db_query('SELECT DISTINCT nid FROM {og_uid} WHERE uid = %d', $user->uid);
+    while ($nid = db_result($results)) {
+      $group_nids[] = $nid;
+    }
+    //pull list of template nodes assigned to these groups
+    $results = db_query("SELECT n.nid, n.title FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid = oa.nid  WHERE oa.group_nid IN ('%s') AND n.type = 'confirmation_template'", implode(',', $group_nids));
+
+  }
+  else {
+    $results = db_query("SELECT n.nid, n.title FROM {node} where type = 'confirmation_template'");
+  }
+  while ($node = db_fetch_object($results)) {
+    $templates[$node->nid] = $node->title;    
+  }
+  // check any additional perms and build list of additional templates if warranted.
+  return $templates;
+}
+
+
+/**
+ * #AHAH callback for email template selection form element.
+ */
+function _email_confirmation_template_ahah() {
+ 
+  module_load_include('inc', 'node', 'node.pages');
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+
+  $form = form_get_cache($form_build_id, $form_state);
+  
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+
+  // Disable validation
+  $form['#validate'] = NULL;
+  $form_state['validate_handlers'] = NULL;
+  fundraiser_ahah_helper_disable_validation($form);
+  
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  $template_form = $form['confirmation']['template_wrapper'];
+  unset($template_form['#prefix'], $template_form['#suffix']);
+ 
+  $output = theme('status_messages') . drupal_render($template_form);
+
+  $form_state = array('submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+/**
+ * Submit handler for confirmation fields.
+ */
+function email_confirmation_donation_form_submit($form, $form_state) {
+
+  $values = $form_state['values']['template_wrapper'];
+    drupal_set_message('subject:' . $values['confirmation_subject']);
+  $nid = $form_state['values']['nid'];
+  $tid = $values['email_template'];
+  $subject = $values['confirmation_subject'];
+  $from_name =  $values['confirmation_from_name'];
+  $reply_to_email = $values['confirmation_reply_email'];
+  $bcc_email = $values['confirmation_bcc_email'];
+  $html_body = $values['confirmation_html_email_message'];
+  $text_body = $values['confirmation_text_email_message'];
+
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $nid))) {
+    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_body = '%s', text_body = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $nid);
+  }
+  else {
+    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_body, text_body) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_order_success().
+ */
+function email_confirmation_fundraiser_order_success($order) {
+
+  $template = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
+
+  $message = array();
+  $message['from_name'] = $template->from_name;
+  $message['from_address'] = $template->reply_to_email;
+  $message['subject'] = $template->subject;
+  $message['html_body'] = token_replace($template->html_body, 'order', $order);
+  $message['html_body'] = token_replace($message['html_body']);
+  $message['text_body'] = token_replace($template->text_body, 'order', $order);
+  $message['text_body'] = token_replace($message['text_body']);
+  $message['bcc'] = $template->bcc_email;
+  $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+}
+
+/**
+ * Implements hook_mail().
+ */
+function email_confirmation_mail($key, &$message, $params) {
+  
+  // To make the HTML email work, implement all our own headers
+  $boundary = '----=_NextPart_'.md5(uniqid());
+  
+  $headers = array(
+   'MIME-Version' => '1.0',
+   'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
+   'Content-Transfer-Encoding' => '8Bit',
+   'X-Mailer' => 'Drupal',
+  );
+
+  $default_from = $params['from_name'] . ' <' . $params['from_address'] . '>';
+  $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
+  
+  if (!empty($params->bcc_address)) {
+    $headers['Bcc'] = $params['bcc_address'];
+  }
+  //
+  // Now create the message, with an HTML component and a plaintext component
+  //
+
+  $body_html = $params['html_body'];
+  $body_text = $params['text_body'];
+
+  $multi_body  = "
+
+This is a multi-part message in MIME format.
+
+--$boundary
+Content-Type: text/plain; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_text
+
+--$boundary
+Content-Type: text/html; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_html
+
+";
+
+  $message['subject'] = $params['subject'];
+  $message['body'][] = $multi_body;
+  $message['headers'] = $headers;
+}

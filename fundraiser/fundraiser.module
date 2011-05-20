@@ -307,7 +307,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
-    '#weight' => -5,
+    '#weight' => -5.1,
     '#maxlength' => 255,
   );
   $form['internal_name'] = array(
@@ -315,10 +315,12 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => t('Internal Name'),
     '#required' => TRUE,
     '#default_value' => $node->internal_name,
-    '#weight' => -4.99,
+    '#weight' => -5.0,
     '#maxlength' => 255,
   );
 
+ 
+  
   /* add amount #aha */
   $form['amount_wrapper'] = array(
     '#type' => 'fieldset',
@@ -334,8 +336,6 @@ function fundraiser_form($node, $edit = NULL) {
     '#suffix' => '</div>',
     '#theme' => 'fundraiser_ask_amounts',
   );
-  
- 
   
   // Retrieve saved values if available
   $amount_values = array();
@@ -1400,6 +1400,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
+ 	  module_invoke_all('fundraiser_order_success', $order);
  	}
  	else { 
 		// failed to process credit cart
@@ -2413,3 +2414,4 @@ function fundraiser_validate_email($mail) {
 	return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 }
+
