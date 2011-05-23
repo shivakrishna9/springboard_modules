@@ -102,13 +102,11 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       while ($item = db_fetch_object($results)) {
         $bcc[$item->delta] = $item->field_confirmation_bcc_email;
       }
-      drupal_set_message('nid:' . $defaults->nid);
       $defaults->bcc = implode(';', $bcc);
-      $defaults->html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n ON n.vid = nr.vid WHERE n.nid=%d', $defaults->nid));
+      //$defaults->html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n ON n.vid = nr.vid WHERE n.nid=%d', $defaults->nid));
     }
     // Otherwise get defaults from db.
     else {
-      drupal_set_message('attempting to load defaults from table');
       $nid = $form['nid']['#value'];
 
       if ($nid) {
@@ -120,8 +118,8 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
             from_name AS field_confirmation_from_name_value, 
             reply_to_email AS field_confirmation_reply_email_email, 
             bcc_email AS bcc, 
-            html_message AS html,
-            text_message AS field_confirmation_text_value
+            html_message AS field_confirmation_html_message_value,
+            text_message AS field_confirmation_text_message_value
           FROM {fundraiser_confirmations}
           WHERE nid = %d', $nid);
 
@@ -130,7 +128,6 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
 
       // TODO: retrieve default values from wherever they're being stored, possibly the fundraiser table.
     }
-    drupal_set_message('defaults:' . print_r($defaults, TRUE));
      /* email template configuration, see #133*/
     // TODO: replace variable_get() with appropriate $node property
     $form['confirmation'] = array(
@@ -189,7 +186,7 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
     $form['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('HTML Email Message'),
-      '#default_value' => $defaults->html,
+      '#default_value' => $defaults->field_confirmation_html_message_value,
     );
     $form['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
       '#type' => 'fieldset',
@@ -203,7 +200,7 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
     $form['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Text Email Message'),
-      '#default_value' => $defaults->field_confirmation_text_value,
+      '#default_value' => $defaults->field_confirmation_text_message_value,
     );
    $form['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
       '#type' => 'fieldset',
@@ -304,10 +301,10 @@ function email_confirmation_donation_form_submit($form, $form_state) {
   $text_body = $values['confirmation_text_email_message'];
 
   if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $nid))) {
-    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_body = '%s', text_body = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $nid);
+    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', text_message = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $nid);
   }
   else {
-    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_body, text_body) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
   }
 }
 
