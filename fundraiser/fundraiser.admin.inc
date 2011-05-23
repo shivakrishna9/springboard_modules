@@ -31,6 +31,10 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#title' => t('Confirmation message'),
     '#default_value' => $node->confirmation_page_body,
   );
+  
+  $body_format = variable_get('fundraiser_confirmation_message_body_format', FILTER_FORMAT_DEFAULT);
+  $form['confirmation_page']['format'] = filter_form($body_format, NULL, array('confirmation_page_format'));
+  
   $form['confirmation_page']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available confirmation message tokens'),
