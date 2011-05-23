@@ -13,6 +13,15 @@ function email_confirmation_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+  // TODO: add administer fundraiser perm to Fundraiser? Default perm "access content" isn't appropriate for admin pages.
+  $items['admin/settings/fundraiser/confirmations'] = array(
+    'title' => 'Confirmation settings',
+    'description' => 'Administer email confirmation settings.',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('email_confirmation_admin'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
 
 }
@@ -229,7 +238,7 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
 function email_confirmation_list_templates() {
   global $user;
   $templates = array('0' => ' - select -');
-  if (module_exists('og')) {
+  if (module_exists('og') && variable_get('emaiL_confirmation_og_filter', 0)) {
  
     //List user's groups
     $group_nids = array();
@@ -405,4 +414,18 @@ function email_confirmation_token_values($type, $object = NULL) {
     $values['confirmation-message-html'] = $data->html_message;
     return $values;
   }
+}
+
+/**
+ * Admin configuration form.
+ */
+function email_confirmation_admin() {
+  $form = array();
+  $form['emaiL_confirmation_og_filter'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Limit templates by group.'),
+    '#description' => t('Use OG group membership to resitrict available confirmation templates. When this is enabled content editors will only see email templates assigned to groups they are members of when creating or editing donation forms.'),
+    '#default_value' => variable_get('emaiL_confirmation_og_filter', 0),
+  );
+  return system_settings_form($form);
 }
