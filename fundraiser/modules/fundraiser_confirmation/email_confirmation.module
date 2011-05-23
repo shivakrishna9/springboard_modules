@@ -313,15 +313,17 @@ function email_confirmation_donation_form_submit($form, $form_state) {
  */
 function email_confirmation_fundraiser_order_success($order) {
 
-  $template = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
-
+  $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
+  $template_html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+  $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
+  
   $message = array();
   $message['from_name'] = $template->from_name;
   $message['from_address'] = $template->reply_to_email;
   $message['subject'] = $template->subject;
-  $message['html_body'] = token_replace($template->html_body, 'order', $order);
+  $message['html_body'] = token_replace($template_html, 'order', $order);
   $message['html_body'] = token_replace($message['html_body']);
-  $message['text_body'] = token_replace($template->text_body, 'order', $order);
+  $message['text_body'] = token_replace($template_text, 'order', $order);
   $message['text_body'] = token_replace($message['text_body']);
   $message['bcc'] = $template->bcc_email;
   $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
