@@ -377,3 +377,31 @@ $body_html
   $message['body'][] = $multi_body;
   $message['headers'] = $headers;
 }
+
+/**
+ * Implements hook_token_list().
+ */
+function email_confirmation_token_list($type = 'all') {
+  $tokens = array();
+  if ($type == 'order') {
+    $tokens['order']['confirmation-message-text'] = t('The text version of the donation confirmation message.');
+    $tokens['order']['confirmation-message-html'] = t('The HTML version of the donation confirmation message.');
+  }
+  return $tokens;
+}
+
+/**
+ * Implements hook_token_values().
+ */
+function email_confirmation_token_values($type, $object = NULL) {
+  
+  if ($type == 'order') {
+    $nid = $object->products[0]->nid;
+    $data = db_fetch_object(db_query('SELECT html_message, text_message FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
+    drupal_set_message('values invoked!');
+    drupal_set_message('args:' . print_r(func_get_args(), TRUE));
+    $values['confirmation-message-text'] = check_plain($data->text_message);
+    $values['confirmation-message-html'] = $data->html_message;
+    return $values;
+  }
+}
