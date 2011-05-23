@@ -859,6 +859,7 @@ function fundraiser_user_map($nid) {
  * Returns a reference to an element of a FAPI array based on a known path.
  */
 function fundraiser_find_field(&$form, $path = array()) {
+  drupal_set_message('path:' . print_r($path, TRUE));
   foreach(array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return fundraiser_find_field($form[$v], $path[$v]);
