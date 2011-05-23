@@ -5,7 +5,7 @@
       var url = $(location).attr('href');
       url = url.replace('http://', ''); // strip off http bs
       var parts = url.split('/');
-      if (parts[1] == 'node' && parts[3] == 'webform' && parts[4] == 'confirmations') {
+      if (parts[1] == 'node' && parts[3] == 'webform') {
         var token = window.showModalDialog("/fundraiser/confirmation-token-list/"+parts[2],null,"dialogWidth:450px;dialogHeight:320px;center:yes; resizable: yes; help: no");  
         if (token != false && token != null) {
           editor.insertHtml(token);    
