@@ -23,6 +23,7 @@ function email_confirmation_menu() {
 function email_confirmation_form_alter(&$form, $form_state, $form_id) {
 
   if ($form_id == 'confirmation_template_node_form') {
+
     // Add token display to fields
     $text_field = $form['#field_info']['field_confirmation_text'];
     $text_message = $form['#field_info']['field_confirmation_text_message'];
