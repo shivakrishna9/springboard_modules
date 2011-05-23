@@ -116,6 +116,14 @@ function fundraiser_menu() {
 	    'type' => MENU_CALLBACK,
 	);
 	
+	$items['fundraiser/confirmation-token-list/%'] = array(
+    'title' => 'Confirmation token list',
+    'page callback' => 'fundraiser_confirmation_token_list',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+	);
+	
 	$items['admin/fundraiser/recurring/test'] = array(
 		'title' => 'Fundraiser Recurring Payment Tester',
 	    'page callback' => 'fundraiser_recurring_test',
@@ -266,6 +274,85 @@ function fundraiser_access_clone() {
  */
 function fundraiser_mapping_form_access($node) {
         return $node->type == 'donation_form';
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ */
+function fundraiser_theme_registry_alter(&$theme_registry) {
+  // tell the theme registry to look in this module's directory for theme files
+  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'fundraiser') . '/templates';
+}
+
+/**
+ * Implementation of hook_preprocess_page().
+ *
+ * Add a template suggestion that renders a blank page template for our confirmation page token picker.
+ */
+function fundraiser_preprocess_page(&$vars) {
+  if (arg(1) == 'confirmation-token-list') {
+    $vars['template_file'] = 'page-fundraiser-token-list';
+  }
+}
+
+/**
+ * Implementation of hook_wysiwyg_plugin().
+ *
+ * Add a WYSIWYG plugin for fundraiser confirmation tokens.
+ */
+function fundraiser_wysiwyg_plugin($editor, $version) {
+  switch ($editor) {
+    case 'ckeditor':
+      return array(
+        'fundraiser-tokens' => array(
+          'path' => drupal_get_path('module', 'fundraiser') . '/ckeditor',
+          'buttons' => array(
+            'fundraiser-tokens' => t('Fundraiser tokens'),
+          ),
+          'load' => TRUE,
+        ),
+      );
+      break;    
+  }
+}
+
+/**
+ * Generates all possible fundraiser tokens and passes them to theme function.
+ *
+ * @param: $nid
+ *   The id of the donation form node.
+ */
+function fundraiser_confirmation_token_list($nid) {
+  $all_tokens = array();
+  $all_tokens['webform'] = array();
+  $all_tokens['order'] = array();
+  
+  $items = token_get_list('order');
+  
+  // load up the donation form node 
+  $node = node_load($nid);
+
+  // loop over the webform components and output the special token syntax (ignore naughty fields)
+  foreach($node->webform['components'] as $component) {
+    if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
+      $parents = webform_component_parent_keys($node, $component);
+      if ($component['name'] == 'Please select your tax-deductible gift amount below') {
+        $component['name'] = t('Donation amount');
+      }
+      $all_tokens['webform']['%value[' . implode('][', $parents) . ']'] = $component['name'];
+    }
+  }
+
+  foreach($items as $module => $tokens) {
+    foreach($tokens as $token => $desc) {
+      $all_tokens['order']['['. $token . ']'] = $desc;
+    }
+  }
+  
+  array_unshift($all_tokens['webform'], '-- Select --');
+  array_unshift($all_tokens['order'], '-- Select --');
+  $output = theme(array('fundraiser_confirmation_tokens'), $all_tokens);
+  return $output;
 }
 
 /**
@@ -2098,6 +2185,10 @@ function fundraiser_theme() {
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
+    'fundraiser_confirmation_tokens' => array(
+      'arguments' => array('tokens' => NULL),
+      'template' => 'templates/fundraiser-token-list',
+    ),
   );
 }
 
@@ -2416,3 +2507,12 @@ function fundraiser_validate_email($mail) {
 	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 }
 
+function _fundraiser_field_blacklist() {
+  return array(
+    'card_number',
+    'card_cvv',
+    'recurs_monthly',
+    'card_expiration_month',
+    'card_expiration_year',
+  );
+}
