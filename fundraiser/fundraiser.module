@@ -276,12 +276,35 @@ function fundraiser_mapping_form_access($node) {
         return $node->type == 'donation_form';
 }
 
+/**
+ * Implementation of hook_theme_registry_alter().
+ */
+function fundraiser_theme_registry_alter(&$theme_registry) {
+  // tell the theme registry to look in this module's directory for theme files
+  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'fundraiser') . '/templates';
+}
+
+/**
+ * Implementation of hook_preprocess_page().
+ *
+ * Add a template suggestion that renders a blank page template for our confirmation page token picker.
+ */
+function fundraiser_preprocess_page(&$vars) {
+  if (arg(1) == 'confirmation-token-list') {
+    $vars['template_file'] = 'page-fundraiser-token-list';
+  }
+}
+
+/**
+ * Implementation of hook_wysiwyg_plugin().
+ *
+ * Add a WYSIWYG plugin for fundraiser confirmation tokens.
+ */
 function fundraiser_wysiwyg_plugin($editor, $version) {
   switch ($editor) {
     case 'ckeditor':
       return array(
         'fundraiser-tokens' => array(
-          'url' => 'http://www.thecavefamily.com',
           'path' => drupal_get_path('module', 'fundraiser') . '/ckeditor',
           'buttons' => array(
             'fundraiser-tokens' => t('Fundraiser tokens'),
@@ -293,11 +316,18 @@ function fundraiser_wysiwyg_plugin($editor, $version) {
   }
 }
 
+/**
+ * Generates all possible fundraiser tokens and passes them to theme function.
+ *
+ * @param: $nid
+ *   The id of the donation form node.
+ */
 function fundraiser_confirmation_token_list($nid) {
+  $all_tokens = array();
+  $all_tokens['webform'] = array();
+  $all_tokens['order'] = array();
+  
   $items = token_get_list('order');
-  $js = '$(document).ready(function(){$(\'.token\').click(function(e) {e.preventDefault(); window.returnValue = $(this).attr(\'href\'); window.close();});});';
-  drupal_add_js($js, 'inline');
-  $output = '<h2>Form component tokens</h2>';
   
   // load up the donation form node 
   $node = node_load($nid);
@@ -306,16 +336,22 @@ function fundraiser_confirmation_token_list($nid) {
   foreach($node->webform['components'] as $component) {
     if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
       $parents = webform_component_parent_keys($node, $component);
-      $output .= '<li><a href="%value[' . implode('][', $parents) . ']" class="token">' . $component['name'] . '</a></li>';
+      if ($component['name'] == 'Please select your tax-deductible gift amount below') {
+        $component['name'] = t('Donation amount');
+      }
+      $all_tokens['webform']['%value[' . implode('][', $parents) . ']'] = $component['name'];
+    }
+  }
+
+  foreach($items as $module => $tokens) {
+    foreach($tokens as $token => $desc) {
+      $all_tokens['order']['['. $token . ']'] = $desc;
     }
   }
   
-  $output .= '<h2>Order tokens</h2>';
-  foreach($items as $module => $tokens) {
-    foreach($tokens as $token => $desc) {
-      $output .= '<li><a href="['. $token . ']" class="token">' . $desc . '</a></li>';
-    }
-  }
+  array_unshift($all_tokens['webform'], '-- Select --');
+  array_unshift($all_tokens['order'], '-- Select --');
+  $output = theme(array('fundraiser_confirmation_tokens'), $all_tokens);
   return $output;
 }
 
@@ -2146,6 +2182,10 @@ function fundraiser_theme() {
       'arguments' => array('node' => NULL, 'sid' => NULL),
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
+    ),
+    'fundraiser_confirmation_tokens' => array(
+      'arguments' => array('tokens' => NULL),
+      'template' => 'templates/fundraiser-token-list',
     ),
   );
 }
