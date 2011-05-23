@@ -2506,8 +2506,6 @@ function fundraiser_validate_email($mail) {
 	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 }
 
-<<<<<<< HEAD
-=======
 function _fundraiser_field_blacklist() {
   return array(
     'card_number',
@@ -2517,4 +2515,3 @@ function _fundraiser_field_blacklist() {
     'card_expiration_year',
   );
 }
->>>>>>> wysiwyg
