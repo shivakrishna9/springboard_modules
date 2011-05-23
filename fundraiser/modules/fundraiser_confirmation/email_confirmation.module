@@ -16,7 +16,7 @@ function email_confirmation_menu() {
   return $items;
 
 }
-
+ 
 /**
  * Implements hook_form_alter().
  */
@@ -25,25 +25,54 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'confirmation_template_node_form') {
     // Add token display to fields
     $text_field = $form['#field_info']['field_confirmation_text'];
+    $text_message = $form['#field_info']['field_confirmation_text_message'];
     $form['text_field'] = array(
       '#type' => 'fieldset',
       '#title' => t('Text Template Settings'),
     );
     $form['text_field']['field_confirmation_text'] = $form['field_confirmation_text'];
-    unset($form['field_confirmation_text']);
+    $form['text_field']['field_confirmation_text']['#weight'] = 0;
     $form['text_field']['text_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-      '#weight' => 50,
+      '#weight' => 1,
     );
     $form['text_field']['text_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
+    $form['text_field']['field_confirmation_text_message'] = $form['field_confirmation_text_message'];
+    $form['text_field']['field_confirmation_text_message']['#weight'] = 10;
+    $form['text_field']['message_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 11,
+    );
+    $form['text_field']['message_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
+    unset($form['field_confirmation_text']);
+    unset($form['field_confirmation_text_message']);
+
     
     $form['body_field']['#type'] = 'fieldset';
     $form['body_field']['#title'] = t('HTML Template Settings');
+    $form['body_field']['field_confirmation_html_message'] = $form['field_confirmation_html_message'];
+    $form['body_field']['field_confirmation_html_message']['#weight'] = 10;
+    unset($form['field_confirmation_html_message']);
+    $form['body_field']['message_tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available confirmation message tokens'),
+      '#weight' => 11,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['body_field']['message_tokens']['help'] = array(
+      '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    );
     $form['body_field']['html_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
@@ -91,14 +120,14 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
             from_name AS field_confirmation_from_name_value, 
             reply_to_email AS field_confirmation_reply_email_email, 
             bcc_email AS bcc, 
-            html_body AS html,
-            text_body AS field_confirmation_text_value
+            html_message AS html,
+            text_message AS field_confirmation_text_value
           FROM {fundraiser_confirmations}
           WHERE nid = %d', $nid);
 
         $defaults = db_fetch_object($result);
       }
- 
+
       // TODO: retrieve default values from wherever they're being stored, possibly the fundraiser table.
     }
     drupal_set_message('defaults:' . print_r($defaults, TRUE));

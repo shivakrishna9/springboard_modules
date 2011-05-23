@@ -7,7 +7,7 @@ function email_confirmation_install() {
   drupal_set_message('install invoked');
   drupal_install_schema('email_confirmation');
 }
-
+ 
 /**
  * Implements hook_schema().
  */
@@ -46,12 +46,12 @@ function email_confirmation_schema() {
         'description' => t('BCC email addresses'),
         'type' => 'text',
       ),
-      'html_body' => array(
-        'description' => t('HTML version of the email body.'),
+      'html_message' => array(
+        'description' => t('HTML version of the email message.'),
         'type' => 'text',
       ),
-      'text_body' => array(
-        'description' => t('Text version of the email body.'),
+      'text_message' => array(
+        'description' => t('Text version of the email message.'),
         'type' => 'text',
       ),
     ),
