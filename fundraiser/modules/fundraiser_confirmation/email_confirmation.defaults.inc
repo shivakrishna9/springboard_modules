@@ -71,9 +71,7 @@ function email_confirmation_default_html_message() {
 function email_confirmation_default_html_template() {
 
   $template = '
-<html>
-<head></head>
-<body>
+
 <tbody><tr>
     <td style="padding: 3.75pt;" valign="top">
     <table style="width: 100%;" border="0" cellpadding="0" width="100%">
@@ -229,8 +227,7 @@ function email_confirmation_default_html_template() {
     </td>
  </tr>
 </tbody>
-</body>
-</html>
+
   ';
 
 return $template; 

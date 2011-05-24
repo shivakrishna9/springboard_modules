@@ -401,7 +401,7 @@ function email_confirmation_mail($key, &$message, $params) {
   //
 
   $body_html = $params['html_body'];
-  $body_text = $params['text_body'];
+  $body_text = '<html><head></head><body>' . $params['text_body'] . '</body></html>';
 
   $multi_body  = "
 
