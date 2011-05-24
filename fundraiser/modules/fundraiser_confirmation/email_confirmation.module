@@ -353,7 +353,6 @@ function _email_confirmation_template_ahah() {
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
 
-
 /**
  * Implements hook_fundraiser_order_success().
  */
@@ -445,7 +444,6 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' && $object->order_status == 'in_checkout') {
-    drupal_set_message('object:' . print_r($object, TRUE));
     $nid = $object->products[0]->nid;
     $data = db_fetch_object(db_query('SELECT html_message, text_message FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_plain($data->text_message);
@@ -510,7 +508,7 @@ function email_confirmation_modal_preview() {
  * 
  */
 function _email_confirmation_preview($op, $message, $nid) {
-  drupal_set_message('nid:' . $nid);
+
   $object = _email_confirmation_test_object();
   $output = '';
   switch ($op) {

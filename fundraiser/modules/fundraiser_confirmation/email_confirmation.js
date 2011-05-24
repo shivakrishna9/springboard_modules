@@ -1,5 +1,7 @@
-$(document).ready(function(){
+Drupal.behaviors.emailBehavior = function(){
+
    $old_action = $('#node-form').attr('action');
+ 
 
   // Add onmouseover and onmouseout functions to swap form action
   $('#edit-template-wrapper-preview').mouseover(function(){
@@ -11,4 +13,4 @@ $(document).ready(function(){
   });
 
 
-});
+};
