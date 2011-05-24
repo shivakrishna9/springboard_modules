@@ -22,6 +22,13 @@ function email_confirmation_menu() {
     'page arguments' => array('email_confirmation_admin'),
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['email_confirmation/preview_modal'] = array(
+    'title' => 'Email Confirmation Template Preview',
+    'access callback' => TRUE,
+    'page callback' => 'email_confirmation_modal_preview',
+    'page arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 
 }
@@ -100,6 +107,12 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
   }
 
   if ($form_id == 'donation_form_node_form') {
+    // Ctools modals setup for preview button
+    module_load_include('inc', 'ctools', 'includes/ajax');
+    ctools_include('modal');
+    ctools_modal_add_js();
+    drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
+    
     $template_nid = $form_state['values']['template_wrapper']['email_template'];
     $bcc = array();
  
@@ -197,6 +210,7 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       '#type' => 'textarea',
       '#title' => t('HTML Email Message'),
       '#default_value' => $defaults->field_confirmation_html_message_value,
+
     );
     $form['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
       '#type' => 'fieldset',
@@ -223,10 +237,12 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
     );
     // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
     $form['confirmation']['template_wrapper']['preview'] = array(
+     // '#type' => 'markup',
+     // '#value' => ctools_modal_text_button('Preview', 'email_confirmation/preview_modal', '', 'edit-template-wrapper-email-template'),
       '#type' => 'button',
-      '#value' => t('Preview Confirmation'),
+      '#value' => t('Preview'),
+      '#attributes' => array('class' => 'ctools-use-modal'),
     );
-
     $form['#submit'][] = 'email_confirmation_donation_form_submit';
   } 
 }
@@ -408,6 +424,7 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' && $object->order_status == 'in_checkout') {
+    drupal_set_message('object:' . print_r($object, TRUE));
     $nid = $object->products[0]->nid;
     $data = db_fetch_object(db_query('SELECT html_message, text_message FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_plain($data->text_message);
@@ -428,4 +445,158 @@ function email_confirmation_admin() {
     '#default_value' => variable_get('emaiL_confirmation_og_filter', 0),
   );
   return system_settings_form($form);
+}
+
+/**
+ * Page callback for template modal preview.
+ * 
+ */
+function email_confirmation_modal_preview() {
+ module_load_include('inc', 'ctools', 'includes/modal');
+ $title = 'Template Preview';
+ $values = $_POST['template_wrapper'];
+ drupal_set_message('values:' . print_r($values, TRUE));
+ $output = array();
+ $output['subject'] = $values['confirmation_subject'];
+ $output['email'] = array(
+   'from' => '<' . $values['confirmation_from_name'] . '>' . $values['confirmation_reply_email'],
+   'bcc' => $values['confirmation_bcc_email'],
+ );
+ $output['HTML'] = _email_confirmation_preview('html', $values['confirmation_html_email_message'], $values['email_template']);
+ $output['text'] = _email_confirmation_preview('text', $values['confirmation_text_email_message'], $values['email_template']);
+ $keys = array_keys($output);
+ foreach($keys as $key) {
+   if (is_array($output[$key])) {
+     drupal_set_message('is array:' . $key);
+     $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+     $subkeys = array_keys($output[$key]);
+     foreach ($subkeys as $subkey) {
+       $preview .= '<p><strong>' . ucfirst($subkey) . '</strong>&nbsp; ' . $output[$key][$subkey] . '</p>'; 
+     }
+     $preview .= '</fieldset>';  
+   }
+    else {
+     $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+     $preview .= '<div>' . $output[$key] . '</div>';
+     $preview .= '</fieldset>';
+   }
+ }
+ 
+ ctools_modal_render($title, $preview);
+}
+
+/**
+ * 
+ */
+function _email_confirmation_preview($op, $message, $nid) {
+  drupal_set_message('nid:' . $nid);
+  $object = _email_confirmation_test_object();
+  $output = '';
+  switch ($op) {
+    case 'html':
+      $output = db_result(db_query("SELECT body FROM {node_revisions} nr INNER JOIN {node} n ON n.vid = nr.vid WHERE n.nid = %d", $nid));
+      $output = preg_replace('/\[confirmation-message-html\]/', $message, $output); 
+      break;
+    case 'text':
+      $output = db_result(db_query("SELECT ct.field_confirmation_text_message_value FROM {content_type_confirmation_template} ct INNER JOIN {node} n ON n.vid = ct.vid WHERE ct.nid = %d", $nid));
+      $output = preg_replace('/\[confirmation-message-text\]/', $message, $output);
+      $output = preg_replace('/\n/', '<br />', $output);
+      break;
+    default:
+      break;
+  }
+  return token_replace($output, 'order', $object);
+}
+
+/**
+ * Helper function, generates a bogus order object for use with the template preview.
+ */
+function _email_confirmation_test_object() {
+  $object = new stdClass;
+  $object->order_id = 1;
+  $object->uid = 1;
+  $object->order_status = 'fake';
+  $object->order_total = 100;
+  $object->product_count = 1;
+  $object->primary_email = 's.holmes@example.com';
+  $object->delivery_first_name = ''; 
+  $object->delivery_last_name = ''; 
+  $object->delivery_phone = ''; 
+  $object->delivery_company = ''; 
+  $object->delivery_street1 = ''; 
+  $object->delivery_street2 = ''; 
+  $object->delivery_city = ''; 
+  $object->delivery_zone = 0;
+  $object->delivery_postal_code = ''; 
+  $object->delivery_country = 840;
+  $object->billing_first_name = 'S.';
+  $object->billing_last_name = 'Holmes';
+  $object->billing_phone = ''; 
+  $object->billing_company = ''; 
+  $object->billing_street1 = '221B Baker Street';
+  $object->billing_street2 = ''; 
+  $object->billing_city = 'Durham';
+  $object->billing_zone = '44';
+  $object->billing_postal_code = '27703';
+  $object->billing_country = 840;
+  $object->payment_method = 'credit';
+  $object->data = array(
+    'cc_data' => ')Ya,e[S1{bqOP.xl&gt;2o6-J1-3@J}w]X{?HX6dT#7w8oa)=$KhBl$UCqD4&amp;W@?WWA&gt;VKcyHbD[&amp;cdVUBtT |nX?8?}XaMYJesDE3smx&gt;8pb}#bXbXH9',
+  );
+
+  $object->created = time();
+  $object->modified = time();
+  $object->host = '127.0.0.1';
+  $object->products = array();
+
+  $product = new stdClass;
+  $product->order_product_id = 45;
+  $product->order_id = 45;
+  $product->nid = 6;
+  $product->title = 'Fictional Donation Form';
+  $product->manufacturer = ''; 
+  $product->model = ''; 
+  $product->qty = 1;
+  $product->cost = 0.00000;
+  $product->price = 100.00000;
+  $product->weight = 0;
+  $product->data = array(
+    'shippable' => '', 
+    'model' => '',
+    'varprice' => 20,
+    'module' => 'uc_product',
+  );
+  $product->order_uid = 1;
+  
+  $object->products[] = $product;
+  unset($product);
+
+  $object->payment_details = array(
+    'cc_type' => 'mc',
+    'cc_owner' => '',
+    'cc_number' => '1111111111111111',
+    'cc_start_month' => '', 
+    'cc_start_year' => '', 
+    'cc_exp_month' => 1, 
+    'cc_exp_year' => '2025',
+    'cc_issue' => '', 
+    'cc_cvv' => '000',
+    'cc_bank' => '', 
+  );
+
+  $object->line_items = array();
+
+  $line_item = array(
+    'line_item_id' => 'subtotal',
+    'type' => 'subtotal',
+    'title' => 'Subtotal',
+    'amount' => 100,
+    'weight' => 0,
+    'data' => '', 
+  );
+
+  $object->line_items[] = $line_item;
+  unset($line_item);
+
+  return $object;
 }
