@@ -4,9 +4,7 @@
  * Ogone ecommerce payment gateway.
  *
  * Todo:
- *  Run $_GET vars through check_plain
  *  Re-add recurring option when hiding credit card fields
- *  Do not re-call fundraiser_order_x() functions if the user refreshes the page
  */
  
 /**
