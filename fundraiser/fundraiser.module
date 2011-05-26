@@ -696,7 +696,11 @@ function fundraiser_load($node) {
  */
 function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
   if (is_numeric($node->nid)) {
-    $gateway  = db_result(db_query('SELECT gateway FROM {fundraiser} WHERE nid = %d', $node->nid));  
+    $gateway  = db_result(db_query('SELECT gateway FROM {fundraiser} WHERE nid = %d', $node->nid));
+    if(module_exists('gateway_manager') && is_numeric($gateway)) {
+      $gateway = db_result(db_query("SELECT type FROM {gateway_manager_gateways} WHERE id=%d", $gateway));
+    }
+  
     if ($gateway === 'test_gateway') {
       drupal_set_message('This donation form is using the test gateway for order processing. Donations submitted via this form will not be processed.', 'error', FALSE);
     }
