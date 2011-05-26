@@ -377,6 +377,7 @@ function fundraiser_node_info() {
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
+
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all', FALSE);
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
@@ -694,6 +695,12 @@ function fundraiser_load($node) {
  * Implemenation of hook_view().
  */
 function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
+  if (is_numeric($node->nid)) {
+    $gateway  = db_result(db_query('SELECT gateway FROM {fundraiser} WHERE nid = %d', $node->nid));  
+    if ($gateway === 'test_gateway') {
+      drupal_set_message('This donation form is using the test gateway for order processing. Donations submitted via this form will not be processed.', 'error', FALSE);
+    }
+  }
   // use Drupal's default node view
   $node = node_prepare($node, $teaser);
   
@@ -946,6 +953,7 @@ function fundraiser_user_map($nid) {
  * Returns a reference to an element of a FAPI array based on a known path.
  */
 function fundraiser_find_field(&$form, $path = array()) {
+ 
   foreach(array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return fundraiser_find_field($form[$v], $path[$v]);
