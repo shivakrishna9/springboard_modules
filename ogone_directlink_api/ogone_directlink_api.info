@@ -1,4 +1,4 @@
-name = Ogone API
+name = Ogone DirectLink API
 description = "Provides functions to interact with Ogone DirectLink method."
 package = Jackson River Springboard - payment
 

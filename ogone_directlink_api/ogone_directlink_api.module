@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Ogone API
+ * Ogone DirectLink API
  *
  * Provides functions to interact with Ogone DirectLink method.
  */
