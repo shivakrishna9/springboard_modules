@@ -48,7 +48,6 @@ function sf_donation_fundraiser_form_insert($node, $components) {
   $integrator = _sf_donation_current_donation_integrator();
   $default_map = DonationMapper::GetDefaultMap($integrator['id']);
   if (is_array($default_map)) {
-    drupal_set_message('its an array:' . pritn_r($default_map, TRUE));
     $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
   }
   $single = variable_get('sf_donation_default_single_donation_recordtype', '');

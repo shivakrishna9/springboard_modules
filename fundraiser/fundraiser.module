@@ -116,6 +116,14 @@ function fundraiser_menu() {
 	    'type' => MENU_CALLBACK,
 	);
 	
+	$items['fundraiser/confirmation-token-list/%'] = array(
+    'title' => 'Confirmation token list',
+    'page callback' => 'fundraiser_confirmation_token_list',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+	);
+	
 	$items['admin/fundraiser/recurring/test'] = array(
 		'title' => 'Fundraiser Recurring Payment Tester',
 	    'page callback' => 'fundraiser_recurring_test',
@@ -177,14 +185,6 @@ function fundraiser_menu() {
     'file' => 'fundraiser.sustainer.inc',
     'weight' => 2,
     'type' => MENU_LOCAL_TASK,
-	);
-	
-	$items['admin/fundraiser/recurring/logs'] = array(
-		'title' => 'Fundraiser Recurring Logs',
-    'page callback' => 'fundraiser_recurring_admin_logs',
-    'access arguments' => array("access content"),
-    'weight' => 2,
-    'type' => MENU_CALLBACK,
 	);
 	
 	$items['admin/store/orders/%uc_order/recurring/overview'] = array(
@@ -277,6 +277,85 @@ function fundraiser_mapping_form_access($node) {
 }
 
 /**
+ * Implementation of hook_theme_registry_alter().
+ */
+function fundraiser_theme_registry_alter(&$theme_registry) {
+  // tell the theme registry to look in this module's directory for theme files
+  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'fundraiser') . '/templates';
+}
+
+/**
+ * Implementation of hook_preprocess_page().
+ *
+ * Add a template suggestion that renders a blank page template for our confirmation page token picker.
+ */
+function fundraiser_preprocess_page(&$vars) {
+  if (arg(1) == 'confirmation-token-list') {
+    $vars['template_file'] = 'page-fundraiser-token-list';
+  }
+}
+
+/**
+ * Implementation of hook_wysiwyg_plugin().
+ *
+ * Add a WYSIWYG plugin for fundraiser confirmation tokens.
+ */
+function fundraiser_wysiwyg_plugin($editor, $version) {
+  switch ($editor) {
+    case 'ckeditor':
+      return array(
+        'fundraiser-tokens' => array(
+          'path' => drupal_get_path('module', 'fundraiser') . '/ckeditor',
+          'buttons' => array(
+            'fundraiser-tokens' => t('Fundraiser tokens'),
+          ),
+          'load' => TRUE,
+        ),
+      );
+      break;    
+  }
+}
+
+/**
+ * Generates all possible fundraiser tokens and passes them to theme function.
+ *
+ * @param: $nid
+ *   The id of the donation form node.
+ */
+function fundraiser_confirmation_token_list($nid) {
+  $all_tokens = array();
+  $all_tokens['webform'] = array();
+  $all_tokens['order'] = array();
+  
+  $items = token_get_list('order');
+  
+  // load up the donation form node 
+  $node = node_load($nid);
+
+  // loop over the webform components and output the special token syntax (ignore naughty fields)
+  foreach($node->webform['components'] as $component) {
+    if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
+      $parents = webform_component_parent_keys($node, $component);
+      if ($component['name'] == 'Please select your tax-deductible gift amount below') {
+        $component['name'] = t('Donation amount');
+      }
+      $all_tokens['webform']['%value[' . implode('][', $parents) . ']'] = $component['name'];
+    }
+  }
+
+  foreach($items as $module => $tokens) {
+    foreach($tokens as $token => $desc) {
+      $all_tokens['order']['['. $token . ']'] = $desc;
+    }
+  }
+  
+  array_unshift($all_tokens['webform'], '-- Select --');
+  array_unshift($all_tokens['order'], '-- Select --');
+  $output = theme(array('fundraiser_confirmation_tokens'), $all_tokens);
+  return $output;
+}
+
+/**
  * Implementation of hook_node_info().
  */
 function fundraiser_node_info() {
@@ -298,6 +377,7 @@ function fundraiser_node_info() {
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
+
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all', FALSE);
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
@@ -315,7 +395,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
-    '#weight' => -5,
+    '#weight' => -5.1,
     '#maxlength' => 255,
   );
   $form['internal_name'] = array(
@@ -323,10 +403,12 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => t('Internal Name'),
     '#required' => TRUE,
     '#default_value' => $node->internal_name,
-    '#weight' => -4.99,
+    '#weight' => -5.0,
     '#maxlength' => 255,
   );
 
+ 
+  
   /* add amount #aha */
   $form['amount_wrapper'] = array(
     '#type' => 'fieldset',
@@ -342,8 +424,6 @@ function fundraiser_form($node, $edit = NULL) {
     '#suffix' => '</div>',
     '#theme' => 'fundraiser_ask_amounts',
   );
-  
- 
   
   // Retrieve saved values if available
   $amount_values = array();
@@ -615,6 +695,16 @@ function fundraiser_load($node) {
  * Implemenation of hook_view().
  */
 function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
+  if (is_numeric($node->nid)) {
+    $gateway  = db_result(db_query('SELECT gateway FROM {fundraiser} WHERE nid = %d', $node->nid));
+    if(module_exists('gateway_manager') && is_numeric($gateway)) {
+      $gateway = db_result(db_query("SELECT type FROM {gateway_manager_gateways} WHERE id=%d", $gateway));
+    }
+  
+    if ($gateway === 'test_gateway') {
+      drupal_set_message('This donation form is using the test gateway for order processing. Donations submitted via this form will not be processed.', 'error', FALSE);
+    }
+  }
   // use Drupal's default node view
   $node = node_prepare($node, $teaser);
   
@@ -799,16 +889,16 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			$cc_exp_year_field = NULL;
 			
 			// alter country drop down to populate zone drop down via ahah
-			$country_field =& fundraiser_find_field($form, $component_hierarchy['billing_country']);
+			$country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
 			$country_field['#ahah'] = array('path' => 'zones/js', 'wrapper' => 'zone-select-wrapper');
             // add default country & state values from user profile
             $fids = _fundraiser_get_profile_location_fields();
             if ($fids['country']) {
-              $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_name AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
+              $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
             }
 
       // add a wrapper around the state field so it can be replaced via ajax			
-			$state_field =& fundraiser_find_field($form, $component_hierarchy['billing_state']);
+			$state_field =& fundraiser_find_field($form, $component_hierarchy['state']);
 			if ($fids['state']) {
 			  $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
 			}
@@ -818,10 +908,10 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // flatten form state array so that it is easier to work with			
 			$fields = _fundraiser_array_flatten($form_state);
 			// country/state dependant drop down code
-			if (array_key_exists('billing_country', $fields)) {
-				$country_field['#default_value'] = $fields['billing_country']; // user selected country
+			if (array_key_exists('country', $fields)) {
+				$country_field['#default_value'] = $fields['country']; // user selected country
 				// populate via Ahah!
-				$state_field['#options'] = fundraiser_get_country_zones($fields['billing_country']);
+				$state_field['#options'] = fundraiser_get_country_zones($fields['country']);
 			}
 			else {
         $state_field['#options'] = fundraiser_get_country_zones($country_field['#default_value']); // default country as defined in the component definition
@@ -866,7 +956,8 @@ function fundraiser_user_map($nid) {
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
  */
-function &fundraiser_find_field(&$form, $path) {
+function fundraiser_find_field(&$form, $path = array()) {
+ 
   foreach(array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return fundraiser_find_field($form[$v], $path[$v]);
@@ -966,7 +1057,7 @@ function fundraiser_zones_ahah_render() {
   
   // figure out the path to the billing state drop down component
   $nid = $form['#parameters'][2]->nid;
-	$field = fundraiser_find_field($form, fundraiser_parse_component($nid, 'billing_state'));
+	$field = fundraiser_find_field($form, fundraiser_parse_component($nid, 'state'));
 	unset($field['#prefix'], $field['#suffix']); // prevent duplicate wrappers
 	$output = $field;
 	
@@ -1094,30 +1185,6 @@ function fundraiser_recurring_check_access() {
 		$bool = TRUE;
 	}
 	return $bool;
-}
-
-
-function fundraiser_recurring_admin_logs(){
-	$resource = db_query("select fundraiser_recurring_log.*, {users}.name
-			from {fundraiser_recurring_log} 
-			inner join {users} on {fundraiser_recurring_log}.customer_uid = {users}.uid
-			order by timestamp desc");
-	
-	$output = "
-	<h3><a href='/admin/fundraiser/recurring'>Return to Fundraising Overview</a></h3>
-	<table border=1>
-	<tr><th>Order ID</th><th>Customer</th><th>Message</th><th>Date</th></tr>";
-	for($i=0;$row = db_fetch_array($resource); $i++){
-		$output .= "<tr>
-		<td><a href='/admin/store/orders/$row[order_id]'>$row[order_id]</a></td>
-		<td><a href='/user/$row[customer_uid]'>$row[name]</a></td>
-		<td>User <a href='/user/$row[who_cancelled_uid]'>$row[who_cancelled_uid]</a>: $row[action]</td>
-		<td>$row[timestamp]</td>
-		</tr>";
-	}
-	$output .= "</table>";
-	
-	return $output;
 }
 
 /**
@@ -1321,12 +1388,12 @@ function fundraiser_webform_submit($form, &$form_state) {
 	$first_name = $fundraiser_fields['first_name'];
 	$last_name = $fundraiser_fields['last_name'];
 	$email = $fundraiser_fields['email'];
-	$billing_address = $fundraiser_fields['billing_address'];
-	$billing_address_2 = $fundraiser_fields['billing_address_2'];
-	$billing_city = $fundraiser_fields['billing_city'];
-	$billing_country = $fundraiser_fields['billing_country'];
-	$billing_state = $fundraiser_fields['billing_state'];
-	$billing_zipcode = $fundraiser_fields['billing_zipcode'];
+	$billing_address = $fundraiser_fields['address'];
+	$billing_address_2 = $fundraiser_fields['address_line_2'];
+	$billing_city = $fundraiser_fields['city'];
+	$billing_country = $fundraiser_fields['country'];
+	$billing_state = $fundraiser_fields['state'];
+	$billing_zipcode = $fundraiser_fields['zip'];
 	$quantity = $fundraiser_fields['quantity'];
 	
 	// lets jump through some hoops to see if this was a recurring donation
@@ -1436,6 +1503,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
+ 	  module_invoke_all('fundraiser_order_success', $order);
  	}
  	else { 
 		// failed to process credit cart
@@ -1676,6 +1744,9 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 			// save profile
 			_fundraiser_profile_save_profile($updates, $user, $cat['name']);
 		}		
+		// convert ubercart's numeric ids to textual values
+		$submission = webform_get_submission($nid, $sid);
+		_fundraiser_update_profile_location($submission);
 	}
 	
 	// update last_updated date so user will be re-synced on next cron run
@@ -2129,6 +2200,10 @@ function fundraiser_theme() {
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
+    'fundraiser_confirmation_tokens' => array(
+      'arguments' => array('tokens' => NULL),
+      'template' => 'templates/fundraiser-token-list',
+    ),
   );
 }
 
@@ -2445,4 +2520,14 @@ function _fundraiser_array_smart_merge($array, $override) {
 function fundraiser_validate_email($mail) {
 	return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
 	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
+}
+
+function _fundraiser_field_blacklist() {
+  return array(
+    'card_number',
+    'card_cvv',
+    'recurs_monthly',
+    'card_expiration_month',
+    'card_expiration_year',
+  );
 }

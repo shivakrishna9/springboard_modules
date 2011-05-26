@@ -141,20 +141,29 @@ function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
  */
 function secure_prepopulate_after_build($form, &$form_state) {
   $node = $form['#parameters'][2];
-
+  
   // see if the user has any pre-popluate data for this node in their session
   $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
   $precedence = variable_get('secure_prepopulate_precedence', 'url');
   $components = $node->webform['components'];
-
   // create an data structure that will tell us exactly where each webform component lives in the FAPI array
   $component_hierarchy = _secure_prepopulate_parse_form($node->nid, $components);
-  
+
   // try to prepopulate any fields found in the prepopulate_data array
   foreach ($prepopulate_data as $form_key => $value) {
     if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
       switch ($field['#type']) {
+        case 'radios':
+          // radios will have individual radio form fields inside them
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#value'] = $value; 
+          }
+          break;
         case 'checkboxes':
+          // if single checkbox, there will be a inner checkbox field
+          if (array_key_exists($value, $field)) {
+            $field[$value]['#value'] = $value;
+          }
           $value = array($value);
           break;
         case 'date':
@@ -285,16 +294,23 @@ function secure_prepopulate_parse_qs($qs) {
   if (module_exists('uc_store')) {
     // look for billing_country, billing_state specifically
     if (array_key_exists('billing_country', $result)) {
-      $result['billing_country'] = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $result['billing_country']));
+      $result['billing_country'] = _secure_prepopulate_convert_country($result['billing_country']);
     }
     if (array_key_exists('billing_state', $result)) {
-      $result['billing_state'] = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $result['billing_state']));
+      $result['billing_state'] = _secure_prepopulate_convert_state($result['billing_state']);
+    }
+    if (array_key_exists('country', $result)) {
+      $result['country'] = _secure_prepopulate_convert_country($result['country']);
+    }
+    if (array_key_exists('state', $result)) {
+      $result['state'] = _secure_prepopulate_convert_country($result['state']);
     }
   }
   
   // return an array of key/value pairs or an empty array
   return $result;
 }
+
 
 /**
  * Determines if an encrypted query string has already been used.
@@ -336,6 +352,36 @@ function secure_prepopulate_expire($qs) {
  */
 function secure_prepopulate_clear_session($nid) {
   unset($_SESSION['secure_prepopulate_values'][$nid]);
+}
+
+/**
+ * Converts a 2 character iso country code to an ubercart country id.
+ *
+ * @parm $country
+ *   The country code to convert.
+ */
+function _secure_prepopulate_convert_country($country) {
+  $code = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $country));
+  if (!empty($code)) {
+    return $code;
+  }
+  // nothing found, return original
+  return $country;
+}
+
+/**
+ * Converts a 2 character state abbreviation to an ubercart zone code.
+ *
+ * @parm $state
+ *   The state abbreviation to convert.
+ */
+function _secure_prepopulate_convert_state($state) {
+  $code = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $state));  
+  if (!empty($code)) {
+    return $code;
+  }
+  // nothing found, return original
+  return $state;
 }
 
 /****************************************************************

@@ -1028,7 +1028,7 @@ function _webform_user_create_webform_components(&$node) {
     $item = array(
       'nid' => $node->nid,
       'pid' => $fieldset_id,
-      'form_key' => $field['name'],
+      'form_key' => str_replace('profile_', '', $field['name']),
       'name' => $field['title'],
       'type' => $field['type'],
       'mandatory' => $field['required'],

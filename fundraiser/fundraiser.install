@@ -840,3 +840,26 @@ function fundraiser_update_6305() {
     variable_set('webform_node_types_primary', $result);
   }
 }
+
+/**
+ * Rename component form keys in all existing donation forms.
+ */
+function fundraiser_update_6306() {
+  $changes = array(
+    'billing_address' => 'address',
+    'billing_address_2' => 'address_line_2',
+    'billing_city' => 'city',
+    'billing_state' => 'state',
+    'billing_country' => 'country',
+    'billing_zipcode' => 'zip',
+  );
+  
+  $result = db_query("SELECT nid FROM {node} WHERE type = 'donation_form'");
+  
+  // loop over every donation form and change the field key for each component
+  while ($data = db_fetch_object($result)) {
+    foreach($changes as $old_key => $new_key) {
+      db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
+    }  
+  }
+}

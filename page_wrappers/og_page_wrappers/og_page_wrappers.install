@@ -1,0 +1,38 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install file for the og page wrappers module. 
+ * 
+ */
+
+/**
+ * Implementation of hook_enable().
+ */
+function og_page_wrappers_enable() {
+  // let og new the page wrappers node type is a standard post
+  variable_set('og_content_type_usage_page_wrapper', 'group_post_standard');
+  
+  // remove the path from the original page_wrappers view so og_page_wrappers will take it's place
+  $view = 'page_wrappers';
+  $view = views_get_view($view);
+  $view->display['page_1']->display_options['path'] = '';
+  $view->save();
+  cache_clear_all('*', 'cache_views');
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function og_page_wrappers_disable() {
+  // when disabled, don't allow page wrappers to be assigned to groups
+  variable_set('og_content_type_usage_page_wrapper', 'omitted');
+  
+  // re-add the path to the original page_wrappers view
+  $view = 'page_wrappers';
+  $view = views_get_view($view);
+  $view->display['page_1']->display_options['path'] = 'admin/build/page-wrappers';
+  $view->save();
+  cache_clear_all('*', 'cache_views');
+}

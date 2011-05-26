@@ -1,0 +1,591 @@
+<?php
+// $Id$
+
+ 
+
+// include feature
+include_once('page_wrappers.features.inc');
+
+/**
+ * Implementation of hook_menu().
+ */
+function page_wrappers_menu() {
+  $items['admin/settings/page-wrappers'] = array(
+    'title' => t('Page wrapper settings'),
+    'description' => t('Configure page wrapper settings.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('page_wrappers_settings_form'),
+    'access arguments' => array('administer page wrappers'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'page_wrappers.admin.inc',
+  );
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function page_wrappers_perm() {
+  return array('administer page wrappers');
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ */
+function page_wrappers_theme_registry_alter(&$theme_registry) {
+  // tell the theme registry to look in this module's directory for theme files
+  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'page_wrappers') . '/theme';
+  $theme_registry['page']['theme paths'][] = 'sites/default/files/page_wrappers/tpl';
+}
+
+/**
+ * Implementation of hook_preprocess_page().
+ */
+function page_wrappers_preprocess_page(&$vars) {
+  // get out of here if we're on the edit page
+  if (arg(0) == 'node' && arg(2) == 'edit') {
+    return;
+  }
+
+  // get the list of node types that can have wrappers
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form', 'page_wrapper'));
+  
+  // if the node type is wrapper enabled and actually has one assigned
+  if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
+    $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
+    
+    // make sure template actually exists
+    if (_page_wrappers_template_exists($template)) {
+      $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
+      // remove all the stylesheets and add the style specific to this wrapper if available
+      $wrapper_node = node_load($vars['node']->wrapper);
+      // if the wrapper has it's own stylesheet, overwrite all others
+      if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
+        $stylesheets = drupal_add_css();
+        // remove module stylesheets
+        unset($stylesheets['all']['module'] ['modules/aggregator/aggregator.css']);
+        unset($stylesheets['all']['module'] ['modules/node/node.css']);
+        unset($stylesheets['all']['module'] ['modules/system/defaults.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system-menus.css']);
+        unset($stylesheets['all']['module'] ['modules/taxonomy/taxonomy.css']);
+        unset($stylesheets['all']['module'] ['modules/user/user.css']);
+        // remove the theme stylesheet
+        unset($stylesheets['all']['theme']);
+        // add the new theme stylesheet
+        $stylesheets['all']['theme'][$wrapper_node->field_css_file[0]['filepath']] = 1;
+        // regenerate styles
+        $vars['styles'] = drupal_get_css($stylesheets);
+      }
+      
+      // add javascript if available
+      if (!empty($wrapper_node->field_js_file[0]['filepath'])) {
+        $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
+
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  
+  // page wrapper specific
+  if ($node->type == 'page_wrapper') {
+    switch ($op) {
+      case 'presave':
+        page_wrappers_clean_markup($node);
+        break;
+      case 'insert':
+        $template = _page_wrappers_create_template($node);
+        db_query("INSERT INTO {page_wrappers} (nid, template) VALUES (%d, '%s')", $node->nid, $template);
+        
+      case 'update':
+        $template = _page_wrappers_create_template($node);
+        break;
+        
+      case 'delete':
+        // remove the template from any nodes that are assigned to it
+        db_query("DELETE FROM {node_page_wrappers} WHERE wrapper_nid = %d", $node->nid);
+        // remove the wrapper
+        db_query("DELETE FROM {page_wrappers} WHERE nid = %d", $node->nid);
+        break;
+        
+      case 'load':
+        $wrapper = db_result(db_query("SELECT nid FROM {page_wrappers} WHERE nid = %d", $node->nid));
+        if (arg(2) != 'clone' && arg(2) != 'delete') {
+          $node->wrapper = $wrapper;
+        }        
+        break;
+        
+      case 'view':
+        if (!$teaser) {
+          unset($node->content);
+          $node->content['preview'] = array(
+            '#value' => drupal_get_form('_page_wrapper_preview_form'),
+          );
+          unset($node->content['[field_css_file]']);
+          unset($node->content['field_js_file']);
+          //$node->content['body'] = 'blah';
+          //print "<pre>".print_r($node, TRUE)."</pre>";
+        }
+        break;
+    }
+  }
+  elseif (in_array($node->type, $enabled_types)) {
+    switch ($op) {
+      // insert/update
+      case 'insert':
+      case 'update':
+        if (isset($node->wrapper)) {
+          _page_wrappers_assign_wrapper($node->nid, $node->wrapper);
+        }
+        break;
+      
+      // delete
+      case 'delete':
+        db_query("DELETE FROM {node_page_wrappers} WHERE nid = %d", $node->nid);
+        break;
+      
+      // load  
+      case 'load':
+        $wrapper = db_result(db_query("SELECT wrapper_nid FROM {node_page_wrappers} WHERE nid = %d", $node->nid));
+        if (!empty($wrapper)) {
+          $node->wrapper = $wrapper;
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function page_wrappers_form_alter(&$form, $form_state, $form_id) {
+  // get the node types that can utilize a page wrapper
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  
+  // make sure we're dealing with a node edit form and the node type is in the enabled types array
+  if (!empty($form['#node']) && ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types))) {
+    $wrappers = _page_wrappers_available_wrappers();
+    if (count($wrappers) > 1) {
+      $form['wrapper'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Page wrapper settings'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      
+      $wrapper = $form['#node']->wrapper;
+      $form['wrapper']['wrapper'] = array(
+        '#type' => 'select',
+        '#title' => t('Page wrapper'),
+        '#default_value' => $wrapper,
+        '#options' => $wrappers,
+        '#description' => t('Select the page wrapper to use when displaying this node.'),
+      );
+    }
+  }
+  
+  // page_wrapper_node_form
+  if ($form_id == 'page_wrapper_node_form') {
+    // add some help the body (Template HTML) field
+    $form['body_field']['#suffix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt; or &lt;head&gt tags in the template. ');
+    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output.');
+  }
+}
+
+/**
+ * Implementation of hook_file_insert().
+ */
+function page_wrappers_file_insert(&$file) {
+  // js file rename back to .js
+  if ($file->source == 'group_files_field_js_file_0' || $file->source == 'group_files_field_css_file_0') {
+    
+    $filepath = $file->filepath;
+    $new_filepath = $file->filepath;
+    $filename = $file->filename;
+    
+    // for .js files, strip off the .txt extension that gets added
+    if ($file->source == 'group_files_field_js_file_0') {
+      $new_filepath = substr($filepath, 0, strlen($filepath) - 4);
+      $filename = substr($file->filename, 0, strlen($file->filename) - 4);
+    }
+    
+    // append a timestamp to the filename to ensure uniqueness
+    $new_filepath = _page_wrappers_add_timestamp($new_filepath);
+    
+    if (file_move($filepath, $new_filepath)) {
+      // update the file
+      $file->filepath = $filepath;
+      $file->filename = $filename;
+      $file->filemime = file_get_mimetype($file->filename);
+      $file->destination = $file->filepath;
+      $file->status = FILE_STATUS_TEMPORARY;
+      drupal_write_record('files', $file, 'fid');
+    }
+    
+  }
+}
+
+/**
+ * Adds a timestamp to a filename.
+ *
+ * @param $filename
+ *   The filename to add the timestamp to.
+ */
+function _page_wrappers_add_timestamp($filename) {
+  $parts = explode('.', $filename);
+  $parts[0] = $parts[0] . '-' . time();
+  return implode('.', $parts); // glue the parts back together with a period
+}
+ 
+
+/**
+ * Gets all configured wrappers.
+ */
+function _page_wrappers_available_wrappers() {
+  $result = db_query(db_rewrite_sql("SELECT n.title, p.nid, p.template FROM {page_wrappers} p INNER JOIN {node} n ON n.nid = p.nid"));
+  $wrappers = array(t('-- Select --'));
+  while ($data = db_fetch_object($result)) {
+    $wrappers[$data->nid] = $data->title;
+  }
+  
+  // allow other modules to alter the array of available templates
+  drupal_alter('available_page_wrappers', $wrappers);
+  return $wrappers;
+}
+
+/**
+ * Assigns a page wrapper to a node.
+ *
+ * @param $nid
+ *   The id of the node that is being assigned the wrapper.
+ * @param $wrapper_nid
+ *   The id of the wrapper being assigned.
+ */
+function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
+  // check if there is an existing entry at all for this node.
+  $exists = db_result(db_query('SELECT nid FROM {node_page_wrappers} WHERE nid = %d', $nid));
+  
+  // if a valid wrapper is being assigned  
+  if ($wrapper_nid) {
+    if (!$exists) {
+      db_query("INSERT INTO {node_page_wrappers} (nid, wrapper_nid) VALUES (%d, %d)", $nid, $wrapper_nid);
+    }
+    else {
+      db_query("UPDATE {node_page_wrappers} SET wrapper_nid = %d WHERE nid = %d", $wrapper_nid, $nid);
+    }
+  }
+  else {
+    // remove it
+    db_query("DELETE FROM {node_page_wrappers} WHERE nid = %d", $nid);
+  }
+}
+
+/**
+ * Returns the path to where all page wrapper files are stored.
+ */
+function _page_wrappers_base_path() {
+  //return $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
+  //return drupal_get_path('module', 'page_wrappers') . '/theme';
+  return $_SERVER['DOCUMENT_ROOT'] . '/' . 'sites/default/files/page_wrappers';
+}
+
+function _page_wrappers_template_path() {
+  return _page_wrappers_base_path() . '/tpl';
+}
+
+function _page_wrappers_css_path() {
+  return _page_wrappers_base_path() . '/css';
+}
+
+function _page_wrappers_js_path() {
+  return _page_wrappers_base_path() . '/js';
+}
+
+/**
+ * Creates a template file.
+ *
+ * This function will create a template file in the /theme subdirectory of the module. It uses
+ * the title of the node to generate a unique template filename.
+ *
+ * @param $node
+ *   The page wrapper node.
+ */
+function _page_wrappers_create_template($node) {
+  $base_path = _page_wrappers_base_path();
+  
+  // see if a template file already exists for this node
+  $filename = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $node->nid));  
+
+  if (empty($filename)) {
+    // create a template file name based on title
+    $filename = 'page-' . strtolower(str_replace(' ', '-', $node->title)) . '-' . time() . '.tpl.php'; // TODO: Better filename creator  
+  }  
+  
+  $full_path = $base_path . '/tpl';
+
+  if (file_check_directory($full_path, 1)) {
+    $full_path = $full_path . '/' . $filename;
+    // open the file for writing
+    $file = fopen($full_path, 'w');
+    
+    // build up template markup
+    $body = _page_wrappers_default_header();
+    $body .= _page_wrappers_tokens($node->body);
+    $body .= _page_wrappers_default_footer();
+    
+    fputs($file, $body);
+    
+    fclose($file);
+    
+    return $filename;
+  }
+  
+  return FALSE;  
+  
+}
+
+/**
+ * Cleans up unwanted user created markup in the node body.
+ *
+ * @param $node
+ *   The page wrapper node to clean up.
+ */
+function page_wrappers_clean_markup(&$node) {
+  // remove any header the user may have entered
+  $node->teaser = '';
+  $node->body = preg_replace('/<html.*?>(.|\n)*?<body>/i', '', $node->body);
+}
+
+/**
+ * Replaces tokens in the template content.
+ *
+ * @param $content
+ *   The content that contains the tokens.
+ */ 
+function _page_wrappers_tokens($content) {
+  $tokens = array('[content]', '[styles]', '[scripts]');
+  $replaces = array(
+    '<?php print $content; ?>',
+    '<?php print $styles; ?>',
+    '<?php print $scripts; ?>',
+  );
+  return str_replace($tokens, $replaces, $content);
+}
+
+/**
+ * Determines if a wrapper template file actually exists on disk.
+ *
+ * @param $template
+ *   The template filename.
+ */
+function _page_wrappers_template_exists($template) {
+  $path = _page_wrappers_template_path() . '/' . $template;
+
+  if (file_exists($path)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implementation of hook_clone_node_alter().
+ *
+ * Make a copy of the css and js files when a node is cloned.
+ */
+function page_wrappers_clone_node_alter(&$node, $original_node, $method) {
+  if ($method == 'save-edit') {
+    // make copies of any css and js files accordingly
+    if ($original_node->field_js_file[0]['fid']) {
+      if ($file = _page_wrappers_clone_file($original_node->field_js_file[0], 'js', _page_wrappers_add_timestamp($original_node->field_js_file[0]['filename']))) {
+        $node->field_js_file[0]['filepath'] = $file->filepath;
+        $node->field_js_file[0]['fid'] = $file->fid;
+      }
+    }
+    if ($original_node->field_css_file[0]['fid']) {
+      if ($file = _page_wrappers_clone_file($original_node->field_css_file[0], 'css', _page_wrappers_add_timestamp($original_node->field_css_file[0]['filename']))) {
+        $node->field_css_file[0]['filepath'] = $file->filepath;
+        $node->field_css_file[0]['fid'] = $file->fid;
+      }
+    }
+  }
+}
+
+/**
+ * Clones a file associated with a page wrapper.
+ *
+ * @param $original
+ *   The original file being cloned.
+ * @param $type
+ *   The type of file (js or css).
+ * @param $new_filename
+ *   The filename to use for the cloned file.
+ */
+function _page_wrappers_clone_file($original, $type, $new_filename) {
+  global $user;
+  
+  // create a new filename for the file
+  $filepath = 'sites/default/files/page_wrappers/' . $type . '/' . $new_filename;
+  
+  // if it copies, create a new file
+  if (file_copy($original['filepath'], $filepath)) {
+    $file = new stdClass();
+    $file->uid = $user->uid;
+    $file->filename = $original['filename'];
+    $file->filepath = $filepath;
+    $file->filemime = $original['filemime'];
+    $file->filesize = $original['filesize'];
+    $file->status = $original['status'];
+    $file->timestamp = $original['timestamp'];
+    $file->list = $original['list'];
+    
+    // save the new file
+    if (drupal_write_record('files', $file)) {
+      return $file;
+    }
+  }
+  
+  return FALSE; // couldn't copy file   
+}
+
+/**
+ * Returns a fake form for previewing wrappers.
+ */
+function _page_wrapper_preview_form() {
+  $form['donation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Donation'),
+    '#weight' => 1,
+  );
+  
+  $form['donation']['amount'] = array(
+    '#type' => 'radios',
+    '#title' => t('Please select your tax-deductible gift amount below'),
+    '#options' => array('$10', '$20', '$50', '$100'),
+  );
+  
+  $form['personal'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Your Information',
+    '#weight' => 2,
+  );
+  $form['personal']['firstname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('First Name'),
+  );
+  
+  $form['personal']['lastname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Last Name'),
+  );
+  
+  $form['personal']['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+  );
+  
+  $form['billing'] = array(
+    '#type' => 'fielset',
+    '#title' => t('Credit Card Billing Information'),
+    '#weight' => 3,
+  );
+  
+  $form['billing']['address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address'),
+  );
+  
+  $form['billing']['address2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address Line 2'),
+  );
+  
+  $form['billing']['city'] = array(
+    '#type' => 'textfield',
+    '#title' => t('City'),
+  );
+  
+  $form['billing']['country'] = array(
+    '#type' => 'select',
+    '#title' => t('Country'),
+    '#options' => array('United States'),
+  );
+  
+  $form['billing']['state'] = array(
+    '#type' => 'select',
+    '#title' => t('State/Province'),
+    '#options' => array('Alabama', 'Alaska'),
+  );
+  
+  $form['billing']['zip'] = array(
+    '#type' => 'textfield',
+    '#title' => t('ZIP/Postal Code'),
+  );
+  
+  $form['cc'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Credit Card Information'),
+    '#weight' => 4,
+  );
+  
+  $form['cc']['number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Card Number'),
+  );
+  
+  $form['cc']['expdate'] = array(
+    '#type' => 'date',
+    '#title' => t('Expiration Date'),
+  );
+  
+  $form['cc']['cvv'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Card Security Code'),
+  );
+  
+  $form['cc']['recurs'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Recurring Payment'),
+    '#options' => array('Yes'),
+    '#multiple' => TRUE,
+  );
+  
+  return $form;
+}
+
+/**
+ * Creates the required markup for the template header.
+ */
+function _page_wrappers_default_header() {
+  $head = <<<EOT
+  <html xmlns="http://www.w3.org/1999/xhtml" lang="<?php print \$language->language ?>" xml:lang="<?php print \$language->language ?>" dir="<?php print \$language->dir ?>">
+  <head>
+    <?php print \$head ?>
+    <title><?php print \$head_title ?></title>
+    <?php print \$styles ?>
+    <?php print \$scripts ?>
+    </head>
+  <body>
+EOT;
+
+  return $head;
+}
+
+/**
+ * Creates the required markup for the template footer.
+ */
+function _page_wrappers_default_footer() {
+  $footer = <<<EOT
+  <?php print \$closure ?>
+  </body>
+  </html>
+EOT;
+
+  return $footer;
+}
