@@ -17,7 +17,7 @@
  */
 function gm_ogone_ecommerce_menu() {
   $items['ogone/post/%uc_order'] = array(
-    'title' => t('Ogone e-commerce'),
+    'title' => t('Redirecting to Ogone...'),
     'page callback' => 'gm_ogone_ecommerce_build_form',
     'page arguments' => array(2),
     'access callback' => TRUE,
@@ -63,7 +63,9 @@ function gm_ogone_ecommerce_menu() {
  */
 function gm_ogone_ecommerce_build_form($order) {
   drupal_add_js(drupal_get_path('module', 'gm_ogone_ecommerce') . '/gm_ogone_ecommerce.js');
-  return drupal_get_form('gm_ogone_ecommerce_post_form', $order);
+  $output = t("You are being redirected to Ogone to provide your payment details directly to the payment processor. One moment please.");
+  $output .= drupal_get_form('gm_ogone_ecommerce_post_form', $order);
+  return $output;
 }
 
 /**
