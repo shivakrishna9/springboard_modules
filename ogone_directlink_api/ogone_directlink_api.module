@@ -1,0 +1,8 @@
+<?php
+/**
+ * @file
+ * Ogone API
+ *
+ * Provides functions to interact with Ogone DirectLink method.
+ */
+
