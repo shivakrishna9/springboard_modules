@@ -4,9 +4,6 @@
  * Ogone ecommerce payment gateway.
  *
  * Todo:
- *  Return callbacks:
- *    Redirect user to order page? Get them to the confirmation page somewhow
- *  Remove credit card field from the donation form
  *  Run $_GET vars through check_plain
  *  Re-add recurring option when hiding credit card fields
  *  Do not re-call fundraiser_order_x() functions if the user refreshes the page
@@ -279,23 +276,33 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
 /*******************************************************************************
  * Ogone Feedback Functions
  ******************************************************************************/
+/**
+ * Menu callback: successful payment
+ */
 function gm_ogone_ecommerce_feedback_accepted() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
-  $order_id = $payment_values['orderID'];
+  $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
 
   if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_accept($order_id, $transaction_id);
+    drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
   }
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
+    drupal_goto('node/' . $webform->webform_nid);
   }
-  return "Accepted<pre>" . print_r($payment_values, true) . '</pre>';
 }
 
+
+/**
+ * Menu callback: declined payment
+ */
 function gm_ogone_ecommerce_feedback_declined() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
-  $order_id = $payment_values['orderID'];
+  $order_id = $payment_values['ORDERID'];
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
   if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_decline($order_id, $message);
@@ -303,12 +310,17 @@ function gm_ogone_ecommerce_feedback_declined() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Declined<pre>" . print_r($payment_values, true) . '</pre>';
+  drupal_goto('node/' . $webform->webform_nid);
 }
 
+
+/**
+ * Menu callback: exception
+ */
 function gm_ogone_ecommerce_feedback_exception() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
-  $order_id = $payment_values['orderID'];
+  $order_id = $payment_values['ORDERID'];
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
   if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_exception($order_id, '');
@@ -316,20 +328,26 @@ function gm_ogone_ecommerce_feedback_exception() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Exception<pre>" . print_r($payment_values, true) . '</pre>';
+  drupal_goto('node/' . $webform->webform_nid);
 }
 
+
+
+/**
+ * Menu callback: cancelled payment
+ */
 function gm_ogone_ecommerce_feedback_cancelled() {
   $payment_values = _gm_ogone_ecommerce_get_returned_values();
-  $order_id = $payment_values['orderID'];
-  
+  $order_id = $payment_values['ORDERID'];
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+
   if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
     fundraiser_order_cancel($order_id);
   }
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
-  return "Cancelled<pre>" . print_r($payment_values, true) . '</pre>';
+  drupal_goto('node/' . $webform->webform_nid);
 }
 
 
