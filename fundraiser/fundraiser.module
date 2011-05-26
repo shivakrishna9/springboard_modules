@@ -701,7 +701,7 @@ function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
       $gateway = db_result(db_query("SELECT type FROM {gateway_manager_gateways} WHERE id=%d", $gateway));
     }
   
-    if ($gateway === 'test_gateway') {
+    if ($gateway === 'test_gateway' && $page) {
       drupal_set_message('This donation form is using the test gateway for order processing. Donations submitted via this form will not be processed.', 'error', FALSE);
     }
   }
