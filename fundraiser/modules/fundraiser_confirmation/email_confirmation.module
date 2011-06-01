@@ -37,6 +37,8 @@ function email_confirmation_menu() {
  * Implements hook_form_alter().
  */
 function email_confirmation_form_alter(&$form, $form_state, $form_id) {
+  drupal_set_message('form id:' . $form_id);
+ 
   require_once('email_confirmation.defaults.inc');
   if ($form_id == 'confirmation_template_node_form') {
 
@@ -115,6 +117,10 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
     // We need to make sure there is only one  default confirmation template per group.
      if (module_exists('og')) {
        $form['#submit'][] = 'email_confirmation_defaults';
+     }
+     else {
+       // Hide OG default field
+       $form['field_confirmation_default']['#type'] = 'hidden';
      }
   }
 
@@ -255,40 +261,68 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       '#value' => t('Preview'),
       '#attributes' => array('class' => 'ctools-use-modal'),
     );
-  } 
+  }
+   drupal_set_message('form submit:' . print_r($form['#submit'], TRUE));
 }
 
 /**
  * Implements hook_nodeapi().
  */
-function email_confirmation_nodeapi($node, $op) {
-  if ($node->type == 'donation_form' && $op == 'delete') {
-    db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
-  }
-  if ($node->type =='donation_form' && $op == 'insert') {
-    $values = $node->template_wrapper;
-    $tid = $values['email_template'];
-    $subject = $values['confirmation_subject'];
-    $from_name =  $values['confirmation_from_name'];
-    $reply_to_email = $values['confirmation_reply_email'];
-    $bcc_email = $values['confirmation_bcc_email'];
-    $html_body = $values['confirmation_html_email_message'];
-    $text_body = $values['confirmation_text_email_message'];
-    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
-    
-  }
+function email_confirmation_nodeapi(&$node, $op) {
+  if ($node->type == 'donation_form') {
   
-  if ($node->type == 'donation_form' &&  $op == 'update') {
+  
+  switch ($op) {
 
-    $values = $node->template_wrapper;
-    $tid = $values['email_template'];
-    $subject = $values['confirmation_subject'];
-    $from_name =  $values['confirmation_from_name'];
-    $reply_to_email = $values['confirmation_reply_email'];
-    $bcc_email = $values['confirmation_bcc_email'];
-    $html_body = $values['confirmation_html_email_message'];
-    $text_body = $values['confirmation_text_email_message'];
-    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', text_message = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $node->nid);
+    case 'delete': 
+      db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
+      break;
+
+    case 'insert':
+      $values = $node->template_wrapper;
+      $tid = $values['email_template'];
+      $subject = $values['confirmation_subject'];
+      $from_name =  $values['confirmation_from_name'];
+      $reply_to_email = $values['confirmation_reply_email'];
+      $bcc_email = $values['confirmation_bcc_email'];
+      $html_body = $values['confirmation_html_email_message'];
+      $text_body = $values['confirmation_text_email_message'];
+      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+      break;  
+
+
+    case 'update':
+      $values = $node->template_wrapper;
+
+      // Defend against random node_save()s
+      if (!count($values)) {        
+        $data = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid));
+        $values = array();
+        $values['email_template'] = $data->tid;
+        $values['confirmation_subject'] = $data->subject;
+        $values['confirmation_from_name'] = $data->from_name;
+        $values['confirmation_reply_email'] = $data->reply_to_email;
+        $values['confirmation_bcc_email'] = $data->bcc_email;
+        $values['confirmation_html_email_message'] = $data->html_message;
+        $values['confirmation_text_email_message'] = $data->text_message;
+      }
+      $tid = $values['email_template'];
+      $subject = $values['confirmation_subject'];
+      $from_name =  $values['confirmation_from_name'];
+      $reply_to_email = $values['confirmation_reply_email'];
+      $bcc_email = $values['confirmation_bcc_email'];
+      $html_body = $values['confirmation_html_email_message'];
+      $text_body = $values['confirmation_text_email_message'];
+      
+      // Futureproof rolling out this feature to existing sites, we can't assume a record will already exist when a donation form
+      // is updated.
+      if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid=%d', $node->nid))) {   
+        db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', text_message = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $node->nid);
+      }
+      else {
+        db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+      }
+    }
   }
 }
 
@@ -618,4 +652,12 @@ function _email_confirmation_test_object() {
   unset($line_item);
 
   return $object;
+}
+
+/**
+ * Submit handler for the default group template field.
+ */
+function email_confirmation_defaults($form, $form_state) {
+
+
 }
