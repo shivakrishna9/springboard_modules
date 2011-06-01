@@ -431,9 +431,6 @@ function fundraiser_form($node, $edit = NULL) {
     $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
     $amount_values = unserialize(db_result($results));
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
-    if ($node->show_other_amount) {
-      unset ($amount_values[count($amount_values) -1]);
-    }
   }
 
  // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
@@ -2325,6 +2322,9 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
     if (!$edit['post'] && count($amount_values)) {
       $values = explode('|', $amount_values[$delta]);
       $form[$key . $delta]['#default_value'] = $values[$weight];
+      if ($values[0] == 'other') {
+        return FALSE;
+      }
     }
     else {
       $form[$key . $delta]['#default_value'] = $edit['post'][$key . $delta];
