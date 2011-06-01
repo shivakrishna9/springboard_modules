@@ -37,7 +37,6 @@ function email_confirmation_menu() {
  * Implements hook_form_alter().
  */
 function email_confirmation_form_alter(&$form, $form_state, $form_id) {
-  drupal_set_message('form id:' . $form_id);
  
   require_once('email_confirmation.defaults.inc');
   if ($form_id == 'confirmation_template_node_form') {
@@ -262,7 +261,6 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       '#attributes' => array('class' => 'ctools-use-modal'),
     );
   }
-   drupal_set_message('form submit:' . print_r($form['#submit'], TRUE));
 }
 
 /**
