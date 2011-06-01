@@ -114,7 +114,7 @@ function email_confirmation_default_html_template() {
         <td style="width: 50%; padding: 0in;" valign="top" width="50%">
         <p class="MsoNormal"><b><span>Billing
         Address:</span></b><span><br>
-        [order-address]
+        [order-billing-address]
         </span></p>
 
         </td>
