@@ -36,9 +36,17 @@ function email_confirmation_menu() {
 /**
  * Implements hook_form_alter().
  */
-function email_confirmation_form_alter(&$form, $form_state, $form_id) {
- 
+function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
+  
   require_once('email_confirmation.defaults.inc');
+  // If this module is enabled the confirmation email stuff on the confirmation tab is redundant and confusing.
+  if ($form_id = 'fundraiser_confirmation_settings_form') {
+    if ($form['#parameters'][2]->type == 'donation_form') {
+      unset($form['email']);
+      $form['#validate'] = array('email_confirmation_confirmation_form_validate');
+    }
+  }
+  
   if ($form_id == 'confirmation_template_node_form') {
 
     // New node, add default template & message values
@@ -261,6 +269,7 @@ function email_confirmation_form_alter(&$form, $form_state, $form_id) {
       '#attributes' => array('class' => 'ctools-use-modal'),
     );
   }
+
 }
 
 /**
@@ -658,4 +667,30 @@ function _email_confirmation_test_object() {
 function email_confirmation_defaults($form, $form_state) {
 
 
+}
+
+/**
+ * Replaces fundraiser_confirmation_settings_form_validate().
+ */
+function email_confirmation_confirmation_form_validate(&$form, $form_state) {
+
+  // Ensure the entered redirect URL is valid.
+  if ($form_state['values']['redirect'] == 'url') {
+    $redirect_url = trim($form_state['values']['redirect_url']);
+    if (empty($redirect_url)) {
+      form_error($form['confirmation_page']['redirection']['redirect_url'], t('A valid URL is required for custom redirection.'));
+    }
+    elseif (strpos($redirect_url, 'http') === 0 && !valid_url($redirect_url, TRUE)) {
+      form_error($form['confirmation_page']['redirection']['redirect_url'], t('The entered URL is not a valid address.'));
+    }
+    else {
+      form_set_value($form['confirmation_page']['redirection']['redirect_url'], $redirect_url, $form_state);
+    }
+  }
+  elseif ($form_state['values']['redirect'] == 'confirmation') {
+    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
+  }
+  else {
+    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
+  }
 }
