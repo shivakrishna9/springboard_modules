@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * Implements hook_perm().
+ */
+function fundraiser_goals_perm() {
+
+}
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_goals_menu() {
+
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
+
+}
+
+/**
+ * Implements hook_nodeapi().
+ */
+function fundraiser_goals_nodeapi($node, $op) {
+
+}
+
+/**
+ * Implements hook_block().
+ */
+function fundraiser_goals_block() {
+
+}
