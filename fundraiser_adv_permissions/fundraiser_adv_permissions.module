@@ -30,8 +30,8 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
-  $items['node/%webform_menu/webform/mapping']['access callback'] = 'user_access';
-  $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
+ // $items['node/%webform_menu/webform/mapping']['access callback'] = 'user_access';
+ // $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
 
 /**
