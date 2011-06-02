@@ -40,7 +40,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   
   require_once('email_confirmation.defaults.inc');
   // If this module is enabled the confirmation email stuff on the confirmation tab is redundant and confusing.
-  if ($form_id = 'fundraiser_confirmation_settings_form') {
+  if ($form_id == 'fundraiser_confirmation_settings_form') {
     if ($form['#parameters'][2]->type == 'donation_form') {
       unset($form['email']);
       $form['#validate'] = array('email_confirmation_confirmation_form_validate');
