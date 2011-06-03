@@ -11,6 +11,7 @@ function fundraiser_adv_permissions_perm() {
  * Implements hook_form_alter().
  */
 function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
+
   global $user;
   if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
     if ($form['form_key']['#default_value']) {
@@ -36,12 +37,20 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
 
 /**
  * Custom page callback for the webform link on donation form pages.
+ * 
+ * @return form
+ * Returns confirmation page form on donation forms, otherwise displays standard component form.
  */
 function fundraiser_adv_permissions_webform_page() {
   $args = func_get_args();
   $node = $args[0];
-  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
-  return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  if ($node->type == 'donation_form') {
+   module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+    return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  }
+  else {
+    return drupal_get_form('webform_components_form', $node);
+  }
   
 }
 
