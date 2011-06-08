@@ -1,0 +1,16 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ *   Dynamic gift strings install/schema hooks
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function dynamic_gift_strings_uninstall() {
+  variable_del('dynamic_gift_strings_send_alert');
+  variable_del('dynamic_gift_strings_alert_email');
+  variable_del('dynamic_gift_strings_never_expire');
+}
