@@ -65,15 +65,6 @@ function salesforce_management_api_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'salesforce_management_api.admin.inc',
   );  
-  
-  $items[SALESFORCE_PATH_ADMIN .'/demo'] = array(
-    'title' => 'Test/Demo',
-    'page callback' => 'salesforce_management_api_demo',
-    'access arguments' => array('administer salesforce management'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'salesforce_management_api.admin.inc',
-  );
-   
   $items[SALESFORCE_PATH_FIELDMAPS] = array(
     'title' => 'Fieldmaps',
     'description' => 'Administer fieldmap relationships between Drupal objects and Salesforce objects.',

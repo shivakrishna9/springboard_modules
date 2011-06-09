@@ -377,7 +377,6 @@ function fundraiser_node_info() {
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
-
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all', FALSE);
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
@@ -431,9 +430,6 @@ function fundraiser_form($node, $edit = NULL) {
     $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
     $amount_values = unserialize(db_result($results));
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
-    if ($node->show_other_amount) {
-      unset ($amount_values[count($amount_values) -1]);
-    }
   }
 
  // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
@@ -614,6 +610,7 @@ function fundraiser_insert($node) {
  * Implemenation of hook_update().
  */
 function fundraiser_update($node) {
+
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
@@ -680,14 +677,34 @@ function fundraiser_delete(&$node) {
  * Implementation of hook_load().
  */
 function fundraiser_load($node) {
+
   $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
   // get the user profile map
   $result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
-	while($row = db_fetch_array($result)){
-		$map[$row['cid']] = $row['map_id'];
-	}
-	
-	$fundraiser->map = $map;
+  while($row = db_fetch_array($result)){
+    $map[$row['cid']] = $row['map_id'];
+  }
+
+  // Protection vs node_save() for donation amounts.
+  $extra = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d and form_key = "amount"', $node->nid));
+  $extra = unserialize($extra);
+
+  $items = preg_split('/\s/', $extra['items']);
+  $count = 0;
+
+  for ($i = 0; $i < count($items); ++$i) {
+    $item = explode('|', $items[$i]);
+    if ($item[0] != 'other') {
+
+      $amount = 'amount_' . $i;
+      $label = 'label_' . $i;
+      $fundraiser->$amount = $item[0];
+      $fundraiser->$label = $item[1];
+      ++$count;
+    }
+  }
+  $fundraiser->amount_delta = $count;
+  $fundraiser->map = $map;
   return $fundraiser;
 }
 
@@ -695,16 +712,6 @@ function fundraiser_load($node) {
  * Implemenation of hook_view().
  */
 function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
-  if (is_numeric($node->nid)) {
-    $gateway  = db_result(db_query('SELECT gateway FROM {fundraiser} WHERE nid = %d', $node->nid));
-    if(module_exists('gateway_manager') && is_numeric($gateway)) {
-      $gateway = db_result(db_query("SELECT type FROM {gateway_manager_gateways} WHERE id=%d", $gateway));
-    }
-  
-    if ($gateway === 'test_gateway') {
-      drupal_set_message('This donation form is using the test gateway for order processing. Donations submitted via this form will not be processed.', 'error', FALSE);
-    }
-  }
   // use Drupal's default node view
   $node = node_prepare($node, $teaser);
   
@@ -956,8 +963,7 @@ function fundraiser_user_map($nid) {
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
  */
-function fundraiser_find_field(&$form, $path = array()) {
- 
+function &fundraiser_find_field(&$form, $path) {
   foreach(array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return fundraiser_find_field($form[$v], $path[$v]);
@@ -2328,6 +2334,9 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
     if (!$edit['post'] && count($amount_values)) {
       $values = explode('|', $amount_values[$delta]);
       $form[$key . $delta]['#default_value'] = $values[$weight];
+      if ($values[0] == 'other') {
+        return FALSE;
+      }
     }
     else {
       $form[$key . $delta]['#default_value'] = $edit['post'][$key . $delta];

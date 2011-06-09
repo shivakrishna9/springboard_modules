@@ -11,6 +11,7 @@ function fundraiser_adv_permissions_perm() {
  * Implements hook_form_alter().
  */
 function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
+
   global $user;
   if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
     if ($form['form_key']['#default_value']) {
@@ -30,18 +31,26 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
-  $items['node/%webform_menu/webform/mapping']['access callback'] = 'user_access';
-  $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
+  $items['node/%webform_menu/webform/mapping']['access callback'] = 'fundraiser_adv_permissions_mapping_access';
+ // $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
 
 /**
  * Custom page callback for the webform link on donation form pages.
+ * 
+ * @return form
+ * Returns confirmation page form on donation forms, otherwise displays standard component form.
  */
 function fundraiser_adv_permissions_webform_page() {
   $args = func_get_args();
   $node = $args[0];
-  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
-  return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  if ($node->type == 'donation_form') {
+   module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+    return drupal_get_form('fundraiser_confirmation_settings_form', $node);
+  }
+  else {
+    return drupal_get_form('webform_components_form', $node);
+  }
   
 }
 
@@ -60,3 +69,10 @@ function fundraiser_adv_permissions_component_access() {
   return node_access('update', $node);
 }
 
+/**
+ * Access callback for user mapping tab.
+ */
+function fundraiser_adv_permissions_mapping_access($node) {
+  return ($node->type == 'donation_form' && user_access('access user/sf mappings'));
+
+}

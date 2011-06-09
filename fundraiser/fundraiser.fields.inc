@@ -606,7 +606,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   else {
     $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
     $field_type = db_result(db_query('SELECT type FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
-
+    
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
@@ -618,7 +618,8 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
       db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
-      _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $node->show_other_amounts);
+      $amount = _fundraiser_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amounts);
+      webform_component_insert($amount['amount']);
     }
   }
   
@@ -707,7 +708,6 @@ function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = arr
  *  Returns a keyed array containing the component values and the id of the created component.
  */
 function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount) {
-  drupal_set_message('other amount insert invoked');
   $other_amount = array();
   $other_amount['nid'] = $nid;
   $other_amount['pid'] = $pid; 

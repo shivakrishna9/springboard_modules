@@ -20,7 +20,7 @@ function springboard_perm() {
 function springboard_menu() {
   $items = array();
   $items['admin/springboard'] = array(
-    'title' => 'Springboard settings',
+    'title' => 'Springboard',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('administer springboard'),
     'page callback' => 'springboard_admin',

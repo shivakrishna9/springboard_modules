@@ -1,0 +1,5 @@
+core = "6.x"
+name = "Fundraiser Goals"
+description = "Activity goals"
+package = "Fundraiser"
+dependencies[] = 'fundraiser'

@@ -6,7 +6,7 @@
 function email_confirmation_install() {
   //Disable conditional action order confirmation emails
   if (module_exists('ca')) {
-    $pid = db_result(db_query('SELECT 1 FROM {ca_predicates} WHERE pid = "uc_checkout_admin_notification"'));
+    $pid = db_result(db_query('SELECT 1 FROM {ca_predicates} WHERE pid = "uc_checkout_customer_notification"'));
     if ($pid) {
       db_query('UPDATE {ca_predicates} SET status = 0 WHERE pid = "uc_checkout_customer_notification"');
     }
@@ -45,7 +45,16 @@ function email_confirmation_install() {
   }
   drupal_install_schema('email_confirmation');
 }
- 
+
+/**
+ * Implements hook_uninstall().
+ */
+function email_confirmation_uninstall() {
+  drupal_uninstall_schema('email_confirmation');
+  // We now return you to your regularly scheduled UC order confirmation emails already in progress.
+  db_query('UPDATE {ca_predicates} SET status = 1 WHERE pid = "uc_checkout_customer_notification"');
+}
+
 /**
  * Implements hook_schema().
  */
