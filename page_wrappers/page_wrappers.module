@@ -372,7 +372,7 @@ function page_wrappers_clean_markup(&$node) {
 function _page_wrappers_tokens($content) {
   $tokens = array('[content]', '[styles]', '[scripts]');
   $replaces = array(
-    '<?php print $content; ?>',
+    '<?php if ($tabs): print \'<ul class="tabs primary">\'. $tabs .\'</ul>\'; endif; ?><?php print $content; ?>',
     '<?php print $styles; ?>',
     '<?php print $scripts; ?>',
   );
