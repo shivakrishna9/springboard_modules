@@ -40,6 +40,14 @@ function page_wrappers_theme_registry_alter(&$theme_registry) {
 }
 
 /**
+ * Implementation of hook_preprocess_fundraiser_confirmation().
+ */
+function page_wrappers_preprocess_fundraiser_confirmation(&$vars) {
+  // attempt to apply wrapper
+  _page_wrappers_apply_wrapper($vars);
+}
+
+/**
  * Implementation of hook_preprocess_page().
  */
 function page_wrappers_preprocess_page(&$vars) {
@@ -47,44 +55,9 @@ function page_wrappers_preprocess_page(&$vars) {
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
   }
-
-  // get the list of node types that can have wrappers
-  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form', 'page_wrapper'));
   
-  // if the node type is wrapper enabled and actually has one assigned
-  if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
-    $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
-    
-    // make sure template actually exists
-    if (_page_wrappers_template_exists($template)) {
-      $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
-      // remove all the stylesheets and add the style specific to this wrapper if available
-      $wrapper_node = node_load($vars['node']->wrapper);
-      // if the wrapper has it's own stylesheet, overwrite all others
-      if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
-        $stylesheets = drupal_add_css();
-        // remove module stylesheets
-        unset($stylesheets['all']['module'] ['modules/aggregator/aggregator.css']);
-        unset($stylesheets['all']['module'] ['modules/node/node.css']);
-        unset($stylesheets['all']['module'] ['modules/system/defaults.css']);
-        unset($stylesheets['all']['module'] ['modules/system/system.css']);
-        unset($stylesheets['all']['module'] ['modules/system/system-menus.css']);
-        unset($stylesheets['all']['module'] ['modules/taxonomy/taxonomy.css']);
-        unset($stylesheets['all']['module'] ['modules/user/user.css']);
-        // remove the theme stylesheet
-        unset($stylesheets['all']['theme']);
-        // add the new theme stylesheet
-        $stylesheets['all']['theme'][$wrapper_node->field_css_file[0]['filepath']] = 1;
-        // regenerate styles
-        $vars['styles'] = drupal_get_css($stylesheets);
-      }
-      
-      // add javascript if available
-      if (!empty($wrapper_node->field_js_file[0]['filepath'])) {
-        $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
-      }
-    }
-  }
+  // attempt to apply wrapper
+  _page_wrappers_apply_wrapper($vars);
 }
 
 /**
@@ -559,6 +532,52 @@ function _page_wrapper_preview_form() {
   );
   
   return $form;
+}
+
+/**
+ * Overrides the default page template if a page wrapper has been assigned.
+ *
+ * @param $vars
+ *   Theme vars.
+ */
+function _page_wrappers_apply_wrapper(&$vars) {
+  // get the list of node types that can have wrappers
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form', 'page_wrapper'));
+  
+  // if the node type is wrapper enabled and actually has one assigned
+  if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
+    $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
+    
+    // make sure template actually exists
+    if (_page_wrappers_template_exists($template)) {
+      $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
+      // remove all the stylesheets and add the style specific to this wrapper if available
+      $wrapper_node = node_load($vars['node']->wrapper);
+      // if the wrapper has it's own stylesheet, overwrite all others
+      if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
+        $stylesheets = drupal_add_css();
+        // remove module stylesheets
+        unset($stylesheets['all']['module'] ['modules/aggregator/aggregator.css']);
+        unset($stylesheets['all']['module'] ['modules/node/node.css']);
+        unset($stylesheets['all']['module'] ['modules/system/defaults.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system.css']);
+        unset($stylesheets['all']['module'] ['modules/system/system-menus.css']);
+        unset($stylesheets['all']['module'] ['modules/taxonomy/taxonomy.css']);
+        unset($stylesheets['all']['module'] ['modules/user/user.css']);
+        // remove the theme stylesheet
+        unset($stylesheets['all']['theme']);
+        // add the new theme stylesheet
+        $stylesheets['all']['theme'][$wrapper_node->field_css_file[0]['filepath']] = 1;
+        // regenerate styles
+        $vars['styles'] = drupal_get_css($stylesheets);
+      }
+      
+      // add javascript if available
+      if (!empty($wrapper_node->field_js_file[0]['filepath'])) {
+        $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
+      }
+    }
+  }
 }
 
 /**
