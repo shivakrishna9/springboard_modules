@@ -1,0 +1,9 @@
+; $Id$
+name = Dynamic gift strings
+description = Uses an encrypted url string to dynamically replace the ask amount values on a donation form.
+core = 6.x
+package = Jackson River Springboard - extras
+dependencies[] = fundraiser
+dependencies[] = secure_prepopulate
+
+version = 6.x-3.0-beta1

@@ -293,6 +293,10 @@ function fundraiser_preprocess_page(&$vars) {
   if (arg(1) == 'confirmation-token-list') {
     $vars['template_file'] = 'page-fundraiser-token-list';
   }
+  if (arg(2) == 'confirmation') {
+    // add the node to $vars
+    $vars['node'] = node_load(arg(1));
+  }
 }
 
 /**

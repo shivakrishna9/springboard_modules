@@ -388,7 +388,7 @@ function webform_user_mapping_form($form_state, $node) {
   );
   
   $form['info'] = array(
-    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the donation form is submitted, the user\'s profile will be updated with the values from the form.',
+    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the webform form is submitted, the user\'s profile will be updated with the values from the form.',
     '#weight' => 0, 
   );
 
