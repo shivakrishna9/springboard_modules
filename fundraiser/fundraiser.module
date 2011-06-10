@@ -610,7 +610,6 @@ function fundraiser_insert($node) {
  * Implemenation of hook_update().
  */
 function fundraiser_update($node) {
-
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "

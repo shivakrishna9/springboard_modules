@@ -157,7 +157,6 @@ function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
 
 function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   $node = node_load($form_state['values']['nid']);
- 
   $node->confirmation_page_title = check_plain($form_state['values']['title']);
   $node->confirmation_page_body = $form_state['values']['body'];
   $node->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);

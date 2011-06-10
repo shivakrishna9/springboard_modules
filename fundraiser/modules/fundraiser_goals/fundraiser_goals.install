@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function fundraiser_goals_install() {
+  drupal_install_schema('fundraiser_goals');
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function fundraiser_goals_uninstall() {
+  drupal_uninstall_schema('fundraiser_goals');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_goals_schema() {
+   $schema['fundraiser_goals'] = array(
+    'description' => t('Stores data for webform submission goals.'),
+    'fields' => array(
+      'pid' => array(
+        'description' => t('Parent id, nid for webforms, Salesforce campaign id for campaigns'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'delta' => array(
+        'description' => t('Goal delta, required to separate advanced block goal settings and basic goal settings without duplicating tables.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => t('Goal type.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'target' => array(
+        'description' => t('Goal target, ex. number of submissions or amount donated'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'target_cid' => array(
+        'description' => t('Target webform component.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'display_threshold' => array(
+        'description' => t('Tracker value above which the goal displays.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'template' => array(
+        'description' => t('block body markup, including tokens.'),
+        'type' => 'text',
+      ),
+      'template_format' => array(
+        'descrption' => t('Input filter selected for the template.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'default_message' => array(
+        'description' => t('Message to display if no progress has been made toward goal.'),
+        'type' => 'text',
+      ),
+    ),
+    'indexes' => array(
+      'pid' => array('pid'),
+    ),
+  );
+  
+
+  return $schema;
+}
