@@ -67,7 +67,7 @@ function fundraiser_goals_menu() {
  * Implements hook_form_alter().
  */
 function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
-
+  // drupal_set_message('form:' . print_r($form, TRUE));
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
     $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
@@ -162,7 +162,9 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         while ($component = db_fetch_object($results)) {
           $options[$component->cid] = $component->name;
         }
-
+        if (!count($options)) {
+          form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
+        }
         $form['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target_cid'] = array(
           '#type' => 'select',
           '#title' => t('Choose a field to target for this goal'),
@@ -274,6 +276,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
  * Implements hook_block().
  */
 function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
+  drupal_set_message('hook block invoked:' . $op);
   switch ($op) {
     case 'list':
       $blocks = array();
@@ -315,12 +318,13 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
       default:
         if (in_array($delta, $deltas)) {
           $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
-          $block['subject'] = t('test title');
+          $block['subject'] = fundraiser_goals_advanced_block_title($delta);
           $block['content'] = fundraiser_goals_advanced_block_content($goal);
           return $block;
         }
         break;
     }
+    break;
   }
 }
 
@@ -334,6 +338,7 @@ function fundraiser_goals_advanced_block_content($goal) {
   $output = $goal->template;
   $output = check_markup($output, $goal->template_format, FALSE);
   $output = token_replace($output, 'goal', $node);
+
   return $output;
 }
 
@@ -365,6 +370,23 @@ function fundraiser_goals_block_title($node, $goal, $goal_progress) {
 }
 
 /**
+ * Returns advanced goal block title.
+ * 
+ * @param $delta
+ * Block delta for the current block.
+ * 
+ * @return 
+ * Returns block title from {blocks}.
+ */
+function fundraiser_goals_advanced_block_title($delta) {
+
+ $sql = sprintf("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta);
+ drupal_set_message('sql:' . $sql);
+ $title = db_result(db_query($sql));
+  drupal_set_message('title:' . $title);
+  return $title;
+}
+/**
  * Generates block content for basic goal block.
  * 
  * @param $node
@@ -383,7 +405,9 @@ function fundraiser_goals_block_content($node, $goal, $goal_progress) {
     //$output = 'progress:' . $goal_progress;
     $output = $node->fundraiser_goal_template;
     $node->goal_progress = $goal_progress;
-    
+    if (!$goal_progress && $node->fundraiser_goal_default_message) {
+      $output .= $node->fundraiser_goal_default_message;
+    }
     // Dividing by zero is awesome. Where do you think the platypus came from?
     if ($node->goal_progress && $node->fundraiser_goal_target) {
       $node->goal_percentage = round($node->goal_progress / $node->fundraiser_goal_target * 100);
@@ -500,7 +524,7 @@ function fundraiser_goals_token_list($type = 'all') {
     $tokens['goal']['calculated-value'] = t('Calculated progress towards the current goal.');
     $tokens['goal']['calculated-value-formatted'] = t('Calculated progress, formatted as currency if donations ($xxx,xxx.xx), else a whole integer (xxx,xxx)');
     $tokens['goal']['calculated-value-percentage'] = t('Percentage of current goal reached.');
-    $tokens['goal']['goal-thermometer'] = t('a. Inserts default markup and css  to power a thermometer.');
+    $tokens['goal']['goal-thermometer'] = t('Inserts default markup and css  to power a thermometer.');
   }
   return $tokens;
 }
@@ -562,7 +586,7 @@ function fundraiser_goals_theme() {
  * 
  */
 function _fundraiser_goals_save_goal($object) {
-  
+
   $sql = sprintf("INSERT INTO {fundraiser_goals} 
     (pid, delta, type, target_cid, target, template, weight, display_threshold, template_format, default_message) 
     VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, %d, '%s')", 
@@ -578,26 +602,34 @@ function _fundraiser_goals_save_goal($object) {
       $object->fundraiser_goal_default_message);
  
    db_query($sql);
-      
- 
-  // Save the bulk of the block settings  
-  db_query("INSERT INTO {blocks} 
-  (module, delta, status, custom, visibility, pages, title)
-  VALUES ('fundraiser_goals', '%s', 1, 1, %d, '%s', '%s')",
-  $object->fundraiser_goal_delta,
-  $object->visibility,
-  $object->pages,
-  $object->title);
 
-  // Circle back and save the block description (why the hell is this not in {blocks})?
-  $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
+ // Prevent saving basic goal settings into the block table.
 
-  db_query("INSERT INTO {boxes} (bid, info) VALUES (%d, '%s')", $bid, $object->block_description);
+ if (!$object->nid) {
 
-  // One more run at the db to stash the role visibility settings.
-  foreach($object->roles as $key => $value) {
-    if ($value) {
-      db_query("INSERT INTO {blocks_roles} VALUES ('fundraiser_goals', '%s', %d)", $object->fundraiser_goal_delta, $value);
+    // Save the bulk of the block settings  
+ /*   $sql = sprintf("INSERT INTO {blocks} 
+    (module, delta, status, custom, visibility, pages, title)
+    VALUES ('fundraiser_goals', '%s', 1, 1, %d, '%s', '%s')",
+    $object->fundraiser_goal_delta,
+    $object->visibility,
+    $object->pages,
+    $object->title);
+
+    drupal_set_message('block save sql:' . $sql);
+    db_query($sql);*/
+    // Circle back and save the block description (why the hell is this not in {blocks})?
+    $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
+    drupal_set_message('bid:' . $bid);
+    // db_query("INSERT INTO {boxes} (bid, info) VALUES (%d, '%s')", $bid, $object->block_description);
+
+    // One more run at the db to stash the role visibility settings.
+    if (is_array($objects->roles)) {
+      foreach($object->roles as $key => $value) {
+        if ($value) {
+         // db_query("INSERT INTO {blocks_roles} VALUES ('fundraiser_goals', '%s', %d)", $object->fundraiser_goal_delta, $value);
+        }
+      }
     }
   }
 }
@@ -606,7 +638,7 @@ function _fundraiser_goals_save_goal($object) {
  * 
  */
 function _fundraiser_goals_update_goal($object) {
-
+  drupal_set_message('update goal!');
   $sql = sprintf("UPDATE {fundraiser_goals} 
              SET
                type = '%s',
@@ -632,7 +664,7 @@ function _fundraiser_goals_update_goal($object) {
   db_query($sql);
 
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
-
+  drupal_set_message('bid:' . $bid);
   $sql = sprintf("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->fundraiser_goal_delta, $object->visibility, $object->pages, $object->title, $bid);
 
   db_query($sql);

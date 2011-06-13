@@ -13,19 +13,20 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
  // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled.
 
   module_load_include('inc', 'block', 'block.admin');
-
   $form = block_admin_configure($edit);
+  unset($form['#submit'], $form['#validate']);
   // TODO: If the block is being edited we need to populate the visibility fields from the blocks tables.
   if ($configure) {
-
+    $form['block_settings']['delta']['#default_value'] = $edit['values']['fundraiser_goal_delta'];
     $form['block_settings']['title']['#default_value'] = $edit['values']['title'];
+
   }
   
   $form['configure'] = array(
     '#type' => 'value',
     '#value' => $configure,
   );
-  // TODO: save this shit somewhere already. Jeez.
+
   $form['block_settings']['block_description'] = array(
     '#type' => 'textfield',
     '#title' => t('Block Description'),
@@ -68,9 +69,8 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     $results = db_query($sql);
 
     while ($result = db_fetch_object($results)) {
-   
       $select_options[$result->nid] = $result->title;
-    } 
+    }
   }
   else {
     $select_title = t('Target Campaign');
@@ -78,7 +78,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     $select_options = array(0 => t('- select -'));
     $campaigns = salesforce_management_api_get_campaigns();
     $select_options = array_merge($select_options, $campaigns);
- 
+    
     
   }
   $form['submissions_wrapper']['fundraiser_goal_parent_item'] = array(
@@ -129,22 +129,18 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     ),
     '#default_value' => $edit['values']['fundraiser_goal_type'],
   );
-  // TODO: add title magic #ahah nonsense to goal type select box
-  $form['submissions_wrapper']['fundraiser_goal_target'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Goal target'),
-    '#default_value' => $edit['values']['fundraiser_goal_target'],
-    '#required' => TRUE,
-  );
-  
   if ($edit['values']['fundraiser_goal_type'] == 2) {
 
-    // FIXME: this is massively bugged, rejigger to deal with new form creation.
-    $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['parent_item']);
+
+    $sql = sprintf('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['fundraiser_goal_parent_item']);
+    drupal_set_message('sql:' . $sql);
+    $results = db_query($sql);
     while ($component = db_fetch_object($results)) {
      $options[$component->cid] = $component->name;
     }
-
+    if (!count($options)) {
+      form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
+    }
     $form['submissions_wrapper']['fundraiser_goal_target_cid'] = array(
       '#type' => 'select',
       '#title' => t('Choose a field to target for this goal'),
@@ -152,12 +148,17 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
       '#default_value' => $edit['values']['fundraiser_goal_target_cid'],
     );
   }
-  
+  $form['submissions_wrapper']['fundraiser_goal_target'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Goal target'),
+    '#default_value' => $edit['values']['fundraiser_goal_target'],
+    '#required' => TRUE,
+  );
   $form['submissions_wrapper']['fundraiser_goal_display_threshold'] = array(
     '#type' => 'textfield',
     '#title' => t('Display Threshold'),
     '#description' => t('The goal block will not show up on a page until this value is reached.'),
-    '#default_value' => $edit['values']['fundraiser_goal_display_threshold'],
+    '#default_value' => $edit['values']['fundraiser_goal_display_threshold'] ? $edit['values']['fundraiser_goal_display_threshold'] : 0,
   );
   $form['submissions_wrapper']['fundraiser_goal_default_message'] = array(
     '#type' => 'textarea',
@@ -205,7 +206,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
  * Admin validate callback.
  */
 function fundraiser_goals_admin_validate(&$form, &$form_state) {
-  $form_state['values']['delta'] = $form_state['values']['fundraiser_goal_delta'];
+  $form_state['values']['title'] = $form_state['values']['fundraiser_goal_delta'];
   if (!$form_state['values']['configure'] && db_result(db_query("SELECT 1 FROM {fundraiser_goals} WHERE delta='%s'", $form_state['values']['fundraiser_goal_delta']))) {
     form_set_error('fundraiser_goals_delta', t('Machine Name must be unique. %delta is already taken.', array('%delta' => $form_state['values']['fundraiser_goal_delta'])));
   }
@@ -214,20 +215,21 @@ function fundraiser_goals_admin_validate(&$form, &$form_state) {
 /**
  * Admin submit callback.
  */
-function fundraiser_goals_admin_submit($form, $form_state) {
+function fundraiser_goals_admin_submit($form, &$form_state) {
  
    $object = (object) $form_state['values'];
    if (!$form_state['values']['configure']) {
      $object->pid = $object->fundraiser_goal_parent_item;
+     drupal_set_message('save goal block!');
      _fundraiser_goals_save_goal($object);
 
    }
    else {
+     drupal_set_message('update goal block!');
      _fundraiser_goals_update_goal($object);
    }
-  
-
-   // Save block settings
+   $form_state['redirect'] = 'admin/build/block';
+   return;
 }
 
 /**
@@ -282,7 +284,8 @@ function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
  * #AHAH callback for blck admin form.
  */
 function fundraiser_goals_admin_ahah() {
- module_load_include('inc', 'node', 'node.pages');
+  module_load_include('module', 'fundraiser');
+  drupal_set_message('ahah!');
   $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
