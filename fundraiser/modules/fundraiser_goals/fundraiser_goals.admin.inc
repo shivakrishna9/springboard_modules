@@ -10,26 +10,35 @@ function fundraiser_goals_admin($form, $form_state) {
 }
 
 function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
- // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled.
 
-  module_load_include('inc', 'block', 'block.admin');
+ // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled?
+// TODO: get saved visibility values displaying on block configuration form
 
-  $form = block_admin_configure($edit);
-  // TODO: If the block is being edited we need to populate the visibility fields from the blocks tables.
-  if ($configure) {
+ module_load_include('inc', 'block', 'block.admin');
+  $block_form = block_admin_configure($edit);
+  $form['user_vis_settings'] = $block_form['user_vis_settings'];
+  $form['user_vis_settings']['custom']['#default_value'] = $edit['values']['custom'];
+  $form['page_vis_settings'] = $block_form['page_vis_settings'];
+  $form['page_vis_settings']['pages']['#default_value'] = $edit['values']['pages'];
+  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility']; 
+  $form['role_vis_settings'] = $block_form['role_vis_settings'];
 
-    $form['block_settings']['title']['#default_value'] = $edit['values']['title'];
-  }
+  unset($block_form);
   
   $form['configure'] = array(
     '#type' => 'value',
     '#value' => $configure,
   );
-  // TODO: save this shit somewhere already. Jeez.
+  $form['block_settings']['block_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Block Title'),
+    '#default_value' => $edit['values']['block_title'],
+  );
   $form['block_settings']['block_description'] = array(
     '#type' => 'textfield',
     '#title' => t('Block Description'),
     '#default_value' => $edit['values']['block_description'],
+    '#required' => TRUE,
   );
   $form['block_settings']['fundraiser_goal_delta'] = array(
      '#type' => 'textfield',
@@ -68,18 +77,16 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     $results = db_query($sql);
 
     while ($result = db_fetch_object($results)) {
-   
       $select_options[$result->nid] = $result->title;
-    } 
+    }
   }
   else {
+    // TODO: if (module_exists()), check campaigns even exist before providing radio button.
     $select_title = t('Target Campaign');
     // get list of campaigns, construct options array
     $select_options = array(0 => t('- select -'));
     $campaigns = salesforce_management_api_get_campaigns();
     $select_options = array_merge($select_options, $campaigns);
- 
-    
   }
   $form['submissions_wrapper']['fundraiser_goal_parent_item'] = array(
     '#type' => 'select',
@@ -129,22 +136,17 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     ),
     '#default_value' => $edit['values']['fundraiser_goal_type'],
   );
-  // TODO: add title magic #ahah nonsense to goal type select box
-  $form['submissions_wrapper']['fundraiser_goal_target'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Goal target'),
-    '#default_value' => $edit['values']['fundraiser_goal_target'],
-    '#required' => TRUE,
-  );
-  
   if ($edit['values']['fundraiser_goal_type'] == 2) {
 
-    // FIXME: this is massively bugged, rejigger to deal with new form creation.
-    $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['parent_item']);
+
+    $sql = sprintf('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['fundraiser_goal_parent_item']);
+    $results = db_query($sql);
     while ($component = db_fetch_object($results)) {
      $options[$component->cid] = $component->name;
     }
-
+    if (!count($options)) {
+      form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
+    }
     $form['submissions_wrapper']['fundraiser_goal_target_cid'] = array(
       '#type' => 'select',
       '#title' => t('Choose a field to target for this goal'),
@@ -152,12 +154,17 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
       '#default_value' => $edit['values']['fundraiser_goal_target_cid'],
     );
   }
-  
+  $form['submissions_wrapper']['fundraiser_goal_target'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Goal target'),
+    '#default_value' => $edit['values']['fundraiser_goal_target'],
+    '#required' => TRUE,
+  );
   $form['submissions_wrapper']['fundraiser_goal_display_threshold'] = array(
     '#type' => 'textfield',
     '#title' => t('Display Threshold'),
     '#description' => t('The goal block will not show up on a page until this value is reached.'),
-    '#default_value' => $edit['values']['fundraiser_goal_display_threshold'],
+    '#default_value' => $edit['values']['fundraiser_goal_display_threshold'] ? $edit['values']['fundraiser_goal_display_threshold'] : 0,
   );
   $form['submissions_wrapper']['fundraiser_goal_default_message'] = array(
     '#type' => 'textarea',
@@ -190,12 +197,16 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
   $form['submissions_wrapper']['template']['goal_tokens']['help'] = array(
     '#value' => theme('token_help', 'goal'),
   );
-  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 12,
+  );
   // Shove display settings to the bottom of the form where they belong.
   $form['user_vis_settings']['#weight'] = 11;
   $form['page_vis_settings']['#weight'] = 11;
   $form['role_vis_settings']['#weight'] = 11;
-  $form['submit']['#weight'] = 12;
+
   $form['#validate'] = array('fundraiser_goals_admin_validate');
   $form['#submit'] = array('fundraiser_goals_admin_submit');
   return $form;
@@ -205,7 +216,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
  * Admin validate callback.
  */
 function fundraiser_goals_admin_validate(&$form, &$form_state) {
-  $form_state['values']['delta'] = $form_state['values']['fundraiser_goal_delta'];
+  $form_state['values']['title'] = $form_state['values']['fundraiser_goal_delta'];
   if (!$form_state['values']['configure'] && db_result(db_query("SELECT 1 FROM {fundraiser_goals} WHERE delta='%s'", $form_state['values']['fundraiser_goal_delta']))) {
     form_set_error('fundraiser_goals_delta', t('Machine Name must be unique. %delta is already taken.', array('%delta' => $form_state['values']['fundraiser_goal_delta'])));
   }
@@ -214,7 +225,7 @@ function fundraiser_goals_admin_validate(&$form, &$form_state) {
 /**
  * Admin submit callback.
  */
-function fundraiser_goals_admin_submit($form, $form_state) {
+function fundraiser_goals_admin_submit($form, &$form_state) {
  
    $object = (object) $form_state['values'];
    if (!$form_state['values']['configure']) {
@@ -223,11 +234,11 @@ function fundraiser_goals_admin_submit($form, $form_state) {
 
    }
    else {
+  
      _fundraiser_goals_update_goal($object);
    }
-  
-
-   // Save block settings
+   $form_state['redirect'] = 'admin/build/block';
+   return;
 }
 
 /**
@@ -245,12 +256,14 @@ function fundraiser_goals_block_admin_delete(&$form_state, $delta = 0) {
  * Submit handler for delete block form.
  */
 function fundraiser_goals_block_admin_delete_submit($form, &$form_state) {
+  global $user;
   db_query("DELETE FROM {fundraiser_goals} WHERE delta = '%s'", $form_state['values']['delta']);
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $form_state['values']['delta']));
- 
-  db_query('DELETE FROM {boxes} WHERE bid = %d', $bid);
-  db_query("DELETE FROM {blocks_roles} WHERE module = 'fundraiser_goals' AND delta = '%s'", $form_state['values']['delta']);
+  $info = db_result(db_query('SELECT info FROM {fundraiser_goals_blocks} WHERE bid=%d', $bid));
   db_query('DELETE FROM {blocks} WHERE bid = %d', $bid);
+  db_query("DELETE FROM {blocks_roles} WHERE module = 'fundraiser_goals' AND delta = '%s'", $form_state['values']['delta']);
+  db_query('DELETE FROM {fundraiser_goals_blocks} WHERE bid = %d', $bid);
+  watchdog('fundraiser_goals', 'The @info advanced goal block has been deleted by @user.', array('@info' => $info, '@user' => $user->name));
   $form_state['redirect'] = 'admin/build/block';
   return;
 }
@@ -258,12 +271,12 @@ function fundraiser_goals_block_admin_delete_submit($form, &$form_state) {
 function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
 
   $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
-  $block_info = db_fetch_object(db_query("SELECT b.title, b.visibility, b.pages, bx.info FROM {blocks} b INNER JOIN {boxes} bx ON b.bid = bx.bid WHERE b.module = 'fundraiser_goals' AND delta = '%s'", $delta));
+  $block_info = db_fetch_object(db_query("SELECT b.title, b.custom, b.visibility, b.pages, fb.info FROM {blocks} b INNER JOIN {fundraiser_goals_blocks} fb ON b.bid = fb.bid WHERE b.module = 'fundraiser_goals' AND b.delta = '%s'", $delta));
 
       $edit['values'] = array(
-        'title' => $block_info->title,
+        'block_title' => $block_info->title,
         'visibility' => $block_info->visibility,
-        'pages' => $block_info->visibility,
+        'pages' => $block_info->pages,
         'block_description' => $block_info->info,
         'fundraiser_goal_parent_item' => $goal->pid,
         'fundraiser_goal_delta' => $goal->delta,
@@ -274,15 +287,19 @@ function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
         'fundraiser_goal_template' => $goal->template,
         'fundraise_goal' => array('goals_wrapper' => array('template' => $goal->template_format)),
         'fundraiser_goal_default_message' => $goal->default_message,
+        'custom' => $block_info->custom,
+        'visibility' => $block_info->visibility,
       );
       $edit['values']['submissions'] = is_numeric((string) $goal->pid) ? 0 : 1;
+ ;
       return fundraiser_goals_block_admin($edit, TRUE);
 }
 /**
  * #AHAH callback for blck admin form.
  */
 function fundraiser_goals_admin_ahah() {
- module_load_include('inc', 'node', 'node.pages');
+  module_load_include('module', 'fundraiser');
+
   $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
