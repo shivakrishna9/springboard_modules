@@ -5,7 +5,8 @@
  * Implementation of hook_install().
  */
 function market_source_install() {
-  variable_set('market_source_validity_period', 0);
+  // Default to six hours
+  variable_set('market_source_validity_period', 6);
 }
 
 /**
@@ -19,6 +20,6 @@ function market_source_uninstall() {
  * Add the validity period variable.
  */
 function market_source_update_6000() {
-  variable_set('market_source_validity_period', 0);
+  variable_set('market_source_validity_period', 6);
   return array();
 }
