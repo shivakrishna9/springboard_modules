@@ -254,7 +254,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
 
          break;     
        case 'update':
-
+         $node->pid = $node->nid;
          if (db_result(db_query("SELECT 1 FROM {fundraiser_goals} WHERE pid = %d AND delta = 'basic'", $node->nid))) {
            _fundraiser_goals_update_goal($node);
          }
