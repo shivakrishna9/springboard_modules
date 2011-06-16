@@ -178,7 +178,7 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         '#description' => t('Sets the number of submissions (or donation total) that must be reached before this goal is visible.'),
         '#default_value' => $node->fundraiser_goal_display_threshold ? $node->fundraiser_goal_display_threshold : 0,
       );
-      $form['fundraser_goals']['goal_wrapper']['fundraiser_goal_default_message'] = array(
+      $form['fundraiser_goals']['goal_wrapper']['fundraiser_goal_default_message'] = array(
         '#type' => 'textarea',
         '#title' => t('Starter message'),
         '#description' => t('This is an optional message to show users if no form submission has been made. Note: if display threshold is set users will not see this message.'),
