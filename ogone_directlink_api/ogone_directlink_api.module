@@ -6,3 +6,132 @@
  * Provides functions to interact with Ogone DirectLink method.
  */
 
+/**
+ * Implements hook_menu().
+ */
+function ogone_directlink_api_menu() {
+  $items = array();
+
+  $items['admin/settings/ogone_directlink_api/test'] = array(
+    'title' => 'Test Ogone connection',
+    'description' => 'Makes a test charge over Ogone DirectLink connection',
+    'page callback' => '_check_ogone_charge',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+
+
+function _check_ogone_charge() {
+  $account_info = array(
+    'PSPID' => 'brockboland',
+    'ORDERID' => '14',
+    'USERID' => 'brockbolandapi',
+    'PSWD' => 'VQA4#k+Q9i',
+    'CURRENCY' => 'USD',
+    
+  );
+  
+  $charge_details = array(
+    'AMOUNT' => '37.25',
+    'CARDNO' => '4111111111111111',
+    'ED' => '0212',
+  );
+  
+  $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
+
+  dsm($charge_result, 'charge_result');
+  
+  
+  return "";
+}
+
+
+/**
+ * Charge a credit card
+ * 
+ * @param $acct_info
+ *   Array of Ogone account info to use
+ * @param $charge_details
+ *   Array of details about the charge to be made
+ */
+function ogone_directlink_api_charge_credit($acct_info, $charge_details) {
+  $charge_details['AMOUNT'] = $charge_details['AMOUNT'] * 100;
+  return _ogone_directlink_api_make_post_request($acct_info, $charge_details);
+}
+
+
+/**
+ * Charge direct debit
+ * 
+ * @param $acct_info
+ *   Array of Ogone account info to use
+ * @param $charge_details
+ *   Array of details about the charge to be made
+ */
+function ogone_directlink_api_charge_direct_debit($acct_info, $charge_details) {
+  
+}
+
+
+/**
+ * Issue a refund (credit, in the payment gateway's terms)
+ * 
+ * @param $acct_info
+ *   Array of Ogone account info to use
+ * @param $refund_details
+ *   Array of details about the refund to be made
+ */
+function ogone_directlink_api_charge_refund($acct_info, $refund_details) {
+  
+}
+
+
+/**
+ * Make a form POST to Ogone. This is an API function called by the other functions in this module
+ * 
+ * @param $acct_info
+ *   Array of Ogone account info to use
+ * @param $request_details
+ *   
+ */
+function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
+  $url = "https://secure.ogone.com/ncol/test/orderdirect.asp";
+  //$url = "https://secure.ogone.com/ncol/prod/ orderdirect.asp";
+  
+  $fields = array();
+  foreach($acct_info as $field => $value) {
+    $fields[] = $field . '=' . urlencode($value);
+  }
+  foreach($request_details as $field => $value) {
+    $fields[] = $field . '=' . urlencode($value);
+  }
+  $fields_string = implode('&', $fields);
+  
+  //open connection
+  $ch = curl_init();
+
+  //set the url, number of POST vars, POST data
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_POST, TRUE);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+  //execute post
+  $result = curl_exec($ch);
+
+  //close connection
+  curl_close($ch);
+  
+  // Create an XML parser and pull the attributes out of the returned XML
+  $parser = xml_parser_create();
+  xml_parse_into_struct($parser, $result, $return_values, $index);
+  xml_parser_free($parser);
+  $attributes = $return_values[$index['NCRESPONSE'][0]]['attributes'];
+  
+ 
+  return $attributes;
+}
