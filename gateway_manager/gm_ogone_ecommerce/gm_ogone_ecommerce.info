@@ -2,8 +2,6 @@ name = Ogone Ecommerce Managed
 description = Process payments using Ogone's e-commerce payment method.
 dependencies[] = fundraiser
 dependencies[] = gateway_manager
-;dependencies[] = uc_payment
-;dependencies[] = uc_credit
 
 package = Jackson River Springboard - payment
 core = 6.x
