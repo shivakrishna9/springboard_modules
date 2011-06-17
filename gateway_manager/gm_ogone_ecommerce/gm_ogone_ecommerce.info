@@ -1,4 +1,4 @@
-name = Ogone Ecommerce Gateway Managed
+name = Ogone Ecommerce Managed
 description = Process payments using Ogone's e-commerce payment method.
 dependencies[] = fundraiser
 dependencies[] = gateway_manager
