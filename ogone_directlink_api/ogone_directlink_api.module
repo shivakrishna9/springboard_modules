@@ -26,25 +26,23 @@ function ogone_directlink_api_menu() {
 function _check_ogone_charge() {
   $account_info = array(
     'PSPID' => 'brockboland',
-    'ORDERID' => '14',
+    'ORDERID' => '22',
     'USERID' => 'brockbolandapi',
     'PSWD' => 'VQA4#k+Q9i',
-    'CURRENCY' => 'USD',
+    'CURRENCY' => 'EUR',
     
   );
   
   $charge_details = array(
-    'AMOUNT' => '37.25',
+    'AMOUNT' => '54.59',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
+    'CVC' => '123',
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
 
-  dsm($charge_result, 'charge_result');
-  
-  
-  return "";
+  return '<pre>' . print_r($charge_result, true) . '</pre>';
 }
 
 
@@ -57,7 +55,9 @@ function _check_ogone_charge() {
  *   Array of details about the charge to be made
  */
 function ogone_directlink_api_charge_credit($acct_info, $charge_details) {
+  // Charge amount should be multiplied by 100 - Ogone doesn't accept decimals for this field
   $charge_details['AMOUNT'] = $charge_details['AMOUNT'] * 100;
+  $charge_details['OPERATION'] = 'SAL';
   return _ogone_directlink_api_make_post_request($acct_info, $charge_details);
 }
 
