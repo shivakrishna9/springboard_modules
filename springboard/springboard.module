@@ -20,10 +20,10 @@ function springboard_perm() {
 function springboard_menu() {
   $items = array();
   $items['admin/springboard'] = array(
-    'title' => 'Springboard',
+    'title' => 'Springboard settings',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('administer springboard'),
-    'page callback' => 'springboard_admin',
+    'page callback' => 'springboard_configuration_wizard',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
   );
@@ -270,18 +270,6 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
-
-  // Add a landing page for additonal configuration tasks if SF integration is enabled during installation.
-  /*if (variable_get('springboard_config_homepage', 0)) {
-    $items['springboard'] = array(
-      'title' => t('Welcome to Springboard'),
-      'description' => t('Lorum ipsum dolor amet.'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('springboard_welcome'),
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_NORMAL_ITEM,
-    );
-  }*/
   return $items;
 }
 
@@ -313,11 +301,14 @@ function springboard_welcome() {
   );
 
   // If the Salesforce Management API can connect to Salesforce we no longer need the salesforce configuration form.
-  $sf = salesforce_management_api_connect();
+  // TODO: clean this up. We shouldn't have to check SF connectivity every time this page is viewed.
+  if (module_exists('salesforce_management_api')) {
+    $sf = salesforce_management_api_connect();
+  }
   if (is_object($sf)) {
     variable_del('springboard_salesforce_enabled');
     variable_del('springboard_config_homepage');
-    variable_set('site_frontpage', 'node');
+ 
     $form['salesforce_status'] = array(
       '#type' => 'markup',
       '#prefix' => '<h3>' . t('Salesforce integration status') . '</h3><p class="springboard_status_message">',
@@ -331,6 +322,26 @@ function springboard_welcome() {
       '#prefix' => '<h3>' . t('Salesforce integration status') . '</h3><p class="springboard_status_message">',
       '#suffix' => '</p>',
       '#value' => t('Salesforce integration is enabled but Springboard is unable to connect to Salesforce. Please fill out the form below with your Salesforce credentials.'),
+    );
+  }
+
+  // Default campaign
+  $default_campaign = variable_get('sf_donation_default_campaign', '');
+  if ($default_campaign) {
+    variable_set('site_frontpage', 'node');
+    $form['salesforce_campaign'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<h3>' . t('Salesforce default campaign') . '</h3><p class="springboard_status_message">',
+      '#suffix' => '</p>',
+      '#value' => t('The %campaign campaign has been selected as default.', array('%campaign' => $default_campaign)),
+    );
+  }
+  else {
+    $form['salesforce_campaign'] = array(
+      '#type' => 'markup',
+      '#prefix' => '<h3>' . t('Salesforce default campaign') . '</h3><p class="springboard_status_message">',
+      '#suffix' => '</p>',
+      '#value' => t('Springboard needs to know which Salesforce campaign to use as a default.'),
     );
   }
   
@@ -378,104 +389,5 @@ function springboard_welcome() {
   return $form;
 }
 
-function springboard_welcome_salesforce_validate(&$form, $form_state) {
- 
-  // validate Salesforce credentials
-  if ($form_state['values']['salesforce_username']) {
-    if (!valid_email_address($form_state['values']['salesforce_username'])) {
-      form_set_error('salesforce_username', t('The Salesforce username should be a valid email address.'));
-    }
-  }
-  // Deal with WSDL file
 
-  $source = 'salesforce_wsdl';
-  if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
-    // Check for file upload errors and return FALSE if a
-    // lower level system error occurred.
-    switch ($_FILES['files']['error'][$source]) {
-      // @see http://php.net/manual/en/features.file-upload.errors.php
-      case UPLOAD_ERR_OK:
-        break;
 
-      case UPLOAD_ERR_INI_SIZE:
-      case UPLOAD_ERR_FORM_SIZE:
-        drupal_set_message(t('The file %file could not be saved, because it exceeds %maxsize, the maximum allowed size for uploads.', array('%file' => $source, '%maxsize' => format_size(file_upload_max_size()))), 'error');
-        return 0;
-
-      case UPLOAD_ERR_PARTIAL:
-      case UPLOAD_ERR_NO_FILE:
-        drupal_set_message(t('The file %file could not be saved, because the upload did not complete.', array('%file' => $source)), 'error');
-        return 0;
-
-        // Unknown error
-      default:
-        drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
-        return 0;
-    }
-    
-    // Check the file extension
-    $pathParts = pathinfo($_FILES['files']['name'][$source]);
-    if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
-      form_set_error($source, t('File upload error: invalid file extension. Please upload a file with an XML or WSDL  extension.'));
-      return 0;
-    }
-  }
-  // Check for connection
-}
-
-function springboard_welcome_salesforce_submit($form, $form_state) {
- // If the user hit "Save Configuration" and the required field
-  // salesforce_management_api_password is blank, try to get it from variables
-  if ($form_state['values']['submit'] == $form_state['values']['op'] and empty($form_state['values']['salesforce_password'])) {
-    $pass = variable_get('salesforce_management_api_password', FALSE);
-    if ($pass) {
-      $form_state['values']['salesforce_password'] = $pass;
-    }
-  }
-  // Save settings. If connection validates and WSDL is valid unset springboard_salesforce_enabled flag.
-  variable_set('salesforce_management_api_username', $form_state['values']['salesforce_username']);
-  variable_set('salesforce_management_api_password', $form_state['values']['salesforce_password']);
-  variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
-
-  // Save WSDL
-  $dir = drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient/';
-
-  // Upload file path
-  $file = $dir . 'enterprise.wsdl.xml';
-
-  // Array key for the file element
-  $source = 'salesforce_wsdl';
-
- 
-    // Make sure the directory is writeable
-    if (file_check_directory($dir)) {  
-      // Try to move the uploaded file into the right place
-      if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
-        form_set_error($source, t('File upload error. Could not move uploaded file.'));
-        watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
-        return 0;
-      }
-      else {
-        drupal_set_message('The WSDL file has been successfully uploaded');
-
-        // Clear the cache
-        drupal_flush_all_caches();
-
-        // Clear WSDL files from tmp directory
-        $tmpDir = file_directory_temp();
-        // Make sure the tmp dir exists and isn't the root, just to be safe
-        if(is_dir($tmpDir) && $tmpDir != '/') {
-          $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
-          $execOutput = exec($cmd);
-        }
-
-        drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
-      }
-    } 
-    else {
-      drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
-      watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
-      return 0;
-    }
-
-}

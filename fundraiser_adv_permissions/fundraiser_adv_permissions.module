@@ -18,7 +18,16 @@ function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
       $form['form_key']['#type'] = 'hidden';
     }
   }
-}  
+}
+
+/**
+ * Implements hook_init().
+ */
+function fundraiser_adv_permissions_init() {
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'webform' && !arg(3)) {
+    drupal_add_js(drupal_get_path('module', 'fundraiser_adv_permissions') . '/fundraiser_adv_permissions.js');
+  }
+}
 
 /**
  * Implements hook_menu_alter().

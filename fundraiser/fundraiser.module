@@ -293,6 +293,10 @@ function fundraiser_preprocess_page(&$vars) {
   if (arg(1) == 'confirmation-token-list') {
     $vars['template_file'] = 'page-fundraiser-token-list';
   }
+  if (arg(2) == 'confirmation') {
+    // add the node to $vars
+    $vars['node'] = node_load(arg(1));
+  }
 }
 
 /**
@@ -610,7 +614,6 @@ function fundraiser_insert($node) {
  * Implemenation of hook_update().
  */
 function fundraiser_update($node) {
-
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
