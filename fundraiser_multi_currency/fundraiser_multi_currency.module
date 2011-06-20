@@ -84,3 +84,15 @@ GBP|British pounds";
   
   webform_component_insert($currency);
 }
+
+/**
+ * Implementation of hook_fundraiser_add_order_fields().
+ * 
+ * Add the currency to the $order->data array
+ * 
+ * @return
+ *   Array of fields to set in $order->data array
+ */
+function fundraiser_multi_currency_fundraiser_add_order_fields($fundraiser_fields) {
+  return array('currency' => $fundraiser_fields['currency']);
+}
