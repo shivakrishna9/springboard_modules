@@ -6,9 +6,8 @@
  * Process payments using Ogone's DirectLink payment method.
  *
  * Todo
- *    - Don't require password
- *    - Only update password value if it's set
- *    - Update password description to state that it's only updated if filled
+ *    - Remove hard-coded EUR for currency. Check dropdown if it's an option, or default to USD
+ *    - Remove admin config fields for SHA out? Not used, as far as I can tell
  */
 
 /*******************************************************************************
@@ -132,14 +131,35 @@ function gm_ogone_directlink_settings_form($config = array()) {
 function gm_ogone_directlink_charge($order_id, $amount, $data) {
   global $user;
   $order = uc_order_load($order_id);
-  $gateway_config = _gm_ogone_directlink_get_config_for_order($order);
   
-  $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
+  // Build array of gateway credentials
+  $gateway_config = array(
+    'PSPID' => $data['config']['gm_ogone_directlink_pspid'],
+    'USERID' => $data['config']['gm_ogone_directlink_userid'],
+    'PSWD' => $data['config']['gm_ogone_directlink_password'],
+  );
 
-
-
-
-  if ($success) {
+  // Build array of charge details
+  $charge_details = array(
+    'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
+    'ORDERID' => $order->order_id,
+    'AMOUNT' => $amount,
+    'CARDNO' => $order->payment_details['cc_number'],
+    'ED' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
+    'CVC' => $order->payment_details['cc_cvv'],
+  );
+  
+  // If a currency was set for this order, use it
+  if ($order->data['currency']) {
+    $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
+  }
+  
+  
+  $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
+  
+  $success = FALSE;
+  if ($charge_result && $charge_result['NCERROR'] == 0) {
+    $success = TRUE;
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -152,52 +172,14 @@ function gm_ogone_directlink_charge($order_id, $amount, $data) {
     uc_order_comment_save($order_id, $user->uid, $message, 'admin');
   }
 
+  $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
   $result = array(
     'success' => $success,
-    'comment' => t('Card charged, resolution code: 0022548315'),
+    'comment' => $message,
     'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
-    'data' => array('txn_id' => 'TEST-TXNID-001'),
+    'data' => array('module' => 'gm_ogone_directlink', 'txn_id' => $charge_result['PAYID']),
   );
 
   return $result;
-}
-
-
-
-
-
-/**
- * Get the Ogone config variables for the given order
- * 
- * This function checks if the gateway is configured to use live or test
- * transactions, and returns the appropriate variables.
- * 
- * @param $order_or_id
- *   Ubercart order object, or an order ID
- * @return
- *   Array of gateway config info
- */
-function _gm_ogone_directlink_get_config_for_order($order_or_id) {
-  // Load gateway details
-  $gateway = gateway_manager_gateway_for_order($order_or_id);
-  $gateway_config = $gateway['config'];
- 
-  $config = array(
-    'pspid' => $gateway_config['gm_ogone_directlink_pspid'],
-  );
-  
-  // If using the live transaction mode, load live vars
-  if ($gateway_config['gm_ogone_directlink_transaction_mode'] == 'live') {
-    $config['sha_in'] = $gateway_config['gm_ogone_directlink_shain_live'];
-    $config['sha_out'] = $gateway_config['gm_ogone_directlink_shaout_live'];
-    $config['mode'] = 'prod';
-  }
-  // Not using live transactions, so use test vars
-  else {
-    $config['sha_in'] = $gateway_config['gm_ogone_directlink_shain_test'];
-    $config['sha_out'] = $gateway_config['gm_ogone_directlink_shaout_test'];
-    $config['mode'] = 'test';
-  }
-  return $config;
 }
