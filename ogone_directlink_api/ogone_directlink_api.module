@@ -22,11 +22,20 @@ function ogone_directlink_api_menu() {
     'page callback' => '_check_ogone_charge',
     'access callback' => TRUE,
   );
+
+  $items['admin/settings/ogone_directlink_api/test_refund'] = array(
+    'title' => 'Test Ogone refund',
+    'description' => 'Makes a test refund over Ogone DirectLink connection',
+    'page callback' => '_check_ogone_refund',
+    'access callback' => TRUE,
+  );
   return $items;
 }
 
 
-
+/**
+ * Function to test charges and response
+ */
 function _check_ogone_charge() {
   $account_info = array(
     'PSPID' => 'brockbolandcommerce',
@@ -36,7 +45,7 @@ function _check_ogone_charge() {
   );
   
   $charge_details = array(
-    'ORDERID' => '1395',
+    'ORDERID' => '1397',
     'AMOUNT' => '13.12',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
@@ -44,6 +53,32 @@ function _check_ogone_charge() {
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
+
+  return '<pre>' . print_r($charge_result, true) . '</pre>';
+}
+
+
+/**
+ * Function to test refunds and response
+ */
+function _check_ogone_refund() {
+  $account_info = array(
+    'PSPID' => 'brockbolandcommerce',
+    'USERID' => 'directlinkapiu',
+    'PSWD' => 'iT2s@9?PKr',
+    'CURRENCY' => 'EUR',
+  );
+  
+  $charge_details = array(
+    'ORDERID' => '128',
+    'PAYID' => '10490380',
+    'AMOUNT' => '1.12',
+    'CARDNO' => '4111111111111111',
+    'ED' => '0212',
+    'CVC' => '123',
+  );
+  
+  $charge_result = ogone_directlink_api_refund($account_info, $charge_details);
 
   return '<pre>' . print_r($charge_result, true) . '</pre>';
 }
@@ -86,8 +121,11 @@ function ogone_directlink_api_charge_direct_debit($acct_info, $charge_details) {
  * @param $refund_details
  *   Array of details about the refund to be made
  */
-function ogone_directlink_api_charge_refund($acct_info, $refund_details) {
-  
+function ogone_directlink_api_refund($acct_info, $refund_details) {
+  // Charge amount should be multiplied by 100 - Ogone doesn't accept decimals for this field
+  $refund_details['AMOUNT'] = $refund_details['AMOUNT'] * 100;
+  $refund_details['OPERATION'] = 'RFD';
+  return _ogone_directlink_api_make_post_request($acct_info, $refund_details);
 }
 
 
@@ -100,6 +138,20 @@ function ogone_directlink_api_charge_refund($acct_info, $refund_details) {
  *   
  */
 function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
+  // Check required fields
+  $errors = array();
+  foreach (array('PSPID', 'USERID', 'PSWD', 'OPERATION', 'AMOUNT') as $field) {
+    if (empty($acct_info[$field]) && empty($request_details[$field])) {
+      $errors[] = 'Missing ' . $field;
+    }
+  }
+  if (!empty($errors)) {
+    return array(
+      'SUCCESS' => FALSE,
+      'ERRORS' => implode('. ', $errors) . '.',
+    );
+  }
+  
   $url = "https://secure.ogone.com/ncol/test/orderdirect.asp";
   //$url = "https://secure.ogone.com/ncol/prod/ orderdirect.asp";
   
@@ -150,6 +202,26 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   xml_parser_free($parser);
   $attributes = $return_values[$index['NCRESPONSE'][0]]['attributes'];
   
+  // Get the status message
+  $attributes['STATUS_MESSAGE'] = ogone_directlink_api_feedback_status($attributes['STATUS']);
+  
+  if ($attributes['NCERROR'] == 0) {
+    $attributes['SUCCESS'] = TRUE;
+    watchdog('ogone_directlink_api', 'Ogone transaction. Type: %operation. Status: %status. Status meaning: %status_message.', array(
+      '%operation' => $request_details['OPERATION'],
+      '%status' => $attributes['STATUS'],
+      '%status_message' => $attributes['STATUS_MESSAGE'],
+    ));
+  }
+  else {
+    $attributes['SUCCESS'] = FALSE;
+    watchdog('ogone_directlink_api', 'Ogone transaction. Type: %operation. Status: %status. Status meaning: %status_message. Error message: %error_message', array(
+      '%operation' => $request_details['OPERATION'],
+      '%status' => $attributes['STATUS'],
+      '%status_message' => $attributes['STATUS_MESSAGE'],
+      '%error_message' => $attributes['NCERRORPLUS'],
+    ));
+  }
  
   return $attributes;
 }
@@ -191,4 +263,141 @@ function ogone_directlink_api_sha1_out_parameters() {
     'NBREMAILUSAGE', 'NBRIPUSAGE', 'NBRIPUSAGE_ALLTX', 'NBRUSAGE', 'NCERROR', 'OPERATION',
     'ORDERID', 'PAYID', 'PM', 'PSPID', 'PSWD', 'SCO_CATEGORY', 'SCORING', 'STATUS', 'SUBSCRIPTION_ID',
     'TRXDATE', 'USERID', 'VC');
+}
+
+
+
+
+/**
+ * Get a payment status and message based on Ogone status ID
+ * @param $status
+ *   received Ogone status ID
+ * 
+ * @return array
+ *   key 'code' contains the commerce status
+ *   key 'message' contains a textual representation of the Ogone status ID
+ */
+function ogone_directlink_api_feedback_status($status) {
+  switch ($status) {
+    /** SUCCESS **/
+    case 4:  // Order stored
+      $msg = t('Order stored');
+      break;
+    case 5:  // Authorized
+      $msg = t('Authorized');
+      break;
+    case 8:  // Refund
+			$msg = t('Refund');
+      break;
+    case 85:  // Refund processed by merchant
+			$msg = t('Refund processed by merchant');
+      break;
+    case 9:  // Payment requested
+			$msg = t('Payment requested');
+      break;
+    case 95:  // Payment processed by merchant
+			$msg = t('Payment processed by merchant');
+      break;
+
+    /** PENDING **/
+    case 40: // Stored waiting external result
+			$msg = t('Stored waiting external result');
+      break;
+    case 41: // Waiting client payment
+			$msg = t('Waiting client payment');
+      break;
+    case 50: // Authorized waiting external result
+			$msg = t('Authorized waiting external result');
+      break;
+    case 51: // Authorization waiting
+			$msg = t('Authorization waiting');
+      break;
+    case 55: // Stand-by
+			$msg = t('Stand-by');
+      break;
+    case 56: // OK with scheduled payments
+			$msg = t('OK with scheduled payments');
+      break;
+    case 59: // Authoriz. to get manually
+			$msg = t('Authoriz. to get manually');
+      break;
+    case 81: // Refund pending
+			$msg = t('Refund pending');
+      break;
+    case 82: // Refund uncertain
+			$msg = t('Refund uncertain');
+      break;
+    case 91: // Payment processing
+			$msg = t('Payment processing');
+      break;
+    case 92: // Payment uncertain
+			$msg = t('Payment uncertain');
+      break;
+    case 99: // Being processed
+			$msg = t('Being processed');
+      break;
+
+    /** FAILURE **/
+    case 0:  // Incomplete or invalid
+			$msg = t('Incomplete or invalid');
+      break;
+    case 1:  // Cancelled by client
+			$msg = t('Cancelled by client');
+      break;
+    case 2:  // Authorization refused
+			$msg = t('Authorization refused');
+      break;
+    case 52: // Authorization not known
+			$msg = t('Authorization not known');
+      break;
+    case 57: // Error in scheduled payments
+			$msg = t('Error in scheduled payments');
+      break;
+    case 6:  // Authorized and cancelled
+			$msg = t('Authorized and cancelled');
+      break;
+    case 61: // Author. deletion waiting
+			$msg = t('Author. deletion waiting');
+      break;
+    case 62: // Author. deletion uncertain
+			$msg = t('Author. deletion uncertain');
+      break;
+    case 63: // Author. deletion refused
+			$msg = t('Author. deletion refused');
+      break;
+    case 64: // Authorized and cancelled
+			$msg = t('Authorized and cancelled');
+      break;
+    case 7:  // Payment deleted
+			$msg = t('Payment deleted');
+      break;
+    case 71:  // Payment deletion pending
+			$msg = t('Payment deletion pending');
+      break;
+    case 72:  // Payment deletion uncertain
+			$msg = t('Payment deletion uncertain');
+      break;
+    case 73:  // Payment deletion refused
+			$msg = t('Payment deletion refused');
+      break;
+    case 74:  // Payment deleted
+			$msg = t('Payment deleted');
+      break;
+    case 75:  // Deletion processed by merchant
+			$msg = t('Deletion processed by merchant');
+      break;
+    case 83:  // Refund refused
+			$msg = t('Refund refused');
+      break;
+    case 84:  // Payment declined by the acquirer
+			$msg = t('Payment declined by the acquirer');
+      break;
+    case 93:  // Payment refused
+			$msg = t('Payment refused');
+      break;
+    case 94:  // Refund declined by the acquirer
+			$msg = t('Refund declined by the acquirer');
+      break;
+  }
+  return $msg;
 }
