@@ -50,7 +50,7 @@ function gm_ogone_directlink_settings_form($config = array()) {
     '#required' => TRUE,
   );
   $form['gm_ogone_directlink_password'] = array(
-    '#type' => 'password',
+    '#type' => 'textfield',
     '#title' => t('Password'),
     '#description' => t('Ogone user password.'),
     '#maxlength' => 255,
