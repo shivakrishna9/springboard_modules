@@ -6,8 +6,8 @@
  * Provides functions to interact with Ogone DirectLink method.
  * 
  * Todo
- *    - No SHA coming back?
  *    - Remove hard-coded sha-in
+ *    - Remove text charge menu item and function
  */
 
 /**
@@ -31,14 +31,13 @@ function _check_ogone_charge() {
   $account_info = array(
     'PSPID' => 'brockbolandcommerce',
     'USERID' => 'directlinkapiu',
-    'PSWD' => '5gE@Se3(cX',
+    'PSWD' => 'iT2s@9?PKr',
     'CURRENCY' => 'EUR',
-    
   );
   
   $charge_details = array(
-    'ORDERID' => '135',
-    'AMOUNT' => '12.64',
+    'ORDERID' => '1395',
+    'AMOUNT' => '13.12',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
     'CVC' => '123',
@@ -124,14 +123,23 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
 
   //set the url, number of POST vars, POST data
   curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_POST, TRUE);
+  curl_setopt($ch, CURLOPT_POST, 1);
   curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_setopt($ch, CURLOPT_NOPROGRESS, 1);  
+  curl_setopt($ch, CURLOPT_VERBOSE, 0);
+  
 
   //execute post
   $result = curl_exec($ch);
+  
+  // Log any errors to the watchdog.
+  if ($error = curl_error($ch)) {
+    watchdog('ogone_directlink_api', 'cURL error: @error', array('@error' => $error), WATCHDOG_ERROR);
+    return FALSE;
+  }  
 
   //close connection
   curl_close($ch);
