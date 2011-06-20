@@ -76,7 +76,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
     if ($form['#node']->type == 'donation_form' && $form['#node']->gateway > 0) {
       $gateway = gateway_manager_gateway_info($form['#node']->gateway);
       if ($gateway['gateway_details']['hide_cc_fields']) {
-        unset($form['submitted']['credit_card_information']);
+        $form['submitted']['credit_card_information']['#access'] = FALSE;
       }
     }
   }
