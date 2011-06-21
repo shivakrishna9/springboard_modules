@@ -388,6 +388,12 @@ function process_batch_response(&$batch, &$response) {
 			delete_from_heap($oid, $type);
 			// fire object_error 	
 			module_invoke_all('queue_processor', 'object_error', $batch['records'][$i], $responses[$i]);
+			
+			if (module_exists('rules')) {
+        $errors = _normalize_salesforce_response($responses[$i]->errors); 
+        $error = array_shift($errors); // we can only handle one error currently
+        rules_invoke_event('queue_processor_export_error', $type, $oid, $batch['action'], $batch['records'][$i], $error);
+			}
 		}
 	}
 	

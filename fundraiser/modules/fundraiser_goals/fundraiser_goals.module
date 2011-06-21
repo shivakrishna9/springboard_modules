@@ -223,7 +223,7 @@ function fundraiser_goals_validate(&$form, $form_state) {
   }
   
   // Setting the threshold at or above the target is also pretty lame.
-  if ($form_state['values']['fundraiser_goal_display_threshold'] >= $form_state['values']['fundraiser_goal_target']) {
+  if (($form_state['values']['fundraiser_goal_display_threshold'] >= $form_state['values']['fundraiser_goal_target']) && $form_state['values']['fundraiser_goal_type'] > 0) {
     form_set_error('fundraiser_goal_display_threshold', t('Setting the display threshold at or above the goal target means the goal will never be displayed.'));
   }
 }
@@ -249,7 +249,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
 
          break;
        case 'insert':
-         drupal_set_message('nodapi insert!');
+
          _fundraiser_goals_save_goal($node);
 
          break;     
@@ -611,33 +611,31 @@ if (!$object->nid) {
       }
     }
   }
-
-  $sql = sprintf("INSERT INTO {fundraiser_goals} 
-    (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
-    VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
-      $object->pid,
-      $object->fundraiser_goal_delta,
-      $object->fundraiser_goal_type,
-      $object->fundraiser_goal_target_cid,
-      $object->fundraiser_goal_target,
-      $object->fundraiser_goal_template,
-      $object->fundraiser_goal_weight,
-      $object->fundraiser_goal_display_threshold,
-      $object->fundraiser_goal['goals_wrapper']['template'],
-      $object->fundraiser_goal_default_message);
+  if ($object->fundraiser_goal_type) {
+    drupal_set_message('type selected, inserting');
+    $sql = sprintf("INSERT INTO {fundraiser_goals} 
+      (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
+      VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
+        $object->pid,
+        $object->fundraiser_goal_delta,
+        $object->fundraiser_goal_type,
+        $object->fundraiser_goal_target_cid,
+        $object->fundraiser_goal_target,
+        $object->fundraiser_goal_template,
+        $object->fundraiser_goal_weight,
+        $object->fundraiser_goal_display_threshold,
+        $object->fundraiser_goal['goals_wrapper']['template'],
+        $object->fundraiser_goal_default_message);
  
-   db_query($sql);
-
- // Prevent saving basic goal settings into the block table.
-
- 
+     db_query($sql);
+  }
 }
 
 /**
  * 
  */
 function _fundraiser_goals_update_goal($object) {
-  drupal_set_message('update goal!');
+
   $sql = sprintf("UPDATE {fundraiser_goals} 
              SET
                type = '%s',
@@ -658,11 +656,11 @@ function _fundraiser_goals_update_goal($object) {
              $object->fundraiser_goal_default_message,
              $object->fundraiser_goal_parent_item,
              $object->fundraiser_goal_delta);
-  drupal_set_message('sql:' . $sql);
+
   db_query($sql);
 
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
-  drupal_set_message('bid:' . $bid);
+
   $sql = sprintf("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->fundraiser_goal_delta, $object->visibility, $object->pages, $object->block_title, $bid);
 
   db_query($sql);
