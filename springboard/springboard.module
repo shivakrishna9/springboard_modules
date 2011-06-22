@@ -23,7 +23,7 @@ function springboard_menu() {
     'title' => 'Springboard settings',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('administer springboard'),
-    'page callback' => 'springboard_configuration_wizard',
+    'page callback' => 'springboard_admin',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
   );
@@ -270,6 +270,15 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
+  if (module_exists('queue_processor')) {
+    // Callback for the Springboard sync button.
+    $items['springboard_sync'] = array(
+      'title' => t('Syncronize'),
+      'page callback' => '_springboard_syncronize',
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_CALLBACK,
+    );
+  }
   return $items;
 }
 
@@ -389,5 +398,178 @@ function springboard_welcome() {
   return $form;
 }
 
+/**
+ * Implements hook_theme().
+ */
+function springboard_theme() {
+  return array(
+    'springboard_sf_status' => array(
+      'arguments' => array(),
+    ),
+    'springboard_jump' => array(
+      'arguments' => array(),
+    ),
+    'springboard_logo' => array(
+      'arguments' => array(),
+    ),
+    'springboard_fundraiser_performance' => array(
+      'arguments' => array(),
+    ),
+  );
+}
 
+/**
+ * Implements hook_springboard_dashboard_panes().
+ */
+function springboard_springboard_dashboard_panes() {
+  $panes['springboard_sf_status'] = array(
+    'label' => '',
+    'description' => t('Salesforce connection status'),
+    'content' => theme_springboard_sf_status(),
+  );
+  $panes['springboard_jump'] = array(
+    'label' => '',
+    'description' => t('Quick Jump Form'),
+    'content' => theme_springboard_jump(),
+  );
+  $panes['springboard_logo'] = array(
+    'label' => '',
+    'description' => t('Logo pane'),
+    'content' => theme_springboard_logo(),
+  );
+
+  return $panes;
+}
+
+/**
+ * Theme function for the Springboard Fundraiser Performance pane.
+ */
+function theme_springboard_fundraiser_performance() {
+  // TODO: add code to find and display form layout if/when this becomes available.
+  $forms = array();
+  // Given the scattered nature of this data I predict this page is going to perform poorly.
+  $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
+  while ($donation_form = db_fetch_object($results)) {
+    
+    $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
+    if (module_exists('fundraiser')) {
+      $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
+
+
+      $forms[$donation_form->nid]['conversion'] = round(100 * $access_results->conversions / $access_results->pageviews) . '%';
+      $forms[$donation_form->nid]['local_failure'] = round(100 * $access_results->local_failures / $access_results->pageviews) . '%';
+      $forms[$donation_form->nid]['gateway_failure'] = round(100 * $access_results->gateway_failures / $access_results->pageviews) . '%';
+      if (module_exists('statistics')) {
+        $forms[$donation_form->nid]['load_time'] = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid));
+      }
+    }
+  }
+  foreach($forms as $form) {
+    $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
+  }
+  $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
+  $output = '<div class="springboard-pane">';
+  $output .= theme_table($headers, $rows);
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Theme function for the Springboard Salesforce Status pane.
+ */
+function theme_springboard_sf_status() {
+
+  $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
+  if (!$last_connect['status']) {
+    $last_connect['status'] = 'Unknown';
+  }
+  $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
+  // system status: Good IF (can connect to salesforce)
+  $output = '<div class= "springboard-pane">';
+  $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
+
+  // sf connection info (status, last date/time
+  $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+
+  // WSDL update
+  $output .= '<p>Last WSDL Update: ' . date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) . '</p>';
+  // latest batch # total items :: success :: fail
+  $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
+  // sync button
+  if (variable_get('clean_url', 0)) {
+    $sync_path = base_path() . 'springboard_sync';
+  }
+  else {
+    $sync_path = base_path() . '?q=springboard_sync';
+  }
+  $output .= "<div id='springboard-sync'><span>Run Springboard Sync</span> <a href='" . $sync_path . "'><img src='" . base_path() . drupal_get_path('module', 'springboard') . "/sync.png'></a></div>";
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Theme function for the Springboard logo pane.
+ */
+function theme_springboard_logo() {
+  $theme = variable_get('theme_default', 'garland');
+  $settings = theme_get_settings($theme);
+ 
+  if (!$settings[default_logo] = 0) {
+    $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="64" height="73" alt="this is logo" />';
+  }
+  else {
+    $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="64" height="73" alt="this is logo" />'; // this prints out path to you uploaded logo
+  }
+  
+  $output = '<div class="springboard-pane">';
+  $output .= $logo;
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Theme function for the Springboard Quick Jump pane.
+ */
+function theme_springboard_jump() {
+  $output = '<div class="springboard-pane">';
+  $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png">';
+  $output .= drupal_get_form('springboard_quick_jump');
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Quick jump form.
+ */
+function springboard_quick_jump() {
+  $options = array(
+    'node/add/donation-form' => 'Create Donation Page',
+  );
+  $form['destination'] = array(
+    '#type' => 'select',
+    '#title' => t("Jump To"),
+    '#options' => $options,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Go'),
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for quick jump form.
+ */
+function springboard_quick_jump_submit($form, $form_state) {
+  drupal_goto($form_state['values']['destination']);
+}
+
+/**
+ * Syncronization callback for Springboard Sync button.
+ */
+function _springboard_syncronize() {
+  module_load_include('module', 'queue_processor');
+  queue_processor_process();
+  drupal_goto('admin/settings/springboard');
+}
 

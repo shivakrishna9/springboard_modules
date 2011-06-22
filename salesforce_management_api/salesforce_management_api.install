@@ -18,6 +18,8 @@ function salesforce_management_api_install() {
  * Implementation of hook_uninstall().
  */
 function salesforce_management_api_uninstall() {
+  variable_del('salesforce_management_api_connect');
+  variable_del('salesforce_management_api_wsdl_updated');
   drupal_uninstall_schema('salesforce_management_api');
 }
 
