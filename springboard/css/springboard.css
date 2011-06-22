@@ -1,0 +1,61 @@
+div.springboard-pane {
+  padding: 5px;
+  margin: 3px;
+  float:left;
+
+}
+
+div.springboard-pane p {
+  margin: 0px;
+  padding:0px;
+}
+
+div.springboard-pane #edit-destination-wrapper {
+  margin: 4px 0px 0px 0px;
+  padding-right: 5px;
+  float:left;
+}
+
+div.springboard-pane p.sf-status {
+  text-align: center;
+}
+
+div.springboard-pane div#springboard-sync {
+  float:right;	
+}
+
+div.springboard-pane div#springboard-sync a {
+  -moz-box-shadow: 3px 3px 4px #000;
+  -webkit-box-shadow: 3px 3px 4px #000;
+  box-shadow: 3px 3px 4px #000;
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}
+
+div.springboard-pane div#springboard-sync a:hover {
+  -moz-box-shadow: 1px 1px 2px #555;
+  -webkit-box-shadow: 1px 1px 2px #555;
+  box-shadow: 1px 1px 2px #555;
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555');
+}
+
+div.springboard-pane span.Connected {
+  color: #0A0;
+}
+
+div.springboard-pane span.successes {
+  color: #0A0;
+}
+
+div.springboard-pane span.Failed {
+  color: #A00;
+}
+
+div.springboard-pane span.failures {
+  color: #A00;
+}

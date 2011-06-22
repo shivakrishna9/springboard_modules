@@ -695,7 +695,7 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
     }
     else {
       drupal_set_message('The WSDL file has been successfully uploaded');
-      
+      variable_set('salesforce_management_api_wsdl_updated', time());
       // Clear the cache
       drupal_flush_all_caches();
       

@@ -196,13 +196,15 @@ function salesforce_management_api_connect($username = FALSE, $password = FALSE,
 
   // Attempt a login, and...
   if ($sf->login()) {
-    // Return the object if a connection and login were successful.
+    // Return the object if a connection and login were successful, log the event and cache connect info to a variable.
+    variable_set('salesforce_management_api_connect', array('status' => 'Connected', 'time' => time()));
 	watchdog('salesforce', t('Connection to Salesforce has been set.', array()));
     return $sf;
   }
   else {
     // Or return FALSE to indicate the failure.
     $sf = FALSE;
+    variable_set('salesforce_management_api_connect', array('status' => 'Failed', 'time' => time()));
 	watchdog('salesforce', t('Connection to Salesforce failed because API credentials have not been set.', array()));
     return FALSE;
   }

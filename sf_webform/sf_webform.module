@@ -126,7 +126,7 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 		$object_details = _get_object_details($object);
 		$fields = $object_details['fields'];
 		$record_types = $object_details['record_types'];
-		
+
 		// create a drop down list friendly version of the sf fields
 		foreach($fields as $key => $value) {
 			$options[$key] = $value['label'];
@@ -141,7 +141,7 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 			'#options' => $record_types,
 			'#default_value' => $node->sf_webform_recordtype,
 		);
-		
+
 		foreach($node->webform['components'] as $cid => $component) {
 			if($component['type'] != 'fieldset') {
 				// component
@@ -156,7 +156,7 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 					'#default_value' => $node->sf_webform_map[$cid],
 				);
 				
-				if ($node->sf_webform_map[$cid] && $fields[$node->sf_webform_map[$cid]]['idLookup']) {
+				if ($node->sf_webform_map[$cid] && ($fields[$node->sf_webform_map[$cid]]['idLookup'] || $fields[$node->sf_webform_map[$cid]]['externalId'])) {
 					if ($node->sf_dedupe_key == $node->sf_webform_map[$cid]) {
 						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] .'">Remove dedupe field</a>';
 					}
@@ -204,6 +204,20 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 			'#type' => 'select',
 			'#options' => $options,
 			'#default_value' => $node->sf_webform_map['sid'],
+		);
+		if ($node->sf_webform_map['sid'] && ($fields[$node->sf_webform_map['sid']]['idLookup'] || $fields[$node->sf_webform_map['sid']]['externalId'])) {
+		  if ($node->sf_dedupe_key == $node->sf_webform_map['sid']) {
+				$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map['sid'] .'">Remove dedupe field</a>';
+			}
+			else {
+				$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map['sid'] .'">Set as dedupe field</a>';
+			}  
+		}
+		else {
+			$value = '';
+		}
+		$form['map']['dedupe']['sid'] = array(
+			'#value' => $value,
 		);
 		
 		$form['submission_map']['submission_date']['label'] = array(
@@ -423,12 +437,12 @@ function _get_object_details($object_name) {
 		$record_types = array();
 		
 		$object = $sf->client->describeSObject($object_name);
-		
 		// get object fields
 		foreach($object->fields as $field) {
 			$object_fields[$field->name] = array(
 				'label' => $field->label,
 				'idLookup' => $field->idLookup,
+				'externalId' => $field->externalId,
 			);
 		}
 
@@ -494,11 +508,12 @@ function theme_sf_webform_mapping_form($form) {
 				$row = array();
 				$row[] = array('data' => drupal_render($field['label']), 'width' => '300');
 				$row[] = drupal_render($field['value']);
+				$row[] = drupal_render($map['dedupe'][$key]);
 				$submission_rows[] = $row;
 			}
 		}
 		unset($form['submission_map']);
-		$output .= theme('table', array('Submission Property', 'Salesforce Field'), $submission_rows, array('class' => 'sf_webform_mapping_form'));
+		$output .= theme('table', array('Submission Property', 'Salesforce Field', 'Dedupe Field'), $submission_rows, array('class' => 'sf_webform_mapping_form'));
 		
 		$output .= drupal_render($form['submit']);
 		$output .= drupal_render($form['remove']);

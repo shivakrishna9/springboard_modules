@@ -1,0 +1,113 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_schema() {
+  $schema['springboard_panes'] = array(
+    'description' => t('Stores data for webform submission goals.'),
+    'fields' => array(
+      'delta' => array(
+        'description' => t('Parent id, nid for webforms, Salesforce campaign id for campaigns'),
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'description' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'weight' => array(
+        'description' => t(''),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => t(''),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0, 
+      ),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function springboard_install() {
+  drupal_install_schema('springboard');
+  $panes = array(
+    'springboard_sf_status' => array(
+      'description' => t(''),
+      'weight' => 0,
+      'status' => 1,
+    ),
+    'springboard_jump' => array(
+      'description' => t(''),
+      'weight' => 1,
+      'status' => 1,
+    ),
+    'springboard_logo' => array(
+      'description' => t(''),
+      'weight' => -1,
+      'status' => 1,
+    ),
+    'springboard_fundraiser_performance' => array(
+      'description' => t('Fundraiser Performance'),
+      'weight' => 2,
+      'status' => 1,
+    ),
+  );
+  foreach($panes as $delta => $pane) {
+    $sql = sprintf("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+      VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
+    db_query($sql);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function springboard_uninstall() {
+  drupal_uninstall_schema('springboard');
+}
+
+/**
+ * 
+ */
+function springboard_update_6300() {
+  $ret = array();
+  $schema = springboard_schema();
+  db_create_table($ret, 'springboard_panes', $schema['springboard_panes']);
+  $panes = array(
+    'springboard_sf_status' => array(
+      'description' => t(''),
+      'weight' => 0,
+      'status' => 1,
+    ),
+    'springboard_jump' => array(
+      'description' => t(''),
+      'weight' => 1,
+      'status' => 1,
+    ),
+    'springboard_logo' => array(
+      'description' => t(''),
+      'weight' => -1,
+      'status' => 1,
+    ),
+    'springboard_fundraiser_performance' => array(
+      'description' => t('Fundraiser Performance'),
+      'weight' => 2,
+      'status' => 1,
+    ),
+  );
+  foreach($panes as $delta => $pane) {
+    $sql = sprintf("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+      VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
+    $ret[] = update_sql($sql);
+  }
+  return $ret;
+}
