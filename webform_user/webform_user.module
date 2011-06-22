@@ -42,12 +42,13 @@ function webform_user_menu() {
 		'weight' => 100,
 	);
 	
-	$items['admin/content/clone-webform-user/%'] = array(
-		'title' => 'Clone user weboform',
+	$items['node/%node/clone-webform-user'] = array(
+		'title' => 'Clone',
 		'page callback' => 'webform_user_clone',
-		'page arguments' => array(3),
-		'access arguments' => array('Map webform submissions to Salesforce objects'),
-		'type' => MENU_CALLBACK,
+		'page arguments' => array(1),
+		'access callback' => 'webform_user_access',
+		'access arguments' => array(1),
+		'type' => MENU_LOCAL_TASK,
 		'file' => 'webform_user.admin.inc',
 	);
 	
@@ -61,6 +62,23 @@ function webform_user_menu() {
 	);
 	
 	return $items;
+}
+
+/**
+ * Access callback to check if current node is a webform user.
+ */
+function webform_user_access($node) {
+  return $node->is_webform_user;
+}
+
+/**
+ * Implemenation of hook_clone_access_alter().
+ */
+function webform_user_clone_access_alter(&$access, $node) {
+  // remove access to node clone feature if it's a webform user node
+  if ($node->is_webform_user) {
+    $access = 0;
+  }
 }
 
 /**
