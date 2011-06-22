@@ -1476,6 +1476,9 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	$order->line_items = array();
 
+
+  $order->data['recurring_status'] = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
+  
  	// Allow other modules to add additional fields to the order before processing the payment
   $additional_order_fields = module_invoke_all('fundraiser_add_order_fields', $fundraiser_fields);
   foreach ($additional_order_fields as $field => $value) {
@@ -1488,7 +1491,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	uc_order_save($order);
 
   // relate the order to submission before we try and process the payment
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING);  
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $data->order['recurring_status']);  
   
   // additional data to pass to the payment gateway's charge function
  	$data = array(
@@ -1558,6 +1561,12 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
   
   // update the user's profile
   fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
+  
+  // Update the recurring status, if it was changed by the payment gateway module
+  $status = db_result(db_query("SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  if ($status != $order->data['recurring_status']) {
+    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d', $order->data['recurring_status'], $order_id);
+  }
   
   // if it's recurring, spawn all the future orders
   if (fundraiser_is_recurring_order($order_id)) {
