@@ -7,7 +7,8 @@
  * 
  * Todo
  *    - Remove hard-coded sha-in
- *    - Remove text charge menu item and function
+ *    - Remove test menu items and functions
+ *    - Alias not being returned after it's created on a charge
  */
 
 /**
@@ -17,7 +18,7 @@ function ogone_directlink_api_menu() {
   $items = array();
 
   $items['admin/settings/ogone_directlink_api/test'] = array(
-    'title' => 'Test Ogone connection',
+    'title' => 'Test Ogone charge',
     'description' => 'Makes a test charge over Ogone DirectLink connection',
     'page callback' => '_check_ogone_charge',
     'access callback' => TRUE,
@@ -45,11 +46,13 @@ function _check_ogone_charge() {
   );
   
   $charge_details = array(
-    'ORDERID' => '1397',
-    'AMOUNT' => '13.12',
+    'ORDERID' => '1401',
+    'AMOUNT' => '94.65',
+    'CN' => 'Steve Smith',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
     'CVC' => '123',
+    'ALIASOPERATION' => 'BYPSP',
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
@@ -70,9 +73,9 @@ function _check_ogone_refund() {
   );
   
   $charge_details = array(
-    'ORDERID' => '128',
-    'PAYID' => '10490380',
-    'AMOUNT' => '1.12',
+    //'ORDERID' => '127',
+    'PAYID' => '10490379',
+    'AMOUNT' => '9.50',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
     'CVC' => '123',
@@ -201,6 +204,7 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   xml_parse_into_struct($parser, $result, $return_values, $index);
   xml_parser_free($parser);
   $attributes = $return_values[$index['NCRESPONSE'][0]]['attributes'];
+  dsm($attributes, 'returned attributes');
   
   // Get the status message
   $attributes['STATUS_MESSAGE'] = ogone_directlink_api_feedback_status($attributes['STATUS']);
@@ -255,7 +259,7 @@ function ogone_directlink_api_generate_sha($fields, $sha_pass_phrase) {
  * Get a list of valid SHA-1 out parameters
  */
 function ogone_directlink_api_sha1_out_parameters() {
-  return array('AAVADDRESS', 'AAVCHECK', 'AAVZIP', 'ACCEPTANCE', 'ALIAS', 'AMOUNT',
+  return array('AAVADDRESS', 'AAVCHECK', 'AAVZIP', 'ACCEPTANCE', 'ALIAS', 'ALIASOPERATION', 'AMOUNT',
     'BIN', 'BRAND', 'CARDNO', 'CCCTY', 'CN', 'COMPLUS', 'CREATION_STATUS', 'CURRENCY', 'CVC',
     'CVCCHECK', 'DCC_COMMPERCENTAGE', 'DCC_CONVAMOUNT', 'DCC_CONVCCY', 'DCC_EXCHRATE',
     'DCC_EXCHRATESOURCE', 'DCC_EXCHRATETS', 'DCC_INDICATOR', 'DCC_MARGINPERCENTAGE',
