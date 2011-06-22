@@ -448,16 +448,19 @@ function theme_springboard_fundraiser_performance() {
   // Given the scattered nature of this data I predict this page is going to perform poorly.
   $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
   while ($donation_form = db_fetch_object($results)) {
-    drupal_set_message('form:' . $donation_form->nid);
+    
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
-    // This sucks.
-     $forms[$donation_form->nid]['count'] = $count;
-     $access_results = db_query('(SELECT timer FROM {accesslog} WHERE path = "node/%s" ORDER BY aid DESC LIMIT 1) 
-       UNION (SELECT COUNT(aid) FROM {accesslog} WHERE path = "node/%s")', $donation_form->nid, $donation_form->nid);
-     $load_time = db_result($access_results);
-     $load_time = $load_time ? $load_time : 'No Data';
-     $count = db_result($access_results);
-     $forms[$donation_form->nid]['load_time'] = $load_time;
+    $forms[$donation_form->nid]['count'] = $count;
+    if (module_exists('fundraiser')) {
+      $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
+      $forms[$donation_form->nid]['pageviews'] = $access_results->pageviews;
+      $form[$donation_form->nid]['conversion'] = $access_results->conversions;
+      $forms[$donation_form->nid]['local_failure'] = $access_results->local_failures;
+      $forms[$donation_form->nid]['gateway_failure'] = $access_results->gateway_failures;
+      if (module_exists('statistics')) {
+        $forms[$donation_form->nid]['load_time'] = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid));
+      }
+    }
   }
   foreach($forms as $form) {
     $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time'], $form['layout']);

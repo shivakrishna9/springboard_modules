@@ -344,8 +344,48 @@ function fundraiser_schema() {
 	  ),
 	  'primary key' => array('nid', 'cid'),
 	);
-	
-	return $schema;
+  
+  $schema['fundraiser_tracking'] = array(
+    'description' => t('Store conversion & pageview information for donation forms.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('Donation Form node ID'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'pageviews' => array(
+        'description' => t('Number of times the donation form has been viewed.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'conversions' => array(
+        'description' => t('Number of times the donation form has been submitted successfully.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'local_failures' => array(
+        'description' => t('Number of times form submission has resulted in form_set_error().'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'gateway_failures' => array(
+        'description' => t('Number of times submission has resulted in a failure reported by the payment gateway.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  return $schema;
 }
 
 // Adds fundraiser specific ubercart settings
@@ -862,4 +902,14 @@ function fundraiser_update_6306() {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
     }  
   }
+}
+
+/**
+ * Add tracking table.
+ */
+function fundraiser_update_6307() {
+  $ret = array();
+  $schema = fundraiser_schema();
+  db_create_table($ret, 'fundraiser_tracking', $schema['fundraiser_tracking']);
+  return $ret;
 }
