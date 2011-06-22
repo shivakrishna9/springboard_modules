@@ -1507,7 +1507,6 @@ function fundraiser_webform_submit($form, &$form_state) {
  	else {
  	  $charge_function = fundraiser_charge_function($node->gateway);
  	}
-
   // call the charge function and store the result
   $result = $charge_function($order->order_id, $donation_amount, $data);
 
