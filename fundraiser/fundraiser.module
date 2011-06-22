@@ -1495,7 +1495,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	uc_order_save($order);
 
   // relate the order to submission before we try and process the payment
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $data->order['recurring_status']);  
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $order->data['recurring_status']);
   
   // additional data to pass to the payment gateway's charge function
  	$data = array(
