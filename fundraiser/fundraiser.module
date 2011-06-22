@@ -1750,6 +1750,7 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 			_fundraiser_profile_save_profile($updates, $user, $cat['name']);
 		}		
 		// convert ubercart's numeric ids to textual values
+		module_load_include('inc', 'webform', 'includes/webform.submissions');
 		$submission = webform_get_submission($nid, $sid);
 		_fundraiser_update_profile_location($submission);
 	}
