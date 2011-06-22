@@ -2,9 +2,6 @@
 /**
  * @file
  * Ogone ecommerce payment gateway.
- *
- * Todo:
- *  Re-add recurring option when hiding credit card fields
  */
 
 define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment gateway to store your credit card information. This will allow us to make charges for recurring donations without having to store your credit card number, which helps protect your privacy.');
@@ -294,6 +291,13 @@ function gm_ogone_ecommerce_feedback_accepted() {
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
 
   if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
+    // If no Alias could be set, the donation cannot be recurring
+    $order = uc_order_load($order_id);
+    if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
+      $order->data['recurring_status'] = DONATION_NON_RECURRING;
+      uc_order_save($order); 
+    }    
+    
     fundraiser_order_accept($order_id, $transaction_id);
     drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
   }
