@@ -160,10 +160,14 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   
   $fields = array();
   foreach($acct_info as $field => $value) {
-    $fields[$field] = $value;
+    if (!empty($value)) {
+      $fields[$field] = $value;
+    }
   }
   foreach($request_details as $field => $value) {
-    $fields[$field] = $value;
+    if (!empty($value)) {
+      $fields[$field] = $value;
+    }
   }
   $fields['SHASIGN'] = ogone_directlink_api_generate_sha($fields, 'thisismyINpassphrase?');
   
@@ -204,7 +208,6 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   xml_parse_into_struct($parser, $result, $return_values, $index);
   xml_parser_free($parser);
   $attributes = $return_values[$index['NCRESPONSE'][0]]['attributes'];
-  dsm($attributes, 'returned attributes');
   
   // Get the status message
   $attributes['STATUS_MESSAGE'] = ogone_directlink_api_feedback_status($attributes['STATUS']);
@@ -248,7 +251,7 @@ function ogone_directlink_api_feedback_valid_sha1($feedback, $sha1out) {
 function ogone_directlink_api_generate_sha($fields, $sha_pass_phrase) {
   $sha1_string = '';
   foreach (ogone_directlink_api_sha1_out_parameters() as $param) {
-    if (isset($fields[$param])) {
+    if (!empty($fields[$param])) {
       $sha1_string .= $param . '=' . $fields[$param] . $sha_pass_phrase;
     }
   }
