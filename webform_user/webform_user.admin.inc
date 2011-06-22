@@ -69,8 +69,8 @@ function webform_user_clone($nid) {
 			$fieldmap = db_fetch_object(db_query("SELECT * FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal));
 			$webform_user = db_fetch_object(db_query("SELECT * FROM {webform_user} WHERE nid = %d", $nid));
 			
-			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id) 
-				VALUES ('%s', '%s', '%s', '%s', '%s')", $node->title . ' (webform map)', $new_drupal, $fieldmap->salesforce, $fieldmap->fields, $fieldmap->recordtype_id);
+			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id, dedupe_key) 
+				VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $node->title . ' (webform map)', $new_drupal, $fieldmap->salesforce, $fieldmap->fields, $fieldmap->recordtype_id, $fieldmap->dedupe_key);
 			
 			db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $webform_user->foreign_key_field, $node->nid);
 		
