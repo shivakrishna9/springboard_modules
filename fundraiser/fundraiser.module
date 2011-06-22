@@ -29,6 +29,7 @@ function fundraiser_cron() {
   }
 }
 
+
 /**
  * Implementation of hook_perm().
  */
@@ -381,6 +382,7 @@ function fundraiser_node_info() {
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
+
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all', FALSE);
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
@@ -398,7 +400,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
-    '#weight' => -5.1,
+    '#weight' => -6,
     '#maxlength' => 255,
   );
   $form['internal_name'] = array(
@@ -715,6 +717,9 @@ function fundraiser_load($node) {
  * Implemenation of hook_view().
  */
 function fundraiser_view($node, $teaser = FALSE, $page = FALSE) {
+  if (!$teaser && $page) {
+    fundraiser_track_pageview();
+  }
   // use Drupal's default node view
   $node = node_prepare($node, $teaser);
   
@@ -1374,7 +1379,7 @@ function fundraiser_webform_validate($form, &$form_state) {
 		foreach($fundraiser_fields as $key => $value) {
 			$message .= $key . ': ' . $value . "\n";
 		}
-	
+	    fundraiser_track_local_failure();
 		watchdog('fundraiser', $message, NULL, WATCHDOG_DEBUG, NULL);
 	}
 }
@@ -1502,17 +1507,18 @@ function fundraiser_webform_submit($form, &$form_state) {
  	else {
  	  $charge_function = fundraiser_charge_function($node->gateway);
  	}
-
   // call the charge function and store the result
   $result = $charge_function($order->order_id, $donation_amount, $data);
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
  	  module_invoke_all('fundraiser_order_success', $order);
+ 	  fundraiser_track_conversion();
  	}
  	else { 
 		// failed to process credit cart
 		fundraiser_order_decline($order->order_id, $result['message']);
+		fundraiser_track_gateway_failure();
 		// rebuild the form
 		$form_state['rebuild'] = TRUE;
  	}
@@ -1750,6 +1756,7 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 			_fundraiser_profile_save_profile($updates, $user, $cat['name']);
 		}		
 		// convert ubercart's numeric ids to textual values
+		module_load_include('inc', 'webform', 'includes/webform.submissions');
 		$submission = webform_get_submission($nid, $sid);
 		_fundraiser_update_profile_location($submission);
 	}
@@ -2538,4 +2545,60 @@ function _fundraiser_field_blacklist() {
     'card_expiration_month',
     'card_expiration_year',
   );
+}
+
+/**
+ * Keeps the tracking table up to date.
+ */
+function fundraiser_track_local_failure() {
+  $form_nid = arg(1);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+    $sql = sprintf('UPDATE {fundraiser_tracking} SET local_failures = local_failures + 1 WHERE nid = %d', $form_nid);
+  }
+  else {
+    // This shouldn't happen.
+    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, local_failures, gateway_failures, latest_load_time)
+      VALUES (%d, 1, 1, 0, 0)', $form_nid);
+  }
+  db_query($sql);
+}
+
+function fundraiser_track_pageview() {
+
+  $form_nid = arg(1);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+    $sql = sprintf('UPDATE {fundraiser_tracking} SET pageviews = pageviews + 1 WHERE nid = %d', $form_nid);
+  }
+  else {
+    // This could happen, but only if hook_exit() doesn't get invoked.
+    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+      VALUES (%d, 1, 0, 0, 0)', $form_nid);
+  }
+  db_query($sql);
+}
+
+function fundraiser_track_gateway_failure() {
+   $form_nid = arg(1);
+   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+    $sql = sprintf('UPDATE {fundraiser_tracking} SET gateway_failure = gateway_failure + 1 WHERE nid = %d', $form_nid);
+  }
+  else {
+    // This shouldn't happen.
+    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+      VALUES (%d, 1, 0, 0, 1)', $form_nid);
+  }
+  db_query($sql);
+}
+
+function fundraiser_track_conversion() {
+   $form_nid = arg(1);
+   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+    $sql = sprintf('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = %d', $form_nid);
+  }
+  else {
+    // This shouldn't happen.
+    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+      VALUES (%d, 1, 1, 0, 0)', $form_nid);
+  }
+  db_query($sql);
 }
