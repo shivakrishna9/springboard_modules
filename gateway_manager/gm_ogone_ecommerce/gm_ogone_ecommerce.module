@@ -6,7 +6,8 @@
  * Todo:
  *  Re-add recurring option when hiding credit card fields
  */
- 
+
+define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment gateway to store your credit card information. This will allow us to make charges for recurring donations without having to store your credit card number, which helps protect your privacy.');
 /**
  * Implementation of hook_menu().
  */
@@ -72,6 +73,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
   // Gather arguments that will be sent
   $arguments = array(
     'ACCEPTURL' => '',
+    'ALIASOPERATION' => $gateway_config['ALIASOPERATION'],
     'AMOUNT' => $order->order_total * 100,
     'BGCOLOR' => '',
     'BRAND' => '',
@@ -95,7 +97,7 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'OWNERTOWN' => $order->billing_city,
     'OWNERZIP' => $order->billing_postal_code,
     'PM' => '',
-    'PSPID' => $gateway_config['pspid'],
+    'PSPID' => $gateway_config['PSPID'],
     'TBLBGCOLOR' => '',
     'TBLTXTCOLOR' => '',
     'TITLE' => '',
@@ -106,6 +108,12 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'EXCEPTIONURL' => url('ogone/feedback/exception', array('absolute' => TRUE)),
     'CANCELURL' => url('ogone/feedback/cancel', array('absolute' => TRUE)),
   );
+  
+  // Only send the ALIASUSAGE value if it's set
+  if ($gateway_config['ALIASUSAGE'] && $arguments['ALIASOPERATION']) {
+    $arguments['ALIASUSAGE'] = $gateway_config['ALIASUSAGE'];
+  }
+  
   // Sort the arguments by the key. This needs to be done for the SHA-1 verification
   ksort($arguments);
   
@@ -241,6 +249,30 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#default_value' => $config['gm_ogone_ecommerce_shaout_live'],
   );
   
+  $form['alias_settings'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#title' => t('Alias Settings'),
+    '#description' => t('Ogone uses "aliases" to retain the payment information for users so that it may be used again in the future. This is necessary for recurring donations: credit card numbers are not stored in Springboard. Ogone manages the storage of that information and gives us an alias that we can pass them for future recurring donations.'),
+  );
+  $form['alias_settings']['gm_ogone_ecommerce_alias_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Alias usage'),
+    '#description' => t('If you have not already, you may need to enable Alias Management in the Ogone admin web interface, at Configuration > Account > Your Options.'),
+    '#default_value' => !empty($config['gm_ogone_ecommerce_alias_enable']) ? $config['gm_ogone_ecommerce_alias_enable'] : FALSE,
+  );
+  
+  $form['alias_settings']['gm_ogone_ecommerce_alias_usage'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Alias Usage Explanation'),
+    '#description' => t('This brief message will be shown to the user on the page where they enter their credit card info. It is shown above a checkbox labeled, "I allow Ogone to store my financial details in a secure way so I won\'t have to enter them again for future orders with this merchant." Ogone limits this explanation to 255 characters.'),
+    '#cols' => 60,
+    '#rows' => 2,
+    '#maxlength' => 255,
+    '#default_value' => isset($config['gm_ogone_ecommerce_alias_usage']) ? $config['gm_ogone_ecommerce_alias_usage'] : OGONE_DEFAULT_ALIAS_USAGE,
+  );
+  
+  
   return $form;
 }
 
@@ -361,6 +393,7 @@ function _gm_ogone_ecommerce_get_returned_values() {
     $return_values = array(
       'AAVCHECK' => check_plain(trim($_GET['AAVCheck'])),
       'ACCEPTANCE' => check_plain(trim($_GET['ACCEPTANCE'])),
+      'ALIAS' => check_plain(trim($_GET['ALIAS'])),
       'AMOUNT' => check_plain(trim($_GET['amount'])),
       'BRAND' => check_plain(trim($_GET['BRAND'])),
       'CARDNO' => check_plain(trim($_GET['CARDNO'])),
@@ -403,7 +436,9 @@ function _gm_ogone_ecommerce_get_config_for_order($order_or_id) {
   $gateway_config = $gateway['config'];
  
   $config = array(
-    'pspid' => $gateway_config['gm_ogone_ecommerce_pspid'],
+    'PSPID' => $gateway_config['gm_ogone_ecommerce_pspid'],
+    'ALIASUSAGE' => $gateway_config['gm_ogone_ecommerce_alias_usage'],
+    'ALIASOPERATION' => ($gateway_config['gm_ogone_ecommerce_alias_enable']) ? 'BYPSP' : '',
   );
   
   // If using the live transaction mode, load live vars
