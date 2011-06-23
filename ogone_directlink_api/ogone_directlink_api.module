@@ -43,16 +43,17 @@ function _check_ogone_charge() {
     'USERID' => 'directlinkapiu',
     'PSWD' => 'iT2s@9?PKr',
     'CURRENCY' => 'EUR',
+    'SHA1IN' => 'thisismyINpassphrase?',
   );
   
   $charge_details = array(
-    'ORDERID' => '1401',
-    'AMOUNT' => '94.65',
+    'ORDERID' => '2404',
+    'AMOUNT' => '19.65',
     'CN' => 'Steve Smith',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
     'CVC' => '123',
-    'ALIASOPERATION' => 'BYPSP',
+    //'ALIASOPERATION' => 'BYPSP',
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
@@ -143,7 +144,7 @@ function ogone_directlink_api_refund($acct_info, $refund_details) {
 function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   // Check required fields
   $errors = array();
-  foreach (array('PSPID', 'USERID', 'PSWD', 'OPERATION', 'AMOUNT') as $field) {
+  foreach (array('PSPID', 'USERID', 'PSWD', 'OPERATION', 'AMOUNT', 'SHA1IN') as $field) {
     if (empty($acct_info[$field]) && empty($request_details[$field])) {
       $errors[] = 'Missing ' . $field;
     }
@@ -160,16 +161,18 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
   
   $fields = array();
   foreach($acct_info as $field => $value) {
-    if (!empty($value)) {
+    // Only include the value if it's not empty, and don't send the SHA IN passphrase
+    if (!empty($value) && $field != 'SHA1IN') {
       $fields[$field] = $value;
     }
   }
   foreach($request_details as $field => $value) {
+    // Only include the value if it's not empty
     if (!empty($value)) {
       $fields[$field] = $value;
     }
   }
-  $fields['SHASIGN'] = ogone_directlink_api_generate_sha($fields, 'thisismyINpassphrase?');
+  $fields['SHASIGN'] = ogone_directlink_api_generate_sha($fields, $acct_info['SHA1IN']);
   
   foreach ($fields as $field => $value) {
     $fields_string[] = $field . '=' . urlencode($value);

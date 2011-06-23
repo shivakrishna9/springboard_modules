@@ -154,6 +154,15 @@ function gm_ogone_directlink_charge($order_id, $amount, $data) {
     'PSWD' => $data['config']['gm_ogone_directlink_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_directlink_alias_enable']) ? 'BYPSP' : '',
   );
+  
+  // Set the SHA IN value depending on whether or not the gateway is making live transactions
+  if ($data['config']['gm_ogone_directlink_transaction_mode'] == 'live') {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
+  }
+  else {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_live'];
+  }
+  
 
   // Build array of charge details
   $charge_details = array(
