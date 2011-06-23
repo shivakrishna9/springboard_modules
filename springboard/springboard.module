@@ -20,14 +20,32 @@ function springboard_perm() {
 function springboard_menu() {
   $items = array();
   $items['admin/springboard'] = array(
-    'title' => 'Springboard settings',
+    'title' => 'Springboard',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('administer springboard'),
     'page callback' => 'springboard_admin',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
   );
-    $items['admin/springboard/forms'] = array(
+  $items['admin/springboard/dashboard'] = array(
+    'title' => 'Springboard',
+    'description' => 'Access reports and site maintenance tasks.',
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'springboard.admin.inc',
+  );
+  $items['admin/springboard/springboard_settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Configure Springboard settings.',
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_admin_settings'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'springboard.admin.inc',
+  );
+  $items['admin/springboard/forms'] = array(
     'title' => t('Forms'),
     'description' => t('Manage your donation forms and other webforms.'),
     'weight' => -10,
@@ -478,7 +496,18 @@ if (variable_get('clean_url', 0)) {
       $forms[$donation_form->nid]['local_failure'] = round(100 * $access_results->local_failures / $access_results->pageviews) . '%';
       $forms[$donation_form->nid]['gateway_failure'] = round(100 * $access_results->gateway_failures / $access_results->pageviews) . '%';
       if (module_exists('statistics')) {
-        $forms[$donation_form->nid]['load_time'] = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
+        $threshold = variable_get('springboard_load_time_threshold',0);
+        
+        $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
+        
+        if (!$threshold) {
+          $class = 'no-threshold';
+        }
+        else {
+          $class = ($threshold >= $load_time) ? 'successes' : 'failures';
+        }
+        $forms[$donation_form->nid]['load_time'] = '<span class="' . $class . '">' . $load_time . '</span>';
+        
       }
     }
   }
@@ -599,11 +628,17 @@ function _springboard_fundraiser_report() {
   ctools_include('ajax');
   ctools_include('modal');
   $title = $access_results->internal_name;
+  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
+        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
+        WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
+        $nid));
+  $total_donations = $total_donations ? $total_donations : '0.00';
   // TODO: get a spec for how this is supposed to look and ditch this <br> nonsense.
   $output = 'Pageviews:' . $access_results->pageviews . '<br />';
   $output .= 'Total conversions:' . $access_results->conversions . '<br />';
   $output .= '# of local failures:' . $access_results->local_failures . '<br />';
   $output .= '# of gateway failures:' . $access_results->gateway_failures . '<br />';
+  $output .= 'Total donations:$' . $total_donations . '<br />';
   ctools_modal_render($title, $output);
 
 }
