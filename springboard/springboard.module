@@ -482,7 +482,7 @@ function theme_springboard_fundraiser_performance() {
   while ($donation_form = db_fetch_object($results)) {
     
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
-    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE));
+    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
