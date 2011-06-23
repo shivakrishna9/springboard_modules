@@ -6,9 +6,7 @@
  * Provides functions to interact with Ogone DirectLink method.
  * 
  * Todo
- *    - Remove hard-coded sha-in
  *    - Remove test menu items and functions
- *    - Alias not being returned after it's created on a charge
  */
 
 /**
@@ -47,13 +45,13 @@ function _check_ogone_charge() {
   );
   
   $charge_details = array(
-    'ORDERID' => '2404',
-    'AMOUNT' => '19.65',
+    'ORDERID' => '2405',
+    'AMOUNT' => '22.65',
     'CN' => 'Steve Smith',
     'CARDNO' => '4111111111111111',
     'ED' => '0212',
     'CVC' => '123',
-    //'ALIASOPERATION' => 'BYPSP',
+    'ALIASOPERATION' => 'BYPSP',
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);

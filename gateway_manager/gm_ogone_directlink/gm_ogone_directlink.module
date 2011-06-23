@@ -6,8 +6,6 @@
  * Process payments using Ogone's DirectLink payment method.
  *
  * Todo
- *    - Remove hard-coded EUR for currency. Check dropdown if it's an option, or default to USD
- *    - Remove admin config fields for SHA out? Not used, as far as I can tell
  *    - Add better error handling on the charge response codes
  */
 
@@ -76,49 +74,23 @@ function gm_ogone_directlink_settings_form($config = array()) {
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#title' => t('Security keys'),
-    '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone. Live and test transactions must use different keys. These keys are configured in the Ogone admin, under Technical Information. The SHA-IN phrase is set on the "Data and origin verification tab," and the SHA-OUT is set on the "Transaction Feedback" tab.'),
+    '#description' => t('SHA-1 keys used to validate the data passed to Ogone. Live and test transactions must use different keys. These keys are configured in the Ogone admin, under Technical Information. The SHA-IN phrase is set on the "Data and origin verification tab."'),
   );
   
-  $form['security_keys']['test'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Test'),
-    '#description' => t('Security keys used for test transactions'),
-  );  
-  $form['security_keys']['test']['gm_ogone_directlink_shain_test'] = array(
+  $form['security_keys']['gm_ogone_directlink_shain_test'] = array(
     '#type' => 'textfield',
-    '#title' => t('SHA-IN Pass Phrase'),
+    '#title' => t('SHA-IN Pass Phrase for Test Transactions'),
     '#description' => t('Used to validate data sent to Ogone.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_directlink_shain_test'],
   );
-  $form['security_keys']['test']['gm_ogone_directlink_shaout_test'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SHA-OUT Pass Phrase'),
-    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
-    '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_directlink_shaout_test'],
-  );
   
-  $form['security_keys']['live'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Live'),
-    '#description' => t('Security keys used for live transactions'),
-  );  
-  $form['security_keys']['live']['gm_ogone_directlink_shain_live'] = array(
+  $form['security_keys']['gm_ogone_directlink_shain_live'] = array(
     '#type' => 'textfield',
-    '#title' => t('SHA-IN Pass Phrase'),
+    '#title' => t('SHA-IN Pass Phrase for Live Transactions'),
     '#description' => t('Used to validate data sent to Ogone.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_directlink_shain_live'],
-  );
-  $form['security_keys']['live']['gm_ogone_directlink_shaout_live'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SHA-OUT Pass Phrase'),
-    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
-    '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_directlink_shaout_live'],
   );
   
   $form['alias_settings'] = array(
