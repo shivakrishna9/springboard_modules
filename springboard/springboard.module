@@ -506,6 +506,7 @@ function theme_springboard_fundraiser_performance() {
       }
     }
   }
+  usort($forms, "_springboard_sort_by_conversion");
   foreach($forms as $form) {
     $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
   }
@@ -625,6 +626,8 @@ function _springboard_fundraiser_report() {
         INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
         $nid));
+  $total_donations = round($total_donations) . '.00';
+  
   $total_donations = $total_donations ? $total_donations : '0.00';
   $output .= '<h2>Details for ' . $access_results->internal_name;
   $output .= ' ' . l(t('view'), "node/$nid");
@@ -639,3 +642,14 @@ function _springboard_fundraiser_report() {
   ctools_modal_render($title, $output);
 
 }
+
+function _springboard_sort_by_conversion($a, $b) {
+
+  if ($a['conversion'] == $b['conversion']) {
+    return 0;
+  }
+    
+  return ($a['conversion'] > $b['conversion']) ? -1 : 1;
+}
+
+
