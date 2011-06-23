@@ -184,6 +184,7 @@ function gm_ogone_directlink_charge($order_id, $amount, $data) {
 }
 
 
+
 /**
  * Issue a refund against a DirectLink payment
  * 
@@ -198,5 +199,63 @@ function gm_ogone_directlink_charge($order_id, $amount, $data) {
  *   Array of info about the success/failure of the refund transaction
  */
 function gm_ogone_directlink_refund($order_id, $amount, $data) {
-  return array('success' => FALSE, 'message' => "Refund function hasn't been implemented for DirectLink");
+  global $user;
+  $order = uc_order_load($order_id);
+
+  // Build array of gateway credentials
+  $gateway_config = array(
+    'PSPID' => $data['config']['gm_ogone_directlink_pspid'],
+    'USERID' => $data['config']['gm_ogone_directlink_userid'],
+    'PSWD' => $data['config']['gm_ogone_directlink_password'],
+    'ALIASOPERATION' => ($data['config']['gm_ogone_directlink_alias_enable']) ? 'BYPSP' : '',
+  );
+  
+  // Set the SHA IN value depending on whether or not the gateway is making live transactions
+  if ($data['config']['gm_ogone_directlink_transaction_mode'] == 'live') {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_live'];
+  }
+  else {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
+  }
+  
+
+  // Build array of charge details
+  $charge_details = array(
+    'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
+    'ORDERID' => $order->order_id,
+    'AMOUNT' => $amount,
+  );
+  
+  // If a currency was set for this order, use it
+  if ($order->data['currency']) {
+    $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
+  }
+  
+  $charge_result = ogone_directlink_api_refund($gateway_config, $charge_details);
+  
+  $success = FALSE;
+  if ($charge_result && $charge_result['NCERROR'] == 0) {
+    $success = TRUE;
+    $context = array(
+      'revision' => 'formatted-original',
+      'type' => 'amount',
+    );
+    $message = t('Credit card refunded: !amount', array('!amount' => uc_price($amount, $context)));
+    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+  }
+  else {
+    $message = t('Credit card refund failed.');
+    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+  }
+
+  $message = t('Card refunded: ID: @id', array('@id' => $charge_result['PAYID']));
+  $result = array(
+    'success' => $success,
+    'comment' => $message,
+    'message' => $success ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
+    'uid' => $user->uid,
+    'data' => array('module' => 'gm_ogone_directlink', 'txn_id' => $charge_result['PAYID']),
+  );
+
+  return $result;
 }
