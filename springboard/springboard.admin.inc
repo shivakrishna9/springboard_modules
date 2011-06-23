@@ -25,3 +25,37 @@ function springboard_admin() {
 
   return $content;
 }
+
+
+/**
+ * Admin settings form.
+ */
+function springboard_admin_settings() {
+
+  $form = array();
+  $form['dashboard'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dashboard Settings'),
+    '#description' => t('Configure display settings for your dashboard.'),
+    '#collapsible' => TRUE,
+  );
+  $form['dashboard']['springboard_load_time_threshold'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Donation Form Load Time Threshold'),
+    '#description' => t('Set the maximum acceptable time (in ms) to render a donation form. Any forms taking longer than this to load will be flagged on the dashboard page.'),
+    '#default_value' => variable_get('springboard_load_time_threshold', 0),
+  );
+  $form['#validate'] = array('springboard_admin_settings_validate');
+  return system_settings_form($form);
+
+}
+
+/**
+ * Validation handler for the springboard admin settings form.
+ */
+function springboard_admin_settings_validate(&$form, $form_state) {
+  if ($form_state['values']['springboard_load_time_threshold'] && !is_numeric($form_state['values']['springboard_load_time_threshold'])) {
+    form_set_error('springboard_load_time_threshold', t('The load time threshold must be numeric!'));
+  }
+}
+
