@@ -478,16 +478,11 @@ function theme_springboard_fundraiser_performance() {
   $forms = array();
   // Given the scattered nature of this data I predict this page is going to perform poorly.
   $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
-if (variable_get('clean_url', 0)) {
-    $modal_path = base_path() . 'springboard_report_modal';
-  }
-  else {
-    $modal_path = base_path() . '?q=springboard_report_modal';
-  }
+
   while ($donation_form = db_fetch_object($results)) {
     
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
-    $forms[$donation_form->nid]['internal_name'] .= ' <a href="' . $modal_path . '/' . $donation_form->nid . '" class="ctools-use-modal"><img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png"><a/>';
+    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
@@ -543,13 +538,8 @@ function theme_springboard_sf_status() {
   // latest batch # total items :: success :: fail
   $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
   // sync button
-  if (variable_get('clean_url', 0)) {
-    $sync_path = base_path() . 'springboard_sync';
-  }
-  else {
-    $sync_path = base_path() . '?q=springboard_sync';
-  }
-  $output .= "<div id='springboard-sync'><span>Run Springboard Sync</span> <a href='" . $sync_path . "'><img src='" . base_path() . drupal_get_path('module', 'springboard') . "/sync.png'></a></div>";
+
+  $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
   $output .= '</div>';
   return $output;
 }
@@ -621,6 +611,9 @@ function _springboard_syncronize() {
 }
 
 function _springboard_fundraiser_report() {
+// TODO: get a spec for how this is supposed to look and ditch this <br> nonsense. \
+  // Also, I think this entire approach is probably bogus and should be replaced with a .tpl
+  // to preserve themer sanity.
   $nid = arg(1);
   if (is_numeric($nid)) {
     $access_results = db_fetch_object(db_query('SELECT ft.pageviews, ft.conversions, ft.local_failures, ft.gateway_failures, f.internal_name FROM {fundraiser} f INNER JOIN {fundraiser_tracking} ft ON f.nid = ft.nid WHERE f.nid = %d', $nid));
@@ -633,8 +626,12 @@ function _springboard_fundraiser_report() {
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
         $nid));
   $total_donations = $total_donations ? $total_donations : '0.00';
-  // TODO: get a spec for how this is supposed to look and ditch this <br> nonsense.
-  $output = 'Pageviews:' . $access_results->pageviews . '<br />';
+  $output .= '<h2>Details for ' . $access_results->internal_name;
+  $output .= ' ' . l(t('view'), "node/$nid");
+  $output .= ' | ' . l(t('edit'), "node/$nid/edit");
+  $output .= ' | ' . l(t('donation history'), "node/$nid/webform-results");
+  $output .= '</h2>';
+  $output .= 'Pageviews:' . $access_results->pageviews . '<br />';
   $output .= 'Total conversions:' . $access_results->conversions . '<br />';
   $output .= '# of local failures:' . $access_results->local_failures . '<br />';
   $output .= '# of gateway failures:' . $access_results->gateway_failures . '<br />';
