@@ -155,8 +155,10 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
     'title' => t('Ogone Ecommerce'),
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
     'credit' => 'gm_ogone_ecommerce_charge',
+    'credit_refund' => 'gm_ogone_ecommerce_refund',
     'settings' => 'gm_ogone_ecommerce_settings_form',
     'hide_cc_fields' => TRUE,
+    'credit_txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
   );
 
   return $gateways;
@@ -167,6 +169,24 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
  */
 function gm_ogone_ecommerce_charge($order_id, $amount, $data) {
   drupal_goto('ogone/post/' . $order_id);
+}
+
+
+/**
+ * Issue a refund against an e-Commerce payment
+ * 
+ * @param $order_id
+ *   Order ID
+ * @param $amount
+ *   Amount to refund
+ * @param $data
+ *   Array of info about the transaction to be made
+ * 
+ * @return
+ *   Array of info about the success/failure of the refund transaction
+ */
+function gm_ogone_ecommerce_refund($order_id, $amount, $data) {
+  return array('success' => FALSE, 'message' => "Refund function hasn't been implemented for e-Commerce");
 }
 
 
