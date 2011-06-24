@@ -5,6 +5,7 @@
  */
 
 define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment gateway to store your credit card information. This will allow us to make charges for recurring donations without having to store your credit card number, which helps protect your privacy.');
+
 /**
  * Implementation of hook_menu().
  */
@@ -69,23 +70,19 @@ function gm_ogone_post_form(&$form_state, $order) {
   
   // Gather arguments that will be sent
   $arguments = array(
-    'ACCEPTURL' => '',
     'ALIASOPERATION' => $gateway_config['ALIASOPERATION'],
     'AMOUNT' => $order->order_total * 100,
     'BGCOLOR' => '',
     'BRAND' => '',
     'BUTTONBGCOLOR' => '',
     'BUTTONTXTCOLOR' => '',
-    'CANCELURL' => '',
     'CATALOGURL' => '',
     'CN' => $order->billing_first_name . ' ' . $order->billing_last_name,
     'COM' => '',
     'CURRENCY' => 'EUR',
-    'DECLINEURL' => '',
     'EMAIL' => $order->primary_email,
-    'EXCEPTIONURL' => '',
     'FONTTYPE' => '',
-    'HOMEURL' => url('<front>', array('asbolute' => TRUE)),
+    'HOMEURL' => url('<front>', array('absolute' => TRUE)),
     'LANGUAGE' => 'en_US',
     'LOGO' => '',
     'ORDERID' => $order->order_id,
@@ -526,14 +523,14 @@ function _gm_ogone_get_config_for_order($order_or_id) {
   
   // If using the live transaction mode, load live vars
   if ($gateway_config['gm_ogone_transaction_mode'] == 'live') {
-    $config['sha_in'] = $gateway_config['gm_ogone_shain_live'];
-    $config['sha_out'] = $gateway_config['gm_ogone_shaout_live'];
+    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_live'];
+    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_live'];
     $config['url'] = 'https://secure.ogone.com/ncol/prod/orderstandard.asp';
   }
   // Not using live transactions, so use test vars
   else {
-    $config['sha_in'] = $gateway_config['gm_ogone_shain_test'];
-    $config['sha_out'] = $gateway_config['gm_ogone_shaout_test'];
+    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_test'];
+    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_test'];
     $config['url'] = 'https://secure.ogone.com/ncol/test/orderstandard.asp';
   }
   return $config;
