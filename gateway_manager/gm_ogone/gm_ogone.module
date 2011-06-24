@@ -1,48 +1,48 @@
 <?php
 /**
  * @file
- * Ogone ecommerce payment gateway.
+ * Process payments using Ogone's e-Commerce and DirectLink methods.
  */
 
 define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment gateway to store your credit card information. This will allow us to make charges for recurring donations without having to store your credit card number, which helps protect your privacy.');
 /**
  * Implementation of hook_menu().
  */
-function gm_ogone_ecommerce_menu() {
+function gm_ogone_menu() {
   $items['ogone/post/%uc_order'] = array(
     'title' => t('Redirecting to Ogone...'),
-    'page callback' => 'gm_ogone_ecommerce_build_form',
+    'page callback' => 'gm_ogone_build_form',
     'page arguments' => array(2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   
   // Callbacks for responses from Ogone
-  $items['ogone/feedback/accept'] = array(
+  $items['ogone/ecommerce_feedback/accept'] = array(
     'title' => 'Ogone Response: Accepted',
     'description' => 'Shown when an Ogone payment is authorized, accepted, or pending.',
-    'page callback' => 'gm_ogone_ecommerce_feedback_accepted',
+    'page callback' => 'gm_ogone_feedback_accepted',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['ogone/feedback/decline'] = array(
+  $items['ogone/ecommerce_feedback/decline'] = array(
     'title' => 'Ogone Response: Declined',
     'description' => 'Shown when an Ogone payment is declined.',
-    'page callback' => 'gm_ogone_ecommerce_feedback_declined',
+    'page callback' => 'gm_ogone_feedback_declined',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['ogone/feedback/exception'] = array(
+  $items['ogone/ecommerce_feedback/exception'] = array(
     'title' => 'Ogone Response: Exception',
     'description' => 'Shown when an Ogone payment result is uncertain.',
-    'page callback' => 'gm_ogone_ecommerce_feedback_exception',
+    'page callback' => 'gm_ogone_feedback_exception',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['ogone/feedback/cancel'] = array(
+  $items['ogone/ecommerce_feedback/cancel'] = array(
     'title' => 'Ogone Response: Cancelled',
     'description' => 'Shown when an Ogone payment is cancelled by the user.',
-    'page callback' => 'gm_ogone_ecommerce_feedback_cancelled',
+    'page callback' => 'gm_ogone_feedback_cancelled',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -54,18 +54,18 @@ function gm_ogone_ecommerce_menu() {
 /**
  * Build the form that will auto-submit to Ogone
  */
-function gm_ogone_ecommerce_build_form($order) {
-  drupal_add_js(drupal_get_path('module', 'gm_ogone_ecommerce') . '/gm_ogone_ecommerce.js');
+function gm_ogone_build_form($order) {
+  drupal_add_js(drupal_get_path('module', 'gm_ogone') . '/gm_ogone.js');
   $output = t("You are being redirected to Ogone to provide your payment details directly to the payment processor. One moment please.");
-  $output .= drupal_get_form('gm_ogone_ecommerce_post_form', $order);
+  $output .= drupal_get_form('gm_ogone_post_form', $order);
   return $output;
 }
 
 /**
  * Return the form for the auto-submit form that goes to Ogone
  */
-function gm_ogone_ecommerce_post_form(&$form_state, $order) {
-  $gateway_config = _gm_ogone_ecommerce_get_config_for_order($order);
+function gm_ogone_post_form(&$form_state, $order) {
+  $gateway_config = _gm_ogone_get_config_for_order($order);
   
   // Gather arguments that will be sent
   $arguments = array(
@@ -100,10 +100,10 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
     'TITLE' => '',
     'TP' => '',
     'TXTCOLOR' => '',
-    'ACCEPTURL' => url('ogone/feedback/accept', array('absolute' => TRUE)),
-    'DECLINEURL' => url('ogone/feedback/decline', array('absolute' => TRUE)),
-    'EXCEPTIONURL' => url('ogone/feedback/exception', array('absolute' => TRUE)),
-    'CANCELURL' => url('ogone/feedback/cancel', array('absolute' => TRUE)),
+    'ACCEPTURL' => url('ogone/ecommerce_feedback/accept', array('absolute' => TRUE)),
+    'DECLINEURL' => url('ogone/ecommerce_feedback/decline', array('absolute' => TRUE)),
+    'EXCEPTIONURL' => url('ogone/ecommerce_feedback/exception', array('absolute' => TRUE)),
+    'CANCELURL' => url('ogone/ecommerce_feedback/cancel', array('absolute' => TRUE)),
   );
   
   // Only send the ALIASUSAGE value if it's set
@@ -149,14 +149,14 @@ function gm_ogone_ecommerce_post_form(&$form_state, $order) {
 /**
  * Implementation of hook_payment_gateway_managed().
  */
-function gm_ogone_ecommerce_payment_gateway_managed() {
+function gm_ogone_payment_gateway_managed() {
   $gateways[] = array(
-    'id' => 'ogone_ecommerce',
-    'title' => t('Ogone Ecommerce'),
+    'id' => 'ogone',
+    'title' => t('Ogone'),
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
-    'credit' => 'gm_ogone_ecommerce_charge',
-    'credit_refund' => 'gm_ogone_ecommerce_refund',
-    'settings' => 'gm_ogone_ecommerce_settings_form',
+    'credit' => 'gm_ogone_charge',
+    'credit_refund' => 'gm_ogone_refund',
+    'settings' => 'gm_ogone_settings_form',
     'hide_cc_fields' => TRUE,
     'credit_txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
   );
@@ -167,7 +167,7 @@ function gm_ogone_ecommerce_payment_gateway_managed() {
 /**
  * Charge callback. This is called from fundraiser_webform_submit()
  */
-function gm_ogone_ecommerce_charge($order_id, $amount, $data) {
+function gm_ogone_charge($order_id, $amount, $data) {
   drupal_goto('ogone/post/' . $order_id);
 }
 
@@ -185,7 +185,7 @@ function gm_ogone_ecommerce_charge($order_id, $amount, $data) {
  * @return
  *   Array of info about the success/failure of the refund transaction
  */
-function gm_ogone_ecommerce_refund($order_id, $amount, $data) {
+function gm_ogone_refund($order_id, $amount, $data) {
   return array('success' => FALSE, 'message' => "Refund function hasn't been implemented for e-Commerce");
 }
 
@@ -193,18 +193,18 @@ function gm_ogone_ecommerce_refund($order_id, $amount, $data) {
 /**
  * Settings form for an Ogone gateway
  */
-function gm_ogone_ecommerce_settings_form($config = array()) {
-  $form['gm_ogone_ecommerce_pspid'] = array(
+function gm_ogone_settings_form($config = array()) {
+  $form['gm_ogone_pspid'] = array(
     '#type' => 'textfield',
     '#title' => t('PSPID'),
     '#description' => t('Ogone PSPID.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_pspid'],
+    '#default_value' => $config['gm_ogone_pspid'],
     '#required' => TRUE,
   );
 
 
-  $form['gm_ogone_ecommerce_transaction_mode'] = array(
+  $form['gm_ogone_transaction_mode'] = array(
     '#type' => 'radios',
     '#title' => t('Transaction Mode'),
     '#description' => t('Should transactions be made in a live or test environment? This setting will determine which of the options below are used: live or test.'),
@@ -212,7 +212,7 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
       'test' => t('Test'),
       'live' => t('Live'),
     ),
-    '#default_value' => $config['gm_ogone_ecommerce_transaction_mode'],
+    '#default_value' => $config['gm_ogone_transaction_mode'],
     '#required' => TRUE,
   );
   
@@ -230,19 +230,19 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#title' => t('Test'),
     '#description' => t('Security keys used for test transactions'),
   );  
-  $form['security_keys']['test']['gm_ogone_ecommerce_shain_test'] = array(
+  $form['security_keys']['test']['gm_ogone_shain_test'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-IN Pass Phrase'),
     '#description' => t('Used to validate data sent to Ogone.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shain_test'],
+    '#default_value' => $config['gm_ogone_shain_test'],
   );
-  $form['security_keys']['test']['gm_ogone_ecommerce_shaout_test'] = array(
+  $form['security_keys']['test']['gm_ogone_shaout_test'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-OUT Pass Phrase'),
     '#description' => t('Used to validate data sent back from Ogone after payment process.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shaout_test'],
+    '#default_value' => $config['gm_ogone_shaout_test'],
   );
   
   $form['security_keys']['live'] = array(
@@ -251,19 +251,19 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#title' => t('Live'),
     '#description' => t('Security keys used for live transactions'),
   );  
-  $form['security_keys']['live']['gm_ogone_ecommerce_shain_live'] = array(
+  $form['security_keys']['live']['gm_ogone_shain_live'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-IN Pass Phrase'),
     '#description' => t('Used to validate data sent to Ogone.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shain_live'],
+    '#default_value' => $config['gm_ogone_shain_live'],
   );
-  $form['security_keys']['live']['gm_ogone_ecommerce_shaout_live'] = array(
+  $form['security_keys']['live']['gm_ogone_shaout_live'] = array(
     '#type' => 'textfield',
     '#title' => t('SHA-OUT Pass Phrase'),
     '#description' => t('Used to validate data sent back from Ogone after payment process.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_ecommerce_shaout_live'],
+    '#default_value' => $config['gm_ogone_shaout_live'],
   );
   
   $form['alias_settings'] = array(
@@ -272,21 +272,21 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#title' => t('Alias Settings'),
     '#description' => t('Ogone uses "aliases" to retain the payment information for users so that it may be used again in the future. This is necessary for recurring donations: credit card numbers are not stored in Springboard. Ogone manages the storage of that information and gives us an alias that we can pass them for future recurring donations.'),
   );
-  $form['alias_settings']['gm_ogone_ecommerce_alias_enable'] = array(
+  $form['alias_settings']['gm_ogone_alias_enable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Alias usage'),
     '#description' => t('If you have not already, you may need to enable Alias Management in the Ogone admin web interface, at Configuration > Account > Your Options.'),
-    '#default_value' => !empty($config['gm_ogone_ecommerce_alias_enable']) ? $config['gm_ogone_ecommerce_alias_enable'] : FALSE,
+    '#default_value' => !empty($config['gm_ogone_alias_enable']) ? $config['gm_ogone_alias_enable'] : FALSE,
   );
   
-  $form['alias_settings']['gm_ogone_ecommerce_alias_usage'] = array(
+  $form['alias_settings']['gm_ogone_alias_usage'] = array(
     '#type' => 'textarea',
     '#title' => t('Alias Usage Explanation'),
     '#description' => t('This brief message will be shown to the user on the page where they enter their credit card info. It is shown above a checkbox labeled, "I allow Ogone to store my financial details in a secure way so I won\'t have to enter them again for future orders with this merchant." Ogone limits this explanation to 255 characters.'),
     '#cols' => 60,
     '#rows' => 2,
     '#maxlength' => 255,
-    '#default_value' => isset($config['gm_ogone_ecommerce_alias_usage']) ? $config['gm_ogone_ecommerce_alias_usage'] : OGONE_DEFAULT_ALIAS_USAGE,
+    '#default_value' => isset($config['gm_ogone_alias_usage']) ? $config['gm_ogone_alias_usage'] : OGONE_DEFAULT_ALIAS_USAGE,
   );
   
   
@@ -304,13 +304,13 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
 /**
  * Menu callback: successful payment
  */
-function gm_ogone_ecommerce_feedback_accepted() {
-  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+function gm_ogone_feedback_accepted() {
+  $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
 
-  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
+  if (_gm_ogone_check_feedback_sha($payment_values)) {
     // If no Alias could be set, the donation cannot be recurring
     $order = uc_order_load($order_id);
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
@@ -331,12 +331,12 @@ function gm_ogone_ecommerce_feedback_accepted() {
 /**
  * Menu callback: declined payment
  */
-function gm_ogone_ecommerce_feedback_declined() {
-  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+function gm_ogone_feedback_declined() {
+  $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
-  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
+  if (_gm_ogone_check_feedback_sha($payment_values)) {
     fundraiser_order_decline($order_id, $message);
   }
   else {
@@ -349,12 +349,12 @@ function gm_ogone_ecommerce_feedback_declined() {
 /**
  * Menu callback: exception
  */
-function gm_ogone_ecommerce_feedback_exception() {
-  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+function gm_ogone_feedback_exception() {
+  $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
-  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
+  if (_gm_ogone_check_feedback_sha($payment_values)) {
     fundraiser_order_exception($order_id, '');
   }
   else {
@@ -368,12 +368,12 @@ function gm_ogone_ecommerce_feedback_exception() {
 /**
  * Menu callback: cancelled payment
  */
-function gm_ogone_ecommerce_feedback_cancelled() {
-  $payment_values = _gm_ogone_ecommerce_get_returned_values();
+function gm_ogone_feedback_cancelled() {
+  $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
 
-  if (_gm_ogone_ecommerce_check_feedback_sha($payment_values)) {
+  if (_gm_ogone_check_feedback_sha($payment_values)) {
     fundraiser_order_cancel($order_id);
   }
   else {
@@ -386,8 +386,8 @@ function gm_ogone_ecommerce_feedback_cancelled() {
 /**
  * Check if the SHA value from the payment processor is correct
  */
-function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
-  $gateway_config = _gm_ogone_ecommerce_get_config_for_order($return_values['ORDERID']);
+function _gm_ogone_check_feedback_sha($return_values) {
+  $gateway_config = _gm_ogone_get_config_for_order($return_values['ORDERID']);
   $sha_out_phrase = $gateway_config['sha_out'];
   
   ksort($return_values);
@@ -411,7 +411,7 @@ function _gm_ogone_ecommerce_check_feedback_sha($return_values) {
 /**
  * Get an array of the data passed back from the payment processor
  */
-function _gm_ogone_ecommerce_get_returned_values() {
+function _gm_ogone_get_returned_values() {
   static $return_values;
   if (empty($return_values)) {
     $return_values = array(
@@ -454,27 +454,27 @@ function _gm_ogone_ecommerce_get_returned_values() {
  * @return
  *   Array of gateway config info
  */
-function _gm_ogone_ecommerce_get_config_for_order($order_or_id) {
+function _gm_ogone_get_config_for_order($order_or_id) {
   // Load gateway details
   $gateway = gateway_manager_gateway_for_order($order_or_id);
   $gateway_config = $gateway['config'];
  
   $config = array(
-    'PSPID' => $gateway_config['gm_ogone_ecommerce_pspid'],
-    'ALIASUSAGE' => $gateway_config['gm_ogone_ecommerce_alias_usage'],
-    'ALIASOPERATION' => ($gateway_config['gm_ogone_ecommerce_alias_enable']) ? 'BYPSP' : '',
+    'PSPID' => $gateway_config['gm_ogone_pspid'],
+    'ALIASUSAGE' => $gateway_config['gm_ogone_alias_usage'],
+    'ALIASOPERATION' => ($gateway_config['gm_ogone_alias_enable']) ? 'BYPSP' : '',
   );
   
   // If using the live transaction mode, load live vars
-  if ($gateway_config['gm_ogone_ecommerce_transaction_mode'] == 'live') {
-    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_live'];
-    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_live'];
+  if ($gateway_config['gm_ogone_transaction_mode'] == 'live') {
+    $config['sha_in'] = $gateway_config['gm_ogone_shain_live'];
+    $config['sha_out'] = $gateway_config['gm_ogone_shaout_live'];
     $config['url'] = 'https://secure.ogone.com/ncol/prod/orderstandard.asp';
   }
   // Not using live transactions, so use test vars
   else {
-    $config['sha_in'] = $gateway_config['gm_ogone_ecommerce_shain_test'];
-    $config['sha_out'] = $gateway_config['gm_ogone_ecommerce_shaout_test'];
+    $config['sha_in'] = $gateway_config['gm_ogone_shain_test'];
+    $config['sha_out'] = $gateway_config['gm_ogone_shaout_test'];
     $config['url'] = 'https://secure.ogone.com/ncol/test/orderstandard.asp';
   }
   return $config;
