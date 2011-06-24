@@ -194,12 +194,38 @@ function gm_ogone_refund($order_id, $amount, $data) {
  * Settings form for an Ogone gateway
  */
 function gm_ogone_settings_form($config = array()) {
-  $form['gm_ogone_pspid'] = array(
+  $form['account_credentials'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account Credentials'),
+    '#description' => t('The title you enter here appears on the page.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+  );
+  
+  $form['account_credentials']['gm_ogone_pspid'] = array(
     '#type' => 'textfield',
     '#title' => t('PSPID'),
     '#description' => t('Ogone PSPID.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_pspid'],
+    '#required' => TRUE,
+  );
+
+  $form['account_credentials']['gm_ogone_userid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User ID'),
+    '#description' => t('User ID for use with DirectLink API.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_userid'],
+    '#required' => TRUE,
+  );
+
+  $form['account_credentials']['gm_ogone_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Password'),
+    '#description' => t('Password for use with DirectLink API user.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_password'],
     '#required' => TRUE,
   );
 
@@ -217,54 +243,87 @@ function gm_ogone_settings_form($config = array()) {
   );
   
   
-  $form['security_keys'] = array(
+  $form['security_keys_test'] = array(
     '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Security keys'),
-    '#description' => t('SHA-1 keys used to validate the data passed to and from Ogone. Live and test transactions must use different keys. These keys are configured in the Ogone admin, under Technical Information. The SHA-IN phrase is set on the "Data and origin verification tab," and the SHA-OUT is set on the "Transaction Feedback" tab.'),
+    '#collapsible' => FALSE,
+    '#title' => t('Security keys for test transactions'),
+    '#description' => t('Security keys used for test transactions. Log in to the !merchant_admin to set these values.', array('!merchant_admin' => l('merchant admin', 'https://secure.ogone.com/ncol/test/frame_ogone.asp'))),
+  );
+  $form['security_keys_test']['shain'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#title' => t('SHA-IN'),
+    '#description' => t('Security keys used to verify data sent to Ogone. These are set on the "Data and origin verification" tab in the Technical Information section of the Ogone admin.'),
+  );
+  $form['security_keys_test']['shain']['gm_ogone_ecommerce_shain_test'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Passphrase for e-Commerce'),
+    '#description' => t('Listed under "Checks for e-Commerce" on the "Date and origin verification" tab.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shain_test'],
+  );
+  $form['security_keys_test']['shain']['gm_ogone_directlink_shain_test'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Passphrase for DirectLink'),
+    '#description' => t('Listed under "Checks for Ogone DirectLink" on the "Date and origin verification" tab.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_directlink_shain_test'],
+  );
+  $form['security_keys_test']['shaout'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#title' => t('SHA-OUT'),
+    '#description' => t('Security keys used to verify data returned from Ogone. These are set on the "Transaction feedback" tab in the Technical Information section of the Ogone admin.'),
+  );
+  $form['security_keys_test']['shaout']['gm_ogone_ecommerce_shaout_test'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Passphrase for e-Commerce'),
+    '#description' => t('Listed under "Security for request parameters" on the "Transaction Feedback" tab.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shaout_test'],
   );
   
-  $form['security_keys']['test'] = array(
+  $form['security_keys_live'] = array(
     '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Test'),
-    '#description' => t('Security keys used for test transactions'),
-  );  
-  $form['security_keys']['test']['gm_ogone_shain_test'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SHA-IN Pass Phrase'),
-    '#description' => t('Used to validate data sent to Ogone.'),
-    '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_shain_test'],
+    '#collapsible' => FALSE,
+    '#title' => t('Security keys for live transactions'),
+    '#description' => t('Security keys used for live transactions. Log in to the !merchant_admin to set these values.', array('!merchant_admin' => l('merchant admin', 'https://secure.ogone.com/ncol/prod/frame_ogone.asp'))),    
   );
-  $form['security_keys']['test']['gm_ogone_shaout_test'] = array(
+  $form['security_keys_live']['shain'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#title' => t('SHA-IN'),
+    '#description' => t('Security keys used to verify data sent to Ogone. These are set on the "Data and origin verification" tab in the Technical Information section of the Ogone admin.'),
+  );
+  $form['security_keys_live']['shain']['gm_ogone_ecommerce_shain_live'] = array(
     '#type' => 'textfield',
-    '#title' => t('SHA-OUT Pass Phrase'),
-    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
+    '#title' => t('Passphrase for e-Commerce'),
+    '#description' => t('Listed under "Checks for e-Commerce" on the "Date and origin verification" tab.'),
     '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_shaout_test'],
+    '#default_value' => $config['gm_ogone_ecommerce_shain_live'],
+  );
+  $form['security_keys_live']['shain']['gm_ogone_directlink_shain_live'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Passphrase for DirectLink'),
+    '#description' => t('Listed under "Checks for Ogone DirectLink" on the "Date and origin verification" tab.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_directlink_shain_live'],
+  );
+  $form['security_keys_live']['shaout'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#title' => t('SHA-OUT'),
+    '#description' => t('Security keys used to verify data returned from Ogone. These are set on the "Transaction feedback" tab in the Technical Information section of the Ogone admin.'),
+  );
+  $form['security_keys_live']['shaout']['gm_ogone_ecommerce_shaout_live'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Passphrase for e-Commerce'),
+    '#description' => t('Listed under "Security for request parameters" on the "Transaction Feedback" tab.'),
+    '#maxlength' => 255,
+    '#default_value' => $config['gm_ogone_ecommerce_shaout_live'],
   );
   
-  $form['security_keys']['live'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Live'),
-    '#description' => t('Security keys used for live transactions'),
-  );  
-  $form['security_keys']['live']['gm_ogone_shain_live'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SHA-IN Pass Phrase'),
-    '#description' => t('Used to validate data sent to Ogone.'),
-    '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_shain_live'],
-  );
-  $form['security_keys']['live']['gm_ogone_shaout_live'] = array(
-    '#type' => 'textfield',
-    '#title' => t('SHA-OUT Pass Phrase'),
-    '#description' => t('Used to validate data sent back from Ogone after payment process.'),
-    '#maxlength' => 255,
-    '#default_value' => $config['gm_ogone_shaout_live'],
-  );
+  
   
   $form['alias_settings'] = array(
     '#type' => 'fieldset',
