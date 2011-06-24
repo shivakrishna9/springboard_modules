@@ -36,9 +36,9 @@ function springboard_menu() {
     'weight' => -1,
     'file' => 'springboard.admin.inc',
   );
-  $items['admin/springboard/springboard_settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Configure Springboard settings.',
+  $items['admin/springboard/dashboard_settings'] = array(
+    'title' => 'Dashboard Settings',
+    'description' => 'Configure Springboard dashboard settings.',
     'access arguments' => array('administer springboard'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_admin_settings'),
@@ -179,6 +179,14 @@ function springboard_menu() {
     );
   }
   // Settings submenu
+  $items['admin/springboard/settings/dashboard_settings'] = array(
+    'title' => t('Dashboard Settings'),
+    'description' => t('Configure Springboard dashboard settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_admin_settings'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   if (module_exists('salesforce_management_api')) {
     $items['admin/springboard/settings/salesforce'] = array(
       'title' => t('Salesforce API Credentials'),
@@ -486,22 +494,23 @@ function theme_springboard_fundraiser_performance() {
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
+      $conversion = round(100 * $access_results->conversions / $access_results->pageviews);
+      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
+      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '%</span>';
 
-      $forms[$donation_form->nid]['conversion'] = round(100 * $access_results->conversions / $access_results->pageviews) . '%';
-      $forms[$donation_form->nid]['local_failure'] = round(100 * $access_results->local_failures / $access_results->pageviews) . '%';
-      $forms[$donation_form->nid]['gateway_failure'] = round(100 * $access_results->gateway_failures / $access_results->pageviews) . '%';
+      $local_failure = round(100 * $access_results->local_failures / $access_results->pageviews);
+      $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
+      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '%</span>';
+      
+      $gateway_failure = round(100 * $access_results->gateway_failures / $access_results->pageviews);
+      $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
+      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '%</span>';
+
       if (module_exists('statistics')) {
-        $threshold = variable_get('springboard_load_time_threshold',0);
         
         $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
-        
-        if (!$threshold) {
-          $class = 'no-threshold';
-        }
-        else {
-          $class = ($threshold >= $load_time) ? 'successes' : 'failures';
-        }
-        $forms[$donation_form->nid]['load_time'] = '<span class="' . $class . '">' . $load_time . '</span>';
+        $load_time_threshold = variable_get('springboard_load_time_threshold',0);
+        $forms[$donation_form->nid]['load_time'] = '<span class="' .  springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">' . $load_time . '</span>';
         
       }
     }
@@ -652,4 +661,31 @@ function _springboard_sort_by_conversion($a, $b) {
   return ($a['conversion'] > $b['conversion']) ? -1 : 1;
 }
 
-
+/**
+ * Sets CSS class for dashboard elements based on comparison between the current value and the threshold value.
+ * 
+ * @param $threshold
+ * Int threshold value.
+ * 
+ * @param $value
+ * Int current value.
+ * 
+ * @param $op
+ * Specifies which type of comparison to perform, options are 'min' or 'max', defaults to min.
+ */
+function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
+  if (!$threshold) {
+    $class = 'no-threshold';
+  }
+  else {
+    switch ($op) {
+      case 'min':
+        $class = ($value >= $threshold) ? 'successes' : 'failures';
+        break;
+      case 'max':
+        $class = ($value <= $threshold) ? 'successes' : 'failures';
+        break;
+    }        
+  }
+  return $class;
+}
