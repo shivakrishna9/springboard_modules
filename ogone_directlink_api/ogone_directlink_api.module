@@ -45,13 +45,14 @@ function _check_ogone_charge() {
   );
   
   $charge_details = array(
-    'ORDERID' => '2405',
-    'AMOUNT' => '22.65',
-    'CN' => 'Steve Smith',
-    'CARDNO' => '4111111111111111',
-    'ED' => '0212',
-    'CVC' => '123',
-    'ALIASOPERATION' => 'BYPSP',
+    'ALIAS' => 5,
+    'ORDERID' => '2411',
+    'AMOUNT' => '34.00',
+    //'CN' => 'Steve Smith',
+    //'CARDNO' => '4111111111111111',
+    //'ED' => '0212',
+    'ECI' => '2',
+    //'ALIASOPERATION' => 'BYPSP',
   );
   
   $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
