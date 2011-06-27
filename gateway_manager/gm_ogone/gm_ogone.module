@@ -273,10 +273,10 @@ function gm_ogone_refund($order_id, $amount, $data) {
 
   // Build array of gateway credentials
   $gateway_config = array(
-    'PSPID' => $data['config']['gm_ogone_directlink_pspid'],
-    'USERID' => $data['config']['gm_ogone_directlink_userid'],
-    'PSWD' => $data['config']['gm_ogone_directlink_password'],
-    'ALIASOPERATION' => ($data['config']['gm_ogone_directlink_alias_enable']) ? 'BYPSP' : '',
+    'PSPID' => $data['config']['gm_ogone_pspid'],
+    'USERID' => $data['config']['gm_ogone_userid'],
+    'PSWD' => $data['config']['gm_ogone_password'],
+    'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
   );
   
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -323,7 +323,7 @@ function gm_ogone_refund($order_id, $amount, $data) {
     'comment' => $message,
     'message' => $success ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone_directlink', 'txn_id' => $charge_result['PAYID']),
+    'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
   );
 
   return $result;
