@@ -235,8 +235,6 @@ class FundraiserTestCase extends DrupalWebTestCase {
       return $this->_fundraiser_node;
     }
     
-    
-
     $settings = array(
      'type' => 'donation_form',
      'language' => '',
@@ -287,12 +285,13 @@ class FundraiserTestCase extends DrupalWebTestCase {
       ),
     );
 
-    if (isset($args['settings'])) {
-      $settings = array_merge($settings, $args['settings']);
+    if (isset($args[0]['settings'])) {
+      $settings = array_merge($settings, $args[0]['settings']);
     }
-
+    
     $node = $this->drupalCreateNode($settings);
     $node = node_load($node->nid, TRUE);
+    
     $this->_fundraiser_node = $node;
 
     return $this->_fundraiser_node;
