@@ -249,7 +249,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
 
          break;
        case 'insert':
-
+         $node->pid = $node->nid;
          _fundraiser_goals_save_goal($node);
 
          break;     
@@ -584,7 +584,8 @@ function fundraiser_goals_theme() {
  * Save a goal.
  */
 function _fundraiser_goals_save_goal($object) {
-if (!$object->nid) {
+  
+  if (!$object->nid) {
    $theme = variable_get('theme_default', '');
     // Save the bulk of the block settings  
     $sql = sprintf("INSERT INTO {blocks} 
@@ -612,7 +613,7 @@ if (!$object->nid) {
     }
   }
   if ($object->fundraiser_goal_type) {
-    drupal_set_message('type selected, inserting');
+
     $sql = sprintf("INSERT INTO {fundraiser_goals} 
       (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
       VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
@@ -622,7 +623,6 @@ if (!$object->nid) {
         $object->fundraiser_goal_target_cid,
         $object->fundraiser_goal_target,
         $object->fundraiser_goal_template,
-        $object->fundraiser_goal_weight,
         $object->fundraiser_goal_display_threshold,
         $object->fundraiser_goal['goals_wrapper']['template'],
         $object->fundraiser_goal_default_message);

@@ -1,0 +1,67 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Fundraiser module submission tests.
+ */
+
+
+class FundraiserGoalsUITestCase extends FundraiserTestCase {
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Fundraiser Goals UI'),
+      'description' => t('Confirms basic UI elements are working.'),
+      'group' => t('Springboard'),
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp('fundraiser_goals');
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  function tearDown() {
+    parent::tearDown();
+  }
+  
+  /**
+   * Tests that a donation form edit screen includes goals UI.
+   */
+  function testDonationFormUI() {
+    $this->fundraiserReset();
+    // login the user and load their profile
+    $this->drupalLogin($this->_user);
+    $args['settings'] = array(
+        'fundraiser_goal_delta' => 'basic',
+        'fundraiser_goal_type' => 1,
+        'fundraiser_goal_target_cid' => '',
+        'fundraiser_goal_target' => 50000,
+        'fundraiser_goal_template' => 'test: ##basic_template',
+        'fundraiser_goal_weight' => 0,
+        'fundraiser_goal_display_threshold' => 0,
+        'fundraiser_goal' => array('goals_wrapper' => array('template' => 0)),
+        'fundraiser_goal_default_message' => 'test: ##starter_message',
+    );
+    $node = $this->testFundraiserForm($args);
+    
+    $this->drupalGet('node/' . $node->nid . '/edit'); 
+    $this->assertFieldById('edit-fundraiser-goal-type', '', 'The goal type selection field is present.');
+    $this->assertFieldById('edit-fundraiser-goal-target', '', 'The target text field is present.');
+    $this->assertFieldById('edit-fundraiser-goal-template', '', 'The template textarea field is present.');
+    $this->assertFieldById('edit-fundraiser-goal-display-threshold', '', 'The display threshold text field is present.');
+    $this->assertFieldById('edit-fundraiser-goal-default-message', '', 'The starter message textarea field is present.');
+    $this->pass(var_export($this->drupalGetContent(), TRUE));
+  }
+  
+
+  
+}
