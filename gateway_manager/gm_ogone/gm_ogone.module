@@ -2,6 +2,9 @@
 /**
  * @file
  * Process payments using Ogone's e-Commerce and DirectLink methods.
+ * 
+ * @todo
+ *    - Add credit card/direct debit option on the donation form
  */
 
 define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment gateway to store your credit card information. This will allow us to make charges for recurring donations without having to store your credit card number, which helps protect your privacy.');
@@ -154,18 +157,100 @@ function gm_ogone_payment_gateway_managed() {
     'credit' => 'gm_ogone_charge',
     'credit_refund' => 'gm_ogone_refund',
     'settings' => 'gm_ogone_settings_form',
-    'hide_cc_fields' => TRUE,
+    //'hide_cc_fields' => TRUE,
     'credit_txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
   );
 
   return $gateways;
 }
 
+
 /**
  * Charge callback. This is called from fundraiser_webform_submit()
  */
 function gm_ogone_charge($order_id, $amount, $data) {
-  drupal_goto('ogone/post/' . $order_id);
+  if ($credit_card || TRUE) {
+    global $user;
+    $order = uc_order_load($order_id);
+
+    // Build array of gateway credentials
+    $gateway_config = array(
+      'PSPID' => $data['config']['gm_ogone_pspid'],
+      'USERID' => $data['config']['gm_ogone_userid'],
+      'PSWD' => $data['config']['gm_ogone_password'],
+      'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    );
+
+    // Set the SHA IN value depending on whether or not the gateway is making live transactions
+    if ($data['config']['gm_ogone_transaction_mode'] == 'live') {
+      $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_live'];
+    }
+    else {
+      $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
+    }
+
+
+    // Get the country name from the country ID
+    $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+    $billing_country = !$billing_country ? '' : $billing_country[0]['country_iso_code_2'];
+    
+    // Build array of charge details
+    $charge_details = array(
+      // Default currency to US dollars. This is overwritten below if needed
+      'CURRENCY' => 'USD',
+      // CN name field is limited to 35 characters on the Ogone side
+      'CN' => substr($order->billing_first_name . ' ' . $order->billing_last_name, 0, 35),
+      'ORDERID' => $order->order_id,
+      'AMOUNT' => $amount,
+      'CARDNO' => $order->payment_details['cc_number'],
+      'ED' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
+      'CVC' => $order->payment_details['cc_cvv'],
+      'EMAIL' => $order->primary_email,
+      'OWNERADDRESS' => $order->billing_street1 . ' ' . $order->billing_street2,
+      'OWNERCTY' => $billing_country,
+      'OWNERTOWN' => $order->billing_city,
+      'OWNERZIP' => $order->billing_postal_code,
+    );
+
+    // If a currency was set for this order, use it
+    if ($order->data['currency']) {
+      $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
+    }
+
+
+    $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
+
+    $success = FALSE;
+    if ($charge_result && $charge_result['NCERROR'] == 0) {
+      $success = TRUE;
+      $context = array(
+        'revision' => 'formatted-original',
+        'type' => 'amount',
+      );
+      $message = t('Credit card charged: !amount', array('!amount' => uc_price($amount, $context)));
+      uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    }
+    else {
+      $message = t('Credit card charge failed.');
+      uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    }
+
+    $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
+    $result = array(
+      'success' => $success,
+      'comment' => $message,
+      'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
+      'uid' => $user->uid,
+      'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
+    );
+
+    return $result;
+  }
+  // Non-credit card payment, so redirect to Ogone so the user can enter
+  // their payment info there
+  else {
+    drupal_goto('ogone/post/' . $order_id);
+  }
 }
 
 
@@ -183,7 +268,65 @@ function gm_ogone_charge($order_id, $amount, $data) {
  *   Array of info about the success/failure of the refund transaction
  */
 function gm_ogone_refund($order_id, $amount, $data) {
-  return array('success' => FALSE, 'message' => "Refund function hasn't been implemented for e-Commerce");
+  global $user;
+  $order = uc_order_load($order_id);
+
+  // Build array of gateway credentials
+  $gateway_config = array(
+    'PSPID' => $data['config']['gm_ogone_directlink_pspid'],
+    'USERID' => $data['config']['gm_ogone_directlink_userid'],
+    'PSWD' => $data['config']['gm_ogone_directlink_password'],
+    'ALIASOPERATION' => ($data['config']['gm_ogone_directlink_alias_enable']) ? 'BYPSP' : '',
+  );
+  
+  // Set the SHA IN value depending on whether or not the gateway is making live transactions
+  if ($data['config']['gm_ogone_directlink_transaction_mode'] == 'live') {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_live'];
+  }
+  else {
+    $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
+  }
+  
+
+  // Build array of charge details
+  $charge_details = array(
+    'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
+    'ORDERID' => $order->order_id,
+    'AMOUNT' => $amount,
+  );
+  
+  // If a currency was set for this order, use it
+  if ($order->data['currency']) {
+    $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
+  }
+  
+  $charge_result = ogone_directlink_api_refund($gateway_config, $charge_details);
+  
+  $success = FALSE;
+  if ($charge_result && $charge_result['NCERROR'] == 0) {
+    $success = TRUE;
+    $context = array(
+      'revision' => 'formatted-original',
+      'type' => 'amount',
+    );
+    $message = t('Credit card refunded: !amount', array('!amount' => uc_price($amount, $context)));
+    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+  }
+  else {
+    $message = t('Credit card refund failed.');
+    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+  }
+
+  $message = t('Card refunded: ID: @id', array('@id' => $charge_result['PAYID']));
+  $result = array(
+    'success' => $success,
+    'comment' => $message,
+    'message' => $success ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
+    'uid' => $user->uid,
+    'data' => array('module' => 'gm_ogone_directlink', 'txn_id' => $charge_result['PAYID']),
+  );
+
+  return $result;
 }
 
 
@@ -210,7 +353,7 @@ function gm_ogone_settings_form($config = array()) {
 
   $form['account_credentials']['gm_ogone_userid'] = array(
     '#type' => 'textfield',
-    '#title' => t('User ID'),
+    '#title' => t('DirectLink User ID'),
     '#description' => t('User ID for use with DirectLink API.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_userid'],
@@ -219,7 +362,7 @@ function gm_ogone_settings_form($config = array()) {
 
   $form['account_credentials']['gm_ogone_password'] = array(
     '#type' => 'textfield',
-    '#title' => t('Password'),
+    '#title' => t('DirectLink Password'),
     '#description' => t('Password for use with DirectLink API user.'),
     '#maxlength' => 255,
     '#default_value' => $config['gm_ogone_password'],
