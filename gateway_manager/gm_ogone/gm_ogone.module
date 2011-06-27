@@ -633,14 +633,25 @@ function gm_ogone_feedback_accepted() {
   $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
   $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
-
+  
   if (_gm_ogone_check_feedback_sha($payment_values)) {
     // If no Alias could be set, the donation cannot be recurring
     $order = uc_order_load($order_id);
+    
+    // Load card info into the order object
+    $order->payment_details = array(
+   		'cc_type' => $payment_values['BRAND'],
+   		'cc_number' => $payment_values['CARDNO'],
+   		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
+   		'cc_exp_month' => substr($payment_values['ED'], 0, 2),
+   		'cc_exp_year' => '20' . substr($payment_values['ED'], 2, 2),
+   	);
+   	
+   	
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
-      uc_order_save($order); 
-    }    
+    }
+    uc_order_save($order); 
     
     fundraiser_order_accept($order_id, $transaction_id);
     drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
