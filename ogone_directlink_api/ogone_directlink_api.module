@@ -259,18 +259,68 @@ function ogone_directlink_api_generate_sha($fields, $sha_pass_phrase) {
   return strtoupper(sha1($sha1_string));
 }
 
+
 /**
  * Get a list of valid SHA-1 out parameters
  */
 function ogone_directlink_api_sha1_out_parameters() {
-  return array('AAVADDRESS', 'AAVCHECK', 'AAVZIP', 'ACCEPTANCE', 'ALIAS', 'ALIASOPERATION', 'AMOUNT',
-    'BIN', 'BRAND', 'CARDNO', 'CCCTY', 'CN', 'COMPLUS', 'CREATION_STATUS', 'CURRENCY', 'CVC',
-    'CVCCHECK', 'DCC_COMMPERCENTAGE', 'DCC_CONVAMOUNT', 'DCC_CONVCCY', 'DCC_EXCHRATE',
-    'DCC_EXCHRATESOURCE', 'DCC_EXCHRATETS', 'DCC_INDICATOR', 'DCC_MARGINPERCENTAGE',
-    'DCC_VALIDHOURS', 'DIGESTCARDNO', 'ECI', 'ED', 'ENCCARDNO', 'IP', 'IPCTY',
-    'NBREMAILUSAGE', 'NBRIPUSAGE', 'NBRIPUSAGE_ALLTX', 'NBRUSAGE', 'NCERROR', 'OPERATION',
-    'ORDERID', 'PAYID', 'PM', 'PSPID', 'PSWD', 'SCO_CATEGORY', 'SCORING', 'STATUS', 'SUBSCRIPTION_ID',
-    'TRXDATE', 'USERID', 'VC');
+  return array(
+    'AAVADDRESS',
+    'AAVCHECK',
+    'AAVZIP',
+    'ACCEPTANCE',
+    'ALIAS',
+    'ALIASOPERATION',
+    'AMOUNT',
+    'BIN',
+    'BRAND',
+    'CARDNO',
+    'CCCTY',
+    'CN',
+    'COMPLUS',
+    'CREATION_STATUS',
+    'CURRENCY',
+    'CVC',
+    'CVCCHECK',
+    'DCC_COMMPERCENTAGE',
+    'DCC_CONVAMOUNT',
+    'DCC_CONVCCY',
+    'DCC_EXCHRATE',
+    'DCC_EXCHRATESOURCE',
+    'DCC_EXCHRATETS',
+    'DCC_INDICATOR',
+    'DCC_MARGINPERCENTAGE',
+    'DCC_VALIDHOURS',
+    'DIGESTCARDNO',
+    'ECI',
+    'ED',
+    'EMAIL',
+    'ENCCARDNO',
+    'IP',
+    'IPCTY',
+    'NBREMAILUSAGE',
+    'NBRIPUSAGE',
+    'NBRIPUSAGE_ALLTX',
+    'NBRUSAGE',
+    'NCERROR',
+    'OPERATION',
+    'ORDERID',
+    'OWNERADDRESS',
+    'OWNERCTY',
+    'OWNERTOWN',
+    'OWNERZIP',
+    'PAYID',
+    'PM',
+    'PSPID',
+    'PSWD',
+    'SCO_CATEGORY',
+    'SCORING',
+    'STATUS',
+    'SUBSCRIPTION_ID',
+    'TRXDATE',
+    'USERID',
+    'VC',
+  );
 }
 
 
