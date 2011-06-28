@@ -82,12 +82,13 @@ function gm_ogone_post_form(&$form_state, $order) {
     'CATALOGURL' => '',
     'CN' => $order->billing_first_name . ' ' . $order->billing_last_name,
     'COM' => '',
-    'CURRENCY' => 'EUR',
+    'CURRENCY' => 'USD',
     'EMAIL' => $order->primary_email,
     'FONTTYPE' => '',
     'HOMEURL' => url('<front>', array('absolute' => TRUE)),
     'LANGUAGE' => 'en_US',
     'LOGO' => '',
+    'OPERATION' => 'SAL',
     'ORDERID' => $order->order_id,
     'OWNERADDRESS' => $order->billing_street1 . ' ' . $order->billing_street2,
     'OWNERCTY' => $order->billing_country,
@@ -105,6 +106,12 @@ function gm_ogone_post_form(&$form_state, $order) {
     'EXCEPTIONURL' => url('ogone/ecommerce_feedback/exception', array('absolute' => TRUE)),
     'CANCELURL' => url('ogone/ecommerce_feedback/cancel', array('absolute' => TRUE)),
   );
+  
+  // If a currency was set for this order, use it
+  if ($order->data['currency']) {
+    $arguments['CURRENCY'] = strtoupper($order->data['currency']);
+  }
+  
   
   // Only send the ALIASUSAGE value if it's set
   if ($gateway_config['ALIASUSAGE'] && $arguments['ALIASOPERATION']) {
