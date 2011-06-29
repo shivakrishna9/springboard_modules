@@ -37,6 +37,9 @@ body #springboard-quick-jump {
 body #springboard-jump-pane #springboard-jump-pane input.form-submit {
   bottom: 0;
   right: 0;
+}
+
+body .dashboard #springboard-jump-pane form {
   margin-bottom:0;
 }
 
