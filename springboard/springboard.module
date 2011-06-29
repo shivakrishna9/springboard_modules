@@ -520,7 +520,7 @@ function theme_springboard_fundraiser_performance() {
     $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
   }
   $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="fundraiser-performance-pane">';
   $output .= theme_table($headers, $rows);
   $output .= '</div>';
   return $output;
@@ -537,7 +537,7 @@ function theme_springboard_sf_status() {
   }
   $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
   // system status: Good IF (can connect to salesforce)
-  $output = '<div class= "springboard-pane">';
+  $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
   $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
 
   // sf connection info (status, last date/time
@@ -568,7 +568,7 @@ function theme_springboard_logo() {
     $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="64" height="73" alt="this is logo" />'; // this prints out path to you uploaded logo
   }
   
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="springboard-logo-pane">';
   $output .= $logo;
   $output .= '</div>';
   return $output;
@@ -578,7 +578,7 @@ function theme_springboard_logo() {
  * Theme function for the Springboard Quick Jump pane.
  */
 function theme_springboard_jump() {
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="springboard-jump-pane">';
   $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png">';
   $output .= drupal_get_form('springboard_quick_jump');
   $output .= '</div>';
