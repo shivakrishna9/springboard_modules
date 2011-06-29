@@ -1,8 +1,52 @@
+.dashboard {
+  position:relative;
+  width:99%;
+  min-width:800px;
+}
+#springboard-jump-pane img {
+  position:absolute;
+  right:0;
+  top:0;
+}
+
+#springboard-jump-pane {
+  clear:both;
+  margin-left:85px;
+}
+
+#salesforce-status-pane {
+  padding:10px;
+  border-radius:3px;
+  background: none repeat scroll 0 0 #FFFFFF;
+  border-color: #CCCCCC #DDDDDD #EEEEEE;
+  border-style: solid;     
+  border-width: 1px;
+  -moz-border-radius: 3px; /* Firefox */
+  -webkit-border-radius: 3px; /* Safari, Chrome */
+  border-radius: 3px; /* CSS3 */
+  behavior: url(border-radius.htc);
+}
+
+body #springboard-quick-jump {
+  height: 45px;
+  position: relative;
+  width: 236px;
+  margin-bottom:0;
+}
+
+body #springboard-jump-pane #springboard-jump-pane input.form-submit {
+  bottom: 0;
+  right: 0;
+}
+
+body .dashboard #springboard-jump-pane form {
+  margin-bottom:0;
+}
+
 div.springboard-pane {
   padding: 5px;
   margin: 3px;
   float:left;
-
 }
 
 div.springboard-pane p {
@@ -17,32 +61,30 @@ div.springboard-pane #edit-destination-wrapper {
 }
 
 div.springboard-pane p.sf-status {
-  text-align: center;
 }
 
 div.springboard-pane div#springboard-sync {
-  float:right;	
 }
 
-div.springboard-pane div#springboard-sync a {
-  -moz-box-shadow: 3px 3px 4px #000;
-  -webkit-box-shadow: 3px 3px 4px #000;
-  box-shadow: 3px 3px 4px #000;
+/* div.springboard-pane div#springboard-sync a {
+  -moz-box-shadow: 3px 3px 4px #ccc;
+  -webkit-box-shadow: 3px 3px 4px #ccc;
+  box-shadow: 3px 3px 4px #ccc; */
   /* For IE 8 */
-  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+  /* -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#cccccc')";*/
   /* For IE 5.5 - 7 */
-  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
-}
+  /*filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#cccccc'); */
+/*}
 
 div.springboard-pane div#springboard-sync a:hover {
   -moz-box-shadow: 1px 1px 2px #555;
   -webkit-box-shadow: 1px 1px 2px #555;
-  box-shadow: 1px 1px 2px #555;
+  box-shadow: 1px 1px 2px #555; */
   /* For IE 8 */
-  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555')";
+  /*-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555')";*/
   /* For IE 5.5 - 7 */
-  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555');
-}
+  /*filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2, Direction=135, Color='#555555');
+}*/
 
 div.springboard-pane span.Connected {
   color: #0A0;
@@ -58,4 +100,26 @@ div.springboard-pane span.Failed {
 
 div.springboard-pane span.failures {
   color: #A00;
+}
+
+div.springboard-pane span.no-threshold {
+  color: #00A;
+}
+
+#fundraiser-performance-pane {
+ width:100%;
+}
+
+#salesforce-status-pane #springboard-sync span {
+  clear: none;
+  display: block;
+  float: left;
+  margin-top: 4px;
+}
+
+#salesforce-status-pane #springboard-sync a {
+  clear: none;
+  display: block;
+  float: left;
+  margin-left: 10px;
 }

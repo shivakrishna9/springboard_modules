@@ -224,6 +224,16 @@ function fundraiser_menu() {
     'access arguments' => array("access content"),
     'type' => MENU_CALLBACK,
   );
+  
+  $items['node/%node/clone_form'] = array(
+    'title' => 'Clone',
+    'description' => 'Create a new donation form that inherits settings from this form.',
+    'access callback' => 'fundraiser_access_clone',
+    'page callback' => 'fundraiser_clone_donation_form',
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fundraiser.admin.inc',
+  );
 
   return $items;
 }
@@ -241,17 +251,18 @@ function fundraiser_menu_alter(&$items) {
   // alter some built-in webform menu items
   $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
   $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
+}
 
-  // Add "clone" menu item to donation form local tasks 
-  $items['node/%node/clone_form'] = array(
-    'title' => 'Clone',
-	'description' => 'Create a new donation form that inherits settings from this form.',
-	'access callback' => 'fundraiser_access_clone',
-	'page callback' => 'fundraiser_clone_donation_form',
-    'page arguments' => array(1),
-	'type' => MENU_LOCAL_TASK,
-	'file' => 'fundraiser.admin.inc',
-  );
+/**
+ * Implemenation of hook_clone_access_alter().
+ *
+ * Removing cloning access since fundraiser implements it's own cloning routine.
+ */
+function fundraiser_clone_access_alter(&$access, $node) {
+  // remove access to node clone feature if it's a donation form node
+  if ($node->type == 'donation_form') {
+    $access = 0;
+  }
 }
 
 /**

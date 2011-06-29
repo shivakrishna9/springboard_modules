@@ -37,7 +37,14 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'fundraiser'
     );
     
+    // Install any additional modules specified by helper modules
+    $modules = func_get_args();
+    foreach ($modules as $module) {
+      drupal_install_modules(array($module));
+    }
+    
     $permissions = array(
+      'administer blocks',
       'access content',
       'administer nodes',
       'create webform content',
@@ -228,7 +235,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     if (isset($this->_fundraiser_node)) {
       return $this->_fundraiser_node;
     }
-
+    
     $settings = array(
      'type' => 'donation_form',
      'language' => '',
@@ -279,8 +286,13 @@ class FundraiserTestCase extends DrupalWebTestCase {
       ),
     );
 
+    if (isset($args[0]['settings'])) {
+      $settings = array_merge($settings, $args[0]['settings']);
+    }
+    
     $node = $this->drupalCreateNode($settings);
     $node = node_load($node->nid, TRUE);
+    
     $this->_fundraiser_node = $node;
 
     return $this->_fundraiser_node;

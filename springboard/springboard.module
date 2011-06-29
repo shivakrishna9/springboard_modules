@@ -20,14 +20,32 @@ function springboard_perm() {
 function springboard_menu() {
   $items = array();
   $items['admin/springboard'] = array(
-    'title' => 'Springboard settings',
+    'title' => 'Springboard',
     'description' => 'Access reports and site maintenance tasks.',
     'access arguments' => array('administer springboard'),
     'page callback' => 'springboard_admin',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
   );
-    $items['admin/springboard/forms'] = array(
+  $items['admin/springboard/dashboard'] = array(
+    'title' => 'Springboard',
+    'description' => 'Access reports and site maintenance tasks.',
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'springboard_admin',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'springboard.admin.inc',
+  );
+  $items['admin/springboard/dashboard_settings'] = array(
+    'title' => 'Dashboard Settings',
+    'description' => 'Configure Springboard dashboard settings.',
+    'access arguments' => array('administer springboard'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_admin_settings'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'springboard.admin.inc',
+  );
+  $items['admin/springboard/forms'] = array(
     'title' => t('Forms'),
     'description' => t('Manage your donation forms and other webforms.'),
     'weight' => -10,
@@ -161,6 +179,14 @@ function springboard_menu() {
     );
   }
   // Settings submenu
+  $items['admin/springboard/settings/dashboard_settings'] = array(
+    'title' => t('Dashboard Settings'),
+    'description' => t('Configure Springboard dashboard settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_admin_settings'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   if (module_exists('salesforce_management_api')) {
     $items['admin/springboard/settings/salesforce'] = array(
       'title' => t('Salesforce API Credentials'),
@@ -279,8 +305,16 @@ function springboard_menu() {
       'type' => MENU_CALLBACK,
     );
   }
+  $items['springboard_report_modal'] = array(
+    'title' => t('Syncronize'),
+      'page callback' => '_springboard_fundraiser_report',
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_CALLBACK,
+  );
   return $items;
 }
+
+
 
 /**
  * Dashboard page
@@ -445,30 +479,48 @@ function springboard_springboard_dashboard_panes() {
  * Theme function for the Springboard Fundraiser Performance pane.
  */
 function theme_springboard_fundraiser_performance() {
+  module_load_include('inc', 'ctools', 'includes/ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
   // TODO: add code to find and display form layout if/when this becomes available.
   $forms = array();
   // Given the scattered nature of this data I predict this page is going to perform poorly.
   $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
+
   while ($donation_form = db_fetch_object($results)) {
     
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
+    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
+      $conversion = round(100 * $access_results->conversions / $access_results->pageviews);
+      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
+      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '%</span>';
 
-      $forms[$donation_form->nid]['conversion'] = round(100 * $access_results->conversions / $access_results->pageviews) . '%';
-      $forms[$donation_form->nid]['local_failure'] = round(100 * $access_results->local_failures / $access_results->pageviews) . '%';
-      $forms[$donation_form->nid]['gateway_failure'] = round(100 * $access_results->gateway_failures / $access_results->pageviews) . '%';
+      $local_failure = round(100 * $access_results->local_failures / $access_results->pageviews);
+      $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
+      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '%</span>';
+      
+      $gateway_failure = round(100 * $access_results->gateway_failures / $access_results->pageviews);
+      $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
+      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '%</span>';
+
       if (module_exists('statistics')) {
-        $forms[$donation_form->nid]['load_time'] = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid));
+        
+        $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
+        $load_time_threshold = variable_get('springboard_load_time_threshold',0);
+        $forms[$donation_form->nid]['load_time'] = '<span class="' .  springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">' . $load_time . '</span>';
+        
       }
     }
   }
+  usort($forms, "_springboard_sort_by_conversion");
   foreach($forms as $form) {
     $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
   }
   $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="fundraiser-performance-pane">';
   $output .= theme_table($headers, $rows);
   $output .= '</div>';
   return $output;
@@ -485,7 +537,7 @@ function theme_springboard_sf_status() {
   }
   $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
   // system status: Good IF (can connect to salesforce)
-  $output = '<div class= "springboard-pane">';
+  $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
   $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
 
   // sf connection info (status, last date/time
@@ -496,13 +548,8 @@ function theme_springboard_sf_status() {
   // latest batch # total items :: success :: fail
   $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
   // sync button
-  if (variable_get('clean_url', 0)) {
-    $sync_path = base_path() . 'springboard_sync';
-  }
-  else {
-    $sync_path = base_path() . '?q=springboard_sync';
-  }
-  $output .= "<div id='springboard-sync'><span>Run Springboard Sync</span> <a href='" . $sync_path . "'><img src='" . base_path() . drupal_get_path('module', 'springboard') . "/sync.png'></a></div>";
+
+  $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
   $output .= '</div>';
   return $output;
 }
@@ -521,7 +568,7 @@ function theme_springboard_logo() {
     $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="64" height="73" alt="this is logo" />'; // this prints out path to you uploaded logo
   }
   
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="springboard-logo-pane">';
   $output .= $logo;
   $output .= '</div>';
   return $output;
@@ -531,7 +578,7 @@ function theme_springboard_logo() {
  * Theme function for the Springboard Quick Jump pane.
  */
 function theme_springboard_jump() {
-  $output = '<div class="springboard-pane">';
+  $output = '<div class="springboard-pane" id="springboard-jump-pane">';
   $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png">';
   $output .= drupal_get_form('springboard_quick_jump');
   $output .= '</div>';
@@ -573,3 +620,72 @@ function _springboard_syncronize() {
   drupal_goto('admin/settings/springboard');
 }
 
+function _springboard_fundraiser_report() {
+// TODO: get a spec for how this is supposed to look and ditch this <br> nonsense. \
+  // Also, I think this entire approach is probably bogus and should be replaced with a .tpl
+  // to preserve themer sanity.
+  $nid = arg(1);
+  if (is_numeric($nid)) {
+    $access_results = db_fetch_object(db_query('SELECT ft.pageviews, ft.conversions, ft.local_failures, ft.gateway_failures, f.internal_name FROM {fundraiser} f INNER JOIN {fundraiser_tracking} ft ON f.nid = ft.nid WHERE f.nid = %d', $nid));
+  }
+  ctools_include('ajax');
+  ctools_include('modal');
+  $title = $access_results->internal_name;
+  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
+        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
+        WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
+        $nid));
+  $total_donations = round($total_donations) . '.00';
+  
+  $total_donations = $total_donations ? $total_donations : '0.00';
+  $output .= '<h2>Details for ' . $access_results->internal_name;
+  $output .= ' ' . l(t('view'), "node/$nid");
+  $output .= ' | ' . l(t('edit'), "node/$nid/edit");
+  $output .= ' | ' . l(t('donation history'), "node/$nid/webform-results");
+  $output .= '</h2>';
+  $output .= 'Pageviews:' . ($access_results->pageviews ? $access_results->pageviews : 0) . '<br />';
+  $output .= 'Total conversions:' . ($access_results->conversions ? $access_results->conversions : 0) . '<br />';
+  $output .= '# of local failures:' . ($access_results->local_failures ? $access_results->local_failures : 0) . '<br />';
+  $output .= '# of gateway failures:' . ($access_results->gateway_failures ? $access_results->gateway_failures : 0) . '<br />';
+  $output .= 'Total donations:$' . $total_donations . '<br />';
+  ctools_modal_render($title, $output);
+
+}
+
+function _springboard_sort_by_conversion($a, $b) {
+
+  if ($a['conversion'] == $b['conversion']) {
+    return 0;
+  }
+    
+  return ($a['conversion'] > $b['conversion']) ? -1 : 1;
+}
+
+/**
+ * Sets CSS class for dashboard elements based on comparison between the current value and the threshold value.
+ * 
+ * @param $threshold
+ * Int threshold value.
+ * 
+ * @param $value
+ * Int current value.
+ * 
+ * @param $op
+ * Specifies which type of comparison to perform, options are 'min' or 'max', defaults to min.
+ */
+function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
+  if (!$threshold) {
+    $class = 'no-threshold';
+  }
+  else {
+    switch ($op) {
+      case 'min':
+        $class = ($value >= $threshold) ? 'successes' : 'failures';
+        break;
+      case 'max':
+        $class = ($value <= $threshold) ? 'successes' : 'failures';
+        break;
+    }        
+  }
+  return $class;
+}
