@@ -643,10 +643,10 @@ function _springboard_fundraiser_report() {
   $output .= ' | ' . l(t('edit'), "node/$nid/edit");
   $output .= ' | ' . l(t('donation history'), "node/$nid/webform-results");
   $output .= '</h2>';
-  $output .= 'Pageviews:' . $access_results->pageviews . '<br />';
-  $output .= 'Total conversions:' . $access_results->conversions . '<br />';
-  $output .= '# of local failures:' . $access_results->local_failures . '<br />';
-  $output .= '# of gateway failures:' . $access_results->gateway_failures . '<br />';
+  $output .= 'Pageviews:' . ($access_results->pageviews ? $access_results->pageviews : 0) . '<br />';
+  $output .= 'Total conversions:' . ($access_results->conversions ? $access_results->conversions : 0) . '<br />';
+  $output .= '# of local failures:' . ($access_results->local_failures ? $access_results->local_failures : 0) . '<br />';
+  $output .= '# of gateway failures:' . ($access_results->gateway_failures ? $access_results->gateway_failures : 0) . '<br />';
   $output .= 'Total donations:$' . $total_donations . '<br />';
   ctools_modal_render($title, $output);
 
