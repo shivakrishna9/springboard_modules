@@ -164,7 +164,7 @@ function gm_ogone_payment_gateway_managed() {
     'credit' => 'gm_ogone_charge',
     'credit_refund' => 'gm_ogone_refund',
     'settings' => 'gm_ogone_settings_form',
-    //'hide_cc_fields' => TRUE,
+    'hide_cc_fields' => TRUE,
     'credit_txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
   );
 
@@ -187,11 +187,12 @@ function gm_ogone_charge($order_id, $amount, $data) {
       break;
     
     default:
-      return _gm_ogone_charge_credit_card($order, $amount, $data);
-      break;
+      //return _gm_ogone_charge_credit_card($order, $amount, $data);
+      //break;
     
     // Non-credit card payment, so redirect to Ogone so the user can enter
     // their payment info there
+    // This is down here out of the way for now because the interface hasn't been implemented
     case 'direct debit':
       drupal_goto('ogone/post/' . $order_id);
       break;    
@@ -419,7 +420,6 @@ function gm_ogone_refund($order_id, $amount, $data) {
     $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
   }
   
-
   // Build array of charge details
   $charge_details = array(
     'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
@@ -430,6 +430,11 @@ function gm_ogone_refund($order_id, $amount, $data) {
   // If a currency was set for this order, use it
   if ($order->data['currency']) {
     $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
+  }
+  
+  // If the alias is available, include it
+  if ($order->data['ogone_alias']) {
+    $charge_details['ALIAS'] = $order->data['ogone_alias'];
   }
   
   $charge_result = ogone_directlink_api_refund($gateway_config, $charge_details);
@@ -658,6 +663,12 @@ function gm_ogone_feedback_accepted() {
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
     }
+
+    // If an alias ID is returned from Ogone, save it
+    if (!empty($payment_values['ALIAS'])) {
+      $order->data['ogone_alias'] = $payment_values['ALIAS'];
+    }
+
     uc_order_save($order); 
     
     fundraiser_order_accept($order_id, $transaction_id);
