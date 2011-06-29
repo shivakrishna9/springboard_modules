@@ -11,6 +11,7 @@
 
 #springboard-jump-pane {
   clear:both;
+  margin-left:85px;
 }
 
 #salesforce-status-pane {
@@ -30,12 +31,13 @@
   height: 70px;
   position: relative;
   width: 236px;
+  margin-bottom:0;
 }
 
 #springboard-jump-pane input.form-submit {
-  position: absolute;
   bottom: 0;
   right: 0;
+  margin-bottom:0;
 }
 
 div.springboard-pane {
