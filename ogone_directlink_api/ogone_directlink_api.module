@@ -4,87 +4,8 @@
  * Ogone DirectLink API
  *
  * Provides functions to interact with Ogone DirectLink method.
- * 
- * Todo
- *    - Remove test menu items and functions
  */
 
-/**
- * Implements hook_menu().
- */
-function ogone_directlink_api_menu() {
-  $items = array();
-
-  $items['admin/settings/ogone_directlink_api/test'] = array(
-    'title' => 'Test Ogone charge',
-    'description' => 'Makes a test charge over Ogone DirectLink connection',
-    'page callback' => '_check_ogone_charge',
-    'access callback' => TRUE,
-  );
-
-  $items['admin/settings/ogone_directlink_api/test_refund'] = array(
-    'title' => 'Test Ogone refund',
-    'description' => 'Makes a test refund over Ogone DirectLink connection',
-    'page callback' => '_check_ogone_refund',
-    'access callback' => TRUE,
-  );
-  return $items;
-}
-
-
-/**
- * Function to test charges and response
- */
-function _check_ogone_charge() {
-  $account_info = array(
-    'PSPID' => 'brockbolandcommerce',
-    'USERID' => 'directlinkapiu',
-    'PSWD' => 'iT2s@9?PKr',
-    'CURRENCY' => 'EUR',
-    'SHA1IN' => 'thisismyINpassphrase?',
-  );
-  
-  $charge_details = array(
-    'ALIAS' => 5,
-    'ORDERID' => '2411',
-    'AMOUNT' => '34.00',
-    //'CN' => 'Steve Smith',
-    //'CARDNO' => '4111111111111111',
-    //'ED' => '0212',
-    'ECI' => '2',
-    //'ALIASOPERATION' => 'BYPSP',
-  );
-  
-  $charge_result = ogone_directlink_api_charge_credit($account_info, $charge_details);
-
-  return '<pre>' . print_r($charge_result, true) . '</pre>';
-}
-
-
-/**
- * Function to test refunds and response
- */
-function _check_ogone_refund() {
-  $account_info = array(
-    'PSPID' => 'brockbolandcommerce',
-    'USERID' => 'directlinkapiu',
-    'PSWD' => 'iT2s@9?PKr',
-    'CURRENCY' => 'EUR',
-  );
-  
-  $charge_details = array(
-    //'ORDERID' => '127',
-    'PAYID' => '10490379',
-    'AMOUNT' => '9.50',
-    'CARDNO' => '4111111111111111',
-    'ED' => '0212',
-    'CVC' => '123',
-  );
-  
-  $charge_result = ogone_directlink_api_refund($account_info, $charge_details);
-
-  return '<pre>' . print_r($charge_result, true) . '</pre>';
-}
 
 
 /**
@@ -112,7 +33,8 @@ function ogone_directlink_api_charge_credit($acct_info, $charge_details) {
  *   Array of details about the charge to be made
  */
 function ogone_directlink_api_charge_direct_debit($acct_info, $charge_details) {
-  
+  // Not implemented yet
+  return false;
 }
 
 
