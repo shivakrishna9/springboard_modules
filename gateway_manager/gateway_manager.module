@@ -4,7 +4,6 @@
 /**
  * @file
  * This module provides functionality for creating multiple versions of the same payment gateway with different settings. 
- * 
  */
 
 /**
@@ -69,6 +68,22 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
       $form['gateway']['#suffix'] = '</div>';
       break;
   }
+  
+  // If the payment gateway for the donation form does not include credit card fields (such
+  // as Ogone), remove them from the donation form
+  if (strpos($form_id, 'webform_client_form_') === 0) {
+    if ($form['#node']->type == 'donation_form' && $form['#node']->gateway > 0) {
+      $gateway = gateway_manager_gateway_info($form['#node']->gateway);
+      if ($gateway['gateway_details']['hide_cc_fields']) {
+        foreach (element_children($form['submitted']['credit_card_information']) as $field_name) {
+          // Keep the recurring donation option, but hide everything else
+          if ($field_name != 'recurs_monthly') {
+            $form['submitted']['credit_card_information'][$field_name]['#access'] = FALSE;
+          }
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -97,11 +112,13 @@ function gateway_manager_gateway_info($id) {
   $gateway_info = array();
   
   $gateway_info['config'] = unserialize($gateway->config);
+  $gateway_info['type'] = $gateway->type;
   
   foreach($gateway_types as $options) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
       $gateway_info['refund_function'] = $options['credit_refund'];
+      $gateway_info['gateway_details'] = $options;
     }
   }
   
@@ -352,4 +369,28 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
   // look up the name of the gateway
   $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
   $details['gateway'] = $gateway->name;
+}
+
+
+/**
+ * Get the payment gateway for the given order object or order ID
+ * 
+ * @param $order_or_orderid
+ *   Ubercart order object, or an order ID: either will be handled
+ * 
+ * @return
+ *   Array of gateway details
+ */
+function gateway_manager_gateway_for_order($order_or_orderid) {
+  if (is_object($order_or_orderid)) {
+    $order = $order_or_orderid;
+  }
+  elseif ($order_or_orderid > 0) {
+    $order = uc_order_load($order_or_orderid);
+  }
+
+  if ($order->data['gateway'] > 0) {
+    return gateway_manager_gateway_info($order->data['gateway']);
+  }
+  return null;
 }

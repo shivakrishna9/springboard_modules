@@ -1346,21 +1346,20 @@ function fundraiser_webform_validate($form, &$form_state) {
 	} 
 	
 	//validate cc number
-	if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number))
- 		|| !ctype_digit($cc_number)) {
+	if (!empty($cc_number) && ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number)) || !ctype_digit($cc_number))) {
    	form_set_error('submitted][credit_card_information][card_number',"You have entered an invalid credit card number.");
 		$errors = true;
  	}
     
  	// Validate the card expiration date.
-  if (!_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
+  if (!empty($cc_expiration_month) && !empty($cc_expiration_year) && !_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
   	form_set_error('submitted][credit_card_information][expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
   	form_set_error('submitted][credit_card_information][expiration_date][card_expiration_year', ' ');
 		$errors = true;
   }
 
 	// Validate the CVV Number
-	if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
+	if (!empty($cc_cvv) && variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
 		form_set_error('submitted][credit_card_information][card_cvv',t('You have entered an invalid CVV number.'));
 		$errors = true;
 	}
@@ -1495,6 +1494,11 @@ function fundraiser_webform_submit($form, &$form_state) {
   foreach ($additional_order_fields as $field => $value) {
     $order->data[$field] = $value;
   }
+  
+  if (module_exists('gateway_manager')) {
+ 	  $order->data['gateway'] = $node->gateway;
+  }
+ 	
 
  	// cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
@@ -1502,7 +1506,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	uc_order_save($order);
 
   // relate the order to submission before we try and process the payment
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $data->order['recurring_status']);  
+  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $order->data['recurring_status']);
   
   // additional data to pass to the payment gateway's charge function
  	$data = array(
