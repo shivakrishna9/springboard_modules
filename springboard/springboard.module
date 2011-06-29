@@ -591,6 +591,7 @@ function theme_springboard_jump() {
 function springboard_quick_jump() {
   $options = array(
     'node/add/donation-form' => 'Create Donation Page',
+    'node/add/webform' => 'Create Webform',
   );
   $form['destination'] = array(
     '#type' => 'select',
