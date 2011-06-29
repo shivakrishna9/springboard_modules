@@ -544,7 +544,8 @@ function theme_springboard_sf_status() {
   $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
 
   // WSDL update
-  $output .= '<p>Last WSDL Update: ' . date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) . '</p>';
+  $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0);
+  $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
   // latest batch # total items :: success :: fail
   $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
   // sync button
