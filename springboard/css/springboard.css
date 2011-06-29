@@ -3,12 +3,18 @@
   width:99%;
   min-width:800px;
 }
+#springboard-jump-pane img {
+  position:absolute;
+  right:0;
+  top:0;
+}
 
 #springboard-jump-pane {
   clear:both;
 }
 
 #salesforce-status-pane {
+  padding:10px;
   border-radius:3px;
   background: none repeat scroll 0 0 #FFFFFF;
   border-color: #CCCCCC #DDDDDD #EEEEEE;
