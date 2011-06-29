@@ -1,8 +1,41 @@
+.dashboard {
+  position:relative;
+  width:99%;
+  min-width:800px;
+}
+
+#springboard-jump-pane {
+  clear:both;
+}
+
+#salesforce-status-pane {
+  border-radius:3px;
+  background: none repeat scroll 0 0 #FFFFFF;
+  border-color: #CCCCCC #DDDDDD #EEEEEE;
+  border-style: solid;     
+  border-width: 1px;
+  -moz-border-radius: 3px; /* Firefox */
+  -webkit-border-radius: 3px; /* Safari, Chrome */
+  border-radius: 3px; /* CSS3 */
+  behavior: url(border-radius.htc);
+}
+
+#springboard-quick-jump {
+  height: 70px;
+  position: relative;
+  width: 236px;
+}
+
+#springboard-jump-pane input.form-submit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
 div.springboard-pane {
   padding: 5px;
   margin: 3px;
   float:left;
-
 }
 
 div.springboard-pane p {
@@ -20,7 +53,6 @@ div.springboard-pane p.sf-status {
 }
 
 div.springboard-pane div#springboard-sync {
-  float:right;	
 }
 
 /* div.springboard-pane div#springboard-sync a {
@@ -64,17 +96,17 @@ div.springboard-pane span.no-threshold {
 }
 
 #fundraiser-performance-pane {
- width:99%;
+ width:100%;
 }
 
-#salesforce-status-pane .springboard-sync span {
+#salesforce-status-pane #springboard-sync span {
   clear: none;
   display: block;
   float: left;
   margin-top: 4px;
 }
 
-#salesforce-status-pane .springboard-sync a {
+#salesforce-status-pane #springboard-sync a {
   clear: none;
   display: block;
   float: left;
