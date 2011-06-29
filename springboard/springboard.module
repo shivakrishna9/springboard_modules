@@ -618,7 +618,8 @@ function springboard_quick_jump_submit($form, $form_state) {
 function _springboard_syncronize() {
   module_load_include('module', 'queue_processor');
   queue_processor_process();
-  drupal_goto('admin/settings/springboard');
+  drupal_set_message('Salesforce queues have been processed.');
+  drupal_goto('admin/springboard');
 }
 
 function _springboard_fundraiser_report() {
