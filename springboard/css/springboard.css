@@ -17,7 +17,6 @@ div.springboard-pane #edit-destination-wrapper {
 }
 
 div.springboard-pane p.sf-status {
-  text-align: center;
 }
 
 div.springboard-pane div#springboard-sync {
@@ -62,4 +61,22 @@ div.springboard-pane span.failures {
 
 div.springboard-pane span.no-threshold {
   color: #00A;
+}
+
+#fundraiser-performance-pane {
+ width:99%;
+}
+
+#salesforce-status-pane .springboard-sync span {
+  clear: none;
+  display: block;
+  float: left;
+  margin-top: 4px;
+}
+
+#salesforce-status-pane .springboard-sync a {
+  clear: none;
+  display: block;
+  float: left;
+  margin-left: 10px;
 }
