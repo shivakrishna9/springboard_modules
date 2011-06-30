@@ -474,7 +474,7 @@ function gm_ogone_settings_form($config = array()) {
   $form['account_credentials'] = array(
     '#type' => 'fieldset',
     '#title' => t('Account Credentials'),
-    '#description' => t('The title you enter here appears on the page.'),
+    '#description' => t(''),
     '#size' => 40,
     '#maxlength' => 255,
   );
