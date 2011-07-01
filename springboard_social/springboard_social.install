@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function springboard_social_install() {
+  drupal_install_schema('springboard_social');
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function springboard_social_uninstall() {
+  variable_del('springboard_social_display');
+  variable_del('springboard_social_app_id');
+  variable_del('springboard_social_logo');
+  variable_del('springboard_social_title');
+  variable_del('springboard_social_message');
+  drupal_uninstall_schema('springboard_social');
+}
+
+
+/**
+ * Implementation of hook_schema().
+ */
+function fundraiser_schema() {
+  $schema['springboard_fb_share'] = array(
+    'description' => t('Stores Facebook share config for donation_form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => t('Is sharing enabled for this donation form?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'name' => array(
+        'description' => t('Title to display in the FB share window.'),
+        'type' => 'varchar',
+        'size' => 255,
+      ),
+      'link' => array(
+        'description' => t('URL of the page being shared. For donation form thank-you pages this should be the URL of the parent donation form.'),
+        'type' => 'text',
+      ),
+      'picture' => array(
+        'description' => t('URL of the custom logo to display in the share window. Note: this URL has to be under the parent domain for the FB app.'),
+        'type' => 'text',
+      ),
+      'description' => array(
+        'description' => t('Description to display in the share window.'),
+        'type' => 'text',
+      ),
+      'message' => array(
+        'description' => t('Message to insert into the users status field, FB max is something like 441 characters.'),
+        'type' => 'text', 
+      ),
+    ),
+    'primary_key' => array('nid'),
+  );
+  return $schema;
+}

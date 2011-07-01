@@ -9,7 +9,19 @@
  * Admin settings form.
  */
 function springboard_social_admin_settings() {
+  $options = array(
+    0 => 'Disable Facebook Share Links',
+    1 => 'Add Facebook Share links to all donation forms',
+    2 => 'Add Facebook Share links to select donation forms',
+  );
   $form = array();
+  $form['springboard_social_share_display'] = array(
+    '#type' => 'select',
+    '#title' => t('Display options'),
+    '#description' => t(''),
+    '#options' => $options,
+    '#default_value' => variable_get('springboard_social_share_display', 0),
+  );
   $form['springboard_social_app_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook App ID'),
