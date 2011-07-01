@@ -668,8 +668,11 @@ function gm_ogone_feedback_accepted() {
     if (!empty($payment_values['ALIAS'])) {
       $order->data['ogone_alias'] = $payment_values['ALIAS'];
     }
-
-    uc_order_save($order); 
+    // Clear the Ubercart credit card cache or it will retain the defaul, which is this month
+    uc_credit_cache('clear');
+    
+    // Save the order
+    uc_order_save($order);
     
     fundraiser_order_accept($order_id, $transaction_id);
     drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
