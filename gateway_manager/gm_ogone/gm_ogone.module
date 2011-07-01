@@ -223,6 +223,7 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
 
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -321,6 +322,7 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
   
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -410,6 +412,7 @@ function gm_ogone_refund($order_id, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
   
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -420,11 +423,11 @@ function gm_ogone_refund($order_id, $amount, $data) {
     $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
   }
   
-  // Build array of charge details
+  // Build array of charge details. Amount needs to be positive, so run it through abs()
   $charge_details = array(
     'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
     'ORDERID' => $order->order_id,
-    'AMOUNT' => $amount,
+    'AMOUNT' => abs($amount),
   );
   
   // If a currency was set for this order, use it
@@ -827,6 +830,7 @@ function _gm_ogone_get_config_for_order($order_or_id) {
     'PSPID' => $gateway_config['gm_ogone_pspid'],
     'ALIASUSAGE' => $gateway_config['gm_ogone_alias_usage'],
     'ALIASOPERATION' => ($gateway_config['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $gateway_config['gm_ogone_transaction_mode'],
   );
   
   // If using the live transaction mode, load live vars
