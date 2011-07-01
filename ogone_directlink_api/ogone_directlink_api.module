@@ -77,9 +77,30 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details) {
     );
   }
   
-  $url = "https://secure.ogone.com/ncol/test/orderdirect.asp";
-  //$url = "https://secure.ogone.com/ncol/prod/ orderdirect.asp";
-  
+  // Decide what URL to send the request to
+  // Is it a live transaction?
+  if ($acct_info['transaction_mode'] == 'live') {
+    // Check if it's a maintenance request
+    if (in_array($request_details['OPERATION'], array('REN', 'DEL', 'DES', 'SAL', 'SAS', 'RFD', 'RFS'))) {
+      $url = "https://secure.ogone.com/ncol/prod/maintenancedirect.asp";
+    }
+    // Not a maintenece request
+    else {
+      $url = "https://secure.ogone.com/ncol/prod/orderdirect.asp";
+    }
+  }
+  // Not live, use test URL
+  else {
+    // Check if it's a maintenance request
+    if (in_array($request_details['OPERATION'], array('REN', 'DEL', 'DES', 'SAL', 'SAS', 'RFD', 'RFS'))) {
+      $url = "https://secure.ogone.com/ncol/test/maintenancedirect.asp";
+    }
+    // Not a maintenece request
+    else {
+      $url = "https://secure.ogone.com/ncol/test/orderdirect.asp";
+    }
+  }
+    
   $fields = array();
   foreach($acct_info as $field => $value) {
     // Only include the value if it's not empty, and don't send the SHA IN passphrase
