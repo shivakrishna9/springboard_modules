@@ -650,15 +650,21 @@ function gm_ogone_feedback_accepted() {
     // If no Alias could be set, the donation cannot be recurring
     $order = uc_order_load($order_id);
     
-    // Load card info into the order object
-    $order->payment_details = array(
-   		'cc_type' => $payment_values['BRAND'],
-   		'cc_number' => $payment_values['CARDNO'],
-   		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
-   		'cc_exp_month' => substr($payment_values['ED'], 0, 2),
-   		'cc_exp_year' => '20' . substr($payment_values['ED'], 2, 2),
-   	);
-   	
+    // Fundraiser assumes that payments are made by credit. If the payment was
+    // NOT made by credit card, update the payment_method parameter
+    if ($payment_values['PM'] != 'CreditCard') {
+      $order->payment_method = $payment_values['PM'];
+    }
+    else {
+      // Load card info into the order object
+      $order->payment_details = array(
+     		'cc_type' => $payment_values['BRAND'],
+     		'cc_number' => $payment_values['CARDNO'],
+     		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
+     		'cc_exp_month' => substr($payment_values['ED'], 0, 2),
+     		'cc_exp_year' => '20' . substr($payment_values['ED'], 2, 2),
+     	);
+   	}
    	
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
