@@ -1,5 +1,5 @@
 <?php
-
+ 
 /**
  * @file 
  * Include file for the admin configuration UI
@@ -32,19 +32,20 @@ function springboard_social_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Default logo'),
     '#description' => t('URL of the logo file to use on share popups.'),
-    '#default_value' => variable_get('springboard_social_logo', ''),
+    '#default_value' => variable_get('springboard_social_share_logo', ''),
   );
-  $form['springboard_social_title'] = array(
+  $form['springboard_social_share_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Default title'),
     '#description' => t(''),
-    '#default_value' => variable_get('springboard_social_title', ''),
+    '#default_value' => variable_get('springboard_social_share_title', ''),
   );
-  $form['springboard_social_message'] = array(
+  $form['springboard_social_share_message'] = array(
     '#type' => 'textfield',
     '#title' => t('Default message'),
     '#description' => t(''),
-    '#default_value' => variable_get('springboard_social_message', ''),
+    '#default_value' => variable_get('springboard_social_share_message', ''),
+  
   );
   return system_settings_form($form);
 }

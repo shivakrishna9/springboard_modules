@@ -7,16 +7,17 @@ function springboard_social_install() {
   drupal_install_schema('springboard_social');
 }
 
-
+ 
 /**
  * Implements hook_uninstall().
  */
 function springboard_social_uninstall() {
-  variable_del('springboard_social_display');
-  variable_del('springboard_social_app_id');
-  variable_del('springboard_social_logo');
-  variable_del('springboard_social_title');
-  variable_del('springboard_social_message');
+  variable_del('springboard_social_share_display');
+  variable_del('springboard_social_share_app_id');
+  variable_del('springboard_social_share_name');
+  variable_del('springboard_social_share_picture');
+  variable_del('springboard_social_share_message');
+  variable_del('springboard_social_share_description')
   drupal_uninstall_schema('springboard_social');
 }
 
