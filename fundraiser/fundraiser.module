@@ -411,7 +411,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
-    '#weight' => -6,
+    '#weight' => -5,
     '#maxlength' => 255,
   );
   $form['internal_name'] = array(
@@ -419,7 +419,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#title' => t('Internal Name'),
     '#required' => TRUE,
     '#default_value' => $node->internal_name,
-    '#weight' => -5.0,
+    '#weight' => -4.99,
     '#maxlength' => 255,
   );
 
@@ -496,14 +496,14 @@ function fundraiser_form($node, $edit = NULL) {
 		'#type' => 'checkbox',
 		'#title' => t('Show other amount option'),
 		'#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
-		'#weight' => -4.9,
+		'#weight' => -4.97,
 		'#default_value' => $node->show_other_amount,
 	);
 	$form['minimum_donation_amount'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Minimum donation amount'),
 		'#description' => t('The minimum acceptable donation amount.'),
-		'#weight' => -4.8,
+		'#weight' => -4.96,
 		'#default_value' => number_format($node->minimum_donation_amount, 2),
 	);
 	$form['gateway'] = array(
@@ -511,17 +511,17 @@ function fundraiser_form($node, $edit = NULL) {
 		'#title' => t('Payment Gateway'),
 		'#options' => $options,
 		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-		'#weight' => -4.7,
+		'#weight' => -4.95,
 		'#default_value' => $node->gateway,
 		'#required' => TRUE,
 	);	
-  $form['body_filter']['#weight'] = -4.2;
+  $form['body_filter']['#weight'] = -4.93;
   $form['body_filter']['body'] = array(
     '#type' => 'textarea',
     '#title' => check_plain($type->body_label),
     '#default_value' => $node->body,
     '#rows' => 7,
-    '#weight' => -4.2,
+    '#weight' => -4.94,
     '#required' => FALSE,
   );
   $form['body_filter']['filter'] = filter_form($node->format);
@@ -2640,6 +2640,5 @@ function fundraiser_track_conversion() {
 function _fundraiser_validation_includes($element, $form_state) {
    drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
-   drupal_set_message('includes invoked');
    return $element;
 }
