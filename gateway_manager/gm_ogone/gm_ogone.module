@@ -695,6 +695,7 @@ function gm_ogone_feedback_declined() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
+  drupal_set_message(t('Payment failed: The payment gateway reported that your payment was declined. Please try using a different payment method.'), 'error');
   drupal_goto('node/' . $webform->webform_nid);
 }
 
@@ -713,6 +714,7 @@ function gm_ogone_feedback_exception() {
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
   }
+  drupal_set_message(t('Payment failed: The payment gateway reported an exception during payment processing. It is uncertain if your payment was successfull. Please contact us to check on the status of your payment. Please reference order number %order_id.', array('%order_id' => $order_id)), 'error');
   drupal_goto('node/' . $webform->webform_nid);
 }
 
