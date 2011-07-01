@@ -11,7 +11,7 @@
 
 #springboard-jump-pane {
   clear:both;
-  margin-left:85px;
+  margin-left:78px;
 }
 
 #salesforce-status-pane {
@@ -35,8 +35,6 @@ body #springboard-quick-jump {
 }
 
 body #springboard-jump-pane #springboard-jump-pane input.form-submit {
-  margin-top:4px;
-  margin-left:4px;
 }
 
 body .dashboard #springboard-jump-pane form {
@@ -55,7 +53,7 @@ div.springboard-pane p {
 }
 
 div.springboard-pane #edit-destination-wrapper {
-  margin: 4px 0px 0px 0px;
+  margin: 0px 4px 0px 0px;
   padding-right: 5px;
   float:left;
 }
