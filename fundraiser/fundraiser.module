@@ -919,15 +919,16 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			// alter country drop down to populate zone drop down via ahah
 			$country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
 			$country_field['#ahah'] = array('path' => 'zones/js', 'wrapper' => 'zone-select-wrapper');
-            // add default country & state values from user profile
-            $fids = _fundraiser_get_profile_location_fields();
-            if ($fids['country']) {
-              $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
-            }
+      
+      // add default country & state values from user profile
+      $fids = _fundraiser_get_profile_location_fields();
+      if ($fids['country'] && $user->profile_country) {
+        $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
+      }
 
       // add a wrapper around the state field so it can be replaced via ajax			
 			$state_field =& fundraiser_find_field($form, $component_hierarchy['state']);
-			if ($fids['state']) {
+			if ($fids['state'] && $user->profile_state) {
 			  $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
 			}
 			$state_field['#prefix'] = '<div id="zone-select-wrapper">'; 
