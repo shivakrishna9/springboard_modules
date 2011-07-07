@@ -45,3 +45,13 @@
   width:210px;
   float:left;
 }
+
+#orders .recurring-order td a {
+ display:block;
+padding-left:4px;
+}
+
+#orders .recurring-order td a:hover {
+  background-color:#d3e7f4;
+  text-decoration:none;
+}
