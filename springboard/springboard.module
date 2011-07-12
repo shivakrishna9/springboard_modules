@@ -494,17 +494,17 @@ function theme_springboard_fundraiser_performance() {
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
-      $conversion = round(100 * $access_results->conversions / $access_results->pageviews);
+      $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
       $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
-      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '%</span>';
+      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '</span>';
 
-      $local_failure = round(100 * $access_results->local_failures / $access_results->pageviews);
+      $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
       $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
-      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '%</span>';
+      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '</span>';
       
-      $gateway_failure = round(100 * $access_results->gateway_failures / $access_results->pageviews);
+      $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
       $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
-      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '%</span>';
+      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '</span>';
 
       if (module_exists('statistics')) {
         
@@ -530,29 +530,30 @@ function theme_springboard_fundraiser_performance() {
  * Theme function for the Springboard Salesforce Status pane.
  */
 function theme_springboard_sf_status() {
+  if (module_exists('salesforce_management_api')) {
+    $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
+    if (!$last_connect['status']) {
+      $last_connect['status'] = 'Unknown';
+    }
+    $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
+    // system status: Good IF (can connect to salesforce)
+    $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
+    $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
 
-  $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
-  if (!$last_connect['status']) {
-    $last_connect['status'] = 'Unknown';
+    // sf connection info (status, last date/time
+    $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+
+    // WSDL update
+    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
+    $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
+    // latest batch # total items :: success :: fail
+    $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
+    // sync button
+
+    $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
+    $output .= '</div>';
+    return $output;
   }
-  $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
-  // system status: Good IF (can connect to salesforce)
-  $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
-  $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
-
-  // sf connection info (status, last date/time
-  $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
-
-  // WSDL update
-  $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0);
-  $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
-  // latest batch # total items :: success :: fail
-  $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
-  // sync button
-
-  $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
-  $output .= '</div>';
-  return $output;
 }
 
 /**
@@ -691,4 +692,26 @@ function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
     }        
   }
   return $class;
+}
+
+/**
+ * Calculate performance percentages.
+ * 
+ * @param $a 
+ * Int first number.
+ * 
+ * @param $b
+ * Int second number.
+ * 
+ * @return
+ * Returns a percentage or N/A if either number is zero.
+ */
+function _springboard_percentage($a, $b) {
+  if ($a && $b) {
+    return round(100 * $a / $b) . '%';
+  }
+  else {
+    return 'N/A';
+  }
+
 }
