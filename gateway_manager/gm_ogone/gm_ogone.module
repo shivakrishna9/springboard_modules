@@ -265,9 +265,7 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
 
   $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
 
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  if ($charge_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -282,9 +280,9 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $charge_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
+    'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
     'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
   );
@@ -352,12 +350,10 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
   }
 
-
   $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
 
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  
+  if ($charge_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -372,9 +368,9 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $charge_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
+    'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
     'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
   );
@@ -440,11 +436,10 @@ function gm_ogone_refund($order_id, $amount, $data) {
     $charge_details['ALIAS'] = $order->data['ogone_alias'];
   }
   
-  $charge_result = ogone_directlink_api_refund($gateway_config, $charge_details);
+  $refund_result = ogone_directlink_api_refund($gateway_config, $charge_details);
   
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  
+  if ($refund_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -457,13 +452,13 @@ function gm_ogone_refund($order_id, $amount, $data) {
     uc_order_comment_save($order_id, $user->uid, $message, 'admin');
   }
 
-  $message = t('Card refunded: ID: @id', array('@id' => $charge_result['PAYID']));
+  $message = t('Card refunded: ID: @id', array('@id' => $refund_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $refund_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
+    'message' => $refund_result['SUCCESS'] ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
+    'data' => array('module' => 'gm_ogone', 'txn_id' => $refund_result['PAYID']),
   );
 
   return $result;
