@@ -10,6 +10,16 @@
  */
 function springboard_social_admin_settings() {
   $form = array();
+  $form['springboard_social_share_display'] = array(
+    '#type' => 'select',
+    '#title' => t('Facebook Share Links'),
+    '#options' => array(
+      '0' => t('Disable Facebook share links'),
+      '1' => t('Enable on all donation forms'),
+      '2' => t('Enable on a per form basis'),    
+    ),
+    '#default_value' => variable_get('springboard_social_share_display', 0),
+  );
   $form['springboard_social_app_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook App ID'),
@@ -35,7 +45,7 @@ function springboard_social_admin_settings() {
     '#default_value' => variable_get('springboard_social_message', ''),
   );
   $form['springboard_social_description'] = array(
-    '#type' => 'textfield',
+    '#type' => 'textarea',
     '#title' => t('Default description'),
     '#description' => t(''),
     '#default_value' => variable_get('springboard_social_description', ''),

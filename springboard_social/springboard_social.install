@@ -17,7 +17,7 @@ function springboard_social_uninstall() {
   variable_del('springboard_social_share_name');
   variable_del('springboard_social_share_picture');
   variable_del('springboard_social_share_message');
-  variable_del('springboard_social_share_description')
+  variable_del('springboard_social_share_description');
   drupal_uninstall_schema('springboard_social');
 }
 
@@ -25,7 +25,7 @@ function springboard_social_uninstall() {
 /**
  * Implementation of hook_schema().
  */
-function fundraiser_schema() {
+function springboard_social_schema() {
   $schema['springboard_fb_share'] = array(
     'description' => t('Stores Facebook share config for donation_form nodes.'),
     'fields' => array(
