@@ -26,4 +26,4 @@ $(document).ready(function(){
 });
 </script>
 
-<p><div id="share_button">Share this</div></p>
+<p><div id="share_button">&nbsp;</div></p>
