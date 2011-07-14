@@ -11,19 +11,18 @@ FB.init({
 
 <script type="text/javascript">
 $(document).ready(function(){
-$('#share_button').click(function(e){
-e.preventDefault();
-FB.ui(
-{
-method: 'feed',
-name: '<?php print $title ?>',
-link: '<?php print $link_url ?>',
-picture: '<?php print $logo ?>',
-caption: '',
-description: 'Your tax deductible donation to the International Rescue Committee (IRC) helps us provide lifesaving care and life-changing assistance to refugees fleeing war and disaster.',
-message: 'I just donated to help the IRC rescue and rebuild lives around the world. Will you join me?'
-});
-});
+  $('#share_button').click(function(e){
+    e.preventDefault();
+    FB.ui({
+        method: 'feed',
+        name: '<?php print $title ?>',
+        link: '<?php print $link_url ?>',
+        picture: '<?php print $logo ?>',
+        caption: '',
+        description: '<?php print $description ?>',
+        message: '<?php print $message ?>'
+    });
+  });
 });
 </script>
 

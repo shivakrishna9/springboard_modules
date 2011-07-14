@@ -20,6 +20,7 @@ function springboard_social_admin_settings() {
     ),
     '#default_value' => variable_get('springboard_social_share_display', 0),
   );
+  
   $form['springboard_social_app_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook App ID'),
