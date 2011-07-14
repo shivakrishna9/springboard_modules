@@ -345,12 +345,13 @@ function springboard_welcome() {
 
   // If the Salesforce Management API can connect to Salesforce we no longer need the salesforce configuration form.
   // TODO: clean this up. We shouldn't have to check SF connectivity every time this page is viewed.
-  if (module_exists('salesforce_management_api')) {
+  if (module_exists('salesforce_management_api') && variable_get('salesforce_management_api_wsdl_updated', '')) {
     $sf = salesforce_management_api_connect();
   }
   if (is_object($sf)) {
     variable_del('springboard_salesforce_enabled');
     variable_del('springboard_config_homepage');
+    variable_set('site_frontpage', 'node');
  
     $form['salesforce_status'] = array(
       '#type' => 'markup',
@@ -371,7 +372,7 @@ function springboard_welcome() {
   // Default campaign
   $default_campaign = variable_get('sf_donation_default_campaign', '');
   if ($default_campaign) {
-    variable_set('site_frontpage', 'node');
+    
     $form['salesforce_campaign'] = array(
       '#type' => 'markup',
       '#prefix' => '<h3>' . t('Salesforce default campaign') . '</h3><p class="springboard_status_message">',
@@ -431,6 +432,95 @@ function springboard_welcome() {
   }
   return $form;
 }
+
+/**
+ * Validation handler for salesforce configuration form.
+ */
+function springboard_welcome_salesforce_validate(&$form, $form_state) {
+$source = 'salesforce_wsdl';
+  if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
+    // Check for file upload errors and return FALSE if a
+    // lower level system error occurred.
+    switch ($_FILES['files']['error'][$source]) {
+      // @see http://php.net/manual/en/features.file-upload.errors.php
+      case UPLOAD_ERR_OK:
+        break;
+
+      case UPLOAD_ERR_INI_SIZE:
+      case UPLOAD_ERR_FORM_SIZE:
+        drupal_set_message(t('The file %file could not be saved, because it exceeds %maxsize, the maximum allowed size for uploads.', array('%file' => $source, '%maxsize' => format_size(file_upload_max_size()))), 'error');
+        return 0;
+
+      case UPLOAD_ERR_PARTIAL:
+      case UPLOAD_ERR_NO_FILE:
+        drupal_set_message(t('The file %file could not be saved, because the upload did not complete.', array('%file' => $source)), 'error');
+        return 0;
+
+        // Unknown error
+      default:
+        drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
+        return 0;
+    }
+    
+    // Check the file extension
+    $pathParts = pathinfo($_FILES['files']['name'][$source]);
+    if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
+      form_set_error($source, t('File upload error: invalid file extension. Please upload a file with an XML or WSDL  extension.'));
+      return 0;
+    }
+  }
+}
+
+/**
+ * Submit handler for salesforce configuration form.
+ */
+function springboard_welcome_salesforce_submit($form, $form_state) {
+  variable_set('salesforce_management_api_username', $form_state['values']['salesforce_username']);
+  variable_set('salesforce_management_api_password', $form_state['values']['salesforce_password']);
+  variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
+  // WSDL file handling stuffs
+  
+ // Find the dir the file should go into
+  $dir = drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient/';
+  
+  // Upload file path
+  $file = $dir . 'enterprise.wsdl.xml';
+
+  // Array key for the file element
+  $source = 'salesforce_wsdl';
+  
+  // Make sure the directory is writeable
+  if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {  
+    // Try to move the uploaded file into the right place
+    if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
+         form_set_error($source, t('File upload error. Could not move uploaded file.'));
+         watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
+         return 0;
+    }
+    else {
+      drupal_set_message('The WSDL file has been successfully uploaded');
+      variable_set('salesforce_management_api_wsdl_updated', time());
+      // Clear the cache
+      drupal_flush_all_caches();
+      
+      // Clear WSDL files from tmp directory
+      $tmpDir = file_directory_temp();
+      // Make sure the tmp dir exists and isn't the root, just to be safe
+      if(is_dir($tmpDir) && $tmpDir != '/') {
+        $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
+        $execOutput = exec($cmd);
+      }
+      
+      drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
+    }
+  } 
+  else {
+    drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
+    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
+    return 0;
+  }
+}
+
 
 /**
  * Implements hook_theme().
@@ -494,17 +584,17 @@ function theme_springboard_fundraiser_performance() {
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
-      $conversion = round(100 * $access_results->conversions / $access_results->pageviews);
+      $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
       $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
-      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '%</span>';
+      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '</span>';
 
-      $local_failure = round(100 * $access_results->local_failures / $access_results->pageviews);
+      $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
       $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
-      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '%</span>';
+      $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '</span>';
       
-      $gateway_failure = round(100 * $access_results->gateway_failures / $access_results->pageviews);
+      $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
       $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
-      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '%</span>';
+      $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '</span>';
 
       if (module_exists('statistics')) {
         
@@ -530,29 +620,37 @@ function theme_springboard_fundraiser_performance() {
  * Theme function for the Springboard Salesforce Status pane.
  */
 function theme_springboard_sf_status() {
+  if (module_exists('salesforce_management_api')) {
+    $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
+    if (!$last_connect['status']) {
+      $last_connect['status'] = 'Unknown';
+    }
+    
+    // system status: Good IF (can connect to salesforce)
+    $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
+    $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
 
-  $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
-  if (!$last_connect['status']) {
-    $last_connect['status'] = 'Unknown';
+    // sf connection info (status, last date/time
+    $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+
+    // WSDL update
+    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
+    $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
+
+    // latest batch # total items :: success :: fail
+    if (module_exists('queue_api')) {
+      $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
+      $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
+    }
+    else {
+      $output .= '<p>' . t('Batch info unavailable, please install Queue API.') . '</p>';
+    }
+      // sync button
+
+    $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
+    $output .= '</div>';
+    return $output;
   }
-  $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
-  // system status: Good IF (can connect to salesforce)
-  $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
-  $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
-
-  // sf connection info (status, last date/time
-  $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
-
-  // WSDL update
-  $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0);
-  $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
-  // latest batch # total items :: success :: fail
-  $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
-  // sync button
-
-  $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
-  $output .= '</div>';
-  return $output;
 }
 
 /**
@@ -691,4 +789,26 @@ function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
     }        
   }
   return $class;
+}
+
+/**
+ * Calculate performance percentages.
+ * 
+ * @param $a 
+ * Int first number.
+ * 
+ * @param $b
+ * Int second number.
+ * 
+ * @return
+ * Returns a percentage or N/A if either number is zero.
+ */
+function _springboard_percentage($a, $b) {
+  if ($a && $b) {
+    return round(100 * $a / $b) . '%';
+  }
+  else {
+    return 'N/A';
+  }
+
 }

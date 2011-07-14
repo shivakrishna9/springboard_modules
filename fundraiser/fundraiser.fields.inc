@@ -618,7 +618,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
       db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
-      $amount = _fundraiser_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amounts);
+      $amount = _fundraiser_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amount);
       webform_component_insert($amount['amount']);
     }
   }

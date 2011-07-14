@@ -17,7 +17,7 @@
 /**
  * Form to update billing address for a recurring donation series.
  */
-function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order) {
+function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) {
   $form['uid'] = array(
     '#type' => 'hidden',
     '#value' => $order->uid,

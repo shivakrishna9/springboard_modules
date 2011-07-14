@@ -262,6 +262,7 @@ function sf_donation_mapping_form($form_state, $node) {
   if (is_object($sf) && method_exists($sf->client, 'describeSObject')) {
     $donation = $sf->client->describeSObject($type);
   }
+
   // Calling methods on non-object variables is bad.
   if (is_object($donation)) {
     // Build an array of record types, with the format typeID => typeName
@@ -316,7 +317,7 @@ function sf_donation_mapping_form($form_state, $node) {
 	// Get a list of built-in Donation form fields that can be mapped to SF fields
 	$properties = Donation::get_mappable_properties();
 	asort($properties);
-	
+
 	// For each Donation form field, show a dropdown of all SF fields
 	foreach($properties as $key => $value) {
     $form['mapping']['donation'][$key] = array(
@@ -1113,12 +1114,12 @@ function _sf_donation_get_mapping_config() {
       'card_number' => 'CC_Last_4__c',
       'card_expiration_date' => 'CC_Exp_Month__c',
       'amount' => 'Amount',
-      'billing_address' => 'Billing_Street__c',
-      'billing_address_2' => 'Billing_Street_Line_2__c',
-      'billing_city' => 'Billing_City__c',
-      'billing_country' => 'Billing_Country__c',
-      'billing_state' => 'Billing_State__c',
-      'billing_zipcode' => 'Billing_Zip__c',
+      'address' => 'Billing_Street__c',
+      'address_line_2' => 'Billing_Street_Line_2__c',
+      'city' => 'Billing_City__c',
+      'country' => 'Billing_Country__c',
+      'state' => 'Billing_State__c',
+      'zip' => 'Billing_Zip__c',
       'recurs_monthly' => 'NOT MAPPED',
       'card_cvv' => 'NOT MAPPED',
       'other_amount' => 'NOT MAPPED',

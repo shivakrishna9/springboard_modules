@@ -223,6 +223,7 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
 
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -264,9 +265,7 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
 
   $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
 
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  if ($charge_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -281,9 +280,9 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $charge_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
+    'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
     'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
   );
@@ -321,6 +320,7 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
   
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -350,12 +350,10 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     $charge_details['CURRENCY'] = strtoupper($order->data['currency']);
   }
 
-
   $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
 
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  
+  if ($charge_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -370,9 +368,9 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $charge_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
+    'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
     'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
   );
@@ -410,6 +408,7 @@ function gm_ogone_refund($order_id, $amount, $data) {
     'USERID' => $data['config']['gm_ogone_userid'],
     'PSWD' => $data['config']['gm_ogone_password'],
     'ALIASOPERATION' => ($data['config']['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $data['config']['gm_ogone_transaction_mode'],
   );
   
   // Set the SHA IN value depending on whether or not the gateway is making live transactions
@@ -420,11 +419,11 @@ function gm_ogone_refund($order_id, $amount, $data) {
     $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
   }
   
-  // Build array of charge details
+  // Build array of charge details. Amount needs to be positive, so run it through abs()
   $charge_details = array(
     'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
     'ORDERID' => $order->order_id,
-    'AMOUNT' => $amount,
+    'AMOUNT' => abs($amount),
   );
   
   // If a currency was set for this order, use it
@@ -437,11 +436,10 @@ function gm_ogone_refund($order_id, $amount, $data) {
     $charge_details['ALIAS'] = $order->data['ogone_alias'];
   }
   
-  $charge_result = ogone_directlink_api_refund($gateway_config, $charge_details);
+  $refund_result = ogone_directlink_api_refund($gateway_config, $charge_details);
   
-  $success = FALSE;
-  if ($charge_result && $charge_result['NCERROR'] == 0) {
-    $success = TRUE;
+  
+  if ($refund_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
@@ -454,13 +452,13 @@ function gm_ogone_refund($order_id, $amount, $data) {
     uc_order_comment_save($order_id, $user->uid, $message, 'admin');
   }
 
-  $message = t('Card refunded: ID: @id', array('@id' => $charge_result['PAYID']));
+  $message = t('Card refunded: ID: @id', array('@id' => $refund_result['PAYID']));
   $result = array(
-    'success' => $success,
+    'success' => $refund_result['SUCCESS'],
     'comment' => $message,
-    'message' => $success ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
+    'message' => $refund_result['SUCCESS'] ? t('Credit card refund processed successfully.') : t('Credit card refund failed.'),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
+    'data' => array('module' => 'gm_ogone', 'txn_id' => $refund_result['PAYID']),
   );
 
   return $result;
@@ -650,15 +648,21 @@ function gm_ogone_feedback_accepted() {
     // If no Alias could be set, the donation cannot be recurring
     $order = uc_order_load($order_id);
     
-    // Load card info into the order object
-    $order->payment_details = array(
-   		'cc_type' => $payment_values['BRAND'],
-   		'cc_number' => $payment_values['CARDNO'],
-   		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
-   		'cc_exp_month' => substr($payment_values['ED'], 0, 2),
-   		'cc_exp_year' => '20' . substr($payment_values['ED'], 2, 2),
-   	);
-   	
+    // Fundraiser assumes that payments are made by credit. If the payment was
+    // NOT made by credit card, update the payment_method parameter
+    if ($payment_values['PM'] != 'CreditCard') {
+      $order->payment_method = $payment_values['PM'];
+    }
+    else {
+      // Load card info into the order object
+      $order->payment_details = array(
+     		'cc_type' => $payment_values['BRAND'],
+     		'cc_number' => $payment_values['CARDNO'],
+     		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
+     		'cc_exp_month' => substr($payment_values['ED'], 0, 2),
+     		'cc_exp_year' => '20' . substr($payment_values['ED'], 2, 2),
+     	);
+   	}
    	
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
@@ -668,8 +672,11 @@ function gm_ogone_feedback_accepted() {
     if (!empty($payment_values['ALIAS'])) {
       $order->data['ogone_alias'] = $payment_values['ALIAS'];
     }
-
-    uc_order_save($order); 
+    // Clear the Ubercart credit card cache or it will retain the defaul, which is this month
+    uc_credit_cache('clear');
+    
+    // Save the order
+    uc_order_save($order);
     
     fundraiser_order_accept($order_id, $transaction_id);
     drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
@@ -818,6 +825,7 @@ function _gm_ogone_get_config_for_order($order_or_id) {
     'PSPID' => $gateway_config['gm_ogone_pspid'],
     'ALIASUSAGE' => $gateway_config['gm_ogone_alias_usage'],
     'ALIASOPERATION' => ($gateway_config['gm_ogone_alias_enable']) ? 'BYPSP' : '',
+    'transaction_mode' => $gateway_config['gm_ogone_transaction_mode'],
   );
   
   // If using the live transaction mode, load live vars
