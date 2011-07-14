@@ -2136,14 +2136,16 @@ function fundraiser_hook_info() {
  * Implementation of hook_fundraiser().
  */
 function fundraiser_fundraiser($op, $order) {
-  $aids = _trigger_get_hook_aids('fundraiser', $op);
-  $context = array(
-    'hook' => 'fundraiser',
-    'op' => $op,
-    'order' => $order,
-  );
-	$dummy = new stdClass();
-  actions_do(array_keys($aids), $dummy, $context);
+  if (module_exists('trigger')) {
+    $aids = _trigger_get_hook_aids('fundraiser', $op);
+    $context = array(
+      'hook' => 'fundraiser',
+      'op' => $op,
+      'order' => $order,
+    );
+  	$dummy = new stdClass();
+    actions_do(array_keys($aids), $dummy, $context);
+  }
 }
 
 /**
