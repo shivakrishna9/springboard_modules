@@ -1,0 +1,166 @@
+<?php
+/**
+ * @file
+ * The Springboard Social module provides a level of integration with Facebook for donation forms.
+ */
+ 
+/**
+ * Implements hook_init().
+ */
+function springboard_social_init() {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', arg(1)));
+    if ($node_type == 'donation_form') {
+      $node = node_load(arg(1));
+      springboard_social_load_share($node);
+      if ($node->fb_share_status) {
+        $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_fb.css';
+        drupal_set_message('add css:' . $path);
+        drupal_add_css($path, 'module', 'all', FALSE);
+        drupal_set_message('css added');
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_social_menu() {
+  $items = array();
+  $items['admin/settings/springboard_social'] = array(
+    'title' => 'Springboard Social',
+    'description' => 'Configure Springboard integration with Facebook',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_social_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'springboard_social.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function springboard_social_theme() {
+  return array(
+    'springboard_social_fb_share_link' => array(
+      'variables' => array($app_id => NULL, $link_url => NULL, $title => NULL, $logo => NULL, $description => NULL, $message => NULL),
+      'template' => 'springboard-social-share-link',
+    )
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+
+function springboard_social_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'donation_form_node_form' && variable_get('springboard_social_share_display', 0)) {
+    $display = variable_get('springboard_social_share_display', 0);
+    global $base_url;
+    $form['fb_share'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Facebook Settings'),
+      '#description' => t(''),
+      '#collapsible' => TRUE,
+    );
+
+    $form['fb_share']['fb_share_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Name'),
+      '#description' => t(''),
+      '#default_value' => t(''),
+    );
+    // If share links can be conditionally displayed
+    if ($display == 2) {
+      $form['fb_share']['fb_share_status'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Display Facebook Share button on the thank you page.'),
+        '#description' => t(''),
+        '#default_value' => db_result(db_query('SELECT status FROM {springboard_fb_share} WHERE nid = %d', arg(1))),
+      );
+    }
+    $form['fb_share']['fb_share_link'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Share linkback URL'),
+      '#description' => t(''),
+      '#default_value' => ($node->fb_share_link ? $node->fb_share_link : $base_url . "/node/" . arg(1)),
+    );
+    $form['fb_share']['fb_share_picture'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Share window logo'),
+      '#description' => t(''),
+      '#default_value' => t(''),
+    );
+    $form['fb_share']['db_share_description'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Share window description'),
+      '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
+      '#default_value' => t(''),
+    );
+    $form['fb_share']['fb_share_message'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Share message'),
+      '#description' => t('This text provides a default value for the status message portion of the share form.'),
+      '#default_value' => t(''),
+    );
+  }
+}
+
+/**
+ * Loads share settings for a particular node.
+ * 
+ * @param $nid
+ * Int Node ID
+ * 
+ * @return
+ * Returns an object containing the fb share link configuation.
+ */
+function springboard_social_load_share(&$node) {
+  global $base_url;
+  $share_status = variable_get('springboard_social_share_display', 0);
+  $settings = db_fetch_array(db_query('SELECT * FROM {springboard_fb_share} WHERE nid = %d', $nid));
+  // Has settings
+  if (is_array($settings)) {
+    $node->fb_share_status = $settings['status'];
+    $node->fb_share_name = $settings['name'];
+    $node->fb_share_link = $settings['link'];
+    $node->fb_share_picture = $settings['picture'];
+    $node->fb_share_description = $settings['description'];
+    $node->fb_share_message = $settings['message'];
+  }
+  // No settings, try default config
+  elseif ($share_status) {
+    $node->fb_share_status = $share_status;
+    $node->fb_share_name = variable_get('springboard_social_title', '');
+    $node->fb_share_link = $base_url . "/node/" . $node->nid;
+    $node->fb_share_picture = variable_get('springboard_social_logo', '');
+    $node->fb_share_description = variable_get('springboard_social_message', '');
+    $node->fb_share_message = variable_get('springboard_social_description', '');
+  }
+  // Give up.
+}
+
+/**
+ * Implements hook_nodeapi().
+ */
+function springboard_social_nodeapi(&$node, $op) {
+  switch ($op) {
+    case 'load':
+      springboard_social_load_share($node);
+      break;
+    case 'view':
+      if ($node->type == 'donation_form' && $node->fb_share_status) {
+        $tmp = theme('springboard_social_fb_share_link',
+          variable_get('springboard_social_app_id', ''),
+          $node->fb_share_link, 
+          $node->fb_share_name,
+          $node->fb_share_picture,
+          $node->fb_share_description,
+          $node->fb_share_message);
+        $node->content['share_links'] = array('#value' => $tmp, '#weight' => 0);
+      }
+  }
+}
