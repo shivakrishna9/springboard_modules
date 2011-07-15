@@ -15,9 +15,7 @@ function springboard_social_init() {
       springboard_social_load_share($node);
       if ($node->fb_share_status) {
         $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_fb.css';
-        drupal_set_message('add css:' . $path);
         drupal_add_css($path, 'module', 'all', FALSE);
-        drupal_set_message('css added');
       }
     }
   }
@@ -46,7 +44,7 @@ function springboard_social_menu() {
 function springboard_social_theme() {
   return array(
     'springboard_social_fb_share_link' => array(
-      'variables' => array($app_id => NULL, $link_url => NULL, $title => NULL, $logo => NULL, $description => NULL, $message => NULL),
+      'arguments' => array('app_id' => NULL, 'link_url' => NULL, 'title' => NULL, 'logo' => NULL, 'description' => NULL, 'message' => NULL),
       'template' => 'springboard-social-share-link',
     )
   );
@@ -153,8 +151,9 @@ function springboard_social_nodeapi(&$node, $op) {
       break;
     case 'view':
       if ($node->type == 'donation_form' && $node->fb_share_status) {
+        $app_id = variable_get('springboard_social_app_id', '');
         $tmp = theme('springboard_social_fb_share_link',
-          variable_get('springboard_social_app_id', ''),
+          $app_id,
           $node->fb_share_link, 
           $node->fb_share_name,
           $node->fb_share_picture,
