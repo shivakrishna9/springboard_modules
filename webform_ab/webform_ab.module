@@ -294,7 +294,7 @@ function webform_ab_form(&$node, $form_state) {
   
   $form['winning_conditions']['win_type']['percent_conversions_group']['percent_conversions_radio'] = array(
     '#type' => 'radio',
-    '#title' => $win_conditions['total_conversions'],
+    '#title' => $win_conditions['percent_conversions'],
     '#description' => t('A webform must reach this percentage of conversions to be declared the winner.'),
     '#return_value' => 'percent_conversions',
     '#parents' => array('win_type'),
