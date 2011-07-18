@@ -212,6 +212,9 @@ function fundraiser_clone_donation_form($nid) {
 			$result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_component_map} f inner join
 				{webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = %d", $nid);
 			
+			// update confirmation information
+			db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $original_node->confirmation_page_title, $original_node->confirmation_page_body, $original_node->redirect_url, $new_nid);
+			
 			// loop over mapped components and find new component in cloned donation form
 			while ($data = db_fetch_object($result)) {
 				$cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = '%s' AND nid = %d", $data->form_key, $new_nid));
