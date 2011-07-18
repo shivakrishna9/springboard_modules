@@ -2586,54 +2586,54 @@ function _fundraiser_field_blacklist() {
 function fundraiser_track_local_failure() {
   $form_nid = arg(1);
   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    $sql = sprintf('UPDATE {fundraiser_tracking} SET local_failures = local_failures + 1 WHERE nid = %d', $form_nid);
+    db_query('UPDATE {fundraiser_tracking} SET local_failures = local_failures + 1 WHERE nid = %d', $form_nid);
   }
   else {
     // This shouldn't happen.
-    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, local_failures, gateway_failures, latest_load_time)
+    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, local_failures, gateway_failures, latest_load_time)
       VALUES (%d, 1, 1, 0, 0)', $form_nid);
   }
-  db_query($sql);
+  
 }
 
 function fundraiser_track_pageview() {
 
   $form_nid = arg(1);
   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    $sql = sprintf('UPDATE {fundraiser_tracking} SET pageviews = pageviews + 1 WHERE nid = %d', $form_nid);
+    db_query('UPDATE {fundraiser_tracking} SET pageviews = pageviews + 1 WHERE nid = %d', $form_nid);
   }
   else {
     // This could happen, but only if hook_exit() doesn't get invoked.
-    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
       VALUES (%d, 1, 0, 0, 0)', $form_nid);
   }
-  db_query($sql);
+
 }
 
 function fundraiser_track_gateway_failure() {
    $form_nid = arg(1);
    if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    $sql = sprintf('UPDATE {fundraiser_tracking} SET gateway_failure = gateway_failure + 1 WHERE nid = %d', $form_nid);
+    db_query('UPDATE {fundraiser_tracking} SET gateway_failure = gateway_failure + 1 WHERE nid = %d', $form_nid);
   }
   else {
     // This shouldn't happen.
-    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
       VALUES (%d, 1, 0, 0, 1)', $form_nid);
   }
-  db_query($sql);
+
 }
 
 function fundraiser_track_conversion() {
    $form_nid = arg(1);
    if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    $sql = sprintf('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = %d', $form_nid);
+    db_query('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = %d', $form_nid);
   }
   else {
     // This shouldn't happen.
-    $sql = sprintf('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
+    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
       VALUES (%d, 1, 1, 0, 0)', $form_nid);
   }
-  db_query($sql);
+
 }
 
 /**

@@ -62,9 +62,9 @@ function springboard_install() {
     ),
   );
   foreach($panes as $delta => $pane) {
-    $sql = sprintf("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+    db_query("INSERT INTO {springboard_panes} (delta, description, weight, status) 
       VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
-    db_query($sql);
+
   }
 }
 
@@ -105,9 +105,8 @@ function springboard_update_6300() {
     ),
   );
   foreach($panes as $delta => $pane) {
-    $sql = sprintf("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+    $ret[] = update_sql("INSERT INTO {springboard_panes} (delta, description, weight, status) 
       VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
-    $ret[] = update_sql($sql);
   }
   return $ret;
 }

@@ -778,25 +778,23 @@ function _fundraiser_update_profile_location($submission) {
     $country_name = db_result(db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d', $country_code));
     $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['country']));
     if ($has_country) {
-      $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $user->uid, $fids['country']);
+      db_query("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $user->uid, $fids['country']);
     }
     else {
-      $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $user->uid, $country_name);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $user->uid, $country_name);
     }
 
-    db_query($query);
   }
 
   if ($fids['state']) {
     $state_name = db_result(db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = %d AND zone_country_id = %d', $state_code, $country_code));
     $has_state = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['state']));
     if ($has_state) {
-      $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $user->uid, $fids['state']);
+      db_query("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $user->uid, $fids['state']);
     }
     else {
-      $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $user->uid, $state_name);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $user->uid, $state_name);
     }
 
-    db_query($query);
   }
 }

@@ -381,8 +381,7 @@ function fundraiser_goals_block_title($node, $goal, $goal_progress) {
  * Returns block title from {blocks}.
  */
 function fundraiser_goals_advanced_block_title($delta) {
-  $sql = sprintf("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta);
-  $title = db_result(db_query($sql));
+  $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta));
   return $title;
 }
 /**
@@ -477,39 +476,38 @@ function fundraiser_goals_current_goal_progress($nid, $goal, $unique = FALSE) {
     // # of submissions
     case 1:
       if ($unique) {
-        $sql = sprintf('SELECT COUNT(DISTINCT uid) FROM {webform_submissions} WHERE nid = %d', $nid);
+        $progress = db_result(db_query('SELECT COUNT(DISTINCT uid) FROM {webform_submissions} WHERE nid = %d', $nid));
       }
       else {
-        $sql = sprintf('SELECT COUNT(nid) FROM {webform_submissions} WHERE nid = %d', $nid);
+        $progress = db_result(db_query('SELECT COUNT(nid) FROM {webform_submissions} WHERE nid = %d', $nid));
       }
-      $progress = db_result(db_query($sql));
+
       break;
     // Custom
     case 2:
       if ($unique) {
-        $sql = sprintf('SELECT COUNT(DISTINCT ws.uid) 
+        $progress = db_result(db_query('SELECT COUNT(DISTINCT ws.uid) 
           FROM {webform_submissions} ws 
           INNER JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid 
           WHERE wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $nid, $goal->target_cid);
+          $nid, $goal->target_cid));
       }
       else {
-        $sql = sprintf('SELECT COUNT(ws.nid) FROM webform_submissions ws 
+        $progress = db_result(db_query('SELECT COUNT(ws.nid) FROM webform_submissions ws 
           INNER JOIN webform_submitted_data wsd ON ws.sid = wsd.sid 
           WHERE wsd.data != "" AND wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $nid, $goal->target_cid);
+          $nid, $goal->target_cid));
       }
       break;
     // Donation amount
     case 3:
-      $sql = sprintf('SELECT sum(uc.order_total) FROM {uc_orders} uc 
+      $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
         INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
-        $nid);
+        $nid));
      break;
   }
 
-  $progress = db_result(db_query($sql));
   return $progress;
 }
 
@@ -589,7 +587,7 @@ function _fundraiser_goals_save_goal($object) {
   if (!$object->nid) {
    $theme = variable_get('theme_default', '');
     // Save the bulk of the block settings  
-    $sql = sprintf("INSERT INTO {blocks} 
+    db_query("INSERT INTO {blocks} 
     (module, delta, status, theme, custom, visibility, pages, title)
     VALUES ('fundraiser_goals', '%s', 0, '%s', 1, %d, '%s', '%s')",
     $object->fundraiser_goal_delta,
@@ -598,8 +596,6 @@ function _fundraiser_goals_save_goal($object) {
     $object->pages,
     $object->title);
 
-   
-    db_query($sql);
     // Circle back and save the block description (why the hell is this not in {blocks})?
     $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
     db_query("INSERT INTO {fundraiser_goals_blocks} (bid, info) VALUES (%d, '%s')", $bid, $object->block_description);
@@ -635,7 +631,7 @@ function _fundraiser_goals_save_goal($object) {
  */
 function _fundraiser_goals_update_goal($object) {
 
-  $sql = sprintf("UPDATE {fundraiser_goals} 
+  db_query("UPDATE {fundraiser_goals} 
              SET
                type = '%s',
                target_cid = %d,
@@ -656,13 +652,9 @@ function _fundraiser_goals_update_goal($object) {
              $object->fundraiser_goal_parent_item,
              $object->fundraiser_goal_delta);
 
-  db_query($sql);
-
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
 
-  $sql = sprintf("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->fundraiser_goal_delta, $object->visibility, $object->pages, $object->block_title, $bid);
-
-  db_query($sql);
+  db_query("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->fundraiser_goal_delta, $object->visibility, $object->pages, $object->block_title, $bid);
   db_query("UPDATE {boxes} SET info = '%s' WHERE bid = %d", $object->block_description, $bid);
   
   // TODO: update role settings.
