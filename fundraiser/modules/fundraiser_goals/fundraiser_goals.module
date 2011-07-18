@@ -615,7 +615,7 @@ function _fundraiser_goals_save_goal($object) {
   }
   if ($object->fundraiser_goal_type) {
 
-    $sql = sprintf("INSERT INTO {fundraiser_goals} 
+    db_query("INSERT INTO {fundraiser_goals} 
       (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
       VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
         $object->pid,
@@ -627,8 +627,6 @@ function _fundraiser_goals_save_goal($object) {
         $object->fundraiser_goal_display_threshold,
         $object->fundraiser_goal['goals_wrapper']['template'],
         $object->fundraiser_goal_default_message);
- 
-     db_query($sql);
   }
 }
 
