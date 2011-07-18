@@ -256,7 +256,7 @@ function springboard_menu() {
       'description' => t('Manage credit card payment gateways.'),
       'weight' => -4,
       'page callback' => 'drupal_goto',
-      'page arguments' => array('admin/store/settings/payment/edit/gateways'),
+      'page arguments' => (module_exists('gateway_manager')) ? array('admin/settings/fundraiser/gateways') : array('admin/store/settings/payment/edit/gateways'),
       'access arguments' => array('administer springboard'),
       'type' => MENU_NORMAL_ITEM,
     );
