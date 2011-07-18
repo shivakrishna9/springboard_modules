@@ -127,6 +127,7 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         '#title' => t('Activity Goals'),
         '#description' => t('Your users, doing stuff.'),
         '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
       );
       $form['fundraiser_goals']['fundraiser_goal_delta'] = array(
         '#type' => 'value',
