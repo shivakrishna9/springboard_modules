@@ -55,21 +55,22 @@ function springboard_social_theme() {
  */
 
 function springboard_social_form_alter(&$form, $form_state, $form_id) {
+  drupal_set_message('form:' . print_r($form, TRUE));
   if ($form_id == 'donation_form_node_form' && variable_get('springboard_social_share_display', 0)) {
     $display = variable_get('springboard_social_share_display', 0);
     global $base_url;
     $form['fb_share'] = array(
       '#type' => 'fieldset',
       '#title' => t('Facebook Settings'),
-      '#description' => t(''),
+      '#description' => t('Configure facebook share settings.'),
       '#collapsible' => TRUE,
     );
 
     $form['fb_share']['fb_share_name'] = array(
       '#type' => 'textfield',
       '#title' => t('Name'),
-      '#description' => t(''),
-      '#default_value' => t(''),
+      '#description' => t('This field controls the title text in the Facebook Share popup.'),
+      '#default_value' => $form['#node']->fb_share_name,
     );
     // If share links can be conditionally displayed
     if ($display == 2) {
@@ -77,32 +78,32 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'checkbox',
         '#title' => t('Display Facebook Share button on the thank you page.'),
         '#description' => t(''),
-        '#default_value' => db_result(db_query('SELECT status FROM {springboard_fb_share} WHERE nid = %d', arg(1))),
+        '#default_value' =>  $form['#node']->fb_share_status,
       );
     }
     $form['fb_share']['fb_share_link'] = array(
       '#type' => 'textfield',
       '#title' => t('Share linkback URL'),
       '#description' => t(''),
-      '#default_value' => ($node->fb_share_link ? $node->fb_share_link : $base_url . "/node/" . arg(1)),
+      '#default_value' => ($form['#node']->fb_share_link ? $form['#node']->fb_share_link : $base_url . "/node/" . arg(1)),
     );
     $form['fb_share']['fb_share_picture'] = array(
       '#type' => 'textfield',
       '#title' => t('Share window logo'),
-      '#description' => t(''),
-      '#default_value' => t(''),
+      '#description' => t('The URL of a logo you wish to display in the Facebook Share popup. If left blank this will default to the user profile picture.'),
+      '#default_value' => $form['#node']->fb_share_picture,
     );
     $form['fb_share']['db_share_description'] = array(
       '#type' => 'textarea',
       '#title' => t('Share window description'),
       '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
-      '#default_value' => t(''),
+      '#default_value' => $form['#node']->fb_share_description,
     );
     $form['fb_share']['fb_share_message'] = array(
       '#type' => 'textfield',
       '#title' => t('Share message'),
       '#description' => t('This text provides a default value for the status message portion of the share form.'),
-      '#default_value' => t(''),
+      '#default_value' => $form['#node']->fb_share_message,
     );
   }
 }
