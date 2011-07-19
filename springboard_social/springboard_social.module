@@ -111,6 +111,18 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => $form['#node']->fb_share_message,
     );
   }
+  $form['#validate'][] = 'springboard_social_form_validate';
+}
+
+/**
+ * Validation handler for Springboard Social fields.
+ */
+function springboard_social_form_validate(&$form, $form_state) {
+  // enforce max length, name is stored as a varchar. There's also some Facebook limitation
+  // to the maximum length of a wall post but I don't have a specific length yet.
+  if ($form_state['values']['fb_share_name'] && strlen($form_state['values']['fb_share_name'] > 254)) {
+    form_set_error('fb_share_name', t('The name field cannot be longer than 254 characters, you typed %length.', array('%length' => strlen($form_state['values']['fb_share_name']))));
+  }
 }
 
 /**
@@ -217,6 +229,7 @@ function springboard_social_nodeapi(&$node, $op) {
       }
       break;
     case 'delete':
+      db_query('DELETE FROM {springboard_social_share} WHERE nid = %d', $node->nid);
       // delete from springboard_social_share
   }
 }
