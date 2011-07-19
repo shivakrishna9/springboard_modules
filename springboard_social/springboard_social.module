@@ -184,19 +184,6 @@ function springboard_social_nodeapi(&$node, $op) {
     case 'load':
       springboard_social_load_share($node);
       break;
-    case 'view':
-      if ($node->type == 'donation_form' && $node->fb_share_status) {
-        $app_id = variable_get('springboard_social_app_id', '');
-        $tmp = theme('springboard_social_fb_share_link',
-          $app_id,
-          $node->fb_share_link, 
-          $node->fb_share_name,
-          $node->fb_share_picture,
-          $node->fb_share_description,
-          $node->fb_share_message);
-        $node->content['share_links'] = array('#value' => $tmp, '#weight' => 0);
-      }
-      break;
     case 'insert':
 
       db_query("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
