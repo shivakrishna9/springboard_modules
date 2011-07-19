@@ -80,6 +80,12 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
         '#default_value' =>  $form['#node']->fb_share_status,
       );
     }
+    else {
+      $form['fb_share']['fb_share_status'] = array(
+         '#type' => 'value',
+         '#value' => variable_get('springboard_social_share_display', 0),
+      );
+    }
     $form['fb_share']['fb_share_link'] = array(
       '#type' => 'textfield',
       '#title' => t('Share linkback URL'),
@@ -92,7 +98,7 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#description' => t('The URL of a logo you wish to display in the Facebook Share popup. If left blank this will default to the user profile picture.'),
       '#default_value' => $form['#node']->fb_share_picture,
     );
-    $form['fb_share']['db_share_description'] = array(
+    $form['fb_share']['fb_share_description'] = array(
       '#type' => 'textarea',
       '#title' => t('Share window description'),
       '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
@@ -119,9 +125,9 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
 function springboard_social_load_share(&$node) {
   global $base_url;
   $share_status = variable_get('springboard_social_share_display', 0);
-  $settings = db_fetch_array(db_query('SELECT * FROM {springboard_fb_share} WHERE nid = %d', $nid));
+  $settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_share} WHERE nid = %d', $node->nid));
   // Has settings
-  if (is_array($settings)) {
+  if ($settings['nid']) {
     $node->fb_share_status = $settings['status'];
     $node->fb_share_name = $settings['name'];
     $node->fb_share_link = $settings['link'];
@@ -163,10 +169,54 @@ function springboard_social_nodeapi(&$node, $op) {
       }
       break;
     case 'insert':
-      drupal_set_message('node:' . print_r($node, TRUE));
+      drupal_set_message('insert');
+      db_query("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
+        VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
+        $node->nid,
+        $node->fb_share_status,
+        $node->fb_share->name,
+        $node->fb_share_link, 
+        $node->fb_share_picture,
+        $node->fb_share_description,
+        $node->fb_share_message
+      );
+      // Insert into springboard_social_share
       break;
     case 'update':
-      drupal_set_message('node:' . print_r($node, TRUE));
+      drupal_set_message('update');
+      // Update or insert into springboard_social_share
+      $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_share} WHERE nid = %d', $node->nid));
+      if ($entry_exists) {
+        drupal_set_message('update query');
+        db_query("UPDATE {springboard_social_share} 
+          SET status = %d, name = '%s', link = '%s', picture = '%s', description = '%s', message = '%s' 
+          WHERE nid = %d", 
+          $node->fb_share_status, 
+          $node->fb_share_name, 
+          $node->fb_share_link, 
+          $node->fb_share_picture,
+          $node->fb_share_description,
+          $node->fb_share_message,
+          $node->nid
+        );
+      }
+      else {
+        
+        $sql = sprintf("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
+          VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
+          $node->nid,
+          $node->fb_share_status,
+          $node->fb_share_name,
+          $node->fb_share_link, 
+          $node->fb_share_picture,
+          $node->fb_share_description,
+          $node->fb_share_message
+        );
+        drupal_set_message('insert query:' . $sql . ' node:' . print_r($node, TRUE));
+        db_query($sql);
+      }
       break;
+    case 'delete':
+      // delete from springboard_social_share
   }
 }
