@@ -181,7 +181,7 @@ function springboard_social_nodeapi(&$node, $op) {
       }
       break;
     case 'insert':
-      drupal_set_message('insert');
+
       db_query("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
         VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
         $node->nid,
@@ -195,11 +195,11 @@ function springboard_social_nodeapi(&$node, $op) {
       // Insert into springboard_social_share
       break;
     case 'update':
-      drupal_set_message('update');
+
       // Update or insert into springboard_social_share
       $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_share} WHERE nid = %d', $node->nid));
       if ($entry_exists) {
-        drupal_set_message('update query');
+
         db_query("UPDATE {springboard_social_share} 
           SET status = %d, name = '%s', link = '%s', picture = '%s', description = '%s', message = '%s' 
           WHERE nid = %d", 
@@ -224,7 +224,7 @@ function springboard_social_nodeapi(&$node, $op) {
           $node->fb_share_description,
           $node->fb_share_message
         );
-        drupal_set_message('insert query:' . $sql . ' node:' . print_r($node, TRUE));
+
         db_query($sql);
       }
       break;
