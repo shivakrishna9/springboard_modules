@@ -297,6 +297,25 @@ function page_wrappers_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
+    'title' => array(
+      'operator' => '=',
+      'value' => '',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => FALSE,
+        'operator' => 'title_op',
+        'identifier' => 'title',
+        'label' => 'Node: Title',
+        'remember' => FALSE,
+        'single' => TRUE,
+        'optional' => TRUE,
+      ),
+      'case' => TRUE,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+    ),
   ));
   $handler->override_option('access', array(
     'type' => 'perm',
@@ -311,6 +330,46 @@ function page_wrappers_views_default_views() {
   $handler->override_option('use_pager', '1');
   $handler->override_option('style_plugin', 'table');
   $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->override_option('filters', array(
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'page_wrapper' => 'page_wrapper',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+    ),
+    'title' => array(
+      'operator' => 'word',
+      'value' => '',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => 'title_op',
+        'identifier' => 'title',
+        'label' => 'Internal Title',
+        'optional' => 1,
+        'remember' => 0,
+      ),
+      'case' => 0,
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+    ),
+  ));
   $handler->override_option('header', '<a href="/node/add/page-wrapper">Create New Page Wrapper</a>');
   $handler->override_option('header_format', '1');
   $handler->override_option('header_empty', 1);
