@@ -17,7 +17,7 @@ $(document).ready(function(){
         method: 'feed',
         name: '<?php print $title ?>',
         link: '<?php print $link_url ?>',
-        picture: '<?php print $logo ?>',
+        picture: '<?php print $share_logo ?>',
         caption: '',
         description: '<?php print $description ?>',
         message: '<?php print $message ?>'

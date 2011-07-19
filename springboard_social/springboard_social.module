@@ -44,7 +44,7 @@ function springboard_social_menu() {
 function springboard_social_theme() {
   return array(
     'springboard_social_fb_share_link' => array(
-      'arguments' => array('app_id' => NULL, 'link_url' => NULL, 'title' => NULL, 'logo' => NULL, 'description' => NULL, 'message' => NULL),
+      'arguments' => array('app_id' => NULL, 'link_url' => NULL, 'title' => NULL, 'share_logo' => NULL, 'description' => NULL, 'message' => NULL),
       'template' => 'springboard-social-share-link',
     )
   );
