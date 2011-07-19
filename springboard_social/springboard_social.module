@@ -51,6 +51,23 @@ function springboard_social_theme() {
 }
 
 /**
+ * Implements hook_preprocess_fundraiser_confirmation().
+ * 
+ * Adds $fb_share variable to the confirmation template.
+ */
+function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
+  $app_id = variable_get('springboard_social_app_id', '');
+  $node = node_load(arg(1));
+  $vars['springboard_social_share'] = theme('springboard_social_fb_share_link',
+          $app_id,
+          $node->fb_share_link, 
+          $node->fb_share_name,
+          $node->fb_share_picture,
+          $node->fb_share_description,
+          $node->fb_share_message);
+}
+
+/**
  * Implements hook_form_alter().
  */
 
