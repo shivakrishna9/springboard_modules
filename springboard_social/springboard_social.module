@@ -161,5 +161,12 @@ function springboard_social_nodeapi(&$node, $op) {
           $node->fb_share_message);
         $node->content['share_links'] = array('#value' => $tmp, '#weight' => 0);
       }
+      break;
+    case 'insert':
+      drupal_set_message('node:' . print_r($node, TRUE));
+      break;
+    case 'update':
+      drupal_set_message('node:' . print_r($node, TRUE));
+      break;
   }
 }

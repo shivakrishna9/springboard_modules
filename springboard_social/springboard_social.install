@@ -26,7 +26,7 @@ function springboard_social_uninstall() {
  * Implementation of hook_schema().
  */
 function springboard_social_schema() {
-  $schema['springboard_fb_share'] = array(
+  $schema['springboard_social_share'] = array(
     'description' => t('Stores Facebook share config for donation_form nodes.'),
     'fields' => array(
       'nid' => array(
@@ -45,14 +45,14 @@ function springboard_social_schema() {
       'name' => array(
         'description' => t('Title to display in the FB share window.'),
         'type' => 'varchar',
-        'size' => 255,
+        'length' => 255,
       ),
       'link' => array(
         'description' => t('URL of the page being shared. For donation form thank-you pages this should be the URL of the parent donation form.'),
         'type' => 'text',
       ),
       'picture' => array(
-        'description' => t('URL of the custom logo to display in the share window. Note: this URL has to be under the parent domain for the FB app.'),
+        'description' => t('URL of the custom logo to display in the share window. '),
         'type' => 'text',
       ),
       'description' => array(
