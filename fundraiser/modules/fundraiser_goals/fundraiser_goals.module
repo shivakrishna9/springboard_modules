@@ -296,10 +296,6 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
       return $blocks;
       break;
     case 'view':
-      $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
-      while ($result = db_result($results)) {
-        $deltas[] = $result;
-      }
       switch ($delta) {
         case  'fundraiser_goals_basic':
           if (arg(0) == 'node' && is_numeric (arg(1))) {
@@ -318,8 +314,8 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
           }
           break;
       default:
-        if (in_array($delta, $deltas)) {
-          $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
+        $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
+        if ($goal->pid) {
           $block['subject'] = fundraiser_goals_advanced_block_title($delta);
           $block['content'] = fundraiser_goals_advanced_block_content($goal);
           return $block;
@@ -623,6 +619,7 @@ function _fundraiser_goals_save_goal($object) {
         $object->fundraiser_goal_display_threshold,
         $object->fundraiser_goal['goals_wrapper']['template'],
         $object->fundraiser_goal_default_message);
+
   }
 }
 
