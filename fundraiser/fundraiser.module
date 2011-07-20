@@ -81,6 +81,13 @@ function fundraiser_menu() {
 	 'weight' => 1,
 	);
 
+  $items['fundraiser/js/%fundraiser_ahah_field'] = array(
+    'page callback'    => '_fundraiser_ahah_helper_render',
+    'page arguments'   => array(2),
+    'access callback'  => TRUE,
+    'type'             => MENU_CALLBACK,
+  );
+
 	$items['fundraiser_ask/js'] = array(
 	  'page callback' => '_fundraiser_ask_ahah',
 	  'access callback' => TRUE,
@@ -369,6 +376,13 @@ function fundraiser_confirmation_token_list($nid) {
   array_unshift($all_tokens['order'], '-- Select --');
   $output = theme(array('fundraiser_confirmation_tokens'), $all_tokens);
   return $output;
+}
+
+/**
+ * Wildcard loader for form items; assumes that a passed form item also exists.
+ */
+function fundraiser_ahah_field_load($field) {
+  return $field;
 }
 
 /**
@@ -918,7 +932,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			
 			// alter country drop down to populate zone drop down via ahah
 			$country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
-			$country_field['#ahah'] = array('path' => 'zones/js', 'wrapper' => 'zone-select-wrapper');
+      $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
       
       // add default country & state values from user profile
       $fids = _fundraiser_get_profile_location_fields();
@@ -1036,70 +1050,88 @@ function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
 }
 
 /**
- * Ahah callback for populating the state drop down list based on the selected country.
+ * AHAH callback for dealing with changes to the donation form.
+ *
+ * @param $field
+ *   The field that is being affected by the AHAH call.
  */
-function fundraiser_zones_ahah_render() {
-	$form_state    = array('storage' => NULL, 'submitted' => FALSE);
-	$form_build_id = $_POST['form_build_id'];
+function _fundraiser_ahah_helper_render($field = NULL) {
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
 
-	$form    = form_get_cache($form_build_id, $form_state);
-	$args    = $form['#parameters'];
-	$form_id = array_shift($args);
+  // Get the form from the cache.
+  $form = form_get_cache($form_build_id, $form_state);
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
 
-	$form['#post']       = $_POST;
-	$form['#redirect']   = FALSE;
-	$form['#programmed'] = FALSE;
-	$form_state['post']  = $_POST;
+  // Are we on the node form?
+  $node_form = FALSE;
+  if (preg_match('/_node_form$/', $form_id)) {
+    $node_form = TRUE;
+    module_load_include('inc', 'node', 'node.pages');
+  }
 
-	// Prevents _form_builder_ie_cleanup() from incorrectly assigning the
-	// first button in the form as the clicked button.
-	// Wim Leers' AHAH Helper Module has more in-depth information.
-	// @see the ahah_helper project
-	$form_state['submitted'] = TRUE;
+  // We will run some of the submit handlers so we need to disable redirecting.
+  $form['#redirect'] = FALSE;
+  // We need to process the form, prepare for that by setting a few internals
+  // variables.
+  $form['#post'] = $_POST;
+  $form['#programmed'] = FALSE;
+  $form_state['post'] = $_POST;
+  
+  // $form_state['storage']['#ahah_helper']['file'] has been set, to know
+  // which file should be loaded. This is necessary because we'll use the form
+  // definition itself rather than the cached $form.
+  if (isset($form_state['storage']['#ahah_helper']['file'])) {
+    require_once($form_state['storage']['#ahah_helper']['file']);
+  }
+
+  $form_state['submitted'] = TRUE;
+
   if (!isset($_POST['op'])) {
     // For the default "{$form_id}_validate" and "{$form_id}_submit" handlers.
     $form['#validate'] = NULL;
     $form['#submit'] = NULL;
-    // For customly set #validate and #submit handlers.    $form_state['submit_handlers'] = NULL;
+    // For customly set #validate and #submit handlers.
+    $form_state['submit_handlers'] = NULL;
     $form_state['validate_handlers'] = NULL;
     // Disable #required and #element_validate validation.
-
     fundraiser_ahah_helper_disable_validation($form);
   }
 
-	drupal_process_form($form_id, $form, $form_state);
+  // Build, validate and if possible, submit the form.
+  drupal_process_form($form_id, $form, $form_state);
+  if ($node_form) {
+    // get the node from the submitted values
+    $node = node_form_submit_build_node($form, $form_state);
+    // hack to stop taxonomy from resetting when the form is rebuilt
+    $form_state['node']['taxonomy'] = taxonomy_preview_terms($node);
+  }
 
-	// Once drupal_rebuild_form is called, we no longer have access to
-	// $form_state['values'], so we merge it into $form_state['storage'].
-	if (isset($form_state['values'])) {
-	  if (!isset($form_state['storage'])) {
-	    $form_state['storage'] = array();
-	  }
-	  $storage = $form_state['storage'];
-	  $values  = $form_state['values'];
-	  $form_state['storage'] = _fundraiser_array_smart_merge($storage, $values);
-	}
+  // This call recreates the form relying solely on the form_state that the
+  // drupal_process_form set up.
+  //$form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
-	// Rebuild the form.
-	$form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  
-  // figure out the path to the billing state drop down component
+  // Get the form item we want to render.
+  //$form_item = _ahah_helper_get_form_item($form, $form_item_to_render);
   $nid = $form['#parameters'][2]->nid;
-	$field = fundraiser_find_field($form, fundraiser_parse_component($nid, 'state'));
-	unset($field['#prefix'], $field['#suffix']); // prevent duplicate wrappers
-	$output = $field;
-	
-	// Get the JS settings so we can merge them.
-	$javascript = drupal_add_js(NULL, NULL, 'header');
-	$settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
+  $form_item = fundraiser_find_field($form, fundraiser_parse_component($nid, $field));
 
-	drupal_json(array(
-	  'status'    => TRUE,
-	  'data'      => drupal_render($output),
-	  'settings'  => array('ahah' => $settings['ahah']),
-	));
+  // Get the JS settings so we can merge them.
+  $javascript = drupal_add_js(NULL, NULL, 'header');
+  $settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
+
+  drupal_json(array(
+    'status'   => TRUE,
+    'data'     => theme('status_messages') . drupal_render($form_item),
+    'settings' => array('ahah' => $settings['ahah']),
+  ));
 }
 
+/**
+ * Helper function for disabling validation during AHAH form submissions.
+ */
 function fundraiser_ahah_helper_disable_validation(&$form) {
   foreach (element_children($form) as $child) {
     $form[$child]['#validated'] = TRUE;
@@ -1128,6 +1160,9 @@ function fundraiser_webform_submission_update($node, $submission) {
  * Implementation of hook_webform_submission_presave(). 
  */
 function fundraiser_webform_submission_presave($node, &$submission) {
+  // remove any non-component form fields from the submitted data
+  unset($submission->data['']);
+  
   // remove senstive form data before the submission is saved to the database
   if ($node->type == 'donation_form') {
     $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
