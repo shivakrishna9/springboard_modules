@@ -130,6 +130,22 @@ function form_layouts_submit($form, &$form_state) {
 }
 
 /**
+ * Implementation of hook_nodeapi().
+ *
+ * Make sure the layout gets cloned.
+ */
+function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($node->type == 'donation_form' && $op == 'load') {
+    $node->layout_template = _form_layouts_theme_template($node->nid);
+  }
+  
+  if ($node->type == 'donation_form' && $op == 'insert' && $node->is_being_cloned) {
+    $variable_name = _form_layouts_variable_name($node->nid);
+    variable_set($variable_name, $node->layout_template);
+  }
+}
+
+/**
  * Returns the variable that contains which layout the donation form uses.
  *
  * @param $nid
