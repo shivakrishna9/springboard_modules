@@ -475,11 +475,12 @@ function sf_donation_menu_alter(&$items) {
 function sf_donation_form_alter(&$form, $form_state, $form_id) {
   switch($form_id) {
     case 'webform_component_edit_form':
-      if ($form['advanced']['form_key']['#default_value'] == 'cid') {
+      if ($form['form_key']['#default_value'] == 'cid') {
         // turn it into a select field
         // get campaigns from salesforce
         $campaigns = _sf_donation_get_campaigns();
         if (!empty($campaigns)) {
+          $campaigns = array('' => '-- Select --')+$campaigns;
           $form['value']['#type'] = 'select';
           $form['value']['#options'] = $campaigns;
         }
