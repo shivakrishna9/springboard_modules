@@ -239,14 +239,14 @@ function fundraiser_goals_nodeapi(&$node, $op) {
      $node->fundraiser_goal_parent_item = $node->nid;
      switch ($op) {
        case 'load':
-         $data = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid=%d and delta="basic"', $node->nid));
-         $node->fundraiser_goal_type = $data->type;
-         $node->fundraiser_goal_target = $data->target;
-         $node->fundraiser_goal_template = $data->template;
-         $node->fundraiser_goal_target_cid = $data->target_cid;
-         $node->fundraiser_goal_display_threshold = $data->display_threshold;
-         $node->fundraiser_goal['goals_wrapper']['template'] = $data->template_format;
-         $node->fundraiser_goal_default_message = $data->default_message;
+         $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid=%d and delta="basic"', $node->nid));
+         $node->fundraiser_goal_type = $goal->type;
+         $node->fundraiser_goal_target = $goal->target;
+         $node->fundraiser_goal_template = $goal->template;
+         $node->fundraiser_goal_target_cid = $goal->target_cid;
+         $node->fundraiser_goal_display_threshold = $goal->display_threshold;
+         $node->fundraiser_goal['goals_wrapper']['template'] = $goal->template_format;
+         $node->fundraiser_goal_default_message = $goal->default_message;
 
          break;
        case 'insert':
@@ -305,16 +305,17 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
               // TODO: replace all instances of this query with a get function.
               $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', $node->nid));
               // TODO: work in support for uniques.
-              $goal_progress = fundraiser_goals_current_goal_progress($node->nid, $goal, FALSE);
+              $goal->goal_progress = fundraiser_goals_current_goal_progress($node->nid, $goal, FALSE);
               $block = array();
-              $block['subject'] = fundraiser_goals_block_title($node, $goal, $goal_progress);
-              $block['content'] = fundraiser_goals_block_content($node, $goal, $goal_progress);
+              $block['subject'] = fundraiser_goals_block_title($node, $goal);
+              $block['content'] = fundraiser_goals_block_content($node, $goal);
               return $block;
             }
           }
           break;
       default:
         $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
+        $goal->goal_progress = fundraiser_goals_current_goal_progress($goal->pid, $goal, FALSE);
         if ($goal->pid) {
           $block['subject'] = fundraiser_goals_advanced_block_title($delta);
           $block['content'] = fundraiser_goals_advanced_block_content($goal);
@@ -326,20 +327,6 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 
-/**
- * Generates block content for advanced goal block.
- * 
- * @param $goal
- * Goal object containing values for the advanced block.
- */
-function fundraiser_goals_advanced_block_content($goal) {
-  $output = $goal->template;
-  $output = check_markup($output, $goal->template_format, FALSE);
-  $output = token_replace($output, 'goal', $node);
-
-  return $output;
-}
-
 // TODO: this might be redundant.
 /**
  * Generates block title for basic goal block.
@@ -349,17 +336,14 @@ function fundraiser_goals_advanced_block_content($goal) {
  * 
  * @param $goal
  * Goal object containing values for the current node from {fundraiser_goals}
- * 
- * @param $goal_progress
- * Current progress towards goal.
  */
-function fundraiser_goals_block_title($node, $goal, $goal_progress) {
+function fundraiser_goals_block_title($node, $goal) {
   if (arg(0) == 'node' && is_numeric (arg(1))) {
     $node = node_load(arg(1));
     $types = variable_get('webform_node_types', array());
     if (in_array($node->type, $types)) {
  
-      if (!$goal->display_threshold ||$goal->display_threshold <= $goal_progress) {
+      if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
         // TODO: check spec, beef this up.
         return t('Goals');
       }
@@ -368,19 +352,6 @@ function fundraiser_goals_block_title($node, $goal, $goal_progress) {
 }
 
 /**
- * Returns advanced goal block title.
- * 
- * @param $delta
- * Block delta for the current block.
- * 
- * @return 
- * Returns block title from {blocks}.
- */
-function fundraiser_goals_advanced_block_title($delta) {
-  $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta));
-  return $title;
-}
-/**
  * Generates block content for basic goal block.
  * 
  * @param $node
@@ -388,18 +359,14 @@ function fundraiser_goals_advanced_block_title($delta) {
  * 
  * @param $goal
  * Goal object containing values for the current node from {fundraiser_goals}
- * 
- * @param $goal_progress
- * Current progress towards goal.
  */
-function fundraiser_goals_block_content($node, $goal, $goal_progress) {
+function fundraiser_goals_block_content($node, $goal) {
   
-  if (!$goal->display_threshold ||$goal->display_threshold <= $goal_progress) {
-    // TODO: work in support for custom first!!!!111! message.
-    //$output = 'progress:' . $goal_progress;
+  if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
+
     $output = $node->fundraiser_goal_template;
-    $node->goal_progress = $goal_progress;
-    if (!$goal_progress && $node->fundraiser_goal_default_message) {
+    $node->goal_progress = $goal->goal_progress;
+    if (!$goal->goal_progress && $node->fundraiser_goal_default_message) {
       $output .= $node->fundraiser_goal_default_message;
     }
     // Dividing by zero is awesome. Where do you think the platypus came from?
@@ -417,6 +384,36 @@ function fundraiser_goals_block_content($node, $goal, $goal_progress) {
 
   return $output;
 }
+
+/**
+ * Returns advanced goal block title.
+ * 
+ * @param $delta
+ * Block delta for the current block.
+ * 
+ * @return 
+ * Returns block title from {blocks}.
+ */
+function fundraiser_goals_advanced_block_title($delta) {
+  $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta));
+  return $title;
+}
+
+
+/**
+ * Generates block content for advanced goal block.
+ * 
+ * @param $goal
+ * Goal object containing values for the advanced block.
+ */
+function fundraiser_goals_advanced_block_content($goal) {
+  $output = $goal->template;
+  $output = check_markup($output, $goal->template_format, FALSE);
+  $output = token_replace($output, 'goal', $node);
+
+  return $output;
+}
+
 
 /**
  * #ahah callback for goals UI
@@ -452,8 +449,8 @@ function fundraiser_goals_ahah() {
 /**
  * Calculate the current progress towards a webform goal.
  * 
- * @param nid
- * Webform node id.
+ * @param pid
+ * Parent item id, node id in the case of a webform, Salesforce campaign id if campaign is selected.
  * 
  * @param $goal
  * Object containing the goal settings for this webform.
@@ -465,17 +462,24 @@ function fundraiser_goals_ahah() {
  * Returns an integer value representing the current progress towards the goal. In the case of a donation form
  * this would be the total amount donated. In all other cases the number of webform submissions is returned.
  */
-function fundraiser_goals_current_goal_progress($nid, $goal, $unique = FALSE) {
-
+function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
+  drupal_set_message('goal progress invoked, type:' . $goal->type);
   switch ($goal->type) {
 
     // # of submissions
     case 1:
-      if ($unique) {
-        $progress = db_result(db_query('SELECT COUNT(DISTINCT uid) FROM {webform_submissions} WHERE nid = %d', $nid));
+      // Unique webform
+      if ($unique && is_numeric($pid)) {
+        $progress = db_result(db_query('SELECT COUNT(DISTINCT uid) FROM {webform_submissions} WHERE nid = %d', $pid));
       }
+      // Non-unique webform.
+      elseif (is_numeric($pid)) {
+        $progress = db_result(db_query('SELECT COUNT(nid) FROM {webform_submissions} WHERE nid = %d', $pid));
+      }
+      // if pid isn't numeric that should mean we have a salesforce campaign id.
       else {
-        $progress = db_result(db_query('SELECT COUNT(nid) FROM {webform_submissions} WHERE nid = %d', $nid));
+        drupal_set_message('advanced block, campaign');
+        $progress = 10000;
       }
 
       break;
@@ -486,13 +490,13 @@ function fundraiser_goals_current_goal_progress($nid, $goal, $unique = FALSE) {
           FROM {webform_submissions} ws 
           INNER JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid 
           WHERE wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $nid, $goal->target_cid));
+          $pid, $goal->target_cid));
       }
       else {
         $progress = db_result(db_query('SELECT COUNT(ws.nid) FROM webform_submissions ws 
           INNER JOIN webform_submitted_data wsd ON ws.sid = wsd.sid 
           WHERE wsd.data != "" AND wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $nid, $goal->target_cid));
+          $pid, $goal->target_cid));
       }
       break;
     // Donation amount
@@ -500,7 +504,8 @@ function fundraiser_goals_current_goal_progress($nid, $goal, $unique = FALSE) {
       $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
         INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
-        $nid));
+        $pid));
+
      break;
   }
 

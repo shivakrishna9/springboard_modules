@@ -7,5 +7,5 @@ dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = profile
 dependencies[] = queue_api
-
+dependencies[] = cart
 version =  6.x-3.0-beta1
