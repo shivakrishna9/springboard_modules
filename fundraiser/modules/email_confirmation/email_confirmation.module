@@ -178,19 +178,20 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     }
      /* email template configuration, see #133*/
     // TODO: replace variable_get() with appropriate $node property
-    $form['confirmation'] = array(
+    $form['fundraiser_settings']['confirmation'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Email Confirmation'),
+      '#title' => t('Email confirmation'),
       '#collapsible' => TRUE,
-      '#weight' => -4.99,
+      '#collapsed' => TRUE,
+      //'#weight' => -4.99,
     );
-    $form['confirmation']['template_wrapper'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper'] = array(
       '#tree' => TRUE,
       '#prefix' => '<div id="template-wrapper">',
       '#suffix' => '</div>',
       '#theme' => 'email_confirmation_template_wrapper',
     );
-    $form['confirmation']['template_wrapper']['email_template'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['email_template'] = array(
       '#type' => 'select',
       '#title' => t('Confirmation Email Template'),
       '#options' => email_confirmation_list_templates(),
@@ -202,28 +203,28 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       ),
       '#default_value' => $defaults->nid,
     );
-    $form['confirmation']['template_wrapper']['confirmation_subject'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
       '#default_value' => $defaults->field_confirmation_subject_value,
     );
-    $form['confirmation']['template_wrapper']['confirmation_from_name'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_from_name'] = array(
       '#type' => 'textfield',
       '#title' => t('From Name'),
       '#default_value' => $defaults->field_confirmation_from_name_value,
     );
-    $form['confirmation']['template_wrapper']['confirmation_from_email'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_from_email'] = array(
       '#type' => 'From Email',
       '#title' => t('textfield'),
       '#default_value' => $defaults->field_confirmation_from_email_email,
     );
-    $form['confirmation']['template_wrapper']['confirmation_reply_email'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_reply_email'] = array(
       '#type' => 'textfield',
       '#title' => t('Reply To Email'),
       '#default_value' => $defaults->field_confirmation_reply_email_email,
     );
 
-    $form['confirmation']['template_wrapper']['confirmation_bcc_email' . $delta] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_bcc_email' . $delta] = array(
       '#type' => 'textfield',
       '#title' => t('BCC Email'),
       '#default_value' => $defaults->bcc,
@@ -231,37 +232,37 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
 
     // TODO: add input type filters?
     // TODO: list available tokens in description of text fields or as separate form element.
-    $form['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('HTML Email Message'),
       '#default_value' => $defaults->field_confirmation_html_message_value,
 
     );
-    $form['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
-    $form['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Text Email Message'),
       '#default_value' => $defaults->field_confirmation_text_message_value,
     );
-   $form['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
+   $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
     // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
-    $form['confirmation']['template_wrapper']['preview'] = array(
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['preview'] = array(
      // '#type' => 'markup',
      // '#value' => ctools_modal_text_button('Preview', 'email_confirmation/preview_modal', '', 'edit-template-wrapper-email-template'),
       '#type' => 'button',
@@ -384,7 +385,7 @@ function _email_confirmation_template_ahah() {
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $template_form = $form['confirmation']['template_wrapper'];
+  $template_form = $form['fundraiser_settings']['confirmation']['template_wrapper'];
   unset($template_form['#prefix'], $template_form['#suffix']);
  
   $output = theme('status_messages') . drupal_render($template_form);

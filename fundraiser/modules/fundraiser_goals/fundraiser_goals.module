@@ -18,7 +18,7 @@ function fundraiser_goals_menu() {
     'page callback' => 'fundraiser_goals_admin',
     'access arguments' => array('administer fundraiser goals'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'fundraiser_gaols.admin.inc',
+    'file' => 'fundraiser_goals.admin.inc',
   );
   $items['admin/build/block/add_goal'] = array(
     'title' => 'Add Goal Block',
@@ -122,23 +122,23 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         unset($goal_options[1], $goal_options[2]);
       }
 
-      $form['fundraiser_goals'] = array(
+      $form['fundraiser_settings']['fundraiser_goals'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Activity Goals'),
-        '#description' => t('Your users, doing stuff.'),
+        '#title' => t('Goal settings'),
+        '#description' => t('Set a specific goal for this donation form.'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
-      $form['fundraiser_goals']['fundraiser_goal_delta'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['fundraiser_goal_delta'] = array(
         '#type' => 'value',
         '#value' => 'basic',
       );
-      $form['fundraiser_goals']['goals_wrapper'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper'] = array(
         '#prefix' => '<div id="donation-goals">',
         '#suffix' => '</div>',
         '#theme' => 'fundraiser_goals',
       );
-      $form['fundraiser_goals']['goals_wrapper']['fundraiser_goal_type'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_type'] = array(
         '#type' => 'select',
         '#title' => t('Type of goal'),
         '#description' => t('Choose the type of goal you would like to set for this form.'),
@@ -151,7 +151,7 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
           'effect' => 'fade',
         ),
       );
-      $form['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target'] = array(
         '#type' => 'textfield',
         '#title' => t('Goal target'),
         '#description' => t('Set the target number (petition submissions, total donations, etc) for the goal.'),
@@ -166,37 +166,37 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         if (!count($options)) {
           form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
         }
-        $form['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target_cid'] = array(
+        $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target_cid'] = array(
           '#type' => 'select',
           '#title' => t('Choose a field to target for this goal'),
           '#options' => $options,
           '#default_value' => $node->fundraiser_goal_target_cid,
         );
       }
-      $form['fundraiser_goals']['goal_wrapper']['fundraiser_goal_display_threshold'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_display_threshold'] = array(
         '#type' => 'textfield',
         '#title' => t('Display Threshold'),
         '#description' => t('Sets the number of submissions (or donation total) that must be reached before this goal is visible.'),
         '#default_value' => $node->fundraiser_goal_display_threshold ? $node->fundraiser_goal_display_threshold : 0,
       );
-      $form['fundraiser_goals']['goal_wrapper']['fundraiser_goal_default_message'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_default_message'] = array(
         '#type' => 'textarea',
         '#title' => t('Starter message'),
         '#description' => t('This is an optional message to show users if no form submission has been made. Note: if display threshold is set users will not see this message.'),
         '#default_value' => $node->fundraiser_goal_default_message,
       );
-      $form['fundraiser_goals']['goals_wrapper']['template'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template'] = array(
         '#type' => 'fieldset',
         '#title' => t('Goal template'),
         '#collapsible' => TRUE,
       );
-      $form['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template'] = array(
         '#type' => 'textarea',
         '#title' => t('Template'),
         '#description' => t('Markup appearing for this goal.'),
         '#default_value' => $node->fundraiser_goal_template,
       );
-      $form['fundraiser_goals']['goals_wrapper']['template']['goal_tokens'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['goal_tokens'] = array(
         '#type' => 'fieldset',
         '#title' => t('Available goal tokens'),
         '#collapsible' => TRUE,
@@ -204,8 +204,8 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
         '#weight' => 11,
       );
       $filter = $node->fundraiser_goal['goals_wrapper']['template'] ? $node->fundraiser_goal['goals_wrapper']['template'] : 2;
-      $form['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_goals', 'goals_wrapper', 'template'));
-      $form['fundraiser_goals']['goals_wrapper']['template']['goal_tokens']['help'] = array(
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_settings', 'fundraiser_goals', 'goals_wrapper', 'template'));
+      $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['goal_tokens']['help'] = array(
         '#value' => theme('token_help', 'goal'),
       );
  
@@ -439,7 +439,7 @@ function fundraiser_goals_ahah() {
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $goal_form = $form['fundraiser_goals']['goals_wrapper'];
+  $goal_form = $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper'];
   unset($goal_form['#prefix'], $amount_form['#suffix']);
  
   $output = theme('status_messages') . drupal_render($goal_form);

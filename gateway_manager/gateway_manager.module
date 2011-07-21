@@ -63,9 +63,9 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'donation_form_node_form':
       // change the list of options in the payment gateway list
-      $form['gateway']['#options'] = _gateway_manager_gateway_list();
-      $form['gateway']['#prefix'] = '<div id="gateway">';
-      $form['gateway']['#suffix'] = '</div>';
+      $form['fundraiser_settings']['gateway']['#options'] = _gateway_manager_gateway_list();
+      $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
+      $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
       break;
   }
   
