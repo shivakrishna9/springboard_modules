@@ -63,10 +63,9 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-    '#default_value' => isset($edit['values']['submissions']) ? $edit['values']['submissions'] : 0,
+    '#default_value' => isset($edit['post']['submissions']) ? $edit['post']['submissions'] : $edit['values']['submissions'],
   );
-  if ( (int) $edit['values']['submissions'] == 0) {
-
+  if ((!isset($edit['post']['submissions']) && $edit['values']['submissions'] == 0) || (isset($edit['post']['submissions']) && (int) $edit['post']['submissions'] == 0)) {
     $select_title = t('Target Webform');
     // get list of webforms, construct options array
     $select_options = array(0 => t('- select -'));
@@ -99,7 +98,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-    '#default_value' => $edit['values']['fundraiser_goal_parent_item'],
+    '#default_value' => isset($edit['post']['fundraiser_goal_parent_item']) ? $edit['post']['fundraiser_goal_parent_item'] : $edit['values']['fundraiser_goal_parent_item'],
   );
 
   $goal_options  = array(
@@ -107,9 +106,18 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     1 => t('# of submissions'),
     2 => t('custom'),
   );
-  // We have a webform node id, act accordingly.
- if (is_numeric((string) $edit['values']['fundraiser_goal_parent_item']) && $edit['values']['fundraiser_goal_parent_item']) {
-    
+  // We have a posted webform node id, act accordingly.
+  if (is_numeric((string) $edit['post']['fundraiser_goal_parent_item']) && $edit['post']['fundraiser_goal_parent_item'] ) {
+    $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['post']['fundraiser_goal_parent_item']));
+    // if it's a donation form add max donation as an option
+    if ($type == 'donation_form') {
+
+      $goal_options[3] = 'Donation';
+      unset($goal_options[1], $goal_options[2]);
+    }
+  }
+  // Intial form build with data from db.
+  elseif (!isset($edit['post']['fundraiser_goal_parent_item']) && is_numeric((string) $edit['values']['fundraiser_goal_parent_item']) && $edit['values']['fundraiser_goal_parent_item']) {
     // get type
     $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['values']['fundraiser_goal_parent_item']));
     // if it's a donation form add max donation as an option
@@ -120,7 +128,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     }
   }
   else {
-
+    
     unset($goal_options[2]);
   }
 
@@ -134,7 +142,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-    '#default_value' => $edit['values']['fundraiser_goal_type'],
+    '#default_value' => isset($edit['post']['fundraiser_goal_type']) ? $edit['post']['fundraiser_goal_type'] : $edit['values']['fundraiser_goal_type'],
   );
   if ($edit['values']['fundraiser_goal_type'] == 2) {
 
@@ -234,7 +242,6 @@ function fundraiser_goals_admin_submit($form, &$form_state) {
 
    }
    else {
-  
      _fundraiser_goals_update_goal($object);
    }
    $form_state['redirect'] = 'admin/build/block';
