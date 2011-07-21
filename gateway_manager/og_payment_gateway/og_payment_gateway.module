@@ -70,14 +70,14 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       
     case 'donation_form_node_form':
       // move the gateway selector into the groups fieldset
-      $form['og_nodeapi']['gateway'] = $form['gateway'];
+      $form['og_nodeapi']['gateway'] = $form['fundraiser_settings']['gateway'];
       $form['og_nodeapi']['gateway']['#weight'] = 1;
       $form['og_nodeapi']['visible']['og_groups']['#ahah'] = array(
         'path' => 'og-payment-gateway/filter/ahah',  
         'wrapper' => 'gateway',
         'event' => 'change',  
       );
-      unset($form['gateway']);
+      unset($form['fundraiser_settings']['gateway']);
       // if the current user belongs to more than 1 group, add a group filter
       if (count($user->og_groups) > 1) {
         $options = array('' => t('-- Select --'));
@@ -132,9 +132,9 @@ function _og_payment_gateway_disable_validation(&$form) {
 }
 
 /**
- * Implemenation of hook_gateway_manager_gateway_load().
+ * Implemenation of hook_gateway_manager_gateway_alter().
  */
-function og_payment_gateway_gateway_manager_gateway_load(&$gateway) {
+function og_payment_gateway_gateway_manager_gateway_alter(&$gateway) {
   $result = db_query("SELECT group_nid FROM {og_payment_gateway} WHERE gid = %d", $gateway->id);
   $groups = array();
   // add groups to the gateway object when it is loaded

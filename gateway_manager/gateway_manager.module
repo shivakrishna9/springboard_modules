@@ -134,7 +134,8 @@ function gateway_manager_gateway_load($id) {
   while ($data = db_fetch_array($result)) {
     $gateway->terms[] = $data['tid'];
   }
-  module_invoke_all('gateway_manager_gateway_load', $gateway);
+  //module_invoke_all('gateway_manager_gateway_load', $gateway);
+  drupal_alter('gateway_manager_gateway', $gateway);
   return $gateway;
 }
 
