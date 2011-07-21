@@ -609,7 +609,7 @@ function _fundraiser_goals_save_goal($object) {
 
     db_query("INSERT INTO {fundraiser_goals} 
       (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
-      VALUES (%d, '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
+      VALUES ('%s', '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
         $object->pid,
         $object->fundraiser_goal_delta,
         $object->fundraiser_goal_type,
@@ -630,6 +630,7 @@ function _fundraiser_goals_update_goal($object) {
 
   db_query("UPDATE {fundraiser_goals} 
              SET
+               pid = '%s',
                type = '%s',
                target_cid = %d,
                target = %d,
@@ -638,7 +639,8 @@ function _fundraiser_goals_update_goal($object) {
                template_format = %d,
                default_message = '%s' 
              WHERE
-               pid = %d AND delta = '%s'", 
+               delta = '%s'",
+             $object->fundraiser_goal_parent_item, 
              $object->fundraiser_goal_type,
              $object->fundraiser_goal_target_cid,
              $object->fundraiser_goal_target,
@@ -646,7 +648,6 @@ function _fundraiser_goals_update_goal($object) {
              $object->fundraiser_goal_display_threshold,
              $object->fundraiser_goal['goals_wrapper']['template'],
              $object->fundraiser_goal_default_message,
-             $object->fundraiser_goal_parent_item,
              $object->fundraiser_goal_delta);
 
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
