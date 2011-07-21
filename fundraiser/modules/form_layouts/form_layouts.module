@@ -1,0 +1,177 @@
+<?php
+
+/**
+ * Implementation of hook_theme().
+ *
+ * Add a theme function for each file found in /templates.
+ */
+function form_layouts_theme() {
+  $theme = array();
+  $templates = _form_layouts_template_list();
+  
+  foreach ($templates as $template) {
+    $theme[$template['theme']] = array(
+      'arguments' => array('form' => NULL),
+      'template' => $template['template'],
+      'pattern' => $template['pattern'],  
+    );
+  }
+
+  return $theme;
+}
+
+/**
+ * Implemenation of hook_theme_registry_alter().
+ *
+ * Add in a special preprocess function for all donation forms.
+ */
+function form_layouts_theme_registry_alter(&$theme_registry) {
+  $templates = _form_layouts_template_list();
+  foreach ($templates as $template) {
+    $theme_registry[$template['theme']]['preprocess functions'][] = 'form_layouts_preprocess_template';
+  }
+}
+
+/**
+ * Preprocess function for donation form layout themeing.
+ *
+ * Breaks the form into easily digestable chunks.
+ */
+function form_layouts_preprocess_template(&$vars) {
+  // break the form into the major fieldsets. this could go one step further and break out the individual fields to.
+  $vars['donation_fieldset'] = drupal_render($vars['form']['submitted']['donation']);
+  $vars['donor_information_fieldset'] = drupal_render($vars['form']['submitted']['donor_information']);
+  $vars['billing_address_fieldset'] = drupal_render($vars['form']['submitted']['billing_information']);
+  $vars['credit_card_fieldset'] = drupal_render($vars['form']['submitted']['credit_card_information']);
+}
+
+/**
+ * Default preprocess function for 2 column donation form. Adds some css to make 2 columns.
+ */
+function form_layouts_preprocess_two_column(&$vars) {
+  $css = <<<CSS
+    <style type='text/css'>
+    #donation-form-column-wrapper #left fieldset {
+      margin-right: 10px;
+    }
+    
+    #donation-form-column-wrapper .form-text {
+      width: 250px;
+    }
+    
+    #donation-form-column-wrapper {
+      width: 100%;
+    }
+    
+    #donation-form-column-wrapper #right {
+      float: right;
+      width: 50%;
+    }
+    
+    #donation-form-column-wrapper #left {
+      float: left;
+      width: 50%;
+    }
+    
+    #donation-form-column-wrapper #donation-form-footer {
+      clear: both;
+    }
+    </style>
+CSS;
+  
+  // add in some default css for 2 columns
+  drupal_set_html_head($css);
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function form_layouts_form_alter(&$form, $form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form')) {
+    $node = $form['#parameters'][2];
+		
+		if ($node->type == 'donation_form') {		
+      $theme = _form_layouts_theme_template($node->nid);
+      $form['#theme'] = array($theme . '_' . $node->nid, $theme);
+    }
+  }
+  
+  // add a dropdown for the user to pick the layout
+  if ($form_id == 'donation_form_node_form') {
+    $nid = $form['#node']->nid;
+    
+    // get the available template files and doctor it up for a select list
+    $files = _form_layouts_template_list();
+    $options = array();
+    foreach($files as $file) {
+      $options[$file['theme']] = $file['name'];
+    } 
+    $theme = _form_layouts_theme_template($nid);
+    $form['fundraiser_settings']['layout'] = array(
+      '#type' => 'select',
+      '#title' => t('Form layout'),
+      '#options' => $options,
+      '#default_value' => $theme,
+      '#weight' => -4,
+    );
+    
+    $form['#submit'][] = 'form_layouts_submit';
+  }
+}
+
+/**
+ * Submission handler for donation form node page.
+ *
+ * Sets the choosen donation form layout into a variable.
+ */
+function form_layouts_submit($form, &$form_state) {
+  $variable_name = _form_layouts_variable_name($form_state['values']['nid']);
+  variable_set($variable_name, $form_state['values']['layout']);
+}
+
+/**
+ * Returns the variable that contains which layout the donation form uses.
+ *
+ * @param $nid
+ *  The id of the node whose template to return.
+ */
+function _form_layouts_theme_template($nid) {
+  $variable_name = _form_layouts_variable_name($nid);
+  return variable_get($variable_name, 'one_column');
+}
+
+/**
+ * Builds the name of a variable that will be used to store the donation form's theme template.
+ *
+ * @param $nid
+ *   The id of the node for which the variable name will be constructed.
+ */
+function _form_layouts_variable_name($nid) {
+  return 'donation_form_' . $nid . '_theme';
+}
+
+/**
+ * Returns a list of available donation form templates.
+ */
+function _form_layouts_template_list() {
+  $path = drupal_get_path('module', 'form_layouts') . '/templates';
+
+  // get all .tpl.php files in the /templates directory
+  $files = file_scan_directory($path, '.tpl.php');
+  $templates = array();
+  
+  // loop over each file and create an array of theme registry entries
+  foreach($files as $file) {
+    $name = str_replace('.tpl', '', $file->name);
+    $name_no_underscores = str_replace('-', '_', $name);
+    
+    $templates[$name] = array(
+      'name' => ucfirst(str_replace('-', ' ', $name)),
+      'theme' => $name_no_underscores,
+      'pattern' => $name_no_underscores . '_[0-9]+',
+      'template' => 'templates/' . $name
+    );
+  }
+
+  return $templates;
+}
