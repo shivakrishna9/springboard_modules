@@ -428,6 +428,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#weight' => -5,
     '#maxlength' => 255,
   );
+  
   $form['internal_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Internal Name'),
@@ -436,20 +437,37 @@ function fundraiser_form($node, $edit = NULL) {
     '#weight' => -4.99,
     '#maxlength' => 255,
   );
+  
+  $form['body_filter']['#weight'] = -4.97;
+  $form['body_filter']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#rows' => 7,
+    '#weight' => -4.98,
+    '#required' => FALSE,
+  );
+  $form['body_filter']['filter'] = filter_form($node->format);
 
- 
+  $form['fundraiser_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
   
   /* add amount #aha */
-  $form['amount_wrapper'] = array(
+  $form['fundraiser_settings']['amount_wrapper'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Ask Amounts'),
-    //'#collapsible' => TRUE,
-    '#weight' => -4.98,
+    '#title' => t('Ask amounts'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
     '#prefix' => '<div class="clear-block" id="ask-wrapper">',
     '#suffix' => '</div>',
   );
 
-  $form['amount_wrapper']['amounts'] = array(
+  $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
     '#prefix' => '<div id="ask-amounts">',
     '#suffix' => '</div>',
     '#theme' => 'fundraiser_ask_amounts',
@@ -477,20 +495,23 @@ function fundraiser_form($node, $edit = NULL) {
     $delta = 3;
   }
   
-  $form['amount_wrapper']['amounts']['amount_delta'] = array(
+  $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta'] = array(
     '#type' => 'value',
     '#value' => $delta,
   );
   
   for ($i = 0; $i < $delta; ++$i ) {
-    $form['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $edit, $amount_values);
+    $form['fundraiser_settings']['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $edit, $amount_values);
   }
   
-  $form['amount_wrapper']['amount_more'] = array(
+  $form['fundraiser_settings']['amount_wrapper']['help'] = array(
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>', 
+  );
+  
+  $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
     '#description' => t("Click here to add more choices."),
-    '#weight' => 1,
     '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
     '#ahah' => array(
       'path' => 'fundraiser_ask/js',
@@ -499,47 +520,31 @@ function fundraiser_form($node, $edit = NULL) {
       'effect' => 'fade',
     ),
   );
-  
-  $form['amount_wrapper']['help'] = array(
-    '#weight' => 2,
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>', 
-  );
 
-
-  $form['show_other_amount'] = array (
+  $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array (
 		'#type' => 'checkbox',
 		'#title' => t('Show other amount option'),
 		'#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
-		'#weight' => -4.97,
 		'#default_value' => $node->show_other_amount,
 	);
-	$form['minimum_donation_amount'] = array(
+	
+	$form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Minimum donation amount'),
 		'#description' => t('The minimum acceptable donation amount.'),
-		'#weight' => -4.96,
 		'#default_value' => number_format($node->minimum_donation_amount, 2),
 	);
-	$form['gateway'] = array(
+	
+	$form['fundraiser_settings']['gateway'] = array(
 		'#type' => 'select',
 		'#title' => t('Payment Gateway'),
 		'#options' => $options,
+		'#weight' => -5,
 		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-		'#weight' => -4.95,
 		'#default_value' => $node->gateway,
 		'#required' => TRUE,
 	);	
-  $form['body_filter']['#weight'] = -4.93;
-  $form['body_filter']['body'] = array(
-    '#type' => 'textarea',
-    '#title' => check_plain($type->body_label),
-    '#default_value' => $node->body,
-    '#rows' => 7,
-    '#weight' => -4.94,
-    '#required' => FALSE,
-  );
-  $form['body_filter']['filter'] = filter_form($node->format);
-  
+	
   /* hidden fields */
   $form['confirmation_page_title'] = array(
     '#type' => 'hidden',
@@ -2354,7 +2359,7 @@ function _fundraiser_ask_ahah() {
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $amount_form = $form['amount_wrapper']['amounts'];
+  $amount_form = $form['fundraiser_settings']['amount_wrapper']['amounts'];
   unset($amount_form['#prefix'], $amount_form['#suffix']);
  
   $output = theme('status_messages') . drupal_render($amount_form);
