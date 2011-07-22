@@ -631,7 +631,7 @@ function _fundraiser_goals_update_goal($object) {
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
 
   db_query("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->fundraiser_goal_delta, $object->visibility, $object->pages, $object->block_title, $bid);
-  db_query("UPDATE {boxes} SET info = '%s' WHERE bid = %d", $object->block_description, $bid);
+  db_query("UPDATE {fundraiser_goals_blocks} SET info = '%s' WHERE bid = %d", $object->block_description, $bid);
   
   // TODO: update role settings.
 }

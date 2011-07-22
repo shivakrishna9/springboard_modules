@@ -66,12 +66,13 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     '#default_value' => isset($edit['post']['submissions']) ? $edit['post']['submissions'] : $edit['values']['submissions'],
   );
   if ((!isset($edit['post']['submissions']) && $edit['values']['submissions'] == 0) || (isset($edit['post']['submissions']) && (int) $edit['post']['submissions'] == 0)) {
+
     $select_title = t('Target Webform');
     // get list of webforms, construct options array
     $select_options = array(0 => t('- select -'));
     $types = variable_get('webform_node_types', array());
     $types = implode("','", $types);
-    $results = db_query("SELECT nid, title FROM {node} WHERE type IN ('%s')", $types);
+    $results = db_query(sprintf("SELECT nid, title FROM {node} WHERE type IN ('%s')", $types));
 
     while ($result = db_fetch_object($results)) {
       $select_options[$result->nid] = $result->title;
