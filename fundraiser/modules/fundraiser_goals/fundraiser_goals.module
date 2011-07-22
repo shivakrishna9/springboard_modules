@@ -361,7 +361,7 @@ function fundraiser_goals_block_title($node, $goal) {
  * Goal object containing values for the current node from {fundraiser_goals}
  */
 function fundraiser_goals_block_content($node, $goal) {
-  
+  drupal_set_message('goal:' . print_r($goal, TRUE));
   if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
 
     $output = $node->fundraiser_goal_template;
@@ -479,7 +479,8 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       // if pid isn't numeric that should mean we have a salesforce campaign id.
       else {
         drupal_set_message('advanced block, campaign');
-        $progress = 10000;
+        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
+        $progress = db_result(db_query("SELECT count(sid) FROM {webform_submitted_data} WHERE cid = %d AND data = '%s'", $cid -> $pid));
       }
 
       break;
@@ -501,11 +502,26 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       break;
     // Donation amount
     case 3:
-      $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
-        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
-        WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
-        $pid));
-
+      // Webform node
+      if (is_numeric($pid)) {
+        $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
+          INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
+          WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
+          $pid));
+      }
+      // Campaign
+      else {
+        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
+        $progress = db_result(db_query("SELECT SUM(uo.order_total) FROM {uc_orders} uo
+          INNER JOIN {fundraiser_webform_order} fwo
+            ON fwo.order_id = uo.order_id
+          INNER JOIN {webform_submitted_data} wsd
+            ON wsd.sid = fwo.sid
+          WHERE wsd.cid = %d
+            AND uo.order_status = 'payment_received' 
+            AND wsd.data = '%s'", $cid, $pid));
+        drupal_set_message('donation campaign progress:' . $progress);
+      }
      break;
   }
 
@@ -528,7 +544,7 @@ function fundraiser_goals_token_list($type = 'all') {
 }
 
 /**
- * 
+ * Implements hook_token_values().
  */
 function fundraiser_goals_token_values($type, $object = NULL) {
  

@@ -128,7 +128,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     }
   }
   else {
-    
+    $goal_options[3] = 'Donation';
     unset($goal_options[2]);
   }
 
