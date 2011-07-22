@@ -299,16 +299,15 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
       switch ($delta) {
         case  'fundraiser_goals_basic':
           if (arg(0) == 'node' && is_numeric (arg(1))) {
-            $node = node_load(arg(1));
+            $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', arg(1)));
             $types = variable_get('webform_node_types', array());
-            if (in_array($node->type, $types)) {
+            if (in_array($node_type, $types)) {
               // TODO: replace all instances of this query with a get function.
-              $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', $node->nid));
-              // TODO: work in support for uniques.
+              $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', arg(1)));
               $goal->goal_progress = fundraiser_goals_current_goal_progress($node->nid, $goal, FALSE);
               $block = array();
               $block['subject'] = fundraiser_goals_block_title($node, $goal);
-              $block['content'] = fundraiser_goals_block_content($node, $goal);
+              $block['content'] = fundraiser_goals_block_content($goal);
               return $block;
             }
           }
@@ -318,7 +317,7 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
         $goal->goal_progress = fundraiser_goals_current_goal_progress($goal->pid, $goal, FALSE);
         if ($goal->pid) {
           $block['subject'] = fundraiser_goals_advanced_block_title($delta);
-          $block['content'] = fundraiser_goals_advanced_block_content($goal);
+          $block['content'] = fundraiser_goals_block_content($goal);
           return $block;
         }
         break;
@@ -354,32 +353,29 @@ function fundraiser_goals_block_title($node, $goal) {
 /**
  * Generates block content for basic goal block.
  * 
- * @param $node
- * Webform node object.
- * 
  * @param $goal
  * Goal object containing values for the current node from {fundraiser_goals}
  */
-function fundraiser_goals_block_content($node, $goal) {
+function fundraiser_goals_block_content($goal) {
   drupal_set_message('goal:' . print_r($goal, TRUE));
   if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
 
-    $output = $node->fundraiser_goal_template;
-    $node->goal_progress = $goal->goal_progress;
-    if (!$goal->goal_progress && $node->fundraiser_goal_default_message) {
-      $output .= $node->fundraiser_goal_default_message;
+    $output = $goal->template;
+
+    if (!$goal->goal_progress && $goal->default_message) {
+      $output .= $goal->default_message;
     }
     // Dividing by zero is awesome. Where do you think the platypus came from?
-    if ($node->goal_progress && $node->fundraiser_goal_target) {
-      $node->goal_percentage = round($node->goal_progress / $node->fundraiser_goal_target * 100);
+    if ($goal->goal_progress && $goal->target) {
+      $goal->goal_percentage = round($goal->goal_progress / $goal->target * 100);
     }
     else {
-      $node->goal_percentage = 0;
+      $goal->goal_percentage = 0;
     }
   }
 
   $output = check_markup($output, $node->fundraiser_goal['goals_wrapper']['template'], FALSE);
-  $output = token_replace($output, 'goal', $node);
+  $output = token_replace($output, 'goal', $goal);
   
 
   return $output;
@@ -398,22 +394,6 @@ function fundraiser_goals_advanced_block_title($delta) {
   $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta));
   return $title;
 }
-
-
-/**
- * Generates block content for advanced goal block.
- * 
- * @param $goal
- * Goal object containing values for the advanced block.
- */
-function fundraiser_goals_advanced_block_content($goal) {
-  $output = $goal->template;
-  $output = check_markup($output, $goal->template_format, FALSE);
-  $output = token_replace($output, 'goal', $node);
-
-  return $output;
-}
-
 
 /**
  * #ahah callback for goals UI
@@ -546,45 +526,28 @@ function fundraiser_goals_token_list($type = 'all') {
 /**
  * Implements hook_token_values().
  */
-function fundraiser_goals_token_values($type, $object = NULL) {
+function fundraiser_goals_token_values($type, $goal = NULL) {
  
   $values = array();
   switch ($type) {
     case 'goal':
-      $values['goal-value'] = $object->fundraiser_goal_target; // support cc debug mode
-      $values['calculated-value'] = $object->goal_progress;
-      if ($object->fundraiser_goal_type == 3) {
+      $values['goal-value'] = $goal->target; // support cc debug mode
+      $values['calculated-value'] = $goal->goal_progress;
+      if ($goal->type == 3) {
         // Cash!
-        $values['calculated-value-formatted'] = money_format('%.2n', $object->goal_progress);
-        $values['goal-value-formatted'] = money_format('%.2n', $object->fundraiser_goal_target);
+        $values['calculated-value-formatted'] = money_format('%.2n', $goal->goal_progress);
+        $values['goal-value-formatted'] = money_format('%.2n', $goal->target);
       }
       else {
         // Prizes!
-        $values['calculated-value-formatted'] = number_format($object->goal_progress);
-        $values['goal-value-formatted'] = number_format($object->fundraiser_goal_target);
+        $values['calculated-value-formatted'] = number_format($goal->goal_progress);
+        $values['goal-value-formatted'] = number_format($goal->target);
       }
-      $values['goal-thermometer'] = theme('goal_thermometer', $object); 
-      $values['calculated-value-percentage'] = $object->goal_percentage;
+      $values['goal-thermometer'] = theme('goal_thermometer', $goal); 
+      $values['calculated-value-percentage'] = $goal->goal_percentage;
       break;
   }
   return $values;
-}
-
-/**
- * Returns rendered thermometer TODO: I should probably change this to a theme function.
- * 
- * @param $target
- * Int goal target.
- * 
- * @param $progress
- * Int current progress towards goal.
- * 
- * @return
- * Returns the formatted markup for a thermometer.
- * 
- */
-function fundraiser_render_thermometer($target, $progress) {
-  return $output;
 }
 
 function fundraiser_goals_theme() {
