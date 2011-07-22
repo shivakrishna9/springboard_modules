@@ -71,9 +71,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     $select_options = array(0 => t('- select -'));
     $types = variable_get('webform_node_types', array());
     $types = implode("','", $types);
-
-    $sql = sprintf("SELECT nid, title FROM {node} WHERE type IN ('%s')", $types);
-    $results = db_query($sql);
+    $results = db_query("SELECT nid, title FROM {node} WHERE type IN ('%s')", $types);
 
     while ($result = db_fetch_object($results)) {
       $select_options[$result->nid] = $result->title;
@@ -145,10 +143,8 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     '#default_value' => isset($edit['post']['fundraiser_goal_type']) ? $edit['post']['fundraiser_goal_type'] : $edit['values']['fundraiser_goal_type'],
   );
   if ($edit['values']['fundraiser_goal_type'] == 2) {
-
-
-    $sql = sprintf('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['fundraiser_goal_parent_item']);
-    $results = db_query($sql);
+  
+    $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['fundraiser_goal_parent_item']);
     while ($component = db_fetch_object($results)) {
      $options[$component->cid] = $component->name;
     }

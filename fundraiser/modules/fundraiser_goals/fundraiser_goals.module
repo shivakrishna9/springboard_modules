@@ -67,7 +67,7 @@ function fundraiser_goals_menu() {
  * Implements hook_form_alter().
  */
 function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
-  // drupal_set_message('form:' . print_r($form, TRUE));
+
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
     $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
@@ -110,7 +110,6 @@ function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
       );
       $target_title = $target_titles[$form_state['values']['fundraiser_goal_type']];
  
-      //drupal_set_message('form values:' . print_r($form_state['values'], TRUE));
       if ($form_state['values']['fundraiser_goal_type']) {
         $node->fundraiser_goal_type = $form_state['values']['fundraiser_goal_type'];
       }
@@ -306,7 +305,7 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
               $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', arg(1)));
               $goal->goal_progress = fundraiser_goals_current_goal_progress($node->nid, $goal, FALSE);
               $block = array();
-              $block['subject'] = fundraiser_goals_block_title($node, $goal);
+              $block['subject'] = fundraiser_goals_block_title($goal, NULL);
               $block['content'] = fundraiser_goals_block_content($goal);
               return $block;
             }
@@ -316,7 +315,7 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
         $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
         $goal->goal_progress = fundraiser_goals_current_goal_progress($goal->pid, $goal, FALSE);
         if ($goal->pid) {
-          $block['subject'] = fundraiser_goals_advanced_block_title($delta);
+          $block['subject'] = fundraiser_goals_block_title($goal, $delta);
           $block['content'] = fundraiser_goals_block_content($goal);
           return $block;
         }
@@ -330,24 +329,21 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
 /**
  * Generates block title for basic goal block.
  * 
- * @param $node
- * Webform node object.
- * 
  * @param $goal
  * Goal object containing values for the current node from {fundraiser_goals}
  */
-function fundraiser_goals_block_title($node, $goal) {
-  if (arg(0) == 'node' && is_numeric (arg(1))) {
-    $node = node_load(arg(1));
-    $types = variable_get('webform_node_types', array());
-    if (in_array($node->type, $types)) {
- 
-      if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
-        // TODO: check spec, beef this up.
-        return t('Goals');
-      }
+function fundraiser_goals_block_title($goal, $delta = NULL) {
+  // Basic block doesn't supply delta
+  if (!$delta) {
+    if (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress) {
+      // TODO: check spec, beef this up.
+      $title = t('Goals');
     }
   }
+  else {
+    $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='fundraiser_goals' AND delta='%s'", $delta));
+  }
+  return $title;
 }
 
 /**
@@ -357,7 +353,7 @@ function fundraiser_goals_block_title($node, $goal) {
  * Goal object containing values for the current node from {fundraiser_goals}
  */
 function fundraiser_goals_block_content($goal) {
-  drupal_set_message('goal:' . print_r($goal, TRUE));
+
   if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
 
     $output = $goal->template;
@@ -443,7 +439,7 @@ function fundraiser_goals_ahah() {
  * this would be the total amount donated. In all other cases the number of webform submissions is returned.
  */
 function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
-  drupal_set_message('goal progress invoked, type:' . $goal->type);
+
   switch ($goal->type) {
 
     // # of submissions
@@ -458,7 +454,6 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       }
       // if pid isn't numeric that should mean we have a salesforce campaign id.
       else {
-        drupal_set_message('advanced block, campaign');
         $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
         $progress = db_result(db_query("SELECT count(sid) FROM {webform_submitted_data} WHERE cid = %d AND data = '%s'", $cid -> $pid));
       }
@@ -500,7 +495,6 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
           WHERE wsd.cid = %d
             AND uo.order_status = 'payment_received' 
             AND wsd.data = '%s'", $cid, $pid));
-        drupal_set_message('donation campaign progress:' . $progress);
       }
      break;
   }
@@ -574,7 +568,7 @@ function _fundraiser_goals_save_goal($object) {
     $theme,
     $object->visibility,
     $object->pages,
-    $object->title);
+    $object->block_title);
 
     // Circle back and save the block description (why the hell is this not in {blocks})?
     $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
