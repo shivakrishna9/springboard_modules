@@ -419,6 +419,9 @@ function fundraiser_form($node, $edit = NULL) {
   foreach ($payment_gateways as $gateway) {
   	$options[$gateway['id']] = $gateway['title'];
   }
+  
+  // Workaround for  D6 core #ahah bug
+  $form['#action'] = $form['nid']['#value'] ? url('node/'.$form['nid']['#value'].'/edit') : url('node/add/donation-form');
 
   $form['title'] = array(
     '#type' => 'textfield',
