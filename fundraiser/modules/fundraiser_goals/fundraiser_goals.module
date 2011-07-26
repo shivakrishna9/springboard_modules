@@ -66,7 +66,23 @@ function fundraiser_goals_menu() {
 /**
  * Implements hook_form_alter().
  */
-function fundraiser_goals_form_alter(&$form, $form_state, $form_id) {
+function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
+
+// Patch code from ahah_helper, works around core #ahah bug
+  // see http://drupal.org/node/591696 for more details
+
+  $form['#cache'] = TRUE;
+
+  // When not set.. try to remember the old action
+  if (!isset($form_state['storage']['old_action'])) {
+    $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+  }
+  // If the form action change, restore the old one.
+  if (isset($form_state['storage']['old_action']) &&
+      ($form['#action']!=$form_state['storage']['old_action'])) {
+    $form['#action'] = $form_state['storage']['old_action'];
+  }
+
 
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
