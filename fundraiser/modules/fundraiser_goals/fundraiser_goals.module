@@ -263,7 +263,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
          }
          break;
        case 'delete':
-         db_query('DELETE FROM {fundraiser_goals} WHERE nid=%d', $node->nid);
+         db_query('DELETE FROM {fundraiser_goals} WHERE pid=%d', $node->nid);
          break;
        default:
          break;
