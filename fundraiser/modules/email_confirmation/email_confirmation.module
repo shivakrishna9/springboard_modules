@@ -120,15 +120,6 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     $form['body_field']['html_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
-  
-    // We need to make sure there is only one  default confirmation template per group.
-     if (module_exists('og')) {
-       $form['#submit'][] = 'email_confirmation_defaults';
-     }
-     else {
-       // Hide OG default field
-       $form['field_confirmation_default']['#type'] = 'hidden';
-     }
   }
 
   if ($form_id == 'donation_form_node_form') {
@@ -676,14 +667,6 @@ function _email_confirmation_test_object() {
   unset($line_item);
 
   return $object;
-}
-
-/**
- * Submit handler for the default group template field.
- */
-function email_confirmation_defaults($form, $form_state) {
-
-
 }
 
 /**

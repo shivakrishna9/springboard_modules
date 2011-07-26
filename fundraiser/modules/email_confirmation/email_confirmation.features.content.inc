@@ -54,7 +54,7 @@ function email_confirmation_content_default_fields() {
   );
 
   // Exported field: field_confirmation_default
-  $fields['confirmation_template-field_confirmation_default'] = array(
+ /* $fields['confirmation_template-field_confirmation_default'] = array(
     'field_name' => 'field_confirmation_default',
     'type_name' => 'confirmation_template',
     'display_settings' => array(
@@ -103,7 +103,7 @@ function email_confirmation_content_default_fields() {
       'type' => 'optionwidgets_onoff',
       'module' => 'optionwidgets',
     ),
-  );
+  );*/
 
   // Exported field: field_confirmation_from_email
   $fields['confirmation_template-field_confirmation_from_email'] = array(
