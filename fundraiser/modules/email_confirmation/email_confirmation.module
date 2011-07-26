@@ -401,20 +401,36 @@ function _email_confirmation_template_ahah() {
 function email_confirmation_fundraiser_order_success($order) {
 
   $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
-  $template_html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
-  $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
-  
-  $message = array();
-  $message['from_name'] = $settings->from_name;
-  $message['from_address'] = $settings->reply_to_email;
-  $message['subject'] = $settings->subject;
-  $message['html_body'] = token_replace($template_html, 'order', $order);
-  $message['html_body'] = token_replace($message['html_body']);
-  $message['text_body'] = token_replace($template_text, 'order', $order);
-  $message['text_body'] = token_replace($message['text_body']);
-  $message['bcc'] = $settings->bcc_email;
 
-  $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+  // Gather settings from the db and build the custom email
+  if ($settings->tid) {
+    $template_html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+    $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
+  
+    $message = array();
+    $message['from_name'] = $settings->from_name;
+    $message['from_address'] = $settings->reply_to_email;
+    $message['subject'] = $settings->subject;
+    $message['html_body'] = token_replace($template_html, 'order', $order);
+    $message['html_body'] = token_replace($message['html_body']);
+    $message['text_body'] = token_replace($template_text, 'order', $order);
+    $message['text_body'] = token_replace($message['text_body']);
+    $message['bcc'] = $settings->bcc_email;
+
+    $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+
+  }
+  // If no settings are present use the default email template.
+  else {
+    $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', arg(1)));
+    $site_name = variable_get('site_name', '');
+    $site_mail = variable_get('site_mail', '');
+    $message['from_name'] = $site_name;
+    $message['from_address'] = $site_mail;
+    $message['subject'] = t('Thank you for your donation');
+    $message['html_body'] = theme('default_confirmation_template', $order, $site_url, $site_name);
+    $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+  }
 }
 
 /**
@@ -688,10 +704,22 @@ function email_confirmation_confirmation_form_validate(&$form, &$form_state) {
     }
   }
   elseif ($form_state['values']['redirect'] == 'confirmation') {
-    drupal_set_message('set it!');
+
     form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
   }
   else {
     form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
   }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function email_confirmation_theme() {
+return array(
+    'default_confirmation_template' => array(
+      'arguments' => array('order' => NULL, 'site_url' => NULL, 'site_name' => NULL),
+      'template' => 'email-confirmation-default-template',
+    ),
+  );
 }
