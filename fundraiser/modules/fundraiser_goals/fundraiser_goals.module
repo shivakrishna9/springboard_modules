@@ -68,18 +68,20 @@ function fundraiser_goals_menu() {
  */
 function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
 
-  $form['#cache'] = TRUE;
-  // When not set.. try to remember the old action
-  if (!isset($form_state['storage']['old_action'])) {
-    $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
-  }
-  // If the form action change, restore the old one.
-  if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
-    $form['#action'] = $form_state['storage']['old_action'];
-  }
+  
 
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
+    $form['#cache'] = TRUE;
+    // When not set.. try to remember the old action
+    if (!isset($form_state['storage']['old_action'])) {
+      $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+      drupal_set_message('action:' . $form_state['storage']['old_action']);
+    }
+    // If the form action change, restore the old one.
+    if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
+      $form['#action'] = $form_state['storage']['old_action'];
+    }
     $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
     while ($delta = db_result($results)) {
       if (isset($form['fundraiser_goals_' . $delta])) {
@@ -229,6 +231,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
       );
  
       $form['#validate'][] = 'fundraiser_goals_validate';
+      $form['#submit'][] = 'fundraiser_goals_submit';
     }
   }
 }
@@ -246,6 +249,13 @@ function fundraiser_goals_validate(&$form, $form_state) {
   if (($form_state['values']['fundraiser_goal_display_threshold'] >= $form_state['values']['fundraiser_goal_target']) && $form_state['values']['fundraiser_goal_type'] > 0) {
     form_set_error('fundraiser_goal_display_threshold', t('Setting the display threshold at or above the goal target means the goal will never be displayed.'));
   }
+}
+
+/**
+ * Submit handler for goal form elements.
+ */
+function fundraiser_goals_submit($form, &$form_state) {
+  unset($form_state['storage']);
 }
 
 /**
