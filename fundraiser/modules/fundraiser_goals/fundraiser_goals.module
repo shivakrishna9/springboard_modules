@@ -68,6 +68,16 @@ function fundraiser_goals_menu() {
  */
 function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
 
+  $form['#cache'] = TRUE;
+  // When not set.. try to remember the old action
+  if (!isset($form_state['storage']['old_action'])) {
+    $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+  }
+  // If the form action change, restore the old one.
+  if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
+    $form['#action'] = $form_state['storage']['old_action'];
+  }
+
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
     $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
@@ -137,12 +147,22 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#suffix' => '</div>',
         '#theme' => 'fundraiser_goals',
       );
+      
+      // Preserve user input through form rebuilts
+      $goal_type = (isset($form_state['values']['fundraiser_goal_type'])) ? $form_state['values']['fundraiser_goal_type'] : $node->fundraiser_goal_type;
+      $goal_target = (isset($form_state['values']['fundraiser_goal_target'])) ? $form_state['values']['fundraiser_goal_target'] : $node->fundraiser_goal_target;
+      $goal_template = (isset($form_state['values']['fundraiser_goal_template'])) ? $form_state['values']['fundraiser_goal_template'] : $node->fundraiser_goal_template;
+      $default_message = (isset($form_state['values']['fundraiser_goal_default_message'])) ? $form_state['values']['fundraiser_goal_default_message'] : $node->fundraiser_goal_default_message;
+      $target_cid = (isset($form_state['values']['fundraiser_goal_target_cid'])) ? $form_state['values']['fundraiser_goal_target_cid'] : $node->fundraiser_goal_target_cid;
+      $display_threshold = (isset($form_state['values']['fundraiser_goal_display_threshold'])) ? $form_state['values']['fundraiser_goal_display_threshold'] : $node->fundraiser_goal_display_threshold;
+
+     // drupal_set_message('$form_state:' . print_r($form_state['values'], TRUE));
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_type'] = array(
         '#type' => 'select',
         '#title' => t('Type of goal'),
         '#description' => t('Choose the type of goal you would like to set for this form.'),
         '#options' => $goal_options,
-        '#default_value' => $node->fundraiser_goal_type,
+        '#default_value' => $goal_type,
         '#ahah' => array(
           'path' => 'fundraiser_goals/js',
           'wrapper' => 'donation-goals',
@@ -154,7 +174,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#type' => 'textfield',
         '#title' => t('Goal target'),
         '#description' => t('Set the target number (petition submissions, total donations, etc) for the goal.'),
-        '#default_value' => $node->fundraiser_goal_target,
+        '#default_value' => $goal_target,
       );
       if ($node->fundraiser_goal_type == 2 || $form_state['values']['fundraiser_goal_type'] == 2) {
         // FIXME: this is massively bugged, rejigger to deal with new form creation.
@@ -169,20 +189,20 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
           '#type' => 'select',
           '#title' => t('Choose a field to target for this goal'),
           '#options' => $options,
-          '#default_value' => $node->fundraiser_goal_target_cid,
+          '#default_value' => $target_cid,
         );
       }
       $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_display_threshold'] = array(
         '#type' => 'textfield',
         '#title' => t('Display Threshold'),
         '#description' => t('Sets the number of submissions (or donation total) that must be reached before this goal is visible.'),
-        '#default_value' => $node->fundraiser_goal_display_threshold ? $node->fundraiser_goal_display_threshold : 0,
+        '#default_value' => $display_threshold ? $displa_threshold : 0,
       );
       $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_default_message'] = array(
         '#type' => 'textarea',
         '#title' => t('Starter message'),
         '#description' => t('This is an optional message to show users if no form submission has been made. Note: if display threshold is set users will not see this message.'),
-        '#default_value' => $node->fundraiser_goal_default_message,
+        '#default_value' => $default_message,
       );
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template'] = array(
         '#type' => 'fieldset',
@@ -193,7 +213,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#type' => 'textarea',
         '#title' => t('Template'),
         '#description' => t('Markup appearing for this goal.'),
-        '#default_value' => $node->fundraiser_goal_template,
+        '#default_value' => $goal_template,
       );
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['goal_tokens'] = array(
         '#type' => 'fieldset',

@@ -421,8 +421,8 @@ function fundraiser_form($node, $edit = NULL) {
   }
   
   // Workaround for  D6 core #ahah bug
-  $form['#action'] = $form['nid']['#value'] ? url('node/'.$form['nid']['#value'].'/edit') : url('node/add/donation-form');
-
+  //$form['#action'] = $form['nid']['#value'] ? url('node/'.$form['nid']['#value'].'/edit') : url('node/add/donation-form');
+  
   $form['title'] = array(
     '#type' => 'textfield',
     '#title' => check_plain($type->title_label),
