@@ -76,7 +76,6 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
     // When not set.. try to remember the old action
     if (!isset($form_state['storage']['old_action'])) {
       $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
-      drupal_set_message('action:' . $form_state['storage']['old_action']);
     }
     // If the form action change, restore the old one.
     if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
@@ -103,6 +102,18 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
   $types = variable_get('webform_node_types', array());
   foreach($types as $type) {
     if (!strcmp($type . '_node_form', $form_id)) {
+    
+      // #AHAH bugfix
+      $form['#cache'] = TRUE;
+      // When not set.. try to remember the old action
+      if (!isset($form_state['storage']['old_action'])) {
+        $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+      }
+      // If the form action change, restore the old one.
+      if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
+        $form['#action'] = $form_state['storage']['old_action'];
+      }
+
       $node = $form['#node'];
       if (!is_object($node)) {
         $node = new stdClass;
@@ -179,7 +190,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#default_value' => $goal_target,
       );
       if ($node->fundraiser_goal_type == 2 || $form_state['values']['fundraiser_goal_type'] == 2) {
-        // FIXME: this is massively bugged, rejigger to deal with new form creation.
+        
         $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $node->nid);
         while ($component = db_fetch_object($results)) {
           $options[$component->cid] = $component->name;

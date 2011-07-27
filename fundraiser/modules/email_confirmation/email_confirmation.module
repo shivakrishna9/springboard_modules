@@ -123,20 +123,33 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   }
 
   if ($form_id == 'donation_form_node_form') {
+  
+    // #AHAH bugfix
+    $form['#cache'] = TRUE;
+    // When not set.. try to remember the old action
+    if (!isset($form_state['storage']['old_action'])) {
+      $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+    }
+    // If the form action change, restore the old one.
+    if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
+      $form['#action'] = $form_state['storage']['old_action'];
+    }
+  
     // Ctools modals setup for preview button
     module_load_include('inc', 'ctools', 'includes/ajax');
     ctools_include('modal');
     ctools_modal_add_js();
     drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
-    
-    $template_nid = $form_state['values']['template_wrapper']['email_template'];
+    drupal_set_message('form state values:' . print_r($form_state['values']['template_wrapper'], TRUE));
+
     $bcc = array();
  
     // We need to update default values if a user selects a new email template.
-    if ($template_nid) {
+    if (isset($form_state['values']['template_wrapper']['email_template'])) {
+      drupal_set_message('set!');
       // Get default values from template.
 
-      $defaults = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $template_nid));
+      $defaults = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $form_state['values']['template_wrapper']['email_template']));
       $results = db_query('SELECT delta, field_confirmation_bcc_email FROM {content_field_confirmation_bcc} ORDER BY delta DESC');
       while ($item = db_fetch_object($results)) {
         $bcc[$item->delta] = $item->field_confirmation_bcc_email;
