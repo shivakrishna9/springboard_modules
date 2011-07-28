@@ -26,7 +26,7 @@
 
          <tr valign="top">
            <td>
-                                       <p><b>Thanks for your order,  <?php print $first_name?>!</b></p>
+                                       <p><b>Thanks for your order,  <?php print $order->billing_first_name?>!</b></p>
 
 
                <p><b>Want to manage your order online?</b><br>
