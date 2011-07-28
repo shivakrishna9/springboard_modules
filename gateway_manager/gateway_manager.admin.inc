@@ -18,7 +18,7 @@ function gateway_manager_list() {
   // get all the gateways so we can swap in a nice title
   $gateways = _managed_gateway_list();
   
-  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated FROM {gateway_manager_gateways} g LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where']), $count, $pager_num, NULL, $filter['args']);
+  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated FROM {gateway_manager_gateways} g LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
   $data = array();
   
   while ($row = db_fetch_array($result)) {
