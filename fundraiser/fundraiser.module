@@ -1241,11 +1241,11 @@ function fundraiser_access($op, $node, $account) {
   $is_author = $account->uid == $node->uid;
   switch ($op) {
     case 'create':
-      return user_access('create donation form', $account);
+      return user_access('create donation form', $account) ? TRUE : NULL;
     case 'update':
-      return user_access('edit own donation form', $account) && $is_author || user_access('edit any donation form', $account);
+      return ((user_access('edit own donation form', $account) && $is_author) || user_access('edit any donation form', $account)) ? TRUE : NULL;
     case 'delete':
-      return user_access('delete own donation form', $account) && $is_author || user_access('delete any donation form', $account);
+      return ((user_access('delete own donation form', $account) && $is_author) || user_access('delete any donation form', $account)) ? TRUE : NULL;
   }
 }
 
