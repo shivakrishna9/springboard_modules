@@ -27,24 +27,6 @@ function springboard_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'springboard.admin.inc',
   );
-  $items['admin/springboard/dashboard'] = array(
-    'title' => 'Springboard',
-    'description' => 'Access reports and site maintenance tasks.',
-    'access arguments' => array('administer springboard'),
-    'page callback' => 'springboard_admin',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -1,
-    'file' => 'springboard.admin.inc',
-  );
-  $items['admin/springboard/dashboard_settings'] = array(
-    'title' => 'Dashboard Settings',
-    'description' => 'Configure Springboard dashboard settings.',
-    'access arguments' => array('administer springboard'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('springboard_admin_settings'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'springboard.admin.inc',
-  );
   $items['admin/springboard/forms'] = array(
     'title' => t('Forms'),
     'description' => t('Manage your donation forms and other webforms.'),

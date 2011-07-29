@@ -146,7 +146,6 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
  
     // We need to update default values if a user selects a new email template.
     if (isset($form_state['values']['template_wrapper']['email_template'])) {
-      drupal_set_message('set!');
       // Get default values from template.
 
       $defaults = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $form_state['values']['template_wrapper']['email_template']));
