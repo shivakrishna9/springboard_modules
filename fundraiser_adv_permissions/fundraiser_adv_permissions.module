@@ -45,6 +45,28 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
 }
 
 /**
+ * Implements hook_fundraiser_access_clone_alter().
+ * 
+ * @see fundraiser.module line 292.
+ */
+function fundraiser_adv_permissions_fundraiser_access_clone_alter(&$access, $node) {
+  global $user;
+  // drupal_set_message('hook invoked, user:' . print_r($user, TRUE));
+  // drupal_set_message('node:' . print_r($node, TRUE));
+  if (module_exists('og')) {
+    foreach($node->og_groups as $group_id) {
+      if (isset($user->og_groups[$group_id]) && user_access('clone donation form')) {
+        $access = TRUE;
+      }
+      else {
+        $access = FALSE;
+      }
+    }
+  }
+}
+
+
+/**
  * Custom page callback for the webform link on donation form pages.
  * 
  * @return form

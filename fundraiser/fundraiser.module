@@ -277,15 +277,25 @@ function fundraiser_clone_access_alter(&$access, $node) {
  */
 function fundraiser_access_clone() {
   global $user;
+  $access = FALSE;
   $nid = arg(1);
 
   if (is_numeric($nid)) {
-    $type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $nid));
-    if (user_access('clone donation form') && !strcmp($type, 'donation_form')) { 
-      return TRUE;
+    $node = node_load($nid);
+    if (!strcmp($node->type, 'donation_form')) {
+
+      if (user_access('clone donation form')) { 
+        $access = TRUE;
+      }
+
+      // Alterable so modules like Advanced Permissions can tweak as needed.
+      // Alter function: hook_fundraiser_access_clone_alter(), isn't that a peach?
+      // Pointless to call the alter function if the current node isn't a donation form.
+      drupal_alter("fundraiser_access_clone", $access, $node);
     }
   }
-  return FALSE;
+  
+  return $access;
 }
 
 /**
