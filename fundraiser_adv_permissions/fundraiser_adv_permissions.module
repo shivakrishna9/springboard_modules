@@ -55,7 +55,7 @@ function fundraiser_adv_permissions_fundraiser_access_clone_alter(&$access, $nod
   // drupal_set_message('node:' . print_r($node, TRUE));
   if (module_exists('og')) {
     foreach($node->og_groups as $group_id) {
-      if (isset($user->og_groups[$group_id]) && user_access('clone donation form')) {
+      if (isset($user->og_groups[$group_id]) && $access) {
         $access = TRUE;
       }
       else {
