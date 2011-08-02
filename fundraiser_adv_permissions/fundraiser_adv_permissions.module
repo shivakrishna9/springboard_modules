@@ -18,6 +18,48 @@ function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
       $form['form_key']['#type'] = 'hidden';
     }
   }
+
+  // We need to limit access to various donation edit form elements based on
+  // user permissions.
+  if (!strcmp($form_id, 'donation_form_node_form')) {
+    if ((user_access('form components - no access') || user_access('form components - limited access')) && $user->uid != 1) {
+
+      // Hide amount fields if user has limited or no access
+      // @see #225 for details.
+      $delta = $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta']['#value'];
+      for($i = 0; $i < $delta; ++$i) {
+
+        // Convert amount field to value.
+        $value = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#default_value'];
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#type'] = 'value';
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#value'] = $value;
+        
+        // Convert label field to value.
+        $label = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#default_value'];
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#type'] = 'value';
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#value'] = $label;
+
+        // Remove remove button.
+        unset($form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['remove_' . $i]);
+        
+        // Remove add another buttom.
+        unset($form['fundraiser_settings']['amount_wrapper']['amount_more']);
+      }
+      
+      // Fold up other amount checkbox and minimum donation amount textfield
+      $show = $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#default_value'];
+      $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#type'] = 'value';
+      $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#value'] = $show;
+      
+      $min = $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount']['#default_value'];
+      $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount']['#type'] = 'value';
+      $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] ['#value'] = $min;
+
+      // Overwrite ask amounts fieldset help message
+      $form['fundraiser_settings']['amount_wrapper']['help']['#value'] = '<p>' . t('If you need to make changes to the ask amounts on your donation form, please contact your group administrator.') . '</p>';
+    }
+  }
+  
 }
 
 /**
