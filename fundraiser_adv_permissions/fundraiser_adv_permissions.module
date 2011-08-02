@@ -83,6 +83,9 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
   $items['node/%webform_menu/webform/mapping']['access callback'] = 'fundraiser_adv_permissions_mapping_access';
+  if (module_exists('sf_donation')) {
+    $items['node/%webform_menu/webform/salesforce-donation-mapping']['access callback'] = 'fundraiser_adv_permissions_mapping_access';
+  }
  // $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
 
