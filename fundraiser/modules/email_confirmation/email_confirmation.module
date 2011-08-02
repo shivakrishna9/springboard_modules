@@ -140,7 +140,6 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     ctools_include('modal');
     ctools_modal_add_js();
     drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
-    drupal_set_message('form state values:' . print_r($form_state['values']['template_wrapper'], TRUE));
 
     $bcc = array();
  
@@ -438,7 +437,6 @@ function email_confirmation_fundraiser_order_success($order) {
   }
   // If no settings are present use the default email template.
   else {
-    drupal_set_message('no settings, attempting default');
     $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', arg(1)));
     $site_name = variable_get('site_name', '');
     $site_mail = variable_get('site_mail', '');
