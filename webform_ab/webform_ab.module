@@ -883,6 +883,7 @@ function webform_ab_form_alter(&$form, $form_state, $form_id) {
             // If the hit should be logged, do so
             if ($log_hit) {
               db_query("INSERT INTO {webform_ab_hits} (test_nid, webform_nid, time, uid, session_id) VALUES(%d, %d, %d, %d, '%s')", array($test_nid, $webform_nid, time(), $user->uid, session_id()));
+              _webform_ab_check_for_win($test_nid);
             }
             break;
           }
