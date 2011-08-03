@@ -60,7 +60,7 @@ function webform_ab_test_reports($node) {
   // If one of the webforms won, determine pre-win and post-win conversions
   if (($winning_webform_nid = _webform_ab_has_winner_already($node)) > 0) {
     // Get pre- and post-win hit counts
-    $result = db_query("SELECT SUM(IF(hits.time < f.win_time, 1, 0)) AS post_win, SUM(IF(hits.time >= f.win_time, 1, 0)) AS pre_win 
+    $result = db_query("SELECT SUM(IF(hits.time > f.win_time, 1, 0)) AS post_win, SUM(IF(hits.time <= f.win_time, 1, 0)) AS pre_win 
       FROM {webform_ab_forms} f 
       LEFT JOIN {webform_ab_hits} hits ON hits.test_nid = f.test_nid AND hits.webform_nid = f.webform_nid 
       WHERE f.test_nid = %d AND f.webform_nid = %d 
@@ -69,7 +69,7 @@ function webform_ab_test_reports($node) {
     
     
     // Get pre- and post-win conversions counts
-    $result = db_query("SELECT SUM(IF(sub.submitted < f.win_time, 1, 0)) AS post_win, SUM(IF(sub.submitted >= f.win_time, 1, 0)) AS pre_win 
+    $result = db_query("SELECT SUM(IF(sub.submitted > f.win_time, 1, 0)) AS post_win, SUM(IF(sub.submitted <= f.win_time, 1, 0)) AS pre_win 
       FROM webform_ab_forms f 
       LEFT JOIN webform_ab_conversion con ON con.test_nid = f.test_nid AND con.webform_nid = f.webform_nid
       LEFT JOIN webform_submissions sub ON con.sid = sub.sid
@@ -124,7 +124,7 @@ function webform_ab_test_reports($node) {
       }
       $line[] = $post_win_hit_data['post_win'];
       $line[] = $post_win_conversion_data['post_win'];
-      $line[] = round(100 * $post_win_conversion_data['post_win'] / $post_win_hit_data['post_win']) . '%';
+      $line[] = ($post_win_hit_data['post_win'] > 0) ? round(100 * $post_win_conversion_data['post_win'] / $post_win_hit_data['post_win']) . '%' : '0%';
     }
     else {
       // Not the winning webform. Pad out into the columns for win data

@@ -754,6 +754,8 @@ function webform_ab_view(&$node, $teaser = FALSE, $page = FALSE) {
       
       // If this test has a winner, send them there
       if (($winner_webform_id = _webform_ab_has_winner_already($node)) > 0) {
+        // Save it to the $_SESSION so that it will be logged as a hit to the form
+        $_SESSION['webform_ab']['webform_for_tests'][$node->nid] = $winner_webform_id;
         drupal_goto('node/' . $winner_webform_id, $query_vars);
       }
       // See if they already have a webform nid in their $_SESSION for this test, and
