@@ -946,7 +946,13 @@ function _webform_ab_check_for_win($test_nid) {
   // If there is no winner yet, see if any webforms have reached the minimum_hits 
   // threshhold and ask other modules if any of those webforms has won
   if (!$winner_found) {
-    $node = node_load($test_nid);
+    /**
+     * Load the test node, and force a reload (so that it's not pulled from
+     * cache). When this is checked immediately after a conversion, the cached
+     * node in node_load() will be out of date by one conversion, which will
+     * cause the winner to be declared later.
+     */
+    $node = node_load($test_nid, NULL, TRUE);
     
     $winnable_webforms = array();
     foreach ($node->included_webforms as $webform_nid => $details) {
