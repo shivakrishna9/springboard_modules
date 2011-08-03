@@ -317,7 +317,7 @@ function webform_ab_clear_test_data_confirm(&$form_state, $node) {
     t('Are you sure you want to clear all hit and conversion data on the test %title?', array('%title' => $node->title)),
     'node/' . $node->nid . '/reports',
     t("This action will remove all hit and conversion records saved for this test, return all included webforms to the Active status, and it cannot be undone. Note that any data submitted to the included webforms will remain intact, it just won't be associated with this A/B Test or used to declare a winning webform."),
-    t('Remove'),
+    t('Reset'),
     t('Cancel'));
 }
 
