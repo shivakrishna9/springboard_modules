@@ -15,7 +15,7 @@ function webform_ab_admin_settings(&$form_state) {
     '#title' => t('Roles to ignore hits from'),
     '#description' => t('Hits and conversions will be ignored from users of the chosen roles.'),
     '#options' => user_roles(),
-    '#default_value' => variable_get('webform_ab_ignore_hits_from_roles', ''),
+    '#default_value' => variable_get('webform_ab_ignore_hits_from_roles', array()),
   );
   $form['webform_ab_ignore_hits_from_ips'] = array(
     '#type' => 'textarea',
