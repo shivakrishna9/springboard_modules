@@ -694,10 +694,12 @@ function fundraiser_update($node) {
   
   // Update donation amounts and labels.
   $donation_amounts = array();
+
   for ($i = 0; $i < $node->amount_delta; ++$i) {
     $amount = 'amount_' . $i;
     $label = 'label_' . $i;
     if ($node->$amount) {
+
       $donation_amounts[$node->$amount] = $node->$label;
     }
   }

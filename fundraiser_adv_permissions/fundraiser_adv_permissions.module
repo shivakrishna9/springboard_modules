@@ -4,7 +4,12 @@
  * Implements hook_perm().
  */
 function fundraiser_adv_permissions_perm() {
-  return array('form components - no access', 'form components - limited access', 'access user/sf mappings');
+  return array(
+    'form components - no access', 
+    'form components - limited access', 
+    'access user/sf mappings',
+    'edit confirmation page settings',
+  );
 }
 
 /**
@@ -18,6 +23,48 @@ function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
       $form['form_key']['#type'] = 'hidden';
     }
   }
+
+  // We need to limit access to various donation edit form elements based on
+  // user permissions.
+  if (!strcmp($form_id, 'donation_form_node_form')) {
+    if ((user_access('form components - no access') || user_access('form components - limited access')) && $user->uid != 1) {
+
+      // Hide amount fields if user has limited or no access
+      // @see #225 for details.
+      $delta = $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta']['#value'];
+      for($i = 0; $i < $delta; ++$i) {
+
+        // Convert amount field to value.
+        $value = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#default_value'];
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#type'] = 'value';
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#value'] = $value;
+        
+        // Convert label field to value.
+        $label = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#default_value'];
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#type'] = 'value';
+        $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#value'] = $label;
+
+        // Remove remove button.
+        unset($form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['remove_' . $i]);
+        
+        // Remove add another buttom.
+        unset($form['fundraiser_settings']['amount_wrapper']['amount_more']);
+      }
+      
+      // Fold up other amount checkbox and minimum donation amount textfield
+      $show = $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#default_value'];
+      $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#type'] = 'value';
+      $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#value'] = $show;
+      
+      $min = $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount']['#default_value'];
+      $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount']['#type'] = 'value';
+      $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] ['#value'] = $min;
+
+      // Overwrite ask amounts fieldset help message
+      $form['fundraiser_settings']['amount_wrapper']['help']['#value'] = '<p>' . t('If you need to make changes to the ask amounts on your donation form, please contact your group administrator.') . '</p>';
+    }
+  }
+  
 }
 
 /**
@@ -34,13 +81,22 @@ function fundraiser_adv_permissions_init() {
  */
 function fundraiser_adv_permissions_menu_alter(&$items) {
 module_load_include('inc', 'fundraiser', 'fundraiser.admin');
+
+  // TODO: hide confirmations tab unless 'edit confirmation page settings' perm is available.
+  // If user has 'no access' and also can't edit confirmation page settings, hide webform tab as well.
+
   // Remove access to the form components UI in the webform tab for donation forms.
   $items['node/%webform_menu/webform']['page callback'] = 'fundraiser_adv_permissions_webform_page';
+  $items['node/%webform_menu/webform']['access callback'] = 'fundraiser_adv_permissions_webform_access';
   $items['node/%webform_menu/webform/components']['access callback'] = 'fundraiser_adv_permissions_component_access';
   $items['node/%webform_menu/webform/components']['type'] = MENU_LOCAL_TASK;
+  $items['node/%webform_menu/webform/confirmations']['access callback'] = 'fundraiser_adv_permissions_confirmation_access';
   $items['node/%webform_menu/webform/confirmations']['type'] = MENU_DEFAULT_LOCAL_TASK;
   $items['node/%webform_menu/webform/confirmations']['weight'] = -10;
   $items['node/%webform_menu/webform/mapping']['access callback'] = 'fundraiser_adv_permissions_mapping_access';
+  if (module_exists('sf_donation')) {
+    $items['node/%webform_menu/webform/salesforce-donation-mapping']['access callback'] = 'fundraiser_adv_permissions_mapping_access';
+  }
  // $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
 
@@ -86,6 +142,30 @@ function fundraiser_adv_permissions_webform_page() {
 }
 
 /**
+ * Access callback for webform tab.
+ */
+function fundraiser_adv_permissions_webform_access() {
+  $args = func_get_args();
+  $node = $args[1];
+  global $user;
+  
+  if ($user->uid != 1 && !strcmp($node->type, 'donation_form')) {
+  
+    // If a user has no access to edit webform components, the default local item for the webform tab
+    // changes to the confirmation page. Discussions on the hacky nature of this behavior aside, this
+    // means that if the user does not have permissions to edit webform components and cannot
+    // edit confirmation page settings, we have no form to display for the webform tab, thus
+    // we bar access to this tab entirely.
+    if (!user_access('edit confirmation page settings') && user_access('form components - no access')) {
+      drupal_set_message('User cannot edit confirnation page settings');
+      return FALSE;
+    }
+  }
+  
+  return node_access('update', $node);
+}
+
+/**
  * Custom access function for form component menu item.
  */
 function fundraiser_adv_permissions_component_access() {
@@ -95,6 +175,25 @@ function fundraiser_adv_permissions_component_access() {
 
   if ($user->uid != 1 && !strcmp($node->type, 'donation_form') && user_access('form components - no access', $user)) {
     return FALSE;
+  }
+  // If no special conditions apply defer to the original access function for this menu item.
+  return node_access('update', $node);
+}
+
+/**
+ * Custom access function for confirmation page menu item.
+ */
+function fundraiser_adv_permissions_confirmation_access() {
+  $args = func_get_args();
+  $node = $args[1];
+  global $user;
+
+  if ($user->uid != 1 && !strcmp($node->type, 'donation_form')) {
+  
+     // Limit access to the confirmations tab to users who have edit privileges.
+     if (!user_access('edit confirmation page settings')) {
+       return FALSE;
+     }
   }
   // If no special conditions apply defer to original access function for this menu item.
   return node_access('update', $node);
