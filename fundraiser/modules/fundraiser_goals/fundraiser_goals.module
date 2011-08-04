@@ -376,9 +376,7 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
 function fundraiser_goals_block_title($goal, $delta = NULL) {
   // Basic block doesn't supply delta
   if (!$delta) {
-    drupal_set_message('goal:' . print_r($goal, TRUE));
     if (isset($goal->type) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
-      drupal_set_message('what?');
       // TODO: check spec, beef this up.
       $title = t('Goals');
     }
@@ -396,7 +394,6 @@ function fundraiser_goals_block_title($goal, $delta = NULL) {
  * Goal object containing values for the current node from {fundraiser_goals}
  */
 function fundraiser_goals_block_content($goal, $node = NULL) {
-  drupal_set_message('goal:' . print_r($goal, TRUE));
   if (isset($goal->template) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
 
     $output = $goal->template;
@@ -412,14 +409,10 @@ function fundraiser_goals_block_content($goal, $node = NULL) {
       $goal->goal_percentage = 0;
     }
   }
-  drupal_set_message('pre everything output:' . $output);
   if (is_object($node) && is_numeric($node->fundraiser_goal['goals_wrapper']['template'])) {
     $output = check_markup($output, $node->fundraiser_goal['goals_wrapper']['template'], FALSE);
   }
-  drupal_set_message('pre-token output:' . $output);
   $output = token_replace($output, 'goal', $goal);
-  
-  drupal_set_message('output:' . $output);
   return $output;
 }
 
