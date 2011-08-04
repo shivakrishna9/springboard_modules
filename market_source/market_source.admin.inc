@@ -13,16 +13,16 @@
  *   Returns a system_settings_form() formatted Form API array.
  */
 function market_source_admin_settings() {
-  $form = $campaigns = array();
-  $campaigns = array_merge(array('0' => t('- Select -')), salesforce_management_api_get_campaigns());
+
+  $default = variable_get('market_source_default_campaign', 'default_ms');
 
   $form['market_source_default_campaign'] = array(
-    '#type' => 'select',
-    '#title' => t('Default Campaign'),
+    '#type' => 'textfield',
+    '#title' => t('Default Market Source'),
     '#description' => t('Select a default campaign for your donation forms.'),
-    '#options' => $campaigns,
-    '#default_value' => variable_get('market_source_default_campaign', 0),
+    '#default_value' => $default,
   );
+
   $form['market_source_validity_period'] = array(
     '#title' => 'Validity Period',
     '#description' => 'Determines how long values should be stored in the user\'s session.<br /><strong>Note:</strong> Values do not persist if the user\'s session ends.',

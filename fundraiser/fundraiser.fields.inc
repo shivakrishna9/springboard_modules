@@ -29,7 +29,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$market_source = array();
 	$market_source['nid'] = $nid;
 	$market_source['pid'] = 0; 
-	$market_source['value'] = 'default_ms';
+	$market_source['value'] = variable_get('market_source_default_campaign', 'default_ms');
 	$market_source['form_key'] = 'ms'; 
 	$market_source['name'] = 'Market Source';
 	$market_source['type'] = 'hidden';  
