@@ -6,6 +6,5 @@ package = Jackson River Springboard
 dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = profile
-dependencies[] = queue_api
 dependencies[] = uc_cart
 version =  6.x-3.0-beta1

@@ -5,30 +5,7 @@
  * @file
  * Administration page callbacks for the webform_user module.
  */
-
-/** 
- * Generates a list of webforms that have been converted to webform_user forms
- */
-function webform_user_list() {
-	$pager_num = 0;
-	$result = pager_query(db_rewrite_sql("SELECT n.nid, n.title, n.created, n.changed, u.related_object, u.authenticate_submitters FROM {node} n INNER JOIN {webform_user} u
-		ON u.nid = n.nid ORDER BY n.title"), 20, $pager_num);
-		
-	$header = array('Title', 'Related To', 'Authenticate Submitters', 'Last Modified', '', '', '');
-	$rows = array();
-	
-	while ($data = db_fetch_object($result)) {
-		$edit_link = l('edit', 'node/' . $data->nid . '/edit');
-		$view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
-		$clone_link = l('clone', 'node/' . $data->nid . '/clone-webform-user');
-		$rows[] = array($data->title, $data->related_object, $data->authenticate_submitter ? 'Yes' : 'No', date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
-	}
-	
-	$output = theme('table', $header, $rows);
-	$output .= theme('pager', NULL, 20, $pager_num);
-	return $output;
-}
-
+ 
 /**
  * Clones a user webform
  */
@@ -84,16 +61,45 @@ function webform_user_clone($node) {
  * Settings form for webform_user
  */
 function webform_user_settings_form() {	
-	
-	$form['webform_user_menu_name'] = array(
-		'#type' => 'textfield',
-		'#title' => t('Menu title for webform user'),
-		'#description' => t('The name of the menu item for the list of webform user forms under content management'),
-		'#default_value' => variable_get('webform_user_menu_name', 'User webforms'),
+	// get a list of all webform enabled node types
+	$webform_enabled_types = variable_get('webform_node_types', 'webform');
+	$node_types = node_get_types();
+
+  // make a friendly list of options
+	$options = array();
+	foreach($webform_enabled_types as $type) {
+    $options[$type] = $node_types[$type]->name;
+	}
+
+	$form['webform_user_node_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Webform user enabled content types'),
+    '#options' => $options,
+    '#default_value' => variable_get('webform_user_node_types', array('webform')),
 	);
 	
-	return system_settings_form($form);
+	// add our own submit handler
+	$form['#submit'][] = 'webform_user_settings_form_submit';
 	
+	return system_settings_form($form);
+}
+
+/**
+ * Submit handler for webform_user settings form.
+ */
+function webform_user_settings_form_submit($form, &$form_state) {
+  // we need to add the selected node types to the webform_node_types_primary variable so that a webform record is added by default
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
+  $webform_user_node_types = $form_state['values']['webform_user_node_types'];
+  
+  foreach($webform_user_node_types as $type => $enabled) {
+    if ($enabled && !in_array($type, $webform_node_types_primary)) {
+      $webform_node_types_primary[] = $type;
+    }
+  }
+  
+  // re-save the variable
+  variable_set('webform_node_types_primary', $webform_node_types_primary);
 }
 
 /**

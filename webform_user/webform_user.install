@@ -78,6 +78,12 @@ function webform_user_schema() {
 	      'not null' => TRUE,
 	      'default' => 0,
 	    ),
+	    'confirmation_page_title' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
 	  ),
 	  'primary key' => array('nid'),
 	  'indexes' => array(
@@ -155,4 +161,14 @@ function webform_user_update_6103() {
 	$updates[] = update_sql($sql);
 	
 	return $updates;
+}
+
+/**
+ * Update 6104: Add confirmation_page_title to webform_user table
+ */
+function webform_user_update_6104() {
+  $updates = array();
+
+  db_add_field($updates, 'webform_user', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE));
+  return $updates;
 }

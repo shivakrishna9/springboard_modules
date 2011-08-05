@@ -3,10 +3,6 @@ name = Webform User
 description = Allows administrators to create webforms and attach the webform submissions to users.
 package = Jackson River Springboard
 core = 6.x
-
 dependencies[] = profile
 dependencies[] = webform
-dependencies[] = queue_processor
-dependencies[] = salesforce_management_api
-
 version = 6.x-3.0-beta1

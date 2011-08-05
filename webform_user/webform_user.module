@@ -22,25 +22,14 @@ function webform_user_menu() {
 	);
 	
 	$items['node/%webform_menu/webform/user_mapping'] = array(
-      'title' => 'User map',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('webform_user_mapping_form', 1),
-      'access callback' => '_webform_user_mapping_form_access',
-      'access arguments' => array(1),
-      'weight' => 30,
-      'type' => MENU_LOCAL_TASK,
+    'title' => 'User map',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_user_mapping_form', 1),
+    'access callback' => '_webform_user_mapping_form_access',
+    'access arguments' => array(1),
+    'weight' => 30,
+    'type' => MENU_LOCAL_TASK,
   );
-	
-	$items['admin/content/webform-user'] = array(
-		'title' => 'User webforms',
-		'title callback' => 'webform_user_title',
-		'page callback' => 'webform_user_list',
-		'access callback' => 'user_access',
-		'access arguments' => array('Map webform submissions to Salesforce objects'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'webform_user.admin.inc',
-		'weight' => 100,
-	);
 	
 	$items['node/%node/clone-webform-user'] = array(
 		'title' => 'Clone',
@@ -52,10 +41,10 @@ function webform_user_menu() {
 		'file' => 'webform_user.admin.inc',
 	);
 	
-	$items['admin/settings/salesforce-management/webform-user'] = array(
-		'title' => t('Webform user settings'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('webform_user_settings_form'),
+	$items['admin/settings/webform-user'] = array(
+    'title' => t('Webform user settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_user_settings_form'),
 		'access arguments' => array('Map webform submissions to Salesforce objects'),
 		'type' => MENU_NORMAL_ITEM,
 		'file' => 'webform_user.admin.inc',
@@ -93,18 +82,29 @@ function webform_user_theme() {
 }
 
 /**
- * Defines a custom title for the list of webform_user forms
- */
-function webform_user_title() {
-	return variable_get('webform_user_menu_name', 'User webforms');
-}
-
-/**
  * Implementation of hook_perm().
  */
 function webform_user_menu_alter(&$items) {
 	// only show related object tab if the webform is webform_user and a salesforce object has been mapped
 	$items['node/%webform_menu/webform/webform_user']['access callback'] = '_webform_user_check_settings';
+}
+
+/**
+ * Implementation of hook_preprocess_webform_confirmation().
+ *
+ * Replace any webform component tokens before displaying confirmation page.
+ */
+function webform_user_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->is_webform_user) {
+    $webform_user = _webform_user_load_webform_user($vars['node']->nid);
+    // set title if available
+    if (!empty($webform_user['confirmation_page_title'])) {
+      drupal_set_title($webform_user['confirmation_page_title']);
+    }
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+    $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE);
+  }
 }
 
 /** 
@@ -126,7 +126,9 @@ function _webform_user_check_settings($op) {
 function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   global $user;
 
-  if ($node->type == 'webform') {
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', 'webform'));
+  
+  if (in_array($node->type, $webform_user_node_types)) {
     switch ($op) {
       case 'validate':
         // Don't allow a node to be a Petition and Fundraiser form at the same time.
@@ -180,7 +182,8 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       		$node->related_object = $webform_user['related_object'];
       		$node->foreign_key_field = $webform_user['foreign_key_field'];
       		$node->send_new_user_email = $webform_user['send_new_user_email'];
-      		
+      		$node->confirmation_page_title = $webform_user['confirmation_page_title'];
+
 	      	$result = db_query("SELECT cid, map_id FROM {webform_user_component_map} WHERE nid = %d", $node->nid);
 				  while($row = db_fetch_array($result)){
 				    $map[$row['cid']] = $row['map_id'];
@@ -192,73 +195,81 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   }
 }
 
-
-/**
- * Implementation of hook_form_FORM_ID_alter().
- */
-function webform_user_form_webform_node_form_alter(&$form, &$form_state) {
-  if ($form['#node']->nid && (arg(2) != 'submission')) {
-    $is_webform_user = $form['#node']->is_webform_user;
-    $authenticate_submitters = $form['#node']->authenticate_submitters;
-    $send_new_user_email = $form['#node']->send_new_user_email;
-    $related_object = $form['#node']->related_object ? $form['#node']->related_object : 'none';
-  }
-  else {
-    $is_webform_user = 0;
-    $authenticate_submitters = 0;
-    $send_new_user_email = 0;
-    $related_object = 'none';
-  }
-
-  $form['webform_user'] = array(
-    '#title' => t('Webform user settings'),
-    '#type' => 'fieldset',
-    '#collapsible' => 1,
-    '#collapsed' => 1,
-    '#weight' => 1,
-    '#access' => 1,
-  );
+function webform_user_save_page_title($form, &$form_state) {
+  $title = check_plain($form_state['values']['page_title']);
+  $nid = $form_state['values']['nid'];
   
-  $form['webform_user']['is_webform_user'] = array(
-    '#title' => t('Create or update users when this webform is submitted.'),
-    '#type' => 'checkbox',
-    '#default_value' => $is_webform_user,
-    '#description' => t('When checked, user profile fields will automatically be added to the webform. When the form is submitted, new users will be created using those form values.'),
-  );
-  
-  if (module_exists('sf_webform')) {
-	  $form['webform_user']['related_object'] = array(
-	  	'#title' => t('Relate the user that submitted this webform to'),
-	  	'#type' => 'radios',
-	  	'#options' => array(
-	  		'none' => t('None'),
-	  		'account' => t('Account'),
-	  		'contact' => t('Contact'),
-	  	),
-	  	'#default_value' => $related_object,
-	  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
-	  );
-  }
-  
-  $form['webform_user']['authenticate_submitters'] = array(
-    '#title' => t('Authenticate form submitters based on e-mail address matches.'),
-    '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
-    '#type' => 'checkbox',
-    '#default_value' => $authenticate_submitters,
-  );
-  
-  $form['webform_user']['send_new_user_email'] = array(
-  	'#title' => t('Send new users a e-mail with their account details.'),
-  	'#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
-  	'#type' => 'checkbox',
-  	'#default_value' => $send_new_user_email,
-  );
+  db_query("UPDATE {webform_user} SET confirmation_page_title = '%s' WHERE nid = %d", $title, $nid);
 }
 
 /**
  * Implementation of hook_form_alter().
  */
 function webform_user_form_alter(&$form, $form_state, $form_id) {
+  $webform_user = _webform_user_load_webform_user($form['nid']['#value']);
+  $node = node_load($form['nid']['#value']);
+  if ($form_id == 'webform_configure_form' && $node->is_webform_user) {
+    $form['submission']['confirmation_wrapper']['page_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Page title'),
+      '#weight' => 0,
+      '#default_value' => $webform_user['confirmation_page_title'],
+    );
+    
+    $form['#submit'][] = 'webform_user_save_page_title';
+  }
+  
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', 'webform'));
+  
+  $node = $form['#node'];
+  
+  // see if we're on a node type that allows webform user
+  if (in_array(str_ireplace('_node_form', '', $form_id), $webform_user_node_types)) {
+    $form['webform_user'] = array(
+      '#title' => t('Webform user settings'),
+      '#type' => 'fieldset',
+      '#collapsible' => 1,
+      '#collapsed' => 1,
+      '#weight' => 1,
+      '#access' => 1,
+    );
+    
+    $form['webform_user']['is_webform_user'] = array(
+      '#title' => t('Create or update users when this webform is submitted.'),
+      '#type' => 'checkbox',
+      '#default_value' => $node->is_webform_user,
+      '#description' => t('When checked, user profile fields will automatically be added to the webform. When the form is submitted, new users will be created using those form values.'),
+    );
+    
+    if (module_exists('sf_webform')) {
+  	  $form['webform_user']['related_object'] = array(
+  	  	'#title' => t('Relate the user that submitted this webform to'),
+  	  	'#type' => 'radios',
+  	  	'#options' => array(
+  	  		'none' => t('None'),
+  	  		'account' => t('Account'),
+  	  		'contact' => t('Contact'),
+  	  	),
+  	  	'#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
+  	  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
+  	  );
+    }
+    
+    $form['webform_user']['authenticate_submitters'] = array(
+      '#title' => t('Authenticate form submitters based on e-mail address matches.'),
+      '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
+      '#type' => 'checkbox',
+      '#default_value' => $node->authenticate_submitters,
+    );
+    
+    $form['webform_user']['send_new_user_email'] = array(
+    	'#title' => t('Send new users a e-mail with their account details.'),
+    	'#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
+    	'#type' => 'checkbox',
+    	'#default_value' => $node->send_new_user_email,
+    );
+  }
+  
   if (strpos($form_id, "webform_client") !== FALSE) {
   
     $nid = $form['#parameters'][2]->nid;
@@ -270,31 +281,28 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
 
       $component_hierarchy = webform_user_parse_components($nid, $components); 
       $fields = _webform_user_get_profile_fields();
-      
-      foreach($fields as $fkey => $field) {
-        if (array_key_exists($field['name'], $component_hierarchy)) {
-          $form_field =& webform_user_find_field($form, $component_hierarchy[$field['name']]);
-          if (empty($form_field['#default_value']) && isset($user->$field['name'])) {
+
+      $map = webform_user_user_map($nid);
+
+      foreach($map as $webform_field => $profile_field) {
+        if (array_key_exists($webform_field, $component_hierarchy)) { 
+          $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          if (empty($form_field['#default_value']) && isset($user->$profile_field)) {
             switch ($form_field['#type']) {
               case 'date':
-                $form_field['#default_value'] = $user->$field['name'];
+                $form_field['#default_value'] = $user->$profile_field;
                 break;
               case 'checkboxes':
-                if ($user->$field['name']) { // will be a 0 if unchecked
-                  $form_field['#default_value'] = array($field['name']);
+                if ($user->$profile_field) { // will be a 0 if unchecked
+                  $form_field['#default_value'] = array($profile_field);
                 }
                 break; 
               default:
-                $form_field['#default_value'] = check_plain($user->$field['name']);  
+                $form_field['#default_value'] = check_plain($user->$profile_field);  
                 break;
             } 
           }
-        }
-      }
-      // special case for email because it is not a profile field
-      if (array_key_exists('mail', $component_hierarchy)) {
-        $form_field =& webform_user_find_field($form, $component_hierarchy['mail']);
-        $form_field['#default_value'] = check_plain($user->mail);
+        } 
       }
     }
   
@@ -978,6 +986,9 @@ function _webform_user_get_user_profile_data($uid) {
  *   An object representation of the selected node.
  */
 function _webform_user_create_webform_components(&$node) {
+  // include webform component functions
+  module_load_include('inc', 'webform', 'includes/webform.components');
+  
   $fieldsets = _webform_user_get_profile_fieldsets();
   $fields = _webform_user_get_profile_fields();
 
