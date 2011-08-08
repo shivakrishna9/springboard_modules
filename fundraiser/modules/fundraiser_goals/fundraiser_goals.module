@@ -339,15 +339,15 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
       switch ($delta) {
         case  'fundraiser_goals_basic':
           if (arg(0) == 'node' && is_numeric (arg(1))) {
-            $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', arg(1)));
+            $node = node_load(arg(1));
             $types = variable_get('webform_node_types', array());
-            if (in_array($node_type, $types)) {
+            if (in_array($node->type, $types)) {
               // TODO: replace all instances of this query with a get function.
               $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', arg(1)));
               $goal->goal_progress = fundraiser_goals_current_goal_progress($node->nid, $goal, FALSE);
               $block = array();
               $block['subject'] = fundraiser_goals_block_title($goal, NULL);
-              $block['content'] = fundraiser_goals_block_content($goal);
+              $block['content'] = fundraiser_goals_block_content($goal, $node);
               return $block;
             }
           }
@@ -376,7 +376,7 @@ function fundraiser_goals_block($op = 'list', $delta = 0, $edit = array()) {
 function fundraiser_goals_block_title($goal, $delta = NULL) {
   // Basic block doesn't supply delta
   if (!$delta) {
-    if (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress) {
+    if (isset($goal->type) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
       // TODO: check spec, beef this up.
       $title = t('Goals');
     }
@@ -393,9 +393,8 @@ function fundraiser_goals_block_title($goal, $delta = NULL) {
  * @param $goal
  * Goal object containing values for the current node from {fundraiser_goals}
  */
-function fundraiser_goals_block_content($goal) {
-
-  if (!$goal->display_threshold ||$goal->display_threshold <= $goal->goal_progress) {
+function fundraiser_goals_block_content($goal, $node = NULL) {
+  if (isset($goal->template) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
 
     $output = $goal->template;
 
@@ -410,11 +409,10 @@ function fundraiser_goals_block_content($goal) {
       $goal->goal_percentage = 0;
     }
   }
-
-  $output = check_markup($output, $node->fundraiser_goal['goals_wrapper']['template'], FALSE);
+  if (is_object($node) && is_numeric($node->fundraiser_goal['goals_wrapper']['template'])) {
+    $output = check_markup($output, $node->fundraiser_goal['goals_wrapper']['template'], FALSE);
+  }
   $output = token_replace($output, 'goal', $goal);
-  
-
   return $output;
 }
 
@@ -539,7 +537,6 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       }
      break;
   }
-
   return $progress;
 }
 

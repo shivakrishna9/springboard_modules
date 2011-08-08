@@ -209,6 +209,7 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       
       $form['submitted']['ms']['#type'] = 'textfield';
       $form['submitted']['cid']['#type'] = 'textfield';
+      $form['submitted']['cid']['#default_value'] = variable_get('market_source_default_campaign', 0);
       $form['submitted']['referrer']['#type'] = 'textfield';
       $form['submitted']['initial_referrer']['#type'] = 'textfield';
     }

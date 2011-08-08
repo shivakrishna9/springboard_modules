@@ -1,16 +1,26 @@
 Drupal.behaviors.emailBehavior = function(){
 
-   $old_action = $('#node-form').attr('action');
- 
+   $current_action = $('#node-form').attr('action');
+   if ($current_action != Drupal.settings.basePath + 'email_confirmation/preview_modal') {
+    $old_action = $('#node-form').attr('action');
+   }
+
 
   // Add onmouseover and onmouseout functions to swap form action
   $('#edit-template-wrapper-preview').mouseover(function(){
-    $('#node-form').get(0).setAttribute('action', '/email_confirmation/preview_modal');
+    //alert('base path:' + Drupal.settings.basePath);
+    $('#node-form').get(0).setAttribute('action', Drupal.settings.basePath + 'email_confirmation/preview_modal');
   });
 
   $('#edit-template-wrapper-preview').mouseout(function(){
     $('#node-form').get(0).setAttribute('action', $old_action);
+     $current_action = $('#node-form').attr('action');
   });
 
+  $('#edit-submit').mouseover(function() {
+    // This shouldn't be necessary.
+    $('#node-form').get(0).setAttribute('action', $old_action);
 
+  });
 };
+

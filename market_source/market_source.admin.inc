@@ -13,7 +13,15 @@
  *   Returns a system_settings_form() formatted Form API array.
  */
 function market_source_admin_settings() {
-  $form = array();
+
+  $default = variable_get('market_source_default_campaign', 'default_ms');
+
+  $form['market_source_default_campaign'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default Market Source'),
+    '#description' => t('Select a default campaign for your donation forms.'),
+    '#default_value' => $default,
+  );
 
   $form['market_source_validity_period'] = array(
     '#title' => 'Validity Period',
