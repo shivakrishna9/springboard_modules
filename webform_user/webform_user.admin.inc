@@ -62,7 +62,7 @@ function webform_user_clone($node) {
  */
 function webform_user_settings_form() {	
 	// get a list of all webform enabled node types
-	$webform_enabled_types = variable_get('webform_node_types', 'webform');
+	$webform_enabled_types = variable_get('webform_node_types', array('webform'));
 	$node_types = node_get_types();
 
   // make a friendly list of options

@@ -126,7 +126,7 @@ function _webform_user_check_settings($op) {
 function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   global $user;
 
-  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', 'webform'));
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
   
   if (in_array($node->type, $webform_user_node_types)) {
     switch ($op) {
@@ -219,7 +219,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
     $form['#submit'][] = 'webform_user_save_page_title';
   }
   
-  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', 'webform'));
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
   
   $node = $form['#node'];
   
