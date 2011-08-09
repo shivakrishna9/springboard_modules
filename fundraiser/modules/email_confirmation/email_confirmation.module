@@ -169,17 +169,18 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
             reply_to_email AS field_confirmation_reply_email_email, 
             bcc_email AS bcc, 
             html_message AS field_confirmation_html_message_value,
-            text_message AS field_confirmation_text_message_value
+            html_message_format AS confirmation_html_message_format,
+            text_message AS field_confirmation_text_message_value,
+            text_message_format AS confirmation_text_message_format
           FROM {fundraiser_confirmations}
           WHERE nid = %d', $nid);
 
         $defaults = db_fetch_object($result);
       }
 
-      // TODO: retrieve default values from wherever they're being stored, possibly the fundraiser table.
     }
      /* email template configuration, see #133*/
-    // TODO: replace variable_get() with appropriate $node property
+
     $form['fundraiser_settings']['confirmation'] = array(
       '#type' => 'fieldset',
       '#title' => t('Email confirmation'),
@@ -233,19 +234,21 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => $defaults->bcc,
     );
 
-    // TODO: add input type filters?
-    // TODO: list available tokens in description of text fields or as separate form element.
     $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('HTML Email Message'),
       '#default_value' => $defaults->field_confirmation_html_message_value,
-
+      '#weight' => 10,
     );
+    
+    $html_format = ($defaults->confirmation_html_message_format) ? $defaults->confirmation_html_message_format : FILTER_FORMAT_DEFAULT;
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_message_format'] = filter_form($html_format, 11, array('confirmation_html_message_format'));
     $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
+      '#weight' => 12,
     );
     $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
@@ -254,12 +257,17 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'textarea',
       '#title' => t('Text Email Message'),
       '#default_value' => $defaults->field_confirmation_text_message_value,
+      '#weight' => 13,
     );
-   $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
+    
+    $text_format = ($defaults->confirmation_text_message_format) ? $defaults->confirmation_text_message_format : FILTER_FORMAT_DEFAULT;
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_message_format'] = filter_form($text_format, 14, array('confirmation_text_message_format'));
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
+      '#weight' => 15,
     );
     $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
@@ -271,6 +279,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'button',
       '#value' => t('Preview'),
       '#attributes' => array('class' => 'ctools-use-modal'),
+      '#weight' => 20,
     );
     
     // Validate email template selection field
@@ -309,12 +318,15 @@ function email_confirmation_nodeapi(&$node, $op) {
       $reply_to_email = $values['confirmation_reply_email'];
       $bcc_email = $values['confirmation_bcc_email'];
       $html_body = $values['confirmation_html_email_message'];
+      $html_body_format = $node->confirmation_html_message_format;
       $text_body = $values['confirmation_text_email_message'];
-      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+      $text_body_format = $node->confirmation_text_message_format;
+      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
       break;  
 
 
     case 'update':
+      drupal_set_message('format:' . $node->fundraiser_confirmation );
       $values = $node->template_wrapper;
 
       // Defend against random node_save()s
@@ -327,7 +339,9 @@ function email_confirmation_nodeapi(&$node, $op) {
         $values['confirmation_reply_email'] = $data->reply_to_email;
         $values['confirmation_bcc_email'] = $data->bcc_email;
         $values['confirmation_html_email_message'] = $data->html_message;
+        $values['confirmation_html_message_format'] = $data->html_message_format;
         $values['confirmation_text_email_message'] = $data->text_message;
+        $values['confirmation_text_message_format'] = $data->text_message_format;
       }
       $tid = $values['email_template'];
       $subject = $values['confirmation_subject'];
@@ -335,15 +349,16 @@ function email_confirmation_nodeapi(&$node, $op) {
       $reply_to_email = $values['confirmation_reply_email'];
       $bcc_email = $values['confirmation_bcc_email'];
       $html_body = $values['confirmation_html_email_message'];
+      $html_body_format = (is_numeric($node->confirmation_html_message_format)) ? $node->confirmation_html_message_format : $values['confirmation_html_message_format'];
       $text_body = $values['confirmation_text_email_message'];
-      
+      $text_body_format = (is_numeric($node->confirmation_text_message_format)) ? $node->confirmation_text_message_format : $values['confirmation_text_message_format'];
       // Futureproof rolling out this feature to existing sites, we can't assume a record will already exist when a donation form
       // is updated.
       if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid=%d', $node->nid))) {   
-        db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', text_message = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body, $node->nid);
+        db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $node->nid);
       }
       else {
-        db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s')", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $text_body);
+        db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
       }
     }
   }
@@ -419,17 +434,26 @@ function email_confirmation_fundraiser_order_success($order) {
 
   // Gather settings from the db and build the custom email
   if ($settings->tid) {
-    $template_html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+    $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+    $template_html = check_markup($result->body, $result->format);
+
+    // TODO: convert field to accept input filters.
     $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
-  
+    
+    
     $message = array();
     $message['from_name'] = $settings->from_name;
     $message['from_address'] = $settings->reply_to_email;
     $message['subject'] = $settings->subject;
+
+    // Perform token replacements for "order" tokens and "all" tokens.
     $message['html_body'] = token_replace($template_html, 'order', $order);
     $message['html_body'] = token_replace($message['html_body']);
+
+    // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'order', $order);
     $message['text_body'] = token_replace($message['text_body']);
+    $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 
     $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
@@ -518,9 +542,10 @@ function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' && $object->order_status == 'in_checkout') {
     $nid = $object->products[0]->nid;
-    $data = db_fetch_object(db_query('SELECT html_message, text_message FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
-    $values['confirmation-message-text'] = check_plain($data->text_message);
-    $values['confirmation-message-html'] = $data->html_message;
+    $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
+    $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format);
+    $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
+    $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format);
     return $values;
   }
 }

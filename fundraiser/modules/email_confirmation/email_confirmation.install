@@ -96,9 +96,19 @@ function email_confirmation_schema() {
         'description' => t('HTML version of the email message.'),
         'type' => 'text',
       ),
+      'html_message_format' => array(
+        'description' => t('Input format'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
       'text_message' => array(
         'description' => t('Text version of the email message.'),
         'type' => 'text',
+      ),
+      'text_message_format' => array(
+        'description' => t('Input format'),
+        'type' => 'int',
+        'unsigned' => TRUE,
       ),
     ),
     'primary key' => array('nid'),
@@ -150,4 +160,14 @@ if (module_exists('ca')) {
           ", $action, time(), time());
     }
   }
+}
+
+/**
+ * Implements hook_update().
+ */
+function email_confirmation_update_6002() {
+  $ret = array();
+  $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN html_message_format int UNSIGNED");
+  $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN text_message_format int UNSIGNED");
+  return $ret;
 }
