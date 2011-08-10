@@ -131,7 +131,7 @@ function fundraiser_adv_permissions_fundraiser_access_clone_alter(&$access, $nod
 function fundraiser_adv_permissions_webform_page() {
   $args = func_get_args();
   $node = $args[0];
-  if ($node->type == 'donation_form') {
+  if ($node->type == 'donation_form' && user_access('edit confirmation page settings')) {
    module_load_include('inc', 'fundraiser', 'fundraiser.admin');
     return drupal_get_form('fundraiser_confirmation_settings_form', $node);
   }
@@ -194,6 +194,11 @@ function fundraiser_adv_permissions_confirmation_access() {
      if (!user_access('edit confirmation page settings')) {
        return FALSE;
      }
+  }
+  
+  // hide confirmations tab for webform nodes that aren't donation forms. See #207 for further details.
+  if (strcmp($node->type, 'donation_form')) {
+    return FALSE;
   }
   // If no special conditions apply defer to original access function for this menu item.
   return node_access('update', $node);
