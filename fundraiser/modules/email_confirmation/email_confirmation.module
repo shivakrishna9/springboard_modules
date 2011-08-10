@@ -449,10 +449,13 @@ function email_confirmation_fundraiser_order_success($order) {
 
     // Perform token replacements for "order" tokens and "all" tokens.
     $message['html_body'] = token_replace($template_html, 'order', $order);
+    $message['html_body'] = token_replace($message['html_body'], 'order', $order);
     $message['html_body'] = token_replace($message['html_body']);
+
 
     // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'order', $order);
+    $message['text_body'] = token_replace($message['text_body'], 'order', $order);
     $message['text_body'] = token_replace($message['text_body']);
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
@@ -541,12 +544,14 @@ function email_confirmation_token_list($type = 'all') {
  */
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
-  if ($type == 'order') {
+  if ($type == 'order' || $type == 'all') {
+    
     $nid = $object->products[0]->nid;
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
     $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format);
+    drupal_set_message('values:' . print_r($values, TRUE));
     return $values;
   }
 }
