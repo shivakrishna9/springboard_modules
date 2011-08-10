@@ -429,6 +429,7 @@ function _email_confirmation_template_ahah() {
  * Implements hook_fundraiser_order_success().
  */
 function email_confirmation_fundraiser_order_success($order) {
+  $GLOBALS['order'] = $order;
 
   $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
 
@@ -476,7 +477,7 @@ function email_confirmation_fundraiser_order_success($order) {
  * Implements hook_mail().
  */
 function email_confirmation_mail($key, &$message, $params) {
-  
+
   // To make the HTML email work, implement all our own headers
   $boundary = '----=_NextPart_'.md5(uniqid());
   
