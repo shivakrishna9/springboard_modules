@@ -16,6 +16,13 @@ function fundraiser_adv_permissions_perm() {
  * Implements hook_form_alter().
  */
 function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
+  global $user;
+
+  // Remove add component form elements for users with "form components - limited access" perm.
+  if (!strcmp('webform_components_form', $form_id) && user_access('form components - limited access') && $user->uid != 1) {
+    unset ($form['add']);
+  }
+
 
   global $user;
   if (!strcmp($form_id, 'webform_component_edit_form') && user_access('form components - limited access') && $user->uid != 1) {
@@ -85,6 +92,9 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   // TODO: hide confirmations tab unless 'edit confirmation page settings' perm is available.
   // If user has 'no access' and also can't edit confirmation page settings, hide webform tab as well.
 
+  $items['node/%webform_menu/webform/components/%webform_menu_component']['access callback'] = 'fundraiser_adv_permissions_edit_component_access';
+  $items['node/%webform_menu/webform/components/%webform_menu_component/clone']['access callback'] = 'fundraiser_adv_permissions_clone_component_access';
+  $items['node/%webform_menu/webform/components/%webform_menu_component/delete']['access callback'] = 'fundraiser_adv_permissions_delete_component_access';
   // Remove access to the form components UI in the webform tab for donation forms.
   $items['node/%webform_menu/webform']['page callback'] = 'fundraiser_adv_permissions_webform_page';
   $items['node/%webform_menu/webform']['access callback'] = 'fundraiser_adv_permissions_webform_access';
@@ -99,6 +109,34 @@ module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   }
  // $items['node/%webform_menu/webform/mapping']['access arguments'] = array('access user/sf mappings');
 }
+
+function fundraiser_adv_permissions_edit_component_access() {
+  $args = func_get_args();
+  $node = $args[1]; 
+  return node_access('update', $node);
+}
+
+function fundraiser_adv_permissions_clone_component_access() {
+  global $user;
+  $args = func_get_args();
+  $node = $args[1];
+  if (user_access('form components - limited access') && $user->uid != 1) {
+    return FALSE;
+  }
+  return node_access('update', $node);
+}
+
+
+function fundraiser_adv_permissions_delete_component_access() {
+  global $user;
+  $args = func_get_args();
+  $node = $args[1];
+  if (user_access('form components - limited access') && $user->uid != 1) {
+    return FALSE;
+  }
+  return node_access('update', $node);
+}
+
 
 /**
  * Implements hook_fundraiser_access_clone_alter().
