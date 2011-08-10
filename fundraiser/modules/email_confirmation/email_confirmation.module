@@ -326,7 +326,7 @@ function email_confirmation_nodeapi(&$node, $op) {
 
 
     case 'update':
-      drupal_set_message('format:' . $node->fundraiser_confirmation );
+     
       $values = $node->template_wrapper;
 
       // Defend against random node_save()s
@@ -551,7 +551,7 @@ function email_confirmation_token_values($type, $object = NULL) {
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
     $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format);
-    drupal_set_message('values:' . print_r($values, TRUE));
+
     return $values;
   }
 }
