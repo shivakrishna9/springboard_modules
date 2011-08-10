@@ -321,7 +321,7 @@ function email_confirmation_nodeapi(&$node, $op) {
       $html_body_format = $node->confirmation_html_message_format;
       $text_body = $values['confirmation_text_email_message'];
       $text_body_format = $node->confirmation_text_message_format;
-      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
+      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
       break;  
 
 
