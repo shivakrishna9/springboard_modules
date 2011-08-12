@@ -161,6 +161,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#theme' => 'fundraiser_goals',
       );
       
+      
       // Preserve user input through form rebuilts
       $goal_type = (isset($form_state['values']['fundraiser_goal_type'])) ? $form_state['values']['fundraiser_goal_type'] : $node->fundraiser_goal_type;
       $goal_target = (isset($form_state['values']['fundraiser_goal_target'])) ? $form_state['values']['fundraiser_goal_target'] : $node->fundraiser_goal_target;
@@ -280,6 +281,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
      switch ($op) {
        case 'load':
          $goal = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid=%d and delta="basic"', $node->nid));
+         $node->fundraiser_goal_delta = $goal->delta;
          $node->fundraiser_goal_type = $goal->type;
          $node->fundraiser_goal_target = $goal->target;
          $node->fundraiser_goal_template = $goal->template;
@@ -597,7 +599,7 @@ function fundraiser_goals_theme() {
 function _fundraiser_goals_save_goal($object) {
   
   if (!$object->nid) {
-   $theme = variable_get('theme_default', '');
+    $theme = variable_get('theme_default', '');
     // Save the bulk of the block settings  
     db_query("INSERT INTO {blocks} 
     (module, delta, status, theme, custom, visibility, pages, title)
@@ -622,7 +624,6 @@ function _fundraiser_goals_save_goal($object) {
     }
   }
   if ($object->fundraiser_goal_type) {
-
     db_query("INSERT INTO {fundraiser_goals} 
       (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
       VALUES ('%s', '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 

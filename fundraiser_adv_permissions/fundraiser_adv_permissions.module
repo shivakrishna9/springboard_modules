@@ -195,7 +195,6 @@ function fundraiser_adv_permissions_webform_access() {
     // edit confirmation page settings, we have no form to display for the webform tab, thus
     // we bar access to this tab entirely.
     if (!user_access('edit confirmation page settings') && user_access('form components - no access')) {
-      drupal_set_message('User cannot edit confirnation page settings');
       return FALSE;
     }
   }

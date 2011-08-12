@@ -182,6 +182,7 @@ function fundraiser_clone_donation_form($nid) {
   if (is_numeric($nid)) {
     global $user;
     $node = node_load($nid);
+   // drupal_set_message('node to clone:' . print_r($node, TRUE));
     if (isset($node->nid)) {
       $original_node = drupal_clone($node);
 
@@ -197,7 +198,7 @@ function fundraiser_clone_donation_form($nid) {
       $node->title = t('Clone of !title', array('!title' => $node->title));
       $node->internal_name = 'Clone of ' . $original_node->internal_name;
       $node->is_being_cloned = true;
-
+      
       if (variable_get('clone_reset_'. $node->type, FALSE)) {
         $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
         // Fill in the default values.
