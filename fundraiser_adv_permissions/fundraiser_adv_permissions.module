@@ -40,14 +40,15 @@ function fundraiser_adv_permissions_form_alter(&$form, $form_state, $form_id) {
       // @see #225 for details.
       $delta = $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta']['#value'];
       for($i = 0; $i < $delta; ++$i) {
-
         // Convert amount field to value.
         $value = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#default_value'];
+        unset($form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]);
         $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#type'] = 'value';
         $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['amount_' . $i]['#value'] = $value;
         
         // Convert label field to value.
         $label = $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#default_value'];
+        unset($form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]);
         $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#type'] = 'value';
         $form['fundraiser_settings']['amount_wrapper']['amounts'][$i]['label_' . $i]['#value'] = $label;
 

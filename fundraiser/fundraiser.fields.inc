@@ -21,7 +21,7 @@
  */
 function fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-  
+  drupal_set_message('creating components~');
   // create an array to hold all of the created components
   $components = array();
 

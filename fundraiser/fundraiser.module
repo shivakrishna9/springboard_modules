@@ -562,6 +562,7 @@ function fundraiser_validate(&$node) {
  * Implementation of hook_insert().
  */
 function fundraiser_insert($node) {
+
   db_query(
     "
       INSERT INTO {fundraiser} 
@@ -582,7 +583,9 @@ function fundraiser_insert($node) {
   );
   
   // skip some steps if the form is being cloned
+
   if (!$node->is_being_cloned) {
+
     $donation_amounts = array();
     // add webform components
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
@@ -594,9 +597,10 @@ function fundraiser_insert($node) {
       }
       ksort($donation_amounts, SORT_NUMERIC);
     }
-    
+
     $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
-  	// automap
+
+    // automap
   	fundraiser_user_map_create($node->nid, $components);
     // fire a hook that other modules can utilize to add additional processing when a donation form is created
     module_invoke_all('fundraiser_form_insert', $node, $components);
