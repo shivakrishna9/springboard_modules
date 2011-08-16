@@ -2625,7 +2625,7 @@ function fundraiser_track_pageview() {
 function fundraiser_track_gateway_failure() {
    $form_nid = arg(1);
    if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    db_query('UPDATE {fundraiser_tracking} SET gateway_failure = gateway_failure + 1 WHERE nid = %d', $form_nid);
+    db_query('UPDATE {fundraiser_tracking} SET gateway_failures = gateway_failures + 1 WHERE nid = %d', $form_nid);
   }
   else {
     // This shouldn't happen.
