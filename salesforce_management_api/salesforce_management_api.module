@@ -997,7 +997,7 @@ function salesforce_management_api_get_object_recordtypes($object) {
   if (empty($object)) {
     return array();
   }
-  
+
 	$sf = salesforce_management_api_connect();
 	if ($sf) {
 		$result = $sf->client->describeSObjects(array($object));

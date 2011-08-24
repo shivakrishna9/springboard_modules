@@ -319,7 +319,6 @@ function salesforce_management_api_fieldmap_delete_form_submit($form, &$form_sta
 function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   // Load the fieldmap from the database.
   $map = salesforce_management_api_fieldmap_load($fieldmap);
-  
   // Return to the admin page if the fieldmap did not exist.
   if (empty($map)) {
     drupal_set_message(t('That fieldmap does not exist.'), 'error');
@@ -331,6 +330,37 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
 
   $form = array();
 
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#description' => t('Enter a recognizable name for the fieldmap.'),
+    '#default_value' => $map['name'],
+    '#required' => TRUE,
+  );
+
+  $form['salesforce_recordtype_wrapper'] = array(
+    '#prefix' => '<div id="recordtype">',
+    '#suffix' => '</div>',
+  );
+
+  $recordtypes = salesforce_management_api_get_object_recordtypes($map['salesforce']);
+
+  $form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
+    '#type' => 'select',
+    '#title' => 'Salesforce record type',
+    '#options' => count($recordtypes) > 1 ? $recordtypes : array(t('None available')),
+    '#description' => t('Objects using this fieldmap will be assigned to the selected record type.'),
+    '#default_value' => $map['recordtype_id'],
+  );
+
+  $form['automatic'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Automatically Populate Salesforce?'),
+    '#return_value' => 1,
+    '#default_value' => $map['automatic'],
+    '#description' => t('Automatically create and link new salesforce objects when Drupal objects are created?'),
+  );
+  
   // Add the index to the form array.
   $form['fieldmap_index'] = array(
     '#type' => 'value',
@@ -451,7 +481,11 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
 function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state) {
   // Load the fieldmap from the database.
   $map = salesforce_management_api_fieldmap_load($form_state['values']['fieldmap_index']);
-
+  
+  // Update name, record type, etc.
+  $map['name'] = $form_state['values']['name'];
+  $map['recordtype_id'] = $form_state['values']['salesforce_recordtype'];
+  $map['automatic'] = $form_state['values']['automatic'];
   // Reset the fields array on the fieldmap.
   $map['fields'] = array();
 
