@@ -253,6 +253,16 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
+  if (module_exists('secure_prepopulate')) {
+    $items['admin/springboard/settings/secure-prepopulate'] = array(
+      'title' => t('Secure Prepopulate Settings'),
+      'description' => t('Configure Secure Prepopulate.'),
+      'page callback' => 'drupal_goto',
+      'page arguments' => array('admin/settings/secure-prepopulate'),
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+  }
   // Confirmation submenu
   $items['admin/springboard/confirmation/email'] = array(
     'title' => t('Email Templates'),
