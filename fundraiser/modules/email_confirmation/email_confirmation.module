@@ -200,7 +200,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#options' => email_confirmation_list_templates(),
       '#required' => TRUE,
       '#ahah' => array(
-        'path' => 'emaiL_confirmation/js',
+        'path' => 'email_confirmation/js',
         'wrapper' => 'template-wrapper',
         'method' => 'replace',
         'effect' => 'fade',
