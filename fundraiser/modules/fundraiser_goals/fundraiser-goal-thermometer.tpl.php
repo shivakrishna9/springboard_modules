@@ -1,4 +1,3 @@
-<h2>Thermometer template file output</h2>
 <?php
  /*
   Relevant available properties:
