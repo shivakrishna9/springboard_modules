@@ -23,11 +23,18 @@ function email_confirmation_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
   $items['email_confirmation/preview_modal'] = array(
-    'title' => 'Email Confirmation Template Preview',
+    'title' => 'Confirmation Email Template Preview',
     'access callback' => TRUE,
     'page callback' => 'email_confirmation_modal_preview',
     'page arguments' => array(1),
     'type' => MENU_CALLBACK,
+  );
+  $items['admin/content/confirmation_templates'] = array(
+    'title' => 'Confirmation Email Templates',
+    'description' => '',
+    'page callback' => 'email_confirmation_template_list',
+    'access arguments' => array('create confirmation_template content'),
+    'type' => MENU_NORMAL_ITEM,
   );
   return $items;
 
@@ -414,7 +421,7 @@ function email_confirmation_list_templates() {
  * #AHAH callback for email template selection form element.
  */
 function _email_confirmation_template_ahah() {
- 
+  drupal_set_message('post:' . print_r($_POST, TRUE));
   module_load_include('inc', 'node', 'node.pages');
   $form_state = array('storage' => NULL, 'submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
@@ -778,4 +785,29 @@ return array(
       'template' => 'email-confirmation-default-template',
     ),
   );
+}
+
+
+/**
+ * 
+ */
+function email_confirmation_template_list() {
+  global $user;
+  $result = db_query("SELECT n.nid, n.uid, n.title, n.created, n.changed FROM {node} n WHERE n.type = 'confirmation_template' ORDER BY n.changed DESC");
+
+  $header = array('Internal Name', 'Last Modified', '', '');
+  $rows = array();
+
+  while ($data = db_fetch_object($result)) {
+    if (user_access('edit any confirmation_template content', $user) || ($data->uid == $user->uid && user_access('edit own confirmation_template content', $user))) {
+      $edit_link = l('edit', 'node/' . $data->nid . '/edit');
+    }
+    $view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
+    
+    $rows[] = array($data->title, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link);
+  }
+
+  $output = theme('table', $header, $rows);
+  return $output;  
+
 }
