@@ -421,7 +421,6 @@ function email_confirmation_list_templates() {
  * #AHAH callback for email template selection form element.
  */
 function _email_confirmation_template_ahah() {
-  drupal_set_message('post:' . print_r($_POST, TRUE));
   module_load_include('inc', 'node', 'node.pages');
   $form_state = array('storage' => NULL, 'submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
