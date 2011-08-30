@@ -65,7 +65,7 @@ function page_wrappers_preprocess_page(&$vars) {
  */
 function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
 
-  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form' => 'donation_form'));
   
   // page wrapper specific
   if ($node->type == 'page_wrapper') {
@@ -109,7 +109,7 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
         break;
     }
   }
-  elseif (in_array($node->type, $enabled_types)) {
+  elseif ($enabled_types[$node->type]) {
     switch ($op) {
       // insert/update
       case 'insert':
@@ -140,29 +140,27 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
  */
 function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   // get the node types that can utilize a page wrapper
-  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form'));
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form' => 'donation_form'));
 
   // make sure we're dealing with a node edit form and the node type is in the enabled types array
-  if (!empty($form['#node']) && ($form_id == $form['#node']->type . '_node_form' && in_array($form['#node']->type, $enabled_types))) {
-    if ($enabled_types[$form['#node']->type]) {
-      $wrappers = _page_wrappers_available_wrappers();
-      if (count($wrappers) > 1) {
-        $form['wrapper'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Page wrapper settings'),
-          '#collapsible' => TRUE,
-          '#collapsed' => TRUE,
-        );
-        
-        $wrapper = $form['#node']->wrapper;
-        $form['wrapper']['wrapper'] = array(
-          '#type' => 'select',
-          '#title' => t('Page wrapper'),
-          '#default_value' => $wrapper,
-          '#options' => $wrappers,
-          '#description' => t('Select the page wrapper to use when displaying this node.'),
-        );
-      }
+  if (!empty($form['#node']) && ($form_id == $form['#node']->type . '_node_form' && $enabled_types[$form['#node']->type])) {
+    $wrappers = _page_wrappers_available_wrappers();
+    if (count($wrappers) > 1) {
+      $form['wrapper'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Page wrapper settings'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      
+      $wrapper = $form['#node']->wrapper;
+      $form['wrapper']['wrapper'] = array(
+        '#type' => 'select',
+        '#title' => t('Page wrapper'),
+        '#default_value' => $wrapper,
+        '#options' => $wrappers,
+        '#description' => t('Select the page wrapper to use when displaying this node.'),
+      );
     }
   }
   
@@ -170,7 +168,7 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'page_wrapper_node_form') {
     // add some help the body (Template HTML) field
     $form['body_field']['#suffix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt; or &lt;head&gt tags in the template. ');
-    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output.');
+    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear.');
   }
 }
 
@@ -345,8 +343,9 @@ function page_wrappers_clean_markup(&$node) {
  *   The content that contains the tokens.
  */ 
 function _page_wrappers_tokens($content) {
-  $tokens = array('[content]', '[styles]', '[scripts]');
+  $tokens = array('[title]', '[content]', '[styles]', '[scripts]');
   $replaces = array(
+    '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
     '<?php if ($tabs): print \'<ul class="tabs primary">\'. $tabs .\'</ul>\'; endif; ?><?php print $content; ?>',
     '<?php print $styles; ?>',
     '<?php print $scripts; ?>',
@@ -542,10 +541,10 @@ function _page_wrapper_preview_form() {
  */
 function _page_wrappers_apply_wrapper(&$vars) {
   // get the list of node types that can have wrappers
-  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form', 'page_wrapper'));
+  $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form' => 'donation_form', 'page_wrapper' => 'page_wrapper'));
   
   // if the node type is wrapper enabled and actually has one assigned
-  if (in_array($vars['node']->type, $enabled_types) && isset($vars['node']->wrapper)) {
+  if ($enabled_types[$vars['node']->type] && isset($vars['node']->wrapper)) {
     $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
     
     // make sure template actually exists

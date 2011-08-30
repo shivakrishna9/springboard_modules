@@ -21,6 +21,7 @@ function page_wrappers_install() {
  */
 function page_wrappers_uninstall() {
 	drupal_uninstall_schema('page_wrappers');
+	variable_del('page_wrapper_enabled_node_types');
 }
 
 /**
