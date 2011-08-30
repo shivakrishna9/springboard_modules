@@ -4,14 +4,12 @@
   min-width:800px;
 }
 #springboard-jump-pane img {
-  position:absolute;
-  right:0;
-  top:0;
+  float: left;
 }
 
 #springboard-jump-pane {
-  clear:both;
-  margin-left:78px;
+  float: left;
+  margin-left: 25px;
 }
 
 #salesforce-status-pane {
@@ -29,8 +27,8 @@
 
 body #springboard-quick-jump {
   height: 45px;
-  position: relative;
   width: 236px;
+  float: left;
   margin-bottom:0;
 }
 
@@ -39,6 +37,7 @@ body #springboard-jump-pane #springboard-jump-pane input.form-submit {
 
 body .dashboard #springboard-jump-pane form {
   margin-bottom:0;
+  margin-left: 25px;
 }
 
 div.springboard-pane {
