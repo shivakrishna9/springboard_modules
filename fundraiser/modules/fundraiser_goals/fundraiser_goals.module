@@ -577,7 +577,7 @@ function fundraiser_goals_token_values($type, $goal = NULL) {
         $values['calculated-value-formatted'] = number_format($goal->goal_progress);
         $values['goal-value-formatted'] = number_format($goal->target);
       }
-      $values['goal-thermometer'] = theme('goal_thermometer', $goal); 
+      $values['goal-thermometer'] = theme('fundraiser_goal_thermometer', $goal); 
       $values['calculated-value-percentage'] = $goal->goal_percentage;
       break;
   }
@@ -586,7 +586,7 @@ function fundraiser_goals_token_values($type, $goal = NULL) {
 
 function fundraiser_goals_theme() {
   return array(
-    'goal_thermometer' => array(
+    'fundraiser_goal_thermometer' => array(
       'arguments' => array('goal' => NULL),
       'template' => 'fundraiser-goal-thermometer',
     ),
