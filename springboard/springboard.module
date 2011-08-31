@@ -767,7 +767,7 @@ function _springboard_sort_by_conversion($a, $b) {
  * Specifies which type of comparison to perform, options are 'min' or 'max', defaults to min.
  */
 function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
-  drupal_set_message('value:' . $value);
+
   $value = preg_replace('/\%|ms/', '', $value);
   if (!$threshold || !is_numeric($value)) {
     $class = 'no-threshold';
