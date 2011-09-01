@@ -168,7 +168,7 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'page_wrapper_node_form') {
     // add some help the body (Template HTML) field
     $form['body_field']['#suffix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt; or &lt;head&gt tags in the template. ');
-    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear.');
+    $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
   }
 }
 
@@ -343,9 +343,10 @@ function page_wrappers_clean_markup(&$node) {
  *   The content that contains the tokens.
  */ 
 function _page_wrappers_tokens($content) {
-  $tokens = array('[title]', '[content]', '[styles]', '[scripts]');
+  $tokens = array('[title]', '[messages]', '[content]', '[styles]', '[scripts]');
   $replaces = array(
     '<?php if ($title): print \'<h1>\'. $title .\'</h1>\'; endif; ?>',
+    '<?php if ($show_messages && $messages): print $messages; endif; ?>',
     '<?php if ($tabs): print \'<ul class="tabs primary">\'. $tabs .\'</ul>\'; endif; ?><?php print $content; ?>',
     '<?php print $styles; ?>',
     '<?php print $scripts; ?>',
