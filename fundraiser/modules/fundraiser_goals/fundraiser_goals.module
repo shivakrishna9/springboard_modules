@@ -119,30 +119,15 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         $node = new stdClass;
       }
 
-      $goal_options = array(
-        0 => t('- select -'),
-        1 => t('# of submissions'),
-        2 => t('custom'),
-      );
-
-      $target_titles = array(
-        '',
-        t('# of submissions'),
-        t('Custom field total'),
-        t('Total donations'),
-      );
-      $target_title = $target_titles[$form_state['values']['fundraiser_goal_type']];
- 
       if ($form_state['values']['fundraiser_goal_type']) {
         $node->fundraiser_goal_type = $form_state['values']['fundraiser_goal_type'];
       }
       else {
         $defaults = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', $form_state['values']['nid']));
       }
-      if (!strcmp('donation_form_node_form', $form_id)) {
-        $goal_options[] = 'Donation';
-        unset($goal_options[1], $goal_options[2]);
-      }
+
+      // Set goal type based on form type. 
+      (!strcmp('donation_form_node_form', $form_id)) ? $goal_type = 2 : $goal_type = 1;
 
       $form['fundraiser_settings']['fundraiser_goals'] = array(
         '#type' => 'fieldset',
@@ -163,7 +148,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
       
       
       // Preserve user input through form rebuilts
-      $goal_type = (isset($form_state['values']['fundraiser_goal_type'])) ? $form_state['values']['fundraiser_goal_type'] : $node->fundraiser_goal_type;
+     // $goal_type = (isset($form_state['values']['fundraiser_goal_type'])) ? $form_state['values']['fundraiser_goal_type'] : $node->fundraiser_goal_type;
       $goal_target = (isset($form_state['values']['fundraiser_goal_target'])) ? $form_state['values']['fundraiser_goal_target'] : $node->fundraiser_goal_target;
       $goal_template = (isset($form_state['values']['fundraiser_goal_template'])) ? $form_state['values']['fundraiser_goal_template'] : $node->fundraiser_goal_template;
       $default_message = (isset($form_state['values']['fundraiser_goal_default_message'])) ? $form_state['values']['fundraiser_goal_default_message'] : $node->fundraiser_goal_default_message;
@@ -172,40 +157,15 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
 
      // drupal_set_message('$form_state:' . print_r($form_state['values'], TRUE));
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_type'] = array(
-        '#type' => 'select',
-        '#title' => t('Type of goal'),
-        '#description' => t('Choose the type of goal you would like to set for this form.'),
-        '#options' => $goal_options,
-        '#default_value' => $goal_type,
-        '#ahah' => array(
-          'path' => 'fundraiser_goals/js',
-          'wrapper' => 'donation-goals',
-          'method' => 'replace',
-          'effect' => 'fade',
-        ),
+        '#type' => 'value',
+        '#value' => $goal_type,
       );
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target'] = array(
         '#type' => 'textfield',
-        '#title' => t('Goal target'),
+        '#title' => ($goal_type == 2) ? t('Target total donations') : t('Target # of submissions'),
         '#description' => t('Set the target number (petition submissions, total donations, etc) for the goal.'),
         '#default_value' => $goal_target,
       );
-      if ($node->fundraiser_goal_type == 2 || $form_state['values']['fundraiser_goal_type'] == 2) {
-        
-        $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $node->nid);
-        while ($component = db_fetch_object($results)) {
-          $options[$component->cid] = $component->name;
-        }
-        if (!count($options)) {
-          form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
-        }
-        $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['fundraiser_goal_target_cid'] = array(
-          '#type' => 'select',
-          '#title' => t('Choose a field to target for this goal'),
-          '#options' => $options,
-          '#default_value' => $target_cid,
-        );
-      }
       $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_display_threshold'] = array(
         '#type' => 'textfield',
         '#title' => t('Display Threshold'),
@@ -285,7 +245,6 @@ function fundraiser_goals_nodeapi(&$node, $op) {
          $node->fundraiser_goal_type = $goal->type;
          $node->fundraiser_goal_target = $goal->target;
          $node->fundraiser_goal_template = $goal->template;
-         $node->fundraiser_goal_target_cid = $goal->target_cid;
          $node->fundraiser_goal_display_threshold = $goal->display_threshold;
          $node->fundraiser_goal['goals_wrapper']['template'] = $goal->template_format;
          $node->fundraiser_goal_default_message = $goal->default_message;
@@ -500,24 +459,9 @@ function fundraiser_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       }
 
       break;
-    // Custom
-    case 2:
-      if ($unique) {
-        $progress = db_result(db_query('SELECT COUNT(DISTINCT ws.uid) 
-          FROM {webform_submissions} ws 
-          INNER JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid 
-          WHERE wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $pid, $goal->target_cid));
-      }
-      else {
-        $progress = db_result(db_query('SELECT COUNT(ws.nid) FROM webform_submissions ws 
-          INNER JOIN webform_submitted_data wsd ON ws.sid = wsd.sid 
-          WHERE wsd.data != "" AND wsd.data IS NOT NULL AND ws.nid = %d AND wsd.cid = %d', 
-          $pid, $goal->target_cid));
-      }
-      break;
+
     // Donation amount
-    case 3:
+    case 2:
       // Webform node
       if (is_numeric($pid)) {
         $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
@@ -625,12 +569,11 @@ function _fundraiser_goals_save_goal($object) {
   }
   if ($object->fundraiser_goal_type) {
     db_query("INSERT INTO {fundraiser_goals} 
-      (pid, delta, type, target_cid, target, template, display_threshold, template_format, default_message) 
-      VALUES ('%s', '%s', '%s', %d, %d, '%s', %d, %d, '%s')", 
+      (pid, delta, type, target, template, display_threshold, template_format, default_message) 
+      VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, '%s')", 
         $object->pid,
         $object->fundraiser_goal_delta,
         $object->fundraiser_goal_type,
-        $object->fundraiser_goal_target_cid,
         $object->fundraiser_goal_target,
         $object->fundraiser_goal_template,
         $object->fundraiser_goal_display_threshold,
@@ -649,7 +592,6 @@ function _fundraiser_goals_update_goal($object) {
              SET
                pid = '%s',
                type = '%s',
-               target_cid = %d,
                target = %d,
                template = '%s',
                display_threshold = %d,
@@ -659,7 +601,6 @@ function _fundraiser_goals_update_goal($object) {
                delta = '%s'",
              $object->fundraiser_goal_parent_item, 
              $object->fundraiser_goal_type,
-             $object->fundraiser_goal_target_cid,
              $object->fundraiser_goal_target,
              $object->fundraiser_goal_template,
              $object->fundraiser_goal_display_threshold,

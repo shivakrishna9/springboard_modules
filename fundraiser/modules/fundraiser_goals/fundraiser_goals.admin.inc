@@ -100,19 +100,14 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     '#default_value' => isset($edit['post']['fundraiser_goal_parent_item']) ? $edit['post']['fundraiser_goal_parent_item'] : $edit['values']['fundraiser_goal_parent_item'],
   );
 
-  $goal_options  = array(
-    0 => t('- select -'),
-    1 => t('# of submissions'),
-    2 => t('custom'),
-  );
+  $goal_type = 1;
+
   // We have a posted webform node id, act accordingly.
   if (is_numeric((string) $edit['post']['fundraiser_goal_parent_item']) && $edit['post']['fundraiser_goal_parent_item'] ) {
     $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['post']['fundraiser_goal_parent_item']));
-    // if it's a donation form add max donation as an option
+    // If it's a donation form set type to total donations.
     if ($type == 'donation_form') {
-
-      $goal_options[3] = 'Donation';
-      unset($goal_options[1], $goal_options[2]);
+      $goal_type = 2;
     }
   }
   // Intial form build with data from db.
@@ -122,46 +117,18 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     // if it's a donation form add max donation as an option
     if ($type == 'donation_form') {
 
-      $goal_options[3] = 'Donation';
-      unset($goal_options[1], $goal_options[2]);
+      $goal_type = 2;
     }
-  }
-  else {
-    $goal_options[3] = 'Donation';
-    unset($goal_options[2]);
   }
 
   $form['submissions_wrapper']['fundraiser_goal_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Type of goal'),
-    '#options' => $goal_options,
-    '#ahah' => array(
-      'path' => 'fundraiser_goals_admin/js',
-      'wrapper' => 'goal-submission-settings',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-    '#default_value' => isset($edit['post']['fundraiser_goal_type']) ? $edit['post']['fundraiser_goal_type'] : $edit['values']['fundraiser_goal_type'],
+    '#type' => 'value',
+    '#value' => $goal_type,
   );
-  if ($edit['values']['fundraiser_goal_type'] == 2) {
-  
-    $results = db_query('SELECT cid, name FROM {webform_component} WHERE type = "textfield" AND nid = %d', $edit['values']['fundraiser_goal_parent_item']);
-    while ($component = db_fetch_object($results)) {
-     $options[$component->cid] = $component->name;
-    }
-    if (!count($options)) {
-      form_set_error('fundraiser_goal_target_cid', t('Custom goals require a text field to target. Please add at least one text field to this form before selecting Custom. If you are creating a new webform you may need to save it and add fields before trying to assign a goal.'));
-    }
-    $form['submissions_wrapper']['fundraiser_goal_target_cid'] = array(
-      '#type' => 'select',
-      '#title' => t('Choose a field to target for this goal'),
-      '#options' => $options,
-      '#default_value' => $edit['values']['fundraiser_goal_target_cid'],
-    );
-  }
+
   $form['submissions_wrapper']['fundraiser_goal_target'] = array(
     '#type' => 'textfield',
-    '#title' => t('Goal target'),
+    '#title' => ($goal_type == 2) ? t('Target total donations') : t('Target # of submissions'),
     '#default_value' => $edit['values']['fundraiser_goal_target'],
     '#required' => TRUE,
   );
@@ -286,7 +253,6 @@ function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
         'fundraiser_goal_delta' => $goal->delta,
         'fundraiser_goal_type' => $goal->type,
         'fundraiser_goal_target' => $goal->target,
-        'fundraiser_goal_target_cid' => $goal->target_cid,
         'fundraiser_goal_display_threshold' => $goal->display_threshold,
         'fundraiser_goal_template' => $goal->template,
         'fundraise_goal' => array('goals_wrapper' => array('template' => $goal->template_format)),
