@@ -196,7 +196,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#collapsed' => TRUE,
         '#weight' => 11,
       );
-      $filter = $node->fundraiser_goal['goals_wrapper']['template'] ? $node->fundraiser_goal['goals_wrapper']['template'] : 2;
+      $filter = $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'] ? $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'] : 2;
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_settings', 'fundraiser_goals', 'goals_wrapper', 'template'));
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['goal_tokens']['help'] = array(
         '#value' => theme('token_help', 'goal'),
@@ -246,7 +246,7 @@ function fundraiser_goals_nodeapi(&$node, $op) {
          $node->fundraiser_goal_target = $goal->target;
          $node->fundraiser_goal_template = $goal->template;
          $node->fundraiser_goal_display_threshold = $goal->display_threshold;
-         $node->fundraiser_goal['goals_wrapper']['template'] = $goal->template_format;
+         $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'] = $goal->template_format;
          $node->fundraiser_goal_default_message = $goal->default_message;
 
          break;
@@ -356,7 +356,6 @@ function fundraiser_goals_block_title($goal, $delta = NULL) {
  */
 function fundraiser_goals_block_content($goal, $node = NULL) {
   if (isset($goal->template) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
-
     $output = $goal->template;
 
     if (!$goal->goal_progress && $goal->default_message) {
@@ -370,8 +369,8 @@ function fundraiser_goals_block_content($goal, $node = NULL) {
       $goal->goal_percentage = 0;
     }
   }
-  if (is_object($node) && is_numeric($node->fundraiser_goal['goals_wrapper']['template'])) {
-    $output = check_markup($output, $node->fundraiser_goal['goals_wrapper']['template'], FALSE);
+  if (is_object($node) && is_numeric($node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'])) {
+    $output = check_markup($output, $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'], FALSE);
   }
   $output = token_replace($output, 'goal', $goal);
   return $output;
@@ -577,7 +576,7 @@ function _fundraiser_goals_save_goal($object) {
         $object->fundraiser_goal_target,
         $object->fundraiser_goal_template,
         $object->fundraiser_goal_display_threshold,
-        $object->fundraiser_goal['goals_wrapper']['template'],
+        $object->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'],
         $object->fundraiser_goal_default_message);
 
   }
@@ -587,7 +586,6 @@ function _fundraiser_goals_save_goal($object) {
  * 
  */
 function _fundraiser_goals_update_goal($object) {
-
   db_query("UPDATE {fundraiser_goals} 
              SET
                pid = '%s',
@@ -604,7 +602,7 @@ function _fundraiser_goals_update_goal($object) {
              $object->fundraiser_goal_target,
              $object->fundraiser_goal_template,
              $object->fundraiser_goal_display_threshold,
-             $object->fundraiser_goal['goals_wrapper']['template'],
+             $object->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'],
              $object->fundraiser_goal_default_message,
              $object->fundraiser_goal_delta);
 
