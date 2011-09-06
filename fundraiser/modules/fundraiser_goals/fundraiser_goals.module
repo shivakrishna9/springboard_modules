@@ -164,7 +164,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         '#type' => 'textfield',
         '#title' => ($goal_type == 2) ? t('Target total donations') : t('Target # of submissions'),
         '#description' => t('Set the target number (petition submissions, total donations, etc) for the goal.'),
-        '#default_value' => $goal_target,
+        '#default_value' => is_numeric($goal_target) ? $goal_target : 0,
       );
       $form['fundraiser_settings']['fundraiser_goals']['goal_wrapper']['fundraiser_goal_display_threshold'] = array(
         '#type' => 'textfield',
@@ -218,7 +218,7 @@ function fundraiser_goals_validate(&$form, $form_state) {
   }
   
   // Setting the threshold at or above the target is also pretty lame.
-  if (($form_state['values']['fundraiser_goal_display_threshold'] >= $form_state['values']['fundraiser_goal_target']) && $form_state['values']['fundraiser_goal_type'] > 0) {
+  if ($form_state['values']['fundraiser_goal_display_threshold'] > 0 && ($form_state['values']['fundraiser_goal_display_threshold'] >= $form_state['values']['fundraiser_goal_target'])) {
     form_set_error('fundraiser_goal_display_threshold', t('Setting the display threshold at or above the goal target means the goal will never be displayed.'));
   }
 }
