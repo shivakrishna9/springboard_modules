@@ -652,11 +652,11 @@ function theme_springboard_logo() {
   $theme = variable_get('theme_default', 'garland');
   $settings = theme_get_settings($theme);
  
-  if (!$settings[default_logo] = 0) {
-    $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="64" height="73" alt="this is logo" />';
+  if (!$settings['default_logo'] = 0) {
+    $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
   }
   else {
-    $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="64" height="73" alt="this is logo" />'; // this prints out path to you uploaded logo
+    $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="150" alt="Site logo" />'; // this prints out path to you uploaded logo
   }
   
   $output = '<div class="springboard-pane" id="springboard-logo-pane">';
@@ -670,7 +670,7 @@ function theme_springboard_logo() {
  */
 function theme_springboard_jump() {
   $output = '<div class="springboard-pane" id="springboard-jump-pane">';
-  $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png">';
+  $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png" width=300>';
   $output .= drupal_get_form('springboard_quick_jump');
   $output .= '</div>';
   return $output;
