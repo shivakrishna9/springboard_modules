@@ -114,13 +114,13 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#type' => 'textfield',
       '#title' => t('Share window logo'),
       '#description' => t('The URL of a logo you wish to display in the Facebook Share popup. If left blank this will default to the user profile picture.'),
-      '#default_value' => $form['#node']->fb_share_picture,
+      '#default_value' => $form['#node']->fb_share_picture ? $form['#node']->fb_share_picture : variable_get('springboard_social_logo', ''),
     );
     $form['fb_share']['fb_share_description'] = array(
       '#type' => 'textarea',
       '#title' => t('Share window description'),
       '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
-      '#default_value' => $form['#node']->fb_share_description,
+      '#default_value' => $form['#node']->fb_share_description ? $form['#node']->fb_share_description : variable_get('springboard_social_description', ''),
     );
     /*$form['fb_share']['fb_share_message'] = array(
       '#type' => 'textfield',
