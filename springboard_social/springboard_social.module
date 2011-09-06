@@ -80,6 +80,7 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('Facebook Settings'),
       '#description' => t('Configure facebook share settings.'),
       '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
     );
 
     $form['fb_share']['fb_share_name'] = array(
