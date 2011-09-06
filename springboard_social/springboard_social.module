@@ -122,12 +122,12 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
       '#default_value' => $form['#node']->fb_share_description,
     );
-    $form['fb_share']['fb_share_message'] = array(
+    /*$form['fb_share']['fb_share_message'] = array(
       '#type' => 'textfield',
       '#title' => t('Share message'),
       '#description' => t('This text provides a default value for the status message portion of the share form.'),
       '#default_value' => $form['#node']->fb_share_message,
-    );
+    );*/
   }
   $form['#validate'][] = 'springboard_social_form_validate';
 }

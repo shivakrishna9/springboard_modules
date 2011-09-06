@@ -39,12 +39,12 @@ function springboard_social_admin_settings() {
     '#description' => t(''),
     '#default_value' => variable_get('springboard_social_title', ''),
   );
-  $form['springboard_social_message'] = array(
+ /* $form['springboard_social_message'] = array(
     '#type' => 'textfield',
     '#title' => t('Default message'),
     '#description' => t(''),
     '#default_value' => variable_get('springboard_social_message', ''),
-  );
+  );*/
   $form['springboard_social_description'] = array(
     '#type' => 'textarea',
     '#title' => t('Default description'),

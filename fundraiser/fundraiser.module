@@ -537,11 +537,11 @@ function fundraiser_form($node, $edit = NULL) {
   return $form;
 }
 
+
 /**
  * Implementation of hook_validate().
  */
 function fundraiser_validate(&$node) {
- 
   $donation_amounts = array();
   for($i = 0; $i < $node->amount_delta; ++$i) {
     $value = 'amount_' . $i;
