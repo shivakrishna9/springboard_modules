@@ -133,13 +133,15 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   
     // #AHAH bugfix
     $form['#cache'] = TRUE;
-    // When not set.. try to remember the old action
-    if (!isset($form_state['storage']['old_action'])) {
-      $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
+    // If the form action was changed for AHAH, restore the old one.
+    if ($form['nid']['#value'] > 0) {
+      $edit_path = '/node/' . $form['nid']['#value'] . '/edit';
     }
-    // If the form action change, restore the old one.
-    if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
-      $form['#action'] = $form_state['storage']['old_action'];
+    else {
+      $edit_path = '/node/add/donation-form';
+    }
+    if ($form['#action'] != $edit_path) {
+      $form['#action'] = $edit_path;
     }
   
     // Ctools modals setup for preview button
