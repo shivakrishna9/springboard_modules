@@ -193,7 +193,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
       $filter = $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'] ? $node->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'] : 2;
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_settings', 'fundraiser_goals', 'goals_wrapper', 'template'));
       $form['fundraiser_settings']['fundraiser_goals']['goals_wrapper']['template']['goal_tokens']['help'] = array(
-        '#value' => theme('token_help', 'goal'),
+        '#value' => theme('token_tree', array('goal')),
       );
  
       $form['#validate'][] = 'fundraiser_goals_validate';
