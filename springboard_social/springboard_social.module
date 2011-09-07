@@ -87,7 +87,7 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#type' => 'textfield',
       '#title' => t('Name'),
       '#description' => t('This field controls the title text in the Facebook Share popup.'),
-      '#default_value' => $form['#node']->fb_share_name,
+      '#default_value' => $form['#node']->fb_share_name ? $form['#node']->fb_share_name : variable_get('springboard_social_title', ''),
     );
     // If share links can be conditionally displayed
     if ($display == 2) {
