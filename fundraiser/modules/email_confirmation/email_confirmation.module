@@ -130,15 +130,14 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   }
 
   if ($form_id == 'donation_form_node_form') {
-  
     // #AHAH bugfix
     $form['#cache'] = TRUE;
-    // If the form action was changed for AHAH, restore the old one.
+
     if ($form['nid']['#value'] > 0) {
-      $edit_path = '/node/' . $form['nid']['#value'] . '/edit';
+      $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
     }
     else {
-      $edit_path = $base_path . '/node/add/donation-form';
+      $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
     }
     if ($form['#action'] != $edit_path) {
       $form['#action'] = $edit_path;
