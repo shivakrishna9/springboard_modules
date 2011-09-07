@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_multi_currency_schema() {
+  $schema = array();
+  
+  $schema['fundraiser_currencies'] = array(
+    'description' => 'Default currencies to use for donation forms',
+    'fields' => array(
+      'currency_id' => array(
+        'description' => 'ID for the currency',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'symbol' => array(
+        'description' => 'Curency symbol',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'code' => array(
+        'description' => 'Currency code',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'name' => array(
+        'description' => 'Currency name',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('currency_id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function fundraiser_multi_currency_install() {
+  drupal_install_schema('fundraiser_multi_currency');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function fundraiser_multi_currency_uninstall() {
+  drupal_uninstall_schema('fundraiser_multi_currency');
+}
