@@ -44,7 +44,7 @@ function email_confirmation_menu() {
  * Implements hook_form_alter().
  */
 function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
-  
+  global $base_path;
   require_once('email_confirmation.defaults.inc');
   // If this module is enabled the confirmation email stuff on the confirmation tab is redundant and confusing.
   if ($form_id == 'fundraiser_confirmation_settings_form') {
@@ -138,7 +138,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       $edit_path = '/node/' . $form['nid']['#value'] . '/edit';
     }
     else {
-      $edit_path = '/node/add/donation-form';
+      $edit_path = $base_path . '/node/add/donation-form';
     }
     if ($form['#action'] != $edit_path) {
       $form['#action'] = $edit_path;
