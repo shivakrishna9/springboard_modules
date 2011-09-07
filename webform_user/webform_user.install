@@ -84,6 +84,12 @@ function webform_user_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
+      'email_field' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
 	  ),
 	  'primary key' => array('nid'),
 	  'indexes' => array(
@@ -170,5 +176,15 @@ function webform_user_update_6104() {
   $updates = array();
 
   db_add_field($updates, 'webform_user', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE));
+  return $updates;
+}
+
+/**
+ * Update 6105: Add email_field to webform_user table
+ */
+function webform_user_update_6105() {
+  $updates = array();
+  
+  db_add_field($updates, 'webform_user', 'email_field', array('type' => 'varchar', 'length' => 255, 'not null' => FALSE));
   return $updates;
 }
