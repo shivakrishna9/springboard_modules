@@ -106,10 +106,11 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
       $form['#cache'] = TRUE;
 
       if ($form['nid']['#value'] > 0) {
-        $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
+        $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
       }
       else {
-        $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
+        $type_url_str = str_replace('_', '-', $type);
+        $edit_path = url('node/add/' . $type_url_str, array('absolute' => TRUE));
       }
       if ($form['#action'] != $edit_path) {
         $form['#action'] = $edit_path;
