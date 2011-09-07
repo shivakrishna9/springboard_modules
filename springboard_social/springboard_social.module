@@ -191,7 +191,7 @@ function springboard_social_nodeapi(&$node, $op) {
         VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
         $node->nid,
         $node->fb_share_status,
-        $node->fb_share->name,
+        $node->fb_share_name,
         $node->fb_share_link, 
         $node->fb_share_picture,
         $node->fb_share_description,
