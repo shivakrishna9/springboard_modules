@@ -167,7 +167,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
   $filter = $edit['values']['submissions_wrapper']['template'] ? $edit['values']['submissions_wrapper']['template']  : 2;
   $form['submissions_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_goals', 'goals_wrapper', 'template'));
   $form['submissions_wrapper']['template']['goal_tokens']['help'] = array(
-    '#value' => theme('token_help', 'goal'),
+    '#value' => theme('token_tree', array('goal')),
   );
   $form['submit'] = array(
     '#type' => 'submit',
