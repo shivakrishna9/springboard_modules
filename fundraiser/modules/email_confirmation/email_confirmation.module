@@ -134,7 +134,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     $form['#cache'] = TRUE;
 
     if ($form['nid']['#value'] > 0) {
-      $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
+      $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
     }
     else {
       $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
@@ -207,13 +207,17 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Confirmation Email Template'),
       '#options' => email_confirmation_list_templates(),
       '#required' => TRUE,
+      '#default_value' => $defaults->nid,
+    );
+    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_email_import_template'] = array(
+      '#type' => 'button',
+      '#value' => t('import template settings'),
       '#ahah' => array(
         'path' => 'email_confirmation/js',
         'wrapper' => 'template-wrapper',
         'method' => 'replace',
         'effect' => 'fade',
       ),
-      '#default_value' => $defaults->nid,
     );
     $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_subject'] = array(
       '#type' => 'textfield',
