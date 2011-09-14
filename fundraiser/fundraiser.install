@@ -913,3 +913,12 @@ function fundraiser_update_6307() {
   db_create_table($ret, 'fundraiser_tracking', $schema['fundraiser_tracking']);
   return $ret;
 }
+
+/**
+ * Remove fundraiser tokens module.
+ */
+function fundraiser_update_6308() {
+  if (module_exists('fundraiser_tokens')) {
+    module_disable(array('fundraiser_tokens'));
+  }
+}
