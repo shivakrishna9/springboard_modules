@@ -11,14 +11,6 @@
  * Implementation of hook_menu().
  */
 function sf_user_menu() {
-  $items['user/%/salesforce-management'] = array(
-    'title' => 'Salesforce Management',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('sf_user_salesforce_management_form', 1),
-    'access arguments' => array('sync users with salesforce'),
-    'type' => MENU_LOCAL_TASK,
-  );
-
   $items['user/%/download'] = array(
     'title' => 'Export Errors',
     'page callback' => 'drupal_get_form',
