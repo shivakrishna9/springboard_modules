@@ -328,12 +328,14 @@ function springboard_dashboard() {
  */
 function springboard_welcome() {
   $form = array();
-  $form['message'] = array(
-    '#type' => 'markup',
-    '#prefix' => '<p>',
-    '#suffix' => '</p>',
-    '#value' => t('Insert a warm welcome to our newest Springboard user here.'),
-  );
+
+ /* 
+ if ($default_campaign) {  
+    drupal_set_message(t('The %campaign campaign has been selected as default.'), array('%campaign' => $default_campaign));
+  }
+  else {
+    drupal_set_message(t('Springboard needs to know which Salesforce campaign to use as a default.'), array(), 'error') ;
+  }*/
 
   // If the Salesforce Management API can connect to Salesforce we no longer need the salesforce configuration form.
   // TODO: clean this up. We shouldn't have to check SF connectivity every time this page is viewed.
@@ -342,8 +344,6 @@ function springboard_welcome() {
   }
   if (is_object($sf)) {
     variable_del('springboard_salesforce_enabled');
-    variable_del('springboard_config_homepage');
-    variable_set('site_frontpage', 'node');
  
     $form['salesforce_status'] = array(
       '#type' => 'markup',
@@ -363,23 +363,6 @@ function springboard_welcome() {
 
   // Default campaign
   $default_campaign = variable_get('sf_donation_default_campaign', '');
-  if ($default_campaign) {
-    
-    $form['salesforce_campaign'] = array(
-      '#type' => 'markup',
-      '#prefix' => '<h3>' . t('Salesforce default campaign') . '</h3><p class="springboard_status_message">',
-      '#suffix' => '</p>',
-      '#value' => t('The %campaign campaign has been selected as default.', array('%campaign' => $default_campaign)),
-    );
-  }
-  else {
-    $form['salesforce_campaign'] = array(
-      '#type' => 'markup',
-      '#prefix' => '<h3>' . t('Salesforce default campaign') . '</h3><p class="springboard_status_message">',
-      '#suffix' => '</p>',
-      '#value' => t('Springboard needs to know which Salesforce campaign to use as a default.'),
-    );
-  }
   
   if (variable_get('springboard_salesforce_enabled', 0)) {
     $form['sf'] = array(
@@ -467,6 +450,7 @@ $source = 'salesforce_wsdl';
  * Submit handler for salesforce configuration form.
  */
 function springboard_welcome_salesforce_submit($form, $form_state) {
+
   variable_set('salesforce_management_api_username', $form_state['values']['salesforce_username']);
   variable_set('salesforce_management_api_password', $form_state['values']['salesforce_password']);
   variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
@@ -616,6 +600,7 @@ function theme_springboard_sf_status() {
     $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
     if (!$last_connect['status']) {
       $last_connect['status'] = 'Unknown';
+      $last_connect['time'] = 0;
     }
     
     // system status: Good IF (can connect to salesforce)
@@ -623,8 +608,12 @@ function theme_springboard_sf_status() {
     $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
 
     // sf connection info (status, last date/time
-    $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
-
+    if ($last_connect['time']) {
+      $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+    }
+    else {
+      $output .= '<p><span class"' . $last_connect['status'] . '">Last connected to SF: never</span>';
+    }
     // WSDL update
     $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
     $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
