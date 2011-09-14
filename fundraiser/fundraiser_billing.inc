@@ -94,16 +94,25 @@ function fundraiser_refund(&$form_state, $order) {
     $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));  
   }
   
-  if ($payment_info) {
-    $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
-    $previous_refunds = db_result(db_query($sql, array($order->order_id)));
-    
-    $form['payment_summary'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Payment Summary'),
-      '#collapsible' => FALSE,
-      '#collapsed' => FALSE,
+  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
+  $previous_refunds = db_result(db_query($sql, array($order->order_id)));
+  
+  $form['payment_summary'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Summary'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  if (!$payment_info) {
+    $form['payment_summary']['no_payments'] = array(
+      '#value' => 'No payments have been made on this order yet',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
     );
+    
+  }
+  else {
     $form['payment_summary']['payment_number'] = array(
       '#type' => 'item',
       '#title' => t('Payment #'),
@@ -137,44 +146,67 @@ function fundraiser_refund(&$form_state, $order) {
     '#collapsed' => FALSE,
   );
   
-  $form['refund_options']['full_refund'] = array(
-    '#type' => 'radio',
-    '#title' => t('Full Refund (%amount)', array('%amount' => uc_price($total_paid, $context))),
-    '#return_value' => 'full',
-    '#parents' => array('refund_type'),
-  );
-  $form['refund_options']['partial_refund'] = array(
-    '#type' => 'radio',
-    '#title' => t('Partial Refund'),
-    '#return_value' => 'partial',
-    '#parents' => array('refund_type'),
-  );
+  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
+  $can_refund = fundraiser_gateway_can_refund_order($order);
+  if (!$can_refund || !$payment_info) {
+    // They've made a payment, but it cannot be refunded
+    if ($payment_info) {
+      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
+    }
+    // They have NOT made any payment yet, so there's nothing to refund
+    else {
+      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
+      // Even once the payment is made, they won't be able to refund it
+      if (!$can_refund) {
+        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to make refunds after payments are processed on this order.';
+      }
+    }
+    $form['refund_options']['no_refund_explanation'] = array(
+      '#value' => $no_refund_text,
+      '#prefix' => '<strong>',
+      '#suffix' => '</strong>',
+    );
+  }
+  // Refund options
+  else {
+    $form['refund_options']['full_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Full Refund (%amount)', array('%amount' => uc_price($total_paid, $context))),
+      '#return_value' => 'full',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['partial_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Partial Refund'),
+      '#return_value' => 'partial',
+      '#parents' => array('refund_type'),
+    );
   
-  $form['refund_options']['amount'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Amount to Refund'),
-    '#size' => 40,
-    '#maxlength' => 255,
-  );
-  $form['refund_options']['refund_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Refund Notes'),
-    '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
-    '#cols' => 60,
-    '#rows' => 5,
-    '#required' => TRUE,
-  );
-  $form['refund_options']['issue_refund'] = array(
-    '#type' => 'submit',
-    '#value' => t('Issue Refund'),
-    '#required' => TRUE,
-  );
+    $form['refund_options']['amount'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Amount to Refund'),
+      '#size' => 40,
+      '#maxlength' => 255,
+    );
+    $form['refund_options']['refund_notes'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Refund Notes'),
+      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+      '#cols' => 60,
+      '#rows' => 5,
+      '#required' => TRUE,
+    );
+    $form['refund_options']['issue_refund'] = array(
+      '#type' => 'submit',
+      '#value' => t('Issue Refund'),
+      '#required' => TRUE,
+    );
   
-  $form['total_paid'] = array(
-    '#type' => 'hidden',
-    '#value' => number_format($total_paid, 2),
-  );
-  
+    $form['total_paid'] = array(
+      '#type' => 'hidden',
+      '#value' => number_format($total_paid, 2),
+    );
+  }
   
   return $form;
 }
