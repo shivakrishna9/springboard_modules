@@ -67,21 +67,9 @@ function fundraiser_goals_menu() {
  * Implements hook_form_alter().
  */
 function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
-
-  
-
   // add delete link to advanced blocks
   if ($form_id == 'block_admin_display_form') {
-    $form['#cache'] = TRUE;
-    // When not set.. try to remember the old action
-    if (!isset($form_state['storage']['old_action'])) {
-      $form_state['storage']['old_action'] = isset($form['#action']) ? $form['#action'] : $_SERVER['REQUEST_URI'];
-    }
-    // If the form action change, restore the old one.
-    if (isset($form_state['storage']['old_action']) && ($form['#action']!=$form_state['storage']['old_action'])) {
-      $form['#action'] = $form_state['storage']['old_action'];
-    }
-    $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic"');
+    $results = db_query('SELECT delta FROM {fundraiser_goals} WHERE delta != "basic" AND delta IS NOT NULL AND delta != ""');
     while ($delta = db_result($results)) {
       if (isset($form['fundraiser_goals_' . $delta])) {
         /* Form elements added to block configuration page get stripped of wrappers or other non-active elements.
@@ -95,7 +83,6 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         $form['fundraiser_goals_' . $delta]['delete'] = array('#value' => l(t('delete'), 'admin/build/block/delete-goal-block/'. $delta));
       }
     }
-  
   }
   
   // add goal form elements to webform nodes
