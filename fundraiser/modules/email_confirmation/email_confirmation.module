@@ -46,13 +46,6 @@ function email_confirmation_menu() {
 function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   global $base_path;
   require_once('email_confirmation.defaults.inc');
-  // If this module is enabled the confirmation email stuff on the confirmation tab is redundant and confusing.
-  if ($form_id == 'fundraiser_confirmation_settings_form') {
-    if ($form['#parameters'][2]->type == 'donation_form') {
-      unset($form['email']);
-      $form['#validate'] = array('email_confirmation_confirmation_form_validate');
-    }
-  }
   
   if ($form_id == 'confirmation_template_node_form') {
 
@@ -129,9 +122,14 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
   }
 
-  if ($form_id == 'donation_form_node_form') {
+  if ($form_id == 'fundraiser_confirmation_settings_form') {
+  
+    if ($form['#parameters'][2]->type == 'donation_form') {
+      unset($form['email']);
+      $form['#validate'] = array('email_confirmation_confirmation_form_validate');
+    
     // #AHAH bugfix
-    $form['#cache'] = TRUE;
+   /* $form['#cache'] = TRUE;
 
     if ($form['nid']['#value'] > 0) {
       $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
@@ -141,7 +139,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     }
     if ($form['#action'] != $edit_path) {
       $form['#action'] = $edit_path;
-    }
+    }*/
   
     // Ctools modals setup for preview button
     module_load_include('inc', 'ctools', 'includes/ajax');
@@ -165,6 +163,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     }
     // Otherwise get defaults from db.
     else {
+
       $nid = $form['nid']['#value'];
 
       if ($nid) {
@@ -189,27 +188,27 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     }
      /* email template configuration, see #133*/
 
-    $form['fundraiser_settings']['confirmation'] = array(
+    $form['confirmation_template'] = array(
       '#type' => 'fieldset',
       '#title' => t('Email confirmation'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       //'#weight' => -4.99,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper'] = array(
+    $form['confirmation_template']['template_wrapper'] = array(
       '#tree' => TRUE,
       '#prefix' => '<div id="template-wrapper">',
       '#suffix' => '</div>',
       '#theme' => 'email_confirmation_template_wrapper',
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['email_template'] = array(
+    $form['confirmation_template']['template_wrapper']['email_template'] = array(
       '#type' => 'select',
       '#title' => t('Confirmation Email Template'),
       '#options' => email_confirmation_list_templates(),
       '#required' => TRUE,
       '#default_value' => $defaults->nid,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_email_import_template'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_email_import_template'] = array(
       '#type' => 'button',
       '#value' => t('import template settings'),
       '#ahah' => array(
@@ -219,34 +218,34 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
         'effect' => 'fade',
       ),
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_subject'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
       '#default_value' => $defaults->field_confirmation_subject_value,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_from_name'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_from_name'] = array(
       '#type' => 'textfield',
       '#title' => t('From Name'),
       '#default_value' => $defaults->field_confirmation_from_name_value,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_from_email'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_from_email'] = array(
       '#type' => 'From Email',
       '#title' => t('textfield'),
       '#default_value' => $defaults->field_confirmation_from_email_email,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_reply_email'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_reply_email'] = array(
       '#type' => 'textfield',
       '#title' => t('Reply To Email'),
       '#default_value' => $defaults->field_confirmation_reply_email_email,
     );
 
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_bcc_email' . $delta] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_bcc_email' . $delta] = array(
       '#type' => 'textfield',
       '#title' => t('BCC Email'),
       '#default_value' => $defaults->bcc,
     );
 
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_email_message'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_html_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('HTML Email Message'),
       '#default_value' => $defaults->field_confirmation_html_message_value,
@@ -254,18 +253,18 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
     
     $html_format = ($defaults->confirmation_html_message_format) ? $defaults->confirmation_html_message_format : FILTER_FORMAT_DEFAULT;
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_message_format'] = filter_form($html_format, 11, array('confirmation_html_message_format'));
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_html_message_format'] = filter_form($html_format, 11, array('confirmation_html_message_format'));
+    $form['confirmation_template']['template_wrapper']['confirmation_html_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#weight' => 12,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_html_tokens']['help'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_html_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_email_message'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_text_email_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Text Email Message'),
       '#default_value' => $defaults->field_confirmation_text_message_value,
@@ -273,22 +272,21 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
     
     $text_format = ($defaults->confirmation_text_message_format) ? $defaults->confirmation_text_message_format : FILTER_FORMAT_DEFAULT;
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_message_format'] = filter_form($text_format, 14, array('confirmation_text_message_format'));
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_text_message_format'] = filter_form($text_format, 14, array('confirmation_text_message_format'));
+
+    $form['confirmation_template']['template_wrapper']['confirmation_text_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#weight' => 15,
     );
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['confirmation_text_tokens']['help'] = array(
+    $form['confirmation_template']['template_wrapper']['confirmation_text_tokens']['help'] = array(
       '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
     );
-    // TODO: add $stuff to enable preview. Perhaps a lightbox-style modal display?
-    $form['fundraiser_settings']['confirmation']['template_wrapper']['preview'] = array(
-     // '#type' => 'markup',
-     // '#value' => ctools_modal_text_button('Preview', 'email_confirmation/preview_modal', '', 'edit-template-wrapper-email-template'),
-      '#type' => 'button',
+ 
+    $form['confirmation_template']['template_wrapper']['preview'] = array(
+     '#type' => 'button',
       '#value' => t('Preview'),
       '#attributes' => array('class' => 'ctools-use-modal'),
       '#weight' => 20,
@@ -296,8 +294,9 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     
     // Validate email template selection field
     $form['#validate'][] = 'email_confirmation_template_validate';
+    $form['#submit'][] = 'email_confirmation_template_submit';
   }
-
+  }
 }
 
 /**
@@ -310,86 +309,71 @@ function email_confirmation_template_validate(&$form, $form_state) {
 }
 
 /**
+ * 
+ */
+function email_confirmation_template_submit(&$form, $form_state) {
+  $values = $form_state['values']['template_wrapper'];
+  $update = db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $form_state['values']['nid']));
+  
+  if ($update) {
+
+    $tid = $values['email_template'];
+    $subject = $values['confirmation_subject'];
+    $from_name =  $values['confirmation_from_name'];
+    $reply_to_email = $values['confirmation_reply_email'];
+    $bcc_email = $values['confirmation_bcc_email'];
+    $html_body = $values['confirmation_html_email_message'];
+    $html_body_format = $values['confirmation_html_message_format'];
+    $text_body = $values['confirmation_text_email_message'];
+    $text_body_format = $values['confirmation_text_message_format'];
+  
+    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $node->nid);
+
+  }
+  
+  else {
+
+    $tid = $values['email_template'];
+    $subject = $values['confirmation_subject'];
+    $from_name =  $values['confirmation_from_name'];
+    $reply_to_email = $values['confirmation_reply_email'];
+    $bcc_email = $values['confirmation_bcc_email'];
+    $html_body = $values['confirmation_html_email_message'];
+    $html_body_format = $node->confirmation_html_message_format;
+    $text_body = $values['confirmation_text_email_message'];
+    $text_body_format = $node->confirmation_text_message_format;
+    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
+    break;  
+  }
+}
+
+/**
  * Implements hook_nodeapi().
  */
 function email_confirmation_nodeapi(&$node, $op) {
   if ($node->type == 'donation_form') {
-  
-  
-  switch ($op) {
-    case 'load':
-      $confirmation_settings = db_fetch_array(db_query('SELECT  
-        tid as email_template, 
-        subject as confirmation_subject, 
-        from_name as confirmation_from_name,
-        reply_to_email as confirmation_reply_email,
-        bcc_email as confirmation_bcc_email,
-        html_message as confirmation_html_email_message,
-        html_message_format,
-        text_message as confirmation_text_email_message,
-        text_message_format
-        FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid));
-      
-      $node->template_wrapper = $confirmation_settings;
-      $node->confirmation_html_message_format = $confirmation_settings['html_message_format'];
-      $node->confirmation_text_message_format = $confirmation_settings['text_message_format'];
+    switch ($op) {
+      case 'load':
+        $confirmation_settings = db_fetch_array(db_query('SELECT  
+          tid as email_template, 
+          subject as confirmation_subject, 
+          from_name as confirmation_from_name,
+          reply_to_email as confirmation_reply_email,
+          bcc_email as confirmation_bcc_email,
+          html_message as confirmation_html_email_message,
+          html_message_format,
+          text_message as confirmation_text_email_message,
+          text_message_format
+          FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid));
 
-      break;
-  
-    case 'delete': 
-      db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
-      break;
+        $node->template_wrapper = $confirmation_settings;
+        $node->confirmation_html_message_format = $confirmation_settings['html_message_format'];
+        $node->confirmation_text_message_format = $confirmation_settings['text_message_format'];
+        break;
 
-    case 'insert':
-      $values = $node->template_wrapper;
-      $tid = $values['email_template'];
-      $subject = $values['confirmation_subject'];
-      $from_name =  $values['confirmation_from_name'];
-      $reply_to_email = $values['confirmation_reply_email'];
-      $bcc_email = $values['confirmation_bcc_email'];
-      $html_body = $values['confirmation_html_email_message'];
-      $html_body_format = $node->confirmation_html_message_format;
-      $text_body = $values['confirmation_text_email_message'];
-      $text_body_format = $node->confirmation_text_message_format;
-      db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
-      break;  
-
-
-    case 'update':
-     
-      $values = $node->template_wrapper;
-
-      // Defend against random node_save()s
-      if (!count($values)) {        
-        $data = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid));
-        $values = array();
-        $values['email_template'] = $data->tid;
-        $values['confirmation_subject'] = $data->subject;
-        $values['confirmation_from_name'] = $data->from_name;
-        $values['confirmation_reply_email'] = $data->reply_to_email;
-        $values['confirmation_bcc_email'] = $data->bcc_email;
-        $values['confirmation_html_email_message'] = $data->html_message;
-        $values['confirmation_html_message_format'] = $data->html_message_format;
-        $values['confirmation_text_email_message'] = $data->text_message;
-        $values['confirmation_text_message_format'] = $data->text_message_format;
-      }
-      $tid = $values['email_template'];
-      $subject = $values['confirmation_subject'];
-      $from_name =  $values['confirmation_from_name'];
-      $reply_to_email = $values['confirmation_reply_email'];
-      $bcc_email = $values['confirmation_bcc_email'];
-      $html_body = $values['confirmation_html_email_message'];
-      $html_body_format = (is_numeric($node->confirmation_html_message_format)) ? $node->confirmation_html_message_format : $values['confirmation_html_message_format'];
-      $text_body = $values['confirmation_text_email_message'];
-      $text_body_format = (is_numeric($node->confirmation_text_message_format)) ? $node->confirmation_text_message_format : $values['confirmation_text_message_format'];
-      // Futureproof rolling out this feature to existing sites, we can't assume a record will already exist when a donation form
-      // is updated.
-      if (db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid=%d', $node->nid))) {   
-        db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $node->nid);
-      }
-      else {
-        db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
-      }
+      case 'delete': 
+        db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
+        break;
     }
   }
 }
@@ -426,7 +410,7 @@ function email_confirmation_list_templates() {
  * #AHAH callback for email template selection form element.
  */
 function _email_confirmation_template_ahah() {
-  module_load_include('inc', 'node', 'node.pages');
+  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
   $form_state = array('storage' => NULL, 'submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
 
@@ -444,7 +428,7 @@ function _email_confirmation_template_ahah() {
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $template_form = $form['fundraiser_settings']['confirmation']['template_wrapper'];
+  $template_form = $form['confirmation_template']['template_wrapper'];
   unset($template_form['#prefix'], $template_form['#suffix']);
  
   $output = theme('status_messages') . drupal_render($template_form);
