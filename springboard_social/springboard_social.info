@@ -3,4 +3,4 @@ name = Springboard Social
 description = Integrate your Springboard site with the social web.
 core = 6.x
 package = Jackson River Springboard
-version =  6.x-3.0
+version =  6.x-3.0-dev

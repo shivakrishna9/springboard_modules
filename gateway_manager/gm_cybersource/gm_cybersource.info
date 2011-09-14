@@ -7,5 +7,4 @@ dependencies[] = gateway_manager
 package = Jackson River Springboard - payment
 core = 6.x
 php = 5.0
-version = 6.x-3.0-beta1
-
+version =  6.x-3.0-dev

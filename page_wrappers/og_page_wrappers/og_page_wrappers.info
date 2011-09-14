@@ -6,5 +6,4 @@ package = Jackson River Springboard - extras
 dependencies[] = og
 dependencies[] = og_views
 dependencies[] = page_wrappers
-
-version = 6.x-3.0-beta1
+version =  6.x-3.0-dev

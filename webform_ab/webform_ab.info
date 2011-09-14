@@ -4,8 +4,7 @@ description = "Adds a content type for an A/B test of webforms."
 
 ; Core version (required)
 core = 6.x
-
-version = 6.x-3.0-beta1
+version =  6.x-3.0-dev
 package = Jackson River Springboard
 
 dependencies[] = webform

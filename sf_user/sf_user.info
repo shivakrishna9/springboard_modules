@@ -12,4 +12,4 @@ version = 6.x-3.0-beta1
 core = "6.x"
 project = "salesforce_management"
 datestamp = "1243642894"
-
+version =  6.x-3.0-dev

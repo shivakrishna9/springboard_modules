@@ -2,7 +2,7 @@ name = Capwiz
 description = Provides integration with the Capwiz service
 package = Jackson River Springboard
 core = 6.x
-version = 6.x-3.0-beta1
+version = 6.x-3.0-dev
 
 php = 5.1
 

@@ -7,4 +7,4 @@ dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = profile
 dependencies[] = uc_cart
-version =  6.x-3.0-beta1
+version =  6.x-3.0-dev

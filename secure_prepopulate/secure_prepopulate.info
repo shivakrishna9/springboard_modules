@@ -4,5 +4,4 @@ description = Uses an encrypted url string to pre-populate form fields.
 core = 6.x
 package = Jackson River Springboard - extras
 dependencies[] = webform
-
-version = 6.x-3.0-beta1
+version =  6.x-3.0-dev

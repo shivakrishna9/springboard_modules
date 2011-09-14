@@ -6,5 +6,4 @@ package = Jackson River Springboard
 dependencies[] = salesforce_management_api
 dependencies[] = queue_api
 dependencies[] = trigger
-
-version = 6.x-3.0-beta1
+version =  6.x-3.0-dev

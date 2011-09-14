@@ -5,5 +5,4 @@ package = Jackson River Springboard
 core = 6.x
 
 dependencies[] = salesforce_management_api
-
-version = 6.x-3.0-beta1
+version =  6.x-3.0-dev
