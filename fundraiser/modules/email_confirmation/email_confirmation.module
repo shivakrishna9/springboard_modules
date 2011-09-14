@@ -46,7 +46,7 @@ function email_confirmation_menu() {
 function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   global $base_path;
   require_once('email_confirmation.defaults.inc');
-  
+
   if ($form_id == 'confirmation_template_node_form') {
 
     // New node, add default template & message values
@@ -151,15 +151,9 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
  
     // We need to update default values if a user selects a new email template.
     if (isset($form_state['values']['template_wrapper']['email_template'])) {
+      
       // Get default values from template.
-
-      $defaults = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $form_state['values']['template_wrapper']['email_template']));
-      $results = db_query('SELECT delta, field_confirmation_bcc_email FROM {content_field_confirmation_bcc} ORDER BY delta DESC');
-      while ($item = db_fetch_object($results)) {
-        $bcc[$item->delta] = $item->field_confirmation_bcc_email;
-      }
-      $defaults->bcc = implode(';', $bcc);
-      //$defaults->html = db_result(db_query('SELECT body FROM {node_revisions} nr INNER JOIN {node} n ON n.vid = nr.vid WHERE n.nid=%d', $defaults->nid));
+      $defaults = email_confirmation_load_template($form_state['values']['template_wrapper']['email_template']);
     }
     // Otherwise get defaults from db.
     else {
@@ -343,9 +337,9 @@ function email_confirmation_template_submit(&$form, $form_state) {
     $text_body = $values['confirmation_text_email_message'];
     $text_body_format = $node->confirmation_text_message_format;
     db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format);
-    break;  
   }
 }
+
 
 /**
  * Implements hook_nodeapi().
@@ -370,6 +364,15 @@ function email_confirmation_nodeapi(&$node, $op) {
         $node->confirmation_html_message_format = $confirmation_settings['html_message_format'];
         $node->confirmation_text_message_format = $confirmation_settings['text_message_format'];
         break;
+
+      case 'insert':
+        $template_count = db_result(db_query('SELECT COUNT(nid) FROM {node} WHERE type ="confirmation_template"'));
+        if ($template_count == 1) {
+          $template_nid = db_result(db_query('SELECT nid FROM {node} WHERE type = "confirmation_template"'));
+          $template = email_confirmation_load_template($template_nid);
+          db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)", $node->nid, $template->nid, $template->field_confirmation_subject_value, $template->field_confirmation_from_name_value, $template->field_confirmation_from_email_email, $template->bcc, $template->field_confirmation_html_message_value, $template->field_confirmation_html_message_format, $template->field_confirmation_text_message_value, 1);
+        }
+        break;        
 
       case 'delete': 
         db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
@@ -798,4 +801,24 @@ function email_confirmation_template_list() {
   $output = theme('table', $header, $rows);
   return $output;  
 
+}
+
+/**
+ * Loads template data from the database.
+ * 
+ * @param $nid
+ * Int Node ID
+ * 
+ * @return 
+ * Returns a template object.
+ */
+function email_confirmation_load_template($nid) {
+  $template = db_fetch_object(db_query('SELECT * FROM {content_type_confirmation_template} WHERE nid = %d', $nid));
+  $results = db_query('SELECT delta, field_confirmation_bcc_email FROM {content_field_confirmation_bcc} ORDER BY delta DESC');
+  while ($item = db_fetch_object($results)) {
+    $bcc[$item->delta] = $item->field_confirmation_bcc_email;
+  }
+  $template->bcc = implode(';', $bcc);
+  
+  return $template;
 }
