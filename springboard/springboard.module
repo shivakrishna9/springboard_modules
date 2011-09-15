@@ -621,7 +621,12 @@ function theme_springboard_sf_status() {
     // latest batch # total items :: success :: fail
     if (module_exists('queue_api')) {
       $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
-      $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
+      if ($batch) {
+        $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count . '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
+      }
+      else {
+        $output .= '<p>No batches processed yet</p>';
+      }
     }
     else {
       $output .= '<p>' . t('Batch info unavailable, please install Queue API.') . '</p>';
