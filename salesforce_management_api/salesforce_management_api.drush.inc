@@ -1,5 +1,4 @@
 <?php
-// $Id: salesforce_management_api.drush.inc,v 1.1.2.1 2009/05/08 23:01:08 bevan Exp $
 
 /**
  * @file

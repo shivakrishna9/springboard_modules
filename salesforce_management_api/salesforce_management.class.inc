@@ -1,5 +1,4 @@
 <?php
-// $Id: salesforce.class.inc,v 1.1.4.4 2009/04/25 05:11:55 bevan Exp $
 
 /**
  * @file

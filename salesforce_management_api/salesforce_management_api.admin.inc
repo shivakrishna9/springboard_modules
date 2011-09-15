@@ -1,6 +1,4 @@
 <?php
-// $Id: salesforce_management_api.admin.inc,v 1.2.2.6 2009/05/27 00:04:38 joshk Exp $
-
 /**
  * @file
  * Contains the admin page callbacks for the Salesforce module, including forms
