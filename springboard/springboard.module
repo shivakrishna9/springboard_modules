@@ -51,14 +51,6 @@ function springboard_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/springboard/confirmation'] = array(
-    'title' => t('Confirmation & Notifications'),
-    'description' => t('Manage your email templates and user notifications.'),
-    'weight' => -7,
-    'page callback' => 'springboard_admin',
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-  );
   if (module_exists('salesforce_management_api')) {
     $items['admin/springboard/fieldmaps'] = array(
       'title' => t('Salesforce Fieldmaps'),
@@ -263,31 +255,6 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
-  // Confirmation submenu
-  $items['admin/springboard/confirmation/email'] = array(
-    'title' => t('Email Templates'),
-    'description' => t('Manage your email templates.'),
-    'page callback' => 'drupal_goto',
-    'page arguments' => array('admin/content/confirmation_templates'),
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-  );
-  $items['admin/springboard/confirmation/notifications'] = array(
-    'title' => t('Notifications'),
-    'description' => t('Configure user notifications.'),
-    'page callback' => 't',
-    'page arguments' => array('hello world'),
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-  );
-  $items['admin/springboard/confirmation/pages'] = array(
-    'title' => t('Web Pages'),
-    'description' => t('Manage web pages.'),
-    'page callback' => 't',
-    'page arguments' => array('hello world'),
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-  );
   if (module_exists('queue_processor')) {
     // Callback for the Springboard sync button.
     $items['springboard_sync'] = array(
