@@ -750,54 +750,6 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
 }
 
 
-/**
- * Callback for Test Connection page
- */
-function salesforce_management_api_test_connection() {
-  // Attempt to connect to Salesforce.
-  $sf = _salesforce_management_api_open_connection();
-
-  // Display an error message if the connection failed.
-  if (!is_object($sf)) {
-    return 'Could not connect to Salesforce: ' . $sf . ': ' . salesforce_management_api_format_connection_errors($sf);
-  }
-
-  // Display the server timestamp first.
-  $response = $sf->client->getServerTimestamp();
-
-  $output = '<p>'. t('<b>Salesforce server timestamp:</b> @timestamp', array('@timestamp' => $response->timestamp)) .'</p>';
-
-  // Add a specific demo's output.
-  switch ($demo) {
-    case 'data-structure':
-      if ($arg) {
-        $response = $sf->client->describeSObjects(array(check_plain($arg)));
-        if (function_exists('dpm')) {
-          dpm($response);
-        }
-        elseif (function_exists('krumo')) {
-          $output .= krumo($response);
-        }
-        else {
-          $output .= '<pre>'. print_r($response, 1) .'</pre>';
-        }
-      }
-      else {
-        $response = $sf->client->describeGlobal();
-        if (is_array($response->types)) {
-          foreach ($response->types as $type) {
-            $items[] = l($type, SALESFORCE_PATH_DEMO .'/data-structure/'. $type);
-          }
-          $output .= theme('item_list', $items, t('Global Data Structure'));
-        }
-      }
-
-      break;
-  }
-
-  return $output;
-}
-
 /******************************************************************************
  * AHAH FUNCTIONS
  ******************************************************************************/

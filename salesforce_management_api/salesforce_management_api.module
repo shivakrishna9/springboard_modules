@@ -35,12 +35,6 @@ define('SALESFORCE_LOG_SOME', 5);
 define('SALESFORCE_LOG_ALL', 10);
 
 
-// Define errors that can be returned by salesforce_management_api_connect()
-define('SALESFORCE_ERROR_MISSING_USERNAME', 1);
-define('SALESFORCE_ERROR_MISSING_PASSWORD', 2);
-define('SALESFORCE_ERROR_MISSING_TOKEN', 4);
-define('SALESFORCE_ERROR_LOGIN_FAILURE', 8);
-
 /**
  * Implementation of hook_menu().
  */
@@ -75,7 +69,6 @@ function salesforce_management_api_menu() {
     'page callback' => 'salesforce_management_api_test_connection',
     'access arguments' => array('administer salesforce management'),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'salesforce_management_api.admin.inc',
     'weight' => 10,
   );
   
@@ -208,7 +201,7 @@ function salesforce_management_api_connect($username = FALSE, $password = FALSE,
  * If there is an error, an int is returned. See the SALESFORCE_ERROR_* defines at the top of this file
  */
 function _salesforce_management_api_open_connection($username = FALSE, $password = FALSE, $token = FALSE) {
-  $return_val = 0;
+  $errors = array();
   
   // Load up the sitewide API credentials if no others were provided:
   $username = $username ? $username : variable_get('salesforce_management_api_username', '');
@@ -219,15 +212,15 @@ function _salesforce_management_api_open_connection($username = FALSE, $password
   if (empty($username) || empty($password) || empty($token)) {
     watchdog('salesforce', 'Connection to Salesforce failed because API credentials have not been set.', array(), WATCHDOG_ERROR);
     if (empty($username)) {
-      $return_val += SALESFORCE_ERROR_MISSING_USERNAME;
+      $errors[] = t('Missing username.');
     }
     if (empty($password)) {
-      $return_val += SALESFORCE_ERROR_MISSING_PASSWORD;
+      $errors[] = t('Missing password.');
     }
     if (empty($token)) {
-      $return_val += SALESFORCE_ERROR_MISSING_TOKEN;
+      $errors[] = t('Missing token.');
     }
-    return $return_val;
+    return $errors;
   }
 
   // Include the file that defines the class.
@@ -237,7 +230,7 @@ function _salesforce_management_api_open_connection($username = FALSE, $password
   $sf = new DrupalSalesforce($username, $password, $token);
 
   // Attempt a login, and...
-  if ($sf->login()) {
+  if (($login_result = $sf->login()) === TRUE) {
     // Return the object if a connection and login were successful, log the event and cache connect info to a variable.
     variable_set('salesforce_management_api_connect', array('status' => 'Connected', 'time' => time()));
     watchdog('salesforce', t('Connection to Salesforce has been set.', array()));
@@ -247,9 +240,41 @@ function _salesforce_management_api_open_connection($username = FALSE, $password
     $sf = FALSE;
     variable_set('salesforce_management_api_connect', array('status' => 'Failed', 'time' => time()));
     watchdog('salesforce', t('Connection to Salesforce failed because API credentials are incorrect.', array()));
-    $return_val += SALESFORCE_ERROR_LOGIN_FAILURE;
-    return $return_val;
+    $errors[] = $login_result;
   }
+  return $errors;
+}
+
+
+/**
+ * Callback for Test Connection page
+ */
+function salesforce_management_api_test_connection() {
+  // Attempt to connect to Salesforce. This will set the salesforce_management_api_connect variable
+  $sf = _salesforce_management_api_open_connection();
+
+  $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
+  if (!$last_connect['status']) {
+    $last_connect['status'] = 'Unknown';
+    $last_connect['time'] = 0;
+  }
+  
+  // System status
+  $output .= '<p class="sf-status">Salesforce connection: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
+  
+  if ($last_connect['status'] == 'Failed' && is_array($sf)) {
+    $output .= '<p>Error: ' . implode(' ', $sf) . '</p>';
+  }
+
+  // Connection info (status, last date/time)
+  if ($last_connect['time']) {
+    $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+  }
+  else {
+    $output .= '<p><span class"' . $last_connect['status'] . '">Last connected to SF: never</span>';
+  }
+
+  return $output;
 }
 
 /**
@@ -1115,26 +1140,4 @@ function salesforce_manangement_api_fieldmap_exists($drupal_type) {
     return TRUE;
   }
   return FALSE;
-}
-
-
-
-/**
- * Return explanation text for SF connection errors returned from _salesforce_management_api_open_connection()
- */
-function salesforce_management_api_format_connection_errors($error_bits) {
-  $error_strings = array(
-    SALESFORCE_ERROR_MISSING_USERNAME => t('Missing username'),
-    SALESFORCE_ERROR_MISSING_PASSWORD => t('Missing password'),
-    SALESFORCE_ERROR_MISSING_TOKEN => t('Missing token'),
-    SALESFORCE_ERROR_LOGIN_FAILURE => t('Login failure'),
-  );
-  
-  $errors = array();
-  foreach ($error_strings as $value => $error_explanation) {
-    if (($error_bits & $value) == $value) {
-      $errors[] = $error_explanation;
-    }
-  }
-  return implode('. ', $errors) . '.';
 }

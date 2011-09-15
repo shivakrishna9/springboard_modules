@@ -70,10 +70,12 @@ class DrupalSalesforce {
     }
     catch (Exception $e) {
       // Log the error message.
-      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .'<pre>'. check_plain($this->client->getLastRequest() . $e->faultstring) .'</pre>', WATCHDOG_ERROR);
+      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') . 
+        '<br>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br>' .
+        'Error: <pre>'. check_plain($e->faultstring) .'</pre>', WATCHDOG_ERROR);
 
       // Indicate the failed login.
-      return FALSE;
+      return $e->getMessage();
     }
 
     // Indicate the successful login.
