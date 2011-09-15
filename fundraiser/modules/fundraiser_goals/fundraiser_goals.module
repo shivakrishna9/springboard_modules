@@ -12,14 +12,6 @@ function fundraiser_goals_perm() {
  */
 function fundraiser_goals_menu() {
   $items = array();
-  $items['admin/settings/fundraiser/goals'] = array(
-    'title' => 'User Activity Goals',
-    'description' => 'Manage donation, petition and custom goals for your webforms.',
-    'page callback' => 'fundraiser_goals_admin',
-    'access arguments' => array('administer fundraiser goals'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'fundraiser_goals.admin.inc',
-  );
   $items['admin/build/block/add_goal'] = array(
     'title' => 'Add Goal Block',
     'description' => 'Add a new goal block',

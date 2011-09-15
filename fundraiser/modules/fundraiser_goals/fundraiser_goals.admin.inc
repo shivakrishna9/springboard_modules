@@ -1,14 +1,5 @@
 <?php
 
-/**
- * Goals admin settings form.
- */
-function fundraiser_goals_admin($form, $form_state) {
-  $form = array();
-
-  return $form;
-}
-
 function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
 
  // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled?
