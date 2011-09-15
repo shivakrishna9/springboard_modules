@@ -2682,7 +2682,7 @@ function fundraiser_gateway_can_refund_order($order) {
 /**
  * Implementation of hook_token_list().
  */
-function fundraiser_tokens_token_list($type = 'all') {
+function fundraiser_token_list($type = 'all') {
   if ($type == 'order' || $type == 'all') {
     $tokens['order']['order-cc-last-four']  = t('The last four digits of the credit card used for the order.');
     $tokens['order']['order-cc-card-exp-month'] = t('The credit card expiration month.');
@@ -2695,7 +2695,7 @@ function fundraiser_tokens_token_list($type = 'all') {
 /**
  * Implementation of hook_token_values().
  */
-function fundraiser_tokens_token_values($type, $object = NULL) {
+function fundraiser_token_values($type, $object = NULL) {
   $values = array();
   switch ($type) {
     case 'order':
