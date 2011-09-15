@@ -307,10 +307,14 @@ function email_confirmation_template_validate(&$form, $form_state) {
  */
 function email_confirmation_template_submit(&$form, $form_state) {
   $values = $form_state['values']['template_wrapper'];
-  $update = db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $form_state['values']['nid']));
-  
+  $nid = $form_state['values']['nid'];
+  if (is_numeric($nid)) {
+    $update = db_result(db_query('SELECT 1 FROM {fundraiser_confirmations} WHERE nid = %d', $nid));
+  }
+  else {
+    $update = FALSE;
+  }
   if ($update) {
-
     $tid = $values['email_template'];
     $subject = $values['confirmation_subject'];
     $from_name =  $values['confirmation_from_name'];
@@ -320,9 +324,7 @@ function email_confirmation_template_submit(&$form, $form_state) {
     $html_body_format = $values['confirmation_html_message_format'];
     $text_body = $values['confirmation_text_email_message'];
     $text_body_format = $values['confirmation_text_message_format'];
-  
-    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $node->nid);
-
+    db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s' WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $nid);
   }
   
   else {
