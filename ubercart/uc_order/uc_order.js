@@ -1,4 +1,3 @@
-// $Id: uc_order.js,v 1.9.2.9 2009/09/21 14:34:46 islandusurper Exp $
 
 /**
  * @file

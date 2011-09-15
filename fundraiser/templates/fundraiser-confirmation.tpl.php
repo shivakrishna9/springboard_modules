@@ -1,5 +1,4 @@
 <?php
-// $Id: fundraiser-confirmation.tpl.php,v 1.0 2011/02/17 22:05:27 pcave Exp $
 
 /**
  * @file

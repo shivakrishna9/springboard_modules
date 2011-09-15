@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file

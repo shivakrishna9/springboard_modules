@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_price.inc,v 1.1.2.6 2010/07/12 22:51:30 tr Exp $
 
 /**
  * @file

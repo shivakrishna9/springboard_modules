@@ -1,4 +1,3 @@
-// $Id: uc_taxes.js,v 1.10.2.11 2009/09/21 14:34:50 islandusurper Exp $
 
 /**
  * @file

@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.13 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file

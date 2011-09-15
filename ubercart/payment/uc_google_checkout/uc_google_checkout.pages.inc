@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_google_checkout.pages.inc,v 1.1.2.6 2010/08/11 17:51:04 islandusurper Exp $
 
 /**
  * @file

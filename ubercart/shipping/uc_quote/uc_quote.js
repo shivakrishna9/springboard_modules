@@ -1,4 +1,3 @@
-// $Id: uc_quote.js,v 1.5.2.9 2009/10/20 20:58:07 islandusurper Exp $
 
 /**
  * @file

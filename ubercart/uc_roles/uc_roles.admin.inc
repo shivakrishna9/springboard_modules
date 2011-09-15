@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_roles.admin.inc,v 1.1.2.7 2010/07/16 15:44:54 islandusurper Exp $
 
 /**
  * @file

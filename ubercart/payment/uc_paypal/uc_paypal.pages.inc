@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.12 2010/08/11 17:52:20 islandusurper Exp $
 
 /**
  * @file

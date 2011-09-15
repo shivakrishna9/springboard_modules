@@ -1,5 +1,4 @@
 <?php
-// $Id: secure-prepopulate-welcome.tpl.php,v 1.0 2011/13/04 22:05:27 pcave Exp $
 
 /**
  * @file

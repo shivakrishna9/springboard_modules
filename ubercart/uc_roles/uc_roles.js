@@ -1,4 +1,3 @@
-// $Id: uc_roles.js,v 1.1.2.4 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file

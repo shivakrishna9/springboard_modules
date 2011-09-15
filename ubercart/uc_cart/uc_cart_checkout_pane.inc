@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.13 2010/07/15 17:20:09 islandusurper Exp $
 
 /**
  * @file

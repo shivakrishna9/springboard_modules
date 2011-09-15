@@ -1,5 +1,4 @@
 <?php
-// $Id: fundraiser.module$ a.k.a kashgiser
 
 define('FUNDRAISER_SINGLE_DONATION_TYPE',  'donation');
 define('FUNDRAISER_RECURRING_DONATION_TYPE',  'recurring_donation');

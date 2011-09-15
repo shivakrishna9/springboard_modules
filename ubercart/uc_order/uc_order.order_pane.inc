@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.21 2010/01/04 15:15:07 islandusurper Exp $
 
 /**
  * @file

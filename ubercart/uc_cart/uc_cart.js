@@ -1,4 +1,3 @@
-// $Id: uc_cart.js,v 1.8.2.6 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file

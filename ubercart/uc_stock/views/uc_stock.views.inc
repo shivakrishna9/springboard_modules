@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_stock.views.inc,v 1.1.2.2 2010/07/12 22:53:54 tr Exp $
 
 /**
  * @file

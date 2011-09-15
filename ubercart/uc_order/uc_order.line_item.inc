@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_order.line_item.inc,v 1.1.2.10 2010/07/12 01:31:08 tr Exp $
 
 /**
  * @file

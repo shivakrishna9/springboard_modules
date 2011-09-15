@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_file.admin.inc,v 1.1.2.10 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file

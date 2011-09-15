@@ -1,5 +1,4 @@
 <?php
-// $Id: sf_import.module,v 1.0.0.0 2010/04/05 06:44:28 pcave Exp $
 
 /**
  * @file

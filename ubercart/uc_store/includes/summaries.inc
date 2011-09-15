@@ -1,5 +1,4 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.12 2010/07/12 22:51:30 tr Exp $
 
 /**
  * @file

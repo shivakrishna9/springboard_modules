@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_cart_links.admin.inc,v 1.1.2.5 2010/08/11 17:52:20 islandusurper Exp $
 
 /**
  * @file

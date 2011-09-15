@@ -1,5 +1,4 @@
 <?php
-// $Id: fundraiser.fields.inc $
 
 /**
  * @file

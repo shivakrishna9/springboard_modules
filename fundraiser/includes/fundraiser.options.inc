@@ -1,5 +1,4 @@
 <?php
-// $Id: fundraiser.options.inc,v 1.0.0.0 2010/11/22 03:19:49 pcave Exp $
 
 /**
  * @file

@@ -1,5 +1,4 @@
 <?php
-// $Id: gateway_manager.admin.inc,v 1.0 2010/12/30 18:58:04 pcave Exp $
 
 /**
  * @file

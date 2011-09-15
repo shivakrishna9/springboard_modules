@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.21 2010/02/24 04:42:09 tr Exp $
 
 /**
  * @file

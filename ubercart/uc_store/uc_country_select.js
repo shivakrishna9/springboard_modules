@@ -1,4 +1,3 @@
-// $Id: uc_country_select.js,v 1.6.2.3 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file

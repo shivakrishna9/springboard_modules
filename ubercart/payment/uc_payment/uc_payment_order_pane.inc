@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5.2.8 2010/07/12 01:57:44 tr Exp $
 
 /**
  * @file

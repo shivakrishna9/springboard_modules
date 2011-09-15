@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.16 2010/07/12 01:57:35 tr Exp $
 
 /**
  * @file

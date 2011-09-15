@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_usps.countries.inc,v 1.1.2.2 2009/10/29 13:10:48 islandusurper Exp $
 
 /**
  * @file

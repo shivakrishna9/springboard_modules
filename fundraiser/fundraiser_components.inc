@@ -1,5 +1,4 @@
 <?php
-// $Id: fundraiser.components.inc,v 2.0.1 2010/11/29 20:22:15 pcave Exp $
 
 /**
  * @file

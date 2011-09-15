@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_file.pages.inc,v 1.1.2.19 2010/07/12 01:32:00 tr Exp $
 
 /**
  * @file

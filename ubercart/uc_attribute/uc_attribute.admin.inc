@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.27 2010/07/12 01:33:31 tr Exp $
 
 /**
  * @file

@@ -1,5 +1,4 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.17 2010/03/13 18:22:26 tr Exp $
 
 /**
  * @file

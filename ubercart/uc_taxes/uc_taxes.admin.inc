@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.11 2010/03/18 03:09:42 tr Exp $
 
 /**
  * @file

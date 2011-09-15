@@ -1,5 +1,4 @@
 <?php
-// $Id: uc_payment_pack.admin.inc,v 1.1.2.8 2010/07/12 01:57:44 tr Exp $
 
 /**
  * @file
