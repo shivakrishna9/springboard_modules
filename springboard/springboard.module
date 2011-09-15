@@ -597,23 +597,11 @@ function theme_springboard_fundraiser_performance() {
  */
 function theme_springboard_sf_status() {
   if (module_exists('salesforce_management_api')) {
-    $last_connect = variable_get('salesforce_management_api_connect', array('status' => 'Unknown', 'time' => ''));
-    if (!$last_connect['status']) {
-      $last_connect['status'] = 'Unknown';
-      $last_connect['time'] = 0;
-    }
-    
-    // system status: Good IF (can connect to salesforce)
     $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
-    $output .= '<p class="sf-status">System status: <span class="springboard-connect-status ' . $last_connect['status'] . '">' . $last_connect['status'] . '</span></p>'; 
-
-    // sf connection info (status, last date/time
-    if ($last_connect['time']) {
-      $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
-    }
-    else {
-      $output .= '<p><span class"' . $last_connect['status'] . '">Last connected to SF: never</span>';
-    }
+    
+    // Call on the module to get the current connection status
+    $output .= salesforce_management_api_test_connection();
+    
     // WSDL update
     $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
     $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
