@@ -1,6 +1,4 @@
 <?php
-// $Id: salesforce_management_api.module,v 1.2.2.15 2009/05/29 23:00:11 joshk Exp $
-
 /**
  * @file
  * Defines an API that enables modules to interact with the Salesforce server.
@@ -11,6 +9,7 @@
  */
  // TODO: remove these path constants because they make me sad when I'm examining hook_menu().
 ini_set("soap.wsdl_cache_enabled", "0");
+
 // Define directory paths for the Toolkit and WSDL files.
 define('SALESFORCE_DIR', drupal_get_path('module', 'salesforce_management_api'));
 define('SALESFORCE_DIR_TOOLKIT', SALESFORCE_DIR .'/toolkit');
@@ -21,7 +20,7 @@ define('SALESFORCE_DIR_WSDL', SALESFORCE_DIR .'/wsdl');
 define('SALESFORCE_PATH_ADMIN', 'admin/settings/salesforce-management');
 define('SALESFORCE_PATH_FIELDMAPS', 'admin/settings/salesforce-management/fieldmap');
 define('SALESFORCE_PATH_UPDATE_WSDL', 'admin/settings/salesforce-management/update-wsdl');
-define('SALESFORCE_PATH_DEMO', 'admin/settings/salesforce-management/demo');
+define('SALESFORCE_PATH_TEST', 'admin/settings/salesforce-management/test');
 
 // Define field importing requirements.
 // TODO: I believe we need to use bitwise operators instead.
@@ -35,6 +34,12 @@ define('SALESFORCE_LOG_NONE', 0);
 define('SALESFORCE_LOG_SOME', 5);
 define('SALESFORCE_LOG_ALL', 10);
 
+
+// Define errors that can be returned by salesforce_management_api_connect()
+define('SALESFORCE_ERROR_MISSING_USERNAME', 1);
+define('SALESFORCE_ERROR_MISSING_PASSWORD', 2);
+define('SALESFORCE_ERROR_MISSING_TOKEN', 4);
+define('SALESFORCE_ERROR_LOGIN_FAILURE', 8);
 
 /**
  * Implementation of hook_menu().
@@ -64,7 +69,17 @@ function salesforce_management_api_menu() {
     'access arguments' => array('administer salesforce management'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'salesforce_management_api.admin.inc',
-  );  
+  );
+  $items[SALESFORCE_PATH_TEST] = array(
+    'title' => 'Test Connection',
+    'page callback' => 'salesforce_management_api_test_connection',
+    'access arguments' => array('administer salesforce management'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'salesforce_management_api.admin.inc',
+    'weight' => 10,
+  );
+  
+  
   $items[SALESFORCE_PATH_FIELDMAPS] = array(
     'title' => 'Fieldmaps',
     'description' => 'Administer fieldmap relationships between Drupal objects and Salesforce objects.',
@@ -177,6 +192,24 @@ function salesforce_management_api_connect($username = FALSE, $password = FALSE,
     return $sf;
   }
 
+  $sf = _salesforce_management_api_open_connection($username, $password, $token);
+  if (is_object($sf)) {
+    return $sf;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+
+/**
+ * Local function to actually make the Salesforce connection.
+ * If successful, this function returns a DrupalSalesforce object.
+ * If there is an error, an int is returned. See the SALESFORCE_ERROR_* defines at the top of this file
+ */
+function _salesforce_management_api_open_connection($username = FALSE, $password = FALSE, $token = FALSE) {
+  $return_val = 0;
+  
   // Load up the sitewide API credentials if no others were provided:
   $username = $username ? $username : variable_get('salesforce_management_api_username', '');
   $password = $password ? $password : variable_get('salesforce_management_api_password', '');
@@ -185,7 +218,16 @@ function salesforce_management_api_connect($username = FALSE, $password = FALSE,
   // Fail early if we didn't receive an API username, password, or token.
   if (empty($username) || empty($password) || empty($token)) {
     watchdog('salesforce', 'Connection to Salesforce failed because API credentials have not been set.', array(), WATCHDOG_ERROR);
-	return FALSE;
+    if (empty($username)) {
+      $return_val += SALESFORCE_ERROR_MISSING_USERNAME;
+    }
+    if (empty($password)) {
+      $return_val += SALESFORCE_ERROR_MISSING_PASSWORD;
+    }
+    if (empty($token)) {
+      $return_val += SALESFORCE_ERROR_MISSING_TOKEN;
+    }
+    return $return_val;
   }
 
   // Include the file that defines the class.
@@ -198,15 +240,15 @@ function salesforce_management_api_connect($username = FALSE, $password = FALSE,
   if ($sf->login()) {
     // Return the object if a connection and login were successful, log the event and cache connect info to a variable.
     variable_set('salesforce_management_api_connect', array('status' => 'Connected', 'time' => time()));
-	watchdog('salesforce', t('Connection to Salesforce has been set.', array()));
+    watchdog('salesforce', t('Connection to Salesforce has been set.', array()));
     return $sf;
   }
   else {
-    // Or return FALSE to indicate the failure.
     $sf = FALSE;
     variable_set('salesforce_management_api_connect', array('status' => 'Failed', 'time' => time()));
-	watchdog('salesforce', t('Connection to Salesforce failed because API credentials have not been set.', array()));
-    return FALSE;
+    watchdog('salesforce', t('Connection to Salesforce failed because API credentials are incorrect.', array()));
+    $return_val += SALESFORCE_ERROR_LOGIN_FAILURE;
+    return $return_val;
   }
 }
 
@@ -232,36 +274,36 @@ function salesforce_management_api_fieldmap_objects($type) {
 					}
 				}
 			
-			// We need to limit this to 100 objects at a time
-			$chunked_objects = array_chunk($sf_objects, 100);
-			$result = array();
-			foreach($chunked_objects as $object_set) {
-				$tmp = $sf->client->describeSObjects($object_set);
-				$result = array_merge($result, $tmp);
-			}
+  			// We need to limit this to 100 objects at a time
+  			$chunked_objects = array_chunk($sf_objects, 100);
+  			$result = array();
+  			foreach($chunked_objects as $object_set) {
+  				$tmp = $sf->client->describeSObjects($object_set);
+  				$result = array_merge($result, $tmp);
+  			}
 			
-      foreach ($result as $key => $object) {
-        $objects[$sf_objects[$key]] = array(
-          'label' => t($sf_objects[$key]),
-          'fields' => array(),
-        );
-        foreach ($object->fields as $field) {
-          $objects[$sf_objects[$key]]['fields'][$field->name] = array(
-            'label' => t($field->label),
-						'field_type' => $field->type,
-						'nillable' => $field->nillable,
-						'length' => $field->length,
+        foreach ($result as $key => $object) {
+          $objects[$sf_objects[$key]] = array(
+            'label' => t($sf_objects[$key]),
+            'fields' => array(),
           );
-          if ($field->createable != 1) {
-            $objects[$sf_objects[$key]]['fields'][$field->name]['type'] = SALESFORCE_FIELD_SOURCE_ONLY;
-          }
-          elseif ($field->nillable != 1 && $field->defaultedOnCreate != 1) {
-            $objects[$sf_objects[$key]]['fields'][$field->name]['type'] = SALESFORCE_FIELD_REQUIRED;
+          foreach ($object->fields as $field) {
+            $objects[$sf_objects[$key]]['fields'][$field->name] = array(
+              'label' => t($field->label),
+  						'field_type' => $field->type,
+  						'nillable' => $field->nillable,
+  						'length' => $field->length,
+            );
+            if ($field->createable != 1) {
+              $objects[$sf_objects[$key]]['fields'][$field->name]['type'] = SALESFORCE_FIELD_SOURCE_ONLY;
+            }
+            elseif ($field->nillable != 1 && $field->defaultedOnCreate != 1) {
+              $objects[$sf_objects[$key]]['fields'][$field->name]['type'] = SALESFORCE_FIELD_REQUIRED;
+            }
           }
         }
+        cache_set('salesforce_management_api_sf_objects', $objects);
       }
-      cache_set('salesforce_management_api_sf_objects', $objects);
-    }
     }
     else {
       $objects = $cache->data;
@@ -901,33 +943,32 @@ function salesforce_management_api_map_role_form(){
     return $form;
   }
   
-  else{
-   
-  $response_role = $sf->client->query(('select id,Name from UserRole'));
-  $drupal_roles = user_roles();
+  else {   
+    $response_role = $sf->client->query(('select id,Name from UserRole'));
+    $drupal_roles = user_roles();
 
-  $sf_variable = unserialize(variable_get("sf_drupal_role_map",''));
-  foreach($response_role->records as $sroles) {
-    $drupal_value = '<select name="'.$sroles->Id.'"><option value="">Select Drupal Role</option>';
-    foreach($drupal_roles as $did=>$dval){
-      $d_role_sel = $sf_variable[$sroles->Id]==$did?'selected':'';
-      $drupal_value.= '<option value="'.$did.'" '.$d_role_sel.'>'.$dval.'</option>';
-    }  
-    $rows[] = array(
-      $sroles->Name,
-      $drupal_value,
-    );
-  }
+    $sf_variable = unserialize(variable_get("sf_drupal_role_map",''));
+    foreach($response_role->records as $sroles) {
+      $drupal_value = '<select name="'.$sroles->Id.'"><option value="">Select Drupal Role</option>';
+      foreach($drupal_roles as $did=>$dval){
+        $d_role_sel = $sf_variable[$sroles->Id]==$did?'selected':'';
+        $drupal_value.= '<option value="'.$did.'" '.$d_role_sel.'>'.$dval.'</option>';
+      }  
+      $rows[] = array(
+        $sroles->Name,
+        $drupal_value,
+      );
+    }
   
-  $form['salesforce_management_default_map_role'] = array(
-      '#value' => theme('table', $header, $rows),
+    $form['salesforce_management_default_map_role'] = array(
+        '#value' => theme('table', $header, $rows),
+      );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Map Drupal Roles'),
     );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Map Drupal Roles'),
-  );
   
-  return $form;
+    return $form;
   }
 }
 function salesforce_management_api_map_role_form_submit($form, &$form_state) {
@@ -954,43 +995,41 @@ function salesforce_management_api_map_record_form(){
     );
     return $form;
   }
-  else{
-  $response_account = $sf->client->query(('SELECT id, Name ,SobjectType FROM RecordType'));
-  $drupal_roles = user_roles();
-  $sf_variable = unserialize(variable_get("sf_drupal_record_map",''));
-  foreach($response_account->records as $srecords) {
-   		$SobjectTypeName[] = $srecords->SobjectType;
-  }
+  else {
+    $response_account = $sf->client->query(('SELECT id, Name ,SobjectType FROM RecordType'));
+    $drupal_roles = user_roles();
+    $sf_variable = unserialize(variable_get("sf_drupal_record_map",''));
+    foreach ($response_account->records as $srecords) {
+     		$SobjectTypeName[] = $srecords->SobjectType;
+    }
   
-  foreach($drupal_roles as $did=>$dval){
-   $drupal_value = '<select name="'.$did.'"><option value=""></option>';
-    foreach(array_unique($SobjectTypeName) as $key=>$SobjectType){
-	  $drupal_value.= '<optgroup label="'.$SobjectType.'">';
-	  foreach($response_account->records as $srecords) {
-	   $records_sel = $sf_variable[$did]==$srecords->Id?'selected':'';
-     	if($srecords->SobjectType == $SobjectType){
-	  		$drupal_value.= '<option value="'.$srecords->Id.'" '.$records_sel.'>'.$srecords->Name.'</option>';
-	  	}
-      }  
-	}
-	$drupal_value.= '</select>';  
-    $rows[] = array(
-      $dval,
-      $drupal_value,
+    foreach ($drupal_roles as $did=>$dval){
+     $drupal_value = '<select name="'.$did.'"><option value=""></option>';
+      foreach (array_unique($SobjectTypeName) as $key=>$SobjectType){
+    	  $drupal_value.= '<optgroup label="'.$SobjectType.'">';
+    	  foreach ($response_account->records as $srecords) {
+    	   $records_sel = $sf_variable[$did]==$srecords->Id?'selected':'';
+         	if ($srecords->SobjectType == $SobjectType){
+    	  		$drupal_value.= '<option value="'.$srecords->Id.'" '.$records_sel.'>'.$srecords->Name.'</option>';
+    	  	}
+    	  }
+	    }
+	    $drupal_value.= '</select>';  
+      $rows[] = array(
+        $dval,
+        $drupal_value,
+        );
+    }
+    $form['salesforce_management_default_map_record'] = array(
+        '#value' => theme('table', $header, $rows),
+      );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Map Record Type'),
     );
-  }
-  $form['salesforce_management_default_map_record'] = array(
-      '#value' => theme('table', $header, $rows),
-    );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Map Record Type'),
-  );
 
-  return $form;
+    return $form;
   }
-  
-  
 }
 
 function salesforce_management_api_get_object_recordtypes($object) {
@@ -1008,9 +1047,8 @@ function salesforce_management_api_get_object_recordtypes($object) {
 		}
 	}
 	else {
-	 return array();
-	}
-	
+    return array();
+  }
 	return $types;
 }
 
@@ -1018,7 +1056,6 @@ function salesforce_management_api_get_object_recordtypes($object) {
  * Returns all campaigns defined in Salesforce. The campaigns are cached for 24 hours.
  */
 function salesforce_management_api_get_campaigns() {
-
 	$cid = 'salesforce_campaigns';
 	
 	$campaigns = cache_get($cid);
@@ -1078,4 +1115,26 @@ function salesforce_manangement_api_fieldmap_exists($drupal_type) {
     return TRUE;
   }
   return FALSE;
+}
+
+
+
+/**
+ * Return explanation text for SF connection errors returned from _salesforce_management_api_open_connection()
+ */
+function salesforce_management_api_format_connection_errors($error_bits) {
+  $error_strings = array(
+    SALESFORCE_ERROR_MISSING_USERNAME => t('Missing username'),
+    SALESFORCE_ERROR_MISSING_PASSWORD => t('Missing password'),
+    SALESFORCE_ERROR_MISSING_TOKEN => t('Missing token'),
+    SALESFORCE_ERROR_LOGIN_FAILURE => t('Login failure'),
+  );
+  
+  $errors = array();
+  foreach ($error_strings as $value => $error_explanation) {
+    if (($error_bits & $value) == $value) {
+      $errors[] = $error_explanation;
+    }
+  }
+  return implode('. ', $errors) . '.';
 }
