@@ -1,7 +1,0 @@
-; $Id$
-name = Fundraiser Advanced Permissions
-description = Advanced permissions for the Fundraising Module
-core = 6.x
-package = Jackson River Springboard
-dependencies[] = fundraiser
-version =  6.x-3.0-dev
