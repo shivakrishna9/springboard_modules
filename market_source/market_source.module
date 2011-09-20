@@ -390,3 +390,77 @@ MS_SCRIPT;
 
   return $script;
 }
+
+/**
+ * Implements hook_fundraiser_create_webform_components().
+ */
+function market_source_fundraiser_create_webform_components($nid) {
+  $components = array();
+
+  $components['market_source'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => variable_get('market_source_default_campaign', 'default_ms'),
+    'form_key' => 'ms',
+    'name' => 'Market Source',
+    'type' => 'hidden',
+    'extra' => array('description' => '',),
+    'mandatory' => 1, 
+    'weight' => 20,
+    'email' => 1,
+    'maps_to' => 'profile_ms',
+  );
+	
+	// if the sf_donation is installed, try to get the default campaign
+	$default_campaign = '';
+	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
+		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
+	}
+
+	// campaign id
+	$components['campaign'] = array(
+	  'nid' => $nid,
+	  'pid' => 0,
+	  'value' => $default_campaign,
+	  'form_key' => 'cid',
+	  'name' => t('Campaign ID'),
+	  'type' => 'hidden',
+	  'extra' => array('description' => ''),
+	  'mandatory' => 1,
+	  'weignt' => 21,
+	  'email' => 1,
+	  'maps_to' => 'profile_cid',
+	);
+  
+	// referrer
+	$components['referrer'] = array(
+	  'nid' => $nid,
+	  'pid' => 0 ,
+	  'value' => '',
+	  'form_key' => 'referrer', 
+	  'name' => t('Referrer'),
+	  'type' => 'hidden',  
+	  'extra' => array('description' => ''),
+	  'mandatory' => 0, 
+	  'weight' => 22,
+	  'email' => 1,
+	  'maps_to' => 'profile_referrer',
+	);
+	
+	// initial referrer
+	$components['initial_referrer'] = array(
+	  'nid' => $nid,
+	  'pid' => 0,
+	  'value' => '',
+	  'form_key' => 'initial_referrer', 
+	  'name' => t('Initial Referrer'),
+	  'type' => 'hidden',  
+	  'extra' => array('description' => '',),
+	  'mandatory' => 0, 
+	  'weight' => 23, 
+	  'email' => 1,
+	  'maps_to' => 'profile_initial_referrer',
+	);
+	
+  return $components;
+}

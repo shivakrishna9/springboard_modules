@@ -22,88 +22,6 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   module_load_include('inc', 'webform', 'includes/webform.components');
   // create an array to hold all of the created components
   $components = array();
-
-	// market source id
-	$market_source = array();
-	$market_source['nid'] = $nid;
-	$market_source['pid'] = 0; 
-	$market_source['value'] = variable_get('market_source_default_campaign', 'default_ms');
-	$market_source['form_key'] = 'ms'; 
-	$market_source['name'] = 'Market Source';
-	$market_source['type'] = 'hidden';  
-	$market_source['extra'] = array(
-		'description' => '',
-	);
-	$market_source['mandatory'] = 1; 
-	$market_source['weight'] = 20; 
-	$market_source['email'] = 1;
-	$market_source['maps_to'] = 'profile_ms';
-	
-	$id = webform_component_insert($market_source);
-	$components[$id] = $market_source;
-	
-	// if the sf_donation is installed, try to get the default campaign
-	$default_campaign = '';
-	if (variable_get('fundraiser_salesforce_integration', 0)) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
-	
-	// campaign id
-	$campaign = array();
-	$campaign['nid'] = $nid;
-	$campaign['pid'] = 0; 
-	$campaign['value'] = $default_campaign;
-	$campaign['form_key'] = 'cid'; 
-	$campaign['name'] = 'Campaign ID';
-	$campaign['type'] = 'hidden';  
-	$campaign['extra'] = array(
-		'description' => '',
-	);
-	$campaign['mandatory'] = 1; 
-	$campaign['weight'] = 21; 
-	$campaign['email'] = 1;
-	$campaign['maps_to'] = 'profile_cid';
-	
-	$id = webform_component_insert($campaign);
-    $components[$id] = $campaign;
-  
-	// referrer
-	$referrer = array();
-	$referrer['nid'] = $nid;
-	$referrer['pid'] = 0; 
-	$referrer['value'] = '';
-	$referrer['form_key'] = 'referrer'; 
-	$referrer['name'] = 'Referrer';
-	$referrer['type'] = 'hidden';  
-	$referrer['extra'] = array(
-		'description' => '',
-	);
-	$referrer['mandatory'] = 0; 
-	$referrer['weight'] = 22; 
-	$referrer['email'] = 1;
-	$referrer['maps_to'] = 'profile_referrer';
-	
-	$id = webform_component_insert($referrer);
-	$components[$id] = $referrer;
-	
-	// initial referrer
-	$initial_referrer = array();
-	$initial_referrer['nid'] = $nid;
-	$initial_referrer['pid'] = 0; 
-	$initial_referrer['value'] = '';
-	$initial_referrer['form_key'] = 'initial_referrer'; 
-	$initial_referrer['name'] = 'Initial Referrer';
-	$initial_referrer['type'] = 'hidden';  
-	$initial_referrer['extra'] = array(
-		'description' => '',
-	);
-	$initial_referrer['mandatory'] = 0; 
-	$initial_referrer['weight'] = 23; 
-	$initial_referrer['email'] = 1;
-	$initial_referrer['maps_to'] = 'profile_initial_referrer';
-	
-	$id = webform_component_insert($initial_referrer);
-	$components[$id] = $initial_referrer;
 	
 	// donation amount
 	$donation = array();
@@ -474,6 +392,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	$id = webform_component_insert($recurs);
 	$components[$id] = $recurs;
 	
+	// Invoke hook_fundraiser_create_webform_components
+	// 
+	$contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
+	foreach ($contrib_components as $component) {
+	  $id = webform_component_insert($component);
+	  $components[$id] = $component;
+	}
 	return $components;
 }
 
