@@ -66,5 +66,48 @@ function springboard_social_schema() {
     ),
     'primary_key' => array('nid'),
   );
+  $schema['springboard_social_gplus'] = array(
+    'description' => t('Stores Facebook share config for donation_form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => t('Is Google +1 sharing enabled for this donation form?'),
+        'type' =>'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'href' => array(
+        'description' => t('URL of the page to share.'),
+        'type' => 'text',
+      ),
+      'image_url' => array(
+        'description' => t('URL of the +Snippet image.'),
+        'type' => 'text',
+      ),
+      'description' => array(
+        'description' => t('Description to use in the +Snippet.'),
+        'type' => 'text',
+      ),
+    ),
+    'primary_key' => array('nid'),
+  );
   return $schema;
+}
+
+/**
+ * Implements hook_update().
+ * 
+ * Add database storage for Google+ data.
+ */
+function springboard_social_update_6001() {
+  $ret = array();
+  $schema = springboard_social_schema();
+  db_create_table($ret, 'springboard_social_gplus', $schema['springboard_social_gplus']);
+  return $ret;
 }

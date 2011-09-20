@@ -17,6 +17,9 @@ function springboard_social_init() {
         $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_fb.css';
         drupal_add_css($path, 'module', 'all', FALSE);
       }
+      if ($node->gplus_share_status) {
+        $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_gplus.css';
+      }
     }
   }
 }
@@ -46,14 +49,18 @@ function springboard_social_theme() {
     'springboard_social_fb_share_link' => array(
       'arguments' => array('app_id' => NULL, 'link_url' => NULL, 'title' => NULL, 'share_logo' => NULL, 'description' => NULL, 'message' => NULL),
       'template' => 'springboard-social-share-link',
-    )
+    ),
+    'springboard_social_gplus_share_link' => array(
+      'arguments' => array('button_size' => NULL, 'annotation' => NULL, 'link_url' => NULL, 'image_url' => NULL, 'description' => NULL),
+      'template' => 'springboard-social-gplus-link',
+    ),
   );
 }
 
 /**
  * Implements hook_preprocess_fundraiser_confirmation().
  * 
- * Adds $fb_share variable to the confirmation template.
+ * Adds social networking variables to the confirmation template.
  */
 function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
   $app_id = variable_get('springboard_social_app_id', '');
@@ -65,6 +72,15 @@ function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
           $node->fb_share_picture,
           $node->fb_share_description,
           $node->fb_share_message);
+          
+  $vars['springboard_social_share'] .= theme('springboard_social_gplus_share_link',
+          variable_get('springboard_social_gplus_button_size', 'small'),
+          variable_get('springboard_social_gplus_annotation', 'none'),
+          $node->gplus_href,
+          $node->gplus_image_url,
+          $node->gplus_description);
+          
+  //drupal_set_message('vars:' . print_r($vars['springboard_social_gplus_button, TRUE));
 }
 
 /**
@@ -73,7 +89,8 @@ function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
 
 function springboard_social_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'donation_form_node_form' && variable_get('springboard_social_share_display', 0)) {
-    $display = variable_get('springboard_social_share_display', 0);
+    $fb_display = variable_get('springboard_social_share_display', 0);
+    $gplus_display  = variable_get('springboard_social_gplus_display', 0);
     global $base_url;
     $form['fb_share'] = array(
       '#type' => 'fieldset',
@@ -90,7 +107,7 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => $form['#node']->fb_share_name ? $form['#node']->fb_share_name : variable_get('springboard_social_title', ''),
     );
     // If share links can be conditionally displayed
-    if ($display == 2) {
+    if ($fb_display == 2) {
       $form['fb_share']['fb_share_status'] = array(
         '#type' => 'checkbox',
         '#title' => t('Display Facebook Share button on the thank you page.'),
@@ -122,12 +139,38 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
       '#description' => t('This text is displayed in the body of the share post along with the logo and title.'),
       '#default_value' => $form['#node']->fb_share_description ? $form['#node']->fb_share_description : variable_get('springboard_social_description', ''),
     );
-    /*$form['fb_share']['fb_share_message'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Share message'),
-      '#description' => t('This text provides a default value for the status message portion of the share form.'),
-      '#default_value' => $form['#node']->fb_share_message,
-    );*/
+    $form['gplus_share'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Google Plus Settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    if ($gplus_display == 2) {
+      $form['gplus_share']['gplus_share_status'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Display Google +1 button on the thank you page.'),
+        '#description' => t(''),
+        '#default_value' =>  $form['#node']->gplus_share_status,
+      );
+    }
+   $form['gplus_share']['gplus_href'] = array(
+     '#type' => 'textfield',
+     '#title' => t('Target URL'),
+     '#description' => t(''),
+     '#default_value' => $form['#node']->gplus_href ? $form['#node']->gplus_href : $_SERVER['REQUEST_URI'],
+   );
+   $form['gplus_share']['gplus_image_url'] = array(
+     '#type' => 'textfield',
+     '#title' => t('Image URL'),
+     '#description' => t(''),
+     '#default_value' => $form['#node']->gplus_image_url ? $form['#node']->gplus_image_url : variable_get('springboard_social_gplus_image_url', ''),
+   );
+   $form['gplus_share']['gplus_description'] = array(
+     '#type' => 'textfield',
+     '#title' => t('Description'),
+     '#description' => t(''),
+     '#default_value' => $form['#node']->gplus_description ? $form['#node']->gplus_description : variable_get('springboard_social_gplus_description'),
+   );
   }
   $form['#validate'][] = 'springboard_social_form_validate';
 }
@@ -155,15 +198,18 @@ function springboard_social_form_validate(&$form, $form_state) {
 function springboard_social_load_share(&$node) {
   global $base_url;
   $share_status = variable_get('springboard_social_share_display', 0);
-  $settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_share} WHERE nid = %d', $node->nid));
-  // Has settings
-  if ($settings['nid']) {
-    $node->fb_share_status = $settings['status'];
-    $node->fb_share_name = $settings['name'];
-    $node->fb_share_link = $settings['link'];
-    $node->fb_share_picture = $settings['picture'];
-    $node->fb_share_description = $settings['description'];
-    $node->fb_share_message = $settings['message'];
+  $gplus_status = variable_get('springboard_social_gplus_display', 0);
+  
+  $share_settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_share} WHERE nid = %d', $node->nid));
+  $gplus_settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
+ 
+  if ($share_settings['nid']) {
+    $node->fb_share_status = $share_settings['status'];
+    $node->fb_share_name = $share_settings['name'];
+    $node->fb_share_link = $share_settings['link'];
+    $node->fb_share_picture = $share_settings['picture'];
+    $node->fb_share_description = $share_settings['description'];
+    $node->fb_share_message = $share_settings['message'];
   }
   // No settings, try default config
   elseif ($share_status) {
@@ -174,7 +220,20 @@ function springboard_social_load_share(&$node) {
     $node->fb_share_description = variable_get('springboard_social_message', '');
     $node->fb_share_message = variable_get('springboard_social_description', '');
   }
-  // Give up.
+  
+  if ($gplus_settings['nid']) {
+    $node->gplus_share_status = $gplus_settings['status'];
+    $node->gplus_href = $gplus_settings['href'];
+    $node->gplus_image_url = $gplus_settings['image_url'];
+    $node->gplus_description = $gplus_settings['description'];
+    //drupal_set_message('node:' . print_r($node, TRUE));
+  }
+  elseif ($gplus_status) {
+    $node->gplus_share_status = $gplus_status;
+    $node->gplus_href = $base_url . "/node/" . $node->nid;
+    $node->gplus_image_url = '';
+    $node->gplus_description = '';
+  } 
 }
 
 /**
@@ -184,6 +243,7 @@ function springboard_social_nodeapi(&$node, $op) {
   switch ($op) {
     case 'load':
       springboard_social_load_share($node);
+      
       break;
     case 'insert':
 
@@ -197,7 +257,14 @@ function springboard_social_nodeapi(&$node, $op) {
         $node->fb_share_description,
         $node->fb_share_message
       );
-      // Insert into springboard_social_share
+      db_query("INSERT INTO {springboard_social_gplus} (nid, status, href, image_url, description)
+        VALUES (%d, %d, '%s', '%s', '%s')",
+        $node->nid,
+        $node->gplus_share_status,
+        $node->gplus_href,
+        $node->gplus_image_url,
+        $node->gplus_description
+      );
       break;
     case 'update':
 
@@ -219,7 +286,7 @@ function springboard_social_nodeapi(&$node, $op) {
       }
       else {
         
-        $sql = sprintf("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
+        db_query("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
           VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
           $node->nid,
           $node->fb_share_status,
@@ -229,8 +296,31 @@ function springboard_social_nodeapi(&$node, $op) {
           $node->fb_share_description,
           $node->fb_share_message
         );
+      }
+      
+  $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
+      if ($entry_exists) {
 
-        db_query($sql);
+        db_query("UPDATE {springboard_social_gplus} 
+          SET status = %d, href = '%s', image_url = '%s', description = '%s' 
+          WHERE nid = %d", 
+          $node->gplus_share_status,
+          $node->gplus_href,
+          $node->gplus_image_url,
+          $node->gplus_description,
+          $node->nid
+        );
+      }
+      else {
+        
+        db_query("INSERT INTO {springboard_social_gplus} (nid, status, href, image_url, description)
+        VALUES (%d, %d, '%s', '%s', '%s')",
+        $node->nid,
+        $node->gplus_share_status,
+        $node->gplus_href,
+        $node->gplus_image_url,
+        $node->gplus_description
+      );
       }
       break;
     case 'delete':
