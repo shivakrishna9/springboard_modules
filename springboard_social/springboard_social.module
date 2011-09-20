@@ -169,7 +169,7 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
      '#type' => 'textfield',
      '#title' => t('Description'),
      '#description' => t(''),
-     '#default_value' => $form['#node']->gplus_description ? $form['#node']->gplus_description : variable_get('springboard_social_gplus_description'),
+     '#default_value' => $form['#node']->gplus_description ? $form['#node']->gplus_description : variable_get('springboard_social_gplus_description', ''),
    );
   }
   $form['#validate'][] = 'springboard_social_form_validate';
