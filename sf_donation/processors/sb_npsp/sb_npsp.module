@@ -107,7 +107,9 @@ function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
 	}
 	
 	// export them
-	sf_donation_export_opportunity_contact_roles();
+	if (variable_get('sf_donation_create_contact_roles', TRUE)) {
+    sf_donation_export_opportunity_contact_roles();
+	}
 }
 
 /**

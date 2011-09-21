@@ -560,6 +560,13 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
         '#options' => $record_types,
         '#default_value' => variable_get('sf_donation_default_recurring_donation_recordtype', ''),
       );
+      
+      $form['sf_donation']['sf_donation_create_contact_roles'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Create Opportunity Contact Roles'),
+        '#description' => t('When checked the module will create the opportunity contact role object that relates the contact to the opportunity.'),
+        '#default_value' => variable_get('sf_donation_create_contact_roles', TRUE),
+      );
 
 			break;
 	}
