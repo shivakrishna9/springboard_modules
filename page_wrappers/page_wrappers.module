@@ -101,7 +101,7 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
           $node->content['preview'] = array(
             '#value' => drupal_get_form('_page_wrapper_preview_form'),
           );
-          unset($node->content['[field_css_file]']);
+          unset($node->content['field_css_file']);
           unset($node->content['field_js_file']);
           //$node->content['body'] = 'blah';
           //print "<pre>".print_r($node, TRUE)."</pre>";
