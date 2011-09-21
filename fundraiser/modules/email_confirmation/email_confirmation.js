@@ -1,7 +1,7 @@
 Drupal.behaviors.emailBehavior = function(){
-   $current_action = $('#node-form').attr('action');
+   $current_action = $('#fundraiser-confirmation-settings-form').attr('action');
    if ($current_action != Drupal.settings.basePath + 'email_confirmation/preview_modal') {
-    $old_action = $('#node-form').attr('action');
+    $old_action = $('#fundraiser-confirmation-settings-form').attr('action');
    }
 
 
