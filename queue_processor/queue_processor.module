@@ -833,7 +833,18 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					break;
 					
 				case 'boolean':
-					$value = !empty($value) ? $value : 0; // default to false
+				  if (is_string($value)) {
+				    switch (strtolower($value)) {
+				      case 'true':
+				        $value = 1;
+				        break;
+				      default:
+				        $value = 0; // default to false
+				    }
+				  }
+				  else {
+				    $value = !empty($value) ? $value : 0; // default to false
+				  }
 					// convert any non-bool values back to true
 					if ($value && !is_bool($value)) {
 						$value = 1;
