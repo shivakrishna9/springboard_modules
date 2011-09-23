@@ -36,7 +36,9 @@ function market_source_menu() {
  * Implementation of hook_boot().
  */
 function market_source_boot() {
-//  drupal_set_message('blah', 'error');
+  $custom_fields = variable_get('market_source_custom_fields', '');
+  $field_keys = market_source_custom_field_keys($custom_fields);
+
 
   // Check to see if the market source values should expire.
   if (variable_get('market_source_validity_period', 0) != 0) {
@@ -51,6 +53,13 @@ function market_source_boot() {
         unset($_SESSION['cid']);
         unset($_SESSION['referrer']);
         unset($_SESSION['initial_referrer']);
+
+        foreach ($field_keys as $key) {
+          if (isset($_SESSION[$key])) {
+            unset($_SESSION[$key]);
+          }
+        }
+
       }
     }
   }
@@ -70,6 +79,13 @@ function market_source_boot() {
     $_SESSION['initial_referrer'] = substr($_COOKIE['market_source_initial_referrer'], 0, MARKET_SOURCE_INITIAL_REFERRER_MAX_LENGTH);
     $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
   }
+  
+  foreach ($field_keys as $key) {
+    if(isset($_COOKIE[$key]) && $_COOKIE[$key] != '') {
+      $_SESSION[$key] = $_COOKIE[$key];
+      $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+    }
+  }
 
   // Pull the values from the current request, if any.
   foreach ($_GET as $key => $val) {
@@ -81,6 +97,13 @@ function market_source_boot() {
 
     if (strtolower($key) == 'cid' && market_source_is_valid_cid($val)) {
       $_SESSION['cid'] = $val;
+      $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
+      continue;
+    }
+    
+    // Snag any custom fields in the $_GET string.
+    if (in_array(strtolower($key), $field_keys)) {
+      $_SESSION[$key] = $val;
       $_SESSION['market_source_expiry_date'] = time() + (variable_get('market_source_validity_period', 0) * 3600);
       continue;
     }
@@ -178,11 +201,15 @@ function market_source_user($op, &$edit, &$account, $category = NULL) {
  * Implementation of hook_form_alter().
  */
 function market_source_form_alter(&$form, $form_state, $form_id) {
-  if (!isset($form['submission']) 
+  $custom_fields = variable_get('market_source_custom_fields', array());
+  $field_keys = market_source_custom_field_keys($custom_fields);
+  
+  if (!isset($form['submission'])
       && module_exists('webform') 
       && (strpos($form_id, 'webform') === 0)
       && (('submission' != arg(2)) && ('edit' != arg(4))) // This check ensures that we don't modify a submissions's values on edit
       ) {
+    
     if (isset($form['submitted']['ms']) && market_source_get_ms() != '') {
       $form['submitted']['ms']['#value'] = market_source_get_ms();
     }
@@ -198,6 +225,13 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
     if (isset($form['submitted']['initial_referrer']) && market_source_get_initial_referrer() != '') {
       $form['submitted']['initial_referrer']['#value'] = market_source_get_initial_referrer();
     }
+    
+    foreach ($field_keys as $key) {
+      if (isset($form['submitted'][$key]) && market_source_get_custom_field($key) != '') {
+        $form['submitted']['initial_referrer']['#value'] = market_source_get_custom_field($key);
+      }
+    }
+    
   }
   
   // Expose Market Source fields for editting
@@ -213,6 +247,26 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       $form['submitted']['referrer']['#type'] = 'textfield';
       $form['submitted']['initial_referrer']['#type'] = 'textfield';
     }
+  }
+}
+
+/**
+ * Implements hook_nodeapi().
+ */
+function market_source_nodeapi($node, $op) {
+  switch ($op) {
+    case 'insert':
+     $webform_types = variable_get('webform_node_types', '');
+     if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
+
+       module_load_include('inc', 'webform', 'includes/webform.components');
+       $custom_fields = variable_get('market_source_custom_fields', array());
+       foreach ($custom_fields as $custom_field) {
+         $component = market_source_create_webform_component($custom_field, $node->nid);
+         webform_component_insert($component);
+       }
+     }
+     break;
   }
 }
 
@@ -271,6 +325,9 @@ function market_source_get_initial_referrer() {
 }
 
 function market_source_get_script() {
+  $custom_fields = variable_get('market_source_custom_fields', array());
+  $field_keys = market_source_custom_field_keys($custom_fields);
+
   if (variable_get('market_source_validity_period', 0) != 0) {
     $validity_period = variable_get('market_source_validity_period', 0) / 24;
   }
@@ -385,8 +442,17 @@ jQuery(document).ready(function() {
   if (readCookie("market_source_initial_referrer") == null) {
     createCookie("market_source_initial_referrer", document.referrer, ${validity_period});
   }
-});
+
 MS_SCRIPT;
+
+  // Concat custom field handlers
+  foreach($field_keys as $key) {
+    $string .= "\n" . 'if (querystring("' . $key . '") {' . "\n";
+    $string .= '  createCookie("' . $key . '", querystring["' . $key . '"], ' . $validity_period . ");\n";
+    $string .= "}\n";
+  }
+  
+  $script .= '});';
 
   return $script;
 }
@@ -462,5 +528,65 @@ function market_source_fundraiser_create_webform_components($nid) {
 	  'maps_to' => 'profile_initial_referrer',
 	);
 	
+	// If any custom fields have been configured, add them as well
+	$custom_fields = variable_get('market_source_custom_fields', array());
+
+	if (count($custom_fields)) {
+	  foreach ($custom_fields as $custom_field) {
+	    $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
+	  }
+	}
   return $components;
+}
+
+/**
+ * Create a formatted webform component array.
+ * 
+ * @param $custom_field
+ * Custom field array containing field key and field name values.
+ * 
+ * @param $nid
+ * Node id of the webform to add the component to.
+ * 
+ * @return
+ * Returns a keyed array containing the minimum necessary data to create a new webform component via
+ * webform_component_insert().
+ */
+function market_source_create_webform_component($custom_field, $nid) {
+  $component = array(
+    'nid' => $nid,
+	'pid' => 0,
+	'value' => $custom_field['default'],
+	'form_key' => $custom_field['key'], 
+	'name' => $custom_field['name'],
+	'type' => 'hidden',  
+	'extra' => array('description' => '',),
+	'mandatory' => 0, 
+	'weight' => 23, 
+	'email' => 1,
+	'maps_to' => '',
+  );
+  return $component;
+}
+
+/**
+ * 
+ */
+function market_source_custom_field_keys($custom_fields = array()) {
+  $field_keys = array();
+  if (count($custom_fields)) {
+    foreach ($custom_fields as $custom_field) {
+      $field_keys[] = $custom_field['key'];
+    }
+  }
+  return $field_keys;
+}
+
+function market_source_get_custom_field($key) {
+  if (isset($_SESSION[$key])) {
+    return $_SESSION[$key];
+  }
+  else {
+  	return '';
+  }
 }

@@ -1,0 +1,15 @@
+#marketsource-custom-fields .form-item {
+  float: left;
+  padding-right: 20px;
+}
+
+#marketsource-custom-fields span {
+  float: left;
+  padding-right: 3px;
+  margin-top: 30px;
+}
+
+#marketsource-custom-fields label {
+  width: 100px;
+}
+
