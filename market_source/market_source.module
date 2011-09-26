@@ -228,7 +228,7 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
     
     foreach ($field_keys as $key) {
       if (isset($form['submitted'][$key]) && market_source_get_custom_field($key) != '') {
-        $form['submitted']['initial_referrer']['#value'] = market_source_get_custom_field($key);
+        $form['submitted'][$key]['#value'] = market_source_get_custom_field($key);
       }
     }
     
@@ -574,7 +574,7 @@ function market_source_create_webform_component($custom_field, $nid) {
  */
 function market_source_custom_field_keys($custom_fields = array()) {
   $field_keys = array();
-  if (count($custom_fields)) {
+  if (is_array($custom_fields) && count($custom_fields)) {
     foreach ($custom_fields as $custom_field) {
       $field_keys[] = $custom_field['key'];
     }
