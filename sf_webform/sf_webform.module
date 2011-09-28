@@ -380,7 +380,7 @@ function _sf_webform_delete_map($nid) {
  */
 function sf_webform_nodeapi(&$node, $op, $teaser, $page) {
   $webform_node_types = variable_get('webform_node_types', '');
-  if (in_array($node->type, $webform_node_type) && $node->type != 'donation_form') {
+  if (in_array($node->type, $webform_node_types) && $node->type != 'donation_form') {
     $parts = explode("/",$_GET['q']);
     $drupal = 'webform:' . $node->nid;
 
