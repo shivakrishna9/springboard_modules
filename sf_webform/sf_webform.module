@@ -379,34 +379,35 @@ function _sf_webform_delete_map($nid) {
  * Implementaion of hook_nodeapi().
  */
 function sf_webform_nodeapi(&$node, $op, $teaser, $page) {
-	if($node->type == 'webform') {
-		$parts = explode("/",$_GET['q']);
-		$drupal = 'webform:' . $node->nid;
-		
-		if($op == 'load'){	
-			$result = db_query("select salesforce, fields, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal);
-			while($row = db_fetch_object($result)) {
-				$object = $row->salesforce;
-				$map = unserialize($row->fields); 
-				$dedupe_key = $row->dedupe_key;
-				$recordtype_id = $row->recordtype_id;
-			}
-			
-			$sf_map = array(
-				'sf_webform_map' => $map,
-				'sf_webform_object' => $object,
-				'sf_dedupe_key' => $dedupe_key,
-				'sf_webform_recordtype' => $recordtype_id,
-			);
-			return $sf_map;
-		}
-		
-		switch ($op) {
-			case 'delete':
-				db_query("delete from {salesforce_management_field_map} where drupal = '%s'", $drupal);
-				break;
-		}
-	}
+  $webform_node_types = variable_get('webform_node_types', '');
+  if (in_array($node->type, $webform_node_type) && $node->type != 'donation_form') {
+    $parts = explode("/",$_GET['q']);
+    $drupal = 'webform:' . $node->nid;
+
+    if($op == 'load'){	
+      $result = db_query("select salesforce, fields, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal);
+      while($row = db_fetch_object($result)) {
+        $object = $row->salesforce;
+        $map = unserialize($row->fields); 
+        $dedupe_key = $row->dedupe_key;
+        $recordtype_id = $row->recordtype_id;
+      }
+
+      $sf_map = array(
+        'sf_webform_map' => $map,
+        'sf_webform_object' => $object,
+        'sf_dedupe_key' => $dedupe_key,
+        'sf_webform_recordtype' => $recordtype_id,
+      );
+      return $sf_map;
+    }
+
+    switch ($op) {
+      case 'delete':
+        db_query("delete from {salesforce_management_field_map} where drupal = '%s'", $drupal);
+        break;
+    }
+  }
 }
 
 /**
