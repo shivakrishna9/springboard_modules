@@ -152,7 +152,6 @@ function _market_source_add_field_elements(&$form, $custom_field, $delta) {
   );
   $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $delta] = array(
     '#type' => 'textfield',
-    '#prefix' => '<span>ms_</span>',
     '#title' => t('Field Key'),
     '#description' => t('The unique machine name of this field. This value cannot match any pre-existing field keys.'),
     '#default_value' => $custom_field['key'],
