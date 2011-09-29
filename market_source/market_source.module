@@ -257,16 +257,18 @@ function market_source_nodeapi($node, $op) {
   switch ($op) {
     case 'insert':
      $webform_types = variable_get('webform_node_types', '');
-     if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
-
-       module_load_include('inc', 'webform', 'includes/webform.components');
-       $custom_fields = variable_get('market_source_custom_fields', array());
-       foreach ($custom_fields as $custom_field) {
-         $component = market_source_create_webform_component($custom_field, $node->nid);
-         webform_component_insert($component);
+     // Skip adding custom webform components if the node is being cloned.
+     if (!$node->is_being_cloned) {
+       if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
+         module_load_include('inc', 'webform', 'includes/webform.components');
+         $custom_fields = variable_get('market_source_custom_fields', array());
+         foreach ($custom_fields as $custom_field) {
+           $component = market_source_create_webform_component($custom_field, $node->nid);
+           webform_component_insert($component);
+         }
        }
-     }
-     break;
+    }
+    break;
   }
 }
 

@@ -13,7 +13,6 @@ function webform_user_clone($node) {
   global $user;
   if (isset($node->nid)) {
     $nid = $node->nid;
-    
     $original_node = drupal_clone($node);
 
     $node->nid = NULL;
@@ -26,7 +25,7 @@ function webform_user_clone($node) {
     $node->path = NULL;
     $node->files = array();
     $node->title = t('Clone of !title', array('!title' => $node->title));
-		$node->is_being_cloned = true;
+    $node->is_being_cloned = true;
 
     if (variable_get('clone_reset_'. $node->type, FALSE)) {
       $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
