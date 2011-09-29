@@ -1288,6 +1288,7 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
  */
 function fundraiser_preprocess_sustainer_management_page(&$vars) {
   global $user;
+  $profile_uid = arg(1);
   // convert the array of orders to a nice data table
   $header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
   $rows = array();
@@ -1295,7 +1296,7 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
   // format the dates 
   $class = '';
   foreach($vars['orders'] as $id => &$order) {
-    $edit_link = l('$' . money_format('%i', $order['amount']), 'user/' . $user->uid . '/recurring_overview/' . $id);
+    $edit_link = l('$' . money_format('%i', $order['amount']), 'user/' . $profile_uid . '/recurring_overview/' . $id);
     if ($id == $vars['order_id']) {
       $class = 'recurring-order active';
     }
