@@ -1081,27 +1081,30 @@ function salesforce_management_api_get_object_recordtypes($object) {
  * Returns all campaigns defined in Salesforce. The campaigns are cached for 24 hours.
  */
 function salesforce_management_api_get_campaigns() {
-	$cid = 'salesforce_campaigns';
-	
-	$campaigns = cache_get($cid);
-	if ($campaigns->data) {
-		return $campaigns->data;
-	}	
-	
-	$sf = salesforce_management_api_connect();
-	$campaigns = array();
-	// only continue if we got a valid connection
-	if ($sf) {
-		$results = $sf->client->query("select Id, Name from Campaign Order By Name");
-		if (count($results->records)) {
-			foreach($results->records as $campaign) {
-				$campaigns[$campaign->Id] = $campaign->Name;
-			}
-		}
-	}
+  // To the cache!
+  $cache = cache_get('salesforce_campaigns');
+  if ($cache->data) {
+    $campaigns = $cache->data;
+  }	
+  // No cache? Do it the hard way.
+  else {
+    $sf = salesforce_management_api_connect();
+    $campaigns = array();
+    // only continue if we got a valid connection
+    if ($sf) {
+      $results = $sf->client->query("select Id, Name from Campaign Order By Name");
+      if (count($results->records)) {
+        foreach($results->records as $campaign) {
+          $campaigns[$campaign->Id] = $campaign->Name;
+        }
+      }
+    }
+    cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
+  }
 
-	cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
-	return $campaigns;
+  // We like to keep the campaign names alphabetical for all those juicy select boxes that use this data.
+  asort($campaigns);
+  return $campaigns;
 }
 
 function salesforce_management_api_map_record_form_submit($form, &$form_state) {
