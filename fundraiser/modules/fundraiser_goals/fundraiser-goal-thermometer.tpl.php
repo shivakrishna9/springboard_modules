@@ -1,7 +1,11 @@
 <?php
  /*
   Relevant available properties:
-  $goal->fundraiser_goal_target - unformatted integer, goal target
+  $goal->pid - parent id (typically node id) of the goal parent.
+  $goal->delta - "basic" for basic goals. Displays the machine name value for advanced goals.
+  $goal->target - unformatted integer, goal target
+  $goal->display_threshold - the minimum progress value before the goal should be displayed.
+  $goal->default_message - additional text to display if no progress has been made toward this goal.
   $goal->goal_progress - unformatted integer, progress towards goal
   $goal->goal_percentage - rounded percentage of current goal reached
   
