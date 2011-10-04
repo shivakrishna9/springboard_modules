@@ -256,19 +256,20 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
 function market_source_nodeapi($node, $op) {
   switch ($op) {
     case 'insert':
-     $webform_types = variable_get('webform_node_types', '');
-     // Skip adding custom webform components if the node is being cloned.
-     if (!$node->is_being_cloned) {
-       if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
-         module_load_include('inc', 'webform', 'includes/webform.components');
-         $custom_fields = variable_get('market_source_custom_fields', array());
-         foreach ($custom_fields as $custom_field) {
-           $component = market_source_create_webform_component($custom_field, $node->nid);
-           webform_component_insert($component);
-         }
-       }
-    }
-    break;
+      $webform_types = variable_get('webform_node_types', '');
+      // Skip adding custom webform components if the node is being cloned.
+      if (!$node->is_being_cloned) {
+        // make sure this node type contains a webform and it's not a donation form.
+        if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
+          $components = market_source_create_standard_components($node->nid);
+          module_load_include('inc', 'webform', 'includes/webform.components');
+          // insert all the components
+          foreach ($components as $component) {
+            webform_component_insert($component);
+          }
+        }
+     }
+     break;
   }
 }
 
@@ -460,9 +461,17 @@ MS_SCRIPT;
 }
 
 /**
- * Implements hook_fundraiser_create_webform_components().
+ * Adds the default market source components.
+ *
+ * @param $nid
+ *   The id of the node to which the components will be added.
+ * @param $default_campaign
+ *   A default value for the campaign id component.
  */
-function market_source_fundraiser_create_webform_components($nid) {
+function market_source_create_standard_components($nid, $default_campaign = NULL) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+  
+  // array to hold all the components that need to be created.
   $components = array();
 
   $components['market_source'] = array(
@@ -478,12 +487,6 @@ function market_source_fundraiser_create_webform_components($nid) {
     'email' => 1,
     'maps_to' => 'profile_ms',
   );
-	
-	// if the sf_donation is installed, try to get the default campaign
-	$default_campaign = '';
-	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
 
 	// campaign id
 	$components['campaign'] = array(
@@ -538,7 +541,21 @@ function market_source_fundraiser_create_webform_components($nid) {
 	    $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
 	  }
 	}
-  return $components;
+  return $components;  
+}
+
+/**
+ * Implements hook_fundraiser_create_webform_components().
+ */
+function market_source_fundraiser_create_webform_components($nid) {
+  // if the sf_donation is installed, try to get the default campaign
+	$default_campaign = '';
+	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
+		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
+	}
+	
+	// create the standard components
+	market_source_create_standard_components($nid, $default_campaign);
 }
 
 /**
