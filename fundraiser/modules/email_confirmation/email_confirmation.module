@@ -373,7 +373,9 @@ function email_confirmation_template_submit(&$form, $form_state) {
     db_query("UPDATE {fundraiser_confirmations} SET tid = %d, subject = '%s', from_name = '%s', reply_to_email = '%s', bcc_email = '%s', html_message = '%s', html_message_format = %d, text_message = '%s', text_message_format = '%s', is_webform = %d, send_mail = %d WHERE nid = %d", $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $is_webform, $send_mail, $nid);
   }
   else {
-    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, html_message_format, text_message, text_message_format) VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $is_webform, $send_mail);
+    db_query("INSERT INTO {fundraiser_confirmations} (nid, tid, subject, from_name, reply_to_email, bcc_email, html_message, 
+    html_message_format, text_message, text_message_format, is_webform, send_mail) 
+      VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $is_webform, $send_mail);
   }
 }
 
@@ -598,13 +600,13 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
-    
+    drupal_set_message('token replacement triggered');
     $nid = $object->products[0]->nid;
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
     $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format);
-
+   
     return $values;
   }
 }
@@ -904,13 +906,13 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $message['subject'] = $settings->subject;
 
     // Perform token replacements for "order" tokens and "all" tokens.
-    $message['html_body'] = token_replace($template_html);
-    $message['html_body'] = token_replace($message['html_body']);
+    $message['html_body'] = token_replace($template_html, 'all');
+    $message['html_body'] = token_replace($message['html_body'], 'all');
 
 
     // Same as above, with check_plain() included to insure final output is plain text.
-    $message['text_body'] = token_replace($template_text);
-    $message['text_body'] = token_replace($message['text_body']);
+    $message['text_body'] = token_replace($template_text, 'all');
+    $message['text_body'] = token_replace($message['text_body'], 'all');
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 
