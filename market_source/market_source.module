@@ -555,7 +555,7 @@ function market_source_fundraiser_create_webform_components($nid) {
 	}
 	
 	// create the standard components
-	market_source_create_standard_components($nid, $default_campaign);
+	return market_source_create_standard_components($nid, $default_campaign);
 }
 
 /**
