@@ -271,11 +271,11 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
       'type' => 'amount',
     );
     $message = t('Credit card charged: !amount', array('!amount' => uc_price($amount, $context)));
-    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    uc_order_comment_save($order->order_id, $user->uid, $message, 'admin');
   }
   else {
     $message = t('Credit card charge failed.');
-    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    uc_order_comment_save($order->order_id, $user->uid, $message, 'admin');
   }
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
@@ -359,11 +359,11 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
       'type' => 'amount',
     );
     $message = t('Credit card charged: !amount', array('!amount' => uc_price($amount, $context)));
-    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    uc_order_comment_save($order->order_id, $user->uid, $message, 'admin');
   }
   else {
     $message = t('Credit card charge failed.');
-    uc_order_comment_save($order_id, $user->uid, $message, 'admin');
+    uc_order_comment_save($order->order_id, $user->uid, $message, 'admin');
   }
 
   $message = t('Card charged: ID: @id', array('@id' => $charge_result['PAYID']));
