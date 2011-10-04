@@ -110,6 +110,16 @@ function email_confirmation_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
       ),
+      'is_webform' => array(
+        'description' => t('Is this a standard webform? 0 indicates a donation form'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'send_mail' => array(
+        'description' => t('Send a confirmation email? Used by webforms.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -169,5 +179,15 @@ function email_confirmation_update_6002() {
   $ret = array();
   $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN html_message_format int UNSIGNED");
   $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN text_message_format int UNSIGNED");
+  return $ret;
+}
+
+/**
+ * Adds a column to differentiate webforms from donation forms.
+ */
+function email_confirmation_update_6003() {
+  $ret = array();
+  $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN is_webform int UNSIGNED");
+  $ret[] = update_sql("ALTER TABLE {fundraiser_confirmations} ADD COLUMN send_mail int UNSIGNED");
   return $ret;
 }
