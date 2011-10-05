@@ -477,7 +477,7 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
       if ($form['form_key']['#default_value'] == 'cid') {
         // turn it into a select field
         // get campaigns from salesforce
-        $campaigns = _sf_donation_get_campaigns();
+        $campaigns = salesforce_management_api_get_campaigns();
         if (!empty($campaigns)) {
           $campaigns = array('' => '-- Select --')+$campaigns;
           $form['value']['#type'] = 'select';
@@ -488,7 +488,7 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
 
     case 'salesforce_management_api_settings_form':
       // get campaigns from salesforce
-      $campaigns = _sf_donation_get_campaigns();
+      $campaigns = salesforce_management_api_get_campaigns();
       $integrator = _sf_donation_current_donation_integrator();
       if (empty($integrator)) {
         drupal_set_message('The <strong>Salesforce Donation Application</strong> has not been set. Some options in the Donation integration section will not be available until one has been selected.');
@@ -1063,26 +1063,6 @@ function theme_sf_donation_mapping_form($form) {
 	$output .= drupal_render($form);
 
 	return $output;
-}
-
-/**
- * Get In Progress campaigns from Salesforce
- * Returns an array in the format campaignID => campaignName
- */
-function _sf_donation_get_campaigns() {
-
-	$sf = salesforce_management_api_connect();
-	$campaigns = array();
-	// only continue if we got a valid connection
-	if (is_object($sf)) {
-		$results = $sf->client->query("select Id, Name from Campaign where Status = 'In Progress'");
-		if (count($results->records)) {
-			foreach($results->records as $campaign) {
-				$campaigns[$campaign->Id] = $campaign->Name;
-			}
-		}
-	}
-	return $campaigns;
 }
 
 /**
