@@ -337,6 +337,28 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
   );
      $form['#submit'] =  array('fundraiser_update_cron_settings');
+
+  if (module_exists('form_layouts')) {
+    $form['fundraiser_form_layouts'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Form layouts settings'),
+      '#description' => t('Configure form layouts.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form_layouts = array();
+    foreach (_form_layouts_template_list() as $name => $template) {
+      $form_layouts[$name] = $template['name'];
+    }
+    $form['fundraiser_form_layouts']['fundraiser_form_layouts_default'] = array(
+      '#type' => 'select',
+      '#title' => t('Default form layout'),
+      '#description' => t('Select the default form layout.'),
+      '#default_value' => variable_get('fundraiser_form_layouts_default', 'one_column'),
+      '#options' => $form_layouts,
+    );
+  }
+
   return system_settings_form($form);
 }
 
