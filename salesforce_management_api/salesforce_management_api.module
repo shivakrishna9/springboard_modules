@@ -1099,20 +1099,20 @@ function salesforce_management_api_get_campaigns() {
         }
       }
     }
+    // We like to keep the campaign names alphabetical for all those juicy select boxes that use this data.
+    foreach ($campaigns as $campaign_id => $campaign_name) {
+      $temp_campaigns[$campaign_id] = strtolower($campaign_name);
+    }
+    asort($temp_campaigns);
+
+    // Restore the original capitalization for the campaign names.
+    foreach ($temp_campaigns as $key => $value) {
+      $temp_campaigns[$key] = $campaigns[$key];
+    } 
+    $campaigns = $temp_campaigns;
     cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
   }
 
-  // We like to keep the campaign names alphabetical for all those juicy select boxes that use this data.
-  foreach ($campaigns as $campaign_id => $campaign_name) {
-    $temp_campaigns[$campaign_id] = strtolower($campaign_name);
-  }
-  asort($temp_campaigns);
-  
-  // Restore the original capitalization for the campaign names.
-  foreach ($temp_campaigns as $key => $value) {
-    $temp_campaigns[$key] = $campaigns[$key];
-  } 
-  $campaigns = $temp_campaigns;
   return $campaigns;
 }
 
