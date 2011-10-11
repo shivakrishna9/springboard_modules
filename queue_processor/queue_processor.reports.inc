@@ -137,12 +137,14 @@ function retry_queue_report() {
 	$pager_num = 0;
 	
 	$rows = array();
-	$result = pager_query("SELECT oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC", 20, $pager_num);
+	$result = pager_query("SELECT id, oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC", 20, $pager_num);
 	
 	while ($row = db_fetch_array($result)) {
+	    $row['retry_link'] = l('Retry', 'admin/sf-queue-processor/' . $row['id'] . '/retry');
+	    unset($row['id']);
 		$rows[] = $row;
 	}
-	$header = array('Drupal Id', 'SFID', 'Type', 'Fieldmap', 'Action', 'Retry Date', 'Attempts');
+	$header = array('Drupal Id', 'SFID', 'Type', 'Fieldmap', 'Action', 'Retry Date', 'Attempts', 'Retry Now');
 	$output .= theme('table', $header, $rows, array('id' => 'retry-queue'));
 	$output .= theme('pager', NULL, 20, $pager_num);
 	return $output;

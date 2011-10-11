@@ -78,6 +78,13 @@ function queue_processor_menu() {
 		'type' => MENU_CALLBACK,
 		'file' => 'queue_processor.reports.inc',
 	);
+  $items['admin/sf-queue-processor/%/retry'] = array(
+    'title' => t('Retry Queue Item'),
+    'page callback' => 'queue_processor_retry',
+    'page arguments' => array(2),
+    'access arguments' => array('move item from retries queue'),
+    'type' => MENU_CALLBACK,
+  );
   if (variable_get('queue_processor_standalone_cron_enabled', TRUE)) {
     $items['queue_processor_cron'] = array(
       'page callback' => 'queue_processor_cron',
@@ -100,7 +107,7 @@ function queue_processor_menu_alter(&$items) {
  * Implementation of hook_perm().
  */
 function queue_processor_perm() {
-  return array('configure salesforce queue processor', 'view salesforce reports', 'mass add');
+  return array('configure salesforce queue processor', 'view salesforce reports', 'mass add', 'move item from retries queue');
 }
 
 /**
@@ -1078,4 +1085,20 @@ function created_edit_link($oid, $type, $return_url = null) {
 	}
 	
 	return $url;
+}
+
+/**
+ * Move item from retry queue to current pending queue.
+ *
+ * @param $id
+ * ID of the queue item to move.
+ */
+function queue_processor_retry($id) {
+  $result = db_fetch_object(db_query("SELECT * FROM {sf_retry_queue} WHERE id = %d", $id));
+  sf_queue_insert($result->oid, $result->type, $result->action);
+  db_query("DELETE FROM {sf_retry_queue} WHERE id = %d", $id);
+  
+  drupal_set_message(ucfirst($result->type) . ' ' . $result->oid . ' has been successfully moved to the export queue.');
+  watchdog('queue_processor', t('Moved item %oid from the retry queue to the export queue.', array('%oid' => $id)));
+  drupal_goto('admin/reports/salesforce/retries');
 }
