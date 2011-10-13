@@ -312,6 +312,9 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
  * Form for cancelling all pending donations.
  */
 function fundraiser_cancel_form(&$form_state, $master_order_id) {
+  // Only allow certain users to cancel future donations.
+  $form['#access'] = user_access('cancel future donations');
+
 	$form['reason'] = array(
 		'#type' => 'textarea',
 		'#title' => t('Reason'),

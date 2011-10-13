@@ -33,10 +33,12 @@
   <h2>Payment Schedule</h2>
   <?php print_r($payment_schedule); ?>
 </div>
+<?php if (!empty($cancel_form)): ?>
 <div id="donation-cancel-form">
   <h2>Cancel Future Donations</h2>
   <?php print $cancel_form; ?>
 </div>
+<?php endif; ?>
 
 <?php else: ?>
 

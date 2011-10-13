@@ -33,7 +33,7 @@ function fundraiser_cron() {
  * Implementation of hook_perm().
  */
 function fundraiser_perm() {
-  return array('create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form');
+  return array('create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form', 'cancel future donations');
 }
 
 /**
