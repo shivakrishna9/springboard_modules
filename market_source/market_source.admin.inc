@@ -147,19 +147,22 @@ function _market_source_add_field_elements(&$form, $custom_field, $delta) {
   $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Field Name'),
-    '#description' => t('The human-readable field name. This value is displayed in the webform component list.'),
+    '#description' => t('This value is displayed in the webform component list.'),
     '#default_value' => $custom_field['name'],
+    '#size' => 15,
   );
   $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Field Key'),
-    '#description' => t('The unique machine name of this field. This value cannot match any pre-existing field keys.'),
+    '#description' => t('This value cannot match any pre-existing field keys.'),
     '#default_value' => $custom_field['key'],
+    '#size' => 15,
   );
   $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Default Value'),
     '#default_value' => $custom_field['default'],
+    '#size' => 15,
     '#suffix' => '<div style="clear:both"></div>',
   );
   return $form;

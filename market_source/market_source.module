@@ -648,9 +648,9 @@ function theme_market_source_admin_settings_form($form) {
   // Set table headers.
   $header = array(
     t('Field'),
-    t('Name'),
-    t('Key'),
-    t('Default'),
+    t('Human-readable Field Name'),
+    t('Unique Key'),
+    t('Default Value'),
   );
   // Replace contents of the field wrapper fieldset with our themed table of form elements.
   $form['market_source_global_fields']['custom_fields_wrapper']['output'] = array(
