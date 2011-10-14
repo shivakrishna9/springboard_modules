@@ -23,7 +23,7 @@ function market_source_menu() {
     'description' => 'Configuration settings for the Market Source module.',
     'type' => MENU_NORMAL_ITEM,
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('market_source_admin_settings'),
+    'page arguments' => array('market_source_admin_settings_form'),
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
     'file' => 'market_source.admin.inc',
@@ -618,4 +618,48 @@ function market_source_get_custom_field($key) {
   else {
   	return '';
   }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function market_source_theme() {
+  return array(
+    'market_source_admin_settings_form' => array('arguments' => array('form' => NULL),),
+  );
+} 
+
+/**
+ * Theme custom fields as a table.
+ */
+function theme_market_source_admin_settings_form($form) {
+
+  $rows = array();
+  // Currently we support a total of 5 custom fields. I expect this to change in future and we will need to refactor.
+  for ($i = 0; $i < 5; ++$i) {
+    $row = array();
+    // Pack rows with form elements.
+    $row[] = t('Custom Field #%i', array('%i' => $i));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $i]));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $i]));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $i]));
+    $rows[] = $row;
+  }
+  // Set table headers.
+  $header = array(
+    t('Field'),
+    t('Name'),
+    t('Key'),
+    t('Default'),
+  );
+  // Replace contents of the field wrapper fieldset with our themed table of form elements.
+  $form['market_source_global_fields']['custom_fields_wrapper']['output'] = array(
+    '#type' => 'markup',
+    '#value' => theme('table', $header, $rows),
+  );
+  // Render the form.
+  $output = drupal_render($form);
+
+
+  return $output;
 }

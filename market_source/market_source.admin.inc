@@ -12,7 +12,7 @@
  * @return array
  *   Returns a system_settings_form() formatted Form API array.
  */
-function market_source_admin_settings() {
+function market_source_admin_settings_form() {
   drupal_add_css(drupal_get_path('module', 'market_source') . '/market_source.admin.css', 'module', 'all');
   
   $default = variable_get('market_source_default_campaign', 'default_ms');
@@ -144,27 +144,19 @@ function market_source_submit_admin_form($form, $form_state) {
  */
 function _market_source_add_field_elements(&$form, $custom_field, $delta) {
 
-  $fieldset = 'fieldset_' . ($delta + 1);
-  $collapsed = $delta ? TRUE : FALSE;
-  $form['market_source_global_fields']['custom_fields_wrapper'][$fieldset] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Custom Field #%number', array('%number' => ($delta + 1))),
-    '#collapsible' => TRUE,
-    '#collapsed' => $collapsed,
-  );
-  $form['market_source_global_fields']['custom_fields_wrapper'][$fieldset]['ms_custom_field_name_' . $delta] = array(
+  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Field Name'),
     '#description' => t('The human-readable field name. This value is displayed in the webform component list.'),
     '#default_value' => $custom_field['name'],
   );
-  $form['market_source_global_fields']['custom_fields_wrapper'][$fieldset]['ms_custom_field_key_' . $delta] = array(
+  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Field Key'),
     '#description' => t('The unique machine name of this field. This value cannot match any pre-existing field keys.'),
     '#default_value' => $custom_field['key'],
   );
-  $form['market_source_global_fields']['custom_fields_wrapper'][$fieldset]['ms_custom_field_default_' . $delta] = array(
+  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $delta] = array(
     '#type' => 'textfield',
     '#title' => t('Default Value'),
     '#default_value' => $custom_field['default'],
