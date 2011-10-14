@@ -569,7 +569,6 @@ function _fundraiser_goals_save_goal($object) {
 function _fundraiser_goals_update_goal($object) {
   db_query("UPDATE {fundraiser_goals} 
              SET
-               pid = '%s',
                type = '%s',
                target = %d,
                template = '%s',
@@ -577,15 +576,17 @@ function _fundraiser_goals_update_goal($object) {
                template_format = %d,
                default_message = '%s' 
              WHERE
-               delta = '%s'",
-             $object->fundraiser_goal_parent_item, 
+               delta = '%s'
+               AND pid = %d",
              $object->fundraiser_goal_type,
              $object->fundraiser_goal_target,
              $object->fundraiser_goal_template,
              $object->fundraiser_goal_display_threshold,
              $object->fundraiser_settings['fundraiser_goals']['goals_wrapper']['template'],
              $object->fundraiser_goal_default_message,
-             $object->fundraiser_goal_delta);
+             $object->fundraiser_goal_delta,
+             $object->fundraiser_goal_parent_item
+ );
 
   $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'fundraiser_goals' AND delta = '%s'", $object->fundraiser_goal_delta));
 
