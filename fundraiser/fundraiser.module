@@ -490,7 +490,7 @@ function fundraiser_form($node, $edit = NULL) {
 		'#type' => 'textfield',
 		'#title' => t('Minimum donation amount'),
 		'#description' => t('The minimum acceptable donation amount.'),
-		'#default_value' => number_format($node->minimum_donation_amount, 2),
+		'#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
 	);
 	
 	$form['fundraiser_settings']['gateway'] = array(
