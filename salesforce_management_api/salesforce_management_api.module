@@ -14,7 +14,7 @@ ini_set("soap.wsdl_cache_enabled", "0");
 define('SALESFORCE_DIR', drupal_get_path('module', 'salesforce_management_api'));
 define('SALESFORCE_DIR_TOOLKIT', SALESFORCE_DIR .'/toolkit');
 define('SALESFORCE_DIR_SOAPCLIENT', SALESFORCE_DIR_TOOLKIT .'/soapclient');
-define('SALESFORCE_DIR_WSDL', SALESFORCE_DIR .'/wsdl');
+define('SALESFORCE_DIR_WSDL', variable_get('salesforce_management_api_wsdl_file_path', file_directory_path()));
 
 // Define Drupal paths for various parts of the Salesforce UI.
 define('SALESFORCE_PATH_ADMIN', 'admin/settings/salesforce-management');

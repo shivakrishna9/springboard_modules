@@ -646,7 +646,12 @@ function salesforce_management_api_update_wsdl_form() {
   
   // Need to set the form type so file upload will work
   $form['#attributes']['enctype'] = 'multipart/form-data';
-  
+  $form['salesforce_management_api_wsdl_file_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('File System Path'),
+    '#description' => t('The location on the server where your WSDL file will be saved, defaults to the Drupal files directory.'),
+    '#default_value' => variable_get('salesforce_management_api_wsdl_file_path', file_directory_path()),
+  );
   $form['salesforce_management_api_wsdl_file'] = array(
     '#type' => 'file',
     '#title' => t('WSDL File'),
@@ -667,6 +672,7 @@ function salesforce_management_api_update_wsdl_form() {
  */
 function salesforce_management_api_update_wsdl_form_validate($form, &$form_state) {
   $source = 'salesforce_management_api_wsdl_file';
+
   if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
     // Check for file upload errors and return FALSE if a
     // lower level system error occurred.
@@ -708,11 +714,13 @@ function salesforce_management_api_update_wsdl_form_validate($form, &$form_state
  * needs to go into a sub-dir in the module directory, that won't do.
  */
 function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) {
-  // Find the dir the file should go into
-  $dir = dirname(__FILE__) . '/toolkit/soapclient/';
 
+  variable_set('salesforce_management_api_wsdl_file_path', $form_state['values']['salesforce_management_api_wsdl_file_path']);
+
+  // Find the dir the file should go into
+  $dir = variable_get('salesforce_management_api_wsdl_file_path', file_directory_path());
   // Upload file path
-  $file = $dir . 'enterprise.wsdl.xml';
+  $file = $dir . '/enterprise.wsdl.xml';
 
   // Array key for the file element
   $source = 'salesforce_management_api_wsdl_file';

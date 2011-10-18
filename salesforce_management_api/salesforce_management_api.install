@@ -19,6 +19,7 @@ function salesforce_management_api_install() {
 function salesforce_management_api_uninstall() {
   variable_del('salesforce_management_api_connect');
   variable_del('salesforce_management_api_wsdl_updated');
+  variable_del('salesforce_management_api_wsdl_file_path');
   drupal_uninstall_schema('salesforce_management_api');
 }
 
