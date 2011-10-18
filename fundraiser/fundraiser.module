@@ -567,7 +567,7 @@ function fundraiser_insert($node) {
       INSERT INTO {fundraiser} 
       (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, redirect_url)
       VALUES
-      (%d, '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s')
+      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
     ",
     $node->nid, 
     $node->gateway,
