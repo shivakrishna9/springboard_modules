@@ -616,7 +616,7 @@ function fundraiser_update($node) {
       UPDATE {fundraiser} SET 
       internal_name = '%s', 
       show_other_amount = %d, 
-      minimum_donation_amount = %d, 
+      minimum_donation_amount = '%s', 
       gateway = '%s',
       receipt_email_from = '%s',
       receipt_email_address = '%s',
