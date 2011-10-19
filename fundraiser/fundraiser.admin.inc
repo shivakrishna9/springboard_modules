@@ -347,8 +347,8 @@ function fundraiser_admin_settings() {
       '#collapsed' => TRUE,
     );
     $form_layouts = array();
-    foreach (_form_layouts_template_list() as $name => $template) {
-      $form_layouts[$name] = $template['name'];
+    foreach (_form_layouts_template_list() as $template) {
+      $form_layouts[$template['theme']] = $template['name'];
     }
     $form['fundraiser_form_layouts']['fundraiser_form_layouts_default'] = array(
       '#type' => 'select',

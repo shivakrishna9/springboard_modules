@@ -114,19 +114,7 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => $theme,
       '#weight' => -4,
     );
-    
-    $form['#submit'][] = 'form_layouts_submit';
   }
-}
-
-/**
- * Submission handler for donation form node page.
- *
- * Sets the choosen donation form layout into a variable.
- */
-function form_layouts_submit($form, &$form_state) {
-  $variable_name = _form_layouts_variable_name($form_state['values']['nid']);
-  variable_set($variable_name, $form_state['values']['layout']);
 }
 
 /**
@@ -135,13 +123,22 @@ function form_layouts_submit($form, &$form_state) {
  * Make sure the layout gets cloned.
  */
 function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($node->type == 'donation_form' && $op == 'load') {
-    $node->layout_template = _form_layouts_theme_template($node->nid);
+  if ($node->type != 'donation_form') {
+    // Nothing to do here.
+    return;
   }
-  
-  if ($node->type == 'donation_form' && $op == 'insert' && $node->is_being_cloned) {
-    $variable_name = _form_layouts_variable_name($node->nid);
-    variable_set($variable_name, $node->layout_template);
+
+  switch ($op) {
+    case 'load':
+      $node->layout_template = _form_layouts_theme_template($node->nid);
+      break;
+    case 'insert':
+    case 'update':
+      if (isset($node->layout)) {
+        $variable_name = _form_layouts_variable_name($node->nid);
+        variable_set($variable_name, $node->layout);
+      }
+      break;
   }
 }
 
@@ -152,8 +149,13 @@ function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  *  The id of the node whose template to return.
  */
 function _form_layouts_theme_template($nid) {
-  $variable_name = _form_layouts_variable_name($nid);
-  return variable_get($variable_name, variable_get('fundraiser_form_layouts_default', 'one_column'));
+  if (!empty($nid)) {
+    $variable_name = _form_layouts_variable_name($nid);
+    return variable_get($variable_name, variable_get('fundraiser_form_layouts_default', 'one_column'));
+  }
+  else {
+    return variable_get('fundraiser_form_layouts_default', 'one_column');
+  }
 }
 
 /**
