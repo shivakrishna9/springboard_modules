@@ -127,8 +127,17 @@ function queue_processor_theme() {
  */
 function queue_processor_cron() {
   // Bail on normal cron run if standalone cron is enabled.
-  if (variable_get('queue_processor_standalone_cron_enabled', TRUE) && preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-    return 0;
+  if (variable_get('queue_processor_standalone_cron_enabled', TRUE)) {
+    // If standalone cron is enabled and cron.php is being run, do nothing.
+    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+      return 0;
+    }
+    else {
+      watchdog('queue_processor_cron', t('Standalone cron run.'));
+    }
+  }
+  else {
+    watchdog('queue_processor_cron', t('Standard cron run.'));
   }
   queue_processor_process();
 }

@@ -15,8 +15,17 @@ require_once('fundraiser.fields.inc');
  */
 function fundraiser_cron() {
   // Check for a file key before processing donations
-  if (variable_get('fundraiser_standalone_cron_enabled', 0) && preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-    return 0;
+  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
+    // If cron.php is being run while standalone cron is enabled, do nothing.
+    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+      return 0;
+    }
+    else {
+      watchdog('fundraiser_cron', t('Standalone cron run.'));
+    }
+  }
+  else {
+    watchdog('fundraiser_cron', t('Standard cron run.'));
   }
   if (fundraiser_processor_key_match()) {
     fundraiser_process_recurring_donations();
