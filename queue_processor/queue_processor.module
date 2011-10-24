@@ -256,9 +256,9 @@ function process_batches($ids) {
 	$batches_processed = array();
 	
 	foreach($ids as $id) {
+
 		watchdog('salesforce queue processor', t('Batch !id processing started', array('!id' => $id)), NULL, WATCHDOG_INFO);
 		$batch = load_batch($id);
-
 		// record batch start time
 		log_batch_start_time($id);
 	
@@ -269,13 +269,18 @@ function process_batches($ids) {
 		$objects = array();
 
 		// get all the objects out of the batch
+
 		foreach($batch['records'] as $item) {
+		  // Skip if no object is present. This prevents errors when Sync is run with nothing
+		  // pending in the queue.
+		  if (isset($item->object)) {
 			$object = $item->object;
 			// give modules one last chance to modify the object before shipping it to salesforce
 			drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
 			// update the data field so we have an exact copy of what was sent
 			db_query("UPDATE {sf_batch_item} SET data = '%s' WHERE batch_id = %d AND oid = '%s' AND type = '%s'", serialize($object), $id, $item->oid, $item->type);
 			array_push($objects, $object);
+		  }
 		}
 
 		// apply validation for create/upsert/update actions
