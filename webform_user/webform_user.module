@@ -610,7 +610,6 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user with matching email address.
     elseif ($account = user_load(array('mail' => $fields['mail']))) {
-      drupal_set_message('anon');
       // Update the existing user account.
       _webform_user_save_profile_map($account->uid, $map);
 			$sid = $form_state['values']['details']['sid'];
@@ -622,7 +621,6 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user, new to Drupal.
     else {
-      drupal_set_message('anon, no account');
       // Register the user.
       $user_fields = array(
         'name' => $fields['mail'],
