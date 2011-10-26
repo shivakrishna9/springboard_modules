@@ -233,7 +233,7 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
     }
     
   }
-  
+
   // Expose Market Source fields for editting
   if (strstr($form_id, 'webform_client_form')) {    
     if (arg(2) == 'submission') {
@@ -243,9 +243,13 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       
       $form['submitted']['ms']['#type'] = 'textfield';
       $form['submitted']['cid']['#type'] = 'textfield';
-      $form['submitted']['cid']['#default_value'] = variable_get('market_source_default_campaign', 0);
+      $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#default_value'] ? $form['submitted']['cid']['#default_value'] : variable_get('market_source_default_campaign', 0);
       $form['submitted']['referrer']['#type'] = 'textfield';
       $form['submitted']['initial_referrer']['#type'] = 'textfield';
+      
+      foreach($field_keys as $key) {
+        $form['submitted'][$key]['#type'] = 'textfield';
+      }
     }
   }
 }
