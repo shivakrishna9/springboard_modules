@@ -688,6 +688,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					// Get the date/time of the refund
 					$transaction_date = db_result(db_query("SELECT received FROM {uc_payment_receipts} WHERE receipt_id = %d", $refund->receipt_id));
 					$object['Transaction_Date_Time__c'] = gmdate('c', $transaction_date);
+					$object['CloseDate'] = date('Y-m-d', $transaction_date);
 					
 					// Link the refund to the original donation
 					$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));

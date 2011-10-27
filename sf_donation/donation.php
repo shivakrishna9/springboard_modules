@@ -44,8 +44,8 @@ class NPSPDonation extends Donation
   public function _get_stages() {
     return array(
       'payment_received' => 'Posted',
-      'payment_withdrawn' => 'Withdrawn',
-      'payment_pending' => 'Pledged',
+      'canceled' => 'Withdrawn',
+      'pending_future_payment' => 'Pledged',
       'partially_refunded' => 'Partially Refunded',
       'refunded' => 'Refunded',
     );
@@ -93,7 +93,7 @@ class CommonGroundDonation extends Donation
     return array(
       'payment_received' => 'Received',
       'payment_withdrawn' => 'Withdrawn',
-      'payment_pending' => 'Not Received',
+      'pending_future_payment' => 'Not Received',
     );
   }
   
@@ -190,6 +190,13 @@ class Donation
       $this->transaction_date_gm = gmdate('c', $this->transaction_date);
       $this->probability = 100.00;
   	}
+  	
+  	// Set close date to the original date for refunds otherwise SF will default to current date
+  	if ($order->order_status == 'refunded' || $order->order_status == 'partially_refunded') {
+      $this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
+      $this->close_date = date('Y-m-d', $this->transaction_date);
+  	}
+  	
 	  $this->stage = $stages[$order->order_status];
   	    
     uc_credit_cache('clear');
@@ -367,8 +374,8 @@ class Donation
   public function _get_stages() {
     return array(
       'payment_received' => 'Posted',
-      'payment_withdrawn' => 'Withdrawn',
-      'payment_pending' => 'Pledged',
+      'canceled' => 'Withdrawn',
+      'pending_future_payment' => 'Pledged',
       'partially_refunded' => 'Partially Refunded',
       'refunded' => 'Refunded',
     );
