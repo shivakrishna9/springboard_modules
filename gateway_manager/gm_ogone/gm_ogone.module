@@ -679,7 +679,7 @@ function gm_ogone_feedback_accepted() {
     uc_order_save($order);
     
     fundraiser_order_accept($order_id, $transaction_id);
-    drupal_goto('node/' . $webform->webform_nid . '/confirmation', array('sid' => $webform->sid));
+    drupal_goto('node/' . $webform->webform_nid . '/done', array('sid' => $webform->sid));
   }
   else {
     fundraiser_order_exception($order_id, t('There was an error with your payment. The data from the payment processor may have been tampered with before reaching our server. Please contact a site administrator to check on the status of your payment.'));
