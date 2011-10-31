@@ -857,6 +857,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 				  if (is_string($value)) {
 				    switch (strtolower($value)) {
 				      case 'true':
+				      case '1':
 				        $value = 1;
 				        break;
 				      default:
