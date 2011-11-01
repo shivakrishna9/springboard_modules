@@ -306,6 +306,7 @@ function process_batches($ids) {
 						else {
 							watchdog('salesforce queue processor', t('An upsert call was attempted on batch !id with no dedupe key assigned. The batch will not be processed.', array('!id' => $id)), NULL, WATCHDOG_CRITICAL);
 							// TODO: What do we need to do here? Put the items back in the queue????
+							_queue_processor_requeue_batch($batch);
 						}						
 						break;
 						
@@ -428,6 +429,30 @@ function process_batch_response(&$batch, &$response) {
 	// record batch end
 	log_batch_end($batch['id'], $success_count, $failure_count);
 	watchdog('salesforce queue processor', t('Batch !id has finished processing', array('!id' => $batch['id'])), NULL, WATCHDOG_INFO);
+}
+
+/**
+ * Requeues an entire batch.
+ *
+ * @param $batch
+ *   The batch to requeue.
+ */
+function _queue_processor_requeue_batch(&$batch) {
+  $items_in_batch = count($batch['records']);
+  
+  for ($i = 0; $i < $items_in_batch; $i++) {
+    $oid = $batch['records'][$i]->oid;
+		$type = $batch['records'][$i]->type;
+		
+		sf_queue_insert($oid, $type, $batch['action']);
+		delete_from_heap($oid, $type);
+  }  
+  
+  // record batch end
+	$batch['success_count'] = 0;
+	$batch['failure_count'] = $items_in_batch;
+	
+	log_batch_end($batch['id'], 0, $items_in_batch);
 }
 
 /**
