@@ -1304,3 +1304,15 @@ function webform_user_queue_api_insert_alter(&$record) {
 	}
 		
 }
+
+/**
+ * Delete submissions from queue when a submission is deleted
+ */
+function webform_user_webform_submission_delete($node, $submission) {
+	// Check to see if this form is mapped to Salesforce
+  if ($fieldmap = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = 'webform:%d'", $node->nid))) {
+  	db_query("DELETE FROM {sf_queue} WHERE type = 'webform_user' AND oid = %d", $submission->sid);
+  	db_query("DELETE FROM {sf_retry_queue} WHERE type = 'webform_user' AND oid = %d", $submission->sid);
+  	db_query("DELETE FROM {sf_heap} WHERE type = 'webform_user' AND oid = %d", $submission->sid);
+  }	
+}
