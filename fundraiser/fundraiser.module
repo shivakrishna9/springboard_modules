@@ -42,7 +42,7 @@ function fundraiser_cron() {
  * Implementation of hook_perm().
  */
 function fundraiser_perm() {
-  return array('create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form', 'cancel future donations');
+  return array('administer fundraiser', 'create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form', 'cancel future donations');
 }
 
 /**
@@ -54,7 +54,7 @@ function fundraiser_menu() {
 		'title' => 'Fundraiser settings',
 		'page callback' => 'drupal_get_form',
 		'page arguments' => array('fundraiser_admin_settings'),
-		'access arguments' => array("access content"),
+		'access arguments' => array("administer fundraiser"),
 		'type' => MENU_NORMAL_ITEM,
 		'file' => 'fundraiser.admin.inc',
 	);
