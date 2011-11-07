@@ -491,7 +491,7 @@ function email_confirmation_fundraiser_order_success($order) {
   // Gather settings from the db and build the custom email
   if ($settings->tid) {
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
-    $template_html = check_markup($result->body, $result->format);
+    $template_html = check_markup($result->body, $result->format, FALSE);
 
     // TODO: convert field to accept input filters.
     $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
@@ -600,12 +600,11 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
-    drupal_set_message('token replacement triggered');
     $nid = $object->products[0]->nid;
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
-    $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format);
+    $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
-    $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format);
+    $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format, FALSE);
    
     return $values;
   }
@@ -867,7 +866,7 @@ function email_confirmation_fundraiser_confirmations_perm($perm, $node) {
   $webform_node_types = variable_get('webform_node_types', '');
   if (in_array($node->type, $webform_node_types) && node_access($perm, $node)) {
     $is_webform_user = db_result(db_query('SELECT 1 FROM {webform_user} WHERE is_webform_user = 1 AND nid = %d ', $node->nid));
-    if ($node->type != 'donation_form' && $is_webform_user) {
+    if ($node->type == 'donation_form' || $is_webform_user) {
       return true;
     }
   }
@@ -895,7 +894,7 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $user_email = $form_state['values']['submitted'][$mail_cid];
     
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
-    $template_html = check_markup($result->body, $result->format);
+    $template_html = check_markup($result->body, $result->format, FALSE);
 
     $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
     
