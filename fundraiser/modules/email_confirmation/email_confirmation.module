@@ -525,7 +525,6 @@ function email_confirmation_fundraiser_order_success($order) {
     // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
     // This is hopefully a temporary workaround until I can figure out how to tap into uc_price().   
     if (module_exists('fundraiser_multi_currency') && isset($order->data['currency'])) {
-        drupal_set_message('currency:' . $order->data['currency']);
         $currencies = fundraiser_multi_currency_get_default_currencies();
         $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
          
