@@ -619,6 +619,7 @@ function fundraiser_insert($node) {
  * Implemenation of hook_update().
  */
 function fundraiser_update($node) {
+
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
@@ -633,6 +634,7 @@ function fundraiser_update($node) {
       receipt_email_message = '%s',
       confirmation_page_title = '%s',
       confirmation_page_body = '%s',
+      confirmation_page_format = '%s',
       redirect_url = '%s'
   		WHERE nid = %d
     ",
@@ -646,6 +648,7 @@ function fundraiser_update($node) {
     $node->receipt_email_message,
     $node->confirmation_page_title,
     $node->confirmation_page_body,
+    $node->confirmation_page_format,
     $node->redirect_url,
     $node->nid
   );
@@ -688,7 +691,7 @@ function fundraiser_delete(&$node) {
  */
 function fundraiser_load($node) {
 
-  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
+  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
   // get the user profile map
   $result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
   while($row = db_fetch_array($result)){

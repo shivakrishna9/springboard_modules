@@ -147,6 +147,10 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'confirmation_page_format' => array(
+        'description' => t('input type for the confirmation page textarea'),
+        'type' => 'int',
+      ),
       'redirect_url' => array(
         'description' => t('TODO: please describe this field!'),
         'type' => 'varchar',
@@ -921,4 +925,14 @@ function fundraiser_update_6308() {
   if (module_exists('fundraiser_tokens')) {
     module_disable(array('fundraiser_tokens'));
   }
+}
+
+/**
+ * Add column for confirmation page input type.
+ */
+function fundraiser_update_6309() {
+  $ret = array();
+  db_add_field($ret, 'fundraiser', 'confirmation_page_format', array('type' => 'int', 'not null' => FALSE));
+  variable_del('fundraiser_confirmation_message_body_format');
+  return $ret;
 }

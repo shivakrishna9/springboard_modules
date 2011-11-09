@@ -31,8 +31,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#title' => t('Confirmation message'),
     '#default_value' => $node->confirmation_page_body,
   );
-  
-  $body_format = variable_get('fundraiser_confirmation_message_body_format', FILTER_FORMAT_DEFAULT);
+  $body_format = $node->confirmation_page_format ? $node->confirmation_page_format : FILTER_FORMAT_DEFAULT;
   $form['confirmation_page']['format'] = filter_form($body_format, NULL, array('confirmation_page_format'));
   
   $form['confirmation_page']['tokens'] = array(
@@ -159,6 +158,7 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   $node = node_load($form_state['values']['nid']);
   $node->confirmation_page_title = check_plain($form_state['values']['title']);
   $node->confirmation_page_body = $form_state['values']['body'];
+  $node->confirmation_page_format = $form_state['values']['confirmation_page_format'];
   $node->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
   $node->receipt_email_address = $form_state['values']['receipt_email_address']; 
   $node->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
