@@ -348,6 +348,7 @@ function email_confirmation_template_validate(&$form, $form_state) {
  * 
  */
 function email_confirmation_template_submit(&$form, $form_state) {
+
   $values = $form_state['values']['template_wrapper'];
   $nid = $form_state['values']['nid'];
   if (is_numeric($nid)) {
@@ -363,9 +364,9 @@ function email_confirmation_template_submit(&$form, $form_state) {
   $reply_to_email = $values['confirmation_reply_email'];
   $bcc_email = $values['confirmation_bcc_email'];
   $html_body = $values['confirmation_html_email_message'];
-  $html_body_format = $values['confirmation_html_message_format'];
+  $html_body_format = $form_state['values']['confirmation_html_message_format'];
   $text_body = $values['confirmation_text_email_message'];
-  $text_body_format = $values['confirmation_text_message_format'];
+  $text_body_format = $form_state['values']['confirmation_text_message_format'];
   $is_webform = $form_state['values']['is_webform'];
   $send_mail = $form_state['values']['send_mail'];
     
@@ -485,14 +486,20 @@ function _email_confirmation_template_ahah() {
  */
 function email_confirmation_fundraiser_order_success($order) {
   $GLOBALS['order'] = $order;
-
+  
+  // Since $GLOBALS isn't available within the scope of check_markup, we have to store
+  // the order in $_SESSION to make the data available to php input filter. This
+  // is required to permit conditional templating on $order values.
+  $_SESSION['donation_order'] = $order;
   $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
 
   // Gather settings from the db and build the custom email
   if ($settings->tid) {
-    $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
-    $template_html = check_markup($result->body, $result->format, FALSE);
 
+    $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+
+    $template_html = check_markup($result->body, $result->format, FALSE);
+ 
     // TODO: convert field to accept input filters.
     $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
     
@@ -515,6 +522,18 @@ function email_confirmation_fundraiser_order_success($order) {
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 
+    // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
+    // This is hopefully a temporary workaround until I can figure out how to tap into uc_price().   
+    if (module_exists('fundraiser_multi_currency') && isset($order->data['currency'])) {
+        drupal_set_message('currency:' . $order->data['currency']);
+        $currencies = fundraiser_multi_currency_get_default_currencies();
+        $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
+         
+        $message['text_body'] = str_replace('$', $symbol, $message['text_body']);
+        $message['html_body'] = str_replace('$', $symbol, $message['html_body']);
+    }
+
+    
     $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
 
   }
@@ -529,6 +548,7 @@ function email_confirmation_fundraiser_order_success($order) {
     $message['html_body'] = theme('default_confirmation_template', $order, $site_url, $site_name);
     $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
   }
+  unset($_SESSION['donation_order']);
 }
 
 /**
