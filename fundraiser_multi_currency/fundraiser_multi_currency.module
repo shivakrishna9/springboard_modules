@@ -228,27 +228,6 @@ function fundraiser_multi_currency_get_default_currencies() {
     while ($row = db_fetch_array($result)) {
       $currencies[$row['code']] = $row;
     }
-
-    // If no currencies have been added, use the defaults
-    if (empty($currencies)) {
-      $currencies = array(
-        'USD' => array(
-          'symbol' => '$',
-          'code' => 'USD',
-          'name' => 'US Dollars',
-        ),
-        'EUR' => array(
-          'symbol' => '€',
-          'code' => 'EUR',
-          'name' => 'Euros',
-        ),
-        'GBP' => array(
-          'symbol' => '£',
-          'code' => 'GBP',
-          'name' => 'UK Pounds',
-        ),
-      );
-    }
   }
   
   return $currencies;

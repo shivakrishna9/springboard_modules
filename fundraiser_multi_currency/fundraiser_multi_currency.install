@@ -43,6 +43,7 @@ function fundraiser_multi_currency_schema() {
  */
 function fundraiser_multi_currency_install() {
   drupal_install_schema('fundraiser_multi_currency');
+  _fundraiser_multi_currency_insert_defaults();
 }
 
 /**
@@ -50,4 +51,44 @@ function fundraiser_multi_currency_install() {
  */
 function fundraiser_multi_currency_uninstall() {
   drupal_uninstall_schema('fundraiser_multi_currency');
+}
+
+/**
+ * 
+ */
+function _fundraiser_multi_currency_insert_defaults() {
+  $ret = array();
+  $currencies[] =  array(
+      'symbol' => '$',
+      'code' => 'USD',
+      'name' => 'US Dollars',
+    );
+    $currencies[] =  array(
+      'symbol' => '€',
+      'code' => 'EUR',
+      'name' => 'Euros',
+    );
+    $currencies[] =  array(
+      'symbol' => '£',
+      'code' => 'GBP',
+      'name' => 'UK Pounds',
+    );
+
+
+  foreach($currencies as $values) {
+    if (!db_result(db_query("SELECT 1 FROM {fundraiser_currencies} WHERE code='%s'", $values['code']))) {
+      $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",  $values['symbol'], $values['code'], $values['name']);
+      $ret[] = update_sql($sql);
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Implements hook_update_N().
+ * Load defaults into the db for sites that don't already have them.
+ */
+function fundraiser_multi_currency_update_6001() {
+  $ret = _fundraiser_multi_currency_insert_defaults();
+  return $ret;
 }
