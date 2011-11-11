@@ -1791,11 +1791,12 @@ function fundraiser_is_recurring_order($order_id) {
  *   The id of the webform submission that contains the values.
  */ 
 function fundraiser_update_user_profile($uid, $nid, $sid) {
-	global $user;
+  global $user;
+  $update_user = $user;
   $map = fundraiser_create_profile_values_map($nid, $sid);
   		
 	if ($user->uid == 0) {
-		$user = user_load($uid);
+		$update_user = user_load($uid);
 	}
   
   // make sure the profile module is enabled
@@ -1811,7 +1812,7 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 				}
 			}				
 			// save profile
-			_fundraiser_profile_save_profile($updates, $user, $cat['name']);
+			_fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
 		}		
 		// convert ubercart's numeric ids to textual values
 		module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -1820,17 +1821,17 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 	}
 	
 	// update last_updated date so user will be re-synced on next cron run
-	user_save($user, array('last_updated' => time()));
+	user_save($update_user, array('last_updated' => time()));
 
 	// insert user back into queue
 	$action = 'update';
-	if (empty($user->salesforce_contact_id)) {
+	if (empty($update_user->salesforce_contact_id)) {
 		$action = 'upsert';
 	}
 	
 	// If the SF Queue API is enabled, insert this user into the queue
 	if (module_exists('queue_api')) {
-	  sf_queue_insert($user->uid, 'user', $action);
+	  sf_queue_insert($update_user->uid, 'user', $action);
 	}		
 	
 }
