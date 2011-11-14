@@ -619,7 +619,11 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
-    $nid = $object->products[0]->nid;
+
+    // $object is only valid on donation forms, so we need to default to arg(1) to catch
+    // node id's on webform submissions.
+    $nid = $object->products[0]->nid ? $object->products[0]->nid : arg(1);
+
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
