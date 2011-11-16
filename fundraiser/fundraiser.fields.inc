@@ -686,8 +686,14 @@ function _fundraiser_get_profile_location_fields() {
  *  Webform submission object.
  *  
  */
-function _fundraiser_update_profile_location($submission) {
-  global $user;
+function _fundraiser_update_profile_location($submission, $update_user) {
+  // If the user isn't authenticated and no pre-existing account was found based on email address
+  // we need to bail. Otherwise we'll end up setting profile values for the anonymous user
+  // which clearly sucks.
+  if (!$update_user->uid) {
+    return 0;
+  }  
+
   $fids = _fundraiser_get_profile_location_fields();  
   
   // get the ids of the country and state webform components for node
@@ -699,24 +705,24 @@ function _fundraiser_update_profile_location($submission) {
   
   if ($fids['country']) {
     $country_name = db_result(db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d', $country_code));
-    $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['country']));
+    $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $update_user->uid, $fids['country']));
     if ($has_country) {
       db_query("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $user->uid, $fids['country']);
     }
     else {
-      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $user->uid, $country_name);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, %s)", $fids['country'], $update_user->uid, $country_name);
     }
 
   }
 
   if ($fids['state']) {
     $state_name = db_result(db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = %d AND zone_country_id = %d', $state_code, $country_code));
-    $has_state = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $user->uid, $fids['state']));
+    $has_state = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $update_user->uid, $fids['state']));
     if ($has_state) {
-      db_query("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $user->uid, $fids['state']);
+      db_query("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $update_user->uid, $fids['state']);
     }
     else {
-      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $user->uid, $state_name);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $update_user->uid, $state_name);
     }
 
   }

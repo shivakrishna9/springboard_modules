@@ -1817,7 +1817,7 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
 		// convert ubercart's numeric ids to textual values
 		module_load_include('inc', 'webform', 'includes/webform.submissions');
 		$submission = webform_get_submission($nid, $sid);
-		_fundraiser_update_profile_location($submission);
+		_fundraiser_update_profile_location($submission, $update_user);
 	}
 	
 	// update last_updated date so user will be re-synced on next cron run
