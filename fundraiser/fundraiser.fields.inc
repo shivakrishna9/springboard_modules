@@ -685,14 +685,21 @@ function _fundraiser_get_profile_location_fields() {
  *  @param $submission
  *  Webform submission object.
  *  
+ *  @param $update_user
+ *  User object to be updated. If NULL, defaults to global $user
+ *  
  */
-function _fundraiser_update_profile_location($submission, $update_user) {
+function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   // If the user isn't authenticated and no pre-existing account was found based on email address
   // we need to bail. Otherwise we'll end up setting profile values for the anonymous user
   // which clearly sucks.
-  if (!$update_user->uid) {
+  if ($update_user && !$update_user->uid) {
     return 0;
-  }  
+  }
+  if (!$update_user) {
+    global $user;
+    $update_user = $user;
+  }
 
   $fids = _fundraiser_get_profile_location_fields();  
   
