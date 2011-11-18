@@ -1133,15 +1133,16 @@ function fundraiser_ahah_helper_disable_validation(&$form) {
  */
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
-    if ($order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE webform_nid = %d AND sid = %d", $node->nid, $submission->sid))) {
-      // Determine if we need an INSERT or an UPDATE
-      $action = 'create';
-      if ($sfid = db_result(db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = %d AND drupal_type = "donation"', $order_id))) {
-	  	$action = 'update';
-	  }
-      sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
+    if (module_exists('queue_api')) {
+      if ($order_id = db_result(db_query("SELECT f.order_id FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id WHERE f.webform_nid = %d AND f.sid = %d AND u.order_status = 'payment_received'", $node->nid, $submission->sid))) {
+        // Determine if we need an INSERT or an UPDATE
+        $action = 'create';
+        if ($sfid = db_result(db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = %d AND drupal_type = "donation"', $order_id))) {
+  	  	  $action = 'update';
+        }
+        sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
+      }
     }
-    _fundraiser_update_profile_location($submission);
   }
 }
 
@@ -1568,7 +1569,9 @@ function fundraiser_webform_submit($form, &$form_state) {
 		// failed to process credit cart
 		fundraiser_order_decline($order->order_id, $result['message']);
 		fundraiser_track_gateway_failure();
-		// rebuild the form
+		// tell webform we're not done and rebuild the form
+		unset($form_state['values']['details']['sid']);
+		$form_state['values']['details']['finished'] = 0;
 		$form_state['rebuild'] = TRUE;
  	}
 }
@@ -1607,6 +1610,9 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
   // update the order/webform relationship
   db_query("UPDATE {fundraiser_webform_order} SET gateway = '%s', txn_id = '%s' WHERE order_id = %d", $node->gateway, $transaction_id, $order_id);
   
+  // update the uid on the webform submission
+  db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
+  
   // Update the recurring status, if it was changed by the payment gateway module
   if ($webform->recurring_status != $order->data['recurring_status']) {
     db_query('UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d', $order->data['recurring_status'], $order_id);
@@ -1643,6 +1649,12 @@ function fundraiser_order_decline($order_id, $message) {
  	db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
  	// make a log entry
   watchdog('fundraiser', t('Order !id was declined by the payment gateway. Reason: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_DEBUG, NULL);
+  
+  // clean up
+  $sid = db_result(db_query("SELECT sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  db_query("DELETE FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id);
+  db_query("DELETE FROM {webform_submitted_data} WHERE sid = %d", $sid);
+  db_query("DELETE FROM {webform_submissions} WHERE sid = %d", $sid);
   
   // show gateay message if appropriate
   $display_message = variable_get('fundraiser_gateway_messages', 1);
