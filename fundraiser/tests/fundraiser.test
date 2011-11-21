@@ -34,7 +34,8 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'uc_credit',
       'ca',
       'test_gateway',
-      'fundraiser'
+      'fundraiser',
+      'market_source'
     );
     
     // Install any additional modules specified by helper modules
@@ -65,7 +66,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
   }
   
   /**
-   * Implemenation of tearDown().
+   * Implementation of tearDown().
    */
   function tearDown() {
     // Delete nodes
@@ -229,7 +230,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $this->assertTrue($valid, t('Verify the recurs monthly component is added to the donation form'));
     
   }
-  
+
   function testFundraiserForm() {
     $args = func_get_args();
     if (isset($this->_fundraiser_node)) {
@@ -252,6 +253,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
      'log' => '',
      'format' => '1',
      'is_donation_form' => '1',
+     'donation_amounts' => '10,20,30', //array(10,20,30), // legacy code that can be removed from fundraiser.module
      'gateway' => 'test_gateway',
      'receipt_email_from' => 'Test',
      'receipt_email_address' => 'test@jacksonriver.com',
@@ -285,7 +287,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
         'emails' => array(),
       ),
     );
-
+    
     if (isset($args[0]['settings'])) {
       $settings = array_merge($settings, $args[0]['settings']);
     }
@@ -297,8 +299,5 @@ class FundraiserTestCase extends DrupalWebTestCase {
 
     return $this->_fundraiser_node;
   }
-
-
-
 }
 

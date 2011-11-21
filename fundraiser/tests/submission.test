@@ -155,6 +155,47 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $order = uc_order_load($next_order_id);
     $this->assertEqual($order->order_status, 'payment_received', t('Make sure order status is changed to payment_received when a recurring donation is successfully processed during a cron run.')); 
   }
+  
+  /**
+   * Gateway failure test
+   */
+  function testGatewayFailure() {
+    // clear out all orders before running test
+    $this->clearOrders();
+    
+    $this->fundraiserReset();
+    $node = $this->testFundraiserForm();
+
+    $data = $this->createTestData();
+    
+    // change to an invalid credit cart number (test gateway)
+    $data['cc_number'] = '0000000000000000';
+    $submission = $this->createSubmission($data);
+    
+    $this->drupalGet('node/' . $node->nid);
+    $this->drupalPost(NULL, $submission, t('Submit'));
+    
+    $this->assertText(t('Credit card charge failed.'), t('Make sure the text "Credit card charge failed." appear after credit card is declined'));
+    
+    // Make sure all data is in order
+    $order_id = db_result(db_query("SELECT order_id FROM {uc_orders} LIMIT 1;"));
+    $order = uc_order_load($order_id);
+    
+    $this->assertEqual($order->order_status, 'failed', t('Make sure order status is set to failed'));
+    
+    // make sure there is no fundraiser_webform_order entry
+    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+    $this->assertEqual($count, 0, t('No fundraiser_webform_order created'));
+    
+    // make sure no invalid values are saved to the profile_values table
+    $count = db_result(db_query("SELECT COUNT(*) FROM {profile_values} WHERE uid = %d", 0));
+    $this->assertEqual($count, 0, t('No profile values were created for the anonymous user'));
+    
+    // correct cc number and re-submit
+    $submission["submitted[credit_card_information][card_number]"] = '4111111111111111';
+    $this->drupalPost(NULL, $submission, t('Submit'));
+    $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
+  }
 
   /**
    * Test amount validation
@@ -362,4 +403,12 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     return $edit1;
   }
   
+  function clearOrders() {
+    db_query("truncate {uc_orders}"); 
+    db_query("truncate uc_order_comments"); 
+    db_query("truncate uc_order_admin_comments"); 
+    db_query("truncate uc_order_products"); 
+    db_query("truncate uc_order_line_items"); 
+    db_query("truncate uc_payment_receipts");
+  }
 }
