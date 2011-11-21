@@ -53,21 +53,21 @@ function sf_queue_insert($oid, $type, $action) {
     // ignore duplicate actions
     if ($pending == $action) {
       $valid = false;
-      watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring duplicate request'), $watchdog, null, WATCHDOG_INFO);
+      watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring duplicate request'), $watchdog, WATCHDOG_INFO);
     }
     else {
       if ($queue_rules[$pending][$action] == $pending) {
         $valid = false;
-        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring new !action'), $watchdog, null, WATCHDOG_INFO);
+        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring new !action'), $watchdog, WATCHDOG_INFO);
       }
       elseif ($queue_rules[$pending][$action] == $action) { 
         sf_queue_delete($oid, $type);
-        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, replacing existing !pending'), $watchdog, null, WATCHDOG_INFO);
+        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, replacing existing !pending'), $watchdog, WATCHDOG_INFO);
       }
       elseif ($queue_rules[$pending][$action] == null) {
         sf_queue_delete($oid, $type);
         $valid = false;
-        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, removing from queue'), $watchdog, null, WATCHDOG_INFO);
+        watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, removing from queue'), $watchdog, WATCHDOG_INFO);
       }
     }
   }
