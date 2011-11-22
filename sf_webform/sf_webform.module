@@ -531,7 +531,7 @@ function sf_webform_form_alter(&$form, $form_state, $form_id) {
 		// check to see if the form is mapped
 		$nid = $form['details']['nid']['#value'];
 		$drupal = 'webform:' . $nid;
-		$count = db_result(db_query("select count(*) from {salesforce_management_field_map} where drupal = '%s'", $drupal));
+		$count = db_result(db_query("SELECT COUNT(*) FROM {salesforce_management_field_map} WHERE drupal = '%s' AND salesforce != '')", $drupal));
 		if ($count == 1) {
 			$form['#submit'][] = 'sf_webform_submit';
 		}
