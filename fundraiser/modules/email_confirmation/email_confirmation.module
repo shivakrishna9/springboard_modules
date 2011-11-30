@@ -54,6 +54,11 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   global $base_path;
   require_once('email_confirmation.defaults.inc');
 
+  // @see http://jbenner.net/blog/prevent-ahah-the-right-way-from-breaking-with-validation
+  if (isset($form_state['action'])) {
+    $form['#action'] = $form_state['action'];
+  }
+
   if ($form_id == 'confirmation_template_node_form') {
 
     // New node, add default template & message values
@@ -468,7 +473,7 @@ function _email_confirmation_template_ahah() {
   $form['#validate'] = NULL;
   $form_state['validate_handlers'] = NULL;
   fundraiser_ahah_helper_disable_validation($form);
-  
+  $form_state['action'] = $form['#action']; 
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
   $template_form = $form['confirmation_template']['template_wrapper'];
