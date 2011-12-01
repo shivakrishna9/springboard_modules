@@ -58,8 +58,8 @@ function secure_prepopulate_theme() {
   return array(
     'secure_prepopulate_welcome_message' => array(
       'arguments' => array('values' => null, 'nid' => null),
-      'template' => 'templates/secure-prepopulate-welcome',
-      'pattern' => 'secure_prepopulate_welcome_[0-9]+',
+      'template' => 'secure-prepopulate-welcome-message',
+      'pattern' => 'secure_prepopulate_welcome_message_[0-9]+',
     ),
   );
 }
@@ -74,7 +74,7 @@ function secure_prepopulate_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   if (is_array($_SESSION['secure_prepopulate_values'])) {
     if ($op == 'view' && $page && !empty($node->webform) && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])) {
       $node->content['welcome_back'] = array(
-        '#value' => theme(array('secure_prepopulate_welcome_' . $node->nid, 'secure_prepopulate_welcome_message'), $_SESSION['secure_prepopulate_values'][$node->nid], $node->nid),
+        '#value' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'), $_SESSION['secure_prepopulate_values'][$node->nid], $node->nid),
         '#weight' => -1,
       );
     }
@@ -96,8 +96,10 @@ function secure_prepopulate_init() {
   if (isset($_GET['af']) && arg(0) == 'node' && is_numeric(arg(1))) {
     $af = $_GET['af'];
     $nid = arg(1);
+    // Use the full query string for hash expiration.
+    $qs = !empty($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'q=node/' . $nid . '&af=' . $af;
     // first, check to see if the query string has already been used
-    if (!secure_prepopulate_is_expired($af)) {
+    if (!secure_prepopulate_is_expired($qs)) {
     // run af param through decryption routine
       if ($fields = secure_prepopulate_decrypt($af)) {
         $_SESSION['secure_prepopulate_values'][$nid] = $fields;
@@ -105,7 +107,7 @@ function secure_prepopulate_init() {
           secure_prepopulate_login_user($fields['uid']);
         }
         // expire the query string
-        secure_prepopulate_expire($af);
+        secure_prepopulate_expire($qs);
       }
     }
   }
@@ -141,8 +143,15 @@ function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
 function secure_prepopulate_after_build($form, &$form_state) {
   $node = $form['#parameters'][2];
   
-  // see if the user has any pre-popluate data for this node in their session
-  $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
+  // see if the user has any pre-populate data for this node in their session
+  $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : array();
+
+  if (!empty($form_state['submitted'])) {
+    // Skip the prepopulate work, as we've already submitted the form and it is
+    // being validated or otherwise altered by the user. Exit here cleanly.
+    return $form;
+  }
+
   $precedence = variable_get('secure_prepopulate_precedence', 'url');
   $components = $node->webform['components'];
   // create an data structure that will tell us exactly where each webform component lives in the FAPI array
@@ -184,6 +193,10 @@ function secure_prepopulate_after_build($form, &$form_state) {
       if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
         // set back to original default value by using the webform component definition
         switch ($field['#type']) {
+          case 'hidden':
+            // If it's a hidden field, leave the values intact.
+            continue;
+
           case 'date':
             if (drupal_strlen($field['#webform_component']['value']) > 0) {
               $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
@@ -206,8 +219,16 @@ function secure_prepopulate_after_build($form, &$form_state) {
             break;  
             
           default:
-            $field['#value'] = $field['#webform_component']['value'];
-            $field['#default_value'] = $field['#webform_component']['value'];    
+            if (strpos($field['#webform_component']['value'], '%get[') !== FALSE) {
+              // If the default value is %get[something], set the field to nothing.
+              $field['#value'] = NULL;
+              $field['#default_value'] = NULL;
+            }
+            else {
+              // For all other component default values, copy them to $field.
+              $field['#value'] = $field['#webform_component']['value'];
+              $field['#default_value'] = $field['#webform_component']['value'];
+            }
         }
       }
     }
@@ -302,7 +323,7 @@ function secure_prepopulate_parse_qs($qs) {
       $result['country'] = _secure_prepopulate_convert_country($result['country']);
     }
     if (array_key_exists('state', $result)) {
-      $result['state'] = _secure_prepopulate_convert_country($result['state']);
+      $result['state'] = _secure_prepopulate_convert_state($result['state']);
     }
   }
   
