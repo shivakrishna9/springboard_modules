@@ -65,11 +65,8 @@ function capwiz_uninstall() {
  * Implement hook_enable().
  */
 function capwiz_enable() {
-
-  // Add capwiz to the queue processing order array
-  $processing_order = variable_get('queue_processing_order', array());
-  array_push($processing_order, 'capwiz_action');
-  variable_set('queue_processing_order', $processing_order);
+  // tell the queue about our new dsr_transaction type
+  queue_processor_add_type('capwiz_action');
 }
 
 
@@ -77,11 +74,8 @@ function capwiz_enable() {
  * Implement hook_disable().
  */
 function capwiz_disable() {
-
-  // Remove capwiz from the queue processing order array
-  $processing_order = variable_get('queue_processing_order', array());
-  $processing_order = array_values(array_diff($processing_order, array('capwiz_action')));
-  variable_set('queue_processing_order', $processing_order);
+  // remove our type from the queue processor
+  queue_processor_remove_type('capwiz_action');
 }
 
 

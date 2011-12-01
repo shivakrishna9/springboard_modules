@@ -21,27 +21,22 @@ function sf_donation_uninstall() {
  * Implementation of hook_enable().
  */
 function sf_donation_enable() {
-	
-	// add donation and recurring_donation to the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  array_push($processing_order, 'donation');
-  array_push($processing_order, 'recurring_donation');
-  array_push($processing_order, 'refund');
-  variable_set('queue_processing_order', $processing_order);
-
+  $types = array('donation', 'recurring_donation', 'refund');
+  foreach ($types as $type) {
+    // tell the queue processor about the type
+    queue_processor_add_type($type);
+  }
 }
 
 /**
  * Implementation of hook_disable().
  */
 function sf_donation_disable() {
-
-	// remove donation and recurring donation from the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  $processing_order = array_values(array_diff($processing_order, array('donation')));
-  $processing_order = array_values(array_diff($processing_order, array('recurring_donation')));
-  variable_set('queue_processing_order', $processing_order);
-	
+  $types = array('donation', 'recurring_donation', 'refund');
+  foreach ($types as $type) {
+    // remove the type from the queue processor
+    queue_processor_remove_type($type);
+  }	
 }
 
 /**
@@ -220,10 +215,6 @@ function sf_donation_upgrade_fieldmaps() {
  * Update 6203: Add refunds to the queue_processing_order variable
  */
 function sf_donation_update_6203() {
-  $processing_order = variable_get('queue_processing_order', array());
-  if (!in_array('refund', $processing_order)) {
-    array_push($processing_order, 'refund');
-    variable_set('queue_processing_order', $processing_order);
-  }
+  queue_processor_add_type('refund');
   return array();
 }

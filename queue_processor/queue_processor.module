@@ -85,7 +85,7 @@ function queue_processor_menu() {
     'access arguments' => array('move item from retries queue'),
     'type' => MENU_CALLBACK,
   );
-  if (variable_get('queue_processor_standalone_cron_enabled', TRUE)) {
+  if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
     $items['queue_processor_cron'] = array(
       'page callback' => 'queue_processor_cron',
       'access callback' => TRUE,
@@ -127,7 +127,7 @@ function queue_processor_theme() {
  */
 function queue_processor_cron() {
   // Bail on normal cron run if standalone cron is enabled.
-  if (variable_get('queue_processor_standalone_cron_enabled', TRUE)) {
+  if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
     // If standalone cron is enabled and cron.php is being run, do nothing.
     if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
       return 0;
@@ -1141,4 +1141,41 @@ function queue_processor_retry($id) {
   drupal_set_message(ucfirst($result->type) . ' ' . $result->oid . ' has been successfully moved to the export queue.');
   watchdog('queue_processor', t('Moved item %oid from the retry queue to the export queue.', array('%oid' => $id)));
   drupal_goto('admin/reports/salesforce/retries');
+}
+
+/**
+ * Adds a new type directly to the end of the queue processing order.
+ *
+ * @param $type
+ *   The type to add.
+ */
+function queue_processor_add_type($type) {
+  // get the ordered version of the items
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  
+  // make sure the item doesn't get added more than once
+  if (!in_array($type, $processing_order)) {
+    // add the new type to the end of the order
+    array_push($processing_order, $type);
+  }
+  
+  // save the processing order
+  variable_set('queue_processing_order', $processing_order);
+}
+
+/**
+ * Removes a type from the queue processing order.
+ *
+ * @param $type
+ *   The type to remove.
+ */
+function queue_processor_remove_type($type) {
+  // get the ordered version of the items
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  
+  // remove type from the processing order
+  $processing_order = array_values(array_diff($processing_order, array($type)));
+  
+  // save the processing order
+  variable_set('queue_processing_order', $processing_order);
 }

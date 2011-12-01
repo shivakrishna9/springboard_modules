@@ -5,7 +5,13 @@
  * Implementation of hook_install().
  */
 function queue_processor_install() {
-	variable_set('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  $types = array('user', 'donation', 'webform', 'node');
+  
+  foreach ($types as $type) {
+    // tell the queue processor about the type
+    queue_processor_add_type($type);
+  }
+
 	variable_set('queue_batch_size', 200);
 	variable_set('queue_retry_max', 3);
 }

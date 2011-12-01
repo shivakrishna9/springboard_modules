@@ -13,24 +13,16 @@ function webform_user_uninstall() {
  * Implementation of hook_enable().
  */
 function webform_user_enable() {
-	
-	// add webform_user to the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  array_push($processing_order, 'webform_user');
-  variable_set('queue_processing_order', $processing_order);
-
+	// tell the queue about the type
+  queue_processor_add_type('webform_user');
 }
 
 /**
  * Implementation of hook_disable().
  */
 function webform_user_disable() {
-
-	// remove webform_user from the queue processing order array
-	$processing_order = variable_get('queue_processing_order', array());
-  $processing_order = array_values(array_diff($processing_order, array('webform_user')));
-  variable_set('queue_processing_order', $processing_order);
-	
+  // remove our type from the queue processor
+  queue_processor_remove_type('webform_user');
 }
 
 function webform_user_schema() {

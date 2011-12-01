@@ -118,16 +118,12 @@ function sf_node_salesforce_management_field_map($op, $drupal, $salesforce) {
   switch ($op) {
   case 'insert':
       // add the node type the queue processing order array
-      $processing_order = variable_get('queue_processing_order', array());
-      array_push($processing_order, $drupal);
-      variable_set('queue_processing_order', $processing_order);
+      queue_processor_add_type($drupal);
       break;
  
     case 'delete':
       // remove the node type from the queue processing order array
-      $processing_order = variable_get('queue_processing_order', array());
-      $processing_order = array_values(array_diff($processing_order, array($drupal)));
-      variable_set('queue_processing_order', $processing_order);
+      queue_processor_remove_type($drupal);
       break;
   }
 }
