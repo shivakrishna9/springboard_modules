@@ -657,22 +657,15 @@ function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amo
  * Returns a keyed array of location fields or an empty array if there was an error.
  */
 function _fundraiser_get_profile_location_fields() {
-  // TODO: this is brittle and will break in any instances where fundraiser is depoyed for a country that doesn't use states/provinces.
-  $country_fid = variable_get('fundraiser_country_profile_field', NULL);
-  $state_fid = variable_get('fundraiser_state_profile_field', NULL);
-  
-  if (!$country_fid || !$state_fid) {
-    $results = db_query('SELECT fid,name FROM {profile_fields} WHERE name IN ("profile_country", "profile_state")');
 
-    while ($profile_field = db_fetch_object($results)) {
-      if ($profile_field->name == 'profile_country') {
-        variable_set('fundraiser_country_profile_field', $profile_field->fid);
-        $country_fid = $profile_field->fid;
-      }
-      if ($profile_field->name == 'profile_state') {
-        variable_set('fundraiser_state_profile_field', $profile_field->fid);
-        $state_fid = $profile_field->fid;
-      }
+  $results = db_query('SELECT fid,name FROM {profile_fields} WHERE name IN ("profile_country", "profile_state")');
+
+  while ($profile_field = db_fetch_object($results)) {
+    if ($profile_field->name == 'profile_country') {
+      $country_fid = $profile_field->fid;
+    }
+    if ($profile_field->name == 'profile_state') {
+      $state_fid = $profile_field->fid;
     }
   }
   return array('country' => $country_fid, 'state' => $state_fid);
@@ -696,7 +689,7 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   }
 
   $fids = _fundraiser_get_profile_location_fields();  
-  
+
   // get the ids of the country and state webform components for node
   $country_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'country'", $submission->nid));
   $state_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'state'", $submission->nid));
