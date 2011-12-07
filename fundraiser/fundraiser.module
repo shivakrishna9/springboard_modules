@@ -905,6 +905,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $cc_info_field['expiration_date'] = array();
         $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
         $cc_info_field['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
+        $cc_info_field['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
         $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
       }
       else {
