@@ -5,8 +5,8 @@ dependencies[] = salesforce_management_api
 dependencies[] = webform
 dependencies[] = fundraiser
 dependencies[] = trigger
+dependencies[] = sf_npsp
 
-
-package = Jackson River Springboard
+package= Jackson River Springboard
 core = 6.x
 version =  6.x-3.0-dev
