@@ -129,8 +129,6 @@ function springboard_admin_settings_submit($form, $form_state) {
 /**
  * Page callback for springboard help.
  */
-function springboard_help() {
+function springboard_help_page() {
   return theme_springboard_help();
-  
-
 }
