@@ -62,13 +62,32 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
+  $items['admin/springboard/fundraiser_cron'] = array(
+    'title' => t('Fundraiser cron'),
+    'description' => t(''),
+    'page callback' => '_springboard_syncronize',
+    'page arguments' => array('fundraiser'),
+    'access callback' => '_springboard_cron_access',
+    'access arguments' => array('fundraiser'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/springboard/queue_processor_cron'] = array(
+    'title' => t('Fundraiser cron'),
+    'description' => t(''),
+    'page callback' => '_springboard_syncronize',
+    'page arguments' => array('queue_processor'),
+    'access callback' => '_springboard_cron_access',
+    'access arguments' => array('queue_processor'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   $items['admin/springboard/help'] = array(
     'title' => t('Help'),
     'description' => t('Future home of Springboard help documentation.'),
-    'page callback' => 't',
-    'page arguments' => array('hello world'),
+    'page callback' => 'springboard_help',
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
+    'weight' => 50,
+    'file' => 'springboard.admin.inc',
   );
   // Forms submenu
   if (module_exists('fundraiser')) {
@@ -255,15 +274,15 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
-  if (module_exists('queue_processor')) {
-    // Callback for the Springboard sync button.
-    $items['springboard_sync'] = array(
-      'title' => t('Syncronize'),
-      'page callback' => '_springboard_syncronize',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_CALLBACK,
-    );
-  }
+
+  // Callback for the Springboard sync button.
+  $items['springboard_sync'] = array(
+    'title' => t('Syncronize'),
+    'page callback' => '_springboard_syncronize',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
+  // Callback for the additional details modals in the fundraiser report panel.
   $items['springboard_report_modal'] = array(
     'title' => t('Syncronize'),
       'page callback' => '_springboard_fundraiser_report',
@@ -482,6 +501,9 @@ function springboard_theme() {
     'springboard_fundraiser_performance' => array(
       'arguments' => array(),
     ),
+    'springboard_help' => array(
+      'arguments' => array(),
+    ),
   );
 }
 
@@ -625,6 +647,14 @@ function theme_springboard_jump() {
   return $output;
 }
 
+function theme_springboard_help() {
+  $output = '<h2>' . t('Documentation') . '</h2>';
+  $output .= '<p>' . t('Springboard documentation is available on !docs.', array('!docs' => l('gospringboard.com', 'http://www.gospringboard.com/documentation'))) . '</p>';
+  $output .= '<h2>' . t('Issue Tracker') . '</h2>';
+  $output .= '<p>' . t('The Springboard project issue tracker is hosted on !issue_tracker', array('!issue_tracker' => l('drupal.org', 'http://drupal.org/project/springboard'))) . '</p>';
+  return $output;
+}
+
 /**
  * Quick jump form.
  */
@@ -645,6 +675,7 @@ function springboard_quick_jump() {
   return $form;
 }
 
+
 /**
  * Submit handler for quick jump form.
  */
@@ -655,13 +686,13 @@ function springboard_quick_jump_submit($form, $form_state) {
 /**
  * Syncronization callback for Springboard Sync button.
  */
-function _springboard_syncronize() {
-  if (module_exists('queue_processor')) {
+function _springboard_syncronize($op = 'both') {
+  if (module_exists('queue_processor') && ($op == 'fundraiser' || $op == 'both')) {
     module_load_include('module', 'queue_processor');
     queue_processor_process();
     drupal_set_message('Salesforce queues have been processed.');
   }
-  if (module_exists('fundraiser')) {
+  if (module_exists('fundraiser') && ($op == 'queue_processor' || $op == 'both')) {
     module_load_include('module', 'fundraiser');
     fundraiser_process_recurring_donations();
     drupal_set_message('Recurring donations have been processed.');
@@ -761,4 +792,19 @@ function _springboard_percentage($a, $b) {
     return 'N/A';
   }
 
+}
+
+/**
+ * 
+ **/
+function _springboard_cron_access($param) {
+  if ($param == 'fundraiser' && variable_get('fundraiser_standalone_cron_enabled', 0)) {
+    return user_access('administer springboard');
+  }
+
+  if ($param == 'fundraiser' && variable_get('queue_processor_standalone_cron_enabled', 0)) {
+    return user_access('administer springboard');
+  }
+  // We return FALSE instead of NULL to prevent menu items showing up when standalone cron isn't enabled.
+  return FALSE;
 }
