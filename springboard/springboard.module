@@ -83,7 +83,7 @@ function springboard_menu() {
   $items['admin/springboard/help'] = array(
     'title' => t('Help'),
     'description' => t('Future home of Springboard help documentation.'),
-    'page callback' => 'springboard_help',
+    'page callback' => 'springboard_help_page',
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => 50,
