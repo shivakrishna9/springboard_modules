@@ -33,13 +33,39 @@ function springboard_admin() {
  * Admin settings form.
  */
 function springboard_admin_settings() {
+  // TODO: add support for pane weights.
+ 
+  $results = db_query('SELECT delta, status FROM {springboard_panes}');
+  while ($item = db_fetch_object($results)) {
+    $panes[$item->delta] = $item->delta;
+
+    if ($item->status) {
+      $enabled_panes[$item->delta] = $item->delta;
+    }
+    else {
+      $enabled_panes[$item->delta] = 0;
+    }
+    
+
+  }
+
 
   $form = array();
+  $form['panes'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dashboard Panes'),
+    '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
+  );
+  $form['panes']['springboard_enabled_panes'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enabled Panes'),
+    '#options' => $panes,
+    '#default_value' => $enabled_panes,
+  );
   $form['dashboard'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dashboard Threshold Settings'),
     '#description' => t('Configure display settings for your dashboard.'),
-    '#collapsible' => TRUE,
   );
   $form['dashboard']['springboard_conversion_threshold'] = array(
     '#type' => 'textfield',
@@ -67,6 +93,7 @@ function springboard_admin_settings() {
   );
   
   $form['#validate'] = array('springboard_admin_settings_validate');
+  $form['#submit'][] = 'springboard_admin_settings_submit';
   return system_settings_form($form);
 
 }
@@ -89,3 +116,21 @@ if ($form_state['values']['springboard_gateway_failure_threshold'] && !is_numeri
   }
 }
 
+function springboard_admin_settings_submit($form, $form_state) {
+
+  foreach($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
+    if ($status) {
+      $status = 1;
+    }
+    db_query("UPDATE {springboard_panes} SET status=%d WHERE delta = '%s'", $status, $delta);
+  } 
+}
+
+/**
+ * Page callback for springboard help.
+ */
+function springboard_help() {
+  return theme_springboard_help();
+  
+
+}
