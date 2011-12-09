@@ -1,0 +1,137 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function capwiz_connect_install() {
+  drupal_install_schema('capwiz_connect');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function capwiz_connect_uninstall() {
+  drupal_uninstall_schema('capwiz_connect');
+}
+
+
+/**
+ * Implements hook_schema().
+ */
+function capwiz_connect_schema() {
+  $schema = array();
+  
+  $schema['capwiz_connect_accounts'] = array(
+    'description' => t('Contains the Capwiz accounts that will be synced'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'display_name' => array(
+        'description' => t('Displayed to admins, to differentiate multiple accounts'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'user_name' => array(
+        'description' => t('Username for API'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'user_password' => array(
+        'description' => t('Password for API'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'last_user_sync' => array(
+        'description' => t('Timestamp when users were last synced from Capwiz'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'last_action_sync' => array(
+        'description' => t('Timestamp when actions were last synced from Capwiz'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['capwiz_connect_users'] = array(
+    'description' => t('Store user data from Capwiz'),
+    'fields' => array(
+      'capwiz_account_id' => array(
+        'description' => t('ID from capwiz_connect_accounts.id'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'capwiz_user_id' => array(
+        'description' => t('User ID from Capwiz'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'local_uid' => array(
+        'description' => t('Drupal user ID, if there is one'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'data' => array(
+        'description' => t('Data about the user'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('capwiz_user_id'),
+    'indexes' => array(
+      'capwiz_account_id' => array('capwiz_account_id'),
+    ),
+  );
+  
+  $schema['capwiz_connect_actions'] = array(
+    'description' => t('Store action data from Capwiz'),
+    'fields' => array(
+      'capwiz_account_id' => array(
+        'description' => t('ID from capwiz_connect_accounts.id'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'capwiz_alert_id' => array(
+        'description' => t('Alert ID from Capwiz'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'capwiz_user_id' => array(
+        'description' => t('User ID from Capwiz'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'data' => array(
+        'description' => t('Data about the activity'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'action_timestamp' => array(
+        'description' => t('Timestamp of the action'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('capwiz_alert_id'),
+    'indexes' => array(
+      'capwiz_account_id' => array('capwiz_account_id'),
+      'capwiz_user_id' => array('capwiz_user_id'),
+    ),
+  );
+  
+  return $schema;
+}
+

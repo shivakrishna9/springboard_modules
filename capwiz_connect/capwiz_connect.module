@@ -1,0 +1,87 @@
+<?php
+/**
+ * @file
+ * Capwiz Connect
+ *
+ * Sync users and actions to Salesforce by querying the Capwiz Connect API
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function capwiz_connect_menu() {
+  $items = array();
+
+  $items['admin/settings/capwiz_connect'] = array(
+    'title' => 'Capwiz Connect Accounts',
+    'description' => 'List of Capwiz Connect accounts',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'capwiz_connect_account_list',
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/settings/capwiz_connect/accounts'] = array(
+    'title' => 'Accounts',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'capwiz_connect_account_list',
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  $items['admin/settings/capwiz_connect/accounts/add'] = array(
+    'title' => 'Add Capwiz Connect Account',
+    'description' => 'Add a new Capwiz Connect account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_account_addoredit'),
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/settings/capwiz_connect/accounts/edit/%capwiz_connect_account'] = array(
+    'title' => 'Edit Capwiz Connect Account',
+    'description' => 'Edit a Capwiz Connect account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_account_addoredit', 5),
+    'access arguments' => array('administer capwiz_connect'),
+  );
+  
+  $items['admin/settings/capwiz_connect/accounts/user_mapping/%capwiz_connect_account'] = array(
+    'title' => 'User Mapping for Capwiz Connect Account',
+    'description' => 'Edit User Mapping for Capwiz Connect Account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_account_user_mapping', 5),
+    'access arguments' => array('administer capwiz_connect'),
+  );
+  $items['admin/settings/capwiz_connect/accounts/action_mapping/%capwiz_connect_account'] = array(
+    'title' => 'Action Mapping for Capwiz Connect Account',
+    'description' => 'Edit Action Mapping for Capwiz Connect Account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_account_action_mapping', 5),
+    'access arguments' => array('administer capwiz_connect'),
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_perm().
+ */
+function capwiz_connect_perm() {
+  return array('administer capwiz_connect');
+}
+
+
+/**
+ * Load a Capwiz Connect account. Used for placeholders in menu item URLs
+ */
+function capwiz_connect_account_load($id) {
+  if ($id > 0) {
+    return db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
+  }
+  return null;
+}
