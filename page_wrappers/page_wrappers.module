@@ -36,7 +36,7 @@ function page_wrappers_perm() {
 function page_wrappers_theme_registry_alter(&$theme_registry) {
   // tell the theme registry to look in this module's directory for theme files
   $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'page_wrappers') . '/theme';
-  $theme_registry['page']['theme paths'][] = 'sites/default/files/page_wrappers/tpl';
+  $theme_registry['page']['theme paths'][] = file_directory_path() . '/page_wrappers/tpl';
 }
 
 /**
