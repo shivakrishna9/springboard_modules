@@ -10,6 +10,7 @@
  * Todos
  * -----
  * - Overview form: capwiz_connect_account_overview()
+ * - Implement connection tester: capwiz_connect_account_test_connection()
  * - Build mapping forms
  */
 
@@ -74,6 +75,17 @@ function capwiz_connect_menu() {
     'weight' => 1,
   );
   
+  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/test'] = array(
+    'title' => 'Test Connection',
+    'description' => 'Test the connection for a Capwiz Connect account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'capwiz_connect_account_test_connection',
+    'page arguments' => array(4),
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  
   $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/user_mapping'] = array(
     'title' => 'User Mapping',
     'description' => 'Edit User Mapping for Capwiz Connect Account',
@@ -82,7 +94,7 @@ function capwiz_connect_menu() {
     'page arguments' => array('capwiz_connect_account_user_mapping', 4),
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
+    'weight' => 3,
   );
 
   $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/action_mapping'] = array(
@@ -93,7 +105,7 @@ function capwiz_connect_menu() {
     'page arguments' => array('capwiz_connect_account_action_mapping', 4),
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 3,
+    'weight' => 4,
   );
   
   $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/delete'] = array(
@@ -104,7 +116,7 @@ function capwiz_connect_menu() {
     'page arguments' => array('capwiz_connect_account_delete', 4),
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 4,
+    'weight' => 5,
   );
   
 

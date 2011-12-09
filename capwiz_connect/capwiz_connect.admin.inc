@@ -215,3 +215,8 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
 function capwiz_connect_account_overview($account) {
   return $account->display_name;
 }
+
+
+function capwiz_connect_account_test_connection($account) {
+  return 'Test connection for ' . $account->display_name;
+}
