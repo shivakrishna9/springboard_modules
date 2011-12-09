@@ -19,10 +19,11 @@ function capwiz_connect_account_list() {
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
   while ($row = db_fetch_object($result)) {
     $operations = array(
-      l('edit', 'admin/settings/capwiz_connect/edit/' . $row->id),
-      l('user mapping', 'admin/settings/capwiz_connect/user_mapping/' . $row->id),
-      l('action mapping', 'admin/settings/capwiz_connect/action_mapping/' . $row->id),
-      l('delete', 'admin/settings/capwiz_connect/delete/' . $row->id),
+      l('overview', 'admin/settings/capwiz_connect/account/' . $row->id),
+      l('edit', 'admin/settings/capwiz_connect/account/' . $row->id . '/edit'),
+      l('user mapping', 'admin/settings/capwiz_connect/account/' . $row->id . '/user_mapping'),
+      l('action mapping', 'admin/settings/capwiz_connect/account/' . $row->id . '/action_mapping'),
+      l('delete', 'admin/settings/capwiz_connect/account/' . $row->id . '/delete'),
     );
     
     $accounts[] = array(
@@ -182,10 +183,12 @@ function capwiz_connect_account_delete($form_state, $account) {
       '#account_id' => $account->id,
     );
     
+    $cancel_path = 'admin/settings/capwiz_connect/account/' . $account->id;
+    
     return confirm_form(
       $form,
       t('Are you sure you want to delete the account %display_name?', array('%display_name' => $account->display_name)),
-      'admin/settings/capwiz_connect/accounts',
+      $cancel_path,
       t('This action cannot be undone.'),
       t('Delete'),
       t('Cancel'),
@@ -193,7 +196,7 @@ function capwiz_connect_account_delete($form_state, $account) {
   }
   else {
     drupal_set_message(t('That account does not exist.'), 'error');
-    drupal_goto('admin/settings/capwiz_connect/accounts');
+    drupal_goto($cancel_path);
   }
 }
 
@@ -206,4 +209,9 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
   db_query('DELETE FROM {capwiz_connect_accounts} WHERE id = %d', $account_id);
   drupal_set_message(t('The account has been deleted.'));
   $form_state['redirect'] = 'admin/settings/capwiz_connect/accounts';
+}
+
+
+function capwiz_connect_account_overview($account) {
+  return $account->display_name;
 }
