@@ -266,7 +266,7 @@ function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
 function _page_wrappers_base_path() {
   //return $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
   //return drupal_get_path('module', 'page_wrappers') . '/theme';
-  return $_SERVER['DOCUMENT_ROOT'] . '/' . 'sites/default/files/page_wrappers';
+  return $_SERVER['DOCUMENT_ROOT'] . '/' . file_directory_path() . '/page_wrappers';
 }
 
 function _page_wrappers_template_path() {
