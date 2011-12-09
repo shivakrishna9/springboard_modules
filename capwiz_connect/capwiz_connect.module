@@ -18,7 +18,7 @@ function capwiz_connect_menu() {
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'capwiz_connect_account_list',
     'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_CALLBACK,
   );
   $items['admin/settings/capwiz_connect/accounts'] = array(
     'title' => 'Accounts',
@@ -28,8 +28,8 @@ function capwiz_connect_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   
-  $items['admin/settings/capwiz_connect/accounts/add'] = array(
-    'title' => 'Add Capwiz Connect Account',
+  $items['admin/settings/capwiz_connect/add'] = array(
+    'title' => 'Add Account',
     'description' => 'Add a new Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'drupal_get_form',
@@ -38,31 +38,45 @@ function capwiz_connect_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/settings/capwiz_connect/accounts/edit/%capwiz_connect_account'] = array(
+  $items['admin/settings/capwiz_connect/edit/%capwiz_connect_account'] = array(
     'title' => 'Edit Capwiz Connect Account',
     'description' => 'Edit a Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('capwiz_connect_account_addoredit', 5),
+    'page arguments' => array('capwiz_connect_account_addoredit', 4),
     'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_CALLBACK,
   );
   
-  $items['admin/settings/capwiz_connect/accounts/user_mapping/%capwiz_connect_account'] = array(
+  $items['admin/settings/capwiz_connect/user_mapping/%capwiz_connect_account'] = array(
     'title' => 'User Mapping for Capwiz Connect Account',
     'description' => 'Edit User Mapping for Capwiz Connect Account',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('capwiz_connect_account_user_mapping', 5),
+    'page arguments' => array('capwiz_connect_account_user_mapping', 4),
     'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_CALLBACK,
   );
-  $items['admin/settings/capwiz_connect/accounts/action_mapping/%capwiz_connect_account'] = array(
+  $items['admin/settings/capwiz_connect/action_mapping/%capwiz_connect_account'] = array(
     'title' => 'Action Mapping for Capwiz Connect Account',
     'description' => 'Edit Action Mapping for Capwiz Connect Account',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('capwiz_connect_account_action_mapping', 5),
+    'page arguments' => array('capwiz_connect_account_action_mapping', 4),
     'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_CALLBACK,
   );
+  
+  $items['admin/settings/capwiz_connect/delete/%capwiz_connect_account'] = array(
+    'title' => 'Delete Capwiz Connect Account',
+    'description' => 'Delete a Capwiz Connect account',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_account_delete', 4),
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_CALLBACK,
+  );
+  
 
   return $items;
 }

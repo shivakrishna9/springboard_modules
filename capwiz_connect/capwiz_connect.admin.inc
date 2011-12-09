@@ -19,9 +19,10 @@ function capwiz_connect_account_list() {
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
   while ($row = db_fetch_object($result)) {
     $operations = array(
-      l('edit', 'admin/settings/capwiz_connect/accounts/edit/' . $row->id),
-      l('user mapping', 'admin/settings/capwiz_connect/accounts/user_mapping/' . $row->id),
-      l('action mapping', 'admin/settings/capwiz_connect/accounts/action_mapping/' . $row->id),
+      l('edit', 'admin/settings/capwiz_connect/edit/' . $row->id),
+      l('user mapping', 'admin/settings/capwiz_connect/user_mapping/' . $row->id),
+      l('action mapping', 'admin/settings/capwiz_connect/action_mapping/' . $row->id),
+      l('delete', 'admin/settings/capwiz_connect/delete/' . $row->id),
     );
     
     $accounts[] = array(
@@ -55,6 +56,7 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
       '#type' => 'value',
       '#value' => $account->id,
     );
+    $account_details = (array)$account;
   }
   
   $form['display_name'] = array(
@@ -63,6 +65,8 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#description' => t('Name to show for this account. This is only used to differentiate accounts for admins.'),
     '#size' => 40,
     '#maxlength' => 255,
+    '#required' => TRUE,
+    '#default_value' => $account_details['display_name'],
   );
   $form['user_name'] = array(
     '#type' => 'textfield',
@@ -70,6 +74,8 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#description' => t('API username for the Capwiz Connect API.'),
     '#size' => 40,
     '#maxlength' => 255,
+    '#required' => TRUE,
+    '#default_value' => $account_details['user_name'],
   );
   $form['user_password'] = array(
     '#type' => 'textfield',
@@ -77,6 +83,8 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#description' => t('API password for the Capwiz Connect API.'),
     '#size' => 40,
     '#maxlength' => 255,
+    '#required' => TRUE,
+    '#default_value' => $account_details['user_password'],
   );
   
   
@@ -104,7 +112,29 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
  * Submit the add/edit form
  */
 function capwiz_connect_account_addoredit_submit($form, &$form_state) {
-  dsm($form_state, 'form_state');
+  $values = $form_state['values'];
+  $record = array(
+    'display_name' => $values['display_name'],
+    'user_name' => $values['user_name'],
+    'user_password' => $values['user_password'],
+    'id' => $values['account_id'],
+  );
+  
+  // Determine if inserting or updating
+  if ($values['account_id'] > 0) {
+    $save_ok = drupal_write_record('capwiz_connect_accounts', $record, 'id');
+    if ($save_ok) {
+      drupal_set_message(t('Account updated'));
+    }
+  }
+  else {
+    $save_ok = drupal_write_record('capwiz_connect_accounts', $record);
+    if ($save_ok) {
+      drupal_set_message(t('New Account created'));
+    }
+  }
+  
+  return $save_ok;
 }
 
 
@@ -141,3 +171,39 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
   return $form;
 }
 
+
+
+/**
+ * Confirm account delete
+ */
+function capwiz_connect_account_delete($form_state, $account) {
+  if ($account->id > 0) {
+    $form = array(
+      '#account_id' => $account->id,
+    );
+    
+    return confirm_form(
+      $form,
+      t('Are you sure you want to delete the account %display_name?', array('%display_name' => $account->display_name)),
+      'admin/settings/capwiz_connect/accounts',
+      t('This action cannot be undone.'),
+      t('Delete'),
+      t('Cancel'),
+      'capwiz_connect_account_delete');
+  }
+  else {
+    drupal_set_message(t('That account does not exist.'), 'error');
+    drupal_goto('admin/settings/capwiz_connect/accounts');
+  }
+}
+
+
+/**
+ * After confirming an account delete, actually delete it
+ */
+function capwiz_connect_account_delete_submit($form, &$form_state) {
+  $account_id = $form['#account_id'];
+  db_query('DELETE FROM {capwiz_connect_accounts} WHERE id = %d', $account_id);
+  drupal_set_message(t('The account has been deleted.'));
+  $form_state['redirect'] = 'admin/settings/capwiz_connect/accounts';
+}
