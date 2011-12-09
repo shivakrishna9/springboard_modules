@@ -406,7 +406,7 @@ function _page_wrappers_clone_file($original, $type, $new_filename) {
   global $user;
   
   // create a new filename for the file
-  $filepath = 'sites/default/files/page_wrappers/' . $type . '/' . $new_filename;
+  $filepath = file_directory_path() . '/page_wrappers/' . $type . '/' . $new_filename;
   
   // if it copies, create a new file
   if (file_copy($original['filepath'], $filepath)) {
