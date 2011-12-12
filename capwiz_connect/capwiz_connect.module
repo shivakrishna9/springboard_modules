@@ -12,6 +12,10 @@
  * - Overview form: capwiz_connect_account_overview()
  * - Implement connection tester: capwiz_connect_account_test_connection()
  * - Build mapping forms
+ * 
+ * Minor
+ * -----
+ * - Breadcrumbs not showing when viewing/editing/etc forms
  */
 
 /**
@@ -47,7 +51,7 @@ function capwiz_connect_menu() {
   );
 
 
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account'] = array(
     'title callback' => '_capwiz_connect_overview_title',
     'title arguments' => array(4),
     'description' => 'Capwiz Connect account overview',
@@ -57,14 +61,14 @@ function capwiz_connect_menu() {
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_CALLBACK,
   );
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/overview'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/overview'] = array(
     'title' => 'Overview',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
   
 
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/edit'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/edit'] = array(
     'title' => 'Edit',
     'description' => 'Edit a Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
@@ -75,7 +79,7 @@ function capwiz_connect_menu() {
     'weight' => 1,
   );
   
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/test'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/test'] = array(
     'title' => 'Test Connection',
     'description' => 'Test the connection for a Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
@@ -86,7 +90,7 @@ function capwiz_connect_menu() {
     'weight' => 2,
   );
   
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/user_mapping'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/user_mapping'] = array(
     'title' => 'User Mapping',
     'description' => 'Edit User Mapping for Capwiz Connect Account',
     'file' => 'capwiz_connect.admin.inc',
@@ -97,7 +101,7 @@ function capwiz_connect_menu() {
     'weight' => 3,
   );
 
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/action_mapping'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/action_mapping'] = array(
     'title' => 'Action Mapping',
     'description' => 'Edit Action Mapping for Capwiz Connect Account',
     'file' => 'capwiz_connect.admin.inc',
@@ -108,7 +112,7 @@ function capwiz_connect_menu() {
     'weight' => 4,
   );
   
-  $items['admin/settings/capwiz_connect/account/%capwiz_connect_account/delete'] = array(
+  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/delete'] = array(
     'title' => 'Delete',
     'description' => 'Delete a Capwiz Connect account',
     'file' => 'capwiz_connect.admin.inc',
@@ -119,8 +123,39 @@ function capwiz_connect_menu() {
     'weight' => 5,
   );
   
+  
+  
+  
+  // Expose a callback for the cron run if it's standalone
+  if (variable_get('capwiz_connect_standalone_cron_enabled', FALSE)) {
+    $items['capwiz_connect_cron'] = array(
+      'page callback' => 'capwiz_connect_cron_process',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+  }
+  
+  
+  $items['capwiz_connect'] = array(
+    'title' => 'Capwiz API Testing',
+    'page callback' => 'capwiz_connect_test',
+    'access callback' => TRUE,
+  );
 
   return $items;
+}
+
+function capwiz_connect_test() {
+  $account_id = 5;
+  $connection = capwiz_connect($account_id);
+  $users = $connection->queryUsers(1293840000);
+  if ($users) {
+    dsm($users, 'users');
+    return 'Success!';
+  }
+  else {
+    return 'Error: ' . $connection->getLastError();
+  }
 }
 
 
@@ -136,13 +171,68 @@ function capwiz_connect_perm() {
  * Load a Capwiz Connect account. Used for placeholders in menu item URLs
  */
 function capwiz_connect_account_load($id) {
-  if ($id > 0) {
-    return db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
+  static $account_details = array();
+  
+  if ($id > 0 && !$account_details[$id]) {
+    $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
+  }
+  return $account_details[$id];
+}
+
+
+/**
+ * Title for overview tab when viewing an account
+ */
+function _capwiz_connect_overview_title($account) {
+  return $account->display_name;
+}
+
+
+/**
+ * Get an instance of CapizConnect
+ */
+function capwiz_connect($account_id) {
+  static $included;
+  if (!$included) {
+    module_load_include('inc', 'capwiz_connect', 'CapwizConnect');
+    $included = TRUE;
+  }
+  
+  $account_details = capwiz_connect_account_load($account_id);
+  if ($account_details) {
+    return CapizConnect::instance($account_details);
   }
   return null;
 }
 
 
-function _capwiz_connect_overview_title($account) {
-  return $account->display_name;
+
+
+/**
+ * Implementation of hook_cron().
+ */
+function capwiz_connect_cron() {
+  // Bail on normal cron run if standalone cron is enabled.
+  if (variable_get('capwiz_connect_standalone_cron_enabled', FALSE)) {
+    // If standalone cron is enabled and cron.php is being run, do nothing.
+    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+      return 0;
+    }
+    else {
+      watchdog('capwiz_connect_cron', t('Standalone cron run.'));
+    }
+  }
+  else {
+    watchdog('capwiz_connect_cron', t('Standard cron run.'));
+  }
+  capwiz_connect_cron_process();
+}
+
+
+/**
+ * Do the actual cron run
+ */
+function capwiz_connect_cron_process() {
+  //$connection = capwiz_connect($account_id);
+  //$users = $connection->queryUsers(1293840000);
 }

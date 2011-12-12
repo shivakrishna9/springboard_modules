@@ -12,6 +12,7 @@ function capwiz_connect_install() {
  */
 function capwiz_connect_uninstall() {
   drupal_uninstall_schema('capwiz_connect');
+  variable_del('capwiz_connect_standalone_cron_enabled');
 }
 
 

@@ -19,11 +19,12 @@ function capwiz_connect_account_list() {
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
   while ($row = db_fetch_object($result)) {
     $operations = array(
-      l('overview', 'admin/settings/capwiz_connect/account/' . $row->id),
-      l('edit', 'admin/settings/capwiz_connect/account/' . $row->id . '/edit'),
-      l('user mapping', 'admin/settings/capwiz_connect/account/' . $row->id . '/user_mapping'),
-      l('action mapping', 'admin/settings/capwiz_connect/account/' . $row->id . '/action_mapping'),
-      l('delete', 'admin/settings/capwiz_connect/account/' . $row->id . '/delete'),
+      l('overview', 'admin/settings/capwiz_connect/accounts/' . $row->id),
+      l('edit', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
+      l('test', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/test'),
+      l('user mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
+      l('action mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
+      l('delete', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
     );
     
     $accounts[] = array(
@@ -58,6 +59,9 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
       '#value' => $account->id,
     );
     $account_details = (array)$account;
+    
+    // Go to the overview page after saving
+    $form['#redirect'] = 'admin/settings/capwiz_connect/accounts/' . $account->id;
   }
   
   $form['display_name'] = array(
@@ -123,14 +127,14 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
   
   // Determine if inserting or updating
   if ($values['account_id'] > 0) {
-    $save_ok = drupal_write_record('capwiz_connect_accounts', $record, 'id');
-    if ($save_ok) {
+    $saved_record = drupal_write_record('capwiz_connect_accounts', $record, 'id');
+    if ($saved_record) {
       drupal_set_message(t('Account updated'));
     }
   }
   else {
-    $save_ok = drupal_write_record('capwiz_connect_accounts', $record);
-    if ($save_ok) {
+    $new_record = drupal_write_record('capwiz_connect_accounts', $record);
+    if ($new_record) {
       drupal_set_message(t('New Account created'));
     }
   }
@@ -183,7 +187,7 @@ function capwiz_connect_account_delete($form_state, $account) {
       '#account_id' => $account->id,
     );
     
-    $cancel_path = 'admin/settings/capwiz_connect/account/' . $account->id;
+    $cancel_path = 'admin/settings/capwiz_connect/accounts/' . $account->id;
     
     return confirm_form(
       $form,
@@ -217,6 +221,11 @@ function capwiz_connect_account_overview($account) {
 }
 
 
+/**
+ * Test Connection tab on account
+ */
 function capwiz_connect_account_test_connection($account) {
-  return 'Test connection for ' . $account->display_name;
+  $connection = capwiz_connect($account->id);
+  $connection->authenticate();
+  return $connection->getLastError();
 }
