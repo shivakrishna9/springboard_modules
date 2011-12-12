@@ -243,9 +243,95 @@ function capwiz_connect_cron() {
 function capwiz_connect_cron_process() {
   $all_accounts = capwiz_connect_all_accounts();
   foreach ($all_accounts as $account_id => $account_details) {
+    $updated = $created = $update_fail = $create_fail = 0;
+    
+    // Connect to the API for this account
     $connection = capwiz_connect($account_id);
-    $users = $connection->queryUsers($account_details->last_user_sync);
-    dsm($users);
+    
+    // Query for users that have been updated since the last time 
+    $last_sync = $account_details->last_user_sync;
+    if ($last_sync > 0) {
+      // Reduce the last time stamp to act as a buffer, to make sure no users
+      // fall between the cracks
+      $last_sync -= 3600;
+    }
+    $users = $connection->queryUsers($last_sync);
+
+    // If $users is FALSE, there was an error connecting or querying users, and a
+    // message will be logged to the watchdog
+    if ($users === FALSE) {
+      continue;
+    }
+    
+    if (is_array($users) && !empty($users)) {
+      // Loop over the returned users and save them to the DB
+      foreach ($users as $user) {
+        $capwiz_user_id = $user->id;
+        $record = array(
+          'capwiz_account_id' => $account_id,
+          'capwiz_user_id' => $capwiz_user_id,
+          'local_uid' => 0,
+          'data' => serialize($user),
+        );
+        
+        // Check if this user (identified by Capwiz ID) is already in our DB
+        $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+        
+        if ($existing_record) {
+          // User is already in our DB: update the record
+          if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
+            $updated++;
+          }
+          else {
+            $update_fail++;
+          }
+        }
+        else {
+          // New-to-us user
+          if(drupal_write_record('capwiz_connect_users', $record)) {
+            $created++;
+          }
+          else {
+            $create_fail++;
+          }
+        }
+      }
+      
+      // Log stats for users collected for this account
+      $severity = WATCHDOG_INFO;
+      $message = "Updated users for %account_name. Created: %created. Updated: %updated.";
+      if ($create_fail > 0) {
+        $message .= " Failed to create: %create_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      if ($update_fail > 0) {
+        $message .= " Failed to update: %update_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      $message_vars = array(
+        '%account_name' => $account_details->display_name,
+        '%created' => $created,
+        '%updated' => $updated,
+        '%create_fail' => $create_fail,
+        '%update_fail' => $update_fail,
+      );
+      watchdog('capwiz_connect', $message, $message_vars, $severity);
+    }
+    else {
+      // $users was an empty array, so there were no new users
+      $message = "No users to add or update for %account_name.";
+      $message_vars = array(
+        '%account_name' => $account_details->display_name,
+        '%created' => $created,
+        '%updated' => $updated,
+        '%create_fail' => $create_fail,
+        '%update_fail' => $update_fail,
+      );
+      watchdog('capwiz_connect', $message, $message_vars);
+    }
+    
+    // Update the last_user_sync timestamp on this account
+    db_query('UPDATE {capwiz_connect_accounts} SET last_user_sync=%d WHERE id=%d', time(), $account_id);
   }
   return '';
 }
