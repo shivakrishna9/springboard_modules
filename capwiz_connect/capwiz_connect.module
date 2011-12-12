@@ -103,27 +103,28 @@ function capwiz_connect_menu() {
     'weight' => 2,
   );
   
-  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/user_mapping'] = array(
-    'title' => 'User Mapping',
-    'description' => 'Edit User Mapping for Capwiz Connect Account',
-    'file' => 'capwiz_connect.admin.inc',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('capwiz_connect_account_user_mapping', 4),
-    'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 3,
-  );
-
-  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/action_mapping'] = array(
-    'title' => 'Action Mapping',
-    'description' => 'Edit Action Mapping for Capwiz Connect Account',
-    'file' => 'capwiz_connect.admin.inc',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('capwiz_connect_account_action_mapping', 4),
-    'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 4,
-  );
+  if (module_exists('salesforce_management_api')) {
+    $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/user_mapping'] = array(
+      'title' => 'User Mapping',
+      'description' => 'Edit User Mapping for Capwiz Connect Account',
+      'file' => 'capwiz_connect.admin.inc',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('capwiz_connect_account_user_mapping', 4),
+      'access arguments' => array('administer capwiz_connect'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 3,
+    );
+    $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/action_mapping'] = array(
+      'title' => 'Action Mapping',
+      'description' => 'Edit Action Mapping for Capwiz Connect Account',
+      'file' => 'capwiz_connect.admin.inc',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('capwiz_connect_account_action_mapping', 4),
+      'access arguments' => array('administer capwiz_connect'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 4,
+    );
+  }
   
   $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/delete'] = array(
     'title' => 'Delete',

@@ -147,17 +147,188 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
  * User field mapping for Capwiz Connect account
  */
 function capwiz_connect_account_user_mapping($form_state, $account) {
-  $form = array();
-  
-  $form['user-mapping-form'] = array(
-    '#value' => 'user mapping form',
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
+  // Load the fieldmap from the database.
+   $map = salesforce_management_api_fieldmap_load($fieldmap);
+   // Return to the admin page if the fieldmap did not exist.
+   if (empty($map)) {
+     drupal_set_message(t('That fieldmap does not exist.'), 'error');
+   }
+
+   // Include the CSS file for the form.
+   drupal_add_css(drupal_get_path('module', 'capwiz_connect') .'/capwiz_connect.admin.css');
+
+   $form = array();
+
+   $form['salesforce_recordtype_wrapper'] = array(
+     '#prefix' => '<div id="recordtype">',
+     '#suffix' => '</div>',
+   );
+
+   $recordtypes = array(); //salesforce_management_api_get_object_recordtypes($map['salesforce']);
+
+   $form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
+     '#type' => 'select',
+     '#title' => 'Salesforce record type',
+     '#options' => count($recordtypes) > 1 ? $recordtypes : array(t('None available')),
+     '#description' => t('Objects using this fieldmap will be assigned to the selected record type.'),
+     '#default_value' => $map['recordtype_id'],
+   );
+
+   // Add the index to the form array.
+   $form['fieldmap_index'] = array(
+     '#type' => 'value',
+     '#value' => $fieldmap,
+   );
+
+   // Add a description of the source fieldmap to the form array.
+   $form['fieldmap_desc'] = array(
+     '#value' => '<p>Fieldmap description</p>',
+   );
+
+   $source = array(
+     'label' => t('Capwiz label'),
+     'fields' => array(
+       'uno' => array('label' => 'Capwiz field uno'),
+       'dos' => array('label' => 'Capwiz field dos'),
+      )
+    );
+   $target = array(
+      'label' => t('Capwiz target'),
+      'fields' => array(
+        'one' => array('label' => 'Capwiz field 1'),
+        'two' => array('label' => 'Capwiz field 2'),
+       )
+     );
+
+
+  foreach($target['fields'] as $key => $value){
+ 	  $fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
+  }
+  asort($fieldmapsort);
+
+  // Add the data to the form for the required fields table.
+  $form['fields'] = array(
+    '#theme' => 'salesforce_management_api_fieldmap_edit_form_table',
+    'rows' => array(),
   );
-  
-  
+
+  $form['fields']['header'] = array(
+    array('#value' => t('Target: @label (@type)', array('@label' => $target['label'], '@type' => $map['action'] == 'import' ? t('Drupal') : t('Salesforce')))),
+    array('#value' => t('Source: @label (@type)', array('@label' => $source['label'], '@type' => $map['action'] == 'import' ? t('Salesforce') : t('Drupal')))),
+    array('#value' => t('Business rules Drupal to SF')),
+    array('#value' => t('Business rules SF to Drupal')),
+  );
+
+  // Loop through each of the target fields.
+  $rows = array('required' => array(), 'optional' => array());
+  foreach ($fieldmapsort as $key => $value) {
+    // Determine to which table this field should belong.
+    if ($value['type'] == SALESFORCE_FIELD_REQUIRED) {
+      $type = 'required';
+      $required = ' <span class="form-required" title="'. t('This field is required.') .'">*</span>';
+    }
+    else {
+      $type = 'optional';
+      $required = '';
+    }
+
+    // Create a row for this field.
+    $row = array(
+      'target' => array('#value' => $value['label'] . $required),
+    );
+
+    // Add the select list for the associated target field.
+    $row['source'][$key] = array(
+      '#type' => 'select',
+      '#title' => $value['label'],
+      '#options' => salesforce_management_api_fieldmap_field_options($source),
+      '#default_value' => $map['fields'][$key],
+      '#required' => $type == 'required',
+    );
+    $row['business'][$key.'_r'] = array(
+      '#type' => 'select', 
+      '#title' => t('Default options'),
+      '#default_value' => $map['business'][$key],
+      '#options' => array(
+        'null' => t(''), 
+        'blank' => t('Overwrite when blank'), 
+        'append' => t('Append'),
+        'always' => t('Always overwrite'),
+        'never' => t('Never overwrite'),
+      ),
+    );
+   	$row['businessSD'][$key.'_l'] = array(
+      '#type' => 'select', 
+      '#title' => t('Default options'),
+   	  '#default_value' => $map['businessSD'][$key],
+   	  '#options' => array(
+   		'null' => t(''), 
+   		'blank' => t('Overwrite when blank'), 
+   		'append' => t('Append'),
+   		'always' => t('Always overwrite'),
+   		'never' => t('Never overwrite'),
+     ),
+   	);
+
+     // Add the row to the correct rows array.
+     $rows[$type][] = $row;
+   }
+
+  // Combine the rows arrays into one with required fields displayed first.
+  $form['fields']['rows'] = array_merge($rows['required'], $rows['optional']);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save changes'),
+    '#suffix' => l(t('Cancel'), 'admin/settings/capwiz_connect/accounts/' . $account->id),
+  );
+
   return $form;
 }
+
+function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
+  // Load the fieldmap from the database.
+  $map = salesforce_management_api_fieldmap_load($form_state['values']['fieldmap_index']);
+  
+  // Update name, record type, etc.
+  $map['name'] = $form_state['values']['name'];
+  $map['recordtype_id'] = $form_state['values']['salesforce_recordtype'];
+  // Reset the fields array on the fieldmap.
+  $map['fields'] = array();
+
+  // Get the object definition for the target object.
+  if ($map['action'] == 'import') {
+    $object = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
+  }
+  else {
+    $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
+  }
+
+  // Loop through all the fields on the object.
+  foreach (array_keys($object['fields']) as $field) {
+    // If a field has been mapped to this field on the form...
+    if (!empty($form_state['values'][$field])) {
+      // Add the association to the fieldmap's fields array.
+			$map['fields'][$field] = $form_state['values'][$field];
+	 		$map['business'][$field] = $form_state['values'][$field.'_r'];
+	 		$map['businessSD'][$field] = $form_state['values'][$field.'_l'];
+			$map['validation'][$field] = array(
+				'field_type' => $object['fields'][$field]['field_type'],
+				'nillable' => $object['fields'][$field]['nillable'],
+				'length' => $object['fields'][$field]['length'],
+			);
+	 	}
+  }
+
+  // Save the updated fieldmap.
+  salesforce_management_api_fieldmap_save($map);
+
+  // Display a message and return to the admin page.
+  drupal_set_message(t('The changes have been saved.'));
+
+  $form_state['redirect'] = SALESFORCE_PATH_FIELDMAPS;
+}
+
 
 
 /**
