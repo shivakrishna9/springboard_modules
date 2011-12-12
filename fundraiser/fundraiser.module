@@ -378,10 +378,12 @@ function fundraiser_form($node, $edit = NULL) {
   $type = node_get_types('type', $node);
 
   // payment gateway list
-  $payment_gateways = _payment_gateway_list('', TRUE);
-  $options = array();
-  foreach ($payment_gateways as $gateway) {
-  	$options[$gateway['id']] = $gateway['title'];
+  if (module_exists('gateway_manager')) {
+    $payment_gateways = _payment_gateway_list('', TRUE);
+    $options = array();
+    foreach ($payment_gateways as $gateway) {
+    	$options[$gateway['id']] = $gateway['title'];
+    }
   }
   
   // Workaround for  D6 core #ahah bug
@@ -502,15 +504,17 @@ function fundraiser_form($node, $edit = NULL) {
 		'#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
 	);
 	
-	$form['fundraiser_settings']['gateway'] = array(
-		'#type' => 'select',
-		'#title' => t('Payment Gateway'),
-		'#options' => $options,
-		'#weight' => -5,
-		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-		'#default_value' => $node->gateway,
-		'#required' => TRUE,
-	);	
+	if (module_exists('gateway_manager')) {
+  	$form['fundraiser_settings']['gateway'] = array(
+  		'#type' => 'select',
+  		'#title' => t('Payment Gateway'),
+  		'#options' => $options,
+  		'#weight' => -5,
+  		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
+  		'#default_value' => $node->gateway,
+  		'#required' => TRUE,
+  	);
+	}
 	
   /* hidden fields */
   $form['confirmation_page_title'] = array(
