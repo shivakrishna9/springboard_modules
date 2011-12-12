@@ -72,7 +72,7 @@ class CapizConnect {
           $this->last_error = t('Connected successfully');
         }
         else {
-          watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_name->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
+          watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
         }
       }
       // Response code was NOT 200. Report the error
@@ -91,7 +91,7 @@ class CapizConnect {
             $this->last_error = 'Unknown error during authentication. Response code: ' . $auth_response->code;
             break;            
         }
-        watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_name->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
+        watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
       }
     }
     
@@ -101,15 +101,17 @@ class CapizConnect {
   
   /**
    * Query users. If a timestamp is given, only return users updated since then.
+   * 
+   * @param $updated_since
+   *   Timestamp. If given, only users updated since that time will be returned.
    */
   public function queryUsers($updated_since = 0) {
     if (!$this->connected) {
       return FALSE;
     }
     
-    $query_params = array(
-      'sessionId' => $this->session_id,
-    );
+    $query_params = array();
+    $query_params['sessionId'] = $this->session_id;
     
     // If requesting users updated since some timestamp
     if ($updated_since > 0) {
@@ -129,7 +131,7 @@ class CapizConnect {
         return $users;
       }
       else {
-        watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_name->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
+        watchdog('capwiz_connect', 'There was an error querying users with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
       }
     }
     // Error with user query
@@ -142,7 +144,54 @@ class CapizConnect {
           $this->last_error = 'Unknown error while attempting to query users. Response code: ' . $user_response->code;
           break;            
       }
-      watchdog('capwiz_connect', 'There was an error querying users with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_name->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
+      watchdog('capwiz_connect', 'There was an error querying users with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
+    }
+    
+    return FALSE;
+  }
+  
+  
+  /**
+   * Get a single user by email
+   */
+  public function getUserByEmail($email) {
+    if (!$this->connected) {
+      return FALSE;
+    }
+    
+    $query_params = array();
+    $query_params['sessionId'] = $this->session_id;
+    
+    
+    $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/user/email/' . $email, array('query' => $query_params));
+    
+    $user_response = drupal_http_request($url);
+    
+    // If the query was successfull
+    if ($user_response->code == 200) {
+      $response_data = json_decode($user_response->data);
+      if ($response_data) {
+        $this->last_error = t('User queried successfully');
+        return $response_data;
+      }
+      else {
+        watchdog('capwiz_connect', 'User could not be found by email (%email) with Capwiz Connect for account %account_name. Response: %error.', array('%email' => $email, '%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
+      }
+    }
+    // Error with user query
+    else {
+      switch ($user_response->code) {
+        case 404:
+          $this->last_error = 'The user identified by email address was not found.';
+          break;
+        case 500:
+          $this->last_error = 'A system error was encountered in processing the request';
+          break;
+        default:
+          $this->last_error = 'Unknown error while attempting to query users. Response code: ' . $user_response->code;
+          break;            
+      }
+      watchdog('capwiz_connect', 'There was an error finding user by email (%email) with Capwiz Connect for account %account_name: %error.', array('%email' => $email, '%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
     
     return FALSE;
