@@ -38,6 +38,7 @@ function capwiz_connect_menu() {
     'page callback' => 'capwiz_connect_account_list',
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
   );
   
   $items['admin/settings/capwiz_connect/add'] = array(
@@ -48,6 +49,18 @@ function capwiz_connect_menu() {
     'page arguments' => array('capwiz_connect_account_addoredit'),
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['admin/settings/capwiz_connect/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Capwiz Connect general settings',
+    'file' => 'capwiz_connect.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_settings'),
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
   );
 
 
@@ -124,8 +137,6 @@ function capwiz_connect_menu() {
   );
   
   
-  
-  
   // Expose a callback for the cron run if it's standalone
   if (variable_get('capwiz_connect_standalone_cron_enabled', FALSE)) {
     $items['capwiz_connect_cron'] = array(
@@ -135,28 +146,9 @@ function capwiz_connect_menu() {
     );
   }
   
-  
-  $items['capwiz_connect'] = array(
-    'title' => 'Capwiz API Testing',
-    'page callback' => 'capwiz_connect_test',
-    'access callback' => TRUE,
-  );
-
   return $items;
 }
 
-function capwiz_connect_test() {
-  $account_id = 5;
-  $connection = capwiz_connect($account_id);
-  $users = $connection->queryUsers(1293840000);
-  if ($users) {
-    dsm($users, 'users');
-    return 'Success!';
-  }
-  else {
-    return 'Error: ' . $connection->getLastError();
-  }
-}
 
 
 /**
@@ -177,6 +169,22 @@ function capwiz_connect_account_load($id) {
     $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
   }
   return $account_details[$id];
+}
+
+/**
+ * Get the full list of accounts
+ */
+function capwiz_connect_all_accounts() {
+  static $all_accounts;
+  
+  if (!$all_accounts) {
+    $all_accounts = array();
+    $result = db_query('SELECT * FROM {capwiz_connect_accounts}');
+    while ($row = db_fetch_object($result)) {
+      $all_accounts[$row->id] = $row;
+    }
+  }
+  return $all_accounts;
 }
 
 
@@ -233,6 +241,11 @@ function capwiz_connect_cron() {
  * Do the actual cron run
  */
 function capwiz_connect_cron_process() {
-  //$connection = capwiz_connect($account_id);
-  //$users = $connection->queryUsers(1293840000);
+  $all_accounts = capwiz_connect_all_accounts();
+  foreach ($all_accounts as $account_id => $account_details) {
+    $connection = capwiz_connect($account_id);
+    $users = $connection->queryUsers($account_details->last_user_sync);
+    dsm($users);
+  }
+  return '';
 }

@@ -229,3 +229,25 @@ function capwiz_connect_account_test_connection($account) {
   $connection->authenticate();
   return $connection->getLastError();
 }
+
+
+
+/**
+ * General settings for Capwiz Connect API usage
+ */
+function capwiz_connect_settings($form_state) {
+  $form = array();
+  $form['capwiz_connect_standalone_cron_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable standalone cron.'),
+    '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l('capwiz_connect_cron', 'capwiz_connect_cron'))),
+    '#default_value' => variable_get('capwiz_connect_standalone_cron_enabled', 0),
+  );
+  $form = system_settings_form($form);
+
+  // Need to clear the menu cache after saving so that the independent cron
+  // callback will be available (or not, depending on selection)
+  $form['#submit'][] = 'menu_rebuild';
+
+  return $form;
+}
