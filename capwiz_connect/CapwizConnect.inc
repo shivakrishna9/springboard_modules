@@ -51,9 +51,18 @@ class CapizConnect {
    * Authenticate with the API. Called from the constructor
    */
   public function authenticate() {
+    $session_id_cache_id = 'capwiz_session_id_' . $this->account_details->id;
     $this->connected = FALSE;
     
-    if ($this->account_details->user_name && $this->account_details->user_password) {
+    // Check if a session ID has already been retrieved in a previous authentication
+    // call. Session IDs are good for four hours.
+    $cached_session_id = cache_get($session_id_cache_id);
+    if ($cached_session_id) {
+      $this->session_id = $cached_session_id->data;
+      $this->connected = TRUE;
+    }
+    // No Session ID cached, so authenticate now
+    elseif ($this->account_details->user_name && $this->account_details->user_password) {
       $query_params = array(
         'loginName' => $this->account_details->user_name,
         'password' => $this->account_details->user_password,
@@ -70,6 +79,13 @@ class CapizConnect {
           $this->session_id = $response_data->id;
           $this->connected = TRUE;
           $this->last_error = t('Connected successfully');
+          
+          // Cache the session ID. Session IDs are good for a few hours, but to
+          // make sure that we don't try to use a session ID after it has expired
+          // (at this writing, there is a bug on their end related to this), only
+          // cache the session ID for one hour.
+          $expire_at = time() + 3600;
+          cache_set($session_id_cache_id, $this->session_id, 'cache', $expire_at);
         }
         else {
           watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
@@ -162,7 +178,6 @@ class CapizConnect {
     $query_params = array();
     $query_params['sessionId'] = $this->session_id;
     
-    
     $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/user/email/' . $email, array('query' => $query_params));
     
     $user_response = drupal_http_request($url);
@@ -192,6 +207,49 @@ class CapizConnect {
           break;            
       }
       watchdog('capwiz_connect', 'There was an error finding user by email (%email) with Capwiz Connect for account %account_name: %error.', array('%email' => $email, '%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
+    }
+    
+    return FALSE;
+  }
+  
+  
+  /**
+   * Get custom user fields from Capwiz
+   */
+  public function getCustomUserFields() {
+    if (!$this->connected) {
+      return FALSE;
+    }
+    
+    $query_params = array();
+    $query_params['sessionId'] = $this->session_id;
+    
+    $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/customFields', array('query' => $query_params));
+    
+    $fields_response = drupal_http_request($url);
+    
+    // If the query was successfull
+    if ($fields_response->code == 200) {
+      $fields = json_decode($fields_response->data);
+      if ($fields) {
+        $this->last_error = t('Custom fields gathered successfully');
+        return $fields;
+      }
+      else {
+        watchdog('capwiz_connect', 'There was an error getting custom fields for users with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
+      }
+    }
+    // Error with user query
+    else {
+      switch ($fields_response->code) {
+        case 500:
+          $this->last_error = 'A system error was encountered in processing the request';
+          break;
+        default:
+          $this->last_error = 'Unknown error while attempting to get custom fields for users. Response code: ' . $fields_response->code;
+          break;
+      }
+      watchdog('capwiz_connect', 'There was an error while trying to get custom fields for users with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
     }
     
     return FALSE;
