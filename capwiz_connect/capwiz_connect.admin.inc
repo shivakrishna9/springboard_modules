@@ -3,6 +3,13 @@
  * Admin functions for Capwiz Connect integration
  */
 
+/**
+ * Functions to copy from sf_webform:
+ * render_salesforce_object_fields()
+ * 
+ * sf_webform_remove_mapping
+ * 
+ */
 
 /**
  * Amdin list of Capwiz Connect accounts
@@ -21,7 +28,6 @@ function capwiz_connect_account_list() {
     $operations = array(
       l('overview', 'admin/settings/capwiz_connect/accounts/' . $row->id),
       l('edit', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
-      l('test', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/test'),
       l('user mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
       l('action mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
       l('delete', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
@@ -145,188 +151,289 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
 
 /**
  * User field mapping for Capwiz Connect account
+ * Based on sf_webform_mapping_form()
  */
 function capwiz_connect_account_user_mapping($form_state, $account) {
-  // Load the fieldmap from the database.
-   $map = salesforce_management_api_fieldmap_load($fieldmap);
-   // Return to the admin page if the fieldmap did not exist.
-   if (empty($map)) {
-     drupal_set_message(t('That fieldmap does not exist.'), 'error');
-   }
+	$base = drupal_get_path('module', 'capwiz_connect');
+	drupal_add_js($base .'/capwiz_connect.js');
 
-   // Include the CSS file for the form.
-   drupal_add_css(drupal_get_path('module', 'capwiz_connect') .'/capwiz_connect.admin.css');
-
-   $form = array();
-
-   $form['salesforce_recordtype_wrapper'] = array(
-     '#prefix' => '<div id="recordtype">',
-     '#suffix' => '</div>',
-   );
-
-   $recordtypes = array(); //salesforce_management_api_get_object_recordtypes($map['salesforce']);
-
-   $form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
-     '#type' => 'select',
-     '#title' => 'Salesforce record type',
-     '#options' => count($recordtypes) > 1 ? $recordtypes : array(t('None available')),
-     '#description' => t('Objects using this fieldmap will be assigned to the selected record type.'),
-     '#default_value' => $map['recordtype_id'],
-   );
-
-   // Add the index to the form array.
-   $form['fieldmap_index'] = array(
-     '#type' => 'value',
-     '#value' => $fieldmap,
-   );
-
-   // Add a description of the source fieldmap to the form array.
-   $form['fieldmap_desc'] = array(
-     '#value' => '<p>Fieldmap description</p>',
-   );
-
-   $source = array(
-     'label' => t('Capwiz label'),
-     'fields' => array(
-       'uno' => array('label' => 'Capwiz field uno'),
-       'dos' => array('label' => 'Capwiz field dos'),
-      )
-    );
-   $target = array(
-      'label' => t('Capwiz target'),
-      'fields' => array(
-        'one' => array('label' => 'Capwiz field 1'),
-        'two' => array('label' => 'Capwiz field 2'),
-       )
-     );
-
-
-  foreach($target['fields'] as $key => $value){
- 	  $fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
-  }
-  asort($fieldmapsort);
-
-  // Add the data to the form for the required fields table.
-  $form['fields'] = array(
-    '#theme' => 'salesforce_management_api_fieldmap_edit_form_table',
-    'rows' => array(),
+	$form = array(
+    '#tree' => TRUE,
+    '#node' => $node,
+    'mapping' => array(),
   );
 
-  $form['fields']['header'] = array(
-    array('#value' => t('Target: @label (@type)', array('@label' => $target['label'], '@type' => $map['action'] == 'import' ? t('Drupal') : t('Salesforce')))),
-    array('#value' => t('Source: @label (@type)', array('@label' => $source['label'], '@type' => $map['action'] == 'import' ? t('Salesforce') : t('Drupal')))),
-    array('#value' => t('Business rules Drupal to SF')),
-    array('#value' => t('Business rules SF to Drupal')),
+	// only show object selection for webforms that haven't been mapped
+	if (empty($node->sf_webform_object)) {
+		$form['object'] = array(
+			'#type' => 'select',
+			'#options' => _get_salesforce_objects(),
+			'#default_value' => $node->sf_webform_object,
+			'#title' => t('Salesforce Object'),
+			'#description' => t('Choose the Salesforce object you want to create when the webform is submitted.'),
+			'#ahah' => array(
+			  'path' => 'js/capwiz_connect/salesforce-object-fields',
+	      'wrapper' => 'map',
+	      'effect' => 'fade',
+	    ),
+		);
+	}
+	else {
+		$form['object'] = array(
+			'#prefix' => t("<div>This webform is currently mapped to the <strong>$node->sf_webform_object</strong> object.</div>"), 
+			'#type' => 'hidden',
+			'#default_value' => $node->sf_webform_object,
+			'#suffix' => t('<div>Use the <strong>Remove Map</strong> button below if you wish to map to a different Salesforce object.</div>'),
+		);
+	}
+
+	$form['map'] = array(
+    '#prefix' => '<div id="map">',
+    '#suffix' => '</div>',
+    '#value' => '&nbsp;',
   );
+	
+	if ($form_state['values']['object'] || !empty($node->sf_webform_object)) {
+		$object = !empty($node->sf_webform_object) ? $node->sf_webform_object : $form_state['values']['object'];
+		
+		// get the fields in the object
+		$object_details = _get_object_details($object);
+		$fields = $object_details['fields'];
+		$record_types = $object_details['record_types'];
 
-  // Loop through each of the target fields.
-  $rows = array('required' => array(), 'optional' => array());
-  foreach ($fieldmapsort as $key => $value) {
-    // Determine to which table this field should belong.
-    if ($value['type'] == SALESFORCE_FIELD_REQUIRED) {
-      $type = 'required';
-      $required = ' <span class="form-required" title="'. t('This field is required.') .'">*</span>';
-    }
-    else {
-      $type = 'optional';
-      $required = '';
-    }
+		// create a drop down list friendly version of the sf fields
+		foreach($fields as $key => $value) {
+			$options[$key] = $value['label'];
+		}
+		
+		$disabled = !empty($node->sf_webform_object) ? false : true;
+		
+		$form['record_type'] = array(
+			'#type' => 'select',
+			'#title' => t('Record Type'),
+			'#description' => t('The type of !name to create', array('!name' => $node->sf_webform_object)),
+			'#options' => $record_types,
+			'#default_value' => $node->sf_webform_recordtype,
+		);
 
-    // Create a row for this field.
-    $row = array(
-      'target' => array('#value' => $value['label'] . $required),
-    );
+		foreach($node->webform['components'] as $cid => $component) {
+			if($component['type'] != 'fieldset') {
+				// component
+				$form['map']['cid'][$cid] = array(
+				'#type' => 'item',
+				'#description' => t($component['name']." - (".$component['type'].")"),
+				);
+				// salesforce field
+				$form['map']['salesforce'][$cid] = array(
+					'#type' => 'select',
+					'#options' => $options,
+					'#default_value' => $node->sf_webform_map[$cid],
+				);
+				
+				if ($node->sf_webform_map[$cid] && ($fields[$node->sf_webform_map[$cid]]['idLookup'] || $fields[$node->sf_webform_map[$cid]]['externalId'])) {
+					if ($node->sf_dedupe_key == $node->sf_webform_map[$cid]) {
+						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] .'">Remove dedupe field</a>';
+					}
+					else {
+						$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] .'">Set as dedupe field</a>';
+					}
+				}
+				else {
+					$value = '';
+				}
+				$form['map']['dedupe'][$cid] = array(
+					'#value' => $value,
+				);
+			}
+		}
 
-    // Add the select list for the associated target field.
-    $row['source'][$key] = array(
-      '#type' => 'select',
-      '#title' => $value['label'],
-      '#options' => salesforce_management_api_fieldmap_field_options($source),
-      '#default_value' => $map['fields'][$key],
-      '#required' => $type == 'required',
-    );
-    $row['business'][$key.'_r'] = array(
-      '#type' => 'select', 
-      '#title' => t('Default options'),
-      '#default_value' => $map['business'][$key],
-      '#options' => array(
-        'null' => t(''), 
-        'blank' => t('Overwrite when blank'), 
-        'append' => t('Append'),
-        'always' => t('Always overwrite'),
-        'never' => t('Never overwrite'),
-      ),
-    );
-   	$row['businessSD'][$key.'_l'] = array(
-      '#type' => 'select', 
-      '#title' => t('Default options'),
-   	  '#default_value' => $map['businessSD'][$key],
-   	  '#options' => array(
-   		'null' => t(''), 
-   		'blank' => t('Overwrite when blank'), 
-   		'append' => t('Append'),
-   		'always' => t('Always overwrite'),
-   		'never' => t('Never overwrite'),
-     ),
-   	);
-
-     // Add the row to the correct rows array.
-     $rows[$type][] = $row;
-   }
-
-  // Combine the rows arrays into one with required fields displayed first.
-  $form['fields']['rows'] = array_merge($rows['required'], $rows['optional']);
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save changes'),
-    '#suffix' => l(t('Cancel'), 'admin/settings/capwiz_connect/accounts/' . $account->id),
-  );
-
-  return $form;
+		$form['node_map']['nid']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Node Id',
+		);
+		
+		$form['node_map']['nid']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['nid'],
+		);
+		
+		$form['node_map']['node_title']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Node Title',
+		);
+		
+		$form['node_map']['node_title']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['node_title'],
+		);
+		
+		$form['submission_map']['sid']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Submission Id',
+		);
+	
+		$form['submission_map']['sid']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['sid'],
+		);
+		if ($node->sf_webform_map['sid'] && ($fields[$node->sf_webform_map['sid']]['idLookup'] || $fields[$node->sf_webform_map['sid']]['externalId'])) {
+		  if ($node->sf_dedupe_key == $node->sf_webform_map['sid']) {
+				$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map['sid'] .'">Remove dedupe field</a>';
+			}
+			else {
+				$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map['sid'] .'">Set as dedupe field</a>';
+			}  
+		}
+		else {
+			$value = '';
+		}
+		$form['map']['dedupe']['sid'] = array(
+			'#value' => $value,
+		);
+		
+		$form['submission_map']['submission_date']['label'] = array(
+			'#type' => 'item',
+			'#description' => 'Submission Date',
+		);
+	
+		$form['submission_map']['submission_date']['value'] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#default_value' => $node->sf_webform_map['submission_date'],
+		);
+		
+		$form['remove'] = array(
+			'#type' => 'submit',
+			'#value' => t('Remove Map'),
+			'#submit' => array('sf_webform_remove_mapping'),
+		);
+		
+		$form['submit'] = array(
+			'#type' => 'submit',
+			'#value' => 'Submit',
+		);
+	}
+	return $form;
 }
 
+
+
+/** 
+ * AHAH callback for mapping form
+ */
+function capwiz_connect_render_salesforce_object_fields() {
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+
+	// HACK: Select values changing never get recognized
+	unset($form['object']['#value']);
+
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+
+	$output = drupal_render($form['record_type']);
+
+  $map = $form['map'];
+	
+	foreach ($map['cid'] as $key=>$cid) {
+		if (is_numeric($key)) {
+			$row = array();
+			$row[] = array('data' => drupal_render($map['cid'][$key]), 'width' => '300');
+			$row[] = drupal_render($map['salesforce'][$key]);
+			$row[] = drupal_render($map['dedupe'][$key]);
+			$rows[] = $row;
+		}
+	}
+
+	$header = array("Webform Component","Salesforce Field","Dedupe Field");
+
+	$output .= theme('table', $header, $rows, array('id' => 'sf_webform_mapping_form'));
+	
+	foreach($form['node_map'] as $key=>$field) {
+		if (substr($key, 0, 1) != '#') {
+			$node_row = array();
+			$node_row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+			$node_row[] = drupal_render($field['value']);
+			$node_rows[] = $node_row;
+		}
+	}
+	unset($form['node_map']);
+	$output .= theme('table', array('Node Property', 'Salesforce Field'), $node_rows);
+		
+	foreach($form['submission_map'] as $key=>$field) {
+		if (substr($key, 0, 1) != '#') {
+			$row = array();
+			$row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+			$row[] = drupal_render($field['value']);
+			$submission_rows[] = $row;
+		}
+	}
+	unset($form['submission_map']);
+	$output .= theme('table', array('Submission Property', 'Salesforce Field'), $submission_rows);
+	
+	$output .= drupal_render($form['submit']);
+  //$output = drupal_render($map);
+
+  // Final rendering callback.
+  print drupal_json(array('status' => TRUE, 'data' => $output));
+  exit();
+}
+
+
+/**
+ * Submit the user mapping form
+ */
 function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
-  // Load the fieldmap from the database.
-  $map = salesforce_management_api_fieldmap_load($form_state['values']['fieldmap_index']);
-  
-  // Update name, record type, etc.
-  $map['name'] = $form_state['values']['name'];
-  $map['recordtype_id'] = $form_state['values']['salesforce_recordtype'];
-  // Reset the fields array on the fieldmap.
-  $map['fields'] = array();
+  if ($form_state['values']['map']['salesforce']) {
 
-  // Get the object definition for the target object.
-  if ($map['action'] == 'import') {
-    $object = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
-  }
-  else {
-    $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-  }
+		$nid = $form['#node']->nid;
+		$drupal_fieldmap_name = 'webform:' . $nid;
+		$fieldmap_id = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal_fieldmap_name));
+		$record_type = $form_state['values']['record_type'];
 
-  // Loop through all the fields on the object.
-  foreach (array_keys($object['fields']) as $field) {
-    // If a field has been mapped to this field on the form...
-    if (!empty($form_state['values'][$field])) {
-      // Add the association to the fieldmap's fields array.
-			$map['fields'][$field] = $form_state['values'][$field];
-	 		$map['business'][$field] = $form_state['values'][$field.'_r'];
-	 		$map['businessSD'][$field] = $form_state['values'][$field.'_l'];
-			$map['validation'][$field] = array(
-				'field_type' => $object['fields'][$field]['field_type'],
-				'nillable' => $object['fields'][$field]['nillable'],
-				'length' => $object['fields'][$field]['length'],
-			);
-	 	}
-  }
-
-  // Save the updated fieldmap.
-  salesforce_management_api_fieldmap_save($map);
-
-  // Display a message and return to the admin page.
-  drupal_set_message(t('The changes have been saved.'));
-
-  $form_state['redirect'] = SALESFORCE_PATH_FIELDMAPS;
+		// re-add mappings
+		foreach($form_state['values']['map']['salesforce'] as $key => $value) {
+			if (!empty($value)) {
+				$map[$key] = $value;
+			}
+		}
+		
+		// add node fields
+		foreach($form_state['values']['node_map'] as $key => $value) {
+			if (!empty($value['value'])) {
+				$map[$key] = $value['value'];
+			}
+		}
+		
+		// add submission fields
+		foreach($form_state['values']['submission_map'] as $key => $value) {
+			if (!empty($value['value'])) {
+				$map[$key] = $value['value'];
+			}
+		}
+		
+		// insert serialized map
+		$name = $form['#node']->title . " (webform map)";
+		
+		if (empty($fieldmap_id)) {
+			db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields) VALUES ('%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map));
+		}
+		else {
+			db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), $fieldmap_id);
+		}
+			
+		//db_query($sql, $name, $form['#node']->type . ':' . $form['#node']->nid, $form_state['values']['object'], serialize($map));
+		drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
+	}
 }
 
 
@@ -381,25 +488,32 @@ function capwiz_connect_account_delete($form_state, $account) {
  */
 function capwiz_connect_account_delete_submit($form, &$form_state) {
   $account_id = $form['#account_id'];
+  
+  // Delete the account record
   db_query('DELETE FROM {capwiz_connect_accounts} WHERE id = %d', $account_id);
+  
+  // Delete any field mappings
+  $drupal = 'capwiz_connect:' . $account_id . ':%';
+  db_query("DELETE FROM {salesforce_management_field_map} where drupal LIKE '%s'", $drupal);
+  
   drupal_set_message(t('The account has been deleted.'));
   $form_state['redirect'] = 'admin/settings/capwiz_connect/accounts';
 }
 
 
 function capwiz_connect_account_overview($account) {
-  return $account->display_name;
-}
-
-
-/**
- * Test Connection tab on account
- */
-function capwiz_connect_account_test_connection($account) {
   $connection = capwiz_connect($account->id);
   $connection->authenticate();
-  return $connection->getLastError();
+  if ($connection->isConnected()) {
+    return '<div class="connected">Credentials OK</div>';
+  }
+  else {
+    $error = $connection->getLastError();
+    drupal_set_message($error, 'error');
+    return '<div class="connection_error">Error connectnig to Capwiz.</div>';
+  }
 }
+
 
 
 

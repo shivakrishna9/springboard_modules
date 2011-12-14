@@ -10,7 +10,6 @@
  * Todos
  * -----
  * - Overview form: capwiz_connect_account_overview()
- * - Implement connection tester: capwiz_connect_account_test_connection()
  * - Build mapping forms
  * 
  * Minor
@@ -92,17 +91,6 @@ function capwiz_connect_menu() {
     'weight' => 1,
   );
   
-  $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/test'] = array(
-    'title' => 'Test Connection',
-    'description' => 'Test the connection for a Capwiz Connect account',
-    'file' => 'capwiz_connect.admin.inc',
-    'page callback' => 'capwiz_connect_account_test_connection',
-    'page arguments' => array(4),
-    'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-  );
-  
   if (module_exists('salesforce_management_api')) {
     $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/user_mapping'] = array(
       'title' => 'User Mapping',
@@ -147,6 +135,15 @@ function capwiz_connect_menu() {
     );
   }
   
+  
+  // AJAX callback to change the SF object type on user or account mapping
+  $items['js/capwiz_connect/salesforce-object-fields'] = array(
+    'page callback' => 'capwiz_connect_render_salesforce_object_fields',
+    'access arguments' => array('administer capwiz_connect'),
+    'type' => MENU_CALLBACK,
+  );
+	
+  
   return $items;
 }
 
@@ -168,6 +165,22 @@ function capwiz_connect_account_load($id) {
   
   if ($id > 0 && !$account_details[$id]) {
     $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
+    
+    // Load existing mapping for users and actions for this Capwiz account
+    foreach (array('user', 'action') as $mapping_type) {
+      $drupal = 'capwiz_connect:' . $id . ':' . $mapping_type;
+      $mapping_detail = db_fetch_object(db_query("select salesforce, fields, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal));
+      if ($mapping_detail) {
+        // Save details in $account_detail->mapping_user or $account_detail->mapping_action
+        $field = 'mapping_' . $mapping_type;
+        $account_details[$id]->$field = array(
+          'sf_object' => $mapping_detail->salesforce,
+          'map' => unserialize($mapping_detail->fields),
+          'dedupe_key' => $mapping_detail->dedupe_key,
+          'recordtype_id' => $mapping_detail->recordtype_id,
+        );
+      }
+    }
   }
   return $account_details[$id];
 }
