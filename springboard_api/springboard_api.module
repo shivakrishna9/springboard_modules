@@ -1,0 +1,257 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function springboard_api_help($section) {
+  switch ($section) {
+  case 'admin/help#springboard_api':
+    return t('Provides Fundraiser, Webform and Webform User methods to Services applications.');
+  case 'admin/modules#description':
+    return t('Provides Fundraiser, Webform and Webform User methods to Services applications. Requires services.module, fundraiser.module and webform.module');
+  }
+}
+
+/**
+ *  Implements hook_perm().
+ */
+function springboard_api_perm() {
+  return array(
+    'administer springboard api','view webform index', 'retrieve webform', 'retrieve submission', 'create submission'
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_api_menu() {
+  $items['admin/settings/springboard_api'] = array(
+    'title' => t('Springboard API settings'),
+    'description' => t('Administer Springboard API settings and service tokens'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_admin'),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'springboard_api.admin.inc',
+  );
+  $items['admin/settings/springboard_api/api_settings'] = array(
+    'title' => t('Settings'),
+    'description' => t('Administer Springboard API settings and service tokens'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_admin'),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'springboard_api.admin.inc',
+  );
+  $items['admin/settings/springboard_api/test_client'] = array(
+    'title' => t('Test client'),
+    'description' => t('A native client for testing Springboard services.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_test_client'),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'springboard_api.admin.inc',
+  );
+  $items['admin/settings/springboard_api/keyset/%springboard_api/edit'] = array(
+    'title callback' => '_springboard_api_keyset_title',
+    'title arguments' => array(4),
+    'description' => t('Edit keyset settings.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_edit_keyset', 4),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'springboard_api.admin.inc',
+  );
+  $items['admin/settings/springboard_api/keyset/%springboard_api/delete'] = array(
+    'title callback' => '_springboard_api_keyset_title',
+    'title arguments' => array(4),
+    'description' => t('Delete api key set.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_api_delete_keyset', 4),
+    'access arguments' => array('administer springboard api'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'springboard_api.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_services_resources().
+ * @see http://drupalcontrib.org/api/drupal/contributions--services--services.services.api.php/function/hook_services_resources/6
+ */
+function springboard_api_services_resources() {
+  return array(
+    'webform' => array(
+      'index' => array(
+        'help' => 'Retrieves a list of available webforms',
+        'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'springboard_api'),
+        'callback' => 'springboard_api_list_webforms',
+        'access callback' => '_springboard_api_access',
+        'access arguments' => array('view webform index'),
+        'args' => array(
+          array(
+            'name' => 'pubkey',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'key'),
+            'type' => 'string'
+          ),
+          array(
+            'name' => 'timestamp',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'time'),
+            'type' => 'int'
+          ),
+          array(
+            'name' => 'checksum',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'checksum'),
+            'type' => 'string'
+          ),
+          array(
+            'name' => 'page',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'The zero-based index of the page to get, defaults to 0.',
+            'default value' => 0,
+            'source' => array('param' => 'page'),
+          ),
+          array(
+            'name' => 'pagesize',
+            'optional' => TRUE,
+            'type' => 'init',
+            'description' => 'Number of records to get per page.',
+            'default value' => variable_get('fundraiser_webform_index_page_size', 20), // TODO: add admin config for this value, variable_del() to hook_uninstall.
+            'source' => array('param' => 'pagesize'),
+          ),
+        ),
+      ),
+      'retrieve' => array(
+        'help' => 'Retrieves a list of available webforms',
+        'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'springboard_api'),
+        'callback' => 'springboard_api_get_webform',
+        'access callback' => '_springboard_api_access',
+        'access arguments' => array('retrieve webform'),
+        'args' => array(
+          array(
+            'name' => 'pubkey',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'key'),
+            'type' => 'string'
+          ),
+          array(
+            'name' => 'timestamp',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'time'),
+            'type' => 'int'
+          ),
+          array(
+            'name' => 'checksum',
+            'optional' => FALSE,
+            'description' => 'Transaction data.',
+            'source' => array('param' => 'checksum'),
+            'type' => 'string'
+          ),
+          array(
+            'name' => 'nid',
+            'optional' => FALSE,
+            'source' => array('path' => 0),
+            'type' => 'int',
+            'description' => 'The nid of the node to get',
+          ),
+        ),
+      ),
+      'actions' => array(
+        'submit' => array(
+          'help' => 'Submit webform fields',
+          'callback' => 'springboard_api_submit_webform',
+          'access callback' => '_springboard_api_access',
+          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'springboard_api'),
+          'args' => array(
+            array(
+              'name' => 'submission',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The donation order data to create',
+              'type' => 'array',
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+function springboard_api_load($kid) {
+  $keyset =  db_fetch_object(db_query('SELECT s.kid, s.uid, s.name, u.name as username, s.pubkey, s.privkey
+   FROM {springboard_api} s
+   INNER JOIN {users} u
+     ON u.uid = s.uid
+   WHERE s.kid = %d', $kid));
+  if ($keyset->uid == 0) {
+    $keyset->username = 'Anonymous';
+  }
+
+  return $keyset;
+}
+
+/**
+ * 
+ */
+function _springboard_api_access($perm) {
+  global $user;
+  return TRUE;
+}
+
+/**
+ * Format admin UI links for api keysets.
+ * 
+ * @param $kid
+ * Int, keyset id.
+ * 
+ * @return
+ * Returns preformatted edit/delete links.
+ */
+function _springboard_api_links($kid) {
+  $path = 'admin/settings/springboard_api';
+  $links = l(t('edit'), "admin/settings/springboard_api/keyset/$kid/edit");
+  $links .= ' : ';
+  $links .= l(t('delete'), "admin/settings/springboard_api/keyset/$kid/delete");
+  return $links;
+}
+
+/**
+ * Title callback for keyset edit/delete forms
+ * 
+ * @param $kid
+ * Int, keyset it.
+ * 
+ * @return 
+ * Returns translated app name for current keyset.
+ */
+function _springboard_api_keyset_title($kid) {
+  return $kid->name;
+}
+
+/**
+ * 
+ */
+function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $checksum) {
+$data = array();
+  $data['resource'] = $resource;
+  $data['timestamp'] = (int) trim($timestamp);
+  $data['pubkey'] = trim($pubkey);
+  $data['privkey'] = trim(db_result(db_query("SELECT privkey FROM {springboard_api} WHERE pubkey = '%s'", $pubkey)));
+  $gen_checksum = sha1(json_encode($data));
+
+  if (trim($checksum) === $gen_checksum) {
+    return TRUE;
+  }
+  drupal_set_message('Error: Authentication failed.');
+  return FALSE;
+}
