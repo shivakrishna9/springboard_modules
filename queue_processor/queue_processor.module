@@ -63,7 +63,8 @@ function queue_processor_menu() {
 	
 	$items['admin/reports/salesforce/permanent-failures'] = array(
 		'title' => 'Permanent failures',
-		'page callback' => 'permanent_failures_report',
+	    'page callback' => 'drupal_get_form',
+		'page arguments' => array('permanent_failures_report'),
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_NORMAL_ITEM,
 		'weight' => 30,
@@ -117,8 +118,12 @@ function queue_processor_theme() {
   return array(
     'queue_processor_admin_settings' => array(
       'arguments' => array('form' => array()),
-			'file' => 'queue_processor.admin.inc',
-    )
+      'file' => 'queue_processor.admin.inc',
+    ),
+    'queue_processor_perm_failures' => array(
+      'arguments' => array('form' => array()),
+      'file' => 'queue_processor.reports.inc',
+    ),
   );
 }
 
