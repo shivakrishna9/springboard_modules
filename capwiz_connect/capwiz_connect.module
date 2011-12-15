@@ -15,6 +15,7 @@
  * Minor
  * -----
  * - Breadcrumbs not showing when viewing/editing/etc forms
+ * - After adding a new account, show the Overview tab for it
  */
 
 /**
@@ -138,6 +139,7 @@ function capwiz_connect_menu() {
   
   // AJAX callback to change the SF object type on user or account mapping
   $items['js/capwiz_connect/salesforce-object-fields'] = array(
+    'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'capwiz_connect_render_salesforce_object_fields',
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_CALLBACK,
@@ -155,6 +157,19 @@ function capwiz_connect_menu() {
 function capwiz_connect_perm() {
   return array('administer capwiz_connect');
 }
+
+
+/**
+ * Implements hook_theme().
+ */
+function capwiz_connect_theme($existing, $type, $theme, $path) {
+  return array(
+		'capwiz_connect_account_user_mapping' => array(
+		  'arguments' => array(),
+	  ),
+  );
+}
+
 
 
 /**
