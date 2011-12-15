@@ -52,13 +52,16 @@ class CapizConnect {
    */
   public function authenticate() {
     $session_id_cache_id = 'capwiz_session_id_' . $this->account_details->id;
+    $client_id_cache_id = 'capwiz_cache_id_' . $this->account_details->id;
     $this->connected = FALSE;
     
     // Check if a session ID has already been retrieved in a previous authentication
     // call. Session IDs are good for four hours.
     $cached_session_id = cache_get($session_id_cache_id);
+    $cached_client_id = cache_get($client_id_cache_id);
     if ($cached_session_id) {
       $this->session_id = $cached_session_id->data;
+      $this->client_id = $cached_client_id->data;
       $this->connected = TRUE;
     }
     // No Session ID cached, so authenticate now
@@ -86,6 +89,7 @@ class CapizConnect {
           // cache the session ID for one hour.
           $expire_at = time() + 3600;
           cache_set($session_id_cache_id, $this->session_id, 'cache', $expire_at);
+          cache_set($client_id_cache_id, $this->client_id, 'cache', $expire_at);
         }
         else {
           watchdog('capwiz_connect', 'There was an error authenticating with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
