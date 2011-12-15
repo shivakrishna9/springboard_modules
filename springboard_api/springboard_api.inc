@@ -45,7 +45,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
     $uid = db_result(db_query("SELECT uid FROM {springboard_api} WHERE pubkey='%s'", $pubkey));
     $user = user_load(array('uid' => $uid));
     $webform_node_types = variable_get('webform_node_types', '');
-    $node = db_fetch_object(db_query('SELECT nid, title, type FROM {node} WHERE nid = %d', $nid));
+    $node = node_load(array('nid' => $nid));
 
     
     if (!is_numeric($nid) || $nid == 0) {
