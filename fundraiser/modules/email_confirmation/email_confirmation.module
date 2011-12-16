@@ -156,7 +156,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     module_load_include('inc', 'ctools', 'includes/ajax');
     ctools_include('modal');
     ctools_modal_add_js();
-    drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
+    
 
     $bcc = array();
  
@@ -314,6 +314,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
     
     // Validate email template selection field
+    $form['#after_build'][] = 'email_confirmation_after_build';
     $form['#validate'][] = 'email_confirmation_template_validate';
     $form['#submit'][] = 'email_confirmation_template_submit';
    /**
@@ -338,6 +339,16 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'webform_client_form') === 0 && $form['#node']->type != 'donation_form') {
     $form['#submit'][] = 'email_confirmation_webform_send_mail';
   }
+}
+
+function email_confirmation_after_build($form, $form_state) {
+
+  drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
+  module_load_include('inc', 'ctools', 'includes/ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  
+  return $form;
 }
 
 /**
