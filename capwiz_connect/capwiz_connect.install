@@ -11,8 +11,15 @@ function capwiz_connect_install() {
  * Implements hook_uninstall().
  */
 function capwiz_connect_uninstall() {
+  // Remove the table
   drupal_uninstall_schema('capwiz_connect');
+
+  // Remove variables
   variable_del('capwiz_connect_standalone_cron_enabled');
+
+  // Remove Salesforce field mapping
+  $drupal = 'capwiz_connect:%';	
+  db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);  
 }
 
 
@@ -56,6 +63,12 @@ function capwiz_connect_schema() {
       'last_action_sync' => array(
         'description' => t('Timestamp when actions were last synced from Capwiz'),
         'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'form_affiliation' => array(
+        'description' => t('Form Affiliation for account'),
+        'type' => 'varchar',
+        'length' => '255',
         'not null' => FALSE,
       ),
     ),

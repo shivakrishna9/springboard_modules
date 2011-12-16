@@ -100,6 +100,15 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#required' => TRUE,
     '#default_value' => $account_details['user_password'],
   );
+  $form['form_affiliation'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Form Affiliation'),
+    '#description' => t('Form Affiliation that can be mapped to Salesforce fields.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#required' => FALSE,
+    '#default_value' => $account_details['form_affiliation'],
+  );
   
   
   /**
@@ -132,6 +141,7 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
     'user_name' => $values['user_name'],
     'user_password' => $values['user_password'],
     'id' => $values['account_id'],
+    'form_affiliation' => $values['form_affiliation'],
   );
   
   // Determine if inserting or updating
@@ -145,10 +155,10 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
     $new_record = drupal_write_record('capwiz_connect_accounts', $record);
     if ($new_record) {
       drupal_set_message(t('New Account created'));
+      // Redirect them to the overview page
+      drupal_goto('admin/settings/capwiz_connect/accounts/' . $record['id']);
     }
   }
-  
-  return $save_ok;
 }
 
 
@@ -511,14 +521,13 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
 
 function capwiz_connect_account_overview($account) {
   $connection = capwiz_connect($account->id);
-  $connection->authenticate();
   if ($connection->isConnected()) {
     return '<div class="connected">Credentials OK</div>';
   }
   else {
     $error = $connection->getLastError();
     drupal_set_message($error, 'error');
-    return '<div class="connection_error">Error connectnig to Capwiz.</div>';
+    return '<div class="connection_error">Error connecting to Capwiz.</div>';
   }
 }
 
