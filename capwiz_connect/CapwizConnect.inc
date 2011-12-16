@@ -51,6 +51,11 @@ class CapizConnect {
    * Authenticate with the API. Called from the constructor
    */
   public function authenticate() {
+    // If this function gets called again after connecting, don't do anything
+    if ($this->connected) {
+      return $this->connected;
+    }
+    
     $session_id_cache_id = 'capwiz_session_id_' . $this->account_details->id;
     $client_id_cache_id = 'capwiz_cache_id_' . $this->account_details->id;
     $this->connected = FALSE;
