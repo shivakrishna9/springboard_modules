@@ -197,7 +197,14 @@ function capwiz_connect_account_load($id) {
       }
     }
   }
-  return $account_details[$id];
+  
+  if ($account_details[$id]) {
+    return $account_details[$id];
+  }
+  
+  // Could not load the account, so it must not exist. Return FALSE instead
+  // of null so that admin pages trying to edit a non-existent account will 404
+  return FALSE;
 }
 
 /**
