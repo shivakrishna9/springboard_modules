@@ -152,6 +152,12 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
 }
 
 
+
+/*********************************************************/
+/**
+ * User mapping form functions
+ */
+ 
 /**
  * User field mapping for Capwiz Connect account
  * Based on sf_webform_mapping_form()
@@ -196,18 +202,20 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     '#value' => '&nbsp;',
   );
 	
+	// Only build the field mapping form if a Salesforce object type has been
+	// selected to map to
 	if ($form_state['values']['object'] || !empty($account->mapping_user['sf_object'])) {
 		$object = !empty($account->mapping_user['sf_object']) ? $account->mapping_user['sf_object'] : $form_state['values']['object'];
 		
 		$connection = capwiz_connect($account->id);
 		$user_fields = $connection->getCustomUserFields();
     
-		// get the fields in the object
+		// Get the fields available on this type of Salesforce object
 		$object_details = _capwiz_connect_get_sf_object_details($object);
 		$fields = $object_details['fields'];
 		$record_types = $object_details['record_types'];
 
-		// create a drop down list friendly version of the sf fields
+		// Create a drop down list friendly version of the Salesforce fields
 		foreach($fields as $key => $value) {
 			$options[$key] = $value['label'];
 		}
@@ -339,7 +347,6 @@ function capwiz_connect_render_salesforce_object_fields() {
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
-  dsm($form, 'form in render function');
 	$output = drupal_render($form['record_type']);
 
   $map = $form['map'];
@@ -348,7 +355,6 @@ function capwiz_connect_render_salesforce_object_fields() {
 	// theme function
 	$rows = array();
 	$capwiz_fields = element_children($map['capwiz_field']);
-	dsm($capwiz_fields, '$capwiz_fields');
 	foreach ($capwiz_fields as $field_key) {
 		$row = array();
 		$row[] = array('data' => drupal_render($map['capwiz_field'][$field_key]), 'width' => '300');
@@ -371,7 +377,6 @@ function capwiz_connect_render_salesforce_object_fields() {
  * Submit the user mapping form
  */
 function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
-  dsm($form_state, 'form state on submit');
   if ($form_state['values']['map']['salesforce']) {
 
 		$drupal_fieldmap_name = 'capwiz_connect:' . $form['#account']->id . ':user';
