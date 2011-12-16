@@ -8,6 +8,16 @@ function capwiz_connect_install() {
 }
 
 /**
+ * Implements hook_enable().
+ */
+function capwiz_connect_enable() {
+  // Add this module's types to the SF queue processor
+  queue_processor_add_type('capwiz_connect_user');
+  queue_processor_add_type('capwiz_connect_action');
+}
+
+
+/**
  * Implements hook_uninstall().
  */
 function capwiz_connect_uninstall() {
@@ -21,6 +31,17 @@ function capwiz_connect_uninstall() {
   $drupal = 'capwiz_connect:%';	
   db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);  
 }
+
+/**
+ * Implements hook_disable().
+ */
+function capwiz_connect_disable() {
+  // Remove this module's types from the SF queue processor
+  queue_processor_remove_type('capwiz_connect_user');
+  queue_processor_remove_type('capwiz_connect_action');
+}
+
+
 
 
 /**
@@ -85,8 +106,7 @@ function capwiz_connect_schema() {
       ),
       'capwiz_user_id' => array(
         'description' => t('User ID from Capwiz'),
-        'type' => 'varchar',
-        'length' => '255',
+        'type' => 'int',
         'not null' => TRUE,
       ),
       'local_uid' => array(

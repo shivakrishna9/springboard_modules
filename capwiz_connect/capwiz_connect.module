@@ -331,6 +331,8 @@ function capwiz_connect_cron_process() {
             $create_fail++;
           }
         }
+        // Insert the user into the Salesforce processing queue
+        sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
       }
       
       // Log stats for users collected for this account
@@ -370,4 +372,51 @@ function capwiz_connect_cron_process() {
     db_query('UPDATE {capwiz_connect_accounts} SET last_user_sync=%d WHERE id=%d', time(), $account_id);
   }
   return '';
+}
+
+
+
+/**
+ * Implementation of hook_queue_preprocess_batch_alter().
+ * Prep an object to be sent to SF. Mostly copied from sf_webform_queue_preprocess_batch_alter()
+ */
+function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
+  dsm($batch, 'batch in capwiz_connect_queue_preprocess_batch_alter');
+  if ($batch['type'] == 'capwiz_connect_user') {
+    switch ($batch['action']) {
+			
+			case 'update':
+			case 'upsert':
+			case 'create':
+				foreach($batch['records'] as $record) {
+				  IMPLEMENT THIS
+				  // Need to copy over _sf_webform_load_salesforce_map()
+					$map = _sf_webform_load_salesforce_map($record->oid, $record->sfid);
+					if (is_array($record->object)) {
+						$record->object = array_merge($record->object, $map['fields']);	
+					}
+					else {
+						$record->object = $map['fields'];
+					}
+					// add the salesforce id to the object on updates
+				  if ($batch['action'] == 'update') {
+				    $record->object['Id'] = $record->sfid;
+				  }
+				}
+				break;
+				
+			case 'delete':
+			
+				break;
+		}
+  }
+}
+
+
+/**
+ * Implementation of hook_fieldmap_objects().
+ * Not sure yet what this function needs to do, or if we even need it.
+ */
+function capwiz_connect_fieldmap_objects($type) {
+  dsm($type, 'type in capwiz_connect_fieldmap_objects');
 }
