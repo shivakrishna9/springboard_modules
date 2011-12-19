@@ -242,7 +242,11 @@ class CapizConnect {
       $fields = json_decode($fields_response->data);
       if ($fields) {
         $this->last_error = t('Custom fields gathered successfully');
-        return $fields;
+        $return_fields = array();
+        foreach($fields as $field) {
+          $return_fields[$field->name] = $field;
+        }
+        return $return_fields;
       }
       else {
         watchdog('capwiz_connect', 'There was an error getting custom fields for users with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
@@ -262,5 +266,22 @@ class CapizConnect {
     }
     
     return FALSE;
+  }
+  
+  
+  /**
+   * Get the definition of a specific user field
+   * 
+   * @param $field_name
+   *   Key of the custom field, matching to the field->name value
+   */
+  public function getSpecificCustomUserField($field_name) {
+    if ($this->connected) {
+      $fields = $this->getCustomUserFields();
+      if ($fields) {
+        return $fields[$field_name];
+      }
+    }
+    return NULL;
   }
 }
