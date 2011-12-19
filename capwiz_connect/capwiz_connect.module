@@ -512,6 +512,7 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     // Find this particular user to determine which Capwiz account it came from
     $user = _capwiz_connect_load_user($data->oid);
     
+    // Load the field map for the Account the user came in from
     $drupal = 'capwiz_connect:' . $user->capwiz_account_id . ':user';
 		$result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
     
