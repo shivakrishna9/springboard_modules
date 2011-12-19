@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -25,29 +24,6 @@ function market_source_admin_settings_form() {
     '#default_value' => $default,
   );
 
-  $form['market_source_validity_period'] = array(
-    '#title' => 'Validity Period',
-    '#description' => 'Determines how long values should be stored in the user\'s session.<br /><strong>Note:</strong> Values do not persist if the user\'s session ends.',
-    '#type' => 'select',
-    '#multiple' => FALSE,
-    '#options' => array(
-      6 => t('6 Hours'),
-      12 => t('12 Hours'),
-      24 => t('1 Day'),
-      48 => t('2 Days'),
-      72 => t('3 Days'),
-      96 => t('4 Days'),
-      120 => t('5 Days'),
-      144 => t('6 Days'),
-      168 => t('1 Week'),
-      336 => t('2 Weeks'),
-      504 => t('3 Weeks'),
-      672 => t('4 Weeks'),
-      0 => t('Always Valid'),
-    ),
-    '#default_value' => variable_get('market_source_validity_period', 6),
-  );
-  
   if (module_exists('salesforce_management_api')) {
   	$form['market_source_validate_sf_campaigns'] = array(
   		'#title' => t('Validate Salesforce Campaigns'),
@@ -90,8 +66,7 @@ function market_source_admin_settings_form() {
     '#type' => 'submit',
     '#value' => t('Save settings'),
   );
-  $form['#validate'][] = 'market_source_validate_admin_form';
-  $form['#submit'][] = 'market_source_submit_admin_form';
+
   return $form;
 }
 
@@ -99,33 +74,32 @@ function market_source_admin_settings_form() {
 /**
  * Validates marketsource admin form.
  */
-function market_source_validate_admin_form(&$form, $form_state) {
+function market_source_admin_settings_form_validate($form, &$form_state) {
   // we don't want any bogus field keys or names.
   for ($i = 0; $i < 5; ++$i) {
-    if ($form_state['values']['ms_custom_field_name_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_name_' . $i])){ 
-		form_set_error('ms_custom_field_name_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
-	}
-    if ($form_state['values']['ms_custom_field_key_' . $i] && !preg_match('/^[a-zA-Z0-9_+-]+$/', $form_state['values']['ms_custom_field_key_' . $i])){ 
-		form_set_error('ms_custom_field_key_' . $i, t('This field may only contain alphanumeric characters and underscores.'));
-	}
-    if ($form_state['values']['ms_custom_field_default_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_default_' . $i])){ 
-		form_set_error('ms_custom_field_default_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
-	}
+    if ($form_state['values']['ms_custom_field_name_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_name_' . $i])) {
+		  form_set_error('ms_custom_field_name_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
+	  }
+    if ($form_state['values']['ms_custom_field_key_' . $i] && !preg_match('/^[a-zA-Z0-9_+-]+$/', $form_state['values']['ms_custom_field_key_' . $i])) { 
+		  form_set_error('ms_custom_field_key_' . $i, t('This field may only contain alphanumeric characters and underscores.'));
+	  }
+    if ($form_state['values']['ms_custom_field_default_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_default_' . $i])){
+		  form_set_error('ms_custom_field_default_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
+	  }
   }
 }
 
 /**
  * Handle admin form submission.
  */
-function market_source_submit_admin_form($form, $form_state) {
+function market_source_admin_settings_form_submit($form, &$form_state) {
   $custom_fields = array();
-  
+
   variable_set('market_source_default_campaign', $form_state['values']['market_source_default_campaign']);
-  variable_set('market_source_validity_period', $form_state['values']['market_source_validity_period']);
-  if (module_exists('salesforce_management_api')) {
+  if (isset($form_state['values']['market_source_validate_sf_campaigns'])) {
     variable_set('market_source_validate_sf_campaigns', $form_state['values']['market_source_validate_sf_campaigns']);
   }
-  
+
   for ($i = 0; $i < 5; ++$i) {
     if ($form_state['values']['ms_custom_field_name_' . $i] && $form_state['values']['ms_custom_field_name_' . $i]) {
       $custom_fields[] = array(
@@ -137,10 +111,11 @@ function market_source_submit_admin_form($form, $form_state) {
     }
   }
   variable_set('market_source_custom_fields', $custom_fields);
+  drupal_set_message(t('Market Source settings saved.'));
 }
 
 /**
- * 
+ *
  */
 function _market_source_add_field_elements(&$form, $custom_field, $delta) {
 
@@ -166,4 +141,36 @@ function _market_source_add_field_elements(&$form, $custom_field, $delta) {
     '#suffix' => '<div style="clear:both"></div>',
   );
   return $form;
+}
+
+/**
+ * Theme custom fields as a table.
+ */
+function theme_market_source_admin_settings_form($form) {
+  $rows = array();
+  // Currently we support a total of 5 custom fields. I expect this to change in future and we will need to refactor.
+  for ($i = 0; $i < 5; ++$i) {
+    $row = array();
+    // Pack rows with form elements.
+    $row[] = t('Custom Field #%i', array('%i' => $i));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $i]));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $i]));
+    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $i]));
+    $rows[] = $row;
+  }
+  // Set table headers.
+  $header = array(
+    t('Field'),
+    t('Human-readable Field Name'),
+    t('Unique Key'),
+    t('Default Value'),
+  );
+  // Replace contents of the field wrapper fieldset with our themed table of form elements.
+  $form['market_source_global_fields']['custom_fields_wrapper']['output'] = array(
+    '#type' => 'markup',
+    '#value' => theme('table', $header, $rows),
+  );
+  // Render the form.
+  $output = drupal_render($form);
+  return $output;
 }
