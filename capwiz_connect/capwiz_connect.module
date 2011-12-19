@@ -163,29 +163,8 @@ function capwiz_connect_menu() {
     'access arguments' => array('administer capwiz_connect'),
   );
   
-  
-  
-  $items['capwiz_connect_test'] = array(
-    'page callback' => '_capwiz_connect_test_page',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-  
   return $items;
 }
-
-
-
-function _capwiz_connect_test_page() {
-  $user = _capwiz_connect_load_user(39321816);
-  dsm($user, 'user');
-  
-  $connection = capwiz_connect(1);
-  $user_fields = $connection->getCustomUserFields();
-  dsm($user_fields, 'user fields');
-  return '';
-}
-
 
 /**
  * Implements hook_perm().
@@ -526,6 +505,30 @@ function _capwiz_connect_sf_load_user_details($capwiz_user_id) {
 
 
 /**
+ * Implementation of hook_queue_fieldmap_assignment_alter().
+ */
+function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
+	if ($data->type == 'capwiz_connect_user') {
+    // Find this particular user to determine which Capwiz account it came from
+    $user = _capwiz_connect_load_user($data->oid);
+    
+    $drupal = 'capwiz_connect:' . $user->capwiz_account_id . ':user';
+		$result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
+    
+		$fieldmap = db_fetch_array($result);
+		$data->fieldmap = $fieldmap['fieldmap'];
+		
+		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = '%s'", $data->oid, $data->type));
+		// check the action. by default users go into the queue as upsert, but if the mapping has no dedupe key defined, revert to create
+		if (empty($fieldmap['dedupe_key']) && empty($result['sfid'])) {
+			$data->action = 'create';
+		}
+	}
+}
+
+
+
+/**
  * Load a single Capwiz user from the local data
  */
 function _capwiz_connect_load_user($capwiz_user_id) {
@@ -535,13 +538,4 @@ function _capwiz_connect_load_user($capwiz_user_id) {
     return $capwiz_user;
   }
   return NULL;
-}
-
-
-/**
- * Implementation of hook_fieldmap_objects().
- * Not sure yet what this function needs to do, or if we even need it.
- */
-function capwiz_connect_fieldmap_objects($type) {
-  //dsm($type, 'type in capwiz_connect_fieldmap_objects');
 }
