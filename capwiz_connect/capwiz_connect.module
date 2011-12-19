@@ -11,6 +11,8 @@
  * -----
  * - Overview form: capwiz_connect_account_overview()
  * - Build mapping forms
+ * - When updating an existing user, put in SF queue for update
+ * - Map the Form Affiliation field
  * 
  * Minor
  * -----
@@ -30,7 +32,7 @@ function capwiz_connect_menu() {
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'capwiz_connect_account_list',
     'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL,
   );
   $items['admin/settings/capwiz_connect/accounts'] = array(
     'title' => 'Accounts',
@@ -144,11 +146,45 @@ function capwiz_connect_menu() {
     'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_CALLBACK,
   );
-	
+  
+  // Ajax callback to add and remove dedupe keys for Capwiz Account mappings
+  $items['js/capwiz_connect/%capwiz_connect_account/set-dedupe-field'] = array(
+    'file' => 'capwiz_connect.admin.inc',
+    'description' => 'Callback to add a dedupe key',
+    'page callback' => 'capwiz_connect_add_dedupe_field',
+    'page arguments' => array(2),
+    'access arguments' => array('administer capwiz_connect'),
+  );
+  $items['js/capwiz_connect/%capwiz_connect_account/remove-dedupe-field'] = array(
+    'file' => 'capwiz_connect.admin.inc',
+    'description' => 'Callback to add a dedupe key',
+    'page callback' => 'capwiz_connect_remove_dedupe_field',
+    'page arguments' => array(2),
+    'access arguments' => array('administer capwiz_connect'),
+  );
+  
+  
+  
+  $items['capwiz_connect_test'] = array(
+    'page callback' => '_capwiz_connect_test_page',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   
   return $items;
 }
 
+
+
+function _capwiz_connect_test_page() {
+  $user = _capwiz_connect_load_user(39321816);
+  dsm($user, 'user');
+  
+  $connection = capwiz_connect(1);
+  $user_fields = $connection->getCustomUserFields();
+  dsm($user_fields, 'user fields');
+  return '';
+}
 
 
 /**
@@ -381,7 +417,6 @@ function capwiz_connect_cron_process() {
  * Prep an object to be sent to SF. Mostly copied from sf_webform_queue_preprocess_batch_alter()
  */
 function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
-  dsm($batch, 'batch in capwiz_connect_queue_preprocess_batch_alter');
   if ($batch['type'] == 'capwiz_connect_user') {
     switch ($batch['action']) {
 			
@@ -389,9 +424,9 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
 			case 'upsert':
 			case 'create':
 				foreach($batch['records'] as $record) {
-				  IMPLEMENT THIS
+				  
 				  // Need to copy over _sf_webform_load_salesforce_map()
-					$map = _sf_webform_load_salesforce_map($record->oid, $record->sfid);
+					$map = _capwiz_connect_sf_load_user_details($record->oid, $record->sfid);
 					if (is_array($record->object)) {
 						$record->object = array_merge($record->object, $map['fields']);	
 					}
@@ -412,11 +447,101 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
   }
 }
 
+/**
+ * Load the details for a single user and map the SF fields
+ */
+function _capwiz_connect_sf_load_user_details($capwiz_user_id) {
+  static $sf_field_map;
+  
+  $capwiz_user = _capwiz_connect_load_user($capwiz_user_id);
+  if ($capwiz_user->capwiz_account_id > 0) {
+    $account_id = $capwiz_user->capwiz_account_id;
+    
+    // Load the Salesforce field map for this Capwiz account, if we have not already
+    if (!$sf_field_map[$account_id]) {
+      $drupal = 'capwiz_connect:' . $account_id . ':user';
+    	$sql = "SELECT salesforce, recordtype_id, fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
+    	$data = db_fetch_object(db_query($sql, $drupal));
+
+  		$sf_field_map[$account_id]['map'] = unserialize($data->fields);
+  		$sf_field_map[$account_id]['object'] = $data->salesforce;
+  		$sf_field_map[$account_id]['recordtype_id'] = $data->recordtype_id;
+    }
+    
+    // Prep map array
+  	$salesforce_map = array(
+  		'object' => $sf_field_map[$account_id]['object'],
+  		'fields' => array(),
+      'RecordTypeId' => $sf_field_map[$account_id]['recordtype_id'],
+  	);
+    
+    // Loop over the mapped fields, and for each that has value on this user, set
+    // it in the mapped fields. For any fields that have multiple values, they
+    // should be separated with semi-colons (though this is not in use here yet)
+    foreach ($sf_field_map[$account_id]['map'] as $capwiz_field_name => $sf_field_name) {
+      // Different fields have different formats
+      switch ($capwiz_field_name) {
+        case 'emailAddress':
+          if ($capwiz_user->data->emails[0]) {
+            $salesforce_map['fields'][$sf_field_name] = $capwiz_user->data->emails[0]->address;
+          }
+          break;
+        
+        case 'honorificId':
+          if ($capwiz_user->data->honorific) {
+            $salesforce_map['fields'][$sf_field_name] = $capwiz_user->data->honorific->name;
+          }
+          break;
+          
+        case 'street1':
+          if ($capwiz_user->data->addresses[0]) {
+            $salesforce_map['fields'][$sf_field_name] = $capwiz_user->data->addresses[0]->street1;
+          }
+          break;
+          
+        case 'addressType':
+          $connection = capwiz_connect($account_id);
+          $address_field = $connection->getSpecificCustomUserField('addressType');
+          if ($capwiz_user->data->addresses[0] && $address_field) {
+            $address_type_id = $capwiz_user->data->addresses[0]->addressTypeId;
+            $salesforce_map['fields'][$sf_field_name] = $address_field->options[$address_type_id]->label;
+          }
+          break;
+        
+        case 'form_affiliation':
+          $account = capwiz_connect_account_load($account_id);
+          $salesforce_map['fields'][$sf_field_name] = $account->form_affiliation;
+          break;
+                
+        default:
+          $salesforce_map['fields'][$sf_field_name] = $capwiz_user->data->{$capwiz_field_name};
+      }
+    }
+    
+    return $salesforce_map;
+  }
+  
+  return NULL;
+}
+
+
+/**
+ * Load a single Capwiz user from the local data
+ */
+function _capwiz_connect_load_user($capwiz_user_id) {
+  $capwiz_user = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_users} WHERE capwiz_user_id=%d', $capwiz_user_id));
+  if ($capwiz_user) {
+    $capwiz_user->data = unserialize($capwiz_user->data);
+    return $capwiz_user;
+  }
+  return NULL;
+}
+
 
 /**
  * Implementation of hook_fieldmap_objects().
  * Not sure yet what this function needs to do, or if we even need it.
  */
 function capwiz_connect_fieldmap_objects($type) {
-  dsm($type, 'type in capwiz_connect_fieldmap_objects');
+  //dsm($type, 'type in capwiz_connect_fieldmap_objects');
 }
