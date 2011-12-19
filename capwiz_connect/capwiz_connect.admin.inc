@@ -328,8 +328,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 			'#default_value' => $account->mapping_user['recordtype_id'],
 		);
 
-		foreach($user_fields as $field) {
-		  $field_key = $field->name;
+		foreach($user_fields as $field_key => $field) {
 		  $map_for_field = $account->mapping_user['map'][$field_key];
 		  
 			// Capwiz field
@@ -346,10 +345,10 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 			
 			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
 				if ($account->mapping_user['dedupe_key'] == $map_for_field) {
-					$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $map_for_field .'">Remove dedupe field</a>';
+					$value = '<a class="webform-dedupe" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/user">Remove dedupe field</a>';
 				}
 				else {
-					$value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $map_for_field .'">Set as dedupe field</a>';
+					$value = '<a class="webform-dedupe" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/user/' . $map_for_field .'">Set as dedupe field</a>';
 				}
 			}
 			else {
@@ -548,8 +547,37 @@ function theme_capwiz_connect_account_user_mapping($form) {
 }
 
 
+/**
+ * Callback for AJAX function to set the dedupe field on a mapping
+ * 
+ * @param $acount
+ *   Account object
+ * @param $map_type
+ *   String of mapping type: user or action
+ * @param $field_name
+ *   Name of the field to use as the dedupe
+ */
+function capwiz_connect_add_dedupe_field($account, $map_type, $field_name) {
+  if ($account && $map_type && $field_name) {
+    $drupal = 'capwiz_connect:' . $account->id . ':' . $map_type;
+    db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = '%s' WHERE drupal = '%s'", $field_name, $drupal);
+  }
+}
 
-
+/**
+ * Callback for AJAX function to remove the dedupe field on a mapping
+ * 
+ * @param $acount
+ *   Account object
+ * @param $map_type
+ *   String of mapping type: user or action
+ */
+function capwiz_connect_remove_dedupe_field($account, $map_type) {
+  if ($account && $map_type) {
+    $drupal = 'capwiz_connect:' . $account->id . ':' . $map_type;
+    db_query("UPDATE {salesforce_management_field_map} SET dedupe_key = NULL WHERE drupal = '%s'", $drupal);
+  }
+}
 
 
 
