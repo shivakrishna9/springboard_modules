@@ -464,7 +464,9 @@ function _capwiz_connect_sync_actions_for_account($account_details) {
         }
       }
       // Insert the user into the Salesforce processing queue
-      sf_queue_insert($record['capwiz_alert_id'], 'capwiz_connect_action', 'upsert');
+      if ($record['id']) {
+        sf_queue_insert($record['id'], 'capwiz_connect_action', 'upsert');
+      }
     }
       
     // Log stats for users collected for this account
