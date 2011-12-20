@@ -9,15 +9,12 @@
 /**
  * Todos
  * -----
- * - Overview form: capwiz_connect_account_overview()
- * - Build mapping forms
- * - When updating an existing user, put in SF queue for update
- * - Map the Form Affiliation field
+ * - Build Action mapping forms
+ * - Handle 'more' flag from API, and make subsequent calls if necessary
  * 
  * Minor
  * -----
  * - Breadcrumbs not showing when viewing/editing/etc forms
- * - After adding a new account, show the Overview tab for it
  */
 
 /**
@@ -294,100 +291,221 @@ function capwiz_connect_cron() {
 function capwiz_connect_cron_process() {
   $all_accounts = capwiz_connect_all_accounts();
   foreach ($all_accounts as $account_id => $account_details) {
-    $updated = $created = $update_fail = $create_fail = 0;
-    
-    // Connect to the API for this account
-    $connection = capwiz_connect($account_id);
-    
-    // Query for users that have been updated since the last time 
-    $last_sync = $account_details->last_user_sync;
-    if ($last_sync > 0) {
-      // Reduce the last time stamp to act as a buffer, to make sure no users
-      // fall between the cracks
-      $last_sync -= 3600;
-    }
-    $users = $connection->queryUsers($last_sync);
-
-    // If $users is FALSE, there was an error connecting or querying users, and a
-    // message will be logged to the watchdog
-    if ($users === FALSE) {
-      continue;
-    }
-    
-    if (is_array($users) && !empty($users)) {
-      // Loop over the returned users and save them to the DB
-      foreach ($users as $user) {
-        $capwiz_user_id = $user->id;
-        $record = array(
-          'capwiz_account_id' => $account_id,
-          'capwiz_user_id' => $capwiz_user_id,
-          'local_uid' => 0,
-          'data' => serialize($user),
-        );
-        
-        // Check if this user (identified by Capwiz ID) is already in our DB
-        $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-        
-        if ($existing_record) {
-          // User is already in our DB: update the record
-          if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
-            $updated++;
-          }
-          else {
-            $update_fail++;
-          }
-        }
-        else {
-          // New-to-us user
-          if(drupal_write_record('capwiz_connect_users', $record)) {
-            $created++;
-          }
-          else {
-            $create_fail++;
-          }
-        }
-        // Insert the user into the Salesforce processing queue
-        sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
-      }
-      
-      // Log stats for users collected for this account
-      $severity = WATCHDOG_INFO;
-      $message = "Updated users for %account_name. Created: %created. Updated: %updated.";
-      if ($create_fail > 0) {
-        $message .= " Failed to create: %create_fail.";
-        $severity = WATCHDOG_ERROR;
-      }
-      if ($update_fail > 0) {
-        $message .= " Failed to update: %update_fail.";
-        $severity = WATCHDOG_ERROR;
-      }
-      $message_vars = array(
-        '%account_name' => $account_details->display_name,
-        '%created' => $created,
-        '%updated' => $updated,
-        '%create_fail' => $create_fail,
-        '%update_fail' => $update_fail,
-      );
-      watchdog('capwiz_connect', $message, $message_vars, $severity);
-    }
-    else {
-      // $users was an empty array, so there were no new users
-      $message = "No users to add or update for %account_name.";
-      $message_vars = array(
-        '%account_name' => $account_details->display_name,
-        '%created' => $created,
-        '%updated' => $updated,
-        '%create_fail' => $create_fail,
-        '%update_fail' => $update_fail,
-      );
-      watchdog('capwiz_connect', $message, $message_vars);
-    }
-    
-    // Update the last_user_sync timestamp on this account
-    db_query('UPDATE {capwiz_connect_accounts} SET last_user_sync=%d WHERE id=%d', time(), $account_id);
+    _capwiz_connect_sync_users_for_account($account_details);
+    _capwiz_connect_sync_actions_for_account($account_details);
   }
   return '';
 }
+
+
+
+/**
+ * Query the users from a given Capwiz Connect account, save them locally, and
+ * add them to the SF queue
+ */
+function _capwiz_connect_sync_users_for_account($account_details) {
+  $updated = $created = $update_fail = $create_fail = 0;
+    
+  // Connect to the API for this account
+  $account_id = $account_details->id;
+  $connection = capwiz_connect($account_id);
+    
+  // Query for users that have been updated since the last time
+  $last_sync = $account_details->last_user_sync;
+  if ($last_sync > 0) {
+    // Reduce the last time stamp to act as a buffer, to make sure no users
+    // fall between the cracks
+    $last_sync -= 3600;
+  }
+  $users = $connection->queryUsers($last_sync);
+
+  // If $users is FALSE, there was an error connecting or querying users, and a
+  // message will be logged to the watchdog
+  if ($users === FALSE) {
+    return;
+  }
+    
+  if (is_array($users) && !empty($users)) {
+    // Loop over the returned users and save them to the DB
+    foreach ($users as $user) {
+      $capwiz_user_id = $user->id;
+      $record = array(
+        'capwiz_account_id' => $account_id,
+        'capwiz_user_id' => $capwiz_user_id,
+        'local_uid' => 0,
+        'data' => serialize($user),
+      );
+        
+      // Check if this user (identified by Capwiz ID) is already in our DB
+      $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+        
+      if ($existing_record) {
+        // User is already in our DB: update the record
+        if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
+          $updated++;
+        }
+        else {
+          $update_fail++;
+        }
+      }
+      else {
+        // New-to-us user
+        if(drupal_write_record('capwiz_connect_users', $record)) {
+          $created++;
+        }
+        else {
+          $create_fail++;
+        }
+      }
+      // Insert the user into the Salesforce processing queue
+      if ($record['capwiz_user_id']) {
+        sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
+      }
+    }
+      
+    // Log stats for users collected for this account
+    $severity = WATCHDOG_INFO;
+    $message = "Updated users for %account_name. Created: %created. Updated: %updated.";
+    if ($create_fail > 0) {
+      $message .= " Failed to create: %create_fail.";
+      $severity = WATCHDOG_ERROR;
+    }
+    if ($update_fail > 0) {
+      $message .= " Failed to update: %update_fail.";
+      $severity = WATCHDOG_ERROR;
+    }
+    $message_vars = array(
+      '%account_name' => $account_details->display_name,
+      '%created' => $created,
+      '%updated' => $updated,
+      '%create_fail' => $create_fail,
+      '%update_fail' => $update_fail,
+    );
+    watchdog('capwiz_connect', $message, $message_vars, $severity);
+  }
+  else {
+    // $users was an empty array, so there were no new users
+    $message = "No users to add or update for %account_name.";
+    $message_vars = array(
+      '%account_name' => $account_details->display_name,
+      '%created' => $created,
+      '%updated' => $updated,
+      '%create_fail' => $create_fail,
+      '%update_fail' => $update_fail,
+    );
+    watchdog('capwiz_connect', $message, $message_vars);
+  }
+    
+  // Update the last_user_sync timestamp on this account
+  db_query('UPDATE {capwiz_connect_accounts} SET last_user_sync=%d WHERE id=%d', time(), $account_id);
+}
+
+
+
+/**
+ * Query the actions from a given Capwiz Connect account, save them locally, and
+ * add them to the SF queue
+ */
+function _capwiz_connect_sync_actions_for_account($account_details) {
+  $updated = $created = $update_fail = $create_fail = 0;
+    
+  // Connect to the API for this account
+  $account_id = $account_details->id;
+  $connection = capwiz_connect($account_id);
+    
+  // Query for users that have been updated since the last time 
+  $last_sync = $account_details->last_action_sync;
+  if ($last_sync > 0) {
+    // Reduce the last time stamp to act as a buffer, to make sure no users
+    // fall between the cracks
+    $last_sync -= 3600;
+  }
+  $actions = $connection->queryActions($last_sync);
+
+  // If $actions is FALSE, there was an error connecting or querying actions, and
+  // a message will be logged to the watchdog
+  if ($actions === FALSE) {
+    return;
+  }
+    
+  if (is_array($actions) && !empty($actions)) {
+    // Loop over the returned actions and save them to the DB
+    foreach ($actions as $action) {
+      $message_id = $action->messageId;
+      $record = array(
+        'message_id' => $message_id,
+        'capwiz_account_id' => $account_id,
+        'capwiz_alert_id' => $action->alertId,
+        'capwiz_user_id' => $action->userId,
+        'data' => serialize($action),
+        'action_timestamp' => strtotime($action->dtAction),
+      );
+        
+      // Check if this action (identified by Capwiz ID) sis already in our DB
+      $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE message_id='%s'", $message_id));
+        
+      if ($existing_record_id > 0) {
+        // Action is already in our DB: update the record
+        $record['id'] = $existing_record_id;
+        if (drupal_write_record('capwiz_connect_actions', $record, 'id')) {
+          $updated++;
+        }
+        else {
+          $update_fail++;
+        }
+      }
+      else {
+        // New-to-us user
+        if(drupal_write_record('capwiz_connect_actions', $record)) {
+          $created++;
+        }
+        else {
+          $create_fail++;
+        }
+      }
+      // Insert the user into the Salesforce processing queue
+      sf_queue_insert($record['capwiz_alert_id'], 'capwiz_connect_action', 'upsert');
+    }
+      
+    // Log stats for users collected for this account
+    $severity = WATCHDOG_INFO;
+    $message = "Updated actions for %account_name. Created: %created. Updated: %updated.";
+    if ($create_fail > 0) {
+      $message .= " Failed to create: %create_fail.";
+      $severity = WATCHDOG_ERROR;
+    }
+    if ($update_fail > 0) {
+      $message .= " Failed to update: %update_fail.";
+      $severity = WATCHDOG_ERROR;
+    }
+    $message_vars = array(
+      '%account_name' => $account_details->display_name,
+      '%created' => $created,
+      '%updated' => $updated,
+      '%create_fail' => $create_fail,
+      '%update_fail' => $update_fail,
+    );
+    watchdog('capwiz_connect', $message, $message_vars, $severity);
+  }
+  else {
+    // $users was an empty array, so there were no new users
+    $message = "No actions to add or update for %account_name.";
+    $message_vars = array(
+      '%account_name' => $account_details->display_name,
+      '%created' => $created,
+      '%updated' => $updated,
+      '%create_fail' => $create_fail,
+      '%update_fail' => $update_fail,
+    );
+    watchdog('capwiz_connect', $message, $message_vars);
+  }
+    
+  // Update the last_user_sync timestamp on this account
+  db_query('UPDATE {capwiz_connect_accounts} SET last_action_sync=%d WHERE id=%d', time(), $account_id);
+}
+
+
+
 
 
 
@@ -445,6 +563,16 @@ function _capwiz_connect_sf_load_user_details($capwiz_user_id) {
   		$sf_field_map[$account_id]['map'] = unserialize($data->fields);
   		$sf_field_map[$account_id]['object'] = $data->salesforce;
   		$sf_field_map[$account_id]['recordtype_id'] = $data->recordtype_id;
+    }
+    
+    // If no map was found for this account, return a blank version of the
+    // expected array
+    if (!$sf_field_map[$account_id]['map']) {
+      return array(
+    		'object' => '',
+    		'fields' => array(),
+        'RecordTypeId' => '',
+    	);
     }
     
     // Prep map array
