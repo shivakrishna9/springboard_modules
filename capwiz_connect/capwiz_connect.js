@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  $('.webform-dedupe').click(function(e) {
+  $('.dedupe-link').click(function(e) {
   	e.preventDefault();
   	var url = $(this).attr('href');
   	var action = $(this).text();	
@@ -23,5 +23,13 @@ $(document).ready(function() {
   	// set the new properties of the clicked link
 		$(this).attr('href', new_url);
 		$(this).text(text);
+  });
+  
+  // Confirm intention when the user clicks on the Remove Map button
+  $('input#edit-remove').click(function(e) {
+    e.preventDefault();
+    if (confirm("Are you sure you want to remove the field mapping? This cannot be undone; you will need to re-build this mapping after removing it.")) {
+      this.form.submit();
+    }
   });
 });
