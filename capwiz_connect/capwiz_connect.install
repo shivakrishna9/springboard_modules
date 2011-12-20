@@ -115,7 +115,7 @@ function capwiz_connect_schema() {
         'not null' => FALSE,
       ),
       'data' => array(
-        'description' => t('Data about the user'),
+        'description' => t('Serialized data about the user'),
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
@@ -126,10 +126,22 @@ function capwiz_connect_schema() {
       'capwiz_account_id' => array('capwiz_account_id'),
     ),
   );
-  
+
+
   $schema['capwiz_connect_actions'] = array(
     'description' => t('Store action data from Capwiz'),
     'fields' => array(
+      'id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'message_id' => array(
+        'description' => t('Unique messageId from Capwiz, too large for int field'),
+        'type' => 'varchar',
+        'length' => '20',
+        'not null' => TRUE,
+      ),
       'capwiz_account_id' => array(
         'description' => t('ID from capwiz_connect_accounts.id'),
         'type' => 'int',
@@ -137,31 +149,30 @@ function capwiz_connect_schema() {
       ),
       'capwiz_alert_id' => array(
         'description' => t('Alert ID from Capwiz'),
-        'type' => 'varchar',
-        'length' => '255',
+        'type' => 'int',
         'not null' => TRUE,
       ),
       'capwiz_user_id' => array(
         'description' => t('User ID from Capwiz'),
-        'type' => 'varchar',
-        'length' => '255',
+        'type' => 'int',
         'not null' => TRUE,
       ),
       'data' => array(
-        'description' => t('Data about the activity'),
+        'description' => t('Serialized data about the action'),
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
       ),
       'action_timestamp' => array(
-        'description' => t('Timestamp of the action'),
+        'description' => t('Timestamp when the action was taken'),
         'type' => 'int',
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('capwiz_alert_id'),
+    'primary key' => array('id'),
     'indexes' => array(
       'capwiz_account_id' => array('capwiz_account_id'),
+      'capwiz_alert_id' => array('capwiz_alert_id'),
       'capwiz_user_id' => array('capwiz_user_id'),
     ),
   );
