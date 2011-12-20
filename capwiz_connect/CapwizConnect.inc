@@ -124,6 +124,11 @@ class CapizConnect {
   }
   
   
+  
+  /***********************************************
+   * User functions
+   */
+   
   /**
    * Query users. If a timestamp is given, only return users updated since then.
    * 
@@ -140,6 +145,7 @@ class CapizConnect {
     
     // If requesting users updated since some timestamp
     if ($updated_since > 0) {
+      // Date must be in ISO 8601 format
       $query_params['updatedSince'] = date('c', $updated_since);
     }
     
@@ -284,4 +290,63 @@ class CapizConnect {
     }
     return NULL;
   }
+  
+  
+  
+  
+  /***********************************************
+   * Action functions
+   */
+   
+  /**
+   * Query actions. If a timestamp is given, only return items updated since then
+   * 
+   * @param $updated_since
+   *   Timestamp. If given, only actions updated since that time will be returned.
+   */
+  public function queryActions($updated_since = 0) {
+    if (!$this->connected) {
+      return FALSE;
+    }
+    
+    $query_params = array();
+    $query_params['sessionId'] = $this->session_id;
+    
+    // If requesting actions updated since some timestamp
+    if ($updated_since > 0) {
+      // Date must be in ISO 8601 format
+      $query_params['minDate'] = date('c', $updated_since);
+    }
+    
+    $url = url(self::$base_url . 'activity/v1/client/' . $this->client_id . '/events', array('query' => $query_params));
+    
+    $action_response = drupal_http_request($url);
+    
+    // If the query was successfull
+    if ($action_response->code == 200) {
+      $response_data = json_decode($action_response->data);
+      if ($response_data) {
+        $this->last_error = t('Actions queried successfully');
+        return $response_data->events;
+      }
+      else {
+        watchdog('capwiz_connect', 'There was an error querying actions with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
+      }
+    }
+    // Error with action query
+    else {
+      switch ($action_response->code) {
+        case 500:
+          $this->last_error = 'A system error was encountered in processing the request';
+          break;
+        default:
+          $this->last_error = 'Unknown error while attempting to query actions. Response code: ' . $action_response->code;
+          break;            
+      }
+      watchdog('capwiz_connect', 'There was an error querying actions with Capwiz Connect for account %account_name: %error.', array('%account_name' => $this->account_details->display_name, '%error' => $this->last_error), WATCHDOG_ERROR);
+    }
+    
+    return FALSE;
+  }
+  
 }
