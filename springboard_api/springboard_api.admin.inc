@@ -25,8 +25,6 @@ function springboard_api_admin() {
     $rows[] = $row;
   }
   
-  $users = _springboard_api_get_users();
-  
   $form['api_keysets'] = array(
     '#type' => 'fieldset',
     '#title' => t('API key sets'),
@@ -48,10 +46,10 @@ function springboard_api_admin() {
     '#description' => t(''),
   );
   $form['new']['user'] = array(
-    '#type' => 'select',
+    '#type' => 'textfield',
     '#title' => t('User'),
+    '#autocomplete_path' => 'users_autocomplete/springboard_api', 
     '#description' => t('Select a user account to associate with this app. Service calls made by this app will use the permissionsa assigned to this account for purposes of access checking.'),
-    '#options' => $users,
   );
   $form['new']['submit'] = array(
     '#type' => 'submit',
@@ -70,15 +68,16 @@ function springboard_api_admin_validate(&$form, $form_state) {
 }
 
 function springboard_api_admin_submit($form, $form_state) {
+  $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
   $pubkey = md5(user_password());
   $privkey = sha1(user_password());
-  db_query("INSERT INTO {springboard_api} (kid, uid, name, pubkey, privkey) VALUES (NULL, %d, '%s', '%s', '%s')", $form_state['values']['user'], $form_state['values']['name'], $pubkey, $privkey);
+  db_query("INSERT INTO {springboard_api} (kid, uid, name, pubkey, privkey) VALUES (NULL, %d, '%s', '%s', '%s')", $uid, $form_state['values']['name'], $pubkey, $privkey);
   // save.
 }
 
 
 function springboard_api_edit_keyset($form, $edit) {
-  $users = _springboard_api_get_users();
+
   $form = array();
   $form['kid'] = array(
     '#type' => 'hidden',
@@ -88,15 +87,14 @@ function springboard_api_edit_keyset($form, $edit) {
     '#type' => 'textfield',
     '#title' => t('App Name'),
     '#size' => 50,
-    '#maxlength' => 255,
     '#default_value' => $edit->name,
   );
   $form['new']['user'] = array(
-    '#type' => 'select',
+    '#type' => 'textfield',
     '#title' => t('User'),
     '#description' => t('Select a user account to associate with this app. Service calls made by this app will use the permissionsa assigned to this account for purposes of access checking.'),
-    '#options' => $users,
-    '#default_value' => $edit->uid,
+    '#autocomplete_path' => 'users_autocomplete/springboard_api',
+    '#default_value' => $edit->username,
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -108,7 +106,8 @@ function springboard_api_edit_keyset($form, $edit) {
 }
 
 function springboard_api_edit_submit($form, $form_state) {
-  db_query("UPDATE {springboard_api} SET uid = %d, name = '%s' WHERE kid = %d", $form_state['values']['user'], $form_state['values']['name'], $form_state['values']['kid']);
+   $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
+  db_query("UPDATE {springboard_api} SET uid = %d, name = '%s' WHERE kid = %d", $uid, $form_state['values']['name'], $form_state['values']['kid']);
   drupal_set_message('Settings saved.');
   drupal_goto('admin/settings/springboard_api');
 }
@@ -226,11 +225,17 @@ function _springboard_api_pack_test_data($pubkey, $privkey, $data, $resource) {
   return $data;
 }
 
-function _springboard_api_get_users() {
-  $users = array('0' => 'Anonymous');
-  $results = db_query('SELECT uid, name FROM {users} where uid > 1 order by uid');
-  while ($user = db_fetch_object($results)) {
-    $users[$user->uid] = $user->name;
+function _springboard_api_get_users($string = '') {
+
+  $users['anonymous'] = 'Anonymous';
+
+  if ($string) {
+    
+    $results = db_query_range("SELECT uid, name FROM {users} WHERE uid > 1 AND LOWER(name) LIKE LOWER('%s%%')", $string, 0, 10);
+
+    while ($user = db_fetch_object($results)) {
+      $users[$user->name] = check_plain($user->name);
+    }
   }
-  return $users;
+  drupal_json($users);
 }

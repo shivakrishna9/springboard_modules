@@ -21,7 +21,6 @@ function springboard_api_uninstall() {
  */
 
 function springboard_api_schema() {
-  drupal_set_message('hook_schema invoked');
   $schema['springboard_api'] = array(
     'description' => t('Stores session information for API sessions.'),
     'fields' => array(
