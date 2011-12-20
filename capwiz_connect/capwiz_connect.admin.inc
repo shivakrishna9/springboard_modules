@@ -190,15 +190,52 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
  * Show overview tab for an account
  */
 function capwiz_connect_account_overview($account) {
+  $form = array();
+  $form['display_name'] = array(
+    '#type' => 'item',
+    '#value' => $account->display_name,
+    '#title' => t('Display Name'),
+    '#weight' => 0,
+  );
+  
   $connection = capwiz_connect($account->id);
   if ($connection->isConnected()) {
-    return '<div class="connected">Credentials OK</div>';
+    $form['creds_ok'] = array(
+      '#type' => 'item',
+      '#value' => 'Credentials OK',
+      '#title' => t('Connection'),
+      '#prefix' => '<div class="connected">',
+      '#suffix' => '</div>',
+      '#weight' => 10,
+    );
   }
   else {
     $error = $connection->getLastError();
     drupal_set_message($error, 'error');
-    return '<div class="connection_error">Error connecting to Capwiz.</div>';
+    $form['creds_ok'] = array(
+      '#type' => 'item',
+      '#value' => 'Error connecting to Capwiz',
+      '#title' => t('Connection'),
+      '#prefix' => '<div class="connection_error">',
+      '#suffix' => '</div>',
+      '#weight' => 10,
+    );
   }
+  
+  $form['user_mapping'] = array(
+    '#type' => 'item',
+    '#value' => ($account->mapping_user) ? 'Set' : 'Not set',
+    '#title' => t('User Mapping'),
+    '#weight' => 20,
+  );
+  $form['action_mapping'] = array(
+    '#type' => 'item',
+    '#value' => ($account->mapping_action) ? 'Set' : 'Not set',
+    '#title' => t('Action Mapping'),
+    '#weight' => 20,
+  );
+  
+  return drupal_render($form);
 }
 
 
