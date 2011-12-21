@@ -203,7 +203,13 @@ function springboard_api_submit_webform($submission) {
       return $_SESSION['messages'];
     }
     else {
-      services_error('Error: One or more problems where detected with your submission.', 400, $errors);
+      foreach($errors as $key => $message) {
+        $key = explode('][', $key);
+        $item['field_key'] = str_replace(']', '', $key[count($key) -1]);
+        $item['message'] = $message;
+        $formatted_errors['errors'][] = $item;
+      }
+      services_error('Error: One or more problems where detected with your submission.', 400, $formatted_errors);
     }
 
   }
