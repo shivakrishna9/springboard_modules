@@ -152,7 +152,10 @@ function springboard_api_delete_submit($form, $form_state) {
  * 
  */
 function springboard_api_test_client($form = array()) {
-
+  $results = db_query('SELECT kid, name FROM {springboard_api}');
+  while ($result = db_fetch_object($results)) {
+    $options[$result->kid] = $result->name;
+  }
   $form = array();
   $form['url'] =  array(
     '#type' => 'textfield',
@@ -163,18 +166,11 @@ function springboard_api_test_client($form = array()) {
     '#title' => t('Service resource'),
     '#options' => array('index' => 'index', 'retrieve' => 'retrieve', 'submit' => 'submit'),
   );
-  $form['method'] = array(
+  $form['keyset'] = array(
     '#type' => 'select',
-    '#title' => t('Method'),
-    '#options' => array('GET' => 'GET', 'POST' => 'POST'),
-  );
-  $form['pubkey'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Public Key',
-  );
-  $form['privkey'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Private Key',
+    '#title' => t('Key set'),
+    '#description' => t('Select a key set to use for this transaction.'),
+    '#options' => $options,
   );
   $form['data'] = array(
     '#type' => 'textarea',
@@ -188,17 +184,14 @@ function springboard_api_test_client($form = array()) {
   return $form;
 }
 
-function springboard_api_test_client_validate(&$form, $form_state) {
-
-}
-
 function springboard_api_test_client_submit(&$form, $form_state) {
   if (function_exists('curl_init')) {
+    $keyset = db_fetch_object(db_query('SELECT * FROM {springboard_api} WHERE kid=%d', $form_state['values']['kid']));
     $url = $form_state['values']['url'];
-    $data = _springboard_api_pack_test_data($form_state['values']['pubkey'], $form_state['values']['privkey'], $form_state['values']['data'], $form_state['values']['resource']);
+    $data = _springboard_api_pack_test_data($keyset->pubkey, $keyset->privkey, $form_state['values']['data'], $form_state['values']['resource']);
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-    if ($form_state['values']['method'] == 'POST') {
+    if ($form_state['values']['resource'] == 'submit') {
       curl_setopt($ch, CURLOPT_POST, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     }

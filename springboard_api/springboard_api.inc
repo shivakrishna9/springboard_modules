@@ -19,7 +19,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
     return $webforms;
   }
   else {
-    return t('Error: Access denied.');
+    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
   }
 }
 
@@ -50,20 +50,23 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
     
     if (!is_numeric($nid) || $nid == 0) {
       watchdog('springboard_api', t('Error: nid missing or invalid'), array(), WATCHDOG_ERROR);
-      return t('Error: nid missing or invalid');
+      services_error('Error: webform id missing or invalid', 400, t('The webform id is either missing or invalid (not an integer).'));
     }
 
     if (!in_array($node->type, $webform_node_types)) {
       watchdog('springboard_api', t('Invalid resource requested.'), array(), WATCHDOG_ERROR);
-      return t('Invalid resource requested.');
+      services_error('Error: Invalid id', 400, t('The webform id submitted does not match any webforms on the site.'));
     }
 
     if (!node_access('view', $node)) {
       watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), array(), WATCHDOG_ERROR);
-      return t('Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name));
+      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), 400, t('Your API account does not have access to retrieve the requested webform.'));
     }
 
-    $webform = (array) $node;
+    $webform['nid'] = $node->nid;
+    $webform['type'] = $node->type;
+    $webform['title'] = $node->title;
+    
   
     $webform['components'] = _springboard_api_get_webform_components($node->nid);
     $user = $cache_user;
@@ -71,7 +74,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
   }
   else {
 
-    return $_SESSION['messages'];
+    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
   }
 }
 
@@ -195,13 +198,18 @@ function springboard_api_submit_webform($submission) {
     }
 
     drupal_execute('webform_client_form_' . $submission['webform_nid'], $form_state, $node, $submission, FALSE, FALSE);
-    $messages = $_SESSION['messages'];
+    $errors = form_get_errors();
+    if (!$errors) {
+      return $_SESSION['messages'];
+    }
+    else {
+      services_error('Error: One or more problems where detected with your submission.', 400, $errors);
+    }
 
-    return $messages;
   }
   else {
     watchdog('springboard_api', t('Invalid submission sent from %ip', array('%ip' => $_SERVER['REMOTE_ADDR'])), array(), WATCHDOG_ERROR);
-    return $_SESSION['messages'];
+    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
   }
 }
 
@@ -216,10 +224,6 @@ function springboard_api_submit_webform($submission) {
 function springboard_api_validate_donation($donation = array()) {
    unset($_SESSION['messages']);
    $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
-  
-   if (strcmp($node_type, 'donation_form')) {
-     drupal_set_message(t('The webform node id (webform_id) is missing or invalid.'));
-   }
    
   // TODO: replace this with a function call that ascertains required fields for this webform.
   $results = db_query('SELECT form_key FROM {webform_component} WHERE nid=%d AND mandatory = 1', $donation['webform_id']);
@@ -248,7 +252,7 @@ function springboard_api_validate_donation($donation = array()) {
     }
   }
   if (count($_SESSION['messages'])) {
-    return services_error('One or more problems where detected with your submission.', 200, $_SESSION['messages']);
+    return services_error('Error: one or more required fields are missing.', 400, $_SESSION['messages']);
   }
 }
 
@@ -283,7 +287,18 @@ function _springboard_api_get_webform_components($nid) {
     FROM {webform_component} 
     WHERE nid = %d', $nid);
   while ($field = db_fetch_array($results)) {
+
     $field['details'] = unserialize($field['details']);
+    
+    if ($field['type'] == 'select') {
+      $items = array();
+      $items_raw = explode("\n", $field['details']['items']);
+      foreach ($items_raw as $item) {
+        $item = explode('|', $item);
+        $items[] = array('key' => $item[0], 'value' => $item[1]);
+      }
+      $field['details']['items'] = $items;
+    }
     $fields[] = $field;
   }
   return $fields;
