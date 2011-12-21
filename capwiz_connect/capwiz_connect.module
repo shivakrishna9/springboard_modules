@@ -11,10 +11,8 @@
  * -----
  * - Action mapping form needs the correct Capwiz fields
  * - Handle 'more' flag from API, and make subsequent calls if necessary
- * 
- * Minor
- * -----
- * - Breadcrumbs not showing when viewing/editing/etc forms
+ * - Implement field mapping in queue hooks for Actions
+ *   - sf_userid needs to switch to SF id
  */
 
 /**
@@ -516,9 +514,8 @@ function _capwiz_connect_sync_actions_for_account($account_details) {
  * Prep an object to be sent to SF. Mostly copied from sf_webform_queue_preprocess_batch_alter()
  */
 function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
-  if ($batch['type'] == 'capwiz_connect_user') {
+  if ($batch['type'] == 'capwiz_connect_user' || $batch['type'] == 'capwiz_connect_user') {
     switch ($batch['action']) {
-			
 			case 'update':
 			case 'upsert':
 			case 'create':

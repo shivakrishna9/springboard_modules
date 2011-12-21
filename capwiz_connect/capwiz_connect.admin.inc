@@ -494,9 +494,6 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
 	if ($form_state['values']['object'] || !empty($account->mapping_action['sf_object'])) {
 		$object = !empty($account->mapping_action['sf_object']) ? $account->mapping_action['sf_object'] : $form_state['values']['object'];
 		
-		$connection = capwiz_connect($account->id);
-		$user_fields = $connection->getCustomUserFields();
-    
 		// Get the fields available on this type of Salesforce object
 		$object_details = _capwiz_connect_get_sf_object_details($object);
 		$fields = $object_details['fields'];
@@ -516,14 +513,25 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
 			'#options' => $record_types,
 			'#default_value' => $account->mapping_action['recordtype_id'],
 		);
-
-		foreach($user_fields as $field_key => $field) {
+    
+    // Define the Capwiz fiels that can be defined to SF fields
+    // Field name as key, displayable label as the value
+    $capwiz_fields = array(
+      'alertId' => 'Alert ID',
+      'action_timestamp' => 'Action Timestamp',
+      'emailAddress' => 'Email Address',
+      'messageId' => 'Message ID',
+      'userId' => 'Capwiz User ID',
+      'sf_userid' => 'Salesforce User Record',
+    );
+    
+		foreach($capwiz_fields as $field_key => $field_label) {
 		  $map_for_field = $account->mapping_action['map'][$field_key];
 		  
 			// Capwiz field
 			$form['map']['user_field'][$field_key] = array(
   			'#type' => 'item',
-  			'#description' => t($field->label . " - (" . $field->formInputType . ")"),
+  			'#description' => t($field_label),
 			);
 			// Salesforce field
 			$form['map']['salesforce'][$field_key] = array(
