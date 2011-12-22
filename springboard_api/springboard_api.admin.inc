@@ -48,7 +48,7 @@ function springboard_api_admin() {
   $form['new']['user'] = array(
     '#type' => 'textfield',
     '#title' => t('User'),
-    '#autocomplete_path' => 'users_autocomplete/springboard_api', 
+    '#autocomplete_path' => 'user/autocomplete', 
     '#description' => t('Select a user account to associate with this app. Service calls made by this app will use the permissionsa assigned to this account for purposes of access checking.'),
   );
   $form['new']['submit'] = array(
