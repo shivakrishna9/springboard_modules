@@ -428,7 +428,7 @@ function email_confirmation_nodeapi(&$node, $op) {
         break;
 
       case 'delete': 
-        db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $nid);
+        db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
         break;
     }
   }
