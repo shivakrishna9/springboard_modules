@@ -10,6 +10,8 @@ class CapizConnect {
   private $client_id;
   private $session_id;
   
+  private $last_user_offset = 0;
+  
   /**
    * Create a single instance of CapizConnect.
    */
@@ -134,8 +136,13 @@ class CapizConnect {
    * 
    * @param $updated_since
    *   Timestamp. If given, only users updated since that time will be returned.
+   * @param $start
+   *   User to start at. If given, this will be used as the start value for the
+   *   query, since some queries will result in multiple batches of users.
+   * @param $batch_size
+   *   Number of items to include in a given batch
    */
-  public function queryUsers($updated_since = 0) {
+  public function queryUsers($updated_since = 0, $start = 0, $batch_size = 500) {
     if (!$this->connected) {
       return FALSE;
     }
@@ -149,6 +156,14 @@ class CapizConnect {
       $query_params['updatedSince'] = date('c', $updated_since);
     }
     
+    // If requesting a second (or third or fourth or...) batch of users, start at
+    // some point in the result set.
+    $query_params['start'] = (int)$start;
+    // If a batch size is given, only get that many items
+    if ($batch_size > 0) {
+      $query_params['end'] = $query_params['start'] + $batch_size;
+    }
+    
     $url = url(self::$base_url . 'users/v1/client/' . $this->client_id . '/users', array('query' => $query_params));
     
     $user_response = drupal_http_request($url);
@@ -159,6 +174,20 @@ class CapizConnect {
       if ($response_data) {
         $this->last_error = t('Users queried successfully');
         $users = $response_data->users;
+
+        // Check if there are more users to get
+        if ($response_data->moreData == 'true') {
+          // Determine the offset of the last item
+          $last_user = end($users);
+          $this->last_user_offset = $last_user->offset;
+          reset($users);
+        }
+        else {
+          $this->last_user_offset = 0;
+        }
+        
+        db_query('UPDATE {capwiz_connect_accounts} SET user_sync_offset=%d WHERE id=%d', $this->last_user_offset, $this->account_details->id);
+        
         return $users;
       }
       else {
@@ -181,6 +210,20 @@ class CapizConnect {
     return FALSE;
   }
   
+  
+  /**
+   * Return whether or not there are more users to collect from the 
+   */
+  function hasMoreUsers() {
+    return ($this->last_user_offset > 0);
+  }
+  
+  /**
+   * Return the offset of the last user that was returned by a query
+   */
+  function lastUserOffset() {
+    return $this->last_user_offset;
+  }
   
   /**
    * Get a single user by email
