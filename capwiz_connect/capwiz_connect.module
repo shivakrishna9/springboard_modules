@@ -9,9 +9,9 @@
 /**
  * Todos
  * -----
- * - Handle 'more' flag from API, and make subsequent calls if necessary
- *   - This needs to be done for both data types
- *   - Waiting to hear back from Capwiz on bugfix for moreData field on users: same problem in action may exist
+ * - Define syncUsersBatch() method on CapwizConnect class
+ *   - Query a batch of users, add them to the local store and sf_queue, and set values in capwiz_connect_accounts table
+ * - Handle 'more' flag for actions, and make subsequent calls if necessary
  * - Determine the value to use for last_sync fields before querying the API, so that the timestamp will be from the beginning of the sync, not the end
  *   - Better yet: while saving the users, track the highest timestamp that appears there and use that as the "since"
  * - Split user saving into a separate function, so that it can be replaced with a Drupal user save later on
@@ -162,7 +162,36 @@ function capwiz_connect_menu() {
     'access arguments' => array('administer capwiz_connect'),
   );
   
+  $items['captest'] = array(
+    'page callback' => 'captest',
+    'access callback' => TRUE,
+  );
+  
+  
   return $items;
+}
+
+
+function captest() {
+  $con = capwiz_connect(1);
+  
+  $output = '';
+  $user_start = 0;
+  $users = $con->queryUsers(0, $user_start);
+  //while ($users = $con->queryUsers(0, $user_start, 100)) {
+    foreach ($users as $u) {
+      $output .= $u->id . ': ' . $u->firstName . ' ' . $u->lastName . '<br>';
+    }
+    $output .= "Done with batch<hr>";
+    if ($con->hasMoreUsers()) {
+      $user_start = $con->lastUserOffset() + 1;
+      $output .= "Starting next batch at offset $user_start<br>";
+    }
+    else {
+      //break;
+    }
+    //}
+  return $output;
 }
 
 /**
@@ -189,10 +218,10 @@ function capwiz_connect_theme($existing, $type, $theme, $path) {
 /**
  * Load a Capwiz Connect account. Used for placeholders in menu item URLs
  */
-function capwiz_connect_account_load($id) {
+function capwiz_connect_account_load($id, $refresh_cache = FALSE) {
   static $account_details = array();
   
-  if ($id > 0 && !$account_details[$id]) {
+  if ($id > 0 && (!$account_details[$id] || $refresh_cache)) {
     $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
     
     // Load existing mapping for users and actions for this Capwiz account
@@ -224,14 +253,14 @@ function capwiz_connect_account_load($id) {
 /**
  * Get the full list of accounts
  */
-function capwiz_connect_all_accounts() {
+function capwiz_connect_all_accounts($refresh_cache = FALSE) {
   static $all_accounts;
   
-  if (!$all_accounts) {
+  if (!$all_accounts || $refresh_cache) {
     $all_accounts = array();
-    $result = db_query('SELECT * FROM {capwiz_connect_accounts}');
+    $result = db_query('SELECT id FROM {capwiz_connect_accounts}');
     while ($row = db_fetch_object($result)) {
-      $all_accounts[$row->id] = $row;
+      $all_accounts[$row->id] = capwiz_connect_account_load($id, $refresh_cache);
     }
   }
   return $all_accounts;
@@ -291,7 +320,7 @@ function capwiz_connect_cron() {
  * Do the actual cron run
  */
 function capwiz_connect_cron_process() {
-  $all_accounts = capwiz_connect_all_accounts();
+  $all_accounts = capwiz_connect_all_accounts(TRUE);
   foreach ($all_accounts as $account_id => $account_details) {
     _capwiz_connect_sync_users_for_account($account_details);
     _capwiz_connect_sync_actions_for_account($account_details);
@@ -313,7 +342,7 @@ function _capwiz_connect_sync_users_for_account($account_details) {
   $connection = capwiz_connect($account_id);
     
   // Query for users that have been updated since the last time
-  $last_sync = $account_details->last_user_sync;
+  $last_sync = $account_details->user_sync_since;
   if ($last_sync > 0) {
     // Reduce the last time stamp to act as a buffer, to make sure no users
     // fall between the cracks
@@ -398,8 +427,8 @@ function _capwiz_connect_sync_users_for_account($account_details) {
     watchdog('capwiz_connect', $message, $message_vars);
   }
     
-  // Update the last_user_sync timestamp on this account
-  db_query('UPDATE {capwiz_connect_accounts} SET last_user_sync=%d WHERE id=%d', time(), $account_id);
+  // Update the user_sync_since timestamp on this account
+  db_query('UPDATE {capwiz_connect_accounts} SET user_sync_since=%d WHERE id=%d', time(), $account_id);
 }
 
 
@@ -504,7 +533,7 @@ function _capwiz_connect_sync_actions_for_account($account_details) {
     watchdog('capwiz_connect', $message, $message_vars);
   }
     
-  // Update the last_user_sync timestamp on this account
+  // Update the last_action timestamp on this account
   db_query('UPDATE {capwiz_connect_accounts} SET last_action_sync=%d WHERE id=%d', time(), $account_id);
 }
 
