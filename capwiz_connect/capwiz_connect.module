@@ -681,8 +681,46 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
           }
         }
         break;
+      
+      // Legislation district fields. Only on users. These fields are listed on
+      // every official in the user data, with the same value on each
+      case 'nationalDistrict':
+      case 'stateDistrictUpper':
+      case 'stateDistrictLower':
+        // Make sure the officials array has at least one item in it
+        if (is_array($object->data->officials) && is_object($object->data->officials[0])) {
+          // Get the requested field from the first legislator object in the array
+          if ($object->data->officials[0]->{$capwiz_field_name}) {
+            $salesforce_map['fields'][$sf_field_name] = $object->data->officials[0]->{$capwiz_field_name};
+          }
+        }
+        break;
         
-      // Every other field. Just load the 
+      // Federal senators. Users only.
+      case 'fed_senator_1':
+      case 'fed_senator_2':
+        // @todo
+        break;
+      
+      // Federal senator phone numbers. Users only.
+      case 'fed_senator_1_phone':
+      case 'fed_senator_2_phone':
+        // @todo
+        break;
+        
+      // Federal rep. Users only.
+      case 'fed_rep':
+        // @todo
+        break;
+        
+      // Federal rep phone number. Users only.
+      case 'fed_rep_phone':
+        // @todo
+        break;
+        
+      
+      
+      // Every other field. Just load the field from the object
       default:
         $salesforce_map['fields'][$sf_field_name] = $object->data->{$capwiz_field_name};
     }

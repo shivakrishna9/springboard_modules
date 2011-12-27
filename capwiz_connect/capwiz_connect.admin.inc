@@ -338,8 +338,47 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 	if ($form_state['values']['object'] || !empty($account->mapping_user['sf_object'])) {
 		$object = !empty($account->mapping_user['sf_object']) ? $account->mapping_user['sf_object'] : $form_state['values']['object'];
 		
+    // Get the custom fields for users from Capwiz
 		$connection = capwiz_connect($account->id);
 		$user_fields = $connection->getCustomUserFields();
+    
+    // Add fields for the legislator fields
+    $user_fields['fed_senator_1'] = (object)array(
+      'label' => 'Federal Senator 1',
+      'formInputType' => 'auto',
+    );
+    $user_fields['fed_senator_1_phone'] = (object)array(
+      'label' => 'Federal Senator 1 Phone',
+      'formInputType' => 'auto',
+    );
+    $user_fields['fed_senator_2'] = (object)array(
+      'label' => 'Federal Senator 2',
+      'formInputType' => 'auto',
+    );
+    $user_fields['fed_senator_2_phone'] = (object)array(
+      'label' => 'Federal Senator 2 Phone',
+      'formInputType' => 'auto',
+    );
+    $user_fields['fed_rep'] = (object)array(
+      'label' => 'Federal Representative',
+      'formInputType' => 'auto',
+    );
+    $user_fields['fed_rep_phone'] = (object)array(
+      'label' => 'Federal Representative 1 Phone',
+      'formInputType' => 'auto',
+    );
+    $user_fields['nationalDistrict'] = (object)array(
+      'label' => 'National District',
+      'formInputType' => 'auto',
+    );
+    $user_fields['stateDistrictUpper'] = (object)array(
+      'label' => 'State Upper',
+      'formInputType' => 'auto',
+    );
+    $user_fields['stateDistrictLower'] = (object)array(
+      'label' => 'State Lower',
+      'formInputType' => 'auto',
+    );
     
 		// Get the fields available on this type of Salesforce object
 		$object_details = _capwiz_connect_get_sf_object_details($object);
