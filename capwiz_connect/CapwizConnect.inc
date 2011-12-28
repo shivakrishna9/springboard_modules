@@ -12,6 +12,13 @@ class CapizConnect {
   
   private $last_user_offset = 0;
   
+
+  // Status values when saving users
+  public static $STAT_UPDATE_OK = 1;
+  public static $STAT_UPDATE_FAIL = 2;
+  public static $STAT_CREATE_OK = 4;
+  public static $STAT_CREATE_FAIL = 8;
+  
   /**
    * Create a single instance of CapizConnect.
    */
@@ -365,41 +372,18 @@ class CapizConnect {
     }
     
     if (is_array($users) && !empty($users)) {
+      // Prep an array to keep track of added/updated users
+      $save_counts = array(
+        self::$STAT_CREATE_OK => 0,
+        self::$STAT_UPDATE_OK => 0,
+        self::$STAT_CREATE_FAIL => 0,
+        self::$STAT_UPDATE_FAIL => 0,
+      );
+        
       // Loop over the returned users and save them to the DB
       foreach ($users as $user) {
-        $capwiz_user_id = $user->id;
-        $record = array(
-          'capwiz_account_id' => $account_id,
-          'capwiz_user_id' => $capwiz_user_id,
-          'local_uid' => 0,
-          'data' => serialize($user),
-        );
-        
-        // Check if this user (identified by Capwiz ID) is already in our DB
-        $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-        
-        if ($existing_record) {
-          // User is already in our DB: update the record
-          if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
-            $updated++;
-          }
-          else {
-            $update_fail++;
-          }
-        }
-        else {
-          // New-to-us user
-          if(drupal_write_record('capwiz_connect_users', $record)) {
-            $created++;
-          }
-          else {
-            $create_fail++;
-          }
-        }
-        // Insert the user into the Salesforce processing queue
-        if ($record['capwiz_user_id']) {
-          sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
-        }
+        $save_stat = $this->saveUser($user);
+        $save_counts[$save_stat]++;
       }
       
       // Log stats for users collected for this account
@@ -415,10 +399,10 @@ class CapizConnect {
       }
       $message_vars = array(
         '%account_name' => $this->account_details->display_name,
-        '%created' => $created,
-        '%updated' => $updated,
-        '%create_fail' => $create_fail,
-        '%update_fail' => $update_fail,
+        '%created' => $save_counts[self::$STAT_CREATE_OK],
+        '%updated' => $save_counts[self::$STAT_UPDATE_OK],
+        '%create_fail' => $save_counts[self::$STAT_CREATE_FAIL],
+        '%update_fail' => $save_counts[self::$STAT_UPDATE_FAIL],
       );
       watchdog('capwiz_connect', $message, $message_vars, $severity);
     }
@@ -427,14 +411,64 @@ class CapizConnect {
       $message = "No users to add or update for %account_name.";
       $message_vars = array(
         '%account_name' => $this->account_details->display_name,
-        '%created' => $created,
-        '%updated' => $updated,
-        '%create_fail' => $create_fail,
-        '%update_fail' => $update_fail,
       );
       watchdog('capwiz_connect', $message, $message_vars);
     }
   }
+  
+  
+  
+  /**
+   * Local method to save a user. Right now, this saves to the capwiz_connect_users
+   * table and adds the user to the Salesforce processing queue, but this might be
+   * changed later to create Drupal users
+   * 
+   * @param $user
+   *   Object representing a user that was pulled over from Capwiz
+   * 
+   * @return int
+   *   Returns a status matching a static $STAT_* variable from this class
+   */
+  private function saveUser($user) {
+    $return_value = 0;
+    
+    $capwiz_user_id = $user->id;
+    $record = array(
+      'capwiz_account_id' => $account_id,
+      'capwiz_user_id' => $capwiz_user_id,
+      'local_uid' => 0,
+      'data' => serialize($user),
+    );
+        
+    // Check if this user (identified by Capwiz ID) is already in our DB
+    $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+        
+    if ($existing_record) {
+      // User is already in our DB: update the record
+      if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
+        $return_value = self::$STAT_UPDATE_OK;
+      }
+      else {
+        $return_value = self::$STAT_UPDATE_FAIL;
+      }
+    }
+    else {
+      // New-to-us user
+      if(drupal_write_record('capwiz_connect_users', $record)) {
+        $return_value = self::$STAT_CREATE_OK;
+      }
+      else {
+        $return_value = self::$STAT_CREATE_FAIL;
+      }
+    }
+    // Insert the user into the Salesforce processing queue
+    if ($record['capwiz_user_id']) {
+      sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
+    }
+    
+    return $return_value;
+  }
+  
   
   
   /***********************************************

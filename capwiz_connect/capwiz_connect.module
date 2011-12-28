@@ -9,12 +9,7 @@
 /**
  * Todos
  * -----
- * - Define syncUsersBatch() method on CapwizConnect class
- *   - Query a batch of users, add them to the local store and sf_queue, and set values in capwiz_connect_accounts table
  * - Handle 'more' flag for actions, and make subsequent calls if necessary
- * - Determine the value to use for last_sync fields before querying the API, so that the timestamp will be from the beginning of the sync, not the end
- *   - Better yet: while saving the users, track the highest timestamp that appears there and use that as the "since"
- * - Split user saving into a separate function, so that it can be replaced with a Drupal user save later on
  * - Convert the capwiz user ID field to a varchar in case it goes above 2^31, like was done for actions
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
  */
@@ -306,11 +301,11 @@ function capwiz_connect_cron() {
       return 0;
     }
     else {
-      watchdog('capwiz_connect_cron', t('Standalone cron run.'));
+      watchdog('capwiz_connect', t('Standalone cron run.'));
     }
   }
   else {
-    watchdog('capwiz_connect_cron', t('Standard cron run.'));
+    watchdog('capwiz_connect', t('Standard cron run.'));
   }
   capwiz_connect_cron_process();
 }
