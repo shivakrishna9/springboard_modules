@@ -183,9 +183,12 @@ class CapizConnect {
           reset($users);
         }
         else {
+          // No more users to sync down. Reset the offset for the next run to 0 so
+          // it starts over
           $this->last_user_offset = 0;
         }
         
+        // Save the new user offset so we know where to start the next batch
         db_query('UPDATE {capwiz_connect_accounts} SET user_sync_offset=%d WHERE id=%d', $this->last_user_offset, $this->account_details->id);
         
         return $users;
@@ -335,6 +338,103 @@ class CapizConnect {
   }
   
   
+  
+  /**
+   * Sync a batch of users down from Capwiz
+   */
+  public function syncUsersBatch() {
+    // Note when we started this batch, to update user_sync_since if this batch
+    // completes the full user sync. Subtract five minutes to ensure that no one
+    // falls through the cracks between batches
+    $batch_start_time = time() - 300;
+    
+    // Query for users that have been updated since the last time
+    $sync_since = $this->account_details->user_sync_since;
+    $start_offset = $this->account_details->user_sync_offset;
+    $users = $this->queryUsers($sync_since, $start_offset);
+    
+    if (!$this->hasMoreUsers()) {
+      $this->account_details->user_sync_since = $batch_start_time;
+      db_query('UPDATE {capwiz_connect_accounts} SET user_sync_since=%d WHERE id=%d', $this->account_details->user_sync_since, $this->account_details->id);
+    }
+
+    // If $users is FALSE, there was an error connecting or querying users, and a
+    // message will be logged to the watchdog
+    if ($users === FALSE) {
+      return;
+    }
+    
+    if (is_array($users) && !empty($users)) {
+      // Loop over the returned users and save them to the DB
+      foreach ($users as $user) {
+        $capwiz_user_id = $user->id;
+        $record = array(
+          'capwiz_account_id' => $account_id,
+          'capwiz_user_id' => $capwiz_user_id,
+          'local_uid' => 0,
+          'data' => serialize($user),
+        );
+        
+        // Check if this user (identified by Capwiz ID) is already in our DB
+        $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+        
+        if ($existing_record) {
+          // User is already in our DB: update the record
+          if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
+            $updated++;
+          }
+          else {
+            $update_fail++;
+          }
+        }
+        else {
+          // New-to-us user
+          if(drupal_write_record('capwiz_connect_users', $record)) {
+            $created++;
+          }
+          else {
+            $create_fail++;
+          }
+        }
+        // Insert the user into the Salesforce processing queue
+        if ($record['capwiz_user_id']) {
+          sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
+        }
+      }
+      
+      // Log stats for users collected for this account
+      $severity = WATCHDOG_INFO;
+      $message = "Updated users for %account_name. Created: %created. Updated: %updated.";
+      if ($create_fail > 0) {
+        $message .= " Failed to create: %create_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      if ($update_fail > 0) {
+        $message .= " Failed to update: %update_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      $message_vars = array(
+        '%account_name' => $this->account_details->display_name,
+        '%created' => $created,
+        '%updated' => $updated,
+        '%create_fail' => $create_fail,
+        '%update_fail' => $update_fail,
+      );
+      watchdog('capwiz_connect', $message, $message_vars, $severity);
+    }
+    else {
+      // $users was an empty array, so there were no new users
+      $message = "No users to add or update for %account_name.";
+      $message_vars = array(
+        '%account_name' => $this->account_details->display_name,
+        '%created' => $created,
+        '%updated' => $updated,
+        '%create_fail' => $create_fail,
+        '%update_fail' => $update_fail,
+      );
+      watchdog('capwiz_connect', $message, $message_vars);
+    }
+  }
   
   
   /***********************************************
