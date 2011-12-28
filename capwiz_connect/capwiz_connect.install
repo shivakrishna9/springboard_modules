@@ -86,8 +86,13 @@ function capwiz_connect_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
-      'last_action_sync' => array(
+      'action_sync_since' => array(
         'description' => t('Timestamp when actions were last synced from Capwiz'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'action_sync_offset' => array(
+        'description' => t('The offset of the last action that was synced from Capwiz'),
         'type' => 'int',
         'not null' => FALSE,
       ),

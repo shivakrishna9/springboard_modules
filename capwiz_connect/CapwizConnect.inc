@@ -11,6 +11,7 @@ class CapizConnect {
   private $session_id;
   
   private $last_user_offset = 0;
+  private $last_action_offset = 0;
   
 
   // Status values when saving users
@@ -222,18 +223,12 @@ class CapizConnect {
   
   
   /**
-   * Return whether or not there are more users to collect from the 
+   * Return whether or not there are more users to collect from the API
    */
   function hasMoreUsers() {
     return ($this->last_user_offset > 0);
   }
-  
-  /**
-   * Return the offset of the last user that was returned by a query
-   */
-  function lastUserOffset() {
-    return $this->last_user_offset;
-  }
+
   
   /**
    * Get a single user by email
@@ -360,16 +355,20 @@ class CapizConnect {
     $start_offset = $this->account_details->user_sync_offset;
     $users = $this->queryUsers($sync_since, $start_offset);
     
-    if (!$this->hasMoreUsers()) {
-      $this->account_details->user_sync_since = $batch_start_time;
-      db_query('UPDATE {capwiz_connect_accounts} SET user_sync_since=%d WHERE id=%d', $this->account_details->user_sync_since, $this->account_details->id);
-    }
-
     // If $users is FALSE, there was an error connecting or querying users, and a
     // message will be logged to the watchdog
     if ($users === FALSE) {
       return;
     }
+    
+    // If this is the last batch of users, set the last sync time to right now
+    // so that the next batch will only query users who are updated after right
+    // now.
+    if (!$this->hasMoreUsers()) {
+      $this->account_details->user_sync_since = $batch_start_time;
+      db_query('UPDATE {capwiz_connect_accounts} SET user_sync_since=%d WHERE id=%d', $this->account_details->user_sync_since, $this->account_details->id);
+    }
+    
     
     if (is_array($users) && !empty($users)) {
       // Prep an array to keep track of added/updated users
@@ -434,7 +433,7 @@ class CapizConnect {
     
     $capwiz_user_id = $user->id;
     $record = array(
-      'capwiz_account_id' => $account_id,
+      'capwiz_account_id' => $this->account_details->id,
       'capwiz_user_id' => $capwiz_user_id,
       'local_uid' => 0,
       'data' => serialize($user),
@@ -481,7 +480,7 @@ class CapizConnect {
    * @param $updated_since
    *   Timestamp. If given, only actions updated since that time will be returned.
    */
-  public function queryActions($updated_since = 0) {
+  public function queryActions($updated_since = 0, $start = 0, $batch_size = 500) {
     if (!$this->connected) {
       return FALSE;
     }
@@ -495,6 +494,14 @@ class CapizConnect {
       $query_params['minDate'] = date('c', $updated_since);
     }
     
+    // If requesting a second (or third or fourth or...) batch of actions,
+    // start at some point in the result set.
+    $query_params['start'] = (int)$start;
+    // If a batch size is given, only get that many items
+    if ($batch_size > 0) {
+      $query_params['end'] = $query_params['start'] + $batch_size;
+    }
+
     $url = url(self::$base_url . 'activity/v1/client/' . $this->client_id . '/events', array('query' => $query_params));
     
     $action_response = drupal_http_request($url);
@@ -504,7 +511,24 @@ class CapizConnect {
       $response_data = json_decode($action_response->data);
       if ($response_data) {
         $this->last_error = t('Actions queried successfully');
-        return $response_data->events;
+        $actions = $response_data->events;
+        
+        // Check if there are more actions to get
+        if ($response_data->moreData == 'true') {
+          // Determine the offset of the last item
+          $last_action = end($actions);
+          $this->last_action_offset = $last_action->offset;
+          reset($actions);
+        }
+        else {
+          // No more actions to sync down. Reset the offset for the next run to
+          // 0 so it starts over
+          $this->last_action_offset = 0;
+        }  
+        // Save the new action offset so we know where to start the next batch
+        db_query('UPDATE {capwiz_connect_accounts} SET action_sync_offset=%d WHERE id=%d', $this->last_action_offset, $this->account_details->id);
+        
+        return $actions;      
       }
       else {
         watchdog('capwiz_connect', 'There was an error querying actions with Capwiz Connect for account %account_name. Response: %error.', array('%account_name' => $this->account_details->display_name, '%error' => print_r($auth_response->data, TRUE)), WATCHDOG_ERROR);
@@ -526,4 +550,141 @@ class CapizConnect {
     return FALSE;
   }
   
+  
+  /**
+   * Return whether or not there are more actions to collect from the API
+   */
+  function hasMoreActions() {
+    return ($this->last_action_offset > 0);
+  }
+  
+  
+  /**
+   * Sync a batch of action from Capwiz
+   */
+  public function syncActionsBatch() {
+    // Note when we started this batch, to update action_sync_since if this
+    // batch completes the full action sync. Subtract five minutes to ensure
+    // that no actions falls through the cracks between batches
+    $batch_start_time = time() - 300;
+    
+    // Query for actions that have been updated since the last time
+    $sync_since = $this->account_details->action_sync_since;
+    $start_offset = $this->account_details->action_sync_offset;
+    $actions = $this->queryActions($sync_since, $start_offset);
+    
+    // If $actions is FALSE, there was an error connecting or querying actions,
+    // and a message will be logged to the watchdo
+    if ($actions === FALSE) {
+      return;
+    }
+    
+    
+    // No more actions remaining, so update the last sync time so that next
+    // time, it will only query actions that happen after this.
+    if (!$this->hasMoreActions()) {
+      $this->account_details->action_sync_since = $batch_start_time;
+      db_query('UPDATE {capwiz_connect_accounts} SET action_sync_since=%d WHERE id=%d', $this->account_details->action_sync_since, $this->account_details->id);
+    }
+    
+
+    if (is_array($actions) && !empty($actions)) {
+      // Prep an array to keep track of added/updated users
+      $save_counts = array(
+        self::$STAT_CREATE_OK => 0,
+        self::$STAT_UPDATE_OK => 0,
+        self::$STAT_CREATE_FAIL => 0,
+        self::$STAT_UPDATE_FAIL => 0,
+      );
+        
+      // Loop over the returned users and save them to the DB
+      foreach ($actions as $action) {
+        $save_stat = $this->saveAction($action);
+        $save_counts[$save_stat]++;
+      }
+      
+      // Log stats for users collected for this account
+      $severity = WATCHDOG_INFO;
+      $message = "Updated actions for %account_name. Created: %created. Updated: %updated.";
+      if ($create_fail > 0) {
+        $message .= " Failed to create: %create_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      if ($update_fail > 0) {
+        $message .= " Failed to update: %update_fail.";
+        $severity = WATCHDOG_ERROR;
+      }
+      $message_vars = array(
+        '%account_name' => $this->account_details->display_name,
+        '%created' => $save_counts[self::$STAT_CREATE_OK],
+        '%updated' => $save_counts[self::$STAT_UPDATE_OK],
+        '%create_fail' => $save_counts[self::$STAT_CREATE_FAIL],
+        '%update_fail' => $save_counts[self::$STAT_UPDATE_FAIL],
+      );
+      watchdog('capwiz_connect', $message, $message_vars, $severity);
+    }
+    else {
+      // $actions was an empty array, so there were no new users
+      $message = "No actions to add or update for %account_name.";
+      $message_vars = array(
+        '%account_name' => $this->account_details->display_name,
+      );
+      watchdog('capwiz_connect', $message, $message_vars);
+    }
+  }
+  
+  
+  
+  /**
+   * Local method to save an action
+   * 
+   * @param $action
+   *   Object representing an action that was pulled over from Capwiz
+   * 
+   * @return int
+   *   Returns a status matching a static $STAT_* variable from this class
+   */
+  private function saveAction($action) {
+    $return_value = 0;
+    
+    $message_id = $action->messageId;
+    $record = array(
+      'message_id' => $message_id,
+      'capwiz_account_id' => $this->account_details->id,
+      'capwiz_alert_id' => $action->alertId,
+      'capwiz_user_id' => $action->userId,
+      'data' => serialize($action),
+      'action_timestamp' => strtotime($action->dtAction),
+    );
+        
+    // Check if this action (identified by message ID) is already in our DB
+    $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE message_id='%s'", $message_id));
+        
+    if ($existing_record_id > 0) {
+      // Action is already in our DB: update the record
+      $record['id'] = $existing_record_id;
+      if (drupal_write_record('capwiz_connect_actions', $record, 'id')) {
+        $return_value = self::$STAT_UPDATE_OK;
+      }
+      else {
+        $return_value = self::$STAT_UPDATE_FAIL;
+      }
+    }
+    else {
+      // New-to-us user
+      if(drupal_write_record('capwiz_connect_actions', $record)) {
+        $return_value = self::$STAT_CREATE_OK;
+      }
+      else {
+        $return_value = self::$STAT_CREATE_FAIL;
+      }
+    }
+    
+    // Insert the action into the Salesforce processing queue
+    if ($record['id']) {
+      sf_queue_insert($record['id'], 'capwiz_connect_action', 'upsert');
+    }
+    
+    return $return_value;
+  }
 }
