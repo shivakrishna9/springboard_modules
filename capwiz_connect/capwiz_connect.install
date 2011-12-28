@@ -81,11 +81,6 @@ function capwiz_connect_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
-      'last_user_sync_start' => array(
-        'description' => t('Timestamp when users were last synced from Capwiz'),
-        'type' => 'int',
-        'not null' => FALSE,
-      ),
       'user_sync_offset' => array(
         'description' => t('The offset of the last user that was synced from Capwiz'),
         'type' => 'int',
