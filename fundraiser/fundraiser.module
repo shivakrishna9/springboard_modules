@@ -702,7 +702,7 @@ function fundraiser_load($node) {
   $extra = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d and form_key = "amount"', $node->nid));
   $extra = unserialize($extra);
 
-  $items = preg_split('/\s/', $extra['items']);
+  $items = preg_split('/\n/', $extra['items']);
   $count = 0;
 
   for ($i = 0; $i < count($items); ++$i) {
