@@ -9,11 +9,9 @@
 /**
  * Todos
  * -----
- * - Handle 'more' flag for actions, and make subsequent calls if necessary
- * - Convert the capwiz user ID field to a varchar in case it goes above 2^31, like was done for actions
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
  * 
- * - ISSUE: If not all users are synced, actions will fail to SF because the user won't exist in the SF
+ * - ISSUE: Only add actions to the sf_queue once the user has been retrieved?
  */
 
 /**
@@ -360,7 +358,7 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
 
   // Load the user or action data, depending on the type
   if ($type == 'user') {
-    $object = _capwiz_connect_load_user($oid);
+    $object = _capwiz_connect_load_user_from_local_id($oid);
     if ($object) {
       $account_id = $object->capwiz_account_id;
     }
@@ -532,7 +530,7 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     $type = substr($data->type, 15);
     
     if ($type == 'user') {
-      $object = _capwiz_connect_load_user($data->oid);
+      $object = _capwiz_connect_load_user_from_local_id($data->oid);
       if ($object) {
         $account_id = $object->capwiz_account_id;
       }
@@ -571,7 +569,19 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
  * for the user
  */
 function _capwiz_connect_load_user($capwiz_user_id) {
-  $capwiz_user = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_users} WHERE capwiz_user_id=%d', $capwiz_user_id));
+  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+  if ($capwiz_user) {
+    $capwiz_user->data = unserialize($capwiz_user->data);
+    return $capwiz_user;
+  }
+  return NULL;
+}
+/**
+ * Load a single Capwiz user from the local data, using the local auto-
+ * increment ID that's used for the Salesforce processing queue
+ */
+function _capwiz_connect_load_user_from_local_id($id) {
+  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE id=%d", $id));
   if ($capwiz_user) {
     $capwiz_user->data = unserialize($capwiz_user->data);
     return $capwiz_user;

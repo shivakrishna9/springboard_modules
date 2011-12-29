@@ -440,11 +440,12 @@ class CapizConnect {
     );
         
     // Check if this user (identified by Capwiz ID) is already in our DB
-    $existing_record = db_result(db_query("SELECT 1 FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
+    $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
         
-    if ($existing_record) {
+    if ($existing_record_id > 0) {
+      $record['id'] = $existing_record_id;
       // User is already in our DB: update the record
-      if (drupal_write_record('capwiz_connect_users', $record, 'capwiz_user_id')) {
+      if (drupal_write_record('capwiz_connect_users', $record, 'id')) {
         $return_value = self::$STAT_UPDATE_OK;
       }
       else {
@@ -461,8 +462,8 @@ class CapizConnect {
       }
     }
     // Insert the user into the Salesforce processing queue
-    if ($record['capwiz_user_id']) {
-      sf_queue_insert($record['capwiz_user_id'], 'capwiz_connect_user', 'upsert');
+    if ($record['id']) {
+      sf_queue_insert($record['id'], 'capwiz_connect_user', 'upsert');
     }
     
     return $return_value;
