@@ -456,6 +456,19 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 			'#options' => $options,
 			'#default_value' => $account->mapping_user['map']['form_affiliation'],
 		);
+    // Salesforce business rules for form affiliation
+    $form['map']['business']['form_affiliation'] = array(
+      '#type' => 'select',
+      '#default_value' => $account->mapping_user['business']['form_affiliation'],
+  	  '#options' => array(
+    		'null' => t(''), 
+    		'blank' => t('Overwrite when blank'), 
+    		'append' => t('Append'),
+    		'always' => t('Always overwrite'),
+    		'never' => t('Never overwrite'),
+      ),
+    );
+    
 		
 		
 
@@ -589,20 +602,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
 				'#type' => 'select',
 				'#options' => $options,
 				'#default_value' => $account->mapping_action['map'][$field_key],
-			);
-      // Salesforce business rules
-      $form['map']['business'][$field_key] = array(
-        '#type' => 'select',
-        '#default_value' => $account->mapping_action['business'][$field_key],
-    	  '#options' => array(
-      		'null' => t(''), 
-      		'blank' => t('Overwrite when blank'), 
-      		'append' => t('Append'),
-      		'always' => t('Always overwrite'),
-      		'never' => t('Never overwrite'),
-        ),
-      );
-      
+			);      
 			
 			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
 				if ($account->mapping_action['dedupe_key'] == $map_for_field) {
@@ -728,17 +728,30 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row = array();
       $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
       $row[] = drupal_render($map['salesforce'][$field_key]);
-      $row[] = drupal_render($map['business'][$field_key]);
+      if ($form['#map_type'] != 'action') {
+        $row[] = drupal_render($map['business'][$field_key]);
+      }
       $row[] = drupal_render($map['dedupe'][$field_key]);
       $rows[] = $row;
     }
 		
-    $header = array(
-      "Capwiz Field",
-      "Salesforce Field",
-      "Business rules Drupal to SF",
-      "Dedupe Field"
-    );
+    // Set the headers for the table. Action mapping does NOT include business rules
+    if ($form['#map_type'] == 'action') {
+      $header = array(
+        "Capwiz Field",
+        "Salesforce Field",
+        "Dedupe Field"
+      );
+    }
+    else {
+      $header = array(
+        "Capwiz Field",
+        "Salesforce Field",
+        "Business rules Drupal to SF",
+        "Dedupe Field"
+      );
+    }
+    
     $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
 
     // Additional hard-coded fields that can be mapped
@@ -748,15 +761,28 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row = array();
       $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
       $row[] = drupal_render($map['salesforce'][$field_key]);
-      $row[] = drupal_render($map['business'][$field_key]);
+      if ($form['#map_type'] != 'action') {
+        $row[] = drupal_render($map['business'][$field_key]);
+      }
       $rows[] = $row;
     }
 
-    $header = array(
-      "Capwiz Account Field",
-      "Salesforce Field",
-      "Business rules Drupal to SF"
-    );
+
+    // Set the headers for the table. Action mapping does NOT include business rules
+    if ($form['#map_type'] == 'action') {
+      $header = array(
+        "Capwiz Account Field",
+        "Salesforce Field",
+      );
+    }
+    else {
+      $header = array(
+        "Capwiz Account Field",
+        "Salesforce Field",
+        "Business rules Drupal to SF"
+      );
+    }
+
     $output .= theme('table', $header, $rows);    
 
     // Remove map so it's not rendered twice
@@ -803,17 +829,30 @@ function capwiz_connect_render_salesforce_object_fields() {
     $row = array();
     $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
     $row[] = drupal_render($map['salesforce'][$field_key]);
-    $row[] = drupal_render($map['business'][$field_key]);
+    if ($form['#map_type'] != 'action') {
+      $row[] = drupal_render($map['business'][$field_key]);
+    }
     $row[] = drupal_render($map['dedupe'][$field_key]);
     $rows[] = $row;
   }
 
-  $header = array(
-    "Capwiz Field",
-    "Salesforce Field",
-    "Business rules Drupal to SF",
-    "Dedupe Field"
-  );
+  // Set the headers for the table. Action mapping does NOT include business rules
+  if ($form['#map_type'] == 'action') {
+    $header = array(
+      "Capwiz Field",
+      "Salesforce Field",
+      "Dedupe Field"
+    );
+  }
+  else {
+    $header = array(
+      "Capwiz Field",
+      "Salesforce Field",
+      "Business rules Drupal to SF",
+      "Dedupe Field"
+    );
+  }
+  
   $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
   
   // Additional hard-coded fields that can be mapped
@@ -823,15 +862,29 @@ function capwiz_connect_render_salesforce_object_fields() {
     $row = array();
     $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
     $row[] = drupal_render($map['salesforce'][$field_key]);
-    $row[] = drupal_render($map['business'][$field_key]);
+    if ($form['#map_type'] != 'action') {
+      $row[] = drupal_render($map['business'][$field_key]);
+    }
     $rows[] = $row;
   }
 
-  $header = array(
-    "Capwiz Account Field",
-    "Salesforce Field",
-    "Business rules Drupal to SF"
-  );
+
+
+  // Set the headers for the table. Action mapping does NOT include business rules
+  if ($form['#map_type'] == 'action') {
+    $header = array(
+      "Capwiz Account Field",
+      "Salesforce Field",
+    );
+  }
+  else {
+    $header = array(
+      "Capwiz Account Field",
+      "Salesforce Field",
+      "Business rules Drupal to SF"
+    );
+  }
+
   $output .= theme('table', $header, $rows);
   
   $output .= drupal_render($form['submit']);

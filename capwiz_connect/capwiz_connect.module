@@ -378,10 +378,11 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   // Load the Salesforce field map for this Capwiz account, if we have not already
   if (!$sf_field_map[$account_id][$type]) {
     $drupal = 'capwiz_connect:' . $account_id . ':' . $type;
-  	$sql = "SELECT salesforce, recordtype_id, fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
+  	$sql = "SELECT salesforce, recordtype_id, fields, business FROM {salesforce_management_field_map} WHERE drupal = '%s'";
   	$data = db_fetch_object(db_query($sql, $drupal));
 
 		$sf_field_map[$account_id][$type]['map'] = unserialize($data->fields);
+		$sf_field_map[$account_id][$type]['business'] = unserialize($data->business);
 		$sf_field_map[$account_id][$type]['object'] = $data->salesforce;
 		$sf_field_map[$account_id][$type]['recordtype_id'] = $data->recordtype_id;
   }
