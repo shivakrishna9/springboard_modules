@@ -408,12 +408,24 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   			'#type' => 'item',
   			'#description' => t($field->label . " - (" . $field->formInputType . ")"),
 			);
-			// Salesforce field
-			$form['map']['salesforce'][$field_key] = array(
-				'#type' => 'select',
-				'#options' => $options,
-				'#default_value' => $account->mapping_user['map'][$field_key],
-			);
+      // Salesforce field
+      $form['map']['salesforce'][$field_key] = array(
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => $account->mapping_user['map'][$field_key],
+      );
+      // Salesforce business rules
+      $form['map']['business'][$field_key] = array(
+        '#type' => 'select',
+        '#default_value' => $account->mapping_user['business'][$field_key],
+    	  '#options' => array(
+      		'null' => t(''), 
+      		'blank' => t('Overwrite when blank'), 
+      		'append' => t('Append'),
+      		'always' => t('Always overwrite'),
+      		'never' => t('Never overwrite'),
+        ),
+      );
 			
 			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
 				if ($account->mapping_user['dedupe_key'] == $map_for_field) {
@@ -578,6 +590,19 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
 				'#options' => $options,
 				'#default_value' => $account->mapping_action['map'][$field_key],
 			);
+      // Salesforce business rules
+      $form['map']['business'][$field_key] = array(
+        '#type' => 'select',
+        '#default_value' => $account->mapping_action['business'][$field_key],
+    	  '#options' => array(
+      		'null' => t(''), 
+      		'blank' => t('Overwrite when blank'), 
+      		'append' => t('Append'),
+      		'always' => t('Always overwrite'),
+      		'never' => t('Never overwrite'),
+        ),
+      );
+      
 			
 			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
 				if ($account->mapping_action['dedupe_key'] == $map_for_field) {
@@ -654,20 +679,30 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
     $record_type = $form_state['values']['record_type'];
 
     // re-add mappings
+    $map = array();
     foreach($form_state['values']['map']['salesforce'] as $key => $value) {
       if (!empty($value)) {
         $map[$key] = $value;
       }
     }
+
+    // Build array of business rules (overwrite when blank, etc)
+    $business = array();
+    foreach($form_state['values']['map']['business'] as $key => $value) {
+      if (!empty($value)) {
+        $business[$key] = $value;
+      }
+    }
+    
 		
     // Display name for the field map
     $name = $form['#account']->display_name . " (" . ucfirst($map_type) . " field mapping)";
 		
     if (empty($fieldmap_id)) {
-      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields) VALUES ('%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map));
+      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields, business) VALUES ('%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business));
     }
     else {
-      db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), $fieldmap_id);
+      db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s', business='%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business), $fieldmap_id);
     }
 			
     drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
@@ -693,11 +728,17 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row = array();
       $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
       $row[] = drupal_render($map['salesforce'][$field_key]);
+      $row[] = drupal_render($map['business'][$field_key]);
       $row[] = drupal_render($map['dedupe'][$field_key]);
       $rows[] = $row;
     }
 		
-    $header = array("Capwiz Field","Salesforce Field","Dedupe Field");
+    $header = array(
+      "Capwiz Field",
+      "Salesforce Field",
+      "Business rules Drupal to SF",
+      "Dedupe Field"
+    );
     $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
 
     // Additional hard-coded fields that can be mapped
@@ -707,10 +748,15 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row = array();
       $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
       $row[] = drupal_render($map['salesforce'][$field_key]);
+      $row[] = drupal_render($map['business'][$field_key]);
       $rows[] = $row;
     }
 
-    $header = array("Capwiz Account Field","Salesforce Field");
+    $header = array(
+      "Capwiz Account Field",
+      "Salesforce Field",
+      "Business rules Drupal to SF"
+    );
     $output .= theme('table', $header, $rows);    
 
     // Remove map so it's not rendered twice
@@ -757,11 +803,17 @@ function capwiz_connect_render_salesforce_object_fields() {
     $row = array();
     $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
     $row[] = drupal_render($map['salesforce'][$field_key]);
+    $row[] = drupal_render($map['business'][$field_key]);
     $row[] = drupal_render($map['dedupe'][$field_key]);
     $rows[] = $row;
   }
 
-  $header = array("Capwiz Field","Salesforce Field","Dedupe Field");
+  $header = array(
+    "Capwiz Field",
+    "Salesforce Field",
+    "Business rules Drupal to SF",
+    "Dedupe Field"
+  );
   $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
   
   // Additional hard-coded fields that can be mapped
@@ -771,10 +823,15 @@ function capwiz_connect_render_salesforce_object_fields() {
     $row = array();
     $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
     $row[] = drupal_render($map['salesforce'][$field_key]);
+    $row[] = drupal_render($map['business'][$field_key]);
     $rows[] = $row;
   }
 
-  $header = array("Capwiz Account Field","Salesforce Field");
+  $header = array(
+    "Capwiz Account Field",
+    "Salesforce Field",
+    "Business rules Drupal to SF"
+  );
   $output .= theme('table', $header, $rows);
   
   $output .= drupal_render($form['submit']);

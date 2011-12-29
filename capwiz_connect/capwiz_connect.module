@@ -194,13 +194,14 @@ function capwiz_connect_account_load($id, $refresh_cache = FALSE) {
     // Load existing mapping for users and actions for this Capwiz account
     foreach (array('user', 'action') as $mapping_type) {
       $drupal = 'capwiz_connect:' . $id . ':' . $mapping_type;
-      $mapping_detail = db_fetch_object(db_query("select salesforce, fields, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal));
+      $mapping_detail = db_fetch_object(db_query("select salesforce, fields, business, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal));
       if ($mapping_detail) {
         // Save details in $account_detail->mapping_user or $account_detail->mapping_action
         $field = 'mapping_' . $mapping_type;
         $account_details[$id]->$field = array(
           'sf_object' => $mapping_detail->salesforce,
           'map' => unserialize($mapping_detail->fields),
+          'business' => unserialize($mapping_detail->business),
           'dedupe_key' => $mapping_detail->dedupe_key,
           'recordtype_id' => $mapping_detail->recordtype_id,
         );
