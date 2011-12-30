@@ -671,13 +671,26 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
     $fieldmap_id = db_result(db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal_fieldmap_name));
     $record_type = $form_state['values']['record_type'];
 
-    // re-add mappings
-    $map = array();
+    // Display name for the field map
+    $name = $form['#account']->display_name . " (" . ucfirst($map_type) . " field mapping)";
+
+    // Prep array for saving to field map table
+    $map = array(
+      'fieldmap' => $fieldmap_id,
+      'name' => $name,
+      'drupal' => $drupal_fieldmap_name,
+      'salesforce' => $form_state['values']['object'],
+      'recordtype_id' => $record_type,
+    );
+
+    // Setup field mapping
+    $fields = array();
     foreach($form_state['values']['map']['salesforce'] as $key => $value) {
       if (!empty($value)) {
-        $map[$key] = $value;
+        $fields[$key] = $value;
       }
     }
+    $map['fields'] = serialize($fields);
 
     // Build array of business rules (overwrite when blank, etc)
     $business = array();
@@ -686,18 +699,11 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
         $business[$key] = $value;
       }
     }
+    $map['business'] = serialize($business);
     
+
+    salesforce_management_api_fieldmap_save($map);
 		
-    // Display name for the field map
-    $name = $form['#account']->display_name . " (" . ucfirst($map_type) . " field mapping)";
-		
-    if (empty($fieldmap_id)) {
-      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields, business) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business));
-    }
-    else {
-      db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s', business='%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business), $fieldmap_id);
-    }
-			
     drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
   }
 }
