@@ -384,6 +384,14 @@ function fundraiser_form($node, $edit = NULL) {
   	$gateway_options[$gateway['id']] = $gateway['title'];
   }
   
+  // Warn the user if there are no payment gateways. If the gateway_manager
+  // module is enabled, it sets the gateway dropdown values in
+  // gateway_manager_form_alter(), so it's handled there
+  if (empty($gateway_options) && !module_exists('gateway_manager')) {
+    $link = l('Configure payment gateways in the Ubercart settings.', 'admin/store/settings/payment/edit/gateways');
+    drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured. !link', array('!link' => $link)), 'warning');
+  }
+  
   // Workaround for  D6 core #ahah bug
   //$form['#action'] = $edit['nid']['#value'] ? url('node/'. $edit['nid']['#value'] .'/edit') : url('node/add/donation-form');
   

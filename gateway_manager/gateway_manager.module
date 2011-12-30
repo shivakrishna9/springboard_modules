@@ -65,6 +65,14 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
       $form['fundraiser_settings']['gateway']['#options'] = _gateway_manager_gateway_list();
       $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
       $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
+      
+      // If there are no gateways configured, the required gateway dropdown
+      // will be empty, so warn the user
+      if (empty($form['fundraiser_settings']['gateway']['#options'])) {
+        $link = l('Configure payment gateways in the gateway manager.', 'admin/settings/fundraiser/gateways');
+        drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured. !link', array('!link' => $link)), 'warning');
+      }
+
       break;
   }
   
