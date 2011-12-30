@@ -10,8 +10,6 @@
  * Todos
  * -----
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
- * 
- * - ISSUE: Only add actions to the sf_queue once the user has been retrieved?
  */
 
 /**
@@ -294,10 +292,19 @@ function capwiz_connect_cron_process() {
     $connection = capwiz_connect($account_id);
     
     // Sync down a batch of users
+    watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
     $connection->syncUsersBatch();
     
-    // Sync down a batch of actions
-    $connection->syncActionsBatch();
+    // Only sync actions once all the users have been synced, since Actions
+    // cannot be synced to Salesforce before the users
+    if (!$connection->hasMoreUsers()) {
+      watchdog('capwiz_connect', t('Begin syncing a batch of actions from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
+      // Sync down a batch of actions
+      $connection->syncActionsBatch();
+    }
+    else {
+      watchdog('capwiz_connect', t('Skipping sync of actions from Capwiz for account %account_name: waiting until all users have been synced before syncing actions.', array('%account_name' => $account_details->display_name)));
+    }
   }
   return '';
 }

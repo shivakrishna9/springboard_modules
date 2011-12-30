@@ -4,13 +4,6 @@
  */
 
 /**
- * @todo
- * - Add overwrite options for each field to the mapping form
- */
-
-
-
-/**
  * General settings for Capwiz Connect API usage
  */
 function capwiz_connect_settings($form_state) {
@@ -699,7 +692,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
     $name = $form['#account']->display_name . " (" . ucfirst($map_type) . " field mapping)";
 		
     if (empty($fieldmap_id)) {
-      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields, business) VALUES ('%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business));
+      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, recordtype_id, fields, business) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business));
     }
     else {
       db_query("UPDATE {salesforce_management_field_map} SET name = '%s', drupal = '%s', salesforce = '%s', recordtype_id = '%s', fields = '%s', business='%s' WHERE fieldmap  = %d", $name, $drupal_fieldmap_name, $form_state['values']['object'], $record_type, serialize($map), serialize($business), $fieldmap_id);

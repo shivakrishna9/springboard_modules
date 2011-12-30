@@ -225,7 +225,7 @@ class CapizConnect {
   /**
    * Return whether or not there are more users to collect from the API
    */
-  function hasMoreUsers() {
+  public function hasMoreUsers() {
     return ($this->last_user_offset > 0);
   }
 
@@ -555,7 +555,7 @@ class CapizConnect {
   /**
    * Return whether or not there are more actions to collect from the API
    */
-  function hasMoreActions() {
+  public function hasMoreActions() {
     return ($this->last_action_offset > 0);
   }
   
