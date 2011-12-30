@@ -153,17 +153,100 @@ function retry_queue_report() {
 /**
  * Lists all items that have been flagged as a permanent failure
  */
-function permanent_failures_report() {
-	$output = 'The following items have been marked as permanent failures. No more attempts to export them will be made until they have been edited.';
-	$pager_num = 0;
-	
-	$rows = array();
-	$result = pager_query("SELECT oid, type, fieldmap, action, from_unixtime(date_added, '%m/%e/%Y %h:%i:%S %p') FROM {sf_permanent_failure} ORDER BY date_added DESC", 20, $pager_num);
-	while ($row = db_fetch_array($result)) {
-		$rows[] = $row;
-	}
-	$header = array('Drupal Id', 'Type', 'Fieldmap', 'Action', 'Date Added');
-	$output .= theme('table', $header, $rows, array('id' => 'permanent-failures'));
-	$output .= theme('pager', NULL, 20, $pager_num);
-	return $output;
+function permanent_failures_report($edit = array()) {
+  if (isset($edit['post']['op']) && $edit['post']['op'] == t('Retry All')) {
+    _queue_processor_retry_all_perm_failures();
+  }
+  
+  $form['overview'] = array('#value' => t('The following items have been marked as permanent failures. No more attempts to export them will be made until they have been edited.'));
+  $pager_num = 0;
+
+  $rows = array();
+  $result = pager_query("SELECT id, oid, type, fieldmap, action, from_unixtime(date_added, '%m/%e/%Y %h:%i:%S %p') as date_added FROM {sf_permanent_failure} ORDER BY date_added DESC", 20, $pager_num);
+
+  while ($row = db_fetch_array($result)) {
+    $form['oid'][$row['id']] = array('#value' => $row['oid']);
+    $form['type'][$row['id']] = array('#value' => $row['type']);
+    $form['fieldmap'][$row['id']] = array('#value' => $row['fieldmap']);
+    $form['action'][$row['id']] = array('#value' => $row['action']);
+    $form['date_added'][$row['id']] = array('#value' => $row['date_added']);
+	$ids[$row['id']] = '';
+  }
+  $ids['all'] = '';
+
+  $form['select'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $ids,
+  );
+  $form['#theme'] = 'queue_processor_perm_failures';
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Retry Selected'),
+  );
+  $form['mass_move'] = array(
+    '#type' => 'button',
+    '#value' => t('Retry All'),
+  );
+
+  $form['#submit'][] = 'queue_processor_submit_retry';
+  $header = array('Drupal Id', 'Type', 'Fieldmap', 'Action', 'Date Added');
+
+  return $form;
+}
+
+function theme_queue_processor_perm_failures($form = array()) {
+  drupal_add_js(drupal_get_path('module', 'queue_processor') .'/queue_processor.js');
+  $pager_num = 0;
+  $check_all = drupal_render($form['select']['all']);
+  $header = array($check_all, 'Drupal Id', 'Type', 'Fieldmap', 'Action', 'Date Added');
+  $rows = array();
+  foreach (element_children($form['select']) as $id) {
+    if ($id != 'all') {
+      $fields = array();
+      $fields[] = drupal_render($form['select'][$id]);
+      $fields[] = drupal_render($form['oid'][$id]);
+      $fields[] = drupal_render($form['type'][$id]);
+      $fields[] = drupal_render($form['fieldmap'][$id]);
+      $fields[] = drupal_render($form['action'][$id]);
+      $fields[] = drupal_render($form['date_added'][$id]);
+      $rows[] = $fields;
+    }
+  }
+  $output = drupal_render($form['overview']);
+  $output .= theme('table', $header, $rows);
+  $output .= drupal_render($form);
+  $output .= theme('pager', NULL, 20, $pager_num);
+  return $output;
+}
+
+/**
+ * Submit handler for perm failures report form.
+ */
+function queue_processor_submit_retry($form, $form_state) {
+
+  foreach ($form_state['values']['select'] as $key => $value) {
+    if (is_numeric($value) && $value) {
+      $result = db_fetch_object(db_query("SELECT * FROM {sf_permanent_failure} WHERE id = %d", $value));
+      sf_queue_insert($result->oid, $result->type, $result->action);
+      db_query("DELETE FROM {sf_permanent_failure} WHERE id = %d", $value);
+  
+      drupal_set_message(ucfirst($result->type) . ' ' . $result->oid . ' has been successfully moved to the export queue.');
+      watchdog('queue_processor', t('Moved item %oid from the permanent failures queue to the export queue.', array('%oid' => $id)));
+
+    }
+  }
+  drupal_goto('admin/reports/salesforce/permanent-failures');
+}
+
+function _queue_processor_retry_all_perm_failures() {
+  $item_count = db_result(db_query('SELECT count(id) FROM {sf_permanent_failure}'));
+  db_query('INSERT INTO {sf_queue} 
+      (id, oid, type, fieldmap, action, created) 
+    (SELECT f.oid, f.type, o.sfid, f.fieldmap, f.action 
+    FROM {sf_permanent_failure} f 
+    LEFT JOIN {salesforce_management_object_map} o 
+      ON o.oid = f.oid 
+      AND o.drupal_type = f.type');
+  db_query('DELETE FROM {sf_permanent_failure}');
+  drupal_set_message(t('%items items where moved to the export queue.', array('%items' => $item_count)));
 }

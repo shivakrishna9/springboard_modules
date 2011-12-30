@@ -7,7 +7,7 @@ $(document).ready(function(){
 
 	$('#edit-submitted-donation-quantity').change(function() {
 		$('#total').empty();
-		var total = this.value * $('#webform-component-amount input:radio:checked').val();
+		var total = this.value * $('#webform-component-donation--amount input:radio:checked').val();
 		$('#edit-submitted-donation-quantity').after('<p id="total">Total: $' + total + '</p>');
 	});
 	

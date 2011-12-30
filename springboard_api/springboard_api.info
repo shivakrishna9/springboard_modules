@@ -1,0 +1,8 @@
+; $Id$
+name = Springboard API
+description = Provides an integration API for donations and petitions.
+core = 6.x
+package = Jackson River Springboard
+dependencies[] = fundraiser
+dependencies[] = services
+version =  6.x-1.0-dev

@@ -378,12 +378,10 @@ function fundraiser_form($node, $edit = NULL) {
   $type = node_get_types('type', $node);
 
   // payment gateway list
-  if (module_exists('gateway_manager')) {
-    $payment_gateways = _payment_gateway_list('', TRUE);
-    $options = array();
-    foreach ($payment_gateways as $gateway) {
-    	$options[$gateway['id']] = $gateway['title'];
-    }
+  $payment_gateways = _payment_gateway_list('', TRUE);
+  $gateway_options = array();
+  foreach ($payment_gateways as $gateway) {
+  	$gateway_options[$gateway['id']] = $gateway['title'];
   }
   
   // Workaround for  D6 core #ahah bug
@@ -504,17 +502,15 @@ function fundraiser_form($node, $edit = NULL) {
 		'#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
 	);
 	
-	if (module_exists('gateway_manager')) {
-  	$form['fundraiser_settings']['gateway'] = array(
-  		'#type' => 'select',
-  		'#title' => t('Payment Gateway'),
-  		'#options' => $options,
-  		'#weight' => -5,
-  		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-  		'#default_value' => $node->gateway,
-  		'#required' => TRUE,
-  	);
-	}
+	$form['fundraiser_settings']['gateway'] = array(
+		'#type' => 'select',
+		'#title' => t('Payment Gateway'),
+		'#options' => $gateway_options,
+		'#weight' => -5,
+		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
+		'#default_value' => $node->gateway,
+		'#required' => TRUE,
+	);
 	
   /* hidden fields */
   $form['confirmation_page_title'] = array(
@@ -706,7 +702,7 @@ function fundraiser_load($node) {
   $extra = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d and form_key = "amount"', $node->nid));
   $extra = unserialize($extra);
 
-  $items = preg_split('/\s/', $extra['items']);
+  $items = preg_split('/\n/', $extra['items']);
   $count = 0;
 
   for ($i = 0; $i < count($items); ++$i) {
@@ -1576,6 +1572,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 		fundraiser_track_gateway_failure();
 		// tell webform we're not done and rebuild the form
 		unset($form_state['values']['details']['sid']);
+		form_set_error('credit_card_information][card_number', $result['message']);
 		$form_state['values']['details']['finished'] = 0;
 		$form_state['rebuild'] = TRUE;
  	}

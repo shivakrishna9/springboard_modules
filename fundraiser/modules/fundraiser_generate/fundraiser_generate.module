@@ -142,7 +142,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
             ),
             'expiration_date' => array(
               'card_expiration_month' => mt_rand(1, 12),
-              'card_expiration_year' => mt_rand($year, $year + 3),
+              'card_expiration_year' => mt_rand($year + 1, $year + 3),
             ),
           ),
           'ms' => '',

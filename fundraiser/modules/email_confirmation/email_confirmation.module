@@ -156,7 +156,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     module_load_include('inc', 'ctools', 'includes/ajax');
     ctools_include('modal');
     ctools_modal_add_js();
-    drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
+    
 
     $bcc = array();
  
@@ -314,6 +314,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
     
     // Validate email template selection field
+    $form['#after_build'][] = 'email_confirmation_after_build';
     $form['#validate'][] = 'email_confirmation_template_validate';
     $form['#submit'][] = 'email_confirmation_template_submit';
    /**
@@ -338,6 +339,16 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'webform_client_form') === 0 && $form['#node']->type != 'donation_form') {
     $form['#submit'][] = 'email_confirmation_webform_send_mail';
   }
+}
+
+function email_confirmation_after_build($form, $form_state) {
+
+  drupal_add_js(drupal_get_path('module', 'email_confirmation') . '/email_confirmation.js');
+  module_load_include('inc', 'ctools', 'includes/ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  
+  return $form;
 }
 
 /**
@@ -417,7 +428,7 @@ function email_confirmation_nodeapi(&$node, $op) {
         break;
 
       case 'delete': 
-        db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $nid);
+        db_query('DELETE FROM {fundraiser_confirmations} WHERE nid = %d', $node->nid);
         break;
     }
   }
@@ -493,7 +504,7 @@ function email_confirmation_fundraiser_order_success($order) {
   // the order in $_SESSION to make the data available to php input filter. This
   // is required to permit conditional templating on $order values.
   $_SESSION['donation_order'] = $order;
-  $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', arg(1)));
+  $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $order->products[0]->nid));
 
   // Gather settings from the db and build the custom email
   if ($settings->tid) {
@@ -540,7 +551,7 @@ function email_confirmation_fundraiser_order_success($order) {
   }
   // If no settings are present use the default email template.
   else {
-    $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', arg(1)));
+    $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', $order->products[0]->nid));
     $site_name = variable_get('site_name', '');
     $site_mail = variable_get('site_mail', '');
     $message['from_name'] = $site_name;

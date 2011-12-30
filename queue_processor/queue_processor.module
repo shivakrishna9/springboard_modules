@@ -63,7 +63,8 @@ function queue_processor_menu() {
 	
 	$items['admin/reports/salesforce/permanent-failures'] = array(
 		'title' => 'Permanent failures',
-		'page callback' => 'permanent_failures_report',
+	    'page callback' => 'drupal_get_form',
+		'page arguments' => array('permanent_failures_report'),
 		'access arguments' => array('view salesforce reports'),
 		'type' => MENU_NORMAL_ITEM,
 		'weight' => 30,
@@ -117,8 +118,12 @@ function queue_processor_theme() {
   return array(
     'queue_processor_admin_settings' => array(
       'arguments' => array('form' => array()),
-			'file' => 'queue_processor.admin.inc',
-    )
+      'file' => 'queue_processor.admin.inc',
+    ),
+    'queue_processor_perm_failures' => array(
+      'arguments' => array('form' => array()),
+      'file' => 'queue_processor.reports.inc',
+    ),
   );
 }
 
@@ -274,18 +279,25 @@ function process_batches($ids) {
 		  // Skip if no object is present. This prevents errors when Sync is run with nothing
 		  // pending in the queue.
 		  if (isset($item->object)) {
-			$object = $item->object;
-			// give modules one last chance to modify the object before shipping it to salesforce
-			drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
-			// update the data field so we have an exact copy of what was sent
-			db_query("UPDATE {sf_batch_item} SET data = '%s' WHERE batch_id = %d AND oid = '%s' AND type = '%s'", serialize($object), $id, $item->oid, $item->type);
-			array_push($objects, $object);
+        $object = $item->object;
+        // give modules one last chance to modify the object before shipping it to salesforce
+        drupal_alter('queue_batch_item', $object, $item->type, $batch['action'], $item->oid);
+        array_push($objects, $object);
 		  }
 		}
 
 		// apply validation for create/upsert/update actions
 		if ($batch['action'] != 'delete') {
 			queue_validate_batch($objects, $batch['salesforce_type']);
+		}
+		
+		// log the object being sent. do this after validation because validation may change a value
+		foreach($batch['records'] as $item) {
+		  if (isset($item->object)) {
+        $object = $item->object;
+  		  // update the data field so we have an exact copy of what was sent
+        db_query("UPDATE {sf_batch_item} SET data = '%s' WHERE batch_id = %d AND oid = '%s' AND type = '%s'", serialize($object), $id, $item->oid, $item->type);
+		  }
 		}
 		
 		// clear out any previous responses
@@ -850,18 +862,12 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					
 				case 'date':
 				case 'datetime':
-					// make sure dates are formatted properly. we could get a string or unix timestamp!
-					$string_date = false;
-					$unix_timestamp = false;
-					
-					$string_date = strtotime($value);
-					$unix_timestamp = date($value);
-					
-					$valid_date = ($string_date) ? $string_date : $unix_timestamp;
-
-					// if the date is good, just assign it
-					if ($valid_date) {
-						$value = date('c', $valid_date);
+          // check for timestamp first
+					if (_queue_processor_valid_timestamp($value)) {
+            $value = date('c', $value);
+					}
+					else if (_queue_processor_valid_ISO_date($value)) {
+            $value = $value;
 					}
 					else {
 						if ($nillable) {
@@ -1178,4 +1184,19 @@ function queue_processor_remove_type($type) {
   
   // save the processing order
   variable_set('queue_processing_order', $processing_order);
+}
+
+function _queue_processor_valid_timestamp($date)  {
+  for ($i = 0; $i < 5; $i++) {
+    if (!is_numeric(substr($date, $i, 1))) {
+      return false;
+    }  
+  }
+  
+  return true;
+}
+
+function _queue_processor_valid_ISO_date($date) {
+  $result = preg_match('/^(\d{4})\D?(0[1-9]|1[0-2])\D?([12]\d|0[1-9]|3[01])(\D?([01]\d|2[0-3])\D?([0-5]\d)\D?([0-5]\d)?\D?(\d{3})?([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?)?$/', $date);
+  return $result > 0;
 }

@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * Implements hook_install(). 
+ */
+function springboard_api_install() {
+
+  drupal_install_schema('springboard_api');
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function springboard_api_uninstall() {
+  drupal_uninstall_schema('springboard_api');
+}
+
+/**
+ * Implements hook_schema().
+ */
+
+function springboard_api_schema() {
+  $schema['springboard_api'] = array(
+    'description' => t('Stores session information for API sessions.'),
+    'fields' => array(
+      'kid' => array(
+        'description' => 'key id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'user id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'pubkey' => array(
+        'description' => 'The node id.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'privkey' => array(
+        'description' => 'The node id.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'App name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('kid'),
+    'indexes' => array('privkey' => array('privkey'), 'pubkey' => array('pubkey')),
+  );
+  return $schema;
+}
