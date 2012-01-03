@@ -954,3 +954,43 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $sent = drupal_mail('email_confirmation', 'confirmation', $user_email, language_default(), $message);
   }
 }
+
+
+/**
+ * Implements hook_fundraiser_clone_donation_form().
+ * 
+ * We want to clone any email confirmation settings for the original node.
+ */
+function email_confirmation_fundraiser_clone_donation_form($old_nid, $new_nid) {
+
+  $result = db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $old_nid);
+  $settings = db_fetch_object($result);
+  if (isset($settings->tid)) {
+    db_query("INSERT INTO {fundraiser_confirmations} (
+        nid,
+        tid,
+        subject,
+        from_name,
+        reply_to_email,
+        bcc_email,
+        html_message, 
+        html_message_format,
+        text_message,
+        text_message_format,
+        is_webform,
+        send_mail) 
+      VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)",
+      $new_nid, 
+      $settings->tid, 
+      $settings->subject, 
+      $settings->from_name, 
+      $settings->reply_to_email, 
+      $settings->bcc_email, 
+      $settings->html_message, 
+      $settings->html_message_format, 
+      $settings->text_message, 
+      $settings->text_message_format, 
+      $settings->is_webform, 
+      $settings->send_mail);
+  }
+}

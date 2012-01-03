@@ -37,25 +37,31 @@ function webform_user_clone($node) {
     
     node_save($node);
 
-		// clone the fieldmap & webform_user settings
-		$drupal = 'webform:' . $nid;
-		$new_drupal = 'webform:' . $node->nid;
-		
-		$fieldmap = db_fetch_object(db_query("SELECT * FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal));
-		$webform_user = db_fetch_object(db_query("SELECT * FROM {webform_user} WHERE nid = %d", $nid));
-		
-		db_query("INSERT INTO {webform_user_component_map} (nid, cid, map_id) SELECT %d, cid, map_id FROM {webform_user_component_map} WHERE nid = %d", $node->nid, $nid);
-		
-		// make sure cloned node has a fieldmap
-		if ($fieldmap) {
-		  db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id, dedupe_key) 
-			 VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $node->title . ' (webform map)', $new_drupal, $fieldmap->salesforce, $fieldmap->fields, $fieldmap->recordtype_id, $fieldmap->dedupe_key);
-		}
-		
-		db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $webform_user->foreign_key_field, $node->nid);
+    // clone email confirmation settings.
+    if (module_exists('email_confirmation')) {
+      module_load_include('module', 'email_confirmation');
+      email_confirmation_fundraiser_clone_donation_form($original_node->nid, $node->nid);
+    }
+
+    // clone the fieldmap & webform_user settings
+    $drupal = 'webform:' . $nid;
+    $new_drupal = 'webform:' . $node->nid;
+
+    $fieldmap = db_fetch_object(db_query("SELECT * FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal));
+    $webform_user = db_fetch_object(db_query("SELECT * FROM {webform_user} WHERE nid = %d", $nid));
 	
-		drupal_set_message("User webform [$original_node->title] has been cloned successfully.");
-		drupal_goto('node/'. $node->nid .'/edit');
+    db_query("INSERT INTO {webform_user_component_map} (nid, cid, map_id) SELECT %d, cid, map_id FROM {webform_user_component_map} WHERE nid = %d", $node->nid, $nid);
+	
+    // make sure cloned node has a fieldmap
+    if ($fieldmap) {
+      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id, dedupe_key) 
+        VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $node->title . ' (webform map)', $new_drupal, $fieldmap->salesforce, $fieldmap->fields, $fieldmap->recordtype_id, $fieldmap->dedupe_key);
+    }
+
+    db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $webform_user->foreign_key_field, $node->nid);
+
+    drupal_set_message("User webform [$original_node->title] has been cloned successfully.");
+    drupal_goto('node/'. $node->nid .'/edit');
   }
 }
 

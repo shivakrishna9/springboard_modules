@@ -209,27 +209,34 @@ function fundraiser_clone_donation_form($nid) {
       node_save($node);
       $new_nid = $node->nid;
 
-			// get profile map for the original donation form
-			$result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_component_map} f inner join
-				{webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = %d", $nid);
-			
-			// update confirmation information
-			db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $original_node->confirmation_page_title, $original_node->confirmation_page_body, $original_node->redirect_url, $new_nid);
-			
-			// loop over mapped components and find new component in cloned donation form
-			while ($data = db_fetch_object($result)) {
-				$cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = '%s' AND nid = %d", $data->form_key, $new_nid));
-				if ($cid) {
-					db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id);
-				}
-			}
-			
-			if (module_exists('sf_donation')) {
-				sf_donation_clone_map($nid, $new_nid);
-			}
-			
-			drupal_set_message("Donation form [$original_node->title] has been cloned succesfully.");
-			drupal_goto('node/'. $new_nid .'/edit');
+      // get profile map for the original donation form
+      $result = db_query("SELECT f.nid, f.cid, f.map_id, c.form_key
+        FROM {fundraiser_component_map} f
+        INNER JOIN {webform_component} c
+          ON c.cid = f.cid
+          AND c.nid = f.nid
+        WHERE f.nid = %d", $nid);
+
+      // update confirmation information
+      db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $original_node->confirmation_page_title, $original_node->confirmation_page_body, $original_node->redirect_url, $new_nid);
+
+      // loop over mapped components and find new component in cloned donation form
+      while ($data = db_fetch_object($result)) {
+        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = '%s' AND nid = %d", $data->form_key, $new_nid));
+
+        if ($cid) {
+          db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id);
+        }
+      }
+	
+      if (module_exists('sf_donation')) {
+        sf_donation_clone_map($nid, $new_nid);
+       }
+
+       module_invoke_all('fundraiser_clone_donation_form', $original_node->nid, $node->nid);
+       
+       drupal_set_message("Donation form [$original_node->title] has been cloned succesfully.");
+       drupal_goto('node/'. $new_nid .'/edit');
     }
   }
 }
