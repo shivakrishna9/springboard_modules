@@ -38,11 +38,7 @@ function form_layouts_theme_registry_alter(&$theme_registry) {
  * Breaks the form into easily digestable chunks.
  */
 function form_layouts_preprocess_template(&$vars) {
-  // break the form into the major fieldsets. this could go one step further and break out the individual fields to.
-  $vars['donation_fieldset'] = drupal_render($vars['form']['submitted']['donation']);
-  $vars['donor_information_fieldset'] = drupal_render($vars['form']['submitted']['donor_information']);
-  $vars['billing_address_fieldset'] = drupal_render($vars['form']['submitted']['billing_information']);
-  $vars['credit_card_fieldset'] = drupal_render($vars['form']['submitted']['credit_card_information']);
+  // leaving this function in place for possible feature enhancement.
 }
 
 /**
