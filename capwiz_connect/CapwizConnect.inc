@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @file
+ * CapwizConnect class. Encapsualtes functions to interact with Capwiz Connect API
+ */
+ 
 class CapizConnect {
   public static $base_url = 'https://connect.capwiz.com/api/';
 
@@ -32,7 +36,7 @@ class CapizConnect {
       }
       return $instances[$account_details->id];
     }
-    return null;
+    return NULL;
   }
   
   
@@ -297,7 +301,7 @@ class CapizConnect {
       if ($fields) {
         $this->last_error = t('Custom fields gathered successfully');
         $return_fields = array();
-        foreach($fields as $field) {
+        foreach ($fields as $field) {
           $return_fields[$field->name] = $field;
         }
         return $return_fields;
@@ -454,7 +458,7 @@ class CapizConnect {
     }
     else {
       // New-to-us user
-      if(drupal_write_record('capwiz_connect_users', $record)) {
+      if (drupal_write_record('capwiz_connect_users', $record)) {
         $return_value = self::$STAT_CREATE_OK;
       }
       else {
@@ -673,7 +677,7 @@ class CapizConnect {
     }
     else {
       // New-to-us user
-      if(drupal_write_record('capwiz_connect_actions', $record)) {
+      if (drupal_write_record('capwiz_connect_actions', $record)) {
         $return_value = self::$STAT_CREATE_OK;
       }
       else {

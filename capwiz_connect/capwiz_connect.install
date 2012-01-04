@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @file
+ * Install and uninstall functions for Capwiz Connect
+ */
+ 
 /**
  * Implements hook_install().
  */
@@ -28,7 +32,7 @@ function capwiz_connect_uninstall() {
   variable_del('capwiz_connect_standalone_cron_enabled');
 
   // Remove Salesforce field mapping
-  $drupal = 'capwiz_connect:%';	
+  $drupal = 'capwiz_connect:%';  
   db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);  
 }
 

@@ -1,5 +1,6 @@
 <?php
 /**
+ * @file
  * Admin functions for Capwiz Connect integration
  */
 
@@ -198,7 +199,7 @@ function capwiz_connect_account_overview($account) {
   }
   else {
     $error = $connection->getLastError();
-    drupal_set_message($error, 'error');
+    drupal_set_message(filter_xss($error), 'error');
     $form['creds_ok'] = array(
       '#type' => 'item',
       '#value' => 'Error connecting to Capwiz',
@@ -285,10 +286,10 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
  * Based on sf_webform_mapping_form()
  */
 function capwiz_connect_account_user_mapping($form_state, $account) {
-	$base = drupal_get_path('module', 'capwiz_connect');
-	drupal_add_js($base .'/capwiz_connect.js');
+  $base = drupal_get_path('module', 'capwiz_connect');
+  drupal_add_js($base .'/capwiz_connect.js');
 
-	$form = array(
+  $form = array(
     '#tree' => TRUE,
     '#account' => $account,
     'mapping' => array(),
@@ -296,44 +297,44 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     '#theme' => 'capwiz_connect_account_mapping_form',
   );
 
-	// only show object selection for webforms that haven't been mapped
-	if (empty($account->mapping_user)) {
-		$form['object'] = array(
-			'#type' => 'select',
-			'#options' => _get_salesforce_objects(),
-			'#default_value' => $account->mapping_user['sf_object'],
-			'#title' => t('Salesforce Object'),
-			'#description' => t('Choose the Salesforce object you want to create for each Capwiz user.'),
-			'#ahah' => array(
-			  'path' => 'js/capwiz_connect/salesforce-object-fields',
-	      'wrapper' => 'map',
-	      'effect' => 'fade',
-	    ),
-		);
-	}
-	else {
-		$form['object'] = array(
-			'#prefix' => t("<div>Users from this Capwiz account are currently mapped to the <strong>%sf_object</strong> object.</div>", array('%sf_object' => $account->mapping_user['sf_object'])),
-			'#type' => 'hidden',
-			'#default_value' => $account->mapping_user['sf_object'],
-			'#suffix' => t('<div>Use the <strong>Remove Map</strong> button below if you wish to map to a different Salesforce object.</div>'),
-		);
-	}
+  // only show object selection for webforms that haven't been mapped
+  if (empty($account->mapping_user)) {
+    $form['object'] = array(
+      '#type' => 'select',
+      '#options' => _get_salesforce_objects(),
+      '#default_value' => $account->mapping_user['sf_object'],
+      '#title' => t('Salesforce Object'),
+      '#description' => t('Choose the Salesforce object you want to create for each Capwiz user.'),
+      '#ahah' => array(
+        'path' => 'js/capwiz_connect/salesforce-object-fields',
+        'wrapper' => 'map',
+        'effect' => 'fade',
+      ),
+    );
+  }
+  else {
+    $form['object'] = array(
+      '#prefix' => t("<div>Users from this Capwiz account are currently mapped to the <strong>%sf_object</strong> object.</div>", array('%sf_object' => $account->mapping_user['sf_object'])),
+      '#type' => 'hidden',
+      '#default_value' => $account->mapping_user['sf_object'],
+      '#suffix' => t('<div>Use the <strong>Remove Map</strong> button below if you wish to map to a different Salesforce object.</div>'),
+    );
+  }
 
-	$form['map'] = array(
+  $form['map'] = array(
     '#prefix' => '<div id="map">',
     '#suffix' => '</div>',
     '#value' => '&nbsp;',
   );
-	
-	// Only build the field mapping form if a Salesforce object type has been
-	// selected to map to
-	if ($form_state['values']['object'] || !empty($account->mapping_user['sf_object'])) {
-		$object = !empty($account->mapping_user['sf_object']) ? $account->mapping_user['sf_object'] : $form_state['values']['object'];
-		
+  
+  // Only build the field mapping form if a Salesforce object type has been
+  // selected to map to
+  if ($form_state['values']['object'] || !empty($account->mapping_user['sf_object'])) {
+    $object = !empty($account->mapping_user['sf_object']) ? $account->mapping_user['sf_object'] : $form_state['values']['object'];
+    
     // Get the custom fields for users from Capwiz
-		$connection = capwiz_connect($account->id);
-		$user_fields = $connection->getCustomUserFields();
+    $connection = capwiz_connect($account->id);
+    $user_fields = $connection->getCustomUserFields();
     
     // Add fields for the legislator fields
     $user_fields['fed_senator_1'] = (object)array(
@@ -373,34 +374,34 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
       'formInputType' => 'auto',
     );
     
-		// Get the fields available on this type of Salesforce object
-		$object_details = _capwiz_connect_get_sf_object_details($object);
-		$fields = $object_details['fields'];
-		$record_types = $object_details['record_types'];
+    // Get the fields available on this type of Salesforce object
+    $object_details = _capwiz_connect_get_sf_object_details($object);
+    $fields = $object_details['fields'];
+    $record_types = $object_details['record_types'];
 
-		// Create a drop down list friendly version of the Salesforce fields
-		foreach($fields as $key => $value) {
-			$options[$key] = $value['label'];
-		}
-		
-		$disabled = !empty($account->mapping_user['sf_object']) ? false : true;
-		
-		$form['record_type'] = array(
-			'#type' => 'select',
-			'#title' => t('Record Type'),
-			'#description' => t('The type of !name to create', array('!name' => $account->mapping_user['sf_object'])),
-			'#options' => $record_types,
-			'#default_value' => $account->mapping_user['recordtype_id'],
-		);
+    // Create a drop down list friendly version of the Salesforce fields
+    foreach ($fields as $key => $value) {
+      $options[$key] = $value['label'];
+    }
+    
+    $disabled = !empty($account->mapping_user['sf_object']) ? FALSE : TRUE;
+    
+    $form['record_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Record Type'),
+      '#description' => t('The type of !name to create', array('!name' => $account->mapping_user['sf_object'])),
+      '#options' => $record_types,
+      '#default_value' => $account->mapping_user['recordtype_id'],
+    );
 
-		foreach($user_fields as $field_key => $field) {
-		  $map_for_field = $account->mapping_user['map'][$field_key];
-		  
-			// Capwiz field
-			$form['map']['user_field'][$field_key] = array(
-  			'#type' => 'item',
-  			'#description' => t($field->label . " - (" . $field->formInputType . ")"),
-			);
+    foreach ($user_fields as $field_key => $field) {
+      $map_for_field = $account->mapping_user['map'][$field_key];
+      
+      // Capwiz field
+      $form['map']['user_field'][$field_key] = array(
+        '#type' => 'item',
+        '#description' => t($field->label . " - (" . $field->formInputType . ")"),
+      );
       // Salesforce field
       $form['map']['salesforce'][$field_key] = array(
         '#type' => 'select',
@@ -411,72 +412,72 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
       $form['map']['business'][$field_key] = array(
         '#type' => 'select',
         '#default_value' => $account->mapping_user['business'][$field_key],
-    	  '#options' => array(
-      		'null' => t(''), 
-      		'blank' => t('Overwrite when blank'), 
-      		'append' => t('Append'),
-      		'always' => t('Always overwrite'),
-      		'never' => t('Never overwrite'),
+        '#options' => array(
+          'null' => t(''), 
+          'blank' => t('Overwrite when blank'), 
+          'append' => t('Append'),
+          'always' => t('Always overwrite'),
+          'never' => t('Never overwrite'),
         ),
       );
-			
-			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
-				if ($account->mapping_user['dedupe_key'] == $map_for_field) {
-					$value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/user">Remove dedupe field</a>';
-				}
-				else {
-					$value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/user/' . $map_for_field .'">Set as dedupe field</a>';
-				}
-			}
-			else {
-				$value = '';
-			}
-			$form['map']['dedupe'][$field_key] = array(
-				'#value' => $value,
-			);
-		}
-		
-		// Fields specific to this account that can be mapped to SF
-		// This is a little goofy:
-		//   Put an item in $form['capwiz_field_map'] for the label
-		//   Put an item in $form['map']['salesforce'] for the SF field dropdown
-		$form['capwiz_field_map']['form_affiliation'] = array(
-			'#type' => 'item',
-			'#description' => t('Form Affiliation'),
-		);
-		$form['map']['salesforce']['form_affiliation'] = array(
-			'#type' => 'select',
-			'#options' => $options,
-			'#default_value' => $account->mapping_user['map']['form_affiliation'],
-		);
+      
+      if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
+        if ($account->mapping_user['dedupe_key'] == $map_for_field) {
+          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/user">Remove dedupe field</a>';
+        }
+        else {
+          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/user/' . $map_for_field .'">Set as dedupe field</a>';
+        }
+      }
+      else {
+        $value = '';
+      }
+      $form['map']['dedupe'][$field_key] = array(
+        '#value' => $value,
+      );
+    }
+    
+    // Fields specific to this account that can be mapped to SF
+    // This is a little goofy:
+    //   Put an item in $form['capwiz_field_map'] for the label
+    //   Put an item in $form['map']['salesforce'] for the SF field dropdown
+    $form['capwiz_field_map']['form_affiliation'] = array(
+      '#type' => 'item',
+      '#description' => t('Form Affiliation'),
+    );
+    $form['map']['salesforce']['form_affiliation'] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => $account->mapping_user['map']['form_affiliation'],
+    );
     // Salesforce business rules for form affiliation
     $form['map']['business']['form_affiliation'] = array(
       '#type' => 'select',
       '#default_value' => $account->mapping_user['business']['form_affiliation'],
-  	  '#options' => array(
-    		'null' => t(''), 
-    		'blank' => t('Overwrite when blank'), 
-    		'append' => t('Append'),
-    		'always' => t('Always overwrite'),
-    		'never' => t('Never overwrite'),
+      '#options' => array(
+        'null' => t(''), 
+        'blank' => t('Overwrite when blank'), 
+        'append' => t('Append'),
+        'always' => t('Always overwrite'),
+        'never' => t('Never overwrite'),
       ),
     );
     
-		
-		
+    
+    
 
-		$form['remove'] = array(
-			'#type' => 'submit',
-			'#value' => t('Remove Map'),
-			'#submit' => array('capwiz_connect_remove_mapping'),
-		);
-		
-		$form['submit'] = array(
-			'#type' => 'submit',
-			'#value' => 'Submit',
-		);
-	}
-	return $form;
+    $form['remove'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove Map'),
+      '#submit' => array('capwiz_connect_remove_mapping'),
+    );
+    
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Submit',
+    );
+  }
+  return $form;
 }
 
 /**
@@ -505,10 +506,10 @@ function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
  * changes made here are reflected there
  */
 function capwiz_connect_account_action_mapping($form_state, $account) {
-	$base = drupal_get_path('module', 'capwiz_connect');
-	drupal_add_js($base .'/capwiz_connect.js');
+  $base = drupal_get_path('module', 'capwiz_connect');
+  drupal_add_js($base .'/capwiz_connect.js');
 
-	$form = array(
+  $form = array(
     '#tree' => TRUE,
     '#account' => $account,
     'mapping' => array(),
@@ -516,60 +517,60 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
     '#theme' => 'capwiz_connect_account_mapping_form',
   );
 
-	// only show object selection for webforms that haven't been mapped
-	if (empty($account->mapping_action)) {
-		$form['object'] = array(
-			'#type' => 'select',
-			'#options' => _get_salesforce_objects(),
-			'#default_value' => $account->mapping_action['sf_object'],
-			'#title' => t('Salesforce Object'),
-			'#description' => t('Choose the Salesforce object you want to create for each Capwiz action.'),
-			'#ahah' => array(
-			  'path' => 'js/capwiz_connect/salesforce-object-fields',
-	      'wrapper' => 'map',
-	      'effect' => 'fade',
-	    ),
-		);
-	}
-	else {
-		$form['object'] = array(
-			'#prefix' => t("<div>Actions from this Capwiz account are currently mapped to the <strong>%sf_object</strong> object.</div>", array('%sf_object' => $account->mapping_action['sf_object'])),
-			'#type' => 'hidden',
-			'#default_value' => $account->mapping_action['sf_object'],
-			'#suffix' => t('<div>Use the <strong>Remove Map</strong> button below if you wish to map to a different Salesforce object.</div>'),
-		);
-	}
+  // only show object selection for webforms that haven't been mapped
+  if (empty($account->mapping_action)) {
+    $form['object'] = array(
+      '#type' => 'select',
+      '#options' => _get_salesforce_objects(),
+      '#default_value' => $account->mapping_action['sf_object'],
+      '#title' => t('Salesforce Object'),
+      '#description' => t('Choose the Salesforce object you want to create for each Capwiz action.'),
+      '#ahah' => array(
+        'path' => 'js/capwiz_connect/salesforce-object-fields',
+        'wrapper' => 'map',
+        'effect' => 'fade',
+      ),
+    );
+  }
+  else {
+    $form['object'] = array(
+      '#prefix' => t("<div>Actions from this Capwiz account are currently mapped to the <strong>%sf_object</strong> object.</div>", array('%sf_object' => $account->mapping_action['sf_object'])),
+      '#type' => 'hidden',
+      '#default_value' => $account->mapping_action['sf_object'],
+      '#suffix' => t('<div>Use the <strong>Remove Map</strong> button below if you wish to map to a different Salesforce object.</div>'),
+    );
+  }
 
-	$form['map'] = array(
+  $form['map'] = array(
     '#prefix' => '<div id="map">',
     '#suffix' => '</div>',
     '#value' => '&nbsp;',
   );
-	
-	// Only build the field mapping form if a Salesforce object type has been
-	// selected to map to
-	if ($form_state['values']['object'] || !empty($account->mapping_action['sf_object'])) {
-		$object = !empty($account->mapping_action['sf_object']) ? $account->mapping_action['sf_object'] : $form_state['values']['object'];
-		
-		// Get the fields available on this type of Salesforce object
-		$object_details = _capwiz_connect_get_sf_object_details($object);
-		$fields = $object_details['fields'];
-		$record_types = $object_details['record_types'];
+  
+  // Only build the field mapping form if a Salesforce object type has been
+  // selected to map to
+  if ($form_state['values']['object'] || !empty($account->mapping_action['sf_object'])) {
+    $object = !empty($account->mapping_action['sf_object']) ? $account->mapping_action['sf_object'] : $form_state['values']['object'];
+    
+    // Get the fields available on this type of Salesforce object
+    $object_details = _capwiz_connect_get_sf_object_details($object);
+    $fields = $object_details['fields'];
+    $record_types = $object_details['record_types'];
 
-		// Create a drop down list friendly version of the Salesforce fields
-		foreach($fields as $key => $value) {
-			$options[$key] = $value['label'];
-		}
-		
-		$disabled = !empty($account->mapping_action['sf_object']) ? false : true;
-		
-		$form['record_type'] = array(
-			'#type' => 'select',
-			'#title' => t('Record Type'),
-			'#description' => t('The type of !name to create', array('!name' => $account->mapping_action['sf_object'])),
-			'#options' => $record_types,
-			'#default_value' => $account->mapping_action['recordtype_id'],
-		);
+    // Create a drop down list friendly version of the Salesforce fields
+    foreach ($fields as $key => $value) {
+      $options[$key] = $value['label'];
+    }
+    
+    $disabled = !empty($account->mapping_action['sf_object']) ? FALSE : TRUE;
+    
+    $form['record_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Record Type'),
+      '#description' => t('The type of !name to create', array('!name' => $account->mapping_action['sf_object'])),
+      '#options' => $record_types,
+      '#default_value' => $account->mapping_action['recordtype_id'],
+    );
     
     // Define the Capwiz fiels that can be defined to SF fields
     // Field name as key, displayable label as the value
@@ -582,65 +583,65 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       'sf_userid' => 'Salesforce User Record',
     );
     
-		foreach($capwiz_fields as $field_key => $field_label) {
-		  $map_for_field = $account->mapping_action['map'][$field_key];
-		  
-			// Capwiz field
-			$form['map']['user_field'][$field_key] = array(
-  			'#type' => 'item',
-  			'#description' => t($field_label),
-			);
-			// Salesforce field
-			$form['map']['salesforce'][$field_key] = array(
-				'#type' => 'select',
-				'#options' => $options,
-				'#default_value' => $account->mapping_action['map'][$field_key],
-			);      
-			
-			if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
-				if ($account->mapping_action['dedupe_key'] == $map_for_field) {
-					$value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
-				}
-				else {
-					$value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
-				}
-			}
-			else {
-				$value = '';
-			}
-			$form['map']['dedupe'][$field_key] = array(
-				'#value' => $value,
-			);
-		}
-		
-		// Fields specific to this account that can be mapped to SF
-		// This is a little goofy:
-		//   Put an item in $form['capwiz_field_map'] for the label
-		//   Put an item in $form['map']['salesforce'] for the SF field dropdown
-		$form['capwiz_field_map']['form_affiliation'] = array(
-			'#type' => 'item',
-			'#description' => t('Form Affiliation'),
-		);
-		$form['map']['salesforce']['form_affiliation'] = array(
-			'#type' => 'select',
-			'#options' => $options,
-			'#default_value' => $account->mapping_action['map']['form_affiliation'],
-		);
-		
-		
+    foreach ($capwiz_fields as $field_key => $field_label) {
+      $map_for_field = $account->mapping_action['map'][$field_key];
+      
+      // Capwiz field
+      $form['map']['user_field'][$field_key] = array(
+        '#type' => 'item',
+        '#description' => t($field_label),
+      );
+      // Salesforce field
+      $form['map']['salesforce'][$field_key] = array(
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => $account->mapping_action['map'][$field_key],
+      );      
+      
+      if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
+        if ($account->mapping_action['dedupe_key'] == $map_for_field) {
+          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
+        }
+        else {
+          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
+        }
+      }
+      else {
+        $value = '';
+      }
+      $form['map']['dedupe'][$field_key] = array(
+        '#value' => $value,
+      );
+    }
+    
+    // Fields specific to this account that can be mapped to SF
+    // This is a little goofy:
+    //   Put an item in $form['capwiz_field_map'] for the label
+    //   Put an item in $form['map']['salesforce'] for the SF field dropdown
+    $form['capwiz_field_map']['form_affiliation'] = array(
+      '#type' => 'item',
+      '#description' => t('Form Affiliation'),
+    );
+    $form['map']['salesforce']['form_affiliation'] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => $account->mapping_action['map']['form_affiliation'],
+    );
+    
+    
 
-		$form['remove'] = array(
-			'#type' => 'submit',
-			'#value' => t('Remove Map'),
-			'#submit' => array('capwiz_connect_remove_mapping'),
-		);
-		
-		$form['submit'] = array(
-			'#type' => 'submit',
-			'#value' => 'Submit',
-		);
-	}
-	return $form;
+    $form['remove'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove Map'),
+      '#submit' => array('capwiz_connect_remove_mapping'),
+    );
+    
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Submit',
+    );
+  }
+  return $form;
 }
 
 /**
@@ -685,7 +686,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
 
     // Setup field mapping
     $fields = array();
-    foreach($form_state['values']['map']['salesforce'] as $key => $value) {
+    foreach ($form_state['values']['map']['salesforce'] as $key => $value) {
       if (!empty($value)) {
         $fields[$key] = $value;
       }
@@ -694,7 +695,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
 
     // Build array of business rules (overwrite when blank, etc)
     $business = array();
-    foreach($form_state['values']['map']['business'] as $key => $value) {
+    foreach ($form_state['values']['map']['business'] as $key => $value) {
       if (!empty($value)) {
         $business[$key] = $value;
       }
@@ -703,7 +704,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
     
 
     salesforce_management_api_fieldmap_save($map);
-		
+    
     drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
   }
 }
@@ -716,7 +717,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
  * capwiz_connect_render_salesforce_object_fields(), since both render the form
  * in different situations.
  */
-function theme_capwiz_connect_account_mapping_form($form) {	
+function theme_capwiz_connect_account_mapping_form($form) {  
   if ($form['map']['user_field']) {
     $output = drupal_render($form['object']);
     $output .= drupal_render($form['record_type']);
@@ -733,7 +734,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row[] = drupal_render($map['dedupe'][$field_key]);
       $rows[] = $row;
     }
-		
+    
     // Set the headers for the table. Action mapping does NOT include business rules
     if ($form['#map_type'] == 'action') {
       $header = array(
@@ -787,7 +788,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
     // Remove map so it's not rendered twice
     unset($form['map']);
     unset($form['capwiz_field_map']);
-		
+    
     $output .= drupal_render($form['submit']);
     $output .= drupal_render($form['remove']);
     $output .= drupal_render($form);
@@ -819,7 +820,7 @@ function capwiz_connect_render_salesforce_object_fields() {
   $output = drupal_render($form['record_type']);
 
   $map = $form['map'];
-	
+  
   // Add all the mappable fields as elements in an array to be passed into the
   // theme function
   $rows = array();
@@ -946,37 +947,37 @@ function capwiz_connect_remove_dedupe_field($account, $map_type) {
  * Copy of _get_object_details() from sf_webform module
  */
 function _capwiz_connect_get_sf_object_details($object_name) {
-	$sf = salesforce_management_api_connect();
-	if ($sf) {
-		$record_types = array();
-		
-		$object = $sf->client->describeSObject($object_name);
-		// get object fields
-		foreach($object->fields as $field) {
-			$object_fields[$field->name] = array(
-				'label' => $field->label,
-				'idLookup' => $field->idLookup,
-				'externalId' => $field->externalId,
-			);
-		}
+  $sf = salesforce_management_api_connect();
+  if ($sf) {
+    $record_types = array();
+    
+    $object = $sf->client->describeSObject($object_name);
+    // get object fields
+    foreach ($object->fields as $field) {
+      $object_fields[$field->name] = array(
+        'label' => $field->label,
+        'idLookup' => $field->idLookup,
+        'externalId' => $field->externalId,
+      );
+    }
 
-		// get object record types
-		foreach($object->recordTypeInfos as $record_type) {
-			if ($record_type->available && $record_type->name != 'Master') {
-				$record_types[$record_type->recordTypeId] = $record_type->name;
-			}
-		}
-		
-		$object_fields[] = '--Select One--';
-		$record_types[] = '--Select One--';
-		
-		asort($object_fields);
-		asort($record_types);
-		
-		return array(
-			'fields' => $object_fields,
-			'record_types' => $record_types,
-		);
-	}	
-	return array();
+    // get object record types
+    foreach ($object->recordTypeInfos as $record_type) {
+      if ($record_type->available && $record_type->name != 'Master') {
+        $record_types[$record_type->recordTypeId] = $record_type->name;
+      }
+    }
+    
+    $object_fields[] = '--Select One--';
+    $record_types[] = '--Select One--';
+    
+    asort($object_fields);
+    asort($record_types);
+    
+    return array(
+      'fields' => $object_fields,
+      'record_types' => $record_types,
+    );
+  }  
+  return array();
 }
