@@ -58,7 +58,7 @@ function capwiz_connect_schema() {
     'description' => t('Contains the Capwiz accounts that will be synced'),
     'fields' => array(
       'id' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Internal ID for the action'),
         'type' => 'serial',
         'not null' => TRUE,
       ),

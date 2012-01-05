@@ -287,7 +287,16 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 
   // Get the custom fields for users from Capwiz
   $connection = capwiz_connect($account->id);
-  $user_fields = $connection->getCustomUserFields();
+  
+  $user_fields['capwiz_user_id'] = (object)array(
+    'label' => 'Capwiz User ID',
+    'formInputType' => 'auto',
+  );
+
+  $custom_user_fields = $connection->getCustomUserFields();
+  if (is_array($custom_user_fields)) {
+    $user_fields += $custom_user_fields;
+  }
     
   // Add fields for the legislator fields
   $user_fields['fed_senator_1'] = (object)array(
@@ -438,7 +447,7 @@ function theme_capwiz_connect_user_mapping_form($form) {
     
     // Set the headers for the table. Action mapping does NOT include business rules
     $header = array(
-      "Capwiz Field",
+      "Capwiz User Field",
       "Drupal User Field",
       "Business rules Capwiz to Drupal",
     );
@@ -457,6 +466,12 @@ function theme_capwiz_connect_user_mapping_form($form) {
     }
 
 
+    $header = array(
+      "Capwiz Account Field",
+      "Drupal User Field",
+      "Business rules Capwiz to Drupal",
+    );
+    
     $output .= theme('table', $header, $rows);    
 
     // Remove map so it's not rendered twice

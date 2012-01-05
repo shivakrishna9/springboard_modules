@@ -477,6 +477,10 @@ class CapizConnect {
 
       // Handle the mapping from Capwiz field to Drupal user field
       switch ($field_key) {
+        case 'capwiz_user_id':
+          $value = $capwiz_user_id;
+          break;
+        
         // Email address. On Actions and Users.
         case 'emailAddress':
           // Email address
@@ -548,23 +552,23 @@ class CapizConnect {
         // Federal senators. Users only.
         case 'fed_senator_1':
         case 'fed_senator_2':
-          // @todo
+          // @todo: waiting on API update from Capwiz
           break;
       
         // Federal senator phone numbers. Users only.
         case 'fed_senator_1_phone':
         case 'fed_senator_2_phone':
-          // @todo
+          // @todo: waiting on API update from Capwiz
           break;
         
         // Federal rep. Users only.
         case 'fed_rep':
-          // @todo
+          // @todo: waiting on API update from Capwiz
           break;
         
         // Federal rep phone number. Users only.
         case 'fed_rep_phone':
-          // @todo
+          // @todo: waiting on API update from Capwiz
           break;
       
         // Every other field. Just load the field from the object
