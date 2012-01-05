@@ -437,7 +437,7 @@ class CapizConnect {
     
     $capwiz_user_id = $user->id;
     
-    $email = $user->data->emails[0]->address;
+    $email = $user->emails[0]->address;
     $existing_profile_values = array();
     
     if (!empty($email)) {
@@ -480,30 +480,36 @@ class CapizConnect {
         // Email address. On Actions and Users.
         case 'emailAddress':
           // Email address
-          if ($user->data->emails[0]) {
-            $value = $user->data->emails[0]->address;
+          if ($user->emails[0]) {
+            $value = $user->emails[0]->address;
           }
           break;
       
         // Salutation
         case 'honorificId':
-          if ($user->data->honorific) {
-            $value = $user->data->honorific->name;
+          if ($user->honorific) {
+            $value = $user->honorific->name;
           }
           break;
           
         // Street address
         case 'street1':
-          if ($user->data->addresses[0]) {
-            $value = $user->data->addresses[0]->street1;
+        case 'street2':
+        case 'city':
+        case 'state':
+        case 'postCode':
+        case 'postCodePlus':
+        case 'country':
+          if ($user->addresses[0]) {
+            $value = $user->addresses[0]->$field_key;
           }
           break;
           
         // Type of address
         case 'addressType':
           $address_field = $this->getSpecificCustomUserField('addressType');
-          if ($user->data->addresses[0] && $address_field) {
-            $address_type_id = $user->data->addresses[0]->addressTypeId;
+          if ($user->addresses[0] && $address_field) {
+            $address_type_id = $user->addresses[0]->addressTypeId;
             $value = $address_field->options[$address_type_id]->label;
           }
           break;
@@ -516,9 +522,9 @@ class CapizConnect {
         // Capwiz User in Salesforce. Only on Actions. 
         case 'sf_userid':
         // @todo: update this to use new data
-          if ($user->data->userId) {
+          if ($user->userId) {
             // Load the Salesforce ID for the user
-            $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $user->data->userId));
+            $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $user->userId));
             if ($sfid) {
               $salesforce_map['fields'][$sf_field_name] = $sfid;
             }
@@ -531,10 +537,10 @@ class CapizConnect {
         case 'stateDistrictUpper':
         case 'stateDistrictLower':
           // Make sure the officials array has at least one item in it
-          if (is_array($user->data->officials) && is_object($user->data->officials[0])) {
+          if (is_array($user->officials) && is_object($user->officials[0])) {
             // Get the requested field from the first legislator object in the array
-            if ($user->data->officials[0]->{$capwiz_field_name}) {
-              $value = $user->data->officials[0]->{$capwiz_field_name};
+            if ($user->officials[0]->{$capwiz_field_name}) {
+              $value = $user->officials[0]->{$capwiz_field_name};
             }
           }
           break;
@@ -563,22 +569,24 @@ class CapizConnect {
       
         // Every other field. Just load the field from the object
         default:
-          $value = $user->data->{$capwiz_field_name};
+          if ($user->{$field_key}) {
+            $value = $user->{$field_key};
+          }
       }
       
       // Save the value
       // If it's a profile field
       if ((int)$target_field > 0) {
-        // ALways overwrite, or overwrite when blank
-        if ($business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
-          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+        // Always overwrite, or overwrite when blank
+        if (empty($business_rule) || $business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
         }
         // Append
         elseif ($business_rule == 'append') {
           if ($existing_profile_values[$target_field]) {
             $value = $existing_profile_values[$target_field] . ' ' . $value;
           }
-          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
         }
       }
       // Not a profile field, but a regular user field
