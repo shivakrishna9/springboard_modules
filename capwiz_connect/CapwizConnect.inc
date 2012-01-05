@@ -436,34 +436,154 @@ class CapizConnect {
     $return_value = 0;
     
     $capwiz_user_id = $user->id;
-    $record = array(
-      'capwiz_account_id' => $this->account_details->id,
-      'capwiz_user_id' => $capwiz_user_id,
-      'local_uid' => 0,
-      'data' => serialize($user),
-    );
-        
-    // Check if this user (identified by Capwiz ID) is already in our DB
-    $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-        
-    if ($existing_record_id > 0) {
-      $record['id'] = $existing_record_id;
-      // User is already in our DB: update the record
-      if (drupal_write_record('capwiz_connect_users', $record, 'id')) {
+    
+    $email = $user->data->emails[0]->address;
+    $existing_profile_values = array();
+    
+    if (!empty($email)) {
+      $drupal_account = user_load(array('mail' => $email));
+      if ($drupal_account) {
         $return_value = self::$STAT_UPDATE_OK;
+        // Load profile values
+        if (module_exists('profile')) {
+          $result = db_query('SELECT fid, value FROM {profile_values} WHERE uid=%d', $drupal_account->uid);
+          while ($row = db_fetch_object($result)) {
+            $existing_profile_values[$row->fid] = $row->value;
+          }
+        }
       }
       else {
-        $return_value = self::$STAT_UPDATE_FAIL;
-      }
-    }
-    else {
-      // New-to-us user
-      if (drupal_write_record('capwiz_connect_users', $record)) {
+        $drupal_account_password = user_password();
+        $drupal_account = array(
+          'name'    => $email,
+          'pass'    => md5($drupal_account_password),
+          'mail'    => $email,
+          'created' => $time = time(),
+          'access'  => $time,
+          'login'   => 0,
+          'status'  => 1,
+        );
+
+        db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status) VALUES ("%s", "%s", "%s", %d, %d, %d, %d)', $drupal_account);
+        $drupal_account = (object)$drupal_account;
+        $drupal_account->uid  = db_last_insert_id('users', 'uid');
         $return_value = self::$STAT_CREATE_OK;
       }
-      else {
-        $return_value = self::$STAT_CREATE_FAIL;
+    }
+    
+    foreach ($this->account_details->mapping_user['map'] as $field_key => $target_field) {
+      $business_rule = $this->account_details->mapping_user['business'][$field_key];
+      $value = '';
+
+      // Handle the mapping from Capwiz field to Drupal user field
+      switch ($field_key) {
+        // Email address. On Actions and Users.
+        case 'emailAddress':
+          // Email address
+          if ($user->data->emails[0]) {
+            $value = $user->data->emails[0]->address;
+          }
+          break;
+      
+        // Salutation
+        case 'honorificId':
+          if ($user->data->honorific) {
+            $value = $user->data->honorific->name;
+          }
+          break;
+          
+        // Street address
+        case 'street1':
+          if ($user->data->addresses[0]) {
+            $value = $user->data->addresses[0]->street1;
+          }
+          break;
+          
+        // Type of address
+        case 'addressType':
+          $address_field = $this->getSpecificCustomUserField('addressType');
+          if ($user->data->addresses[0] && $address_field) {
+            $address_type_id = $user->data->addresses[0]->addressTypeId;
+            $value = $address_field->options[$address_type_id]->label;
+          }
+          break;
+        
+        // Affiliation of form
+        case 'form_affiliation':
+          $value = $this->account_details->form_affiliation;
+          break;
+      
+        // Capwiz User in Salesforce. Only on Actions. 
+        case 'sf_userid':
+        // @todo: update this to use new data
+          if ($user->data->userId) {
+            // Load the Salesforce ID for the user
+            $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $user->data->userId));
+            if ($sfid) {
+              $salesforce_map['fields'][$sf_field_name] = $sfid;
+            }
+          }
+          break;
+      
+        // Legislation district fields. These fields are listed on
+        // every official in the user data, with the same value on each
+        case 'nationalDistrict':
+        case 'stateDistrictUpper':
+        case 'stateDistrictLower':
+          // Make sure the officials array has at least one item in it
+          if (is_array($user->data->officials) && is_object($user->data->officials[0])) {
+            // Get the requested field from the first legislator object in the array
+            if ($user->data->officials[0]->{$capwiz_field_name}) {
+              $value = $user->data->officials[0]->{$capwiz_field_name};
+            }
+          }
+          break;
+        
+        // Federal senators. Users only.
+        case 'fed_senator_1':
+        case 'fed_senator_2':
+          // @todo
+          break;
+      
+        // Federal senator phone numbers. Users only.
+        case 'fed_senator_1_phone':
+        case 'fed_senator_2_phone':
+          // @todo
+          break;
+        
+        // Federal rep. Users only.
+        case 'fed_rep':
+          // @todo
+          break;
+        
+        // Federal rep phone number. Users only.
+        case 'fed_rep_phone':
+          // @todo
+          break;
+      
+        // Every other field. Just load the field from the object
+        default:
+          $value = $user->data->{$capwiz_field_name};
       }
+      
+      // Save the value
+      // If it's a profile field
+      if ((int)$target_field > 0) {
+        // ALways overwrite, or overwrite when blank
+        if ($business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+        }
+        // Append
+        elseif ($business_rule == 'append') {
+          if ($existing_profile_values[$target_field]) {
+            $value = $existing_profile_values[$target_field] . ' ' . $value;
+          }
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $field_mapping['profile_fid'], $value, $value);
+        }
+      }
+      // Not a profile field, but a regular user field
+      else {
+      }      
     }
 
     

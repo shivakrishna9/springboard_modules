@@ -332,7 +332,6 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     '' => '',
     t('User account') => array(
       'mail' => t('E-mail address'),
-      'status' => t('Account status'),
     ),
   );
 
@@ -343,10 +342,9 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 
     // Loop through the fields and add them to the Drupal user object.
     while ($field = db_fetch_array($result)) {
-      $drupal_user_fields['Profile fields'][$field['name']] = t('@category: @title', array('@category' => $field['category'], '@title' => $field['title']));
+      $drupal_user_fields['Profile fields'][$field['fid']] = t('@category: @title', array('@category' => $field['category'], '@title' => $field['title']));
     }
   }
-    
   foreach ($user_fields as $field_key => $field) {
     $map_for_field = $account->mapping_user['map'][$field_key];
       
