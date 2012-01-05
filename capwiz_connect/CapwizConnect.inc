@@ -465,10 +465,7 @@ class CapizConnect {
         $return_value = self::$STAT_CREATE_FAIL;
       }
     }
-    // Insert the user into the Salesforce processing queue
-    if ($record['id']) {
-      sf_queue_insert($record['id'], 'capwiz_connect_user', 'upsert');
-    }
+
     
     return $return_value;
   }

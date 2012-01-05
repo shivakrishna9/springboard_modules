@@ -175,6 +175,9 @@ function capwiz_connect_theme($existing, $type, $theme, $path) {
     'capwiz_connect_account_mapping_form' => array(
       'arguments' => array(),
     ),
+    'capwiz_connect_user_mapping_form' => array(
+      'arguments' => array(),
+    ),
   );
 }
 
@@ -317,7 +320,7 @@ function capwiz_connect_cron_process() {
  * Prep an object to be sent to SF. Mostly copied from sf_webform_queue_preprocess_batch_alter()
  */
 function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
-  if ($batch['type'] == 'capwiz_connect_user' || $batch['type'] == 'capwiz_connect_action') {
+  if ($batch['type'] == 'capwiz_connect_action') {
     // Get 'user' or 'action' by removing 'capwiz_connect_' from $batch['type']
     $type = substr($batch['type'], 15);
     
@@ -326,7 +329,6 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
       case 'upsert':
       case 'create':
         foreach ($batch['records'] as $record) {
-          
           $map = _capwiz_connect_sf_load_object_details($record->oid, $type);
           if (is_array($record->object)) {
             $record->object = array_merge($record->object, $map['fields']);  
@@ -349,8 +351,7 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
 }
 
 /**
- * Load field mapping for an object to be passed to Salesforce queue processor. This
- * function is used for both users and actions.
+ * Load field mapping for an action object to be passed to Salesforce queue processor. 
  */
 function _capwiz_connect_sf_load_object_details($oid, $type) {
   static $sf_field_map;
@@ -364,18 +365,10 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
     'RecordTypeId' => '',
   );
 
-  // Load the user or action data, depending on the type
-  if ($type == 'user') {
-    $object = _capwiz_connect_load_user_from_local_id($oid);
-    if ($object) {
-      $account_id = $object->capwiz_account_id;
-    }
-  }
-  else {
-    $object = _capwiz_connect_load_action($oid);
-    if ($object) {
-      $account_id = $object->capwiz_account_id;
-    }
+  // Load the action data, depending on the type
+  $object = _capwiz_connect_load_action($oid);
+  if ($object) {
+    $account_id = $object->capwiz_account_id;
   }
   
   if (!($account_id > 0)) {
@@ -535,7 +528,7 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
  * Implementation of hook_queue_fieldmap_assignment_alter().
  */
 function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
-  if ($data->type == 'capwiz_connect_user' || $data->type == 'capwiz_connect_action') {
+  if ($data->type == 'capwiz_connect_action') {
     $type = substr($data->type, 15);
     
     if ($type == 'user') {

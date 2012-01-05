@@ -110,44 +110,6 @@ function capwiz_connect_schema() {
     'primary key' => array('id'),
   );
   
-  $schema['capwiz_connect_users'] = array(
-    'description' => t('Store user data from Capwiz'),
-    'fields' => array(
-      'id' => array(
-        'description' => t('Auto-increment local ID for the user'),
-        'type' => 'serial',
-        'not null' => TRUE,
-      ),
-      'capwiz_account_id' => array(
-        'description' => t('ID from capwiz_connect_accounts.id'),
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'capwiz_user_id' => array(
-        'description' => t('User ID from Capwiz'),
-        'type' => 'varchar',
-        'length' => '20',
-        'not null' => TRUE,
-      ),
-      'local_uid' => array(
-        'description' => t('Drupal user ID, if there is one'),
-        'type' => 'int',
-        'not null' => FALSE,
-      ),
-      'data' => array(
-        'description' => t('Serialized data about the user'),
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => FALSE,
-      ),
-    ),
-    'primary key' => array('id'),
-    'indexes' => array(
-      'capwiz_account_id' => array('capwiz_account_id'),
-      'capwiz_user_id' => array('capwiz_user_id'),
-    ),
-  );
-
 
   $schema['capwiz_connect_actions'] = array(
     'description' => t('Store action data from Capwiz'),
