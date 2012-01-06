@@ -13,8 +13,11 @@ function webform_user_uninstall() {
  * Implementation of hook_enable().
  */
 function webform_user_enable() {
-	// tell the queue about the type
-  queue_processor_add_type('webform_user');
+  // tell the queue about the type
+  if (module_exists('queue_processor')) {
+    module_load_include('module', 'queue_processor');
+    queue_processor_add_type('webform_user');
+  }
 }
 
 /**
