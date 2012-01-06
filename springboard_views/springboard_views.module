@@ -3,6 +3,6 @@
 /**
  * Implementation of hook_views_api().
  */
-function fundraiser_views_views_api() {
+function springboard_views_views_api() {
   return array('api' => 2);
 }

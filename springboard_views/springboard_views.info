@@ -1,0 +1,5 @@
+core = "6.x"
+description = "Adds views integration for Springboard."
+name = "Springboard Views integration"
+package = "Jackson River Springboard"
+dependencies[] = "views"
