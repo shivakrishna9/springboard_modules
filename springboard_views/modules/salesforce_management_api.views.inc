@@ -34,7 +34,7 @@ function springboard_views_salesforce_management_api_views_data() {
   );
 
   // Salesforce_management_object_map fields
-  $data['drupal_type'] = array(
+  $data['salesforce_management_object_map']['drupal_type'] = array(
     'title' => t('Drupal type'),
     'help' => t('Drupal object type (e.g. "node", "comment").'),
     'field' => array(
@@ -42,14 +42,15 @@ function springboard_views_salesforce_management_api_views_data() {
       'click sortable' => TRUE,
     ),
     'filter' => array(
-      'handler' => 'fundraiser_views_handler_filter_drupal_type',
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'springboard_views_sf_drupal_types',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
   );
-  $data['oid'] = array();
-  $data['sfid'] = array(
+  //$data['salesforce_management_object_map']['oid'] = array();
+  $data['salesforce_management_object_map']['sfid'] = array(
     'title' => t('Salesforce object ID'),
     'help' => t('The Salesforce object ID.'),
     'field' => array(
@@ -63,7 +64,7 @@ function springboard_views_salesforce_management_api_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  $data['fieldmap'] = array();
+  //$data['salesforce_management_object_map']['fieldmap'] = array();
 
   // --------------------------------------------------------------------------
   // Salesforce_management_field_map table metadata

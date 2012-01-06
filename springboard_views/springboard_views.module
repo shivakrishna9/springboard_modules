@@ -6,3 +6,28 @@
 function springboard_views_views_api() {
   return array('api' => 2);
 }
+
+/**
+ * Returns a list of the available 'drupal_type' field values.
+ */
+function springboard_views_sf_drupal_types() {
+  static $drupal_types = array();
+  if (empty($drupal_types)) {
+    $result = db_query("SELECT DISTINCT drupal_type FROM {salesforce_management_object_map} WHERE drupal_type IS NOT NULL");
+    while ($drupal_type = db_result($result)) {
+      $drupal_types[$drupal_type] = $drupal_type;
+    }
+  }
+  return $drupal_types;
+}
+
+/**
+ * Returns a list of the possible gateway responses.
+ */
+function springboard_views_gateway_response_options() {
+  return array(
+    'success' => t('Success'),
+    'canceled' => t('Canceled'),
+    'failed' => t('Failed'),
+  );
+}
