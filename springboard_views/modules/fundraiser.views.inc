@@ -14,7 +14,7 @@ function springboard_views_fundraiser_views_handlers() {
         'parent' => 'views_handler_field_prerender_list',
       ),
       // Filter handlers
-      'fundraiser_handler_filter_drupal_type' => array(
+      'fundraiser_handler_filter_gateway_resp' => array(
         'parent' => 'views_handler_filter_in_operator',
       ),
     ),
@@ -176,7 +176,7 @@ function springboard_views_fundraiser_views_data() {
     'help' => t('The body text of the confirmation page.'),
     'field' => array(
       'handler' => 'views_handler_field_markup',
-      'format' => 'format', // The name of the format field
+      'format' => 'confirmation_page_format', // The name of the format field
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
@@ -268,7 +268,7 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
   $data['fundraiser_webform_orders']['txn_id'] = array(
-    'title' => t('Gateway'),
+    'title' => t('Transaction ID'),
     'help' => t('The transaction ID used on this donation.'),
     'field' => array(
       'handler' => 'views_handler_field',
@@ -276,6 +276,9 @@ function springboard_views_fundraiser_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   $data['fundraiser_webform_orders']['recurring_status'] = array(
@@ -325,18 +328,122 @@ function springboard_views_fundraiser_views_data() {
   );
 
   // Fundraiser_recurring fields
-  $data['fundraiser_recurring']['master_order_id'] = array();
-  $data['fundraiser_recurring']['order_id'] = array();
-  $data['fundraiser_recurring']['next_charge'] = array();
+  $data['fundraiser_recurring']['master_order_id'] = array(
+    'title' => t('Master order'),
+    'help' => t('Master Ubercart order for this recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['order_id'] = array(
+    'title' => t('Recurring order'),
+    'help' => t('A single recurring donation Ubercart order.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['next_charge'] = array(
+    'title' => t('Date of next charge'),
+    'help' => t('Date of the next recurring charge.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_date',
+    ),
+  );
   $data['fundraiser_recurring']['sf_opportunity_id'] = array();
   $data['fundraiser_recurring']['sf_recurring_id'] = array();
   $data['fundraiser_recurring']['sf_stagename'] = array();
   $data['fundraiser_recurring']['sf_sync_status'] = array();
-  $data['fundraiser_recurring']['gateway_resp'] = array();
-  $data['fundraiser_recurring']['attempts'] = array();
-  $data['fundraiser_recurring']['cancellation_reason'] = array();
-  $data['fundraiser_recurring']['gateway'] = array();
-  $data['fundraiser_recurring']['txn_id'] = array();
+  $data['fundraiser_recurring']['gateway_resp'] = array(
+    'title' => t('Gateway response'),
+    'help' => t('Response from the payment gateway for a recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'fundraiser_handler_filter_gateway_resp',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['attempts'] = array(
+    'title' => t('Attempts'),
+    'help' => t('Number of attempted charges for a recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['cancellation_reason'] = array(
+    'title' => t('Cancellation reason'),
+    'help' => t('The reason provided for the cancellation of a recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['gateway'] = array(
+    'title' => t('Gateway'),
+    'help' => t('The payment gateway used on a recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['fundraiser_recurring']['txn_id'] = array(
+    'title' => t('Transaction ID'),
+    'help' => t('The transaction ID used on a recurring donation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
 
   // --------------------------------------------------------------------------
   // Fundraiser_component_map table metadata

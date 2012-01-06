@@ -1,5 +1,23 @@
 <?php
 
+
+/**
+ * Implements hook_views_handlers().
+ */
+function springboard_views_salesforce_management_api_views_handlers() {
+  return array(
+    'info' => array(
+      'path' => drupal_get_path('module', 'springboard_views') . '/modules/salesforce_management_api',
+    ),
+    'handlers' => array(
+      // Filter handlers
+      'salesforce_management_api_handler_filter_drupal_type' => array(
+        'parent' => 'views_handler_filter_in_operator',
+      ),
+    ),
+  );
+}
+
 /**
  * Implementation of hook_views_data().
  */
