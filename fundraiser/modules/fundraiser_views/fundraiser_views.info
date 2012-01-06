@@ -1,0 +1,6 @@
+core = "6.x"
+description = "Adds views integration for Fundraiser."
+name = "Fundraiser Views integration"
+package = "Jackson River Springboard"
+dependencies[] = "fundraiser"
+dependencies[] = "views"
