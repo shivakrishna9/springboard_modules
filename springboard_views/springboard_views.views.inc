@@ -64,7 +64,13 @@ function _springboard_views_invoke_all($hook) {
 }
 
 /**
+ * Enhancements to the standard views_join class that will allow extra fields
+ * to be used in the join clause.
  *
+ * 'extra' array now can accept the following keys:
+ *   - table type: 'left' or 'right' (default).
+ *   - value type: 'field' or 'value' (default).
+ *   - value: can now be a field name, if value type is field.
  */
 class springboard_views_join extends views_join {
   /**
@@ -97,11 +103,18 @@ class springboard_views_join extends views_join {
           // Figure out the table name. Remember, only use aliases provided
           // if at all possible.
           $join_table = '';
-          if (!array_key_exists('table', $info)) {
-            $join_table = $table['alias'] . '.';
+          if (isset($info['table'])) {
+            $table_type = isset($info['table type']) ? $info['table type'] : 'right';
+            if ($table_type == 'left') {
+              $extra_table = $query->get_table_info($this->left_table);
+              $join_table = $extra_table['alias'] . '.';
+            }
+            else {
+              $join_table = $info['table'] . '.';
+            }
           }
-          elseif (isset($info['table'])) {
-            $join_table = $info['table'] . '.';
+          else {
+            $join_table = $table['alias'] . '.';
           }
 
           // And now deal with the value and the operator.  Set $q to

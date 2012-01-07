@@ -22,6 +22,12 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field',
     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_queue']['oid'] = array(
     'title' => t('Queued object'),
@@ -31,6 +37,9 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
     'relationship' => array(
       'base' => 'salesforce_management_object_map',
@@ -47,6 +56,48 @@ function springboard_views_queue_api_views_data() {
       'label' => t('Queued object'),
     ),
   );
+  $data['sf_queue']['oid_user'] = array(
+    'title' => t('User object'),
+    'help' => t('Drupal user object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'users',
+      'base field' => 'uid',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_queue',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'user',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('User object'),
+    ),
+  );
+  $data['sf_queue']['oid_donation'] = array(
+    'title' => t('Donation object'),
+    'help' => t('Drupal donation (Ubercart order) object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'uc_orders',
+      'base field' => 'order_id',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_queue',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'donation',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Donation object'),
+    ),
+  );
   $data['sf_queue']['type'] = array(
     'title' => t('Queued object type'),
     'help' => t('The queued object type.'),
@@ -56,6 +107,9 @@ function springboard_views_queue_api_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_in_operator',
       'options callback' => 'springboard_views_sf_drupal_types',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   $data['sf_queue']['sfid'] = array(
@@ -67,6 +121,9 @@ function springboard_views_queue_api_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_string',
     ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_queue']['fieldmap'] = array(
     'title' => t('Fieldmap'),
@@ -77,6 +134,9 @@ function springboard_views_queue_api_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
     ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_queue']['action'] = array(
     'title' => t('Action'),
@@ -86,6 +146,9 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   $data['sf_queue']['created'] = array(
@@ -120,6 +183,12 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field',
     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_retry_queue']['oid'] = array(
     'title' => t('Queued object'),
@@ -129,6 +198,65 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'relationship' => array(
+      'base' => 'salesforce_management_object_map',
+      'base field' => 'oid',
+      'extra' => array(
+        array(
+          'field' => 'type',
+          'value type' => 'field',
+          'value' => 'drupal_type',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Queued object'),
+    ),
+  );
+  $data['sf_retry_queue']['oid_user'] = array(
+    'title' => t('User object'),
+    'help' => t('Drupal user object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'users',
+      'base field' => 'uid',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_retry_queue',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'user',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('User object'),
+    ),
+  );
+  $data['sf_retry_queue']['oid_donation'] = array(
+    'title' => t('Donation object'),
+    'help' => t('Drupal donation (Ubercart order) object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'uc_orders',
+      'base field' => 'order_id',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_retry_queue',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'donation',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Donation object'),
     ),
   );
   $data['sf_retry_queue']['type'] = array(
@@ -141,6 +269,9 @@ function springboard_views_queue_api_views_data() {
       'handler' => 'views_handler_filter_in_operator',
       'options callback' => 'springboard_views_sf_drupal_types',
     ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_retry_queue']['sfid'] = array(
     'title' => t('Salesforce ID'),
@@ -150,6 +281,9 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   $data['sf_retry_queue']['fieldmap'] = array(
@@ -161,6 +295,9 @@ function springboard_views_queue_api_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
     ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['sf_retry_queue']['action'] = array(
     'title' => t('Action'),
@@ -170,6 +307,9 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
   $data['sf_retry_queue']['created'] = array(
@@ -240,6 +380,65 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'relationship' => array(
+      'base' => 'salesforce_management_object_map',
+      'base field' => 'oid',
+      'extra' => array(
+        array(
+          'field' => 'type',
+          'value type' => 'field',
+          'value' => 'drupal_type',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Queued object'),
+    ),
+  );
+  $data['sf_permanent_failure']['oid_user'] = array(
+    'title' => t('User object'),
+    'help' => t('Drupal user object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'users',
+      'base field' => 'uid',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_permanent_failure',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'user',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('User object'),
+    ),
+  );
+  $data['sf_permanent_failure']['oid_donation'] = array(
+    'title' => t('Donation object'),
+    'help' => t('Drupal donation (Ubercart order) object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'uc_orders',
+      'base field' => 'order_id',
+      'extra' => array(
+        array(
+          'table type' => 'left',
+          'table' => 'sf_permanent_failure',
+          'field' => 'type',
+          'value type' => 'value',
+          'value' => 'donation',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Donation object'),
     ),
   );
   $data['sf_permanent_failure']['type'] = array(

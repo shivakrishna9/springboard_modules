@@ -1,23 +1,5 @@
 <?php
 
-
-/**
- * Implements hook_views_handlers().
- */
-function springboard_views_salesforce_management_api_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'springboard_views') . '/modules/salesforce_management_api',
-    ),
-    'handlers' => array(
-      // Filter handlers
-      'salesforce_management_api_handler_filter_drupal_type' => array(
-        'parent' => 'views_handler_filter_in_operator',
-      ),
-    ),
-  );
-}
-
 /**
  * Implementation of hook_views_data().
  */
@@ -34,26 +16,6 @@ function springboard_views_salesforce_management_api_views_data() {
   );
 
   // Salesforce_management_object_map fields
-  $data['salesforce_management_object_map']['oid_user'] = array(
-    'title' => t('User object'),
-    'help' => t('Drupal user object.'),
-    'relationship' => array(
-      'relationship field' => 'oid',
-      'base' => 'user',
-      'base field' => 'uid',
-      'extra' => array(
-        array(
-          'table' => 'salesforce_management_object_map',
-          'field' => 'drupal_type',
-          'value type' => 'value',
-          'value' => 'user',
-        ),
-      ),
-      'handler' => 'views_handler_relationship',
-      'join_handler' => 'springboard_views_join',
-      'label' => t('Queued object'),
-    ),
-  );
   $data['salesforce_management_object_map']['drupal_type'] = array(
     'title' => t('Drupal type'),
     'help' => t('Drupal object type (e.g. "node", "comment").'),
@@ -83,7 +45,19 @@ function springboard_views_salesforce_management_api_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  //$data['salesforce_management_object_map']['fieldmap'] = array();
+  $data['salesforce_management_object_map']['fieldmap'] = array(
+    'title' => t('Fieldmap'),
+    'help' => t('The ID of the fieldmap associated with this object.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
 
   // --------------------------------------------------------------------------
   // Salesforce_management_field_map table metadata
