@@ -32,6 +32,20 @@ function springboard_views_queue_api_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_string',
     ),
+    'relationship' => array(
+      'base' => 'salesforce_management_object_map',
+      'base field' => 'oid',
+      'extra' => array(
+        array(
+          'field' => 'type',
+          'value type' => 'field',
+          'value' => 'drupal_type',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Queued object'),
+    ),
   );
   $data['sf_queue']['type'] = array(
     'title' => t('Queued object type'),
@@ -40,7 +54,8 @@ function springboard_views_queue_api_views_data() {
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'springboard_views_sf_drupal_types',
     ),
   );
   $data['sf_queue']['sfid'] = array(
@@ -71,6 +86,20 @@ function springboard_views_queue_api_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_string',
+    ),
+  );
+  $data['sf_queue']['created'] = array(
+    'title' => t('Created'),
+    'help' => t('The date this item was added to the queue.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
     ),
   );
 
@@ -109,7 +138,8 @@ function springboard_views_queue_api_views_data() {
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'springboard_views_sf_drupal_types',
     ),
   );
   $data['sf_retry_queue']['sfid'] = array(
@@ -155,9 +185,6 @@ function springboard_views_queue_api_views_data() {
     'sort' => array(
       'handler' => 'views_handler_sort_date',
     ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_date',
-    ),
   );
   $data['sf_retry_queue']['retry_date'] = array(
     'title' => t('Retry date'),
@@ -171,9 +198,6 @@ function springboard_views_queue_api_views_data() {
     ),
     'sort' => array(
       'handler' => 'views_handler_sort_date',
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_date',
     ),
   );
   $data['sf_retry_queue']['attempts'] = array(
@@ -225,7 +249,8 @@ function springboard_views_queue_api_views_data() {
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'springboard_views_sf_drupal_types',
     ),
   );
   $data['sf_permanent_failure']['fieldmap'] = array(
@@ -260,9 +285,6 @@ function springboard_views_queue_api_views_data() {
     ),
     'sort' => array(
       'handler' => 'views_handler_sort_date',
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_date',
     ),
   );
 

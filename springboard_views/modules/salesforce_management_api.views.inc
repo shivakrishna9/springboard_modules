@@ -34,6 +34,26 @@ function springboard_views_salesforce_management_api_views_data() {
   );
 
   // Salesforce_management_object_map fields
+  $data['salesforce_management_object_map']['oid_user'] = array(
+    'title' => t('User object'),
+    'help' => t('Drupal user object.'),
+    'relationship' => array(
+      'relationship field' => 'oid',
+      'base' => 'user',
+      'base field' => 'uid',
+      'extra' => array(
+        array(
+          'table' => 'salesforce_management_object_map',
+          'field' => 'drupal_type',
+          'value type' => 'value',
+          'value' => 'user',
+        ),
+      ),
+      'handler' => 'views_handler_relationship',
+      'join_handler' => 'springboard_views_join',
+      'label' => t('Queued object'),
+    ),
+  );
   $data['salesforce_management_object_map']['drupal_type'] = array(
     'title' => t('Drupal type'),
     'help' => t('Drupal object type (e.g. "node", "comment").'),
@@ -49,7 +69,6 @@ function springboard_views_salesforce_management_api_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  //$data['salesforce_management_object_map']['oid'] = array();
   $data['salesforce_management_object_map']['sfid'] = array(
     'title' => t('Salesforce object ID'),
     'help' => t('The Salesforce object ID.'),

@@ -427,9 +427,6 @@ function springboard_views_fundraiser_views_data() {
     'sort' => array(
       'handler' => 'views_handler_sort_date',
     ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_date',
-    ),
   );
   //$data['fundraiser_recurring']['sf_opportunity_id'] = array();
   //$data['fundraiser_recurring']['sf_recurring_id'] = array();
