@@ -528,18 +528,6 @@ class CapizConnect {
           $value = $this->account_details->form_affiliation;
           break;
       
-        // Capwiz User in Salesforce. Only on Actions. 
-        case 'sf_userid':
-        // @todo: update this to use new data
-          if ($user->userId) {
-            // Load the Salesforce ID for the user
-            $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $user->userId));
-            if ($sfid) {
-              $salesforce_map['fields'][$sf_field_name] = $sfid;
-            }
-          }
-          break;
-      
         // Legislation district fields. These fields are listed on
         // every official in the user data, with the same value on each
         case 'nationalDistrict':
