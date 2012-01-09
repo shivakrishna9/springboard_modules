@@ -422,9 +422,8 @@ class CapizConnect {
   
   
   /**
-   * Local method to save a user. Right now, this saves to the capwiz_connect_users
-   * table and adds the user to the Salesforce processing queue, but this might be
-   * changed later to create Drupal users
+   * Local method to save a Capwiz user as a Drupal user and add the user to
+   * the Salesforce processing queue
    * 
    * @param $user
    *   Object representing a user that was pulled over from Capwiz
@@ -436,39 +435,174 @@ class CapizConnect {
     $return_value = 0;
     
     $capwiz_user_id = $user->id;
-    $record = array(
-      'capwiz_account_id' => $this->account_details->id,
-      'capwiz_user_id' => $capwiz_user_id,
-      'local_uid' => 0,
-      'data' => serialize($user),
-    );
-        
-    // Check if this user (identified by Capwiz ID) is already in our DB
-    $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-        
-    if ($existing_record_id > 0) {
-      $record['id'] = $existing_record_id;
-      // User is already in our DB: update the record
-      if (drupal_write_record('capwiz_connect_users', $record, 'id')) {
+    
+    $email = $user->emails[0]->address;
+    $existing_profile_values = array();
+    
+    if (!empty($email)) {
+      $drupal_account = user_load(array('mail' => $email));
+      if ($drupal_account) {
         $return_value = self::$STAT_UPDATE_OK;
+        // Load profile values
+        if (module_exists('profile')) {
+          $result = db_query('SELECT fid, value FROM {profile_values} WHERE uid=%d', $drupal_account->uid);
+          while ($row = db_fetch_object($result)) {
+            $existing_profile_values[$row->fid] = $row->value;
+          }
+        }
       }
       else {
-        $return_value = self::$STAT_UPDATE_FAIL;
-      }
-    }
-    else {
-      // New-to-us user
-      if (drupal_write_record('capwiz_connect_users', $record)) {
+        $drupal_account_password = user_password();
+        $drupal_account = array(
+          'name'    => $email,
+          'pass'    => md5($drupal_account_password),
+          'mail'    => $email,
+          'created' => $time = time(),
+          'access'  => $time,
+          'login'   => 0,
+          'status'  => 1,
+        );
+
+        db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status) VALUES ("%s", "%s", "%s", %d, %d, %d, %d)', $drupal_account);
+        $drupal_account = (object)$drupal_account;
+        $drupal_account->uid  = db_last_insert_id('users', 'uid');
         $return_value = self::$STAT_CREATE_OK;
       }
-      else {
-        $return_value = self::$STAT_CREATE_FAIL;
+    }
+    
+    // Add the new/updated user to the SF queue
+    if (module_exists('sf_user') && $drupal_account->uid > 0) {
+      sf_queue_insert($drupal_account->uid, 'user', 'upsert');
+    }
+    
+    
+    foreach ($this->account_details->mapping_user['map'] as $field_key => $target_field) {
+      $business_rule = $this->account_details->mapping_user['business'][$field_key];
+      $value = '';
+
+      // Handle the mapping from Capwiz field to Drupal user field
+      switch ($field_key) {
+        case 'capwiz_user_id':
+          $value = $capwiz_user_id;
+          break;
+        
+        // Email address. On Actions and Users.
+        case 'emailAddress':
+          // Email address
+          if ($user->emails[0]) {
+            $value = $user->emails[0]->address;
+          }
+          break;
+      
+        // Salutation
+        case 'honorificId':
+          if ($user->honorific) {
+            $value = $user->honorific->name;
+          }
+          break;
+          
+        // Street address
+        case 'street1':
+        case 'street2':
+        case 'city':
+        case 'state':
+        case 'postCode':
+        case 'postCodePlus':
+        case 'country':
+          if ($user->addresses[0]) {
+            $value = $user->addresses[0]->$field_key;
+          }
+          break;
+          
+        // Type of address
+        case 'addressType':
+          $address_field = $this->getSpecificCustomUserField('addressType');
+          if ($user->addresses[0] && $address_field) {
+            $address_type_id = $user->addresses[0]->addressTypeId;
+            $value = $address_field->options[$address_type_id]->label;
+          }
+          break;
+        
+        // Affiliation of form
+        case 'form_affiliation':
+          $value = $this->account_details->form_affiliation;
+          break;
+      
+        // Capwiz User in Salesforce. Only on Actions. 
+        case 'sf_userid':
+        // @todo: update this to use new data
+          if ($user->userId) {
+            // Load the Salesforce ID for the user
+            $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $user->userId));
+            if ($sfid) {
+              $salesforce_map['fields'][$sf_field_name] = $sfid;
+            }
+          }
+          break;
+      
+        // Legislation district fields. These fields are listed on
+        // every official in the user data, with the same value on each
+        case 'nationalDistrict':
+        case 'stateDistrictUpper':
+        case 'stateDistrictLower':
+          // Make sure the officials array has at least one item in it
+          if (is_array($user->officials) && is_object($user->officials[0])) {
+            // Get the requested field from the first legislator object in the array
+            if ($user->officials[0]->{$capwiz_field_name}) {
+              $value = $user->officials[0]->{$capwiz_field_name};
+            }
+          }
+          break;
+        
+        // Federal senators. Users only.
+        case 'fed_senator_1':
+        case 'fed_senator_2':
+          // @todo: waiting on API update from Capwiz
+          break;
+      
+        // Federal senator phone numbers. Users only.
+        case 'fed_senator_1_phone':
+        case 'fed_senator_2_phone':
+          // @todo: waiting on API update from Capwiz
+          break;
+        
+        // Federal rep. Users only.
+        case 'fed_rep':
+          // @todo: waiting on API update from Capwiz
+          break;
+        
+        // Federal rep phone number. Users only.
+        case 'fed_rep_phone':
+          // @todo: waiting on API update from Capwiz
+          break;
+      
+        // Every other field. Just load the field from the object
+        default:
+          if ($user->{$field_key}) {
+            $value = $user->{$field_key};
+          }
       }
+      
+      // Save the value
+      // If it's a profile field
+      if ((int)$target_field > 0) {
+        // Always overwrite, or overwrite when blank
+        if (empty($business_rule) || $business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
+        }
+        // Append
+        elseif ($business_rule == 'append') {
+          if ($existing_profile_values[$target_field]) {
+            $value = $existing_profile_values[$target_field] . ' ' . $value;
+          }
+          db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
+        }
+      }
+      // Not a profile field, but a regular user field
+      else {
+      }      
     }
-    // Insert the user into the Salesforce processing queue
-    if ($record['id']) {
-      sf_queue_insert($record['id'], 'capwiz_connect_user', 'upsert');
-    }
+
     
     return $return_value;
   }
