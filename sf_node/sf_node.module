@@ -115,16 +115,18 @@ function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  */
 function sf_node_salesforce_management_field_map($op, $drupal, $salesforce) {
   // the queue needs to be aware of any node types that are set to export
-  switch ($op) {
-  case 'insert':
-      // add the node type the queue processing order array
-      queue_processor_add_type($drupal);
-      break;
- 
-    case 'delete':
-      // remove the node type from the queue processing order array
-      queue_processor_remove_type($drupal);
-      break;
+  if (substr($drupal, 0, 5) == 'node_') { #301 - only respond to node fieldmaps
+    switch ($op) {
+      case 'insert':
+        // add the node type the queue processing order array
+        queue_processor_add_type($drupal);
+        break;
+   
+      case 'delete':
+        // remove the node type from the queue processing order array
+        queue_processor_remove_type($drupal);
+        break;
+    }
   }
 }
 
