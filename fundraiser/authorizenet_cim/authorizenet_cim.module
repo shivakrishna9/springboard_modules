@@ -2,8 +2,8 @@
 
 /**
  * @file
- * Methods for updating authorize.net CIM profiles. 
- * 
+ * Methods for updating authorize.net CIM profiles.
+ *
  */
 
 /**
@@ -33,7 +33,7 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, 
 
   // format expirdation date for API
   $expiration_date = $billing_info['card_exp_date']['year'] . '-' . sprintf("%02d", $billing_info['card_exp_date']['month']);
-  
+
   // create the updateCustomerPaymentProfileRequest xml request
   $request = array(
     'customerProfileId' => $profile_id,
@@ -57,8 +57,8 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile, 
       'customerPaymentProfileId' => $payment_profile->customerPaymentProfileId,
     ),
   );
-  
-  $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',  _uc_authorizenet_array_to_xml($request));
+
+  $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',   _uc_authorizenet_array_to_xml($request));
   $response = uc_authorizenet_xml_api($server, $xml);
   $response = _authorizenet_cim_strip_namespace($response);
   $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
@@ -78,7 +78,7 @@ function authorizenet_cim_profile_get($profile_id) {
   $response = uc_authorizenet_xml_api($server, $xml);
   $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
   $xml_raw = strstr($response, '<getCustomerProfileResponse');
-  
+
   return authorizenet_cim_process_xml($xml_raw);
 }
 
@@ -97,14 +97,14 @@ function authorizenet_cim_payment_profile_get($profile_id, $payment_profile_id) 
   // Parse the response.
   $response = uc_authorizenet_xml_api($server, $xml);
   $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
-  
+
   // someone at ubercart thought it would be awesome to include the http headers in the response. so let's parse out the stuff we need
   $xml_raw = strstr($response, '<getCustomerPaymentProfileResponse');
-  
+
   return authorizenet_cim_process_xml($xml_raw);
 }
 
-/** 
+/**
  * Generic function to process the XML messages return from API.
  */
 function authorizenet_cim_process_xml($xml) {
@@ -119,7 +119,7 @@ function authorizenet_cim_process_xml($xml) {
     watchdog('fundraiser', t('Authorize.Net: Error parsing API response.<br />@error', array('@error' => $e->getMessage()), NULL, WATCHDOG_CRITICAL));
     $xml_data = NULL;
   }
-  
+
   // return a valid response or NULL
   return $xml_data;
 }

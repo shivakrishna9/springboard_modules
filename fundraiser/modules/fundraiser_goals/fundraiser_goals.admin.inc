@@ -2,20 +2,20 @@
 
 function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
 
- // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled?
-// TODO: get saved visibility values displaying on block configuration form
+  // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled?
+  // TODO: get saved visibility values displaying on block configuration form
 
- module_load_include('inc', 'block', 'block.admin');
+  module_load_include('inc', 'block', 'block.admin');
   $block_form = block_admin_configure($edit);
   $form['user_vis_settings'] = $block_form['user_vis_settings'];
   $form['user_vis_settings']['custom']['#default_value'] = $edit['values']['custom'];
   $form['page_vis_settings'] = $block_form['page_vis_settings'];
   $form['page_vis_settings']['pages']['#default_value'] = $edit['values']['pages'];
-  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility']; 
+  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility'];
   $form['role_vis_settings'] = $block_form['role_vis_settings'];
 
   unset($block_form);
-  
+
   $form['configure'] = array(
     '#type' => 'value',
     '#value' => $configure,
@@ -35,7 +35,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
      '#type' => 'textfield',
      '#title' => t('Machine Name'),
      '#required' => TRUE,
-     '#default_value' => $edit['values']['fundraiser_goal_delta'],  
+     '#default_value' => $edit['values']['fundraiser_goal_delta'],
   );
   $form['submissions_wrapper'] = array(
     '#prefix' => '<div id="goal-submission-settings">',
@@ -189,18 +189,18 @@ function fundraiser_goals_admin_validate(&$form, &$form_state) {
  * Admin submit callback.
  */
 function fundraiser_goals_admin_submit($form, &$form_state) {
- 
-   $object = (object) $form_state['values'];
-   if (!$form_state['values']['configure']) {
-     $object->pid = $object->fundraiser_goal_parent_item;
-     _fundraiser_goals_save_goal($object);
 
-   }
-   else {
-     _fundraiser_goals_update_goal($object);
-   }
-   $form_state['redirect'] = 'admin/build/block';
-   return;
+  $object = (object) $form_state['values'];
+  if (!$form_state['values']['configure']) {
+    $object->pid = $object->fundraiser_goal_parent_item;
+    _fundraiser_goals_save_goal($object);
+
+  }
+  else {
+    _fundraiser_goals_update_goal($object);
+  }
+  $form_state['redirect'] = 'admin/build/block';
+  return;
 }
 
 /**
@@ -235,7 +235,7 @@ function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
   $goal = db_fetch_object(db_query("SELECT * FROM {fundraiser_goals} WHERE delta = '%s'", $delta));
   $block_info = db_fetch_object(db_query("SELECT b.title, b.custom, b.visibility, b.pages, fb.info FROM {blocks} b INNER JOIN {fundraiser_goals_blocks} fb ON b.bid = fb.bid WHERE b.module = 'fundraiser_goals' AND b.delta = '%s'", $delta));
 
-      $edit['values'] = array(
+  $edit['values'] = array(
         'block_title' => $block_info->title,
         'visibility' => $block_info->visibility,
         'pages' => $block_info->pages,
@@ -251,9 +251,8 @@ function fundraiser_goals_block_admin_configure($edit, $delta = 0) {
         'custom' => $block_info->custom,
         'visibility' => $block_info->visibility,
       );
-      $edit['values']['submissions'] = is_numeric((string) $goal->pid) ? 0 : 1;
- ;
-      return fundraiser_goals_block_admin($edit, TRUE);
+  $edit['values']['submissions'] = is_numeric((string) $goal->pid) ? 0 : 1;
+  return fundraiser_goals_block_admin($edit, TRUE);
 }
 /**
  * #AHAH callback for blck admin form.
@@ -264,7 +263,7 @@ function fundraiser_goals_admin_ahah() {
   $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
-  
+
   $args = $form['#parameters'];
   $form_id = array_shift($args);
   $form_state['post'] = $form['#post'] = $_POST;
@@ -274,12 +273,12 @@ function fundraiser_goals_admin_ahah() {
   $form['#validate'] = NULL;
   $form_state['validate_handlers'] = NULL;
   fundraiser_ahah_helper_disable_validation($form);
-  
+
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
   $goal_form = $form['submissions_wrapper'];
   unset($goal_form['#prefix'], $amount_form['#suffix']);
- 
+
   $output = theme('status_messages') . drupal_render($goal_form);
 
   $form_state = array('submitted' => FALSE);

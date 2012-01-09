@@ -1,0 +1,258 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function fundraiser_api_help($section) {
+  switch ($section) {
+    case 'admin/help#fundraiser_api':
+      return t('Provides Fundraiser, Webform and Webform User methods to Services applications.');
+    case 'admin/modules#description':
+      return t('Provides Fundraiser, Webform and Webform User methods to Services applications. Requires services.module, fundraiser.module and webform.module');
+  }
+}
+
+/**
+ *  Implements hook_perm().
+ */
+function fundraiser_api_perm() {
+  return array(
+    'view webform index', 'retrieve webform', 'view donation index', 'retrieve donation', 'create donation'
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_api_menu() {
+  $items = array();
+  $items['admin/settings/fundraiser/fundraiser_api'] = array(
+    'title' => 'Fundraiser API',
+    'description' => 'Configure Fundraiser service integration and API settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_api_admin'),
+    'access arguments' => array('administer fundraiser'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'fundraiser_api.admin.inc',
+  );
+  return $items;
+}
+
+
+/**
+ * Implements hook_services_resources().
+ * @see http://drupalcontrib.org/api/drupal/contributions--services--services.services.api.php/function/hook_services_resources/6
+ */
+function fundraiser_api_services_resources() {
+  return array(
+    'fundraiser_webform' => array(
+      'index' => array(
+        'help' => 'Retrieves a list of available webforms',
+        'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+        'callback' => 'fundraiser_api_list_webforms',
+        'access callback' => '_fundraiser_api_access',
+        'access arguments' => array('view webform index'),
+        'args' => array(
+          array(
+            'name' => 'page',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'The zero-based index of the page to get, defaults to 0.',
+            'default value' => 0,
+            'source' => array('param' => 'page'),
+          ),
+          array(
+            'name' => 'fields',
+            'optional' => TRUE,
+            'type' => 'string',
+            'description' => 'The fields to get.',
+            'default value' => '*',
+            'source' => array('param' => 'fields'),
+          ),
+          array(
+            'name' => 'pagesize',
+            'optional' => TRUE,
+            'type' => 'init',
+            'description' => 'Number of records to get per page.',
+            'default value' => variable_get('fundraiser_webform_index_page_size', 20), // TODO: add admin config for this value, variable_del() to hook_uninstall.
+            'source' => array('param' => 'pagesize'),
+          ),
+          array(
+            'name' => 'groupid',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'Filter index by parent group node id',
+            'default_value' => NULL,
+            'source' => array('param' => 'groupid'),
+          ),
+          array(
+            'name' => 'term',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'Filter index by parent taxonomy term id',
+            'default_value' => NULL,
+            'source' => array('param' => 'termid'),
+          ),
+        ),
+      ),
+      'retrieve' => array(
+        'help' => 'Retrieves a list of available webforms',
+        'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+        'callback' => 'fundraiser_api_get_webform',
+        'access callback' => '_fundraiser_api_access',
+        'access arguments' => array('retrieve webform'),
+        'args' => array(
+          array(
+            'name' => 'nid',
+            'optional' => FALSE,
+            'source' => array('path' => 0),
+            'type' => 'int',
+            'description' => 'The nid of the node to get',
+          ),
+        ),
+      ),
+      // create
+      // delete
+    ),
+
+    // Donation API
+    'fundraiser_donation' => array(
+      'index' => array(
+        'help' => 'Retrieves a list of donations',
+        'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+        'callback' => 'fundraiser_api_list_donations',
+        'access callback' => '_fundraiser_api_access',
+        'access arguments' => array('view donation index'),
+        'args' => array(
+          array(
+            'name' => 'page',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'The zero-based index of the page to get, defaults to 0.',
+            'default value' => 0,
+            'source' => array('param' => 'page'),
+          ),
+          array(
+            'name' => 'fields',
+            'optional' => TRUE,
+            'type' => 'string',
+            'description' => 'The fields to get.',
+            'default value' => '*',
+            'source' => array('param' => 'fields'),
+          ),
+          array(
+            'name' => 'pagesize',
+            'optional' => TRUE,
+            'type' => 'init',
+            'description' => 'Number of records to get per page.',
+            'default value' => variable_get('fundraiser_api_donation_index_page_size', 20), // TODO: add admin config for this value, variable_del() to hook_uninstall.
+            'source' => array('param' => 'pagesize'),
+          ),
+          array(
+            'name' => 'webformid',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'Filter index by parent webform node id',
+            'default_value' => NULL,
+            'source' => array('param' => 'groupid'),
+          ),
+          array(
+            'name' => 'status',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'Filter index by order status',
+            'default_value' => NULL,
+            'source' => array('param' => 'termid'),
+          ),
+          array(
+            'name' => 'uid',
+            'optional' => TRUE,
+            'type' => 'int',
+            'description' => 'Filter index by user id',
+            'default_value' => NULL,
+            'source' => array('param' => 'uid'),
+          ),
+        ),
+      ),
+      'retrieve' => array(
+        'help' => 'Retrieves a single order',
+        'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+        'callback' => 'fundraiser_api_get_donation',
+        'access callback' => '_fundraiser_api_access',
+        'access arguments' => array('retrieve donation'),
+        'args' => array(
+          array(
+            'name' => 'oid',
+            'optional' => FALSE,
+            'source' => array('path' => '0'),
+            'type' => 'int',
+            'description' => 'The order id to retrieve',
+          ),
+        ),
+      ),
+      'submit' => array(
+        'help' => 'Submit a donation.',
+        'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+        'callback' => 'fundraiser_api_create_donation',
+        'access callback' => '_fundraiser_api_access',
+        'access arguments' => array('create donation'),
+        'args' => array(
+          array(
+            'name' => 'donation',
+            'optional' => FALSE,
+            'source' => 'data',
+            'description' => 'The donation order data to create',
+            'type' => 'array',
+          ),
+        ),
+      ),
+      /*
+ 'update' => array(
+ 'help' => 'Make changes to an existing donation.',
+ 'file' => array('type' => 'inc', 'module' => 'fundraiser_api', 'name' => 'fundraiser_api.api'),
+ 'callback' => 'fundraiser_api_update_donation',
+ 'access callback' => '_fundraiser_api_access',
+ 'access arguments' => array('update'),
+ 'args' => array(
+ array(
+ 'name' => 'sid',
+ 'optional' => FALSE,
+ 'source' => array('path' => 0),
+ 'type' => 'int',
+ 'description' => 'The nid of the node to get',
+ ),
+ array(
+ 'name' => 'donation',
+ 'optional' => FALSE,
+ 'source' => 'data',
+ 'description' => 'The donation order data to create',
+ 'type' => 'array',
+ ),
+ ),
+ ),*/
+      // delete
+    ),
+  );
+}
+
+
+/**
+ *
+ */
+function _fundraiser_api_access($perm) {
+  return TRUE;
+  return user_access($perm);
+}
+
+// TODO: remove debugging code
+function fundraiser_api_form_alter(&$form, $form_state, $form_id) {
+  /*
+   if (strpos($form_id, 'webform_client_form_') === 0) {
+   $form['#validate'][] = 'fundraiser_api_print_shit';
+   }
+   */
+}
+
+function fundraiser_api_print_shit($form, $form_state) {
+  drupal_set_message('form state:' . print_r($form_state, TRUE));
+}

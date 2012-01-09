@@ -2,18 +2,18 @@
 
 /**
  * @file
- * Install file for the form layouts module. 
- * 
+ * Install file for the form layouts module.
+ *
  */
 
 /**
  * Implementation of hook_uninstall().
  */
 function form_layouts_uninstall() {
-	// delete all form layout variables
-	$result = db_query("SELECT nid FROM {node} WHERE type = '%s'", 'donation_form');
-	while ($data = db_fetch_object($result)) {
+  // delete all form layout variables
+  $result = db_query("SELECT nid FROM {node} WHERE type = '%s'", 'donation_form');
+  while ($data = db_fetch_object($result)) {
     $var_name = _form_layouts_variable_name($data->nid);
     variable_del($var_name);
-	}
+  }
 }

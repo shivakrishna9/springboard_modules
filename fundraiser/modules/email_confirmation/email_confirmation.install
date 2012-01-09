@@ -1,5 +1,5 @@
 <?php
- 
+
 /**
  * Implements hook_install().
  */
@@ -13,7 +13,7 @@ function email_confirmation_install() {
     else {
       // predicate currently running on programmatic defaults, we'll need to insert a record for this predicate in the db.
       $action = 'a:1:{i:0;a:4:{s:5:"#name";s:22:"uc_order_email_invoice";s:6:"#title";s:30:"Send an e-mail to the customer";s:13:"#argument_map";a:1:{s:5:"order";s:5:"order";}s:9:"#settings";a:5:{s:4:"from";s:19:"devnull@example.com";s:9:"addresses";s:13:"[order-email]";s:7:"subject";s:26:"Your Order at [store-name]";s:8:"template";s:8:"customer";s:4:"view";s:13:"checkout-mail";}}}';
-      db_query("INSERT INTO {ca_predicates} 
+      db_query("INSERT INTO {ca_predicates}
         (pid,
          title,
          description,
@@ -40,7 +40,7 @@ function email_confirmation_install() {
           %d,
           %d)
           ", $action, time(), time());
- 
+
     }
   }
   drupal_install_schema('email_confirmation');
@@ -129,11 +129,11 @@ function email_confirmation_schema() {
 
 /**
  * Implements hook_update().
- * 
+ *
  * We want to be certain ca's default confirmation email is disabled on existing sites().
  */
 function email_confirmation_update_6001() {
-if (module_exists('ca')) {
+  if (module_exists('ca')) {
     $pid = db_result(db_query('SELECT 1 FROM {ca_predicates} WHERE pid = "uc_checkout_customer_notification"'));
     if ($pid) {
       db_query('UPDATE {ca_predicates} SET status = 0 WHERE pid = "uc_checkout_customer_notification"');
@@ -141,7 +141,7 @@ if (module_exists('ca')) {
     else {
       // predicate currently running on programmatic defaults, we'll need to insert a record for this predicate in the db.
       $action = 'a:1:{i:0;a:4:{s:5:"#name";s:22:"uc_order_email_invoice";s:6:"#title";s:30:"Send an e-mail to the customer";s:13:"#argument_map";a:1:{s:5:"order";s:5:"order";}s:9:"#settings";a:5:{s:4:"from";s:19:"devnull@example.com";s:9:"addresses";s:13:"[order-email]";s:7:"subject";s:26:"Your Order at [store-name]";s:8:"template";s:8:"customer";s:4:"view";s:13:"checkout-mail";}}}';
-      db_query("INSERT INTO {ca_predicates} 
+      db_query("INSERT INTO {ca_predicates}
         (pid,
          title,
          description,

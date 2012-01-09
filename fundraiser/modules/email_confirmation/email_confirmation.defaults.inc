@@ -5,7 +5,7 @@
  */
 function email_confirmation_default_text_message() {
   $message = 'On behalf of [site-name], thank you for your generous contribution.';
-  
+
   return $message;
 }
 
@@ -54,7 +54,7 @@ Email: organization email
 }
 
 /**
- * Returns default starter html email message. 
+ * Returns default starter html email message.
  */
 function email_confirmation_default_html_message() {
   $message = '
@@ -230,6 +230,6 @@ function email_confirmation_default_html_template() {
 
   ';
 
-return $template; 
+  return $template;
 
 }

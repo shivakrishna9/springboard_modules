@@ -8,12 +8,12 @@
 function form_layouts_theme() {
   $theme = array();
   $templates = _form_layouts_template_list();
-  
+
   foreach ($templates as $template) {
     $theme[$template['theme']] = array(
       'arguments' => array('form' => NULL),
       'template' => $template['template'],
-      'pattern' => $template['pattern'],  
+      'pattern' => $template['pattern'],
     );
   }
 
@@ -38,7 +38,11 @@ function form_layouts_theme_registry_alter(&$theme_registry) {
  * Breaks the form into easily digestable chunks.
  */
 function form_layouts_preprocess_template(&$vars) {
-  // leaving this function in place for possible feature enhancement.
+  // break the form into the major fieldsets. this could go one step further and break out the individual fields to.
+  $vars['donation_fieldset'] = drupal_render($vars['form']['submitted']['donation']);
+  $vars['donor_information_fieldset'] = drupal_render($vars['form']['submitted']['donor_information']);
+  $vars['billing_address_fieldset'] = drupal_render($vars['form']['submitted']['billing_information']);
+  $vars['credit_card_fieldset'] = drupal_render($vars['form']['submitted']['credit_card_information']);
 }
 
 /**
@@ -50,31 +54,31 @@ function form_layouts_preprocess_two_column(&$vars) {
     #donation-form-column-wrapper #left fieldset {
       margin-right: 10px;
     }
-    
+
     #donation-form-column-wrapper .form-text {
       width: 250px;
     }
-    
+
     #donation-form-column-wrapper {
       width: 100%;
     }
-    
+
     #donation-form-column-wrapper #right {
       float: right;
       width: 50%;
     }
-    
+
     #donation-form-column-wrapper #left {
       float: left;
       width: 50%;
     }
-    
+
     #donation-form-column-wrapper #donation-form-footer {
       clear: both;
     }
     </style>
 CSS;
-  
+
   // add in some default css for 2 columns
   drupal_set_html_head($css);
 }
@@ -85,23 +89,23 @@ CSS;
 function form_layouts_form_alter(&$form, $form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
-		
-		if ($node->type == 'donation_form') {		
+
+    if ($node->type == 'donation_form') {
       $theme = _form_layouts_theme_template($node->nid);
       $form['#theme'] = array($theme . '_' . $node->nid, $theme);
     }
   }
-  
+
   // add a dropdown for the user to pick the layout
   if ($form_id == 'donation_form_node_form') {
     $nid = $form['#node']->nid;
-    
+
     // get the available template files and doctor it up for a select list
     $files = _form_layouts_template_list();
     $options = array();
-    foreach($files as $file) {
+    foreach ($files as $file) {
       $options[$file['theme']] = $file['name'];
-    } 
+    }
     $theme = _form_layouts_theme_template($nid);
     $form['fundraiser_settings']['layout'] = array(
       '#type' => 'select',
@@ -173,12 +177,12 @@ function _form_layouts_template_list() {
   // get all .tpl.php files in the /templates directory
   $files = file_scan_directory($path, '.tpl.php');
   $templates = array();
-  
+
   // loop over each file and create an array of theme registry entries
-  foreach($files as $file) {
+  foreach ($files as $file) {
     $name = str_replace('.tpl', '', $file->name);
     $name_no_underscores = str_replace('-', '_', $name);
-    
+
     $templates[$name] = array(
       'name' => ucfirst(str_replace('-', ' ', $name)),
       'theme' => $name_no_underscores,

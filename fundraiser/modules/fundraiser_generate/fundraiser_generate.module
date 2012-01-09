@@ -5,7 +5,7 @@
  *
  * This module is used to generate massive amounts of donations for testing purposes.
  */
- 
+
 /**
  * Implemenation of hook_menu().
  */
@@ -17,7 +17,15 @@ function fundraiser_generate_menu() {
 		'access arguments' => array('create test donations'),
 		'type' => MENU_NORMAL_ITEM,
 	);
-  
+
+  $items['fundraiser/generate/cron/%/%'] = array(
+	 'title' => t('Cron donation generation'),
+	 'page callback' => 'fundraiser_generate_cron_create',
+	 'page arguments' => array(3, 4),
+	 'access callback' => TRUE,
+	 'type' => MENU_CALLBACK,
+	);
+
   return $items;
 }
 
@@ -34,32 +42,42 @@ function fundraiser_generate_perm() {
 function fundraiser_generate_donations_form() {
   $options = _fundraiser_generate_get_forms();
   $types = array('single' => 'Single', 'recurring' => 'Recurring', 'random' => 'Random');
-  
+
   $form['nid'] = array(
     '#type' => 'select',
     '#title' => t('Donation form'),
     '#options' => $options,
   );
-  
+
   $form['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Number of donations to generate'),
     '#size' => 3,
     '#default_value' => 1,
   );
-  
+
   $form['type'] = array(
     '#type' => 'radios',
     '#title' => t('Donation type'),
     '#options' => $types,
     '#default_value' => 'single',
   );
-  
+
+  $form['ms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Market source'),
+  );
+
+  $form['cid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Salesforce campaign'),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate!'),
   );
-  
+
   return $form;
 }
 
@@ -67,34 +85,55 @@ function fundraiser_generate_donations_form() {
  * Submission handler.
  */
 function fundraiser_generate_donations_form_submit($form, &$form_state) {
-  module_load_include('inc', 'devel_generate', 'devel_generate');
-   
   $nid = $form_state['values']['nid'];
   $number_to_create = $form_state['values']['number'];
   $type = $form_state['values']['type'];
-  
+  $ms = $form_state['values']['ms'];
+  $cid = $form_state['values']['cid'];
+
+  fundraiser_generate_donations($nid, $number_to_create, $type, $ms, $cid);
+}
+
+/**
+ * Used to generate donations on cron runs.
+ */
+function fundraiser_generate_cron_create($nid, $count = 1) {
+  fundraiser_generate_donations($nid, $count, 'random');
+}
+
+/**
+ * API function to generate a set of testing donations.
+ */
+function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms = NULL, $cid = NULL) {
+  if (empty($nid)) {
+    drupal_set_message('You must pass in the donation form node id');
+    return;
+  }
+
+  module_load_include('inc', 'devel_generate', 'devel_generate');
+
   if ($type == 'single') {
     $recurs = FALSE;
   }
-  elseif($type == 'recurring') {
+  elseif ($type == 'recurring') {
     $recurs = TRUE;
   }
   else {
-    $recurs = (bool)rand(0, 1);
+    $recurs = (bool) rand(0, 1);
   }
-  
+
   // load up the donation form node
   $donation_form_node = node_load($nid);
-  
-  for ($i = 0; $i < $number_to_create; $i++) {
-  
+
+  for ($i = 0; $i < $count; $i++) {
+
     // create some random strings
     $url = parse_url($GLOBALS['base_url']);
     $first_name = devel_generate_word(mt_rand(4, 10));
     $last_name = devel_generate_word(mt_rand(3, 11));
-    $email =  $first_name . '.' . $last_name . '@'. $url['host'];
+    $email =  $first_name . '.' . $last_name . '@' . $url['host'];
     $year = date('Y');
-    
+
     // build up a bogus form_state to submit
     $state = array(
       'submitted' => TRUE,
@@ -106,7 +145,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
       'values' => array(
         'op' => t('Submit'),
         'submit' => t('Submit'),
-        'form_id' => 'webform_client_form_'. $nid,
+        'form_id' => 'webform_client_form_' . $nid,
         'details' => array(
           'nid' => $nid,
           'sid' => '',
@@ -145,18 +184,19 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
               'card_expiration_year' => mt_rand($year + 1, $year + 3),
             ),
           ),
-          'ms' => '',
-          'cid' => '',
+          'ms' => $ms,
+          'cid' => $cid,
           'referrer' => '',
           'initial_referrer' => '',
         ),
       ),
     );
-    
+
     // submit it
-    drupal_execute('webform_client_form_'. $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
-  
+    drupal_execute('webform_client_form_' . $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
+
   }
+
 }
 
 /**
@@ -168,7 +208,7 @@ function _fundraiser_generate_get_forms() {
   while ($data = db_fetch_object($result)) {
     $forms[$data->nid] = $data->title;
   }
-  
+
   return $forms;
 }
 
@@ -185,10 +225,10 @@ function _fundraiser_generate_random_state() {
       $zones[] = $data->zone_id;
     }
   }
-  
+
   // get length of array
   $length = count($zones) - 1;
-  
+
   // return random index from array
   $id = $zones[rand(0, $length)];
   return $id;
@@ -202,14 +242,14 @@ function _fundraiser_generate_random_ask_amount($nid) {
   $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $nid);
   $amount_values = unserialize(db_result($results));
   $amount_values = preg_split('/\n/', trim($amount_values['items']));
-  
+
   array_pop($amount_values); // git rid of other for now
   $values = array();
-  foreach($amount_values as $amount) {
+  foreach ($amount_values as $amount) {
     $split_amount = explode('|', $amount);
     $values[] = $split_amount[0];
   }
-  
+
   $length = count($values) - 1;
   return $values[rand(0, $length)];
 }

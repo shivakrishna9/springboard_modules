@@ -1,44 +1,47 @@
 <?php
-// $Id$
+/**
+ * @file
+ * Install, update and uninstall functions for the fundraiser module.
+ */
 
 /**
  * Implementation of hook_install().
  */
 function fundraiser_install() {
   variable_set('fundraiser_development_mode', 1);
-  drupal_install_schema('fundraiser');	
+  drupal_install_schema('fundraiser');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function fundraiser_uninstall() {
-	drupal_uninstall_schema('fundraiser');
-	db_query("DROP VIEW {fundraiser_webform_data}");
-	db_query("DROP VIEW {fundraiser_webform_recurring_order}");
+  drupal_uninstall_schema('fundraiser');
+  db_query("DROP VIEW {fundraiser_webform_data}");
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
 }
 
 /**
  * Implementation of hook_enable().
  */
 function fundraiser_enable() {
-	configure_ubercart_settings();
-	create_countries();
-	
-	/**
-	 *  Add the donation_form node type to the array of node types handled
-	 * by the webform module.
-	 * 
-	 * The default value is array('webform') because this variable starts
-	 * off empty, until an admin chooses webform node types at
-	 * admin/settings/webform. If you save the webform_node_types as an
-	 * array with ONLY donation_form, then webform nodes will not be
-	 * handled as webforms.
-	 */
-	$result = variable_get('webform_node_types', array('webform'));
+  configure_ubercart_settings();
+  create_countries();
+
+  /**
+   *  Add the donation_form node type to the array of node types handled
+   * by the webform module.
+   *
+   * The default value is array('webform') because this variable starts
+   * off empty, until an admin chooses webform node types at
+   * admin/settings/webform. If you save the webform_node_types as an
+   * array with ONLY donation_form, then webform nodes will not be
+   * handled as webforms.
+   */
+  $result = variable_get('webform_node_types', array('webform'));
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
-  
+
   // New for webform 3.9. Let webform know the primary purpose of this node type is for webforms
   $result = variable_get('webform_node_types_primary', array('webform'));
   if (!in_array('donation_form', $result)) {
@@ -47,16 +50,16 @@ function fundraiser_enable() {
   }
 }
 
-/** 
+/**
  * Implementation of hook_disable().
  */
 function fundraiser_disable() {
-	remove_ubercart_settings();
-	remove_countries();
-	
-	// Remove donation_form from the list of webform_node_types.
-	// Not really necessary, but still good to clean up after ourselves
-	$result = variable_get('webform_node_types', array('webform'));
+  remove_ubercart_settings();
+  remove_countries();
+
+  // Remove donation_form from the list of webform_node_types.
+  // Not really necessary, but still good to clean up after ourselves
+  $result = variable_get('webform_node_types', array('webform'));
   if (is_array($result)) {
     foreach ($result as $index => $type) {
       if ($type == 'donation_form') {
@@ -156,11 +159,11 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
-      ),  
+      ),
     ),
     'primary key' => array('nid'),
   );
-	$schema['fundraiser_webform_order'] = array(
+  $schema['fundraiser_webform_order'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'webform_nid' => array(
@@ -205,7 +208,7 @@ function fundraiser_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
-  
+
   $schema['fundraiser_refund'] = array(
     'description' => t('Stores information about refunds made on donations'),
     'fields' => array(
@@ -245,8 +248,8 @@ function fundraiser_schema() {
     'primary key' => array('refund_id'),
     'indexes' => array('refund_order_id' => array('order_id')),
   );
-	
-	$schema['fundraiser_recurring'] = array(
+
+  $schema['fundraiser_recurring'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'master_order_id' => array(
@@ -323,32 +326,32 @@ function fundraiser_schema() {
     ),
     'primary key' => array('order_id'),
   );
-	
-	$schema['fundraiser_component_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'cid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'map_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => TRUE,
-	    ),
-	  ),
-	  'primary key' => array('nid', 'cid'),
-	);
-  
+
+  $schema['fundraiser_component_map'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'map_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+
   $schema['fundraiser_tracking'] = array(
     'description' => t('Store conversion & pageview information for donation forms.'),
     'fields' => array(
@@ -394,43 +397,43 @@ function fundraiser_schema() {
 
 // Adds fundraiser specific ubercart settings
 function configure_ubercart_settings() {
-	
-	$statuses = _fundraiser_statuses();
-	
-	// create each ubercart status
-	foreach ($statuses as $status_id => $status) {
-		db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, "
-			."weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
-			$status_id, $status['title'], $status['state'], $status['weight'], $status['locked']);
-	}
-	
+
+  $statuses = _fundraiser_statuses();
+
+  // create each ubercart status
+  foreach ($statuses as $status_id => $status) {
+    db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, "
+      . "weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
+      $status_id, $status['title'], $status['state'], $status['weight'], $status['locked']);
+  }
+
 }
 
 // Removes fundraiser specific ubercart settings
 function remove_ubercart_settings() {
-	$statuses = _fundraiser_statuses();
-	
-	// remove each ubercart status
-	foreach ($statuses as $status_id => $status) {
-		db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status_id);
-	}	
+  $statuses = _fundraiser_statuses();
+
+  // remove each ubercart status
+  foreach ($statuses as $status_id => $status) {
+    db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status_id);
+  }
 }
 
 // Returns an array of fundraiser module specific order statuses
 function _fundraiser_statuses() {
-	$fundraiser_statuses = array(
-		'pending_future_payment' => array(
-			'title' => 'Pending Future Payment',
-			'state' => 'post_checkout',
-			'locked' => 1,
-			'weight' => -20,
-		),
-		'failed' => array(
-			'title' => 'Failed',
-			'state' => 'canceled',
-			'locked' => 1,
-			'weight' => -20,
-		),
+  $fundraiser_statuses = array(
+    'pending_future_payment' => array(
+      'title' => 'Pending Future Payment',
+      'state' => 'post_checkout',
+      'locked' => 1,
+      'weight' => -20,
+    ),
+    'failed' => array(
+      'title' => 'Failed',
+      'state' => 'canceled',
+      'locked' => 1,
+      'weight' => -20,
+    ),
     'refunded' => array(
       'title' => 'Refunded',
       'state' => 'post_checkout',
@@ -443,301 +446,301 @@ function _fundraiser_statuses() {
       'locked' => 1,
       'weight' => -21,
     ),
-	);
-	
-	return $fundraiser_statuses;
+  );
+
+  return $fundraiser_statuses;
 }
 
 // Adds all countries to the ubercart countries table
 function create_countries() {
-	remove_countries();
-	db_query("INSERT INTO {uc_countries} VALUES (4,'Afghanistan','AF','AFG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (248,'Aland Islands','AX','ALA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (8,'Albania','AL','ALB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (12,'Algeria','DZ','DZA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (16,'American Samoa','AS','ASM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (20,'Andorra','AD','AND',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (24,'Angola','AO','AGO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (660,'Anguilla','AI','AIA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (10,'Antarctica','AQ','ATA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (28,'Antigua and Barbuda','AG','ATG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (32,'Argentina','AR','ARG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (51,'Armenia','AM','ARM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (533,'Aruba','AW','ABW',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (36,'Australia','AU','AUS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (40,'Austria','AT','AUT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (31,'Azerbaijan','AZ','AZE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (44,'Bahamas','BS','BHS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (48,'Bahrain','BH','BHR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (50,'Bangladesh','BD','BGD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (52,'Barbados','BB','BRB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (112,'Belarus','BY','BLR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (56,'Belgium','BE','BEL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (84,'Belize','BZ','BLZ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (204,'Benin','BJ','BEN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (60,'Bermuda','BM','BMU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (64,'Bhutan','BT','BTN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (68,'Bolivia','BO','BOL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (70,'Bosnia and Herzegovina','BA','BIH',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (72,'Botswana','BW','BWA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (74,'Bouvet Island','BV','BVT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (76,'Brazil','BR','BRA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (86,'British Indian Ocean Territory','IO','IOT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (96,'Brunei Darussalam','BN','BRN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (100,'Bulgaria','BG','BGR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (854,'Burkina Faso','BF','BFA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (108,'Burundi','BI','BDI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (116,'Cambodia','KH','KHM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (120,'Cameroon','CM','CMR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (132,'Cape Verde','CV','CPV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (136,'Cayman Islands','KY','CYM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (140,'Central African Republic','CF','CAF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (148,'Chad','TD','TCD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (152,'Chile','CL','CHL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (156,'China','CN','CHN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (162,'Christmas Island','CX','CXR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (166,'Cocos (Keeling) Islands','CC','CCK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (170,'Colombia','CO','COL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (174,'Comoros','KM','COM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (178,'Congo','CG','COG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (180,'Congo, The Democratic Republic of the','CD','COD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (184,'Cook Islands','CK','COK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (188,'Costa Rica','CR','CRI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (384,'Cote D\'ivoire','CI','CIV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (191,'Croatia','HR','HRV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (192,'Cuba','CU','CUB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (196,'Cyprus','CY','CYP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (203,'Czech Republic','CZ','CZE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (208,'Denmark','DK','DNK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (262,'Djibouti','DJ','DJI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (212,'Dominica','DM','DMA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (214,'Dominican Republic','DO','DOM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (218,'Ecuador','EC','ECU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (818,'Egypt','EG','EGY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (222,'El Salvador','SV','SLV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (226,'Equatorial Guinea','GQ','GNQ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (232,'Eritrea','ER','ERI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (233,'Estonia','EE','EST',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (231,'Ethiopia','ET','ETH',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (238,'Falkland Islands (Malvinas)','FK','FLK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (234,'Faroe Islands','FO','FRO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (242,'Fiji','FJ','FJI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (246,'Finland','FI','FIN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (250,'France','FR','FRA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (254,'French Guiana','GF','GUF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (258,'French Polynesia','PF','PYF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (260,'French Southern Territories','TF','ATF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (266,'Gabon','GA','GAB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (270,'Gambia','GM','GMB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (268,'Georgia','GE','GEO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (276,'Germany','DE','DEU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (288,'Ghana','GH','GHA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (292,'Gibraltar','GI','GIB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (300,'Greece','GR','GRC',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (304,'Greenland','GL','GRL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (308,'Grenada','GD','GRD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (312,'Guadeloupe','GP','GLP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (316,'Guam','GU','GUM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (320,'Guatemala','GT','GTM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (831,'Guernsey','GG','GGY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (324,'Guinea','GN','GIN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (624,'Guinea-bissau','GW','GNB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (328,'Guyana','GY','GUY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (332,'Haiti','HT','HTI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (334,'Heard Island and Mcdonald Islands','HM','HMD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (340,'Honduras','HN','HND',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (344,'Hong Kong','HK','HKG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (348,'Hungary','HU','HUN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (352,'Iceland','IS','ISL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (356,'India','IN','IND',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (360,'Indonesia','ID','IDN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (364,'Iran (Islamic Republic of)','IR','IRN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (368,'Iraq','IQ','IRQ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (372,'Ireland','IE','IRL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (833,'Isle of Man','IM','IMM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (376,'Israel','IL','ISR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (380,'Italy','IT','ITA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (388,'Jamaica','JM','JAM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (392,'Japan','JP','JPN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (832,'Jersey','JE','JEY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (400,'Jordan','JO','JOR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (398,'Kazakhstan','KZ','KAZ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (404,'Kenya','KE','KEN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (296,'Kiribati','KI','KIR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (408,'Korea, Democratic People\'s Republic of','KP','PRK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (410,'Korea, Republic of','KR','KOR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (414,'Kuwait','KW','KWT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (417,'Kyrgyzstan','KG','KGZ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (418,'Lao People\'s Democratic Republic','LA','LAO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (428,'Latvia','LV','LVA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (422,'Lebanon','LB','LBN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (426,'Lesotho','LS','LSO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (430,'Liberia','LR','LBR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (434,'Libyan Arab Jamahiriya','LY','LBY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (438,'Liechtenstein','LI','LIE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (440,'Lithuania','LT','LTU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (442,'Luxembourg','LU','LUX',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (446,'Macao','MO','MAC',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (807,'Macedonia, The Former Yugoslav Republic of','MK','MKD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (450,'Madagascar','MG','MDG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (454,'Malawi','MW','MWI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (458,'Malaysia','MY','MYS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (462,'Maldives','MV','MDV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (466,'Mali','ML','MLI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (470,'Malta','MT','MLT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (584,'Marshall Islands','MH','MHL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (474,'Martinique','MQ','MTQ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (478,'Mauritania','MR','MRT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (480,'Mauritius','MU','MUS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (175,'Mayotte','YT','MYT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (484,'Mexico','MX','MEX',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (583,'Micronesia, Federated States of','FM','FSM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (498,'Moldova, Republic of','MD','MDA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (492,'Monaco','MC','MCO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (496,'Mongolia','MN','MNG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (499,'Montenegro','ME','MNE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (500,'Montserrat','MS','MSR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (504,'Morocco','MA','MAR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (508,'Mozambique','MZ','MOZ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (104,'Myanmar','MM','MMR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (516,'Namibia','NA','NAM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (520,'Nauru','NR','NRU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (524,'Nepal','NP','NPL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (528,'Netherlands','NL','NLD',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (530,'Netherlands Antilles','AN','ANT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (540,'New Caledonia','NC','NCL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (554,'New Zealand','NZ','NZL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (558,'Nicaragua','NI','NIC',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (562,'Niger','NE','NER',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (566,'Nigeria','NG','NGA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (570,'Niue','NU','NIU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (574,'Norfolk Island','NF','NFK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (580,'Northern Mariana Islands','MP','MNP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (578,'Norway','NO','NOR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (512,'Oman','OM','OMN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (586,'Pakistan','PK','PAK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (585,'Palau','PW','PLW',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (275,'Palestinian Territory, Occupied','PS','PSE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (591,'Panama','PA','PAN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (598,'Papua New Guinea','PG','PNG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (600,'Paraguay','PY','PRY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (604,'Peru','PE','PER',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (608,'Philippines','PH','PHL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (612,'Pitcairn','PN','PCN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (616,'Poland','PL','POL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (620,'Portugal','PT','PRT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (630,'Puerto Rico','PR','PRI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (634,'Qatar','QA','QAT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (638,'Reunion','RE','REU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (642,'Romania','RO','ROU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (643,'Russian Federation','RU','RUS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (646,'Rwanda','RW','RWA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (654,'Saint Helena','SH','SHN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (659,'Saint Kitts and Nevis','KN','KNA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (662,'Saint Lucia','LC','LCA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (666,'Saint Pierre and Miquelon','PM','SPM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (670,'Saint Vincent and the Grenadines','VC','VCT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (882,'Samoa','WS','WSM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (674,'San Marino','SM','SMR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (678,'Sao Tome and Principe','ST','STP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (682,'Saudi Arabia','SA','SAU',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (686,'Senegal','SN','SEN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (688,'Serbia','RS','SRB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (690,'Seychelles','SC','SYC',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (694,'Sierra Leone','SL','SLE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (702,'Singapore','SG','SGP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (703,'Slovakia','SK','SVK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (705,'Slovenia','SI','SVN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (90,'Solomon Islands','SB','SLB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (706,'Somalia','SO','SOM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (710,'South Africa','ZA','ZAF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (239,'South Georgia and the South Sandwich Islands','GS','SGS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (724,'Spain','ES','ESP',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (144,'Sri Lanka','LK','LKA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (736,'Sudan','SD','SDN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (740,'Suriname','SR','SUR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (744,'Svalbard and Jan Mayen','SJ','SJM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (748,'Swaziland','SZ','SWZ',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (752,'Sweden','SE','SWE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (756,'Switzerland','CH','CHE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (760,'Syrian Arab Republic','SY','SYR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (158,'Taiwan, Province of China','TW','TWN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (762,'Tajikistan','TJ','TJK',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (834,'Tanzania, United Republic of','TZ','TZA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (764,'Thailand','TH','THA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (626,'Timor-leste','TL','TLS',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (768,'Togo','TG','TGO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (772,'Tokelau','TK','TKL',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (776,'Tonga','TO','TON',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (780,'Trinidad and Tobago','TT','TTO',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (788,'Tunisia','TN','TUN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (792,'Turkey','TR','TUR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (795,'Turkmenistan','TM','TKM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (796,'Turks and Caicos Islands','TC','TCA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (798,'Tuvalu','TV','TUV',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (800,'Uganda','UG','UGA',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (804,'Ukraine','UA','UKR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (784,'United Arab Emirates','AE','ARE',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (826,'United Kingdom','GB','GBR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (581,'United States Minor Outlying Islands','UM','UMI',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (858,'Uruguay','UY','URY',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (860,'Uzbekistan','UZ','UZB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (548,'Vanuatu','VU','VUT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (336,'Vatican City State (Holy See)','VA','VAT',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (862,'Venezuela','VE','VEN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (704,'Viet Nam','VN','VNM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (92,'Virgin Islands (British)','VG','VGB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (850,'Virgin Islands (U.S.)','VI','VIR',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (876,'Wallis and Futuna','WF','WLF',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (732,'Western Sahara','EH','ESH',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (887,'Yemen','YE','YEM',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (891,'Yugoslavia','YU','YUG',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (894,'Zambia','ZM','ZMB',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (716,'Zimbabwe','ZW','ZWE',1)");
-	db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (0,'NA','N/A')");
+  remove_countries();
+  db_query("INSERT INTO {uc_countries} VALUES (4,'Afghanistan','AF','AFG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (248,'Aland Islands','AX','ALA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (8,'Albania','AL','ALB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (12,'Algeria','DZ','DZA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (16,'American Samoa','AS','ASM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (20,'Andorra','AD','AND',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (24,'Angola','AO','AGO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (660,'Anguilla','AI','AIA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (10,'Antarctica','AQ','ATA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (28,'Antigua and Barbuda','AG','ATG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (32,'Argentina','AR','ARG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (51,'Armenia','AM','ARM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (533,'Aruba','AW','ABW',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (36,'Australia','AU','AUS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (40,'Austria','AT','AUT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (31,'Azerbaijan','AZ','AZE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (44,'Bahamas','BS','BHS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (48,'Bahrain','BH','BHR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (50,'Bangladesh','BD','BGD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (52,'Barbados','BB','BRB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (112,'Belarus','BY','BLR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (56,'Belgium','BE','BEL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (84,'Belize','BZ','BLZ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (204,'Benin','BJ','BEN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (60,'Bermuda','BM','BMU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (64,'Bhutan','BT','BTN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (68,'Bolivia','BO','BOL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (70,'Bosnia and Herzegovina','BA','BIH',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (72,'Botswana','BW','BWA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (74,'Bouvet Island','BV','BVT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (76,'Brazil','BR','BRA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (86,'British Indian Ocean Territory','IO','IOT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (96,'Brunei Darussalam','BN','BRN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (100,'Bulgaria','BG','BGR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (854,'Burkina Faso','BF','BFA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (108,'Burundi','BI','BDI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (116,'Cambodia','KH','KHM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (120,'Cameroon','CM','CMR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (132,'Cape Verde','CV','CPV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (136,'Cayman Islands','KY','CYM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (140,'Central African Republic','CF','CAF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (148,'Chad','TD','TCD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (152,'Chile','CL','CHL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (156,'China','CN','CHN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (162,'Christmas Island','CX','CXR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (166,'Cocos (Keeling) Islands','CC','CCK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (170,'Colombia','CO','COL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (174,'Comoros','KM','COM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (178,'Congo','CG','COG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (180,'Congo, The Democratic Republic of the','CD','COD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (184,'Cook Islands','CK','COK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (188,'Costa Rica','CR','CRI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (384,'Cote D\'ivoire','CI','CIV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (191,'Croatia','HR','HRV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (192,'Cuba','CU','CUB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (196,'Cyprus','CY','CYP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (203,'Czech Republic','CZ','CZE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (208,'Denmark','DK','DNK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (262,'Djibouti','DJ','DJI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (212,'Dominica','DM','DMA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (214,'Dominican Republic','DO','DOM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (218,'Ecuador','EC','ECU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (818,'Egypt','EG','EGY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (222,'El Salvador','SV','SLV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (226,'Equatorial Guinea','GQ','GNQ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (232,'Eritrea','ER','ERI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (233,'Estonia','EE','EST',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (231,'Ethiopia','ET','ETH',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (238,'Falkland Islands (Malvinas)','FK','FLK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (234,'Faroe Islands','FO','FRO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (242,'Fiji','FJ','FJI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (246,'Finland','FI','FIN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (250,'France','FR','FRA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (254,'French Guiana','GF','GUF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (258,'French Polynesia','PF','PYF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (260,'French Southern Territories','TF','ATF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (266,'Gabon','GA','GAB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (270,'Gambia','GM','GMB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (268,'Georgia','GE','GEO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (276,'Germany','DE','DEU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (288,'Ghana','GH','GHA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (292,'Gibraltar','GI','GIB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (300,'Greece','GR','GRC',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (304,'Greenland','GL','GRL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (308,'Grenada','GD','GRD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (312,'Guadeloupe','GP','GLP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (316,'Guam','GU','GUM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (320,'Guatemala','GT','GTM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (831,'Guernsey','GG','GGY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (324,'Guinea','GN','GIN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (624,'Guinea-bissau','GW','GNB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (328,'Guyana','GY','GUY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (332,'Haiti','HT','HTI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (334,'Heard Island and Mcdonald Islands','HM','HMD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (340,'Honduras','HN','HND',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (344,'Hong Kong','HK','HKG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (348,'Hungary','HU','HUN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (352,'Iceland','IS','ISL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (356,'India','IN','IND',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (360,'Indonesia','ID','IDN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (364,'Iran (Islamic Republic of)','IR','IRN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (368,'Iraq','IQ','IRQ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (372,'Ireland','IE','IRL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (833,'Isle of Man','IM','IMM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (376,'Israel','IL','ISR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (380,'Italy','IT','ITA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (388,'Jamaica','JM','JAM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (392,'Japan','JP','JPN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (832,'Jersey','JE','JEY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (400,'Jordan','JO','JOR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (398,'Kazakhstan','KZ','KAZ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (404,'Kenya','KE','KEN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (296,'Kiribati','KI','KIR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (408,'Korea, Democratic People\'s Republic of','KP','PRK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (410,'Korea, Republic of','KR','KOR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (414,'Kuwait','KW','KWT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (417,'Kyrgyzstan','KG','KGZ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (418,'Lao People\'s Democratic Republic','LA','LAO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (428,'Latvia','LV','LVA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (422,'Lebanon','LB','LBN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (426,'Lesotho','LS','LSO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (430,'Liberia','LR','LBR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (434,'Libyan Arab Jamahiriya','LY','LBY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (438,'Liechtenstein','LI','LIE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (440,'Lithuania','LT','LTU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (442,'Luxembourg','LU','LUX',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (446,'Macao','MO','MAC',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (807,'Macedonia, The Former Yugoslav Republic of','MK','MKD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (450,'Madagascar','MG','MDG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (454,'Malawi','MW','MWI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (458,'Malaysia','MY','MYS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (462,'Maldives','MV','MDV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (466,'Mali','ML','MLI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (470,'Malta','MT','MLT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (584,'Marshall Islands','MH','MHL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (474,'Martinique','MQ','MTQ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (478,'Mauritania','MR','MRT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (480,'Mauritius','MU','MUS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (175,'Mayotte','YT','MYT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (484,'Mexico','MX','MEX',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (583,'Micronesia, Federated States of','FM','FSM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (498,'Moldova, Republic of','MD','MDA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (492,'Monaco','MC','MCO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (496,'Mongolia','MN','MNG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (499,'Montenegro','ME','MNE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (500,'Montserrat','MS','MSR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (504,'Morocco','MA','MAR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (508,'Mozambique','MZ','MOZ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (104,'Myanmar','MM','MMR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (516,'Namibia','NA','NAM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (520,'Nauru','NR','NRU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (524,'Nepal','NP','NPL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (528,'Netherlands','NL','NLD',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (530,'Netherlands Antilles','AN','ANT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (540,'New Caledonia','NC','NCL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (554,'New Zealand','NZ','NZL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (558,'Nicaragua','NI','NIC',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (562,'Niger','NE','NER',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (566,'Nigeria','NG','NGA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (570,'Niue','NU','NIU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (574,'Norfolk Island','NF','NFK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (580,'Northern Mariana Islands','MP','MNP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (578,'Norway','NO','NOR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (512,'Oman','OM','OMN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (586,'Pakistan','PK','PAK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (585,'Palau','PW','PLW',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (275,'Palestinian Territory, Occupied','PS','PSE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (591,'Panama','PA','PAN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (598,'Papua New Guinea','PG','PNG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (600,'Paraguay','PY','PRY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (604,'Peru','PE','PER',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (608,'Philippines','PH','PHL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (612,'Pitcairn','PN','PCN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (616,'Poland','PL','POL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (620,'Portugal','PT','PRT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (630,'Puerto Rico','PR','PRI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (634,'Qatar','QA','QAT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (638,'Reunion','RE','REU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (642,'Romania','RO','ROU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (643,'Russian Federation','RU','RUS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (646,'Rwanda','RW','RWA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (654,'Saint Helena','SH','SHN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (659,'Saint Kitts and Nevis','KN','KNA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (662,'Saint Lucia','LC','LCA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (666,'Saint Pierre and Miquelon','PM','SPM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (670,'Saint Vincent and the Grenadines','VC','VCT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (882,'Samoa','WS','WSM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (674,'San Marino','SM','SMR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (678,'Sao Tome and Principe','ST','STP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (682,'Saudi Arabia','SA','SAU',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (686,'Senegal','SN','SEN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (688,'Serbia','RS','SRB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (690,'Seychelles','SC','SYC',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (694,'Sierra Leone','SL','SLE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (702,'Singapore','SG','SGP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (703,'Slovakia','SK','SVK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (705,'Slovenia','SI','SVN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (90,'Solomon Islands','SB','SLB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (706,'Somalia','SO','SOM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (710,'South Africa','ZA','ZAF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (239,'South Georgia and the South Sandwich Islands','GS','SGS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (724,'Spain','ES','ESP',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (144,'Sri Lanka','LK','LKA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (736,'Sudan','SD','SDN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (740,'Suriname','SR','SUR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (744,'Svalbard and Jan Mayen','SJ','SJM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (748,'Swaziland','SZ','SWZ',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (752,'Sweden','SE','SWE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (756,'Switzerland','CH','CHE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (760,'Syrian Arab Republic','SY','SYR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (158,'Taiwan, Province of China','TW','TWN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (762,'Tajikistan','TJ','TJK',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (834,'Tanzania, United Republic of','TZ','TZA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (764,'Thailand','TH','THA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (626,'Timor-leste','TL','TLS',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (768,'Togo','TG','TGO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (772,'Tokelau','TK','TKL',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (776,'Tonga','TO','TON',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (780,'Trinidad and Tobago','TT','TTO',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (788,'Tunisia','TN','TUN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (792,'Turkey','TR','TUR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (795,'Turkmenistan','TM','TKM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (796,'Turks and Caicos Islands','TC','TCA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (798,'Tuvalu','TV','TUV',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (800,'Uganda','UG','UGA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (804,'Ukraine','UA','UKR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (784,'United Arab Emirates','AE','ARE',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (826,'United Kingdom','GB','GBR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (581,'United States Minor Outlying Islands','UM','UMI',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (858,'Uruguay','UY','URY',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (860,'Uzbekistan','UZ','UZB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (548,'Vanuatu','VU','VUT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (336,'Vatican City State (Holy See)','VA','VAT',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (862,'Venezuela','VE','VEN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (704,'Viet Nam','VN','VNM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (92,'Virgin Islands (British)','VG','VGB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (850,'Virgin Islands (U.S.)','VI','VIR',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (876,'Wallis and Futuna','WF','WLF',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (732,'Western Sahara','EH','ESH',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (887,'Yemen','YE','YEM',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (891,'Yugoslavia','YU','YUG',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (894,'Zambia','ZM','ZMB',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (716,'Zimbabwe','ZW','ZWE',1)");
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (0,'NA','N/A')");
 }
 
 // Removes all countries
 function remove_countries() {
-	db_query("DELETE FROM {uc_countries}");
-	db_query("DELETE FROM {uc_zones} WHERE zone_country_id = 0");
-	create_default_countries();
+  db_query("DELETE FROM {uc_countries}");
+  db_query("DELETE FROM {uc_zones} WHERE zone_country_id = 0");
+  create_default_countries();
 }
 
 // Creates the default countries
 function create_default_countries() {
-	db_query("INSERT INTO {uc_countries} VALUES (124,'Canada','CA','CAN',1)");
-	db_query("INSERT INTO {uc_countries} VALUES (840,'United States','US','USA',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (124,'Canada','CA','CAN',1)");
+  db_query("INSERT INTO {uc_countries} VALUES (840,'United States','US','USA',1)");
 }
 
 /**********************************************************************************
  * UPDATES
  **********************************************************************************/
 function fundraiser_update_1() {
-	$items = array();
-	$items[] = update_sql("ALTER TABLE {fundraiser_gateway} ADD internal_name varchar(255)");
-	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD cancellation_reason varchar(500)");
-	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP data");
-	$items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP fee_amount");
-	return $items;
+  $items = array();
+  $items[] = update_sql("ALTER TABLE {fundraiser_gateway} ADD internal_name varchar(255)");
+  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} ADD cancellation_reason varchar(500)");
+  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP data");
+  $items[] = update_sql("ALTER TABLE {fundraiser_recurring} DROP fee_amount");
+  return $items;
 }
 
 // Add views for reporting
 function fundraiser_update_2() {
-	$items = array();
-	$items[] = update_sql("CREATE VIEW {fundraiser_webform_data} AS
-		SELECT sd.sid, sd.nid,
-		  GROUP_CONCAT(if(wc.form_key = 'cid', sd.data, NULL)) AS 'campaign_id',
-		  GROUP_CONCAT(if(wc.form_key = 'ms', sd.data, NULL)) AS 'market_source'
-		FROM {webform_submitted_data} sd
-		INNER JOIN {webform_component} wc on wc.cid = sd.cid
-		GROUP BY sd.sid, sd.nid");
-		
-	$items[] = update_sql("CREATE VIEW {fundraiser_webform_recurring_order} AS
-		SELECT f.sid, f.webform_nid AS nid, r.order_id, r.sf_opportunity_id AS sfid FROM {fundraiser_webform_order} f
-		INNER JOIN {fundraiser_recurring} r ON r.master_order_id = f.order_id");
-		
-	return $items;
+  $items = array();
+  $items[] = update_sql("CREATE VIEW {fundraiser_webform_data} AS
+    SELECT sd.sid, sd.nid,
+      GROUP_CONCAT(if(wc.form_key = 'cid', sd.data, NULL)) AS 'campaign_id',
+      GROUP_CONCAT(if(wc.form_key = 'ms', sd.data, NULL)) AS 'market_source'
+    FROM {webform_submitted_data} sd
+    INNER JOIN {webform_component} wc on wc.cid = sd.cid
+    GROUP BY sd.sid, sd.nid");
+
+  $items[] = update_sql("CREATE VIEW {fundraiser_webform_recurring_order} AS
+    SELECT f.sid, f.webform_nid AS nid, r.order_id, r.sf_opportunity_id AS sfid FROM {fundraiser_webform_order} f
+    INNER JOIN {fundraiser_recurring} r ON r.master_order_id = f.order_id");
+
+  return $items;
 }
 
 // Version 2.1 - Add the ability to store gateway and approval ids with individual orders
@@ -748,11 +751,11 @@ function fundraiser_update_6210() {
   db_query("ALTER TABLE {fundraiser_webform_order} ADD recurring_status int(11) DEFAULT 0");
   db_query("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
   db_query("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
- 
+
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})");
 }
 
-/** 
+/**
  * Version 3.0 - Remove the credit card expiration date from donation forms and replace it with
  * 2 separate field for month and year.
  */
@@ -804,18 +807,18 @@ function fundraiser_update_6301() {
   $result = variable_get('webform_node_types', array());
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
-  
+
   // make a copy of all items in fundraiser_gateway
   db_query(
     "
-      INSERT INTO {fundraiser} 
+      INSERT INTO {fundraiser}
       (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name)
-      SELECT 
+      SELECT
       nid, gateway, confirmation_email_from_name, confirmation_email_from_email, confirmation_email_subject, confirmation_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name from {fundraiser_gateway}
     "
   );
-  
-  // change all donation form webforms to the new donation_form content type   
+
+  // change all donation form webforms to the new donation_form content type
   db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
   db_query("DROP TABLE {fundraiser_gateway}");
 }
@@ -854,7 +857,7 @@ function fundraiser_update_6304() {
   db_add_field($updates, 'fundraiser', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255));
   db_add_field($updates, 'fundraiser', 'confirmation_page_body', array('type' => 'text'));
   db_add_field($updates, 'fundraiser', 'redirect_url', array('type' => 'varchar', 'length' => 255));
-  
+
   // update existing donation forms
   $result = db_query(
     "
@@ -863,13 +866,13 @@ function fundraiser_update_6304() {
       INNER JOIN {node} n on n.nid = w.nid
     "
   );
-  
+
   // update each donation form with values from the webform
   while ($data = db_fetch_object($result)) {
     db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d",
       $data->title, $data->confirmation, $data->redirect_url, $data->nid);
   }
-  
+
   return $updates;
 }
 
@@ -897,14 +900,14 @@ function fundraiser_update_6306() {
     'billing_country' => 'country',
     'billing_zipcode' => 'zip',
   );
-  
+
   $result = db_query("SELECT nid FROM {node} WHERE type = 'donation_form'");
-  
+
   // loop over every donation form and change the field key for each component
   while ($data = db_fetch_object($result)) {
-    foreach($changes as $old_key => $new_key) {
+    foreach ($changes as $old_key => $new_key) {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
-    }  
+    }
   }
 }
 
