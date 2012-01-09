@@ -421,7 +421,8 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
  */
 function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
   $form_state['values']['map']['salesforce'] = $form_state['values']['map']['drupal_user_field'];
-  return _capwiz_connect_save_field_mapping_save($form, &$form_state);
+  _capwiz_connect_save_field_mapping_save($form, &$form_state, FALSE);
+  drupal_set_message(t('User mapping has been saved.'));
 }
 
 
@@ -664,7 +665,7 @@ function capwiz_connect_account_action_mapping_submit($form, &$form_state) {
  * Submit either mapping form. Called by capwiz_connect_account_user_mapping_submit() and
  * capwiz_connect_account_action_mapping_submit()
  */
-function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
+function _capwiz_connect_save_field_mapping_save($form, &$form_state, $show_saved_message = TRUE) {
   $map_type = $form['#map_type'];
   if ($form_state['values']['map']['salesforce']) {
     $drupal_fieldmap_name = 'capwiz_connect:' . $form['#account']->id . ':' . $map_type;
@@ -706,7 +707,9 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
 
     salesforce_management_api_fieldmap_save($map);
     
-    drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
+    if ($show_saved_message) {
+      drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
+    }
   }
 }
 
