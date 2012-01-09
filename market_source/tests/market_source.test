@@ -1,0 +1,102 @@
+<?php
+
+/**
+ * @file
+ * Test suite for Market Source module.
+ */
+ 
+class MarketSourceTestCase extends DrupalWebTestCase {
+  protected $privileged_user;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Market Source',
+      'description' => 'Market Source tests',
+      'group' => 'Market Source',
+    );
+  }
+  
+  public function setUp() {
+    parent::setUp('market_source', 'webform');
+    
+    $this->privileged_user = $this->drupalCreateUser(array(
+      'administer site configuration',
+      'access all webform results',
+      'create webform content',
+      'edit own webform content'
+      ));
+    $this->drupalLogin($this->privileged_user);
+  }
+  
+  public function testMarketSourceAdminSettings() {
+
+    // confirm admin form elements.
+    $this->drupalGet('admin/config/search/market-source');
+    $this->assertFieldById('edit-new-name', '', t('Name field found.'));
+    $this->assertFieldById('edit-new-key', '', t('Key field found.'));
+    $this->assertFieldById('edit-new-default', '', t('Default field found.'));
+
+    // confirm custom settings.
+    $settings = array(
+      'new_name' => 'UTM Medium',
+      'new_key' => 'utm_medium',
+      'new_default' => 'utm default',
+    );
+    $this->drupalPost('admin/config/search/market-source', $settings, 'Save settings');
+    $this->drupalGet('admin/config/search/market-source');
+    $this->assertText('UTM Medium', t('Custom field name found.'));
+    $this->assertText('utm_medium', t('Custom form key found.'));
+    $this->assertText('utm default', t('Custom default value found.'));
+    
+    // confirm delete
+    $this->drupalGet('admin/config/search/market-source/delete/0');
+    $this->assertText('Warning: you are about to permanently remove a custom Market Source field. Are you sure?');
+    
+    $this->drupalPost('admin/config/search/market-source/delete/0', array('field_delta' => 0), 'Remove');
+    $this->assertNoText('UTM Medium', t('Custom field was removed.'));
+    
+  }
+  
+  public function testMarketSourceCreateWebform() {
+    $default_campaign = variable_get('market_source_default_campaign');
+    
+     // re-add custom field for other tests.
+    $settings = array(
+      'new_name' => 'UTM Large',
+      'new_key' => 'utm_large',
+      'new_default' => 'utm large default',
+    );
+    $this->drupalPost('admin/config/search/market-source', $settings, 'Save settings');
+    
+    $settings = array(
+      'type' => 'webform',
+    );
+
+    // confirm components are created.    
+    $node = $this->drupalCreateNode($settings);
+    $path = 'node/' . $node->nid . '/webform';
+    $this->drupalGet($path);
+    $this->assertText('Market Source', t('Market Source component found.'));
+    $this->assertText('default_ms', t('Default Market Source value found.'));
+    $this->assertText('Referrer', t('Referrer component found.'));
+    $this->assertText('Initial Referrer', t('Initial Referrer component found.'));
+    $this->assertText('UTM Large', t('Custom component found.'));
+    $this->assertText('utm large default', t('Custom component default value found.'));
+    
+    // Submit results and confirm
+    $options = array(
+      'query' => array(
+        'ms' => 'overridden_ms',
+        'utm_large' => 'fries and a coke',
+      ),
+    );
+    $this->drupalPost('node/' . $node->nid, array(), 'Submit', $options);
+    $this->drupalGet('node/' . $node->nid . '/submission/1');
+    $this->assertText('Market Source (hidden)', t('Market Source submission found.'));
+    $this->assertText('overridden_ms', t('Market Source overridden default ms found.'));
+  }
+}
+
+
+
+?>
