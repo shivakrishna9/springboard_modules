@@ -422,9 +422,8 @@ class CapizConnect {
   
   
   /**
-   * Local method to save a user. Right now, this saves to the capwiz_connect_users
-   * table and adds the user to the Salesforce processing queue, but this might be
-   * changed later to create Drupal users
+   * Local method to save a Capwiz user as a Drupal user and add the user to
+   * the Salesforce processing queue
    * 
    * @param $user
    *   Object representing a user that was pulled over from Capwiz
@@ -470,6 +469,12 @@ class CapizConnect {
         $return_value = self::$STAT_CREATE_OK;
       }
     }
+    
+    // Add the new/updated user to the SF queue
+    if (module_exists('sf_user') && $drupal_account->uid > 0) {
+      sf_queue_insert($drupal_account->uid, 'user', 'upsert');
+    }
+    
     
     foreach ($this->account_details->mapping_user['map'] as $field_key => $target_field) {
       $business_rule = $this->account_details->mapping_user['business'][$field_key];

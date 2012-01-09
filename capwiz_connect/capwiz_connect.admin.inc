@@ -575,8 +575,12 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       'emailAddress' => 'Email Address',
       'messageId' => 'Message ID',
       'userId' => 'Capwiz User ID',
-      'sf_userid' => 'Salesforce User Record',
     );
+    
+    // Only allow mapping to the Contact in SF if the SF User Integration module is available
+    if (module_exists('sf_user')) {
+      $capwiz_fields['sf_userid'] = 'Salesforce User Record';
+    }
     
     foreach ($capwiz_fields as $field_key => $field_label) {
       $map_for_field = $account->mapping_action['map'][$field_key];
@@ -690,9 +694,11 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state) {
 
     // Build array of business rules (overwrite when blank, etc)
     $business = array();
-    foreach ($form_state['values']['map']['business'] as $key => $value) {
-      if (!empty($value)) {
-        $business[$key] = $value;
+    if (is_array($form_state['values']['map']['business'])) {
+      foreach ($form_state['values']['map']['business'] as $key => $value) {
+        if (!empty($value)) {
+          $business[$key] = $value;
+        }
       }
     }
     $map['business'] = serialize($business);

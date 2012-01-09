@@ -321,15 +321,12 @@ function capwiz_connect_cron_process() {
  */
 function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
   if ($batch['type'] == 'capwiz_connect_action') {
-    // Get 'user' or 'action' by removing 'capwiz_connect_' from $batch['type']
-    $type = substr($batch['type'], 15);
-    
     switch ($batch['action']) {
       case 'update':
       case 'upsert':
       case 'create':
         foreach ($batch['records'] as $record) {
-          $map = _capwiz_connect_sf_load_object_details($record->oid, $type);
+          $map = _capwiz_connect_sf_load_action_details($record->oid);
           if (is_array($record->object)) {
             $record->object = array_merge($record->object, $map['fields']);  
           }
@@ -353,7 +350,7 @@ function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
 /**
  * Load field mapping for an action object to be passed to Salesforce queue processor. 
  */
-function _capwiz_connect_sf_load_object_details($oid, $type) {
+function _capwiz_connect_sf_load_action_details($oid) {
   static $sf_field_map;
   
   // If there is an error building the mapping, or the data is incomplete, a generic
@@ -376,18 +373,18 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   }
   
   // Load the Salesforce field map for this Capwiz account, if we have not already
-  if (!$sf_field_map[$account_id][$type]) {
-    $drupal = 'capwiz_connect:' . $account_id . ':' . $type;
+  if (!$sf_field_map[$account_id]) {
+    $drupal = 'capwiz_connect:' . $account_id . ':action';
     $sql = "SELECT salesforce, recordtype_id, fields, business FROM {salesforce_management_field_map} WHERE drupal = '%s'";
     $data = db_fetch_object(db_query($sql, $drupal));
 
-    $sf_field_map[$account_id][$type]['map'] = unserialize($data->fields);
-    $sf_field_map[$account_id][$type]['business'] = unserialize($data->business);
-    $sf_field_map[$account_id][$type]['object'] = $data->salesforce;
-    $sf_field_map[$account_id][$type]['recordtype_id'] = $data->recordtype_id;
+    $sf_field_map[$account_id]['map'] = unserialize($data->fields);
+    $sf_field_map[$account_id]['business'] = unserialize($data->business);
+    $sf_field_map[$account_id]['object'] = $data->salesforce;
+    $sf_field_map[$account_id]['recordtype_id'] = $data->recordtype_id;
   }
   
-  $map_details = $sf_field_map[$account_id][$type];
+  $map_details = $sf_field_map[$account_id];
   
   // If no map is found for this account and type, bail out
   if (!$map_details['map']) {
@@ -411,52 +408,20 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   foreach ($map_details['map'] as $capwiz_field_name => $sf_field_name) {
     // Different fields have different formats
     switch ($capwiz_field_name) {
-      // Email address. On Actions and Users.
+      // Email address
       case 'emailAddress':
-        // Email address is stored on Users and Actions differently
-        if ($type == 'user') {
-          if ($object->data->emails[0]) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->emails[0]->address;
-          }
-        }
-        else { // action, not user
-          if ($object->data->emailAddress) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->emailAddress;
-          }
+        if ($object->data->emailAddress) {
+          $salesforce_map['fields'][$sf_field_name] = $object->data->emailAddress;
         }
         break;
       
-      // Salutation. Only on users.
-      case 'honorificId':
-        if ($object->data->honorific) {
-          $salesforce_map['fields'][$sf_field_name] = $object->data->honorific->name;
-        }
-        break;
-          
-      // Street address. Only on users.
-      case 'street1':
-        if ($object->data->addresses[0]) {
-          $salesforce_map['fields'][$sf_field_name] = $object->data->addresses[0]->street1;
-        }
-        break;
-          
-      // Type of address. Only on users.
-      case 'addressType':
-        $connection = capwiz_connect($account_id);
-        $address_field = $connection->getSpecificCustomUserField('addressType');
-        if ($object->data->addresses[0] && $address_field) {
-          $address_type_id = $object->data->addresses[0]->addressTypeId;
-          $salesforce_map['fields'][$sf_field_name] = $address_field->options[$address_type_id]->label;
-        }
-        break;
-        
-      // Affiliation of form. On Actions and Users.
+      // Affiliation of form
       case 'form_affiliation':
         $account = capwiz_connect_account_load($account_id);
         $salesforce_map['fields'][$sf_field_name] = $account->form_affiliation;
         break;
       
-      // Action timestamp. Only on Actions.
+      // Action timestamp
       case 'action_timestamp':
         if ($object->data->dtAction) {
           // Not sure if SF expects Unix timestamps for date time fields
@@ -466,59 +431,21 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
         
       // Capwiz User in Salesforce. Only on Actions. 
       case 'sf_userid':
-        if ($object->data->userId) {
+        if ($object->data->emailAddress) {
           // Load the Salesforce ID for the user
-          $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $object->data->userId));
+          $sfid = db_result(db_query("SELECT om.sfid FROM {users} u LEFT JOIN {salesforce_management_object_map} om ON om.oid = u.uid AND om.drupal_type = 'user' WHERE u.mail='%s'", $object->data->emailAddress));
           if ($sfid) {
             $salesforce_map['fields'][$sf_field_name] = $sfid;
           }
         }
         break;
       
-      // Legislation district fields. Only on users. These fields are listed on
-      // every official in the user data, with the same value on each
-      case 'nationalDistrict':
-      case 'stateDistrictUpper':
-      case 'stateDistrictLower':
-        // Make sure the officials array has at least one item in it
-        if (is_array($object->data->officials) && is_object($object->data->officials[0])) {
-          // Get the requested field from the first legislator object in the array
-          if ($object->data->officials[0]->{$capwiz_field_name}) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->officials[0]->{$capwiz_field_name};
-          }
-        }
-        break;
-        
-      // Federal senators. Users only.
-      case 'fed_senator_1':
-      case 'fed_senator_2':
-        // @todo
-        break;
-      
-      // Federal senator phone numbers. Users only.
-      case 'fed_senator_1_phone':
-      case 'fed_senator_2_phone':
-        // @todo
-        break;
-        
-      // Federal rep. Users only.
-      case 'fed_rep':
-        // @todo
-        break;
-        
-      // Federal rep phone number. Users only.
-      case 'fed_rep_phone':
-        // @todo
-        break;
-        
-      
-      
       // Every other field. Just load the field from the object
       default:
         $salesforce_map['fields'][$sf_field_name] = $object->data->{$capwiz_field_name};
     }
   }
-  
+    
   return $salesforce_map;
 }
 
@@ -529,19 +456,9 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
  */
 function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
   if ($data->type == 'capwiz_connect_action') {
-    $type = substr($data->type, 15);
-    
-    if ($type == 'user') {
-      $object = _capwiz_connect_load_user_from_local_id($data->oid);
-      if ($object) {
-        $account_id = $object->capwiz_account_id;
-      }
-    }
-    else {
-      $object = _capwiz_connect_load_action($data->oid);
-      if ($object) {
-        $account_id = $object->capwiz_account_id;
-      }
+    $object = _capwiz_connect_load_action($data->oid);
+    if ($object) {
+      $account_id = $object->capwiz_account_id;
     }
     
     if (!($account_id > 0)) {
@@ -549,7 +466,7 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     }
     
     // Load the field map for the Account the user came in from
-    $drupal = 'capwiz_connect:' . $account_id . ':' . $type;
+    $drupal = 'capwiz_connect:' . $account_id . ':action';
     $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
     
     $fieldmap = db_fetch_array($result);
@@ -565,31 +482,6 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
 }
 
 
-
-/**
- * Load a single Capwiz user from the local data. Argument should be the Capwiz ID
- * for the user
- */
-function _capwiz_connect_load_user($capwiz_user_id) {
-  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-  if ($capwiz_user) {
-    $capwiz_user->data = unserialize($capwiz_user->data);
-    return $capwiz_user;
-  }
-  return NULL;
-}
-/**
- * Load a single Capwiz user from the local data, using the local auto-
- * increment ID that's used for the Salesforce processing queue
- */
-function _capwiz_connect_load_user_from_local_id($id) {
-  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE id=%d", $id));
-  if ($capwiz_user) {
-    $capwiz_user->data = unserialize($capwiz_user->data);
-    return $capwiz_user;
-  }
-  return NULL;
-}
 
 /**
  * Load a single Capwiz action from the locally stored data
