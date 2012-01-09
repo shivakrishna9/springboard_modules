@@ -1,8 +1,8 @@
 <?php
 
-define('FUNDRAISER_SINGLE_DONATION_TYPE',   'donation');
-define('FUNDRAISER_RECURRING_DONATION_TYPE',   'recurring_donation');
-define('FUNDRAISER_DONATION_REFUND_TYPE',   'refund');
+define('FUNDRAISER_SINGLE_DONATION_TYPE',    'donation');
+define('FUNDRAISER_RECURRING_DONATION_TYPE',    'recurring_donation');
+define('FUNDRAISER_DONATION_REFUND_TYPE',    'refund');
 define('RECURRING_DONATION_STATUS', 'pending_future_payment');
 
 define('DONATION_NON_RECURRING', 0);
@@ -79,21 +79,21 @@ function fundraiser_menu() {
   );
 
   $items['node/%webform_menu/webform/confirmations'] = array(
-   'title' => 'Confirmations',
-   'page callback' => 'drupal_get_form',
-   'page arguments' => array('fundraiser_confirmation_settings_form', 1),
-   'access callback' => 'fundraiser_confirmations_perm',
-   'access arguments' => array('update', 1),
-   'file' => 'fundraiser.admin.inc',
-   'type' => MENU_LOCAL_TASK,
-   'weight' => 1,
+    'title' => 'Confirmations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_confirmation_settings_form', 1),
+    'access callback' => 'fundraiser_confirmations_perm',
+    'access arguments' => array('update', 1),
+    'file' => 'fundraiser.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
   );
 
   $items['fundraiser/js/%fundraiser_ahah_field'] = array(
-    'page callback'    => '_fundraiser_ahah_helper_render',
-    'page arguments'   => array(2),
-    'access callback'  => TRUE,
-    'type'             => MENU_CALLBACK,
+    'page callback' => '_fundraiser_ahah_helper_render',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
 
   $items['fundraiser_ask/js'] = array(
@@ -105,16 +105,16 @@ function fundraiser_menu() {
   $items['fundraiser_changestate/js'] = array(
     'page callback' => 'fundraiser_changestate',
     'type' => MENU_CALLBACK,
-    'access arguments' => array("access content"),  
+    'access arguments' => array("access content"),
   );
 
   // Add the cron handler if it's enabled.
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
     $items['fundraiser_cron'] = array(
-        'page callback' => 'fundraiser_cron',
-        'access callback' => TRUE,
-        'type' => MENU_CALLBACK,
-      );
+      'page callback' => 'fundraiser_cron',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
   }
   $items['zones/js'] = array(
     'type' => MENU_CALLBACK,
@@ -134,13 +134,13 @@ function fundraiser_menu() {
 
   $items['admin/fundraiser/recurring/test'] = array(
     'title' => 'Fundraiser Recurring Payment Tester',
-      'page callback' => 'fundraiser_recurring_test',
-      'access callback' => 'node_access',
-      'access arguments' => array('update', 1),
-      'file' => 'fundraiser_components.inc',
-      'weight' => 2,
-      'type' => MENU_CALLBACK,
-    );
+    'page callback' => 'fundraiser_recurring_test',
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'fundraiser_components.inc',
+    'weight' => 2,
+    'type' => MENU_CALLBACK,
+  );
 
   $items['admin/store/orders/%uc_order/recurring/edit'] = array(
     'title' => 'Edit Recurring Donations',
@@ -910,7 +910,10 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 
       // alter country drop down to populate zone drop down via ahah
       $country_field = &fundraiser_find_field($form, $component_hierarchy['country']);
-      $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
+      $country_field['#ahah'] = array(
+        'path' => 'fundraiser/js/state',
+        'wrapper' => 'zone-select-wrapper',
+      );
 
       // add default country & state values from user profile
       $fids = _fundraiser_get_profile_location_fields();
@@ -918,7 +921,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
       }
 
-      // add a wrapper around the state field so it can be replaced via ajax      
+      // add a wrapper around the state field so it can be replaced via ajax
       $state_field = &fundraiser_find_field($form, $component_hierarchy['state']);
       if ($fids['state'] && $user->profile_state) {
         $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
@@ -926,7 +929,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
 
-      // flatten form state array so that it is easier to work with      
+      // flatten form state array so that it is easier to work with
       $fields = _fundraiser_array_flatten($form_state);
       // country/state dependant drop down code
       if (array_key_exists('country', $fields)) {
@@ -1034,7 +1037,10 @@ function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
  *   The field that is being affected by the AHAH call.
  */
 function _fundraiser_ahah_helper_render($field = NULL) {
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
   $form_build_id = $_POST['form_build_id'];
 
   // Get the form from the cache.
@@ -1101,8 +1107,8 @@ function _fundraiser_ahah_helper_render($field = NULL) {
   $settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
 
   drupal_json(array(
-    'status'   => TRUE,
-    'data'     => theme('status_messages') . drupal_render($form_item),
+    'status' => TRUE,
+    'data' => theme('status_messages') . drupal_render($form_item),
     'settings' => array('ahah' => $settings['ahah']),
   ));
 }
@@ -1471,7 +1477,7 @@ function fundraiser_webform_submit($form, &$form_state) {
   $order->products[0]->nid = $node_id;
   $order->products[0]->data = array(
     'shippable' => $order->products[0]->shippable,
-    'model' =>  $order->products[0]->model,
+    'model' => $order->products[0]->model,
     'varprice' => $donation_amount,
     'module' => 'uc_product',
   );
@@ -1494,17 +1500,17 @@ function fundraiser_webform_submit($form, &$form_state) {
   $order->billing_country = $billing_country;
   $order->payment_method = 'credit';
   $order->payment_details = array(
-     'cc_type' => _fundraiser_get_cc_type($cc_number),
-     'cc_owner' => '',
-     'cc_number' => $cc_number,
-     'cc_start_month' => '',
-     'cc_start_year' => '',
-     'cc_exp_month' => $cc_expiration_month,
-     'cc_exp_year' => $cc_expiration_year,
-     'cc_issue' => '',
-     'cc_cvv' => $cc_cvv,
-     'cc_bank' => '',
-   );
+    'cc_type' => _fundraiser_get_cc_type($cc_number),
+    'cc_owner' => '',
+    'cc_number' => $cc_number,
+    'cc_start_month' => '',
+    'cc_start_year' => '',
+    'cc_exp_month' => $cc_expiration_month,
+    'cc_exp_year' => $cc_expiration_year,
+    'cc_issue' => '',
+    'cc_cvv' => $cc_cvv,
+    'cc_bank' => '',
+  );
 
   $order->line_items = array();
 
@@ -1533,8 +1539,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 
   // additional data to pass to the payment gateway's charge function
   $data = array(
-     'txn_type' => 'auth_capture',
-   );
+    'txn_type' => 'auth_capture',
+  );
 
   // varaible to hold the name of the payment gateway charge function we need to call
   $charge_function = NULL;
@@ -2261,7 +2267,7 @@ function fundraiser_order_actions($order) {
 function fundraiser_theme() {
   return array(
     'fundraiser_mapping_form' => array(
-    'arguments' => array(),
+      'arguments' => array(),
     ),
     'sustainer_management_page' => array(
       'template' => 'sustainer-management-page',
@@ -2332,7 +2338,10 @@ function theme_fundraiser_mapping_form($form) {
  */
 function _fundraiser_ask_ahah() {
   module_load_include('inc', 'node', 'node.pages');
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
   $form_build_id = $_POST['form_build_id'];
   $amount_delta = $form_state['values']['amount_delta'];
   $form = form_get_cache($form_build_id, $form_state);
@@ -2383,8 +2392,16 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
 
   $form = array();
   $fields = array(
-    'amount_' => array('label' => 'Ask amount', 'size' => 10, 'class' => 'amount_field'),
-    'label_' => array('label' => 'Label', 'size' => 30, 'class' => 'label_field'),
+    'amount_' => array(
+      'label' => 'Ask amount',
+      'size' => 10,
+      'class' => 'amount_field',
+    ),
+    'label_' => array(
+      'label' => 'Label',
+      'size' => 30,
+      'class' => 'label_field',
+    ),
   );
   $weight = 0;
 
@@ -2733,9 +2750,6 @@ function fundraiser_token_values($type, $object = NULL) {
   }
   return $values;
 }
-   $values['order-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
-      $values['order-cc-card-type'] = ucfirst($object->payment_details['cc_type']); 
-      break;
-  }
-  return $values;
-}
+$values['order-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
+$values['order-cc-card-type'] = ucfirst($object->payment_details['cc_type']);
+break;

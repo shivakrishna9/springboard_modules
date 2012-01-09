@@ -467,6 +467,10 @@ function fundraiser_create_month_field($nid, $pid) {
   return $expiration_month;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_required_fields() {
   return array(
     'ms',
@@ -503,10 +507,10 @@ function fundraiser_required_fields() {
  * Default selected value for amount radios.
  */
 function _fundraiser_update_amount_webform_component($node, $donation_amounts = array(), $value) {
-  $pid = db_result(db_query('SELECT cid FROM {webform_component} WHERE nid = %d AND form_key="donation"', $node->nid));
+  $pid = db_query('SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $node->nid, ':form_key' => "donation"))->fetchField();
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
-    $has_select = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "amount" AND type = "select"', $node->nid));
+    $has_select = db_query('SELECT 1 FROM {webform_component} WHERE nid = :nid AND form_key = :form_key AND type = :type', array(':nid' => $node->nid, ':form_key' => "amount", ':type' => "select"))->fetchField();
     if ($has_select) {
       $amount = array();
       $amount['nid'] = $node->nid;
@@ -522,31 +526,50 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       $amount['mandatory'] = 1;
       $amount['weight'] = 0;
       $amount['email'] = 1;
-      db_query('DELETE FROM {webform_component} WHERE nid =%d AND form_key = "amount"', $node->nid);
+      // TODO Please review the conversion of this statement to the D7 database API syntax.
+      /* db_query('DELETE FROM {webform_component} WHERE nid =%d AND form_key = "amount"', $node->nid) */
+      db_delete('webform_component')
+  ->condition('nid', $node->nid)
+  ->condition('form_key', "amount")
+  ->execute();
       webform_component_insert($amount);
     }
   }
   else {
     $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
-    $field_type = db_result(db_query('SELECT type FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
+    $field_type = db_query('SELECT type FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $node->nid, ':form_key' => "amount"))->fetchField();
 
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
-      db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      // TODO Please review the conversion of this statement to the D7 database API syntax.
+      /* db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid) */
+      db_update('webform_component')
+  ->fields(array(
+        'extra' => $data,
+        'value' => $value,
+      ))
+  ->condition('nid', $node->nid)
+  ->condition('form_key', 'amount')
+  ->execute();
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
-      $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
+      $result = db_query('SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $node->nid, ':form_key' => "other_amount"))->fetchField();
     }
 
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
-      db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
+      // TODO Please review the conversion of this statement to the D7 database API syntax.
+      /* db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid) */
+      db_delete('webform_component')
+  ->condition('nid', $node->nid)
+  ->condition('form_key', "amount")
+  ->execute();
       $amount = _fundraiser_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amount);
       webform_component_insert($amount['amount']);
     }
   }
 
-  $result = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
+  $result = db_query('SELECT 1 FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $node->nid, ':form_key' => "other_amount"))->fetchField();
   if ($node->show_other_amount) {
     // Pre-existing entry in the DB for this form component and it's still enabled so we update.
     if ($result) {
@@ -555,7 +578,15 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
         'width' => 10,
         'field_prefix' => '$',
       );
-      db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid=%d AND form_key = 'other_amount'", serialize($extra), $node->nid);
+      // TODO Please review the conversion of this statement to the D7 database API syntax.
+      /* db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid=%d AND form_key = 'other_amount'", serialize($extra), $node->nid) */
+      db_update('webform_component')
+  ->fields(array(
+        'extra' => serialize($extra),
+      ))
+  ->condition('nid', $node->nid)
+  ->condition('form_key', 'other_amount')
+  ->execute();
       $message .= t('Other donation amount options have been updated.');
     }
 
@@ -569,7 +600,12 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
   // associated form element(s) being rendered by webform.
   elseif ($result) {
-    db_query('DELETE FROM {webform_component} WHERE nid=%d AND form_key ="other_amount"', $node->nid);
+    // TODO Please review the conversion of this statement to the D7 database API syntax.
+    /* db_query('DELETE FROM {webform_component} WHERE nid=%d AND form_key ="other_amount"', $node->nid) */
+    db_delete('webform_component')
+  ->condition('nid', $node->nid)
+  ->condition('form_key', "other_amount")
+  ->execute();
     $message .= t('Other amount options have been disabled on the form.');
   }
   watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, "node/$node->nid");
@@ -658,6 +694,7 @@ function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amo
  */
 function _fundraiser_get_profile_location_fields() {
 
+  // TODO Please convert this statement to the D7 database API syntax.
   $results = db_query('SELECT fid,name FROM {profile_fields} WHERE name IN ("profile_country", "profile_state")');
 
   while ($profile_field = db_fetch_object($results)) {
@@ -691,15 +728,15 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   $fids = _fundraiser_get_profile_location_fields();
 
   // get the ids of the country and state webform components for node
-  $country_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'country'", $submission->nid));
-  $state_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'state'", $submission->nid));
+  $country_cid = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key = :form_key", array(':nid' => $submission->nid, ':form_key' => 'country'))->fetchField();
+  $state_cid = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid AND form_key = :form_key", array(':nid' => $submission->nid, ':form_key' => 'state'))->fetchField();
 
   $country_code = $submission->data[$country_cid]['value'][0];
   $state_code = $submission->data[$state_cid]['value'][0];
 
   if ($fids['country']) {
-    $country_name = db_result(db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d', $country_code));
-    $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $update_user->uid, $fids['country']));
+    $country_name = db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id', array(':country_id' => $country_code))->fetchField();
+    $has_country = db_query('SELECT 1 FROM {profile_values} WHERE uid = :uid AND fid = :fid', array(':uid' => $update_user->uid, ':fid' => $fids['country']))->fetchField();
     if ($has_country) {
       $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", db_escape_string($country_name), $update_user->uid, $fids['country']);
     }
@@ -707,12 +744,13 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
       $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['country'], $update_user->uid, $country_name);
     }
 
+    // TODO Please convert this statement to the D7 database API syntax.
     db_query($query);
   }
 
   if ($fids['state']) {
-    $state_name = db_result(db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = %d AND zone_country_id = %d', $state_code, $country_code));
-    $has_state = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $update_user->uid, $fids['state']));
+    $state_name = db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id AND zone_country_id = :zone_country_id', array(':zone_id' => $state_code, ':zone_country_id' => $country_code))->fetchField();
+    $has_state = db_query('SELECT 1 FROM {profile_values} WHERE uid = :uid AND fid = :fid', array(':uid' => $update_user->uid, ':fid' => $fids['state']))->fetchField();
     if ($has_state) {
       $query = sprintf("UPDATE {profile_values} SET value = '%s' WHERE uid = %d AND fid = %d", $state_name, $update_user->uid, $fids['state']);
     }
@@ -720,6 +758,7 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
       $query = sprintf("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fids['state'], $update_user->uid, $state_name);
     }
 
+    // TODO Please convert this statement to the D7 database API syntax.
     db_query($query);
   }
 }
