@@ -9,16 +9,12 @@
  */
 function fundraiser_install() {
   variable_set('fundraiser_development_mode', 1);
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_install_schema('fundraiser')
 }
 
 /**
  * Implements hook_uninstall().
  */
 function fundraiser_uninstall() {
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_uninstall_schema('fundraiser')
   db_query("DROP VIEW {fundraiser_webform_data}");
   db_query("DROP VIEW {fundraiser_webform_recurring_order}");
 }
@@ -58,7 +54,6 @@ function fundraiser_enable() {
 function fundraiser_disable() {
   remove_ubercart_settings();
   remove_countries();
-
   // Remove donation_form from the list of webform_node_types.
   // Not really necessary, but still good to clean up after ourselves
   $result = variable_get('webform_node_types', array('webform'));
@@ -210,7 +205,6 @@ function fundraiser_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
-
   $schema['fundraiser_refund'] = array(
     'description' => 'Stores information about refunds made on donations',
     'fields' => array(
@@ -250,24 +244,23 @@ function fundraiser_schema() {
     'primary key' => array('refund_id'),
     'indexes' => array('refund_order_id' => array('order_id')),
   );
-
   $schema['fundraiser_recurring'] = array(
-    'description' => 'TODO: please describe this table!',
+    'description' => 'Stores information about recurring orders.',
     'fields' => array(
       'master_order_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Master order ID from ubercart.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'order_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'This specific recurring order id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'next_charge' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'When to charge the order next.',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -296,25 +289,25 @@ function fundraiser_schema() {
         'default' => 0,
       ),
       'gateway_resp' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Gateway response to the charge.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
       'attempts' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Number of attempts made to charge.',
         'type' => 'int',
         'not null' => FALSE,
         'default' => 0,
       ),
       'cancellation_reason' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'If cancelled, reason why.',
         'type' => 'varchar',
         'length' => '500',
         'not null' => FALSE,
       ),
       'gateway' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Gateway to process order with.',
         'type' => 'varchar',
         'length' => '100',
         'not null' => FALSE,
@@ -328,7 +321,6 @@ function fundraiser_schema() {
     ),
     'primary key' => array('order_id'),
   );
-
   $schema['fundraiser_component_map'] = array(
     'description' => 'TODO: please describe this table!',
     'fields' => array(
@@ -353,7 +345,6 @@ function fundraiser_schema() {
     ),
     'primary key' => array('nid', 'cid'),
   );
-
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
     'fields' => array(
@@ -397,36 +388,35 @@ function fundraiser_schema() {
   return $schema;
 }
 
-// Adds fundraiser specific ubercart settings
+/**
+ * Helper function. Adds fundraiser specific ubercart settings.
+ */
 function configure_ubercart_settings() {
-
   $statuses = _fundraiser_statuses();
-
-  // create each ubercart status
   foreach ($statuses as $status_id => $status) {
-    // TODO Please convert this statement to the D7 database API syntax.
-    db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, "
-      . "weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
-      $status_id, $status['title'], $status['state'], $status['weight'], $status['locked']);
+    $id = db_insert('uc_order_statuses')->fields(array(
+      'order_status_id' => $status_id,
+      'title' => $status['title'],
+      'state' => $status['state'],
+      'weight' => $status['weight'],
+      'locked' => $status['locked'],
+    ))->execute();
   }
-
 }
 
-// Removes fundraiser specific ubercart settings
+/**
+ * Helper function. Removes fundraiser specific ubercart settings.
+ */
 function remove_ubercart_settings() {
   $statuses = _fundraiser_statuses();
-
-  // remove each ubercart status
   foreach ($statuses as $status_id => $status) {
-    // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status_id) */
-    db_delete('uc_order_statuses')
-  ->condition('order_status_id', $status_id)
-  ->execute();
+    db_delete('uc_order_statuses')->condition('order_status_id', $status_id)->execute();
   }
 }
 
-// Returns an array of fundraiser module specific order statuses
+/**
+ * Helper function. Returns an array of fundraiser module specific order statuses.
+ */
 function _fundraiser_statuses() {
   $fundraiser_statuses = array(
     'pending_future_payment' => array(
@@ -454,1075 +444,313 @@ function _fundraiser_statuses() {
       'weight' => -21,
     ),
   );
-
   return $fundraiser_statuses;
 }
 
-// Adds all countries to the ubercart countries table
+/**
+ * Helper function. Adds all countries to the ubercart countries table.
+ */
 function create_countries() {
   remove_countries();
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (4,'Afghanistan','AF','AFG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (248,'Aland Islands','AX','ALA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (8,'Albania','AL','ALB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (12,'Algeria','DZ','DZA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (16,'American Samoa','AS','ASM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (20,'Andorra','AD','AND',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (24,'Angola','AO','AGO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (660,'Anguilla','AI','AIA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (10,'Antarctica','AQ','ATA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (28,'Antigua and Barbuda','AG','ATG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (32,'Argentina','AR','ARG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (51,'Armenia','AM','ARM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (533,'Aruba','AW','ABW',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (36,'Australia','AU','AUS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (40,'Austria','AT','AUT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (31,'Azerbaijan','AZ','AZE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (44,'Bahamas','BS','BHS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (48,'Bahrain','BH','BHR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (50,'Bangladesh','BD','BGD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (52,'Barbados','BB','BRB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (112,'Belarus','BY','BLR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (56,'Belgium','BE','BEL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (84,'Belize','BZ','BLZ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (204,'Benin','BJ','BEN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (60,'Bermuda','BM','BMU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (64,'Bhutan','BT','BTN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (68,'Bolivia','BO','BOL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (70,'Bosnia and Herzegovina','BA','BIH',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (72,'Botswana','BW','BWA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (74,'Bouvet Island','BV','BVT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (76,'Brazil','BR','BRA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (86,'British Indian Ocean Territory','IO','IOT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (96,'Brunei Darussalam','BN','BRN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (100,'Bulgaria','BG','BGR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (854,'Burkina Faso','BF','BFA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (108,'Burundi','BI','BDI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (116,'Cambodia','KH','KHM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (120,'Cameroon','CM','CMR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (132,'Cape Verde','CV','CPV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (136,'Cayman Islands','KY','CYM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (140,'Central African Republic','CF','CAF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (148,'Chad','TD','TCD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (152,'Chile','CL','CHL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (156,'China','CN','CHN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (162,'Christmas Island','CX','CXR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (166,'Cocos (Keeling) Islands','CC','CCK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (170,'Colombia','CO','COL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (174,'Comoros','KM','COM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (178,'Congo','CG','COG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (180,'Congo, The Democratic Republic of the','CD','COD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (184,'Cook Islands','CK','COK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (188,'Costa Rica','CR','CRI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (384,'Cote D\'ivoire','CI','CIV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (191,'Croatia','HR','HRV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (192,'Cuba','CU','CUB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (196,'Cyprus','CY','CYP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (203,'Czech Republic','CZ','CZE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (208,'Denmark','DK','DNK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (262,'Djibouti','DJ','DJI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (212,'Dominica','DM','DMA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (214,'Dominican Republic','DO','DOM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (218,'Ecuador','EC','ECU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (818,'Egypt','EG','EGY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (222,'El Salvador','SV','SLV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (226,'Equatorial Guinea','GQ','GNQ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (232,'Eritrea','ER','ERI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (233,'Estonia','EE','EST',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (231,'Ethiopia','ET','ETH',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (238,'Falkland Islands (Malvinas)','FK','FLK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (234,'Faroe Islands','FO','FRO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (242,'Fiji','FJ','FJI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (246,'Finland','FI','FIN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (250,'France','FR','FRA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (254,'French Guiana','GF','GUF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (258,'French Polynesia','PF','PYF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (260,'French Southern Territories','TF','ATF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (266,'Gabon','GA','GAB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (270,'Gambia','GM','GMB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (268,'Georgia','GE','GEO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (276,'Germany','DE','DEU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (288,'Ghana','GH','GHA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (292,'Gibraltar','GI','GIB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (300,'Greece','GR','GRC',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (304,'Greenland','GL','GRL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (308,'Grenada','GD','GRD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (312,'Guadeloupe','GP','GLP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (316,'Guam','GU','GUM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (320,'Guatemala','GT','GTM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (831,'Guernsey','GG','GGY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (324,'Guinea','GN','GIN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (624,'Guinea-bissau','GW','GNB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (328,'Guyana','GY','GUY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (332,'Haiti','HT','HTI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (334,'Heard Island and Mcdonald Islands','HM','HMD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (340,'Honduras','HN','HND',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (344,'Hong Kong','HK','HKG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (348,'Hungary','HU','HUN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (352,'Iceland','IS','ISL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (356,'India','IN','IND',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (360,'Indonesia','ID','IDN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (364,'Iran (Islamic Republic of)','IR','IRN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (368,'Iraq','IQ','IRQ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (372,'Ireland','IE','IRL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (833,'Isle of Man','IM','IMM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (376,'Israel','IL','ISR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (380,'Italy','IT','ITA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (388,'Jamaica','JM','JAM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (392,'Japan','JP','JPN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (832,'Jersey','JE','JEY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (400,'Jordan','JO','JOR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (398,'Kazakhstan','KZ','KAZ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (404,'Kenya','KE','KEN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (296,'Kiribati','KI','KIR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (408,'Korea, Democratic People\'s Republic of','KP','PRK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (410,'Korea, Republic of','KR','KOR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (414,'Kuwait','KW','KWT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (417,'Kyrgyzstan','KG','KGZ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (418,'Lao People\'s Democratic Republic','LA','LAO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (428,'Latvia','LV','LVA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (422,'Lebanon','LB','LBN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (426,'Lesotho','LS','LSO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (430,'Liberia','LR','LBR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (434,'Libyan Arab Jamahiriya','LY','LBY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (438,'Liechtenstein','LI','LIE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (440,'Lithuania','LT','LTU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (442,'Luxembourg','LU','LUX',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (446,'Macao','MO','MAC',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (807,'Macedonia, The Former Yugoslav Republic of','MK','MKD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (450,'Madagascar','MG','MDG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (454,'Malawi','MW','MWI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (458,'Malaysia','MY','MYS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (462,'Maldives','MV','MDV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (466,'Mali','ML','MLI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (470,'Malta','MT','MLT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (584,'Marshall Islands','MH','MHL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (474,'Martinique','MQ','MTQ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (478,'Mauritania','MR','MRT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (480,'Mauritius','MU','MUS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (175,'Mayotte','YT','MYT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (484,'Mexico','MX','MEX',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (583,'Micronesia, Federated States of','FM','FSM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (498,'Moldova, Republic of','MD','MDA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (492,'Monaco','MC','MCO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (496,'Mongolia','MN','MNG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (499,'Montenegro','ME','MNE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (500,'Montserrat','MS','MSR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (504,'Morocco','MA','MAR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (508,'Mozambique','MZ','MOZ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (104,'Myanmar','MM','MMR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (516,'Namibia','NA','NAM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (520,'Nauru','NR','NRU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (524,'Nepal','NP','NPL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (528,'Netherlands','NL','NLD',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (530,'Netherlands Antilles','AN','ANT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (540,'New Caledonia','NC','NCL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (554,'New Zealand','NZ','NZL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (558,'Nicaragua','NI','NIC',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (562,'Niger','NE','NER',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (566,'Nigeria','NG','NGA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (570,'Niue','NU','NIU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (574,'Norfolk Island','NF','NFK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (580,'Northern Mariana Islands','MP','MNP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (578,'Norway','NO','NOR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (512,'Oman','OM','OMN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (586,'Pakistan','PK','PAK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (585,'Palau','PW','PLW',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (275,'Palestinian Territory, Occupied','PS','PSE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (591,'Panama','PA','PAN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (598,'Papua New Guinea','PG','PNG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (600,'Paraguay','PY','PRY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (604,'Peru','PE','PER',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (608,'Philippines','PH','PHL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (612,'Pitcairn','PN','PCN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (616,'Poland','PL','POL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (620,'Portugal','PT','PRT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (630,'Puerto Rico','PR','PRI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (634,'Qatar','QA','QAT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (638,'Reunion','RE','REU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (642,'Romania','RO','ROU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (643,'Russian Federation','RU','RUS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (646,'Rwanda','RW','RWA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (654,'Saint Helena','SH','SHN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (659,'Saint Kitts and Nevis','KN','KNA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (662,'Saint Lucia','LC','LCA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (666,'Saint Pierre and Miquelon','PM','SPM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (670,'Saint Vincent and the Grenadines','VC','VCT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (882,'Samoa','WS','WSM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (674,'San Marino','SM','SMR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (678,'Sao Tome and Principe','ST','STP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (682,'Saudi Arabia','SA','SAU',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (686,'Senegal','SN','SEN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (688,'Serbia','RS','SRB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (690,'Seychelles','SC','SYC',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (694,'Sierra Leone','SL','SLE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (702,'Singapore','SG','SGP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (703,'Slovakia','SK','SVK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (705,'Slovenia','SI','SVN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (90,'Solomon Islands','SB','SLB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (706,'Somalia','SO','SOM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (710,'South Africa','ZA','ZAF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (239,'South Georgia and the South Sandwich Islands','GS','SGS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (724,'Spain','ES','ESP',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (144,'Sri Lanka','LK','LKA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (736,'Sudan','SD','SDN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (740,'Suriname','SR','SUR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (744,'Svalbard and Jan Mayen','SJ','SJM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (748,'Swaziland','SZ','SWZ',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (752,'Sweden','SE','SWE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (756,'Switzerland','CH','CHE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (760,'Syrian Arab Republic','SY','SYR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (158,'Taiwan, Province of China','TW','TWN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (762,'Tajikistan','TJ','TJK',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (834,'Tanzania, United Republic of','TZ','TZA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (764,'Thailand','TH','THA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (626,'Timor-leste','TL','TLS',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (768,'Togo','TG','TGO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (772,'Tokelau','TK','TKL',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (776,'Tonga','TO','TON',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (780,'Trinidad and Tobago','TT','TTO',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (788,'Tunisia','TN','TUN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (792,'Turkey','TR','TUR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (795,'Turkmenistan','TM','TKM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (796,'Turks and Caicos Islands','TC','TCA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (798,'Tuvalu','TV','TUV',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (800,'Uganda','UG','UGA',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (804,'Ukraine','UA','UKR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (784,'United Arab Emirates','AE','ARE',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (826,'United Kingdom','GB','GBR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (581,'United States Minor Outlying Islands','UM','UMI',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (858,'Uruguay','UY','URY',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (860,'Uzbekistan','UZ','UZB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (548,'Vanuatu','VU','VUT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (336,'Vatican City State (Holy See)','VA','VAT',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (862,'Venezuela','VE','VEN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (704,'Viet Nam','VN','VNM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (92,'Virgin Islands (British)','VG','VGB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (850,'Virgin Islands (U.S.)','VI','VIR',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (876,'Wallis and Futuna','WF','WLF',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (732,'Western Sahara','EH','ESH',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (887,'Yemen','YE','YEM',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (891,'Yugoslavia','YU','YUG',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (894,'Zambia','ZM','ZMB',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (716,'Zimbabwe','ZW','ZWE',1)") */
-  NULL;
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (0,'NA','N/A')") */
-  $id = db_insert('uc_zones')
-  ->fields(array(
+  $country_set = array();
+  $country_set[] = array(4,'Afghanistan','AF','AFG',1);
+  $country_set[] = array(248,'Aland Islands','AX','ALA',1);
+  $country_set[] = array(8,'Albania','AL','ALB',1);
+  $country_set[] = array(12,'Algeria','DZ','DZA',1);
+  $country_set[] = array(16,'American Samoa','AS','ASM',1);
+  $country_set[] = array(20,'Andorra','AD','AND',1);
+  $country_set[] = array(24,'Angola','AO','AGO',1);
+  $country_set[] = array(660,'Anguilla','AI','AIA',1);
+  $country_set[] = array(10,'Antarctica','AQ','ATA',1);
+  $country_set[] = array(28,'Antigua and Barbuda','AG','ATG',1);
+  $country_set[] = array(32,'Argentina','AR','ARG',1);
+  $country_set[] = array(51,'Armenia','AM','ARM',1);
+  $country_set[] = array(533,'Aruba','AW','ABW',1);
+  $country_set[] = array(36,'Australia','AU','AUS',1);
+  $country_set[] = array(40,'Austria','AT','AUT',1);
+  $country_set[] = array(31,'Azerbaijan','AZ','AZE',1);
+  $country_set[] = array(44,'Bahamas','BS','BHS',1);
+  $country_set[] = array(48,'Bahrain','BH','BHR',1);
+  $country_set[] = array(50,'Bangladesh','BD','BGD',1);
+  $country_set[] = array(52,'Barbados','BB','BRB',1);
+  $country_set[] = array(112,'Belarus','BY','BLR',1);
+  $country_set[] = array(56,'Belgium','BE','BEL',1);
+  $country_set[] = array(84,'Belize','BZ','BLZ',1);
+  $country_set[] = array(204,'Benin','BJ','BEN',1);
+  $country_set[] = array(60,'Bermuda','BM','BMU',1);
+  $country_set[] = array(64,'Bhutan','BT','BTN',1);
+  $country_set[] = array(68,'Bolivia','BO','BOL',1);
+  $country_set[] = array(70,'Bosnia and Herzegovina','BA','BIH',1);
+  $country_set[] = array(72,'Botswana','BW','BWA',1);
+  $country_set[] = array(74,'Bouvet Island','BV','BVT',1);
+  $country_set[] = array(76,'Brazil','BR','BRA',1);
+  $country_set[] = array(86,'British Indian Ocean Territory','IO','IOT',1);
+  $country_set[] = array(96,'Brunei Darussalam','BN','BRN',1);
+  $country_set[] = array(100,'Bulgaria','BG','BGR',1);
+  $country_set[] = array(854,'Burkina Faso','BF','BFA',1);
+  $country_set[] = array(108,'Burundi','BI','BDI',1);
+  $country_set[] = array(116,'Cambodia','KH','KHM',1);
+  $country_set[] = array(120,'Cameroon','CM','CMR',1);
+  $country_set[] = array(132,'Cape Verde','CV','CPV',1);
+  $country_set[] = array(136,'Cayman Islands','KY','CYM',1);
+  $country_set[] = array(140,'Central African Republic','CF','CAF',1);
+  $country_set[] = array(148,'Chad','TD','TCD',1);
+  $country_set[] = array(152,'Chile','CL','CHL',1);
+  $country_set[] = array(156,'China','CN','CHN',1);
+  $country_set[] = array(162,'Christmas Island','CX','CXR',1);
+  $country_set[] = array(166,'Cocos (Keeling) Islands','CC','CCK',1);
+  $country_set[] = array(170,'Colombia','CO','COL',1);
+  $country_set[] = array(174,'Comoros','KM','COM',1);
+  $country_set[] = array(178,'Congo','CG','COG',1);
+  $country_set[] = array(180,'Congo, The Democratic Republic of the','CD','COD',1);
+  $country_set[] = array(184,'Cook Islands','CK','COK',1);
+  $country_set[] = array(188,'Costa Rica','CR','CRI',1);
+  $country_set[] = array(384,'Cote D\'ivoire','CI','CIV',1);
+  $country_set[] = array(191,'Croatia','HR','HRV',1);
+  $country_set[] = array(192,'Cuba','CU','CUB',1);
+  $country_set[] = array(196,'Cyprus','CY','CYP',1);
+  $country_set[] = array(203,'Czech Republic','CZ','CZE',1);
+  $country_set[] = array(208,'Denmark','DK','DNK',1);
+  $country_set[] = array(262,'Djibouti','DJ','DJI',1);
+  $country_set[] = array(212,'Dominica','DM','DMA',1);
+  $country_set[] = array(214,'Dominican Republic','DO','DOM',1);
+  $country_set[] = array(218,'Ecuador','EC','ECU',1);
+  $country_set[] = array(818,'Egypt','EG','EGY',1);
+  $country_set[] = array(222,'El Salvador','SV','SLV',1);
+  $country_set[] = array(226,'Equatorial Guinea','GQ','GNQ',1);
+  $country_set[] = array(232,'Eritrea','ER','ERI',1);
+  $country_set[] = array(233,'Estonia','EE','EST',1);
+  $country_set[] = array(231,'Ethiopia','ET','ETH',1);
+  $country_set[] = array(238,'Falkland Islands (Malvinas)','FK','FLK',1);
+  $country_set[] = array(234,'Faroe Islands','FO','FRO',1);
+  $country_set[] = array(242,'Fiji','FJ','FJI',1);
+  $country_set[] = array(246,'Finland','FI','FIN',1);
+  $country_set[] = array(250,'France','FR','FRA',1);
+  $country_set[] = array(254,'French Guiana','GF','GUF',1);
+  $country_set[] = array(258,'French Polynesia','PF','PYF',1);
+  $country_set[] = array(260,'French Southern Territories','TF','ATF',1);
+  $country_set[] = array(266,'Gabon','GA','GAB',1);
+  $country_set[] = array(270,'Gambia','GM','GMB',1);
+  $country_set[] = array(268,'Georgia','GE','GEO',1);
+  $country_set[] = array(276,'Germany','DE','DEU',1);
+  $country_set[] = array(288,'Ghana','GH','GHA',1);
+  $country_set[] = array(292,'Gibraltar','GI','GIB',1);
+  $country_set[] = array(300,'Greece','GR','GRC',1);
+  $country_set[] = array(304,'Greenland','GL','GRL',1);
+  $country_set[] = array(308,'Grenada','GD','GRD',1);
+  $country_set[] = array(312,'Guadeloupe','GP','GLP',1);
+  $country_set[] = array(316,'Guam','GU','GUM',1);
+  $country_set[] = array(320,'Guatemala','GT','GTM',1);
+  $country_set[] = array(831,'Guernsey','GG','GGY',1);
+  $country_set[] = array(324,'Guinea','GN','GIN',1);
+  $country_set[] = array(624,'Guinea-bissau','GW','GNB',1);
+  $country_set[] = array(328,'Guyana','GY','GUY',1);
+  $country_set[] = array(332,'Haiti','HT','HTI',1);
+  $country_set[] = array(334,'Heard Island and Mcdonald Islands','HM','HMD',1);
+  $country_set[] = array(340,'Honduras','HN','HND',1);
+  $country_set[] = array(344,'Hong Kong','HK','HKG',1);
+  $country_set[] = array(348,'Hungary','HU','HUN',1);
+  $country_set[] = array(352,'Iceland','IS','ISL',1);
+  $country_set[] = array(356,'India','IN','IND',1);
+  $country_set[] = array(360,'Indonesia','ID','IDN',1);
+  $country_set[] = array(364,'Iran (Islamic Republic of)','IR','IRN',1);
+  $country_set[] = array(368,'Iraq','IQ','IRQ',1);
+  $country_set[] = array(372,'Ireland','IE','IRL',1);
+  $country_set[] = array(833,'Isle of Man','IM','IMM',1);
+  $country_set[] = array(376,'Israel','IL','ISR',1);
+  $country_set[] = array(380,'Italy','IT','ITA',1);
+  $country_set[] = array(388,'Jamaica','JM','JAM',1);
+  $country_set[] = array(392,'Japan','JP','JPN',1);
+  $country_set[] = array(832,'Jersey','JE','JEY',1);
+  $country_set[] = array(400,'Jordan','JO','JOR',1);
+  $country_set[] = array(398,'Kazakhstan','KZ','KAZ',1);
+  $country_set[] = array(404,'Kenya','KE','KEN',1);
+  $country_set[] = array(296,'Kiribati','KI','KIR',1);
+  $country_set[] = array(408,'Korea, Democratic People\'s Republic of','KP','PRK',1);
+  $country_set[] = array(410,'Korea, Republic of','KR','KOR',1);
+  $country_set[] = array(414,'Kuwait','KW','KWT',1);
+  $country_set[] = array(417,'Kyrgyzstan','KG','KGZ',1);
+  $country_set[] = array(418,'Lao People\'s Democratic Republic','LA','LAO',1);
+  $country_set[] = array(428,'Latvia','LV','LVA',1);
+  $country_set[] = array(422,'Lebanon','LB','LBN',1);
+  $country_set[] = array(426,'Lesotho','LS','LSO',1);
+  $country_set[] = array(430,'Liberia','LR','LBR',1);
+  $country_set[] = array(434,'Libyan Arab Jamahiriya','LY','LBY',1);
+  $country_set[] = array(438,'Liechtenstein','LI','LIE',1);
+  $country_set[] = array(440,'Lithuania','LT','LTU',1);
+  $country_set[] = array(442,'Luxembourg','LU','LUX',1);
+  $country_set[] = array(446,'Macao','MO','MAC',1);
+  $country_set[] = array(807,'Macedonia, The Former Yugoslav Republic of','MK','MKD',1);
+  $country_set[] = array(450,'Madagascar','MG','MDG',1);
+  $country_set[] = array(454,'Malawi','MW','MWI',1);
+  $country_set[] = array(458,'Malaysia','MY','MYS',1);
+  $country_set[] = array(462,'Maldives','MV','MDV',1);
+  $country_set[] = array(466,'Mali','ML','MLI',1);
+  $country_set[] = array(470,'Malta','MT','MLT',1);
+  $country_set[] = array(584,'Marshall Islands','MH','MHL',1);
+  $country_set[] = array(474,'Martinique','MQ','MTQ',1);
+  $country_set[] = array(478,'Mauritania','MR','MRT',1);
+  $country_set[] = array(480,'Mauritius','MU','MUS',1);
+  $country_set[] = array(175,'Mayotte','YT','MYT',1);
+  $country_set[] = array(484,'Mexico','MX','MEX',1);
+  $country_set[] = array(583,'Micronesia, Federated States of','FM','FSM',1);
+  $country_set[] = array(498,'Moldova, Republic of','MD','MDA',1);
+  $country_set[] = array(492,'Monaco','MC','MCO',1);
+  $country_set[] = array(496,'Mongolia','MN','MNG',1);
+  $country_set[] = array(499,'Montenegro','ME','MNE',1);
+  $country_set[] = array(500,'Montserrat','MS','MSR',1);
+  $country_set[] = array(504,'Morocco','MA','MAR',1);
+  $country_set[] = array(508,'Mozambique','MZ','MOZ',1);
+  $country_set[] = array(104,'Myanmar','MM','MMR',1);
+  $country_set[] = array(516,'Namibia','NA','NAM',1);
+  $country_set[] = array(520,'Nauru','NR','NRU',1);
+  $country_set[] = array(524,'Nepal','NP','NPL',1);
+  $country_set[] = array(528,'Netherlands','NL','NLD',1);
+  $country_set[] = array(530,'Netherlands Antilles','AN','ANT',1);
+  $country_set[] = array(540,'New Caledonia','NC','NCL',1);
+  $country_set[] = array(554,'New Zealand','NZ','NZL',1);
+  $country_set[] = array(558,'Nicaragua','NI','NIC',1);
+  $country_set[] = array(562,'Niger','NE','NER',1);
+  $country_set[] = array(566,'Nigeria','NG','NGA',1);
+  $country_set[] = array(570,'Niue','NU','NIU',1);
+  $country_set[] = array(574,'Norfolk Island','NF','NFK',1);
+  $country_set[] = array(580,'Northern Mariana Islands','MP','MNP',1);
+  $country_set[] = array(578,'Norway','NO','NOR',1);
+  $country_set[] = array(512,'Oman','OM','OMN',1);
+  $country_set[] = array(586,'Pakistan','PK','PAK',1);
+  $country_set[] = array(585,'Palau','PW','PLW',1);
+  $country_set[] = array(275,'Palestinian Territory, Occupied','PS','PSE',1);
+  $country_set[] = array(591,'Panama','PA','PAN',1);
+  $country_set[] = array(598,'Papua New Guinea','PG','PNG',1);
+  $country_set[] = array(600,'Paraguay','PY','PRY',1);
+  $country_set[] = array(604,'Peru','PE','PER',1);
+  $country_set[] = array(608,'Philippines','PH','PHL',1);
+  $country_set[] = array(612,'Pitcairn','PN','PCN',1);
+  $country_set[] = array(616,'Poland','PL','POL',1);
+  $country_set[] = array(620,'Portugal','PT','PRT',1);
+  $country_set[] = array(630,'Puerto Rico','PR','PRI',1);
+  $country_set[] = array(634,'Qatar','QA','QAT',1);
+  $country_set[] = array(638,'Reunion','RE','REU',1);
+  $country_set[] = array(642,'Romania','RO','ROU',1);
+  $country_set[] = array(643,'Russian Federation','RU','RUS',1);
+  $country_set[] = array(646,'Rwanda','RW','RWA',1);
+  $country_set[] = array(654,'Saint Helena','SH','SHN',1);
+  $country_set[] = array(659,'Saint Kitts and Nevis','KN','KNA',1);
+  $country_set[] = array(662,'Saint Lucia','LC','LCA',1);
+  $country_set[] = array(666,'Saint Pierre and Miquelon','PM','SPM',1);
+  $country_set[] = array(670,'Saint Vincent and the Grenadines','VC','VCT',1);
+  $country_set[] = array(882,'Samoa','WS','WSM',1);
+  $country_set[] = array(674,'San Marino','SM','SMR',1);
+  $country_set[] = array(678,'Sao Tome and Principe','ST','STP',1);
+  $country_set[] = array(682,'Saudi Arabia','SA','SAU',1);
+  $country_set[] = array(686,'Senegal','SN','SEN',1);
+  $country_set[] = array(688,'Serbia','RS','SRB',1);
+  $country_set[] = array(690,'Seychelles','SC','SYC',1);
+  $country_set[] = array(694,'Sierra Leone','SL','SLE',1);
+  $country_set[] = array(702,'Singapore','SG','SGP',1);
+  $country_set[] = array(703,'Slovakia','SK','SVK',1);
+  $country_set[] = array(705,'Slovenia','SI','SVN',1);
+  $country_set[] = array(90,'Solomon Islands','SB','SLB',1);
+  $country_set[] = array(706,'Somalia','SO','SOM',1);
+  $country_set[] = array(710,'South Africa','ZA','ZAF',1);
+  $country_set[] = array(239,'South Georgia and the South Sandwich Islands','GS','SGS',1);
+  $country_set[] = array(724,'Spain','ES','ESP',1);
+  $country_set[] = array(144,'Sri Lanka','LK','LKA',1);
+  $country_set[] = array(736,'Sudan','SD','SDN',1);
+  $country_set[] = array(740,'Suriname','SR','SUR',1);
+  $country_set[] = array(744,'Svalbard and Jan Mayen','SJ','SJM',1);
+  $country_set[] = array(748,'Swaziland','SZ','SWZ',1);
+  $country_set[] = array(752,'Sweden','SE','SWE',1);
+  $country_set[] = array(756,'Switzerland','CH','CHE',1);
+  $country_set[] = array(760,'Syrian Arab Republic','SY','SYR',1);
+  $country_set[] = array(158,'Taiwan, Province of China','TW','TWN',1);
+  $country_set[] = array(762,'Tajikistan','TJ','TJK',1);
+  $country_set[] = array(834,'Tanzania, United Republic of','TZ','TZA',1);
+  $country_set[] = array(764,'Thailand','TH','THA',1);
+  $country_set[] = array(626,'Timor-leste','TL','TLS',1);
+  $country_set[] = array(768,'Togo','TG','TGO',1);
+  $country_set[] = array(772,'Tokelau','TK','TKL',1);
+  $country_set[] = array(776,'Tonga','TO','TON',1);
+  $country_set[] = array(780,'Trinidad and Tobago','TT','TTO',1);
+  $country_set[] = array(788,'Tunisia','TN','TUN',1);
+  $country_set[] = array(792,'Turkey','TR','TUR',1);
+  $country_set[] = array(795,'Turkmenistan','TM','TKM',1);
+  $country_set[] = array(796,'Turks and Caicos Islands','TC','TCA',1);
+  $country_set[] = array(798,'Tuvalu','TV','TUV',1);
+  $country_set[] = array(800,'Uganda','UG','UGA',1);
+  $country_set[] = array(804,'Ukraine','UA','UKR',1);
+  $country_set[] = array(784,'United Arab Emirates','AE','ARE',1);
+  $country_set[] = array(826,'United Kingdom','GB','GBR',1);
+  $country_set[] = array(581,'United States Minor Outlying Islands','UM','UMI',1);
+  $country_set[] = array(858,'Uruguay','UY','URY',1);
+  $country_set[] = array(860,'Uzbekistan','UZ','UZB',1);
+  $country_set[] = array(548,'Vanuatu','VU','VUT',1);
+  $country_set[] = array(336,'Vatican City State (Holy See)','VA','VAT',1);
+  $country_set[] = array(862,'Venezuela','VE','VEN',1);
+  $country_set[] = array(704,'Viet Nam','VN','VNM',1);
+  $country_set[] = array(92,'Virgin Islands (British)','VG','VGB',1);
+  $country_set[] = array(850,'Virgin Islands (U.S.)','VI','VIR',1);
+  $country_set[] = array(876,'Wallis and Futuna','WF','WLF',1);
+  $country_set[] = array(732,'Western Sahara','EH','ESH',1);
+  $country_set[] = array(887,'Yemen','YE','YEM',1);
+  $country_set[] = array(891,'Yugoslavia','YU','YUG',1);
+  $country_set[] = array(894,'Zambia','ZM','ZMB',1);
+  $country_set[] = array(716,'Zimbabwe','ZW','ZWE',1);
+  foreach ($country_set as $country) {
+    $id = db_insert('uc_countries')->fields(array(
+      'country_id' => $country[0],
+      'country_name' => $country[1],
+      'country_iso_code_2' => $country[2],
+      'country_iso_code_3' => $country[3],
+      'version' => $country[4],
+    ))->execute();
+  }
+  $id = db_insert('uc_zones')->fields(array(
     'zone_country_id' => 0,
     'zone_code' => 'NA',
     'zone_name' => 'N/A',
-  ))
-  ->execute();
+  ))->execute();
 }
 
-// Removes all countries
+/**
+ * Helper function. Removes all countries.
+ */
 function remove_countries() {
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("DELETE FROM {uc_countries}") */
-  db_delete('uc_countries')
-  ->execute();
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("DELETE FROM {uc_zones} WHERE zone_country_id = 0") */
-  db_delete('uc_zones')
-  ->condition('zone_country_id', 0)
-  ->execute();
+  db_delete('uc_countries')->execute();
+  db_delete('uc_zones')->condition('zone_country_id', 0)->execute();
   create_default_countries();
 }
 
-// Creates the default countries
+/** 
+ * Helper function. Creates the default countries.
+ */
 function create_default_countries() {
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (124,'Canada','CA','CAN',1)") */
-  NULL;
-  // TODO Please convert this statement to the D7 database API syntax.
-  /* db_query("INSERT INTO {uc_countries} VALUES (840,'United States','US','USA',1)") */
-  NULL;
-}
-
-/**********************************************************************************
- * UPDATES
- **********************************************************************************/
-/**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
- */
-function fundraiser_update_1() {
-  $items = array();
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("ALTER TABLE {fundraiser_gateway} ADD internal_name varchar(255)") */;
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("ALTER TABLE {fundraiser_recurring} ADD cancellation_reason varchar(500)") */;
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("ALTER TABLE {fundraiser_recurring} DROP data") */;
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("ALTER TABLE {fundraiser_recurring} DROP fee_amount") */;
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $items */;
-}
-
-// Add views for reporting
-/**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
- */
-function fundraiser_update_2() {
-  $items = array();
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("CREATE VIEW {fundraiser_webform_data} AS
-    SELECT sd.sid, sd.nid,
-      GROUP_CONCAT(if(wc.form_key = 'cid', sd.data, NULL)) AS 'campaign_id',
-      GROUP_CONCAT(if(wc.form_key = 'ms', sd.data, NULL)) AS 'market_source'
-    FROM {webform_submitted_data} sd
-    INNER JOIN {webform_component} wc on wc.cid = sd.cid
-    GROUP BY sd.sid, sd.nid") */;
-
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $items[] = array() /* update_sql("CREATE VIEW {fundraiser_webform_recurring_order} AS
-    SELECT f.sid, f.webform_nid AS nid, r.order_id, r.sf_opportunity_id AS sfid FROM {fundraiser_webform_order} f
-    INNER JOIN {fundraiser_recurring} r ON r.master_order_id = f.order_id") */;
-
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $items */;
-}
-
-// Version 2.1 - Add the ability to store gateway and approval ids with individual orders
-/**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
- */
-function fundraiser_update_6210() {
-  // do it the old fashioned way because we need to update some data
-  db_query("ALTER TABLE {fundraiser_webform_order} ADD gateway varchar(100)");
-  db_query("ALTER TABLE {fundraiser_webform_order} ADD txn_id varchar(55)");
-  db_query("ALTER TABLE {fundraiser_webform_order} ADD recurring_status int(11) DEFAULT 0");
-  db_query("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
-  db_query("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
-
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})") */
-  db_update('fundraiser_webform_order')
-  ->fields(array(
-    'recurring_status' => 1,
-  ))
-    ->where('order_id IN (SELECT master_order_id FROM {fundraiser_recurring})',  )
-  ->execute();
+  $id = db_insert('uc_countries')->fields(array(
+    'country_id' => 124,
+    'country_name' => 'Canada',
+    'country_iso_code_2' => 'CA',
+    'country_iso_code_3' => 'CAN',
+    'version' => '1',
+  ))->execute();
+  $id = db_insert('uc_countries')->fields(array(
+    'country_id' => 840,
+    'country_name' => 'United States',
+    'country_iso_code_2' => 'US',
+    'country_iso_code_3' => 'USA',
+    'version' => '1',
+  ))->execute();
 }
 
 /**
- * Version 3.0 - Remove the credit card expiration date from donation forms and replace it with
- * 2 separate field for month and year.
+ * Implements hook_update_last_removed().
  */
-function fundraiser_update_6300() {
-  module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-  $result = db_query("SELECT * FROM {webform_component} WHERE form_key = :form_key", array(':form_key' => 'card_expiration_date'));
-  while ($data = db_fetch_object($result)) {
-    // create the new month field
-    $month_field = fundraiser_create_month_field($data->nid, $data->pid);
-    $month_field['#weight'] = $data->weight;
-    // create the new day field
-    $year_field = fundraiser_create_year_field($data->nid, $data->pid);
-    $year_field['#weight'] = $data->weight + 1;
-    // save both fields
-    $month_cid = webform_component_insert($month_field);
-    $year_cid = webform_component_insert($year_field);
-    // delete old field
-    // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("DELETE FROM {webform_component} WHERE cid = %d and nid = %d", $data->cid, $data->nid) */
-    db_delete('webform_component')
-  ->condition('cid', $data->cid)
-  ->execute();
-  }
+function hook_update_last_removed() {
+  // We've removed versions of this module prior to 7.x-3.x.
+  // The next update function is fundraiser_update_7000().
+  return 6309;
 }
 
 /**
- * Convert donation froms to a real node type.
+ * 7.x branch updates below.
  */
-function fundraiser_update_6301() {
-  // create table for storing new donation form nodes
-  db_query(
-    "
-      CREATE TABLE {fundraiser} (
-      nid int(10) unsigned NOT NULL,
-      gateway varchar(50) NOT NULL,
-      receipt_email_from varchar(100) default NULL,
-      receipt_email_address varchar(255) default NULL,
-      receipt_email_subject varchar(100) default NULL,
-      receipt_email_message text,
-      donation_amounts varchar(100) default NULL,
-      show_other_amount tinyint(4) default '0',
-      is_donation_form tinyint(4) default '0',
-      minimum_donation_amount decimal(15,3) default NULL,
-      internal_name varchar(255) default NULL,
-      confirmation_page_title varchar(255) default NULL,
-      confirmation_page_body text,
-      redirect_url varchar(255) default NULL,
-      PRIMARY KEY (nid))
-    "
-  );
 
-  // convert donation form to a node type
-  $result = variable_get('webform_node_types', array());
-  $result[] = 'donation_form';
-  variable_set('webform_node_types', $result);
-
-  // make a copy of all items in fundraiser_gateway
-  db_query(
-    "
-      INSERT INTO {fundraiser}
-      (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name)
-      SELECT
-      nid, gateway, confirmation_email_from_name, confirmation_email_from_email, confirmation_email_subject, confirmation_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name from {fundraiser_gateway}
-    "
-  );
-
-  // change all donation form webforms to the new donation_form content type
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)") */
-  db_update('node')
-  ->fields(array(
-    'type' => 'donation_form',
-  ))
-    ->where('nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)',  )
-  ->execute();
-  db_query("DROP TABLE {fundraiser_gateway}");
-}
-
-/**
- * Add new refund statuses
- */
-function fundraiser_update_6302() {
-  $updates = array();
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $updates[] = array() /* update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('refunded', 'Refunded', 'post_checkout', -21, 1)") */;
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  $updates[] = array() /* update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('partially_refunded', 'Partially Refunded', 'post_checkout', -21, 1)") */;
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $updates */;
-}
-
-
-/**
- * Add the table to store refund info
- */
-function fundraiser_update_6303() {
-  $schema['fundraiser_refund'] = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
-  _drupal_initialize_schema('fundraiser', $schema);
-
-  $ret = array();
-  $table = drupal_get_schema_unprocessed('fundraiser', 'fundraiser_refund');
-  $table['module'] = 'fundraiser';
-  $table['name'] = 'fundraiser_refund';
-  db_create_table('fundraiser_refund', $table);
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
-}
-
-/**
- * Add the confirmation fields
- */
-function fundraiser_update_6304() {
-  $updates = array();
-  db_add_field('fundraiser', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255));
-  db_add_field('fundraiser', 'confirmation_page_body', array('type' => 'text'));
-  db_add_field('fundraiser', 'redirect_url', array('type' => 'varchar', 'length' => 255));
-
-  // update existing donation forms
-  $result = db_query(
-    "
-      SELECT f.nid, n.title, w.confirmation, w.redirect_url FROM {webform} w
-      INNER JOIN {fundraiser} f ON f.nid = w.nid
-      INNER JOIN {node} n on n.nid = w.nid
-    "
-  );
-
-  // update each donation form with values from the webform
-  while ($data = db_fetch_object($result)) {
-    // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $data->title, $data->confirmation, $data->redirect_url, $data->nid) */
-    db_update('fundraiser')
-  ->fields(array(
-      'confirmation_page_title' => $data->title,
-      'confirmation_page_body' => $data->confirmation,
-      'redirect_url' => $data->redirect_url,
-    ))
-  ->condition('nid', $data->nid)
-  ->execute();
-  }
-
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $updates */;
-}
-
-/**
- * Alter a webform variable.
- */
-function fundraiser_update_6305() {
-  // New for webform 3.9. Let webform know the primary purpose of this node type is for webforms
-  $result = variable_get('webform_node_types_primary', array('webform'));
-  if (!in_array('donation_form', $result)) {
-    $result[] = 'donation_form';
-    variable_set('webform_node_types_primary', $result);
-  }
-}
-
-/**
- * Rename component form keys in all existing donation forms.
- */
-function fundraiser_update_6306() {
-  $changes = array(
-    'billing_address' => 'address',
-    'billing_address_2' => 'address_line_2',
-    'billing_city' => 'city',
-    'billing_state' => 'state',
-    'billing_country' => 'country',
-    'billing_zipcode' => 'zip',
-  );
-
-  $result = db_query("SELECT nid FROM {node} WHERE type = :type", array(':type' => 'donation_form'));
-
-  // loop over every donation form and change the field key for each component
-  while ($data = db_fetch_object($result)) {
-    foreach ($changes as $old_key => $new_key) {
-      // TODO Please review the conversion of this statement to the D7 database API syntax.
-      /* db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid) */
-      db_update('webform_component')
-  ->fields(array(
-        'form_key' => $new_key,
-      ))
-  ->condition('form_key', $old_key)
-  ->condition('nid', $data->nid)
-  ->execute();
-    }
-  }
-}
-
-/**
- * Add tracking table.
- */
-function fundraiser_update_6307() {
-  $ret = array();
-  $schema = fundraiser_schema();
-  db_create_table('fundraiser_tracking', $schema['fundraiser_tracking']);
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
-}
-
-/**
- * Remove fundraiser tokens module.
- */
-function fundraiser_update_6308() {
-  if (module_exists('fundraiser_tokens')) {
-    module_disable(array('fundraiser_tokens'));
-  }
-}
-
-/**
- * Add column for confirmation page input type.
- */
-function fundraiser_update_6309() {
-  $ret = array();
-  db_add_field('fundraiser', 'confirmation_page_format', array('type' => 'int', 'not null' => FALSE));
-  variable_del('fundraiser_confirmation_message_body_format');
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
-}
