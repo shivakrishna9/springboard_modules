@@ -361,8 +361,8 @@ function fundraiser_node_info() {
  */
 function fundraiser_form($node, $edit = NULL) {
 
-  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css', 'module', 'all');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
   $type = node_get_types('type', $node);
 
@@ -842,9 +842,9 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     // handle the donation form itself
     if ($node->type == 'donation_form' && arg(2) != 'submission') {
       $base = drupal_get_path('module', 'fundraiser');
-      drupal_add_js($base . '/jquery.alphanumeric.js');
-      drupal_add_js($base . '/fundraiser.js');
-      drupal_add_css($base . '/fundraiser-donation-form.css');
+      drupal_add_js($base . '/js/jquery.alphanumeric.js');
+      drupal_add_js($base . '/js/fundraiser.js');
+      drupal_add_css($base . '/css/fundraiser-donation-form.css');
 
       $components = $node->webform['components'];
       // create an data structure that will tell us exactly where each webform component lives in the FAPI array
@@ -1399,9 +1399,9 @@ function fundraiser_webform_validate($form, &$form_state) {
   // create watchdog entry on validation errors
   if ($errors) {
     $base = drupal_get_path('module', 'fundraiser');
-    drupal_add_js($base . '/jquery.alphanumeric.js');
-    drupal_add_js($base . '/fundraiser.js');
-    drupal_add_css($base . '/fundraiser-donation-form.css');
+    drupal_add_js($base . '/js/jquery.alphanumeric.js');
+    drupal_add_js($base . '/js/fundraiser.js');
+    drupal_add_css($base . '/css/fundraiser-donation-form.css');
 
     $message = "The following donation form fields failed local validation:\n\n";
     $validation_errors = array_keys(form_get_errors());
@@ -2698,8 +2698,8 @@ function fundraiser_track_conversion() {
  * see: http://drupal.org/node/645880
  */
 function _fundraiser_validation_includes($element, $form_state) {
-  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css', 'module', 'all');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
   return $element;
 }
 
