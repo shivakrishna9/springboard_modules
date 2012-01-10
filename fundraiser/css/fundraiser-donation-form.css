@@ -16,5 +16,5 @@ p.donation-processing {
 }
 div.donation-processing-spinner {
   height: 16px;
-  background: url(loader.gif) no-repeat center;
+  background: url(../images/loader.gif) no-repeat center;
 }
