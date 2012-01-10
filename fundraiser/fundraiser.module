@@ -2200,7 +2200,7 @@ function fundraiser_action_info_alter(&$info) {
  */
 function fundraiser_webform_select_options_info() {
   $items = array();
-  include 'includes/fundraiser.options.inc';
+  include 'fundraiser.options.inc';
   return _fundraiser_webform_select_options_info();
 }
 
