@@ -73,7 +73,7 @@ function fundraiser_menu() {
     'page arguments' => array('fundraiser_mapping_form', 1),
     'access callback' => 'fundraiser_mapping_form_access',
     'access arguments' => array(1),
-    'file' => 'fundraiser_components.inc',
+    'file' => 'fundraiser.components.inc',
     'weight' => 30,
     'type' => MENU_LOCAL_TASK,
   );
@@ -127,7 +127,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_admin',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser_components.inc',
+    'file' => 'fundraiser.components.inc',
     'weight' => 2,
     'type' => MENU_CALLBACK,
   );
@@ -137,7 +137,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_test',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser_components.inc',
+    'file' => 'fundraiser.components.inc',
     'weight' => 2,
     'type' => MENU_CALLBACK,
   );
@@ -147,7 +147,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_edit_forms',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser_components.inc',
+    'file' => 'fundraiser.components.inc',
     'weight' => 2,
     'type' => MENU_NORMAL_ITEM,
   );
@@ -157,7 +157,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_show_refund_form',
     'page arguments' => array(3),
     'access arguments' => array('edit orders'),
-    'file' => 'fundraiser_billing.inc',
+    'file' => 'fundraiser.billing.inc',
     'weight' => 3,
     'type' => MENU_LOCAL_TASK,
   );
@@ -191,7 +191,7 @@ function fundraiser_menu() {
     'access callback' => 'fundraiser_recurring_check_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 11,
-    'file' => 'fundraiser_components.inc',
+    'file' => 'fundraiser.components.inc',
   );
 
   $items['admin/content/donation-forms'] = array(
