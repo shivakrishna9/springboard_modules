@@ -2270,8 +2270,8 @@ function fundraiser_theme() {
       'arguments' => array(),
     ),
     'sustainer_management_page' => array(
-      'template' => 'sustainer-management-page',
       'arguments' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),
+      'template' => 'templates/sustainer-management-page',
     ),
     'fundraiser_credit_card_expiration_date' => array(
       'arguments' => array(),
