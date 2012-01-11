@@ -1,8 +1,8 @@
 <?php
 
-define('FUNDRAISER_SINGLE_DONATION_TYPE',    'donation');
-define('FUNDRAISER_RECURRING_DONATION_TYPE',    'recurring_donation');
-define('FUNDRAISER_DONATION_REFUND_TYPE',    'refund');
+define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation');
+define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation');
+define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');
 define('RECURRING_DONATION_STATUS', 'pending_future_payment');
 
 define('DONATION_NON_RECURRING', 0);
@@ -11,12 +11,12 @@ define('DONATION_CANCELLED', 2);
 require_once('fundraiser.fields.inc');
 
 /**
- * Implementation of hook_cron().
+ * Implements hook_cron().
  */
 function fundraiser_cron() {
-  // Check for a file key before processing donations
+  // If cron.php is being run while standalone cron is enabled, do nothing.
+  // This allows this code to still execute if cron is run from status page.
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    // If cron.php is being run while standalone cron is enabled, do nothing.
     if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
       return 0;
     }
@@ -27,6 +27,7 @@ function fundraiser_cron() {
   else {
     watchdog('fundraiser_cron', 'Standard cron run.');
   }
+  // Process recurring donations.
   if (fundraiser_processor_key_match()) {
     fundraiser_process_recurring_donations();
   }
@@ -37,19 +38,50 @@ function fundraiser_cron() {
   }
 }
 
-
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
-function fundraiser_perm() {
-  return array('administer fundraiser', 'create donation form', 'edit own donation form', 'edit any donation form', 'delete own donation form', 'delete any donation form', 'clone donation form', 'cancel future donations');
+function fundraiser_permission() {
+  return array(
+    'administer fundraiser' => array(
+      'title' => t('Administer fundraiser'), 
+      'description' => t('Perform administration tasks for fundraiser.'),
+    ),
+    'create donation form' => array(
+      'title' => t('Create donation form'), 
+      'description' => t('Create donation forms.'),
+    ),
+    'edit own donation form' => array(
+      'title' => t('Edit own donation form'), 
+      'description' => t('Edit own donation forms.'), 
+    ),
+    'edit any donation form' => array(
+      'title' => t('Edit any donation form'), 
+      'description' => t('Edit any donation forms.'), 
+    ),
+    'delete own donation form' => array(
+      'title' => t('Delete own donation form'), 
+      'description' => t('Delete own donation forms.'), 
+    ),
+    'delete any donation form' => array(
+      'title' => t('Delete any donation form'), 
+      'description' => t('Delete any donation forms.'), 
+    ),
+    'clone donation form' => array(
+      'title' => t('Clone donation form'), 
+      'description' => t('Clone donation forms.'), 
+    ),
+    'cancel future donations' => array(
+      'title' => t('Cancel future donations'), 
+      'description' => t('Cancel future donations.'),
+    ),
+  );
 }
 
 /**
  * Implements hook_menu().
  */
 function fundraiser_menu() {
-
   $items['admin/settings/fundraiser'] = array(
     'title' => 'Fundraiser settings',
     'page callback' => 'drupal_get_form',
@@ -116,6 +148,7 @@ function fundraiser_menu() {
       'type' => MENU_CALLBACK,
     );
   }
+
   $items['zones/js'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'fundraiser_zones_ahah_render',
@@ -230,32 +263,31 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-
   return $items;
 }
 
 /**
- * Implemenation of hook_menu_alter().
+ * Implements hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
-  // workaround for douchebaggy bug where only uid 1 can see custom triggers
+  // Workaround for bug where only uid 1 can see custom triggers.
   // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
+  // User access is handled by: 'access arguments' => array('administer actions') in D7.
+  // Is that the same as it was when you looked in May? - SeH 1/10/12
   if (module_exists('trigger')) {
     $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
   }
 
-  // alter some built-in webform menu items
+  // Alter some built-in webform menu items.
   $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
   $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
 }
 
 /**
- * Implemenation of hook_clone_access_alter().
- *
- * Removing cloning access since fundraiser implements it's own cloning routine.
+ * Implements hook_clone_access_alter() from Node clone.
  */
 function fundraiser_clone_access_alter(&$access, $node) {
-  // remove access to node clone feature if it's a donation form node
+  // Removing cloning access since fundraiser implements it's own cloning routine.
   if ($node->type == 'donation_form') {
     $access = 0;
   }
@@ -268,22 +300,18 @@ function fundraiser_access_clone() {
   global $user;
   $access = FALSE;
   $nid = arg(1);
-
   if (is_numeric($nid)) {
     $node = node_load($nid);
     if (!strcmp($node->type, 'donation_form')) {
-
       if (user_access('clone donation form')) {
         $access = TRUE;
       }
-
       // Alterable so modules like Advanced Permissions can tweak as needed.
       // Alter function: hook_fundraiser_access_clone_alter(), isn't that a peach?
       // Pointless to call the alter function if the current node isn't a donation form.
-      drupal_alter("fundraiser_access_clone", $access, $node);
+      drupal_alter('fundraiser_access_clone', $access, $node);
     }
   }
-
   return $access;
 }
 
@@ -291,31 +319,32 @@ function fundraiser_access_clone() {
  * Access callback, returns TRUE if current node is a donation form.
  */
 function fundraiser_mapping_form_access($node) {
+  // TODO make sure this is consistantly used throughout code.
   return $node->type == 'donation_form';
 }
 
 /**
- * Implementation of hook_theme_registry_alter().
+ * Implements hook_theme_registry_alter().
  */
 function fundraiser_theme_registry_alter(&$theme_registry) {
-  // tell the theme registry to look in this module's directory for theme files
-  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'fundraiser') . '/templates';
+  // Tell the theme registry to look in this module's directory for theme files.
+  $theme_registry['page']['theme path'] = drupal_get_path('module', 'fundraiser') . '/templates';
 }
 
 /**
- * Implementation of hook_preprocess_page().
- *
+ * Implements hook_preprocess_page().
  * Add a template suggestion that renders a blank page template for our confirmation page token picker.
  */
-function fundraiser_preprocess_page(&$vars) {
+function fundraiser_preprocess_page(&$variables) {
   if (arg(2) == 'confirmation') {
-    // add the node to $vars
-    $vars['node'] = node_load(arg(1));
+    // Add the node to $variables.
+    $variables['node'] = node_load(arg(1));
   }
 }
 
 /**
- * Implmentation of hook_confirmation_page_tokens().
+ * Implements hook_confirmation_page_tokens().
+ * TODO figure out where this hook comes from - webform? - SeH 1/10/12
  */
 function fundraiser_confirmation_page_tokens($type) {
   if ($type == 'donation_form') {
@@ -326,55 +355,52 @@ function fundraiser_confirmation_page_tokens($type) {
         $order_tokens['order']['[' . $token . ']'] = $desc;
       }
     }
-
     return $order_tokens;
   }
 }
 
 /**
  * Wildcard loader for form items; assumes that a passed form item also exists.
+ * TODO figure out where this comes form, AHAH is very different in D7. - SeH 1/10/12
  */
 function fundraiser_ahah_field_load($field) {
   return $field;
 }
 
 /**
- * Implementation of hook_node_info().
+ * Implements hook_node_info().
  */
 function fundraiser_node_info() {
   return array(
     'donation_form' => array(
       'name' => t('Donation Form'),
-      'module' => 'fundraiser',
+      'base' => 'fundraiser', // Not donation_form, since all the functions are fundraiser_something.
       'description' => t('Create a flexible form that users can use to donate to noble causes.'),
+      //'help' => t(''),
       'has_title' => TRUE,
       'title_label' => t('Title'),
-      'has_body' => TRUE,
-      'body_label' => t('Body'),
       'locked' => TRUE,
     ),
   );
 }
 
 /**
- * Implementation of hook_form().
+ * Implements hook_form().
  */
-function fundraiser_form($node, $edit = NULL) {
-
+function fundraiser_form($node, &$form_state) {
+  // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css', 'module', 'all');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
-  $type = node_get_types('type', $node);
+  // Get the type.
+  $type = node_type_get_type($node);
 
-  // payment gateway list
+  // Get payment gateway list, create options set.
   $payment_gateways = _payment_gateway_list('', TRUE);
   $gateway_options = array();
   foreach ($payment_gateways as $gateway) {
     $gateway_options[$gateway['id']] = $gateway['title'];
   }
-
-  // Workaround for  D6 core #ahah bug
-  //$form['#action'] = $edit['nid']['#value'] ? url('node/'. $edit['nid']['#value'] .'/edit') : url('node/add/donation-form');
 
   $form['title'] = array(
     '#type' => 'textfield',
@@ -393,17 +419,7 @@ function fundraiser_form($node, $edit = NULL) {
     '#weight' => -4.99,
     '#maxlength' => 255,
   );
-
-  $form['body_filter']['#weight'] = -4.97;
-  $form['body_filter']['body'] = array(
-    '#type' => 'textarea',
-    '#title' => check_plain($type->body_label),
-    '#default_value' => $node->body,
-    '#rows' => 7,
-    '#weight' => -4.98,
-    '#required' => FALSE,
-  );
-  $form['body_filter']['filter'] = filter_form($node->format);
+  /* The body field is set up by Field API in D7, and does not need to be configured here. */
 
   $form['fundraiser_settings'] = array(
     '#type' => 'fieldset',
@@ -461,7 +477,8 @@ function fundraiser_form($node, $edit = NULL) {
   }
 
   $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. '.
+      'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
 
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
@@ -475,7 +492,7 @@ function fundraiser_form($node, $edit = NULL) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-  );
+  );//TODO update this to use D7 ahah.
 
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -536,9 +553,9 @@ function fundraiser_form($node, $edit = NULL) {
 
 
 /**
- * Implementation of hook_validate().
+ * Implements of hook_validate().
  */
-function fundraiser_validate(&$node) {
+function fundraiser_validate($node, $form, &$form_state) {
   $donation_amounts = array();
   for ($i = 0; $i < $node->amount_delta; ++$i) {
     $value = 'amount_' . $i;
@@ -553,36 +570,30 @@ function fundraiser_validate(&$node) {
     }
   }
   $node->donation_amounts = implode(',', $donation_amounts);
+  // TODO: from http://api.drupal.org/api/drupal/modules--node--node.api.php/function/hook_validate/7
+  // Note: Changes made to the $node object within your hook implementation will have no effect. 
+  // The preferred method to change a node's content is to use hook_node_presave() instead.
 }
 
 /**
  * Implementation of hook_insert().
  */
 function fundraiser_insert($node) {
-
-  db_query(
-    "
-      INSERT INTO {fundraiser}
-      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, redirect_url)
-      VALUES
-      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
-    ",
-    $node->nid,
-    $node->gateway,
-    $node->donation_amounts,
-    $node->show_other_amount,
-    $node->internal_name,
-    $node->minimum_donation_amount,
-    variable_get('site_name', ''),
-    variable_get('site_mail', ''),
-    t('Thank you for your donation'),
-    '<confirmation>'
+  $fundraiser = array(
+    'nid' => $node->nid, 
+    'gateway' => $node->gateway, 
+    'donation_amounts' => $node->donation_amounts, 
+    'show_other_amount' => $node->show_other_amount, 
+    'internal_name' => $node->internal_name, 
+    'minimum_donation_amount' => $node->minimum_donation_amount, 
+    'receipt_email_from' => variable_get('site_name', ''), 
+    'receipt_email_address' => variable_get('site_mail', ''), 
+    'receipt_email_subject' => t('Thank you for your donation'), 
+    'redirect_url' => '<confirmation>',
   );
-
-  // skip some steps if the form is being cloned
+  drupal_write_record('fundraiser', $fundraiser);
 
   if (!$node->is_being_cloned) {
-
     $donation_amounts = array();
     // add webform components
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
@@ -594,7 +605,6 @@ function fundraiser_insert($node) {
       }
       ksort($donation_amounts, SORT_NUMERIC);
     }
-
     $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
 
     // automap
@@ -610,37 +620,22 @@ function fundraiser_insert($node) {
 function fundraiser_update($node) {
 
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
-  db_query(
-    "
-      UPDATE {fundraiser} SET
-      internal_name = '%s',
-      show_other_amount = %d,
-      minimum_donation_amount = '%s',
-      gateway = '%s',
-      receipt_email_from = '%s',
-      receipt_email_address = '%s',
-      receipt_email_subject = '%s',
-      receipt_email_message = '%s',
-      confirmation_page_title = '%s',
-      confirmation_page_body = '%s',
-      confirmation_page_format = '%s',
-      redirect_url = '%s'
-      WHERE nid = %d
-    ",
-    $node->internal_name,
-    $node->show_other_amount,
-    $node->minimum_donation_amount,
-    $node->gateway,
-    $node->receipt_email_from,
-    $node->receipt_email_address,
-    $node->receipt_email_subject,
-    $node->receipt_email_message,
-    $node->confirmation_page_title,
-    $node->confirmation_page_body,
-    $node->confirmation_page_format,
-    $node->redirect_url,
-    $node->nid
+  $fundraiser = array(
+    'nid' => $node->nid,
+    'internal_name' => $node->internal_name, 
+    'show_other_amount' => $node->show_other_amount, 
+    'minimum_donation_amount' => $node->minimum_donation_amount, 
+    'gateway' => $node->gateway, 
+    'receipt_email_from' => $node->receipt_email_from, 
+    'receipt_email_address' => $node->receipt_email_address, 
+    'receipt_email_subject' => $node->receipt_email_subject, 
+    'receipt_email_message' => $node->receipt_email_message, 
+    'confirmation_page_title' => $node->confirmation_page_title, 
+    'confirmation_page_body' => $node->confirmation_page_body, 
+    'confirmation_page_format' => $node->confirmation_page_format, 
+    'redirect_url' => $node->redirect_url, 
   );
+  drupal_write_record('fundraiser', $fundraiser, 'nid');
 
   // Update donation amounts and labels.
   $donation_amounts = array();
@@ -661,10 +656,10 @@ function fundraiser_update($node) {
 
   // update the label on the minimum donation amount
   if ($node->show_other_amount) {
-    $extra = db_result(db_query("SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = 'other_amount'", $node->nid));
+    $extra = db_query("SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key = 'other_amount'", array(':nid' => $node->nid))->fetchColumn();
     $extra = unserialize($extra);
     $extra['description'] = 'Minimum payment $' . $node->minimum_donation_amount . '.';
-    db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND form_key = 'other_amount'", serialize($extra), $node->nid);
+    db_query("UPDATE {webform_component} SET extra = :extra WHERE nid = :nid AND form_key = 'other_amount'", array(':extra' => serialize($extra), ':nid' => $node->nid));
   }
 }
 
@@ -672,7 +667,7 @@ function fundraiser_update($node) {
  * Implementation of hook_delete().
  */
 function fundraiser_delete(&$node) {
-  db_query("DELETE FROM {fundraiser} WHERE nid = %d", $node->nid);
+  db_delete('fundraiser')->condition('nid', $node->nid)->execute();
 }
 
 /**
@@ -2722,7 +2717,7 @@ function fundraiser_gateway_can_refund_order($order) {
   return trim($refund_function) != '';
 }
 
-/**
+/**      
  * Implementation of hook_token_list().
  */
 function fundraiser_token_list($type = 'all') {
