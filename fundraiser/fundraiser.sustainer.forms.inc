@@ -188,7 +188,7 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
     if ($result) {
       watchdog('fundraiser', 'Billing information was updated for profile @profile', array('@profile' => $payment_details['reference_id']), WATCHDOG_INFO));
       $orders = _get_pending_recurring_orders($master_order_id);
-      while ($row = db_fetch_object($orders)) {
+      foreach ($orders as $row) {
         $order = _update_order_billing_info($row->order_id, $form_state);
         // put order back in queue
         if (module_exists('sf_donation') && module_exists('queue_api')) {
@@ -238,6 +238,7 @@ function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid, $
     '#default_value' => $amount,
     '#size' => 10,
     '#required' => TRUE,
+    //TODO this should be t, with values inserted.
     '#description' => "<span id='current'>Your current donation amount is $$amount</span> <span id='minimum'>Minimum donation $$minimum</span>",
     '#field_prefix' => '$',
   );
@@ -278,7 +279,7 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
 
-  while ($row = db_fetch_object($orders)) {
+  foreach ($orders as $row) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
     $old_amount = $order->order_total;
@@ -347,23 +348,28 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   $master_order_id = $form_state['values']['master_order_id'];
   $reason = $form_state['values']['reason'];
 
-  db_query("UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d", DONATION_CANCELLED, $master_order_id);
+  db_query("UPDATE {fundraiser_webform_order} SET recurring_status = :recurring_status WHERE order_id = :order_id",
+    array(':recurring_status' => DONATION_CANCELLED, ':order_id' => $master_order_id));
 
   // get the ids of the child orders
-  $result = _get_pending_recurring_orders($master_order_id);
+  $orders = _get_pending_recurring_orders($master_order_id);
 
   // cancel all child orders that are still pen
-  $sql = "UPDATE {uc_orders} u inner join {fundraiser_recurring} f on f.order_id = u.order_id
-  SET u.order_status = 'canceled' where f.master_order_id = %d and u.order_status = 'pending_future_payment'";
-  db_query($sql, $master_order_id);
+  db_query('UPDATE {uc_orders} u ' .
+    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
+    'SET u.order_status = \'canceled\' ' .
+    'WHERE f.master_order_id = :order_id and u.order_status = \'pending_future_payment\'',
+    array(':order_id' => $master_order_id));
 
   // delete recurring information
-  $sql = "update {fundraiser_recurring} set gateway_resp = 'canceled', cancellation_reason = '%s' where master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')";
-  db_query($sql, $reason, $master_order_id);
+  db_query('UPDATE {fundraiser_recurring} '.
+    'SET gateway_resp = \'canceled\', cancellation_reason = :reason '.
+    'WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+    array(':reason' => $reason, ':order_id' => $master_order_id));
 
   $order_ids = array();
   // add a comment to the canceled orders
-  while ($data = db_fetch_object($result)) {
+  foreach ($orders as $data) {
     $order_ids[] = $data->order_id;
     uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
     // put order back in queue so that amount gets updated in Salesforce
@@ -371,8 +377,6 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
       sf_queue_insert($data->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
     }
   }
-
-
 
   // call out to saleforce module if installed
   //if (module_exists('sf_donation')) {
@@ -392,7 +396,7 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
  * Gets the minimum donation amount for a given donation form
  */
 function _minimum_donation_amount($nid) {
-  return db_result(db_query("SELECT minimum_donation_amount FROM {fundraiser} where nid = %d", $nid));
+  return db_query('SELECT minimum_donation_amount FROM {fundraiser} where nid = :nid', array(':nid' => $nid))->fetchColumn();
 }
 
 /**
@@ -400,7 +404,6 @@ function _minimum_donation_amount($nid) {
  */
 function _update_order_billing_info($order_id, &$form_state) {
   global $user;
-
   $order = uc_order_load($order_id);
   $order->primary_email = $form_state['values']['email'];
   $order->billing_first_name =  $form_state['values']['first_name'];
@@ -448,7 +451,7 @@ function _fundraiser_get_payment_details($order_id) {
   else {
     // next, revert to the donation form that created the order
     $donation_form_nid = $order->products[0]->nid;
-    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = %d", $donation_form_nid));
+    $gateway = db_query('SELECT gateway FROM {fundraiser} WHERE nid = :nid', array(':nid' => $donation_form_nid))->fetchColumn();
   }
 
   // get the gateway's details
@@ -481,5 +484,6 @@ function _fundraiser_lookup_gateway_details($gateway) {
  */
 function _get_pending_recurring_orders($order_id) {
   // get the ids of the child orders
-  return db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')", $order_id);
+  return db_query('SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+   array(':order_id' => $order_id));
 }
