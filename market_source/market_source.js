@@ -1,9 +1,10 @@
 /**
  * Store and parse market source data in cookies.
  */
-Drupal.behaviors.marketSourceInit = function (context) {
-  $('body:not(.marketsource-processed)', context).each(function(i){
 
+Drupal.behaviors.marketSourceInit = function (context) {
+  alert('context:' + context);
+  $('body:not(.marketsource-processed)', context).each(function(i){
     if (typeof Drupal.settings.market_source === 'undefined' ||
       typeof Drupal.settings.market_source.qs_keys === 'undefined') {
         return;
@@ -113,6 +114,7 @@ Drupal.behaviors.marketSourceFormPopulate = function (context) {
   var qs_keys = Drupal.settings.market_source.qs_keys;
   // Iterate across all webforms on the page.
   for (var form_id in Drupal.settings.market_source.form_keys) {
+    alert('form id:' + form_id);
     // Iterate across all form keys in this webform.
     var form_keys = Drupal.settings.market_source.form_keys[form_id];
     for (var key in form_keys) {
@@ -131,6 +133,7 @@ Drupal.behaviors.marketSourceFormPopulate = function (context) {
         // If the value is not null, set the value.
         if (value != null) {
           var selector = 'form#' + form_id + ' #' + form_keys[key] + ':not(.marketsource-processed)';
+          alert('value:' + value);
           // Set the value.
           $(selector, context)
             .val(qs_keys[key])

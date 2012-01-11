@@ -1,6 +1,6 @@
-#marketsource-custom-fields .form-item {
+.fieldset-wrapper .form-item-new-name, .fieldset-wrapper .form-item-new-key, .fieldset-wrapper .form-item-new-default{
   float: left;
-  padding-right: 20px;
+  margin-right: 20px;
 }
 
 #marketsource-custom-fields label {
