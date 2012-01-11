@@ -21,20 +21,18 @@ function fundraiser_mapping_form($form_state, $node) {
   );
 
   $form['info'] = array(
-    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the donation form is submitted, the user\'s profile will be updated with the values from the form.',
+    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the ' .
+      'donation form is submitted, the user\'s profile will be updated with the values from the form.',
     '#weight' => 0,
   );
 
   foreach ($node->webform['components']   as $cid => $component) {
     if ($component['type'] != 'fieldset') {
-
       $form['mapping']['cid'][$cid] = array(
       '#type' => 'item',
       '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
-
       $options = array('' => '--Select One--');
-
       if (module_exists('profile')) {
         $cat_array = profile_categories();
         foreach ($cat_array as $cat) {
@@ -44,87 +42,67 @@ function fundraiser_mapping_form($form_state, $node) {
           }
         }
       }
-
       $options['User Fields'] = array(
         'mail' => t("Email Address"),
       );
-
       $form['mapping']['type'][$cid] = array(
       '#type' => 'select',
       '#options' => $options,
       '#default_value' => $node->map[$cid],
       );
-
       $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
-
     }
-
   }
-
   return $form;
 }
 
 function fundraiser_mapping_form_submit($form, &$form_state) {
-  $sql = "delete from {fundraiser_component_map} where nid=" . $form['#node']->nid;
-  db_query($sql);
-
+  db_delete('fundraiser_component_map')->condition('nid', $form['#node']->nid)->execute();
   foreach ($form_state['values']['mapping']['type'] as $key => $value) {
     if (!empty($value)) {
-
-      $sql = "insert into {fundraiser_component_map} set nid=" . $form['#node']->nid . ", cid=$key,map_id='$value'";
-      db_query($sql);
+      $component_map = array('nid' => $form['#node']->nid, 'cid' => $key, 'map_id' => $value);
+      drupal_write_record('fundraiser_component_map', $component_map);
     }
   }
-
   drupal_set_message(t('Profile mapping has been saved'));
 }
 
 function fundraiser_recurring_admin() {
-
-  $sql = "select fundraiser_recurring.*,users.name
-  from fundraiser_recurring
-  inner join uc_orders on fundraiser_recurring.order_id=uc_orders.order_id
-  inner join users on uc_orders.uid=users.uid
-  where fundraiser_recurring.order_id=" . arg(3) . "
-  order by uc_orders.created desc";
-  $resource = db_query($sql);
-
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+// TODO signifigant security issues in the previous version of this query, needs to be reviewed on the 6.x branch. - SeH
   $output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
-  <tr>
-  
+  <tr> 
   <th>OrderID</th>
   <th>User Name</th>
   <th>Amount</th>
-
   <th>Last Charged</th>
   </tr>
   ";
 
-  for ($i = 1; $row = db_fetch_array($resource); $i++) {
+  $results = db_query('SELECT fr.*, u.name FROM {fundraiser_recurring} fr '.
+    'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id '.
+    'INNER JOIN {users} u ON uo.uid = u.uid '.
+    'WHERE fr.order_id = :order_id'.
+    'ORDER BY uo.created DESC',
+  array(':order_id' => arg(3)));
+
+  foreach ($results as $result) {
+    $row = (array) $result;
     $row['fee_amount'] = number_format($row['fee_amount'], 2, '.', '');
     $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $row['next_charge']));
-    $output .= "<tr>
-    
+    $output .= "<tr>  
     <td>$row[order_id]</td>
     <td>$row[name]</td>
     <td>$row[fee_amount]</td>
     <td>$last_charge</td>
     </tr>";
   }
-
   $output .= "</table>";
-
   return $output;
-
 }
 
 function fundraiser_recurring_master_order_overview() {
-
-  $resource = db_query("select fundraiser_recurring.*, name  from {fundraiser_recurring}
-  inner join {uc_orders} on {fundraiser_recurring}.order_id={uc_orders}.order_id
-  inner join {users} on {users}.uid={uc_orders}.uid
-  where master_order_id=%d order by order_id asc", arg(3));
-
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
   $output = "<h2>Recurring Orders</h2>";
   $output .= "<table><thead>
   <tr>
@@ -132,22 +110,20 @@ function fundraiser_recurring_master_order_overview() {
   <th>OrderID</th>
   <th>User Name</th>
   <th>Amount</th>
-
   <th>Charge Date</th>
   </tr></thead>
   ";
 
-
-
   if (empty($rows[1])) {
     //we're actually looking at the order id and not the master_order_id
-    $resource = db_query("select fundraiser_recurring.*, name, uc_orders.order_total  {from fundraiser_recurring}
-    inner join uc_orders on fundraiser_recurring.order_id=uc_orders.order_id
-    inner join users on users.uid=uc_orders.uid
-    where master_order_id=(select master_order_id from fundraiser_recurring where order_id=%d)
-    order by order_id asc", arg(3));
+    $results = db_query('SELECT fr.*, u.name, uo.order_total FROM {fundraiser_recurring} fr ' .
+    'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id ' .
+    'INNER JOIN {users} u on u.uid = uo.uid ' .
+    'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
+    'ORDER BY fr.order_id ASC', array(':order_id' => arg(3)));
     unset($rows);
-    for ($i = 1; $rows[$i] = db_fetch_array($resource); $i++) {
+    foreach ($results as $result) {
+      $rows[] = (array) $result;
     }
   }
 
@@ -173,11 +149,8 @@ function fundraiser_recurring_master_order_overview() {
     <td>$next_charge</td>
     </tr>";
   }
-
   $output .= "</table>";
-
   return $output;
-
 }
 
 function fundraiser_recurring_user_overview() {
