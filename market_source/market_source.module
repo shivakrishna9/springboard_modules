@@ -14,7 +14,7 @@ define('MARKET_SOURCE_VALUE_MAXLENGTH', 255);
 function market_source_menu() {
   $items = array();
 
-  $items['admin/settings/market-source'] = array(
+  $items['admin/config/search/market-source'] = array(
     'title' => 'Market Source',
     'description' => 'Configuration settings for the Market Source module.',
     'type' => MENU_NORMAL_ITEM,
@@ -23,7 +23,14 @@ function market_source_menu() {
     'access arguments' => array('administer site configuration'),
     'file' => 'market_source.admin.inc',
   );
-
+  $items['admin/config/search/market-source/delete/%'] = array(
+    'title' => 'Remove Custom Market Source Field?',
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('market_source_delete_custom_field', 5),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'market_source.admin.inc',
+  );
   return $items;
 }
 
@@ -31,9 +38,8 @@ function market_source_menu() {
  * Implementation of hook_init().
  */
 function market_source_init() {
-  // Add JavaScript to each page load.
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js');
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js');
+  drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js', 'file');
   // Add other variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
     'qs_keys' => _market_source_build_qs_keys(),
@@ -46,7 +52,7 @@ function market_source_init() {
  */
 function market_source_form_alter(&$form, $form_state, $form_id) {
   // Alter webforms.
-  if (isset($form['#node']) && !empty($form['#node']->webform) && $form_id == 'webform_client_form_' . $form['#node']->nid) {
+  if (isset($form['#node']->nid) && !empty($form['#node']->webform) && $form_id == 'webform_client_form_' . $form['#node']->nid) {
     // Add an #after_build callback for webforms.
     $form['#after_build'][] = 'market_source_webform_after_build';
     // Add validation callback for campaigns.
@@ -61,6 +67,19 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
     if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
       $form['#validate'][] = 'market_source_user_register_cid_validate';
     }
+  }
+  
+  // Replaces hook_user() register op.
+  if ($form_id == 'user_register_form') {
+    // Add the qs_keys as hidden fields on the user registration form.
+    $form = array();
+    $qs_keys = _market_source_build_qs_keys();
+    foreach (array_keys($qs_keys) as $key) {
+      $form['profile_' . $key] = array(
+        '#type' => 'hidden',
+      );
+    }
+    return $form;
   }
 }
 
@@ -105,6 +124,7 @@ function market_source_user_register_cid_validate($form, &$form_state) {
  * #after_build callback for all webforms.
  */
 function market_source_webform_after_build($form, &$form_state) {
+  drupal_set_message('after build');
   if ($form_state['submitted']) {
     // Do not add form keys when the form has been submitted.
     return $form;
@@ -184,6 +204,7 @@ function _market_source_build_qs_keys() {
       }
     }
   }
+  drupal_set_message('qs keys:' . print_r($qs_keys, TRUE));
   return $qs_keys;
 }
 
@@ -268,53 +289,36 @@ function _market_source_validate_cid($val) {
 }
 
 /**
- * Implements hook_nodeapi().
+ * Implements hook_node_insert().
  */
-function market_source_nodeapi(&$node, $op) {
-  switch ($op) {
-    case 'insert':
-      $webform_types = variable_get('webform_node_types', '');
-      // Skip adding custom webform components if the node is being cloned.
-      if (!$node->is_being_cloned) {
-        // make sure this node type contains a webform and it's not a donation form.
-        if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
-          module_load_include('inc', 'webform', 'includes/webform.components');
-          // don't add standard fields to webform_user because it handles the fields itself 
-          if (module_exists('webform_user') && $node->is_webform_user) {
-            $custom_fields = variable_get('market_source_custom_fields', array());
-            foreach ($custom_fields as $custom_field) {
-              $component = market_source_create_webform_component($custom_field, $node->nid);
-              webform_component_insert($component);
-            }
-          }
-          else {
-            $components = market_source_create_standard_components($node->nid);
-            // insert all the components
-            foreach ($components as $component) {
-              webform_component_insert($component);
-            }
-          }
+function market_source_node_insert($node) {
+  drupal_set_message('node:' . print_r($node, TRUE));
+  $webform_types = variable_get('webform_node_types', array('webform'));
+  // Skip adding custom webform components if the node is being cloned.
+  if (!property_exists($node, 'is_being_cloned') || $node->is_being_cloned === 0) {
+    drupal_set_message('no clone');
+    // make sure this node type contains a webform and it's not a donation form.
+    if (in_array($node->type, $webform_types)) {
+      drupal_set_message('node type ok');
+      module_load_include('inc', 'webform', 'includes/webform.components');
+      // don't add standard fields to webform_user because it handles the fields itself 
+      if (module_exists('webform_user') && $node->is_webform_user) {
+        $custom_fields = variable_get('market_source_custom_fields', array());
+        foreach ($custom_fields as $custom_field) {
+          $component = market_source_create_webform_component($custom_field, $node->nid);
+          webform_component_insert($component);
         }
-     }
-     break;
-  }
-}
-
-/**
- * Implementation of hook_user().
- */
-function market_source_user($op, &$edit, &$account, $category = NULL) {
-  if ($op == 'register') {
-    // Add the qs_keys as hidden fields on the user registration form.
-    $form = array();
-    $qs_keys = _market_source_build_qs_keys();
-    foreach (array_keys($qs_keys) as $key) {
-      $form['profile_' . $key] = array(
-        '#type' => 'hidden',
-      );
+      }
+      else {
+        $components = market_source_create_standard_components($node->nid);
+            // insert all the components
+        foreach ($components as $component) {
+          webform_component_insert($component);
+        }
+      }
     }
-    return $form;
   }
+
 }
 
 /**
@@ -338,81 +342,87 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'form_key' => 'ms',
     'name' => 'Market Source',
     'type' => 'hidden',
-    'extra' => array('description' => '',),
+    'extra' => array('description' => ''),
     'mandatory' => 1, 
     'weight' => 20,
     'email' => 1,
     'maps_to' => 'profile_ms',
   );
 
-	// campaign id
-	$components['campaign'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => $default_campaign,
-	  'form_key' => 'cid',
-	  'name' => t('Campaign ID'),
-	  'type' => 'hidden',
-	  'extra' => array('description' => ''),
-	  'mandatory' => 1,
-	  'weignt' => 21,
-	  'email' => 1,
-	  'maps_to' => 'profile_cid',
-	);
-  
-	// referrer
-	$components['referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0 ,
-	  'value' => '',
-	  'form_key' => 'referrer', 
-	  'name' => t('Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => ''),
-	  'mandatory' => 0, 
-	  'weight' => 22,
-	  'email' => 1,
-	  'maps_to' => 'profile_referrer',
-	);
-	
-	// initial referrer
-	$components['initial_referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => '',
-	  'form_key' => 'initial_referrer', 
-	  'name' => t('Initial Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => '',),
-	  'mandatory' => 0, 
-	  'weight' => 23, 
-	  'email' => 1,
-	  'maps_to' => 'profile_initial_referrer',
-	);
-	
-	// If any custom fields have been configured, add them as well
-	$custom_fields = variable_get('market_source_custom_fields', array());
+  // campaign id
+  $components['campaign'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => $default_campaign,
+    'form_key' => 'cid',
+    'name' => t('Campaign ID'),
+    'type' => 'hidden',
+    'extra' => array('description' => ''),
+    'mandatory' => 1,
+    'weight' => 21,
+    'email' => 1,
+    'maps_to' => 'profile_cid',
+  );
 
-	if (count($custom_fields)) {
-	  foreach ($custom_fields as $custom_field) {
-	    $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
-	  }
-	}
+  // referrer
+  $components['referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0 ,
+    'value' => '',
+    'form_key' => 'referrer', 
+    'name' => t('Referrer'),
+    'type' => 'hidden',  
+    'extra' => array('description' => ''),
+    'mandatory' => 0, 
+    'weight' => 22,
+    'email' => 1,
+    'maps_to' => 'profile_referrer',
+  );
+
+  // initial referrer
+  $components['initial_referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => '',
+    'form_key' => 'initial_referrer', 
+    'name' => t('Initial Referrer'),
+    'type' => 'hidden',  
+    'extra' => array('description' => ''),
+    'mandatory' => 0, 
+    'weight' => 23, 
+    'email' => 1,
+    'maps_to' => 'profile_initial_referrer',
+  );
+
+  // If any custom fields have been configured, add them as well
+  $custom_fields = variable_get('market_source_custom_fields', array());
+
+  if (count($custom_fields)) {
+    foreach ($custom_fields as $custom_field) {
+      $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
+    }
+  }
   return $components;  
 }
 
 /**
  * Implements hook_fundraiser_create_webform_components().
+ *
+ * @param $nid
+ * Node ID
+ * 
+ * @return
+ * returns an array of formatted webform components.
  */
 function market_source_fundraiser_create_webform_components($nid) {
   // if the sf_donation is installed, try to get the default campaign
-	$default_campaign = '';
-	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
-	
-	// create the standard components
-	return market_source_create_standard_components($nid, $default_campaign);
+  $default_campaign = '';
+  if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
+    $default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
+  }
+
+  // create the standard components
+  return market_source_create_standard_components($nid, $default_campaign);
 }
 
 /**
@@ -431,28 +441,18 @@ function market_source_fundraiser_create_webform_components($nid) {
 function market_source_create_webform_component($custom_field, $nid) {
   $component = array(
     'nid' => $nid,
-  	'pid' => 0,
-  	'value' => $custom_field['default'],
-  	'form_key' => $custom_field['key'], 
-  	'name' => $custom_field['name'],
-  	'type' => 'hidden',  
-  	'extra' => array('description' => '',),
-  	'mandatory' => 0, 
-  	'weight' => 23, 
-  	'email' => 1,
-  	'maps_to' => '',
+    'pid' => 0,
+    'value' => $custom_field['default'],
+    'form_key' => $custom_field['key'], 
+    'name' => $custom_field['name'],
+    'type' => 'hidden',  
+    'extra' => array('description' => ''),
+    'mandatory' => 0, 
+    'weight' => 23, 
+    'email' => 1,
+    'maps_to' => '',
   );
   return $component;
 }
 
-/**
- * Implements hook_theme().
- */
-function market_source_theme() {
-  return array(
-    'market_source_admin_settings_form' => array(
-      'arguments' => array('form' => NULL),
-      'file' => 'market_source.admin.inc',
-    ),
-  );
-}
+
