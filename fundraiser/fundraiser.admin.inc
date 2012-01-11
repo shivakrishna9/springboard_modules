@@ -41,7 +41,6 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#collapsed' => TRUE,
   );
   // TODO Please change this theme call to use an associative array for the $variables parameter.
-  // TODO Please change this theme call to use an associative array for the $variables parameter.
   $form['confirmation_page']['tokens']['help'] = array(
     '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
   );
@@ -130,8 +129,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Validation function for fundraiser_confirmation_settings_form().
  */
 function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
   // validate email
@@ -161,8 +159,7 @@ function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Submit function for fundraiser_confirmation_settings_form().
  */
 function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   $node = node_load($form_state['values']['nid']);
@@ -192,7 +189,6 @@ function fundraiser_clone_donation_form($nid) {
   if (is_numeric($nid)) {
     global $user;
     $node = node_load($nid);
-    // drupal_set_message('node to clone:' . print_r($node, TRUE));
     if (isset($node->nid)) {
       $original_node = clone $node;
 
@@ -220,30 +216,32 @@ function fundraiser_clone_donation_form($nid) {
       $new_nid = $node->nid;
 
       // get profile map for the original donation form
-      $result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_component_map} f inner join
-        {webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = :nid", array(':nid' => $nid));
+      $result = db_query('SELECT f.nid, f.cid, f.map_id, c.form_key FROM {fundraiser_component_map} f ' .
+        'INNER JOIN {webform_component} c on c.cid = f.cid AND c.nid = f.nid ' .
+        'WHERE f.nid = :nid',
+        array(':nid' => $nid));
 
       // update confirmation information
       db_update('fundraiser')
-  ->fields(array(
+      ->fields(array(
         'confirmation_page_title' => $original_node->confirmation_page_title,
         'confirmation_page_body' => $original_node->confirmation_page_body,
         'redirect_url' => $original_node->redirect_url,
       ))
-  ->condition('nid', $new_nid)
-  ->execute();
+      ->condition('nid', $new_nid)
+      ->execute();
 
       // loop over mapped components and find new component in cloned donation form
       while ($data = db_fetch_object($result)) {
         $cid = db_query("SELECT cid FROM {webform_component} WHERE form_key = :form_key AND nid = :nid", array(':form_key' => $data->form_key, ':nid' => $new_nid))->fetchField();
         if ($cid) {
           $id = db_insert('fundraiser_component_map')
-  ->fields(array(
+          ->fields(array(
             'nid' => $new_nid,
             'cid' => $cid,
             'map_id' => $data->map_id,
           ))
-  ->execute();
+          ->execute();
         }
       }
 
@@ -386,16 +384,13 @@ function fundraiser_admin_settings($form, &$form_state) {
   return system_settings_form($form);
 }
 
-/*
- * Creates a list of all donation forms on the site
- */
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Creates a list of all donation forms on the site
  */
 function fundraiser_donation_form_list() {
   global $user;
-  $result = db_query("SELECT n.nid, n.uid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid ORDER BY n.changed DESC");
+  $result = db_query('SELECT n.nid, n.uid, n.title, f.internal_name, n.created, n.changed FROM {node} n '.
+    'INNER JOIN {fundraiser} f ON f.nid = n.nid ORDER BY n.changed DESC');
 
   $header = array('Title', 'Internal Name', 'Last Modified', '', '', '');
   $rows = array();
@@ -416,15 +411,15 @@ function fundraiser_donation_form_list() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Create a monthly report.
  */
+// TODO consider if we can use views to create this report?
 function fundraiser_monthly_report() {
   global $base_url;
   if ($_SESSION['fundraiser_report_filters']) {
     $start_date = $_SESSION['fundraiser_report_filters']['from_date'];
     $end_date = $_SESSION['fundraiser_report_filters']['to_date'];
-    $sql = "select
+    $sql = "SELECT
               u.order_id,
               u.uid,
               u.order_status,
@@ -446,16 +441,16 @@ function fundraiser_monthly_report() {
               op.title,
               fd.campaign_id,
               fd.market_source
-            from
-              uc_orders u inner join fundraiser_webform_order s on s.order_id = u.order_id
-              inner join {uc_payment_receipts} p on p.order_id = u.order_id
-              inner join {uc_countries} c on c.country_id = u.billing_country
-              inner join {uc_zones} z on z.zone_id = u.billing_zone
-              inner join {uc_order_products} op on op.order_id = u.order_id
-              inner join {fundraiser_webform_order} wo on wo.order_id = u.order_id
-              inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.webform_nid
-              where u.order_status = 'payment_received' and u.created between :start_date and :end_date 
-            union select
+            FROM
+              uc_orders u INNER JOIN fundraiser_webform_order s ON s.order_id = u.order_id
+              INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
+              INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
+              INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
+              INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
+              INNER JOIN {fundraiser_webform_order} wo ON wo.order_id = u.order_id
+              INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.webform_nid
+              WHERE u.order_status = 'payment_received' AND u.created BETWEEN :start_date AND :end_date 
+            UNION SELECT
               r.order_id,
               u.uid,
               u.order_status,
@@ -477,14 +472,14 @@ function fundraiser_monthly_report() {
               op.title,
               fd.campaign_id,
               fd.market_source
-            from fundraiser_recurring r inner join uc_orders u on u.order_id = r.order_id
-              inner join {uc_payment_receipts} p on p.order_id = u.order_id
-              inner join {uc_countries} c on c.country_id = u.billing_country
-              inner join {uc_zones} z on z.zone_id = u.billing_zone
-              inner join {uc_order_products} op on op.order_id = u.order_id
-              inner join {fundraiser_webform_recurring_order} wo on wo.order_id = u.order_id
-              inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.nid
-              where u.order_status = 'payment_received' and r.next_charge between :start_date and :end_date order by order_id";
+            FROM fundraiser_recurring r INNER JOIN uc_orders u ON u.order_id = r.order_id
+              INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
+              INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
+              INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
+              INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
+              INNER JOIN {fundraiser_webform_recurring_order} wo ON wo.order_id = u.order_id
+              INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.nid
+              WHERE u.order_status = 'payment_received' AND r.next_charge BETWEEN :start_date AND :end_date ORDER BY order_id";
     $result = db_query($sql, array(':start_date' => $start_date, ':end_date' => $end_date));
   }
 
@@ -556,8 +551,7 @@ function fundraiser_monthly_report() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Create a form to filter reporting by month.
  */
 function fundraiser_report_form($form) {
 
@@ -610,8 +604,7 @@ function fundraiser_report_form($form) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Submit form reporting.
  */
 function fundraiser_report_form_submit($form, &$form_state) {
 
@@ -628,7 +621,7 @@ function fundraiser_report_form_submit($form, &$form_state) {
 
   $from_date = mktime(0, 0, 0, $from_month, $from_day, $from_year);
   $to_date = mktime(23, 59, 59, $to_month, $to_day, $to_year);
-
+  // TODO - why are we using session here?
   $_SESSION['fundraiser_report_filters'] = array(
     'from_date' => $from_date,
     'to_date' => $to_date,
@@ -657,4 +650,3 @@ function fundraiser_update_cron_settings($form, $form_state) {
     menu_rebuild();
   }
 }
-fundraiser_standalone_cron_enabled;
