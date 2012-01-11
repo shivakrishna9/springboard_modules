@@ -221,11 +221,9 @@ function fundraiser_clone_donation_form($nid) {
 
       // get profile map for the original donation form
       $result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_component_map} f inner join
-        {webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = %d", $nid);
+        {webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = :nid", array(':nid' => $nid));
 
       // update confirmation information
-      // TODO Please review the conversion of this statement to the D7 database API syntax.
-      /* db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $original_node->confirmation_page_title, $original_node->confirmation_page_body, $original_node->redirect_url, $new_nid) */
       db_update('fundraiser')
   ->fields(array(
         'confirmation_page_title' => $original_node->confirmation_page_title,
@@ -239,8 +237,6 @@ function fundraiser_clone_donation_form($nid) {
       while ($data = db_fetch_object($result)) {
         $cid = db_query("SELECT cid FROM {webform_component} WHERE form_key = :form_key AND nid = :nid", array(':form_key' => $data->form_key, ':nid' => $new_nid))->fetchField();
         if ($cid) {
-          // TODO Please review the conversion of this statement to the D7 database API syntax.
-          /* db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id) */
           $id = db_insert('fundraiser_component_map')
   ->fields(array(
             'nid' => $new_nid,
@@ -458,7 +454,7 @@ function fundraiser_monthly_report() {
               inner join {uc_order_products} op on op.order_id = u.order_id
               inner join {fundraiser_webform_order} wo on wo.order_id = u.order_id
               inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.webform_nid
-              where u.order_status = 'payment_received' and u.created between %d and %d
+              where u.order_status = 'payment_received' and u.created between :start_date and :end_date 
             union select
               r.order_id,
               u.uid,
@@ -488,8 +484,8 @@ function fundraiser_monthly_report() {
               inner join {uc_order_products} op on op.order_id = u.order_id
               inner join {fundraiser_webform_recurring_order} wo on wo.order_id = u.order_id
               inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.nid
-              where u.order_status = 'payment_received' and r.next_charge between %d and %d order by order_id";
-    $result = db_query($sql, $start_date, $end_date, $start_date, $end_date);
+              where u.order_status = 'payment_received' and r.next_charge between :start_date and :end_date order by order_id";
+    $result = db_query($sql, array(':start_date' => $start_date, ':end_date' => $end_date));
   }
 
   $header = array('Order Id', 'Opportunity Id', 'Uid', 'First Name', 'Last Name', 'Email', 'Address', 'Address 2', 'City', 'Country', 'State/Province', 'Postal Code', 'Payment Date', 'Amount', 'Donation Form', 'URL', 'Market Source', 'Campaign ID', 'CC Last Four', 'CC Type', 'CC Exp Month', 'CC Exp Year');

@@ -448,8 +448,7 @@ function fundraiser_form($node, &$form_state) {
   // Retrieve saved values if available
   $amount_values = array();
   if (is_numeric($node->nid)) {
-    $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
-    $amount_values = unserialize(db_result($results));
+    $amount_values = _fundraiser_get_webform_extra_by_key($node->nid, 'amount');
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
   }
 
@@ -656,10 +655,9 @@ function fundraiser_update($node) {
 
   // update the label on the minimum donation amount
   if ($node->show_other_amount) {
-    $extra = db_query("SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key = 'other_amount'", array(':nid' => $node->nid))->fetchColumn();
-    $extra = unserialize($extra);
+    $extra = _fundraiser_get_webform_extra_by_key($node->nid, 'other_amount');
     $extra['description'] = 'Minimum payment $' . $node->minimum_donation_amount . '.';
-    db_query("UPDATE {webform_component} SET extra = :extra WHERE nid = :nid AND form_key = 'other_amount'", array(':extra' => serialize($extra), ':nid' => $node->nid));
+    _fundraiser_set_webform_extra_by_key($node->nid, 'other_amount', $extra);
   }
 }
 
@@ -674,17 +672,18 @@ function fundraiser_delete(&$node) {
  * Implementation of hook_load().
  */
 function fundraiser_load($node) {
-
-  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
+  $results = _fundraiser_get_fundraiser($node->nid);
+  foreach ($results as $result) {
+    $fundraiser = $result;
+  }
   // get the user profile map
-  $result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
-  while ($row = db_fetch_array($result)) {
-    $map[$row['cid']] = $row['map_id'];
+  $results = _fundraiser_get_fundraiser_component_map($node->nid, array(), array('cid', 'map_id'));
+  foreach($results as $result) {
+    $map[$result->cid] = $result->map_id;
   }
 
   // Protection vs node_save() for donation amounts.
-  $extra = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d and form_key = "amount"', $node->nid));
-  $extra = unserialize($extra);
+  $extra = _fundraiser_get_webform_extra_by_key($node->nid, 'amount');
 
   $items = preg_split('/\s/', $extra['items']);
   $count = 0;
@@ -913,13 +912,14 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // add default country & state values from user profile
       $fids = _fundraiser_get_profile_location_fields();
       if ($fids['country'] && $user->profile_country) {
-        $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
+      //TODO come back to these later, determine if need to be in own function.
+        $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = :uid AND pv.fid = :fid', array(':uid' => $user->uid, ':fid' => $fids['country'])));
       }
 
       // add a wrapper around the state field so it can be replaced via ajax
       $state_field = &fundraiser_find_field($form, $component_hierarchy['state']);
       if ($fids['state'] && $user->profile_state) {
-        $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
+        $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = :uid AND pv.fid = :fid', array(':uid' => $user->uid, ':fid' => $fids['state'])));
       }
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
@@ -954,15 +954,16 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
  */
 function fundraiser_user_map($nid) {
   $map = array();
+  // TODO come back to this as well.
   $result = db_query(
     "
       SELECT w.form_key, f.cid, f.map_id, w.type
       FROM {webform_component} w
       INNER JOIN {fundraiser_component_map} f ON f.cid = w.cid AND f.nid = w.nid
-      WHERE f.nid = %d
+      WHERE f.nid = :nid
       ORDER BY f.cid
     ",
-    $nid
+    array(':nid' => $nid)
   );
 
   while ($row = db_fetch_array($result)) {
@@ -1005,7 +1006,10 @@ function fundraiser_parse_components($nid, $components) {
  * Creates a nested array of where a component exists in the FAPI array.
  */
 function fundraiser_parse_component($nid, $form_key) {
-  $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d and form_key = '%s'", $nid, $form_key));
+  $results = _fundraiser_get_webform_component($nid, array('form_key' => $form_key), 'cid');
+  foreach ($results as $result) {
+    $cid = $result->cid;
+  }
   $component_path = 'submitted[' . implode('][', fundraiser_walk_component_hierarchy($nid, $cid)) . ']';
   parse_str($component_path, $output); // convert string to a nested array
   return $output;
@@ -1015,11 +1019,11 @@ function fundraiser_parse_component($nid, $form_key) {
  * Builds a path from the webform component to it's topmost parent.
  */
 function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
-  $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = %d and cid = %d", $nid, $cid);
-  while ($data = db_fetch_object($result)) {
-    array_unshift($path, $data->form_key);
-    if ($data->pid > 0) {
-      fundraiser_walk_component_hierarchy($nid, $data->pid, $path);
+  $results = _fundraiser_get_webform_component($nid, array('cid' => $cid), array('cid', 'pid', 'form_key'));
+  foreach ($results as $result) {
+    array_unshift($path, $result->form_key);
+    if ($result->pid > 0) {
+      fundraiser_walk_component_hierarchy($nid, $result->pid, $path);
     }
   }
   return $path;
@@ -1124,10 +1128,13 @@ function fundraiser_ahah_helper_disable_validation(&$form) {
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
     if (module_exists('queue_api')) {
-      if ($order_id = db_result(db_query("SELECT f.order_id FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id WHERE f.webform_nid = %d AND f.sid = %d AND u.order_status = 'payment_received'", $node->nid, $submission->sid))) {
+      // TODO come back to this as well.
+      if ($order_id = db_result(db_query("SELECT f.order_id FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = 'payment_received'",
+        array(':webform_nid' => $node->nid, ':sid' => $submission->sid)))) {
         // Determine if we need an INSERT or an UPDATE
         $action = 'create';
-        if ($sfid = db_result(db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = %d AND drupal_type = "donation"', $order_id))) {
+        if ($sfid = db_result(db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = :oid AND drupal_type = "donation"', 
+          array(':oid' => $order_id)))) {
           $action = 'update';
         }
         sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
@@ -1145,15 +1152,12 @@ function fundraiser_webform_submission_presave($node, &$submission) {
 
   // remove senstive form data before the submission is saved to the database
   if ($node->type == 'donation_form') {
-    $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
-    while ($data = db_fetch_object($result)) {
-      $submission->data[$data->cid]['value'][0] = NULL;
+    $results = _fundraiser_get_webform_component($node->nid, array('form_key' => array('card_number', 'card_cvv', 'card_expiration_date')), 'cid');
+    foreach ($results as result) {
+      $submission->data[$result->cid]['value'][0] = NULL;
     }
   }
 }
-
-
-
 
 /**
  * Permission check for webform form settings tab.
@@ -1179,13 +1183,14 @@ function fundraiser_confirmations_perm($perm, $node) {
  * Determines if a user has any recurring donations.
  */
 function fundraiser_user_has_recurring_orders($user) {
+//TODO come back
   $count = db_result(db_query(
     "
       SELECT count(u.order_id) FROM uc_orders u
       INNER JOIN fundraiser_recurring f on f.master_order_id = u.order_id
-      WHERE u.uid = %d
+      WHERE u.uid = :uid
     ",
-    $user->uid
+    array(':uid' => $user->uid)
   ));
 
   if ($count > 0) {
@@ -1222,7 +1227,8 @@ function fundraiser_access($op, $node, $account) {
 }
 
 function fundraiser_recurring_check_access() {
-  $resource = db_query("select order_id from {fundraiser_recurring} where master_order_id=%d or order_id=%d", arg(3), arg(3));
+// TODO come back to this.
+  $resource = db_query("select order_id from {fundraiser_recurring} where master_order_id=:master_order_id or order_id=:order_id", array(':master_order_id' => arg(3), ':order_id' => arg(3)));
   $array = db_fetch_array($resource);
   $bool = FALSE;
   if (!empty($array)) {
@@ -1255,7 +1261,8 @@ function fundraiser_get_country_zones($country_id) {
 function fundraiser_user_map_create($nid, $components) {
   foreach ($components as $cid => $component) {
     if (array_key_exists('maps_to', $component)) {
-      db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $nid, $cid, $component['maps_to']);
+      $component_map = array('nid' => $nid, 'cid' => $cid, 'map_id' => $component['maps_to']);
+      drupal_write_record('fundraiser_component_map', $component_map);
     }
   }
   drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
@@ -1268,7 +1275,7 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
   $sid = $vars['sid'];
   if ($sid) {
     // load up the id of the order
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = :sid", array(':sid' => $sid)));
     $order = uc_order_load($order_id);
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $sid);
@@ -1446,7 +1453,10 @@ function fundraiser_webform_submit($form, &$form_state) {
 
   // lets jump through some hoops to see if this was a recurring donation
   $recurs = FALSE;
-  $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $node->nid));
+  $results = _fundraiser_get_webform_component($node->nid, array('form_key' => 'recurs_monthly'), 'cid');
+  foreach ($results as $result) {
+    $recurs_cid = $result->cid;
+  }
   if (!empty($recurs_cid)) {
     $value = $form_state['values']['submitted'][$recurs_cid];
     if (is_array($value)) { // if this is an array, then it is a single item checkbox
@@ -1530,7 +1540,8 @@ function fundraiser_webform_submit($form, &$form_state) {
   uc_order_save($order);
 
   // relate the order to submission before we try and process the payment
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $order->data['recurring_status']);
+  $webform_order = array('webform_nid' => $node->nid, 'order_id' => $order->order_id, 'sid' => $form_state['values']['details']['sid'], 'recurring_status' => $order->data['recurring_status']);
+  drupal_write_record('fundraiser_webform_order', $webform_order);
 
   // additional data to pass to the payment gateway's charge function
   $data = array(
@@ -1586,7 +1597,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
   fundraiser_track_conversion();
 
   // use order_id to find the nid and then go ahead and load up the node
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} WHERE order_id = :order_id", array(':order_id' => $order_id)));
   $node = node_load($webform->webform_nid);
 
   // complete the sale
@@ -1596,17 +1607,17 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
   uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
 
   // mark payment as received
-  db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", 'payment_received', $order_id);
+  db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id", array(':order_id' => $order_id));
 
   // update the order/webform relationship
-  db_query("UPDATE {fundraiser_webform_order} SET gateway = '%s', txn_id = '%s' WHERE order_id = %d", $node->gateway, $transaction_id, $order_id);
+  db_query("UPDATE {fundraiser_webform_order} SET gateway = :gateway, txn_id = :txn_id WHERE order_id = :order_id", array(':gateway' => $node->gateway, ':txn_id' => $transaction_id, ':order_id' => $order_id);
 
   // update the uid on the webform submission
-  db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
+  db_query("UPDATE {webform_submissions} SET uid = :uid WHERE sid = :sid", array(':uid' => $order->uid, ':sid' => $webform->sid));
 
   // Update the recurring status, if it was changed by the payment gateway module
   if ($webform->recurring_status != $order->data['recurring_status']) {
-    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d', $order->data['recurring_status'], $order_id);
+    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = :recurring_status WHERE order_id = :order_id', array(':recurring_status' => $order->data['recurring_status'], ':order_id' => $order_id));
   }
 
   // update the user's profile
@@ -1637,15 +1648,15 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
  */
 function fundraiser_order_decline($order_id, $message) {
   // make the order as failed
-  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // make a log entry
   watchdog('fundraiser', 'Order @id was declined by the payment gateway. Reason: @message', array('@id' => $order_id, '@message' => $message), WATCHDOG_DEBUG, NULL);
 
   // clean up
-  $sid = db_result(db_query("SELECT sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
-  db_query("DELETE FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id);
-  db_query("DELETE FROM {webform_submitted_data} WHERE sid = %d", $sid);
-  db_query("DELETE FROM {webform_submissions} WHERE sid = %d", $sid);
+  $sid = db_result(db_query("SELECT sid FROM {fundraiser_webform_order} WHERE order_id = :order_id", array(':order_id' => $order_id)));
+  db_delete('fundraiser_webform_order')->condition('order_id', $order_id)->execute();
+  db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
+  db_delete('webform_submissions')->condition('sid', $sid)->execute();
 
   // show gateay message if appropriate
   $display_message = variable_get('fundraiser_gateway_messages', 1);
@@ -1664,7 +1675,7 @@ function fundraiser_order_decline($order_id, $message) {
  */
 function fundraiser_order_exception($order_id, $message) {
   // make the order as failed
-  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // make a log entry
   watchdog('fundraiser', 'An error occurred while processing order @id. Error: @message', array('@id' => $order_id, '@message' => $message), WATCHDOG_ERROR, NULL);
 
@@ -1685,7 +1696,7 @@ function fundraiser_order_exception($order_id, $message) {
  */
 function fundraiser_order_cancel($order_id) {
   // make the order as canceled
-  db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = %d", $order_id);
+  db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // make a comment on the order
   uc_order_comment_save($order_id, 0, t('Payment was canceled during checkout by the user.'));
   // make a log entry
@@ -1779,7 +1790,7 @@ function fundraiser_refund_function($type) {
  *   The order id to check.
  */
 function fundraiser_is_recurring_order($order_id) {
-  $status = db_result(db_query("SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $status = db_result(db_query("SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id = :order_id", array(':order_id' => $order_id)));
   return $status == DONATION_RECURRING;
 }
 
@@ -1849,7 +1860,7 @@ function fundraiser_update_user_profile($uid, $nid, $sid) {
  */
 function fundraiser_create_profile_values_map($nid, $sid) {
   $map = array();
-  $mapped_fields = db_query("SELECT f.map_id, d.data FROM {fundraiser_component_map} f INNER JOIN {webform_submitted_data} d on d.cid = f.cid WHERE f.nid = %d and d.sid = %d", $nid, $sid);
+  $mapped_fields = db_query("SELECT f.map_id, d.data FROM {fundraiser_component_map} f INNER JOIN {webform_submitted_data} d on d.cid = f.cid WHERE f.nid = :nid and d.sid = :sid", array(':nid'=> $nid, ':sid' => $sid));
 
   // create an array in the format of profile_field => value
   while ($row = db_fetch_object($mapped_fields)) {
@@ -1865,7 +1876,8 @@ function fundraiser_create_profile_values_map($nid, $sid) {
 function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
   // determine the date of the last order, and the number of orders to create out to the new expiration date
   $exp = $exp_year . sprintf("%02d", $exp_month)  ;
-  $result = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(%d, date_format(from_unixtime(max(next_charge)),'%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = %d", $exp, $order_id);
+  $result = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(:exp, date_format(from_unixtime(max(next_charge)),'%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = :order_id",
+    array(':exp' => $exp, ':order_id' => $order_id));
 
   while ($data = db_fetch_object($result)) {
     $last_order_id = $data->last_order_id;
@@ -1875,11 +1887,12 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
 
   // load up the last order since it will have the most recent changes
   $order = uc_order_load($last_order_id);
-  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
+  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = :order_id", array(':order_id' => $last_order_id)));
   for ($i = 1; $i <= $new_order_count; $i++) {
     $new_order_id = fundraiser_clone_order($order);
     $charge_date = strtotime("+$i months", $last_charge_date);
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_order_id, $charge_date, $gateway);
+    $recurring = array('master_order_id' => $order_id, 'order_id' => $new_order_id, 'next_charge' => $charge_date, 'gateway' => $gateway);
+    drupal_write_record('fundraiser_recurring', $recurring);
     uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
     // add these new orders to the queue
     if (module_exists('sf_donation') && module_exists('queue_api')) {
@@ -1928,7 +1941,8 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
     $next_charge = strtotime("+$i months");
 
     // make a record of the recurring order
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_id, $next_charge, $gateway);
+    $recurring = array('master_order_id' => $order_id, 'order_id' => $new_id, 'next_charge' => $next_charge, 'gateway' => $gateway);
+    drupal_write_record('fundraiser_recurring', $recurring);
 
     // add a comment to the order stating when it will be charged
     uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
@@ -1944,8 +1958,8 @@ function fundraiser_process_recurring_donations() {
   $successes = 0;
   $fails = 0;
 
-  $orders_to_process = db_query("SELECT * FROM {fundraiser_recurring} WHERE next_charge < %d AND
-    (gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3", time());
+  $orders_to_process = db_query("SELECT * FROM {fundraiser_recurring} WHERE next_charge < :next_charge AND
+    (gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3", array(':next_charge' => time()));
 
   // loop over the found orders
   while ($order_info = db_fetch_array($orders_to_process)) {
@@ -1975,8 +1989,8 @@ function fundraiser_process_recurring_donations() {
         $successes++;
         uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
         uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin');
-        db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = %d", $order_id);
-        db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = '%s' WHERE order_id = %d", $result['data']['txn_id'], $order_id);
+        db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",array(':order_id' => $order_id));
+        db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = :txn_id WHERE order_id = :order_id", array(':txn_id' => $result['data']['txn_id'], ':order_id' => $order_id));
 
         // Send credit card notification email when only a single payment is left
         if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
@@ -1990,15 +2004,15 @@ function fundraiser_process_recurring_donations() {
       }
       else {
         $fails++;
-        db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
+        db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order->order_id));
         db_query("UPDATE {fundraiser_recurring} SET
           gateway_resp = 'failed',
           attempts = attempts + 1,
           next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
-          WHERE order_id = %d", $order_id
+          WHERE order_id = :order_id", array(':order_id' => $order_id)
         );
         // get the number of times this order has been attempted
-        $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
+        $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = :order_id", array(':order_id' => $order->order_id)));
         if ($attempt_count == 3) {
           // final attempt. add debug alert
           watchdog('fundraiser', 'Payment for recurring donation @id has failed 3 times. The order will not be submitted for payment again. Gateway message: @message', array('@id' => $order->order_id, '@message' => $result['message']), WATCHDOG_DEBUG);
@@ -2024,7 +2038,7 @@ function fundraiser_process_recurring_donations() {
  * Returns the number of unprocessed payments for a recurring donation series.
  */
 function fundraiser_recurring_payments_remaining($master_order_id) {
-  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
+  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL", array(':master_order_id' => $master_order_id)));
 }
 
 /**
@@ -2033,7 +2047,7 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
 function fundraiser_send_cc_notification($master_order_id, $uid) {
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
-  $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
+  $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL", array(':master_order_id' => $master_order_id)));
   $order = uc_order_load($order_id);
 
   // set up some params that can be used in the email
@@ -2077,7 +2091,7 @@ function fundraiser_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'delete':
       // remove the order from fundraiser tables
-      db_query("DELETE FROM {fundraiser_recurring} WHERE order_id = %d", $arg1->order_id);
+      db_delete('fundraiser_recurring')->condition('order_id', $arg1->order_id)->execute();
       break;
   }
 }
@@ -2114,7 +2128,7 @@ function fundraiser_preprocess_uc_order(&$variables) {
   switch ($variables['op']) {
     case 'checkout-mail':
       $nid = $variables['order']->products[0]->nid;
-      $message = db_result(db_query("SELECT receipt_email_message FROM {fundraiser} WHERE nid = %d", $nid));
+      $message = db_result(db_query("SELECT receipt_email_message FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid)));
       $variables['fundraiser_message'] = $message;
       break;
   }
@@ -2138,7 +2152,7 @@ function fundraiser_queue_report_item_title_alter(&$row) {
     $row['title'] = $title;
   }
   elseif ($row['type'] == 'refund') {
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = %d", $row['oid']));
+    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id", array(':refund_id' => $row['oid'])));
     $title = 'Order ' . $order_id;
     $row['title'] = $title;
   }
@@ -2373,7 +2387,7 @@ function _fundraiser_ask_ahah() {
  * Node $edit array.
  *
  * @param $amount_values
- * An array of donation amounts taken from {webform_component}.
+ * An array of donation amounts taken from webform_component.
  *
  *  @return
  *  Returns ask, label and remove form elements namespaced by delta.
@@ -2493,8 +2507,7 @@ function _fundraiser_get_cc_type($cardnumber) {
  * Version of _profile_get_fields that includes hidden profile fields by default
  */
 function _fundraiser_profile_get_fields($category) {
-  $sql = "SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER('%s') ORDER BY category, weight";
-  return db_query($sql, $category);
+  return db_query("SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER(':category') ORDER BY category, weight", array(':category' => $category));
 }
 
 /**
@@ -2506,8 +2519,9 @@ function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
     if (_profile_field_serialize($field->type)) {
       $edit[$field->name] = serialize($edit[$field->name]);
     }
-    db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $user->uid);
-    db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
+    db_delete('profile_values')->condition('fid', $field->fid)->condition('uid', $user->uid)->execute();
+    $profile_values = array('fid' => $field->fid, 'uid' => $user->uid, 'value' => $edit[$field->name]);
+    drupal_write_record('profile_values', $profile_values);
     // Mark field as handled (prevents saving to user->data).
     $edit[$field->name] = NULL;
   }
@@ -2531,11 +2545,11 @@ function _fundraiser_months_between_dates($exp_month, $exp_year) {
  */
 function _fundraiser_charge_function($order_id, $nid, &$data) {
   // first, see if the gateway is stored with the order
-  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
+  $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = :order_id", array(':order_id' => $order_id)));
 
   if (empty($gateway)) {
     // get the gateway from the original donation form
-    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = %d", $nid));
+    $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid)));
   }
 
   if (module_exists('gateway_manager')) {
@@ -2568,7 +2582,7 @@ function _fundraiser_charge_function($order_id, $nid, &$data) {
  * Indicates other amount field is in use by the current donation form.
  *
  * @return
- * Returns a formatted string of amount|value pairs in the format required bo {webform_component}.extra
+ * Returns a formatted string of amount|value pairs in the format required by webform_component.extra
  */
 function _fundraiser_create_amount_options($donation_amounts, $show_other_amount) {
   $formatted_amounts = '';
@@ -2637,13 +2651,13 @@ function _fundraiser_field_blacklist() {
  */
 function fundraiser_track_local_failure() {
   $form_nid = arg(1);
-  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    db_query('UPDATE {fundraiser_tracking} SET local_failures = local_failures + 1 WHERE nid = %d', $form_nid);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = :nod', array(':nid' => $form_nid)))) {
+    db_query('UPDATE {fundraiser_tracking} SET local_failures = local_failures + 1 WHERE nid = :nid', array(':nid' => $form_nid));
   }
   else {
     // This shouldn't happen.
-    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, local_failures, gateway_failures, latest_load_time)
-      VALUES (%d, 1, 1, 0, 0)', $form_nid);
+    $tracking = array('nid' => $form_nid, 'pageviews' => 1, 'local_failures' => 1, 'gateway_failures' => 0, 'latest_load_time' => 0);
+    drupal_write_record('fundraiser_tracking', $tracking);
   }
 
 }
@@ -2651,39 +2665,39 @@ function fundraiser_track_local_failure() {
 function fundraiser_track_pageview() {
 
   $form_nid = arg(1);
-  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    db_query('UPDATE {fundraiser_tracking} SET pageviews = pageviews + 1 WHERE nid = %d', $form_nid);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $form_nid)))) {
+    db_query('UPDATE {fundraiser_tracking} SET pageviews = pageviews + 1 WHERE nid = :nid', array(':nid' => $form_nid));
   }
   else {
     // This could happen, but only if hook_exit() doesn't get invoked.
-    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
-      VALUES (%d, 1, 0, 0, 0)', $form_nid);
+    $tracking = array('nid' => $form_nid, 'pageviews' => 1, 'conversions' => 0,'local_failures' => 0, 'gateway_failures' => 0);
+    drupal_write_record('fundraiser_tracking', $tracking);
   }
 
 }
 
 function fundraiser_track_gateway_failure() {
   $form_nid = arg(1);
-  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    db_query('UPDATE {fundraiser_tracking} SET gateway_failures = gateway_failures + 1 WHERE nid = %d', $form_nid);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $form_nid)))) {
+    db_query('UPDATE {fundraiser_tracking} SET gateway_failures = gateway_failures + 1 WHERE nid = :nid', array(':nid' => $form_nid));
   }
   else {
     // This shouldn't happen.
-    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
-      VALUES (%d, 1, 0, 0, 1)', $form_nid);
+    $tracking = array('nid' => $form_nid, 'pageviews' => 1, 'conversions' => 0,'local_failures' => 0, 'gateway_failures' => 1);
+    drupal_write_record('fundraiser_tracking', $tracking);
   }
 
 }
 
 function fundraiser_track_conversion() {
   $form_nid = arg(1);
-  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
-    db_query('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = %d', $form_nid);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $form_nid)))) {
+    db_query('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = :nid', array(':nid' => $form_nid));
   }
   else {
     // This shouldn't happen.
-    db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
-      VALUES (%d, 1, 1, 0, 0)', $form_nid);
+    $tracking = array('nid' => $form_nid, 'pageviews' => 1, 'conversions' => 1,'local_failures' => 0, 'gateway_failures' => 0);
+    drupal_write_record('fundraiser_tracking', $tracking);
   }
 
 }
@@ -2705,7 +2719,8 @@ function _fundraiser_validation_includes($element, $form_state) {
  */
 function fundraiser_gateway_can_refund_order($order) {
   // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order->order_id, $order->order_id));
+  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = :order_id UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = :order_id',
+    array(':order_id' => $order->order_id)));
 
   if (module_exists('gateway_manager')) {
     $info = gateway_manager_gateway_info($payment_details->gateway);
@@ -2748,3 +2763,107 @@ function fundraiser_token_values($type, $object = NULL) {
 $values['order-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
 $values['order-cc-card-type'] = ucfirst($object->payment_details['cc_type']);
 break;
+
+
+// New DB Functions
+// DB functions are eventually going to be reduced into CRUD like formats where possible. Joins complicate this effort.
+
+// TODO generalize webform crud names in case in the future we move away from webform.
+/**
+ * DB function, given a nid and field key, get and unserialize the extra field from webform component.
+ */
+function _fundraiser_get_webform_extra_by_key($nid, $form_key) {
+  $results = _fundraiser_get_webform_component($nid, array('form_key' => $form_key), 'extra')
+  if (!empty($results)) {
+    return unserialize($results);
+  }
+  return FALSE;
+}
+
+/**
+ * DB function, given a nid and field key, serialize and set the extra field from webform component.
+ */
+function _fundraiser_set_webform_extra_by_key($nid, $form_key, $new_value) {
+  if (empty($nid) || empty($form_key) || empty($new_value)) {
+    return FALSE;
+  }
+  db_query("UPDATE {webform_component} SET extra = :extra WHERE nid = :nid AND form_key = :form_key",
+    array(':extra' => serialize($new_value), ':nid' => $node->nid, ':form_key' => $form_key));
+}
+
+/**
+ * DB function, given a nid and options to filter by, get the given fields from webform component.
+ */
+function _fundraiser_get_webform_component($nid, $options = array(), $fields = array()) {
+  $fields = (array) $fields; // Convert strings given for the field set to an array.
+  $query = db_select('webform_component', 'wc');
+  if (!empty($fields)) {
+    $query->fields('wc', $fields); // Get selected fields.
+  }
+  else {
+    $query->fields('wc'); // Get all.
+  }
+  $query->condition('nid', $nid, '='); // Filter by nid.
+  foreach ($options as $option_key => $option_value) {
+    if (is_array($option_value)) {
+      $query->condition($option_key, $option_value, 'IN');
+    }
+    else {
+      $query->condition($option_key, $option_value, '=');
+    }
+  }
+  // Return loopable set of objects (array or query result) or FALSE if no result.
+  return $query->execute();
+}
+
+/**
+ * DB function, given a nid and options to filter by, get the given fields from webform component.
+ */
+function _fundraiser_get_fundraiser($nid, $options = array(), $fields = array()) {
+  $fields = (array) $fields; // Convert strings given for the field set to an array.
+  $query = db_select('fundraiser', 'f');
+  if (!empty($fields)) {
+    $query->fields('f', $fields); // Get selected fields.
+  }
+  else {
+    $query->fields('f'); // Get all.
+  }
+  $query->condition('nid', $nid, '='); // Filter by nid.
+  foreach ($options as $option_key => $option_value) {
+    if (is_array($option_value)) {
+      $query->condition($option_key, $option_value, 'IN');
+    }
+    else {
+      $query->condition($option_key, $option_value, '=');
+    }
+  }
+  // Return loopable set of objects (array or query result) or FALSE if no result.
+  return $query->execute();
+}
+
+//TODO determine if we're going full on CRUD here.
+
+/**
+ * DB function, given a nid and options to filter by, get the given fields from webform component.
+ */
+function _fundraiser_get_fundraiser_component_map($nid, $options = array(), $fields = array()) {
+  $fields = (array) $fields; // Convert strings given for the field set to an array.
+  $query = db_select('fundraiser_component_map', 'fcm');
+  if (!empty($fields)) {
+    $query->fields('fcm', $fields); // Get selected fields.
+  }
+  else {
+    $query->fields('fcm'); // Get all.
+  }
+  $query->condition('nid', $nid, '='); // Filter by nid.
+  foreach ($options as $option_key => $option_value) {
+    if (is_array($option_value)) {
+      $query->condition($option_key, $option_value, 'IN');
+    }
+    else {
+      $query->condition($option_key, $option_value, '=');
+    }
+  }
+  // Return loopable set of objects (array or query result) or FALSE if no result.
+  return $query->execute();
+}
