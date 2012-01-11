@@ -1,11 +1,10 @@
 ; $Id$
 name = Fundraiser
 description = Fundraising Module
-core = 6.x
+core = 7.x
 package = Jackson River Springboard
 dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = profile
 dependencies[] = uc_cart
-version =  6.x-3.0-dev

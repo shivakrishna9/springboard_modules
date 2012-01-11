@@ -63,9 +63,9 @@ function sage_update_billing_information($reference_id, $billing_info) {
  * Refund tab on Orders
  */
 function fundraiser_show_refund_form($order) {
-  $module_path = drupal_get_path('module', 'fundraiser') . '/';
-  drupal_add_css($module_path . 'refund.css');
-  drupal_add_js($module_path . 'refund.js');
+  $base = drupal_get_path('module', 'fundraiser');
+  drupal_add_css($base . '/css/refund.css');
+  drupal_add_js($base . '/js/refund.js');
   return drupal_get_form('fundraiser_refund', $order);
 }
 

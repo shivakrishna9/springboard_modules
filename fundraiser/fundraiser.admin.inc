@@ -9,7 +9,7 @@
 /**
  * Form for fundraiser confirmation settings.
  */
-function fundraiser_confirmation_settings_form(&$form_state, $node) {
+function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
@@ -40,6 +40,8 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  // TODO Please change this theme call to use an associative array for the $variables parameter.
+  // TODO Please change this theme call to use an associative array for the $variables parameter.
   $form['confirmation_page']['tokens']['help'] = array(
     '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
   );
@@ -127,6 +129,10 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   return $form;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
   // validate email
   if (!fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
@@ -154,6 +160,10 @@ function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   $node = node_load($form_state['values']['nid']);
   $node->confirmation_page_title = check_plain($form_state['values']['title']);
@@ -184,7 +194,7 @@ function fundraiser_clone_donation_form($nid) {
     $node = node_load($nid);
     // drupal_set_message('node to clone:' . print_r($node, TRUE));
     if (isset($node->nid)) {
-      $original_node = drupal_clone($node);
+      $original_node = clone $node;
 
       $node->nid = NULL;
       $node->vid = NULL;
@@ -211,16 +221,29 @@ function fundraiser_clone_donation_form($nid) {
 
       // get profile map for the original donation form
       $result = db_query("select f.nid, f.cid, f.map_id, c.form_key from {fundraiser_component_map} f inner join
-        {webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = %d", $nid);
+        {webform_component} c on c.cid = f.cid and c.nid = f.nid where f.nid = :nid", array(':nid' => $nid));
 
       // update confirmation information
-      db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d", $original_node->confirmation_page_title, $original_node->confirmation_page_body, $original_node->redirect_url, $new_nid);
+      db_update('fundraiser')
+  ->fields(array(
+        'confirmation_page_title' => $original_node->confirmation_page_title,
+        'confirmation_page_body' => $original_node->confirmation_page_body,
+        'redirect_url' => $original_node->redirect_url,
+      ))
+  ->condition('nid', $new_nid)
+  ->execute();
 
       // loop over mapped components and find new component in cloned donation form
       while ($data = db_fetch_object($result)) {
-        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = '%s' AND nid = %d", $data->form_key, $new_nid));
+        $cid = db_query("SELECT cid FROM {webform_component} WHERE form_key = :form_key AND nid = :nid", array(':form_key' => $data->form_key, ':nid' => $new_nid))->fetchField();
         if ($cid) {
-          db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id);
+          $id = db_insert('fundraiser_component_map')
+  ->fields(array(
+            'nid' => $new_nid,
+            'cid' => $cid,
+            'map_id' => $data->map_id,
+          ))
+  ->execute();
         }
       }
 
@@ -239,7 +262,7 @@ function fundraiser_clone_donation_form($nid) {
  * Form builder. Configure fundraiser.
  *
  */
-function fundraiser_admin_settings() {
+function fundraiser_admin_settings($form, &$form_state) {
 
   $description = 'Use this option if you want donations to be exported to Salesforce.';
   $attributes = array();
@@ -249,17 +272,17 @@ function fundraiser_admin_settings() {
   }
 
   $form['fundraiser_development_mode'] = array(
-   '#type' => 'checkbox',
-   '#title' => t('Development mode'),
-   '#default_value' => variable_get('fundraiser_development_mode', 0),
-   '#description' => t('Development mode allows you to access donation forms over HTTP.'),
+    '#type' => 'checkbox',
+    '#title' => t('Development mode'),
+    '#default_value' => variable_get('fundraiser_development_mode', 0),
+    '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
 
   $form['fundraiser_default_minimum'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Default minimum donation amount'),
-   '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
-   '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
+    '#type' => 'textfield',
+    '#title' => t('Default minimum donation amount'),
+    '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
+    '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
   );
 
   $form['fundraiser_salesforce_integration'] = array(
@@ -278,36 +301,36 @@ function fundraiser_admin_settings() {
   );
 
   $form['fundraiser_gateway_messages'] = array(
-   '#type' => 'checkbox',
-   '#title' => t('Display gateway messages'),
-   '#default_value' => variable_get('fundraiser_gateway_messages', 1),
-   '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
+    '#type' => 'checkbox',
+    '#title' => t('Display gateway messages'),
+    '#default_value' => variable_get('fundraiser_gateway_messages', 1),
+    '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
   );
 
   $form['fundraiser_receipt_bcc'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Donation receipt bcc email address'),
-   '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
-   '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
+    '#type' => 'textfield',
+    '#title' => t('Donation receipt bcc email address'),
+    '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
+    '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
   );
 
   $form['fundraiser_cc_expiration_message'] = array(
-   '#type' => 'fieldset',
-   '#title' => t('Credit card expiration email'),
-   '#collapsible' => TRUE,
+    '#type' => 'fieldset',
+    '#title' => t('Credit card expiration email'),
+    '#collapsible' => TRUE,
   );
 
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Email subject'),
-   '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
+    '#type' => 'textfield',
+    '#title' => t('Email subject'),
+    '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
   );
 
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
-   '#type' => 'textarea',
-   '#title' => t('Email body'),
-   '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
-   '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
+    '#type' => 'textarea',
+    '#title' => t('Email body'),
+    '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
+    '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
   );
 
   $form['fundraiser_cc_expiration_message']['tokens'] = array(
@@ -318,6 +341,7 @@ function fundraiser_admin_settings() {
     '#collapsed' => TRUE,
   );
 
+  // TODO Please change this theme call to use an associative array for the $variables parameter.
   $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
     '#value' => theme('token_help', 'user'),
   );
@@ -365,6 +389,10 @@ function fundraiser_admin_settings() {
 /*
  * Creates a list of all donation forms on the site
  */
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_donation_form_list() {
   global $user;
   $result = db_query("SELECT n.nid, n.uid, n.title, f.internal_name, n.created, n.changed FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid ORDER BY n.changed DESC");
@@ -383,10 +411,14 @@ function fundraiser_donation_form_list() {
     $rows[] = array($data->title, $data->internal_name, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
   }
 
-  $output = theme('table', $header, $rows);
+  $output = theme('table', array('header' => $header, 'rows' => $rows));
   return $output;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_monthly_report() {
   global $base_url;
   if ($_SESSION['fundraiser_report_filters']) {
@@ -422,7 +454,7 @@ function fundraiser_monthly_report() {
               inner join {uc_order_products} op on op.order_id = u.order_id
               inner join {fundraiser_webform_order} wo on wo.order_id = u.order_id
               inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.webform_nid
-              where u.order_status = 'payment_received' and u.created between %d and %d
+              where u.order_status = 'payment_received' and u.created between :start_date and :end_date 
             union select
               r.order_id,
               u.uid,
@@ -452,8 +484,8 @@ function fundraiser_monthly_report() {
               inner join {uc_order_products} op on op.order_id = u.order_id
               inner join {fundraiser_webform_recurring_order} wo on wo.order_id = u.order_id
               inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.nid
-              where u.order_status = 'payment_received' and r.next_charge between %d and %d order by order_id";
-    $result = db_query($sql, $start_date, $end_date, $start_date, $end_date);
+              where u.order_status = 'payment_received' and r.next_charge between :start_date and :end_date order by order_id";
+    $result = db_query($sql, array(':start_date' => $start_date, ':end_date' => $end_date));
   }
 
   $header = array('Order Id', 'Opportunity Id', 'Uid', 'First Name', 'Last Name', 'Email', 'Address', 'Address 2', 'City', 'Country', 'State/Province', 'Postal Code', 'Payment Date', 'Amount', 'Donation Form', 'URL', 'Market Source', 'Campaign ID', 'CC Last Four', 'CC Type', 'CC Exp Month', 'CC Exp Year');
@@ -514,7 +546,7 @@ function fundraiser_monthly_report() {
     $output = drupal_get_form('fundraiser_report_form');
     if ($_SESSION['fundraiser_report_filters']) {
       $output .= '<h3>Date Range: ' . date('m/d/Y', $start_date) . ' - ' . date('m/d/Y', $end_date) . '</h3>';
-      $output .= theme('table', $header, $rows);
+      $output .= theme('table', array('header' => $header, 'rows' => $rows));
     }
     else {
       $output .= '<h4>To get started, use the filter form to select the dates for your report.</h4>';
@@ -523,10 +555,14 @@ function fundraiser_monthly_report() {
   }
 }
 
-function fundraiser_report_form() {
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
+function fundraiser_report_form($form) {
 
-  $from_date_default = $_SESSION['fundraiser_report_filters']['from_date'] ? $_SESSION['fundraiser_report_filters']['from_date'] : time();
-  $to_date_default = $_SESSION['fundraiser_report_filters']['to_date'] ? $_SESSION['fundraiser_report_filters']['to_date'] : time();
+  $from_date_default = $_SESSION['fundraiser_report_filters']['from_date'] ? $_SESSION['fundraiser_report_filters']['from_date'] : REQUEST_TIME;
+  $to_date_default = $_SESSION['fundraiser_report_filters']['to_date'] ? $_SESSION['fundraiser_report_filters']['to_date'] : REQUEST_TIME;
 
   $form['filters'] = array(
     '#type' => 'fieldset',
@@ -573,6 +609,10 @@ function fundraiser_report_form() {
   return $form;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function fundraiser_report_form_submit($form, &$form_state) {
 
   $export = array_shift($form_state['values']['export']);
@@ -617,8 +657,4 @@ function fundraiser_update_cron_settings($form, $form_state) {
     menu_rebuild();
   }
 }
-']['fundraiser_standalone_cron_enabled']);
-    // Refresh menu cache.
-    menu_rebuild();
-  }
-}
+fundraiser_standalone_cron_enabled;
