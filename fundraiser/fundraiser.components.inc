@@ -117,10 +117,11 @@ function fundraiser_recurring_master_order_overview() {
   if (empty($rows[1])) {
     //we're actually looking at the order id and not the master_order_id
     $results = db_query('SELECT fr.*, u.name, uo.order_total FROM {fundraiser_recurring} fr ' .
-    'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id ' .
-    'INNER JOIN {users} u on u.uid = uo.uid ' .
-    'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
-    'ORDER BY fr.order_id ASC', array(':order_id' => arg(3)));
+      'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id ' .
+      'INNER JOIN {users} u on u.uid = uo.uid ' .
+      'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
+      'ORDER BY fr.order_id ASC',
+    array(':order_id' => arg(3)));
     unset($rows);
     foreach ($results as $result) {
       $rows[] = (array) $result;
@@ -154,12 +155,12 @@ function fundraiser_recurring_master_order_overview() {
 }
 
 function fundraiser_recurring_user_overview() {
-
-  $resource = db_query("select master_order_id,fundraiser_recurring.order_id,uc_orders.order_total, next_charge,uid, gateway_resp
-    from {fundraiser_recurring}
-    inner join uc_orders on uc_orders.order_id=fundraiser_recurring.order_id
-    where uc_orders.uid=%d
-    order by master_order_id desc, fundraiser_recurring.order_id asc", arg(1));
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+  $results = db_query('SELECT fr.master_order_id, fr.order_id, uo.order_total, fr.next_charge, uo.uid, fr. gateway_resp FROM {fundraiser_recurring} fr ' .
+    'INNER JOIN {uc_orders} uo on uo.order_id = fr.order_id '.
+    'WHERE uo.uid = :uid '.
+    'ORDER BY fr.master_order_id DESC, fr.order_id ASC',
+  array(':uid' => arg(1)));
 
   $output = "<h2>Recurring Payment Schedule</h2>";
   $output .= "<table>
@@ -174,7 +175,8 @@ function fundraiser_recurring_user_overview() {
   </thead>
   ";
 
-  for ($i = 1; $rows[$i] = db_fetch_array($resource); $i++) {
+  foreach ($results as $result) {
+    $rows[] = (array) $result;
   }
 
   for ($i = 1; $i < count($rows); $i++) {
@@ -195,21 +197,18 @@ function fundraiser_recurring_user_overview() {
     <td><a href='/user/" . $rows[$i]['uid'] . "/recurring/edit/" . $rows[$i]['master_order_id'] . "'>Edit Payment Info</a></td>
     </tr>";
   }
-
   $output .= "</table>";
-
   return $output;
-
 }
 
 function _processed_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and gateway_resp = 'success'", $order_id));
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = :order_id AND gateway_resp = \'success\'',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 function _remaining_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order) {
@@ -376,7 +375,7 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
   $orders_changed = array();
   $vault_guid = '';
 
-  while ($row = db_fetch_object($orders)) {
+  foreach ($orders as $row) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
 
@@ -434,14 +433,13 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
   if (module_exists('sf_donation')) {
     sf_donation_update_donation_billing($orders_changed);
   }
-
   drupal_set_message(t('Billing information for all pending orders has been updated.'));
 }
 
 function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
   // get the amount of a pending donation because the older ones may be out of date
-  $donation_amount = db_result(db_query("select order_total from {uc_orders}
-    where order_id = %d", $master_order_id));
+  $donation_amount = db_query('SELECT order_total from {uc_orders} WHERE order_id =:order_id',
+    array(':order_id' => $master_order_id))->fetchColumn();
 
   $form = array(
     '#tree' => TRUE,
@@ -493,7 +491,8 @@ function fundraiser_donation_amount_form_validate($form, &$form_state) {
   }
 
   // get minimum amount
-  $minimum = db_result(db_query("select minimum_donation_amount from {fundraiser} where nid = %d", $form_state['values']['amount']['nid']));
+  $minimum = db_query('SELECT minimum_donation_amount FROM {fundraiser} WHERE nid = :nid',
+    array(':nid' => $form_state['values']['amount']['nid']))->fetchColumn();
   if ($form_state['values']['amount']['fee_amount'] <= $minimum) {
     $minimum = money_format('%i', $minimum);
     form_set_error('amount', t("Donation amount must be greater than $$minimum"));
@@ -508,7 +507,7 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
 
-  while ($row = db_fetch_object($orders)) {
+  foreach ($orders as $row) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
     $old_amount = $order->order_total;
@@ -577,20 +576,24 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   $reason = $form_state['values']['cancel']['reason'];
 
   // get the ids of the child orders
-  $result = _get_pending_recurring_orders($master_order_id);
+  $orders = _get_pending_recurring_orders($master_order_id);
 
   // cancel all child orders that are still pen
-  $sql = "UPDATE {uc_orders} u inner join {fundraiser_recurring} f on f.order_id = u.order_id
-  SET u.order_status = 'canceled' where f.master_order_id = %d and u.order_status = 'pending_future_payment'";
-  db_query($sql, $master_order_id);
+  db_query('UPDATE {uc_orders} u '.
+    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
+    'SET u.order_status = \'canceled\' '.
+    'WHERE f.master_order_id = :order_id AND u.order_status = \'pending_future_payment\'',
+  array(':order_id' => $master_order_id);
 
   // delete recurring information
-  $sql = "update {fundraiser_recurring} set gateway_resp = 'canceled', cancellation_reason = '%s' where master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')";
-  db_query($sql, $reason, $master_order_id);
+  db_query('UPDATE {fundraiser_recurring} '.
+    'SET gateway_resp = \'canceled\', cancellation_reason = :reason '.
+    'where master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+    array(':reason' => $reason, ':order_id' => $master_order_id));
 
   $order_ids = array();
   // add a comment to the canceled orders
-  while ($data = db_fetch_object($result)) {
+  foreach ($orders as $data) {
     $order_ids[] = $data->order_id;
     uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
   }
@@ -599,10 +602,7 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   if (module_exists('sf_donation')) {
     sf_donation_canel_recurring_donations($master_order_id);
   }
-
   drupal_set_message(t('All future payments cancelled.'));
-
-  //drupal_goto("user/$user->uid/recurring_overview");
 }
 
 function fundraiser_recurring_edit_forms() {
@@ -621,8 +621,10 @@ function fundraiser_recurring_user_edit_forms() {
 
 function _recurring_donation_edit_forms($master_order_id) {
   // we need an unprocessed child order for billing information
-  $child_order_id = db_result(db_query("select order_id from {fundraiser_recurring}
-    where master_order_id = %d and gateway_resp is null limit 1", $master_order_id));
+  $child_order_id = db_query('SELECT order_id FROM {fundraiser_recurring} '.
+    'WHERE master_order_id = :order_id and gateway_resp IS NULL LIMIT 1',
+    array(':order_id' => $master_order_id))->fetchColumn();
+
   $order = uc_order_load($child_order_id);
   $nid = $order->products[0]->nid;
 
@@ -644,7 +646,7 @@ function _get_billing_information($master_order_id, $order) {
   $orders_remaining = _remaining_recurring_charge_count($master_order_id);
   $orders_processed = _processed_recurring_charge_count($master_order_id);
   $donation_amount = '$' . money_format('%i', $order->order_total);
-
+// TODO come back to this - shouldn't this be in a themed template display? - SeH 1/11/12
   $billing_str = "";
   $billing_str .= "<div class='order-pane pos-left'>";
   $billing_str .= "<div class='order-pane-title'>Bill to:</div>";
@@ -668,10 +670,8 @@ function _get_billing_information($master_order_id, $order) {
 }
 
 function _get_pending_recurring_orders($order_id) {
-  // get the ids of the child orders
-  $sql = "SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND
-    (gateway_resp IS NULL OR gateway_resp = 'failed')";
-
-  return db_query($sql, $order_id);
+ return db_query('SELECT order_id FROM {fundraiser_recurring} '.
+   'WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+   array(':order_id' => $order_id));
 }
 
