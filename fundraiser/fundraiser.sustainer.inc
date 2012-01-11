@@ -55,8 +55,11 @@ function fundraiser_recurring_user_edit_forms($uid, $order_id) {
  */
 function _fundraiser_get_recurring_orders(&$user) {
   $orders = array();
-  $result = db_query("SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id  WHERE recurring_status != %d AND u.uid = %d", DONATION_NON_RECURRING, $user->uid);
-  while ($data = db_fetch_object($result)) {
+  $results = db_query('SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f '.
+    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
+    'WHERE recurring_status != :status AND u.uid = :uid',
+    array(':status' => DONATION_NON_RECURRING, ':uid' => $user->uid));
+  foreach($results as $data) {
     $created = _fundraiser_get_start_date($data->order_id);
     $next_charge = _fundraiser_get_next_charge_date($data->order_id);
     $last_charge = _fundraiser_get_last_charge_date($data->order_id);
@@ -106,7 +109,9 @@ function _fundraiser_get_billing_information($master_order_id, &$order) {
  * Gets an unprocessed order in a recurring donation series.
  */
 function _fundraiser_get_unprocessed_order($master_order_id) {
-  $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'canceled') limit 1", $master_order_id));
+  $order_id = db_query('SELECT order_id FROM {fundraiser_recurring} ' .
+   'WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'canceled\') LIMIT 1',
+   array(':order_id' => $master_order_id))->fetchColumn();
   if ($order_id) {
     return uc_order_load($order_id);
   }
@@ -117,16 +122,18 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
  * Counts the number of processed recurring orders.
  */
 function _fundraiser_processed_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and gateway_resp = 'success'", $order_id));
+  return db_query('SELECT count(order_id) from {fundraiser_recurring} '.
+   'WHERE master_order_id = :order_id AND gateway_resp = \'success\'',
+   array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
  * Counts the number of unprocessed orders remaining.
  */
 function _fundraiser_remaining_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
+  return db_query('SELECT count(order_id) from {fundraiser_recurring} '.
+   'WHERE master_order_id = :order_id AND (gateway_resp IS NULL or gateway_resp = \'failed\')',
+   array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
@@ -135,18 +142,14 @@ function _fundraiser_remaining_recurring_charge_count($order_id) {
 function _fundraiser_recurring_payment_schedule($master_order_id) {
   $orders = array();
 
-  $result = db_query(
-  "
-    SELECT u.order_total as amount, f.next_charge as charge_date, f.gateway_resp as status
-    FROM {fundraiser_recurring} f
-    INNER JOIN {uc_orders} u ON u.order_id = f.order_id
-    WHERE f.master_order_id = %d
-    ORDER BY f.next_charge asc
-  ",
-  $master_order_id
-  );
+  $results = db_query('SELECT u.order_total AS amount, f.next_charge AS charge_date, f.gateway_resp AS status FROM {fundraiser_recurring} f '.
+    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
+    'WHERE f.master_order_id = :order_id ' .
+    'ORDER BY f.next_charge ASC',
+    array(':order_id' => $master_order_id));
 
-  while ($data = db_fetch_array($result)) {
+  foreach($results as $result) {
+    $data = (array) $result;
     $orders[] = $data;
   }
   return $orders;
@@ -156,7 +159,7 @@ function _fundraiser_recurring_payment_schedule($master_order_id) {
  * Determines whether or not a recurring donation series is cancelled.
  */
 function _fundraiser_recurring_payment_cancelled($order_id) {
-  $status = db_result(db_query("SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $status = db_query('SELECT recurring_status FROM {fundraiser_webform_order} WHERE order_id =:order_id', array(':order_id' => $order_id))->fetchColumn();
   if ($status == DONATION_CANCELLED) {
     return TRUE;
   }
@@ -170,28 +173,35 @@ function _fundraiser_recurring_payment_cancelled($order_id) {
  */
 function _fundraiser_get_current_donation_amount($order_id) {
   // get amound from the next unprocessed recurring donation
-  return db_result(db_query("SELECT u.order_total FROM {uc_orders} u INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id WHERE (f.gateway_resp IS NULL OR f.gateway_resp = 'canceled') AND f.master_order_id = %d ORDER BY next_charge LIMIT 1", $order_id));
+  return db_query('SELECT u.order_total FROM {uc_orders} u '. 
+    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
+    'WHERE (f.gateway_resp IS NULL OR f.gateway_resp = \'canceled\') AND f.master_order_id = :order_id '.
+    'ORDER BY next_charge LIMIT 1',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
  * Gets the next charge date of a recurring donation.
  */
 function _fundraiser_get_next_charge_date($order_id) {
-  return db_result(db_query("SELECT min(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
+  return db_query('SELECT min(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
  * Gets the last payment date of a recurring donation.
  */
 function _fundraiser_get_last_charge_date($order_id) {
-  return db_result(db_query("SELECT max(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
+  return db_query('SELECT max(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
  * Gets the start date of a recurring donation.
  */
 function _fundraiser_get_start_date($order_id) {
-  return db_result(db_query("SELECT created FROM {uc_orders} WHERE order_id = %d", $order_id));
+  return db_query('SELECT created FROM {uc_orders} WHERE order_id = :order_id',
+    array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
@@ -200,9 +210,11 @@ function _fundraiser_get_start_date($order_id) {
 function _fundraiser_expand_date($element) {
   // Default to current date
   if (empty($element['#value'])) {
-    $element['#value'] = array('day' => format_date(time(), 'custom', 'j'),
-                            'month' => format_date(time(), 'custom', 'n'),
-                            'year' => format_date(time(), 'custom', 'Y'));
+    $element['#value'] = array(
+      'day' => format_date(time(), 'custom', 'j'),
+      'month' => format_date(time(), 'custom', 'n'),
+      'year' => format_date(time(), 'custom', 'Y')
+    );
   }
 
   $element['#tree'] = TRUE;
@@ -242,6 +254,4 @@ function _fundraiser_expand_date($element) {
   }
 
   return $element;
-}
-ment;
 }
