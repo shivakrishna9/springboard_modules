@@ -2209,8 +2209,17 @@ function fundraiser_action_info_alter(&$info) {
  */
 function fundraiser_webform_select_options_info() {
   $items = array();
-  include 'fundraiser.options.inc';
-  return _fundraiser_webform_select_options_info();
+  $items['uc_states'] = array(
+    'title' => t('Ubercart defined states'),
+    'options callback' => 'fundraiser_options_uc_states',
+    'file' => 'fundraiser.options.inc',
+  );
+  $items['uc_countries'] = array(
+    'title' => t('Ubercart defined countries'),
+    'options callback' => 'fundraiser_options_uc_countries',
+    'file' => 'fundraiser.options.inc',
+  );
+  return $items;
 }
 
 /**
