@@ -37,7 +37,7 @@ function authorizenet_update_billing_information($reference_id, $billing_info) {
  * Sage billing information update function.
  */
 function sage_update_billing_information($reference_id, $billing_info) {
-  $vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $reference_id));
+  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
   $data = array(
     'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
     'billing_street1' => $billing_info['address_1'],
@@ -50,14 +50,10 @@ function sage_update_billing_information($reference_id, $billing_info) {
     'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
     'cc_exp_year' => $billing_info['card_exp_date']['year'],
   );
-
   $response = uc_sage_vault_update($vault_id, $data);
   // TODO: Need to add some better returns to the uc_sage module
   return TRUE;
 }
-
-
-
 
 /**
  * Refund tab on Orders
@@ -69,7 +65,6 @@ function fundraiser_show_refund_form($order) {
   return drupal_get_form('fundraiser_refund', $order);
 }
 
-
 /**
  * Refund form
  */
@@ -78,8 +73,7 @@ function fundraiser_refund(&$form_state, $order) {
   $form['#order_id'] = $order->order_id;
 
   // Determine how much has been paid, less previous refunds
-  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
-  $total_paid = db_result(db_query($sql, array($order->order_id)));
+  $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order->order_id))->fetchColumn();
 
   $context = array(
     'revision' => 'formatted-original',
@@ -87,15 +81,18 @@ function fundraiser_refund(&$form_state, $order) {
   );
 
   // Get payment info
-  $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));
+  $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
+    'LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id ' .
+    'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order->order_id))->fetchAssoc();
 
   // If not payment info was found, check if it was a recurring order
   if (!$payment_info) {
-    $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));
+    $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
+      'LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id ' .
+      'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order->order_id))->fetchAssoc();
   }
 
-  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
-  $previous_refunds = db_result(db_query($sql, array($order->order_id)));
+  $previous_refunds = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id AND amount < 0', array(':order_id' => $order->order_id))->fetchColumn();
 
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
@@ -137,11 +134,11 @@ function fundraiser_refund(&$form_state, $order) {
     }
   }
 
-
   $form['refund_options'] = array(
     '#type' => 'fieldset',
     '#title' => t('Refund Options'),
-    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
+     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
@@ -158,7 +155,8 @@ function fundraiser_refund(&$form_state, $order) {
       $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
       // Even once the payment is made, they won't be able to refund it
       if (!$can_refund) {
-        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to make refunds after payments are processed on this order.';
+        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+          'make refunds after payments are processed on this order.';
       }
     }
     $form['refund_options']['no_refund_explanation'] = array(
@@ -230,21 +228,18 @@ function fundraiser_refund_validate($form, &$form_state) {
       // Make sure they don't try to refund more than was paid
       $order_id = $form['#order_id'];
       // Determine how much has been paid, less previous refunds
-      $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
-      $total_paid = db_result(db_query($sql, array($order_id)));
+      $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
       if ($amount > $total_paid) {
         $context = array(
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
-        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no more than that can be refunded.', array('@paid' => uc_price($total_paid, $context))));
+        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
+          'more than that can be refunded.', array('@paid' => uc_price($total_paid, $context))));
       }
     }
-
-
   }
 }
-
 
 /**
  * Submit the refund form
@@ -256,9 +251,7 @@ function fundraiser_refund_submit($form, &$form_state) {
   $order = uc_order_load($order_id);
 
   // Determine how much has been paid, less previous refunds
-  $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
-  $total_paid = db_result(db_query($sql, array($order_id)));
-
+  $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
 
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
@@ -282,7 +275,11 @@ function fundraiser_refund_submit($form, &$form_state) {
   $amount = abs($amount) * -1;
 
   // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order_id, $order_id));
+  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} ' .
+    'WHERE order_id = :order_id ' .
+    'UNION '.
+    'SELECT gateway, txn_id FROM {fundraiser_recurring} '. 
+    'WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchObject();
 
   if (module_exists('gateway_manager')) {
     $info = gateway_manager_gateway_info($payment_details->gateway);
@@ -334,7 +331,8 @@ function fundraiser_refund_submit($form, &$form_state) {
     drupal_write_record('fundraiser_refund', $refund);
 
     // Set order status to Refunded or Partially Refunded
-    db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
+    db_query("UPDATE {uc_orders} SET order_status= :order_status where order_id = :order_id",
+      array(':order_status' => $new_order_status, ':order_id' => $order_id));
 
     // If using the Salesforce queue, queue up the updates
     if (module_exists('queue_api')) {
@@ -355,6 +353,4 @@ function fundraiser_refund_submit($form, &$form_state) {
     $form_state['rebuild'] = TRUE;
     $form_state['values']['abort'] = TRUE;
   }
-}
-}
 }
