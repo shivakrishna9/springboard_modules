@@ -319,7 +319,6 @@ function fundraiser_access_clone() {
  * Access callback, returns TRUE if current node is a donation form.
  */
 function fundraiser_mapping_form_access($node) {
-  // TODO make sure this is consistantly used throughout code.
   return $node->type == 'donation_form';
 }
 
@@ -568,10 +567,25 @@ function fundraiser_validate($node, $form, &$form_state) {
       }
     }
   }
-  $node->donation_amounts = implode(',', $donation_amounts);
   // TODO: from http://api.drupal.org/api/drupal/modules--node--node.api.php/function/hook_validate/7
   // Note: Changes made to the $node object within your hook implementation will have no effect. 
   // The preferred method to change a node's content is to use hook_node_presave() instead.
+}
+
+/**
+ * Implements of hook_node_presave().
+ */
+function fundraiser_node_presave($node) {
+  if ($node->type == 'donation_form') {
+    $donation_amounts = array();
+    for ($i = 0; $i < $node->amount_delta; ++$i) {
+      $value = 'amount_' . $i;
+      if ($node->$value) {
+        $donation_amounts[] = $node->$value;
+      }
+    }
+    $node->donation_amounts = implode(',', $donation_amounts);
+  }
 }
 
 /**
