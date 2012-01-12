@@ -128,12 +128,6 @@ function fundraiser_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['fundraiser_ask/js'] = array(
-    'page callback' => '_fundraiser_ask_ahah',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
   $items['fundraiser_changestate/js'] = array(
     'page callback' => 'fundraiser_changestate',
     'type' => MENU_CALLBACK,
@@ -382,16 +376,6 @@ function fundraiser_node_info() {
   );
 }
 
-// TODO: Move this call into fundraiser_ubercart module, and make it into a hook.
-// TODO: Wray gateway query into it's own function to allow for an alter to be provided as well?
-function fundraiser_fundraiser_get_gateway_info() {
-  return _payment_gateway_list('', TRUE);
-// From Ubsercart http://api.lullabot.com/_payment_gateway_list
-// Is ultimately configured by http://api.lullabot.com/hook_payment_gateway
-// Returns in the format:
-// $gateway = array('id', 'title', 'credit', 'credit_refund');
-}
-
 /**
  * Implements hook_form().
  */
@@ -439,7 +423,6 @@ function fundraiser_form($node, &$form_state) {
     '#collapsed' => TRUE,
   );
 
-  /* add amount #aha */
   $form['fundraiser_settings']['amount_wrapper'] = array(
     '#type' => 'fieldset',
     '#title' => t('Ask amounts'),
@@ -462,8 +445,8 @@ function fundraiser_form($node, &$form_state) {
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
   }
 
-  // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
-  // how many field sets to build.
+  // If we're editing an existing donation form that's had new fields added we use the current 
+  // delta (updated by the more button) to tell the form how many field sets to build.
   if ($edit['values']['amount_delta']) {
     $delta = $edit['values']['amount_delta'];
   }
@@ -493,15 +476,15 @@ function fundraiser_form($node, &$form_state) {
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
-    '#description' => t("Click here to add more choices."),
-    '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
-    '#ahah' => array(
-      'path' => 'fundraiser_ask/js',
+    '#description' => t('Click here to add more choices.'),
+    '#submit' => array('_fundraiser_form_amount_no_js_submit'), // If no javascript action.
+    '#ajax' => array(
+      'callback' => '_fundraiser_form_amount_ajax_submit',
       'wrapper' => 'ask-amounts',
       'method' => 'replace',
       'effect' => 'fade',
     ),
-  );//TODO update this to use D7 ahah.
+  );
 
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -560,6 +543,33 @@ function fundraiser_form($node, &$form_state) {
   return $form;
 }
 
+/**
+ * Callback handler for the donation ask amount form #ajax.
+ */
+function _fundraiser_form_amount_ajax_submit($form, $form_state) { {
+  $amount_form = $form['fundraiser_settings']['amount_wrapper']['amounts'];
+  // Unset the prefix / suffix to avoid duplication of divs. TODO - test that this is needed.
+  unset($amount_form['#prefix'], $amount_form['#suffix']);
+  $output = theme('status_messages') . drupal_render($amount_form);
+  return $output;
+}
+
+/**
+ * Submit handler for ask amount more button if no JS in place.
+ */
+function _fundraiser_form_amount_no_js_submit($form, &$form_state) {
+  unset($form_state['submit_handlers']);
+  $delta = $form_state['values']['amount_delta'];
+  for ($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
+    if (!$form_state['values']['amount_' . $i]) {
+      --$delta;
+    }
+  }
+  ++$form_state['values']['amount_delta'];
+  form_execute_handlers('submit', $form, $form_state);
+  $values = $form_state['values'];
+  $form_state['rebuild'] = TRUE;
+}
 
 /**
  * Implements of hook_validate().
@@ -2387,41 +2397,6 @@ function theme_fundraiser_mapping_form($form) {
 }
 
 /**
- * Callback handler for the donation ask amount form #ahah.
- */
-function _fundraiser_ask_ahah() {
-  module_load_include('inc', 'node', 'node.pages');
-  $form_state = array(
-    'storage' => NULL,
-    'submitted' => FALSE,
-  );
-  $form_build_id = $_POST['form_build_id'];
-  $amount_delta = $form_state['values']['amount_delta'];
-  $form = form_get_cache($form_build_id, $form_state);
-
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-
-  // Disable validation
-  $form['#validate'] = NULL;
-  $form_state['validate_handlers'] = NULL;
-  fundraiser_ahah_helper_disable_validation($form);
-
-  drupal_process_form($form_id, $form, $form_state);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $amount_form = $form['fundraiser_settings']['amount_wrapper']['amounts'];
-  unset($amount_form['#prefix'], $amount_form['#suffix']);
-
-  $output = theme('status_messages') . drupal_render($amount_form);
-
-  $form_state = array('submitted' => FALSE);
-  $form_build_id = $_POST['form_build_id'];
-  drupal_json(array('status' => TRUE, 'data' => $output));
-}
-
-/**
  * Generate donation ask amount fields, used by donation form #ahah
  *
  * @param $delta
@@ -2491,24 +2466,6 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
     '#suffix' => '<div class="clear-block"></div>',
   );
   return $form;
-}
-
-/**
- * Submit handler for ask amount more button.
- */
-function _fundraiser_amount_ahah_submit(&$form, &$form_state) {
-  unset($form_state['submit_handlers']);
-  $delta = $form_state['values']['amount_delta'];
-  for ($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
-    if (!$form_state['values']['amount_' . $i]) {
-      --$delta;
-    }
-  }
-  ++$form_state['values']['amount_delta'];
-
-  form_execute_handlers('submit', $form, $form_state);
-  $values = $form_state['values'];
-  $form_state['rebuild'] = TRUE;
 }
 
 /**
@@ -2860,4 +2817,13 @@ function _fundraiser_get_gateway_info() {
   $gateways = module_invoke_all('fundraiser_gateway_info');
   drupal_alter('fundraiser_gateway_info', $gateways);
   return (array) $gateways;
+}
+
+// TODO: Move this call into fundraiser_ubercart module, and make it into a hook.
+function fundraiser_fundraiser_gateway_info() {
+  return _payment_gateway_list('', TRUE);
+// From Ubsercart http://api.lullabot.com/_payment_gateway_list
+// Is ultimately configured by http://api.lullabot.com/hook_payment_gateway
+// Returns in the format:
+// $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
 }
