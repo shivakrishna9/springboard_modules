@@ -421,7 +421,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
  */
 function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
   $form_state['values']['map']['salesforce'] = $form_state['values']['map']['drupal_user_field'];
-  _capwiz_connect_save_field_mapping_save($form, &$form_state, FALSE);
+  _capwiz_connect_save_field_mapping_save($form, $form_state, FALSE);
   drupal_set_message(t('User mapping has been saved.'));
 }
 
@@ -648,7 +648,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
  * Handle submit of the action mapping form. Just calls _capwiz_connect_save_field_mapping_save()
  */
 function capwiz_connect_account_action_mapping_submit($form, &$form_state) {
-  return _capwiz_connect_save_field_mapping_save($form, &$form_state);
+  return _capwiz_connect_save_field_mapping_save($form, $form_state);
 }
   
 
