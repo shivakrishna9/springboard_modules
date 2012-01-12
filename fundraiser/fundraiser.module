@@ -121,13 +121,6 @@ function fundraiser_menu() {
     'weight' => 1,
   );
 
-  $items['fundraiser/js/%fundraiser_ahah_field'] = array(
-    'page callback' => '_fundraiser_ahah_helper_render',
-    'page arguments' => array(2),
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
   $items['fundraiser_changestate/js'] = array(
     'page callback' => 'fundraiser_changestate',
     'type' => MENU_CALLBACK,
@@ -236,7 +229,6 @@ function fundraiser_menu() {
     'page arguments' => array(3),
     'access arguments' => array('create donation forms'),
     'type' => MENU_CALLBACK,
-    'file' => 'fundraiser.admin.inc',
   );
 
   $items['node/%webform_menu/confirmation'] = array(
@@ -248,14 +240,13 @@ function fundraiser_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['node/%node/clone_form'] = array(
+  $items['node/%/clone_form'] = array(
     'title' => 'Clone',
     'description' => 'Create a new donation form that inherits settings from this form.',
     'access callback' => 'fundraiser_access_clone',
     'page callback' => 'fundraiser_clone_donation_form',
     'page arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'fundraiser.admin.inc',
   );
   return $items;
 }
@@ -550,8 +541,7 @@ function _fundraiser_form_amount_ajax_submit($form, $form_state) { {
   $amount_form = $form['fundraiser_settings']['amount_wrapper']['amounts'];
   // Unset the prefix / suffix to avoid duplication of divs. TODO - test that this is needed.
   unset($amount_form['#prefix'], $amount_form['#suffix']);
-  $output = theme('status_messages') . drupal_render($amount_form);
-  return $output;
+  return $amount_form;
 }
 
 /**
@@ -777,7 +767,7 @@ function fundraiser_view($node, $view_mode) {
 }
 
 /**
- * Helper function. Check if the current page is SSL
+ * Helper function. Check if the current page is SSL protected.
  */
 function fundraiser_is_secure() {
   return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? TRUE : FALSE;
@@ -786,13 +776,13 @@ function fundraiser_is_secure() {
 /**
  * Alter the webform component delete form to prevent the deletion of required fundraiser fields
  */
-function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state) {
-  // makes sure we are dealing with a donation form
-  if ($form['node']['#value']->type == 'donation_form') {
+function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
+  // Make sure we are dealing with a donation form.
+  if ($form['node']['#value']->type == 'donation_form') { //TODO pull this from someplace else in form
+    // TODO review this, wasn't this already required in line one? - SeH
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
     $required_fields = fundraiser_required_fields();
-
-    $cid = arg(4);
+    $cid = arg(4); // TODO pull *this* from someplace else in form.
     $component = $form['node']['#value']->webform['components'][$cid];
     // check to see if the form_key is in our required fields array
     if (in_array($component['form_key'], $required_fields)) {
@@ -804,20 +794,12 @@ function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_stat
 }
 
 /**
- * Submit handler for donation form cloning.
- */
-function fundraiser_clone_form($form, &$form_state) {
-  module_load_include('inc', 'fundraiser', 'fundraiser.admin');
-  $nid = $form['nid']['#value'];
-  fundraiser_clone_donation_form($nid);
-}
-
-/**
  * Implementation of hook_form_alter().
  */
 function fundraiser_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == 'donation_form_node_form') {
-    // TODO: write submit handler, check permissions before displaying button
+
+  // Alter the donation_form displayed on the node.
+  if ($form_id == 'donation_form_node_form' && user_access('clone donation form')) {
     $form['buttons']['clone'] = array(
       '#type' => 'submit',
       '#value' => 'Clone',
@@ -826,23 +808,28 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     );
   }
 
+  // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
     global $user;
-    profile_load_profile($user); /* explicitly load profile as of Drupal 6.19 */
+    $this_user = user_load($user->uid); // Loads profile fields.
 
     // get fundraiser info
     $node = $form['#parameters'][2];
 
-    // handle donation form submissions
+    // Handle donation form submissions.
     if ($node->type == 'donation_form' && arg(2) == 'submission') {
       // Set up a view only display of the donation amount
-      $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
+      if ('other' != $form['submitted']['donation']['amount']['#default_value']) {
+        $amount = $form['submitted']['donation']['amount']['#default_value'];
+      }
+      else {
+        $amount = $form['submitted']['donation']['other_amount']['#default_value'];
+      }
       $form['submitted']['donation']['display_amount'] = array(
         '#type' => 'markup',
         '#value' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . '$' . number_format($amount, 2) . '</div>',
       );
-
       // Show whether or not it's a recurring donation
       if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
         $recurs = $form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs' ? t('Yes') : t('No');
@@ -857,54 +844,52 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 
       // Clean up the donor info section - replace the form fields with read only info
       $form['submitted']['donor_information']['#title'] = t('Donor Information');
-
       $form['submitted']['donor_information']['first_name_readonly'] = array(
         '#type' => 'markup',
-        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' . $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
+        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' .
+          $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
       );
       $form['submitted']['donor_information']['last_name_readonly'] = array(
         '#type' => 'markup',
-        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' . $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
+        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' .
+          $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
       );
       $form['submitted']['donor_information']['email_readonly'] = array(
         '#type' => 'markup',
-        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
+        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' .
+          $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
       );
-
       $form['submitted']['donor_information']['first_name']['#prefix'] =
         $form['submitted']['donor_information']['last_name']['#prefix'] =
         $form['submitted']['donor_information']['email']['#prefix'] = '<div style="display:none">';
-
       $form['submitted']['donor_information']['first_name']['#suffix'] =
         $form['submitted']['donor_information']['last_name']['#suffix'] =
         $form['submitted']['donor_information']['email']['#suffix'] = '</div>';
-    }
+    } // End handle donation form submissions.
 
-    // handle the donation form itself
+    // Handle the donation form itself
     if ($node->type == 'donation_form' && arg(2) != 'submission') {
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js(array('file' => $base . '/js/jquery.alphanumeric.js'));
       drupal_add_js(array('file' => $base . '/js/fundraiser.js'));
       drupal_add_css(array('file' => $base . '/css/fundraiser-donation-form.css'));
 
+      // Create an data structure that will tell us exactly where each webform component lives in the FAPI array.
       $components = $node->webform['components'];
-      // create an data structure that will tell us exactly where each webform component lives in the FAPI array
       $component_hierarchy = fundraiser_parse_components($node->nid, $components);
 
-      // preload any fields if the user is logged in
+      // Preload any fields if the user is logged in.
       if (user_is_logged_in()) {
-        // load up map
+        // Load up any mapped profile fields.
         $map = fundraiser_user_map($node->nid);
-        // load up any mapped profile fields
         foreach ($map as $field_key => $profile_key) {
-          $field = &fundraiser_find_field($form, $component_hierarchy[$field_key]);
+          $field = fundraiser_find_field($form, $component_hierarchy[$field_key]);
           if (empty($field['#default_value'])) {
             if (property_exists($user, $profile_key)) {
               switch ($field['#type']) {
                 case 'checkboxes':
                   $field['#default_value'] = array($user->$profile_key);
                   break;
-
                 default:
                   $field['#default_value'] = $user->$profile_key;
               }
@@ -913,15 +898,14 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         }
       }
 
-      // combine expiration month and year into a single component
-      $cc_exp_month_field = &fundraiser_find_field($form, $component_hierarchy['card_expiration_month']);
-      $cc_exp_year_field = &fundraiser_find_field($form, $component_hierarchy['card_expiration_year']);
-      $cc_info_field = &fundraiser_find_field($form, $component_hierarchy['credit_card_information']);
-
+      // Combine expiration month and year into a single component.
+      $cc_exp_month_field = fundraiser_find_field($form, $component_hierarchy['card_expiration_month']);
+      $cc_exp_year_field = fundraiser_find_field($form, $component_hierarchy['card_expiration_year']);
+      $cc_info_field = fundraiser_find_field($form, $component_hierarchy['credit_card_information']);
       $cc_exp_month_field['#default_value'] = date('n');
       $cc_exp_year_field['#default_value'] = date('Y');
 
-      // make sure the year field always has a good range of years
+      // Make sure the year field always has a good range of years.
       $this_year = date('Y');
       $years = array($this_year => $this_year);
       for ($i = 1; $i <= 5; $i++) {
@@ -929,7 +913,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       }
       $cc_exp_year_field['#options'] = $years;
 
-      // check to see if the credit card information fieldset still exists because it may have been removed
+      // Check to see if the credit card information fieldset still exists because it may have been removed.
       if (is_array($cc_info_field)) {
         $cc_info_field['expiration_date'] = array();
         $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
@@ -938,60 +922,159 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
       }
       else {
-        // add the new expiration_date directly to the form with the same weight as the cc_exp_month field
+        // Add the new expiration_date directly to the form with the same weight as the cc_exp_month field.
         $form['expiration_date'] = array();
         $form['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
         $form['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
         $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
         $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
       }
-      // remove old fields after moving them
+      // Remove old fields after moving them.
       $cc_exp_month_field = NULL;
       $cc_exp_year_field = NULL;
 
-      // alter country drop down to populate zone drop down via ahah
-      $country_field = &fundraiser_find_field($form, $component_hierarchy['country']);
-      $country_field['#ahah'] = array(
-        'path' => 'fundraiser/js/state',
+      // Alter country drop down to populate zone drop down via ahah.
+      $country_field = fundraiser_find_field($form, $component_hierarchy['country']);
+      $country_field['#ajax'] = array(
+        'callback' => '_fundraiser_form_webform_client_state_ajax_submit',
         'wrapper' => 'zone-select-wrapper',
       );
-
-      // add default country & state values from user profile
+  
+      // Add default country & state values from user profile
       $fids = _fundraiser_get_profile_location_fields();
       if ($fids['country'] && $user->profile_country) {
       //TODO come back to these later, determine if need to be in own function.
-        $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = :uid AND pv.fid = :fid', array(':uid' => $user->uid, ':fid' => $fids['country'])));
+      // YES. These need to be hooked, as they are ubercart dependant.
+        $country_field['#default_value'] = db_query('SELECT uc.country_id FROM {uc_countries} uc '.
+          'INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = :uid AND pv.fid = :fid',
+          array(':uid' => $user->uid, ':fid' => $fids['country']))->fetchColumn();
       }
 
-      // add a wrapper around the state field so it can be replaced via ajax
-      $state_field = &fundraiser_find_field($form, $component_hierarchy['state']);
+      // Add a wrapper around the state field so it can be replaced via ajax.
+      $state_field = fundraiser_find_field($form, $component_hierarchy['state']);
       if ($fids['state'] && $user->profile_state) {
-        $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = :uid AND pv.fid = :fid', array(':uid' => $user->uid, ':fid' => $fids['state'])));
+        $state_field['#default_value'] = db_query('SELECT uz.zone_id FROM {uc_zones} uz '.
+          'INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = :uid AND pv.fid = :fid',
+          array(':uid' => $user->uid, ':fid' => $fids['state']))->fetchColumn();
       }
       $state_field['#prefix'] = '<div id="zone-select-wrapper">';
       $state_field['#suffix'] = '</div>';
 
-      // flatten form state array so that it is easier to work with
+      // Flatten form state array so that it is easier to work with
       $fields = _fundraiser_array_flatten($form_state);
-      // country/state dependant drop down code
+      // Country/state dependant drop down code
       if (array_key_exists('country', $fields)) {
-        $country_field['#default_value'] = $fields['country']; // user selected country
-        // populate via Ahah!
+        // User selected country
+        $country_field['#default_value'] = $fields['country'];
+        // Populate via Ahah above. (See TODO)
         $state_field['#options'] = fundraiser_get_country_zones($fields['country']);
       }
       else {
-        $state_field['#options'] = fundraiser_get_country_zones($country_field['#default_value']); // default country as defined in the component definition
+        $state_field['#options'] = fundraiser_get_country_zones($country_field['#default_value']);
       }
 
-      // add a validation handler and two additional submit handlers
+      // Add a validation handler and two additional submit handlers
       $form['#validate'][] = 'fundraiser_webform_validate';
       $form['#submit'][] = 'fundraiser_webform_submit';
       $form['#submit'][] = 'fundraiser_confirmation';
-      $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/images/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
+      // And lastly add a user facing message for submit.
+      $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
+        theme('image', drupal_get_path('module', 'fundraiser') . '/images/padlock.gif') .
+        t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
+        '</div>';
+    } // End handle the donation form itself.
+  }  // End alter the webform client form.
+  return $form;
+}
+
+/**
+ * AHAH callback for dealing with changes to the donation form.
+ */
+function _fundraiser_form_webform_client_state_ajax_submit($form, $form_state) {
+  // Get the form item we want to render.
+  $nid = $form['#parameters'][2]->nid; //TODO make sure this is the nid.
+  $form_item = fundraiser_find_field($form, fundraiser_parse_component($nid, 'state'));
+  return $form_item;
+}
+
+/**
+ * Submit handler for donation form cloning.
+ */
+function fundraiser_clone_form($form, &$form_state) {
+  $nid = $form['nid']['#value'];
+  fundraiser_clone_donation_form($nid);
+}
+
+/**
+ * Clones a donation form and related fieldmaps. Called from button or by menu paths.
+ */
+function fundraiser_clone_donation_form($nid) {
+  // Check that the nid is numeric, and then load it up to clone.
+  if (is_numeric($nid)) {
+    global $user;
+    $node = node_load($nid);
+    if (isset($node->nid)) {
+      $original_node = clone $node;
+      $node->nid = NULL;
+      $node->vid = NULL;
+      $node->name = $user->name;
+      $node->uid = $user->uid;
+      $node->created = NULL;
+      $node->menu = NULL;
+      $node->book['mlid'] = NULL;
+      $node->path = NULL;
+      $node->files = array();
+      $node->title = t('Clone of !title', array('!title' => $node->title));
+      $node->internal_name = 'Clone of ' . $original_node->internal_name;
+      $node->is_being_cloned = TRUE;
+      if (variable_get('clone_reset_' . $node->type, FALSE)) {
+        $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+        // Fill in the default values.
+        foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
+          $node->$key = in_array($key, $node_options);
+        }
+      }
+      node_save($node);
+      $new_nid = $node->nid;
+
+      // Update confirmation information
+      db_update('fundraiser')
+      ->fields(array(
+        'confirmation_page_title' => $original_node->confirmation_page_title,
+        'confirmation_page_body' => $original_node->confirmation_page_body,
+        'redirect_url' => $original_node->redirect_url,
+      ))
+      ->condition('nid', $new_nid)
+      ->execute();
+      
+      // Get profile map for the original donation form
+      $results = db_query('SELECT f.nid, f.cid, f.map_id, c.form_key FROM {fundraiser_component_map} f ' .
+        'INNER JOIN {webform_component} c on c.cid = f.cid AND c.nid = f.nid ' .
+        'WHERE f.nid = :nid',
+        array(':nid' => $nid));
+
+      // Loop over mapped components and find new component in cloned donation form
+      foreach ($results as $data) {
+        $cid = db_query('SELECT cid FROM {webform_component} '.
+          'WHERE form_key = :form_key AND nid = :nid',
+          array(':form_key' => $data->form_key, ':nid' => $new_nid))->fetchField();
+        if ($cid) {
+          $id = db_insert('fundraiser_component_map')
+          ->fields(array(
+            'nid' => $new_nid,
+            'cid' => $cid,
+            'map_id' => $data->map_id,
+          ))
+          ->execute();
+        }
+      }
+      if (module_exists('sf_donation')) {
+        sf_donation_clone_map($nid, $new_nid);
+      }
+      drupal_set_message(t('Donation form [@title] has been cloned succesfully.', array('@title' => $original_node->title)));
+      drupal_goto('node/' . $new_nid . '/edit');
     }
   }
-
-  return $form;
 }
 
 /**
@@ -1016,7 +1099,7 @@ function fundraiser_user_map($nid) {
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
  */
-function &fundraiser_find_field(&$form, $path) {
+function fundraiser_find_field(&$form, $path) {
   foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return fundraiser_find_field($form[$v], $path[$v]);
@@ -1048,12 +1131,13 @@ function fundraiser_parse_components($nid, $components) {
 function fundraiser_parse_component($nid, $form_key) {
   $cid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $nid, 'form_key' => $form_key), 'cid');
   $component_path = 'submitted[' . implode('][', fundraiser_walk_component_hierarchy($nid, $cid)) . ']';
-  parse_str($component_path, $output); // convert string to a nested array
+  parse_str($component_path, $output); // Convert. string to a nested array
   return $output;
 }
 
 /**
  * Builds a path from the webform component to it's topmost parent.
+ * Recursion is here here. Be careful.
  */
 function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) { 
   // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
@@ -1077,101 +1161,11 @@ function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
 }
 
 /**
- * AHAH callback for dealing with changes to the donation form.
- *
- * @param $field
- *   The field that is being affected by the AHAH call.
- */
-function _fundraiser_ahah_helper_render($field = NULL) {
-  $form_state = array(
-    'storage' => NULL,
-    'submitted' => FALSE,
-  );
-  $form_build_id = $_POST['form_build_id'];
-
-  // Get the form from the cache.
-  $form = form_get_cache($form_build_id, $form_state);
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-
-  // Are we on the node form?
-  $node_form = FALSE;
-  if (preg_match('/_node_form$/', $form_id)) {
-    $node_form = TRUE;
-    module_load_include('inc', 'node', 'node.pages');
-  }
-
-  // We will run some of the submit handlers so we need to disable redirecting.
-  $form['#redirect'] = FALSE;
-  // We need to process the form, prepare for that by setting a few internals
-  // variables.
-  $form['#post'] = $_POST;
-  $form['#programmed'] = FALSE;
-  $form_state['post'] = $_POST;
-
-  // $form_state['storage']['#ahah_helper']['file'] has been set, to know
-  // which file should be loaded. This is necessary because we'll use the form
-  // definition itself rather than the cached $form.
-  if (isset($form_state['storage']['#ahah_helper']['file'])) {
-    require_once($form_state['storage']['#ahah_helper']['file']);
-  }
-
-  $form_state['submitted'] = TRUE;
-
-  if (!isset($_POST['op'])) {
-    // For the default "{$form_id}_validate" and "{$form_id}_submit" handlers.
-    $form['#validate'] = NULL;
-    $form['#submit'] = NULL;
-    // For customly set #validate and #submit handlers.
-    $form_state['submit_handlers'] = NULL;
-    $form_state['validate_handlers'] = NULL;
-    // Disable #required and #element_validate validation.
-    fundraiser_ahah_helper_disable_validation($form);
-  }
-
-  // Build, validate and if possible, submit the form.
-  drupal_process_form($form_id, $form, $form_state);
-  if ($node_form) {
-    // get the node from the submitted values
-    $node = node_form_submit_build_node($form, $form_state);
-    // hack to stop taxonomy from resetting when the form is rebuilt
-    $form_state['node']['taxonomy'] = taxonomy_preview_terms($node);
-  }
-
-  // This call recreates the form relying solely on the form_state that the
-  // drupal_process_form set up.
-  //$form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-
-  // Get the form item we want to render.
-  //$form_item = _ahah_helper_get_form_item($form, $form_item_to_render);
-  $nid = $form['#parameters'][2]->nid;
-  $form_item = fundraiser_find_field($form, fundraiser_parse_component($nid, $field));
-
-  // Get the JS settings so we can merge them.
-  $javascript = drupal_add_js(NULL, NULL, 'header'); // TODO come back to you.
-  $settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
-
-  drupal_json(array(
-    'status' => TRUE,
-    'data' => theme('status_messages') . drupal_render($form_item),
-    'settings' => array('ahah' => $settings['ahah']),
-  ));
-}
-
-/**
- * Helper function for disabling validation during AHAH form submissions.
- */
-function fundraiser_ahah_helper_disable_validation(&$form) {
-  foreach (element_children($form) as $child) {
-    $form[$child]['#validated'] = TRUE;
-    fundraiser_ahah_helper_disable_validation($form[$child]);
-  }
-}
-
-/**
  * Implementation of hook_webform_submission_update()
+ * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
  */
+ // TODO this looks like it should be in another module. - SeH 1/12/12
+ // Shall it be moved over?
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
     if (module_exists('queue_api')) {
@@ -1199,7 +1193,6 @@ function fundraiser_webform_submission_update($node, $submission) {
 function fundraiser_webform_submission_presave($node, &$submission) {
   // remove any non-component form fields from the submitted data
   unset($submission->data['']);
-
   // remove senstive form data before the submission is saved to the database
   if ($node->type == 'donation_form') {
     $results = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => array('card_number', 'card_cvv', 'card_expiration_date')), 'cid');
@@ -1283,6 +1276,7 @@ function fundraiser_recurring_check_access() {
   return $bool;
 }
 
+// TODO to become a hook to be called.
 /**
  * Retrieves an array of Ubercart zone IDs.
  *
