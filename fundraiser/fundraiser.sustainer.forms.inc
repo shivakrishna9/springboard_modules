@@ -464,13 +464,13 @@ function _fundraiser_get_payment_details($order_id) {
   return $details;
 }
 
+
 /**
  * Look up a payment gateway's details based on it's id
  */
 function _fundraiser_lookup_gateway_details($gateway) {
-  $gateways = _payment_gateway_list('', TRUE);
-
-  // use the name to look up the gateway
+  $gateways = _fundraiser_get_gateway_info();
+  // Use the name to look up the gateway.
   foreach ($gateways as $k => $v) {
     if ($v['id'] == $gateway) {
       return $v;

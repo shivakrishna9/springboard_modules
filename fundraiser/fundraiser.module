@@ -277,7 +277,6 @@ function fundraiser_menu_alter(&$items) {
   if (module_exists('trigger')) {
     $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
   }
-
   // Alter some built-in webform menu items.
   $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
   $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
@@ -383,6 +382,16 @@ function fundraiser_node_info() {
   );
 }
 
+// TODO: Move this call into fundraiser_ubercart module, and make it into a hook.
+// TODO: Wray gateway query into it's own function to allow for an alter to be provided as well?
+function fundraiser_fundraiser_get_gateway_info() {
+  return _payment_gateway_list('', TRUE);
+// From Ubsercart http://api.lullabot.com/_payment_gateway_list
+// Is ultimately configured by http://api.lullabot.com/hook_payment_gateway
+// Returns in the format:
+// $gateway = array('id', 'title', 'credit', 'credit_refund');
+}
+
 /**
  * Implements hook_form().
  */
@@ -396,9 +405,10 @@ function fundraiser_form($node, &$form_state) {
   $type = node_type_get_type($node);
 
   // Get payment gateway list, create options set.
-  $payment_gateways = _payment_gateway_list('', TRUE);
+  // Returns an array of gateway information.
+  $gateways = _fundraiser_get_gateway_info();
   $gateway_options = array();
-  foreach ($payment_gateways as $gateway) {
+  foreach ($gateways as $gateway) {
     $gateway_options[$gateway['id']] = $gateway['title'];
   }
 
@@ -1773,7 +1783,7 @@ function fundraiser_confirmation($form, &$form_state) {
  * Returns the charge function associated with the specified gateway
  */
 function fundraiser_charge_function($type) {
-  $gateways = _payment_gateway_list('', TRUE);
+  $gateways = _fundraiser_get_gateway_info();
   foreach ($gateways as $key => $gateway) {
     if ($gateway['id'] == $type) {
       return $gateway['credit'];
@@ -1786,7 +1796,7 @@ function fundraiser_charge_function($type) {
  * Returns the refund function associated with the specified gateway
  */
 function fundraiser_refund_function($type) {
-  $gateways = _payment_gateway_list('', TRUE);
+  $gateways = _fundraiser_get_gateway_info();
   foreach ($gateways as $key => $gateway) {
     if ($gateway['id'] == $type && $gateway['credit_refund']) {
       return $gateway['credit_refund'];
@@ -2583,7 +2593,7 @@ function _fundraiser_charge_function($order_id, $nid, &$data) {
     return $charge_function;
   }
   else {
-    $gateways = _payment_gateway_list('', TRUE);
+    $gateways = _fundraiser_get_gateway_info();
     // get the charge function for the given gateway
     foreach ($gateways as $k => $v) {
       if ($v['id'] == $gateway) {
@@ -2748,15 +2758,22 @@ function fundraiser_token_values($type, $object = NULL) {
   return $values;
 }
 
-/**
- * Version of _profile_get_fields that includes hidden profile fields by default
- */
-function _fundraiser_profile_get_fields($category) {
-  return db_query("SELECT * FROM {profile_fields} WHERE LOWER(category) = LOWER(':category') ORDER BY category, weight", array(':category' => $category));
-}
 
 // New DB Functions
 // DB functions are eventually going to be reduced into CRUD like formats where possible. Joins complicate this effort.
+
+/**
+ * Version of _profile_get_fields that includes hidden profile fields by default.
+ */
+function _fundraiser_profile_get_fields($category) {
+  $query = db_select('profile_field');
+  $query->condition('category', db_like($category), 'LIKE');
+  return $query
+    ->fields('profile_field')
+    ->orderBy('category', 'ASC')
+    ->orderBy('weight', 'ASC')
+    ->execute();
+}
 
 /**
  * DB function, handle update (or create) for tracking data by field given.
@@ -2792,12 +2809,10 @@ function _fundraiser_get_webform_extra_by_key($nid, $form_key) {
  * DB function, given a nid and field key, *serialize* and set the extra field from webform component.
  */
 function _fundraiser_set_webform_extra_by_key($nid, $form_key, $new_value) {
-  if (empty($nid) || empty($form_key) || empty($new_value)) {
-    return FALSE;
-  }
-  // More complicated update than drupal_write_record can handle, two keys. 
-  db_query("UPDATE {webform_component} SET extra = :extra WHERE nid = :nid AND form_key = :form_key",
-    array(':extra' => serialize($new_value), ':nid' => $node->nid, ':form_key' => $form_key));
+  $record['nid'] = $node->nid;
+  $record['form_key'] = $form_key;
+  $record['extra'] = serialize($new_value);
+  drupal_write_record('webform_component', $record, array('nid', 'form_key'));
 }
 
 /**
@@ -2836,4 +2851,13 @@ function _fundraiser_get_fields_from_table($tablename, $options = array(), $fiel
     return $results->fetchObject();
   }
   return $results->fetchAll();
+}
+
+/**
+ * API wrapper, get gateway information.
+ */
+function _fundraiser_get_gateway_info() {
+  $gateways = module_invoke_all('fundraiser_gateway_info');
+  drupal_alter('fundraiser_gateway_info', $gateways);
+  return (array) $gateways;
 }
