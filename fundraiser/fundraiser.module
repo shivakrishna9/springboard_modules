@@ -2226,6 +2226,20 @@ function fundraiser_webform_select_options_info() {
 }
 
 /**
+ * Options list containing a list of ubercart defined states
+ */
+function fundraiser_options_uc_states() {
+  return array();
+}
+
+/**
+ * Options list containing a list of ubercart defined countries
+ */
+function fundraiser_options_uc_countries() {
+  return array();
+}
+
+/**
  * Loads the recurring donation processor key.
  *
  * @return FALSE if no key is found or the key domain does not match the current domain.
