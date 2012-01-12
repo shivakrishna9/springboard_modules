@@ -1034,11 +1034,22 @@ function fundraiser_parse_component($nid, $form_key) {
 }
 
 /**
- * Builds a path from the webform component to it's topmost parent.
+ * Builds a path from the webform component to its topmost parent.
  */
 function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
-  $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = %d and cid = %d", $nid, $cid);
-  while ($data = db_fetch_object($result)) {
+  // Store all the components for this node in a static cache to reduce the
+  // number of duplicated database hits.
+  static $component_hierarchy = array();
+  if (empty($component_hierarchy[$nid])) {
+    $component_hierarchy[$nid] = array();
+    $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = %d", $nid);
+    while ($data = db_fetch_object($result)) {
+      $cid = $data->cid;
+      $component_hierarchy[$nid][$cid][] = $data;
+    }
+  }
+  // Build a path from the webform component to its topmost parent.
+  foreach ($component_hierarchy[$nid][$cid] as $data) {
     array_unshift($path, $data->form_key);
     if ($data->pid > 0) {
       fundraiser_walk_component_hierarchy($nid, $data->pid, $path);
