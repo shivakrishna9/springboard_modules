@@ -60,8 +60,8 @@ function sage_update_billing_information($reference_id, $billing_info) {
  */
 function fundraiser_show_refund_form($order) {
   $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_css($base . '/css/refund.css');
-  drupal_add_js($base . '/js/refund.js');
+  drupal_add_css(array('file' => $base . '/css/refund.css'));
+  drupal_add_js(array('file' => $base . '/js/refund.js'));
   return drupal_get_form('fundraiser_refund', $order);
 }
 
