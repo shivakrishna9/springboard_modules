@@ -26,8 +26,8 @@ function fundraiser_recurring_user_overview($uid) {
 function fundraiser_recurring_user_edit_forms($uid, $order_id) {
 
   $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_js(array('file' => $base . '/js/sustainer.js'));
-  drupal_add_css(array('file' => $base . '/css/sustainer.css'));
+  drupal_add_js($base . '/js/sustainer.js');
+  drupal_add_css($base . '/css/sustainer.css');
   // gather all information for the page and send it through a theme function
   $orders = _fundraiser_get_recurring_orders($uid);
   $order = _fundraiser_get_unprocessed_order($order_id);

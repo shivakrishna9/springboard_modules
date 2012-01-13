@@ -360,8 +360,8 @@ function fundraiser_node_info() {
 function fundraiser_form($node, &$form_state) {
   // Add additional js and css for this form.
   $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_css(array('file' => $base . '/css/fundraiser.css'));
-  drupal_add_js(array('file' => $base . '/js/fundraiser_form.js'), array('cache' => FALSE));
+  drupal_add_css($base . '/css/fundraiser.css');
+  drupal_add_js($base . '/js/fundraiser_form.js');
 
   // Get the type.
   $type = node_type_get_type($node);
@@ -586,8 +586,8 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
  */
 function _fundraiser_validation_includes($element, $form_state) {
   $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_css(array('file' => $base . '/css/fundraiser.css'));
-  drupal_add_js(array('file' =>  $base . '/js/fundraiser_form.js'), array('cache' => FALSE));
+  drupal_add_css($base . '/css/fundraiser.css');
+  drupal_add_js($base . '/js/fundraiser_form.js');
   return $element;
 }
 
@@ -856,10 +856,8 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 
   // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form')) {
-    $node = $form['#parameters'][2];
-
-    // get fundraiser info
-    $node = $form['#parameters'][2];
+    // Get node information.
+    $node = node_load($form['#node']->nid);
 
     // Handle donation form submissions.
     if ($node->type == 'donation_form' && arg(2) == 'submission') {
@@ -917,9 +915,9 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     // Handle the donation form itself
     if ($node->type == 'donation_form' && arg(2) != 'submission') {
       $base = drupal_get_path('module', 'fundraiser');
-      drupal_add_js(array('file' => $base . '/js/jquery.alphanumeric.js'));
-      drupal_add_js(array('file' => $base . '/js/fundraiser.js'));
-      drupal_add_css(array('file' => $base . '/css/fundraiser-donation-form.css'));
+      drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
+      drupal_add_js( $base . '/js/fundraiser.js', 'file');
+      drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
 
       // Create an data structure that will tell us exactly where each webform component lives in the FAPI array.
       $components = $node->webform['components'];
@@ -1489,9 +1487,9 @@ function fundraiser_webform_validate($form, &$form_state) {
   // create watchdog entry on validation errors
   if ($errors) {
     $base = drupal_get_path('module', 'fundraiser');
-    drupal_add_js(array('file' => $base . '/js/jquery.alphanumeric.js'));
-    drupal_add_js(array('file' => $base . '/js/fundraiser.js'));
-    drupal_add_css(array('file' => $base . '/css/fundraiser-donation-form.css'));
+    drupal_add_js($base . '/js/jquery.alphanumeric.js');
+    drupal_add_js($base . '/js/fundraiser.js');
+    drupal_add_css($base . '/css/fundraiser-donation-form.css');
 
     $message = "The following donation form fields failed local validation:\n\n";
     $validation_errors = array_keys(form_get_errors());
@@ -2715,7 +2713,6 @@ function fundraiser_set_tracking($nid, $field) {
   }
   else {
     // Update.
-    $tracked_nid = $tracked_nid->fetchObject();
     $tracking = array('nid' => $nid, $field => $tracked_nid->$field + 1);
     drupal_write_record('fundraiser_tracking', $tracking, 'nid');  
   }
@@ -2791,9 +2788,9 @@ function _fundraiser_get_gateway_info() {
 
 // TODO: Move this call into fundraiser_ubercart module, and make it into a hook.
 function fundraiser_fundraiser_gateway_info() {
-  return _payment_gateway_list('', TRUE);
-// From Ubsercart http://api.lullabot.com/_payment_gateway_list
-// Is ultimately configured by http://api.lullabot.com/hook_payment_gateway
+  return _uc_payment_gateway_list('', TRUE);
+// From Ubsercarthttp://api.lullabot.com/_uc_payment_gateway_list/7
+// Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
 // Returns in the format:
 // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
 }
