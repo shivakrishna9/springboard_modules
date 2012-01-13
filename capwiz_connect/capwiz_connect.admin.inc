@@ -335,6 +335,15 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     'label' => 'State Lower',
     'formInputType' => 'auto',
   );
+  $user_fields['governor'] = (object)array(
+    'label' => 'Governor',
+    'formInputType' => 'auto',
+  );
+  $user_fields['governor_phone'] = (object)array(
+    'label' => 'Governor Phone',
+    'formInputType' => 'auto',
+  );
+    
     
   // Load an array of Drupal user fields for targets
   $drupal_user_fields = array(

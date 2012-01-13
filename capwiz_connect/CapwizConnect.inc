@@ -475,6 +475,21 @@ class CapizConnect {
       sf_queue_insert($drupal_account->uid, 'user', 'upsert');
     }
     
+    // Round up the details on any legislators for this user
+    $legislators = array();
+    if (!empty($user->officials)) {
+      foreach ($user->officials as $o) {
+        $level = $o->level->label;
+        $chamber = $o->position->chamber->label;
+        $label = $o->description . ' ' . $o->firstName . ' ' . $o->lastName;
+        // @todo: load phone and email once added by Capwiz
+        $legislators[$level][$chamber][] = array(
+          'name' => $label,
+          'phone' => '',
+          'email' => '',
+        );
+      }
+    }
     
     foreach ($this->account_details->mapping_user['map'] as $field_key => $target_field) {
       $business_rule = $this->account_details->mapping_user['business'][$field_key];
@@ -542,27 +557,60 @@ class CapizConnect {
           }
           break;
         
-        // Federal senators. Users only.
+        // Federal senators
         case 'fed_senator_1':
+          if (isset($legislators['National']['Senate (Upper)'][0]['name'])) {
+            $value = $legislators['National']['Senate (Upper)'][0]['name'];
+          }
+          break;
+          
         case 'fed_senator_2':
-          // @todo: waiting on API update from Capwiz
+          if (isset($legislators['National']['Senate (Upper)'][1]['name'])) {
+            $value = $legislators['National']['Senate (Upper)'][1]['name'];
+          }
           break;
       
-        // Federal senator phone numbers. Users only.
+        // Federal senator phone numbers
         case 'fed_senator_1_phone':
+          if (isset($legislators['National']['Senate (Upper)'][0]['phone'])) {
+            $value = $legislators['National']['Senate (Upper)'][0]['phone'];
+          }
+          break;
+
         case 'fed_senator_2_phone':
-          // @todo: waiting on API update from Capwiz
+          if (isset($legislators['National']['Senate (Upper)'][1]['phone'])) {
+            $value = $legislators['National']['Senate (Upper)'][1]['phone'];
+          }
           break;
         
-        // Federal rep. Users only.
+        // Federal rep
         case 'fed_rep':
-          // @todo: waiting on API update from Capwiz
+          if (isset($legislators['National']['House (Lower)'][0]['name'])) {
+            $value = $legislators['National']['House (Lower)'][0]['name'];
+          }
           break;
         
-        // Federal rep phone number. Users only.
+        // Federal rep phone number
         case 'fed_rep_phone':
-          // @todo: waiting on API update from Capwiz
+          if (isset($legislators['National']['House (Lower)'][0]['phone'])) {
+            $value = $legislators['National']['House (Lower)'][0]['phone'];
+          }
           break;
+          
+        // Governor fields
+        // @todo: replace these with the correct array keys once added by Capwiz
+        case 'governor':
+          if (isset($legislators['State']['Senate (Upper)'][0]['phone'])) {
+            $value = $legislators['State']['Senate (Upper)'][0]['phone'];
+          }
+          break;
+
+        case 'governor_phone':
+          if (isset($legislators['State']['Senate (Upper)'][1]['phone'])) {
+            $value = $legislators['State']['Senate (Upper)'][1]['phone'];
+          }
+          break;
+      
       
         // Every other field. Just load the field from the object
         default:
