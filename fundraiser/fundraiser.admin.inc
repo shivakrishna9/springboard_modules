@@ -313,7 +313,7 @@ function fundraiser_donation_form_list() {
   $header = array('Title', 'Internal Name', 'Last Modified', '', '', '');
   $rows = array();
 
-  while ($data = db_fetch_object($result)) {
+  foreach ($result as $data) {
     if (user_access('edit any donation form', $user) || ($data->uid == $user->uid && user_access('edit own donation form', $user))) {
       $edit_link = l(t('edit'), 'node/' . $data->nid . '/edit');
     }
@@ -405,7 +405,7 @@ function fundraiser_monthly_report() {
   $columns = array('order_id', 'sfid', 'billing_first_name', 'billing_last_name', 'primary_email', 'billing_street1', 'billing_street2', 'billing_city', 'country_iso_code_2', 'zone_code', 'received', 'order_total', 'title', 'nid');
 
   $rows = array();
-  while ($data = db_fetch_object($result)) {
+  foreach ($result as $data) {
     $cc_data = decrypt_credit_card($data->data);
     $rows[] = array(
       $data->order_id,

@@ -37,7 +37,8 @@ function fundraiser_mapping_form($form_state, $node) {
         $cat_array = profile_categories();
         foreach ($cat_array as $cat) {
           $result = _profile_get_fields($cat['name']);
-          for ($i = 0; $row = db_fetch_array($result); $i++) {
+          foreach( $result as $this_row) {
+            $row = (array)$this_row;
             $options['Drupal Profile Fields'][$row['name']] = $row['title'];
           }
         }
