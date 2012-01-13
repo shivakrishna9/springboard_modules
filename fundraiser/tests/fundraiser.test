@@ -93,20 +93,20 @@ class FundraiserTestCase extends DrupalWebTestCase {
    * Creates the stanard profile fields used by the fundraiser module.
    */
   function setupProfileFields() {
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Address', 'profile_address', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Address Line 2', 'profile_address_line_2', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('City', 'profile_city', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('State', 'profile_state', 'Personal Information', 'selection', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Zip', 'profile_zip', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Country', 'profile_country', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Campaign Id', 'profile_cid', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Market Source', 'profile_ms', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Referrer', 'profile_referrer', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Initial Referrer', 'profile_initial_referrer', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Address', 'profile_address', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Address Line 2', 'profile_address_line_2', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('City', 'profile_city', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('State', 'profile_state', 'Personal Information', 'selection', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Zip', 'profile_zip', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Country', 'profile_country', 'Personal Information', 'textfield', 2)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Campaign Id', 'profile_cid', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Market Source', 'profile_ms', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Referrer', 'profile_referrer', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Initial Referrer', 'profile_initial_referrer', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4)");
+    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4)");
   }
   
   function setProfileFields() {

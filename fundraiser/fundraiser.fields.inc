@@ -693,7 +693,7 @@ function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amo
  * Returns a keyed array of location fields or an empty array if there was an error.
  */
 function _fundraiser_get_profile_location_fields() {
-  $results = db_query('SELECT fid, name FROM {profile_fields} WHERE name IN ("profile_country", "profile_state")');
+  $results = db_query('SELECT fid, name FROM {profile_field} WHERE name IN (\'profile_country\', \'profile_state\')');
   foreach ($results as $profile_field) {
     if ($profile_field->name == 'profile_country') {
       $country_fid = $profile_field->fid;
@@ -738,30 +738,30 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   if ($fids['country']) {
     $country_name = db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id',
       array(':country_id' => $country_code))->fetchField();
-    $has_country = db_query('SELECT 1 FROM {profile_values} WHERE uid = :uid AND fid = :fid',
+    $has_country = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['country']))->fetchField();
     if ($has_country) {
-      db_query('UPDATE {profile_values} SET value = :value WHERE uid = :uid AND fid = :fid',
+      db_query('UPDATE {profile_value} SET value = :value WHERE uid = :uid AND fid = :fid',
         array(':value' => $country_name, ':uid' => $update_user->uid, ':fid' => $fids['country']));
     }
     else {
       $values = array('fid' => $fids['country'], 'uid' => $update_user->uid, 'value' => $country_name);
-      drupal_write_record('profile_values', $values);
+      drupal_write_record('profile_value', $values);
     }
   }
 
   if ($fids['state']) {
     $state_name = db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id AND zone_country_id = :zone_country_id',
       array(':zone_id' => $state_code, ':zone_country_id' => $country_code))->fetchField();
-    $has_state = db_query('SELECT 1 FROM {profile_values} WHERE uid = :uid AND fid = :fid',
+    $has_state = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['state']))->fetchField();
     if ($has_state) {
-      db_query('UPDATE {profile_values} SET value = :value WHERE uid = :uid AND fid = :fid',
+      db_query('UPDATE {profile_value} SET value = :value WHERE uid = :uid AND fid = :fid',
         array(':value' =>  $state_name, ':uid' => $update_user->uid, ':fid' => $fids['state']));
     }
     else {
       $values = array('fid' => $fids['state'], 'uid' => $update_user->uid, 'value' => $state_name);
-      drupal_write_record('profile_values', $values);
+      drupal_write_record('profile_value', $values);
     }
   }
 }
