@@ -506,60 +506,65 @@ function email_confirmation_fundraiser_order_success($order) {
   $_SESSION['donation_order'] = $order;
   $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $order->products[0]->nid));
 
-  // Gather settings from the db and build the custom email
-  if ($settings->tid) {
+  // If sending mail is enabled on this donation form, continue.
+  if ($settings->send_mail) {
 
-    $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+    // Gather settings from the db and build the custom email
+    if ($settings->tid) {
 
-    $template_html = check_markup($result->body, $result->format, FALSE);
+      $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
+
+      $template_html = check_markup($result->body, $result->format, FALSE);
  
-    // TODO: convert field to accept input filters.
-    $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
+      // TODO: convert field to accept input filters.
+      $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
     
     
-    $message = array();
-    $message['from_name'] = $settings->from_name;
-    $message['from_address'] = $settings->reply_to_email;
-    $message['subject'] = $settings->subject;
+      $message = array();
+      $message['from_name'] = $settings->from_name;
+      $message['from_address'] = $settings->reply_to_email;
+      $message['subject'] = $settings->subject;
 
-    // Perform token replacements for "order" tokens and "all" tokens.
-    $message['html_body'] = token_replace($template_html, 'order', $order);
-    $message['html_body'] = token_replace($message['html_body'], 'order', $order);
-    $message['html_body'] = token_replace($message['html_body']);
+      // Perform token replacements for "order" tokens and "all" tokens.
+      $message['html_body'] = token_replace($template_html, 'order', $order);
+      $message['html_body'] = token_replace($message['html_body'], 'order', $order);
+      $message['html_body'] = token_replace($message['html_body']);
 
 
-    // Same as above, with check_plain() included to insure final output is plain text.
-    $message['text_body'] = token_replace($template_text, 'order', $order);
-    $message['text_body'] = token_replace($message['text_body'], 'order', $order);
-    $message['text_body'] = token_replace($message['text_body']);
-    $message['text_body'] = check_plain($message['text_body']);
-    $message['bcc'] = $settings->bcc_email;
+      // Same as above, with check_plain() included to insure final output is plain text.
+      $message['text_body'] = token_replace($template_text, 'order', $order);
+      $message['text_body'] = token_replace($message['text_body'], 'order', $order);
+      $message['text_body'] = token_replace($message['text_body']);
+      $message['text_body'] = check_plain($message['text_body']);
+      $message['bcc'] = $settings->bcc_email;
 
-    // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
-    // This is hopefully a temporary workaround until I can figure out how to tap into uc_price().   
-    if (module_exists('fundraiser_multi_currency') && isset($order->data['currency'])) {
-        $currencies = fundraiser_multi_currency_get_default_currencies();
-        $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
+      // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
+      // This is hopefully a temporary workaround until I can figure out how to tap into uc_price().
+      if (module_exists('fundraiser_multi_currency') && isset($order->data['currency'])) {
+          $currencies = fundraiser_multi_currency_get_default_currencies();
+          $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
          
-        $message['text_body'] = str_replace('$', $symbol, $message['text_body']);
-        $message['html_body'] = str_replace('$', $symbol, $message['html_body']);
-    }
+          $message['text_body'] = str_replace('$', $symbol, $message['text_body']);
+          $message['html_body'] = str_replace('$', $symbol, $message['html_body']);
+      }
 
     
-    $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+      $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
 
+    }
+    // If no settings are present use the default email template.
+    else {
+      $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', $order->products[0]->nid));
+      $site_name = variable_get('site_name', '');
+      $site_mail = variable_get('site_mail', '');
+      $message['from_name'] = $site_name;
+      $message['from_address'] = $site_mail;
+      $message['subject'] = t('Thank you for your donation');
+      $message['html_body'] = theme('default_confirmation_template', $order, $site_url, $site_name);
+      $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
+    }
   }
-  // If no settings are present use the default email template.
-  else {
-    $order->form_title = db_result(db_query('SELECT title FROM node WHERE nid=%d', $order->products[0]->nid));
-    $site_name = variable_get('site_name', '');
-    $site_mail = variable_get('site_mail', '');
-    $message['from_name'] = $site_name;
-    $message['from_address'] = $site_mail;
-    $message['subject'] = t('Thank you for your donation');
-    $message['html_body'] = theme('default_confirmation_template', $order, $site_url, $site_name);
-    $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
-  }
+
   unset($_SESSION['donation_order']);
 }
 
