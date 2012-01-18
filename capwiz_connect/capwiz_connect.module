@@ -13,6 +13,25 @@
  */
 
 /**
+  * Implementation of hook_help().
+  */
+ function capwiz_connect_help($path, $arg) {
+   switch ($path) {
+     case 'admin/help#capwiz_connect':
+       return '<p>'. t('Integrates with the Capwiz Connect API to sync users and actions. Users are saved as Drupal users, and can then be synced to Salesforce using the SF User Integration module. Actions are saved to the DB and synced directly to Salesforce.') .'</p>';
+      
+     case 'admin/settings/capwiz_connect/accounts/%/user_mapping':
+       return '<p>' . t('Configure Capwiz-to-Drupal mapping for users. Capwiz user accounts are saved as Drupal users. To add more fields to Drupal user accounts, use the Profile module.') . '</p>';
+
+     case 'admin/settings/capwiz_connect/accounts/%/action_mapping':
+       return '<p>' . t('Configure Capwiz-to-Salesforce mapping for actions. Capwiz actions are saved to the database, then synced to Salesforce on the next cron maintenance run.') . '</p>';
+   }
+ }
+ 
+ 
+
+
+/**
  * Implements hook_menu().
  */
 function capwiz_connect_menu() {
