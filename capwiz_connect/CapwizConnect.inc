@@ -162,6 +162,16 @@ class CapizConnect {
     $query_params = array();
     $query_params['sessionId'] = $this->session_id;
     
+    // Specify that what officials we want in the result set.
+    // From https://connect.capwiz.com/documentation/lookup/v1/index.html:
+    //   PR  President
+    //   NS  National/Federal Senator
+    //   NH  National/Federal Representative
+    //   G   Governor
+    //   SL  State Legislator
+    //   SE  State Executive (including the Governor, Lt. Governor, etc...)
+    $query_params['officialTypes'] = 'NS,NH,G';
+      
     // If requesting users updated since some timestamp
     if ($updated_since > 0) {
       // Date must be in ISO 8601 format
@@ -480,13 +490,13 @@ class CapizConnect {
     if (!empty($user->officials)) {
       foreach ($user->officials as $o) {
         $level = $o->level->label;
-        $chamber = $o->position->chamber->label;
+        $chamber = $o->position->label;
         $label = $o->description . ' ' . $o->firstName . ' ' . $o->lastName;
-        // @todo: load phone and email once added by Capwiz
+        // @todo: Phone and email will be relocated into another data structure
         $legislators[$level][$chamber][] = array(
           'name' => $label,
-          'phone' => '',
-          'email' => '',
+          'phone' => $o->phone,
+          'email' => $o->emailAddress,
         );
       }
     }
@@ -562,56 +572,35 @@ class CapizConnect {
         
         // Federal senators
         case 'fed_senator_1':
-          if (isset($legislators['National']['Senate (Upper)'][0]['name'])) {
-            $value = $legislators['National']['Senate (Upper)'][0]['name'];
-          }
+          $value = $legislators['National']['Senate'][0]['name'];
           break;
-          
         case 'fed_senator_2':
-          if (isset($legislators['National']['Senate (Upper)'][1]['name'])) {
-            $value = $legislators['National']['Senate (Upper)'][1]['name'];
-          }
+          $value = $legislators['National']['Senate'][1]['name'];
           break;
       
         // Federal senator phone numbers
         case 'fed_senator_1_phone':
-          if (isset($legislators['National']['Senate (Upper)'][0]['phone'])) {
-            $value = $legislators['National']['Senate (Upper)'][0]['phone'];
-          }
+          $value = $legislators['National']['Senate'][0]['phone'];
           break;
-
         case 'fed_senator_2_phone':
-          if (isset($legislators['National']['Senate (Upper)'][1]['phone'])) {
-            $value = $legislators['National']['Senate (Upper)'][1]['phone'];
-          }
+          $value = $legislators['National']['Senate'][1]['phone'];
           break;
         
         // Federal rep
         case 'fed_rep':
-          if (isset($legislators['National']['House (Lower)'][0]['name'])) {
-            $value = $legislators['National']['House (Lower)'][0]['name'];
-          }
+          $value = $legislators['National']['House'][0]['name'];
           break;
-        
         // Federal rep phone number
         case 'fed_rep_phone':
-          if (isset($legislators['National']['House (Lower)'][0]['phone'])) {
-            $value = $legislators['National']['House (Lower)'][0]['phone'];
-          }
+          $value = $legislators['National']['House'][0]['phone'];
           break;
           
         // Governor fields
-        // @todo: replace these with the correct array keys once added by Capwiz
         case 'governor':
-          if (isset($legislators['State']['Senate (Upper)'][0]['phone'])) {
-            $value = $legislators['State']['Senate (Upper)'][0]['phone'];
-          }
+          $value = $legislators['State']['Governor'][0]['name'];
           break;
-
         case 'governor_phone':
-          if (isset($legislators['State']['Senate (Upper)'][1]['phone'])) {
-            $value = $legislators['State']['Senate (Upper)'][1]['phone'];
-          }
+          $value = $legislators['State']['Governor'][0]['phone'];
           break;
       
       
