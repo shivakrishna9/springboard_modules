@@ -7,6 +7,59 @@
  */
 
 /**
+ * Creates an array to map webform component fields to user profile fields.
+ */
+function fundraiser_get_user_map($nid) {
+  $map = array();
+  $results = db_query('SELECT w.form_key, f.cid, f.map_id, w.type '.
+    'FROM {webform_component} w '.
+    'INNER JOIN {fundraiser_component_map} f ON f.cid = w.cid AND f.nid = w.nid '.
+    'WHERE f.nid = :nid '.
+    'ORDER BY f.cid',
+    array(':nid' => $nid)
+  );
+  foreach ($results as $result) {
+    $row = (array) $result;
+    $map[$row['form_key']] = $row['map_id'];
+  }
+  return $map;
+}
+
+/**
+ * Automatically maps predefined webform components to user profile fields. Called by fundraiser_insert().
+ */
+function fundraiser_create_user_map($nid, $components) {
+  foreach ($components as $cid => $component) {
+    if (array_key_exists('maps_to', $component)) {
+      $component_map = array('nid' => $nid, 'cid' => $cid, 'map_id' => $component['maps_to']);
+      drupal_write_record('fundraiser_component_map', $component_map);
+    }
+  }
+  drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
+}
+
+/**
+ * DB function, given a nid and field key, get and *unserialize* the extra field from webform component.
+ */
+function _fundraiser_get_webform_extra_by_key($nid, $form_key) {
+  $results = _fundraiser_get_fields_from_table('webform_component', array('nid' => $nid, 'form_key' => $form_key), 'extra');
+  if ($results) {
+    return unserialize($results);
+  }
+  return FALSE;
+}
+
+/**
+ * DB function, given a nid and field key, *serialize* and set the extra field from webform component.
+ */
+function _fundraiser_set_webform_extra_by_key($nid, $form_key, $new_value) {
+  $record['nid'] = $node->nid;
+  $record['form_key'] = $form_key;
+  $record['extra'] = serialize($new_value);
+  drupal_write_record('webform_component', $record, array('nid', 'form_key'));
+}
+
+/**
  * Creates all donation specific webform components
  *
  * @param $nid
@@ -507,14 +560,10 @@ function fundraiser_required_fields() {
  * Default selected value for amount radios.
  */
 function _fundraiser_update_amount_webform_component($node, $donation_amounts = array(), $value) {
-  $pid = db_query('SELECT cid FROM {webform_component} '.
-    'WHERE nid = :nid AND form_key = :form_key',
-    array(':nid' => $node->nid, ':form_key' => "donation"))->fetchField();
+  $pid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'donation'), 'cid');
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
-    $has_select = db_query('SELECT 1 FROM {webform_component} '.
-      'WHERE nid = :nid AND form_key = :form_key AND type = :type',
-      array(':nid' => $node->nid, ':form_key' => "amount", ':type' => "select"))->fetchField();
+    $has_select = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'amount', 'type' => 'select'), 'nid');
     if ($has_select) {
       $amount = array();
       $amount['nid'] = $node->nid;
@@ -532,17 +581,14 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       $amount['email'] = 1;
       db_delete('webform_component')
         ->condition('nid', $node->nid)
-        ->condition('form_key', "amount")
+        ->condition('form_key', 'amount')
         ->execute();
       webform_component_insert($amount);
     }
   }
   else {
     $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
-    $field_type = db_query('SELECT type FROM {webform_component} '.
-      'WHERE nid = :nid AND form_key = :form_key',
-      array(':nid' => $node->nid, ':form_key' => "amount"))->fetchField();
-
+    $field_type = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'amount'), 'type');  
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
@@ -555,9 +601,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
         ->condition('form_key', 'amount')
         ->execute();
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
-      $result = db_query('SELECT extra FROM {webform_component} '.
-        'WHERE nid = :nid AND form_key = :form_key',
-        array(':nid' => $node->nid, ':form_key' => 'other_amount'))->fetchField();
+      $result = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'other_amount'), 'extra');
     }
 
     // Since we have donation amounts we need to convert the amount component from textfield to select
@@ -716,6 +760,7 @@ function _fundraiser_get_profile_location_fields() {
  *  User object to be updated. If NULL, defaults to global $user
  *
  */
+// LOADS of ubercart dependancy here -SeH, needs to get updated TODO
 function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   // make sure we have a real user
   if (empty($update_user) || $update_user->uid == 0) {
