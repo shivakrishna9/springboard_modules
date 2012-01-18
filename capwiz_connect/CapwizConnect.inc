@@ -543,17 +543,20 @@ class CapizConnect {
           $value = $this->account_details->form_affiliation;
           break;
       
-        // Legislation district fields. These fields are listed on
-        // every official in the user data, with the same value on each
+        // National District
         case 'nationalDistrict':
+          $value = $user->districtInfo->national;
+          break;
+        
+        // State districts
         case 'stateDistrictUpper':
+          if (is_array($user->districtInfo->stateUpper)) {
+            $value = implode(',', $user->districtInfo->stateUpper);
+          }
+          break;
         case 'stateDistrictLower':
-          // Make sure the officials array has at least one item in it
-          if (is_array($user->officials) && is_object($user->officials[0])) {
-            // Get the requested field from the first legislator object in the array
-            if ($user->officials[0]->{$capwiz_field_name}) {
-              $value = $user->officials[0]->{$capwiz_field_name};
-            }
+          if (is_array($user->districtInfo->stateLower)) {
+            $value = implode(',', $user->districtInfo->stateLower);
           }
           break;
         
