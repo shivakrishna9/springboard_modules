@@ -20,17 +20,14 @@ function capwiz_connect_menu() {
 
   $items['admin/settings/capwiz_connect'] = array(
     'title' => 'Capwiz Connect Accounts',
-    'description' => 'List of Capwiz Connect accounts',
+    'description' => 'Manage Capwiz Connect accounts',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'capwiz_connect_account_list',
     'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_NORMAL,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/settings/capwiz_connect/accounts'] = array(
     'title' => 'Accounts',
-    'file' => 'capwiz_connect.admin.inc',
-    'page callback' => 'capwiz_connect_account_list',
-    'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
