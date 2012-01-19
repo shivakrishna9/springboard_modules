@@ -32,6 +32,8 @@ function fundraiser_cron() {
   else {
     watchdog('fundraiser_cron', 'Standard cron run.');
   }
+  // Load all cron related functions.
+  module_load_include('inc', 'fundraiser', 'fundraiser.cron');
   // Process recurring donations.
   if (fundraiser_processor_key_match()) {
     fundraiser_process_recurring_donations();
@@ -113,7 +115,7 @@ function fundraiser_menu() {
     'page arguments' => array('fundraiser_mapping_form', 1),
     'access callback' => 'fundraiser_mapping_form_access',
     'access arguments' => array(1),
-    'file' => 'fundraiser.components.inc',
+    'file' => 'fundraiser.admin.inc',
     'weight' => 30,
     'type' => MENU_LOCAL_TASK,
   );
@@ -148,17 +150,17 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_admin',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser.components.inc',
+    'file' => 'fundraiser.admin.inc',
     'weight' => 2,
     'type' => MENU_CALLBACK,
   );
-
+  // Unable to find the function associated with this menu path. Check if still in use. - TODO
   $items['admin/fundraiser/recurring/test'] = array(
     'title' => 'Fundraiser Recurring Payment Tester',
     'page callback' => 'fundraiser_recurring_test',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser.components.inc',
+    'file' => 'fundraiser.admin.inc',
     'weight' => 2,
     'type' => MENU_CALLBACK,
   );
@@ -168,7 +170,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_edit_forms',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'file' => 'fundraiser.components.inc',
+    'file' => 'fundraiser.admin.inc',
     'weight' => 2,
     'type' => MENU_NORMAL_ITEM,
   );
@@ -212,7 +214,7 @@ function fundraiser_menu() {
     'access callback' => 'fundraiser_recurring_check_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 11,
-    'file' => 'fundraiser.components.inc',
+    'file' => 'fundraiser.admin.inc',
   );
 
   $items['admin/content/donation-forms'] = array(
@@ -1251,7 +1253,6 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   }
 }
 
-
 /**
  * Validate donation form submissions.
  */
@@ -1389,7 +1390,7 @@ function fundraiser_webform_submit($form, &$form_state) {
     $data['config'] = $info['config'];
   }
   else {
-    $charge_function = fundraiser_charge_function($node->gateway);
+    $charge_function = fundraiser_get_charge_function_by_gateway($node->gateway);
   }
   // call the charge function and store the result
   $result = $charge_function($order_id, $donation_amount, $data);
@@ -1435,41 +1436,191 @@ function fundraiser_webform_confirm($form, &$form_state) {
 }
 
 /**
- * Helper functions below.
+ * Charge related functions.
  */
 
 /**
- * Loads the recurring donation processor key.
+ * Completes the processing of an accepted order.
  *
- * @return FALSE if no key is found or the key domain does not match the current domain.
+ * @param $order_id
+ *   The id of the order.
+ * @param $transaction_id
+ *   The id of the transaction that was returned from the gateway.
+ * @param $message
+ *   Any message that was returned by the gateway.
  */
-function fundraiser_processor_key_match() {
-  static $key;
-  if (!empty($key)) {
-    return ($key == $_SERVER['HTTP_HOST']);
+function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
+  // reload the order
+  $order = uc_order_load($order_id);
+
+  module_invoke_all('fundraiser_order_success', $order);
+
+  // use order_id to find the nid and then go ahead and load up the node
+  $webform = db_query("SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} WHERE order_id = :order_id", array(':order_id' => $order_id))->fetchObject();
+  fundraiser_set_tracking($webform->webform_nid, 'conversions');
+  $node = node_load($webform->webform_nid);
+
+  // complete the sale
+  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+
+  // enter the payment
+  uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
+
+  // mark payment as received
+  db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id", array(':order_id' => $order_id));
+
+  // update the order/webform relationship
+  db_query("UPDATE {fundraiser_webform_order} SET gateway = :gateway, txn_id = :txn_id WHERE order_id = :order_id", array(':gateway' => $node->gateway, ':txn_id' => $transaction_id, ':order_id' => $order_id));
+
+  // update the uid on the webform submission
+  db_query("UPDATE {webform_submissions} SET uid = :uid WHERE sid = :sid", array(':uid' => $order->uid, ':sid' => $webform->sid));
+
+  // Update the recurring status, if it was changed by the payment gateway module
+  if ($webform->recurring_status != $order->data['recurring_status']) {
+    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = :recurring_status WHERE order_id = :order_id', array(':recurring_status' => $order->data['recurring_status'], ':order_id' => $order_id));
   }
-  $dir = fundraiser_get_credit_encryption_path();
-  if ($dir && $dir !== t('Not configured, see below.')) {
-    $filename = rtrim($dir, '/\\') . '/sustainer.key';
-    if (file_exists($filename)) {
-      if (!$file = fopen($filename, 'r')) {
-        return FALSE;
-      }
-      $key = fread($file, filesize($filename));
-      if (trim($key) != trim($_SERVER['HTTP_HOST'])) {
-        return FALSE;
-      }
-      fclose($file);
-    }
-    else {
-      return FALSE;
-    }
+
+  // update the user's profile
+  fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
+
+  // if it's recurring, spawn all the future orders
+  if (fundraiser_is_recurring_order($order_id)) {
+    fundraiser_create_future_orders($order_id, $node->gateway);
   }
-  else {
-    return FALSE;
+
+  // TODO: This should be changed to a hook (hook_donation_successful) and another module can put it in the queue.
+  fundraiser_add_to_queue($order);
+
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($message);
   }
-  return TRUE;
 }
+
+
+/**
+ * Updates the profile of user that submitted the donation.
+ *
+ * @param $uid
+ *   The id of the user that made the donation.
+ * @param $nid
+ *   The nid of the webform node.
+ * @param $sid
+ *   The id of the webform submission that contains the values.
+ */
+function fundraiser_update_user_profile($uid, $nid, $sid) {
+  global $user;
+  $update_user = $user;
+  $map = fundraiser_create_profile_values_map($nid, $sid);
+
+  if ($user->uid == 0) {
+    $update_user = user_load($uid);
+  }
+
+  // make sure the profile module is enabled
+  if (module_exists('profile')) {
+    $cat_array = profile_categories();
+
+    foreach ($cat_array as $cat) {
+      $updates = array(); // array for storing updates to each profile category
+      $results = _fundraiser_profile_get_fields($cat['name']);
+      foreach ($results as $result) {
+        $row = (array) $result;
+        if (array_key_exists($row['name'], $map)) {
+          $updates[$row['name']] = $map[$row['name']];
+        }
+      }
+      // save profile
+      _fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
+    }
+    // convert ubercart's numeric ids to textual values
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($nid, $sid);
+    _fundraiser_update_profile_location($submission, $update_user);
+  }
+
+  // update last_updated date so user will be re-synced on next cron run
+  user_save($update_user, array('last_updated' => time()));
+
+  // insert user back into queue
+  $action = 'update';
+  if (empty($update_user->salesforce_contact_id)) {
+    $action = 'upsert';
+  }
+
+  // If the SF Queue API is enabled, insert this user into the queue
+  if (module_exists('queue_api')) {
+    sf_queue_insert($update_user->uid, 'user', $action);
+  }
+
+}
+
+
+/**
+ * Creates future order based on the the order's credit card expiration date.
+ */
+function fundraiser_create_future_orders($order_id, $gateway = NULL) {
+  global $user;
+
+  // reload the original order so we get any changes that have been made by the payment gateways
+  $order = uc_order_load($order_id);
+
+  // determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
+  $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
+
+  for ($i = 1; $i <= $counter; $i++) {
+    $next_order = uc_order_new($user->uid);
+    // copy all values to new order
+    $new_id = $next_order->order_id;
+    $next_order = clone $order;
+    $next_order->order_id = $new_id;
+    $next_order->order_status = 'pending_future_payment';
+
+    unset($next_order->products[0]->order_product_id);
+    uc_order_save($next_order);
+    $next_charge = strtotime("+$i months");
+
+    // make a record of the recurring order
+    $recurring = array('master_order_id' => $order_id, 'order_id' => $new_id, 'next_charge' => $next_charge, 'gateway' => $gateway);
+    drupal_write_record('fundraiser_recurring', $recurring);
+
+    // add a comment to the order stating when it will be charged
+    uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
+  }
+
+}
+
+/**
+ * Completes the processing of an declined order.
+ *
+ * @param $order_id
+ *   The id of the order.
+ * @param $message
+ *   Any message that was returned by the gateway.
+ */
+function fundraiser_order_decline($order_id, $message) {
+  // make the order as failed
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
+  // make a log entry
+  watchdog('fundraiser', 'Order @id was declined by the payment gateway. Reason: @message', array('@id' => $order_id, '@message' => $message), WATCHDOG_DEBUG, NULL);
+
+  // clean up
+  $sid = db_query('SELECT sid FROM {fundraiser_webform_order} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
+  db_delete('fundraiser_webform_order')->condition('order_id', $order_id)->execute();
+  db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
+  db_delete('webform_submissions')->condition('sid', $sid)->execute();
+
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($message);
+  }
+}
+
+/**
+ * Helper functions below.
+ */
 
 
 /**
@@ -1599,6 +1750,29 @@ function fundraiser_is_recurring_order($order_id) {
 }
 
 /**
+ * DB Function, Check if the given order was made on a payment gateway that supports refunds
+ */
+function fundraiser_gateway_can_refund_order($order) {
+  // Get details on the original payment so we can load the payment gateway details
+  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} '.
+    'WHERE order_id = :order_id '.
+    'UNION '.
+    'SELECT gateway, txn_id FROM {fundraiser_recurring} '.
+    'WHERE order_id = :order_id',
+    array(':order_id' => $order->order_id))->fetchObject();
+
+  if (module_exists('gateway_manager')) {
+    $info = gateway_manager_gateway_info($payment_details->gateway);
+    $refund_function = $info['refund_function'];
+  }
+  else {
+    $refund_function = fundraiser_refund_function($node->gateway);
+  }
+  return trim($refund_function) != '';
+}
+
+
+/**
  * Function returns months between today's datestamp and $exp_date -1
  */
 function _fundraiser_months_between_dates($exp_month, $exp_year) {
@@ -1606,19 +1780,6 @@ function _fundraiser_months_between_dates($exp_month, $exp_year) {
   $stopDate = mktime(0, 0, 0, $exp_month, 1, $exp_year);
   $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
   return $nrmonths;
-}
-
-/**
- * Returns the charge function associated with the specified gateway
- */
-function fundraiser_charge_function($type) {
-  $gateways = _fundraiser_get_gateway_info();
-  foreach ($gateways as $key => $gateway) {
-    if ($gateway['id'] == $type) {
-      return $gateway['credit'];
-    }
-  }
-  return NULL;
 }
 
 /**
@@ -1724,6 +1885,21 @@ function _fundraiser_get_cc_type($cardnumber) {
 }
 
 /**
+ * Returns the charge function associated with the specified gateway
+ */
+function fundraiser_get_charge_function_by_gateway($id) {
+  $gateways = _fundraiser_get_gateway_info();
+  foreach ($gateways as $key => $gateway) {
+    if ($gateway['id'] == $i) {
+      return $gateway['credit'];
+    }
+  }
+  return NULL;
+}
+
+
+
+/**
  * DB generic function, given a nid and options to filter by, get the given fields from given table.
  * Doesn't handle joined tables, but handles the basic pretty readily.
  */
@@ -1788,6 +1964,24 @@ function _fundraiser_profile_get_fields($category) {
     ->orderBy('weight', 'ASC')
     ->execute();
 }
+
+/**
+ * Version of profile_save_profile that includes hidden profile fields
+ */
+function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
+  $results = _fundraiser_profile_get_fields($category);
+  foreach ($results as $field) {
+    if (_profile_field_serialize($field->type)) {
+      $edit[$field->name] = serialize($edit[$field->name]);
+    }
+    db_delete('profile_value')->condition('fid', $field->fid)->condition('uid', $user->uid)->execute();
+    $profile_values = array('fid' => $field->fid, 'uid' => $user->uid, 'value' => $edit[$field->name]);
+    drupal_write_record('profile_value', $profile_values);
+    // Mark field as handled (prevents saving to user->data).
+    $edit[$field->name] = NULL;
+  }
+}
+
 
 /**
  * DB function, handle update (or create) for tracking data by field given.
@@ -1995,92 +2189,8 @@ function fundraiser_add_to_queue($order) {
 
 // Unsorted below.
 
-/**
- * Completes the processing of an accepted order.
- *
- * @param $order_id
- *   The id of the order.
- * @param $transaction_id
- *   The id of the transaction that was returned from the gateway.
- * @param $message
- *   Any message that was returned by the gateway.
- */
-function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
-  // reload the order
-  $order = uc_order_load($order_id);
 
-  module_invoke_all('fundraiser_order_success', $order);
-
-  // use order_id to find the nid and then go ahead and load up the node
-  $webform = db_query("SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} WHERE order_id = :order_id", array(':order_id' => $order_id))->fetchObject();
-  fundraiser_set_tracking($webform->webform_nid, 'conversions');
-  $node = node_load($webform->webform_nid);
-
-  // complete the sale
-  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-
-  // enter the payment
-  uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
-
-  // mark payment as received
-  db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id", array(':order_id' => $order_id));
-
-  // update the order/webform relationship
-  db_query("UPDATE {fundraiser_webform_order} SET gateway = :gateway, txn_id = :txn_id WHERE order_id = :order_id", array(':gateway' => $node->gateway, ':txn_id' => $transaction_id, ':order_id' => $order_id));
-
-  // update the uid on the webform submission
-  db_query("UPDATE {webform_submissions} SET uid = :uid WHERE sid = :sid", array(':uid' => $order->uid, ':sid' => $webform->sid));
-
-  // Update the recurring status, if it was changed by the payment gateway module
-  if ($webform->recurring_status != $order->data['recurring_status']) {
-    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = :recurring_status WHERE order_id = :order_id', array(':recurring_status' => $order->data['recurring_status'], ':order_id' => $order_id));
-  }
-
-  // update the user's profile
-  fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
-
-  // if it's recurring, spawn all the future orders
-  if (fundraiser_is_recurring_order($order_id)) {
-    fundraiser_create_future_orders($order_id, $node->gateway);
-  }
-
-  // TODO: This should be changed to a hook (hook_donation_successful) and another module can put it in the queue.
-  fundraiser_add_to_queue($order);
-
-  // show gateay message if appropriate
-  $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
-    drupal_set_message($message);
-  }
-}
-
-/**
- * Completes the processing of an declined order.
- *
- * @param $order_id
- *   The id of the order.
- * @param $message
- *   Any message that was returned by the gateway.
- */
-function fundraiser_order_decline($order_id, $message) {
-  // make the order as failed
-  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
-  // make a log entry
-  watchdog('fundraiser', 'Order @id was declined by the payment gateway. Reason: @message', array('@id' => $order_id, '@message' => $message), WATCHDOG_DEBUG, NULL);
-
-  // clean up
-  $sid = db_query('SELECT sid FROM {fundraiser_webform_order} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
-  db_delete('fundraiser_webform_order')->condition('order_id', $order_id)->execute();
-  db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
-  db_delete('webform_submissions')->condition('sid', $sid)->execute();
-
-  // show gateay message if appropriate
-  $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
-    drupal_set_message($message);
-  }
-}
-
+// Only called by gateway_manager/gm_ogone/gm_ogone.module:
 /**
  * Completes the processing of an order when an error occurs.
  *
@@ -2102,6 +2212,7 @@ function fundraiser_order_exception($order_id, $message) {
   }
 }
 
+// Only called by gateway_manager/gm_ogone/gm_ogone.module:
 /**
  * Completes the processing of an order when it is cancelled by the user.
  *
@@ -2125,63 +2236,7 @@ function fundraiser_order_cancel($order_id) {
   }
 }
 
-/**
- * Updates the profile of user that submitted the donation.
- *
- * @param $uid
- *   The id of the user that made the donation.
- * @param $nid
- *   The nid of the webform node.
- * @param $sid
- *   The id of the webform submission that contains the values.
- */
-function fundraiser_update_user_profile($uid, $nid, $sid) {
-  global $user;
-  $update_user = $user;
-  $map = fundraiser_create_profile_values_map($nid, $sid);
-
-  if ($user->uid == 0) {
-    $update_user = user_load($uid);
-  }
-
-  // make sure the profile module is enabled
-  if (module_exists('profile')) {
-    $cat_array = profile_categories();
-
-    foreach ($cat_array as $cat) {
-      $updates = array(); // array for storing updates to each profile category
-      $results = _fundraiser_profile_get_fields($cat['name']);
-      foreach ($results as $result) {
-        $row = (array) $result;
-        if (array_key_exists($row['name'], $map)) {
-          $updates[$row['name']] = $map[$row['name']];
-        }
-      }
-      // save profile
-      _fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
-    }
-    // convert ubercart's numeric ids to textual values
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($nid, $sid);
-    _fundraiser_update_profile_location($submission, $update_user);
-  }
-
-  // update last_updated date so user will be re-synced on next cron run
-  user_save($update_user, array('last_updated' => time()));
-
-  // insert user back into queue
-  $action = 'update';
-  if (empty($update_user->salesforce_contact_id)) {
-    $action = 'upsert';
-  }
-
-  // If the SF Queue API is enabled, insert this user into the queue
-  if (module_exists('queue_api')) {
-    sf_queue_insert($update_user->uid, 'user', $action);
-  }
-
-}
-
+// Called in fundraiser/fundraiser.sustainer.inc:
 /**
  * Extends a current recurring donation series out to a new credit card expiration date.
  */
@@ -2214,160 +2269,7 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
   }
 }
 
-/**
- * Creates future order based on the the order's credit card expiration date.
- */
-function fundraiser_create_future_orders($order_id, $gateway = NULL) {
-  global $user;
-
-  // reload the original order so we get any changes that have been made by the payment gateways
-  $order = uc_order_load($order_id);
-
-  // determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
-  $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
-
-  for ($i = 1; $i <= $counter; $i++) {
-    $next_order = uc_order_new($user->uid);
-    // copy all values to new order
-    $new_id = $next_order->order_id;
-    $next_order = clone $order;
-    $next_order->order_id = $new_id;
-    $next_order->order_status = 'pending_future_payment';
-
-    unset($next_order->products[0]->order_product_id);
-    uc_order_save($next_order);
-    $next_charge = strtotime("+$i months");
-
-    // make a record of the recurring order
-    $recurring = array('master_order_id' => $order_id, 'order_id' => $new_id, 'next_charge' => $next_charge, 'gateway' => $gateway);
-    drupal_write_record('fundraiser_recurring', $recurring);
-
-    // add a comment to the order stating when it will be charged
-    uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
-  }
-
-}
-
-/**
- * Submits recurring donations for payment
- */
-function fundraiser_process_recurring_donations() {
-
-  $successes = 0;
-  $fails = 0;
-
-  $results = db_query("SELECT * FROM {fundraiser_recurring} WHERE next_charge < :next_charge AND
-    (gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3", array(':next_charge' => time()));
-
-  // loop over the found orders
-  foreach ($results as $result) {
-    $order_info = (array) $result;
-    $order_id = $order_info['order_id'];
-    $order = uc_order_load($order_id);
-    $total = $order->order_total;
-
-    // varaible to hold the name of the payment gateway charge function we need to call
-    $charge_function = NULL;
-
-    // get the id of the reference to the customers cc data
-    $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
-    $data = array(
-      'txn_type' => 'reference_txn',
-      'ref_id' => $ref_id,
-    );
-
-    $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
-
-    if (empty($charge_function)) {
-      watchdog('fundraiser', 'Cannot determine the payment gateway for order @id. Node id of donation form is @nid', array('@id' => $order->order_id, '@nid' => $order->products[0]->nid), WATCHDOG_CRITICAL);
-    }
-    else {
-      // process the order
-      $result = $charge_function($order_id, $total, $data);
-      if ($result['success']) {
-        $successes++;
-        uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
-        uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin');
-        db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",array(':order_id' => $order_id));
-        db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = :txn_id WHERE order_id = :order_id", array(':txn_id' => $result['data']['txn_id'], ':order_id' => $order_id));
-
-        // Send credit card notification email when only a single payment is left
-        if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
-          fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
-        }
-
-        // Check for Salesforce Fundraiser module and update order status
-        if (module_exists('sf_donation')) {
-          sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-        }
-      }
-      else {
-        $fails++;
-        db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order->order_id));
-        db_query("UPDATE {fundraiser_recurring} SET
-          gateway_resp = 'failed',
-          attempts = attempts + 1,
-          next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
-          WHERE order_id = :order_id", array(':order_id' => $order_id)
-        );
-        // get the number of times this order has been attempted
-        $attempt_count = db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = :order_id",
-          array(':order_id' => $order->order_id))->fetchColumn();
-        if ($attempt_count == 3) {
-          // final attempt. add debug alert
-          watchdog('fundraiser', 'Payment for recurring donation @id has failed 3 times. The order will not be submitted for payment again. Gateway message: @message', array('@id' => $order->order_id, '@message' => $result['message']), WATCHDOG_DEBUG);
-        }
-        else {
-          // log this failure
-          watchdog('fundraiser', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message', array('@id' => $order->order_id, '@attempts' => $attempt_count, '@message' => $result['message']), WATCHDOG_DEBUG);
-        }
-        // fire sustainer payment failure trigger
-        module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
-      }
-      // clear the credit card cache between orders
-      uc_credit_cache('clear');
-    }
-  }
-
-  if ($successes > 0 || $fails > 0) {
-    watchdog('fundraiser', '!successes recurring fees processed successfully; !fails failed.', array('!successes' => $successes, '!fails' => $fails));
-  }
-}
-
-/**
- * Returns the number of unprocessed payments for a recurring donation series.
- */
-function fundraiser_recurring_payments_remaining($master_order_id) {
-  return db_query('SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL',
-    array(':master_order_id' => $master_order_id))->fetchColumn();
-}
-
-/**
- * Kicks of an email to a sustainer to remind them their credit card is about to expire.
- */
-function fundraiser_send_cc_notification($master_order_id, $uid) {
-  $user = user_load($uid);
-  // load the last remaining order so we can get some info for the email
-  $order_id = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL",
-    array(':master_order_id' => $master_order_id))->fetchColumn();
-  $order = uc_order_load($order_id);
-
-  // set up some params that can be used in the email
-  $params['exp_month'] = $order->payment_details['cc_exp_month'];
-  $params['exp_year'] = $order->payment_details['cc_exp_year'];
-  $params['cc_last_4'] = substr($order->payment_details['cc_number'], -4);
-  $params['cc_type'] = $order->payment_details['cc_type'];
-  $params['amount'] = $order->order_total;
-  $params['order_id'] = $order_id;
-  $params['user'] = $user;
-  $params['master_order_id'] = $master_order_id;
-
-  watchdog('fundraiser', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
-  drupal_mail('fundraiser', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
-}
-
-
-
+// UC related - SeH TODO hook
 /**
  * Implementation of hook_order().
  */
@@ -2380,8 +2282,7 @@ function fundraiser_order($op, &$arg1, $arg2) {
   }
 }
 
-
-
+// UC related - SeH TODO hook
 /**
  * Implementation of hook_preprocess_uc_order().
  *
@@ -2423,9 +2324,9 @@ function fundraiser_queue_report_item_title_alter(&$row) {
   }
 }
 
-/******************************************************************************
- * TRIGGERS
- *****************************************************************************/
+/**
+ * Trigger and action related functions.
+ */
 
 /**
  * Implementation of hook_hook_info().
@@ -2477,11 +2378,11 @@ function fundraiser_webform_select_options_info() {
   $items = array();
   $items['uc_states'] = array(
     'title' => t('Ubercart defined states'),
-    'options callback' => 'fundraiser_options_uc_states',
+    'options callback' => 'fundraiser_options_states',
   );
   $items['uc_countries'] = array(
     'title' => t('Ubercart defined countries'),
-    'options callback' => 'fundraiser_options_uc_countries',
+    'options callback' => 'fundraiser_options_countries',
   );
   return $items;
 }
@@ -2489,14 +2390,14 @@ function fundraiser_webform_select_options_info() {
 /**
  * Options list containing a list of ubercart defined states
  */
-function fundraiser_options_uc_states() {
+function fundraiser_options_states() {
   return array();
 }
 
 /**
  * Options list containing a list of ubercart defined countries
  */
-function fundraiser_options_uc_countries() {
+function fundraiser_options_countries() {
   return array();
 }
 
@@ -2504,6 +2405,7 @@ function fundraiser_options_uc_countries() {
  * Implementation of hook_order_actions().
  * Add a refund action to the Order list
  */
+// New Ubercart uses rules now, this should be ported. - SeH TODO
 function fundraiser_order_actions($order) {
   if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && fundraiser_gateway_can_refund_order($order)) {
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
@@ -2516,76 +2418,4 @@ function fundraiser_order_actions($order) {
     );
     return $actions;
   }
-}
-
-/**
- * Check if the given order was made on a payment gateway that supports refunds
- */
-function fundraiser_gateway_can_refund_order($order) {
-  // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} '.
-    'WHERE order_id = :order_id '.
-    'UNION '.
-    'SELECT gateway, txn_id FROM {fundraiser_recurring} '.
-    'WHERE order_id = :order_id',
-    array(':order_id' => $order->order_id))->fetchObject();
-
-  if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($payment_details->gateway);
-    $refund_function = $info['refund_function'];
-  }
-  else {
-    $refund_function = fundraiser_refund_function($node->gateway);
-  }
-  return trim($refund_function) != '';
-}
-
-
-
-/**
- * Version of profile_save_profile that includes hidden profile fields
- */
-function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
-  $results = _fundraiser_profile_get_fields($category);
-  foreach ($results as $field) {
-    if (_profile_field_serialize($field->type)) {
-      $edit[$field->name] = serialize($edit[$field->name]);
-    }
-    db_delete('profile_value')->condition('fid', $field->fid)->condition('uid', $user->uid)->execute();
-    $profile_values = array('fid' => $field->fid, 'uid' => $user->uid, 'value' => $edit[$field->name]);
-    drupal_write_record('profile_value', $profile_values);
-    // Mark field as handled (prevents saving to user->data).
-    $edit[$field->name] = NULL;
-  }
-}
-
-/**
- * Gets the gateway associated with a given order. First it looks to see if the gateway has been
- * stored with the individual order. If it hasn't it uses the gateway that was assigned to the
- * donation form where the order originated.
- */
-function _fundraiser_charge_function($order_id, $nid, &$data) {
-  // First, see if the gateway is stored with the order.
-  $gateway = _fundraiser_get_fields_from_table('fundraiser_recurring', array('order_id' => $order_id), 'gateway');
-  if (!$gateway || empty($gateway)) {
-    // Nothing on the order? Get the gateway from the original donation form.
-    $gateway = _fundraiser_get_fields_from_table('fundraiser', array('nid' => $nid), 'gateway');
-  }
-  if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($gateway);
-    $charge_function = $info['charge_function'];
-    $data['config'] = $info['config'];
-    return $charge_function;
-  }
-  else {
-    $gateways = _fundraiser_get_gateway_info();
-    // get the charge function for the given gateway
-    foreach ($gateways as $k => $v) {
-      if ($v['id'] == $gateway) {
-        return $v['credit'];
-      }
-    }
-  }
-
-  return FALSE;
 }

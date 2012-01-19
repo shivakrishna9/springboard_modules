@@ -568,3 +568,217 @@ function fundraiser_update_cron_settings($form, $form_state) {
     menu_rebuild();
   }
 }
+
+
+/**
+ * User mapping form.
+ */
+function fundraiser_mapping_form($form_state, $node) {
+  $form = array(
+    '#tree' => TRUE,
+    '#node' => $node,
+    'mapping' => array(),
+  );
+
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
+
+  $form['info'] = array(
+    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the ' .
+      'donation form is submitted, the user\'s profile will be updated with the values from the form.',
+    '#weight' => 0,
+  );
+
+  foreach ($node->webform['components']   as $cid => $component) {
+    if ($component['type'] != 'fieldset') {
+      $form['mapping']['cid'][$cid] = array(
+      '#type' => 'item',
+      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
+      );
+      $options = array('' => '--Select One--');
+      if (module_exists('profile')) {
+        $cat_array = profile_categories();
+        foreach ($cat_array as $cat) {
+          $result = _profile_get_fields($cat['name']);
+          foreach( $result as $this_row) {
+            $row = (array)$this_row;
+            $options['Drupal Profile Fields'][$row['name']] = $row['title'];
+          }
+        }
+      }
+      $options['User Fields'] = array(
+        'mail' => t("Email Address"),
+      );
+      $form['mapping']['type'][$cid] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => $node->map[$cid],
+      );
+      $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+    }
+  }
+  return $form;
+}
+
+
+function fundraiser_mapping_form_submit($form, &$form_state) {
+  db_delete('fundraiser_component_map')->condition('nid', $form['#node']->nid)->execute();
+  foreach ($form_state['values']['mapping']['type'] as $key => $value) {
+    if (!empty($value)) {
+      $component_map = array('nid' => $form['#node']->nid, 'cid' => $key, 'map_id' => $value);
+      drupal_write_record('fundraiser_component_map', $component_map);
+    }
+  }
+  drupal_set_message(t('Profile mapping has been saved'));
+}
+
+function fundraiser_recurring_admin() {
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+// TODO signifigant security issues in the previous version of this query, needs to be reviewed on the 6.x branch. - SeH
+  $output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
+  <tr> 
+  <th>OrderID</th>
+  <th>User Name</th>
+  <th>Amount</th>
+  <th>Last Charged</th>
+  </tr>
+  ";
+
+  $results = db_query('SELECT fr.*, u.name FROM {fundraiser_recurring} fr '.
+    'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id '.
+    'INNER JOIN {users} u ON uo.uid = u.uid '.
+    'WHERE fr.order_id = :order_id'.
+    'ORDER BY uo.created DESC',
+  array(':order_id' => arg(3)));
+
+  foreach ($results as $result) {
+    $row = (array) $result;
+    $row['fee_amount'] = number_format($row['fee_amount'], 2, '.', '');
+    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $row['next_charge']));
+    $output .= "<tr>  
+    <td>$row[order_id]</td>
+    <td>$row[name]</td>
+    <td>$row[fee_amount]</td>
+    <td>$last_charge</td>
+    </tr>";
+  }
+  $output .= "</table>";
+  return $output;
+}
+
+
+
+function fundraiser_recurring_edit_forms() {
+  if (is_numeric(arg(3))) {
+    $master_order_id = arg(3);
+    return _recurring_donation_edit_forms($master_order_id);
+  }
+}
+
+function _recurring_donation_edit_forms($master_order_id) {
+  // we need an unprocessed child order for billing information
+  $child_order_id = db_query('SELECT order_id FROM {fundraiser_recurring} '.
+    'WHERE master_order_id = :order_id and gateway_resp IS NULL LIMIT 1',
+    array(':order_id' => $master_order_id))->fetchColumn();
+
+  $order = uc_order_load($child_order_id);
+  $nid = $order->products[0]->nid;
+
+  $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
+  // render 3 forms
+  $output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
+
+  // 4/5/2010 - commented out for time being because authorize.net does not support updating
+  //             CIM profiles at this time
+  // $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
+
+  $output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
+
+  return $output;
+}
+
+function _get_billing_information($master_order_id, $order) {
+  $state = uc_get_zone_code($order->billing_zone);
+  $orders_remaining = _remaining_recurring_charge_count($master_order_id);
+  $orders_processed = _processed_recurring_charge_count($master_order_id);
+  $donation_amount = '$' . money_format('%i', $order->order_total);
+// TODO come back to this - shouldn't this be in a themed template display? - SeH 1/11/12
+  $billing_str = "";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Bill to:</div>";
+  $billing_str .= "$order->billing_first_name $order->billing_last_name<br />";
+  $billing_str .= "$order->billing_street1<br />";
+  if (!empty($order->billing_street2)) {
+    $billing_str .= "$order->billing_street2<br />";
+  }
+  $billing_str .= "$order->billing_city, $state $order->billing_postal_code</div>";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Customer Info:</div>";
+  $billing_str .= "Customer Number: <a href='/user/$order->uid'>$order->uid</a><br />";
+  $billing_str .= "Primary email:<br />$order->primary_email</div>";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Recurring Payment Info:</div>";
+  $billing_str .= "Recurring Donation Amount: $donation_amount<br />";
+  $billing_str .= "Recurring Charges Processed: $orders_processed <br />";
+  $billing_str .= "Recurring Charges Remaining: $orders_remaining <br /></div>";
+  $billing_str .= "<div style='clear:both;'>&nbsp;</div>";
+  return $billing_str;
+}
+
+
+
+
+function fundraiser_recurring_master_order_overview() {
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+  $output = "<h2>Recurring Orders</h2>";
+  $output .= "<table><thead>
+  <tr>
+  <th>Master Order ID</th>
+  <th>OrderID</th>
+  <th>User Name</th>
+  <th>Amount</th>
+  <th>Charge Date</th>
+  </tr></thead>
+  ";
+
+  if (empty($rows[1])) {
+    //we're actually looking at the order id and not the master_order_id
+    $results = db_query('SELECT fr.*, u.name, uo.order_total FROM {fundraiser_recurring} fr ' .
+      'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id ' .
+      'INNER JOIN {users} u on u.uid = uo.uid ' .
+      'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
+      'ORDER BY fr.order_id ASC',
+    array(':order_id' => arg(3)));
+    unset($rows);
+    foreach ($results as $result) {
+      $rows[] = (array) $result;
+    }
+  }
+
+  for ($i = 1; $i < count($rows); $i++) {
+    if (($i % 2) == 0) {
+      $class = 'even';
+    }
+    else {
+      $class = 'odd';
+    }
+    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'], 2, '.', '');
+    if ($rows[$i]['gateway_resp'] == 'canceled') {
+      $next_charge = 'Canceled';
+    }
+    else {
+      $next_charge = date("Y-m-d H:i:s", $rows[$i]['next_charge']);
+    }
+    $output .= "<tr class='$class'>
+    <td><a href='/admin/store/orders/" . $rows[$i]['master_order_id'] . "/recurring/edit'>" . $rows[$i]['master_order_id'] . "</a></td>
+    <td>" . $rows[$i]['order_id'] . "</td>
+    <td>" . $rows[$i]['name'] . "</td>
+    <td>" . $rows[$i]['fee_amount'] . "</td>
+    <td>$next_charge</td>
+    </tr>";
+  }
+  $output .= "</table>";
+  return $output;
+}
