@@ -54,6 +54,28 @@ function fundraiser_preprocess_page(&$variables) {
   }
 }
 
+/**
+ * Implemenation of hook_preprocess_fundraiser_confirmation().
+ * http://api.drupal.org/api/drupal/modules--system--theme.api.php/function/hook_preprocess/7
+ */
+function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
+  $sid = $vars['sid'];
+  if ($sid) {
+    // load up the id of the order
+    $order_id = db_query('SELECT order_id FROM {fundraiser_webform_order} WHERE sid = :sid', array(':sid' => $sid))->fetchColumn();
+    $order = uc_order_load($order_id);  // SHOULD BE HOOKED. TODO
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $sid);
+    $message = $vars['node']->confirmation_page_body;
+    // replace any submission level tokens
+    $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE);
+    // replace any order tokens
+    $message = token_replace($message, 'order', $order);
+
+    // set a variable that can be used in the template
+    $vars['confirmation_message'] = $message;
+  }
+}
 
 /**
  * Theme function for the sustainer management page.

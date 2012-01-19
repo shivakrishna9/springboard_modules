@@ -785,3 +785,36 @@ function sage_update_billing_information($reference_id, $billing_info) {
   return TRUE;
 }
 
+
+// Called in fundraiser/fundraiser.sustainer.inc:
+/**
+ * Extends a current recurring donation series out to a new credit card expiration date.
+ */
+function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
+  // determine the date of the last order, and the number of orders to create out to the new expiration date
+  $exp = $exp_year . sprintf("%02d", $exp_month)  ;
+  $results = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(:exp, date_format(from_unixtime(max(next_charge)),'%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = :order_id",
+    array(':exp' => $exp, ':order_id' => $order_id));
+
+  foreach ($results as $data) {
+    $last_order_id = $data->last_order_id;
+    $last_charge_date = $data->last_charge_date;
+    $new_order_count = $data->new_order_count;
+  }
+
+  // load up the last order since it will have the most recent changes
+  $order = uc_order_load($last_order_id);
+  $gateway = db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = :order_id", array(':order_id' => $last_order_id))->fetchColumn();
+  for ($i = 1; $i <= $new_order_count; $i++) {
+    $new_order_id = fundraiser_clone_order($order);
+    $charge_date = strtotime("+$i months", $last_charge_date);
+    $recurring = array('master_order_id' => $order_id, 'order_id' => $new_order_id, 'next_charge' => $charge_date, 'gateway' => $gateway);
+    drupal_write_record('fundraiser_recurring', $recurring);
+    uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
+    // add these new orders to the queue
+    if (module_exists('sf_donation') && module_exists('queue_api')) {
+      sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+      sf_queue_insert($order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'update');
+    }
+  }
+}
