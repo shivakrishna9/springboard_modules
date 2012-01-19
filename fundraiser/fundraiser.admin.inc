@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Administration page callbacks for the fundraiser module
+ * Administration page callbacks for the fundraiser module.
  */
 
 /**

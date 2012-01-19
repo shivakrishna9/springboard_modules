@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Sustainer management functions for the fundraiser module.
- *
+ * Sustainer page callbacks for the fundraiser module.
  *
  * @ingroup fundraiser
  */

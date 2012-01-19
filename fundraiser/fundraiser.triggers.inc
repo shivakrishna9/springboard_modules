@@ -3,6 +3,7 @@
 /**
  * @file
  * Action and trigger related stuff for the fundraiser module.
+ * These functions are split off with the idea that eventually this could become it's own module, linking fundraiser and triggers.
  */
 
 /**

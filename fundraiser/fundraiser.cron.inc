@@ -4,7 +4,7 @@
 /**
  * @file
  * Cron related functions for hte fundraiser module.
- * This file is included when cron or custom fundraiser cron are run.
+ * This file is included only when cron or custom fundraiser cron are run.
  */
 
 /**
@@ -174,7 +174,7 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
 function fundraiser_send_cc_notification($master_order_id, $uid) {
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
-  $order_id = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL",
+  $order_id = db_query('SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL',
     array(':master_order_id' => $master_order_id))->fetchColumn();
   $order = uc_order_load($order_id);
 

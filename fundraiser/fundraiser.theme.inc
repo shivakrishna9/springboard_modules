@@ -2,7 +2,8 @@
 
 /**
  * @file
- * Theme related functions for the fundraiser module
+ * Theme related functions for the fundraiser module.
+ * These are isolated to make them easy to locate and maintain.
  */
 
 /**

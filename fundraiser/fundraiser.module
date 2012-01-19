@@ -1979,8 +1979,6 @@ function fundraiser_get_charge_function_by_gateway($id) {
   return NULL;
 }
 
-
-
 /**
  * DB generic function, given a nid and options to filter by, get the given fields from given table.
  * Doesn't handle joined tables, but handles the basic pretty readily.

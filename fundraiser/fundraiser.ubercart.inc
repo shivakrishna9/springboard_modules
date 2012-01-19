@@ -3,11 +3,13 @@
 /**
  * @file
  * Ubercart based hook implementations for the fundraiser module.
+ * These functions are split off with the idea that eventually this could become it's own module, linking fundraiser and ubercart.
  */
 
 /**
  * Implementation of hook_order().
  * From http://www.ubercart.org/docs/api/hook_order
+ * When an order is deleted, keep fundraiser tables in sync.
  */
 function fundraiser_order($op, &$arg1, $arg2) {
   switch ($op) {
@@ -20,7 +22,7 @@ function fundraiser_order($op, &$arg1, $arg2) {
 
 /**
  * Implementation of hook_preprocess_uc_order().
- * Adds additional variables for use in donation receipt emails.
+ * Adds additional variables for use in donation receipt emails sent by UC.
  * From: http://www.ubercart.org/forum/development/18047/inserting_variables_invoices_ubercart_23_and_above
  */
 function fundraiser_preprocess_uc_order(&$variables) {
