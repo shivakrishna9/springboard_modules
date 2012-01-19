@@ -196,10 +196,6 @@ function _market_source_build_qs_keys() {
     if (is_array($custom_fields)) {
       foreach ($custom_fields as $field) {
         $qs_keys[$field['key']] = NULL;
-        if (!empty($field['default'])) {
-          // Set a default value, if a default value is provided.
-          $qs_keys[$field['key']] = $field['default'];
-        }
       }
     }
   }
