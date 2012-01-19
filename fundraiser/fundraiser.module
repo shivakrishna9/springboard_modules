@@ -12,6 +12,8 @@ define('DONATION_CANCELLED', 2);
 require_once('fundraiser.fields.inc'); 
 // Include theme related functions.
 require_once('fundraiser.theme.inc'); 
+// Include trigger related functions.
+require_once('fundraiser.triggers.inc'); 
 // Include ubercart based implementations of fundraiser hooks.
 require_once('fundraiser.ubercart.inc'); 
 
@@ -180,7 +182,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_show_refund_form',
     'page arguments' => array(3),
     'access arguments' => array('edit orders'),
-    'file' => 'fundraiser.billing.inc',
+    'file' => 'fundraiser.admin.inc',
     'weight' => 3,
     'type' => MENU_LOCAL_TASK,
   );
@@ -427,6 +429,86 @@ function fundraiser_clone_access_alter(&$access, $node) {
   // Removing cloning access since fundraiser implements it's own cloning routine.
   if ($node->type == 'donation_form') {
     $access = 0;
+  }
+}
+
+
+
+/**
+ * Implemenation of queue_report_item_name().
+ */
+function fundraiser_queue_report_item_title_alter(&$row) {
+  if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
+    $title = 'Order ' . $row['oid'];
+    $row['title'] = $title;
+  }
+  elseif ($row['type'] == 'refund') {
+    $order_id = db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id",
+      array(':refund_id' => $row['oid']))->fetchColumn();
+    $title = 'Order ' . $order_id;
+    $row['title'] = $title;
+  }
+}
+
+
+/**
+ * Implementation of hook_order_actions() from Ubercart.
+ * Add a refund option to the Order list
+ * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
+ */
+function fundraiser_order_actions($order) {
+  if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && fundraiser_gateway_can_refund_order($order)) {
+    $module_path = base_path() . drupal_get_path('module', 'fundraiser');
+    $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
+    $actions[] = array(
+      'name' => t('Refund'),
+      'url' => 'admin/store/orders/' . $order->order_id . '/refund',
+      'icon' => '<img src="' . $module_path . '/images/refund.gif" alt="' . $title . '" />',
+      'title' => $title,
+    );
+    return $actions;
+  }
+}
+
+/**
+ * Implemenation of hook_webform_select_options_info() from Webform.
+ * From http://drupalcontrib.org/api/drupal/contributions!webform!webform_hooks.php/function/hook_webform_select_options_info/7
+ */
+function fundraiser_webform_select_options_info() {
+  $items = array();
+  $items['fundraiserstates'] = array(
+    'title' => t('Fundraiser defined states'),
+    'options callback' => 'fundraiser_options_states',
+  );
+  $items['fundraiser_countries'] = array(
+    'title' => t('Fundraiser defined countries'),
+    'options callback' => 'fundraiser_options_countries',
+  );
+  return $items;
+}
+
+/**
+ * Options list containing a list of ubercart defined states
+ */
+function fundraiser_options_states() {
+  return array();
+}
+
+/**
+ * Options list containing a list of ubercart defined countries
+ */
+function fundraiser_options_countries() {
+  return array();
+}
+
+/*
+ * Support for cloning via the node clone module
+ * Implements hook_clone_node_alter() from Node clone.
+ * From: http://drupal.org/node/1256478
+ */
+function fundraiser_clone_node_alter(&$node, $original_node, $method) {
+  if ($method == 'prepopulate') {
+    $node->internal_name = 'Clone of ' . $original_node->internal_name;
   }
 }
 
@@ -2266,156 +2348,5 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
       sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
       sf_queue_insert($order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'update');
     }
-  }
-}
-
-// UC related - SeH TODO hook
-/**
- * Implementation of hook_order().
- */
-function fundraiser_order($op, &$arg1, $arg2) {
-  switch ($op) {
-    case 'delete':
-      // remove the order from fundraiser tables
-      db_delete('fundraiser_recurring')->condition('order_id', $arg1->order_id)->execute();
-      break;
-  }
-}
-
-// UC related - SeH TODO hook
-/**
- * Implementation of hook_preprocess_uc_order().
- *
- * Adds additional variables for use in donation receipt emails.
- *
- */
-function fundraiser_preprocess_uc_order(&$variables) {
-  switch ($variables['op']) {
-    case 'checkout-mail':
-      $nid = $variables['order']->products[0]->nid;
-      $message = db_query("SELECT receipt_email_message FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid))->fetchColumn();
-      $variables['fundraiser_message'] = $message;
-      break;
-  }
-}
-
-/*
- * Support for cloning via the node clone module
- */
-function fundraiser_clone_node_alter(&$node, $original_node, $method) {
-  if ($method == 'prepopulate') {
-    $node->internal_name = 'Clone of ' . $original_node->internal_name;
-  }
-}
-
-/**
- * Implemenation of queue_report_item_name().
- */
-function fundraiser_queue_report_item_title_alter(&$row) {
-  if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
-    $title = 'Order ' . $row['oid'];
-    $row['title'] = $title;
-  }
-  elseif ($row['type'] == 'refund') {
-    $order_id = db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id",
-      array(':refund_id' => $row['oid']))->fetchColumn();
-    $title = 'Order ' . $order_id;
-    $row['title'] = $title;
-  }
-}
-
-/**
- * Trigger and action related functions.
- */
-
-/**
- * Implementation of hook_hook_info().
- */
-function fundraiser_hook_info() {
-  return array(
-    'fundraiser' => array(
-      'fundraiser' => array(
-        'sustainer_payment_declined' => array(
-          'runs when' => t('A sustainer\'s credit card payment is declined'),
-        ),
-      ),
-    ),
-  );
-}
-
-/**
- * Implementation of hook_fundraiser().
- */
-function fundraiser_fundraiser($op, $order) {
-  if (module_exists('trigger')) {
-    $aids = _trigger_get_hook_aids('fundraiser', $op);
-    $context = array(
-      'hook' => 'fundraiser',
-      'op' => $op,
-      'order' => $order,
-    );
-    $dummy = new stdClass();
-    actions_do(array_keys($aids), $dummy, $context);
-  }
-}
-
-/**
- * Implementation of hook_action_info_alter().
- */
-function fundraiser_action_info_alter(&$info) {
-  if (isset($info['token_actions_send_email_action']['hooks']['fundraiser'])) {
-    array_merge($info['token_actions_send_email_action']['hooks']['fundraiser'], array('sustainer_payment_declined'));
-  }
-  else {
-    $info['token_actions_send_email_action']['hooks']['fundraiser'] = array('sustainer_payment_declined');
-  }
-}
-
-/**
- * Implemenation of hook_webform_select_options_info().
- */
-function fundraiser_webform_select_options_info() {
-  $items = array();
-  $items['uc_states'] = array(
-    'title' => t('Ubercart defined states'),
-    'options callback' => 'fundraiser_options_states',
-  );
-  $items['uc_countries'] = array(
-    'title' => t('Ubercart defined countries'),
-    'options callback' => 'fundraiser_options_countries',
-  );
-  return $items;
-}
-
-/**
- * Options list containing a list of ubercart defined states
- */
-function fundraiser_options_states() {
-  return array();
-}
-
-/**
- * Options list containing a list of ubercart defined countries
- */
-function fundraiser_options_countries() {
-  return array();
-}
-
-/**
- * Implementation of hook_order_actions().
- * Add a refund action to the Order list
- */
-// New Ubercart uses rules now, this should be ported. - SeH TODO
-function fundraiser_order_actions($order) {
-  if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && fundraiser_gateway_can_refund_order($order)) {
-    $module_path = base_path() . drupal_get_path('module', 'fundraiser');
-    $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
-    $actions[] = array(
-      'name' => t('Refund'),
-      'url' => 'admin/store/orders/' . $order->order_id . '/refund',
-      'icon' => '<img src="' . $module_path . '/images/refund.gif" alt="' . $title . '" />',
-      'title' => $title,
-    );
-    return $actions;
   }
 }

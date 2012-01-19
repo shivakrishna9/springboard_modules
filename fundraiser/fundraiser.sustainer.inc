@@ -421,7 +421,6 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
  * Updates all pending donations with new billing information
  */
 function fundraiser_billing_update_form_submit($form, &$form_state) {
-  include_once 'fundraiser.billing.inc';
   $orders_changed = array();
 
   $master_order_id = $form_state['values']['master_order_id'];

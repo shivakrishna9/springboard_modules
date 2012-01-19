@@ -5,6 +5,35 @@
  * Ubercart based hook implementations for the fundraiser module.
  */
 
+/**
+ * Implementation of hook_order().
+ * From http://www.ubercart.org/docs/api/hook_order
+ */
+function fundraiser_order($op, &$arg1, $arg2) {
+  switch ($op) {
+    case 'delete':
+      // remove the order from fundraiser tables
+      db_delete('fundraiser_recurring')->condition('order_id', $arg1->order_id)->execute();
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_preprocess_uc_order().
+ * Adds additional variables for use in donation receipt emails.
+ * From: http://www.ubercart.org/forum/development/18047/inserting_variables_invoices_ubercart_23_and_above
+ */
+function fundraiser_preprocess_uc_order(&$variables) {
+  switch ($variables['op']) {
+    case 'checkout-mail':
+      $nid = $variables['order']->products[0]->nid;
+      $message = db_query("SELECT receipt_email_message FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid))->fetchColumn();
+      $variables['fundraiser_message'] = $message;
+      break;
+  }
+}
+
+
 function fundraiser_fundraiser_get_country_zones($country_id) {
   $options = array('required' => uc_address_field_required('zone'));
   $zones = uc_zone_select(uc_get_field_name('zone'), NULL, $country_id, $options);
