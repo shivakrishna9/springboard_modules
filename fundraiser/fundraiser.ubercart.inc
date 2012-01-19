@@ -289,6 +289,8 @@ function fundraiser_fundraiser_create_future_orders($user, $order_id, $gateway) 
 function fundraiser_fundraiser_order_decline($order_id) {
   // Mark the sale in Ubercart as failed.
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
+  // Clear the credit card cache between orders
+  uc_credit_cache('clear');
 }
 
 /**

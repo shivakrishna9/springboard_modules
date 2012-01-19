@@ -40,7 +40,6 @@ function fundraiser_processor_key_match() {
   return TRUE;
 }
 
-
 /**
  * Submits recurring donations for payment
  */
@@ -49,30 +48,31 @@ function fundraiser_process_recurring_donations() {
   $successes = 0;
   $fails = 0;
 
-  $results = db_query("SELECT * FROM {fundraiser_recurring} WHERE next_charge < :next_charge AND
-    (gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3", array(':next_charge' => time()));
+  $results = db_query('SELECT * FROM {fundraiser_recurring} ' .
+    'WHERE next_charge < :next_charge AND (gateway_resp IS NULL OR gateway_resp = \'failed\') AND attempts < 3',
+    array(':next_charge' => time()));
 
-  // loop over the found orders
+  // Loop over the found orders
   foreach ($results as $result) {
     $order_info = (array) $result;
     $order_id = $order_info['order_id'];
-    $order = uc_order_load($order_id);
+
+    // Get the order data from our order handler (Ubercart).
+    $order = module_invoke_all('fundraiser_get_order', $order_id);
     $total = $order->order_total;
 
-    // varaible to hold the name of the payment gateway charge function we need to call
-    $charge_function = NULL;
-
-    // get the id of the reference to the customers cc data
+    // Get data out of the given order.
     $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
     $data = array(
       'txn_type' => 'reference_txn',
       'ref_id' => $ref_id,
     );
-
     $charge_function = _fundraiser_get_charge_function($order_id, $order->products[0]->nid, $data);
 
+    // Process the charge.
     if (empty($charge_function)) {
-      watchdog('fundraiser', 'Cannot determine the payment gateway for order @id. Node id of donation form is @nid', array('@id' => $order->order_id, '@nid' => $order->products[0]->nid), WATCHDOG_CRITICAL);
+      watchdog('fundraiser', 'Cannot determine the payment gateway for order @id. Node id of donation form is @nid',
+        array('@id' => $order->order_id, '@nid' => $order->products[0]->nid), WATCHDOG_CRITICAL);
     }
     else {
       // process the order
@@ -96,29 +96,31 @@ function fundraiser_process_recurring_donations() {
       }
       else {
         $fails++;
-        db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order->order_id));
-        db_query("UPDATE {fundraiser_recurring} SET
-          gateway_resp = 'failed',
-          attempts = attempts + 1,
-          next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
-          WHERE order_id = :order_id", array(':order_id' => $order_id)
+        // Allow other modules to respond to the failure. Including Ubercart.
+        module_invoke_all('fundraiser_order_decline', $order->order_id);
+
+        // Update data internal to fundraiser.
+        db_query('UPDATE {fundraiser_recurring} SET '.
+          'gateway_resp = \'failed\', attempts = attempts + 1, next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) '.
+          'WHERE order_id = :order_id', array(':order_id' => $order_id)
         );
         // get the number of times this order has been attempted
-        $attempt_count = db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = :order_id",
+        $attempt_count = db_query('SELECT attempts FROM {fundraiser_recurring} WHERE order_id = :order_id',
           array(':order_id' => $order->order_id))->fetchColumn();
         if ($attempt_count == 3) {
-          // final attempt. add debug alert
-          watchdog('fundraiser', 'Payment for recurring donation @id has failed 3 times. The order will not be submitted for payment again. Gateway message: @message', array('@id' => $order->order_id, '@message' => $result['message']), WATCHDOG_DEBUG);
+          // Final attempt, add debug alert.
+          watchdog('fundraiser', 'Payment for recurring donation @id has failed 3 times. The order will not be submitted for payment again. Gateway message: @message',
+            array('@id' => $order->order_id, '@message' => $result['message']), WATCHDOG_DEBUG);
         }
         else {
-          // log this failure
-          watchdog('fundraiser', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message', array('@id' => $order->order_id, '@attempts' => $attempt_count, '@message' => $result['message']), WATCHDOG_DEBUG);
+          // Log this failure
+          watchdog('fundraiser', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
+            array('@id' => $order->order_id, '@attempts' => $attempt_count, '@message' => $result['message']), WATCHDOG_DEBUG);
         }
-        // fire sustainer payment failure trigger
+
+        // Fire sustainer payment failure in triggers. TODO - this needs some more thought put to it for a clean interface. -SeH
         module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
       }
-      // clear the credit card cache between orders
-      uc_credit_cache('clear');
     }
   }
 
@@ -126,8 +128,6 @@ function fundraiser_process_recurring_donations() {
     watchdog('fundraiser', '!successes recurring fees processed successfully; !fails failed.', array('!successes' => $successes, '!fails' => $fails));
   }
 }
-
-
 
 /**
  * Gets the gateway associated with a given order. First it looks to see if the gateway has been
@@ -167,18 +167,18 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
     array(':master_order_id' => $master_order_id))->fetchColumn();
 }
 
-
 /**
- * Kicks of an email to a sustainer to remind them their credit card is about to expire.
+ * Kicks off an email to a sustainer to remind them their credit card is about to expire.
  */
 function fundraiser_send_cc_notification($master_order_id, $uid) {
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
   $order_id = db_query('SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL',
     array(':master_order_id' => $master_order_id))->fetchColumn();
-  $order = uc_order_load($order_id);
-
-  // set up some params that can be used in the email
+  // Get the order data from our order handler (Ubercart).
+  $order = module_invoke_all('fundraiser_get_order', $order_id);
+    
+  // Set up some params that can be used in the email.
   $params['exp_month'] = $order->payment_details['cc_exp_month'];
   $params['exp_year'] = $order->payment_details['cc_exp_year'];
   $params['cc_last_4'] = substr($order->payment_details['cc_number'], -4);
