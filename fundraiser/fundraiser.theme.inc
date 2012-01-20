@@ -129,7 +129,7 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
  * Theme Fundraiser mapping form.
  */
 function theme_fundraiser_mapping_form($form) {
-  if ($form['mapping']['cid']) {
+  if (isset($form['mapping']) && $form['mapping']['cid']) {
     foreach ($form['mapping']['cid'] as $key => $cid) {
       if (is_numeric($key)) {
         $row = array();

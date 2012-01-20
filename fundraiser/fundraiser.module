@@ -559,6 +559,23 @@ function fundraiser_form($node, &$form_state) {
     '#collapsed' => TRUE,
   );
 
+  // Get payment gateway list, create options set.
+  // Returns an array of gateway information.
+  $gateways = _fundraiser_get_gateway_info();
+  $gateway_options = array();
+  foreach ($gateways as $gateway) {
+    $gateway_options[$gateway['id']] = $gateway['title'];
+  }
+  $form['fundraiser_settings']['gateway'] = array(
+    '#type' => 'select',
+    '#title' => t('Payment Gateway'),
+    '#options' => $gateway_options,
+    '#weight' => -5,
+    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
+    '#default_value' =>  isset($node->gateway) ? $node->gateway : '',
+    '#required' => TRUE,
+  );
+
   $form['fundraiser_settings']['amount_wrapper'] = array(
     '#type' => 'fieldset',
     '#title' => t('Ask amounts'),
@@ -599,8 +616,6 @@ function fundraiser_form($node, &$form_state) {
   );
 
   for ($i = 0; $i < $delta; ++$i ) {
-// TODO this  cause: Warning: array_merge() [function.array-merge]: 
-// Argument #1 is not an array in _form_set_class()
     $form['fundraiser_settings']['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $form_state, $amount_values);
   }
 
@@ -634,23 +649,6 @@ function fundraiser_form($node, &$form_state) {
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
     '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
-  );
-
-  // Get payment gateway list, create options set.
-  // Returns an array of gateway information.
-  $gateways = _fundraiser_get_gateway_info();
-  $gateway_options = array();
-  foreach ($gateways as $gateway) {
-    $gateway_options[$gateway['id']] = $gateway['title'];
-  }
-  $form['fundraiser_settings']['gateway'] = array(
-    '#type' => 'select',
-    '#title' => t('Payment Gateway'),
-    '#options' => $gateway_options,
-    '#weight' => -5,
-    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-    '#default_value' =>  isset($node->gateway) ? $node->gateway : '',
-    '#required' => TRUE,
   );
 
   /* Hidden fields. */
@@ -723,7 +721,7 @@ function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
 
     // Post values take precedence as they're fresh from the form.
     // We defer to values retrieved from the DB only during initial form generation.
-    if (!isset($form_state['post']) && count($amount_values)) {
+    if (!isset($form_state['values']) && count($amount_values)) {
       $values = explode('|', $amount_values[$delta]);
       $form[$key . $delta]['#default_value'] = $values[$weight];
       if ($values[0] == 'other') {
@@ -731,7 +729,7 @@ function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
       }
     }
     else {
-      $form[$key . $delta]['#default_value'] = $form_state['post'][$key . $delta];
+      $form[$key . $delta]['#default_value'] = $form_state['values'][$key . $delta];
     }
     ++$weight;
   }

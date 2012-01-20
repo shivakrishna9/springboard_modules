@@ -497,7 +497,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
 /**
  * User mapping form.
  */
-function fundraiser_mapping_form($form_state, $node) {
+function fundraiser_mapping_form($form, &$form_state, $node) {
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
@@ -536,9 +536,9 @@ function fundraiser_mapping_form($form_state, $node) {
         'mail' => t("Email Address"),
       );
       $form['mapping']['type'][$cid] = array(
-      '#type' => 'select',
-      '#options' => $options,
-      '#default_value' => $node->map[$cid],
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => isset($node->map[$cid]) ? $node->map[$cid] : '',
       );
       $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
     }

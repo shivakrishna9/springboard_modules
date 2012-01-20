@@ -187,6 +187,8 @@ function fundraiser_fundraiser_get_zone_iso($country_code, $state_code) {
  * Implements hook_fundraiser_gateway_info().
  */
 function fundraiser_fundraiser_gateway_info() {
+  // If no gateways are enabled, this returns an empty array.
+  // TODO - make sure where this is accounted for an emtpy is noted, and flagged as a thing to fix. - SeH
   return _uc_payment_gateway_list('', TRUE);
 // From Ubsercart http://api.lullabot.com/_uc_payment_gateway_list/7
 // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
