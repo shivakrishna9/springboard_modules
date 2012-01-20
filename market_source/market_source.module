@@ -217,9 +217,9 @@ function _market_source_build_form_keys(&$form, $prefix = NULL) {
     }
     // Lookup the element ID of $key in $form.
     $element = &_market_source_form_find_element($form, $lookup_key);
-    if (is_array($element) && isset($element['#id'])) {
-      // Add the element ID to $form_keys.
-      $form_keys[$key] = $element['#id'];
+    if (is_array($element) && isset($element['#name'])) {
+      // Add the element name to $form_keys.
+      $form_keys[$key] = $element['#name'];
     }
   }
   return $form_keys;
