@@ -53,10 +53,7 @@ function fundraiser_recurring_user_edit_forms($uid, $order_id) {
  */
 function _fundraiser_get_recurring_orders(&$user) {
   $orders = array();
-  $results = db_query('SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f '.
-    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
-    'WHERE recurring_status != :status AND u.uid = :uid',
-    array(':status' => DONATION_NON_RECURRING, ':uid' => $user->uid));
+  $results = module_invoke_all('fundraiser_user_get_recurring_orders', $user->uid);
   foreach($results as $data) {
     $created = _fundraiser_get_start_date($data->order_id);
     $next_charge = _fundraiser_get_next_charge_date($data->order_id);
@@ -70,7 +67,6 @@ function _fundraiser_get_recurring_orders(&$user) {
       'expire_date' => $last_charge,
     );
   }
-
   return $orders;
 }
 
@@ -102,7 +98,6 @@ function _fundraiser_get_billing_information($master_order_id, &$order) {
   return $billing_info;
 }
 
-
 /**
  * Gets an unprocessed order in a recurring donation series.
  */
@@ -112,6 +107,7 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
    array(':order_id' => $master_order_id))->fetchColumn();
   if ($order_id) {
     return uc_order_load($order_id);
+  // TODO hook here to load up order info. - SeH 
   }
   return NULL;
 }
@@ -120,7 +116,7 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
  * Counts the number of processed recurring orders.
  */
 function _fundraiser_processed_recurring_charge_count($order_id) {
-  return db_query('SELECT count(order_id) from {fundraiser_recurring} '.
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
    'WHERE master_order_id = :order_id AND gateway_resp = \'success\'',
    array(':order_id' => $order_id))->fetchColumn();
 }
@@ -129,7 +125,7 @@ function _fundraiser_processed_recurring_charge_count($order_id) {
  * Counts the number of unprocessed orders remaining.
  */
 function _fundraiser_remaining_recurring_charge_count($order_id) {
-  return db_query('SELECT count(order_id) from {fundraiser_recurring} '.
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
    'WHERE master_order_id = :order_id AND (gateway_resp IS NULL or gateway_resp = \'failed\')',
    array(':order_id' => $order_id))->fetchColumn();
 }
@@ -139,13 +135,7 @@ function _fundraiser_remaining_recurring_charge_count($order_id) {
  */
 function _fundraiser_recurring_payment_schedule($master_order_id) {
   $orders = array();
-
-  $results = db_query('SELECT u.order_total AS amount, f.next_charge AS charge_date, f.gateway_resp AS status FROM {fundraiser_recurring} f '.
-    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
-    'WHERE f.master_order_id = :order_id ' .
-    'ORDER BY f.next_charge ASC',
-    array(':order_id' => $master_order_id));
-
+  $results = module_invoke_all('fundraiser_user_get_recurring_order_schedule', $master_order_id);
   foreach($results as $result) {
     $data = (array) $result;
     $orders[] = $data;
@@ -170,19 +160,15 @@ function _fundraiser_recurring_payment_cancelled($order_id) {
  * Gets the current amount of a recurring donation. Gets an unprocessed order as the amount may have changed in the past.
  */
 function _fundraiser_get_current_donation_amount($order_id) {
-  // get amound from the next unprocessed recurring donation
-  return db_query('SELECT u.order_total FROM {uc_orders} u '. 
-    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
-    'WHERE (f.gateway_resp IS NULL OR f.gateway_resp = \'canceled\') AND f.master_order_id = :order_id '.
-    'ORDER BY next_charge LIMIT 1',
-    array(':order_id' => $order_id))->fetchColumn();
+  return module_invoke_all('fundraiser_get_current_donation_amount', $order_id);
+// TODO refactor this out. -SeH
 }
 
 /**
  * Gets the next charge date of a recurring donation.
  */
 function _fundraiser_get_next_charge_date($order_id) {
-  return db_query('SELECT min(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
+  return db_query('SELECT MIN(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
     array(':order_id' => $order_id))->fetchColumn();
 }
 
@@ -190,16 +176,16 @@ function _fundraiser_get_next_charge_date($order_id) {
  * Gets the last payment date of a recurring donation.
  */
 function _fundraiser_get_last_charge_date($order_id) {
-  return db_query('SELECT max(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
+  return db_query('SELECT MAX(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
     array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
  * Gets the start date of a recurring donation.
  */
-function _fundraiser_get_start_date($order_id) {
-  return db_query('SELECT created FROM {uc_orders} WHERE order_id = :order_id',
-    array(':order_id' => $order_id))->fetchColumn();
+function _fundraiser_get_start_date($order_id) { 
+  //  TODO refactor this out. - SeH
+  return module_invoke_all('fundraiser_get_order_start', $order_id);
 }
 
 /**
@@ -253,12 +239,6 @@ function _fundraiser_expand_date($element) {
 
   return $element;
 }
-
-/*----------------------------------------------------------------------------------
- *
- * Fundraiser billing update form
- *
- *--------------------------------------------------------------------------------*/
 
 /**
  * Form to update billing address for a recurring donation series.
@@ -324,7 +304,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) 
     '#default_value' => $order->billing_city,
   );
 
-  $countries = uc_country_select(uc_get_field_name('country'), 840, NULL, 'name', uc_address_field_required('country'));
+  $countries = module_invoke_all('fundraiser_format_country_select', 840);
   $form['billing_address']['country'] = array(
     '#type' => 'select',
     '#title' => 'Country',
@@ -333,7 +313,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) 
     '#default_value' => $order->billing_country,
   );
 
-  $zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, 840, 'name', uc_address_field_required('zone'));
+  $zones = module_invoke_all('fundraiser_format_zone_select', 840, $arg1->billing_zone);
   $form['billing_address']['state'] = array(
     '#type' => 'select',
     '#title' => 'State',
@@ -400,18 +380,17 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
   $cc_cvv = $form_state['values']['card_cvv'];
 
   //validate cc number
-  if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number))
-     || !ctype_digit($cc_number)) {
+  if (!module_invoke_all('fundraiser_fundraiser_validate_card', $cc_number) || !ctype_digit($cc_number)) {
     form_set_error('cc_info][card_num', "You have entered an invalid credit card number.");
   }
 
   // Validate the card expiration date.
-  if (!_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
+  if (!module_invoke_all('fundraiser_fundraiser_validate_card_expiration', $cc_expiration_month, $cc_expiration_year)) {
     form_set_error('cc_info][card_exp_date', t('The credit card you entered has expired.'));
   }
 
   // Validate the CVV Number
-  if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
+  if (!module_invoke_all('fundraiser_fundraiser_validate_card', $cc_cvv)) {
     form_set_error('cc_info][card_cvv', t('You have entered an invalid CVV number.'));
   }
 }
@@ -453,13 +432,6 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
 
   }
 }
-
-
-/*----------------------------------------------------------------------------------
- *
- * Fundraiser donation amount update form
- *
- *--------------------------------------------------------------------------------*/
 
 /**
  * Creates a form for updating donation amount
@@ -526,33 +498,17 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
 
   foreach ($orders as $row) {
     // update ubercart orders first
-    $order = uc_order_load($row->order_id);
-    $old_amount = $order->order_total;
+    module_invoke_all('fundraiser_update_order_amount', $row->order_id, $amount, $user->uid);
     $orders_changed[] = $row->order_id;
-
-    // update the order total
-    $order->order_total = $amount;
-    // update the product price
-    $order->products[0]->price = $amount;
-    // save the order
-    uc_order_save($order);
-    uc_order_comment_save($order->order_id, $user->uid, "Donation amount changed from
-      $old_amount to $amount by an administrator.", 'admin');
 
     // put order back in queue so that amount gets updated in Salesforce
     if (module_exists('sf_donation') && module_exists('queue_api')) {
-      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+      sf_queue_insert($row->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
     }
   }
 
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $amount));
 }
-
-/*----------------------------------------------------------------------------------
- *
- * Recurring donation cancellation form
- *
- *--------------------------------------------------------------------------------*/
 
 /**
  * Form for cancelling all pending donations.
@@ -596,28 +552,15 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = :recurring_status WHERE order_id = :order_id",
     array(':recurring_status' => DONATION_CANCELLED, ':order_id' => $master_order_id));
 
-  // get the ids of the child orders
-  $orders = _get_pending_recurring_orders($master_order_id);
-
-  // cancel all child orders that are still pen
-  db_query('UPDATE {uc_orders} u ' .
-    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
-    'SET u.order_status = \'canceled\' ' .
-    'WHERE f.master_order_id = :order_id and u.order_status = \'pending_future_payment\'',
-    array(':order_id' => $master_order_id));
+  $canceled_orders = module_invoke_all('fundraiser_cancel_future_orders', $master_order_id, $reason, $user);
 
   // delete recurring information
   db_query('UPDATE {fundraiser_recurring} '.
     'SET gateway_resp = \'canceled\', cancellation_reason = :reason '.
     'WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
     array(':reason' => $reason, ':order_id' => $master_order_id));
-
-  $order_ids = array();
-  // add a comment to the canceled orders
-  foreach ($orders as $data) {
-    $order_ids[] = $data->order_id;
-    uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
-    // put order back in queue so that amount gets updated in Salesforce
+  
+  foreach ($canceled_orders as $order_id) {
     if (module_exists('sf_donation') && module_exists('queue_api')) {
       sf_queue_insert($data->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
     }
@@ -631,12 +574,6 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   drupal_set_message(t('All future payments cancelled.'));
 }
 
-/*----------------------------------------------------------------------------------
- *
- * Helper functions
- *
- *--------------------------------------------------------------------------------*/
-
 /**
  * Gets the minimum donation amount for a given donation form
  */
@@ -648,36 +585,8 @@ function _minimum_donation_amount($nid) {
  * Loads an order and updates it's billing information from a form
  */
 function _update_order_billing_info($order_id, &$form_state) {
-  global $user;
-  $order = uc_order_load($order_id);
-  $order->primary_email = $form_state['values']['email'];
-  $order->billing_first_name =  $form_state['values']['first_name'];
-  $order->billing_last_name = $form_state['values']['last_name'];
-  $order->billing_city = $form_state['values']['city'];
-  $order->billing_street1 = $form_state['values']['address_1'];
-  $order->billing_street2 = $form_state['values']['address_2'];
-  $order->billing_postal_code = $form_state['values']['zipcode'];
-  $order->billing_zone = $form_state['values']['state'];
-  $order->billing_country = $form_state['values']['country'];
-  $order->payment_method = 'credit';
-  $order->payment_details = array(
-    'cc_type' => _fundraiser_get_cc_type($form_state['values']['card_num']),
-    'cc_owner' => '',
-    'cc_number' => $form_state['values']['card_num'],
-    'cc_start_month' => '',
-    'cc_start_year' => '',
-    'cc_exp_month' => $form_state['values']['card_exp_date']['month'],
-    'cc_exp_year' => $form_state['values']['card_exp_date']['year'],
-    'cc_issue' => '',
-    'cc_cvv' => $form_state['values']['card_cvv'],
-    'cc_bank' => '',
-  );
-
-  uc_credit_cache('save', $order->payment_details, FALSE);
-  uc_order_save($order);
-  uc_credit_cache('clear');
-  uc_order_comment_save($order->order_id, $user->uid, "Billing information updated.");
-  return $order;
+// TODO refactor this out - SeH
+  module_invoke_all('fundraiser_update_order_billing', $order_id, $form_state);
 }
 
 
@@ -685,7 +594,7 @@ function _update_order_billing_info($order_id, &$form_state) {
  * Returns the payment gateway and transaction reference used for a recurring donation
  */
 function _fundraiser_get_payment_details($order_id) {
-  $order = uc_order_load($order_id);
+  $order = module_invoke_all('fundraiser_get_order', $order_id);
   $details = array();
   $gateway = '';
 
@@ -745,6 +654,8 @@ function _get_pending_recurring_orders($order_id) {
  * Generic function that is called by the fundraiser module.
  */
 function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_info) {
+  // TODO isnt't his just a module invoke for 'update_billing_information' ?
+  // this, authorize.net and sage should be converted to proper hooks later. - SeH
   $function = $gateway_id . '_update_billing_information';
   return $function($reference_id, $billing_info);
 }
@@ -763,29 +674,6 @@ function authorizenet_update_billing_information($reference_id, $billing_info) {
   }
 }
 
-/**
- * Sage billing information update function.
- */
-function sage_update_billing_information($reference_id, $billing_info) {
-  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
-  $data = array(
-    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
-    'billing_street1' => $billing_info['address_1'],
-    'billing_street2' => $billing_info['address_2'],
-    'billing_city' => $billing_info['city'],
-    'billing_zone' => $billing_info['state'],
-    'billing_postal_code' => $billing_info['zipcode'],
-    'billing_country' => $billing_info['country'],
-    'cc_number' => $billing_info['card_num'],
-    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
-    'cc_exp_year' => $billing_info['card_exp_date']['year'],
-  );
-  $response = uc_sage_vault_update($vault_id, $data);
-  // TODO: Need to add some better returns to the uc_sage module
-  return TRUE;
-}
-
-
 // Called in fundraiser/fundraiser.sustainer.inc:
 /**
  * Extends a current recurring donation series out to a new credit card expiration date.
@@ -793,9 +681,10 @@ function sage_update_billing_information($reference_id, $billing_info) {
 function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
   // determine the date of the last order, and the number of orders to create out to the new expiration date
   $exp = $exp_year . sprintf("%02d", $exp_month)  ;
-  $results = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(:exp, date_format(from_unixtime(max(next_charge)),'%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = :order_id",
+  $results = db_query('SELECT MAX(order_id) AS last_order_id, MAX(next_charge) AS last_charge_date, ' .
+    "PERIOD_DIFF(:exp, DATE_FORMAT(FROM_UNIXTIME(MAX(next_charge)),'%Y%m')) AS new_order_count ".
+    'FROM {fundraiser_recurring} WHERE master_order_id = :order_id',
     array(':exp' => $exp, ':order_id' => $order_id));
-
   foreach ($results as $data) {
     $last_order_id = $data->last_order_id;
     $last_charge_date = $data->last_charge_date;
@@ -810,7 +699,9 @@ function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
     $charge_date = strtotime("+$i months", $last_charge_date);
     $recurring = array('master_order_id' => $order_id, 'order_id' => $new_order_id, 'next_charge' => $charge_date, 'gateway' => $gateway);
     drupal_write_record('fundraiser_recurring', $recurring);
-    uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
+    
+    module_invoke_all('fundraiser_update_order_comment', $new_order_id, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))));
+
     // add these new orders to the queue
     if (module_exists('sf_donation') && module_exists('queue_api')) {
       sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');

@@ -276,7 +276,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
 
   // country
-  $countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
+  $countries =  module_invoke_all('fundraiser_format_country_select', $us);
 
   // build option string for countries
   $options = '';
@@ -314,7 +314,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $components[$id] = $billing_country;
 
   // state
-  $zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $us, 'name', uc_address_field_required('zone'));
+  $zones = module_invoke_all('fundraiser_format_zone_select', $us, NULL);
 
   // build option string for states
   $options = '';
@@ -518,33 +518,6 @@ function fundraiser_create_month_field($nid, $pid) {
   $expiration_month['weight'] = 1;
   $expiration_month['email'] = 0;
   return $expiration_month;
-}
-
-/**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
- */
-function fundraiser_required_fields() {
-  return array(
-    'ms',
-    'cid',
-    'referrer',
-    'initial_referrer',
-    'amount',
-    'first_name',
-    'last_name',
-    'email',
-    'address',
-    'address_line_2',
-    'city',
-    'country',
-    'state',
-    'zip',
-    'card_number',
-    'card_expiration_year',
-    'card_expiration_month',
-    'card_cvv',
-  );
 }
 
 /**
@@ -760,7 +733,6 @@ function _fundraiser_get_profile_location_fields() {
  *  User object to be updated. If NULL, defaults to global $user
  *
  */
-// LOADS of ubercart dependancy here -SeH, needs to get updated TODO
 function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   // make sure we have a real user
   if (empty($update_user) || $update_user->uid == 0) {
@@ -781,8 +753,7 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   $state_code = $submission->data[$state_cid]['value'][0];
 
   if ($fids['country']) {
-    $country_name = db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id',
-      array(':country_id' => $country_code))->fetchField();
+    $country_name = module_invoke_all('fundraiser_get_country_iso', $country_code);
     $has_country = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['country']))->fetchField();
     if ($has_country) {
@@ -796,8 +767,7 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   }
 
   if ($fids['state']) {
-    $state_name = db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id AND zone_country_id = :zone_country_id',
-      array(':zone_id' => $state_code, ':zone_country_id' => $country_code))->fetchField();
+    $state_name = module_invoke_all('fundraiser_get_zone_iso', $country_code, $state_code);
     $has_state = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['state']))->fetchField();
     if ($has_state) {

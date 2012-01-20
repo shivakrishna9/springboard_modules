@@ -54,6 +54,29 @@ function fundraiser_preprocess_uc_order(&$variables) {
 }
 
 /**
+ * Sage billing information update function.
+ */
+function sage_update_billing_information($reference_id, $billing_info) {
+  // TODO hook here to load up order info. - SeH 
+  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
+  $data = array(
+    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
+    'billing_street1' => $billing_info['address_1'],
+    'billing_street2' => $billing_info['address_2'],
+    'billing_city' => $billing_info['city'],
+    'billing_zone' => $billing_info['state'],
+    'billing_postal_code' => $billing_info['zipcode'],
+    'billing_country' => $billing_info['country'],
+    'cc_number' => $billing_info['card_num'],
+    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
+    'cc_exp_year' => $billing_info['card_exp_date']['year'],
+  );
+  $response = uc_sage_vault_update($vault_id, $data);
+  // TODO: Need to add some better returns to the uc_sage module
+  return TRUE;
+}
+
+/**
  * Implements hook_fundraiser_get_user_country().
  */
 function fundraiser_fundraiser_get_user_country($profile_field_id, $uid) {
@@ -86,6 +109,46 @@ function fundraiser_fundraiser_user_has_recurring_orders($uid) {
 }
 
 /**
+ * Implements hook_fundraiser_user_get_recurring_orders().
+ */
+function fundraiser_fundraiser_user_get_recurring_orders($uid) {
+  return db_query('SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f '.
+    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
+    'WHERE f.recurring_status != :status AND u.uid = :uid',
+    array(':status' => DONATION_NON_RECURRING, ':uid' => $uid));
+}
+
+/**
+ * Implements hook_fundraiser_user_get_recurring_order_schedule().
+ */
+function fundraiser_fundraiser_user_get_recurring_order_schedule($master_order_id) {
+  return db_query('SELECT u.order_total AS amount, f.next_charge AS charge_date, f.gateway_resp AS status FROM {fundraiser_recurring} f '.
+    'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
+    'WHERE f.master_order_id = :order_id ' .
+    'ORDER BY f.next_charge ASC',
+    array(':order_id' => $master_order_id));
+}
+
+/**
+ * Implements hook_fundraiser_get_current_donation_amount().
+ */
+function fundraiser_fundraiser_get_current_donation_amount($master_order_id) {
+  return db_query('SELECT u.order_total FROM {uc_orders} u '. 
+    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
+    'WHERE (f.gateway_resp IS NULL OR f.gateway_resp = \'canceled\') AND f.master_order_id = :order_id '.
+    'ORDER BY next_charge LIMIT 1',
+    array(':order_id' => $order_id))->fetchColumn();
+}
+
+/**
+ * Implements hook_fundraiser_get_order_start().
+ */
+function fundraiser_fundraiser_get_order_start($order_id) {
+  return db_query('SELECT created FROM {uc_orders} WHERE order_id = :order_id',
+    array(':order_id' => $order_id))->fetchColumn();
+}
+
+/**
  * Implements hook_fundraiser_get_country_zones().
  */
 function fundraiser_fundraiser_get_country_zones($country_id) {
@@ -98,6 +161,28 @@ function fundraiser_fundraiser_get_country_zones($country_id) {
   return $zone_array;
 }
 
+/**
+ * Implements hook_fundraiser_get_country_zone().
+ */
+function fundraiser_fundraiser_get_country_zone($zone_id) {
+  return uc_get_zone_code($zone_id);
+}
+
+/**
+ * Implements hook_fundraiser_get_country_iso().
+ */
+function fundraiser_fundraiser_get_country_iso($country_code) {
+  return db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id',
+    array(':country_id' => $country_code))->fetchField();
+}
+
+/**
+ * Implements hook_fundraiser_get_country_zone().
+ */
+function fundraiser_fundraiser_get_zone_iso($country_code, $state_code) {
+  return db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id AND zone_country_id = :zone_country_id',
+    array(':zone_id' => $state_code, ':zone_country_id' => $country_code))->fetchField();
+}
 /**
  * Implements hook_fundraiser_gateway_info().
  */
@@ -114,6 +199,18 @@ function fundraiser_fundraiser_gateway_info() {
  */
 function fundraiser_fundraiser_get_credit_encryption_path() {
   return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+}
+
+/**
+ * Implements hook_fundraiser_decrypt_credit().
+ */
+function fundraiser_fundraiser_decrypt_credit($data) {
+  $key = uc_credit_encryption_key();
+  $crypt = new uc_encryption_class;
+  $cc = unserialize($data);
+  $cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
+  $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
+  return $cc_data;
 }
 
 /**
@@ -235,9 +332,95 @@ function fundraiser_fundraiser_create_order($user, $fundraiser_fields, $recurs, 
  * Implements hook_fundraiser_get_order().
  */
 function fundraiser_fundraiser_get_order($order_id) {
+  return uc_order_load($order_id);
+}
+
+/**
+ * Implements hook_fundraiser_update_order_amount().
+ */
+function fundraiser_fundraiser_update_order_amount($order_id, $amount, $uid) {
   $order = uc_order_load($order_id);
-  // Return the order information.
+  $old_amount = $order->order_total;
+  $order->order_total = $amount;
+  $order->products[0]->price = $amount;
+  uc_order_save($order);
+  uc_order_comment_save($order->order_id, $uid, "Donation amount changed from
+    $old_amount to $amount by an administrator.", 'admin');
+}
+
+/**
+ * Implements hook_fundraiser_update_order_comment().
+ */
+function fundraiser_fundraiser_update_order_comment($order_id, $message, $uid) {
+  uc_order_comment_save($order_id, 0, $message, 'admin');
+}
+
+/**
+ * Implements hook_fundraiser_update_order_billing().
+ */
+function fundraiser_fundraiser_update_order_billing( $order_id, $form_state) {
+  global $user;
+  $order = uc_order_load($order_id);
+  $order->primary_email = $form_state['values']['email'];
+  $order->billing_first_name =  $form_state['values']['first_name'];
+  $order->billing_last_name = $form_state['values']['last_name'];
+  $order->billing_city = $form_state['values']['city'];
+  $order->billing_street1 = $form_state['values']['address_1'];
+  $order->billing_street2 = $form_state['values']['address_2'];
+  $order->billing_postal_code = $form_state['values']['zipcode'];
+  $order->billing_zone = $form_state['values']['state'];
+  $order->billing_country = $form_state['values']['country'];
+  $order->payment_method = 'credit';
+  $order->payment_details = array(
+    'cc_type' => _fundraiser_get_cc_type($form_state['values']['card_num']),
+    'cc_owner' => '',
+    'cc_number' => $form_state['values']['card_num'],
+    'cc_start_month' => '',
+    'cc_start_year' => '',
+    'cc_exp_month' => $form_state['values']['card_exp_date']['month'],
+    'cc_exp_year' => $form_state['values']['card_exp_date']['year'],
+    'cc_issue' => '',
+    'cc_cvv' => $form_state['values']['card_cvv'],
+    'cc_bank' => '',
+  );
+  uc_credit_cache('save', $order->payment_details, FALSE);
+  uc_order_save($order);
+  uc_credit_cache('clear');
+  uc_order_comment_save($order->order_id, $user->uid, "Billing information updated.");
   return $order;
+}
+
+/**
+ * Implements hook_fundraiser_get_order_paid().
+ */
+function fundraiser_fundraiser_get_order_paid($order_id) {
+  return db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id',
+    array(':order_id' => $order_id))->fetchColumn();
+}
+
+/**
+ * Implements hook_fundraiser_get_order_payment_info().
+ */
+function fundraiser_fundraiser_get_order_payment_info($order_id) {
+  $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
+    'LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id ' .
+    'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order_id))->fetchAssoc();
+
+  // If not payment info was found, check if it was a recurring order
+  if (!$payment_info) {
+    $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
+      'LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id ' .
+      'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order_id))->fetchAssoc();
+  }
+  return $payment_info;
+}
+
+/**
+ * Implements hook_fundraiser_get_order_refund_info().
+ */
+function fundraiser_fundraiser_get_order_refund_info($order_id) {
+  return db_query('SELECT SUM(amount) FROM {uc_payment_receipts} '.
+    'WHERE order_id = :order_id AND amount < 0', array(':order_id' => $order_id))->fetchColumn();
 }
 
 /**
@@ -284,6 +467,27 @@ function fundraiser_fundraiser_create_future_orders($user, $order_id, $gateway) 
 }
 
 /**
+ * Implements hook_fundraiser_cancel_future_orders().
+ */
+function fundraiser_fundraiser_cancel_future_orders($master_order_id, $reason, $user) {
+  // get the ids of the child orders
+  $orders = _get_pending_recurring_orders($master_order_id);
+  db_query('UPDATE {uc_orders} u ' .
+    'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
+    'SET u.order_status = \'canceled\' ' .
+    'WHERE f.master_order_id = :order_id and u.order_status = \'pending_future_payment\'',
+    array(':order_id' => $master_order_id));
+
+  $order_ids = array();
+  // add a comment to the canceled orders
+  foreach ($orders as $data) {
+    $order_ids[] = $data->order_id;
+    uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
+  }
+  return $order_ids
+}
+
+/**
  * Implements hook_fundraiser_order_decline().
  */
 function fundraiser_fundraiser_order_decline($order_id) {
@@ -308,4 +512,129 @@ function fundraiser_fundraiser_order_cancel($order_id) {
   db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // Make a comment on the order.
   uc_order_comment_save($order_id, 0, t('Payment was canceled during checkout by the user.'));
+}
+
+/**
+ * Implements hook_fundraiser_order_refund().
+ */
+function fundraiser_fundraiser_order_refund($order_id, $amount, $new_status, $transaction_id, $reason) {
+  $data = array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $transaction_id);
+  uc_payment_enter($order_id, 'fundraiser', $amount, 0, $data, 'Refund processed by the fundraiser module.');
+  // Make the charge amount positive again, for nice display in the admin comment
+  $amount = abs($payment_info['amount']);
+  $reason = check_plain($reason);
+  $amount_formatted = module_invoke_all('fundraiser_format_price', $amount);
+  global $user;
+  uc_order_comment_save($payment_info['order_id'], 
+    $user->uid,
+    t('%amount refund issued by %user. Refund notes: %reason',
+      array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)),
+    'admin');
+  // Set order status to Refunded or Partially Refunded
+  db_query("UPDATE {uc_orders} SET order_status= :order_status where order_id = :order_id",
+    array(':order_status' => $new_status, ':order_id' => $order_id));
+
+  // get the receipt_id that belongs to this refund
+  $receipt_id = NULL;
+  $payments = uc_payment_load_payments($order_id);
+  foreach ($payments as $payment) {
+    $data = unserialize($payment->data);
+    if ($data['txn_id'] == $result['data']['txn_id']) {
+      $receipt_id = $payment->receipt_id;
+    }
+  }
+  return $receipt_id;
+}
+
+/**
+ * Implements hook_fundraiser_monthly_report().
+ */
+// TODO consider if we can use views to create this report?
+// This is massive and ugly and *really* should be handled some other way.
+function fundraiser_fundraiser_monthly_report($start_date, $end_date) {
+  $sql = "SELECT
+            u.order_id,
+            u.uid,
+            u.order_status,
+            s.sfid,
+            u.billing_first_name,
+            u.billing_last_name,
+            u.primary_email,
+            u.billing_street1,
+            u.billing_street2,
+            u.billing_city,
+            u.data,
+            z.zone_code,
+            u.billing_postal_code,
+            c.country_iso_code_2,
+            u.created as date,
+            u.order_total,
+            p.received,
+            op.nid,
+            op.title,
+            fd.campaign_id,
+            fd.market_source
+          FROM
+            uc_orders u INNER JOIN fundraiser_webform_order s ON s.order_id = u.order_id
+            INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
+            INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
+            INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
+            INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
+            INNER JOIN {fundraiser_webform_order} wo ON wo.order_id = u.order_id
+            INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.webform_nid
+            WHERE u.order_status = 'payment_received' AND u.created BETWEEN :start_date AND :end_date 
+          UNION SELECT
+            r.order_id,
+            u.uid,
+            u.order_status,
+            r.sf_opportunity_id,
+            u.billing_first_name,
+            u.billing_last_name,
+            u.primary_email,
+            u.billing_street1,
+            u.billing_street2,
+            u.billing_city,
+            u.data,
+            z.zone_code,
+            u.billing_postal_code,
+            c.country_iso_code_2,
+            next_charge,
+            u.order_total,
+            p.received,
+            op.nid,
+            op.title,
+            fd.campaign_id,
+            fd.market_source
+          FROM fundraiser_recurring r INNER JOIN uc_orders u ON u.order_id = r.order_id
+            INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
+            INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
+            INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
+            INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
+            INNER JOIN {fundraiser_webform_recurring_order} wo ON wo.order_id = u.order_id
+            INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.nid
+            WHERE u.order_status = 'payment_received' AND r.next_charge BETWEEN :start_date AND :end_date ORDER BY order_id";
+  return db_query($sql, array(':start_date' => $start_date, ':end_date' => $end_date));
+}
+
+// Theme / formaty code, really should get refactored at some point. -SeH
+
+/**
+ * Implements hook_fundraiser_format_price().
+ */
+function fundraiser_fundraiser_format_price($price) {
+  return theme('uc_price', array('price' => $price));
+}
+
+/**
+ * Implements hook_fundraiser_format_country_select().
+ */
+function fundraiser_fundraiser_format_country_select($country) {
+  return uc_country_select(uc_get_field_name('country'), $country, NULL, 'name', uc_address_field_required('country'));
+}
+
+/**
+ * Implements hook_fundraiser_format_zone_select().
+ */
+function fundraiser_fundraiser_format_zone_select($country, $zone) {
+  return uc_zone_select(uc_get_field_name('zone'), $zone, NULL, $country, 'name', uc_address_field_required('zone'));
 }

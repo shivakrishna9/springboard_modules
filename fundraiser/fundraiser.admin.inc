@@ -132,7 +132,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
  * Validation function for fundraiser_confirmation_settings_form().
  */
 function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
-  // validate email
+  // Validate email
   if (!fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
     form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
   }
@@ -298,7 +298,6 @@ function fundraiser_admin_settings($form, &$form_state) {
       '#options' => $form_layouts,
     );
   }
-
   return system_settings_form($form);
 }
 
@@ -308,11 +307,10 @@ function fundraiser_admin_settings($form, &$form_state) {
 function fundraiser_donation_form_list() {
   global $user;
   $result = db_query('SELECT n.nid, n.uid, n.title, f.internal_name, n.created, n.changed FROM {node} n '.
-    'INNER JOIN {fundraiser} f ON f.nid = n.nid ORDER BY n.changed DESC');
-
+    'INNER JOIN {fundraiser} f ON f.nid = n.nid '.
+    'ORDER BY n.changed DESC');
   $header = array('Title', 'Internal Name', 'Last Modified', '', '', '');
   $rows = array();
-
   foreach ($result as $data) {
     if (user_access('edit any donation form', $user) || ($data->uid == $user->uid && user_access('edit own donation form', $user))) {
       $edit_link = l(t('edit'), 'node/' . $data->nid . '/edit');
@@ -323,7 +321,6 @@ function fundraiser_donation_form_list() {
     }
     $rows[] = array($data->title, $data->internal_name, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link, $clone_link);
   }
-
   $output = theme('table', array('header' => $header, 'rows' => $rows));
   return $output;
 }
@@ -331,74 +328,12 @@ function fundraiser_donation_form_list() {
 /**
  * Create a monthly report.
  */
-// TODO consider if we can use views to create this report?
 function fundraiser_monthly_report() {
   global $base_url;
   if ($_SESSION['fundraiser_report_filters']) {
     $start_date = $_SESSION['fundraiser_report_filters']['from_date'];
     $end_date = $_SESSION['fundraiser_report_filters']['to_date'];
-    $sql = "SELECT
-              u.order_id,
-              u.uid,
-              u.order_status,
-              s.sfid,
-              u.billing_first_name,
-              u.billing_last_name,
-              u.primary_email,
-              u.billing_street1,
-              u.billing_street2,
-              u.billing_city,
-              u.data,
-              z.zone_code,
-              u.billing_postal_code,
-              c.country_iso_code_2,
-              u.created as date,
-              u.order_total,
-              p.received,
-              op.nid,
-              op.title,
-              fd.campaign_id,
-              fd.market_source
-            FROM
-              uc_orders u INNER JOIN fundraiser_webform_order s ON s.order_id = u.order_id
-              INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
-              INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
-              INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
-              INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
-              INNER JOIN {fundraiser_webform_order} wo ON wo.order_id = u.order_id
-              INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.webform_nid
-              WHERE u.order_status = 'payment_received' AND u.created BETWEEN :start_date AND :end_date 
-            UNION SELECT
-              r.order_id,
-              u.uid,
-              u.order_status,
-              r.sf_opportunity_id,
-              u.billing_first_name,
-              u.billing_last_name,
-              u.primary_email,
-              u.billing_street1,
-              u.billing_street2,
-              u.billing_city,
-              u.data,
-              z.zone_code,
-              u.billing_postal_code,
-              c.country_iso_code_2,
-              next_charge,
-              u.order_total,
-              p.received,
-              op.nid,
-              op.title,
-              fd.campaign_id,
-              fd.market_source
-            FROM fundraiser_recurring r INNER JOIN uc_orders u ON u.order_id = r.order_id
-              INNER JOIN {uc_payment_receipts} p ON p.order_id = u.order_id
-              INNER JOIN {uc_countries} c ON c.country_id = u.billing_country
-              INNER JOIN {uc_zones} z ON z.zone_id = u.billing_zone
-              INNER JOIN {uc_order_products} op ON op.order_id = u.order_id
-              INNER JOIN {fundraiser_webform_recurring_order} wo ON wo.order_id = u.order_id
-              INNER JOIN {fundraiser_webform_data} fd ON fd.sid = wo.sid AND fd.nid = wo.nid
-              WHERE u.order_status = 'payment_received' AND r.next_charge BETWEEN :start_date AND :end_date ORDER BY order_id";
-    $result = db_query($sql, array(':start_date' => $start_date, ':end_date' => $end_date));
+    $result = module_invoke_all('fundraiser_monthly_report', $start_date, $end_date);
   }
 
   $header = array('Order Id', 'Opportunity Id', 'Uid', 'First Name', 'Last Name', 'Email', 'Address', 'Address 2', 'City', 'Country', 'State/Province', 'Postal Code', 'Payment Date', 'Amount', 'Donation Form', 'URL', 'Market Source', 'Campaign ID', 'CC Last Four', 'CC Type', 'CC Exp Month', 'CC Exp Year');
@@ -406,7 +341,7 @@ function fundraiser_monthly_report() {
 
   $rows = array();
   foreach ($result as $data) {
-    $cc_data = decrypt_credit_card($data->data);
+    $cc_data = module_invoke_all('fundraiser_decrypt_credit', $data->data);
     $rows[] = array(
       $data->order_id,
       $data->sfid ? $data->sfid : 'Not Exported',
@@ -439,9 +374,7 @@ function fundraiser_monthly_report() {
     foreach ($header as $i => $value) {
       $out .= '"' . $value . '",';
     }
-
     $out .= "\n";
-
     // Add all values in the table
     foreach ($rows as $row) {
       foreach ($row as $i => $value) {
@@ -547,16 +480,6 @@ function fundraiser_report_form_submit($form, &$form_state) {
   );
 }
 
-// Utility function to decrypt stored credit card information
-function decrypt_credit_card($data) {
-  $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
-  $cc = unserialize($data);
-  $cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
-  $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
-  return $cc_data;
-}
-
 /**
  * Submit handler updates cron menu handler.
  */
@@ -599,7 +522,7 @@ function fundraiser_mapping_form($form_state, $node) {
       );
       $options = array('' => '--Select One--');
       if (module_exists('profile')) {
-        $cat_array = profile_categories();
+        $cat_array = profile_user_categories();
         foreach ($cat_array as $cat) {
           $result = _profile_get_fields($cat['name']);
           foreach( $result as $this_row) {
@@ -621,7 +544,6 @@ function fundraiser_mapping_form($form_state, $node) {
   }
   return $form;
 }
-
 
 function fundraiser_mapping_form_submit($form, &$form_state) {
   db_delete('fundraiser_component_map')->condition('nid', $form['#node']->nid)->execute();
@@ -646,29 +568,28 @@ function fundraiser_recurring_admin() {
   </tr>
   ";
 
-  $results = db_query('SELECT fr.*, u.name FROM {fundraiser_recurring} fr '.
-    'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id '.
-    'INNER JOIN {users} u ON uo.uid = u.uid '.
+  $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr '.
     'WHERE fr.order_id = :order_id'.
-    'ORDER BY uo.created DESC',
+    'ORDER BY fr.order_id DESC',
   array(':order_id' => arg(3)));
 
   foreach ($results as $result) {
-    $row = (array) $result;
-    $row['fee_amount'] = number_format($row['fee_amount'], 2, '.', '');
-    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $row['next_charge']));
+    // Get the order data from our order handler (Ubercart).
+    $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+    $user = user_load($order->uid);
+    $fundraiser = (array) $result;
+    $fundraiser['fee_amount'] = number_format($fundraiser['fee_amount'], 2, '.', '');
+    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $fundraiser['next_charge']));
     $output .= "<tr>  
-    <td>$row[order_id]</td>
-    <td>$row[name]</td>
-    <td>$row[fee_amount]</td>
+    <td>$fundraiser[order_id]</td>
+    <td>$user[name]</td>
+    <td>$fundraiser[fee_amount]</td>
     <td>$last_charge</td>
     </tr>";
   }
   $output .= "</table>";
   return $output;
 }
-
-
 
 function fundraiser_recurring_edit_forms() {
   if (is_numeric(arg(3))) {
@@ -683,11 +604,12 @@ function _recurring_donation_edit_forms($master_order_id) {
     'WHERE master_order_id = :order_id and gateway_resp IS NULL LIMIT 1',
     array(':order_id' => $master_order_id))->fetchColumn();
 
-  $order = uc_order_load($child_order_id);
+  // Get the order data from our order handler (Ubercart).
+  $order = module_invoke_all('fundraiser_get_order', $order_id);
   $nid = $order->products[0]->nid;
-
   $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
-  // render 3 forms
+
+  // Render multiple forms
   $output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
 
   // 4/5/2010 - commented out for time being because authorize.net does not support updating
@@ -700,7 +622,7 @@ function _recurring_donation_edit_forms($master_order_id) {
 }
 
 function _get_billing_information($master_order_id, $order) {
-  $state = uc_get_zone_code($order->billing_zone);
+  $state = module_invoke_all('fundraiser_get_country_zone', $order->billing_zone);
   $orders_remaining = _remaining_recurring_charge_count($master_order_id);
   $orders_processed = _processed_recurring_charge_count($master_order_id);
   $donation_amount = '$' . money_format('%i', $order->order_total);
@@ -727,9 +649,6 @@ function _get_billing_information($master_order_id, $order) {
   return $billing_str;
 }
 
-
-
-
 function fundraiser_recurring_master_order_overview() {
 // TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
   $output = "<h2>Recurring Orders</h2>";
@@ -742,17 +661,19 @@ function fundraiser_recurring_master_order_overview() {
   <th>Charge Date</th>
   </tr></thead>
   ";
-
   if (empty($rows[1])) {
     //we're actually looking at the order id and not the master_order_id
-    $results = db_query('SELECT fr.*, u.name, uo.order_total FROM {fundraiser_recurring} fr ' .
-      'INNER JOIN {uc_orders} uo ON fr.order_id = uo.order_id ' .
-      'INNER JOIN {users} u on u.uid = uo.uid ' .
+    $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr ' .
       'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
       'ORDER BY fr.order_id ASC',
     array(':order_id' => arg(3)));
     unset($rows);
     foreach ($results as $result) {
+      // Get the order data from our order handler (Ubercart).
+      $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+      $user = user_load($order->uid);
+      $result->order_total = $order->order_total;
+      $result->name = $user->name;
       $rows[] = (array) $result;
     }
   }
@@ -783,7 +704,6 @@ function fundraiser_recurring_master_order_overview() {
   return $output;
 }
 
-
 /**
  * Refund tab on Orders
  */
@@ -801,27 +721,14 @@ function fundraiser_refund(&$form_state, $order) {
   $form = array();
   $form['#order_id'] = $order->order_id;
 
-  // Determine how much has been paid, less previous refunds
-  $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order->order_id))->fetchColumn();
-
-  $context = array(
-    'revision' => 'formatted-original',
-    'type' => 'amount',
-  );
+  // Determine how much has been paid, less previous refunds.
+  $total_paid = module_invoke_all('fundraiser_get_order_paid', $order->order_id);
 
   // Get payment info
-  $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
-    'LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id ' .
-    'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order->order_id))->fetchAssoc();
+  $payment_info = module_invoke_all('fundraiser_get_order_payment_info', $order->order_id);
 
-  // If not payment info was found, check if it was a recurring order
-  if (!$payment_info) {
-    $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
-      'LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id ' .
-      'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order->order_id))->fetchAssoc();
-  }
-
-  $previous_refunds = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id AND amount < 0', array(':order_id' => $order->order_id))->fetchColumn();
+  // Get refund info
+  $previous_refunds = module_invoke_all('fundraiser_get_order_refund_info', $order->order_id);
 
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
@@ -847,18 +754,18 @@ function fundraiser_refund(&$form_state, $order) {
     $form['payment_summary']['payment_date'] = array(
       '#type' => 'item',
       '#title' => t('Payment Date'),
-      '#value' => format_date($payment_info['received']),
+      '#value' => module_invoke_all('fundraiser_format_price', $payment_info['received']),
     );
     $form['payment_summary']['payment_total'] = array(
       '#type' => 'item',
       '#title' => t('Payment Total'),
-      '#value' => uc_price($payment_info['amount'], $context),
+      '#value' => module_invoke_all('fundraiser_format_price', $payment_info['amount']),
     );
     if ($previous_refunds < 0) {
       $form['payment_summary']['total_refunded'] = array(
         '#type' => 'item',
         '#title' => t('Total Previously Refunded'),
-        '#value' => uc_price($previous_refunds, $context),
+        '#value' => module_invoke_all('fundraiser_format_price', $previous_refunds),
       );
     }
   }
@@ -898,7 +805,7 @@ function fundraiser_refund(&$form_state, $order) {
   else {
     $form['refund_options']['full_refund'] = array(
       '#type' => 'radio',
-      '#title' => t('Full Refund (%amount)', array('%amount' => uc_price($total_paid, $context))),
+      '#title' => t('Full Refund (%amount)', array('%amount' => module_invoke_all('fundraiser_format_price', $total_paid))),
       '#return_value' => 'full',
       '#parents' => array('refund_type'),
     );
@@ -957,14 +864,14 @@ function fundraiser_refund_validate($form, &$form_state) {
       // Make sure they don't try to refund more than was paid
       $order_id = $form['#order_id'];
       // Determine how much has been paid, less previous refunds
-      $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
+      $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
       if ($amount > $total_paid) {
         $context = array(
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
         form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
-          'more than that can be refunded.', array('@paid' => uc_price($total_paid, $context))));
+          'more than that can be refunded.', array('@paid' => module_invoke_all('fundraiser_format_price',$total_paid))));
       }
     }
   }
@@ -974,13 +881,11 @@ function fundraiser_refund_validate($form, &$form_state) {
  * Submit the refund form
  */
 function fundraiser_refund_submit($form, &$form_state) {
-  global $user;
-
+  // Get the order.
   $order_id = $form['#order_id'];
-  $order = uc_order_load($order_id);
 
   // Determine how much has been paid, less previous refunds
-  $total_paid = db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchColumn();
+  $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
 
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
@@ -1020,37 +925,13 @@ function fundraiser_refund_submit($form, &$form_state) {
   }
 
   // call the refund function and store the result
-  $result = $refund_function($order->order_id, $amount, $data);
+  $result = $refund_function($order_id, $amount, $data);
 
   if ($result['success']) {
-    // enter the payment
-    uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
 
-    // Add the comment
-    $context = array(
-      'revision' => 'formatted-original',
-      'type' => 'amount',
-    );
+    $receipt_id = module_invoke_all('fundraiser_order_refund', $order_id, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
 
-    // Make the charge amount positive again, for nice display in the admin comment
-    $amount = abs($amount);
-
-    $reason = check_plain($form_state['values']['refund_notes']);
-
-    $amount_formatted = uc_price($amount, $context);
-    uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
-
-    // get the receipt_id that belongs to this refund
-    $receipt_id = NULL;
-    $payments = uc_payment_load_payments($order_id);
-    foreach ($payments as $payment) {
-      $data = unserialize($payment->data);
-      if ($data['txn_id'] == $result['data']['txn_id']) {
-        $receipt_id = $payment->receipt_id;
-      }
-    }
-
-    // Save refund data
+    // Save refund data for Fundraiser.
     $refund = new stdClass();
     $refund->order_id = $order_id;
     $refund->receipt_id = $receipt_id;
@@ -1059,14 +940,11 @@ function fundraiser_refund_submit($form, &$form_state) {
     $refund->reason = $reason;
     drupal_write_record('fundraiser_refund', $refund);
 
-    // Set order status to Refunded or Partially Refunded
-    db_query("UPDATE {uc_orders} SET order_status= :order_status where order_id = :order_id",
-      array(':order_status' => $new_order_status, ':order_id' => $order_id));
-
     // If using the Salesforce queue, queue up the updates
+    // This could be on hook couldn't it? - SeH
     if (module_exists('queue_api')) {
       // Update the original order
-      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+      sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
       // Create the refund
       sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
     }
@@ -1076,7 +954,7 @@ function fundraiser_refund_submit($form, &$form_state) {
   }
   else {
     // failed to process credit cart
-    $log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
+    $log_error = 'Refund on order ' . $order_id . ' failed gateway validation. Reason: ' . $result['message'];
     watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
     drupal_set_message($result['message']);
     $form_state['rebuild'] = TRUE;

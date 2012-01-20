@@ -1937,6 +1937,32 @@ function _fundraiser_get_cc_type($cardnumber) {
 }
 
 /**
+ * Helper function, return a list of fields that are required for webform fundraiser.
+ */
+function fundraiser_required_fields() {
+  return array(
+    'ms',
+    'cid',
+    'referrer',
+    'initial_referrer',
+    'amount',
+    'first_name',
+    'last_name',
+    'email',
+    'address',
+    'address_line_2',
+    'city',
+    'country',
+    'state',
+    'zip',
+    'card_number',
+    'card_expiration_year',
+    'card_expiration_month',
+    'card_cvv',
+  );
+}
+
+/**
  * DB function, creates a map of profile fields with their corrosponding values.
  */
 function fundraiser_create_profile_values_map($nid, $sid) {
