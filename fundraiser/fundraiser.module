@@ -948,8 +948,10 @@ function fundraiser_load($nodes) {
     $fundraiser->map = $map;
 
     // Merge data from fundraiser with node.
-    $orig_node = (array) $node;
-    $nodes[$node->nid] = (object) array_merge((array) $orig_node, (array) $fundraiser);
+    $fundraiser = (array) $fundraiser;
+    foreach ($fundraiser as $key => $value) {
+      $nodes[$node->nid]->$key = $value;
+    }
   }
 }
 
