@@ -24,15 +24,15 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
   $form['confirmation_page']['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Page title'),
-    '#default_value' => $node->confirmation_page_title,
+    '#default_value' => isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
   );
   $form['confirmation_page']['body'] = array(
     '#type' => 'textarea',
     '#title' => t('Confirmation message'),
-    '#default_value' => $node->confirmation_page_body,
+    '#default_value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
+    '#format' => isset($body_format) ? $body_format : NULL,
+    '#parents' =>  array('confirmation_page_format'),
   );
-  $body_format = $node->confirmation_page_format ? $node->confirmation_page_format : FILTER_FORMAT_DEFAULT;
-  $form['confirmation_page']['format'] = filter_form($body_format, NULL, array('confirmation_page_format'));
 
   $form['confirmation_page']['tokens'] = array(
     '#type' => 'fieldset',
@@ -40,13 +40,14 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  // TODO Please change this theme call to use an associative array for the $variables parameter.
   $form['confirmation_page']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
+    '#theme' => 'token_tree',
+    '#token_types' => array('node'),
+    //theme('token_help', 'order') . theme('webform_token_help', (array) $node),
   );
 
   // Redirection settings.
-  if (strpos($node->redirect_url, '<') === 0) {
+  if (isset($node->redirect_url) && strpos($node->redirect_url, '<') === 0) {
     $redirect = trim($node->redirect_url, '<>');
     // Redirection is set to front page.
     if ($redirect == 'front') {
@@ -59,7 +60,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
   }
   else {
     $redirect = 'url';
-    $redirect_url = $node->redirect_url;
+    $redirect_url = isset($node->redirect_url) ? $node->redirect_url : '';
   }
   $form['confirmation_page']['redirection'] = array(
     '#type' => 'item',
@@ -94,7 +95,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#description' => t('The email address that the receipt email will come from.'),
     '#weight' => -4.6,
     '#maxlength' => 255,
-    '#default_value' => $node->receipt_email_address,
+    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
     '#required' => TRUE,
   );
   $form['email']['receipt_email_from'] = array(
@@ -102,7 +103,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#title' => t('Receipt Email From'),
     '#description' => t('The name that is associated with the receipt email address.'),
     '#weight' => -4.5,
-    '#default_value' => $node->receipt_email_from,
+    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
     '#required' => TRUE,
   );
   $form['email']['receipt_email_subject'] = array(
@@ -110,14 +111,14 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#title' => t('Receipt Email Subject'),
     '#description' => t('The subject of the donation receipt email.'),
     '#weight' => -4.4,
-    '#default_value' => $node->receipt_email_subject,
+    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
     '#required' => TRUE,
   );
   $form['email']['receipt_email_message'] = array(
     '#type' => 'textarea',
     '#title' => t('Confirmation Email Message'),
     '#weight' => -4.3,
-    '#default_value' => $node->receipt_email_message,
+    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -591,9 +592,8 @@ function fundraiser_recurring_admin() {
   return $output;
 }
 
-function fundraiser_recurring_edit_forms() {
-  if (is_numeric(arg(3))) {
-    $master_order_id = arg(3);
+function fundraiser_recurring_edit_forms($master_order_id) {
+  if (is_numeric($master_order_id)) {
     return _recurring_donation_edit_forms($master_order_id);
   }
 }
@@ -649,7 +649,7 @@ function _get_billing_information($master_order_id, $order) {
   return $billing_str;
 }
 
-function fundraiser_recurring_master_order_overview() {
+function fundraiser_recurring_master_order_overview($order_id) {
 // TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
   $output = "<h2>Recurring Orders</h2>";
   $output .= "<table><thead>
@@ -666,7 +666,7 @@ function fundraiser_recurring_master_order_overview() {
     $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr ' .
       'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
       'ORDER BY fr.order_id ASC',
-    array(':order_id' => arg(3)));
+    array(':order_id' => $order_id));
     unset($rows);
     foreach ($results as $result) {
       // Get the order data from our order handler (Ubercart).
@@ -707,18 +707,19 @@ function fundraiser_recurring_master_order_overview() {
 /**
  * Refund tab on Orders
  */
-function fundraiser_show_refund_form($order) {
+function fundraiser_show_refund_form($order_id) {
   $base = drupal_get_path('module', 'fundraiser');
   drupal_add_css($base . '/css/refund.css');
   drupal_add_js($base . '/js/refund.js');
-  return drupal_get_form('fundraiser_refund', $order);
+  return drupal_get_form('fundraiser_refund', $order_id);
 }
 
 /**
  * Refund form
  */
-function fundraiser_refund(&$form_state, $order) {
+function fundraiser_refund(&$form_state, $order_id) {
   $form = array();
+  $order = module_invoke_all('fundraiser_get_order', $order_id);
   $form['#order_id'] = $order->order_id;
 
   // Determine how much has been paid, less previous refunds.

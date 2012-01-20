@@ -92,26 +92,7 @@ function fundraiser_permission() {
  */
 function fundraiser_menu() {
 // TODO make sure there are MENU_LOCAL_TASKs for each of the admin screens
-  $items['admin/config/system/fundraiser'] = array(
-    'title' => 'Fundraiser settings',
-    'description' => t('Configurations for the Fundraiser system.'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_admin_settings'),
-    'access arguments' => array("administer fundraiser"),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'fundraiser.admin.inc',
-  );
-
-  $items['admin/store/reports/fundraiser'] = array(
-    'title' => 'Donation report',
-    'description' => t('Donation reports for campaigns.'),
-    'page callback' => 'fundraiser_monthly_report',
-    'access arguments' => array('view store reports'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'fundraiser.admin.inc',
-  );
-
-  $items['node/%webform_menu/webform/mapping'] = array(
+  $items['node/%node/webform/mapping'] = array(
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_mapping_form', 1),
@@ -122,7 +103,7 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%webform_menu/webform/confirmations'] = array(
+  $items['node/%node/webform/confirmations'] = array(
     'title' => 'Confirmations',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_confirmation_settings_form', 1),
@@ -147,6 +128,24 @@ function fundraiser_menu() {
       'type' => MENU_CALLBACK,
     );
   }
+  $items['admin/config/system/fundraiser'] = array(
+    'title' => 'Fundraiser settings',
+    'description' => t('Configurations for the Fundraiser system.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_admin_settings'),
+    'access arguments' => array("administer fundraiser"),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'fundraiser.admin.inc',
+  );
+
+  $items['admin/store/reports/fundraiser'] = array(
+    'title' => 'Donation report',
+    'description' => t('Donation reports for campaigns.'),
+    'page callback' => 'fundraiser_monthly_report',
+    'access arguments' => array('view store reports'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'fundraiser.admin.inc',
+  );
   $items['admin/fundraiser/recurring'] = array(
     'title' => 'Current Fundraiser Recurring Payments',
     'page callback' => 'fundraiser_recurring_admin',
@@ -167,7 +166,7 @@ function fundraiser_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['admin/store/orders/%uc_order/recurring/edit'] = array(
+  $items['admin/store/orders/%/recurring/edit'] = array(
     'title' => 'Edit Recurring Donations',
     'page callback' => 'fundraiser_recurring_edit_forms',
     'access callback' => 'node_access',
@@ -177,7 +176,7 @@ function fundraiser_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['admin/store/orders/%uc_order/refund'] = array(
+  $items['admin/store/orders/%/refund'] = array(
     'title' => 'Refund',
     'page callback' => 'fundraiser_show_refund_form',
     'page arguments' => array(3),
@@ -209,7 +208,7 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/store/orders/%uc_order/recurring/overview'] = array(
+  $items['admin/store/orders/%/recurring/overview'] = array(
     'title' => 'Recurring Info',
     'page callback' => 'fundraiser_recurring_master_order_overview',
     'access arguments' => array('view all orders'),
@@ -920,18 +919,18 @@ function fundraiser_delete($node) {
  * Implementation of hook_load().
  */
 function fundraiser_load($nodes) {
-  foreach ($nodes as $nid => $node) {
+  foreach ($nodes as $node) {
     // Get the fundraiser.
-    $fundraiser = _fundraiser_get_fields_from_table('fundraiser', array('nid' => $nid));
+    $fundraiser = _fundraiser_get_fields_from_table('fundraiser', array('nid' => $node->nid));
     // Get the user profile map.
-    $results = _fundraiser_get_fields_from_table('fundraiser_component_map', array('nid' => $nid), array('cid', 'map_id') );
+    $results = _fundraiser_get_fields_from_table('fundraiser_component_map', array('nid' => $node->nid), array('cid', 'map_id') );
     foreach($results as $result) {
       $map[$result->cid] = $result->map_id;
     }
 
     // Protection vs node_save() for donation amounts.
     // From fundraiser.fields.inc. get the extra data.
-    $extra = _fundraiser_get_webform_extra_by_key($nid, 'amount');
+    $extra = _fundraiser_get_webform_extra_by_key($node->nid, 'amount');
   
     $items = preg_split('/\s/', $extra['items']);
     $count = 0;
@@ -949,8 +948,8 @@ function fundraiser_load($nodes) {
     $fundraiser->map = $map;
 
     // Merge data from fundraiser with node.
-    $node = (object) array_merge((array) $node, (array) $fundraiser);
-    $nodes[$nid] = $node;
+    $orig_node = (array) $node;
+    $nodes[$node->nid] = (object) array_merge((array) $orig_node, (array) $fundraiser);
   }
 }
 
