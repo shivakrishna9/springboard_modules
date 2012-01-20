@@ -484,7 +484,7 @@ function fundraiser_fundraiser_cancel_future_orders($master_order_id, $reason, $
     $order_ids[] = $data->order_id;
     uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
   }
-  return $order_ids
+  return $order_ids;
 }
 
 /**
