@@ -492,10 +492,11 @@ class CapizConnect {
         $level = $o->level->label;
         $chamber = $o->position->label;
         $label = $o->description . ' ' . $o->firstName . ' ' . $o->lastName;
+        $phone = is_object($o->offices[0]) ? $o->offices[0]->phone : '';
         // @todo: Phone and email will be relocated into another data structure
         $legislators[$level][$chamber][] = array(
           'name' => $label,
-          'phone' => $o->phone,
+          'phone' => $phone,
           'email' => $o->emailAddress,
         );
       }
@@ -586,6 +587,14 @@ class CapizConnect {
           $value = $legislators['National']['Senate'][1]['phone'];
           break;
         
+        // Federal senator email
+        case 'fed_senator_1_email':
+          $value = $legislators['National']['Senate'][0]['email'];
+          break;
+        case 'fed_senator_2_email':
+          $value = $legislators['National']['Senate'][1]['email'];
+          break;
+        
         // Federal rep
         case 'fed_rep':
           $value = $legislators['National']['House'][0]['name'];
@@ -594,6 +603,10 @@ class CapizConnect {
         case 'fed_rep_phone':
           $value = $legislators['National']['House'][0]['phone'];
           break;
+        // Federal rep email
+        case 'fed_rep_email':
+          $value = $legislators['National']['House'][0]['email'];
+          break;
           
         // Governor fields
         case 'governor':
@@ -601,6 +614,9 @@ class CapizConnect {
           break;
         case 'governor_phone':
           $value = $legislators['State']['Governor'][0]['phone'];
+          break;
+        case 'governor_email':
+          $value = $legislators['State']['Governor'][0]['email'];
           break;
       
       

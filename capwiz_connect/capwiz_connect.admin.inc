@@ -307,6 +307,10 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     'label' => 'Federal Senator 1 Phone',
     'formInputType' => 'auto',
   );
+  $user_fields['fed_senator_1_email'] = (object)array(
+    'label' => 'Federal Senator 1 Email',
+    'formInputType' => 'auto',
+  );
   $user_fields['fed_senator_2'] = (object)array(
     'label' => 'Federal Senator 2',
     'formInputType' => 'auto',
@@ -315,12 +319,20 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     'label' => 'Federal Senator 2 Phone',
     'formInputType' => 'auto',
   );
+  $user_fields['fed_senator_2_email'] = (object)array(
+    'label' => 'Federal Senator 2 Email',
+    'formInputType' => 'auto',
+  );
   $user_fields['fed_rep'] = (object)array(
     'label' => 'Federal Representative',
     'formInputType' => 'auto',
   );
   $user_fields['fed_rep_phone'] = (object)array(
-    'label' => 'Federal Representative 1 Phone',
+    'label' => 'Federal Representative Phone',
+    'formInputType' => 'auto',
+  );
+  $user_fields['fed_rep_email'] = (object)array(
+    'label' => 'Federal Representative Email',
     'formInputType' => 'auto',
   );
   $user_fields['nationalDistrict'] = (object)array(
@@ -341,6 +353,10 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   );
   $user_fields['governor_phone'] = (object)array(
     'label' => 'Governor Phone',
+    'formInputType' => 'auto',
+  );
+  $user_fields['governor_email'] = (object)array(
+    'label' => 'Governor Email',
     'formInputType' => 'auto',
   );
     
