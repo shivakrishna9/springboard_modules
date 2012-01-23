@@ -492,7 +492,7 @@ function fundraiser_fundraiser_cancel_future_orders($master_order_id, $reason, $
 /**
  * Implements hook_fundraiser_order_decline().
  */
-function fundraiser_fundraiser_order_decline($order_id) {
+function fundraiser_fundraiser_order_decline($order_id, $message) {
   // Mark the sale in Ubercart as failed.
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // Clear the credit card cache between orders

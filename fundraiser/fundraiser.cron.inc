@@ -17,7 +17,7 @@ function fundraiser_processor_key_match() {
   if (!empty($key)) {
     return ($key == $_SERVER['HTTP_HOST']);
   }
-  $dir = fundraiser_get_credit_encryption_path();
+  $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
   if ($dir && $dir !== t('Not configured, see below.')) {
     $filename = rtrim($dir, '/\\') . '/sustainer.key';
     if (file_exists($filename)) {
