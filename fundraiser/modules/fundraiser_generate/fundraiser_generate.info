@@ -1,7 +1,8 @@
 name = Fundraiser generate
 description = Creates massive amounts of donations for testing purposes.
-core = 6.x
+core = 7.x
 package = Jackson River Springboard - development
 dependencies[] = fundraiser
 dependencies[] = devel_generate
 version =  6.x-3.0-dev
+files[] = fundraiser_generate.module

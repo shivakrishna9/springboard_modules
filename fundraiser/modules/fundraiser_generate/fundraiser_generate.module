@@ -10,74 +10,74 @@
  * Implemenation of hook_menu().
  */
 function fundraiser_generate_menu() {
-  $items['admin/settings/fundraiser/generate'] = array(
-		'title' => t('Generate donations'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('fundraiser_generate_donations_form'),
-		'access arguments' => array('create test donations'),
-		'type' => MENU_NORMAL_ITEM,
-	);
-
+  $items['admin/config/fundraiser/generate'] = array(
+    'title' => t('Generate donations'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_generate_donations_form'),
+    'access arguments' => array('create test donations'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   $items['fundraiser/generate/cron/%/%'] = array(
-	 'title' => t('Cron donation generation'),
-	 'page callback' => 'fundraiser_generate_cron_create',
-	 'page arguments' => array(3, 4),
-	 'access callback' => TRUE,
-	 'type' => MENU_CALLBACK,
-	);
-
+    'title' => t('Cron donation generation'),
+    'page callback' => 'fundraiser_generate_cron_create',
+    'page arguments' => array(3, 4),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
 /**
- * Implemenatation of hook_perm().
+ * Implemenatation of hook_permission().
  */
-function fundraiser_generate_perm() {
-  return array('create test donations');
+function fundraiser_generate_permission() {
+  return array(
+    'create test donations' => array(
+      'title' => t('create test donations'),
+      'description' => t('Create test donations.'),
+    ),
+  );
 }
 
 /**
  * Generate donations form.
  */
-function fundraiser_generate_donations_form() {
+function fundraiser_generate_donations_form($form, &$form_state) {
   $options = _fundraiser_generate_get_forms();
-  $types = array('single' => 'Single', 'recurring' => 'Recurring', 'random' => 'Random');
-
+  $types = array(
+    'single' => 'Single',
+    'recurring' => 'Recurring',
+    'random' => 'Random',
+  );
   $form['nid'] = array(
     '#type' => 'select',
     '#title' => t('Donation form'),
     '#options' => $options,
   );
-
   $form['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Number of donations to generate'),
     '#size' => 3,
     '#default_value' => 1,
   );
-
   $form['type'] = array(
     '#type' => 'radios',
     '#title' => t('Donation type'),
     '#options' => $types,
     '#default_value' => 'single',
   );
-
   $form['ms'] = array(
     '#type' => 'textfield',
     '#title' => t('Market source'),
   );
-
   $form['cid'] = array(
     '#type' => 'textfield',
     '#title' => t('Salesforce campaign'),
   );
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate!'),
   );
-
   return $form;
 }
 
@@ -90,7 +90,6 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
   $type = $form_state['values']['type'];
   $ms = $form_state['values']['ms'];
   $cid = $form_state['values']['cid'];
-
   fundraiser_generate_donations($nid, $number_to_create, $type, $ms, $cid);
 }
 
@@ -109,9 +108,7 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
     drupal_set_message('You must pass in the donation form node id');
     return;
   }
-
   module_load_include('inc', 'devel_generate', 'devel_generate');
-
   if ($type == 'single') {
     $recurs = FALSE;
   }
@@ -121,20 +118,16 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
   else {
     $recurs = (bool) rand(0, 1);
   }
-
-  // load up the donation form node
+  // Load up the donation form node.
   $donation_form_node = node_load($nid);
-
   for ($i = 0; $i < $count; $i++) {
-
-    // create some random strings
+    // Create some random strings.
     $url = parse_url($GLOBALS['base_url']);
     $first_name = devel_generate_word(mt_rand(4, 10));
     $last_name = devel_generate_word(mt_rand(3, 11));
     $email =  $first_name . '.' . $last_name . '@' . $url['host'];
     $year = date('Y');
-
-    // build up a bogus form_state to submit
+    // Build up a bogus form_state to submit.
     $state = array(
       'submitted' => TRUE,
       'clicked_button' => array(
@@ -191,9 +184,8 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
         ),
       ),
     );
-
-    // submit it
-    drupal_execute('webform_client_form_' . $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
+    // Submit the form. TODO - check that this is the form array we need. -SeH
+    drupal_form_submit('webform_client_form_' . $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
 
   }
 
@@ -204,11 +196,10 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
  */
 function _fundraiser_generate_get_forms() {
   $forms = array();
-  $result = db_query("SELECT nid, title FROM {node} WHERE type = 'donation_form' ORDER BY title");
+  $result = db_query("SELECT nid, title FROM {node} WHERE type = :type ORDER BY title", array(':type' => 'donation_form'));
   while ($data = db_fetch_object($result)) {
     $forms[$data->nid] = $data->title;
   }
-
   return $forms;
 }
 
@@ -217,18 +208,16 @@ function _fundraiser_generate_get_forms() {
  */
 function _fundraiser_generate_random_state() {
   static $zones;
-
   if (count($zones == 0)) {
     // load up ubercart zones
-    $result = db_query("SELECT zone_id FROM {uc_zones} WHERE zone_country_id = 840"); // hardcode US for now
+    // TODO move this tp use hook. -SeH
+    $result = db_query("SELECT zone_id FROM {uc_zones} WHERE zone_country_id = :zone_country_id", array(':zone_country_id' => 840)); // hardcode US for now
     while ($data = db_fetch_object($result)) {
       $zones[] = $data->zone_id;
     }
   }
-
   // get length of array
   $length = count($zones) - 1;
-
   // return random index from array
   $id = $zones[rand(0, $length)];
   return $id;
@@ -239,17 +228,16 @@ function _fundraiser_generate_random_state() {
  */
 function _fundraiser_generate_random_ask_amount($nid) {
   $amount_values = array();
-  $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $nid);
-  $amount_values = unserialize(db_result($results));
+  // TODO move this to use new db query - SeH
+  $results = db_query('SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $nid, ':form_key' => "amount"));
+  $amount_values = unserialize($results->fetchField());
   $amount_values = preg_split('/\n/', trim($amount_values['items']));
-
   array_pop($amount_values); // git rid of other for now
   $values = array();
   foreach ($amount_values as $amount) {
     $split_amount = explode('|', $amount);
     $values[] = $split_amount[0];
   }
-
   $length = count($values) - 1;
   return $values[rand(0, $length)];
 }
