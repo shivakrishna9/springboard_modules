@@ -184,11 +184,9 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
         ),
       ),
     );
-    // Submit the form. TODO - check that this is the form array we need. -SeH
+    // Submit the form.
     drupal_form_submit('webform_client_form_' . $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
-
   }
-
 }
 
 /**
@@ -209,16 +207,12 @@ function _fundraiser_generate_get_forms() {
 function _fundraiser_generate_random_state() {
   static $zones;
   if (count($zones == 0)) {
-    // load up ubercart zones
-    // TODO move this tp use hook. -SeH
-    $result = db_query("SELECT zone_id FROM {uc_zones} WHERE zone_country_id = :zone_country_id", array(':zone_country_id' => 840)); // hardcode US for now
-    while ($data = db_fetch_object($result)) {
-      $zones[] = $data->zone_id;
-    }
+    // Load up available zones from fundraiser hooks.
+    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840));
   }
-  // get length of array
+  // Get length of array.
   $length = count($zones) - 1;
-  // return random index from array
+  // Return random index from array.
   $id = $zones[rand(0, $length)];
   return $id;
 }
@@ -228,11 +222,9 @@ function _fundraiser_generate_random_state() {
  */
 function _fundraiser_generate_random_ask_amount($nid) {
   $amount_values = array();
-  // TODO move this to use new db query - SeH
-  $results = db_query('SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key = :form_key', array(':nid' => $nid, ':form_key' => "amount"));
-  $amount_values = unserialize($results->fetchField());
+  $amount_values = _fundraiser_get_webform_extra_by_key($nid, 'amount'); // From fundraiser.fields.inc.
   $amount_values = preg_split('/\n/', trim($amount_values['items']));
-  array_pop($amount_values); // git rid of other for now
+  array_pop($amount_values); // Get rid of other for now.
   $values = array();
   foreach ($amount_values as $amount) {
     $split_amount = explode('|', $amount);
