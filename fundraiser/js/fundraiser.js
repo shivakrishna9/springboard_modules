@@ -1,4 +1,7 @@
-$(document).ready(function(){
+Drupal.behaviors.fundraiserCheckCode = {
+  attach: function(context) { (function($) {
+  
+  $(document).ready(function(){
 
 	// make sure cc number and cvv are numeric
 	$('#edit-submitted-credit-card-information-card-number').numeric();
@@ -23,6 +26,7 @@ $(document).ready(function(){
     
     $(this).after('<div class="donation-processing-wrapper"><p class="donation-thank-you">Thank you.</p><p class="donation-processing">Your donation is being processed.</p><div class="donation-processing-spinner"></div></div>');
 	});
-});;
-	});
 });
+
+  })(jQuery); }
+} 

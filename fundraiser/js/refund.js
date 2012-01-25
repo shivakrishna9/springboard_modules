@@ -1,4 +1,6 @@
-Drupal.behaviors.enableAmountForPartialRefund = function(context) {
+Drupal.behaviors.enableAmountForPartialRefund = {
+  attach: function(context) { (function($) {
+
   $('input[name=refund_type]:radio', context).bind('click', function() {
     amountBox = $('input[name=amount]:text', context);
     totalAmount = $('input[name=total_paid]:hidden', context).val();
@@ -12,3 +14,6 @@ Drupal.behaviors.enableAmountForPartialRefund = function(context) {
     }
   });
 };
+
+  })(jQuery); }
+} 

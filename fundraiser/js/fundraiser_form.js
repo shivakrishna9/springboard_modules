@@ -1,4 +1,6 @@
-Drupal.behaviors.fundraiserBehavior = function() {
+Drupal.behaviors.fundraiserBehavior = {
+  attach: function(context) { (function($) {
+
   $fundraiser = '';
   // Auto-populate the internal name field
   $("#edit-title").blur(function() {
@@ -40,4 +42,7 @@ Drupal.behaviors.fundraiserBehavior = function() {
     }
   });
 };
+
+  })(jQuery); }
+} 
 
