@@ -305,6 +305,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) 
   );
 
   $countries = module_invoke_all('fundraiser_format_country_select', 840);
+  $countries = $countries[0];
   $form['billing_address']['country'] = array(
     '#type' => 'select',
     '#title' => 'Country',
@@ -314,6 +315,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) 
   );
 
   $zones = module_invoke_all('fundraiser_format_zone_select', 840, $arg1->billing_zone);
+  $zones = $zones[0];
   $form['billing_address']['state'] = array(
     '#type' => 'select',
     '#title' => 'State',
@@ -380,17 +382,20 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
   $cc_cvv = $form_state['values']['card_cvv'];
 
   //validate cc number
-  if (!module_invoke_all('fundraiser_fundraiser_validate_card', $cc_number) || !ctype_digit($cc_number)) {
+  $valid_card = module_invoke_all('fundraiser_fundraiser_validate_card', $cc_number);
+  if (!$valid_card[0] || !ctype_digit($cc_number)) {
     form_set_error('cc_info][card_num', "You have entered an invalid credit card number.");
   }
 
   // Validate the card expiration date.
-  if (!module_invoke_all('fundraiser_fundraiser_validate_card_expiration', $cc_expiration_month, $cc_expiration_year)) {
+  $valid_date = module_invoke_all('fundraiser_fundraiser_validate_card_expiration', $cc_expiration_month, $cc_expiration_year);
+  if (!$valid_date[0]) {
     form_set_error('cc_info][card_exp_date', t('The credit card you entered has expired.'));
   }
 
   // Validate the CVV Number
-  if (!module_invoke_all('fundraiser_fundraiser_validate_card', $cc_cvv)) {
+  $valid_cvv = module_invoke_all('fundraiser_fundraiser_validate_card', $cc_cvv);
+  if (!$valid_cvv[0]) {
     form_set_error('cc_info][card_cvv', t('You have entered an invalid CVV number.'));
   }
 }
@@ -595,6 +600,7 @@ function _update_order_billing_info($order_id, &$form_state) {
  */
 function _fundraiser_get_payment_details($order_id) {
   $order = module_invoke_all('fundraiser_get_order', $order_id);
+  $order = $order[0];
   $details = array();
   $gateway = '';
 

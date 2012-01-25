@@ -277,6 +277,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
   // country
   $countries =  module_invoke_all('fundraiser_format_country_select', $us);
+  $countries = $countries[0];
 
   // build option string for countries
   $options = '';
@@ -315,6 +316,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
   // state
   $zones = module_invoke_all('fundraiser_format_zone_select', $us, NULL);
+  $zones = $zones[0];
 
   // build option string for states
   $options = '';
@@ -754,6 +756,8 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
 
   if ($fids['country']) {
     $country_name = module_invoke_all('fundraiser_get_country_iso', $country_code);
+    $country_name = $country_name[0];
+
     $has_country = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['country']))->fetchField();
     if ($has_country) {
@@ -768,6 +772,8 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
 
   if ($fids['state']) {
     $state_name = module_invoke_all('fundraiser_get_zone_iso', $country_code, $state_code);
+    $state_name = $state_name[0];
+
     $has_state = db_query('SELECT 1 FROM {profile_value} WHERE uid = :uid AND fid = :fid',
       array(':uid' => $update_user->uid, ':fid' => $fids['state']))->fetchField();
     if ($has_state) {

@@ -18,6 +18,7 @@ function fundraiser_processor_key_match() {
     return ($key == $_SERVER['HTTP_HOST']);
   }
   $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
+  $dir = $dir[0];
   if ($dir && $dir !== t('Not configured, see below.')) {
     $filename = rtrim($dir, '/\\') . '/sustainer.key';
     if (file_exists($filename)) {
@@ -59,6 +60,8 @@ function fundraiser_process_recurring_donations() {
 
     // Get the order data from our order handler (Ubercart).
     $order = module_invoke_all('fundraiser_get_order', $order_id);
+    $order = $order[0];
+
     $total = $order->order_total;
 
     // Get data out of the given order.
@@ -177,7 +180,8 @@ function fundraiser_send_cc_notification($master_order_id, $uid) {
     array(':master_order_id' => $master_order_id))->fetchColumn();
   // Get the order data from our order handler (Ubercart).
   $order = module_invoke_all('fundraiser_get_order', $order_id);
-    
+  $order = $order[0];
+
   // Set up some params that can be used in the email.
   $params['exp_month'] = $order->payment_details['cc_exp_month'];
   $params['exp_year'] = $order->payment_details['cc_exp_year'];

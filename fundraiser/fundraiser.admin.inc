@@ -335,6 +335,7 @@ function fundraiser_monthly_report() {
     $start_date = $_SESSION['fundraiser_report_filters']['from_date'];
     $end_date = $_SESSION['fundraiser_report_filters']['to_date'];
     $result = module_invoke_all('fundraiser_monthly_report', $start_date, $end_date);
+    $result = $result[0];
   }
 
   $header = array('Order Id', 'Opportunity Id', 'Uid', 'First Name', 'Last Name', 'Email', 'Address', 'Address 2', 'City', 'Country', 'State/Province', 'Postal Code', 'Payment Date', 'Amount', 'Donation Form', 'URL', 'Market Source', 'Campaign ID', 'CC Last Four', 'CC Type', 'CC Exp Month', 'CC Exp Year');
@@ -343,6 +344,7 @@ function fundraiser_monthly_report() {
   $rows = array();
   foreach ($result as $data) {
     $cc_data = module_invoke_all('fundraiser_decrypt_credit', $data->data);
+    $cc_date = $cc_date[0];
     $rows[] = array(
       $data->order_id,
       $data->sfid ? $data->sfid : 'Not Exported',
@@ -577,6 +579,7 @@ function fundraiser_recurring_admin() {
   foreach ($results as $result) {
     // Get the order data from our order handler (Ubercart).
     $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+    $order = $order[0];
     $user = user_load($order->uid);
     $fundraiser = (array) $result;
     $fundraiser['fee_amount'] = number_format($fundraiser['fee_amount'], 2, '.', '');
@@ -606,6 +609,7 @@ function _recurring_donation_edit_forms($master_order_id) {
 
   // Get the order data from our order handler (Ubercart).
   $order = module_invoke_all('fundraiser_get_order', $order_id);
+  $order = $order[0];
   $nid = $order->products[0]->nid;
   $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
 
@@ -623,6 +627,7 @@ function _recurring_donation_edit_forms($master_order_id) {
 
 function _get_billing_information($master_order_id, $order) {
   $state = module_invoke_all('fundraiser_get_country_zone', $order->billing_zone);
+  $state = $state[0];
   $orders_remaining = _remaining_recurring_charge_count($master_order_id);
   $orders_processed = _processed_recurring_charge_count($master_order_id);
   $donation_amount = '$' . money_format('%i', $order->order_total);
@@ -671,6 +676,7 @@ function fundraiser_recurring_master_order_overview($order_id) {
     foreach ($results as $result) {
       // Get the order data from our order handler (Ubercart).
       $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+      $order = $order[0];
       $user = user_load($order->uid);
       $result->order_total = $order->order_total;
       $result->name = $user->name;
@@ -720,16 +726,20 @@ function fundraiser_show_refund_form($order_id) {
 function fundraiser_refund(&$form_state, $order_id) {
   $form = array();
   $order = module_invoke_all('fundraiser_get_order', $order_id);
+  $order = $order[0];
   $form['#order_id'] = $order->order_id;
 
   // Determine how much has been paid, less previous refunds.
   $total_paid = module_invoke_all('fundraiser_get_order_paid', $order->order_id);
+  $total_paid = $total_paid[0];
 
   // Get payment info
   $payment_info = module_invoke_all('fundraiser_get_order_payment_info', $order->order_id);
+  $payment_info = $payment_info[0];
 
   // Get refund info
   $previous_refunds = module_invoke_all('fundraiser_get_order_refund_info', $order->order_id);
+  $previous_refunds = $previous_refunds[0];
 
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
@@ -752,21 +762,24 @@ function fundraiser_refund(&$form_state, $order_id) {
       '#title' => t('Payment #'),
       '#value' => $payment_info['receipt_id'],
     );
+    $formated_price = module_invoke_all('fundraiser_format_price', $payment_info['received']);
     $form['payment_summary']['payment_date'] = array(
       '#type' => 'item',
       '#title' => t('Payment Date'),
-      '#value' => module_invoke_all('fundraiser_format_price', $payment_info['received']),
+      '#value' => $formated_price[0],
     );
+    $formated_price = module_invoke_all('fundraiser_format_price', $payment_info['amount']);
     $form['payment_summary']['payment_total'] = array(
       '#type' => 'item',
       '#title' => t('Payment Total'),
-      '#value' => module_invoke_all('fundraiser_format_price', $payment_info['amount']),
+      '#value' => $formated_price[0],
     );
     if ($previous_refunds < 0) {
+      $formated_price = module_invoke_all('fundraiser_format_price', $previous_refunds);
       $form['payment_summary']['total_refunded'] = array(
         '#type' => 'item',
         '#title' => t('Total Previously Refunded'),
-        '#value' => module_invoke_all('fundraiser_format_price', $previous_refunds),
+        '#value' => $formated_price[0],
       );
     }
   }
@@ -804,9 +817,10 @@ function fundraiser_refund(&$form_state, $order_id) {
   }
   // Refund options
   else {
+    $formated_price = module_invoke_all('fundraiser_format_price', $total_paid);
     $form['refund_options']['full_refund'] = array(
       '#type' => 'radio',
-      '#title' => t('Full Refund (%amount)', array('%amount' => module_invoke_all('fundraiser_format_price', $total_paid))),
+      '#title' => t('Full Refund (%amount)', array('%amount' => $formated_price[0])),
       '#return_value' => 'full',
       '#parents' => array('refund_type'),
     );
@@ -866,13 +880,15 @@ function fundraiser_refund_validate($form, &$form_state) {
       $order_id = $form['#order_id'];
       // Determine how much has been paid, less previous refunds
       $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
+      $total_paid = $total_paid[0];
       if ($amount > $total_paid) {
         $context = array(
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
+        $formated_price = module_invoke_all('fundraiser_format_price',$total_paid);
         form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
-          'more than that can be refunded.', array('@paid' => module_invoke_all('fundraiser_format_price',$total_paid))));
+          'more than that can be refunded.', array('@paid' => $formated_price[0])));
       }
     }
   }
@@ -887,6 +903,7 @@ function fundraiser_refund_submit($form, &$form_state) {
 
   // Determine how much has been paid, less previous refunds
   $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
+  $total_paid = $total_paid[0];
 
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
@@ -931,6 +948,7 @@ function fundraiser_refund_submit($form, &$form_state) {
   if ($result['success']) {
 
     $receipt_id = module_invoke_all('fundraiser_order_refund', $order_id, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
+    $receipt_id = $receipt_id[0];
 
     // Save refund data for Fundraiser.
     $refund = new stdClass();
