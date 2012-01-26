@@ -81,13 +81,17 @@ function fundraiser_mapping_form_submit($form, &$form_state){
 
 function fundraiser_recurring_admin(){
 	
-	$sql = "select fundraiser_recurring.*,users.name 
-	from fundraiser_recurring
-	inner join uc_orders on fundraiser_recurring.order_id=uc_orders.order_id
-	inner join users on uc_orders.uid=users.uid 
-	where fundraiser_recurring.order_id=".arg(3)."
-	order by uc_orders.created desc";
-	$resource = db_query($sql);
+	$resouce = db_query("
+          SELECT 
+            fundraiser_recurring.*,
+            users.name 
+	  FROM {fundraiser_recurring}
+	  INNER JOIN {uc_orders}
+            ON fundraiser_recurring.order_id = uc_orders.order_id
+	  INNER JOIN users
+            ON uc_orders.uid=users.uid 
+	  WHERE fundraiser_recurring.order_id='%s'
+	  ORDER BY uc_orders.created desc", arg(3));
 	
 	$output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
 	<tr>
@@ -119,66 +123,77 @@ function fundraiser_recurring_admin(){
 }
 
 function fundraiser_recurring_master_order_overview(){
-	
-	$resource = db_query("select fundraiser_recurring.*, name  from {fundraiser_recurring}  
-	inner join {uc_orders} on {fundraiser_recurring}.order_id={uc_orders}.order_id
-	inner join {users} on {users}.uid={uc_orders}.uid
-	where master_order_id=%d order by order_id asc",arg(3));
-	
-	$output = "<h2>Recurring Orders</h2>";
-	$output .= "<table><thead>
-	<tr>
-	<th>Master Order ID</th>
-	<th>OrderID</th>
-	<th>User Name</th>
-	<th>Amount</th>
 
-	<th>Charge Date</th>
-	</tr></thead>
-	";
+  $resource = db_query('
+    SELECT
+      fr.*,
+      name
+    FROM {fundraiser_recurring} fr  
+    INNER JOIN {uc_orders} uo
+      ON fr.order_id = uo.order_id
+    INNER JOIN {users} u
+      ON u.uid = uo.uid
+    WHERE  fr.master_order_id = %d
+    ORDER BY fr.order_id asc', arg(3));
+
+  $output = "<h2>Recurring Orders</h2>";
+  $output .= "<table><thead>
+    <tr>
+    <th>Master Order ID</th>
+    <th>OrderID</th>
+    <th>User Name</th>
+    <th>Amount</th>
+    <th>Charge Date</th>
+    </tr></thead>
+  ";
 	
 
 	
-	if(empty($rows[1])){
-		//we're actually looking at the order id and not the master_order_id
-		$resource = db_query("select fundraiser_recurring.*, name, uc_orders.order_total  from fundraiser_recurring
-		inner join uc_orders on fundraiser_recurring.order_id=uc_orders.order_id
-		inner join users on users.uid=uc_orders.uid
-		where master_order_id=(select master_order_id from fundraiser_recurring where order_id=%d)
-		order by order_id asc",arg(3));
-		unset($rows);
-		for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
-			;
-		}
-	}
+  if(empty($rows[1])){
+    //we're actually looking at the order id and not the master_order_id
+    $resource = db_query('
+      SELECT
+        fr.*,
+        u.name,
+        uo.order_total
+      FROM {fundraiser_recurring} fr
+      INNER JOIN {uc_orders} uo
+        ON fr.order_id = uo.order_id
+      INNER JOIN {users} u
+        ON u.uid = uo.uid
+      WHERE fr.master_order_id = (SELECT master_order_id FROM {fundraiser_recurring} WHERE order_id=%d)
+      ORDER BY order_id asc', arg(3));
+    unset($rows);
+    for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
+      ;
+    }
+  }
 	
-	for($i=1;$i<count($rows);$i++){
-		if (($i % 2) == 0) {
-			$class = 'even';
-		}
-		else {
-			$class = 'odd';
-		}
-		$rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'],2,'.','');
-		if ($rows[$i]['gateway_resp'] == 'canceled') {
-			$next_charge = 'Canceled';
-		}
-		else {
-			$next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
-		}
-		$output.= "<tr class='$class'>
-		<td><a href='/admin/store/orders/".$rows[$i][master_order_id]."/recurring/edit'>".$rows[$i][master_order_id]."</a></td>
-		<td>".$rows[$i][order_id]."</td>
-		<td>".$rows[$i][name]."</td>
-		<td>".$rows[$i][fee_amount]."</td>
-		<td>$next_charge</td>
-		</tr>";
-	}
-	
-	$output .= "</table>";
-	
-	return $output;
-
+  for($i=1;$i<count($rows);$i++){
+    if (($i % 2) == 0) {
+      $class = 'even';
+    }
+    else {
+      $class = 'odd';
+    }
+    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'],2,'.','');
+    if ($rows[$i]['gateway_resp'] == 'canceled') {
+      $next_charge = 'Canceled';
+    }
+    else {
+      $next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
+    }
+    $output.= "
+      <tr class='$class'>
+      <td><a href='/admin/store/orders/".$rows[$i][master_order_id]."/recurring/edit'>".$rows[$i][master_order_id]."</a></td>
+      <td>".$rows[$i][order_id]."</td>
+      <td>".$rows[$i][name]."</td>
+      <td>".$rows[$i][fee_amount]."</td>
+      <td>$next_charge</td>
+     </tr>";
+  }
+  $output .= "</table>";
+  return $output;
 }
 
 function fundraiser_recurring_user_overview(){
