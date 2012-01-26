@@ -6,60 +6,48 @@
  */
 
 /**
- * Display a list of tax rates.
+ * Displays a list of tax rates.
  */
 function uc_taxes_admin_settings() {
+  $header = array(t('Name'), t('Rate'), t('Taxed products'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Operations'), 'colspan' => 4));
+
   $rows = array();
-
-  $header = array(t('Name'), t('Rate'), t('Taxed products'), t('Taxed product types'), t('Taxed line items'), t('Weight'), 'data' => t('Operations'));
-
-  // Loop through all the defined tax rates.
   foreach (uc_taxes_rate_load() as $rate_id => $rate) {
-    // Build the operations links for the tax rate.
-    $ops = array(
-       l(t('edit'), 'admin/store/settings/taxes/'. $rate_id .'/edit'),
-       l(t('conditions'), CA_UI_PATH .'/uc_taxes_'. $rate_id .'/edit/conditions'),
-       l(t('clone'), 'admin/store/settings/taxes/'. $rate_id .'/clone'),
-       l(t('delete'), 'admin/store/settings/taxes/'. $rate_id .'/delete'),
-    );
-
-    // Add the row to the table.
     $rows[] = array(
       check_plain($rate->name),
-      $rate->rate * 100 .'%',
+      $rate->rate * 100 . '%',
       $rate->shippable ? t('Shippable products') : t('Any product'),
       implode(', ', $rate->taxed_product_types),
       implode(', ', $rate->taxed_line_items),
       $rate->weight,
-      implode(' | ', $ops),
+      l(t('edit'), 'admin/store/settings/taxes/' . $rate_id . '/edit'),
+      l(t('conditions'), 'admin/store/settings/taxes/manage/uc_taxes_' . $rate_id),
+      l(t('clone'), 'admin/store/settings/taxes/' . $rate_id . '/clone'),
+      l(t('delete'), 'admin/store/settings/taxes/' . $rate_id . '/delete'),
     );
   }
 
-  // Let the user know if no tax rates are defined.
-  if (empty($rows)) {
-    $rows[] = array(array('data' => t('No rates available.'), 'colspan' => 7));
-  }
+  $build['taxes'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('No rates available.'),
+  );
 
-  // Build the output including the table and a link to add a new rate.
-  $output = theme('table', $header, $rows)
-          . l(t('Add a tax rate'), 'admin/store/settings/taxes/add');
-
-  return $output;
+  return $build;
 }
 
 /**
- * Build a form to add or edit a tax rate.
+ * Builds a form to add or edit a tax rate.
  *
  * @param $rate_id
  *   The ID of the tax rate to edit; leave NULL to add a new rate.
+ *
+ * @see uc_taxes_form_validate()
+ * @see uc_taxes_form_submit()
  * @ingroup forms
- * @see
- *   uc_taxes_form_validate()
- *   uc_taxes_form_submit()
  */
-function uc_taxes_form($form_state, $rate_id = NULL) {
-  $form = array();
-
+function uc_taxes_form($form, &$form_state, $rate_id = NULL) {
   // If a rate ID was specified...
   if ($rate_id) {
     // Load the tax rate and set the page title.
@@ -76,7 +64,7 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
-    '#description' => t('This name will appear to the customer when this tax is applied to an order.<br />It will also be used to name the corresponding predicate for this rate.'),
+    '#description' => t('This name will appear to the customer when this tax is applied to an order.'),
     '#default_value' => $rate_id ? $rate->name : '',
     '#required' => TRUE,
   );
@@ -85,20 +73,18 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
     '#type' => 'textfield',
     '#title' => t('Rate'),
     '#description' => t('The tax rate as a percent or decimal. Examples: 6%, .06'),
-    '#default_value' => $rate_id ? $rate->rate : '',
+    '#default_value' => $rate_id ? (($rate->rate * 100) . '%') : '',
     '#size' => 15,
     '#required' => TRUE,
-  );
-
-  $options = array(
-    '0' => t('Apply tax to any product regardless of its shipability.'),
-    1 => t('Apply tax to shippable products only.'),
   );
 
   $form['shippable'] = array(
     '#type' => 'radios',
     '#title' => t('Taxed products'),
-    '#options' => $options,
+    '#options' => array(
+      t('Apply tax to any product regardless of its shippability.'),
+      t('Apply tax to shippable products only.'),
+    ),
     '#default_value' => $rate_id ? $rate->shippable : 0,
   );
 
@@ -117,9 +103,9 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
 
   $options = array();
 
-  foreach (_line_item_list() as $line_item) {
-    if (!in_array($line_item['id'], array('subtotal', 'tax_subtotal', 'total'))) {
-      $options[$line_item['id']] = $line_item['title'];
+  foreach (_uc_line_item_list() as $id => $line_item) {
+    if (!in_array($id, array('subtotal', 'tax_subtotal', 'total'))) {
+      $options[$id] = $line_item['title'];
     }
   }
 
@@ -138,7 +124,21 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
     '#default_value' => $rate_id ? $rate->weight : 0,
   );
 
-  $form['submit'] = array(
+  $form['display_include'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include this tax when displaying product prices.'),
+    '#default_value' => $rate_id ? $rate->display_include : 0,
+  );
+
+  $form['inclusion_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tax inclusion text'),
+    '#description' => t('This text will be displayed near the price to indicate that it includes tax.'),
+    '#default_value' => $rate_id ? $rate->inclusion_text : '',
+  );
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
     '#suffix' => l(t('Cancel'), 'admin/store/settings/taxes'),
@@ -148,9 +148,10 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
 }
 
 /**
- * Ensure that tax rates are positive numbers.
+ * Ensures that tax rates are positive numbers.
  *
  * @see uc_taxes_form()
+ * @see uc_taxes_form_submit()
  */
 function uc_taxes_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['rate']) && (floatval($form_state['values']['rate']) < 0)) {
@@ -159,7 +160,10 @@ function uc_taxes_form_validate($form, &$form_state) {
 }
 
 /**
+ * Form submission handler for uc_taxes_form().
+ *
  * @see uc_taxes_form()
+ * @see uc_taxes_form_validate()
  */
 function uc_taxes_form_submit($form, &$form_state) {
   // Determine the decimal rate value.
@@ -171,7 +175,7 @@ function uc_taxes_form_submit($form, &$form_state) {
   }
 
   // Build the rate object based on the form values and save it.
-  $rate = array(
+  $rate = (object) array(
     'id' => $form_state['values']['id'],
     'name' => $form_state['values']['name'],
     'rate' => $form_state['values']['rate'],
@@ -179,20 +183,35 @@ function uc_taxes_form_submit($form, &$form_state) {
     'taxed_line_items' => array_filter($form_state['values']['taxed_line_items']),
     'weight' => $form_state['values']['weight'],
     'shippable' => $form_state['values']['shippable'],
+    'display_include' => $form_state['values']['display_include'],
+    'inclusion_text' => $form_state['values']['inclusion_text'],
   );
-  uc_taxes_rate_save((object) $rate);
+  $rate = uc_taxes_rate_save($rate);
 
-  // Update the name of the associated predicate.
-  db_query("UPDATE {ca_predicates} SET title = '%s' WHERE pid = '%s'", $rate['name'], 'uc_taxes_'. $rate['id']);
+  // Ensure Rules picks up the new condition.
+  rules_clear_cache();
 
-  // Display a message and redirect back to the overview.
-  drupal_set_message(t('Tax rate %name saved.', array('%name' => $form_state['values']['name'])));
+  // Update the name of the associated conditions.
+  $conditions = rules_config_load('uc_taxes_' . $form_state['values']['id']);
+  if ($conditions) {
+    $conditions->label = $form_state['values']['name'];
+    $conditions->save();
+  }
 
-  $form_state['redirect'] = 'admin/store/settings/taxes';
+  // Display a message and redirect back to the overview,
+  // or the conditions page for new taxes.
+  if ($form_state['values']['id']) {
+    drupal_set_message(t('Tax rate %name saved.', array('%name' => $form_state['values']['name'])));
+    $form_state['redirect'] = 'admin/store/settings/taxes';
+  }
+  else {
+    drupal_set_message(t('Tax rate %name created.', array('%name' => $form_state['values']['name'])));
+    $form_state['redirect'] = 'admin/store/settings/taxes/manage/uc_taxes_'. $rate->id;
+  }
 }
 
 /**
- * Clone a tax rate.
+ * Clones a tax rate.
  */
 function uc_taxes_clone($rate_id) {
   // Load the source rate object.
@@ -206,10 +225,10 @@ function uc_taxes_clone($rate_id) {
   // Save the new rate.
   $rate = uc_taxes_rate_save($rate);
 
-  // Clone the associated predicate as well.
-  if ($predicate = ca_load_predicate('uc_taxes_'. $rate_id)) {
-    $predicate['#pid'] = 'uc_taxes_'. $rate->id;
-    ca_save_predicate($predicate);
+  // Clone the associated conditions as well.
+  if ($conditions = rules_config_load('uc_taxes_' . $rate_id)) {
+    unset($conditions->id);
+    $conditions->save('uc_taxes_' . $rate->id);
   }
 
   // Display a message and redirect back to the overview.
@@ -219,14 +238,12 @@ function uc_taxes_clone($rate_id) {
 }
 
 /**
- * Delete a tax rule.
+ * Deletes a tax rule.
  *
+ * @see uc_taxes_delete_form_submit()
  * @ingroup forms
- * @see uc_taxes_delete_submit()
  */
-function uc_taxes_delete_form($form_state, $rate_id) {
-  $form = array();
-
+function uc_taxes_delete_form($form, &$form_state, $rate_id) {
   // Bail if we got a bad rate ID.
   if (!$rate = uc_taxes_rate_load($rate_id)) {
     drupal_set_message(t('That tax rate does not exist.'), 'error');
@@ -246,6 +263,8 @@ function uc_taxes_delete_form($form_state, $rate_id) {
 }
 
 /**
+ * Form submission handler for uc_taxes_delete_form().
+ *
  * @see uc_taxes_delete_form()
  */
 function uc_taxes_delete_form_submit($form, &$form_state) {

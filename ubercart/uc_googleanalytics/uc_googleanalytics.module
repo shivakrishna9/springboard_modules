@@ -11,21 +11,24 @@
  */
 
 /**
- * Implementation of hook_enable().
+ * Implements hook_enable().
  */
 function uc_googleanalytics_enable() {
   // Get the weight of the Google Analytics module.
-  $weight = db_result(db_query("SELECT weight FROM {system} WHERE name = '%s'", 'googleanalytics'));
+  $weight = db_query("SELECT weight FROM {system} WHERE name = :module", array(':module' => 'googleanalytics'))->fetchField();
 
   // Update the weight of the UC Google Analytics module so its hooks get called
   // after the actual Google Analytics module.
-  db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", max(1000, $weight + 1), 'uc_googleanalytics');
+  db_update('system')
+    ->fields(array('weight' => max(1000, $weight + 1)))
+    ->condition('name', 'uc_googleanalytics')
+    ->execute();
 }
 
 /**
- * Implementation of hook_footer().
+ * Implements hook_page_alter().
  */
-function uc_googleanalytics_footer($main = 0) {
+function uc_googleanalytics_page_alter(&$page) {
   // Check to see if we are at the order completion page.
   if (uc_googleanalytics_display()) {
     // If so, then if we can load the order...
@@ -34,7 +37,7 @@ function uc_googleanalytics_footer($main = 0) {
       $script = uc_googleanalytics_ecommerce_js($order);
 
       // Add the code to the footer.
-      drupal_add_js($script, 'inline', 'footer');
+      drupal_add_js($script, array('type' => 'inline', 'scope' => 'footer', 'preprocess' => FALSE));
     }
 
     // Clean out the session variable.
@@ -43,13 +46,13 @@ function uc_googleanalytics_footer($main = 0) {
 }
 
 /**
- * Implementation of hook_order().
+ * Implements hook_uc_order().
  */
-function uc_googleanalytics_order($op, &$arg1, $arg2) {
+function uc_googleanalytics_uc_order($op, $order, $arg2) {
   // If a new order is created during the checkout process...
-  if ($op == 'new' && arg(0) == 'cart') {
+  if ($op == 'new') {
     // Store the order ID for later use.
-    $_SESSION['ucga_order_id'] = $arg1->order_id;
+    $_SESSION['ucga_order_id'] = $order->order_id;
   }
 }
 
@@ -68,7 +71,7 @@ function uc_googleanalytics_display() {
   // Or if the URL is the custom completion page.
   $completion_page = variable_get('uc_cart_checkout_complete_page', '');
 
-  if (!empty($completion_page) && $completion_page == $_GET['q']) {
+  if (!empty($completion_page) && $completion_page == drupal_get_path_alias($_GET['q'])) {
     return TRUE;
   }
 
@@ -88,6 +91,7 @@ function uc_googleanalytics_display() {
  *
  * @param $order
  *   The fully loaded order object to convert into GA JS.
+ *
  * @return
  *   The JS that should be added to the page footer.
  */
@@ -122,7 +126,7 @@ function uc_googleanalytics_ecommerce_js($order) {
   // Build the transaction arguments.
   $trans = array(
     'order_id' => $order->order_id,
-    'store' => variable_get('uc_store_name', variable_get('site_name', 'Ubercart')),
+    'store' => uc_store_name(),
     'total' => $order->order_total,
     'tax' => $order->tax_total,
     'shipping' => $order->shipping_total,
@@ -136,29 +140,29 @@ function uc_googleanalytics_ecommerce_js($order) {
 
   // Put the arguments into an array that is safe to implode directly.
   $args = array(
-    '"'. $trans['order_id'] .'"',
-    drupal_to_js($trans['store']),
-    '"'. $trans['total'] .'"',
-    '"'. $trans['tax'] .'"',
-    '"'. $trans['shipping'] .'"',
-    drupal_to_js($trans['city']),
-    drupal_to_js($trans['state']),
-    drupal_to_js($trans['country']),
+    '"' . $trans['order_id'] . '"',
+    drupal_json_encode($trans['store']),
+    '"' . $trans['total'] . '"',
+    '"' . $trans['tax'] . '"',
+    '"' . $trans['shipping'] . '"',
+    drupal_json_encode($trans['city']),
+    drupal_json_encode($trans['state']),
+    drupal_json_encode($trans['country']),
   );
 
   // Add the transaction line to the JS.
-  $script .= 'pageTracker._addTrans('. implode(', ', $args) .');';
+  $script .= '_gaq.push(["_addTrans", ' . implode(', ', $args) . ']);';
 
   // Loop through the products on the order.
   foreach ($order->products as $product) {
     $product->category = '';
 
     // Try to find a category (term) for the product. Since products most often
-    // only have one category, the first one returned (based on tid) is chosen.
+    // only have one category, the first one returned (in the $node->taxonomy_catalog) is chosen.
     if (module_exists('taxonomy')) {
-      $terms = taxonomy_node_get_terms(node_load($product->nid));
-      if (count($terms)) {
-        $term = array_shift($terms);
+      $node = node_load($product->nid);
+      if (isset($node->taxonomy_catalog[$node->language][0]['tid'])) {
+        $term = taxonomy_term_load($node->taxonomy_catalog[$node->language][0]['tid']);
         $product->category = $term->name;
       }
     }
@@ -181,20 +185,20 @@ function uc_googleanalytics_ecommerce_js($order) {
 
     // Put the arguments into an array that is safe to implode directly.
     $args = array(
-      '"'. $item['order_id'] .'"',
-      drupal_to_js($item['sku']),
-      drupal_to_js($item['name']),
-      drupal_to_js((string) $item['category']),
-      '"'. $item['price'] .'"',
-      '"'. $item['qty'] .'"',
+      '"' . $item['order_id'] . '"',
+      drupal_json_encode($item['sku']),
+      drupal_json_encode($item['name']),
+      drupal_json_encode((string) $item['category']),
+      '"' . $item['price'] . '"',
+      '"' . $item['qty'] . '"',
     );
 
     // Add the item line to the JS.
-    $script .= 'pageTracker._addItem('. implode(', ', $args) .');';
+    $script .= '_gaq.push(["_addItem", ' . implode(', ', $args) . ']);';
   }
 
   // Add the function to submit the transaction to GA.
-  $script .= 'pageTracker._trackTrans();';
+  $script .= '_gaq.push(["_trackTrans"]);';
 
   return $script;
 }

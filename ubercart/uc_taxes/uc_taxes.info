@@ -1,17 +1,19 @@
-; $Id: uc_taxes.info,v 1.6.2.2 2009/02/10 21:58:14 islandusurper Exp $
 name = Taxes
-description = Define tax rates for customers' geographic locations and products sold.
+description = Defines tax rates for customers' geographic locations and products sold.
 dependencies[] = uc_store
 dependencies[] = uc_payment
 dependencies[] = uc_product
-dependencies[] = ca
-package = "Ubercart - core (optional)"
-core = 6.x
-php = 5.0
+package = Ubercart - core (optional)
+core = 7.x
 
-; Information added by drupal.org packaging script on 2010-08-11
-version = "6.x-2.4"
-core = "6.x"
+; Test cases
+files[] = tests/uc_taxes.test
+
+configure = admin/store/settings/taxes
+
+; Information added by drupal.org packaging script on 2011-12-06
+version = "7.x-3.0-rc3"
+core = "7.x"
 project = "ubercart"
-datestamp = "1281551792"
+datestamp = "1323195643"
 

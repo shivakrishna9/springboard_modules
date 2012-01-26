@@ -2,11 +2,37 @@
 
 /**
  * @file
- * Install hooks for uc_store.module.
+ * Install, update, and uninstall functions for the uc_store module.
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_requirements().
+ */
+function uc_store_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    $severities = array(
+      'ok' => REQUIREMENT_OK,
+      'warning' => REQUIREMENT_WARNING,
+      'error' => REQUIREMENT_ERROR,
+    );
+
+    $results = module_invoke_all('uc_store_status');
+    foreach ($results as $status) {
+      $requirements[] = array(
+        'severity' => isset($severities[$status['status']]) ? $severities[$status['status']] : REQUIREMENT_INFO,
+        'title' => $status['title'],
+        'value' => $status['desc'],
+      );
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
  */
 function uc_store_schema() {
   $schema = array();
@@ -91,241 +117,163 @@ function uc_store_schema() {
       'zone_country_id' => array('zone_country_id'),
     ),
     'primary key' => array('zone_id'),
-  );
-
-  $schema['uc_store_footers'] = array(
-    'description' => 'Maps Drupal paths to Ubercart footer messages.',
-    'fields' => array(
-      'path_hash' => array(
-        'description' => 'MD5 hash of the Drupal path.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'message' => array(
-        'description' => 'The message displayed in the page footer.',
-        'type' => 'text',
-      ),
+    'foreign keys' => array(
+      'zone_country_id' => array('uc_countries' => 'country_id'),
     ),
-    'primary key' => array('path_hash'),
   );
-
-  $schema['cache_uc_price'] = drupal_get_schema_unprocessed('system', 'cache');
-  $schema['cache_uc_price']['description'] = 'Cache table for Ubercart store prices.';
 
   return $schema;
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function uc_store_install() {
-  drupal_install_schema('uc_store');
+  // Set mail handler for all Ubercart modules
+  variable_set('mail_system',
+    array_merge(
+      variable_get('mail_system', array('default-system' => 'DefaultMailSystem')),
+      array(
+        'uc_cart'  => 'UbercartMailSystem',
+        'uc_order' => 'UbercartMailSystem',
+        'uc_file'  => 'UbercartMailSystem',
+        'uc_roles' => 'UbercartMailSystem',
+        'uc_stock' => 'UbercartMailSystem',
+        'uc_store' => 'UbercartMailSystem',
+      )
+    )
+  );
+
+  // Set the default store date format.
+  variable_set('date_format_uc_store', 'm/d/Y');
+
   // Install United States and Canada by default.
   $path = drupal_get_path('module', 'uc_store');
-  require_once($path .'/countries/united_states_840_1.cif');
-  require_once($path .'/countries/canada_124_1.cif');
+  require_once($path . '/countries/united_states_840_1.cif');
+  require_once($path . '/countries/canada_124_2.cif');
   united_states_install();
   canada_install();
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function uc_store_uninstall() {
-  drupal_uninstall_schema('uc_store');
-
-  db_query("DELETE FROM {variable} WHERE name LIKE 'user_initials_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_address_format_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_currency_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_store_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_weight_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_length_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_field_%%'");
+  db_delete('variable')
+    ->condition(db_or()
+      ->condition('name', 'uc_address_format_%', 'LIKE')
+      ->condition('name', 'uc_currency_%', 'LIKE')
+      ->condition('name', 'uc_store_%', 'LIKE')
+      ->condition('name', 'uc_weight_%', 'LIKE')
+      ->condition('name', 'uc_length_%', 'LIKE')
+      ->condition('name', 'uc_field_%', 'LIKE')
+    )
+    ->execute();
 
   variable_del('uc_customer_list_address');
   variable_del('uc_sign_after_amount');
-  variable_del('uc_date_format_default');
+  variable_del('date_format_uc_store');
   variable_del('uc_address_fields');
   variable_del('uc_address_fields_required');
+  variable_del('uc_address_fields_weight');
   variable_del('uc_footer_message');
-}
 
-function uc_store_update_1() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("DROP TABLE IF EXISTS {uc_address_formats}");
-      $ret[] = update_sql("ALTER TABLE {uc_countries} CHANGE address_format_id version SMALLINT(11) NOT NULL DEFAULT '0'");
-      $ret[] = update_sql("ALTER TABLE {uc_zones} CHANGE zone_name zone_name VARCHAR(32) CHARACTER SET utf8 NOT NULL");
-      break;
-    case 'pgsql':
-      $ret[] = update_sql("DROP TABLE IF EXISTS {uc_address_formats}");
-      $ret[] = update_sql("ALTER TABLE {uc_countries} CHANGE address_format_id version SMALLINT(11) NOT NULL DEFAULT '0'");
-      $ret[] = update_sql("ALTER TABLE {uc_zones} CHANGE zone_name zone_name VARCHAR(32) CHARACTER SET utf8 NOT NULL default ''");
-      break;
-  }
-  return $ret;
-}
-
-function uc_store_update_2() {
-  $ret = array();
-  // Get rid of the auto_increment.
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_zones} CHANGE zone_id zone_id MEDIUMINT(11) NOT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_zones} CHANGE zone_name zone_name VARCHAR(255) CHARACTER SET utf8 NOT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_countries} CHANGE country_id country_id MEDIUMINT(11) NOT NULL");
-    break;
-    case 'pgsql':
-      db_change_column($ret, 'uc_zones', 'zone_id', 'zone_id', 'integer', array('not null' => TRUE, 'default' => 0));
-      db_change_column($ret, 'uc_zones', 'zone_name', 'zone_name', 'varchar(255) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
-      db_change_column($ret, 'uc_countries', 'country_id', 'country_id', 'integer', array('not null' => TRUE, 'default' => 0));
-    break;
-  }
-
-  // Make the fixes for U.S.
-  $ret[] = update_sql("UPDATE {uc_countries} SET country_id = 840 WHERE country_id = 223");
-  $ret[] = update_sql("UPDATE {uc_zones} SET zone_country_id = 840 WHERE zone_country_id = 223");
-  $ret[] = update_sql("UPDATE {uc_orders} SET delivery_country = 840 WHERE delivery_country = 223");
-  $ret[] = update_sql("UPDATE {uc_orders} SET billing_country = 840 WHERE billing_country = 223");
-  if (variable_get('uc_store_country', 223) == 223) {
-    variable_set('uc_store_country', 840);
-  }
-
-  // Make the fixes for Canada.
-  $ret[] = update_sql("UPDATE {uc_countries} SET country_id = 124 WHERE country_id = 38");
-  $ret[] = update_sql("UPDATE {uc_zones} SET zone_country_id = 124 WHERE zone_country_id = 38");
-  if (variable_get('uc_store_country', 223) == 38) {
-    variable_set('uc_store_country', 124);
-  }
-
-  $result = db_query("SELECT zone_id FROM {uc_zones} ORDER BY zone_id DESC LIMIT 1");
-  if ($row = db_fetch_object($result)) {
-    $max_id = $row->zone_id;
-  }
-  else {
-    $max_id = 1;
-  }
-  $ret[] = update_sql("INSERT INTO {sequences} VALUES ('{uc_zones}_zone_id', $max_id)");
-  return $ret;
-}
-
-function uc_store_update_3() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("CREATE TABLE {uc_store_footers} (
-        `path_hash` varchar(32) NOT NULL default '',
-        `message` text NOT NULL,
-        PRIMARY KEY (path_hash)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
-    break;
-    case 'pgsql':
-      $ret[] = update_sql("CREATE TABLE {uc_store_footers} (
-        path_hash varchar(32) NOT NULL default '',
-        message text NOT NULL default '',
-        PRIMARY KEY (path_hash)
-      )");
-    break;
-  }
-  return $ret;
-}
-
-function uc_store_update_4() {
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_store_opt_in%%'");
-  variable_del('uc_store_prev_time');
-
-  return array();
-}
-
-function uc_store_update_6000() {
-  $ret = array();
-
-  db_drop_primary_key($ret, 'uc_countries');
-  db_change_field($ret, 'uc_countries', 'country_id', 'country_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('country_id')));
-
-  db_drop_primary_key($ret, 'uc_zones');
-  db_drop_index($ret, 'uc_zones', 'zone_country_id');
-  db_change_field($ret, 'uc_zones', 'zone_id', 'zone_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('zone_id')));
-  db_change_field($ret, 'uc_zones', 'zone_country_id', 'zone_country_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('zone_country_id' => array('zone_country_id'))));
-
-  return $ret;
-}
-
-function uc_store_update_6001() {
-  $ret = array();
-
-  $schema['cache_uc_price'] = drupal_get_schema_unprocessed('system', 'cache');
-  $schema['cache_uc_price']['description'] = t('Cache table for Ubercart store prices.');
-
-  db_create_table($ret, 'cache_uc_price', $schema['cache_uc_price']);
-  return $ret;
+  // Unset mail Ubercart hander in variable mail_system
+  $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  unset($mail_system['uc_cart']);
+  unset($mail_system['uc_order']);
+  unset($mail_system['uc_file']);
+  unset($mail_system['uc_roles']);
+  unset($mail_system['uc_stock']);
+  unset($mail_system['uc_store']);
+  variable_set('mail_system', $mail_system);
 }
 
 /**
- * Disable uc_recurring.
+ * Implements hook_update_last_removed().
  */
-function uc_store_update_6002() {
-  $ret = array();
-
-  // UC Recurring was moved from core to http://drupal.org/project/uc_recurring.
-  // This will check for its existence and disable it, instructing the user to
-  // download and install the module from there.
-  module_disable(array('uc_recurring'));
-  $ret[] = array('success' => TRUE, 'query' => t("The Recurring Fees module was removed from core between Ubercart 2.0-rc1 and 2.0-rc2. If you were using it, it has been disabled and should be removed from your ubercart/payment directory if the old verion remains. You may continue using the module by downloading and installing the latest <a href=\"http://drupal.org/project/uc_recurring\">UC Recurring 6.x-1.x</a> release from drupal.org.  New features for the module will be developed in the contributed version of the module starting with the 6.x-2.x branch."));
-
-  return $ret;
+function uc_store_update_last_removed() {
+  return 6005;
 }
+/*
+ * Removed update 7000.
+ */
 
-function uc_store_update_6003() {
-  $ret = array();
-
-  // Copy value of uc_notify_store_help_page into uc_store_help_page
-  variable_set('uc_store_help_page', variable_get('uc_notify_store_help_page', ''));
-
-  // Remove old variable uc_notify_store_help_page
-  variable_del('uc_notify_store_help_page');
-
-  $ret[] = array('success' => TRUE, 'query' => t("'uc_notify_store_help_page' renamed to 'uc_store_help_page' in variable table"));
-  return $ret;
+/**
+ * Removes uc_price cache table.
+ */
+function uc_store_update_7001() {
+  db_drop_table('cache_uc_price');
 }
 
 /**
- * Remove broken statistics reporting.
+ * Removes unused variable.
  */
-function uc_store_update_6004() {
-  $ret = array();
-
-  variable_del('uc_store_last_report');
-  variable_del('uc_store_report');
-  variable_del('uc_store_site_id');
-
-  $ret[] = array('success' => TRUE, 'query' => 'Removed broken statistics reporting.');
-
-  return $ret;
+function uc_store_update_7002() {
+  variable_del('uc_store_admin_page_display');
 }
 
 /**
- * Remove auto-increment from uc_countries.country_id.
+ * Removes store footer message hash table.
  */
-function uc_store_update_6005() {
-  $ret = array();
+function uc_store_update_7003() {
+  db_drop_table('uc_store_footers');
+}
 
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_change_field($ret, 'uc_countries', 'country_id', 'country_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE));
-      break;
-    case 'pgsql':
-      db_drop_primary_key($ret, 'uc_countries');
-      db_change_field($ret, 'uc_countries', 'country_id', 'country_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('country_id')));
-      break;
+/**
+ * Installs HTML Mail System for Ubercart.
+ */
+function uc_store_update_7004() {
+  // Set mail handler for all Ubercart modules
+  variable_set('mail_system',
+    array_merge(
+      variable_get('mail_system', array('default-system' => 'DefaultMailSystem')),
+      array(
+        'uc_cart'  => 'UbercartMailSystem',
+        'uc_order' => 'UbercartMailSystem',
+        'uc_file'  => 'UbercartMailSystem',
+        'uc_roles' => 'UbercartMailSystem',
+        'uc_stock' => 'UbercartMailSystem',
+        'uc_store' => 'UbercartMailSystem',
+      )
+    )
+  );
+}
+
+/**
+ * Change date formatting to use D7 API.
+ */
+function uc_store_update_7005() {
+  variable_set('date_format_uc_store', variable_get('uc_date_format_default', 'm/d/Y'));
+  variable_del('uc_date_format_default');
+}
+
+/**
+ * Delete user initials variables.
+ */
+function uc_store_update_7006() {
+  db_delete('variable')->condition('name', 'user_initials_%', 'LIKE')->execute();
+}
+
+/**
+ * Ensure Rules and Views are installed.
+ */
+function uc_store_update_7007() {
+  $modules = array('rules', 'views');
+  module_enable($modules);
+
+  foreach ($modules as $module) {
+    if (!module_exists($module)) {
+      throw new DrupalUpdateException(t('Rules and Views are now dependencies of Ubercart, but are not currently available. Please download them to sites/all/modules and run update.php again.'));
+    }
   }
+}
 
-  return $ret;
+/**
+ * Delete unused address field titles.
+ */
+function uc_store_update_7008() {
+  variable_del('uc_field_address');
+  variable_del('uc_field_email');
+  variable_del('uc_field_street');
 }

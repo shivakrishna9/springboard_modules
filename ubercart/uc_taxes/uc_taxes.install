@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Install hooks for uc_taxes.module.
+ * Install, update and uninstall functions for the uc_taxes module.
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function uc_taxes_schema() {
   $schema = array();
@@ -58,229 +58,196 @@ function uc_taxes_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'display_include' => array(
+        'description' => 'Boolean flag indicating that product prices should be displayed including the tax.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'inclusion_text' => array(
+        'description' => 'Text to be shown near a product price that includes tax.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('id'),
   );
+
+  $schema['uc_taxed_product_types'] = array(
+    'fields' => array(
+      'tax_id' => array(
+        'description' => 'Tax rate id',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'type' => array(
+        'description' => 'Node type',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('tax_id', 'type'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['uc_taxed_line_items'] = $schema['uc_taxed_product_types'];
+  $schema['uc_taxed_line_items']['fields']['type']['description'] = 'Line item type';
 
   return $schema;
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_update_last_removed().
  */
-function uc_taxes_install() {
-  drupal_install_schema('uc_taxes');
+function uc_taxes_update_last_removed() {
+  return 6003;
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Add "price including tax" columns.
  */
-function uc_taxes_uninstall() {
-  drupal_uninstall_schema('uc_taxes');
-}
+function uc_taxes_update_7000() {
+  db_add_field('uc_taxes', 'include', array(
+    'description' => 'Boolean flag indicating that product prices should be displayed including the tax.',
+    'type' => 'int',
+    'size' => 'tiny',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  ));
+  db_add_field('uc_taxes', 'inclusion_text', array(
+    'description' => 'Text to be shown near a product price that includes tax.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  ));
 
-function uc_taxes_update_1() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP INDEX taxes");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP pcid");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN id mediumint(9) NOT NULL FIRST");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD PRIMARY KEY id (id)");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN name varchar(255) NOT NULL AFTER id");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} CHANGE COLUMN area area varchar(255) NOT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} CHANGE COLUMN type type enum('code','zone','country') NOT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} CHANGE COLUMN standalone cumulative tinyint(1) NOT NULL default '0'");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN weight tinyint(2) NOT NULL default '0'");
-    break;
-    case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP CONSTRAINT {uc_taxes}_pcid_area_key");
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP pcid");
-      db_add_column($ret, 'uc_taxes', 'id', 'integer', array('not null' => TRUE, 'default' => 0));
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD PRIMARY KEY (id)");
-      $ret[] = update_sql("CREATE INDEX {uc_taxes}_id ON {uc_taxes} (id)");
-      db_add_column($ret, 'uc_taxes', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
-      db_change_column($ret, 'uc_taxes', 'area', 'area', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
-      db_change_column($ret, 'uc_taxes', 'type', 'type', "enum('code','zone','country')", array('not null' => TRUE, 'default' => 'code'));
-      db_change_column($ret, 'uc_taxes', 'standalone', 'cumulative', 'smallint', array('not null' => TRUE, 'default' => 0));
-      db_add_column($ret, 'uc_taxes', 'weight', 'smallint', array('not null' => TRUE, 'default' => 0));
-    break;
-  }
-  return $ret;
-}
-
-function uc_taxes_update_2() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} CHANGE COLUMN shipping taxed_line_items text NOT NULL");
-    break;
-    case 'pgsql':
-      db_change_column($ret, 'uc_taxes', 'shipping', 'taxed_line_items', 'text', array('not null' => TRUE, 'default' => "''"));
-    break;
-  }
-  return $ret;
-}
-
-function uc_taxes_update_3() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN conditions text NOT NULL");
-    break;
-    case 'pgsql':
-      db_add_column($ret, 'uc_taxes', 'conditions', 'text', array('not null' => TRUE, 'default' => "''"));
-    break;
-  }
-
-  return $ret;
-}
-
-function uc_taxes_update_4() {
-  $result = db_query("SELECT id, taxed_line_items FROM {uc_taxes} WHERE cumulative <> 0");
-  while ($tax = db_fetch_object($result)) {
-    if ($taxed_line_items = unserialize($tax->taxed_line_items) && is_array($taxed_line_items)) {
-      $taxed_line_items['tax'] = 'tax';
-      db_query("UPDATE {uc_taxes} SET taxed_line_items = '%s' WHERE id = %d", serialize($taxed_line_items), $tax->id);
-    }
-  }
-
-  $ret = array();
-  $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP cumulative");
-
-  return $ret;
-}
-
-function uc_taxes_update_5() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN taxed_product_types text NOT NULL AFTER rate");
-    break;
-    case 'pgsql':
-      db_add_column($ret, 'uc_taxes', 'taxed_product_types', 'text', array('not null' => TRUE, 'default' => "''"));
-    break;
-  }
-
-  $types = array();
-  foreach (module_invoke_all('product_types') as $type) {
-    $types[$type] = $type;
-  }
-  db_query("UPDATE {uc_taxes} SET taxed_product_types = '%s'", serialize($types));
-
-  return $ret;
-}
-
-function uc_taxes_update_6() {
-  $ret = array();
-  if (module_exists('workflow_ng_ui')) {
-    $configurations = array();
-    $taxes = uc_taxes_rate_load();
-    foreach ($taxes as $tax) {
-      $configurations['uc_taxes_'. $tax->id] = array(
-        '#name' => 'uc_taxes_'. $tax->id,
-        '#label' => $tax->name,
-        '#event' => 'calculate_tax_'. $tax->id,
-        '#module' => 'uc_taxes',
-        '#active' => TRUE,
-      );
-      $action = workflow_ng_use_action('uc_taxes_action_apply_tax', array(
-        '#label' => t('Apply @tax', array('@tax' => $tax->name)),
-      ));
-      switch ($tax->type) {
-        case 'code':
-          $area_condition = workflow_ng_use_condition('uc_order_condition_delivery_postal_code', array(
-            '#label' => t('Is in postal code area @code', array('@code' => $tax->area)),
-            '#settings' => array(
-              'pattern' => $tax->area,
-            ),
-          ));
-        break;
-        case 'zone':
-          $zone = uc_get_zone_code($tax->area);
-          $area_condition = workflow_ng_use_condition('uc_order_condition_delivery_zone', array(
-            '#label' => t('Is in @zone', array('@zone' => $zone)),
-            '#settings' => array(
-              'zones' => array($tax->area),
-            ),
-          ));
-        break;
-        case 'country':
-          $country = uc_get_country_data(array('country_id' => $tax->area));
-          $country_name = $country[0]['country_name'];
-          $area_condition = workflow_ng_use_condition('uc_order_condition_delivery_country', array(
-            '#label' => t('Is in @country', array('@country' => $country_name)),
-            '#settings' => array(
-              'countries' => array($tax->area),
-            ),
-          ));
-        break;
-      }
-      $configurations['uc_taxes_'. $tax->id] = workflow_ng_configure($configurations['uc_taxes_'. $tax->id], $action, $area_condition);
-      workflow_ng_ui_save_configuration($configurations['uc_taxes_'. $tax->id]);
-    }
-    $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP area");
-    $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP type");
-    $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP conditions");
-  }
-  return $ret;
-}
-
-function uc_taxes_update_7() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN shippable tinyint UNSIGNED NOT NULL default 0");
-      break;
-    case 'pgsql':
-      db_add_column($ret, 'uc_taxes', 'shippable', 'smallint_unsigned', array('not null' => TRUE, 'default' => 0));
-      break;
-  }
-
-  return $ret;
-}
-
-function uc_taxes_update_6000() {
-  $ret = array();
-
-  db_drop_primary_key($ret, 'uc_taxes');
-  db_change_field($ret, 'uc_taxes', 'id', 'id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('id')));
-
-  return $ret;
+  return t('Added "price including tax" columns.');
 }
 
 /**
- * Change to signed floats.
+ * Separate taxed product types and line items to joined tables.
  */
-function uc_taxes_update_6001() {
-  $ret = array();
-
-  $schema = array(
-    'rate' => array(
-      'description' => t('The rate of taxation.'),
-      'type' => 'float',
-      'not null' => TRUE,
-      'default' => 0.0,
+function uc_taxes_update_7001() {
+  $table = array(
+    'fields' => array(
+      'tax_id' => array(
+        'description' => 'Tax rate id',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'type' => array(
+        'description' => 'Node type',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('tax_id', 'type'),
+    'indexes' => array(
+      'type' => array('type'),
     ),
   );
-  db_change_field($ret, 'uc_taxes', 'rate', 'rate', $schema['rate']);
+  db_create_table('uc_taxed_product_types', $table);
 
-  return $ret;
+  $table['fields']['type']['description'] = 'Line item type';
+  db_create_table('uc_taxed_line_items', $table);
+
+  $p_insert = db_insert('uc_taxed_product_types')->fields(array('tax_id', 'type'));
+  $l_insert = db_insert('uc_taxed_line_items')->fields(array('tax_id', 'type'));
+
+  $result = db_query("SELECT id, taxed_product_types, taxed_line_items FROM {uc_taxes}");
+  foreach ($result as $tax) {
+    $tax->taxed_product_types = unserialize($tax->taxed_product_types);
+    $tax->taxed_line_items = unserialize($tax->taxed_line_items);
+
+    foreach ($tax->taxed_product_types as $type) {
+      $p_insert->values(array(
+        'tax_id' => $tax->id,
+        'type' => $type,
+      ));
+    }
+
+    foreach ($tax->taxed_line_items as $type) {
+      $l_insert->values(array(
+        'tax_id' => $tax->id,
+        'type' => $type,
+      ));
+    }
+
+    $p_insert->execute();
+    $l_insert->execute();
+  }
 }
 
-function uc_taxes_update_6002() {
-  $ret = array();
-
-  if (!db_column_exists('uc_taxes', 'shippable')) {
-    db_add_field($ret, 'uc_taxes', 'shippable', array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+/**
+ * Fix schema mismatch in update 7000.
+ */
+function uc_taxes_update_7002() {
+  if (db_field_exists('uc_taxes', 'include')) {
+    db_change_field('uc_taxes', 'include', 'display_include', array(
+      'description' => 'Boolean flag indicating that product prices should be displayed including the tax.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ));
   }
 
-  return $ret;
+  db_change_field('uc_taxes', 'inclusion_text', 'inclusion_text', array(
+    'description' => 'Text to be shown near a product price that includes tax.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  ));
+}
+
+/**
+ * Make sure orders have stored tax data.
+ */
+function uc_taxes_update_7003(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $taxes = db_query("SELECT id FROM {uc_taxes}")->fetchField();
+    if (!$taxes) {
+      return;
+    }
+
+    $sandbox['current'] = 0;
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_query("SELECT COUNT(order_id) FROM {uc_orders}")->fetchField();
+  }
+
+  $t = get_t();
+  $limit = 100;
+
+  $orders = db_query_range("SELECT order_id FROM {uc_orders} WHERE order_id > :current ORDER BY order_id", 0, $limit, array(':current' => $sandbox['current']))->fetchCol();
+  foreach ($orders as $order_id) {
+    $order = uc_order_load($order_id);
+
+    uc_order_save($order);
+
+    $sandbox['current'] = $order_id;
+    $sandbox['progress']++;
+  }
+
+  if ($sandbox['progress'] < $sandbox['max']) {
+    $sandbox['#finished'] = min(0.99, $sandbox['progress'] / $sandbox['max']);
+  }
+  else {
+    $sandbox['#finished'] = 1;
+  }
 }
