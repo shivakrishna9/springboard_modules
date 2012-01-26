@@ -143,10 +143,9 @@ function fundraiser_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
     'access arguments' => array("administer fundraiser"),
-    'type' => MENU_DEFAULT_TASK,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-
 
   $items['admin/store/reports/fundraiser'] = array(
     'title' => 'Donation report',
@@ -156,7 +155,7 @@ function fundraiser_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.admin.inc',
   );
-  $items['admin/config/system/fundraiser/recurring'] = array(
+  $items['admin/fundraiser/recurring'] = array(
     'title' => 'Current Fundraiser Recurring Payments',
     'page callback' => 'fundraiser_recurring_admin',
     'access callback' => 'node_access',
@@ -166,7 +165,7 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   // Unable to find the function associated with this menu path. Check if still in use. - TODO
-  $items['admin/config/system/fundraiser/recurring/test'] = array(
+  $items['admin/fundraiser/recurring/test'] = array(
     'title' => 'Fundraiser Recurring Payment Tester',
     'page callback' => 'fundraiser_recurring_test',
     'access callback' => 'node_access',
