@@ -137,6 +137,16 @@ function fundraiser_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.admin.inc',
   );
+  $items['admin/config/system/fundraiser/settings'] = array(
+    'title' => 'Fundraiser settings',
+    'description' => t('Configurations for the Fundraiser system.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_admin_settings'),
+    'access arguments' => array("administer fundraiser"),
+    'type' => MENU_DEFAULT_TASK,
+    'file' => 'fundraiser.admin.inc',
+  );
+
 
   $items['admin/store/reports/fundraiser'] = array(
     'title' => 'Donation report',
@@ -146,24 +156,24 @@ function fundraiser_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.admin.inc',
   );
-  $items['admin/fundraiser/recurring'] = array(
+  $items['admin/config/system/fundraiser/recurring'] = array(
     'title' => 'Current Fundraiser Recurring Payments',
     'page callback' => 'fundraiser_recurring_admin',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'file' => 'fundraiser.admin.inc',
     'weight' => 2,
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
   );
   // Unable to find the function associated with this menu path. Check if still in use. - TODO
-  $items['admin/fundraiser/recurring/test'] = array(
+  $items['admin/config/system/fundraiser/recurring/test'] = array(
     'title' => 'Fundraiser Recurring Payment Tester',
     'page callback' => 'fundraiser_recurring_test',
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'file' => 'fundraiser.admin.inc',
     'weight' => 2,
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
   );
 
   $items['admin/store/orders/%/recurring/edit'] = array(
@@ -222,8 +232,7 @@ function fundraiser_menu() {
     'title' => 'Donation Forms',
     'page callback' => 'fundraiser_donation_form_list',
     'access arguments' => array('create donation form'),
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => 20,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
 
@@ -594,30 +603,30 @@ function fundraiser_form($node, &$form_state) {
     '#suffix' => '</div>',
   );
 
-  $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
-    '#prefix' => '<div id="ask-amounts">',
-    '#suffix' => '</div>',
-    '#theme' => 'fundraiser_ask_amounts',
-  );
-
   // Retrieve saved values if available from where they were saved in webform.
   $amount_values = array();
   if (is_numeric($node->nid)) {
     $amount_values = _fundraiser_get_webform_extra_by_key($node->nid, 'amount');
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
+    // This includes 'Other' as an option which is dropped on the display end.
   }
-
   // By default we add three new fields.
   $delta = 3;
+
   if (isset($form_state['values']['amount_delta'])) {
-    // If we're editing an existing donation form that's had new fields added we use the current 
-    // delta (updated by the more button) to tell the form how many field sets to build.
+    // If we're editing an existing donation form that's had new fields added we add more.
     $delta = $form_state['values']['amount_delta'];
   }
   elseif (count($amount_values) > 0) {
     // Otherwise we start by generating enough fields to house the data currently in the database.
     $delta = count($amount_values);
   }
+
+  $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
+    '#prefix' => '<div id="ask-amounts">',
+    '#suffix' => '</div>',
+    '#theme' => 'fundraiser_ask_amounts',
+  );
 
   $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta'] = array(
     '#type' => 'value',
@@ -649,7 +658,8 @@ function fundraiser_form($node, &$form_state) {
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show other amount option'),
-    '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
+    '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list ' .
+      'of Donation Amounts.'),
     '#default_value' => isset($node->show_other_amount) ? $node->show_other_amount : '',
   );
 
@@ -699,7 +709,7 @@ function fundraiser_form($node, &$form_state) {
 function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
   // Workaround for bogus blank fields being added if user first deletes a set or sets before adding a set.
   if(isset($form_state['values'])) {
-    if (!isset($form_state['post']['amount_' . $delta]) && $delta < $form_state['values']['amount_delta'] - 1) {
+    if (!isset($form_state['values']['amount_' . $delta]) && $delta < $form_state['values']['amount_delta'] - 1) {
       return array();
     }
   }
@@ -707,14 +717,10 @@ function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
   $form = array();
   $fields = array(
     'amount_' => array(
-      'label' => 'Ask amount',
       'size' => 10,
-      'class' => 'amount_field',
     ),
     'label_' => array(
-      'label' => 'Label',
       'size' => 30,
-      'class' => 'label_field',
     ),
   );
   $weight = 0;
@@ -722,10 +728,8 @@ function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
   foreach ($fields as $key => $value) {
     $form[$key . $delta] = array(
       '#type' => 'textfield',
-      '#title' => t($value['label']),
       '#size' => $value['size'],
       '#weight' => $weight,
-      '#attributes' => array('class' => $value['class']),
     );
 
     // Post values take precedence as they're fresh from the form.
@@ -742,12 +746,10 @@ function _fundraiser_ask_form($delta, $form_state, $amount_values = array()) {
     }
     ++$weight;
   }
-
   $form['remove_' . $delta] = array(
     '#type' => 'button',
     '#value' => t('remove'),
     '#weight' => 2,
-    '#suffix' => '<div class="clear-block"></div>',
   );
   return $form;
 }
@@ -797,7 +799,7 @@ function fundraiser_validate($node, $form, &$form_state) {
   $donation_amounts = array();
   for ($i = 0; $i < $node->amount_delta; ++$i) {
     $value = 'amount_' . $i;
-    if ($node->$value) {
+    if (isset($node->$value)) {
       if (is_numeric($node->$value)) {
         $donation_amounts[] = $node->$value;
       }
