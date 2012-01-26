@@ -83,15 +83,15 @@ function fundraiser_recurring_admin(){
 	
 	$resouce = db_query("
           SELECT 
-            fundraiser_recurring.*,
-            users.name 
-	  FROM {fundraiser_recurring}
-	  INNER JOIN {uc_orders}
-            ON fundraiser_recurring.order_id = uc_orders.order_id
-	  INNER JOIN users
-            ON uc_orders.uid=users.uid 
-	  WHERE fundraiser_recurring.order_id='%s'
-	  ORDER BY uc_orders.created desc", arg(3));
+            fr.*,
+            u.name 
+	  FROM {fundraiser_recurring} fr
+	  INNER JOIN {uc_orders} uo
+            ON fr.order_id = uo.order_id
+	  INNER JOIN {users} u
+            ON o.uid = u.uid 
+	  WHERE fr.order_id='%s'
+	  ORDER BY uo.created desc", arg(3));
 	
 	$output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
 	<tr>
