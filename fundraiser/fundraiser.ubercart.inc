@@ -360,7 +360,7 @@ function fundraiser_fundraiser_update_order_comment($order_id, $message, $uid) {
 /**
  * Implements hook_fundraiser_update_order_billing().
  */
-function fundraiser_fundraiser_update_order_billing( $order_id, $form_state) {
+function fundraiser_fundraiser_update_order_billing($order_id, $form_state) {
   global $user;
   $order = uc_order_load($order_id);
   $order->primary_email = $form_state['values']['email'];

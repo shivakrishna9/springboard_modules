@@ -91,7 +91,7 @@ function fundraiser_permission() {
  * Implements hook_menu().
  */
 function fundraiser_menu() {
-// TODO make sure there are MENU_LOCAL_TASKs for each of the admin screens
+
   $items['node/%node/webform/mapping'] = array(
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
@@ -235,14 +235,6 @@ function fundraiser_menu() {
     'file' => 'fundraiser.admin.inc',
   );
 
-  $items['admin/content/clone-form/%'] = array(
-    'title' => 'Clone donation form',
-    'page callback' => 'fundraiser_clone_donation_form',
-    'page arguments' => array(3),
-    'access arguments' => array('create donation forms'),
-    'type' => MENU_CALLBACK,
-  );
-
   $items['node/%webform_menu/confirmation'] = array(
     'title' => 'Webform submission',
     'load arguments' => array(1),
@@ -252,14 +244,6 @@ function fundraiser_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['node/%/clone_form'] = array(
-    'title' => 'Clone',
-    'description' => 'Create a new donation form that inherits settings from this form.',
-    'access callback' => 'fundraiser_access_clone',
-    'page callback' => 'fundraiser_clone_donation_form',
-    'page arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-  );
   return $items;
 }
 
@@ -277,28 +261,6 @@ function fundraiser_menu_alter(&$items) {
   // Alter some built-in webform menu items.
   $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
   $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
-}
-
-/**
- * Menu access callback, determines if the "clone" link should be displayed on a donation form.
- */
-function fundraiser_access_clone() {
-  global $user;
-  $access = FALSE;
-  $nid = arg(1);
-  if (is_numeric($nid)) {
-    $node = node_load($nid);
-    // Pointless to call the alter function if the current node isn't a donation form.
-    if (!strcmp($node->type, 'donation_form')) {
-      if (user_access('clone donation form')) {
-        $access = TRUE;
-      }
-      // Alterable so modules like Advanced Permissions can tweak as needed.
-      // Alter function: hook_fundraiser_access_clone_alter($access, $node).
-      drupal_alter('fundraiser_access_clone', $access, $node);
-    }
-  }
-  return $access;
 }
 
 /**
@@ -631,7 +593,7 @@ function fundraiser_form($node, &$form_state) {
     '#type' => 'value',
     '#value' => $delta,
   );
-
+//TODO come back to this.
   for ($i = 0; $i < $delta; ++$i ) {
     $form['fundraiser_settings']['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $form_state, $amount_values);
   }
@@ -1225,85 +1187,6 @@ function _fundraiser_form_webform_client_state_ajax_submit($form, $form_state) {
 }
 
 /**
- * Submit handler for donation form cloning.
- */
-function fundraiser_clone_form($form, &$form_state) {
-  $nid = $form['nid']['#value'];
-  fundraiser_clone_donation_form($nid);
-}
-
-/**
- * Clones a donation form and related fieldmaps. Called from button or by menu paths.
- */
-function fundraiser_clone_donation_form($nid) {
-  // Check that the nid is numeric, and then load it up to clone.
-  if (is_numeric($nid)) {
-    global $user;
-    $node = node_load($nid);
-    if (isset($node->nid)) {
-      $original_node = clone $node;
-      $node->nid = NULL;
-      $node->vid = NULL;
-      $node->name = $user->name;
-      $node->uid = $user->uid;
-      $node->created = NULL;
-      $node->menu = NULL;
-      $node->book['mlid'] = NULL;
-      $node->path = NULL;
-      $node->files = array();
-      $node->title = t('Clone of !title', array('!title' => $node->title));
-      $node->internal_name = 'Clone of ' . $original_node->internal_name;
-      $node->is_being_cloned = TRUE;
-      if (variable_get('clone_reset_' . $node->type, FALSE)) {
-        $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-        // Fill in the default values.
-        foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
-          $node->$key = in_array($key, $node_options);
-        }
-      }
-      node_save($node);
-      $new_nid = $node->nid;
-
-      // Update confirmation information
-      db_update('fundraiser')
-      ->fields(array(
-        'confirmation_page_title' => $original_node->confirmation_page_title,
-        'confirmation_page_body' => $original_node->confirmation_page_body,
-        'redirect_url' => $original_node->redirect_url,
-      ))
-      ->condition('nid', $new_nid)
-      ->execute();
-      
-      // Get profile map for the original donation form
-      $results = db_query('SELECT f.nid, f.cid, f.map_id, c.form_key FROM {fundraiser_component_map} f ' .
-        'INNER JOIN {webform_component} c on c.cid = f.cid AND c.nid = f.nid ' .
-        'WHERE f.nid = :nid',
-        array(':nid' => $nid));
-
-      // Loop over mapped components and find new component in cloned donation form
-      foreach ($results as $data) {
-        $cid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $new_nid, 'form_key' => $data->form_key), 'cid' );
-        if ($cid) {
-          $id = db_insert('fundraiser_component_map')
-          ->fields(array(
-            'nid' => $new_nid,
-            'cid' => $cid,
-            'map_id' => $data->map_id,
-          ))
-          ->execute();
-        }
-      }
-      // TODO make this a hook that sf_donation triggers on.
-      if (module_exists('sf_donation')) {
-        sf_donation_clone_map($nid, $new_nid);
-      }
-      drupal_set_message(t('Donation form [@title] has been cloned succesfully.', array('@title' => $original_node->title)));
-      drupal_goto('node/' . $new_nid . '/edit');
-    }
-  }
-}
-
-/**
  * Implementation of hook_webform_submission_presave().
  */
 function fundraiser_webform_submission_presave($node, &$submission) {
@@ -1884,7 +1767,7 @@ function fundraiser_clone_order($order) {
   $cloned_order->order_id = $id;
   $cloned_order->order_status = RECURRING_DONATION_STATUS;
   unset($cloned_order->products[0]->order_product_id);
-  uc_order_save($cloned_order);
+  uc_order_save($cloned_order); //TODO REMOVE THIS  - ubercart hook.
   return $cloned_order->order_id;
 }
 
@@ -2117,6 +2000,7 @@ function fundraiser_confirmation_page_tokens($type) {
  * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
  */
  // TODO this looks like it should be in another module based on what it does, perhaps sf_queue? - SeH 1/12/12
+ // Update - move to sf_donation.
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
     if (module_exists('queue_api')) {

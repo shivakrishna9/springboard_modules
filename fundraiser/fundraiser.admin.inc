@@ -327,7 +327,7 @@ function fundraiser_donation_form_list() {
 }
 
 /**
- * Create a monthly report.
+ * Create a monthly report. TODO get rid of this, drop monthly support feature.
  */
 function fundraiser_monthly_report() {
   global $base_url;
