@@ -1,14 +1,15 @@
-; $Id: uc_ups.info,v 1.3.4.2 2008/11/07 21:13:25 islandusurper Exp $
 name = UPS
-description = Integration of UPS Rates and Services Selection and Shipping Online Tools with Drupal. See www.ups.com for details.
+description = Integrates UPS Rates and Services Selection and Shipping Online Tools.
 dependencies[] = uc_quote
 package = Ubercart - fulfillment
-core = 6.x
-php = 5.0
+core = 7.x
 
-; Information added by drupal.org packaging script on 2010-08-11
-version = "6.x-2.4"
-core = "6.x"
+configure = admin/store/settings/quotes/settings/ups
+stylesheets[all][] = uc_ups.css
+
+; Information added by drupal.org packaging script on 2011-12-06
+version = "7.x-3.0-rc3"
+core = "7.x"
 project = "ubercart"
-datestamp = "1281551792"
+datestamp = "1323195643"
 

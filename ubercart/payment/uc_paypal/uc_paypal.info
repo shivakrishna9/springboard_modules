@@ -1,14 +1,12 @@
-; $Id: uc_paypal.info,v 1.3.4.3 2008/11/07 21:13:25 islandusurper Exp $
 name = PayPal
-description = Integrates various PayPal payment services and IPN feedback.
+description = Processes payments using PayPal Website Payments Standard, Website Payments Pro and Express Checkout.
 dependencies[] = uc_payment
 package = Ubercart - payment
-core = 6.x
-php = 5.0
+core = 7.x
 
-; Information added by drupal.org packaging script on 2010-08-11
-version = "6.x-2.4"
-core = "6.x"
+; Information added by drupal.org packaging script on 2011-12-06
+version = "7.x-3.0-rc3"
+core = "7.x"
 project = "ubercart"
-datestamp = "1281551792"
+datestamp = "1323195643"
 

@@ -2,12 +2,14 @@
 
 /**
  * @file
- * Install file for uc_2checkout.module.
+ * Install, update and uninstall functions for the uc_2checkout module.
  */
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function uc_2checkout_uninstall() {
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_2checkout_%%'");
+  db_delete('variable')
+    ->condition('name', 'uc_2checkout_%', 'LIKE')
+    ->execute();
 }

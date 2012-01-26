@@ -3,9 +3,11 @@
 /**
  * @file
  * 2checkout menu items.
- *
  */
 
+/**
+ * Finalizes 2checkout transaction.
+ */
 function uc_2checkout_complete($cart_id = 0) {
   watchdog('2Checkout', 'Receiving new order notification for order !order_id.', array('!order_id' => check_plain($_POST['merchant_order_id'])));
 
@@ -24,7 +26,7 @@ function uc_2checkout_complete($cart_id = 0) {
 
   if ($_POST['demo'] == 'Y' xor variable_get('uc_2checkout_demo', TRUE)) {
     watchdog('uc_2checkout', 'The 2checkout payment for order <a href="!order_url">@order_id</a> demo flag was set to %flag, but the module is set to %mode mode.',
-      array('!order_url' => url('admin/store/orders/'. $order->order_id), '@order_id' => $order->order_id, '%flag' => $_POST['demo'] == 'Y' ? 'Y' : 'N', '%mode' => variable_get('uc_2checkout_demo', TRUE) ? 'Y' : 'N'), WATCHDOG_ERROR);
+      array('!order_url' => url('admin/store/orders/' . $order->order_id), '@order_id' => $order->order_id, '%flag' => $_POST['demo'] == 'Y' ? 'Y' : 'N', '%mode' => variable_get('uc_2checkout_demo', TRUE) ? 'Y' : 'N'), WATCHDOG_ERROR);
     if (!variable_get('uc_2checkout_demo', TRUE)) {
       return MENU_ACCESS_DENIED;
     }
@@ -36,15 +38,18 @@ function uc_2checkout_complete($cart_id = 0) {
   $order->billing_postal_code = $_POST['zip'];
   $order->billing_phone = $_POST['phone'];
 
-  $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code LIKE '%s'", $_POST['state']));
+  $zone_id = db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code LIKE :code", array(':code' => $_POST['state']))->fetchField();
   if (!empty($zone_id)) {
     $order->billing_zone = $zone_id;
   }
 
-  $country_id = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_name LIKE '%s'", $_POST['country']));
-  if (!empty($zone_id)) {
+  $country_id = db_query("SELECT country_id FROM {uc_countries} WHERE country_name LIKE :name", array(':name' => $_POST['country']))->fetchField();
+  if (!empty($country_id)) {
     $order->billing_country = $country_id;
   }
+
+  // Save changes to order without it's completion.
+  uc_order_save($order);
 
   if (strtolower($_POST['email']) !== strtolower($order->primary_email)) {
     uc_order_comment_save($order->order_id, 0, t('Customer used a different e-mail address during payment: !email', array('!email' => check_plain($_POST['email']))), 'admin');
@@ -62,13 +67,10 @@ function uc_2checkout_complete($cart_id = 0) {
   // Empty that cart...
   uc_cart_empty($cart_id);
 
-  // Save changes to order without it's completion.
-  uc_order_save($order);
-
   // Add a comment to let sales team know this came in through the site.
   uc_order_comment_save($order->order_id, 0, t('Order created through website.'), 'admin');
 
-  $output = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+  $build = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
 
   $page = variable_get('uc_cart_checkout_complete_page', '');
 
@@ -76,5 +78,5 @@ function uc_2checkout_complete($cart_id = 0) {
     drupal_goto($page);
   }
 
-  return $output;
+  return $build;
 }

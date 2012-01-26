@@ -5,27 +5,37 @@
  * Paypal administration menu items.
  */
 
-// Process Instant Payment Notifiations from PayPal.
-function uc_paypal_ipn($order_id = 0) {
-  watchdog('uc_paypal', 'Receiving IPN at URL for order @order_id. <pre>@debug</pre>',
-    array('@order_id' => $order_id, '@debug' => variable_get('uc_paypal_wps_debug_ipn', FALSE) ? print_r($_POST, TRUE) : ''));
-
+/**
+ * Processes Instant Payment Notifiations from PayPal.
+ */
+function uc_paypal_ipn() {
   if (!isset($_POST['invoice'])) {
     watchdog('uc_paypal', 'IPN attempted with invalid order ID.', array(), WATCHDOG_ERROR);
     return;
   }
 
-  if (($len = strpos($_POST['invoice'], '-')) > 0) {
-    $order_id = intval(substr($_POST['invoice'], 0, $len));
+  if (strpos($_POST['invoice'], '-') > 0) {
+    list($order_id, $cart_id) = explode('-', $_POST['invoice']);
+
+    // Sanitize order ID and cart ID
+    $order_id = intval($order_id);
+    $cart_id  = check_plain($cart_id);
+
+    if (!empty($cart_id)) {
+      // Needed later by uc_complete_sale to empty the correct cart
+      $_SESSION['uc_cart_id'] = $cart_id;
+    }
   }
   else {
     $order_id = intval($_POST['invoice']);
   }
 
+  watchdog('uc_paypal', 'Receiving IPN at URL for order @order_id. <pre>@debug</pre>', array('@order_id' => $order_id, '@debug' => variable_get('uc_paypal_wps_debug_ipn', FALSE) ? print_r($_POST, TRUE) : ''));
+
   $order = uc_order_load($order_id);
 
   if ($order == FALSE) {
-    watchdog('uc_paypal', 'IPN attempted for non-existent order.', array(), WATCHDOG_ERROR);
+    watchdog('uc_paypal', 'IPN attempted for non-existent order @order_id.', array('@order_id' => $order_id), WATCHDOG_ERROR);
     return;
   }
 
@@ -33,15 +43,18 @@ function uc_paypal_ipn($order_id = 0) {
   $payment_status = check_plain($_POST['payment_status']);
   $payment_amount = check_plain($_POST['mc_gross']);
   $payment_currency = check_plain($_POST['mc_currency']);
-  $payment_fee = check_plain($_POST['mc_fee']);
-  $receiver_email = check_plain($_POST['receiver_email']);
+  $receiver_email = check_plain($_POST['business']);
+  if ($receiver_email == '') {
+    $receiver_email = check_plain($_POST['receiver_email']);
+  }
   $txn_id = check_plain($_POST['txn_id']);
   $txn_type = check_plain($_POST['txn_type']);
   $payer_email = check_plain($_POST['payer_email']);
 
-  // Express Checkout IPNs may not have the WPS email stored. But if it is, make
-  // sure that the right account is being paid.
-  if (variable_get('uc_paypal_wps_email', '') && $receiver_email != variable_get('uc_paypal_wps_email', '')) {
+  // Express Checkout IPNs may not have the WPS email stored. But if it is,
+  // make sure that the right account is being paid.
+  $uc_paypal_wps_email = trim(variable_get('uc_paypal_wps_email', ''));
+  if (!empty($uc_paypal_wps_email) && drupal_strtolower($receiver_email) != drupal_strtolower($uc_paypal_wps_email)) {
     watchdog('uc_paypal', 'IPN for a different PayPal account attempted.', array(), WATCHDOG_ERROR);
     return;
   }
@@ -50,7 +63,7 @@ function uc_paypal_ipn($order_id = 0) {
 
   foreach ($_POST as $key => $value) {
     $value = urlencode(stripslashes($value));
-    $req .= $key .'='. $value .'&';
+    $req .= $key . '=' . $value . '&';
   }
 
   $req .= 'cmd=_notify-validate';
@@ -62,7 +75,10 @@ function uc_paypal_ipn($order_id = 0) {
     $host = variable_get('uc_paypal_wps_server', 'https://www.sandbox.paypal.com/cgi-bin/webscr');
   }
 
-  $response = drupal_http_request($host, array(), 'POST', $req);
+  $response = drupal_http_request($host, array(
+    'method' => 'POST',
+    'data' => $req,
+  ));
 
   // TODO: Change this to property_exists when we have a PHP requirement >= 5.1.
   if (array_key_exists('error', $response)) {
@@ -73,7 +89,7 @@ function uc_paypal_ipn($order_id = 0) {
   if (strcmp($response->data, 'VERIFIED') == 0) {
     watchdog('uc_paypal', 'IPN transaction verified.');
 
-    $duplicate = db_result(db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = '%s' AND status <> 'Pending'", $txn_id));
+    $duplicate = db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = :id AND status <> :status", array(':id' => $txn_id, ':status' => 'Pending'))->fetchField();
     if ($duplicate > 0) {
       if ($order->payment_method != 'credit') {
         watchdog('uc_paypal', 'IPN transaction ID has been processed before.', array(), WATCHDOG_NOTICE);
@@ -81,31 +97,33 @@ function uc_paypal_ipn($order_id = 0) {
       return;
     }
 
-    db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
-      $order_id, $txn_id, $txn_type, $payment_amount, $payment_status, $receiver_email, $payer_email, time());
-
-    $context = array(
-      'revision' => 'formatted-original',
-      'type' => 'amount',
-    );
-    $options = array(
-      'sign' => FALSE,
-    );
+    db_insert('uc_payment_paypal_ipn')
+      ->fields(array(
+        'order_id' => $order_id,
+        'txn_id' => $txn_id,
+        'txn_type' => $txn_type,
+        'mc_gross' => $payment_amount,
+        'status' => $payment_status,
+        'receiver_email' => $receiver_email,
+        'payer_email' => $payer_email,
+        'received' => REQUEST_TIME,
+      ))
+      ->execute();
 
     switch ($payment_status) {
       case 'Canceled_Reversal':
-        uc_order_comment_save($order_id, 0, t('PayPal has cancelled the reversal and returned !amount !currency to your account.', array('!amount' => uc_price($payment_amount, $context, $options), '!currency' => $payment_currency)), 'admin');
+        uc_order_comment_save($order_id, 0, t('PayPal has canceled the reversal and returned !amount !currency to your account.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'admin');
         break;
 
       case 'Completed':
-        if ($payment_amount != $order->order_total) {
-          watchdog('uc_paypal', 'Payment @txn_id for order @order_id did not equal the order total.', array('@txn_id' => $txn_id, '@order_id' => $order->order_id), WATCHDOG_WARNING, l(t('view'), 'admin/store/orders/'. $order->order_id));
+        if (abs($payment_amount - $order->order_total) > 0.01) {
+          watchdog('uc_paypal', 'Payment @txn_id for order @order_id did not equal the order total.', array('@txn_id' => $txn_id, '@order_id' => $order->order_id), WATCHDOG_WARNING, l(t('view'), 'admin/store/orders/' . $order->order_id));
         }
         $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
         uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
         uc_cart_complete_sale($order);
-        uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_price($payment_amount, $context, $options), '@currency' => $payment_currency)), 'order', 'payment_received');
-        uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_price($payment_amount, $context, $options), '@currency' => $payment_currency)));
+        uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)), 'order', 'payment_received');
+        uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)));
         break;
 
       case 'Denied':
@@ -151,7 +169,9 @@ function uc_paypal_ipn($order_id = 0) {
   }
 }
 
-// Handles the review page for Express Checkout Mark Flow.
+/**
+ * Handles the review page for Express Checkout Mark Flow.
+ */
 function uc_paypal_ec_review_redirect() {
   if (!isset($_SESSION['TOKEN']) || ($order = uc_order_load($_SESSION['cart_order'])) == FALSE) {
     unset($_SESSION['cart_order']);
@@ -173,7 +193,9 @@ function uc_paypal_ec_review_redirect() {
   drupal_goto('cart/checkout/review');
 }
 
-// Handles the review page for Express Checkout Shortcut Flow.
+/**
+ * Handles the review page for Express Checkout Shortcut Flow.
+ */
 function uc_paypal_ec_review() {
   if (!isset($_SESSION['TOKEN']) || ($order = uc_order_load($_SESSION['cart_order'])) == FALSE) {
     unset($_SESSION['cart_order']);
@@ -183,7 +205,7 @@ function uc_paypal_ec_review() {
     drupal_goto('cart');
   }
 
-  if ($_SESSION['have_details'][$order->order_id] !== TRUE) {
+  if (!isset($_SESSION['have_details'][$order->order_id])) {
     $nvp_request = array(
       'METHOD' => 'GetExpressCheckoutDetails',
       'TOKEN' => $_SESSION['TOKEN'],
@@ -203,15 +225,16 @@ function uc_paypal_ec_review() {
       $order->delivery_last_name = '';
     }
 
-    $country_id = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $nvp_response['SHIPTOCOUNTRYCODE']));
+    $country_id = db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = :code", array(':code' => $nvp_response['SHIPTOCOUNTRYCODE']))->fetchField();
     $zone = $nvp_response['SHIPTOSTATE'];
     $zone_id = 0;
 
     if (!empty($country_id) && !empty($zone)) {
-      $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_country_id = '%s' AND (zone_code = '%s' OR zone_name = '%s')", $country_id, $zone, $zone));
+      $zone_id = db_query("SELECT zone_id FROM {uc_zones} WHERE zone_country_id = :id AND (zone_code = :code OR zone_name = :name)", array(':id' => $country_id, ':code' => $zone, ':name' => $zone))->fetchField();
     }
 
     $order->delivery_street1 = check_plain($nvp_response['SHIPTOSTREET']);
+    $order->delivery_street2 = isset($nvp_response['SHIPTOSTREET2']) ? check_plain($nvp_response['SHIPTOSTREET2']) : '';
     $order->delivery_city = check_plain($nvp_response['SHIPTOCITY']);
     $order->delivery_zone = !empty($zone_id) ? $zone_id : 0;
     $order->delivery_postal_code = check_plain($nvp_response['SHIPTOZIP']);
@@ -231,55 +254,28 @@ function uc_paypal_ec_review() {
     $_SESSION['have_details'][$order->order_id] = TRUE;
   }
 
-  $output = t("Your order is almost complete!  Please fill in the following details and click 'Continue checkout' to finalize the purchase.");
+  $build['instructions'] = array('#markup' => t("Your order is almost complete!  Please fill in the following details and click 'Continue checkout' to finalize the purchase."));
 
-  $output .= drupal_get_form('uc_paypal_ec_review_form', $order);
+  $build['form'] = drupal_get_form('uc_paypal_ec_review_form', $order);
 
-  return $output;
+  return $build;
 }
 
-// Returns the form for the custom Review Payment screen for Express Checkout.
-function uc_paypal_ec_review_form($form_state, $order) {
+/**
+ * Returns the form for the custom Review Payment screen for Express Checkout.
+ */
+function uc_paypal_ec_review_form($form, &$form_state, $order) {
   if (module_exists('uc_quote') && variable_get('uc_paypal_ec_review_shipping', TRUE) && uc_order_is_shippable($order)) {
     $result = uc_checkout_pane_quotes('view', $order, NULL);
     $form['panes']['quotes'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Calculate shipping'),
+      '#title' => t('Shipping cost'),
       '#collapsible' => FALSE,
     );
     $form['panes']['quotes'] += $result['contents'];
-    $form['panes']['quotes']['quote_button']['#value'] = t('Click to refresh shipping options');
+    unset($form['panes']['quotes']['quote_button']);
 
-    $form['panes']['quotes']['quote_div'] = array(
-      '#value' => '<div id="quote"></div>',
-    );
-
-    // small hack; automatically looks for shipping quotes on page load
-    drupal_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
-
-    // Fake the checkout form delivery information.
-    $form['delivery_first_name'] = array('#type' => 'hidden', '#value' => $order->delivery_first_name);
-    $form['delivery_last_name'] = array('#type' => 'hidden', '#value' => $order->delivery_last_name);
-    $form['delivery_company'] = array('#type' => 'hidden', '#value' => $order->delivery_company);
-    $form['delivery_street1'] = array('#type' => 'hidden', '#value' => $order->delivery_street1);
-    $form['delivery_street2'] = array('#type' => 'hidden', '#value' => $order->delivery_street2);
-    $form['delivery_city'] = array('#type' => 'hidden', '#value' => $order->delivery_city);
-    $form['delivery_postal_code'] = array('#type' => 'hidden', '#value' => $order->delivery_postal_code);
-    $form['delivery_phone'] = array('#type' => 'hidden', '#value' => $order->delivery_phone);
-    $form['delivery_zone'] = array(
-      '#type' => 'select',
-      '#options' => drupal_map_assoc(array($order->delivery_zone)),
-      '#default_value' => $order->delivery_zone,
-      '#attributes' => array('style' => 'display: none;'),
-    );
-    $form['delivery_country'] = array(
-      '#type' => 'select',
-      '#options' => drupal_map_assoc(array($order->delivery_country)),
-      '#default_value' => $order->delivery_country,
-      '#attributes' => array('style' => 'display: none;'),
-    );
-
-    $form['shippable'] = array('#type' => 'hidden', '#value' => 'true');
+    $form['shippable'] = array('#type' => 'value', '#value' => 'true');
   }
 
   if (variable_get('uc_paypal_ec_review_company', TRUE)) {
@@ -312,7 +308,8 @@ function uc_paypal_ec_review_form($form_state, $order) {
     drupal_goto('cart/echeckout/submit');
   }
 
-  $form['submit'] = array(
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Continue checkout'),
   );
@@ -321,28 +318,28 @@ function uc_paypal_ec_review_form($form_state, $order) {
 }
 
 function uc_paypal_ec_review_form_validate($form, &$form_state) {
-  if ($form_state['values']['shippable'] == 'true') {
-    if (!isset($_POST['quote-option'])) {
-      form_set_error('shipping', t('You must calculate and select a shipping option.'));
-    }
+  if (!empty($form_state['values']['shippable']) && empty($form_state['values']['quotes']['quote_option'])) {
+    form_set_error('shipping', t('You must calculate and select a shipping option.'));
   }
 }
 
 function uc_paypal_ec_review_form_submit($form, &$form_state) {
   $order = uc_order_load($_SESSION['cart_order']);
 
-  if ($form_state['values']['shippable'] == 'true') {
-    $method_accessorials= split("---", isset($_POST['quote-option']) ? strval($_POST['quote-option']) : 0);
-    $order->quote['method'] = $method_accessorials[0];
-    $order->quote['accessorials'] = $method_accessorials[1];
-    $order->quote['rate'] = $_POST['rate'][isset($_POST['quote-option']) ? strval($_POST['quote-option']) : 0];
+  if (!empty($form_state['values']['shippable'])) {
+    $quote_option = explode('---', $form_state['values']['quotes']['quote_option']);
+    $order->quote['method'] = $quote_option[0];
+    $order->quote['accessorials'] = $quote_option[1];
+    $methods = uc_quote_methods();
+    $method = $methods[$quote_option[0]];
 
-    $order->quote['quote_form'] = rawurldecode($_POST['quote-form']);
-    $methods = module_invoke_all('shipping_method');
-    $method = $methods[$order->quote['method']];
-    $label = is_null($_POST['quote-option']) ? t('Error calculating shipping') : $method['quote']['accessorials'][$order->quote['accessorials']];
-    $result = db_query("SELECT line_item_id FROM {uc_order_line_items} WHERE order_id = %d AND type = 'shipping'", $order->order_id);
-    if ($lid = db_result($result)) {
+    $label = $method['quote']['accessorials'][$quote_option[1]];
+
+    $quote_option = $form_state['values']['quotes']['quote_option'];
+    $order->quote['rate'] = $form_state['values']['quotes'][$quote_option]['rate'];
+
+    $result = db_query("SELECT line_item_id FROM {uc_order_line_items} WHERE order_id = :id AND type = :type", array(':id' => $order->order_id, ':type' => 'shipping'));
+    if ($lid = $result->fetchField()) {
       uc_order_update_line_item($lid, $label, $order->quote['rate']);
     }
     else {
@@ -359,7 +356,9 @@ function uc_paypal_ec_review_form_submit($form, &$form_state) {
   }
 
   if (variable_get('uc_paypal_ec_review_comment', TRUE)) {
-    db_query("DELETE FROM {uc_order_comments} WHERE order_id = %d", $order->order_id);
+    db_delete('uc_order_comments')
+      ->condition('order_id', $order->order_id)
+      ->execute();
     uc_order_comment_save($order->order_id, 0, $form_state['values']['order_comments'], 'order');
   }
 
@@ -368,7 +367,9 @@ function uc_paypal_ec_review_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'cart/echeckout/submit';
 }
 
-// Present the final total to the user for checkout!
+/**
+ * Presents the final total to the user for checkout!
+ */
 function uc_paypal_ec_submit() {
   if (!isset($_SESSION['TOKEN']) || ($order = uc_order_load($_SESSION['cart_order'])) == FALSE) {
     unset($_SESSION['cart_order'], $_SESSION['have_details']);
@@ -377,18 +378,33 @@ function uc_paypal_ec_submit() {
     drupal_goto('cart');
   }
 
-  drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
-  $output = '<div>'. theme('cart_review_table', FALSE) .'</div>';
-  $output .= uc_order_pane_line_items('customer', $order);
-  $output .= '<p>'. t("Your order is not complete until you click the 'Submit order' button below. Your PayPal account will be charged for the amount shown above once your order is placed. You will receive confirmation once your payment is complete.") .'</p>';
-  $output .= drupal_get_form('uc_paypal_ec_submit_form');
+  drupal_add_css(drupal_get_path('module', 'uc_cart') . '/uc_cart.css');
 
-  return $output;
+  $items = uc_cart_get_contents();
+
+  $build['review'] = array(
+    '#theme' => 'uc_cart_review_table',
+    '#items' => $items,
+    '#show_subtotal' => FALSE,
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+  );
+
+  $build['line_items'] = uc_order_pane_line_items('customer', $order);
+
+  $build['instructions'] = array('#markup' => '<p>' . t("Your order is not complete until you click the 'Submit order' button below. Your PayPal account will be charged for the amount shown above once your order is placed. You will receive confirmation once your payment is complete.") . '</p>');
+
+  $build['submit_form'] = drupal_get_form('uc_paypal_ec_submit_form');
+
+  return $build;
 }
 
-// Submits an order, calling the NVP API to send the order total to PayPal.
-function uc_paypal_ec_submit_form() {
-  $form['submit'] = array(
+/**
+ * Submits an order, calling the NVP API to send the order total to PayPal.
+ */
+function uc_paypal_ec_submit_form($form, &$form_state) {
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit order'),
   );
@@ -396,15 +412,17 @@ function uc_paypal_ec_submit_form() {
   return $form;
 }
 
-// Handles a complete Website Payments Standard sale.
+/**
+ * Handles a complete Website Payments Standard sale.
+ */
 function uc_paypal_complete($order) {
   // If the order ID specified in the return URL is not the same as the one in
   // the user's session, we need to assume this is either a spoof or that the
   // user tried to adjust the order on this side while at PayPal. If it was a
   // legitimate checkout, the IPN will still come in from PayPal so the order
   // gets processed correctly. We'll leave an ambiguous message just in case.
-  if (intval($_SESSION['cart_order']) != $order->order_id) {
-    drupal_set_message(t('Thank you for your order! We will be notified by PayPal that we have received your payment.'));
+  if (!isset($_SESSION['cart_order']) || intval($_SESSION['cart_order']) != $order->order_id) {
+    drupal_set_message(t('Thank you for your order! PayPal will notify us once your payment has been processed.'));
     drupal_goto('cart');
   }
 
@@ -419,11 +437,13 @@ function uc_paypal_complete($order) {
   drupal_goto('cart/checkout/complete');
 }
 
-// Handles a canceled Website Payments Standard sale.
+/**
+ * Handles a canceled Website Payments Standard sale.
+ */
 function uc_paypal_cancel() {
   unset($_SESSION['cart_order']);
 
-  drupal_set_message(t('Your PayPal payment was cancelled. Please feel free to continue shopping or contact us for assistance.'));
+  drupal_set_message(t('Your PayPal payment was canceled. Please feel free to continue shopping or contact us for assistance.'));
 
   drupal_goto(variable_get('uc_paypal_wps_cancel_return_url', 'cart'));
 }
