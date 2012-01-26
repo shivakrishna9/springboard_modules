@@ -133,6 +133,14 @@ function springboard_api_services_resources() {
             'default value' => variable_get('fundraiser_webform_index_page_size', 20), // TODO: add admin config for this value, variable_del() to hook_uninstall.
             'source' => array('param' => 'pagesize'),
           ),
+          array(
+            'name' => 'override_400',
+            'optional' => TRUE,
+            'type' => 'init',
+            'description' => 'Number of records to get per page.',
+            'default value' => FALSE,
+            'source' => array('param' => 'override_400'),
+          ),
         ),
       ),
       'retrieve' => array(
@@ -169,6 +177,14 @@ function springboard_api_services_resources() {
             'source' => array('path' => 0),
             'type' => 'int',
             'description' => 'The nid of the node to get',
+          ),
+          array(
+            'name' => 'override_400',
+            'optional' => TRUE,
+            'type' => 'init',
+            'description' => 'Number of records to get per page.',
+            'default value' => FALSE,
+            'source' => array('param' => 'override_400'),
           ),
         ),
       ),

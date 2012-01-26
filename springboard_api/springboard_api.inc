@@ -3,9 +3,10 @@
 /**
  * Index callback for springboard service.
  */
-function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $pagesize) {
+function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $pagesize, $override_400 = FALSE) {
   unset($_SESSION['messages']);
   $data = array();
+  $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
   
   if ($valid) {
@@ -19,7 +20,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
     return $webforms;
   }
   else {
-    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
+    services_error('Error: Access denied.', $error_code, t('Your submission failed validation.'));
   }
 }
 
@@ -32,9 +33,9 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
  * @return
  * Returns an array of field definitions for the requested webform.
  */
-function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
+function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $override_400 = FALSE) {
   global $user;
-
+  $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   unset($_SESSION['messages']);
   $nid = (int) $nid;
   $webform = array();
@@ -50,17 +51,17 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
     
     if (!is_numeric($nid) || $nid == 0) {
       watchdog('springboard_api', t('Error: nid missing or invalid'), array(), WATCHDOG_ERROR);
-      services_error('Error: webform id missing or invalid', 400, t('The webform id is either missing or invalid (not an integer).'));
+      services_error('Error: webform id missing or invalid', $error_code, t('The webform id is either missing or invalid (not an integer).'));
     }
 
     if (!in_array($node->type, $webform_node_types)) {
       watchdog('springboard_api', t('Invalid resource requested.'), array(), WATCHDOG_ERROR);
-      services_error('Error: Invalid id', 400, t('The webform id submitted does not match any webforms on the site.'));
+      services_error('Error: Invalid id', $error_code, t('The webform id submitted does not match any webforms on the site.'));
     }
 
     if (!node_access('view', $node)) {
       watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), array(), WATCHDOG_ERROR);
-      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), 400, t('Your API account does not have access to retrieve the requested webform.'));
+      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), $error_code, t('Your API account does not have access to retrieve the requested webform.'));
     }
 
     $webform['nid'] = $node->nid;
@@ -74,7 +75,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
   }
   else {
 
-    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
+    services_error('Error: Access denied.', $error_code, t('Your submission failed validation.'));
   }
 }
 
@@ -87,10 +88,10 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid) {
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
   $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['pubkey'], $submission['checksum']);
-  
+  $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   if ($valid) {
 
-    springboard_api_validate_donation($submission);
+    springboard_api_validate_donation($submission, $error_code);
 
     //$submission = NULL;
     $sid = $submission['sid'] ? (int) $submission['sid'] : NULL;
@@ -209,13 +210,13 @@ function springboard_api_submit_webform($submission) {
         $item['message'] = $message;
         $formatted_errors['errors'][] = $item;
       }
-      services_error('Error: One or more problems where detected with your submission.', 400, $formatted_errors);
+      services_error('Error: One or more problems where detected with your submission.', $error_code, $formatted_errors);
     }
 
   }
   else {
     watchdog('springboard_api', t('Invalid submission sent from %ip', array('%ip' => $_SERVER['REMOTE_ADDR'])), array(), WATCHDOG_ERROR);
-    services_error('Error: Access denied.', 400, t('Your submission failed validation.'));
+    services_error('Error: Access denied.', $error_code, t('Your submission failed validation.'));
   }
 }
 
@@ -227,7 +228,7 @@ function springboard_api_submit_webform($submission) {
  * Keyed array of submitted donation values.
  *
  */
-function springboard_api_validate_donation($donation = array()) {
+function springboard_api_validate_donation($donation = array(), $error_code) {
    unset($_SESSION['messages']);
    $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
    
@@ -258,7 +259,7 @@ function springboard_api_validate_donation($donation = array()) {
     }
   }
   if (count($_SESSION['messages'])) {
-    return services_error('Error: one or more required fields are missing.', 400, $_SESSION['messages']);
+    return services_error('Error: one or more required fields are missing.', $error_code, $_SESSION['messages']);
   }
 }
 
