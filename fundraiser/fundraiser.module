@@ -164,16 +164,6 @@ function fundraiser_menu() {
     'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
-  // Unable to find the function associated with this menu path. Check if still in use. - TODO
-  $items['admin/fundraiser/recurring/test'] = array(
-    'title' => 'Fundraiser Recurring Payment Tester',
-    'page callback' => 'fundraiser_recurring_test',
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
-    'file' => 'fundraiser.admin.inc',
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-  );
 
   $items['admin/store/orders/%/recurring/edit'] = array(
     'title' => 'Edit Recurring Donations',
@@ -398,10 +388,63 @@ function fundraiser_mail_alter(&$message) {
  * Implements hook_clone_access_alter() from Node clone.
  */
 function fundraiser_clone_access_alter(&$access, $node) {
-  // Removing cloning access since fundraiser implements it's own cloning routine.
-  if ($node->type == 'donation_form') {
+  // Remove the access if the user isn't allowed to clone the donation form.
+  if (!user_access('clone donation form')) {
     $access = 0;
   }
+}
+
+/*
+ * Support for cloning via the node clone module
+ * Implements hook_clone_node_alter() from Node clone.
+ * From: http://drupal.org/node/1256478
+ */
+function fundraiser_clone_node_alter(&$node, $context) {
+  // Set the internal name.
+  $node->internal_name = t('Clone of ') . $context['original_node']->internal_name;
+  // Set the webform values.
+drupal_set_message(print_r($node,TRUE));
+drupal_set_message(print_r($context,TRUE));
+}
+
+/*
+  if (!$node->is_being_cloned) {
+    // From fundraiser.fields.inc. update the webform component amounts.
+    $donation_amounts = array();
+    // Add webform components.
+    for ($i = 0; $i < $node->amount_delta; ++$i) {
+      $value = 'amount_' . $i;
+      $label = 'label_' . $i;
+      if ($node->$value) {
+        $donation_amounts[$node->$value] = $node->$label;
+      }
+      ksort($donation_amounts, SORT_NUMERIC);
+    }
+    $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
+
+    // Create the user profile map.
+    fundraiser_create_user_map($node->nid, $components);
+
+    // Fire a hook that other modules can use to add additional processing when a donation form is created.
+    // Called in: fundraiser_multi_currency.module, sf_donation.module
+    // This can, and should, be replaced with hook_node_insert() implementations.
+    // THIS HOOK IS TO BE DEPR.
+    // module_invoke_all('fundraiser_form_insert', $node, $components);
+  }
+//*/
+
+/**
+ * Returns a duplicate of a given order
+ */
+function fundraiser_clone_order($order) {
+  $cloned_order = uc_order_new($order->uid);
+  $id = $cloned_order->order_id;
+  $cloned_order = clone $order;
+  $cloned_order->order_id = $id;
+  $cloned_order->order_status = RECURRING_DONATION_STATUS;
+  unset($cloned_order->products[0]->order_product_id);
+  uc_order_save($cloned_order); //TODO REMOVE THIS  - ubercart hook.
+  return $cloned_order->order_id;
 }
 
 /**
@@ -449,17 +492,6 @@ function fundraiser_options_states() {
  */
 function fundraiser_options_countries() {
   return array();
-}
-
-/*
- * Support for cloning via the node clone module
- * Implements hook_clone_node_alter() from Node clone.
- * From: http://drupal.org/node/1256478
- */
-function fundraiser_clone_node_alter(&$node, $original_node, $method) {
-  if ($method == 'prepopulate') {
-    $node->internal_name = 'Clone of ' . $original_node->internal_name;
-  }
 }
 
 /**
@@ -565,6 +597,10 @@ function fundraiser_form($node, &$form_state) {
   );
 
   // Retrieve saved values if available from where they were saved in webform.
+  // TODO - THIS FAILS IN COMBINATION WITH NODE CLONE.
+  // Since node clone hasn't saved the node yet - there's nothing to pull.
+  // BETTER: pull the values from node_load, so we have it when we get here already.
+  // TODO - SeH
   $amount_values = array();
   if (is_numeric($node->nid)) {
     $amount_values = _fundraiser_get_webform_extra_by_key($node->nid, 'amount');
@@ -810,30 +846,6 @@ function fundraiser_insert($node) {
     'redirect_url' => '<confirmation>',
   );
   drupal_write_record('fundraiser', $fundraiser);
-
-  if (!$node->is_being_cloned) {
-    // From fundraiser.fields.inc. update the webform component amounts.
-    $donation_amounts = array();
-    // Add webform components.
-    for ($i = 0; $i < $node->amount_delta; ++$i) {
-      $value = 'amount_' . $i;
-      $label = 'label_' . $i;
-      if ($node->$value) {
-        $donation_amounts[$node->$value] = $node->$label;
-      }
-      ksort($donation_amounts, SORT_NUMERIC);
-    }
-    $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
-
-    // Create the user profile map.
-    fundraiser_create_user_map($node->nid, $components);
-
-    // Fire a hook that other modules can use to add additional processing when a donation form is created.
-    // Called in: fundraiser_multi_currency.module, sf_donation.module
-    // This can, and should, be replaced with hook_node_insert() implementations.
-    // THIS HOOK IS TO BE DEPR.
-    // module_invoke_all('fundraiser_form_insert', $node, $components);
-  }
 }
 
 /**
@@ -957,7 +969,7 @@ function fundraiser_view($node, $view_mode) {
 /**
  * Implements hook_form_FORM_ID_alter().
  * Alter the webform component delete form to prevent the deletion of required fundraiser fields
- * Why not handle this with the main interface? because edit/clone/delete operations are added at theme layer.
+ * Why not handle this with the main interface? because edit/delete operations are added at theme layer.
  * TODO: add theme override to this level.
  */
 function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
@@ -974,22 +986,6 @@ function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_stat
       $form['description']['#markup'] = $message;
       unset($form['actions']['submit']);
     }
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- * Add the clone button if the user is allowed.
- */
-function fundraiser_form_donation_form_node_form_alter(&$form, &$form_state, $form_id) {
-  // Alter the donation_form displayed on the node.
-  if (user_access('clone donation form')) {
-    $form['buttons']['clone'] = array(
-      '#type' => 'submit',
-      '#value' => 'Clone',
-      '#submit' => array('fundraiser_clone_form'),
-      '#weight' => 100,
-    );
   }
 }
 
@@ -1755,20 +1751,6 @@ function _fundraiser_months_between_dates($exp_month, $exp_year) {
   $stopDate = mktime(0, 0, 0, $exp_month, 1, $exp_year);
   $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
   return $nrmonths;
-}
-
-/**
- * Returns a duplicate of a given order
- */
-function fundraiser_clone_order($order) {
-  $cloned_order = uc_order_new($order->uid);
-  $id = $cloned_order->order_id;
-  $cloned_order = clone $order;
-  $cloned_order->order_id = $id;
-  $cloned_order->order_status = RECURRING_DONATION_STATUS;
-  unset($cloned_order->products[0]->order_product_id);
-  uc_order_save($cloned_order); //TODO REMOVE THIS  - ubercart hook.
-  return $cloned_order->order_id;
 }
 
 /**
