@@ -127,7 +127,7 @@ function fundraiser_recurring_master_order_overview(){
   $resource = db_query('
     SELECT
       fr.*,
-      name
+      u.name
     FROM {fundraiser_recurring} fr  
     INNER JOIN {uc_orders} uo
       ON fr.order_id = uo.order_id
@@ -162,7 +162,7 @@ function fundraiser_recurring_master_order_overview(){
       INNER JOIN {users} u
         ON u.uid = uo.uid
       WHERE fr.master_order_id = (SELECT master_order_id FROM {fundraiser_recurring} WHERE order_id=%d)
-      ORDER BY order_id asc', arg(3));
+      ORDER BY fr.order_id asc', arg(3));
     unset($rows);
     for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
       ;
