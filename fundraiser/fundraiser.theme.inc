@@ -14,6 +14,7 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     'fundraiser_mapping_form' => array(
       'variables' => array(),
     ),
+    'fundraiser_ask_amounts' => array(),
     'sustainer_management_page' => array(
       'variables' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 
         'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 
@@ -168,4 +169,22 @@ function theme_fundraiser_credit_card_expiration_date($element) {
 
   $expiration_date = "<div class='expiration-date-wrapper clear-block'>$month</div>";
   return $expiration_date . drupal_render($element); // Always end any form theming with drupal_render() for cleanup.
+}
+
+/** 
+ * Theme the ask amounts table on webform creation.
+ */
+function theme_fundraiser_ask_amounts($form){
+  $amounts = array_shift($form);
+  $header = array( t('Ask amount'), t('Label'), t('Actions') );
+  $rows = array();
+  for ($i=0; $i < $amounts['amount_delta']['#value']; $i++) {
+    if (isset($amounts[$i]['amount_' . $i])) {
+      $amount = drupal_render($amounts[$i]['amount_' . $i]);
+      $label = drupal_render($amounts[$i]['label_' . $i]);
+      $remove = drupal_render($amounts[$i]['remove_' . $i]);
+      $rows[] = array($amount, $label, $remove);
+    }
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
 }
