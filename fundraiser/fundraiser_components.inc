@@ -197,58 +197,61 @@ function fundraiser_recurring_master_order_overview(){
 }
 
 function fundraiser_recurring_user_overview(){
-	
-	$resource = db_query("select master_order_id,fundraiser_recurring.order_id,uc_orders.order_total, next_charge,uid, gateway_resp
-		from {fundraiser_recurring}
-		inner join uc_orders on uc_orders.order_id=fundraiser_recurring.order_id
-		where uc_orders.uid=%d
-		order by master_order_id desc, fundraiser_recurring.order_id asc",arg(1));
-	
-	$output = "<h2>Recurring Payment Schedule</h2>";
-	$output .= "<table>
-	<thead>
-	<tr>
-	<th>OrderID</th>
-	<th>Amount</th>
-	<th>Charge Date</th>
-	<th>Processed</th>
-	<th>&nbsp;</th>
-	</tr>
-	</thead>
-	";
-	
-	for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
-		;
-	}
-	
-	for($i=1;$i<count($rows);$i++) {
-		if (($i % 2) == 0) {
-			$class = 'even';
-		}
-		else {
-			$class = 'odd';
-		}
 
-		$next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
-		$processed = $rows[$i]['gateway_resp'] == "success" ? "Yes" : "No";
-		$output.= "<tr class='$class'>
-		<td>".$rows[$i][order_id]."</td>
+  $resource = db_query('
+    SELECT 
+      fr.master_order_id,
+      fr.order_id,
+      uo.order_total,
+      fr.next_charge,
+      uo.uid,
+      fr.gateway_resp
+  FROM {fundraiser_recurring}
+  INNER JOIN {uc_orders}
+    ON uo.order_id = fr.order_id
+  WHERE uo.uid=%d
+  ORDER BY fr.master_order_id DESC, fr.order_id asc',arg(1));
+
+  $output = "<h2>Recurring Payment Schedule</h2>";
+  $output .= "<table>
+    <thead>
+    <tr>
+    <th>OrderID</th>
+    <th>Amount</th>
+    <th>Charge Date</th>
+    <th>Processed</th>
+    <th>&nbsp;</th>
+    </tr>
+    </thead>";
+
+  for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
+    ;
+  }
+	
+  for($i=1;$i<count($rows);$i++) {
+    if (($i % 2) == 0) {
+      $class = 'even';
+    }
+    else {
+      $class = 'odd';
+    }
+
+    $next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
+    $processed = $rows[$i]['gateway_resp'] == "success" ? "Yes" : "No";
+    $output.= "<tr class='$class'><td>" . $rows[$i][order_id]."</td>
 		<td>".number_format($rows[$i][order_total], 2, '.', '')."</td>
 		<td>$next_charge</td>
 		<td>$processed</td>
 		<td><a href='/user/".$rows[$i]['uid']."/recurring/edit/".$rows[$i][master_order_id]."'>Edit Payment Info</a></td>
 		</tr>";
-	}
-	
-	$output .= "</table>";
-	
-	return $output;
+  }
 
+  $output .= "</table>";
+  return $output;
 }
 
 function _processed_recurring_charge_count($order_id) {
-	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-		and gateway_resp = 'success'", $order_id));
+  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp = 'success'", $order_id));
 }
 
 function _remaining_recurring_charge_count($order_id) {
