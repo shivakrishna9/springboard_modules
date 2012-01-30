@@ -360,21 +360,21 @@ function springboard_welcome() {
       '#type' => 'textfield',
       '#title' => t('Username'),
       '#description' => t('Your Salesforce login name. This should be an email address.'),
-      '#default_value' => variable_get('salesforce_management_api_username', ''),
+      '#default_value' => decrypt(variable_get('salesforce_management_api_username', '')),
       '#required' => TRUE,
     );
     $form['sf']['salesforce_password'] = array(
       '#type' => 'password',
       '#title' => t('Password'),
       '#description' => t('Your Salesforce login password.'),
-      '#default_value' => variable_get('salesforce_management_api_password', ''),
+      '#default_value' => decrypt(variable_get('salesforce_management_api_password', '')),
       '#required' => TRUE,
     );
     $form['sf']['salesforce_token'] = array(
       '#type' => 'textfield',
       '#title' => t('Security Token'),
       '#description' => t('You may set your security token by logging into Salesforce and navigating to Setup > My Personal Information > Reset My Security Token.'),
-      '#default_value' => variable_get('salesforce_management_api_token', ''),
+      '#default_value' => decrypt(variable_get('salesforce_management_api_token', '')),
       '#required' => TRUE,
     );
     $form['#attributes']['enctype'] = 'multipart/form-data';
@@ -398,7 +398,12 @@ function springboard_welcome() {
  * Validation handler for salesforce configuration form.
  */
 function springboard_welcome_salesforce_validate(&$form, $form_state) {
-$source = 'salesforce_wsdl';
+  // encrypt credentials
+  $form_state['values']['salesforce_username'] = encrypt($form_state['values']['salesforce_username']);
+  $form_state['values']['salesforce_password'] = encrypt($form_state['values']['salesforce_password']);
+  $form_state['values']['salesforce_token'] = encrypt($form_state['values']['salesforce_token']);
+  
+  $source = 'salesforce_wsdl';
   if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
     // Check for file upload errors and return FALSE if a
     // lower level system error occurred.

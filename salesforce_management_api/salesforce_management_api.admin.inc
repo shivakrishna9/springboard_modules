@@ -10,7 +10,7 @@ function salesforce_management_api_settings_form() {
   $form = array();
 
   // Use the username field to collapse the API settings fieldset.
-  $username = variable_get('salesforce_management_api_username', '');
+  $username = decrypt(variable_get('salesforce_management_api_username', ''));
 
   $form['api'] = array(
     '#type' => 'fieldset',
@@ -24,19 +24,19 @@ function salesforce_management_api_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Username'),
     '#description' => t('Should be in the form of an e-mail address.'),
-    '#default_value' => variable_get('salesforce_management_api_username', ''),
+    '#default_value' => $username,
     '#required' => TRUE,
   );
   $form['api']['salesforce_management_api_password'] = array(
     '#type' => 'password',
     '#title' => t('Password'),
-    '#default_value' => variable_get('salesforce_management_api_password', ''),
+    '#default_value' => decrypt(variable_get('salesforce_management_api_password', '')),
   );
   $form['api']['salesforce_management_api_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Security token'),
     '#description' => t('Set your security token by logging into Salesforce and navigating to Setup > My Personal Information > Reset My Security Token.'),
-    '#default_value' => variable_get('salesforce_management_api_token', ''),
+    '#default_value' => decrypt(variable_get('salesforce_management_api_token', '')),
   );
 
   $form['log'] = array(
@@ -69,7 +69,17 @@ function salesforce_management_api_settings_form() {
 
   // Validate handler makes sure that the salesforce_management_api_password doesn't get set to null on accident
   $form['#submit'][] = 'salesforce_management_api_settings_form_submit';
+  $form['#validate'][] = 'salesforce_mangaement_api_settings_form_encrypt';
   return system_settings_form($form);
+}
+
+function salesforce_mangaement_api_settings_form_encrypt($form, &$form_state) {
+  // always encrypt username and token
+  $form_state['values']['salesforce_management_api_username'] = encrypt($form_state['values']['salesforce_management_api_username']);
+  $form_state['values']['salesforce_management_api_token'] = encrypt($form_state['values']['salesforce_management_api_token']);
+  if (!empty($form_state['values']['salesforce_management_api_password'])) {
+    $form_state['values']['salesforce_management_api_password'] = encrypt($form_state['values']['salesforce_management_api_password']);
+  }
 }
 
 // Settings form submit handler so that password doesn't get deleted.

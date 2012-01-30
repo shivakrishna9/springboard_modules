@@ -2,5 +2,6 @@
 name = Salesforce Management API
 description = Defines an API that enables modules to interact with the Salesforce server.
 package = Jackson River Springboard
+dependencies[] = encrypt
 core = 6.x
 version =  6.x-3.0-dev
