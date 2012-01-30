@@ -30,27 +30,24 @@ function capwiz_connect_settings($form_state) {
  */
 function capwiz_connect_account_list() {
   $table_headers = array(
-    'Name',
-    'Username',
-    'Operations',
+    'Display Name',
+    array(
+      'data' => 'Operations',
+      'colspan' => 5,
+    ),
   );
 
   $accounts = array();
   
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
   while ($row = db_fetch_object($result)) {
-    $operations = array(
+    $accounts[] = array(
+      $row->display_name,
       l('overview', 'admin/settings/capwiz_connect/accounts/' . $row->id),
       l('edit', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
       l('user mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
       l('action mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
       l('delete', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
-    );
-    
-    $accounts[] = array(
-      $row->display_name,
-      $row->user_name,
-      implode(' | ', $operations),
     );
   }
   
@@ -100,16 +97,15 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#required' => TRUE,
-    '#default_value' => $account_details['user_name'],
+    '#default_value' => isset($account_details['user_name']) ? $account_details['user_name'] : '',
   );
   $form['user_password'] = array(
-    '#type' => 'textfield',
+    '#type' => 'password',
     '#title' => t('User Password'),
     '#description' => t('API password for the Capwiz Connect API.'),
     '#size' => 40,
     '#maxlength' => 255,
-    '#required' => TRUE,
-    '#default_value' => $account_details['user_password'],
+    '#required' => !($account->id > 0),
   );
   $form['form_affiliation'] = array(
     '#type' => 'textfield',
@@ -138,13 +134,21 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
   $record = array(
     'display_name' => $values['display_name'],
     'user_name' => $values['user_name'],
-    'user_password' => $values['user_password'],
     'id' => $values['account_id'],
     'form_affiliation' => $values['form_affiliation'],
   );
+  if (!empty($values['user_password'])) {
+    $record['user_password'] = $values['user_password'];
+  }
   
   // Determine if inserting or updating
   if ($values['account_id'] > 0) {
+    // Nuke any previously-cached session information
+    $session_id_cache_id = 'capwiz_session_id_' . $values['account_id'];
+    $client_id_cache_id = 'capwiz_cache_id_' . $values['account_id'];
+    cache_set($session_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
+    cache_set($client_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
+    
     $saved_record = drupal_write_record('capwiz_connect_accounts', $record, 'id');
     if ($saved_record) {
       drupal_set_message(t('Account updated'));
@@ -575,85 +579,85 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
     
     // Get the fields available on this type of Salesforce object
     $object_details = _capwiz_connect_get_sf_object_details($object);
-    $fields = $object_details['fields'];
-    $record_types = $object_details['record_types'];
+    if (!empty($object_details)) {
+      $fields = $object_details['fields'];
+      $record_types = $object_details['record_types'];
 
-    // Create a drop down list friendly version of the Salesforce fields
-    foreach ($fields as $key => $value) {
-      $options[$key] = $value['label'];
-    }
+      // Create a drop down list friendly version of the Salesforce fields
+      foreach ($fields as $key => $value) {
+        $options[$key] = $value['label'];
+      }
     
-    $disabled = !empty($account->mapping_action['sf_object']) ? FALSE : TRUE;
+      $disabled = !empty($account->mapping_action['sf_object']) ? FALSE : TRUE;
     
-    $form['record_type'] = array(
-      '#type' => 'select',
-      '#title' => t('Record Type'),
-      '#description' => t('The type of !name to create', array('!name' => $account->mapping_action['sf_object'])),
-      '#options' => $record_types,
-      '#default_value' => $account->mapping_action['recordtype_id'],
-    );
-    
-    // Define the Capwiz fiels that can be defined to SF fields
-    // Field name as key, displayable label as the value
-    $capwiz_fields = array(
-      'alertId' => 'Alert ID',
-      'action_timestamp' => 'Action Timestamp',
-      'emailAddress' => 'Email Address',
-      'messageId' => 'Message ID',
-      'userId' => 'Capwiz User ID',
-    );
-    
-    // Only allow mapping to the Contact in SF if the SF User Integration module is available
-    if (module_exists('sf_user')) {
-      $capwiz_fields['sf_userid'] = 'Salesforce User Record';
-    }
-    
-    foreach ($capwiz_fields as $field_key => $field_label) {
-      $map_for_field = $account->mapping_action['map'][$field_key];
-      
-      // Capwiz field
-      $form['map']['user_field'][$field_key] = array(
-        '#type' => 'item',
-        '#description' => t($field_label),
-      );
-      // Salesforce field
-      $form['map']['salesforce'][$field_key] = array(
+      $form['record_type'] = array(
         '#type' => 'select',
-        '#options' => $options,
-        '#default_value' => $account->mapping_action['map'][$field_key],
-      );      
+        '#title' => t('Record Type'),
+        '#description' => t('The type of !name to create', array('!name' => $account->mapping_action['sf_object'])),
+        '#options' => $record_types,
+        '#default_value' => $account->mapping_action['recordtype_id'],
+      );
+    
+      // Define the Capwiz fiels that can be defined to SF fields
+      // Field name as key, displayable label as the value
+      $capwiz_fields = array(
+        'alertId' => 'Alert ID',
+        'action_timestamp' => 'Action Timestamp',
+        'emailAddress' => 'Email Address',
+        'messageId' => 'Message ID',
+        'userId' => 'Capwiz User ID',
+      );
+    
+      // Only allow mapping to the Contact in SF if the SF User Integration module is available
+      if (module_exists('sf_user')) {
+        $capwiz_fields['sf_userid'] = 'Salesforce User Record';
+      }
+    
+      foreach ($capwiz_fields as $field_key => $field_label) {
+        $map_for_field = $account->mapping_action['map'][$field_key];
       
-      if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
-        if ($account->mapping_action['dedupe_key'] == $map_for_field) {
-          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
+        // Capwiz field
+        $form['map']['user_field'][$field_key] = array(
+          '#type' => 'item',
+          '#description' => t($field_label),
+        );
+        // Salesforce field
+        $form['map']['salesforce'][$field_key] = array(
+          '#type' => 'select',
+          '#options' => $options,
+          '#default_value' => $account->mapping_action['map'][$field_key],
+        );      
+      
+        if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
+          if ($account->mapping_action['dedupe_key'] == $map_for_field) {
+            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
+          }
+          else {
+            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
+          }
         }
         else {
-          $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
+          $value = '';
         }
+        $form['map']['dedupe'][$field_key] = array(
+          '#value' => $value,
+        );
       }
-      else {
-        $value = '';
-      }
-      $form['map']['dedupe'][$field_key] = array(
-        '#value' => $value,
+    
+      // Fields specific to this account that can be mapped to SF
+      // This is a little goofy:
+      //   Put an item in $form['capwiz_field_map'] for the label
+      //   Put an item in $form['map']['salesforce'] for the SF field dropdown
+      $form['capwiz_field_map']['form_affiliation'] = array(
+        '#type' => 'item',
+        '#description' => t('Form Affiliation'),
+      );
+      $form['map']['salesforce']['form_affiliation'] = array(
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => $account->mapping_action['map']['form_affiliation'],
       );
     }
-    
-    // Fields specific to this account that can be mapped to SF
-    // This is a little goofy:
-    //   Put an item in $form['capwiz_field_map'] for the label
-    //   Put an item in $form['map']['salesforce'] for the SF field dropdown
-    $form['capwiz_field_map']['form_affiliation'] = array(
-      '#type' => 'item',
-      '#description' => t('Form Affiliation'),
-    );
-    $form['map']['salesforce']['form_affiliation'] = array(
-      '#type' => 'select',
-      '#options' => $options,
-      '#default_value' => $account->mapping_action['map']['form_affiliation'],
-    );
-    
-    
 
     $form['remove'] = array(
       '#type' => 'submit',
@@ -979,8 +983,22 @@ function _capwiz_connect_get_sf_object_details($object_name) {
   $sf = salesforce_management_api_connect();
   if ($sf) {
     $record_types = array();
-    
-    $object = $sf->client->describeSObject($object_name);
+    try {
+      $object = $sf->client->describeSObject($object_name);
+    }
+    catch (SoapFault $e) {
+      // Something failed in getting object details from Salesforce
+      drupal_set_message($e->getMessage(), 'error');
+      if ($e->faultcode == 'sf:INVALID_TYPE') {
+        drupal_set_message(t('The Salesforce object type selected for this mapping is no longer available. Either re-add that object type in Salesforce, or click Remove Map at the bottom of the page and re-do the mapping with a difference object type.'), 'error');
+      }
+      return array();
+    }
+    catch (Exception $e) {
+      // Something failed in getting object details from Salesforce
+      drupal_set_message($e->getMessage());
+      return array();
+    }
     // get object fields
     foreach ($object->fields as $field) {
       $object_fields[$field->name] = array(

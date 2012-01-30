@@ -78,7 +78,7 @@ class CapizConnect {
     // call. Session IDs are good for four hours.
     $cached_session_id = cache_get($session_id_cache_id);
     $cached_client_id = cache_get($client_id_cache_id);
-    if ($cached_session_id) {
+    if (!empty($cached_session_id->data)) {
       $this->session_id = $cached_session_id->data;
       $this->client_id = $cached_client_id->data;
       $this->connected = TRUE;
@@ -491,7 +491,7 @@ class CapizConnect {
       foreach ($user->officials as $o) {
         $level = $o->level->label;
         $chamber = $o->position->label;
-        $label = $o->description . ' ' . $o->firstName . ' ' . $o->lastName;
+        $label = $o->title . ' ' . $o->firstName . ' ' . $o->lastName;
         $phone = is_object($o->offices[0]) ? $o->offices[0]->phone : '';
         // @todo: Phone and email will be relocated into another data structure
         $legislators[$level][$chamber][] = array(
