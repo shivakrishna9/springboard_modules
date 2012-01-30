@@ -953,7 +953,8 @@ function fundraiser_view($node, $view_mode) {
  * Implements hook_form_FORM_ID_alter().
  * Alter the webform component delete form to prevent the deletion of required fundraiser fields
  * Why not handle this with the main interface? because edit/delete operations are added at theme layer.
- * TODO: add theme override to this level.
+ * Unfortunately the theme layer adds the values and immediately renders, negating any chance for us to make changes.
+ * In order to remove delete properly, we will need a patch in webform addressing this issue.
  */
 function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   // Make sure we are dealing with a donation form.
