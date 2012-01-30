@@ -334,34 +334,41 @@ function fundraiser_mapping_form($form, &$form_state, $node) {
       'donation form is submitted, the user\'s profile will be updated with the values from the form.',
     '#weight' => 0,
   );
-
-  foreach ($node->webform['components']   as $cid => $component) {
-    if ($component['type'] != 'fieldset') {
-      $form['mapping']['cid'][$cid] = array(
-      '#type' => 'item',
-      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
-      );
-      $options = array('' => '--Select One--');
-      if (module_exists('profile')) {
-        $cat_array = profile_user_categories();
-        foreach ($cat_array as $cat) {
-          $result = _profile_get_fields($cat['name']);
-          foreach( $result as $this_row) {
-            $row = (array)$this_row;
-            $options['Drupal Profile Fields'][$row['name']] = $row['title'];
-          }
-        }
+ // Gather user profile options. TODO this becomes hookable eventually. -SeH
+  $options = array('' => '--Select One--');
+  if (module_exists('profile')) {
+    $cat_array = profile_user_categories();
+    foreach ($cat_array as $cat) {
+      $result = _profile_get_fields($cat['name']);
+      foreach( $result as $this_row) {
+        $row = (array) $this_row;
+        $options['Drupal Profile Fields'][$row['name']] = $row['title'];
       }
-      $options['User Fields'] = array(
-        'mail' => t("Email Address"),
-      );
+    }
+  }
+  // Add final field, user email address.
+  $options['User Fields'] = array(
+    'mail' => t("Email Address"),
+  );
+  // For each component create possible profile fields.
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['type'] != 'fieldset') {
       $form['mapping']['type'][$cid] = array(
+        '#label' => t($component['name'] . " - (" . $component['type'] . ")"),
         '#type' => 'select',
         '#options' => $options,
         '#default_value' => isset($node->map[$cid]) ? $node->map[$cid] : '',
       );
-      $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
     }
+  }
+  if (empty($form['mapping']['type'])) {
+    $form['mapping'] = array(
+      '#markup' => t('You must add some fields to the webform before you can map them.'),
+    );
+  }
+  else {
+    $form['mapping']['type']['#theme'] = 'fundraiser_mapping_options';
+    $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   }
   return $form;
 }

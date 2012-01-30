@@ -11,11 +11,15 @@
  */
 function fundraiser_theme($existing, $type, $theme, $path) {
   return array(
-    'fundraiser_mapping_form' => array(
-      'variables' => array(),
+    'fundraiser_mapping_options' => array(
+      'render element' => 'element',
     ),
-    'fundraiser_ask_amounts' => array(),
-    'fundraiser_credit_card_expiration_date' => array(),
+    'fundraiser_ask_amounts' => array(
+      'render element' => 'element',
+    ),
+    'fundraiser_credit_card_expiration_date' => array(
+      'render element' => 'element',    
+    ),
     'sustainer_management_page' => array(
       'variables' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 
         'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 
@@ -127,29 +131,20 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
 /**
  * Theme Fundraiser mapping form.
  */
-function theme_fundraiser_mapping_form($form) {
-  if (isset($form['mapping']) && $form['mapping']['cid']) {
-    foreach ($form['mapping']['cid'] as $key => $cid) {
-      if (is_numeric($key)) {
-        $row = array();
-        $row[] = drupal_render($form['mapping']['cid'][$key]);
-        $row[] = drupal_render($form['mapping']['type'][$key]);
-        $rows[] = $row;
-      }
+function theme_fundraiser_mapping_options($element) {
+  $element = $element['element'];
+  $rows = array();
+  foreach (element_children($element) as $cid) {
+    if (!empty($element[$cid])) {
+      $row = array();
+      $row[] = $element[$cid]['#label'];
+      $row[] = drupal_render($element[$cid]);
+      $rows[] = $row;
     }
-    $row = array();
-    $row[] = drupal_render($form['submit']);
-    $row[] = '&nbsp;';
-    $rows[] = $row;
-
-    $header = array("Webform Component", "Profile Field");
-    $output = drupal_render($form['info']);
-    $output .= theme('table', array('header' => $header, 'row' => $rows, 'attributes' => array('id' => 'fundraiser_mapping_form')));
-    $output .= drupal_render($form);
   }
-  else {
-    $output = "<p>You must add some fields to the webform before you can map them.</p>";
-  }
+  $header = array("Webform Component", "Profile Field");
+  $output = drupal_render($form['info']);
+  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'fundraiser_mapping_form')));
   return $output;
 }
 
@@ -157,7 +152,7 @@ function theme_fundraiser_mapping_form($form) {
  * Theme the credit card expiration date form field. This places month and year beside each other.
  */
 function theme_fundraiser_credit_card_expiration_date($element) {
-  $element = array_shift($element);
+  $element = $element['element'];
   $element['card_expiration_month']['#title'] = t('Expiration date');
   $element['card_expiration_year']['#title'] = '';
   $month = drupal_render($element['card_expiration_month']);
@@ -171,7 +166,7 @@ function theme_fundraiser_credit_card_expiration_date($element) {
  * Theme the ask amounts table on webform creation.
  */
 function theme_fundraiser_ask_amounts($element){
-  $element = array_shift($element);
+  $element = $element['element'];
   $header = array( t('Ask amount'), t('Label'), t('Actions') );
   $rows = array();
   for ($i=0; $i < $element['amount_delta']['#value']; $i++) {
