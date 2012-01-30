@@ -147,14 +147,6 @@ function fundraiser_menu() {
     'file' => 'fundraiser.admin.inc',
   );
 
-  $items['admin/store/reports/fundraiser'] = array(
-    'title' => 'Donation report',
-    'description' => t('Donation reports for campaigns.'),
-    'page callback' => 'fundraiser_monthly_report',
-    'access arguments' => array('view store reports'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'fundraiser.admin.inc',
-  );
   $items['admin/fundraiser/recurring'] = array(
     'title' => 'Current Fundraiser Recurring Payments',
     'page callback' => 'fundraiser_recurring_admin',
@@ -214,14 +206,6 @@ function fundraiser_menu() {
     'access callback' => 'fundraiser_recurring_check_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 11,
-    'file' => 'fundraiser.admin.inc',
-  );
-
-  $items['admin/content/donation-forms'] = array(
-    'title' => 'Donation Forms',
-    'page callback' => 'fundraiser_donation_form_list',
-    'access arguments' => array('create donation form'),
-    'type' => MENU_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
 
@@ -434,20 +418,6 @@ drupal_set_message(print_r($context,TRUE));
 //*/
 
 /**
- * Returns a duplicate of a given order
- */
-function fundraiser_clone_order($order) {
-  $cloned_order = uc_order_new($order->uid);
-  $id = $cloned_order->order_id;
-  $cloned_order = clone $order;
-  $cloned_order->order_id = $id;
-  $cloned_order->order_status = RECURRING_DONATION_STATUS;
-  unset($cloned_order->products[0]->order_product_id);
-  uc_order_save($cloned_order); //TODO REMOVE THIS  - ubercart hook.
-  return $cloned_order->order_id;
-}
-
-/**
  * Implemenation of queue_report_item_name().
  */
 function fundraiser_queue_report_item_title_alter(&$row) {
@@ -492,6 +462,15 @@ function fundraiser_options_states() {
  */
 function fundraiser_options_countries() {
   return array();
+}
+
+/**
+ * Implements hook_views_api(). From Views module.
+ */
+function fundraiser_views_api() {
+  return array(
+    'api' => 2,
+  );
 }
 
 /**
@@ -576,6 +555,9 @@ function fundraiser_form($node, &$form_state) {
   $gateway_options = array();
   foreach ($gateways as $gateway) {
     $gateway_options[$gateway['id']] = $gateway['title'];
+  }
+  if (empty($gateway_options)) {
+    $gateway_options[-1] = t('No gateways are available. Please configure one.');
   }
   $form['fundraiser_settings']['gateway'] = array(
     '#type' => 'select',
@@ -1682,10 +1664,8 @@ function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = arra
  * Helper function, check if given string is an email format.
  */
 function fundraiser_validate_email($mail) {
-// TODO fix this err -SeH
-// Deprecated function: Function eregi() is deprecated in fundraiser_validate_email() 
-// (line 2615 of /Users/cg176010/Repos/springboard_modules/fundraiser/fundraiser.module).
-  return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
+  // eregi is depr in PHP 5.3. Replaced with preg_match, adding lower case options.
+  return preg_match("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$", $mail);
 }
 
 /**
