@@ -7,6 +7,22 @@
  * @ingroup fundraiser
  */
 
+
+/**
+ * Returns a duplicate of a given order
+ * // called in fundraiser.sustainer.inc:    $new_order_id = fundraiser_clone_order($order);
+ */
+function fundraiser_clone_order($order) {
+  $cloned_order = uc_order_new($order->uid);
+  $id = $cloned_order->order_id;
+  $cloned_order = clone $order;
+  $cloned_order->order_id = $id;
+  $cloned_order->order_status = RECURRING_DONATION_STATUS;
+  unset($cloned_order->products[0]->order_product_id);
+  uc_order_save($cloned_order); //TODO REMOVE THIS  - ubercart hook.
+  return $cloned_order->order_id;
+}
+
 /**
  * Menu callback for the my recurring payments tab of the user profile.
  */
