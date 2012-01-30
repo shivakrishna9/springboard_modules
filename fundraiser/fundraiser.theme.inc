@@ -15,14 +15,12 @@ function fundraiser_theme($existing, $type, $theme, $path) {
       'variables' => array(),
     ),
     'fundraiser_ask_amounts' => array(),
+    'fundraiser_credit_card_expiration_date' => array(),
     'sustainer_management_page' => array(
       'variables' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 
         'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 
         'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),
       'template' => 'templates/sustainer-management-page',
-    ),
-    'fundraiser_credit_card_expiration_date' => array(
-      'variables' => array(),
     ),
     'fundraiser_confirmation' => array(
       'variables' => array('node' => NULL, 'sid' => NULL),
@@ -156,33 +154,31 @@ function theme_fundraiser_mapping_form($form) {
 }
 
 /**
- * Theme the credit card expiration date form field.
+ * Theme the credit card expiration date form field. This places month and year beside each other.
  */
 function theme_fundraiser_credit_card_expiration_date($element) {
-  $element['card_expiration_month']['#title'] = t('Expiration Date');
-  $month = drupal_render($element['card_expiration_month']);
+  $element = array_shift($element);
+  $element['card_expiration_month']['#title'] = t('Expiration date');
   $element['card_expiration_year']['#title'] = '';
+  $month = drupal_render($element['card_expiration_month']);
   $year = drupal_render($element['card_expiration_year']);
-
   preg_match('#<select.*/select>#ms', $year, $matches);
   $month = str_replace('</select>', "</select>$matches[0]", $month);
-
-  $expiration_date = "<div class='expiration-date-wrapper clear-block'>$month</div>";
-  return $expiration_date . drupal_render($element); // Always end any form theming with drupal_render() for cleanup.
+  return '<div class=\'expiration-date-wrapper clear-block\'>' . $month . '</div>';
 }
 
 /** 
  * Theme the ask amounts table on webform creation.
  */
-function theme_fundraiser_ask_amounts($form){
-  $amounts = array_shift($form);
+function theme_fundraiser_ask_amounts($element){
+  $element = array_shift($element);
   $header = array( t('Ask amount'), t('Label'), t('Actions') );
   $rows = array();
-  for ($i=0; $i < $amounts['amount_delta']['#value']; $i++) {
-    if (isset($amounts[$i]['amount_' . $i])) {
-      $amount = drupal_render($amounts[$i]['amount_' . $i]);
-      $label = drupal_render($amounts[$i]['label_' . $i]);
-      $remove = drupal_render($amounts[$i]['remove_' . $i]);
+  for ($i=0; $i < $element['amount_delta']['#value']; $i++) {
+    if (isset($element[$i]['amount_' . $i])) {
+      $amount = drupal_render($element[$i]['amount_' . $i]);
+      $label = drupal_render($element[$i]['label_' . $i]);
+      $remove = drupal_render($element[$i]['remove_' . $i]);
       $rows[] = array($amount, $label, $remove);
     }
   }
