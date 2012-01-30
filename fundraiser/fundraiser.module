@@ -92,6 +92,7 @@ function fundraiser_permission() {
  */
 function fundraiser_menu() {
 
+  // Maps results to profile pgs. TODO move to .profile
   $items['node/%node/webform/mapping'] = array(
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
@@ -1665,7 +1666,7 @@ function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = arra
  */
 function fundraiser_validate_email($mail) {
   // eregi is depr in PHP 5.3. Replaced with preg_match, adding lower case options.
-  return preg_match("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$", $mail);
+  return preg_match("/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$/", $mail);
 }
 
 /**
