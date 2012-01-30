@@ -204,9 +204,9 @@ function _salesforce_management_api_open_connection($username = FALSE, $password
   $errors = array();
   
   // Load up the sitewide API credentials if no others were provided:
-  $username = $username ? $username : variable_get('salesforce_management_api_username', '');
-  $password = $password ? $password : variable_get('salesforce_management_api_password', '');
-  $token = $token ? $token : variable_get('salesforce_management_api_token', '');
+  $username = $username ? $username : decrypt(variable_get('salesforce_management_api_username', ''));
+  $password = $password ? $password : decrypt(variable_get('salesforce_management_api_password', ''));
+  $token = $token ? $token : decrypt(variable_get('salesforce_management_api_token', ''));
 
   // Fail early if we didn't receive an API username, password, or token.
   if (empty($username) || empty($password) || empty($token)) {
@@ -1063,7 +1063,7 @@ function salesforce_management_api_get_object_recordtypes($object) {
   }
 
 	$sf = salesforce_management_api_connect();
-	if ($sf) {
+	if (is_object($sf)) {
 		$result = $sf->client->describeSObjects(array($object));
 		if (count($result->recordTypeInfos)) {
 			foreach($result->recordTypeInfos as $recordtype) {
