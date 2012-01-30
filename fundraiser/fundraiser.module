@@ -1277,17 +1277,20 @@ function fundraiser_webform_validate($form, &$form_state) {
 function fundraiser_webform_submit($form, &$form_state) {
   global $user;
 
-  $node = $form['#parameters'][2];
-  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']);
   $node_id = $form_state['values']['details']['nid'];
+  $node = node_load($node_id);
+  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']);
 
   // See if this was a recurring donation.
   $recurs = FALSE;
-  $recurs_cid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'recurs_monthly'), 'cid');
+  $recurs_cid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node_id, 'form_key' => 'recurs_monthly'), 'cid');
   if (!empty($recurs_cid)) {
     $value = $form_state['values']['submitted'][$recurs_cid];
-    if (is_array($value)) { // If this is an array, then it is a single item checkbox
-      $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
+    if (is_array($value)) {
+      // If this is an array, then it is a single item checkbox
+      if (isset($value[0])) {
+        $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
+      }
     }
     else {
       $recurs = $value == 'recurs' ? TRUE : FALSE;
@@ -1303,11 +1306,11 @@ function fundraiser_webform_submit($form, &$form_state) {
   // So any hook creating an order should keep that in mind.
   // Fundraiser sees this order only by an order_id.
   // The supporting system (here ubercart) handles everything else once handed fundraisers info.
-  $order_id = module_invoke_all('fundraiser_create_order', $user, $fundraiser_fields, $recurs, $additional_order_fields);
+  $order_id = module_invoke_all('fundraiser_create_order', $user, $node, $fundraiser_fields, $recurs, $additional_order_fields);
   $order_id = $order_id[0];
 
   // Relate the order to submission before we try to process the payment.
-  $webform_order = array('webform_nid' => $node->nid, 'order_id' => $order_id, 'sid' => $form_state['values']['details']['sid'], 'recurring_status' => $recurs);
+  $webform_order = array('webform_nid' => $node_id, 'order_id' => $order_id, 'sid' => $form_state['values']['details']['sid'], 'recurring_status' => $recurs);
   drupal_write_record('fundraiser_webform_order', $webform_order);
 
   // Additional data to pass to the payment gateway's charge function.
@@ -1316,7 +1319,7 @@ function fundraiser_webform_submit($form, &$form_state) {
   // if the gateway manager module is in use, attempt to extract the charge function from there
   $charge_function = NULL;
   if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($node->gateway);
+    $info = gateway_manager_gateway_info($node->gateway); // TODO trackdown is this can be grabbed without loading node. - SeH
     $charge_function = $info['charge_function'];
     $data['config'] = $info['config'];
   }

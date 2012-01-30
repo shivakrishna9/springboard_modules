@@ -246,7 +246,7 @@ function fundraiser_fundraiser_validate_card_cvv($cc_cvv){
 /**
  * Implements hook_fundraiser_create_order().
  */
-function fundraiser_fundraiser_create_order($user, $fundraiser_fields, $recurs, $additional_order_fields) {
+function fundraiser_fundraiser_create_order($user, $node, $fundraiser_fields, $recurs, $additional_order_fields) {
   // pick out the values we need to generate an order
   $donation_amount = $fundraiser_fields['amount'];
   $cc_number = $fundraiser_fields['card_number'];
@@ -262,7 +262,7 @@ function fundraiser_fundraiser_create_order($user, $fundraiser_fields, $recurs, 
   $billing_country = $fundraiser_fields['country'];
   $billing_state = $fundraiser_fields['state'];
   $billing_zipcode = $fundraiser_fields['zip'];
-  $quantity = $fundraiser_fields['quantity'];
+  $quantity = isset($fundraiser_fields['quantity']) ? $fundraiser_fields['quantity'] : 1;
 
   // Look for other amount if set.
   if ($donation_amount == "other") {
@@ -275,10 +275,10 @@ function fundraiser_fundraiser_create_order($user, $fundraiser_fields, $recurs, 
   $order->products[0]->price = $donation_amount;
   $order->products[0]->qty = empty($quantity) ? 1 : $quantity;
   $order->products[0]->title = $node->title;
-  $order->products[0]->nid = $node_id;
+  $order->products[0]->nid = $node->nid;
   $order->products[0]->data = array(
-    'shippable' => $order->products[0]->shippable,
-    'model' => $order->products[0]->model,
+    'shippable' => $order->products[0]->shippable, //TODO does this exist?
+    'model' => $order->products[0]->model, // TODO does this exist?
     'varprice' => $donation_amount,
     'module' => 'uc_product',
   );
