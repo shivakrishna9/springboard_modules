@@ -6,6 +6,7 @@ package = Jackson River Springboard
 dependencies[] = views
 dependencies[] = webform
 dependencies[] = profile
+dependencies[] = token
 dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = uc_cart

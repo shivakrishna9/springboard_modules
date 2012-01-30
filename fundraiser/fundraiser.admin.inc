@@ -14,7 +14,6 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#type' => 'value',
     '#value' => $node->nid,
   );
-
   /* Start edit form */
   $form['confirmation_page'] = array(
     '#type' => 'fieldset',
@@ -41,9 +40,8 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
     '#collapsed' => TRUE,
   );
   $form['confirmation_page']['tokens']['help'] = array(
-    '#theme' => 'token_tree',
-    '#token_types' => array('node'),
-    //theme('token_help', 'order') . theme('webform_token_help', (array) $node),
+    // TODO follow up on this to make sure that the tokens we are using are the right ones.
+    '#markup' => theme('token_tree', array('token_types' => array('node'))) . theme('webform_token_help', array()),
   );
 
   // Redirection settings.
@@ -258,9 +256,9 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#collapsed' => TRUE,
   );
 
-  // TODO Please change this theme call to use an associative array for the $variables parameter.
+  // TODO Check gthis ot make sure these are the right tokens to display given the radical changes in this par tof D7. - SeH
   $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
-    '#value' => theme('token_help', 'user'),
+    '#markup' => theme('token_tree', array('token_types' => array('user'))),
   );
 
   $form['fundraiser_cron'] = array(

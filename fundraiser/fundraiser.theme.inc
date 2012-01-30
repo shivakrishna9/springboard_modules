@@ -31,10 +31,6 @@ function fundraiser_theme($existing, $type, $theme, $path) {
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
-    'fundraiser_confirmation_tokens' => array(
-      'variables' => array('tokens' => NULL),
-      'template' => 'templates/fundraiser-token-list',
-    ),
   );
 }
 
