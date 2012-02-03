@@ -6,7 +6,7 @@
 function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $pagesize, $override_400 = FALSE) {
   unset($_SESSION['messages']);
   $data = array();
-  $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
+  $error_code = (isset($override_400) && $override_400) ? 200 : 400;
   $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
   
   if ($valid) {
