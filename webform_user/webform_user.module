@@ -605,9 +605,11 @@ function webform_user_webform_validate($form, &$form_state) {
  * Process webform submissions.
  */
 function webform_user_webform_submit($form, &$form_state) {
+  
   global $user;
+  $account = new stdClass();
   $node = node_load(array('nid' => $form_state['values']['details']['nid']));
-
+  $submitted = $form_state;
   // Only process if the form is completed and it's a webform_user form.
   $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
 
@@ -618,6 +620,7 @@ function webform_user_webform_submit($form, &$form_state) {
     // Authenticated user, update if this isn't an edit.
     if ($user->uid && $form_state['redirect']) {
       // Update the existing user account.
+      $account = $user;
       _webform_user_save_profile_map($user->uid, $map);
     }
     // Anonymous user with matching email address.
@@ -668,6 +671,8 @@ function webform_user_webform_submit($form, &$form_state) {
       	drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
       }
     }
+    // Finish up by handling any tasks implemented elsewhere.
+    module_invoke_all('webform_user_webform_submit', $account, $node, $form_state);
   }
 }
 
