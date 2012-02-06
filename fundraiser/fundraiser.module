@@ -1584,6 +1584,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
+ 	  $node = node_load(array('nid' => $node_id));
+ 	  module_invoke_all('fundraiser_webform_submit', $user, $node, $form_state);
  	}
  	else { 
 		// failed to process credit cart
