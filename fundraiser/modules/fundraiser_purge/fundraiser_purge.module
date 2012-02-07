@@ -102,7 +102,7 @@ function _fundraiser_purge_webform_submitted_data($age) {
       INNER JOIN {uc_orders} o
       ON o.order_id = fwo.order_id 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -123,7 +123,7 @@ function _fundraiser_purge_webform_submissions($age) {
       INNER JOIN {uc_orders} o
       ON o.order_id = fwo.order_id 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -142,7 +142,8 @@ function _fundraiser_purge_webform_orders($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
+      AND order_id NOT IN (SELECT DISTINCT master_order_id FROM {fundraiser_recurring})
     ", 
     $age
   );
@@ -161,7 +162,7 @@ function _fundraiser_purge_payment_receipts($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -180,7 +181,7 @@ function _fundraiser_purge_order_log($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -199,7 +200,7 @@ function _fundraiser_purge_order_comments($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -218,7 +219,7 @@ function _fundraiser_purge_order_admin_comments($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -237,7 +238,7 @@ function _fundraiser_purge_order_products($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
     ", 
     $age
   );
@@ -256,7 +257,9 @@ function _fundraiser_purge_orders($age) {
       WHERE order_id IN (
       SELECT order_id FROM {uc_orders} 
       WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d)
-      AND order_status IN ('payment_received', 'refunded', 'partially_refunded')
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
+      AND order_id NOT IN (SELECT DISTINCT master_order_id FROM {fundraiser_recurring}) 
+      AND order_id NOT IN (SELECT order_id FROM {fundraiser_recurring})
     ", 
     $age
   );
