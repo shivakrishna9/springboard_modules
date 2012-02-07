@@ -1247,7 +1247,7 @@ function _webform_user_create_webform_components(&$node) {
  * Implementation of queue_batch_item_alter().
  */
 function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
-	if ($type == 'webform_user' && $action == 'create') {
+	if ($type == 'webform_user' && ($action == 'create' || $action == 'upsert')) {
 		$relationship = _webform_user_get_relationship($oid);
 		if (!empty($relationship)) {
 			$user = _webform_user_load_user_salesforce_ids($oid);
