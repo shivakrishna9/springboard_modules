@@ -393,6 +393,20 @@ function page_wrappers_clone_node_alter(&$node, $original_node, $method) {
 }
 
 /**
+ * Implementation of hook_advagg_disable_processor().
+ */
+function page_wrappers_advagg_disable_processor() {
+  $arg = arg();
+  // examine the args to see if we're on a full node page  
+  if (isset($arg) && ($arg[0] == 'node' && $arg[2] != 'edit')) {
+    $node = node_load($arg[1]);
+    if (isset($node->wrapper)) { // if we have a page wrapper assigned, turn disable advagg on this node
+      return TRUE;
+    }
+  }
+}
+
+/**
  * Clones a file associated with a page wrapper.
  *
  * @param $original
