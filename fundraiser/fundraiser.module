@@ -2514,13 +2514,16 @@ function _fundraiser_profile_get_fields($category) {
 function _fundraiser_profile_save_profile(&$edit, &$user, $category) {
   $result = _fundraiser_profile_get_fields($category);
   while ($field = db_fetch_object($result)) {
-    if (_profile_field_serialize($field->type)) {
-      $edit[$field->name] = serialize($edit[$field->name]);
+    if (array_key_exists($field->name, $edit)) {
+
+      if (_profile_field_serialize($field->type)) {
+        $edit[$field->name] = serialize($edit[$field->name]);
+      }
+      db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $user->uid);
+      db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
+      // Mark field as handled (prevents saving to user->data).
+      $edit[$field->name] = NULL;
     }
-    db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $user->uid);
-    db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $field->fid, $user->uid, $edit[$field->name]);
-    // Mark field as handled (prevents saving to user->data).
-    $edit[$field->name] = NULL;
   }
 }
 
