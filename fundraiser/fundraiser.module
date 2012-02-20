@@ -1303,8 +1303,9 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $sid);
     $message = $vars['node']->confirmation_page_body;
+    
     // replace any submission level tokens
-    $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE);
+    $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE, TRUE);
     // replace any order tokens
     $message = token_replace($message, 'order', $order);
     
