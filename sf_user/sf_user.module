@@ -449,11 +449,7 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 		// load
    	case 'load':
       $account->salesforce = salesforce_management_api_id_load('user', $account->uid);
-      
-			// attempt to replace any special characters in the name fields
-			$account->profile_first_name = preg_replace("/[^\w\'\",_\.:;\/-]/i", "", $account->profile_first_name);
-			$account->profile_last_name = preg_replace("/[^\w\'\",_\.:;\/-]/i", "", $account->profile_last_name);
-			
+      			
 			// do some cleanup to make values salesforce compatible
 			clean_checkbox_values($account);
 			clean_selection_values($account);
