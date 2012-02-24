@@ -47,7 +47,7 @@ function fundraiser_ab_donations_count_config_validate($config, $field_name_pref
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B tets node
+ * Webform A/B test node
  */
 function fundraiser_ab_donations_count_config_summary($config) {
   return $config['donations'];
