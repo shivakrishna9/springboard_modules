@@ -2,7 +2,8 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Minimum of donations
+ * Provide a Webform A/B Test win condition: Minimum number of sustainer
+ * donations
  */
 
 // Plugin details
