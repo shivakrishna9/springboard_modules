@@ -48,6 +48,7 @@ function fundraiser_ab_donations_total_config_validate($config, $field_name_pref
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
  * Webform A/B test node
+ * @todo: format this as a dollar amount
  */
 function fundraiser_ab_donations_total_config_summary($config) {
   return $config['donation_sum'];
@@ -59,12 +60,10 @@ function fundraiser_ab_donations_total_config_summary($config) {
  * 
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
- *   checked for a win. In this case, the array will contain 'hits'
+ *   checked for a win. In this case, the array will contain 'donation_sum'
  * @param $webform_details
  *   Array of info about the webform to check.
  */
 function fundraiser_ab_donations_total_check_win($config, $webform_details) {
-  dsm($webform_details['fundraiser']['total_donations'], 'donated');
-  dsm($config['donation_sum'], 'min for win');
   return ($webform_details['fundraiser']['total_donations'] >= $config['donation_sum']);
 }

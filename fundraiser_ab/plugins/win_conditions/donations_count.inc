@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Minimum of donations
+ * Provide a Webform A/B Test win condition: Minimum number of donations
  */
 
 // Plugin details
@@ -59,7 +59,7 @@ function fundraiser_ab_donations_count_config_summary($config) {
  * 
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
- *   checked for a win. In this case, the array will contain 'hits'
+ *   checked for a win. In this case, the array will contain 'donations'
  * @param $webform_details
  *   Array of info about the webform to check.
  */
