@@ -80,7 +80,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
 
 
       // Check if the stat record already exists
-      if (db_result(db_query('SELECT test_nid FROM {fundraiser_ab_states} WHERE test_nid = %d AND webform_nid = %d', $test_node->nid, $webform_node->nid))) {
+      if (db_result(db_query('SELECT test_nid FROM {fundraiser_ab_stats} WHERE test_nid = %d AND webform_nid = %d', $test_node->nid, $webform_node->nid))) {
         // Update existing record
 
         // Prep placeholders for query
@@ -89,7 +89,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         );
 
         // Start query
-        $sql = 'UPDATE {fundraiser_ab_states} SET 
+        $sql = 'UPDATE {fundraiser_ab_stats} SET 
           donation_count = donation_count + 1,
           total_donations = total_donations + %d';
 
@@ -119,7 +119,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
           'total_sustainer_donations' => ($recurs) ? $donation_amount : 0,
           'sustainer_count' => ($recurs) ? 1 : 0,
         );
-        drupal_write_record('fundraiser_ab_states', $row);
+        drupal_write_record('fundraiser_ab_stats', $row);
       }
     }
   }
@@ -146,11 +146,20 @@ function fundraiser_ab_ctools_plugin_directory($module, $plugin) {
 function fundraiser_ab_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   if ($node->type == 'webform_ab' && $op == 'load') {
     // Load all avialable fundraiser stats for webforms in this test
-    $result = db_query('SELECT * FROM {fundraiser_ab_states} WHERE test_nid=%d', $node->nid);
+    $result = db_query('SELECT * FROM {fundraiser_ab_stats} WHERE test_nid=%d', $node->nid);
     while ($row = db_fetch_array($result)) {
       // Set the stats right on the node object instead of returning values,
       // because returned values overwrite the existing included_webforms values
       $node->included_webforms[$row['webform_nid']]['fundraiser'] = $row;
     }
   }
+}
+
+
+/**
+ * Implementation of hook_webform_ab_reset_data().
+ * Reset data about a given A/B test
+ */
+function fundraiser_ab_webform_ab_reset_data($test_nid) {
+  $result = db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d', $test_nid);
 }

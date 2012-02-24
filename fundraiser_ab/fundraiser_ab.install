@@ -21,7 +21,7 @@ function fundraiser_ab_uninstall() {
 function fundraiser_ab_schema() {
   $schema = array();
   
-  $schema['fundraiser_ab_states'] = array(
+  $schema['fundraiser_ab_stats'] = array(
     'description' => t('Store totaled information about '),
     'fields' => array(
       'test_nid' => array(
