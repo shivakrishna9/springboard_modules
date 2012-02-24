@@ -91,12 +91,12 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         // Start query
         $sql = 'UPDATE {fundraiser_ab_stats} SET 
           donation_count = donation_count + 1,
-          total_donations = total_donations + %d';
+          total_donations = total_donations + %f';
 
         // If it's a sustainer, increase those values too
         if ($recurs) {
           $sql .= ', sustainer_count = sustainer_count + 1,
-            total_sustainer_donations = total_sustainer_donations + %d';
+            total_sustainer_donations = total_sustainer_donations + %f';
           $placeholders[] = $donation_amount;
         }
 
