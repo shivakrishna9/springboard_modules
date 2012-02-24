@@ -135,3 +135,22 @@ function fundraiser_ab_ctools_plugin_directory($module, $plugin) {
     return 'plugins/' . $plugin;
   }
 }
+
+
+
+/**
+ * Implements hook_nodeapi().
+ *
+ * When loading a webform_ab node, load any fundraiser stats for it
+ */
+function fundraiser_ab_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type == 'webform_ab' && $op == 'load') {
+    // Load all avialable fundraiser stats for webforms in this test
+    $result = db_query('SELECT * FROM {fundraiser_ab_states} WHERE test_nid=%d', $node->nid);
+    while ($row = db_fetch_array($result)) {
+      // Set the stats right on the node object instead of returning values,
+      // because returned values overwrite the existing included_webforms values
+      $node->included_webforms[$row['webform_nid']]['fundraiser'] = $row;
+    }
+  }
+}
