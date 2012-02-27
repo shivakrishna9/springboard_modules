@@ -63,7 +63,9 @@ function fundraiser_ab_donations_total_config_summary($config) {
  *   checked for a win. In this case, the array will contain 'donation_sum'
  * @param $webform_details
  *   Array of info about the webform to check.
+ * @param $test_node
+ *   Webform A/B Test node
  */
-function fundraiser_ab_donations_total_check_win($config, $webform_details) {
+function fundraiser_ab_donations_total_check_win($config, $webform_details, $test_node) {
   return ($webform_details['fundraiser']['total_donations'] >= $config['donation_sum']);
 }

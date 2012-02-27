@@ -95,8 +95,10 @@ function fundraiser_ab_sustainers_percentage_prep_save(&$config) {
  *   checked for a win. In this case, the array will contain 'percentage'
  * @param $webform_details
  *   Array of info about the webform to check.
+ * @param $test_node
+ *   Webform A/B Test node
  */
-function fundraiser_ab_sustainers_percentage_check_win($config, $webform_details) {
+function fundraiser_ab_sustainers_percentage_check_win($config, $webform_details, $test_node) {
   if ($webform_details['fundraiser']['sustainer_count'] > 0) {
     $percentage = $webform_details['fundraiser']['sustainer_count'] / $webform_details['fundraiser']['donation_count'];
     return $percentage >= $config['percentage'];
