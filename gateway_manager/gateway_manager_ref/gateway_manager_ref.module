@@ -76,31 +76,12 @@ function gateway_manager_ref_field_settings($op, $field) {
  */
 function gateway_manager_ref_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
-    // Do validation on the field values here. The widget 
-    // will do its own validation and you cannot make any 
-    // assumptions about what kind of widget has been used, 
-    // so don't validate widget values, only field values.
-    case 'validate':
-      if (is_array($items)) {
-        foreach ($items as $delta => $item) {
-          // The error_element is needed so that CCK can 
-          // set an error on the right sub-element when 
-          // fields are deeply nested in the form.
-          $error_element = isset($item['_error_element']) ? $item['_error_element'] : '';
-          if (is_array($item) && isset($item['_error_element'])) unset($item['_error_element']);
-          if (!empty($item['value'])) {
-            // @todo: Check that it's a valid gateway
-            //form_set_error($error_element, t('%name: the value may not be longer than %max characters.', array('%name' => $field['widget']['label'], '%max' => $field['max_length'])));
-          }
-        }
-      }
-      return $items;
-
     // This is where you make sure that user-provided 
     // data is sanitized before being displayed.
     case 'sanitize':
       foreach ($items as $delta => $item) {
-        $items[$delta]['safe'] = check_plain($item['value']);
+        $gateway = gateway_manager_gateway_load($item['gateway_id']);
+        $items[$delta]['safe'] = $gateway->name;
       }
   }
 }
@@ -192,11 +173,7 @@ function gateway_manager_ref_field_formatter_info() {
  * 
  */
 function theme_gateway_manager_ref_formatter_default($element) {
-  if ($element['#item']['gateway_id'] > 0) {
-    $gateway = gateway_manager_gateway_load($element['#item']['gateway_id']);
-    return $gateway->name;
-  }
-  return '';
+  return $element['#item']['safe'];
 }
 
 
