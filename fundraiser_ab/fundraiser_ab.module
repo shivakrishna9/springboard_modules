@@ -161,5 +161,14 @@ function fundraiser_ab_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
  * Reset data about a given A/B test
  */
 function fundraiser_ab_webform_ab_reset_data($test_nid) {
-  $result = db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d', $test_nid);
+  db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d', $test_nid);
+}
+
+
+/**
+ * Implementation of hook_webform_ab_remove_form().
+ * Remove data about a form when it is removed from a test
+ */
+function fundraiser_ab_webform_ab_remove_form($test_nid, $webform_nid) {
+  db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d AND webform_nid=%d', $test_nid, $webform_nid);
 }
