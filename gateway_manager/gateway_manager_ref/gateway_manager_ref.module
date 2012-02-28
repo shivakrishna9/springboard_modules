@@ -1,0 +1,308 @@
+<?php
+/**
+ * @file
+ * Payment Gateway Reference
+ *
+ * Defines a CCK node field for references to Payment Gateways, similar to the
+ * Node Reference field.
+ */
+
+
+//==========================================//
+// DEFINING A FIELD
+//==========================================//
+
+/**
+ * Implementation of hook_field_info().
+ */
+function gateway_manager_ref_field_info() {
+  return array(
+    // The machine name of the field, 
+    // no more than 32 characters.
+    'gateway_manager_ref' => array(
+      // The human-readable label of the field that will be 
+      // seen in the Manage fields screen.
+      'label' => t('Payment Gateway Reference'),
+      // A description of what type of data the field stores.
+      'description' => t('Store a reference to a payment gateway.'),
+      // An icon to use in Panels.
+      'content_icon' => 'icon_cck_field.png',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function gateway_manager_ref_field_settings($op, $field) {
+  switch ($op) {
+    // Define the database storage for this field using 
+    // the same construct used by schema API. Most fields
+    // have only one column, but there can be any number 
+    // of different columns. After the schema API values, 
+    // add two optional values to each column, 
+    //  'views', to define a Views field 
+    //  'sortable', to add a Views sort field
+    case 'database columns':
+      $columns['gateway_id'] = array(
+        'type' => 'int', 
+        'length' => 11, 
+        'not null' => FALSE, 
+        'sortable' => TRUE, 
+        'views' => TRUE,
+      );
+      return $columns;
+
+    // Optional: Make changes to the default $data array 
+    // created for Views. Omit this if no changes are 
+    // needed, use it to add a custom handler or make 
+    // other changes.
+    case 'views data':
+      // Start with the $data created by CCK
+      // and alter it as needed. The following
+      // code illustrates how you would retrieve
+      // the necessary data.
+      $data = content_views_field_views_data($field);
+      $db_info = content_database_info($field);
+      $table_alias = content_views_tablename($field);
+      $field_data = $data[$table_alias][$field['field_name'] .'_value'];
+      // Make changes to $data as needed here.
+      return $data;
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function gateway_manager_ref_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    // Do validation on the field values here. The widget 
+    // will do its own validation and you cannot make any 
+    // assumptions about what kind of widget has been used, 
+    // so don't validate widget values, only field values.
+    case 'validate':
+      if (is_array($items)) {
+        foreach ($items as $delta => $item) {
+          // The error_element is needed so that CCK can 
+          // set an error on the right sub-element when 
+          // fields are deeply nested in the form.
+          $error_element = isset($item['_error_element']) ? $item['_error_element'] : '';
+          if (is_array($item) && isset($item['_error_element'])) unset($item['_error_element']);
+          if (!empty($item['value'])) {
+            // @todo: Check that it's a valid gateway
+            //form_set_error($error_element, t('%name: the value may not be longer than %max characters.', array('%name' => $field['widget']['label'], '%max' => $field['max_length'])));
+          }
+        }
+      }
+      return $items;
+
+    // This is where you make sure that user-provided 
+    // data is sanitized before being displayed.
+    case 'sanitize':
+      foreach ($items as $delta => $item) {
+        $items[$delta]['safe'] = check_plain($item['value']);
+      }
+  }
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ * 
+ * CCK has no way to know if something like a zero is
+ * an empty value or a valid value, so return
+ * TRUE or FALSE to a populated field $item array.
+ * CCK uses this to remove empty multi-value elements
+ * from forms.
+ */
+function gateway_manager_ref_content_is_empty($item, $field) {
+  return (empty($item['gateway_id']) || !($item['gateway_id'] > 0));
+}
+
+/**
+ * Implementation of hook_content_generate().
+ * 
+ * Optional, provide dummy value for nodes created
+ * by the Devel Generate module.
+ */
+function gateway_manager_ref_content_generate($node, $field) {
+  $node_field = array();
+  $gateway_ids = array_keys(_gateway_manager_gateway_list());
+  $node_field['gateway_id'] = $gateway_ids[array_rand($gateway_ids)];
+  return $node_field;
+}
+
+
+
+
+//==========================================//
+// DEFINING A FORMATTER
+//==========================================//
+
+/**
+ * Implementation of hook_theme().
+ */
+function gateway_manager_ref_theme() {
+  return array(
+    // Themes for the formatters.
+    'gateway_manager_ref_formatter_default' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ * 
+ * All fields should have a 'default' formatter.
+ * Any number of other formatters can be defined as well.
+ * It's nice for there always to be a 'plain' option
+ * for the raw value, but that is not required.
+ * 
+ */
+function gateway_manager_ref_field_formatter_info() {
+  return array(
+    // The machine name of the formatter.
+    'default' => array(
+      // The human-readable label shown on the Display 
+      // fields screen.
+      'label' => t('Default'),
+      // An array of the field types this formatter 
+      // can be used on.
+      'field types' => array('gateway_manager_ref'),
+      // CONTENT_HANDLE_CORE:   CCK will pass the formatter
+      // a single value.
+      // CONTENT_HANDLE_MODULE: CCK will pass the formatter
+      // an array of all the values. None of CCK's core 
+      // formatters use multiple values, that is an option
+      // available to other modules that want it.
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+  );
+}
+
+/**
+ * Theme function for 'default' example field formatter.
+ * 
+ * $element['#item']: the sanitized $delta value for the item,
+ * $element['#field_name']: the field name,
+ * $element['#type_name']: the $node->type,
+ * $element['#formatter']: the $formatter_name,
+ * $element['#node']: the $node,
+ * $element['#delta']: the delta of this item, like '0',
+ * 
+ */
+function theme_gateway_manager_ref_formatter_default($element) {
+  if ($element['#item']['gateway_id'] > 0) {
+    $gateway = gateway_manager_gateway_load($element['#item']['gateway_id']);
+    return $gateway->name;
+  }
+  return '';
+}
+
+
+
+
+
+//==========================================//
+// DEFINING A WIDGET
+//==========================================//
+
+/**
+ * Implementation of hook_widget_info().
+ *
+ * Here we indicate that the content module will handle
+ * the default value and multiple values for these widgets.
+ *
+ * Callbacks can be omitted if default handing is used.
+ * They're included here just so this module can be used
+ * as an example for custom modules that might do things
+ * differently.
+ */
+function gateway_manager_ref_widget_info() {
+  return array(
+    // The machine name of the widget, no more than 32 
+    // characters.
+    'gateway_manager_ref_widget' => array(
+      // The human-readable label of the field that will be 
+      // seen in the Manage fields screen.
+      'label' => t('Gateway Selector'),
+      // An array of the field types this widget can be 
+      // used with.
+      'field types' => array('gateway_manager_ref'),
+      // Who will handle multiple values, default is core.
+      // 'CONTENT_HANDLE_MODULE' means the module does it.
+      // See optionwidgets for an example of a module that 
+      // handles its own multiple values.
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'callbacks' => array(
+        // Who will create the default value, default is core.
+        // 'CONTENT_CALLBACK_CUSTOM' means the module does it.
+        // 'CONTENT_CALLBACK_NONE' means this widget has 
+        // no default value.
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+
+/**
+ * Implementation of hook_widget().
+ *
+ * Attach a single form element to the form. 
+ * 
+ * CCK core fields only add a stub element and builds 
+ * the complete item in #process so reusable elements 
+ * created by hook_elements can be plugged into any 
+ * module that provides valid $field information.
+ * 
+ * Custom widgets that don't care about using hook_elements
+ * can be built out completely at this time.
+ *
+ * If there are multiple values for this field and CCK is 
+ * handling multiple values, the content module will call 
+ * this function as many times as needed.
+ *
+ * @param $form
+ *   the entire form array, 
+ *   $form['#node'] holds node information
+ * @param $form_state
+ *   the form_state, 
+ *   $form_state['values'][$field['field_name']]
+ *   holds the field's form values.
+ * @param $field
+ *   the field array
+ * @param $items
+ *   array of default values for this field
+ * @param $delta
+ *   the order of this item in the array of 
+ *   subelements (0, 1, 2, etc)
+ *
+ * @return
+ *   the form item for a single element for this field
+ */
+function gateway_manager_ref_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $gateways = array('' => t('-- Select One --')) + _gateway_manager_gateway_list();
+
+  
+  $element['gateway_id'] = array(
+    '#type' => 'select',
+    '#title' => check_plain($field['widget']['label']),
+    '#default_value' => isset($items[$delta]['gateway_id']) ? $items[$delta]['gateway_id'] : NULL,
+    '#options' => $gateways,
+    '#required' => $field['required'],
+  );
+  
+  
+  // Used so that hook_field('validate') knows where to 
+  // flag an error in deeply nested forms.
+  if (empty($form['#parents'])) {
+    $form['#parents'] = array();
+  }
+  $element['_error_element'] = array(
+    '#type' => 'value',
+    '#value' => implode('][', array_merge($form['#parents'], array('value'))),
+  );
+  
+  return $element;
+}
