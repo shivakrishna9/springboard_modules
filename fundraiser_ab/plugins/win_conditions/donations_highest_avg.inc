@@ -32,7 +32,7 @@ function fundraiser_ab_donations_highest_avg_config_summary($config) {
  * 
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
- *   checked for a win. In this case, the array will contain 'donation_sum'
+ *   checked for a win. In this case, the array will be empty.
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
