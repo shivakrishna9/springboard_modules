@@ -11,9 +11,9 @@ $plugin = array(
   'title' => t('Number of Sustainer Donations'),
   'description' => t('A donation form must receive at least this many sustainer donations to be can be declared the winner.'),
   'config form' => 'fundraiser_ab_sustainers_count_config',
-  'config validation form' => 'fundraiser_ab_sustainers_count_config_validate',
+  'config form validation' => 'fundraiser_ab_sustainers_count_config_validate',
   'config summary' => 'fundraiser_ab_sustainers_count_config_summary',
-  'check win criteria' => 'fundraiser_ab_sustainers_count_check_win',
+  'check criteria' => 'fundraiser_ab_sustainers_count_check_win',
 );
 
 /**

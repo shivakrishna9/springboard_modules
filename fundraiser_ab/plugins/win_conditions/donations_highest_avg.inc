@@ -10,7 +10,7 @@ $plugin = array(
   'title' => t('Highest Average of Donation Amounts'),
   'description' => t('A donation form will be declared the winner if it meets all other win conditions, and has the highest average donation amount among the donation forms included in the A/B test.'),
   'config summary' => 'fundraiser_ab_donations_highest_avg_config_summary',
-  'check win criteria' => 'fundraiser_ab_donations_highest_avg_check_win',
+  'check criteria' => 'fundraiser_ab_donations_highest_avg_check_win',
 );
 
 

@@ -10,9 +10,9 @@ $plugin = array(
   'title' => t('Number of Donations'),
   'description' => t('A donation form must receive at least this many donations to be can be declared the winner.'),
   'config form' => 'fundraiser_ab_donations_count_config',
-  'config validation form' => 'fundraiser_ab_donations_count_config_validate',
+  'config form validation' => 'fundraiser_ab_donations_count_config_validate',
   'config summary' => 'fundraiser_ab_donations_count_config_summary',
-  'check win criteria' => 'fundraiser_ab_donations_count_check_win',
+  'check criteria' => 'fundraiser_ab_donations_count_check_win',
 );
 
 /**

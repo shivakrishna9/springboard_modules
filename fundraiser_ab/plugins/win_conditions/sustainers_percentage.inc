@@ -11,9 +11,9 @@ $plugin = array(
   'title' => t('Percentage of Donations That Are Sustainers'),
   'description' => t('Of the donations made on the form, at least this percentage must be sustainers in order to win.'),
   'config form' => 'fundraiser_ab_sustainers_percentage_config',
-  'config validation form' => 'fundraiser_ab_sustainers_percentage_config_validate',
+  'config form validation' => 'fundraiser_ab_sustainers_percentage_config_validate',
   'config summary' => 'fundraiser_ab_sustainers_percentage_config_summary',
-  'check win criteria' => 'fundraiser_ab_sustainers_percentage_check_win',
+  'check criteria' => 'fundraiser_ab_sustainers_percentage_check_win',
   'prep for save' => 'fundraiser_ab_sustainers_percentage_prep_save',
 );
 
