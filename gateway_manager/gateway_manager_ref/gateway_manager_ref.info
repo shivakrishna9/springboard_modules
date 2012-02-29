@@ -1,0 +1,10 @@
+name = Payment Gateway Reference
+description = Defines a CCK node field for references to Payment Gateways, similar to the Node Reference field.
+core = 6.x
+package = Jackson River Springboard - payment
+dependencies[] = gateway_manager
+dependencies[] = content
+dependencies[] = text
+dependencies[] = optionwidgets
+
+version =  6.x-3.0-dev
