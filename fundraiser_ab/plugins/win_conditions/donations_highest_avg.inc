@@ -18,7 +18,6 @@ $plugin = array(
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
  * Webform A/B test node
- * @todo: format this as a dollar amount
  */
 function fundraiser_ab_donations_highest_avg_config_summary($config) {
   return 'Yes';

@@ -51,7 +51,7 @@ function fundraiser_ab_donations_total_config_validate($config, $field_name_pref
  * @todo: format this as a dollar amount
  */
 function fundraiser_ab_donations_total_config_summary($config) {
-  return $config['donation_sum'];
+  return money_format('$%.2n', $config['donation_sum']);
 }
 
 
