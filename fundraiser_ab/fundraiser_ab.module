@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Fundraiser A/B Test
@@ -8,12 +6,6 @@
  * Adds special functionality to the Webform A/B Test module for use with Fundraising
  * forms.
  */
-
-/**
- * @todo
- *    Add win condition for total amount collected?
- */
-
 
 /**
  * Implementation of hook_webform_ab_get_webform_types().
@@ -51,4 +43,132 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
     }
     return $forms;
   }
+}
+
+
+/**
+ * Implementation of hook_webform_ab_conversion().
+ * Save updated stats for this donation form/test node combo.
+ */
+function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
+  if($webform_node = node_load($form_state_values['webform_nid'])) {
+    // Only update on donation form submissions
+    if ($webform_node->type == 'donation_form') {
+      $fundraiser_fields = _fundraiser_array_flatten($form_state_values);
+
+      // lets jump through some hoops to see if this was a recurring donation
+      $recurs = FALSE;
+      $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $webform_node->nid));
+      if (!empty($recurs_cid)) {
+        $value = $form_state_values['submitted'][$recurs_cid];
+        if (is_array($value)) { // if this is an array, then it is a single item checkbox
+          $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
+        }
+        else {
+          $recurs = $value == 'recurs' ? TRUE : FALSE;
+        }
+      }
+      // end jumping through hoops
+
+
+      // look for other amount
+      $donation_amount = $fundraiser_fields['amount'];
+      if ($donation_amount == "other") {
+        $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
+      }
+
+
+
+      // Check if the stat record already exists
+      if (db_result(db_query('SELECT test_nid FROM {fundraiser_ab_stats} WHERE test_nid = %d AND webform_nid = %d', $test_node->nid, $webform_node->nid))) {
+        // Update existing record
+
+        // Prep placeholders for query
+        $placeholders = array(
+          $donation_amount,
+        );
+
+        // Start query
+        $sql = 'UPDATE {fundraiser_ab_stats} SET 
+          donation_count = donation_count + 1,
+          total_donations = total_donations + %f';
+
+        // If it's a sustainer, increase those values too
+        if ($recurs) {
+          $sql .= ', sustainer_count = sustainer_count + 1,
+            total_sustainer_donations = total_sustainer_donations + %f';
+          $placeholders[] = $donation_amount;
+        }
+
+        // Make sure the right row is updated
+        $sql .= ' WHERE test_nid = %d AND webform_nid = %d';
+
+        // And add the placeholder values used for the where clause
+        $placeholders[] = $test_node->nid;
+        $placeholders[] = $webform_node->nid;
+
+        db_query($sql, $placeholders);
+      }
+      else {
+        // Create a new stat record
+        $row = array(
+          'test_nid' => $test_node->nid,
+          'webform_nid' => $webform_node->nid,
+          'total_donations' => $donation_amount,
+          'donation_count' => 1,
+          'total_sustainer_donations' => ($recurs) ? $donation_amount : 0,
+          'sustainer_count' => ($recurs) ? 1 : 0,
+        );
+        drupal_write_record('fundraiser_ab_stats', $row);
+      }
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_ctools_plugin_directory().
+ * Tell ctools where this module's plugins live
+ */
+function fundraiser_ab_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'webform_ab') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+
+
+/**
+ * Implements hook_nodeapi().
+ *
+ * When loading a webform_ab node, load any fundraiser stats for it
+ */
+function fundraiser_ab_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type == 'webform_ab' && $op == 'load') {
+    // Load all avialable fundraiser stats for webforms in this test
+    $result = db_query('SELECT * FROM {fundraiser_ab_stats} WHERE test_nid=%d', $node->nid);
+    while ($row = db_fetch_array($result)) {
+      // Set the stats right on the node object instead of returning values,
+      // because returned values overwrite the existing included_webforms values
+      $node->included_webforms[$row['webform_nid']]['fundraiser'] = $row;
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_webform_ab_reset_data().
+ * Reset data about a given A/B test
+ */
+function fundraiser_ab_webform_ab_reset_data($test_nid) {
+  db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d', $test_nid);
+}
+
+
+/**
+ * Implementation of hook_webform_ab_remove_form().
+ * Remove data about a form when it is removed from a test
+ */
+function fundraiser_ab_webform_ab_remove_form($test_nid, $webform_nid) {
+  db_query('DELETE FROM {fundraiser_ab_stats} WHERE test_nid=%d AND webform_nid=%d', $test_nid, $webform_nid);
 }

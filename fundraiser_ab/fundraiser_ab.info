@@ -1,4 +1,3 @@
-; $Id$
 name = Fundraiser A/B Test
 description = "Adds special functionality to the Webform A/B Test module for use with Fundraising forms."
 
