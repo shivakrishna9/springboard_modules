@@ -98,6 +98,22 @@ function queue_processor_admin_settings() {
 		'#size' => 2,
 	);
 	
+	$form['queue_heap_destination'] = array(
+	 '#type' => 'select',
+	 '#title' => t('Unrecoverable error destination'),
+	 '#description' => t('Where items get moved to in the event of an unrecoverable error.'),
+	 '#options' => array('queue' => 'Queue', 'retry queue' => 'Retry queue'),
+	 '#default_value' => variable_get('queue_heap_destination', 'queue'),
+	);
+	
+	$form['queue_retry_delay'] = array(
+    '#type' => 'select',
+    '#title' => t('Retry queue delay'),
+    '#description' => t('The number of hours to wait before an item is processed again.'),
+    '#options' => array(2 => '2 hours', 6 => '6 hours', 12 => '12 hours', 24 => '24 hours'),
+    '#default_value' => variable_get('queue_retry_delay', 24),
+	);
+	
 	$form['queue_summary_email'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Send email summary to'),
@@ -187,6 +203,8 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
 	variable_set('queue_batch_size', $form_state['values']['queue_batch_size']);
 	variable_set('queue_retry_max', $form_state['values']['queue_retry_max']);
 	variable_set('queue_summary_email', $form_state['values']['queue_summary_email']);
+	variable_set('queue_heap_destination', $form_state['values']['queue_heap_destination']);
+	variable_set('queue_retry_delay', $form_state['values']['queue_retry_delay']);
   
 	drupal_set_message(t('Settings have been saved.'));
 }
@@ -199,6 +217,8 @@ function queue_processor_admin_settings_reset($form, &$form_state) {
 	variable_set('queue_batch_size', 200);
 	variable_set('queue_retry_max', 3);
 	variable_set('queue_summary_email', NULL);
+	variable_set('queue_heap_destination', 'queue');
+	variable_set('queue_retry_delay', 24);
 	
 	drupal_set_message(t('Settings have been reset.'));
 }
