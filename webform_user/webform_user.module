@@ -206,25 +206,27 @@ function webform_user_save_page_title($form, &$form_state) {
  * Implementation of hook_form_alter().
  */
 function webform_user_form_alter(&$form, $form_state, $form_id) {
-  $webform_user = _webform_user_load_webform_user($form['nid']['#value']);
-  $node = node_load($form['nid']['#value']);
-  if ($form_id == 'webform_configure_form' && $node->is_webform_user) {
-    $form['submission']['confirmation_wrapper']['page_title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Page title'),
-      '#weight' => 0,
-      '#default_value' => $webform_user['confirmation_page_title'],
-    );
-    
-    $form['#submit'][] = 'webform_user_save_page_title';
+
+  if ($form_id == 'webform_configure_form' && isset($form['nid']['#value'])) {
+    $node = node_load($form['nid']['#value']);
+    if($node->is_webform_user) {
+      $webform_user = _webform_user_load_webform_user($form['nid']['#value']);
+      $form['submission']['confirmation_wrapper']['page_title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Page title'),
+        '#weight' => 0,
+        '#default_value' => $webform_user['confirmation_page_title'],
+      );
+
+      $form['#submit'][] = 'webform_user_save_page_title';
+    }
   }
   
   $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
   
-  $node = $form['#node'];
-  
   // see if we're on a node type that allows webform user
   if (in_array(str_ireplace('_node_form', '', $form_id), $webform_user_node_types)) {
+    $node = $form['#node'];
     $form['webform_user'] = array(
       '#title' => t('Webform user settings'),
       '#type' => 'fieldset',
