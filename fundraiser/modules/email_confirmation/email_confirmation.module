@@ -968,7 +968,7 @@ function _email_confirmation_find_cid($form_key, $children) {
   $cid = '';
   foreach ($children as $child) {
     if (isset($child['children'])) {
-      $cid = _aclu_form_tweaks_find_cid($form_key, $child['children']);
+      $cid = _email_confirmation_find_cid($form_key, $child['children']);
     }
     elseif ($child['form_key'] == $form_key) {
       $cid =  $child['cid'];
