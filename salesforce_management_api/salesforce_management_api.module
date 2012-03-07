@@ -233,7 +233,7 @@ function _salesforce_management_api_open_connection($username = FALSE, $password
   if (($login_result = $sf->login()) === TRUE) {
     // Return the object if a connection and login were successful, log the event and cache connect info to a variable.
     variable_set('salesforce_management_api_connect', array('status' => 'Connected', 'time' => time()));
-    watchdog('salesforce', t('Connection to Salesforce has been set.', array()));
+    watchdog('salesforce', t('Connection to Salesforce from !ip has been set.', array('!ip' => $_SERVER['REMOTE_ADDR'])));
     return $sf;
   }
   else {
@@ -659,19 +659,12 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
   // Load the fieldmap from the database.
   $map = salesforce_management_api_fieldmap_load($fieldmap);
 
-  $d_user = user_load($source->uid);
- 
- if(($map['salesforce']== 'User') || ($map['salesforce'] == 'Account') || ($map['salesforce'] == 'Campaign') || ($map['salesforce'] == 'Case') || ($map['salesforce'] == 'Contact') || ($map['salesforce'] == 'Contract') || ($map['salesforce'] == 'Lead') || ($map['salesforce'] == 'Opportunity')){
-	 foreach($d_user->roles as $dr=>$val)
-	  $d_roles = $dr;
- }
   // Fail if the fieldmap does not exist.
   if (!$map) {
     return FALSE;
   }
 
-  // Load the source object definition so we know how to get values for its
-  // various fields.
+  // Load the source object definition so we know how to get values for its various fields.
 
   if ($map['action'] == 'import') {
     $source_object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
@@ -682,15 +675,6 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
 
   $object = new stdClass();
   
-  if($map['salesforce']== 'User'){
-	  $sf_variable = unserialize(variable_get("sf_drupal_role_map",''));
-	  foreach($sf_variable as $id=>$val)
-		if($val==$d_roles){
-		  $Sf_id = $id;
-		  break;
-		}
-  }  
-
 	// if $sfid is empty, the object is being exported for the first time
   if (empty($sfid)) {
   	// Loop through the fields on the fieldmap.

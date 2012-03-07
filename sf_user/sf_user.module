@@ -63,10 +63,13 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
 				$objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
 
 				foreach($batch['records'] as $record) {
-					$user = user_load((int)$record->oid);
-					// determine which users have already been exported. use their sfids to create an array of salesforce objects
-					// to pass to the object creation function
+					// create our own user object for performance reasons
+					$user = db_fetch_object(db_query("SELECT uid, name, mail, created, access, login, status FROM {users} WHERE uid = %d", $record->oid));
+					profile_load_profile($user);
+					
+					// determine which users have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
 					$object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $user, $record->sfid, $objects);
+					
 					// add the object to the batch record
 					$record->object = $object;
 				}

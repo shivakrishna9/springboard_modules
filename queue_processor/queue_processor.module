@@ -158,6 +158,10 @@ function queue_processor_process() {
 	
 	if ($sf) {
 		watchdog('salesforce queue processor', t('Queue processing started'), NULL, WATCHDOG_INFO);
+		
+		// clean up anything that might be left over in the heap as a result of a fatal, non-recoverable error
+		queue_processor_clean_heap();
+
 		// move all currently queued items to the heap
 		db_query("UPDATE {sf_queue} SET locked = 1 LIMIT %d", $max_to_process);
 		$result = db_query("SELECT * FROM {sf_queue} WHERE locked = 1");
@@ -415,9 +419,10 @@ function process_batch_response(&$batch, &$response) {
 		else {
 			// handle failure
 			$failure_count++;
+			$retry_delay = variable_get('queue_retry_delay', 24);
 			save_batch_errors($batch['id'], $oid, $type, $responses[$i]->errors);
 			log_batch_item_status($batch['id'], $oid, 0);
-			move_to_retry_queue($batch['records'][$i], $responses[$i]);
+			move_to_retry_queue($batch['records'][$i], $responses[$i], $retry_delay);
 			delete_from_heap($oid, $type);
 			// fire object_error 	
 			module_invoke_all('queue_processor', 'object_error', $batch['records'][$i], $responses[$i]);
@@ -478,6 +483,8 @@ function process_batch_failure(&$batch, $exception) {
 	$error->statusCode = "SOAP_FAULT";
 	$error->message = $exception->getMessage();
 	
+	$retry_delay = variable_get('queue_retry_delay', 24);
+	
 	for ($i = 0; $i < $items_in_batch; $i++) {
 		// convenience vars
 		$oid = $batch['records'][$i]->oid;
@@ -486,7 +493,7 @@ function process_batch_failure(&$batch, $exception) {
 		$error->type = $type;
 		save_batch_errors($batch['id'], $oid, $type, $error);
 		log_batch_item_status($batch['id'], $oid, 0);
-		move_to_retry_queue($batch['records'][$i], $response);
+		move_to_retry_queue($batch['records'][$i], $response, $retry_delay);
 		delete_from_heap($oid, $type);
 	}
 	
@@ -616,6 +623,14 @@ function delete_from_heap($oid, $type) {
  */
 function clear_heap() {
 	db_query("DELETE FROM {sf_heap} WHERE locked = 1");
+}
+
+/**
+ * Clears all records from heap
+ */
+function _queue_clear_all_from_heap() {
+  db_query("DELETE FROM {sf_heap}");
+  watchdog('salesforce queue processor', 'All items removed from heap', NULL, WATCHDOG_INFO);
 }
 
 /**
@@ -764,9 +779,67 @@ function log_batch_end($id, $success_count = 0, $failure_count = 0) {
 }
 
 /** 
+ * Cleans up any records that may be left in the heap as a result of a fatal
+ * non-recovarable error
+ */
+function queue_processor_clean_heap() {
+  // check if anything is currently in the heap
+  $count = db_result(db_query("SELECT count(id) FROM {sf_heap}"));
+  
+  // if there are any items in the heap, take action
+  if ($count > 0 ) {
+    // grab some settings
+    $destination = variable_get('queue_heap_destination', 'queue');
+    $retry_delay = variable_get('queue_retry_delay', 24);
+    
+    watchdog('salesforce queue processor', '!count items found in heap. Moving items to !destination for processing.', array('!count' => $count, '!destination' => $destination), WATCHDOG_INFO);
+    
+    // determine where these items are going
+    switch ($destination) {
+      // move to regular queue
+      case 'queue':
+        _queue_move_heap_to_queue();
+        _queue_clear_all_from_heap();
+        break;
+      
+      // move to retry queue
+      case 'retry queue':
+        _queue_move_heap_to_retry_queue($retry_delay);
+        _queue_clear_all_from_heap();
+        break;
+      
+    }   
+  } 
+  
+}
+
+/**
+ * Moves all heap records to the queue.
+ */
+function _queue_move_heap_to_queue() {
+  // take everything out of the heap and put it in the retry queue omitting anything that is already in the queue
+  db_query("INSERT INTO {sf_queue} (oid, sfid, type, fieldmap, action, created)
+    SELECT h.oid, h.sfid, h.type, h.fieldmap, h.action, unix_timestamp() FROM {sf_heap} h LEFT JOIN {sf_queue} q ON h.oid = q.oid AND h.type = q.type WHERE q.oid IS NULL");
+    
+  watchdog('salesforce queue processor', 'All items moved from the heap to the queue', NULL, WATCHDOG_INFO);
+}
+
+/**
+ * Moves all heap records to the retry queue.
+ */
+function _queue_move_heap_to_retry_queue($retry_delay) {
+  // take everything out of the heap and put it in the retry queue omitting anything that is already in the retry queue
+  db_query("INSERT INTO {sf_retry_queue} (oid, sfid, type, fieldmap, action, created, retry_date) 
+    SELECT h.oid, h.sfid, h.type, h.fieldmap, h.action, unix_timestamp(), unix_timestamp(timestampadd(HOUR, %d, from_unixtime(unix_timestamp()))) 
+    FROM {sf_heap} h LEFT JOIN {sf_retry_queue} r ON h.oid = r.oid AND h.type = r.type WHERE r.oid IS NULL", $retry_delay);
+  
+  watchdog('salesforce queue processor', 'All items moved from the heap to the retry queue', NULL, WATCHDOG_INFO);
+}
+
+/** 
  * Moves a failed object to the retry queue
  */
-function move_to_retry_queue(&$item, &$response) {
+function move_to_retry_queue(&$item, &$response, $retry_delay) {
 	$oid = $item->oid;
 	$type = $item->type;
 	
@@ -776,7 +849,7 @@ function move_to_retry_queue(&$item, &$response) {
 	$max_attempts = variable_get('queue_retry_max', 3);
 	
 	if (!empty($data)) {
-		db_query("UPDATE {sf_retry_queue} SET attempts = attempts + 1, retry_date = unix_timestamp(timestampadd(DAY, 1, from_unixtime(retry_date))) WHERE oid = '%s' AND type = '%s'", $oid, $type);
+		db_query("UPDATE {sf_retry_queue} SET attempts = attempts + 1, retry_date = unix_timestamp(timestampadd(HOUR, %d, from_unixtime(retry_date))) WHERE oid = '%s' AND type = '%s'", $retry_delay, $oid, $type);
 		if ($data['attempts'] + 1 == $max_attempts) {
 			move_to_permanent_failure($item, $response);
 			delete_from_retry_queue($oid, $type);
@@ -788,8 +861,8 @@ function move_to_retry_queue(&$item, &$response) {
 	}
 	else {
 		db_query("INSERT INTO {sf_retry_queue} (oid, sfid, type, fieldmap, action, created, retry_date) SELECT
-			oid, sfid, type, fieldmap, action, unix_timestamp(), unix_timestamp(timestampadd(DAY, 1, from_unixtime(unix_timestamp()))) FROM
-			{sf_heap} WHERE oid = '%s' and type = '%s'", $oid, $type);
+			oid, sfid, type, fieldmap, action, unix_timestamp(), unix_timestamp(timestampadd(HOUR, %d, from_unixtime(unix_timestamp()))) FROM
+			{sf_heap} WHERE oid = '%s' and type = '%s'", $retry_delay, $oid, $type);
 		
 		// fire moved_to_retry_queue trigger
 		module_invoke_all('queue_processor', 'moved_to_retry_queue', $item, $response);
