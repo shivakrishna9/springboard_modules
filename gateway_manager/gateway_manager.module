@@ -136,14 +136,17 @@ function gateway_manager_gateway_info($id) {
  * Loads a payment gateway configuration by id.
  */
 function gateway_manager_gateway_load($id) {
-  $gateway = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
-  $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
-  while ($data = db_fetch_array($result)) {
-    $gateway->terms[] = $data['tid'];
+  static $gateways = array();
+  if (!isset($gateways[$id])) {
+    $gateways[$id] = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
+    $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
+    while ($data = db_fetch_array($result)) {
+      $gateways[$id]->terms[] = $data['tid'];
+    }
+    //module_invoke_all('gateway_manager_gateway_load', $gateways[$id]);
+    drupal_alter('gateway_manager_gateway', $gateways[$id]);
   }
-  //module_invoke_all('gateway_manager_gateway_load', $gateway);
-  drupal_alter('gateway_manager_gateway', $gateway);
-  return $gateway;
+  return $gateways[$id];
 }
 
 /**
