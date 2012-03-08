@@ -41,12 +41,22 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
     // If Webform 2.x is in use, jump through hoops to determine the donation
     // forms
     if (_fundraiser_ab_is_webform_2x()) {
-      $result = db_query("SELECT n.nid, n.title, fg.internal_name FROM {node} n LEFT JOIN {fundraiser_gateway} fg ON fg.nid=n.nid WHERE n.status > 0 AND n.type='%s' AND fg.is_donation_form=1 ORDER BY title", array('webform'));
+      $result = db_query("SELECT n.nid, n.title, fg.internal_name
+          FROM {node} n
+          LEFT JOIN {fundraiser_gateway} fg ON fg.nid=n.nid
+          WHERE n.status > 0 AND n.type='%s' AND fg.is_donation_form=1
+          ORDER BY title",
+        array('webform'));
     }
     // Fundraiser for Webform 3.x and above stores donation forms in a node type
     // of their own
     else {
-      $result = db_query("SELECT n.nid, n.title, f.internal_name FROM {node} n LEFT JOIN {fundraiser} f ON f.nid=n.nid WHERE n.status > 0 AND n.type='%s' ORDER BY title", array('donation_form'));
+      $result = db_query("SELECT n.nid, n.title, f.internal_name 
+          FROM {node} n
+          LEFT JOIN {fundraiser} f ON f.nid=n.nid
+          WHERE n.status > 0 AND n.type='%s'
+          ORDER BY title",
+        array('donation_form'));
     }
 
     while ($row = db_fetch_array($result)) {
@@ -70,7 +80,11 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$indexed_forms, $webform
     // If Webform 2.x is in use, jump through hoops to determine the donation
     // forms
     if (_fundraiser_ab_is_webform_2x()) {
-      $result = db_query("SELECT n.nid FROM {node} n LEFT JOIN {fundraiser_gateway} fg ON fg.nid=n.nid WHERE n.status > 0 AND n.type='%s' AND fg.is_donation_form=1", array('webform'));
+      $result = db_query("SELECT n.nid
+          FROM {node} n
+          LEFT JOIN {fundraiser_gateway} fg ON fg.nid=n.nid
+          WHERE n.status > 0 AND n.type='%s' AND fg.is_donation_form=1",
+        array('webform'));
     }
     // Fundraiser for Webform 3.x and above stores donation forms in a node type
     // of their own
