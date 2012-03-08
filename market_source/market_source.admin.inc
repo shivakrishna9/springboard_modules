@@ -134,6 +134,11 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
   if (count(explode('.', $market_source_cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
     variable_set('market_source_cookie_domain', $market_source_cookie_domain);
   }
+  elseif (!empty($market_source_cookie_domain)) {
+    drupal_set_message(t('Your cookie settings will not work. Either you do not have enough of a domain path to be used '.
+      'or you have used an IP address as the domain. The full site domain will be used.'), 'error');
+  }
+  // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.
 
   drupal_set_message(t('Market Source settings saved.'));
 }
