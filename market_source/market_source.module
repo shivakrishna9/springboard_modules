@@ -221,7 +221,7 @@ function _market_source_build_form_keys(&$form, $prefix = NULL) {
 function &_market_source_form_find_element(&$form, $key) {
   foreach (element_children($form) as $id) {
     $element = &$form[$id];
-    if ($id == $key) {
+    if ($id === $key) {
       return $element;
     }
     else {
@@ -243,7 +243,7 @@ function &_market_source_form_find_element(&$form, $key) {
 function &_market_source_webform_find_component(&$components, $key) {
   foreach (element_children($components) as $id) {
     $component = &$components[$id];
-    if ($component['form_key'] == $key) {
+    if ($component['form_key'] === $key) {
       return $component;
     }
   }
