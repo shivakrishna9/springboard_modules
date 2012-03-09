@@ -20,7 +20,6 @@
  *
  */
 ?>
-
 <div id="donation-form-column-wrapper">
   <div id="left">
     <? print $donation_fieldset; ?>

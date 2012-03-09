@@ -1,0 +1,6 @@
+#donation-form-column-wrapper #left fieldset { margin-right: 10px;}
+#donation-form-column-wrapper .form-text {width: 250px;}
+#donation-form-column-wrapper {width: 100%;}
+#donation-form-column-wrapper #right {float: right;width: 50%;}
+#donation-form-column-wrapper #left {float: left;width: 50%;}
+#donation-form-column-wrapper #donation-form-footer {clear: both;}

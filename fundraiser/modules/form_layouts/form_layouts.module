@@ -1,27 +1,29 @@
 <?php
 
 /**
+ * @file form_layouts.module
+ * Provide options for form layouts in donation forms.
+ */
+ 
+/**
  * Implementation of hook_theme().
  *
  * Add a theme function for each file found in /templates.
  */
-function form_layouts_theme() {
-  $theme = array();
+function form_layouts_theme($existing, $type, $theme, $path) {
   $templates = _form_layouts_template_list();
-
   foreach ($templates as $template) {
     $theme[$template['theme']] = array(
-      'arguments' => array('form' => NULL),
+      'variables' => array('form' => NULL),
       'template' => $template['template'],
       'pattern' => $template['pattern'],
     );
   }
-
   return $theme;
 }
 
 /**
- * Implemenation of hook_theme_registry_alter().
+ * Implementation of hook_theme_registry_alter().
  *
  * Add in a special preprocess function for all donation forms.
  */
@@ -38,7 +40,6 @@ function form_layouts_theme_registry_alter(&$theme_registry) {
  * Breaks the form into easily digestable chunks.
  */
 function form_layouts_preprocess_template(&$vars) {
-  // break the form into the major fieldsets. this could go one step further and break out the individual fields to.
   $vars['donation_fieldset'] = drupal_render($vars['form']['submitted']['donation']);
   $vars['donor_information_fieldset'] = drupal_render($vars['form']['submitted']['donor_information']);
   $vars['billing_address_fieldset'] = drupal_render($vars['form']['submitted']['billing_information']);
@@ -46,61 +47,29 @@ function form_layouts_preprocess_template(&$vars) {
 }
 
 /**
- * Default preprocess function for 2 column donation form. Adds some css to make 2 columns.
+ * Preprocess function for  2 column donation form.
+ *
+ * Adds some css to make 2 columns.
  */
 function form_layouts_preprocess_two_column(&$vars) {
-  $css = <<<CSS
-    <style type='text/css'>
-    #donation-form-column-wrapper #left fieldset {
-      margin-right: 10px;
-    }
-
-    #donation-form-column-wrapper .form-text {
-      width: 250px;
-    }
-
-    #donation-form-column-wrapper {
-      width: 100%;
-    }
-
-    #donation-form-column-wrapper #right {
-      float: right;
-      width: 50%;
-    }
-
-    #donation-form-column-wrapper #left {
-      float: left;
-      width: 50%;
-    }
-
-    #donation-form-column-wrapper #donation-form-footer {
-      clear: both;
-    }
-    </style>
-CSS;
-
-  // add in some default css for 2 columns
-  drupal_set_html_head($css);
+  drupal_add_css(drupal_get_path('module', 'form_layouts') . '/css/form_layouts_two_column.css'));
 }
 
 /**
  * Implementation of hook_form_alter().
  */
 function form_layouts_form_alter(&$form, $form_state, $form_id) {
+  // If this is a webform client form and donation type, then theme it.
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
-
     if ($node->type == 'donation_form') {
       $theme = _form_layouts_theme_template($node->nid);
       $form['#theme'] = array($theme . '_' . $node->nid, $theme);
     }
   }
-
-  // add a dropdown for the user to pick the layout
+  // If this is a form to add a donation form, add a dropdown to pick the layout.
   if ($form_id == 'donation_form_node_form') {
     $nid = $form['#node']->nid;
-
-    // get the available template files and doctor it up for a select list
     $files = _form_layouts_template_list();
     $options = array();
     foreach ($files as $file) {
@@ -118,27 +87,36 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implementation of hook_node_load().
  *
- * Make sure the layout gets cloned.
+ * Make sure the layout gets loaded.
  */
-function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($node->type != 'donation_form') {
-    // Nothing to do here.
-    return;
+function form_layouts_node_load($nodes, $types) {
+  foreach ($nodes as $nid => $node) {
+    if ($node->type == 'donation_form') {
+      $nodes[$nid]->layout_template = _form_layouts_theme_template($nid);
+    }
   }
+}
 
-  switch ($op) {
-    case 'load':
-      $node->layout_template = _form_layouts_theme_template($node->nid);
-      break;
-    case 'insert':
-    case 'update':
-      if (isset($node->layout)) {
-        $variable_name = _form_layouts_variable_name($node->nid);
-        variable_set($variable_name, $node->layout);
-      }
-      break;
+/**
+ * Implementation of hook_node_insert().
+ *
+ * Make sure the layout gets inserted.
+ */
+function form_layouts_node_insert($node) {
+  form_layouts_node_update($node);
+}
+
+/**
+ * Implementation of hook_node_update().
+ *
+ * Make sure the layout gets updated.
+ */
+function form_layouts_nodeapi($node) {
+  if ($node->type == 'donation_form' && isset($node->layout)) {
+    $variable_name = _form_layouts_variable_name($node->nid);
+    variable_set($variable_name, $node->layout);
   }
 }
 
@@ -173,16 +151,13 @@ function _form_layouts_variable_name($nid) {
  */
 function _form_layouts_template_list() {
   $path = drupal_get_path('module', 'form_layouts') . '/templates';
-
-  // get all .tpl.php files in the /templates directory
+  // Get all .tpl.php files in the /templates directory.
   $files = file_scan_directory($path, '.tpl.php');
   $templates = array();
-
-  // loop over each file and create an array of theme registry entries
+  // Loop over each file and create an array of theme registry entries.
   foreach ($files as $file) {
     $name = str_replace('.tpl', '', $file->name);
     $name_no_underscores = str_replace('-', '_', $name);
-
     $templates[$name] = array(
       'name' => ucfirst(str_replace('-', ' ', $name)),
       'theme' => $name_no_underscores,
@@ -190,6 +165,5 @@ function _form_layouts_template_list() {
       'template' => 'templates/' . $name
     );
   }
-
   return $templates;
 }
