@@ -38,12 +38,22 @@ function market_source_menu() {
  * Implementation of hook_init().
  */
 function market_source_init() {
+  // Add JavaScript to each page load.
   drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js', 'file');
   drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js', 'file');
+  // Get cookie domain info.
+  $market_source_cookie_domain = variable_get('market_source_cookie_domain', '');
+  $ms_cookie_domain = '';
+  // Per RFC 2109, cookie domains must contain at least one dot other than the
+  // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.
+  if (count(explode('.', $market_source_cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
+    $ms_cookie_domain = $market_source_cookie_domain;
+  }
   // Add other variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
     'qs_keys' => _market_source_build_qs_keys(),
     'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
+    'cookie_domain' => $market_source_cookie_domain,
   )), 'setting');
 }
 

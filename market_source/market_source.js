@@ -33,7 +33,12 @@ Drupal.behaviors.marketSourceInit = function (context) {
     var setCookie = function (name, value) {
       if (typeof $.cookie !== 'undefined') {
         name = 'market_source__' + name;
-        $.cookie(name, value, { path: '/' });
+        if (typeof Drupal.settings.market_source.cookie_domain !== 'undefined') {
+          $.cookie(name, value, { path: '/', domain: Drupal.settings.market_source.cookie_domain });
+        }
+        else {
+          $.cookie(name, value, { path: '/'});
+        }
       }
     }
 

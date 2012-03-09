@@ -88,7 +88,22 @@ function market_source_admin_settings_form() {
     '#type' => 'hidden',
     '#value' => $max_field_delta,
   );
-  
+
+  global $cookie_domain;
+  $form['market_source_cookie_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Market Source cookie settings'),
+    '#description' => t('The cookie domain name for Market Source cookies.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['market_source_cookie_settings']['market_source_cookie_domain'] = array(
+    '#title' => t('Cookie domain'),
+    '#type' => 'textfield',
+    '#description' => t('This is the domain name Market Source cookies will exist under.'),
+    '#default_value' => variable_get('market_source_cookie_domain', $cookie_domain),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save settings'),
@@ -138,6 +153,20 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
  
 
   variable_set('market_source_custom_fields', $custom_fields);
+
+  variable_set('market_source_cookie_domain', ''); 
+  $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
+  // Per RFC 2109, cookie domains must contain at least one dot other than the
+  // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.
+  if (count(explode('.', $market_source_cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
+    variable_set('market_source_cookie_domain', $market_source_cookie_domain);
+  }
+  elseif (!empty($market_source_cookie_domain)) {
+    drupal_set_message(t('Your cookie settings will not work. Either you do not have enough of a domain path to be used '.
+      'or you have used an IP address as the domain. The full site domain will be used.'), 'error');
+  }
+  // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.
+
   drupal_set_message(t('Market Source settings saved.'));
 }
 
