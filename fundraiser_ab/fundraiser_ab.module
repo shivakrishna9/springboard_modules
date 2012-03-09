@@ -107,25 +107,41 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$indexed_forms, $webform
 function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
   if($webform_node = node_load($form_state_values['webform_nid'])) {
     // Only update on donation form submissions
-    if ($webform_node->type == 'donation_form') {
-      $fundraiser_fields = _fundraiser_array_flatten($form_state_values);
+    // 3.x use donation_form node type
+    // 2.x use is_donation_form flag on webform node
+    if ($webform_node->type == 'donation_form' || $webform_node->is_donation_form > 0) {
+      // Flatten the submitted values, for convenience
+      // Use _fundraiser_array_flatten() if it's available (only in 3.x)
+      if (function_exists('_fundraiser_array_flatten')) {
+        $fundraiser_fields = _fundraiser_array_flatten($form_state_values);
+      }
+      else {
+        $fundraiser_fields = array_flatten($form_state_values);
+      }
 
-      // lets jump through some hoops to see if this was a recurring donation
       $recurs = FALSE;
-      $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $webform_node->nid));
-      if (!empty($recurs_cid)) {
-        $value = $form_state_values['submitted'][$recurs_cid];
-        if (is_array($value)) { // if this is an array, then it is a single item checkbox
-          $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
-        }
-        else {
-          $recurs = $value == 'recurs' ? TRUE : FALSE;
+      // If the recurring flag is close at hand, use it (Fundraiser 2.x)
+      if (!empty($fundraiser_fields['recurs_monthly'])) {
+    		$recurs = $fundraiser_fields['recurs_monthly'];
+    	}
+      // Lets jump through some hoops to see if this was a recurring donation
+      // (Fundraiser 3.x)
+    	else {
+        $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $webform_node->nid));
+        if (!empty($recurs_cid)) {
+          $value = $form_state_values['submitted'][$recurs_cid];
+          if (is_array($value)) {
+            // if this is an array, then it is a single item checkbox
+            $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
+          }
+          else {
+            $recurs = $value == 'recurs' ? TRUE : FALSE;
+          }
         }
       }
       // end jumping through hoops
 
-
-      // look for other amount
+      // Check if Other amount field was used
       $donation_amount = $fundraiser_fields['amount'];
       if ($donation_amount == "other") {
         $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
