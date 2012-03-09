@@ -121,7 +121,10 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
 
       $recurs = FALSE;
       // If the recurring flag is close at hand, use it (Fundraiser 2.x)
-      if (!empty($fundraiser_fields['recurs_monthly'])) {
+      if (isset($fundraiser_fields['recurs'])) {
+        $recurs = ($fundraiser_fields['recurs'] == 'recurs');
+      }
+      elseif (!empty($fundraiser_fields['recurs_monthly'])) {
     		$recurs = $fundraiser_fields['recurs_monthly'];
     	}
       // Lets jump through some hoops to see if this was a recurring donation
