@@ -35,8 +35,10 @@ function page_wrappers_perm() {
  */
 function page_wrappers_theme_registry_alter(&$theme_registry) {
   // tell the theme registry to look in this module's directory for theme files
-  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'page_wrappers') . '/theme';
-  $theme_registry['page']['theme paths'][] = file_directory_path() . '/page_wrappers/tpl';
+  $files_path = drupal_get_path('module', 'page_wrappers') . '/theme';
+  $module_path = file_directory_path() . '/page_wrappers/tpl';
+  $theme_registry['page']['theme paths'][] = $files_path;
+  $theme_registry['page']['theme paths'][] = $module_path;
 }
 
 /**
@@ -54,6 +56,15 @@ function page_wrappers_preprocess_page(&$vars) {
   // get out of here if we're on the edit page
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
+  }
+  
+  // do some song and dance for webform confirmation pages
+  if (arg(0) == 'node' && arg(2) == 'done' && is_numeric($_GET['sid'])) {
+    // potential performance enhancement here
+    $nid = filter_xss(arg(1));
+    if (is_numeric($nid)) {
+      $vars['node'] = node_load($nid);
+    }
   }
   
   // attempt to apply wrapper
@@ -557,11 +568,11 @@ function _page_wrapper_preview_form() {
 function _page_wrappers_apply_wrapper(&$vars) {
   // get the list of node types that can have wrappers
   $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form' => 'donation_form', 'page_wrapper' => 'page_wrapper'));
-  
+
   // if the node type is wrapper enabled and actually has one assigned
   if ($enabled_types[$vars['node']->type] && isset($vars['node']->wrapper)) {
     $template = db_result(db_query("SELECT template FROM {page_wrappers} WHERE nid = %d", $vars['node']->wrapper));
-    
+
     // make sure template actually exists
     if (_page_wrappers_template_exists($template)) {
       $vars['template_file'] = str_replace('.tpl.php', '', $template); // remove file ext.
