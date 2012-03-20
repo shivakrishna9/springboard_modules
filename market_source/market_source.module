@@ -38,9 +38,9 @@ function market_source_menu() {
  * Implementation of hook_init().
  */
 function market_source_init() {
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js', 'file');
-  // Add other variables to the JS settings array.
+  // Ensure that the cookie library is loaded.
+  drupal_add_library('system', 'jquery.cookie', TRUE);
+  // Add variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
     'qs_keys' => _market_source_build_qs_keys(),
     'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
@@ -217,9 +217,9 @@ function _market_source_build_form_keys(&$form, $prefix = NULL) {
     }
     // Lookup the element ID of $key in $form.
     $element = &_market_source_form_find_element($form, $lookup_key);
-    if (is_array($element) && isset($element['#id'])) {
-      // Add the element ID to $form_keys.
-      $form_keys[$key] = $element['#id'];
+    if (is_array($element) && isset($element['#name'])) {
+      // Add the element name to $form_keys.
+      $form_keys[$key] = $element['#name'];
     }
   }
   return $form_keys;

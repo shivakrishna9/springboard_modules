@@ -10,5 +10,4 @@ files[] = tests/market_source.test
 
 dependencies[] = webform
 
-scripts[] = jquery-cookie.js
 scripts[] = market_source.js
