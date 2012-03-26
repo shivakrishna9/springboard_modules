@@ -1,20 +1,26 @@
 <?php
 // $Id$
 
+/**
+ * @file installation file for Webform User module
+ */
+
 function webform_user_install() {
-  drupal_install_schema('webform_user');
+
 }
 
 function webform_user_uninstall() {
-  drupal_uninstall_schema('webform_user');
+  variable_del('webform_user_node_types');
 }
 
 /**
  * Implementation of hook_enable().
  */
 function webform_user_enable() {
-	// tell the queue about the type
-  queue_processor_add_type('webform_user');
+  // tell the queue about the type
+  if (module_exists('queue_processor')) {
+    queue_processor_add_type('webform_user');
+  }
 }
 
 /**
@@ -22,161 +28,100 @@ function webform_user_enable() {
  */
 function webform_user_disable() {
   // remove our type from the queue processor
-  queue_processor_remove_type('webform_user');
+  if (module_exists('queue_processor')) {
+    queue_processor_remove_type('webform_user');
+  }
 }
 
 function webform_user_schema() {
   $schema['webform_user'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'is_webform_user' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'authenticate_submitters' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'related_object' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '10',
-	      'not null' => FALSE,
-	    ),
-	    'foreign_key_field' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'send_new_user_email' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'confirmation_page_title' => array(
-        'description' => t('TODO: please describe this field!'),
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'is_webform_user' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'authenticate_submitters' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'related_object' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => FALSE,
+      ),
+      'foreign_key_field' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'send_new_user_email' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'confirmation_page_title' => array(
+        'description' => 'TODO: please describe this field!',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
       'email_field' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => 'TODO: please describe this field!',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
-	  ),
-	  'primary key' => array('nid'),
-	  'indexes' => array(
-	    'nid' => array('nid'),
-	  ),
-	);
-	
-	$schema['webform_user_component_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'cid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'map_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => TRUE,
-	    ),
-	  ),
-	  'primary key' => array('nid', 'cid'),
-	);
-	
-	
+    ),
+    'primary key' => array('nid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+  );
+  
+  $schema['webform_user_component_map'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'map_id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+  
+  
   return $schema;
-}
-
-/**
- * Update 6101: Add send_new_user_email field
- */
-function webform_user_update_6101() {
-
-  $updates = array();
-
-  db_add_field($updates, 'webform_user', 'send_new_user_email', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
-  return $updates;
-  
-}
-
-/**
- * Update 6102: Add webform_user_component_map
- */
-function webform_user_update_6102() {
-	$updates = array();
-	
-	$sql = <<<SQL
-	CREATE TABLE `webform_user_component_map` (
-	  `nid` int(10) unsigned NOT NULL,
-	  `cid` int(10) unsigned NOT NULL,
-	  `map_id` varchar(100) NOT NULL,
-	  PRIMARY KEY (`nid`,`cid`)
-	)
-SQL;
-  $updates[] = update_sql($sql);
-	
-	return $updates;
-}
-
-/**
- * Update 6103: Rename 'initial referrer' form keys to 'initial_referrer'
- */
-function webform_user_update_6103() {
-	$updates = array();
-	
-	$sql = "update webform_component SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
-	$updates[] = update_sql($sql);
-	
-	return $updates;
-}
-
-/**
- * Update 6104: Add confirmation_page_title to webform_user table
- */
-function webform_user_update_6104() {
-  $updates = array();
-
-  db_add_field($updates, 'webform_user', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE));
-  return $updates;
-}
-
-/**
- * Update 6105: Add email_field to webform_user table
- */
-function webform_user_update_6105() {
-  $updates = array();
-  
-  db_add_field($updates, 'webform_user', 'email_field', array('type' => 'varchar', 'length' => 255, 'not null' => FALSE));
-  return $updates;
 }
