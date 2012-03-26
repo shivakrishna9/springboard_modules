@@ -256,14 +256,22 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
   	  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
   	  );
     }
-    
-    $form['webform_user']['authenticate_submitters'] = array(
-      '#title' => t('Authenticate form submitters based on e-mail address matches.'),
-      '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
-      '#type' => 'checkbox',
-      '#default_value' => $node->authenticate_submitters,
-    );
-    
+
+    if (variable_get('webform_user_authenticate_submitters', FALSE)) {
+      $form['webform_user']['authenticate_submitters'] = array(
+        '#title' => t('Authenticate form submitters based on e-mail address matches.'),
+        '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
+        '#type' => 'checkbox',
+        '#default_value' => $node->authenticate_submitters,
+      );
+    }
+    else {
+      $form['webform_user']['authenticate_submitters'] = array(
+        '#type' => 'hidden',
+        '#value' => 0,
+      );
+    }
+
     $form['webform_user']['send_new_user_email'] = array(
     	'#title' => t('Send new users a e-mail with their account details.'),
     	'#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
