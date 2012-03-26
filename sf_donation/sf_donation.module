@@ -13,7 +13,7 @@ function sf_donation_menu() {
     'title' => 'Donation map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_donation_mapping_form', 1),
-    'access callback' => 'fundraiser_mapping_form_access',
+    'access callback' => 'sf_donation_mapping_form_access',
     'access arguments' => array(1),
     'weight' => 35,
     'type' => MENU_LOCAL_TASK,
@@ -38,6 +38,16 @@ function sf_donation_menu() {
 
   return $items;
 }
+
+
+/**
+ * Access callback: Check that the node in question is a donation form, and that
+ * the user has permission to edit Donation mapping
+ */
+function sf_donation_mapping_form_access($node) {
+  return ($node->type == 'donation_form') && user_access('edit donation form mapping');
+}
+
 
 /**
  * Implmentation of hook_fundraiser_form_insert().
@@ -395,7 +405,10 @@ function sf_donation_mapping_form_submit($form, &$form_state) {
  * Implementation of hook_perm().
  */
 function sf_donation_perm() {
-  return array('sync donations with salesforce');
+  return array(
+    'sync donations with salesforce',
+    'edit donation form mapping',
+  );
 }
 
 /**
