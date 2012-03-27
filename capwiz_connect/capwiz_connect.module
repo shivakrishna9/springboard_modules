@@ -224,8 +224,21 @@ function capwiz_connect_legislative_update_start() {
     
     // run curl
     try {
-      $job_id = json_decode(curl_exec($ch));
-      watchdog('capwiz_connect', 'Legislative update process started. Apex JobId: !id', array('!id' => $job_id), WATCHDOG_INFO);
+      $job = json_decode(curl_exec($ch)); // successful call should return the job id of the batch as a string
+      if (!empty($job)) {
+        // if we get an array back salesforce is not happy
+        if (is_array($job)) {
+          watchdog('capwiz_connect', 'Error starting legislative update process. Error code: !code. Message: !message.', array('!code' => $job[0]->errorCode, '!message' => $job[0]->message), WATCHDOG_WARNING);
+        }
+        // job id string is the expected result
+        elseif (is_string($job)) {
+          watchdog('capwiz_connect', 'Legislative update process started. Apex JobId: !id', array('!id' => $job), WATCHDOG_INFO);
+        }
+      }
+      // unable to parse response
+      else {
+        watchdog('capwiz_connect', 'Legislative update process did not start. No JobId was returned.', NULL, WATCHDOG_INFO);
+      }
     }
     catch (Exeception $e) {
       watchdog('capwiz_connect', 'An exception was thrown when requesting !url. Exception: !e', array('!url' => $url, '!e' => $e->getMessage()), WATCHDOG_WARNING);
