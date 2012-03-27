@@ -11,17 +11,14 @@
  * @return array
  *   Returns a system_settings_form() formatted Form API array.
  */
-function market_source_admin_settings_form() {
-  drupal_add_css(drupal_get_path('module', 'market_source') . '/market_source.admin.css', 'module', 'all');
-  
-  $default = variable_get('market_source_default_campaign', 'default_ms');
-  $custom_fields = variable_get('market_source_custom_fields', array());
-  
+function market_source_admin_settings_form(&$form_state) {
+  $form = array();
+
   $form['market_source_default_campaign'] = array(
     '#type' => 'textfield',
     '#title' => t('Default Market Source'),
     '#description' => t('Select a default campaign for your donation forms.'),
-    '#default_value' => $default,
+    '#default_value' => variable_get('market_source_default_campaign', 'default_ms'),
   );
 
   if (module_exists('salesforce_management_api')) {
@@ -33,34 +30,83 @@ function market_source_admin_settings_form() {
   	);
   }
 
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced settings'),
+    '#tree' => FALSE,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $additional_forms = variable_get('market_source_additional_forms', array());
+  if (!is_array($additional_forms)) {
+    $additional_forms = array();
+  }
+  $form['advanced']['market_source_additional_forms'] = array(
+    '#title' => t('Additional forms to process'),
+    '#type' => 'textarea',
+    '#description' => t('Specify any additional forms to process. By default, Market Source will process all webforms and the user registration form. Enter the internal Drupal form ID, one per line.'),
+    '#default_value' => implode("\n", $additional_forms),
+  );
+
+  // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
     '#title' => t('Webform Custom Global Fields'),
     '#description' => t('Any global custom fields created will be added as webform components to your webforms when they are created. Custom fields are not retroactively applied to existing webforms.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+    '#tree' => TRUE,
   );
   $form['market_source_global_fields']['custom_fields_wrapper'] = array(
     '#prefix' => '<div id="marketsource-custom-fields">',
     '#suffix' => '</div>',
+    '#theme' => 'market_source_admin_global_fields_table',
   );
-  // Add UI for any pre-existing fields
-  if (count($custom_fields)) {
+  $custom_fields = &$form['market_source_global_fields']['custom_fields_wrapper']; // shortcut
 
-    for ($i = 0; $i < 5; $i++) {
-      if(!isset($custom_fields[$i])) {
-        _market_source_add_field_elements($form, array('key' => '', 'name' => ''), $i);
-      }
-      else {
-        _market_source_add_field_elements($form, $custom_fields[$i], $i);
-      }
-    }
+  // If this is the first time visiting the form, this will be empty.
+  if (!isset($form_state['values']['market_source_global_fields']['custom_fields_wrapper'])) {
+    $form_state['values']['market_source_global_fields']['custom_fields_wrapper'] = variable_get('market_source_custom_fields', array());
   }
-  else {
-    for ($i = 0; $i < 5; ++$i) {
-       _market_source_add_field_elements($form, array('key' => '', 'name' => '',), $i);
-    }
+  $custom_field_values = &$form_state['values']['market_source_global_fields']['custom_fields_wrapper']; // shortcut
+
+  // Add a blank row at the end.
+  $custom_field_values[] = array();
+
+  foreach ($custom_field_values as $i => $field_value) {
+    $custom_fields[$i] = array();
+    $custom_fields[$i]['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Human-readable field name'),
+      '#description' => t('This value is displayed in the webform component list.'),
+      '#default_value' => isset($field_value['name']) ? $field_value['name'] : '',
+      '#size' => 20,
+    );
+    $custom_fields[$i]['key'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Unique field key'),
+      '#description' => t('This value cannot match any pre-existing field keys.'),
+      '#default_value' => isset($field_value['key']) ? $field_value['key'] : '',
+      '#size' => 20,
+    );
+    $custom_fields[$i]['default'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default value'),
+      '#description' => t('Default value sent to webform.'),
+      '#default_value' => isset($field_value['default']) ? $field_value['default'] : '',
+      '#size' => 20,
+    );
   }
+  $form['market_source_global_fields']['add_more'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add another'),
+    '#ahah' => array(
+      'path' => 'admin/settings/market-source/add-more-ahah',
+      'wrapper' => 'marketsource-custom-fields',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
 
   global $cookie_domain;
   $form['market_source_cookie_settings'] = array(
@@ -76,7 +122,7 @@ function market_source_admin_settings_form() {
     '#description' => t('This is the domain name Market Source cookies will exist under.'),
     '#default_value' => variable_get('market_source_cookie_domain', $cookie_domain),
   );
-	
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save settings'),
@@ -85,22 +131,63 @@ function market_source_admin_settings_form() {
   return $form;
 }
 
+/**
+ * AHAH callback for the Add More button for custom fields.
+ */
+function market_source_admin_add_more_ahah() {
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+    'rebuild' => TRUE,
+  );
+  $form_build_id = $_POST['form_build_id'];
+  // Get the form from the cache.
+  $form = form_get_cache($form_build_id, $form_state);
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  // We will run some of the submit handlers so we need to disable redirecting.
+  $form['#redirect'] = FALSE;
+  // We need to process the form, prepare for that by setting a few internals
+  // variables.
+  $form['#post'] = $_POST;
+  $form['#programmed'] = FALSE;
+  $form_state['post'] = $_POST;
+  // Build, validate and if possible, submit the form.
+  drupal_process_form($form_id, $form, $form_state);
+  // This call recreates the form relying solely on the form_state that the
+  // drupal_process_form set up.
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  // Render the new output.
+  $custom_fields = $form['market_source_global_fields']['custom_fields_wrapper'];
+  $output = theme('status_messages') . drupal_render($custom_fields);
+  // Output JSON with the output.
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
 
 /**
  * Validates marketsource admin form.
  */
 function market_source_admin_settings_form_validate($form, &$form_state) {
+  $values = &$form_state['values'];
   // we don't want any bogus field keys or names.
-  for ($i = 0; $i < 5; ++$i) {
-    if ($form_state['values']['ms_custom_field_name_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_name_' . $i])) {
-		  form_set_error('ms_custom_field_name_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
-	  }
-    if ($form_state['values']['ms_custom_field_key_' . $i] && !preg_match('/^[a-zA-Z0-9_+-]+$/', $form_state['values']['ms_custom_field_key_' . $i])) { 
-		  form_set_error('ms_custom_field_key_' . $i, t('This field may only contain alphanumeric characters and underscores.'));
-	  }
-    if ($form_state['values']['ms_custom_field_default_' . $i] && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $form_state['values']['ms_custom_field_default_' . $i])){
-		  form_set_error('ms_custom_field_default_' . $i, t('This field may only contain alphanumeric characters, whitespace and underscores.'));
-	  }
+  foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
+    if (empty($field['name']) XOR empty($field['key'])) {
+      $error_key = empty($field['name']) ? 'name' : 'key';
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][' . $error_key,
+        t('Both the field name and the field key must be provided.'));
+    }
+    if (!empty($field['name']) && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $field['name'])) {
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][name',
+        t('The field name may only contain alphanumeric characters, whitespace and underscores.'));
+    }
+    if (!empty($field['key']) && !preg_match('/^[a-zA-Z0-9_+-]+$/', $field['key'])) {
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
+        t('The field key may only contain alphanumeric characters and underscores.'));
+    }
+    if (!empty($field['default']) && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $field['default'])) {
+      form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][default',
+        t('The default value may only contain alphanumeric characters, whitespace and underscores.'));
+    }
   }
 }
 
@@ -108,21 +195,31 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
  * Handle admin form submission.
  */
 function market_source_admin_settings_form_submit($form, &$form_state) {
-  $custom_fields = array();
+  $values = &$form_state['values'];
 
-  variable_set('market_source_default_campaign', $form_state['values']['market_source_default_campaign']);
-  if (isset($form_state['values']['market_source_validate_sf_campaigns'])) {
-    variable_set('market_source_validate_sf_campaigns', $form_state['values']['market_source_validate_sf_campaigns']);
+  // Set the default campaign value.
+  variable_set('market_source_default_campaign', $values['market_source_default_campaign']);
+  // Set whether to validate campaigns.
+  if (isset($values['market_source_validate_sf_campaigns'])) {
+    variable_set('market_source_validate_sf_campaigns', $values['market_source_validate_sf_campaigns']);
   }
-
-  for ($i = 0; $i < 5; ++$i) {
-    if ($form_state['values']['ms_custom_field_name_' . $i] && $form_state['values']['ms_custom_field_name_' . $i]) {
-      $custom_fields[] = array(
-        'key' => $form_state['values']['ms_custom_field_key_' . $i],
-        'name' => $form_state['values']['ms_custom_field_name_' . $i],
-        'default' => $form_state['values']['ms_custom_field_default_' . $i],
-        'delta' => $i,
-      );
+  // Save the additional forms.
+  $additional_forms = explode("\n", $values['market_source_additional_forms']);
+  foreach ($additional_forms as $i => &$val) {
+    $val = trim($val);
+  }
+  variable_set('market_source_additional_forms', array_filter($additional_forms));
+  // Save all the custom fields.
+  $custom_fields = array();
+  if (!empty($values['market_source_global_fields']['custom_fields_wrapper'])) {
+    foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
+      if (!empty($field['key']) && !empty($field['name'])) {
+        $custom_fields[] = array(
+          'key' => $field['key'],
+          'name' => $field['name'],
+          'default' => $field['default'],
+        );
+      }
     }
   }
   variable_set('market_source_custom_fields', $custom_fields);
@@ -144,62 +241,28 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
 }
 
 /**
- *
- */
-function _market_source_add_field_elements(&$form, $custom_field, $delta) {
-
-  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $delta] = array(
-    '#type' => 'textfield',
-    '#title' => t('Field Name'),
-    '#description' => t('This value is displayed in the webform component list.'),
-    '#default_value' => $custom_field['name'],
-    '#size' => 15,
-  );
-  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $delta] = array(
-    '#type' => 'textfield',
-    '#title' => t('Field Key'),
-    '#description' => t('This value cannot match any pre-existing field keys.'),
-    '#default_value' => $custom_field['key'],
-    '#size' => 15,
-  );
-  $form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $delta] = array(
-    '#type' => 'textfield',
-    '#title' => t('Default Value'),
-    '#default_value' => $custom_field['default'],
-    '#size' => 15,
-    '#suffix' => '<div style="clear:both"></div>',
-  );
-  return $form;
-}
-
-/**
  * Theme custom fields as a table.
  */
-function theme_market_source_admin_settings_form($form) {
+function theme_market_source_admin_global_fields_table($element) {
+  $header = array();
   $rows = array();
-  // Currently we support a total of 5 custom fields. I expect this to change in future and we will need to refactor.
-  for ($i = 0; $i < 5; ++$i) {
+
+  foreach (element_children($element) as $i) {
     $row = array();
-    // Pack rows with form elements.
-    $row[] = t('Custom Field #%i', array('%i' => $i));
-    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_name_' . $i]));
-    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_key_' . $i]));
-    $row[] = array('data' => drupal_render($form['market_source_global_fields']['custom_fields_wrapper']['ms_custom_field_default_' . $i]));
-    $rows[] = $row;
+    foreach (element_children($element[$i]) as $f) {
+      $this_element = &$element[$i][$f];
+      if (isset($this_element['#title'])) {
+        if (!isset($header[$f])) {
+          $header[$f] = $this_element['#title'];
+        }
+        unset($this_element['#title']);
+        $row[] = drupal_render($this_element);
+      }
+    }
+    $rows[] = array(
+      'data' => $row,
+    );
   }
-  // Set table headers.
-  $header = array(
-    t('Field'),
-    t('Human-readable Field Name'),
-    t('Unique Key'),
-    t('Default Value'),
-  );
-  // Replace contents of the field wrapper fieldset with our themed table of form elements.
-  $form['market_source_global_fields']['custom_fields_wrapper']['output'] = array(
-    '#type' => 'markup',
-    '#value' => theme('table', $header, $rows),
-  );
-  // Render the form.
-  $output = drupal_render($form);
-  return $output;
+
+  return theme('table', $header, $rows);
 }

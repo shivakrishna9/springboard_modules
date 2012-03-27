@@ -23,6 +23,15 @@ function market_source_menu() {
     'access arguments' => array('administer site configuration'),
     'file' => 'market_source.admin.inc',
   );
+  $items['admin/settings/market-source/add-more-ahah'] = array(
+    'title' => 'AHAH callback',
+    'description' => 'AHAH callback for adding another row to the custom fields table.',
+    'type' => MENU_CALLBACK,
+    'page callback' => 'market_source_admin_add_more_ahah',
+    'page arguments' => array(),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'market_source.admin.inc',
+  );
 
   return $items;
 }
@@ -55,7 +64,7 @@ function market_source_init() {
  */
 function market_source_form_alter(&$form, $form_state, $form_id) {
   // Alter webforms.
-  if (isset($form['#node']) && !empty($form['#node']->webform) && $form_id == 'webform_client_form_' . $form['#node']->nid) {
+  if (!empty($form['details']['nid']['#value']) && $form_id == 'webform_client_form_' . $form['details']['nid']['#value']) {
     // Add an #after_build callback for webforms.
     $form['#after_build'][] = 'market_source_webform_after_build';
     // Add validation callback for campaigns.
@@ -69,6 +78,17 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
     // Add validation callback for campaigns.
     if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
       $form['#validate'][] = 'market_source_user_register_cid_validate';
+    }
+  }
+  else {
+    $additional_forms = variable_get('market_source_additional_forms', array());
+    if (array_search($form_id, $additional_forms) !== FALSE) {
+      // Add an #after_build callback for webforms.
+      $form['#after_build'][] = 'market_source_generic_form_after_build';
+      // Add validation callback for campaigns.
+      if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+        $form['#validate'][] = 'market_source_generic_form_cid_validate';
+      }
     }
   }
 }
@@ -164,6 +184,46 @@ function market_source_webform_cid_validate($form, &$form_state) {
         // Set the cid to the form's default cid.
         form_set_value($cid_element, $cid_component['value'], $form_state);
       }
+    }
+  }
+}
+
+/**
+ * #after_build callback for generic forms.
+ */
+function market_source_generic_form_after_build($form, &$form_state) {
+  if ($form_state['submitted']) {
+    // Do not add form keys when the form has been submitted.
+    return $form;
+  }
+
+  // Get form keys array.
+  $form_keys = _market_source_build_form_keys($form);
+
+  // Set the array.
+  $settings = array(
+    'form_keys' => array(
+      $form['#id'] => $form_keys,
+    ),
+  );
+
+  // Add form_keys to the JS settings array.
+  drupal_add_js(array('market_source' => $settings), 'setting');
+
+  // Mandatory return value for #after_build callbacks.
+  return $form;
+}
+
+/**
+ * Campaign ID validation callback for generic forms.
+ */
+function market_source_generic_form_cid_validate($form, &$form_state) {
+  // If campaign validation is enabled, validate.
+  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
+    if (!empty($cid) && !_market_source_validate_cid($cid)) {
+      // Set the cid to empty.
+      $cid = '';
     }
   }
 }
@@ -453,11 +513,43 @@ function market_source_create_webform_component($custom_field, $nid) {
 /**
  * Implements hook_theme().
  */
-function market_source_theme() {
+function market_source_theme($existing, $type, $theme, $path) {
   return array(
-    'market_source_admin_settings_form' => array(
-      'arguments' => array('form' => NULL),
+    'market_source_admin_global_fields_table' => array(
+      'arguments' => array('element' => NULL),
       'file' => 'market_source.admin.inc',
     ),
   );
+}
+
+/**
+ * Legacy support: Fetches the user's referring market source (if any).
+ */
+function market_source_get_ms() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
+
+/**
+ * Legacy support: Fetches the user's referring campaign ID (if any).
+ */
+function market_source_get_cid() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
+
+/**
+ * Legacy support: Fetches the user's referring URL (if any).
+ */
+function market_source_get_referrer() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
+
+/**
+ * Legacy support: Fetches the user's initial referring URL (if any).
+ */
+function market_source_get_initial_referrer() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
 }
