@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Admin functions for the Salesforce Node integration module.

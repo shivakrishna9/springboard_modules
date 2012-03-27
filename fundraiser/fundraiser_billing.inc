@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Includes code for updating billing information for recurring donations.

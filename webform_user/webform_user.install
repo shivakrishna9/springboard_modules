@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 function webform_user_install() {
   drupal_install_schema('webform_user');
 }

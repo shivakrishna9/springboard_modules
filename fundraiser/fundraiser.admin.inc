@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Administration page callbacks for the fundraiser module
