@@ -36,6 +36,13 @@
  */
 function capwiz_connect_menu() {
   $items = array();
+  
+  $items['capwiz_legislative_update'] = array(
+    'title' => 'Capwiz legislative update',
+    'page callback' => 'capwiz_connect_legislative_update_start',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 
   $items['admin/settings/capwiz_connect'] = array(
     'title' => 'Capwiz Connect Accounts',
@@ -197,7 +204,36 @@ function capwiz_connect_theme($existing, $type, $theme, $path) {
   );
 }
 
-
+/**
+ * Kicks off the legislative update process in Salesforce.
+ */
+function capwiz_connect_legislative_update_start() {
+  // get a connection to salesforce
+  $sf = salesforce_management_api_connect();
+  if (is_object($sf)) {
+    // pluck the session id and server instance from the client connection
+    $server_instance = _capwiz_connect_parse_server_instance($sf->client->getLocation());
+    $session_id = $sf->client->getSessionId();
+    $url = sprintf('https://%s.salesforce.com/services/apexrest/LegislativeUpdate', $server_instance);
+    
+    // use curl to request the service endpoint 
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(sprintf('Authorization: OAuth %s', $session_id)));
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    
+    // run curl
+    try {
+      $job_id = json_decode(curl_exec($ch));
+      watchdog('capwiz_connect', 'Legislative update process started. Apex JobId: !id', array('!id' => $job_id), WATCHDOG_INFO);
+    }
+    catch (Exeception $e) {
+      watchdog('capwiz_connect', 'An exception was thrown when requesting !url. Exception: !e', array('!url' => $url, '!e' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+    // close connection
+    curl_close($ch);
+  }
+}
 
 /**
  * Load a Capwiz Connect account. Used for placeholders in menu item URLs
@@ -514,4 +550,16 @@ function _capwiz_connect_load_action($local_action_id) {
     return $capwiz_action;
   }
   return NULL;
+}
+
+/**
+ * Takes a Salesforce url and returns the server instance.
+ *
+ * @param $url
+ *   The full url of the connected Salesforce server.
+ */
+function _capwiz_connect_parse_server_instance($url) {
+  $parsed_url = parse_url($url);
+  $host_parts = explode('.', $parsed_url['host']);
+  return str_ireplace('-api', '', $host_parts[0]); // strip -api to get real server instance
 }
