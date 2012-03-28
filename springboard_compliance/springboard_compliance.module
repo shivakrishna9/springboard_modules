@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file
+ * Springboard Compliance module
+ */
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Disables UC credit card debug mode checkbox.
+ */
 function credit_hax_form_alter(&$form, $form_state, $form_id) {
   if (!strcmp($form_id, 'uc_payment_methods_form')) {
     $form['method_credit']['cc_security']['uc_credit_debug']['#disabled'] = TRUE;
