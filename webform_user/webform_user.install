@@ -180,6 +180,7 @@ function webform_user_update_6105() {
  * Implementation of hook_update_N().
  */
 function webform_user_update_6306(&$sandbox) {
+  // Drop the authenticate_submitters column.
   $ret = array();
   db_drop_field($ret, 'webform_user', 'authenticate_submitters');
   return $ret;
