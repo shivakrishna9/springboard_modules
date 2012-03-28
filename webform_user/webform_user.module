@@ -139,14 +139,10 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         if (isset($a3['webform_user']['is_webform_user']['#value']) && !_webform_user_validate_checkbox($a3['webform_user']['is_webform_user']['#value'])) {
           form_set_error('is_webform_user', t('Invalid choice for enabling webform user.'));
         }
-
-        if (isset($a3['webform_user']['authenticate_submitters']['#value']) && !_webform_user_validate_checkbox($a3['webform_user']['authenticate_submitters']['#value'])) {
-          form_set_error('authenticate_submitters', t('Invalid choice for webform user authentication.'));
-        }
         break;
 
       case 'insert':
-        if ($node->is_webform_user || $node->authenticate_submitters) {
+        if ($node->is_webform_user) {
           _webform_user_set_values($node);
           if (!$node->is_being_cloned) {
           	_webform_user_create_webform_components($node);
@@ -178,7 +174,6 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       	$webform_user = _webform_user_load_webform_user($node->nid);
       	if ($webform_user) {
       		$node->is_webform_user = $webform_user['is_webform_user'];
-      		$node->authenticate_submitters = $webform_user['authenticate_submitters'];
       		$node->related_object = $webform_user['related_object'];
       		$node->foreign_key_field = $webform_user['foreign_key_field'];
       		$node->send_new_user_email = $webform_user['send_new_user_email'];
@@ -255,21 +250,6 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
   	  	'#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
   	  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
   	  );
-    }
-
-    if (variable_get('webform_user_authenticate_submitters', FALSE)) {
-      $form['webform_user']['authenticate_submitters'] = array(
-        '#title' => t('Authenticate form submitters based on e-mail address matches.'),
-        '#description' => t('When the user submits the form, log them into an account corresponding to the e-mail address they entered. If the user doesn\'t have an account, one will be created for them.'),
-        '#type' => 'checkbox',
-        '#default_value' => $node->authenticate_submitters,
-      );
-    }
-    else {
-      $form['webform_user']['authenticate_submitters'] = array(
-        '#type' => 'hidden',
-        '#value' => 0,
-      );
     }
 
     $form['webform_user']['send_new_user_email'] = array(
@@ -640,10 +620,6 @@ function webform_user_webform_submit($form, &$form_state) {
       _webform_user_save_profile_map($account->uid, $map);
 			$sid = $form_state['values']['details']['sid'];
       db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
-      if ($node->authenticate_submitters) {
-        // Log the user in.
-        user_external_login($account);
-      }
     }
     // Anonymous user, new to Drupal.
     elseif ($form_state['redirect']) {
@@ -667,12 +643,6 @@ function webform_user_webform_submit($form, &$form_state) {
       // Update the submission record with the id of the new user
       $sid = $form_state['values']['details']['sid'];
       db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
-
-			// Finally, if authenticate_submitters is true, log the user in
-      if ($node->authenticate_submitters) {
-        // Log the user in.
-        user_external_login($account);
-      }
       
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
@@ -882,29 +852,7 @@ function _webform_user_is_webform_user($nid) {
 }
 
 /**
- * Checks to see if the authenticate_submitters checkbox is enabled for the
- * selected node.
- *
- * @param $nid
- *   The ID of the selected node.
- * @return bool
- *   Returns TRUE if authenticate_submitters is enabled, FALSE otherwise.
- */
-function _webform_user_authenticate_submitters($nid) {
-  $result = db_fetch_array(
-    db_query(
-      'SELECT authenticate_submitters
-       FROM {webform_user}
-       WHERE nid = %d',
-      $nid
-    )
-  );
-
-  return $result['authenticate_submitters'] == 1 ? TRUE : FALSE;
-}
-
-/**
- * Saves the values of the is_webform_user and authenticate_submitters checkboxes
+ * Saves the values of the is_webform_user checkbox
  * when the selected node is created.
  *
  * @param $node
@@ -913,7 +861,6 @@ function _webform_user_authenticate_submitters($nid) {
  */
 function _webform_user_set_values(&$node) {
   $is_webform_user = $node->is_webform_user ? 1 : 0;
-  $authenticate_submitters = $node->authenticate_submitters ? 1 : 0;
   $related_object = $node->related_object ? $node->related_object : 'none';
 	$send_new_user_email = $node->send_new_user_email ? 1 : 0;
 
@@ -921,24 +868,24 @@ function _webform_user_set_values(&$node) {
 
 	if (!$exists && $is_webform_user) {
 	  db_query(
-	    "INSERT INTO {webform_user} (nid, is_webform_user, authenticate_submitters, related_object, send_new_user_email)
-	     VALUES (%d, %d, %d, '%s', %d)",
-	    $node->nid, $is_webform_user, $authenticate_submitters, $related_object, $send_new_user_email
+	    "INSERT INTO {webform_user} (nid, is_webform_user, related_object, send_new_user_email)
+	     VALUES (%d, %d, '%s', %d)",
+	    $node->nid, $is_webform_user, $related_object, $send_new_user_email
 	  );
 	}
   else {
   	db_query(
 	    "UPDATE {webform_user}
-	     SET is_webform_user = %d, authenticate_submitters = %d, related_object = '%s', send_new_user_email = %d
+	     SET is_webform_user = %d, related_object = '%s', send_new_user_email = %d
 	     WHERE nid = %d",
-	    $is_webform_user, $authenticate_submitters, $related_object, $send_new_user_email, $node->nid
+	    $is_webform_user, $related_object, $send_new_user_email, $node->nid
 	  );
   }
 }
 
 
 /**
- * Deletes the values of the is_webform_user and authenticate_submitters checkboxes
+ * Deletes the values of the is_webform_user checkbox
  * when the selected node is being deleted.
  *
  * @param $node
