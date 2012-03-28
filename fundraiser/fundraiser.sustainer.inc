@@ -177,7 +177,7 @@ function _fundraiser_get_current_donation_amount($order_id) {
  * Gets the next charge date of a recurring donation.
  */
 function _fundraiser_get_next_charge_date($order_id) {
-  return db_result(db_query("SELECT min(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
+  return db_result(db_query("SELECT min(next_charge) FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp IS NULL", $order_id));
 }
 
 /**
