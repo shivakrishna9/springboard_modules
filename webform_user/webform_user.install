@@ -121,7 +121,7 @@ function webform_user_schema() {
 /**
  * Implements hook_update_N().
  */
-function webform_user_update_7301() {
+function webform_user_update_7301(&$sandbox) {
   // Drop the authenticate_submitters column.
   db_drop_field('webform_user', 'authenticate_submitters');
 }
