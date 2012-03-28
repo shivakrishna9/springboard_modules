@@ -2,5 +2,4 @@ core = "6.x"
 name = "Springboard Compliance"
 package = "Jackson River Springboard - extras"
 project = ""
-dependencies[] = uc_credit
 version = "6.x-dev"
