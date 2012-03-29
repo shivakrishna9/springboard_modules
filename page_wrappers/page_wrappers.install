@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Install routine for page wrappers module.

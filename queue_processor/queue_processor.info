@@ -1,4 +1,3 @@
-; $Id$
 name = Salesforce Queue Processor
 description = Processes the Salesforce queue
 core = 6.x

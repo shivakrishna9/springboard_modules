@@ -1,4 +1,3 @@
-; $Id$
 name = Webform User
 description = Allows administrators to create webforms and attach the webform submissions to users.
 package = Jackson River Springboard

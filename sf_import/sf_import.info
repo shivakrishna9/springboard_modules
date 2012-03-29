@@ -1,4 +1,3 @@
-; $Id$
 name = Salesforce Importer
 description = Import objects from Salesforce based on criteria entered by the user 
 package = Jackson River Springboard

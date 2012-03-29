@@ -1,4 +1,3 @@
-; $Id$
 name = Springboard Social
 description = Integrate your Springboard site with the social web.
 core = 6.x

@@ -1,4 +1,3 @@
-; $Id$
 name = Authorize.net CIM Management
 description = Provides CIM management functionality for Authorize.net CIM profiles
 core = 6.x

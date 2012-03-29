@@ -1,4 +1,3 @@
-; $Id$
 name = Fundraiser Multiple Currency Support
 description = "Adds multiple currency support to donation forms."
 core = 6.x

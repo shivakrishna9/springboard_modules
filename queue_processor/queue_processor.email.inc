@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Creates email messages for the queue processor module.

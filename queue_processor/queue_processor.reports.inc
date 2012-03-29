@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Report callbacks for the queue processor module.

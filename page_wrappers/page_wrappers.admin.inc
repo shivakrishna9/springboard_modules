@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Administration functions for page wrappers module.
