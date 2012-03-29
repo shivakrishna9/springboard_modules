@@ -47,14 +47,6 @@ function webform_user_schema() {
 	      'not null' => TRUE,
 	      'default' => 0,
 	    ),
-	    'authenticate_submitters' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
 	    'related_object' => array(
 	      'description' => t('TODO: please describe this field!'),
 	      'type' => 'varchar',
@@ -182,4 +174,14 @@ function webform_user_update_6105() {
   
   db_add_field($updates, 'webform_user', 'email_field', array('type' => 'varchar', 'length' => 255, 'not null' => FALSE));
   return $updates;
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function webform_user_update_6306(&$sandbox) {
+  // Drop the authenticate_submitters column.
+  $ret = array();
+  db_drop_field($ret, 'webform_user', 'authenticate_submitters');
+  return $ret;
 }
