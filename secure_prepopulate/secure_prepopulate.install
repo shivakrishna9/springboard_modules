@@ -73,6 +73,7 @@ function secure_prepopulate_schema() {
  * @see http://drupal.org/project/encrypt
  */
 function secure_prepopulate_update_6001() {
+  module_load_include('module', 'encrypt');
   $key = variable_get('secure_prepopulate_key', '');
   $vector = variable_get('secure_prepopulate_iv', '');
   if ($key) {
