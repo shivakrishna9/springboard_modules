@@ -1,5 +1,5 @@
 name = Fundraiser generate
-description = Creates massive amounts of donations for testing purposes.
+description = Creates donation submissions for testing purposes.
 core = 7.x
 package = Jackson River Springboard - development
 dependencies[] = fundraiser
