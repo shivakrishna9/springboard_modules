@@ -1,0 +1,8 @@
+
+TO DO LIST FOR FUTURE DEVELOPMENT
+---------------------------------
+
+1) Cleanup further for hook and CRUD driven behaviors.
+2) Orders => Donations  - terminology change throughout.
+3) Separate Webform based behaviors out.
+4) Document clearly API for all other modules in Suite to follow / use.

@@ -4,7 +4,8 @@
  * @file
  * Sustainer page callbacks for the fundraiser module.
  *
- * @ingroup fundraiser
+ * Why? Footprint again. Not all sites need recurring / sustainer maintained fundraising.
+ * (Use this module to model behavior and actions for peer-to-peer and other fundraiser types.)
  */
 
 

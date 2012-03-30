@@ -1,8 +1,0 @@
-; $Id$
-name = Fundraiser Services API
-description = API Services for 3rd party integration.
-core = 6.x
-package = Jackson River Springboard
-dependencies[] = fundraiser
-dependencies[] = services
-version =  6.x-1.0-dev

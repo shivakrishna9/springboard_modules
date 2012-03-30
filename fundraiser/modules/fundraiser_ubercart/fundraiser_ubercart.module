@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Ubercart based hook implementations for the fundraiser module.
- * These functions are split off with the idea that eventually this could become it's own module, linking fundraiser and ubercart.
+ * Ubercart based hook implementations for the fundraiser module donations.
  */
 
 /**
@@ -12,7 +11,9 @@
  * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
  */
 function fundraiser_order_actions($order) {
-  if (user_access('edit orders') && (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && fundraiser_gateway_can_refund_order($order)) {
+  if (user_access('edit orders') && 
+    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && 
+    fundraiser_gateway_can_refund_order($order)) {
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
     $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
     $actions[] = array(
@@ -79,7 +80,7 @@ function sage_update_billing_information($reference_id, $billing_info) {
 /**
  * Implements hook_fundraiser_get_user_country().
  */
-function fundraiser_fundraiser_get_user_country($profile_field_id, $uid) {
+function fundraiser_ubercart_fundraiser_get_user_country($profile_field_id, $uid) {
   return db_query('SELECT uc.country_id FROM {uc_countries} uc '.
     'INNER JOIN {profile_value} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = :uid AND pv.fid = :fid',
     array(':uid' => $uid, ':fid' => $profile_field_id))->fetchColumn();
@@ -88,7 +89,7 @@ function fundraiser_fundraiser_get_user_country($profile_field_id, $uid) {
 /**
  * Implements hook_fundraiser_get_user_zone().
  */
-function fundraiser_fundraiser_get_user_zone($profile_field_id, $uid) {
+function fundraiser_ubercart_fundraiser_get_user_zone($profile_field_id, $uid) {
   return db_query('SELECT uz.zone_id FROM {uc_zones} uz '.
     'INNER JOIN {profile_value} pv ON pv.value = uz.zone_code AND pv.uid = :uid AND pv.fid = :fid',
     array(':uid' => $uid, ':fid' => $profile_field_id))->fetchColumn();
@@ -97,7 +98,7 @@ function fundraiser_fundraiser_get_user_zone($profile_field_id, $uid) {
 /**
  * Implements hook_fundraiser_user_has_recurring_orders().
  */
-function fundraiser_fundraiser_user_has_recurring_orders($uid) {
+function fundraiser_ubercart_fundraiser_user_has_recurring_orders($uid) {
   $count = db_query('SELECT COUNT(u.order_id) FROM uc_orders u '.
     'INNER JOIN fundraiser_recurring f ON f.master_order_id = u.order_id '.
     'WHERE u.uid = :uid ',
@@ -111,7 +112,7 @@ function fundraiser_fundraiser_user_has_recurring_orders($uid) {
 /**
  * Implements hook_fundraiser_user_get_recurring_orders().
  */
-function fundraiser_fundraiser_user_get_recurring_orders($uid) {
+function fundraiser_ubercart_fundraiser_user_get_recurring_orders($uid) {
   return db_query('SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f '.
     'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
     'WHERE f.recurring_status != :status AND u.uid = :uid',
@@ -121,7 +122,7 @@ function fundraiser_fundraiser_user_get_recurring_orders($uid) {
 /**
  * Implements hook_fundraiser_user_get_recurring_order_schedule().
  */
-function fundraiser_fundraiser_user_get_recurring_order_schedule($master_order_id) {
+function fundraiser_ubercart_fundraiser_user_get_recurring_order_schedule($master_order_id) {
   return db_query('SELECT u.order_total AS amount, f.next_charge AS charge_date, f.gateway_resp AS status FROM {fundraiser_recurring} f '.
     'INNER JOIN {uc_orders} u ON u.order_id = f.order_id '.
     'WHERE f.master_order_id = :order_id ' .
@@ -132,7 +133,7 @@ function fundraiser_fundraiser_user_get_recurring_order_schedule($master_order_i
 /**
  * Implements hook_fundraiser_get_current_donation_amount().
  */
-function fundraiser_fundraiser_get_current_donation_amount($master_order_id) {
+function fundraiser_ubercart_fundraiser_get_current_donation_amount($master_order_id) {
   return db_query('SELECT u.order_total FROM {uc_orders} u '. 
     'INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id '.
     'WHERE (f.gateway_resp IS NULL OR f.gateway_resp = \'canceled\') AND f.master_order_id = :order_id '.
@@ -143,7 +144,7 @@ function fundraiser_fundraiser_get_current_donation_amount($master_order_id) {
 /**
  * Implements hook_fundraiser_get_order_start().
  */
-function fundraiser_fundraiser_get_order_start($order_id) {
+function fundraiser_ubercart_fundraiser_get_order_start($order_id) {
   return db_query('SELECT created FROM {uc_orders} WHERE order_id = :order_id',
     array(':order_id' => $order_id))->fetchColumn();
 }
@@ -151,7 +152,7 @@ function fundraiser_fundraiser_get_order_start($order_id) {
 /**
  * Implements hook_fundraiser_get_country_zones().
  */
-function fundraiser_fundraiser_get_country_zones($country_id) {
+function fundraiser_ubercart_fundraiser_get_country_zones($country_id) {
   $options = array('required' => uc_address_field_required('zone'));
   $zones = uc_zone_select(uc_get_field_name('zone'), NULL, $country_id, $options);
   $zone_array = array();
@@ -164,14 +165,14 @@ function fundraiser_fundraiser_get_country_zones($country_id) {
 /**
  * Implements hook_fundraiser_get_country_zone().
  */
-function fundraiser_fundraiser_get_country_zone($zone_id) {
+function fundraiser_ubercart_fundraiser_get_country_zone($zone_id) {
   return uc_get_zone_code($zone_id);
 }
 
 /**
  * Implements hook_fundraiser_get_country_iso().
  */
-function fundraiser_fundraiser_get_country_iso($country_code) {
+function fundraiser_ubercart_fundraiser_get_country_iso($country_code) {
   return db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id',
     array(':country_id' => $country_code))->fetchField();
 }
@@ -179,14 +180,14 @@ function fundraiser_fundraiser_get_country_iso($country_code) {
 /**
  * Implements hook_fundraiser_get_country_zone().
  */
-function fundraiser_fundraiser_get_zone_iso($country_code, $state_code) {
+function fundraiser_ubercart_fundraiser_get_zone_iso($country_code, $state_code) {
   return db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id AND zone_country_id = :zone_country_id',
     array(':zone_id' => $state_code, ':zone_country_id' => $country_code))->fetchField();
 }
 /**
  * Implements hook_fundraiser_gateway_info().
  */
-function fundraiser_fundraiser_gateway_info() {
+function fundraiser_ubercart_fundraiser_gateway_info() {
   // If no gateways are enabled, this returns an empty array.
   // TODO - make sure where this is accounted for an emtpy is noted, and flagged as a thing to fix. - SeH
   return _uc_payment_gateway_list('', TRUE);
@@ -199,14 +200,14 @@ function fundraiser_fundraiser_gateway_info() {
 /**
  * Implements hook_fundraiser_get_credit_encryption_path().
  */
-function fundraiser_fundraiser_get_credit_encryption_path() {
+function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
   return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
 }
 
 /**
  * Implements hook_fundraiser_decrypt_credit().
  */
-function fundraiser_fundraiser_decrypt_credit($data) {
+function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
   $crypt = new uc_encryption_class;
   $cc = unserialize($data);
@@ -218,7 +219,7 @@ function fundraiser_fundraiser_decrypt_credit($data) {
 /**
  * Implements hook_fundraiser_validate_card().
  */
-function fundraiser_fundraiser_validate_card($cc_number){
+function fundraiser_ubercart_fundraiser_validate_card($cc_number){
   if(variable_get('uc_credit_validate_numbers', TRUE)) {
     return _uc_credit_valid_card_number($cc_number);
   }
@@ -228,7 +229,7 @@ function fundraiser_fundraiser_validate_card($cc_number){
 /**
  * Implements hook_fundraiser_validate_card_expiration().
  */
-function fundraiser_fundraiser_validate_card_expiration($cc_expiration_month, $cc_expiration_year){
+function fundraiser_ubercart_fundraiser_validate_card_expiration($cc_expiration_month, $cc_expiration_year){
   return _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
 }
 
@@ -236,7 +237,7 @@ function fundraiser_fundraiser_validate_card_expiration($cc_expiration_month, $c
 /**
  * Implements hook_fundraiser_validate_card_cvv().
  */
-function fundraiser_fundraiser_validate_card_cvv($cc_cvv){
+function fundraiser_ubercart_fundraiser_validate_card_cvv($cc_cvv){
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
     return _uc_credit_valid_cvv($cc_cvv);
   }
@@ -246,7 +247,7 @@ function fundraiser_fundraiser_validate_card_cvv($cc_cvv){
 /**
  * Implements hook_fundraiser_create_order().
  */
-function fundraiser_fundraiser_create_order($user, $node, $fundraiser_fields, $recurs, $additional_order_fields) {
+function fundraiser_ubercart_fundraiser_create_order($user, $node, $fundraiser_fields, $recurs, $additional_order_fields) {
   // pick out the values we need to generate an order
   $donation_amount = $fundraiser_fields['amount'];
   $cc_number = $fundraiser_fields['card_number'];
@@ -333,14 +334,14 @@ function fundraiser_fundraiser_create_order($user, $node, $fundraiser_fields, $r
 /**
  * Implements hook_fundraiser_get_order().
  */
-function fundraiser_fundraiser_get_order($order_id) {
+function fundraiser_ubercart_fundraiser_get_order($order_id) {
   return uc_order_load($order_id);
 }
 
 /**
  * Implements hook_fundraiser_update_order_amount().
  */
-function fundraiser_fundraiser_update_order_amount($order_id, $amount, $uid) {
+function fundraiser_ubercart_fundraiser_update_order_amount($order_id, $amount, $uid) {
   $order = uc_order_load($order_id);
   $old_amount = $order->order_total;
   $order->order_total = $amount;
@@ -353,14 +354,14 @@ function fundraiser_fundraiser_update_order_amount($order_id, $amount, $uid) {
 /**
  * Implements hook_fundraiser_update_order_comment().
  */
-function fundraiser_fundraiser_update_order_comment($order_id, $message, $uid) {
+function fundraiser_ubercart_fundraiser_update_order_comment($order_id, $message, $uid) {
   uc_order_comment_save($order_id, 0, $message, 'admin');
 }
 
 /**
  * Implements hook_fundraiser_update_order_billing().
  */
-function fundraiser_fundraiser_update_order_billing($order_id, $form_state) {
+function fundraiser_ubercart_fundraiser_update_order_billing($order_id, $form_state) {
   global $user;
   $order = uc_order_load($order_id);
   $order->primary_email = $form_state['values']['email'];
@@ -395,7 +396,7 @@ function fundraiser_fundraiser_update_order_billing($order_id, $form_state) {
 /**
  * Implements hook_fundraiser_get_order_paid().
  */
-function fundraiser_fundraiser_get_order_paid($order_id) {
+function fundraiser_ubercart_fundraiser_get_order_paid($order_id) {
   return db_query('SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = :order_id',
     array(':order_id' => $order_id))->fetchColumn();
 }
@@ -403,7 +404,7 @@ function fundraiser_fundraiser_get_order_paid($order_id) {
 /**
  * Implements hook_fundraiser_get_order_payment_info().
  */
-function fundraiser_fundraiser_get_order_payment_info($order_id) {
+function fundraiser_ubercart_fundraiser_get_order_payment_info($order_id) {
   $payment_info = db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u ' .
     'LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id ' .
     'WHERE u.amount > 0 AND u.order_id = :order_id', array(':order_id' => $order_id))->fetchAssoc();
@@ -420,7 +421,7 @@ function fundraiser_fundraiser_get_order_payment_info($order_id) {
 /**
  * Implements hook_fundraiser_get_order_refund_info().
  */
-function fundraiser_fundraiser_get_order_refund_info($order_id) {
+function fundraiser_ubercart_fundraiser_get_order_refund_info($order_id) {
   return db_query('SELECT SUM(amount) FROM {uc_payment_receipts} '.
     'WHERE order_id = :order_id AND amount < 0', array(':order_id' => $order_id))->fetchColumn();
 }
@@ -428,7 +429,7 @@ function fundraiser_fundraiser_get_order_refund_info($order_id) {
 /**
  * Implements hook_fundraiser_order_success().
  */
-function fundraiser_fundraiser_order_success($order_id) {
+function fundraiser_ubercart_fundraiser_order_success($order_id) {
   // Complete the sale in Ubercart.
   $order = uc_order_load($order_id);
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
@@ -440,7 +441,7 @@ function fundraiser_fundraiser_order_success($order_id) {
 /**
  * Implements hook_fundraiser_create_future_orders().
  */
-function fundraiser_fundraiser_create_future_orders($user, $order_id, $gateway) {
+function fundraiser_ubercart_fundraiser_create_future_orders($user, $order_id, $gateway) {
   $orders = array();
   // Determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
   $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
@@ -471,7 +472,7 @@ function fundraiser_fundraiser_create_future_orders($user, $order_id, $gateway) 
 /**
  * Implements hook_fundraiser_cancel_future_orders().
  */
-function fundraiser_fundraiser_cancel_future_orders($master_order_id, $reason, $user) {
+function fundraiser_ubercart_fundraiser_cancel_future_orders($master_order_id, $reason, $user) {
   // get the ids of the child orders
   $orders = _get_pending_recurring_orders($master_order_id);
   db_query('UPDATE {uc_orders} u ' .
@@ -492,7 +493,7 @@ function fundraiser_fundraiser_cancel_future_orders($master_order_id, $reason, $
 /**
  * Implements hook_fundraiser_order_decline().
  */
-function fundraiser_fundraiser_order_decline($order_id, $message) {
+function fundraiser_ubercart_fundraiser_order_decline($order_id, $message) {
   // Mark the sale in Ubercart as failed.
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // Clear the credit card cache between orders
@@ -502,14 +503,14 @@ function fundraiser_fundraiser_order_decline($order_id, $message) {
 /**
  * Implements hook_fundraiser_order_exception().
  */
-function fundraiser_fundraiser_order_exception($order_id) {
-  return fundraiser_fundraiser_order_decline($order_id);
+function fundraiser_ubercart_fundraiser_order_exception($order_id) {
+  return fundraiser_ubercart_fundraiser_order_decline($order_id);
 }
 
 /**
  * Implements hook_fundraiser_order_cancel().
  */
-function fundraiser_fundraiser_order_cancel($order_id) {
+function fundraiser_ubercart_fundraiser_order_cancel($order_id) {
   // Mark the sale in Ubercart as cencelled.
   db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = :order_id", array(':order_id' => $order_id));
   // Make a comment on the order.
@@ -519,7 +520,7 @@ function fundraiser_fundraiser_order_cancel($order_id) {
 /**
  * Implements hook_fundraiser_order_refund().
  */
-function fundraiser_fundraiser_order_refund($order_id, $amount, $new_status, $transaction_id, $reason) {
+function fundraiser_ubercart_fundraiser_order_refund($order_id, $amount, $new_status, $transaction_id, $reason) {
   $data = array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $transaction_id);
   uc_payment_enter($order_id, 'fundraiser', $amount, 0, $data, 'Refund processed by the fundraiser module.');
   // Make the charge amount positive again, for nice display in the admin comment
@@ -553,20 +554,20 @@ function fundraiser_fundraiser_order_refund($order_id, $amount, $new_status, $tr
 /**
  * Implements hook_fundraiser_format_price().
  */
-function fundraiser_fundraiser_format_price($price) {
+function fundraiser_ubercart_fundraiser_format_price($price) {
   return theme('uc_price', array('price' => $price));
 }
 
 /**
  * Implements hook_fundraiser_format_country_select().
  */
-function fundraiser_fundraiser_format_country_select($country) {
+function fundraiser_ubercart_fundraiser_format_country_select($country) {
   return uc_country_select(uc_get_field_name('country'), $country, NULL, 'name', uc_address_field_required('country'));
 }
 
 /**
  * Implements hook_fundraiser_format_zone_select().
  */
-function fundraiser_fundraiser_format_zone_select($country, $zone) {
+function fundraiser_ubercart_fundraiser_format_zone_select($country, $zone) {
   return uc_zone_select(uc_get_field_name('zone'), $zone, NULL, $country, 'name', uc_address_field_required('zone'));
 }

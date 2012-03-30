@@ -1,0 +1,6 @@
+name = Fundraiser triggers
+description = Implement striggers for Fundraiser.
+core = 7.x
+package = Jackson River Springboard
+dependencies[] = webform
+version =  7.x-3.0-dev

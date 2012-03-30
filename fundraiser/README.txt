@@ -1,6 +1,25 @@
-TODO - update this readme to the right format with more detailed info.
 
-1. Need to patch Ubercart uc_cart.module
-	-fundraiser/uc_cart.module.patch needs to be applied to uc_cart.module
-	
-2. Fundraiser reporting utilizes MySQL views. So the database user will need 'CREATE VIEW' priviledges
+CONTENTS OF THIS FILE
+---------------------
+
+ * Introduction
+ * Installation
+
+INTRODUCTION
+------------
+
+Current Maintainer: Jackson River http://jacksonriver.com
+
+Fundraiser provides behaviors to handle donation form creation and donation submission.
+
+INSTALLATION
+------------
+
+1. Unzip and copy this directory to your sites/SITENAME/modules directory.
+
+2. Fundraiser reporting utilizes MySQL views. So the database user will need 'CREATE VIEW'
+   priviledges
+
+3. Enable the module. 
+
+4. Configure user permissions at admin/user/permissions.
