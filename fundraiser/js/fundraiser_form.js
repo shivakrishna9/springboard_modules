@@ -8,20 +8,7 @@ Drupal.behaviors.fundraiserBehavior = {
     $("#edit-internal-name").val($title);
   });
 
-  // Remove form elements when remove button is clicked.
-  $("#ask-amounts .form-submit").click(function(e) {
-    $(this).hide();
-    $name = $(this).attr('id');
-    $name = $name.split('-');
-    $delta = $name[2];
-    $("#edit-amount-" + $delta).remove();
-    $("#edit-label-" + $delta).remove();
-    $("#edit-label-" + $delta + "-wrapper, #edit-amount-" + $delta + "-wrapper").remove();
-    e.preventDefault(); // Thanks for the link Brock!
-  });
-
-  $("#ask-amounts .amount_field").focus(function() {
-    
+  $("#ask-amounts .amount_field").focus(function() {   
     $amount = $(this).attr('value');
     $id = $(this).attr('id');
     window.fundraiser_amount = {

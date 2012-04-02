@@ -6,6 +6,118 @@
  *
  */
 
+  /**
+ * Implements hook_form_FORM_ID_alter().
+ * Alter the webform component delete form to prevent the deletion of required fundraiser fields
+ * Why not handle this with the main interface? because edit/delete operations are added at theme layer.
+ * Unfortunately the theme layer adds the values and immediately renders, negating any chance for us to make changes.
+ * In order to remove delete properly, we will need a patch in webform addressing this issue.
+ */
+function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
+  // Make sure we are dealing with a donation form.
+  if ($form['node']['#value']->type == 'donation_form') {
+    // Check vs. required fields to make sure we can't delete them.
+    $required_fields = fundraiser_required_fields();
+    $cid = $form['component']['#value']['cid'];
+    $component = $form['node']['#value']->webform['components'][$cid];
+    // Check to see if the form_key is in our required fields array
+    if (in_array($component['form_key'], $required_fields)) {
+      $message = t('<strong>!name</strong> is a required fundraiser field and cannot be deleted from this form.',
+        array('!name' => $component['name']));
+      $form['description']['#markup'] = $message;
+      unset($form['actions']['submit']);
+    }
+  }
+}
+
+ function fundraiser_webform_menu() {
+
+  $items['node/%node/webform/mapping'] = array(
+    'title' => 'User map',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_mapping_form', 1),
+    'access callback' => 'fundraiser_mapping_form_access',
+    'access arguments' => array(1),
+    'weight' => 30,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['node/%node/webform/confirmations'] = array(
+    'title' => 'Confirmations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_confirmation_settings_form', 1),
+    'access callback' => 'fundraiser_confirmations_perm',
+    'access arguments' => array('update', 1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['node/%webform_menu/confirmation'] = array(
+    'title' => 'Webform submission',
+    'load arguments' => array(1),
+    'page callback' => 'fundraiser_donation_confirmation',
+    'page arguments' => array(1),
+    'access arguments' => array("access content"),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Menu access callback, returns TRUE if current node is a donation form.
+ */
+function fundraiser_mapping_form_access($node) {
+  return _fundraiser_is_donation_type($node->type);
+}
+
+
+/**
+ * Menu access callback, check for donation type and node access.
+ */
+function fundraiser_confirmations_perm($perm, $node) {
+  if (_fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_webform_menu_alter(&$items) {
+  // Alter some built-in webform menu items.
+  $items['node/%webform_menu/webform/configure']['access callback'] = 'fundraiser_webform_configure_access';
+  $items['node/%webform_menu/webform/configure']['access arguments'] = array('update', 1);
+}
+
+/**
+ * Menu access callback. Permission check for donation form settings tab.
+ */
+function fundraiser_webform_configure_access($perm, $node) {
+  // Don't show the 'Form settings' tab on donation forms.
+  if (_fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
+    return FALSE;
+  }
+  else {
+    return node_access($perm, $node);
+  }
+}
+
+/**
+ * Implemenation of hook_webform_select_options_info() from Webform.
+ * From http://drupalcontrib.org/api/drupal/contributions!webform!webform_hooks.php/function/hook_webform_select_options_info/7
+ */
+function fundraiser_webform_webform_select_options_info() {
+  $items = array();
+  $items['fundraiserstates'] = array(
+    'title' => t('Fundraiser defined states'),
+    'options callback' => 'fundraiser_options_states', // From fundraiser.module.
+  );
+  $items['fundraiser_countries'] = array(
+    'title' => t('Fundraiser defined countries'),
+    'options callback' => 'fundraiser_options_countries', // From fundraiser.module.
+  );
+  return $items;
+}
+
 /**
  * Creates an array to map webform component fields to user profile fields.
  */

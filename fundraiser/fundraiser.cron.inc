@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Cron related functions for hte fundraiser module.
+ * Cron related functions for the fundraiser module.
  * This file is included only when cron or custom fundraiser cron are run.
  */
 
@@ -45,10 +45,8 @@ function fundraiser_processor_key_match() {
  * Submits recurring donations for payment
  */
 function fundraiser_process_recurring_donations() {
-
   $successes = 0;
   $fails = 0;
-
   $results = db_query('SELECT * FROM {fundraiser_recurring} ' .
     'WHERE next_charge < :next_charge AND (gateway_resp IS NULL OR gateway_resp = \'failed\') AND attempts < 3',
     array(':next_charge' => time()));
@@ -86,12 +84,10 @@ function fundraiser_process_recurring_donations() {
         uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin');
         db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",array(':order_id' => $order_id));
         db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = :txn_id WHERE order_id = :order_id", array(':txn_id' => $result['data']['txn_id'], ':order_id' => $order_id));
-
         // Send credit card notification email when only a single payment is left
         if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
           fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
         }
-
         // Check for Salesforce Fundraiser module and update order status
         if (module_exists('sf_donation')) {
           sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');

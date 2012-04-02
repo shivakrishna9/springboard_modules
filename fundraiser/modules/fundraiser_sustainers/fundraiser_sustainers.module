@@ -7,7 +7,40 @@
  * Why? Footprint again. Not all sites need recurring / sustainer maintained fundraising.
  * (Use this module to model behavior and actions for peer-to-peer and other fundraiser types.)
  */
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_sustainers_menu() {
+  $items['user/%user/recurring_overview'] = array(
+    'title' => 'My Recurring Payments',
+    'page callback' => 'fundraiser_recurring_user_overview',
+    'access callback' => 'fundraiser_user_has_recurring_orders',
+    'access arguments' => array(1),
+    'page arguments' => array(1),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
 
+  $items['user/%user/recurring_overview/%'] = array(
+    'title' => 'My Recurring Payments',
+    'page callback' => 'fundraiser_recurring_user_edit_forms',
+    'access callback' => 'fundraiser_user_has_recurring_orders',
+    'access arguments' => array(1),
+    'page arguments' => array(1, 3),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Menu access callback wrapper, determines if a user has any recurring donations, used as a Menu callback.
+ */
+function fundraiser_user_has_recurring_orders($user) {
+  $recur = FALSE;
+  $recur = module_invoke_all('fundraiser_user_has_recurring_orders', $user->uid);
+  return $recur[0];
+}
 
 /**
  * Returns a duplicate of a given order

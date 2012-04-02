@@ -6,6 +6,27 @@
  */
 
 /**
+ * Implemenation of hook_mail_alter().
+ */
+function fundraiser_ubercart_mail_alter(&$message) {
+  // Catch for mail coming out of UC.
+  if ($message['id'] == 'uc_order_action-mail') {
+    // Gather data.
+    $parts = explode("/", $_GET['q']);
+    $nid = $parts[1];
+    $node = node_load($nid);
+    // Make changes.
+    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+    $bcc = variable_get('fundraiser_receipt_bcc', '');
+    if (!empty($bcc)) {
+      $message['headers']['Bcc'] = $bcc;
+    }
+    $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+    $message['subject'] = $node->receipt_email_subject;
+  }
+}
+
+/**
  * Implementation of hook_order_actions() from Ubercart.
  * Add a refund option to the Order list
  * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6

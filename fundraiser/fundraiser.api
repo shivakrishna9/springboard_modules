@@ -1,0 +1,7 @@
+<?php
+
+/**
+ * Available fundraiser hooks.
+ */
+
+function hook_fundraiser_gateway_info() {}
