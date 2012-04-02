@@ -23,7 +23,7 @@ Drupal.behaviors.marketSourceInit = function (context) {
           q = window.location.search.substring(1);
       while (e = r.exec(q)) {
         var keyname = new String(d(e[1]));
-        urlParams[keyname.toLowerCase()] = d(e[2]);;
+        urlParams[keyname.toLowerCase()] = d(e[2]);
       }
     })();
 
