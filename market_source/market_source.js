@@ -22,7 +22,8 @@ Drupal.behaviors.marketSourceInit = function (context) {
           },
           q = window.location.search.substring(1);
       while (e = r.exec(q)) {
-        urlParams[d(e[1])] = d(e[2]);
+        var keyname = new String(d(e[1]));
+        urlParams[keyname.toLowerCase()] = d(e[2]);;
       }
     })();
 
@@ -93,6 +94,8 @@ Drupal.behaviors.marketSourceInit = function (context) {
     if (typeof qs_keys['referrer'] !== 'undefined') {
       // Store the referrer value in our qs_keys.
       qs_keys['referrer'] = referrer;
+      // Set the referrer cookie for backwards compat.
+      setCookie('referrer', qs_keys['referrer']);
     }
 
   }).addClass('marketsource-processed');
