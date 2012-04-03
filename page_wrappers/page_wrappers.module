@@ -51,6 +51,7 @@ function page_wrappers_preprocess_fundraiser_confirmation(&$vars) {
  * Implementation of hook_preprocess_page().
  */
 function page_wrappers_preprocess_page(&$vars) {
+
   // get out of here if we're on the edit page
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
@@ -175,11 +176,45 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
   
   // page_wrapper_node_form
   if ($form_id == 'page_wrapper_node_form') {
+
+    $form['field_css_file'][0]['#title'] = t('Upload a stylesheet');
+    
+    $form['field_css_file']['or'] = array(
+      '#type' => 'markup',
+      '#value' => '<div><strong>' . t('OR') . '</strong></div>',
+    );
+    
+    $form['field_css_file']['existing_css_file'] = array(
+      '#type' => 'select',
+      '#title' => t('Choose an existing stylesheet'),
+      '#options' => _page_wrapper_list_files(),
+      '#suffix' => '<hr />',
+    );
+    
+    
     // add some help the body (Template HTML) field
     $form['body_field']['#suffix'] = t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt; or &lt;head&gt tags in the template. ');
     $form['body_field']['#suffix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
+
+    $form['#validate'][] = '_page_wrapper_validate_css';
+
   }
 }
+
+
+function _page_wrapper_validate_css($form, &$form_state) {
+  if (isset($form_state['values']['field_css_file']['existing_css_file']) && $form_state['values']['field_css_file']['existing_css_file']) {
+
+    $form_state['values']['field_css_file'][0] = db_fetch_array(db_query("
+      SELECT * FROM {files} 
+      WHERE filepath = '%s' 
+        AND filemime = 'text/css' 
+        AND status = 1", 
+    $form_state['values']['field_css_file']['existing_css_file']));
+  
+  }
+}
+
 
 /**
  * Implementation of hook_file_insert().
@@ -275,7 +310,9 @@ function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
 function _page_wrappers_base_path() {
   //return $base_path = $_SERVER['DOCUMENT_ROOT'] . '/' . drupal_get_path('module', 'page_wrappers') . '/theme';
   //return drupal_get_path('module', 'page_wrappers') . '/theme';
-  return $_SERVER['DOCUMENT_ROOT'] . '/' . file_directory_path() . '/page_wrappers';
+
+  // included base_path() to ensure base path is correct even when Drupal is installed in a subdirectory of webroot.
+  return $_SERVER['DOCUMENT_ROOT'] . base_path() . file_directory_path() . '/page_wrappers';
 }
 
 function _page_wrappers_template_path() {
@@ -312,7 +349,8 @@ function _page_wrappers_create_template($node) {
   
   $full_path = $base_path . '/tpl';
 
-  if (file_check_directory($full_path, 1)) {
+  if (file_check_directory($full_path, FILE_CREATE_DIRECTORY)) {
+
     $full_path = $full_path . '/' . $filename;
     // open the file for writing
     $file = fopen($full_path, 'w');
@@ -328,7 +366,7 @@ function _page_wrappers_create_template($node) {
     
     return $filename;
   }
-  
+
   return FALSE;  
   
 }
@@ -633,4 +671,32 @@ function _page_wrappers_default_footer() {
 EOT;
 
   return $footer;
+}
+
+/**
+ * Finds CSS files uploaded via Page Wrappers.
+ * 
+ * @return
+ * Returns an array containing the stylesheets that have been uploaded via Page Wrappers, formatted suitably
+ *  for populating a select box.
+ */
+function _page_wrapper_list_files() {
+  $options = array(0 => t('- select -'));
+  
+  // Added hoop-jumping to ensure the user is shown a human-readable filename.
+  $css_files = file_scan_directory(file_create_path('page_wrappers/css'), '.*');
+  
+  foreach ($css_files as $path => $file) {
+    $filepaths[] = $path;
+  }
+  $placeholders = db_placeholders($filepaths, 'varchar');
+
+  $sql = ('SELECT * FROM {files} WHERE filemime = "text/css" AND filepath IN (' . $placeholders . ')');
+
+  $results = db_query($sql, $filepaths);
+  while ($filedata = db_fetch_object($results)) {
+
+    $options[$filedata->filepath] = $filedata->filename;
+  }
+  return $options;
 }
