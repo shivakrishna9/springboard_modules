@@ -179,17 +179,20 @@ function page_wrappers_form_alter(&$form, $form_state, $form_id) {
 
     $form['field_css_file'][0]['#title'] = t('Upload a stylesheet');
     
-    $form['field_css_file']['or'] = array(
-      '#type' => 'markup',
-      '#value' => '<div><strong>' . t('OR') . '</strong></div>',
-    );
+    $existing_css = _page_wrapper_list_files();
+    if ($existing_css) {
+      $form['field_css_file']['or'] = array(
+        '#type' => 'markup',
+        '#value' => '<div><strong>' . t('OR') . '</strong></div>',
+      );
     
-    $form['field_css_file']['existing_css_file'] = array(
-      '#type' => 'select',
-      '#title' => t('Choose an existing stylesheet'),
-      '#options' => _page_wrapper_list_files(),
-      '#suffix' => '<hr />',
-    );
+      $form['field_css_file']['existing_css_file'] = array(
+        '#type' => 'select',
+        '#title' => t('Choose an existing stylesheet'),
+        '#options' => $existing_css,
+        '#suffix' => '<hr />',
+      );
+    }
     
     
     // add some help the body (Template HTML) field
@@ -673,30 +676,40 @@ EOT;
   return $footer;
 }
 
+
 /**
  * Finds CSS files uploaded via Page Wrappers.
  * 
- * @return
- * Returns an array containing the stylesheets that have been uploaded via Page Wrappers, formatted suitably
- *  for populating a select box.
+ * @return mixed
+ *   Returns an array containing the stylesheets that have been uploaded via
+ *   Page Wrappers, formatted suitably for populating a select box. If no CSS
+ *   files are available, returns FALSE
  */
 function _page_wrapper_list_files() {
-  $options = array(0 => t('- select -'));
   
   // Added hoop-jumping to ensure the user is shown a human-readable filename.
   $css_files = file_scan_directory(file_create_path('page_wrappers/css'), '.*');
   
+  // If there are no CSS files in the files directory, there are no options to
+  // list
+  if (empty($css_files)) {
+    return FALSE;
+  }
+
+  // Get info about the CSS files
   foreach ($css_files as $path => $file) {
     $filepaths[] = $path;
   }
   $placeholders = db_placeholders($filepaths, 'varchar');
 
-  $sql = ('SELECT * FROM {files} WHERE filemime = "text/css" AND filepath IN (' . $placeholders . ')');
+  $sql = ('SELECT * FROM {files} WHERE filemime = "text/css" AND filepath IN (' . $placeholders . ') ORDER BY filename');
 
+  // Build an array of CSS files
   $results = db_query($sql, $filepaths);
+  $options = array(0 => t('- select -'));
   while ($filedata = db_fetch_object($results)) {
-
     $options[$filedata->filepath] = $filedata->filename;
   }
+
   return $options;
 }
