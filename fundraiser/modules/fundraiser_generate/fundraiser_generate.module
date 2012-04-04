@@ -119,13 +119,14 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
   else {
     $recurs = (bool) rand(0, 1);
   }
+  // TODO - do this with the process system in fundraiser. No more form execute if possible.
   // Load up the donation form node.
   $donation_form_node = node_load($nid);
   for ($i = 0; $i < $count; $i++) {
     // Create some random strings using devel_generate functions.
     $url = parse_url($GLOBALS['base_url']);
-    $first_name = devel_generate_word(mt_rand(4, 10));
-    $last_name = devel_generate_word(mt_rand(3, 11));
+    $first_name = devel_generate_word(mt_rand(4, 10)); // From devel_generate.module.
+    $last_name = devel_generate_word(mt_rand(3, 11)); // From devel_generate.module.
     $email =  $first_name . '.' . $last_name . '@' . $url['host'];
     $year = date('Y');
     // Build up a bogus form_state to submit.
@@ -160,9 +161,9 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
             'email' => $email,
           ),
           'billing_information' => array(
-            'address' => devel_generate_word(mt_rand(10, 20)),
+            'address' => devel_generate_word(mt_rand(10, 20)), // From devel_generate.module.
             'address_line_2' => '',
-            'city' => devel_generate_word(mt_rand(7, 15)),
+            'city' => devel_generate_word(mt_rand(7, 15)), // From devel_generate.module.
             'country' => '840',
             'state' => _fundraiser_generate_random_state(),
             'zip' => mt_rand(11111, 55555),
@@ -209,7 +210,7 @@ function _fundraiser_generate_random_state() {
   static $zones;
   if (count($zones == 0)) {
     // Load up available zones from fundraiser hooks.
-    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840));
+    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840)); //TODO this is no longer a valid hook.
   }
   // Get length of array.
   $length = count($zones) - 1;
@@ -223,7 +224,7 @@ function _fundraiser_generate_random_state() {
  */
 function _fundraiser_generate_random_ask_amount($nid) {
   $amount_values = array();
-  $amount_values = _fundraiser_get_webform_extra_by_key($nid, 'amount'); // From fundraiser.fields.inc.
+  $amount_values = _fundraiser_webform_get_extra_by_key($nid, 'amount'); // From fundraiser_webform.module.
   $amount_values = preg_split('/\n/', trim($amount_values['items']));
   array_pop($amount_values); // Get rid of other for now.
   $values = array();
