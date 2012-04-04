@@ -1003,28 +1003,6 @@ function _fundraiser_webform_create_amount_options($donation_amounts, $show_othe
   return $formatted_amounts;
 }
 
-/** 
- * Helper function, given a card number return likely type.
- */
- //TODO figure out where this is called from.
-function _fundraiser_webform_get_cc_type($cardnumber) {
-  $cardtype = "UNKNOWN";
-  $len = strlen($cardnumber);
-  if ( $len == 15 && substr($cardnumber, 0, 1) == '3' ) {
-    $cardtype = "amex";
-  }
-  elseif ( $len == 16 && substr($cardnumber, 0, 4) == '6011' ) {
-    $cardtype = "discover";
-  }
-  elseif ( $len == 16 && substr($cardnumber, 0, 1) == '5' ) {
-    $cardtype = "mc";
-  }
-  elseif ( ($len == 16 || $len == 13) && substr($cardnumber, 0, 1) == '4' ) {
-    $cardtype = "visa";
-  }
-  return ( $cardtype );
-}
-
 /**
  * Helper function, these are the fields we can't delete.
  */
