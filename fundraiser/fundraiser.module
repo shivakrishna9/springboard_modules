@@ -181,7 +181,6 @@ function fundraiser_menu() {
     'weight' => 11,
     'file' => 'fundraiser.admin.inc',
   );
-
   return $items;
 }
 
@@ -209,18 +208,6 @@ function fundraiser_menu_alter(&$items) {
   if (module_exists('trigger')) {
     $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
   }
-}
-
-/**
- * Menu callback, display fundraiser confirmation page.
- */
-function fundraiser_donation_confirmation($node) {
-  drupal_set_title(check_plain($node->confirmation_page_title));
-  if (empty($output)) {
-    // TODO come back to this, will need to be rethemed.
-    $output = theme(array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'), $node, $_GET['sid']);
-  }
-  return $output;
 }
 
 // TODO come back to fix these. This is no longer how tokens work. vvv
@@ -699,168 +686,6 @@ function _fundraiser_form_amount_no_js_submit($form, &$form_state) {
  */
 
 /**
- * Form for fundraiser confirmation settings.
- */
-//TODO figure out where this is set in the menu.
-function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-  $form['confirmation_page'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation page settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['confirmation_page']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Page title'),
-    '#default_value' => isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
-  );
-  $form['confirmation_page']['body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation message'),
-    '#default_value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
-    '#format' => isset($body_format) ? $body_format : NULL,
-    '#parents' =>  array('confirmation_page_format'),
-  );
-  $form['confirmation_page']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['confirmation_page']['tokens']['help'] = array(
-    // TODO follow up on this to make sure that the tokens we are using are the right ones.
-    '#markup' => theme('token_tree', array('token_types' => array('node'))) . theme('webform_token_help', array()),
-  );
-  // Redirection settings.
-  if (isset($node->redirect_url) && strpos($node->redirect_url, '<') === 0) {
-    $redirect = trim($node->redirect_url, '<>');
-    // Redirection is set to front page.
-    if ($redirect == 'front') {
-      $redirect = 'url';
-      $redirect_url = $node->redirect_url;
-    }
-    else {
-      $redirect_url = '';
-    }
-  }
-  else {
-    $redirect = 'url';
-    $redirect_url = isset($node->redirect_url) ? $node->redirect_url : '';
-  }
-  $form['confirmation_page']['redirection'] = array(
-    '#type' => 'item',
-    '#title' => t('Redirection location'),
-    '#theme' => 'webform_advanced_redirection_form',
-    '#description' => t('Choose where to redirect the user upon successful submission.'),
-  );
-  $form['confirmation_page']['redirection']['redirect'] = array(
-    '#type' => 'radios',
-    '#default_value' => $redirect,
-    '#options' => array(
-      'confirmation' => t('Confirmation page'),
-      'url' => t('Custom URL'),
-    ),
-  );
-  $form['confirmation_page']['redirection']['redirect_url'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Redirect URL'),
-    '#description' => t('URL to redirect the user to upon successful submission.'),
-    '#default_value' => $redirect_url,
-    '#maxlength' => 255,
-  );
-  $form['email'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation email settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['email']['receipt_email_address'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Address'),
-    '#description' => t('The email address that the receipt email will come from.'),
-    '#weight' => -4.6,
-    '#maxlength' => 255,
-    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_from'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email From'),
-    '#description' => t('The name that is associated with the receipt email address.'),
-    '#weight' => -4.5,
-    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Subject'),
-    '#description' => t('The subject of the donation receipt email.'),
-    '#weight' => -4.4,
-    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation Email Message'),
-    '#weight' => -4.3,
-    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 300,
-  );
-  return $form;
-}
-
-/**
- * Validation function for fundraiser_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
-  // Validate the email address.
-  if (!_fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
-    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
-  }
-  // Ensure the entered redirect URL is valid.
-  if ($form_state['values']['redirect'] == 'url') {
-    $redirect_url = trim($form_state['values']['redirect_url']);
-    if (empty($redirect_url)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('A valid URL is required for custom redirection.'));
-    }
-    elseif (strpos($redirect_url, 'http') === 0 && !valid_url($redirect_url, TRUE)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('The entered URL is not a valid address.'));
-    }
-    else {
-      form_set_value($form['confirmation_page']['redirection']['redirect_url'], $redirect_url, $form_state);
-    }
-  }
-  elseif ($form_state['values']['redirect'] == 'confirmation') {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-  else {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-}
-
-/**
- * Submit function for fundraiser_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
-  $fundraiser = _fundraiser_get_fundraiser($form_state['values']['nid']);
-  $fundraiser->confirmation_page_title = check_plain($form_state['values']['title']);
-  $fundraiser->confirmation_page_body = $form_state['values']['body'];
-  $fundraiser->confirmation_page_format = $form_state['values']['confirmation_page_format'];
-  $fundraiser->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
-  $fundraiser->receipt_email_address = $form_state['values']['receipt_email_address'];
-  $fundraiser->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
-  $fundraiser->receipt_email_message = $form_state['values']['receipt_email_message'];
-  $fundraiser->redirect_url = $form_state['values']['redirect_url'];
-  _fundraiser_update_fundraiser($fundraiser);
-}
-
-/**
  * Donation form, display routine on data returned from glue display module.
  * Must be called from glue display module when displaying the donation form.
  */
@@ -1105,11 +930,12 @@ function _fundraiser_is_secure() {
 /**
  * Helper function function, flatten given arrays. Generically useful function.
  * Future plans: this may need to be moved to a toolkit module for use by all our modules.
+ * Careful: Here be recursion.
  */
 function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = array()) {
   foreach ($array as $key => $child) {
     if (is_array($child)) {
-      $newArray = &_fundraiser_webform_array_flatten($child, $preserve_keys, $newArray);
+      $newArray = &_fundraiser_array_flatten($child, $preserve_keys, $newArray);
     }
     elseif ($preserve_keys + is_string($key) > 1) {
       $newArray[$key] = $child;
@@ -1119,6 +945,26 @@ function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = arra
     }
   }
   return $newArray;
+}
+
+/**
+ * Helper function, smarter version of array_merge_recursive: overwrites scalar values.
+ * Future plans: this may need to be moved to a toolkit module for use by all our modules.
+ * @see PHP Manual on: array-merge-recursive comment #82976.
+ * Future plans: this may need to be moved to a toolkit module for use by all our modules.
+ */
+function _fundraiser_array_smart_merge($array, $override) {
+  if (is_array($array) && is_array($override)) {
+    foreach ($override as $k => $v) {
+      if (isset($array[$k]) && is_array($v) && is_array($array[$k])) {
+        $array[$k] = _fundraiser_array_smart_merge($array[$k], $v);
+      }
+      else {
+        $array[$k] = $v;
+      }
+    }
+  }
+  return $array;
 }
 
 /**
@@ -1441,5 +1287,32 @@ function fundraiser_queue_report_item_title_alter(&$row) {
       array(':refund_id' => $row['oid']))->fetchColumn();
     $title = 'Donation ' . $did;
     $row['title'] = $title;
+  }
+}
+
+/**
+ * Implementation of hook_webform_submission_update()
+ * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
+ */
+ // TODO this looks like it should be in another module based on what it does, perhaps sf_queue? - SeH 1/12/12
+ // Update - move to sf_donation.
+function fundraiser_webform_submission_update($node, $submission) {
+  if ($node->type == 'donation_form') {
+    if (module_exists('queue_api')) {
+      $order_id = db_query('SELECT f.order_id FROM {fundraiser_webform_order} f ' .
+        'INNER JOIN {uc_orders} u ON u.order_id = f.order_id ' .
+        'WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = \'payment_received\'',
+        array(':webform_nid' => $node->nid, ':sid' => $submission->sid))->fetchColumn();
+      if ($order_id) {
+        // Determine if we need an INSERT or an UPDATE
+        $action = 'create';
+        $sfid = db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = :oid AND drupal_type = \'donation\'', 
+          array(':oid' => $order_id))->fetchColumn();
+        if ($sfid) {
+          $action = 'update';
+        }
+        sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
+      }
+    }
   }
 }

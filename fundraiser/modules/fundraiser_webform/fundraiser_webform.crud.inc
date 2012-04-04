@@ -18,7 +18,7 @@
  * @param $min_donation_amount
  *   A minimum value for the other amount field that will be validated upon submission
  */
-function fundraiser_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
+function _fundraiser_webform_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
   module_load_include('inc', 'webform', 'includes/webform.components');
   // create an array to hold all of the created components
   $components = array();
@@ -43,16 +43,16 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // determine the type of amount field to output
   if ($donation_amounts) {
     ksort($donation_amounts, SORT_NUMERIC);
-    $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
+    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $show_other_amount); // FROM UNKNOWN LOCATION.
 
     if ($show_other_amount) {
       // other amount
-      $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
+      $component = _fundraiser_webform_insert_other_amount_component($nid, $pid, $min_donation_amount);
       $components[$component['id']] = $component['other_amount'];
     }
 
     // ask amounts
-    $component = _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
+    $component = _fundraiser_webform_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
     $components[$component['id']] = $component['amount'];
   }
   else { // plain old textbox for donation amount
@@ -223,7 +223,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
 
   // country
-  $countries =  module_invoke_all('fundraiser_format_country_select', $us);
+  $countries =  module_invoke_all('fundraiser_format_country_select', $us); // TODO this is no longer a valid hook. Redo.
   $countries = $countries[0];
 
   // build option string for countries
@@ -262,7 +262,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $components[$id] = $billing_country;
 
   // state
-  $zones = module_invoke_all('fundraiser_format_zone_select', $us, NULL);
+  $zones = module_invoke_all('fundraiser_format_zone_select', $us, NULL);// TODO this is no longer a valid hook. Redo.
   $zones = $zones[0];
 
   // build option string for states
@@ -347,12 +347,12 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $components[$id] = $card_number;
 
   // expiration month
-  $expiration_month = fundraiser_create_month_field($nid, $pid);
+  $expiration_month = _fundraiser_webform_create_month_field($nid, $pid);
   $id = webform_component_insert($expiration_month);
   $components[$id] = $expiration_month;
 
   // expiration year
-  $expiration_year = fundraiser_create_year_field($nid, $pid);
+  $expiration_year = _fundraiser_webform_create_year_field($nid, $pid);
   $id = webform_component_insert($expiration_year);
   $components[$id] = $expiration_year;
 
@@ -396,7 +396,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
   // Invoke hook_fundraiser_create_webform_components
   //
-  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
+  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid); // TODO this is no longer a valid hook. Redo.
   foreach ($contrib_components as $component) {
     $id = webform_component_insert($component);
     $components[$id] = $component;
@@ -407,14 +407,12 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 /**
  * Creates a year expiration drop down field to be used in donation forms.
  */
-function fundraiser_create_year_field($nid, $pid) {
+function _fundraiser_webform_create_year_field($nid, $pid) {
   $this_year = date('Y');
   $years = $this_year . "\n";
   for ($i = 1; $i <= 5; $i++) {
     $years .= ($this_year + $i) . "\n";
   }
-
-  // expiration date
   $expiration_year = array();
   $expiration_year['nid'] = $nid;
   $expiration_year['pid'] = $pid;
@@ -436,8 +434,7 @@ function fundraiser_create_year_field($nid, $pid) {
 /**
  * Creates a month expiration drop down field to be used in donation forms.
  */
-function fundraiser_create_month_field($nid, $pid) {
-  // expiration month
+function _fundraiser_webform_create_month_field($nid, $pid) {
   $months = "1|January\n";
   $months .= "2|Feburary\n";
   $months .= "3|March\n";
@@ -450,7 +447,6 @@ function fundraiser_create_month_field($nid, $pid) {
   $months .= "10|October\n";
   $months .= "11|November\n";
   $months .= "12|December\n";
-
   $expiration_month = array();
   $expiration_month['nid'] = $nid;
   $expiration_month['pid'] = $pid;
@@ -483,7 +479,8 @@ function fundraiser_create_month_field($nid, $pid) {
  *
  * TODO called during _fundraiser_update_fundraiser to store new settings.
  */
-function _fundraiser_update_amount_webform_component($node, $donation_amounts = array(), $value) {
+function _fundraiser_webform_update_amount_component($node, $donation_amounts = array(), $value) {
+  // TODO remove this table stuff.
   $pid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'donation'), 'cid');
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
@@ -511,7 +508,8 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     }
   }
   else {
-    $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
+    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $node->show_other_amount);
+    //TODO remove this table.
     $field_type = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'amount'), 'type');  
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
@@ -525,6 +523,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
         ->condition('form_key', 'amount')
         ->execute();
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
+          //TODO remove this table.
       $result = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'other_amount'), 'extra');
     }
 
@@ -534,7 +533,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
         ->condition('nid', $node->nid)
         ->condition('form_key', 'amount')
         ->execute();
-      $amount = _fundraiser_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amount);
+      $amount = _fundraiser_webform_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amount);
       webform_component_insert($amount['amount']);
     }
   }
@@ -562,7 +561,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
 
     // Other amount has been enabled so we need to add the component data to the DB.
     else {
-      _fundraiser_insert_other_amount_component($node->nid, $pid, $node->minimum_donation_amount);
+      _fundraiser_webform_insert_other_amount_component($node->nid, $pid, $node->minimum_donation_amount);
       $message .= t('Other amount options have been added to the form.');
     }
   }
@@ -597,8 +596,8 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
  * @return
  * Returns a keyed array containing the ID of the component created and a keyed array of values used to create the component.
  */
-function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = array(), $show_other_amount) {
-  $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
+function _fundraiser_webform_insert_amount_component($nid, $pid, $donation_amounts = array(), $show_other_amount) {
+  $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $show_other_amount);
   $amount = array();
   $amount['nid'] = $nid;
   $amount['pid'] = $pid;
@@ -634,7 +633,7 @@ function _fundraiser_insert_amount_component($nid, $pid, $donation_amounts = arr
  *  @return
  *  Returns a keyed array containing the component values and the id of the created component.
  */
-function _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount) {
+function _fundraiser_webform_insert_other_amount_component($nid, $pid, $min_donation_amount) {
   $other_amount = array();
   $other_amount['nid'] = $nid;
   $other_amount['pid'] = $pid;
