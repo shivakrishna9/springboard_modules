@@ -37,7 +37,7 @@ define('DONATION_RECURRING', 1);
 define('DONATION_CANCELLED', 2);
 
 // Include theme related functions.
-require_once('fundraiser.theme.inc'); 
+//require_once('fundraiser.theme.inc'); 
 
 /**
  * Implements hook_cron().
@@ -314,6 +314,7 @@ function fundraiser_access($op, $node, $account) {
 // NO MORE OF THIS.
 // SERIOUSLY.
 // Replace with a 'is this a donation type' flag for donation info to attach to a node type.
+// For now, use Features or somethign to make sure donation_type has been created in the system.
 /**
  * Implements hook_node_info().
  *
@@ -379,7 +380,7 @@ function fundraiser_node_load($nodes, $types) {
 function fundraiser_node_presave($node) {
   if (_fundraiser_is_donation_type($node->type)) {
     // Check the submission to remove the donation amounts marked.
-    foreach ($node->donation_amounts as $index => donation_amount) {
+    foreach ($node->donation_amounts as $index => $donation_amount) {
       if ($donation_amount['remove'] == 1) {
          unset($node->donation_amounts[$index]);
       }
@@ -469,6 +470,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state, $node) {
+drupal_set_message(print_r($node,TRUE));
   // Check if this is being called on an enabled node type.
   if (!_fundraiser_is_donation_type($node->type)) {
     return $form;
