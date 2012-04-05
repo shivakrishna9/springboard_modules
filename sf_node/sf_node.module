@@ -95,18 +95,23 @@ function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         }
       }
       break;
-    
+
     case 'delete':
       if (salesforce_manangement_api_fieldmap_exists('node_' . $node->type)) {
         $salesforce = salesforce_management_api_id_load('node_' . $node->type, $node->nid);
         // delete the object in salesforce (maybe make a setting)
         if ($salesforce['fieldmap'] && $salesforce['sfid']) {
-          sf_queue_insert($node->nid, 'node_' . $node->type, 'delete');
+          // Are delete actions enabled globally?
+          if (variable_get('sf_node_delete_action_enabled', FALSE)) {
+            // Insert a delete action into the queue.
+            sf_queue_insert($node->nid, 'node_' . $node->type, 'delete');
+          }
+          // Delete this node from {salesforce_management_object_map} table.
           salesforce_management_api_id_delete('node_' . $node->type, $node->nid);
-        } 
+        }
       }
       break;
-	 
+
   }
 }
 
