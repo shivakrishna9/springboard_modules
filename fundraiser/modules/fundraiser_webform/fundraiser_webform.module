@@ -360,9 +360,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
   unset($submission->data['']);
   // Remove senstive form data before the submission is saved to the database.
   if ($node->type == 'donation_form') {
-  //TODO remove table, move to own function.
-    $results = _fundraiser_get_fields_from_table('webform_component',
-      array('nid' => $node->nid, 'form_key' => array('card_number', 'card_cvv', 'card_expiration_date')), 'cid');
+    $results = _fundraiser_webform_get_cid_by_keys($node->nid, array('card_number', 'card_cvv', 'card_expiration_date'));
     foreach ($results as $result) {
       $submission->data[$result->cid]['value'][0] = NULL;
     }
@@ -410,10 +408,9 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
     // Handle the donation form display.
     if (_fundraiser_is_donation_type($node->type)  && arg(2) != 'submission') { // From fundraiser.module.
       // From fundraiser.module, calls hooks to create form and submission paths.
-      fundraiser_donation_form($form, $form_state);
+      $form = fundraiser_donation_form($form, $form_state);
     }
   }
-  return $form;
 }
 
 /**
@@ -473,7 +470,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 /**
  * Implements hook_fundraiser_donation_form().
  */
-function fundraiser_webform_fundraiser_donation_form(&$form, &$form_state) {
+function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Loads profile fields in addition to base user data, and de-couples logged in user object.
   global $user;
   $this_user = user_load($user->uid);
@@ -591,6 +588,7 @@ function fundraiser_webform_fundraiser_donation_form(&$form, &$form_state) {
     theme('image', array('path' =>  drupal_get_path('module', 'fundraiser') . '/images/padlock.gif' )) .
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
+  return $form;
 }
 
 /**
@@ -622,7 +620,8 @@ function fundraiser_webform_fundraiser_donation_validate($form, &$form_state) {
     }
   }
   // Check for minimum amount.
-  $minimum_donation_amount = _fundraiser_get_fields_from_table('fundraiser', array('nid' => $node_id), 'minimum_donation_amount');
+  $fundraiser = _fundraiser_get_fundraiser($node_id);
+  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
   if ($donation_amount < $minimum_donation_amount) {
     form_set_error('submitted][donation][other_amount', "Your donation amount must be greater than or equal to $minimum_donation_amount.");
@@ -717,8 +716,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, &$form_state) {
 
   // Set if this was a recurring donation.
   $recurs = FALSE; //TODO remove this thing. It's a bad approach to solving the table qustion.
-  $recurs_cid = _fundraiser_get_fields_from_table('webform_component',
-    array('nid' => $node_id, 'form_key' => 'recurs_monthly'), 'cid');
+  $recurs_cid = _fundraiser_webform_get_cid_by_keys($node_id, array('recurs_monthly'));
   if (!empty($recurs_cid)) {
     $value = $form_state['values']['submitted'][$recurs_cid];
     if (is_array($value)) {
@@ -791,8 +789,10 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   // Record that the donation was successful for the webform submission.
   // Get the webform and associated node.
   // TODO get rid of this table functiont hing.
-  $webform = _fundraiser_get_fields_from_table('fundraiser_webform_order',
-    array('order_id' => $order_id), array('webform_nid', 'sid', 'recurring_status'));
+  $results = _fundraiser_webform_get_submission_by_donation($order_id);
+  foreach ($results as $result) {
+    $webform = $result;
+  }
   $node = $donation['node'];
 
   // Update the order/webform relationship // TODO update this to write record -SeH
@@ -838,13 +838,13 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
  */
 function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   // Get the user profile map. // TODO move this into another module?
-  // TODO get rid of table thing.
-  $results = _fundraiser_get_fields_from_table('fundraiser_component_map', array('nid' => $node->nid), array('cid', 'map_id') );
+  $results = fundraiser_webform_get_component_map_by_nid($fundraiser->nid);
+  $map = array();
   foreach($results as $result) {
     $map[$result->cid] = $result->map_id;
   }
   // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
-  $extra = _fundraiser_webform_get_extra_by_key($node->nid, 'amount');
+  $extra = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'amount');
   $items = preg_split('/\s/', $extra['items']);
   $donation_amounts = array();
   for ($i = 0; $i < count($items); ++$i) {
@@ -855,8 +855,8 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
 
   // Add the amount_values for the fundraiser information on load.
   $amount_values = array();
-  if (is_numeric($node->nid)) {
-    $amount_values = _fundraiser_webform_get_extra_by_key($node->nid, 'amount');
+  if (is_numeric($fundraiser->nid)) {
+    $amount_values = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'amount');
     $amount_values = preg_split('/\n/', trim($amount_values['items']));
     // This includes 'Other' as an option which is dropped on the display end.
   }
@@ -911,7 +911,10 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
  * Creates a nested array of where a component exists in the FAPI array.
  */
 function _fundraiser_webform_parse_component($nid, $form_key) {
-  $cid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $nid, 'form_key' => $form_key), 'cid');
+  $results = _fundraiser_webform_get_cid_by_keys($nid, array($form_key));
+  foreach ($results as $result) {
+    $cid = $result->cid;
+  }
   $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid)) . ']';
   parse_str($component_path, $output); // Convert. string to a nested array
   return $output;
@@ -944,7 +947,7 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
   if (empty($component_hierarchy[$nid])) {
     $component_hierarchy[$nid] = array();
     // TODO remove this table thing here.
-    $results = _fundraiser_get_fields_from_table('webform_component', array('nid' => $nid), array('cid', 'pid', 'form_key'));
+    $results = _fundraiser_webform_get_component_data($nid);
     foreach ($results as $data) {
       $cid = $data->cid;
       $component_hierarchy[$nid][$cid][] = $data;
@@ -1043,15 +1046,63 @@ function _fundraiser_webform_required_fields() {
  */
 
 /**
+ * DB function, get submission from a donation form.
+ */
+function fundraiser_webform_get_component_map_by_nid($nid) {
+  return db_query('SELECT * FROM {fundraiser_component_map} WHERE nid = :nid', array(':nid' => $nid));
+}
+
+/**
+ * DB function, get submission from a donation form.
+ */
+function fundraiser_webform_get_submission_by_donation($did) {
+  return db_query('SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} '.
+    'WHERE order_id = :order_id', array(':order_id' => $did));
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_component_data($nid) {
+  return db_query('SELECT * FROM {webform_component} WHERE nid = :nid',
+    array(':nid'=>$nid));
+}
+
+/**
  * DB function, given a nid and field key, get and *unserialize* the extra field from webform component.
  */
-function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
-  //TODO git rid of table thing.
-  $results = _fundraiser_get_fields_from_table('webform_component', array('nid' => $nid, 'form_key' => $form_key), 'extra');
-  if ($results) {
-    return unserialize($results);
+function _fundraiser_webform_get_extra_by_key($nid, $form_keys) {
+  if (!is_array($form_keys)) {
+    $form_keys = array($form_keys);
+  }
+  $results =  db_query('SELECT extra FROM {webform_component} WHERE nid = :nid AND form_key IN(:form_keys)',
+    array(':nid'=>$nid, ':form_keys' => $form_keys));
+  foreach ($results as $result) {
+    return unserialize($result->extra);
   }
   return FALSE;
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_cid_by_keys($nid, $form_keys) {
+  if (!is_array($form_keys)) {
+    $form_keys = array($form_keys);
+  }
+  return db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key IN(:form_keys)',
+    array(':nid'=>$nid, ':form_keys' => $form_keys));
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_amount_count($nid) {
+  $results = db_query('SELECT COUNT(nid) as count FROM {webform_component} WHERE nid = :nid AND form_key LIKE \'amount\' AND type = \'select\'',
+    array(':nid'=>$nid, ':form_keys' => $form_keys));
+  foreach ($results as $result) {
+    return $result->count;
+  }
 }
 
 /**

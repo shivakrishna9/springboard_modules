@@ -481,10 +481,13 @@ function _fundraiser_webform_create_month_field($nid, $pid) {
  */
 function _fundraiser_webform_update_amount_component($node, $donation_amounts = array(), $value) {
   // TODO remove this table stuff.
-  $pid = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'donation'), 'cid');
+  $results = _fundraiser_webform_get_cid_by_keys($node->nid, array('donation'));
+  foreach ($results as $result) {
+    $pid = $result->cid;
+  }
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
-    $has_select = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'amount', 'type' => 'select'), 'nid');
+    $has_select = _fundraiser_webform_get_amount_count($node->nid);
     if ($has_select) {
       $amount = array();
       $amount['nid'] = $node->nid;
@@ -510,7 +513,10 @@ function _fundraiser_webform_update_amount_component($node, $donation_amounts = 
   else {
     $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $node->show_other_amount);
     //TODO remove this table.
-    $field_type = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'amount'), 'type');  
+    $results = _fundraiser_webform_get_cid_by_keys($node->nid, array('amount'));
+    foreach ($results as $result) {
+      $field_type = $result->type;
+    }
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
@@ -524,7 +530,7 @@ function _fundraiser_webform_update_amount_component($node, $donation_amounts = 
         ->execute();
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
           //TODO remove this table.
-      $result = _fundraiser_get_fields_from_table('webform_component', array('nid' => $node->nid, 'form_key' => 'other_amount'), 'extra');
+      $result = _fundraiser_webform_get_extra_by_key($node->nid, array('other_amount'));
     }
 
     // Since we have donation amounts we need to convert the amount component from textfield to select

@@ -205,11 +205,16 @@ function fundraiser_ubercart_fundraiser_donation_retrieve_future($donation) {
     'ref_id' => array_shift(array_keys($order->data['cc_txns']['references'])),
   );
   $donation['donation']->data = array_merge($donation['donation']->data, $data);
-  // TODO git rid of this table thing.
-  $gateway = _fundraiser_get_fields_from_table('fundraiser_recurring', array('order_id' => $order_id), 'gateway');
+  $results = _fundraiser_get_recurring_by_order_id($order_id);
+  foreach ($results as $result) {
+    $gateway = $result->gateway;
+  }
   if (empty($gateway)) {
     // Else try from the fundraiser information directly.
-    $gateway = _fundraiser_get_fields_from_table('fundraiser', array('nid' => $nid), 'gateway');
+    $results = _fundraiser_get_fundraiser_by_nid($nid);
+    foreach ($results as $result) {
+      $gateway = $result->gateway;
+    }
   }
   $donation['node']->nid = $gateway;
 }

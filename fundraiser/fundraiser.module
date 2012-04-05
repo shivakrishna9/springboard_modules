@@ -470,7 +470,6 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state, $node) {
-drupal_set_message(print_r($node,TRUE));
   // Check if this is being called on an enabled node type.
   if (!_fundraiser_is_donation_type($node->type)) {
     return $form;
@@ -698,7 +697,8 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#validate'][] = 'fundraiser_donation_validate';
   $form['#submit'][] = 'fundraiser_donation_submit';
   // Call hook to allow sub modules to add / manipulate the form.
-  module_invoke_all('fundraiser_donation_form', $form, $form_state);
+  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
+  return $form;
 }
 
 /**
@@ -1026,9 +1026,11 @@ function _fundraiser_create_fundraiser($fundraiser) {
 /**
  * CRUD style DB function for fundraiser.
  */
+function _fundraiser_get_fundraiser_by_nid($nid) {
+  return  _fundraiser_get_fundraiser($nid);
+}
 function _fundraiser_get_fundraiser($nid) {
   // Get fundraiser table information.
-drupal_set_message('called _fundraiser_get_fundraiser');
   $results = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid));
   $fundraiser = $results->fetchObject(); // Return an object.
   // Explode the donation amounts that were imploded during save.
@@ -1152,7 +1154,7 @@ function _fundraiser_create_recurring($donation) {
 }
 
 /**
- * CRUD style DB function for fundraiser_recurring.
+ * DB function, get recurring orders.
  */
 function _fundraiser_get_recurring() {
   $results = db_query('SELECT * FROM {fundraiser_recurring} ' .
@@ -1161,6 +1163,14 @@ function _fundraiser_get_recurring() {
     'AND attempts < 3',
     array(':next_charge' => time()));
   return $results;
+}
+
+/**
+ * DB function, get recurring orders by order id.
+ */
+function _fundraiser_get_recurring_by_order_id($order_id) {
+  return db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :order_id',
+    array(':order_id' => $order_id));
 }
 
 /**
@@ -1190,6 +1200,7 @@ function fundraiser_gateway_can_refund_order($order) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //REMOVE ALL BELOW THIS POINT.
 
+
 //TODO move you to another module for profile handling in post submission.
 /**
  * Updates the profile of user that submitted the donation.
@@ -1197,9 +1208,10 @@ function fundraiser_gateway_can_refund_order($order) {
 // NAME THIS AS PER: hook_fundraiser_donation_success();
 function fundraiser_update_user_profile($donation) {
 // Use this to get the sid value out. Submission id.? 
-  $webform = _fundraiser_get_fields_from_table('fundraiser_webform_order',
-    array('order_id' => $order_id), array('webform_nid', 'sid', 'recurring_status'));
-
+  $results = fundraiser_webform_get_submission_by_donation($order_id);
+  foreach ($results as $result) {
+    $webform = $result;
+  }
   $uid = $donation['uid'];
   $nid = $donation['nid'];
   $sid = $donation['webform']->sid; // TODO make sure webform is passed along? Or at least this info.
