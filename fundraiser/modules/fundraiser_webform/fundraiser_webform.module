@@ -698,10 +698,10 @@ function fundraiser_webform_fundraiser_donation_submit($form, &$form_state) {
   
   // Create the donation object and load it with the submitted information for the donation.
   $donation = array();
-  $donation['uid'] => $user->uid;
-  $donation['user'] => user_load($user->uid); //Using user load to avoid user object being carried by ref around.
-  $donation['nid'] => $nid;
-  $donation['node'] => node_load($nid);
+  $donation['uid'] = $user->uid;
+  $donation['user'] = user_load($user->uid); //Using user load to avoid user object being carried by ref around.
+  $donation['nid'] = $nid;
+  $donation['node'] = node_load($nid);
 
   // Retrieve data from the submission.
   $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
@@ -787,7 +787,7 @@ function fundraiser_webform_confirm($form, &$form_state) {
 /**
  * Implements hook_fundraiser_donation_success().
  */
-function fundraiser_webform_fundraiser_donation_success(&$donation) {
+function fundraiser_webform_fundraiser_donation_success($donation) {
   // Record that the donation was successful for the webform submission.
   // Get the webform and associated node.
   // TODO get rid of this table functiont hing.
@@ -802,8 +802,9 @@ function fundraiser_webform_fundraiser_donation_success(&$donation) {
     array(
       ':gateway' => $donation['node']->gateway,
       ':txn_id' => $donation['result']['data']['txn_id'],
-      ':order_id' => $donation['donation']->did))  //TODO rename terminology here.
-    );
+      ':order_id' => $donation['donation']->did,  //TODO rename terminology here.
+    )
+  );
 
   // Update the uid on the webform submission
   db_query('UPDATE {webform_submissions} SET ' .
@@ -822,7 +823,7 @@ function fundraiser_webform_fundraiser_donation_success(&$donation) {
 /**
  * Implements hook_fundraiser_donation_decline().
  */
-function fundraiser_webform_fundraiser_donation_decline(&$donation) {
+function fundraiser_webform_fundraiser_donation_decline($donation) {
   // Clean up.
   $order_id = $donation['donation']->did;
   $sid = db_query('SELECT sid FROM {fundraiser_webform_order} WHERE order_id = :order_id',
@@ -835,7 +836,7 @@ function fundraiser_webform_fundraiser_donation_decline(&$donation) {
 /**
  * Implements hook_fundraiser_get_fundraiser_alter().
  */
-function fundraiser_webform_fundraiser_get_fundraiser_alter(&$fundraiser) {
+function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   // Get the user profile map. // TODO move this into another module?
   // TODO get rid of table thing.
   $results = _fundraiser_get_fields_from_table('fundraiser_component_map', array('nid' => $node->nid), array('cid', 'map_id') );
@@ -843,22 +844,15 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter(&$fundraiser) {
     $map[$result->cid] = $result->map_id;
   }
   // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
-  // Protection vs node_save() for donation amounts. TODO - check if this is actually needed.
   $extra = _fundraiser_webform_get_extra_by_key($node->nid, 'amount');
   $items = preg_split('/\s/', $extra['items']);
-  $count = 0;
+  $donation_amounts = array();
   for ($i = 0; $i < count($items); ++$i) {
-    $item = explode('|', $items[$i]);
-    if ($item[0] != 'other') {
-      $amount = 'amount_' . $i;
-      $label = 'label_' . $i;
-      $fundraiser->$amount = $item[0];
-      $fundraiser->$label = $item[1];
-      ++$count;
-    }
+    $donation_amounts[] = explode('|', $items[$i]);
   }
-  $fundraiser->amount_delta = $count;
+  $fundraiser->donation_amounts = $donation_amounts;
   $fundraiser->map = $map;
+
   // Add the amount_values for the fundraiser information on load.
   $amount_values = array();
   if (is_numeric($node->nid)) {
@@ -871,7 +865,7 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter(&$fundraiser) {
 /**
  * Implements hook_fundraiser_update_fundraiser_alter().
  */
-function fundraiser_webform_fundraiser_update_fundraiser_alter(&$fundraiser) {
+function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
   include_once('fundraiser_webform.crud.inc'); // Do include properly TODO
   $donation_amounts = array();
   for ($i = 0; $i < $node->amount_delta; ++$i) {

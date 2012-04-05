@@ -768,7 +768,7 @@ function fundraiser_donation_failed_validation($errors) {
 /**
  * Donation processing, a donation needs to be created prior to processing.
  */
-function fundraiser_donation_create(&$donation) {
+function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
   $donation['additional'] = module_invoke_all('fundraiser_donation_create_additional', $donation);
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
@@ -778,7 +778,7 @@ function fundraiser_donation_create(&$donation) {
 /**
  * Donation processing, future donations need to be created.
  */
-function fundraiser_donation_create_future(&$donation) {
+function fundraiser_donation_create_future($donation) {
   //TODO review this, figure out how we're going to create multiples.
   // Make a record of each recurring donation in fundraiser recurring table.
   foreach ($donations as $donation) {
@@ -791,7 +791,7 @@ function fundraiser_donation_create_future(&$donation) {
 /**
  * Donation processing, a given donation needs to be processed.
  */
-function fundraiser_donation_process(&$donation) {
+function fundraiser_donation_process($donation) {
   $info = _fundraiser_gateway_info($donation['node']->gateway);
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : $info['credit'];
   if (empty($charge_function)) {
@@ -813,7 +813,7 @@ function fundraiser_donation_process(&$donation) {
 /**
  * Donation processing, a given donation was successful.
  */
-function fundraiser_donation_success(&$donation) {
+function fundraiser_donation_success($donation) {
   // Track the success.
   _fundraiser_update_tracking_value($donation['nid'], 'conversions');
   // If it's recurring, spawn all the future donations at this time.
@@ -832,7 +832,7 @@ function fundraiser_donation_success(&$donation) {
 /**
  * Donation processing, a given donation was declined.
  */
-function fundraiser_donation_decline(&$donation) {
+function fundraiser_donation_decline($donation) {
   // Track this failure.
   _fundraiser_update_tracking_value($node_id, 'gateway_failures');
   // Make a log entry.
@@ -852,7 +852,7 @@ function fundraiser_donation_decline(&$donation) {
  * Completes the processing of an order when an error occurs.
  */
 // Is this functionally different from fundraiser_order_decline ? TODO - come back to this - SeH
-function fundraiser_donation_exception(&$donation) {
+function fundraiser_donation_exception($donation) {
   // Make a log entry.
   watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
     array('@id' => $donation['donation']->did, '@message' => $donation['result']['message']), WATCHDOG_ERROR, NULL);
@@ -1028,6 +1028,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
  */
 function _fundraiser_get_fundraiser($nid) {
   // Get fundraiser table information.
+drupal_set_message('called _fundraiser_get_fundraiser');
   $results = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid));
   $fundraiser = $results->fetchObject(); // Return an object.
   // Explode the donation amounts that were imploded during save.
@@ -1194,7 +1195,7 @@ function fundraiser_gateway_can_refund_order($order) {
  * Updates the profile of user that submitted the donation.
  */
 // NAME THIS AS PER: hook_fundraiser_donation_success();
-function fundraiser_update_user_profile(&$donation) {
+function fundraiser_update_user_profile($donation) {
 // Use this to get the sid value out. Submission id.? 
   $webform = _fundraiser_get_fields_from_table('fundraiser_webform_order',
     array('order_id' => $order_id), array('webform_nid', 'sid', 'recurring_status'));

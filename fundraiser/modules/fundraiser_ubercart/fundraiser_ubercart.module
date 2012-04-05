@@ -94,7 +94,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
 /**
  * Implements hook_fundraiser_create_donation().
  */
-function fundraiser_ubercart_fundraiser_create_donation(&$donation) {
+function fundraiser_ubercart_fundraiser_create_donation($donation) {
   $user = $donation['user'];
   $node = $donation['node'];
   $recurs = $donation['submission']['recurs'];
@@ -191,7 +191,7 @@ function fundraiser_ubercart_fundraiser_create_donation(&$donation) {
 /**
  * Implements hook_fundraiser_donation_retrieve_future().
  */
-function fundraiser_ubercart_fundraiser_donation_retrieve_future(&$donation) {
+function fundraiser_ubercart_fundraiser_donation_retrieve_future($donation) {
   $order = uc_order_load($donation['donation']->did);
   $donation['nid'] = $order->products[0]->nid;
   $donation['node'] = node_load($order->products[0]->nid);
@@ -217,7 +217,7 @@ function fundraiser_ubercart_fundraiser_donation_retrieve_future(&$donation) {
 /**
  * Implements hook_fundraiser_donation_success().
  */
-function fundraiser_ubercart_fundraiser_donation_success(&$donation) {
+function fundraiser_ubercart_fundraiser_donation_success($donation) {
   // Complete the sale in Ubercart.
   $order = uc_order_load($donation['donation']->did);
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
@@ -231,7 +231,7 @@ function fundraiser_ubercart_fundraiser_donation_success(&$donation) {
 /**
  * Implements hook_fundraiser_donation_success_recurring().
  */
-function fundraiser_ubercart_fundraiser_donation_success_recurring(&$donation) {
+function fundraiser_ubercart_fundraiser_donation_success_recurring($donation) {
   // Complete the sale in Ubercart.
   $order = uc_order_load($donation['donation']->did);
   uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
@@ -247,7 +247,7 @@ function fundraiser_ubercart_fundraiser_donation_success_recurring(&$donation) {
 /**
  * Implements hook_fundraiser_donation_create_future().
  */
-function fundraiser_ubercart_fundraiser_donation_create_future(&$donation) {
+function fundraiser_ubercart_fundraiser_donation_create_future($donation) {
   $user = $donation['user'];
   $order_id = $donation['donation']->did;
   $order = uc_order_load($donation['donation']->did);
@@ -281,7 +281,7 @@ function fundraiser_ubercart_fundraiser_donation_create_future(&$donation) {
 /**
  * Implements hook_fundraiser_donation_decline().
  */
-function fundraiser_ubercart_fundraiser_donation_decline(&$donation) {
+function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   $order_id = $donation['donation']->did;
   // Mark the sale in Ubercart as failed.
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $order_id));
@@ -292,8 +292,8 @@ function fundraiser_ubercart_fundraiser_donation_decline(&$donation) {
 /**
  * Implements hook_fundraiser_donation_exception().
  */
-function fundraiser_ubercart_fundraiser_donation_exception(&$doantion) {
-  return fundraiser_ubercart_fundraiser_donation_decline($doantion);
+function fundraiser_ubercart_fundraiser_donation_exception($donation) {
+  return fundraiser_ubercart_fundraiser_donation_decline($donation);
 }
 
 /**
