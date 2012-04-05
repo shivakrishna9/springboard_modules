@@ -19,11 +19,14 @@
  *   A minimum value for the other amount field that will be validated upon submission
  */
 function _fundraiser_webform_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
-  module_load_include('inc', 'webform', 'includes/webform.components');
-  // create an array to hold all of the created components
+  // Poll other modules for the information they would normally provide to the donation form.
+  // So we can create components to hold them.
+  $context = module_invoke_all('fundraiser_donation_form_context', $context);
+
+  // Create an array to hold all of the created components.
   $components = array();
 
-  // donation amount
+  // Donation amount.
   $donation = array();
   $donation['nid'] = $nid;
   $donation['pid'] = 0;
@@ -36,26 +39,24 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $donation['mandatory'] = 0;
   $donation['weight'] = 0;
   $donation['email'] = 0;
-
   $pid = webform_component_insert($donation);
   $components[$pid] = $donation;
 
-  // determine the type of amount field to output
+  // Determine the type of amount field to output.
   if ($donation_amounts) {
     ksort($donation_amounts, SORT_NUMERIC);
-    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $show_other_amount); // FROM UNKNOWN LOCATION.
-
+    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $show_other_amount);
     if ($show_other_amount) {
-      // other amount
+      // Other amount.
       $component = _fundraiser_webform_insert_other_amount_component($nid, $pid, $min_donation_amount);
       $components[$component['id']] = $component['other_amount'];
     }
-
-    // ask amounts
+    // Ask amounts.
     $component = _fundraiser_webform_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
     $components[$component['id']] = $component['amount'];
   }
-  else { // plain old textbox for donation amount
+  else {
+    // Plain old textbox for donation amount.
     $amount = array();
     $amount['nid'] = $nid;
     $amount['pid'] = $pid;
@@ -70,12 +71,11 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
     $amount['mandatory'] = 1;
     $amount['weight'] = 0;
     $amount['email'] = 1;
-
     $id = webform_component_insert($amount);
     $components[$id] = $amount;
   }
 
-  // donor information
+  // Donor information.
   $donor_information = array();
   $donor_information['nid'] = $nid;
   $donor_information['pid'] = 0;
@@ -88,11 +88,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $donor_information['mandatory'] = 0;
   $donor_information['weight'] = 1;
   $donor_information['email'] = 0;
-
   $pid = webform_component_insert($donor_information);
   $components[$pid] = $donor_information;
 
-  // first name
+  // First name.
   $first_name = array();
   $first_name['nid'] = $nid;
   $first_name['pid'] = $pid;
@@ -106,11 +105,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $first_name['weight'] = 0;
   $first_name['email'] = 1;
   $first_name['maps_to'] = 'profile_first_name';
-
   $id = webform_component_insert($first_name);
   $components[$id] = $first_name;
 
-  // last name
+  // Last name.
   $last_name = array();
   $last_name['nid'] = $nid;
   $last_name['pid'] = $pid;
@@ -124,11 +122,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $last_name['weight'] = 1;
   $last_name['email'] = 1;
   $last_name['maps_to'] = 'profile_last_name';
-
   $id = webform_component_insert($last_name);
   $components[$id] = $last_name;
 
-  // email
+  // Email.
   $email = array();
   $email['nid'] = $nid;
   $email['pid'] = $pid;
@@ -142,11 +139,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $email['weight'] = 2;
   $email['email'] = 1;
   $email['maps_to'] = 'mail';
-
   $id = webform_component_insert($email);
   $components[$id] = $email;
 
-  // billing
+  // Billing.
   $billing_information = array();
   $billing_information['nid'] = $nid;
   $billing_information['pid'] = 0;
@@ -159,11 +155,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $billing_information['mandatory'] = 0;
   $billing_information['weight'] = 3;
   $billing_information['email'] = 0;
-
   $pid = webform_component_insert($billing_information);
   $components[$pid] = $billing_information;
 
-  // billing address
+  // Billing address.
   $billing_address = array();
   $billing_address['nid'] = $nid;
   $billing_address['pid'] = $pid;
@@ -177,11 +172,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $billing_address['weight'] = 3;
   $billing_address['email'] = 1;
   $billing_address['maps_to'] = 'profile_address';
-
   $id = webform_component_insert($billing_address);
   $components[$id] = $billing_address;
 
-  // billing address 2
+  // Billing address 2.
   $billing_address_2 = array();
   $billing_address_2['nid'] = $nid;
   $billing_address_2['pid'] = $pid;
@@ -195,11 +189,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $billing_address_2['weight'] = 4;
   $billing_address_2['email'] = 1;
   $billing_address_2['maps_to'] = 'profile_address_line_2';
-
   $id = webform_component_insert($billing_address_2);
   $components[$id] = $billing_address_2;
 
-  // city
+  // City.
   $billing_city = array();
   $billing_city['nid'] = $nid;
   $billing_city['pid'] = $pid;
@@ -213,85 +206,76 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $billing_city['weight'] = 5;
   $billing_city['email'] = 1;
   $billing_city['maps_to'] = 'profile_city';
-
   $id = webform_component_insert($billing_city);
   $components[$id] = $billing_city;
 
-  $us = 840;
-  $ca = 124;
-
-  $include_all_countries = variable_get('fundraiser_all_countries', 0);
-
-  // country
-  $countries =  module_invoke_all('fundraiser_format_country_select', $us); // TODO this is no longer a valid hook. Redo.
-  $countries = $countries[0];
-
-  // build option string for countries
-  $options = '';
-  if ($include_all_countries) {
-    foreach ($countries['#options'] as $key => $value) {
-      $options .= $key . '|' . $value . "\n";
-    }
-  }
-  else {
-    foreach ($countries['#options'] as $key => $value) {
-      if ($key == $us || $key == $ca) {
-        $options .= $key . '|' . $value . "\n";
+  // Country.
+  // Set by the context.
+  if (isset($context->countries)) {
+    $default_available = array(840, 124);
+    // From ubercart defaults. 840 = US, 124 = CA.
+    $include_all_countries = variable_get('fundraiser_all_countries', 0); 
+    $options = '';
+    if ($include_all_countries) {
+      foreach ($context->countries as $country_id => $country) {
+        $options .= $country_id . '|' . $country->country_name . "\n";
       }
     }
+    else {
+      foreach ($context->countries as $country_id => $country) {
+        if (in_array($country_id, $default_available)) {
+          $options .= $country_id . '|' . $country->country_name . "\n";
+        }
+      }
+    }
+    $billing_country = array();
+    $billing_country['nid'] = $nid;
+    $billing_country['pid'] = $pid;
+    $billing_country['form_key'] = 'country';
+    $billing_country['name'] = 'Country';
+    $billing_country['type'] = 'select';
+    $billing_country['extra'] = array(
+      'description' => '',
+      'items' => $options,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    );
+    $billing_country['mandatory'] = 1;
+    $billing_country['weight'] = 6;
+    $billing_country['email'] = 1;
+    $billing_country['maps_to'] = 'profile_country';
+    $id = webform_component_insert($billing_country);
+    $components[$id] = $billing_country;
   }
 
-  $billing_country = array();
-  $billing_country['nid'] = $nid;
-  $billing_country['pid'] = $pid;
-  $billing_country['form_key'] = 'country';
-  $billing_country['name'] = 'Country';
-  $billing_country['type'] = 'select';
-  $billing_country['extra'] = array(
-    'description' => '',
-    'items' => $options,
-    'multiple' => 0,
-    'aslist' => 'Y',
-  );
-  $billing_country['mandatory'] = 1;
-  $billing_country['weight'] = 6;
-  $billing_country['email'] = 1;
-  $billing_country['maps_to'] = 'profile_country';
-
-  $id = webform_component_insert($billing_country);
-  $components[$id] = $billing_country;
-
-  // state
-  $zones = module_invoke_all('fundraiser_format_zone_select', $us, NULL);// TODO this is no longer a valid hook. Redo.
-  $zones = $zones[0];
-
-  // build option string for states
-  $options = '';
-  foreach ($zones['#options'] as $key => $value) {
-    $options .= $key . '|' . $value . "\n";
+  // Zone (for example: state or province).
+  // Set by the context.
+  if (isset($context->zones)) { 
+    $options = '';
+    foreach ($context->zones as $zone_id => $zone) {
+      $options .= $zone_id . '|' . $zone->zone_name . "\n";
+    }
+    $billing_state = array();
+    $billing_state['nid'] = $nid;
+    $billing_state['pid'] = $pid;
+    $billing_state['form_key'] = 'state';
+    $billing_state['name'] = 'State/Province';
+    $billing_state['type'] = 'select';
+    $billing_state['extra'] = array(
+      'description' => '',
+      'items' => $options,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    );
+    $billing_state['mandatory'] = 1;
+    $billing_state['weight'] = 7;
+    $billing_state['email'] = 1;
+    $billing_state['maps_to'] = 'profile_state';
+    $id = webform_component_insert($billing_state);
+    $components[$id] = $billing_state;
   }
 
-  $billing_state = array();
-  $billing_state['nid'] = $nid;
-  $billing_state['pid'] = $pid;
-  $billing_state['form_key'] = 'state';
-  $billing_state['name'] = 'State/Province';
-  $billing_state['type'] = 'select';
-  $billing_state['extra'] = array(
-    'description' => '',
-    'items' => $options,
-    'multiple' => 0,
-    'aslist' => 'Y',
-  );
-  $billing_state['mandatory'] = 1;
-  $billing_state['weight'] = 7;
-  $billing_state['email'] = 1;
-  $billing_state['maps_to'] = 'profile_state';
-
-  $id = webform_component_insert($billing_state);
-  $components[$id] = $billing_state;
-
-  // zip code
+  // Zip code.
   $billing_zipcode = array();
   $billing_zipcode['nid'] = $nid;
   $billing_zipcode['pid'] = $pid;
@@ -307,11 +291,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $billing_zipcode['weight'] = 8;
   $billing_zipcode['email'] = 1;
   $billing_zipcode['maps_to'] = 'profile_zip';
-
   $id = webform_component_insert($billing_zipcode);
   $components[$id] = $billing_zipcode;
 
-  // credit card information
+  // Credit card information.
   $credit_card_information = array();
   $credit_card_information['nid'] = $nid;
   $credit_card_information['pid'] = 0;
@@ -324,11 +307,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $credit_card_information['mandatory'] = 0;
   $credit_card_information['weight'] = 5;
   $credit_card_information['email'] = 0;
-
   $pid = webform_component_insert($credit_card_information);
   $components[$pid] = $credit_card_information;
 
-  // credit card number
+  // Credit card number.
   $card_number = array();
   $card_number['nid'] = $nid;
   $card_number['pid'] = $pid;
@@ -342,21 +324,20 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $card_number['mandatory'] = 1;
   $card_number['weight'] = 0;
   $card_number['email'] = 0;
-
   $id = webform_component_insert($card_number);
   $components[$id] = $card_number;
 
-  // expiration month
+  // Expiration month.
   $expiration_month = _fundraiser_webform_create_month_field($nid, $pid);
   $id = webform_component_insert($expiration_month);
   $components[$id] = $expiration_month;
 
-  // expiration year
+  // Expiration year.
   $expiration_year = _fundraiser_webform_create_year_field($nid, $pid);
   $id = webform_component_insert($expiration_year);
   $components[$id] = $expiration_year;
 
-  // cvv
+  // Cvv.
   $card_cvv = array();
   $card_cvv['nid'] = $nid;
   $card_cvv['pid'] = $pid;
@@ -371,11 +352,10 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $card_cvv['mandatory'] = 1;
   $card_cvv['weight'] = 3;
   $card_cvv['email'] = 0;
-
   $id = webform_component_insert($card_cvv);
   $components[$id] = $card_cvv;
 
-  // recurring donation
+  // Recurring donation.
   $recurs = array();
   $recurs['nid'] = $nid;
   $recurs['pid'] = $pid;
@@ -390,13 +370,13 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $recurs['mandatory'] = 0;
   $recurs['weight'] = 4;
   $recurs['email'] = 0;
-
   $id = webform_component_insert($recurs);
   $components[$id] = $recurs;
 
   // Invoke hook_fundraiser_create_webform_components
-  //
-  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid); // TODO this is no longer a valid hook. Redo.
+  // This hook allows other modules to define additional components to be added here.
+  // Components are to be returned in the same format as other already defined components here.
+  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
   foreach ($contrib_components as $component) {
     $id = webform_component_insert($component);
     $components[$id] = $component;
@@ -479,18 +459,17 @@ function _fundraiser_webform_create_month_field($nid, $pid) {
  *
  * TODO called during _fundraiser_update_fundraiser to store new settings.
  */
-function _fundraiser_webform_update_amount_component($node, $donation_amounts = array(), $value) {
-  // TODO remove this table stuff.
-  $results = _fundraiser_webform_get_cid_by_keys($node->nid, array('donation'));
+function _fundraiser_webform_update_amount_component($fundraiser, $donation_amounts = array(), $value) {
+  $results = _fundraiser_webform_get_cid_by_keys($fundraiser->nid, array('donation'));
   foreach ($results as $result) {
     $pid = $result->cid;
   }
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
-    $has_select = _fundraiser_webform_get_amount_count($node->nid);
+    $has_select = _fundraiser_webform_get_amount_count($fundraiser->nid);
     if ($has_select) {
       $amount = array();
-      $amount['nid'] = $node->nid;
+      $amount['nid'] = $fundraiser->nid;
       $amount['pid'] = $pid;
       $amount['form_key'] = 'amount';
       $amount['name'] = 'Amount';
@@ -504,16 +483,15 @@ function _fundraiser_webform_update_amount_component($node, $donation_amounts = 
       $amount['weight'] = 0;
       $amount['email'] = 1;
       db_delete('webform_component')
-        ->condition('nid', $node->nid)
+        ->condition('nid', $fundraiser->nid)
         ->condition('form_key', 'amount')
         ->execute();
       webform_component_insert($amount);
     }
   }
   else {
-    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $node->show_other_amount);
-    //TODO remove this table.
-    $results = _fundraiser_webform_get_cid_by_keys($node->nid, array('amount'));
+    $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $fundraiser->show_other_amount);
+    $results = _fundraiser_webform_get_cid_by_keys($fundraiser->nid, array('amount'));
     foreach ($results as $result) {
       $field_type = $result->type;
     }
@@ -525,33 +503,31 @@ function _fundraiser_webform_update_amount_component($node, $donation_amounts = 
               'extra' => $data,
               'value' => $value,
             ))
-        ->condition('nid', $node->nid)
+        ->condition('nid', $fundraiser->nid)
         ->condition('form_key', 'amount')
         ->execute();
-      $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
-          //TODO remove this table.
-      $result = _fundraiser_webform_get_extra_by_key($node->nid, array('other_amount'));
+      $message = t('The @node_title donation form has been updated.', array('@node_title' => $fundraiser->title));
+      $result = _fundraiser_webform_get_extra_by_key($fundraiser->nid, array('other_amount'));
     }
-
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
       db_delete('webform_component')
-        ->condition('nid', $node->nid)
+        ->condition('nid', $fundraiser->nid)
         ->condition('form_key', 'amount')
         ->execute();
-      $amount = _fundraiser_webform_insert_amount_component($node->nid, $pid, $donation_amounts, $node->show_other_amount);
+      $amount = _fundraiser_webform_insert_amount_component($fundraiser->nid, $pid, $donation_amounts, $fundraiser->show_other_amount);
       webform_component_insert($amount['amount']);
     }
   }
 
   $result = db_query('SELECT 1 FROM {webform_component} '.
     'WHERE nid = :nid AND form_key = :form_key',
-    array(':nid' => $node->nid, ':form_key' => "other_amount"))->fetchField();
-  if ($node->show_other_amount) {
+    array(':nid' => $fundraiser->nid, ':form_key' => "other_amount"))->fetchField();
+  if ($fundraiser->show_other_amount) {
     // Pre-existing entry in the DB for this form component and it's still enabled so we update.
     if ($result) {
       $extra = array(
-        'description' => 'Minimum payment $' . $minimum_donation_amount . '.',
+        'description' => 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.',
         'width' => 10,
         'field_prefix' => '$',
       );
@@ -559,29 +535,27 @@ function _fundraiser_webform_update_amount_component($node, $donation_amounts = 
         ->fields(array(
               'extra' => serialize($extra),
             ))
-        ->condition('nid', $node->nid)
+        ->condition('nid', $fundraiser->nid)
         ->condition('form_key', 'other_amount')
         ->execute();
       $message .= t('Other donation amount options have been updated.');
     }
-
     // Other amount has been enabled so we need to add the component data to the DB.
     else {
-      _fundraiser_webform_insert_other_amount_component($node->nid, $pid, $node->minimum_donation_amount);
+      _fundraiser_webform_insert_other_amount_component($fundraiser->nid, $pid, $fundraiser->minimum_donation_amount);
       $message .= t('Other amount options have been added to the form.');
     }
   }
-
   // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
   // associated form element(s) being rendered by webform.
   elseif ($result) {
     db_delete('webform_component')
-      ->condition('nid', $node->nid)
+      ->condition('nid', $fundraiser->nid)
       ->condition('form_key', "other_amount")
       ->execute();
     $message .= t('Other amount options have been disabled on the form.');
   }
-  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, "node/$node->nid");
+  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/'.$fundraiser->nid);
 }
 
 /**
@@ -656,4 +630,25 @@ function _fundraiser_webform_insert_other_amount_component($nid, $pid, $min_dona
   $other_amount['email'] = 1;
   $id =  webform_component_insert($other_amount);
   return array('id' => $id, 'other_amount' => $other_amount);
+}
+
+/**
+ * Creates a webform specific string of donations amount to be used in the amount component
+ */
+function _fundraiser_webform_create_amount_options($donation_amounts, $show_other_amount) {
+  $formatted_amounts = '';
+  // Convert to nice dollar format if label isn't present.
+  foreach ($donation_amounts as $amount => $label) {
+    if (!$label) {
+      $formatted_amounts .= $amount . '|$' . $amount;
+    }
+    else {
+      $formatted_amounts .= $amount . '|' . $label;
+    }
+    $formatted_amounts .= "\n";
+  }
+  if ($show_other_amount && count($donation_amounts)) {
+    $formatted_amounts .= 'other|Other';
+  }
+  return $formatted_amounts;
 }
