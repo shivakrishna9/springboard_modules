@@ -342,7 +342,7 @@ function fundraiser_node_info() {
  */
 function fundraiser_node_delete($node) {
   if (_fundraiser_is_donation_type($node->type)) {
-    _fundraiser_delete_fundraiser($nid);
+    _fundraiser_delete_fundraiser($node);
   }
 }
 
@@ -380,11 +380,18 @@ function fundraiser_node_load($nodes, $types) {
 function fundraiser_node_presave($node) {
   if (_fundraiser_is_donation_type($node->type)) {
     // Check the submission to remove the donation amounts marked.
-    foreach ($node->donation_amounts as $index => $donation_amount) {
-      if ($donation_amount['remove'] == 1) {
-         unset($node->donation_amounts[$index]);
+    foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
+      if (isset($donation_amount['remove']) && ($donation_amount['remove'] == 1)) {
+         unset($node->amount_wrapper['donation_amounts'][$index]);
       }
+      unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
     }
+    // Set the donation amounts where we expect them to be for processing.
+    // These are buried under amount_wrapper because we set 'TREE' on that in the form.
+    $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
+    $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
+    $node->minimum_donation_amount = $node->amount_wrapper['minimum_donation_amount'];
+    unset($node->amount_wrapper);
   }
 }
 
@@ -404,7 +411,8 @@ function fundraiser_node_validate($node, $form, &$form_state) {
   if (_fundraiser_is_donation_type($node->type)) {
     $donation_amounts = array();
     // If each given amount if numeric, we're ok.
-    foreach ($node->donation_amounts as $index => $donation_amount) {
+    // Since the form is set to TREE at this point, we need to account for that in our addressing path.
+    foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       if (isset($donation_amount[1])) {
         if (!is_numeric($donation_amount[1])) {
           form_set_error('donation_amounts', t('Ask amounts must be numeric, you entered "@s".', array("@s" => $donation_amount[1])));
@@ -452,10 +460,9 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
  */
 function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (_fundraiser_is_donation_type($form['#node']->type)) {
-    $node = node_load($form['#node']->nid);
-    _fundraiser_donation_settings_form($form, $form_state, $node);
+    _fundraiser_donation_settings_form($form, $form_state);
     // Allow other modules to add or modify additional fundraiser settings.
-    module_invoke_all('fundraiser_donation_settings_form_alter', $form, $form_state, $node);
+    module_invoke_all('fundraiser_donation_settings_form_alter', $form, $form_state);
   }
 }
 
@@ -469,7 +476,12 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  * donation_amounts, show_other_amount, minimum_donation_amount, internal_name, confirmation_page_title,
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
-function _fundraiser_donation_settings_form(&$form, &$form_state, $node) {
+function _fundraiser_donation_settings_form(&$form, &$form_state) {
+  // Load the node up from form data so we have everything.
+  if (empty($node) && isset($form['#node'])) {
+    $node = $form['#node'];
+  }
+
   // Check if this is being called on an enabled node type.
   if (!_fundraiser_is_donation_type($node->type)) {
     return $form;
@@ -530,7 +542,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state, $node) {
   // Donation amounts were loaded on node_load, and exploded at that time.
   // If they exist, they're on the node.
   // If they don't exist, look in form_state.
-  $existing_donation_amounts = $node->donation_amounts; // An array of paired array values.
+  $existing_donation_amounts = isset($node->donation_amounts) ? $node->donation_amounts : array(); // An array of paired array values.
   if (count($existing_donation_amounts) == 0) {
     $existing_donation_amounts = array(
       array(10, '$10'), 
@@ -723,19 +735,23 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
   // Call hook to validate donation values against fundraiser needs and sub module needs.
-  $donation = module_invoke_all('fundraiser_donation_submit', $form, $form_state);
-  // $donation['submission'] contains the submitted values from the form,
+  $donation = (object) array();
+  module_invoke_all('fundraiser_donation_submit', $form, $form_state, $donation);
+  // $donation->submission contains the submitted values from the form,
   // cleaned up and formatted for use in a glue module for payment handling.
-  // $donation['uid'], $donation['$user'], $donation['nid'], $donation['node'] are set as well.
+  // $donation->uid, $donation->user, $donation->nid, $donation->node are set as well.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation)) {
     // Create the donation to process, allows other modules to modify results by hooks.
     fundraiser_donation_create($donation);
-    // The created donation information should be at at $donation['donation'], ready to process.
+    // The created donation information should be at at $donation->donation, ready to process.
     fundraiser_donation_process($donation);
-    // The results should be at $donation['result'], ready to respond to the aftermath.
-    $result = $donation['result'];
+    if (!isset($donation->result['message'])) {
+      $donation->result['message'] = '';
+    }
+    // The results should be at $donation->result, ready to respond to the aftermath.
+    $result = $donation->result;
     if (isset($result['success']) && $result['success']) {
       fundraiser_donation_success($donation);
     }
@@ -770,7 +786,8 @@ function fundraiser_donation_failed_validation($errors) {
  */
 function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
-  $donation['additional'] = module_invoke_all('fundraiser_donation_create_additional', $donation);
+  module_invoke_all('fundraiser_donation_create_additional', $donation);
+  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
 }
@@ -792,20 +809,23 @@ function fundraiser_donation_create_future($donation) {
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {
-  $info = _fundraiser_gateway_info($donation['node']->gateway);
-  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : $info['credit'];
+  $info = _fundraiser_gateway_info($donation->node->gateway);
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    $charge_function = isset($info['credit']) ? $info['credit'] : '';
+  }
   if (empty($charge_function)) {
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $donation['donation']->did, '@nid' => $donation['node']->nid), WATCHDOG_CRITICAL);
+      array('@id' => $donation->donation->did, '@nid' => $donation->node->nid), WATCHDOG_CRITICAL);
     $result = array('success' => FALSE);
   }
   else {
     // Call the charge function and store the result.
     $data = array('txn_type' => 'auth_capture');
-    $data = array_merge($data, $donation['donation']->data);
-    $result = $charge_function($donation['donation']->did, $donation['donation']->donation_amount, $data);
+    $data = array_merge($data, $donation->donation->data);
+    $result = $charge_function($donation->donation->did, $donation->donation->donation_amount, $data);
   }
-  $donation['result'] = $result;
+  $donation->result = $result;
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_process', $donation, $result);
 }
@@ -815,15 +835,15 @@ function fundraiser_donation_process($donation) {
  */
 function fundraiser_donation_success($donation) {
   // Track the success.
-  _fundraiser_update_tracking_value($donation['nid'], 'conversions');
+  _fundraiser_update_tracking_value($donation->nid, 'conversions');
   // If it's recurring, spawn all the future donations at this time.
-  if ($donation['donation']['recurs'] == DONATION_RECURRING) {
+  if ($donation->donation->recurs == DONATION_RECURRING) {
     fundraiser_donation_create_future($donation);
   }
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message($donation['result']['message']);
+    drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
@@ -834,14 +854,14 @@ function fundraiser_donation_success($donation) {
  */
 function fundraiser_donation_decline($donation) {
   // Track this failure.
-  _fundraiser_update_tracking_value($node_id, 'gateway_failures');
+  _fundraiser_update_tracking_value($donation->nid, 'gateway_failures');
   // Make a log entry.
   watchdog('fundraiser', 'Donation @id was declined by the payment gateway. Reason: @message',
-    array('@id' => $donation['donation']->did, '@message' => $donation['result']['message']), WATCHDOG_DEBUG, NULL);
+    array('@id' => $donation->donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message($donation['result']['message']);
+    drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the decline.
   module_invoke_all('fundraiser_donation_decline', $donation);
@@ -855,11 +875,11 @@ function fundraiser_donation_decline($donation) {
 function fundraiser_donation_exception($donation) {
   // Make a log entry.
   watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
-    array('@id' => $donation['donation']->did, '@message' => $donation['result']['message']), WATCHDOG_ERROR, NULL);
+    array('@id' => $donation->donation->did, '@message' => $donation->result['message']), WATCHDOG_ERROR, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message($donation['result']['message']);
+    drupal_set_message($donation->result['message']);
   }
   // Allow other modules to respond to the exception.
   module_invoke_all('fundraiser_donation_exception', $donation);
@@ -872,7 +892,7 @@ function fundraiser_donation_exception($donation) {
 function fundraiser_donation_cancel($donation) {
   // Make a log entry
   watchdog('fundraiser', 'Donation @id was canceled by the user.',
-    array('@id' => $donation['donation']->did), WATCHDOG_DEBUG, NULL);
+    array('@id' => $donation->donation->did), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
@@ -1097,18 +1117,18 @@ function _fundraiser_update_fundraiser($fundraiser) {
 /**
  * CRUD style DB function for fundraiser.
  */
-function _fundraiser_delete_fundraiser($nid) {
+function _fundraiser_delete_fundraiser($node) {
   db_delete('fundraiser')->condition('nid', $node->nid)->execute();
   // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_delete_fundraiser_alter', $nid);
+  module_invoke_all('fundraiser_delete_fundraiser_alter', $node);
 }
 
 /**
  * CRUD style DB function for fundraiser.
  */
-function _fundraiser_delete_fundraisers($nids) {
-  foreach ($nids as $nid) {
-    _fundraiser_delete_fundraiser($nid);
+function _fundraiser_delete_fundraisers($nodes) {
+  foreach ($nodes as $node) {
+    _fundraiser_delete_fundraiser($node);
   }
 }
 
@@ -1212,8 +1232,8 @@ function fundraiser_update_user_profile($donation) {
   foreach ($results as $result) {
     $webform = $result;
   }
-  $uid = $donation['uid'];
-  $nid = $donation['nid'];
+  $uid = $donation->uid;
+  $nid = $donation->nid;
   $sid = $donation['webform']->sid; // TODO make sure webform is passed along? Or at least this info.
   
   global $user;
@@ -1275,7 +1295,7 @@ function fundraiser_update_user_profile($donation) {
 // NAME THIS AS PER: 
 function fundraiser_add_to_queue($donation) {
   if (module_exists('queue_api')) {
-    if ($donation['donation']['recurs'] == DONATION_RECURRING) {
+    if ($donation->donation->recurs == DONATION_RECURRING) {
       sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
     }
     else {
