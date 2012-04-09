@@ -616,6 +616,7 @@ function fundraiser_node_presave($node) {
       if (empty($donation_amount['label']) && empty($donation_amount['amount'])) {
          unset($node->amount_wrapper['donation_amounts'][$index]);
       }
+      unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
     }
     // Set the donation amounts where we expect them to be for processing.
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
