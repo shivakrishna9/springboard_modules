@@ -228,7 +228,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
   $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
   // Per RFC 2109, cookie domains must contain at least one dot other than the
   // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.
-  if (count(explode('.', $market_source_cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
+  if (count(explode('.', $market_source_cookie_domain)) > 1 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
     variable_set('market_source_cookie_domain', $market_source_cookie_domain);
   }
   elseif (!empty($market_source_cookie_domain)) {
