@@ -1,5 +1,5 @@
-name = Fundraiser triggers
-description = Implement striggers for Fundraiser.
+name = Fundraiser Webform
+description = Implements Webform integration for Fundraiser.
 core = 7.x
 package = Jackson River Springboard
 dependencies[] = webform

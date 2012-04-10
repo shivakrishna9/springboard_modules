@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -7,185 +6,15 @@
  */
 
 /**
- * Form for fundraiser confirmation settings.
- */
-function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-  /* Start edit form */
-  $form['confirmation_page'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation page settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['confirmation_page']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Page title'),
-    '#default_value' => isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
-  );
-  $form['confirmation_page']['body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation message'),
-    '#default_value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
-    '#format' => isset($body_format) ? $body_format : NULL,
-    '#parents' =>  array('confirmation_page_format'),
-  );
-
-  $form['confirmation_page']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['confirmation_page']['tokens']['help'] = array(
-    // TODO follow up on this to make sure that the tokens we are using are the right ones.
-    '#markup' => theme('token_tree', array('token_types' => array('node'))) . theme('webform_token_help', array()),
-  );
-
-  // Redirection settings.
-  if (isset($node->redirect_url) && strpos($node->redirect_url, '<') === 0) {
-    $redirect = trim($node->redirect_url, '<>');
-    // Redirection is set to front page.
-    if ($redirect == 'front') {
-      $redirect = 'url';
-      $redirect_url = $node->redirect_url;
-    }
-    else {
-      $redirect_url = '';
-    }
-  }
-  else {
-    $redirect = 'url';
-    $redirect_url = isset($node->redirect_url) ? $node->redirect_url : '';
-  }
-  $form['confirmation_page']['redirection'] = array(
-    '#type' => 'item',
-    '#title' => t('Redirection location'),
-    '#theme' => 'webform_advanced_redirection_form',
-    '#description' => t('Choose where to redirect the user upon successful submission.'),
-  );
-  $form['confirmation_page']['redirection']['redirect'] = array(
-    '#type' => 'radios',
-    '#default_value' => $redirect,
-    '#options' => array(
-      'confirmation' => t('Confirmation page'),
-      'url' => t('Custom URL'),
-    ),
-  );
-  $form['confirmation_page']['redirection']['redirect_url'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Redirect URL'),
-    '#description' => t('URL to redirect the user to upon successful submission.'),
-    '#default_value' => $redirect_url,
-    '#maxlength' => 255,
-  );
-
-  $form['email'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation email settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['email']['receipt_email_address'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Address'),
-    '#description' => t('The email address that the receipt email will come from.'),
-    '#weight' => -4.6,
-    '#maxlength' => 255,
-    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_from'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email From'),
-    '#description' => t('The name that is associated with the receipt email address.'),
-    '#weight' => -4.5,
-    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Subject'),
-    '#description' => t('The subject of the donation receipt email.'),
-    '#weight' => -4.4,
-    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation Email Message'),
-    '#weight' => -4.3,
-    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 300,
-  );
-
-  return $form;
-}
-
-/**
- * Validation function for fundraiser_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
-  // Validate email
-  if (!fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
-    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
-  }
-
-  // Ensure the entered redirect URL is valid.
-  if ($form_state['values']['redirect'] == 'url') {
-    $redirect_url = trim($form_state['values']['redirect_url']);
-    if (empty($redirect_url)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('A valid URL is required for custom redirection.'));
-    }
-    elseif (strpos($redirect_url, 'http') === 0 && !valid_url($redirect_url, TRUE)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('The entered URL is not a valid address.'));
-    }
-    else {
-      form_set_value($form['confirmation_page']['redirection']['redirect_url'], $redirect_url, $form_state);
-    }
-  }
-  elseif ($form_state['values']['redirect'] == 'confirmation') {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-  else {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-}
-
-/**
- * Submit function for fundraiser_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
-  $node = node_load($form_state['values']['nid']);
-  $node->confirmation_page_title = check_plain($form_state['values']['title']);
-  $node->confirmation_page_body = $form_state['values']['body'];
-  $node->confirmation_page_format = $form_state['values']['confirmation_page_format'];
-  $node->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
-  $node->receipt_email_address = $form_state['values']['receipt_email_address'];
-  $node->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
-  $node->receipt_email_message = $form_state['values']['receipt_email_message'];
-  $node->redirect_url = $form_state['values']['redirect_url'];
-  node_save($node);
-}
-
-/**
- * Form builder. Configure fundraiser.
- *
+ * Form builder. Configure fundraiser module.
  */
 function fundraiser_admin_settings($form, &$form_state) {
-
   $description = 'Use this option if you want donations to be exported to Salesforce.';
   $attributes = array();
   if (!module_exists('sf_donation')) {
     $description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
     $attributes['disabled'] = 'disabled';
   }
-
   $form['fundraiser_development_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Development mode'),
@@ -312,76 +141,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
   }
 }
 
-/**
- * User mapping form.
- */
-function fundraiser_mapping_form($form, &$form_state, $node) {
-  $form = array(
-    '#tree' => TRUE,
-    '#node' => $node,
-    'mapping' => array(),
-  );
-
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-
-  $form['info'] = array(
-    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the ' .
-      'donation form is submitted, the user\'s profile will be updated with the values from the form.',
-    '#weight' => 0,
-  );
- // Gather user profile options. TODO this becomes hookable eventually. -SeH
-  $options = array('' => '--Select One--');
-  if (module_exists('profile')) {
-    $cat_array = profile_user_categories();
-    foreach ($cat_array as $cat) {
-      $result = _profile_get_fields($cat['name']);
-      foreach( $result as $this_row) {
-        $row = (array) $this_row;
-        $options['Drupal Profile Fields'][$row['name']] = $row['title'];
-      }
-    }
-  }
-  // Add final field, user email address.
-  $options['User Fields'] = array(
-    'mail' => t("Email Address"),
-  );
-  // For each component create possible profile fields.
-  foreach ($node->webform['components'] as $cid => $component) {
-    if ($component['type'] != 'fieldset') {
-      $form['mapping']['type'][$cid] = array(
-        '#label' => t($component['name'] . " - (" . $component['type'] . ")"),
-        '#type' => 'select',
-        '#options' => $options,
-        '#default_value' => isset($node->map[$cid]) ? $node->map[$cid] : '',
-      );
-    }
-  }
-  if (empty($form['mapping']['type'])) {
-    $form['mapping'] = array(
-      '#markup' => t('You must add some fields to the webform before you can map them.'),
-    );
-  }
-  else {
-    $form['mapping']['type']['#theme'] = 'fundraiser_mapping_options';
-    $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
-  }
-  return $form;
-}
-
-function fundraiser_mapping_form_submit($form, &$form_state) {
-  db_delete('fundraiser_component_map')->condition('nid', $form['#node']->nid)->execute();
-  foreach ($form_state['values']['mapping']['type'] as $key => $value) {
-    if (!empty($value)) {
-      $component_map = array('nid' => $form['#node']->nid, 'cid' => $key, 'map_id' => $value);
-      drupal_write_record('fundraiser_component_map', $component_map);
-    }
-  }
-  drupal_set_message(t('Profile mapping has been saved'));
-}
-
+//TODO this may need to be moved into a sustainer module to provide sustainer ui to recurring donations.
 function fundraiser_recurring_admin() {
 // TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
 // TODO signifigant security issues in the previous version of this query, needs to be reviewed on the 6.x branch. - SeH
@@ -448,6 +208,7 @@ function _recurring_donation_edit_forms($master_order_id) {
   return $output;
 }
 
+// TODO move to ubercart.
 function _get_billing_information($master_order_id, $order) {
   $state = module_invoke_all('fundraiser_get_country_zone', $order->billing_zone);
   $state = $state[0];
@@ -477,6 +238,7 @@ function _get_billing_information($master_order_id, $order) {
   return $billing_str;
 }
 
+// TODO move to ubercart.
 function fundraiser_recurring_master_order_overview($order_id) {
 // TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
   $output = "<h2>Recurring Orders</h2>";

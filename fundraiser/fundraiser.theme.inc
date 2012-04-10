@@ -14,20 +14,24 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     'fundraiser_mapping_options' => array(
       'render element' => 'element',
     ),
+    // Shows ask amounts as table in fundraiser setting forms.
     'fundraiser_ask_amounts' => array(
       'render element' => 'element',
     ),
+    // Shows CC year and data as a merged widget.
     'fundraiser_credit_card_expiration_date' => array(
       'render element' => 'element',    
     ),
+    // TODO move this out.
     'sustainer_management_page' => array(
       'variables' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 
         'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 
         'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),
       'template' => 'templates/sustainer-management-page',
     ),
+    // Shows confirmaiton pages.
     'fundraiser_confirmation' => array(
-      'variables' => array('node' => NULL, 'sid' => NULL),
+      'variables' => array('node' => NULL, 'message' => NULL),
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
@@ -58,20 +62,9 @@ function fundraiser_preprocess_page(&$variables) {
  * http://api.drupal.org/api/drupal/modules--system--theme.api.php/function/hook_preprocess/7
  */
 function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
-  $sid = $vars['sid'];
-  if ($sid) {
-    // load up the id of the order
-    $order_id = db_query('SELECT order_id FROM {fundraiser_webform_order} WHERE sid = :sid', array(':sid' => $sid))->fetchColumn();
-    $order = uc_order_load($order_id);  // SHOULD BE HOOKED. TODO
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($vars['node']->nid, $sid);
-    $message = $vars['node']->confirmation_page_body;
-    // replace any submission level tokens
-    $message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE);
-    // replace any order tokens
-    $message = token_replace($message, 'order', $order);
-
-    // set a variable that can be used in the template
+  $message = $vars['message'];
+  if (!empty($message)) {
+    // Set the message for the template.
     $vars['confirmation_message'] = $message;
   }
 }
@@ -161,17 +154,17 @@ function theme_fundraiser_credit_card_expiration_date($element) {
 /** 
  * Theme the ask amounts table on webform creation.
  */
-function theme_fundraiser_ask_amounts($element){
+function theme_fundraiser_ask_amounts($element) {
   $element = $element['element'];
-  $header = array( t('Ask amount'), t('Label'), t('Actions') );
+  $header = array( t('Ask amount'), t('Label'), t('Remove when saved') );
+//  $header = array( t('Ask amount'), t('Label'));
   $rows = array();
-  for ($i=0; $i < $element['amount_delta']['#value']; $i++) {
-    if (isset($element[$i]['amount_' . $i])) {
-      $amount = drupal_render($element[$i]['amount_' . $i]);
-      $label = drupal_render($element[$i]['label_' . $i]);
-      $remove = drupal_render($element[$i]['remove_' . $i]);
-      $rows[] = array($amount, $label, $remove);
-    }
+  foreach (element_children($element) as $index) {
+    $amount = drupal_render($element[$index]['amount']);
+    $label = drupal_render($element[$index]['label']);
+    $remove = drupal_render($element[$index]['remove']);
+    $rows[] = array($amount, $label, $remove);
+//    $rows[] = array($amount, $label);
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
