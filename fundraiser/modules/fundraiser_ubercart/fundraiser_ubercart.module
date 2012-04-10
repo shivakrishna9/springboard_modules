@@ -597,6 +597,7 @@ function fundraiser_ubercart_fundraiser_order_refund($order_id, $amount, $new_st
   // Make the charge amount positive again, for nice display in the admin comment
   $amount = abs($payment_info['amount']);
   $reason = check_plain($reason);
+  // TODO remove this.
   $amount_formatted = module_invoke_all('fundraiser_format_price', $amount);
   global $user;
   uc_order_comment_save($payment_info['order_id'], 

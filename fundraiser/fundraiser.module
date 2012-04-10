@@ -826,7 +826,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Add another'),
     '#description' => t('Click here to add more choices.'),
-    '#submit' => array('_fundraiser_form_amount_no_js_submit'), // If no javascript action.
     '#ajax' => array(
       'callback' => '_fundraiser_donation_settings_form_amounts',
       'wrapper' => 'ask-amounts',
@@ -917,25 +916,6 @@ function _fundraiser_ask_form($amount_values = array()) {
  */
 function _fundraiser_donation_settings_form_amounts($form, $form_state) {
   return $form['fundraiser_settings']['amount_wrapper']['donation_amounts'];
-}
-
-/**
- * Submit handler for ask amount more button if no JS in place.
- */
-//TODO check if this is all still needed.
-function _fundraiser_form_amount_no_js_submit($form, &$form_state) {
-  unset($form_state['submit_handlers']);
-  // TODO correct for delta use here.
-  $delta = $form_state['values']['amount_delta'];
-  for ($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
-    if (!$form_state['values']['amount_' . $i]) {
-      --$delta;
-    }
-  }
-  ++$form_state['values']['amount_delta'];
-  form_execute_handlers('submit', $form, $form_state);
-  $values = $form_state['values'];
-  $form_state['rebuild'] = TRUE;
 }
 
 /**
@@ -1461,7 +1441,7 @@ function _fundraiser_get_tracking($nid) {
  */
 function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking($nid);
-  if (!$tracking) {
+  if (!isset($tracking->nid)) {
     // Insert.
     $tracking = array('nid' => $nid, 'pageviews' => 1, 'conversions' => 0,'local_failures' => 0,
       'gateway_failures' => 0, 'latest_load_time' => 0);
