@@ -21,7 +21,8 @@
 function _fundraiser_webform_create_webform_components($nid, $donation_amounts, $show_other_amount, $min_donation_amount) {
   // Poll other modules for the information they would normally provide to the donation form.
   // So we can create components to hold them.
-  $context = module_invoke_all('fundraiser_donation_form_context', $context);
+  $context = (object) array();
+  module_invoke_all('fundraiser_donation_form_context', $context);
 
   // Create an array to hold all of the created components.
   $components = array();

@@ -328,7 +328,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state, $contex
 
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
-    theme('image', array('path' =>  drupal_get_path('module', 'fundraiser') . '/images/padlock.gif' )) .
+    theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.gif' )) .
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
 
@@ -419,7 +419,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
   // Create watchdog entry on validation errors.
   if ($errors) {
-    $base = drupal_get_path('module', 'fundraiser');
+    $base = drupal_get_path('module', 'fundraiser_webform');
     drupal_add_js($base . '/js/jquery.alphanumeric.js');
     drupal_add_js($base . '/js/fundraiser.js');
     drupal_add_css($base . '/css/fundraiser-donation-form.css');
