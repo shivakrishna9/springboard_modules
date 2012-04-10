@@ -234,8 +234,8 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state, $contex
       }
     }
   }
-
-/*
+//*
+// TODO this causes an error in _webform_client_form_submit_flatten().
   // Combine expiration month and year into a single component.
   $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
   $cc_exp_year_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_year']);
@@ -267,7 +267,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state, $contex
     $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
     $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
   }
-  // Remove old fields from form layout after moving them.
+  // Remove old fields from form layout after moving them to their new location.
   $cc_exp_month_field = NULL;
   $cc_exp_year_field = NULL;
 //*/
@@ -332,20 +332,26 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state, $contex
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
 
-  // Add a submit handler in advance of the webform_client_form_submit, to move
-  //  'card_expiration_month', 'card_expiration_year' back where needed.
-  // And remove 'expiration_date' to avoid confusing webform.
-  //array_unshift($form['#submit'], '_fundraiser_webform_pre_submit_cleanup');
+  // Add a submit handler in advance of the webform_client_form_submit to cleanup after our move.
+  // Important: It needs to run before webform runs, so it's getting put at the fornt of the array.
+  array_unshift($form['#submit'], '_fundraiser_webform_pre_submit_cleanup');
   return $form;
 }
 
-function _fundraiser_webform_pre_submit_cleanup($form, $form_state) {
- // drupal_set_message(print_r($form_state,TRUE));
- // $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] = 
- //     $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_month'];
- // $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] = 
- //     $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_year'];
- // unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
+/**
+ * Submit callback, this moves the expiration month and year back into the structure where they
+ * are expected, and removes 'expiration_date' from the list. If 'expiration_date' remained in the
+ * submission, webform will try to look up a cid for it and reference it as if the component exists.
+ * (Aka: there's no check to make sure a cid was recieved before acting on it.
+ * So: We put everythign back after we're done so that webform never knows the difference.
+ */
+function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
+  $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] = 
+      $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_month'];
+  $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] = 
+      $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_year'];
+  // Remove 'expiration_date' so webform doesn't get confused when it tries to process.
+  unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
 }
 
 /**
