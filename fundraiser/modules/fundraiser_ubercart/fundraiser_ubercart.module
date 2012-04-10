@@ -188,36 +188,53 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $donation->donation = $order;
   $donation->donation->did = $order->order_id;
   $donation->donation->recurs = $recurs;
+  $donation->donation->donation_amount = $order->order_total;
 }
 
 /**
- * Implements hook_fundraiser_donation_retrieve_future().
+ * Implements hook_fundraiser_donation_get_donation().
  */
-function fundraiser_ubercart_fundraiser_donation_retrieve_future($donation) {
+function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $order = uc_order_load($donation->donation->did);
+// TODO I would really like to move some of this out into an additional table.
+// To allow us to track did - nid - user etc outside of ubercart's tables.
+// This would allow us to more cleanly handle the glue modules.
+// As it is, ubercart is the only record of node, user for a donation.
+// Since this is called with other glue modules in effectively random order,
+// it means other modules cannot rely on having node or user info on hand.
+// This is a pretty huge flaw in the design that needs to be addressed, but
+// would take tweaking tables. So it'll wait until after the port.
   $donation->nid = $order->products[0]->nid;
   $donation->node = node_load($order->products[0]->nid);
   $donation->uid = $order->uid;
   $donation->user = user_load($order->uid);
+  
+  // Load order specific information for donation.
   $donation->donation = $order;
   $donation->donation->did = $order->order_id;
   $donation->donation->donation_amount = $order->order_total;
+
+  $ref_id = '';
+  if (isset($order->data['cc_txns']['references'])) {
+    $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+  }
   $data = array(
     'txn_type' => 'reference_txn',
-    'ref_id' => array_shift(array_keys($order->data['cc_txns']['references'])),
+    'ref_id' => $ref_id,
   );
   $donation->donation->data = array_merge($donation->donation->data, $data);
-  $results = _fundraiser_get_recurring_by_order_id($order_id);
+  // If this was a recurring order, we can get the gateway from that table.
+  $results = _fundraiser_get_recurring_by_order_id($order->order_id);
   foreach ($results as $result) {
     $gateway = $result->gateway;
   }
+  // Else, we fall back to the related fundraiser directly.
   if (empty($gateway)) {
-    // Else try from the fundraiser information directly.
-    $results = _fundraiser_get_fundraiser_by_nid($nid);
-    foreach ($results as $result) {
-      $gateway = $result->gateway;
-    }
+    $fundraiser = _fundraiser_get_fundraiser_by_nid($donation->nid);
+    $gateway = $fundraiser->gateway;
   }
+  // TODO - this should probably get handled better.
+  // This func is used to retrived donations from NON recurring donations too.
   $donation->node->nid = $gateway;
 }
 

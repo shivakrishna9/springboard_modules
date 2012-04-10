@@ -53,8 +53,9 @@ function fundraiser_process_recurring_donations() {
   // Loop over the found orders
   foreach ($recurrings as $recurring) {
     // Recreate the donation to process from the given values.
-    $donation['donation']->did = $recurring->order_id;
-    fundraiser_donation_retrieve_future($donation);
+    // order_id = did for storing recurring orders. 
+    // TODO rename this column for consistant handling of terms.
+    $donation = fundraiser_donation_get_donation($recurring->order_id);
     // The donation information should be at at $donation['donation'], ready to process.
     fundraiser_donation_process($donation);
     // The results should be at $donation['result'], ready to respond to the aftermath.
@@ -76,14 +77,6 @@ function fundraiser_process_recurring_donations() {
   }
   // And after all of that is done, provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_post_recurring');
-}
-
-/**
- * Donation processing, a donation needs to be retrieved from stored data prior to processing.
- */
-function fundraiser_donation_retrieve_future(&$donation) {
-  // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_retrieve_future', $donation);
 }
 
 /**

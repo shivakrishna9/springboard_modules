@@ -139,11 +139,11 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 1,
   );
-  $items['node/%node/confirmation'] = array(
+  $items['node/%node/confirmation/%'] = array(
     'title' => 'Webform submission',
     'load arguments' => array(1),
     'page callback' => 'fundraiser_donation_confirmation_page',
-    'page arguments' => array(1),
+    'page arguments' => array(1, 3),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
@@ -281,6 +281,18 @@ function fundraiser_token_values($type, $object = NULL) {
 // TODO ^^^
 
 /**
+ * Provides an additional mechanism to combine running regular token replacement
+ * and token replacement from other sources (webform).
+ */
+function _fundraiser_replace_tokens($message, $donation) {
+  // First replace the normal token set.
+  $message = token_replace($message, array('order' => $donation->donation));
+  // Then replace based on the glue modules.
+  $message = module_invoke_all('fundraiser_replace_tokens', $message, $donation);
+  return $message[0];  // Return the first member of the result array, aka the message.
+}
+
+/**
  * Implemenation of hook_mail().
  */
 function fundraiser_mail($key, &$message, &$params) {
@@ -352,16 +364,19 @@ function fundraiser_access($op, $node, $account) {
 /**
  * Menu callback, display fundraiser confirmation page.
  */
-// Since this information is stored on fundraiser, but the menu is firmly webform.
-// This needs to be refactored. Either the confirmation page moves entirely into fundraiser (path and all)
-// Or the data comes out of this table and into it's own. TODO.
-function fundraiser_donation_confirmation_page($node) {
+function fundraiser_donation_confirmation_page($node, $did) {
   drupal_set_title(check_plain($node->confirmation_page_title));
   if (empty($output)) {
-    // ALSO remove this 'sid' crap. No getting values from $GET allowed. GAH.
+    $message = '';
+    $donation = fundraiser_donation_get_donation($did);
+    if (!empty($donation)) {
+      if (!empty($donation->node->confirmation_page_body)) {
+        $message = _fundraiser_replace_tokens($donation->node->confirmation_page_body, $donation);
+      }
+    }
     $output = theme(
       array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'),
-      array('node' => $node, 'sid' => $_GET['sid'])
+      array('node' => $node,'message' => $message)
     );
   }
   return $output;
@@ -998,6 +1013,9 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   else {
     $result = array('success' => FALSE);
   }
+  // Add the donation and result info to the form_state so we can reference it later.
+  $form_state['donation'] = $donation;
+  $form_state['result'] = $result;
   // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
   // Such as in cases of failures or the like. Return the donation object and result.
   module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $donation, $result);
@@ -1009,13 +1027,14 @@ function fundraiser_donation_submit(&$form, &$form_state) {
 function fundraiser_donation_confirmation($form, &$form_state) {
   // Everything worked, redirect to the confirmation page as the last submit handler.
   $node = $form['#node'];
-  $sid = $form_state['values']['details']['sid'];
   $redirect_url = trim($node->redirect_url);
+  $did = $form_state['donation']->donation->did;
+
   // Prepare the correct redirect path.
   $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
   if ($redirect_url == '<confirmation>') {
     // This is the default path configured per node in fundraiser_menu.
-    $redirect = array('node/' . $node->nid . '/confirmation', array('query' => array('sid' => $sid)));
+    $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
   }
   elseif (valid_url($redirect_url, TRUE)) {
     // This is the path set by the user.
@@ -1024,7 +1043,7 @@ function fundraiser_donation_confirmation($form, &$form_state) {
   elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
     // This is the reconstructed path from the user.
     $parts = parse_url($redirect_url);
-    $query = $parts['query'] ? array_merge($parts['query'], array('sid'=> $sid)) : array('sid' => $sid);
+    $query = $parts['query'] ? array_merge($parts['query'], array('did'=> $did)) : array('did' => $did);
     $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
   }
   // And we add the redirect to the form processing for the final step.
@@ -1104,6 +1123,7 @@ function fundraiser_donation_process($donation) {
     $data = array('txn_type' => 'auth_capture');
     $data = array_merge($data, $donation->donation->data);
     $result = $charge_function($donation->donation->did, $donation->donation->donation_amount, $data);
+    $result['data'] = $data;
   }
   $donation->result = $result;
   // Allow other modules to respond to the success.
@@ -1127,6 +1147,18 @@ function fundraiser_donation_success($donation) {
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
+}
+
+/**
+ * CRUD style donation get.
+ */
+function fundraiser_donation_get_donation($did) {
+  $donation = (object) array();
+  $donation->donation->did = $did;
+  // Call hooks to re-create the donation info.
+  // The glue modules handle everything else once handed fundraisers info.
+  module_invoke_all('fundraiser_donation_get_donation', $donation);
+  return $donation;
 }
 
 /**

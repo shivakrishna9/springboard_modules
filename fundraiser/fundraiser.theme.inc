@@ -31,7 +31,7 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     ),
     // Shows confirmaiton pages.
     'fundraiser_confirmation' => array(
-      'variables' => array('node' => NULL, 'sid' => NULL),
+      'variables' => array('node' => NULL, 'message' => NULL),
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
@@ -62,25 +62,10 @@ function fundraiser_preprocess_page(&$variables) {
  * http://api.drupal.org/api/drupal/modules--system--theme.api.php/function/hook_preprocess/7
  */
 function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
-drupal_set_message(print_r($vars,TRUE));
-// TODO perhaps use did instead to get the information properly retrieved?
-// This isn't the best way to go about it as it is.
-  $sid = $vars['sid'];
-  if ($sid) {
-    $message = '';
-    // load up the id of the order
-    //$order_id = db_query('SELECT order_id FROM {fundraiser_webform_order} WHERE sid = :sid', array(':sid' => $sid))->fetchColumn();
-    //$order = uc_order_load($order_id);  // SHOULD BE HOOKED. TODO
-    //module_load_include('inc', 'webform', 'includes/webform.submissions');
-    //$submission = webform_get_submission($variables['node']->nid, $sid);
-    //$message = $variables['node']->confirmation_page_body;
-    // replace any submission level tokens
-    //$message = _webform_filter_values($message, $vars['node'], $submission, NULL, FALSE);
-    // replace any order tokens
-    //$message = token_replace($message, 'order', $order);
-
-    // set a variable that can be used in the template
-    $vars['confirmation_message'] = $message. 'sd';
+  $message = $vars['message'];
+  if (!empty($message)) {
+    // Set the message for the template.
+    $vars['confirmation_message'] = $message;
   }
 }
 
