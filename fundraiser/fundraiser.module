@@ -1002,6 +1002,137 @@ function fundraiser_donation_submit(&$form, &$form_state) {
 }
 
 /**
+  A donation object takes the form:
+stdClass Object
+(
+    [uid] => Donator User UID
+    [user] => Donator User Object
+    [nid] => Fundraiser Node NID
+    [node] => Fundraiser Node Object
+    [sid] => Submission ID
+    [submission] => Array (Currently a submission array from Webform.)
+        (
+            [cid] => 
+            [amount] => 10
+            [other_amount] => a
+            [first_name] => First Name
+            [last_name] => Last Name
+            [email] => person@example.com
+            [address] => 1234 Drupal Ave
+            [address_line_2] => Apt 1234
+            [city] => Drupalville
+            [country] => 840
+            [state] => 44
+            [zip] => 12345
+            [card_number] => 4111111111111111
+            [card_cvv] => 123
+            [0] => recurs
+            [card_expiration_month] => 4
+            [card_expiration_year] => 2012
+            [ms] => default_ms
+            [referrer] => d
+            [initial_referrer] => f
+        )
+    [donation] => UcOrder Object (Currently an Order object from Ubercart.)
+        (
+            [order_id] => 71
+            [uid] => 1
+            [order_status] => in_checkout
+            [order_total] => 10
+            [primary_email] => person@example.com
+            [delivery_first_name] => 
+            [delivery_last_name] => 
+            [delivery_phone] => 
+            [delivery_company] => 
+            [delivery_street1] => 
+            [delivery_street2] => 
+            [delivery_city] => 
+            [delivery_zone] => 0
+            [delivery_postal_code] => 
+            [delivery_country] => 840
+            [billing_first_name] => First Name
+            [billing_last_name] => Last Name
+            [billing_phone] => 
+            [billing_company] => 
+            [billing_street1] => 1234 Drupal Ave
+            [billing_street2] => Apt 1234
+            [billing_city] => Drupalville
+            [billing_zone] => 44
+            [billing_postal_code] => 12345
+            [billing_country] => 840
+            [products] => Array
+                (
+                    [0] => stdClass Object
+                        (
+                            [price] => 10
+                            [qty] => 1
+                            [title] => Test Donation Form
+                            [nid] => 1
+                            [data] => Array
+                                (
+                                    [shippable] => 
+                                    [model] => 
+                                    [varprice] => 10
+                                    [module] => uc_product
+                                )
+
+                            [order_id] => 71
+                            [weight_units] => lb
+                            [order_product_id] => 50
+                            [model] => 
+                            [cost] => 0
+                            [weight] => 0
+                        )
+
+                )
+            [line_items] => Array
+                (
+                )
+            [payment_method] => credit
+            [data] => Array
+                (
+                    [recurring_status] => 1
+                )
+            [created] => 1334151019
+            [modified] => 1334151019
+            [currency] => USD
+            [product_count] => 1
+            [host] => 127.0.0.1
+            [payment_details] => Array
+                (
+                    [cc_type] => visa
+                    [cc_owner] => 
+                    [cc_number] => 4111111111111111
+                    [cc_start_month] => 
+                    [cc_start_year] => 
+                    [cc_exp_month] => 4
+                    [cc_exp_year] => 2012
+                    [cc_issue] => 
+                    [cc_cvv] => 123
+                    [cc_bank] => 
+                )
+
+            [did] => 71
+            [recurs] => 1
+            [donation_amount] => 10
+        )
+    [result] => Array  (Currently a result array from Ubercart.)
+        (
+            [success] => 1
+            [comment] => Card charged, resolution code: 0022548315
+            [message] => Credit card payment processed successfully.
+            [uid] => 1
+            [data] => Array
+                (
+                    [txn_type] => auth_capture
+                    [recurring_status] => 1
+                )
+
+        )
+)
+*/
+
+/**
  * Submit handler, handles the final destination redirect after donation completed.
  */
 function fundraiser_donation_confirmation($form, &$form_state) {
