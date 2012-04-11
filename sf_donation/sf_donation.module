@@ -704,7 +704,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 					$object['CloseDate'] = date('Y-m-d', $transaction_date);
 					
 					// Link the refund to the original donation
-					$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+					$donation_sfid = db_result(db_query('SELECT sfid FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT sf_opportunity_id FROM {fundraiser_recurring} WHERE order_id = %d', $order_id, $order_id));
 					$object['Parent_Donation__c'] = $donation_sfid;
 					
 					// Since it's a refund, the probability is 0
