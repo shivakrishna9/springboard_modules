@@ -1,0 +1,138 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the fundraiser module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function fundraiser_webform_uninstall() {
+  db_query("DROP VIEW {fundraiser_webform_data}");
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
+}
+
+/**
+ * Implements hook_enable().
+ */
+function fundraiser_webform_enable() {
+  /**
+   *  Add the donation_form node type to the array of node types handled
+   * by the webform module.
+   *
+   * The default value is array('webform') because this variable starts
+   * off empty, until an admin chooses webform node types at
+   * admin/settings/webform. If you save the webform_node_types as an
+   * array with ONLY donation_form, then webform nodes will not be
+   * handled as webforms.
+   */
+  $result = variable_get('webform_node_types', array('webform'));
+  $result[] = 'donation_form'; //TODO make this more in keeping with node type nuetral.
+  variable_set('webform_node_types', $result);
+
+  // New for webform 3.9.
+  // 3Let webform know the primary purpose of this node type is for webforms
+  $result = variable_get('webform_node_types_primary', array('webform'));
+  if (!in_array('donation_form', $result)) {
+    $result[] = 'donation_form';
+    variable_set('webform_node_types_primary', $result);
+  }
+}
+
+/**
+ * Implements hook_disable().
+ */
+function fundraiser_webform_disable() {
+  // Remove donation_form from the list of webform_node_types.
+  // Not really necessary, but still good to clean up after ourselves
+  $result = variable_get('webform_node_types', array('webform'));
+  if (is_array($result)) {
+    foreach ($result as $index => $type) {
+      if ($type == 'donation_form') {
+        unset($result[$index]);
+        variable_set('webform_node_types', $result);
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_webform_schema() {
+  $schema['fundraiser_webform_order'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'webform_nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sfid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '40',
+        'not null' => FALSE,
+      ),
+      'gateway' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'txn_id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+      'recurring_status' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('webform_nid', 'order_id'),
+  );
+  $schema['fundraiser_component_map'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'map_id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+  return $schema;
+}
+
+// TODO first update post Port:
+// Rename table correctly, rename all order id correctly.
+// Resolve the webform order mapping system.
