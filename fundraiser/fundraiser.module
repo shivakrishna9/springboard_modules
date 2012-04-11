@@ -114,12 +114,6 @@ function fundraiser_permission() {
  * Implements hook_menu().
  */
 function fundraiser_menu() {
-  // JS stuff
-  $items['fundraiser_changestate/js'] = array(
-    'page callback' => 'fundraiser_changestate',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array("access content"),
-  );
   // Paths for fundraiser per node stuff.
   $items['node/%node/fundraiser'] = array(
     'title' => 'Fundraiser',
@@ -183,6 +177,7 @@ function fundraiser_menu() {
     'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
+  // Donation management for admins.
   $items['admin/store/orders/%/recurring/edit'] = array( //TODO - Move this to it's own page. Remove Ubercart as default path.
     'title' => 'Edit Recurring Donations',
     'page callback' => 'fundraiser_recurring_edit_forms',
@@ -206,6 +201,7 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_recurring_master_order_overview',
     'access arguments' => array('view all orders'),
     'access callback' => 'fundraiser_recurring_check_access',
+    'access arguments' => array(3),
     'type' => MENU_LOCAL_TASK,
     'weight' => 11,
     'file' => 'fundraiser.admin.inc',
@@ -225,28 +221,13 @@ function fundraiser_confirmations_perm($perm, $node) {
 
 /**
  * Menu access callback, check if the user has recurring orders.
- */ // TODO do NOT pass these as args. Actually pull them from the menu structure.
-function fundraiser_recurring_check_access() {
-  $count = db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
-    'WHERE master_order_id = :master_order_id OR order_id = :order_id',
-    array(':master_order_id' => arg(3), ':order_id' => arg(3)))->fetchColumn();
+ */
+function fundraiser_recurring_check_access($did) {
+  $count = _fundraiser_recurring_exists($did);
   if ($count > 0) {
     return TRUE;
   }
   return FALSE;
-}
-
-/**
- * Implements hook_menu_alter().
- */
-function fundraiser_menu_alter(&$items) {
-  // Workaround for bug where only uid 1 can see custom triggers.
-  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
-  // User access is handled by: 'access arguments' => array('administer actions') in D7.
-  // Is that the same as it was when you looked in May? - SeH 1/10/12
-  if (module_exists('trigger')) {
-    $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
-  }
 }
 
 // TODO come back to fix these. This is no longer how tokens work. vvv
@@ -287,7 +268,7 @@ function fundraiser_token_values($type, $object = NULL) {
 function _fundraiser_replace_tokens($message, $donation) {
   // First replace the normal token set.
   $message = token_replace($message, array('order' => $donation->donation));
-  // Then replace based on the glue modules.
+  // Then replace based on the glue modules. Specifically for webform, which uses non-standard tokens.
   $message = module_invoke_all('fundraiser_replace_tokens', $message, $donation);
   return $message[0];  // Return the first member of the result array, aka the message.
 }
@@ -416,7 +397,7 @@ function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
   );
   $form['confirmation_page']['tokens']['help'] = array(
     // TODO follow up on this to make sure that the tokens we are using are the right ones.
-    // Currently displays both regualr tokens and webform tokens.
+    // Currently displays both regular tokens and webform tokens.
     '#markup' => theme('token_tree', array('token_types' => array('node'))) . theme('webform_token_help', array()),
   );
   // Redirection settings.
@@ -532,9 +513,6 @@ function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
 /**
  * Submit function for fundraiser_webform_confirmation_settings_form().
  */
-// Since this information is stored on fundraiser, but the menu is firmly webform.
-// This needs to be refactored. Either the confirmation page moves entirely into fundraiser (path and all)
-// Or the data comes out of this table and into it's own. TODO.
 function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   // Get the fundraiser and all the node information that comes with it.
   $fundraiser = node_load($form_state['values']['nid']);
@@ -727,7 +705,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (empty($node) && isset($form['#node'])) {
     $node = $form['#node'];
   }
-
   // Check if this is being called on an enabled node type.
   if (!_fundraiser_is_donation_type($node->type)) {
     return $form;
@@ -813,6 +790,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   // Generate a form set for each existing amount. (To be themed into table format.)
   foreach ($donation_amounts as $donation_amount) {
     // Filter out other|Other combinations. We don't want to display those in this form.
+    // And if we did, the value would fail validation (not a number).
     // There is probably a better way to track this, but for now this'll do.
     if ($donation_amount[0] != 'other') {
       $form['fundraiser_settings']['amount_wrapper']['donation_amounts'][] = _fundraiser_ask_form($donation_amount);
@@ -937,7 +915,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
   // We add these first to make sure they're available for the hook call.
   $form['#validate'][] = 'fundraiser_donation_validate';
   $form['#submit'][] = 'fundraiser_donation_submit';
-  // Add additional submit handler to do the confirmation page.
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
   $form = module_invoke_all('fundraiser_donation_form', $form, $form_state, $context);
@@ -965,12 +942,19 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * Called from glue display module to submit additional data.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
-  // Call hook to validate donation values against fundraiser needs and sub module needs.
+  // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
+  //Using user load to avoid user object being carried by ref around.
+  global $user;
+  $donation->uid = $user->uid;
+  $donation->user = user_load($user->uid);
+  // Load the node from the form.
+  $donation->nid = $form['#node']->nid;
+  $donation->node = $form['#node'];
+
+  // Call hook to validate donation values against fundraiser needs and sub module needs.
   module_invoke_all('fundraiser_donation_submit', $form, $form_state, $donation);
-  // $donation->submission contains the submitted values from the form,
-  // cleaned up and formatted for use in a glue module for payment handling.
-  // $donation->uid, $donation->user, $donation->nid, $donation->node are set as well.
+  // $donation->submission contains the submitted values from the form, as well as sid.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation)) {
@@ -1357,7 +1341,7 @@ function _fundraiser_gateway_info($id = NULL) {
  * Helper function, determine if this node type supports donation forms.
  */
 function _fundraiser_is_donation_type($type) {
-  // TODO move this to a setting check, not a specific node type.
+  // TODO move this to a setting check, not a specific node type. Add caching.
   return ($type == 'donation_form');
 }
 
@@ -1708,6 +1692,16 @@ function _fundraiser_recurring_count_remaining($master_did) {
     array(':master_order_id' => $master_did))->fetchColumn();
 }
 
+/**
+ * DB function, returns count of payments remaining for series / if a member of a series.
+ */
+function _fundraiser_recurring_exists($did) {
+  return = db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
+    'WHERE master_order_id = :master_order_id '.
+    'OR order_id = :order_id',
+    array(':master_order_id' => $did, ':order_id' => $did))->fetchColumn();
+}
+    
 /**
  * DB Function, Check if the given order was made on a payment gateway that supports refunds
  */
