@@ -340,7 +340,7 @@ function market_source_nodeapi(&$node, $op) {
     case 'insert':
       $webform_types = variable_get('webform_node_types', '');
       // Skip adding custom webform components if the node is being cloned.
-      if (!$node->is_being_cloned) {
+      if (!$node->is_being_cloned && !$node->clone_from_original_nid) {
         // make sure this node type contains a webform and it's not a donation form.
         if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
           module_load_include('inc', 'webform', 'includes/webform.components');
