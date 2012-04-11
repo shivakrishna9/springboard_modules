@@ -133,3 +133,8 @@ function hook_fundraiser_donation_post_recurring() {}
  * Allow submodules to contribute to replacing tokens not provided by token module.
  */
 function hook_fundraiser_replace_tokens($message, $donation) {}
+
+/**
+ * Retrieve gateway information for a given donation.
+ */
+function hook_get_donation_gateway($did, $gateway) {}

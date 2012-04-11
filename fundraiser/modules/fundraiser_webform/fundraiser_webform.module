@@ -382,7 +382,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     }
   }
   // Check for minimum amount.
-  $fundraiser = _fundraiser_get_fundraiser($node_id);
+  $fundraiser = _fundraiser_get_fundraiser_by_nid($node_id);
   $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
   if ($donation_amount < $minimum_donation_amount) {
@@ -580,10 +580,7 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
-  $results = _fundraiser_webform_get_submission_by_donation($donation->donation->did);
-  foreach ($results as $result) {
-    $submission = $result;
-  }
+  $submission = _fundraiser_webform_get_webform_order_by_did($donation->donation->did);
   $donation->sid = $submission->sid;
   $donation->donation->recurs = $submission->recurring_status;
 }
@@ -610,10 +607,10 @@ function fundraiser_webform_fundraiser_replace_tokens($message, $donation) {
  */
 function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   // Get the webform map of values.
-  $results = fundraiser_webform_get_component_map_by_nid($fundraiser->nid);
+  $components = _fundraiser_webform_get_component_map_by_nid($fundraiser->nid);
   $map = array();
-  foreach($results as $result) {
-    $map[$result->cid] = $result->map_id;
+  foreach($components as $component) {
+    $map[$component->cid] = $component->map_id;
   }
   $fundraiser->map = $map;
   // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
@@ -680,6 +677,19 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
     $other_amount = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'other_amount');
     $other_amount['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
     _fundraiser_webform_set_extra_by_key($fundraiser->nid, 'other_amount', $other_amount);
+  }
+}
+
+/**
+ * Implements hook_get_donation_gateway().
+ */
+function fundraiser_webform_get_donation_gateway($did, $gateway) {
+  // Get details on the original payment so we can load the payment gateway details
+  $webform_gateway = db_query('SELECT gateway FROM {fundraiser_webform_order} '.
+    'WHERE order_id = :order_id ',
+    array(':order_id' => $did))->fetchObject();
+  if (!$webform_gateway)) {
+    $gateway = $webform_gateway;
   }
 }
 
@@ -806,18 +816,136 @@ function _fundraiser_webform_required_fields() {
  */
 
 /**
- * DB function, get submission from a donation form.
+ * CRUD style DB function for fundraiser_webform_order.
  */
-function fundraiser_webform_get_component_map_by_nid($nid) {
-  return db_query('SELECT * FROM {fundraiser_component_map} WHERE nid = :nid', array(':nid' => $nid));
+function _fundraiser_webform_create_webform_order($webform_order) {
+  // Cast donation just in case.
+  $webform_order = (array) $webform_order;
+  // Check for old data.
+  $webform_order_data = FALSE;
+  if (isset($webform_order['webform_nid']) && isset($webform_order['order_id'])) {
+    $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did($webform_order['webform_nid'], $webform_order['order_id']);
+  }
+  if (!$webform_order_data) {
+    $record = $webform_order;
+    drupal_write_record('fundraiser_webform_order', $record);
+  }
+  else {
+    _fundraiser_webform_update_webform_order($webform_order);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_webform_order.
+ */
+function _fundraiser_webform_get_webform_order_by_nid_did($nid, $did) {
+  return db_query('SELECT * FROM {fundraiser_webform_order} ' .
+    'WHERE webform_nid = :nid ' .
+    'AND order_id = :did', // TODO change this terminology.
+    array(':nid' => $nid, ':did' => $did))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_webform_order.
+ */
+function _fundraiser_webform_update_webform_order($webform_order) {
+  // Cast donation just in case.
+  $webform_order = (array) $webform_order;
+  // Check for old data.
+  $webform_order_data = FALSE;
+  if (isset($webform_order['webform_nid']) && isset($webform_order['order_id'])) {
+    $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did($webform_order['webform_nid'], $webform_order['order_id']);
+  }
+  if (!$webform_order_data) {
+    _fundraiser_webform_create_webform_order($webform_order);
+  }
+  else {
+    $record = array_merge((array) $webform_order_data, $webform_order); // Merge data together so we get everything in the record.
+    drupal_write_record('fundraiser_webform_order', $webform_order, array('webform_nid', 'order_id'));
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_webform_order.
+ */
+function _fundraiser_webform_delete_webform_order($nid, $did) {
+  db_delete('fundraiser_webform_order')->condition('webform_nid', $nid)->condition('order_id', $did)->execute();
 }
 
 /**
  * DB function, get submission from a donation form.
  */
-function _fundraiser_webform_get_submission_by_donation($did) {
-  return db_query('SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} '.
-    'WHERE order_id = :order_id', array(':order_id' => $did));
+function _fundraiser_webform_get_webform_order_by_did($did) {
+  return db_query('SELECT * FROM {fundraiser_webform_order} ' .
+    'WHERE order_id = :did', // TODO change this terminology.
+    array(':did' => $did))->fetchObject();
+    // For now, there can be only one. TODO change this later.
+}
+
+/**
+ * CRUD style DB function for fundraiser_component_map.
+ */
+function _fundraiser_webform_create_component_map($component_map) {
+  // Cast donation just in case.
+  $component_map = (array) $component_map;
+  // Check for old data.
+  $component_map_data = FALSE;
+  if (isset($component_map['nid']) && isset($component_map['cid'])) {
+    $component_map_data = _fundraiser_webform_get_component_map_by_nid_cid($component_map['nid'], $component_map['cid']);
+  }
+  if (!$component_map_data) {
+    $record = $component_map;
+    drupal_write_record('fundraiser_component_map', $record);
+  }
+  else {
+    _fundraiser_webform_update_component_map($component_map);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_component_map.
+ */
+function _fundraiser_webform_get_component_map_by_nid_cid($nid, $did) {
+  return db_query('SELECT * FROM {fundraiser_component_map} ' .
+    'WHERE nid = :nid ' .
+    'AND cid = :cid',
+    array(':nid' => $nid, ':cid' => $cid))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_component_map.
+ */
+function _fundraiser_webform_update_component_map($component_map) {
+  // Cast donation just in case.
+  $component_map = (array) $component_map;
+  // Check for old data.
+  $component_map_data = FALSE;
+  if (isset($component_map['nid']) && isset($component_map['cid'])) {
+    $component_map_data = _fundraiser_webform_get_component_map_by_nid_cid($component_map['nid'], $component_map['cid']);
+  }
+  if (!$component_map_data) {
+    _fundraiser_webform_create_component_map($component_map);
+  }
+  else {
+    $record = array_merge((array) $component_map_data, $component_map); // Merge data together so we get everything in the record.
+    drupal_write_record('fundraiser_component_map', $component_map, array('nid', 'cid'));
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_component_map.
+ */
+function _fundraiser_webform_delete_component_map($nid, $cid) {
+  db_delete('fundraiser_component_map')->condition('nid', $nid)->condition('cid', $cid)->execute();
+}
+
+/**
+ * DB function, get submission from a donation form.
+ */
+function _fundraiser_webform_get_component_map_by_nid($nid) {
+  return db_query('SELECT * FROM {fundraiser_component_map} ' .
+    'WHERE nid = :nid ',
+    array(':nid' => $nid))->fetchAll();
 }
 
 /**

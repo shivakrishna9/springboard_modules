@@ -32,9 +32,10 @@ function fundraiser_ubercart_mail_alter(&$message) {
  * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
  */
 function fundraiser_order_actions($order) {
+  $gateway = _fundraiser_get_donation_gateway($order->order_id);
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (user_access('edit orders') && 
-    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && 
-    fundraiser_gateway_can_refund_order($order)) { //TODO where is this function form?
+    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && $can_refund) {  
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
     $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
     $actions[] = array(
@@ -56,7 +57,7 @@ function fundraiser_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'delete':
       // To do move this out into fundraiser.module as a CRUD function.
-      db_delete('fundraiser_recurring')->condition('order_id', $arg1->order_id)->execute();
+      _fundraiser_delete_recurring($arg1->order_id);
       break;
   }
 }
@@ -224,10 +225,8 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   );
   $donation->donation->data = array_merge($donation->donation->data, $data);
   // If this was a recurring order, we can get the gateway from that table.
-  $results = _fundraiser_get_recurring_by_order_id($order->order_id);
-  foreach ($results as $result) {
-    $gateway = $result->gateway;
-  }
+  $donation = _fundraiser_get_recurring_by_did($order->order_id);
+  $gateway = $donation->gateway;
   // Else, we fall back to the related fundraiser directly.
   if (empty($gateway)) {
     $fundraiser = _fundraiser_get_fundraiser_by_nid($donation->nid);

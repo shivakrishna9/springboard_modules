@@ -49,9 +49,9 @@ function fundraiser_process_recurring_donations() {
   module_invoke_all('fundraiser_donation_recurring');
   $successes = 0;
   $fails = 0;
-  $recurrings = _fundraiser_get_recurring();
+  $donations = _fundraiser_get_recurring_chargable();
   // Loop over the found orders
-  foreach ($recurrings as $recurring) {
+  foreach ($donations as $recurring) {
     // Recreate the donation to process from the given values.
     // order_id = did for storing recurring orders. 
     // TODO rename this column for consistant handling of terms.
@@ -84,8 +84,8 @@ function fundraiser_process_recurring_donations() {
  */
 function fundraiser_donation_success_recurring(&$donation) {
   // Send credit card notification email when only a single payment is left
-  if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {
-    fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
+  if (_fundraiser_recurring_count_remaining($order_info['master_order_id']) == 1) {
+    _fundraiser_send_cc_notification($order_info['master_order_id'], $order->uid);
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success_recurring', $donation);
@@ -122,7 +122,7 @@ function fundraiser_donation_decline_recurring(&$donation) {
 /**
  * Kicks off an email to a sustainer to remind them their credit card is about to expire.
  */
-function fundraiser_send_cc_notification($master_order_id, $uid) {
+function _fundraiser_send_cc_notification($master_order_id, $uid) {
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
   $order_id = db_query('SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL',

@@ -605,7 +605,7 @@ function fundraiser_node_load($nodes, $types) {
       // Get the fundraiser information.
       // This also loads additional data presented from other modules to FR.
       // AKA fundraiser_webform and fundraiser_profile data.
-      $fundraiser = _fundraiser_get_fundraiser($node->nid);
+      $fundraiser = _fundraiser_get_fundraiser_by_nid($node->nid);
       // Merge data from fundraiser with node.
       $fundraiser = (array) $fundraiser;
       foreach ($fundraiser as $key => $value) {
@@ -1439,40 +1439,41 @@ function _fundraiser_months_between_dates($exp_month, $exp_year) {
  * CRUD style DB function for fundraiser.
  */
 function _fundraiser_create_fundraiser($fundraiser) {
-  $fundraiser = (object) $fundraiser;
-  // Implode donation amounds for saving.
-  $imploded_amounts = array();
-  foreach ($fundraiser->donation_amounts as $donation_amount) {
-     $imploded_amounts[] = implode('|', $donation_amount);
+  $fundraiser = (array) $fundraiser;
+  $fundraiser_data = FALSE;
+  if (isset($fundraiser['nid'])) {
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
   }
-  $imploded_amounts = array_unique($imploded_amounts);
-  $fundraiser->donation_amounts = implode(',', $imploded_amounts);
-  // On getting fundraiser this will be exploded into the correct values.
-  // After the node is created, add additional data to fundraiser.
-  $record = array(
-    'nid' => $fundraiser->nid, 
-    'gateway' => $fundraiser->gateway, 
-    'donation_amounts' => $fundraiser->donation_amounts, 
-    'show_other_amount' => $fundraiser->show_other_amount, 
-    'internal_name' => $fundraiser->internal_name, 
-    'minimum_donation_amount' => $fundraiser->minimum_donation_amount, 
-    'receipt_email_from' => variable_get('site_name', ''), 
-    'receipt_email_address' => variable_get('site_mail', ''), 
-    'receipt_email_subject' => t('Thank you for your donation'), 
-    'redirect_url' => '<confirmation>',
-  );
-  drupal_write_record('fundraiser', $record);
-  // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_create_fundraiser_alter', $fundraiser);
+  if (!$fundraiser_data) {
+    // Implode donation amounds for saving.
+    $imploded_amounts = array();
+    foreach ($fundraiser['donation_amounts'] as $donation_amount) {
+       $imploded_amounts[] = implode('|', $donation_amount);
+    }
+    $imploded_amounts = array_unique($imploded_amounts);
+    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    // On getting fundraiser this will be exploded into the correct values.
+    // After the node is created, add additional data to fundraiser.
+    $record = array(
+      'receipt_email_from' => variable_get('site_name', ''),
+      'receipt_email_address' => variable_get('site_mail', ''),
+      'receipt_email_subject' => t('Thank you for your donation'),
+      'redirect_url' => '<confirmation>',
+    );
+    $record = array_merge($record, $fundraiser);
+    drupal_write_record('fundraiser', $record);
+    // And invoke the hooks for all the other modules to respond.
+    module_invoke_all('fundraiser_create_fundraiser_alter', (object) $fundraiser);
+  }
+  else {
+    _fundraiser_update_fundraiser($fundraiser);
+  }
 }
 
 /**
  * CRUD style DB function for fundraiser.
  */
 function _fundraiser_get_fundraiser_by_nid($nid) {
-  return  _fundraiser_get_fundraiser($nid);
-}
-function _fundraiser_get_fundraiser($nid) {
   // Get fundraiser table information.
   $results = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid));
   $fundraiser = $results->fetchObject(); // Return an object.
@@ -1492,65 +1493,60 @@ function _fundraiser_get_fundraiser($nid) {
 /**
  * CRUD style DB function for fundraiser.
  */
-function _fundraiser_get_fundraisers($nids) {
+function _fundraiser_update_fundraiser($fundraiser) {
+  $fundraiser = (array) $fundraiser;
+  $fundraiser_data = FALSE;
+  if (isset($fundraiser['nid'])) {
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
+  }
+  if (!$fundraiser_data) {
+    _fundraiser_create_fundraiser($fundraiser);
+  }
+  else {
+    $fundraiser = array_merge((array) $fundraiser_data, $fundraiser);
+    // Implode donation amounds for saving.
+    $imploded_amounts = array();
+    foreach ($fundraiser['donation_amounts'] as $donation_amount) {
+       $imploded_amounts[] = implode('|', $donation_amount);
+    }
+    $imploded_amounts = array_unique($imploded_amounts);
+    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    // On getting fundraiser this will be exploded into the correct values.
+    $record = $fundraiser;
+    drupal_write_record('fundraiser', $record, 'nid');
+    // And invoke the hooks for all the other modules to respond.
+    module_invoke_all('fundraiser_update_fundraiser_alter', $fundraiser);
+    // Fire a hook that other modules can use to add additional processing when a donation form is created.
+    // Called in: fundraiser_multi_currency.module, sf_donation.module
+    // This can, and should, be replaced with hook_node_insert() implementations.
+    // THIS HOOK IS TO BE DEPR.
+    // module_invoke_all('fundraiser_form_insert', $node, $components);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser.
+ */
+function _fundraiser_delete_fundraiser($fundraiser) {
+  db_delete('fundraiser')->condition('nid', $fundraiser->nid)->execute();
+  // And invoke the hooks for all the other modules to respond.
+  module_invoke_all('fundraiser_delete_fundraiser_alter', $fundraiser);
+}
+
+/**
+ * DB function for fundraiser.
+ */
+function _fundraiser_get_fundraiser_by_nids($nids) {
   // Get fundraiser table information.
   $fundraisers = array();
   foreach ($nids as $nid) {
-    $fundraisers[] = _fundraiser_get_fundraiser($nid);
+    $fundraisers[$nid] = _fundraiser_get_fundraiser_by_nid($nid);
   }
   return $fundraisers;
 }
 
 /**
- * CRUD style DB function for fundraiser.
- */
-function _fundraiser_update_fundraiser($fundraiser) {
-  $fundraiser = (object) $fundraiser;
-  // Implode donation amounds for saving.
-  $imploded_amounts = array();
-  foreach ($fundraiser->donation_amounts as $donation_amount) {
-     $imploded_amounts[] = implode('|', $donation_amount);
-  }
-  $imploded_amounts = array_unique($imploded_amounts);
-  $fundraiser->donation_amounts = implode(',', $imploded_amounts);
-  // On getting fundraiser this will be exploded into the correct values.
-  $record = array(
-    'nid' => $fundraiser->nid,
-    'gateway' => $fundraiser->gateway, 
-    'internal_name' => $fundraiser->internal_name, 
-    'show_other_amount' => $fundraiser->show_other_amount, 
-    'donation_amounts' => $fundraiser->donation_amounts,
-    'minimum_donation_amount' => $fundraiser->minimum_donation_amount, 
-    'receipt_email_from' => $fundraiser->receipt_email_from, 
-    'receipt_email_address' => $fundraiser->receipt_email_address, 
-    'receipt_email_subject' => $fundraiser->receipt_email_subject, 
-    'receipt_email_message' => $fundraiser->receipt_email_message, 
-    'confirmation_page_title' => $fundraiser->confirmation_page_title, 
-    'confirmation_page_body' => $fundraiser->confirmation_page_body, 
-    'confirmation_page_format' => $fundraiser->confirmation_page_format,
-    'redirect_url' => $fundraiser->redirect_url, 
-  );
-  drupal_write_record('fundraiser', $record, 'nid');
-  // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_update_fundraiser_alter', $fundraiser);
-  // Fire a hook that other modules can use to add additional processing when a donation form is created.
-  // Called in: fundraiser_multi_currency.module, sf_donation.module
-  // This can, and should, be replaced with hook_node_insert() implementations.
-  // THIS HOOK IS TO BE DEPR.
-  // module_invoke_all('fundraiser_form_insert', $node, $components);
-}
-
-/**
- * CRUD style DB function for fundraiser.
- */
-function _fundraiser_delete_fundraiser($node) {
-  db_delete('fundraiser')->condition('nid', $node->nid)->execute();
-  // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_delete_fundraiser_alter', $node);
-}
-
-/**
- * CRUD style DB function for fundraiser.
+ * DB function for fundraiser.
  */
 function _fundraiser_delete_fundraisers($nodes) {
   foreach ($nodes as $node) {
@@ -1559,88 +1555,246 @@ function _fundraiser_delete_fundraisers($nodes) {
 }
 
 /**
- * CRUD style DB function for fundraiser_tracking.
+ * CRUD style DB function for fundraiser_refund.
  */
-function _fundraiser_get_tracking($nid) {
-  // Get fundraiser tracking table information.
-  $results = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $nid));
-  return $results->fetchObject(); // Return an object.
+function _fundraiser_create_refund($refund) {
+  // Cast donation just in case.
+  $refund = (array) $refund;
+  // Check for old data.
+  $refund_data = FALSE;
+  if (isset($refund['refund_id'])) {
+    $refund_data = _fundraiser_get_refund_by_rid($refund['refund_id']);
+  }
+  if (!$refund_data) {
+    $record = $refund;
+    drupal_write_record('fundraiser_refund', $record);
+  }
+  else {
+    _fundraiser_update_refund($refund);
+  }
 }
 
 /**
- * DB function for updating the stats in fundraiser_tracking.
+ * CRUD style DB function for fundraiser_refund.
  */
-function _fundraiser_update_tracking_value($nid, $field) {
-  $tracking = _fundraiser_get_tracking($nid);
-  if (!isset($tracking->nid)) {
-    // Insert.
-    $tracking = array('nid' => $nid, 'pageviews' => 1, 'conversions' => 0,'local_failures' => 0,
-      'gateway_failures' => 0, 'latest_load_time' => 0);
-    $tracking[$field] = 1;
-    drupal_write_record('fundraiser_tracking', $tracking);
+function _fundraiser_get_refund_by_rid($rid) {
+  return db_query('SELECT * FROM {fundraiser_refund} ' .
+    'WHERE refund_id = :rid',
+    array(':rid' => $rid))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_refund.
+ */
+function _fundraiser_update_refund($refund) {
+  // Cast donation just in case.
+  $refund = (array) $refund;
+  // Check for old data.
+  $refund_data = FALSE;
+  if (isset($refund['refund_id'])) {
+    $refund_data = _fundraiser_get_refund_by_rid($refund['refund_id']);
+  }
+  if (!$refund_data) {
+    _fundraiser_create_refund($refund);
   }
   else {
-    // Update.
-    $tracking = array('nid' => $nid, $field => $tracking->$field + 1);
-    drupal_write_record('fundraiser_tracking', $tracking, 'nid');
+    $record = array_merge((array) $refund_data, $refund); // Merge data together so we get everything in the record.
+    drupal_write_record('fundraiser_refund', $refund, 'refund_id');
   }
+}
+
+/**
+ * CRUD style DB function for fundraiser_refund.
+ */
+function _fundraiser_delete_refund($rid) {
+  db_delete('fundraiser_recurring')->condition('refund_id', $rid)->execute();
+}
+
+/**
+ * DB function for fundraiser_refund.
+ */
+function _fundraiser_get_refund_by_did($did) {
+  return db_query('SELECT * FROM {fundraiser_refund} ' .
+    'WHERE order_id = :did',
+    array(':did' => $did))->fetchAll();
 }
 
 /**
  * CRUD style DB function for fundraiser_recurring.
  */
 function _fundraiser_create_recurring($donation) {
-  $record = array(
-    'master_order_id' => $donation['order_id'],
-    'order_id' => $donation['new_id'], 
-    'next_charge' => $donation['next_charge'],
-    'gateway' => $donation['gateway'],
-  );
-  drupal_write_record('fundraiser_recurring', $record);
+  // Cast donation just in case.
+  $donation = (array) $donation;
+  // Check for old data.
+  $donation_data = FALSE;
+  if (isset($donation['did'])) {
+    $donation_data = _fundraiser_get_recurring_by_did($donation['did']);
+  }
+  if (!$donation_data) {
+// TODO find out why this is not matching field names to each other
+// Make it match so we can use one line record = donation
+    $record = array(
+      'master_order_id' => $donation['order_id'],
+      'order_id' => $donation['new_id'], 
+      'next_charge' => $donation['next_charge'],
+      'gateway' => $donation['gateway'],
+    );
+    drupal_write_record('fundraiser_recurring', $record);
+  }
+  else {
+    _fundraiser_update_recurring($donation);
+  }
 }
 
 /**
- * DB function, get recurring orders.
+ * CRUD style DB function for fundraiser_recurring.
  */
-function _fundraiser_get_recurring() {
-  $results = db_query('SELECT * FROM {fundraiser_recurring} ' .
+function _fundraiser_get_recurring_by_did($did) {
+  return db_query('SELECT * FROM {fundraiser_recurring} ' .
+    'WHERE order_id = :order_id',
+    array(':order_id' => $did))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_recurring.
+ */
+function _fundraiser_update_recurring($donation) {
+  // Cast donation just in case.
+  $donation_data = FALSE;
+  if (isset($donation['did'])) {
+    $donation_data = _fundraiser_get_recurring_by_did($donation['did']);
+  }
+  if (!$donation_data) {
+    _fundraiser_create_recurring($donation);
+  }
+  else {
+    $record = array_merge((array) $donation_data, $donation); // Merge data together so we get everything in the record.
+    drupal_write_record('fundraiser_recurring', $record, 'order_id');
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_recurring.
+ */
+function _fundraiser_delete_recurring($did) {
+  db_delete('fundraiser_recurring')->condition('order_id', $did)->execute();
+}
+
+/**
+ * DB function, delete recurring given a master did.
+ */
+function _fundraiser_delete_recurring_by_master($master_did) {
+  db_delete('fundraiser_recurring')->condition('master_order_id', $master_did)->execute();
+}
+
+/**
+ * DB function, get all recurring orders available to charge.
+ */
+function _fundraiser_get_recurring_chargable() {
+  return db_query('SELECT * FROM {fundraiser_recurring} ' .
     'WHERE next_charge < :next_charge '.
     'AND (gateway_resp IS NULL OR gateway_resp = \'failed\') '.
     'AND attempts < 3',
-    array(':next_charge' => time()));
-  return $results;
+    array(':next_charge' => time()))->fetchAll();
 }
 
 /**
- * DB function, get recurring orders by order id.
+ * DB function, returns count of payments remaining for series.
  */
-function _fundraiser_get_recurring_by_order_id($order_id) {
-  return db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :order_id',
-    array(':order_id' => $order_id));
-}
-
-/**
- * Returns the number of unprocessed payments for a recurring donation series.
- */
-function fundraiser_recurring_payments_remaining($master_order_id) {
-  return db_query('SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = :master_order_id AND gateway_resp IS NULL',
-    array(':master_order_id' => $master_order_id))->fetchColumn();
+function _fundraiser_recurring_count_remaining($master_did) {
+  return = db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} ' .
+    'WHERE master_order_id = :master_order_id ' .
+    'AND gateway_resp IS NULL',
+    array(':master_order_id' => $master_did))->fetchColumn();
 }
 
 /**
  * DB Function, Check if the given order was made on a payment gateway that supports refunds
  */
-function fundraiser_gateway_can_refund_order($order) {
+// TODO this information should be pullable for NON recurring donations too.
+// This should be in the donation table (the new one that combines did, uid, nid, etc).
+function _fundraiser_get_donation_gateway($did) {
   // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} '.
-    'WHERE order_id = :order_id '.
-    'UNION '.
-    'SELECT gateway, txn_id FROM {fundraiser_recurring} '.
+  $gateway = db_query('SELECT gateway FROM {fundraiser_recurring} '.
     'WHERE order_id = :order_id',
-    array(':order_id' => $order->order_id))->fetchObject();
-  $info = _fundraiser_gateway_info($payment_details->gateway);
-  $refund_function = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
-  return trim($refund_function) != '';
+    array(':order_id' => $did))->fetchObject();
+  // Now ask if any other module wants to override this result.
+  module_invoke('get_donation_gateway', $did, $gateway);
+  // Now translate that into something we can use by getting the rest of the dateway info.
+  if (!$gateway) && isset($gateway->gateway)) {
+    return _fundraiser_gateway_info($gateway->gateway);
+  }
+  // If nothing has been found, return nothing.
+  return array();
+}
+
+/**
+ * CRUD style DB function for fundraiser_tracking.
+ */
+function _fundraiser_create_tracking($tracking) {
+  $tracking = (array) $tracking;
+  $tracking_data = FALSE;
+  if (isset($tracking['nid'])) {
+    $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
+  }
+  if (!$tracking_data) {
+    $record = array(
+      'pageviews' => 1,
+      'conversions' => 0,
+      'local_failures' => 0,
+      'gateway_failures' => 0,
+      'latest_load_time' => 0,
+    );
+    $record = array_merge($record, $tracking);
+    drupal_write_record('fundraiser_tracking', $record);
+  }
+  else {
+    _fundraiser_update_tracking($tracking);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_tracking.
+ */
+function _fundraiser_get_tracking_by_nid($nid) {
+  return db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
+}
+ 
+/**
+ * CRUD style DB function for fundraiser_tracking.
+ */
+function _fundraiser_update_tracking($tracking) {
+  $tracking = (array) $tracking;
+  $tracking_data = FALSE;
+  if (isset($tracking['nid'])) {
+    $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
+  }
+  if (!$tracking_data) {
+    _fundraiser_create_tracking($tracking);
+  }
+  else {
+    $tracking = array_merge((array) $tracking_data, $tracking);
+    drupal_write_record('fundraiser_tracking', $tracking, 'nid');
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_tracking.
+ */
+function _fundraiser_delete_tracking($nid) {
+  db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
+}
+
+/**
+ * DB function for updating the stats in fundraiser_tracking.
+ */
+function _fundraiser_update_tracking_value($nid, $field) {
+  $tracking = _fundraiser_get_tracking_by_nid($nid);
+  // Check to make sure we weren't handed a bad field name.
+  if (!$tracking) {
+    $tracking->$field++;
+    _fundraiser_update_tracking($tracking);
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
