@@ -110,6 +110,21 @@ function fundraiser_user_mapping_form_submit($form, &$form_state) {
 }
 
 /**
+ * Implements hook_fundraiser_get_fundraiser_alter().
+ */
+function fundraiser_user_fundraiser_get_fundraiser_alter($fundraiser) {
+  // Get the user map of values to return for fundraiser to be used by other modules as needed.
+  // It's not saved on create or alter, because there's an existing form for that.
+  // So no need to glomp our stuff on top of the fundraisers update / create.
+  $components = _fundraiser_user_get_component_map_by_nid($fundraiser->nid);
+  $map = array();
+  foreach($components as $component) {
+    $map[$component->cid] = $component->map_id;
+  }
+  $fundraiser->map = $map;
+}
+
+/**
  * Implements hook_fundraiser_donation_form_alter().
  */
 function fundraiser_user_fundraiser_donation_form_alter($form, $form_state, $context) {
@@ -230,34 +245,6 @@ function fundraiser_user_fundraiser_donation_success($donation) {
 }
 
 /**
- * Implements hook_fundraiser_create_fundraiser_alter().
- */ //TODO review this , it might not be needed here.
-function fundraiser_user_fundraiser_create_fundraiser_alter($fundraiser) {
-  // Retrieve the user profile map.
-  $components = _fundraiser_user_get_component_map_by_nid($fundraiser->nid);
-  foreach($components as $component) {
-    if (isset($component->map_id)) {
-      $component_map = array('nid' => $fundraiser->nid, 'cid' => $component->cid, 'map_id' => $component->map_id);
-      _fundraiser_user_create_component_map($component_map);
-    }
-  }
-  drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
-}
-
-/**
- * Implements hook_fundraiser_get_fundraiser_alter().
- */ //TODO review this , it might not be needed here.
-function fundraiser_user_fundraiser_get_fundraiser_alter($fundraiser) {
-  // Get the user map of values.
-  $components = _fundraiser_user_get_component_map_by_nid($fundraiser->nid);
-  $map = array();
-  foreach($components as $component) {
-    $map[$component->cid] = $component->map_id;
-  }
-  $fundraiser->map = $map;
-}
-
-/**
  * Update location fields for a user, default to the currently loged in user.
  */
 function _fundraiser_user_update_profile_location($submission, $context, $update_user = NULL) {
@@ -273,16 +260,16 @@ function _fundraiser_user_update_profile_location($submission, $context, $update
   $country_code = $submission->data[$country->cid]['value'][0];
   $state_code = $submission->data[$state->cid]['value'][0];
 
-  $fids = _fundraiser_user_get_profile_location_fields();
+  $fids = _fundraiser_user_profile_get_location_fields();
   // If we found a country, update the info.
   if ($fids['country']) {
     $country_name = $context->countries[$country_code]->country_iso_code_2;
-    _fundraiser_user_update_profile_field($update_user->uid, $fids['country'], $country_name);
+    _fundraiser_user_profile_update_field($update_user->uid, $fids['country'], $country_name);
   }
   // If we found a zone, update the info.
   if ($fids['state']) {
     $state_name = $context->zones[$state_code]->zone_code;
-    _fundraiser_user_update_profile_field($update_user->uid, $fids['state'], $state_name);
+    _fundraiser_user_profile_update_field($update_user->uid, $fids['state'], $state_name);
   }
 }
 
@@ -361,7 +348,7 @@ function _fundraiser_user_delete_component_map_by_nid($nid) {
 }
 
 /**
- * DB function, creates a map of profile fields with their submitted values
+ * DB function, creates a map of profile fields with their submitted values.
  */
 function _fundraiser_user_create_profile_values_map($nid, $sid) {
   $map = array();
@@ -376,7 +363,7 @@ function _fundraiser_user_create_profile_values_map($nid, $sid) {
 }
 
 /**
- * Creates an array to map webform component fields to user profile fields.
+ * DB function, creates an array to map webform component fields to user profile fields.
  */
 function _fundraiser_user_get_user_map($nid) {
   $map = array();
@@ -428,7 +415,7 @@ function _fundraiser_user_profile_get_fields($category) {
 /**
  * DB function, get profile field.
  */
-function _fundraiser_user_get_profile_field($uid, $fid) {
+function _fundraiser_user_profile_get_field($uid, $fid) {
   return db_query('SELECT * FROM {profile_value} ' .
    'WHERE uid = :uid ' .
    'AND fid = :fid',
@@ -438,8 +425,8 @@ function _fundraiser_user_get_profile_field($uid, $fid) {
 /**
  * DB function, update profile field.
  */
-function _fundraiser_user_update_profile_field($uid, $fid, $value) {
-  $field = _fundraiser_user_get_profile_field($uid, $fid);
+function _fundraiser_user_profile_update_field($uid, $fid, $value) {
+  $field = _fundraiser_user_profile_get_field($uid, $fid);
   if (!$field) {
     $record = array('fid' => $fid, 'uid' => $uid, 'value' => $value);
     drupal_write_record('profile_value', $record);
@@ -456,7 +443,7 @@ function _fundraiser_user_update_profile_field($uid, $fid, $value) {
 /**
  * DB function, returns a keyed array of location fields or an empty array if there was an error.
  */
-function _fundraiser_user_get_profile_location_fields() {
+function _fundraiser_user_profile_get_location_fields() {
   $results = db_query('SELECT fid, name FROM {profile_field} ' .
    'WHERE name IN (\'profile_country\', \'profile_state\')');
   foreach ($results as $profile_field) {
