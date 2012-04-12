@@ -8,6 +8,17 @@
  */
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_triggers_menu_alter(&$items) {
+  // Workaround for bug where only uid 1 can see custom triggers.
+  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
+  // User access is handled by: 'access arguments' => array('administer actions') in D7.
+  // Is that the same as it was when you looked in May? - SeH 1/10/12
+  $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+}
+
+/**
  * Implementation of hook_hook_info().
  */
 function fundraiser_triggers_hook_info() {

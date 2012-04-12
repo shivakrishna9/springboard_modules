@@ -12,7 +12,12 @@ function hook_fundraiser_donation_settings_form_alter($form, $form_state, $node)
 /**
  * For display modules, retrieve donation form implementation.
  */
-function hook_fundraiser_donation_form($form, $form_state) {}
+function hook_fundraiser_donation_form($form, $form_state, $context) {}
+
+/**
+ * For other modules, that need to tweak the results of the display module.
+ */
+function hook_fundraiser_donation_form_alter($form, $form_state, $context) {}
 
 /**
  * Retrieve supplemental information from glue modules to assist in creating a donation form.
@@ -133,3 +138,8 @@ function hook_fundraiser_donation_post_recurring() {}
  * Allow submodules to contribute to replacing tokens not provided by token module.
  */
 function hook_fundraiser_replace_tokens($message, $donation) {}
+
+/**
+ * Retrieve gateway information for a given donation.
+ */
+function hook_get_donation_gateway($did, $gateway) {}

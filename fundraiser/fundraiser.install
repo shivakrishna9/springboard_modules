@@ -219,6 +219,7 @@ function fundraiser_schema() {
     ),
     'primary key' => array('order_id'),
   );
+// TODO - all this sf_field stuff, needs to go in its own table. Seriously.
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
     'fields' => array(

@@ -461,7 +461,7 @@ function _fundraiser_webform_create_month_field($nid, $pid) {
  * TODO called during _fundraiser_update_fundraiser to store new settings.
  */
 function _fundraiser_webform_update_amount_component($fundraiser, $donation_amounts = array(), $value) {
-  $results = _fundraiser_webform_get_cid_by_keys($fundraiser->nid, array('donation'));
+  $results = _fundraiser_webform_get_components_by_keys($fundraiser->nid, array('donation'));
   foreach ($results as $result) {
     $pid = $result->cid;
   }
@@ -483,47 +483,32 @@ function _fundraiser_webform_update_amount_component($fundraiser, $donation_amou
       $amount['mandatory'] = 1;
       $amount['weight'] = 0;
       $amount['email'] = 1;
-      db_delete('webform_component')
-        ->condition('nid', $fundraiser->nid)
-        ->condition('form_key', 'amount')
-        ->execute();
+      _fundraiser_webform_delete_component($fundraiser->nid, 'amount');
       webform_component_insert($amount);
     }
   }
   else {
     $formatted_amounts = _fundraiser_webform_create_amount_options($donation_amounts, $fundraiser->show_other_amount);
-    $results = _fundraiser_webform_get_cid_by_keys($fundraiser->nid, array('amount'));
+    $results = _fundraiser_webform_get_components_by_keys($fundraiser->nid, array('amount'));
     foreach ($results as $result) {
       $field_type = $result->type;
     }
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
-      db_update('webform_component')
-        ->fields(array(
-              'extra' => $data,
-              'value' => $value,
-            ))
-        ->condition('nid', $fundraiser->nid)
-        ->condition('form_key', 'amount')
-        ->execute();
+      _fundraiser_webform_update_component($fundraiser->nid, 'amount', array('extra' => $data, 'value' => $value));
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $fundraiser->title));
-      $result = _fundraiser_webform_get_extra_by_key($fundraiser->nid, array('other_amount'));
+      $result = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'other_amount');
     }
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
-      db_delete('webform_component')
-        ->condition('nid', $fundraiser->nid)
-        ->condition('form_key', 'amount')
-        ->execute();
+      _fundraiser_webform_delete_component($fundraiser->nid, 'amount');
       $amount = _fundraiser_webform_insert_amount_component($fundraiser->nid, $pid, $donation_amounts, $fundraiser->show_other_amount);
       webform_component_insert($amount['amount']);
     }
   }
 
-  $result = db_query('SELECT 1 FROM {webform_component} '.
-    'WHERE nid = :nid AND form_key = :form_key',
-    array(':nid' => $fundraiser->nid, ':form_key' => "other_amount"))->fetchField();
+  $result = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
   if ($fundraiser->show_other_amount) {
     // Pre-existing entry in the DB for this form component and it's still enabled so we update.
     if ($result) {
@@ -532,13 +517,7 @@ function _fundraiser_webform_update_amount_component($fundraiser, $donation_amou
         'width' => 10,
         'field_prefix' => '$',
       );
-     db_update('webform_component')
-        ->fields(array(
-              'extra' => serialize($extra),
-            ))
-        ->condition('nid', $fundraiser->nid)
-        ->condition('form_key', 'other_amount')
-        ->execute();
+      _fundraiser_webform_update_component($fundraiser->nid, 'other_amount', array('extra' => serialize($extra)));
       $message .= t('Other donation amount options have been updated.');
     }
     // Other amount has been enabled so we need to add the component data to the DB.
@@ -550,10 +529,7 @@ function _fundraiser_webform_update_amount_component($fundraiser, $donation_amou
   // Other amount was enabled but is now disabled so the component needs to be removed from the DB to prevent the
   // associated form element(s) being rendered by webform.
   elseif ($result) {
-    db_delete('webform_component')
-      ->condition('nid', $fundraiser->nid)
-      ->condition('form_key', "other_amount")
-      ->execute();
+    _fundraiser_webform_delete_component($fundraiser->nid, 'other_amount');
     $message .= t('Other amount options have been disabled on the form.');
   }
   watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/'.$fundraiser->nid);

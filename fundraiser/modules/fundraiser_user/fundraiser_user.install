@@ -1,0 +1,39 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the fundraiser module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_user_schema() {
+  $schema['fundraiser_component_map'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'map_id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+  return $schema;
+}
+
+// TODO first update post Port:
+// Rename table correctly, rename all order id correctly.

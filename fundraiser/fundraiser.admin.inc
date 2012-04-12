@@ -379,7 +379,8 @@ function fundraiser_refund(&$form_state, $order_id) {
   );
 
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  $can_refund = fundraiser_gateway_can_refund_order($order);
+  $gateway = _fundraiser_get_donation_gateway($order->order_id);
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (!$can_refund || !$payment_info) {
     // They've made a payment, but it cannot be refunded
     if ($payment_info) {

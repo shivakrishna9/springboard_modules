@@ -32,9 +32,10 @@ function fundraiser_ubercart_mail_alter(&$message) {
  * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
  */
 function fundraiser_order_actions($order) {
+  $gateway = _fundraiser_get_donation_gateway($order->order_id);
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (user_access('edit orders') && 
-    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && 
-    fundraiser_gateway_can_refund_order($order)) { //TODO where is this function form?
+    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && $can_refund) {  
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
     $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
     $actions[] = array(
@@ -55,8 +56,7 @@ function fundraiser_order_actions($order) {
 function fundraiser_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'delete':
-      // To do move this out into fundraiser.module as a CRUD function.
-      db_delete('fundraiser_recurring')->condition('order_id', $arg1->order_id)->execute();
+      _fundraiser_delete_recurring($arg1->order_id);
       break;
   }
 }
@@ -69,10 +69,9 @@ function fundraiser_order($op, &$arg1, $arg2) {
 function fundraiser_preprocess_uc_order(&$variables) {
   switch ($variables['op']) {
     case 'checkout-mail':
-      // TODO move SQL to another funct.
       $nid = $variables['order']->products[0]->nid;
-      $message = db_query("SELECT receipt_email_message FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid))->fetchColumn();
-      $variables['fundraiser_message'] = $message;
+      $fundraiser = _fundraiser_get_fundraiser_by_nid($nid);
+      $variables['fundraiser_message'] = $fundraiser->receipt_email_message;
       break;
   }
 }
@@ -223,19 +222,10 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
     'ref_id' => $ref_id,
   );
   $donation->donation->data = array_merge($donation->donation->data, $data);
-  // If this was a recurring order, we can get the gateway from that table.
-  $results = _fundraiser_get_recurring_by_order_id($order->order_id);
-  foreach ($results as $result) {
-    $gateway = $result->gateway;
+  $gateway = _fundraiser_get_donation_gateway($order->order_id);
+  if (isset($gateway['id'] )) {
+    $donation->node->gateway = $gateway;
   }
-  // Else, we fall back to the related fundraiser directly.
-  if (empty($gateway)) {
-    $fundraiser = _fundraiser_get_fundraiser_by_nid($donation->nid);
-    $gateway = $fundraiser->gateway;
-  }
-  // TODO - this should probably get handled better.
-  // This func is used to retrived donations from NON recurring donations too.
-  $donation->node->nid = $gateway;
 }
 
 /**
@@ -247,6 +237,7 @@ function fundraiser_ubercart_fundraiser_donation_success($donation) {
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
   uc_payment_enter($order->order_id, 'fundraiser', $donation->donation->order_total, 0, NULL, 
     t('Payment processed by the fundraiser module.'));
+// TODO move this to a db func.
   db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",
     array(':order_id' => $donation->donation->did));
   // And done.
@@ -261,8 +252,10 @@ function fundraiser_ubercart_fundraiser_donation_success_recurring($donation) {
   uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
   uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id',
     array('@txn_id' => $result['data']['txn_id'])), 'admin');
+//TODO move this to a DB func
   db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",
     array(':order_id' => $order_id));
+// TODO move this to update func.
   db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = :txn_id WHERE order_id = :order_id",
     array(':txn_id' => $result['data']['txn_id'], ':order_id' => $order_id));
   // And done.
@@ -307,6 +300,7 @@ function fundraiser_ubercart_fundraiser_donation_create_future($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   // Mark the sale in Ubercart as failed.
+//TODO move to db func.
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $donation->donation->did));
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
@@ -324,6 +318,7 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Mark the sale in Ubercart as cencelled.
+//TODO move to db func.
   db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = :order_id", array(':order_id' => $donation->donation->did));
   // Make a comment on the order.
   uc_order_comment_save($donation->donation->did, 0, t('Payment was canceled during checkout by the user.'));

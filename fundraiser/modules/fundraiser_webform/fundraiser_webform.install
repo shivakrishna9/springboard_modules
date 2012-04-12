@@ -106,30 +106,6 @@ function fundraiser_webform_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
-  $schema['fundraiser_component_map'] = array(
-    'description' => 'TODO: please describe this table!',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'cid' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'map_id' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'varchar',
-        'length' => '100',
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('nid', 'cid'),
-  );
   return $schema;
 }
 
