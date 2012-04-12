@@ -944,8 +944,12 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * Called from glue display module to submit additional data.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
+  // Retrieve context information for use later.
+  $context = (object) array();
+  module_invoke_all('fundraiser_donation_form_context', $context);
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
+  $donation->context = $context;
   //Using user load to avoid user object being carried by ref around.
   global $user;
   $donation->uid = $user->uid;

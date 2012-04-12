@@ -505,13 +505,6 @@ function fundraiser_webform_fundraiser_replace_tokens($message, $donation) {
  * Implements hook_fundraiser_get_fundraiser_alter().
  */
 function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
-  // Get the webform map of values.
-  $components = _fundraiser_webform_get_component_map_by_nid($fundraiser->nid);
-  $map = array();
-  foreach($components as $component) {
-    $map[$component->cid] = $component->map_id;
-  }
-  $fundraiser->map = $map;
   // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
   // Add the amount_values for the fundraiser information on load.
   if (is_numeric($fundraiser->nid)) {
