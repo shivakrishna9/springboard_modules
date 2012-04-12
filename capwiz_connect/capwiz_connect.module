@@ -460,8 +460,10 @@ function _capwiz_connect_sf_load_action_details($oid) {
   $salesforce_map = array(
     'object' => $map_details['object'],
     'fields' => array(),
-    'RecordTypeId' => $map_details['recordtype_id'],
   );
+  if (!empty($map_details['recordtype_id'])) {
+    $salesforce_map['fields']['RecordTypeId'] = $map_details['recordtype_id'];
+  }
   
   
   // Loop over the mapped fields, and for each that has value on this object, set
