@@ -918,6 +918,8 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
   $form = module_invoke_all('fundraiser_donation_form', $form, $form_state, $context);
+  // Call hook to allow final manipulations.
+  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state, $context);
   return $form;
 }
 
@@ -1794,71 +1796,6 @@ function _fundraiser_update_tracking_value($nid, $field) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //REMOVE ALL BELOW THIS POINT.
 
-
-//TODO move you to another module for profile handling in post submission.
-/**
- * Updates the profile of user that submitted the donation.
- */
-// NAME THIS AS PER: hook_fundraiser_donation_success();
-function fundraiser_update_user_profile($donation) {
-// Use this to get the sid value out. Submission id.? 
-  $results = fundraiser_webform_get_submission_by_donation($order_id);
-  foreach ($results as $result) {
-    $webform = $result;
-  }
-  $uid = $donation->uid;
-  $nid = $donation->nid;
-  $sid = $donation['webform']->sid; // TODO make sure webform is passed along? Or at least this info.
-  
-  global $user;
-  $this_user = $user;
-  $map = fundraiser_create_profile_values_map($nid, $sid);
-
-  // If this is Anon, upload the user data from a given uid instead.
-  // If this isn't Anon, but the values don't match, use the given? -- TODO check on this. -SeH
-  if ($this_user->uid == 0) {
-    $this_user = user_load($uid);
-  }
-
-  // Make sure the profile module is enabled
-  if (module_exists('profile')) {
-    $cat_array = profile_user_categories();
-    foreach ($cat_array as $cat) {
-      $updates = array(); // array for storing updates to each profile category
-      $results = _fundraiser_profile_get_fields($cat['name']);
-      foreach ($results as $result) {
-        $row = (array) $result;
-        if (array_key_exists($row['name'], $map)) {
-          $updates[$row['name']] = $map[$row['name']];
-        }
-      }
-      // save profile
-      _fundraiser_profile_save_profile($updates, $update_user, $cat['name']);
-    }
-    // Convert numeric ids to textual values.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($nid, $sid);
-    _fundraiser_update_profile_location($submission, $update_user);
-    // Found in fundraiser.fields.inc and tangles with profile *and* ubercart.
-    // -TODO come back to this, also consider redoing all profile manipulation with user_profile funcs.
-  }
-
-  // update last_updated date so user will be re-synced on next cron run
-  user_save($this_user, array('last_updated' => time()));
-
-  // If the SF Queue API is enabled, insert this user into the queue
-  // TODO - hook, move this out to be hookable on update.
-  if (module_exists('queue_api')) {
-    // Insert user back into queue
-    $action = 'update';
-    if (empty($update_user->salesforce_contact_id)) {
-      $action = 'upsert';
-    }
-    sf_queue_insert($update_user->uid, 'user', $action);
-  }
-}
-
-
 /**
  * Adds an order to the Salesforce queue.
  *
@@ -1923,5 +1860,25 @@ function fundraiser_webform_submission_update($node, $submission) {
         sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
       }
     }
+  }
+}
+
+
+//TODO move you to another module for profile handling in post submission.
+/**
+ * Updates the profile of user that submitted the donation.
+ */
+// NAME THIS AS PER: hook_fundraiser_donation_success();
+function fundraiser_update_sf_user_profile($donation) {
+
+  // If the SF Queue API is enabled, insert this user into the queue
+  // TODO - hook, move this out to be hookable on update.
+  if (module_exists('queue_api')) {
+    // Insert user back into queue
+    $action = 'update';
+    if (empty($update_user->salesforce_contact_id)) {
+      $action = 'upsert';
+    }
+    sf_queue_insert($update_user->uid, 'user', $action);
   }
 }

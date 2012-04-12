@@ -8,6 +8,7 @@ dependencies[] = fundraiser_webform
 dependencies[] = fundraiser_ubercart
 dependencies[] = fundraiser_triggers
 dependencies[] = fundraiser_sustainers
+dependencies[] = fundraiser_user
 ; Dependencies
 dependencies[] = views
 dependencies[] = webform
