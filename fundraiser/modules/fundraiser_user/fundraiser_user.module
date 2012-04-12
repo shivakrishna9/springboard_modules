@@ -132,6 +132,10 @@ function fundraiser_user_fundraiser_donation_form_alter($form, $form_state, $con
   // Loads profile fields in addition to base user data, and de-couples logged in user object.
   global $user;
   $this_user = user_load($user->uid);
+  $node = node_load($form['#node']->nid);
+  $components = $node->webform['components'];
+  $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $components);
+
   if (user_is_logged_in()) {
     // Load up any mapped profile fields.
     $map = _fundraiser_user_get_user_map($node->nid);
@@ -211,7 +215,7 @@ function fundraiser_user_fundraiser_donation_success($donation) {
   $context = $donation->context;
 
   global $user;
-  $this_user = load_user($user);
+  $this_user = user_load($user->uid);
   $map = _fundraiser_user_create_profile_values_map($nid, $sid);
 
   // If this is Anon, upload the user data from a given uid instead.
@@ -403,13 +407,9 @@ function _fundraiser_user_profile_save_profile(&$edit, &$user, $category) {
  * DB function, version of _profile_get_fields that includes hidden profile fields by default.
  */
 function _fundraiser_user_profile_get_fields($category) {
-  $query = db_select('profile_field');
-  $query->condition('category', db_like($category), 'LIKE');
-  return $query
-    ->fields('profile_field')
-    ->orderBy('category', 'ASC')
-    ->orderBy('weight', 'ASC')
-    ->execute();
+  return db_query('SELECT * FROM {profile_field} ' .
+   'WHERE category LIKE \':category\' ' .
+   'ORDER BY category ASC, weight ASC')->fetchAll();
 }
 
 /**

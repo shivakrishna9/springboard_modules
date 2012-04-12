@@ -391,7 +391,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
 
   // Set if this was a recurring donation.
   $recurs = FALSE;
-  $results = _fundraiser_webform_get_components_by_keys($nid, array('recurs_monthly'));
+  $results = _fundraiser_webform_get_components_by_keys($donation->nid, array('recurs_monthly'));
   foreach ($results as $result) {
     $recurs_cid = $result->cid;
   }
@@ -448,6 +448,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
     'webform_nid' => $donation->nid,
     'order_id' => $donation->donation->did,  
     'gateway' => $donation->node->gateway,
+    'sid' => $donation->sid,
     'txn_id' => $txn_id,
   );
   _fundraiser_webform_update_webform_order($webform_order);
@@ -459,7 +460,8 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   if ($donation->donation->recurs != $donation->donation->data['recurring_status']) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
-      'order_id' => $donation->donation->did,  
+      'order_id' => $donation->donation->did,
+      'sid' => $donation->sid,
       'recurring_status' => $donation->donation->data['recurring_status'],
     );
     _fundraiser_webform_update_webform_order($webform_order);
@@ -576,7 +578,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 function fundraiser_webform_get_donation_gateway($did, $gateway) {
   // Get details on the original payment so we can load the payment gateway details.
   $submission = _fundraiser_webform_get_webform_order_by_did($did);
-  if (!$submission)) {
+  if (!$submission) {
     return '';
   }
   return $submission->gateway;
@@ -780,7 +782,7 @@ function _fundraiser_webform_update_submissions($uid, $sid) {
   db_query('UPDATE {webform_submissions} SET ' .
     'uid = :uid '.
     'WHERE sid = :sid',
-    array(':uid' => $donation->donation->uid, ':sid' => $donation->sid));
+    array(':uid' => $uid, ':sid' => $sid));
 }
 
 /**

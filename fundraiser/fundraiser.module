@@ -1692,7 +1692,7 @@ function _fundraiser_get_recurring_chargable() {
  * DB function, returns count of payments remaining for series.
  */
 function _fundraiser_recurring_count_remaining($master_did) {
-  return = db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} ' .
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} ' .
     'WHERE master_order_id = :master_order_id ' .
     'AND gateway_resp IS NULL',
     array(':master_order_id' => $master_did))->fetchColumn();
@@ -1702,7 +1702,7 @@ function _fundraiser_recurring_count_remaining($master_did) {
  * DB function, returns count of payments remaining for series / if a member of a series.
  */
 function _fundraiser_recurring_exists($did) {
-  return = db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
+  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
     'WHERE master_order_id = :master_order_id '.
     'OR order_id = :order_id',
     array(':master_order_id' => $did, ':order_id' => $did))->fetchColumn();
@@ -1721,7 +1721,7 @@ function _fundraiser_get_donation_gateway($did) {
   // Now ask if any other module wants to override this result.
   module_invoke('get_donation_gateway', $did, $gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
-  if (!$gateway) && isset($gateway->gateway)) {
+  if ((!$gateway) && isset($gateway->gateway)) {
     return _fundraiser_gateway_info($gateway->gateway);
   }
   // If nothing has been found, return nothing.
