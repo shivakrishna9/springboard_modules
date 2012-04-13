@@ -53,7 +53,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
  * Implements hook_form_FORM_ID_alter().
  */
 // Alter the webform component delete form to prevent the deletion of required fundraiser fields
-// Why not handle this by remving delete options from the interface? Because edit/delete operations are added at theme layer.
+// Why not handle this by removing delete options from the interface? Because edit/delete operations are added at theme layer.
 // Unfortunately the theme layer adds the values and immediately renders, negating any chance for us to make changes.
 // In order to remove delete properly, we will need a patch in webform addressing this issue.
 // TODO look into using preprocess to intercept?
@@ -110,7 +110,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
       ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
   );
-  // Show whether or not it's a recurring donation
+  // Show whether or not it's a recurring donation //TODO move this to sustainer to handle.
   if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
     $recurs = t('No');
     if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
@@ -389,7 +389,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
  */
   $donation->submission = $fundraiser_fields;
 
-  // Set if this was a recurring donation.
+  // Set if this was a recurring donation. TODO move this to sustainer.
   $recurs = FALSE;
   $results = _fundraiser_webform_get_components_by_keys($donation->nid, array('recurs_monthly'));
   foreach ($results as $result) {
@@ -421,7 +421,7 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     'webform_nid' => $donation->nid,
     'order_id' => $donation->donation->did,
     'sid' => $donation->sid,
-    'recurring_status' => $donation->recurs,
+    'recurring_status' => $donation->recurs, //TODO do I actually need to save / reference this field?
   );
   _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
@@ -484,7 +484,7 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
   $submission = _fundraiser_webform_get_webform_order_by_did($donation->donation->did);
   $donation->sid = $submission->sid;
-  $donation->recurs = $submission->recurring_status;
+  $donation->recurs = $submission->recurring_status; // Move this to sustainer.
   $donation->submission = webform_get_submission($donation->nid, $donation->sid);
 }
 
@@ -787,7 +787,6 @@ function _fundraiser_webform_delete_submissions($sid) {
   db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
   db_delete('webform_submissions')->condition('sid', $sid)->execute();
 }
-
 
 /**
  * DB function, get webform component form elements.

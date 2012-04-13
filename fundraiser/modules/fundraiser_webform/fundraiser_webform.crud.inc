@@ -356,7 +356,8 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   $id = webform_component_insert($card_cvv);
   $components[$id] = $card_cvv;
 
-  // Recurring donation.
+  // Recurring donation option.
+  // TODO - make optional, or make this handled by sustainer.
   $recurs = array();
   $recurs['nid'] = $nid;
   $recurs['pid'] = $pid;
@@ -377,7 +378,7 @@ function _fundraiser_webform_create_webform_components($nid, $donation_amounts, 
   // Invoke hook_fundraiser_create_webform_components
   // This hook allows other modules to define additional components to be added here.
   // Components are to be returned in the same format as other already defined components here.
-  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
+  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid); //TODO rename this hook, standardize.
   foreach ($contrib_components as $component) {
     $id = webform_component_insert($component);
     $components[$id] = $component;

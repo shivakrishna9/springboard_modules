@@ -1268,9 +1268,14 @@ function fundraiser_donation_get_donation($did) {
   // Grab basic data from our own systems.
   $donation_record = _fundraiser_get_donation_by_did($did);
   $donation->nid = $donation_record->nid;
-  $donation->node = node_load($donation_record->nid;);
+  $donation->node = node_load($donation_record->nid);
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
+  $gateway = _fundraiser_get_donation_gateway($did);
+  if (isset($gateway['id'] )) {
+    $donation->gateway = $gateway;
+    $donation->node->gateway = $gateway;
+  }
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
