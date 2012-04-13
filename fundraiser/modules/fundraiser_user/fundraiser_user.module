@@ -249,7 +249,42 @@ function fundraiser_user_fundraiser_donation_success($donation) {
 }
 
 /**
- * Update location fields for a user, default to the currently loged in user.
+ * Implements hook_fundraiser_field_info_alter().
+ */
+function fundraiser_user_fundraiser_field_info_alter($fields) {
+  $map_to_map = array(
+    'first_name' => 'profile_first_name',
+    'last_name' => 'profile_last_name',
+    'email' => 'mail',
+    'address' => 'profile_address',
+    'address_line_2' => 'profile_address_line_2',
+    'city' => 'profile_city',
+    'zip' => 'profile_zip',
+    'country' => 'profile_country',
+    'state' => 'profile_state',
+  );
+  foreach(element_children($fields) as $key) {
+    $fields[$key] = _fundraiser_user_fundraiser_field_info_alter($key, $fields[$key], $map_to_map);
+  }
+  return $fields;
+}
+
+/**
+ * Handles recursion for fundraiser_sustainers_fundraiser_field_info_alter().
+ */
+function _fundraiser_user_fundraiser_field_info_alter($field_key, $field, $map) {
+  if (isset($map[$field_key])) {
+    $field['#profile_map'] = $map[$field_key];
+  }
+  // Check for children. Recursion occurs here.
+  foreach(element_children($field) as $key) {
+    $field[$key] = _fundraiser_user_fundraiser_field_info_alter($key, $field[$key], $map);
+  }
+  return $field;
+}
+
+/**
+ * Helper function, update location fields for a user, default to the currently loged in user.
  */
 function _fundraiser_user_update_profile_location($submission, $context, $update_user = NULL) {
   // Make sure we have a real user.

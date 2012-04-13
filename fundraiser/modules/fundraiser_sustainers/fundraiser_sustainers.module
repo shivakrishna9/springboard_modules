@@ -455,6 +455,22 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   drupal_set_message(t('All future payments cancelled.'));
 }
 
+/**
+ * Implements hook_fundraiser_field_info().
+ */
+function fundraiser_sustainers_fundraiser_field_info($fields) {
+  $fields['credit_card_information']['recurs_monthly'] = array(
+    '#name' => 'Recurring Payment',
+    '#type' => 'select',
+    '#required' => 0,
+    '#extra' => array(
+      'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
+      'items' => 'recurs|Yes',
+      'multiple' => 'Y',
+    ),
+  );
+  return $fields;
+}
 
 /**
  * Helper function, create and save a duplicate of a given order.

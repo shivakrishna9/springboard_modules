@@ -908,8 +908,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
   // Add donation context information. This provides context for billing information
   // Such as available states and zones or the like. This information is provided
   // once from whatever module may need to set data to whatever module implements it.
-  $context = (object) array();
-  module_invoke_all('fundraiser_donation_form_context', $context);
+  $context = _fundraiser_donation_context();
   // Add validation and submit routines for fundraiser to get called during submission.
   // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
   // We add these first to make sure they're available for the hook call.
@@ -945,8 +944,7 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
   // Retrieve context information for use later.
-  $context = (object) array();
-  module_invoke_all('fundraiser_donation_form_context', $context);
+  $context = _fundraiser_donation_context();
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
   $donation->context = $context;
@@ -1341,6 +1339,297 @@ function fundraiser_donation_cancel($donation) {
  */
 
 /**
+ * Helper function, retrieve donation context as needed.
+ */
+function _fundraiser_donation_context() {
+  $context = (object) array();
+  module_invoke_all('fundraiser_donation_form_context', $context);
+  return $context;
+}
+
+/**
+ * Helper function, provides a list of fields to be defined by the display module.
+ * And requests additional field information from other modules that need to define them.
+ */
+function _fundraiser_field_info() {
+  $context = _fundraiser_donation_context();
+
+  // Donation amounts are handled in a special case.
+  $fields['donation'] = array(
+    '#name' => 'Donation',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['donation']['amount'] = array(
+    '#name' => 'Amount',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 10,
+      'field_prefix' => '$',
+    ),
+    '#callback' => '_fundraiser_field_info_amount_callback',
+  );
+  $fields['donation']['other_amount'] = array(
+    '#name' => 'Other',
+    '#type' => 'textfield',
+    '#required' => 0,
+    '#extra' => array(
+      'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
+      'width' => 10,
+      'field_prefix' => '$',
+    ),
+    '#callback' => '_fundraiser_field_info_other_amount_callback',
+  );
+  $fields['donor_information'] = array(
+    '#name' => 'Your Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['donor_information']['first_name'] = array(
+    '#name' => 'First Name',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['donor_information']['last_name'] = array(
+    '#name' => 'Last Name',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['donor_information']['email'] = array(
+    '#name' => 'Email',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information'] = array(
+    '#name' => 'Credit Card Billing Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['billing_information']['address'] = array(
+    '#name' => 'Address',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['address_line_2'] = array(
+    '#name' => 'Address Line 2',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['city'] = array(
+    '#name' => 'City',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  if (isset($context->countries)) {
+    $default_available = array(840, 124);
+    // From ubercart defaults. 840 = US, 124 = CA.
+    $include_all_countries = variable_get('fundraiser_all_countries', 0); 
+    $options = '';
+    if ($include_all_countries) {
+      foreach ($context->countries as $country_id => $country) {
+        $options .= $country_id . '|' . $country->country_name . "\n";
+      }
+    }
+    else {
+      foreach ($context->countries as $country_id => $country) {
+        if (in_array($country_id, $default_available)) {
+          $options .= $country_id . '|' . $country->country_name . "\n";
+        }
+      }
+    }
+     $fields['billing_information']['country'] = array(
+      '#name' => 'Country',
+      '#type' => 'select',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => '',
+        'items' => $options,
+        'multiple' => 0,
+        'aslist' => 'Y',
+      ),
+    );
+  }
+  if (isset($context->zones)) { 
+    $options = '';
+    foreach ($context->zones as $zone_id => $zone) {
+      $options .= $zone_id . '|' . $zone->zone_name . "\n";
+    }
+    $fields['billing_information']['state'] = array(
+      '#name' => 'State/Province',
+      '#type' => 'select',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => '',
+        'items' => $options,
+        'multiple' => 0,
+        'aslist' => 'Y',
+      ),
+    );
+  }
+  $fields['billing_information']['zip'] = array(
+    '#name' => 'ZIP/Postal Code',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 10,
+      'maxlength' => 5,
+    ),
+  );
+  $fields['credit_card_information'] = array(
+    '#name' => 'Credit Card Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['credit_card_information']['card_number'] = array(
+    '#name' => 'Card Number',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 20,
+    ),
+  );
+  $months = "1|January\n";
+  $months .= "2|Feburary\n";
+  $months .= "3|March\n";
+  $months .= "4|April\n";
+  $months .= "5|May\n";
+  $months .= "6|June\n";
+  $months .= "7|July\n";
+  $months .= "8|August\n";
+  $months .= "9|September\n";
+  $months .= "10|October\n";
+  $months .= "11|November\n";
+  $months .= "12|December\n";
+  $fields['credit_card_information']['card_expiration_month'] = array(
+    '#name' => 'Expiration Month',
+    '#type' => 'select',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'items' => $months,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    ),
+  );
+  $this_year = date('Y');
+  $years = $this_year . "\n";
+  for ($i = 1; $i <= 5; $i++) {
+    $years .= ($this_year + $i) . "\n";
+  }
+  $fields['credit_card_information']['card_expiration_year'] = array(
+    '#name' => 'Expiration Year',
+    '#type' => 'select',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'items' => $years,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    ),
+  );
+  $fields['credit_card_information']['card_cvv'] = array(
+    '#name' => 'Card Security Code',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'maxlength' => 4,
+      'width' => 5,
+    ),
+  );
+
+  $fields = module_invoke_all('fundraiser_field_info', $fields);
+  drupal_alter('fundraiser_field_info', $fields);
+  return $fields;
+
+/*   $fields = array(
+     // Move these four to Market Source for declaration.
+    'ms',
+    'referrer',
+    'initial_referrer',
+    'cid', // Campaign id.
+*/
+
+}
+
+/**
+ * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
+ */
+function _fundraiser_field_info_amount_callback($fundraiser, $field) {
+  // If donation amounts don't exist, use amount as is.
+  if (empty($fundraiser->donation_amounts)) {
+    return $field;
+  }
+  // Since we have an array of donation_amounts, set the field data to match.
+  $keys = array_keys($fundraiser->donation_amounts);
+  // Construct a set of options based on the configured amounts.
+  $formatted_amounts = '';
+  foreach ($fundraiser->donation_amounts as $amount => $label) {
+    if (!$label) {
+      $formatted_amounts .= $amount . '|$' . $amount;
+    }
+    else {
+      $formatted_amounts .= $amount . '|' . $label;
+    }
+    $formatted_amounts .= "\n";
+  }
+  if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
+    $formatted_amounts .= 'other|Other';
+  }
+  // Update the field.
+  $field = array(
+    '#name' => 'Please select your tax-deductible gift amount below',
+    '#type' => 'select',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'items' => $formatted_amounts,
+      'multiple' => 0,
+    ),
+    '#value' => $keys[0],
+  );
+  // Return the field to be created.
+  return $field;
+}
+
+/**
+ * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
+ */
+function _fundraiser_field_info_other_amount_callback($fundraiser, $field) {
+  // If donation amounts don't exist, drop the amount_other field, and use amount as is.
+  if (empty($fundraiser->donation_amounts)) {
+    return '';
+  }
+  // If the show other options is disallowed, unset it.
+  if (!$fundraiser->show_other_amount) {
+    return '';
+  }
+  // Update the min with fundraiser's min.
+  $fields['donation']['other_amount']['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  // Return the field to be created.
+  return $field;
+}
+
+/**
+ * Helper function, these are the fields we can't delete.
+ */
+// This is only used in webform_token_selector/webform_token_selector.module
+// Should it be moved to that module?
+function _fundraiser_field_blacklist() {
+  return array(
+    'card_number',
+    'card_cvv',
+    'recurs_monthly',
+    'card_expiration_month',
+    'card_expiration_year',
+  );
+}
+
+/**
  * Helper function, collects gateway information by calling hook_fundraiser_gateway_info.
  */
 function _fundraiser_gateway_info($id = NULL) {
@@ -1486,18 +1775,19 @@ function _fundraiser_create_fundraiser($fundraiser) {
  */
 function _fundraiser_get_fundraiser_by_nid($nid) {
   // Get fundraiser table information.
-  $results = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid));
-  $fundraiser = $results->fetchObject(); // Return an object.
-  // Explode the donation amounts that were imploded during save.
-  $donation_amounts = explode(',', $fundraiser->donation_amounts);
-  $donation_amounts = array_unique($donation_amounts);
-  $exploded_amounts = array();
-  foreach ($donation_amounts as $donation_amount) {
-    $exploded_amounts[] = explode('|', $donation_amount);
+  $fundraiser = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
+  if ($fundraiser) {
+    // Explode the donation amounts that were imploded during save.
+    $donation_amounts = explode(',', $fundraiser->donation_amounts);
+    $donation_amounts = array_unique($donation_amounts);
+    $exploded_amounts = array();
+    foreach ($donation_amounts as $donation_amount) {
+      $exploded_amounts[] = explode('|', $donation_amount);
+    }
+    $fundraiser->donation_amounts = $exploded_amounts;
+    // Get values from other modules for additional information.
+    module_invoke_all('fundraiser_get_fundraiser_alter', $fundraiser);
   }
-  $fundraiser->donation_amounts = $exploded_amounts;
-  // Get values from other modules for additional information.
-  module_invoke_all('fundraiser_get_fundraiser_alter', $fundraiser);
   return $fundraiser;
 }
 
@@ -1526,7 +1816,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     $record = $fundraiser;
     drupal_write_record('fundraiser', $record, 'nid');
     // And invoke the hooks for all the other modules to respond.
-    module_invoke_all('fundraiser_update_fundraiser_alter', $fundraiser);
+    module_invoke_all('fundraiser_update_fundraiser_alter', (object) $fundraiser);
     // Fire a hook that other modules can use to add additional processing when a donation form is created.
     // Called in: fundraiser_multi_currency.module, sf_donation.module
     // This can, and should, be replaced with hook_node_insert() implementations.
@@ -1765,6 +2055,7 @@ function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
   // Check to make sure we weren't handed a bad field name.
   if (!$tracking) {
+    $tracking->nid = $nid;
     $tracking->$field++;
     _fundraiser_update_tracking($tracking);
   }
