@@ -1610,114 +1610,12 @@ function _fundraiser_get_refund_by_did($did) {
 }
 
 /**
- * CRUD style DB function for fundraiser_recurring.
- */
-function _fundraiser_create_recurring($donation) {
-  // Cast donation just in case.
-  $donation = (array) $donation;
-  // Check for old data.
-  $donation_data = FALSE;
-  if (isset($donation['did'])) {
-    $donation_data = _fundraiser_get_recurring_by_did($donation['did']);
-  }
-  if (!$donation_data) {
-// TODO find out why this is not matching field names to each other
-// Make it match so we can use one line record = donation
-    $record = array(
-      'master_order_id' => $donation['order_id'],
-      'order_id' => $donation['new_id'], 
-      'next_charge' => $donation['next_charge'],
-      'gateway' => $donation['gateway'],
-    );
-    drupal_write_record('fundraiser_recurring', $record);
-  }
-  else {
-    _fundraiser_update_recurring($donation);
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_recurring.
- */
-function _fundraiser_get_recurring_by_did($did) {
-  return db_query('SELECT * FROM {fundraiser_recurring} ' .
-    'WHERE order_id = :order_id',
-    array(':order_id' => $did))->fetchObject();
-}
-
-/**
- * CRUD style DB function for fundraiser_recurring.
- */
-function _fundraiser_update_recurring($donation) {
-  // Cast donation just in case.
-  $donation_data = FALSE;
-  if (isset($donation['did'])) {
-    $donation_data = _fundraiser_get_recurring_by_did($donation['did']);
-  }
-  if (!$donation_data) {
-    _fundraiser_create_recurring($donation);
-  }
-  else {
-    $record = array_merge((array) $donation_data, $donation); // Merge data together so we get everything in the record.
-    drupal_write_record('fundraiser_recurring', $record, 'order_id');
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_recurring.
- */
-function _fundraiser_delete_recurring($did) {
-  db_delete('fundraiser_recurring')->condition('order_id', $did)->execute();
-}
-
-/**
- * DB function, delete recurring given a master did.
- */
-function _fundraiser_delete_recurring_by_master($master_did) {
-  db_delete('fundraiser_recurring')->condition('master_order_id', $master_did)->execute();
-}
-
-/**
- * DB function, get all recurring orders available to charge.
- */
-function _fundraiser_get_recurring_chargable() {
-  return db_query('SELECT * FROM {fundraiser_recurring} ' .
-    'WHERE next_charge < :next_charge '.
-    'AND (gateway_resp IS NULL OR gateway_resp = \'failed\') '.
-    'AND attempts < 3',
-    array(':next_charge' => time()))->fetchAll();
-}
-
-/**
- * DB function, returns count of payments remaining for series.
- */
-function _fundraiser_recurring_count_remaining($master_did) {
-  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} ' .
-    'WHERE master_order_id = :master_order_id ' .
-    'AND gateway_resp IS NULL',
-    array(':master_order_id' => $master_did))->fetchColumn();
-}
-
-/**
- * DB function, returns count of payments remaining for series / if a member of a series.
- */
-function _fundraiser_recurring_exists($did) {
-  return db_query('SELECT COUNT(order_id) FROM {fundraiser_recurring} '.
-    'WHERE master_order_id = :master_order_id '.
-    'OR order_id = :order_id',
-    array(':master_order_id' => $did, ':order_id' => $did))->fetchColumn();
-}
-    
-/**
  * DB Function, Check if the given order was made on a payment gateway that supports refunds
  */
 // TODO this information should be pullable for NON recurring donations too.
 // This should be in the donation table (the new one that combines did, uid, nid, etc).
 function _fundraiser_get_donation_gateway($did) {
-  // Get details on the original payment so we can load the payment gateway details
-  $gateway = db_query('SELECT gateway FROM {fundraiser_recurring} '.
-    'WHERE order_id = :order_id',
-    array(':order_id' => $did))->fetchObject();
+  $gateway = (object) array();
   // Now ask if any other module wants to override this result.
   module_invoke('get_donation_gateway', $did, $gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
