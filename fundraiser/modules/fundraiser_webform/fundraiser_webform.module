@@ -407,6 +407,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
       $recurs = $value == 'recurs' ? TRUE : FALSE;
     }
   }
+  $donation->recurs = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
   $donation->donation->recurs = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
   // TODO is there any other information about the submission I can grab at this point for use down the line?
 }
@@ -420,7 +421,7 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     'webform_nid' => $donation->nid,
     'order_id' => $donation->donation->did,
     'sid' => $donation->sid,
-    'recurring_status' => $donation->donation->recurs,
+    'recurring_status' => $donation->recurs,
   );
   _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
@@ -457,7 +458,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   _fundraiser_webform_update_submissions($donation->donation->uid, $donation->sid);
 
   // Update the recurring status, if it was changed by the payment gateway module
-  if ($donation->donation->recurs != $donation->donation->data['recurring_status']) {
+  if ($donation->recurs != $donation->donation->data['recurring_status']) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
       'order_id' => $donation->donation->did,
@@ -483,7 +484,8 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
   $submission = _fundraiser_webform_get_webform_order_by_did($donation->donation->did);
   $donation->sid = $submission->sid;
-  $donation->donation->recurs = $submission->recurring_status;
+  $donation->recurs = $submission->recurring_status;
+  $donation->submission = webform_get_submission($donation->nid, $donation->sid);
 }
 
 /**
@@ -491,13 +493,6 @@ function fundraiser_webform_fundraiser_donation_get_donation($donation) {
  */
 function fundraiser_webform_fundraiser_replace_tokens($message, $donation) {
   module_load_include('inc', 'webform', 'includes/webform.submissions');
-  // TODO This line should be in fundraiser_webform_fundraiser_donation_get_donation
-  // but is not b/c there is no gurantee at that point in the load sequence that
-  // $donation->nid will be set on retrieval, because it is currently set in another glue module.
-  // When tracking information pulls out of that glue module, then we can properly
-  // set and pull submission information out of the donation object itself.
-  // See: fundraiser_ubercart.module for additional notes re: setting nid.
-  $donation->submission = webform_get_submission($donation->nid, $donation->sid);
   // Replace the message with webform psuedo-tokens.
   $message = _webform_filter_values($message, $donation->node, $donation->submission, NULL, FALSE);
   return $message;

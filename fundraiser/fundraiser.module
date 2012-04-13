@@ -1190,6 +1190,15 @@ function fundraiser_donation_create($donation) {
   // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
+  // For now, our creation system is responsible for creating a did.
+  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
+  // Track the did, nid, uid internally so we can keep things in order.
+  $donation_record = array(
+    'did' => $donation->donation->did,
+    'nid' => $donation->nid,
+    'uid' => $donation->uid
+  );
+  _fundraiser_create_donation($donation_record);
 }
 
 /**
@@ -1256,6 +1265,13 @@ function fundraiser_donation_success($donation) {
 function fundraiser_donation_get_donation($did) {
   $donation = (object) array();
   $donation->donation->did = $did;
+  // Grab basic data from our own systems.
+  $donation_record = _fundraiser_get_donation_by_did($did);
+  $donation->nid = $donation_record->nid;
+  $donation->node = node_load($donation_record->nid;);
+  $donation->uid = $donation_record->uid;
+  $donation->user = user_load($donation_record->uid);
+
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_get_donation', $donation);
@@ -1542,6 +1558,60 @@ function _fundraiser_delete_fundraisers($nodes) {
   foreach ($nodes as $node) {
     _fundraiser_delete_fundraiser($node);
   }
+}
+
+/**
+ * CRUD style DB function for fundraiser_donation.
+ */
+function _fundraiser_create_donation($donation) {
+  // Cast donation just in case.
+  $donation = (array) $donation;
+  // Check for old data.
+  $donation_data = FALSE;
+  if (isset($donation['did'])) {
+    $donation_data = _fundraiser_get_donation_by_did($donation['did']);
+  }
+  if (!$donation_data) {
+    $record = array_merge((array) $donation_data, $donation);
+    drupal_write_record('fundraiser_donation', $record);
+  }
+  else {
+    _fundraiser_update_donation($donation);
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_donation.
+ */
+function _fundraiser_get_donation_by_did($did) {
+  return db_query('SELECT * FROM {fundraiser_donation} ' .
+    'WHERE did = :did',
+    array(':did' => $did))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for fundraiser_donation.
+ */
+function _fundraiser_update_donation($donation) {
+  // Cast donation just in case.
+  $donation_data = FALSE;
+  if (isset($donation['did'])) {
+    $donation_data = _fundraiser_get_donation_by_did($donation['did']);
+  }
+  if (!$donation_data) {
+    _fundraiser_create_donation($donation);
+  }
+  else {
+    $record = array_merge((array) $donation_data, $donation);
+    drupal_write_record('fundraiser_donation', $record, 'did');
+  }
+}
+
+/**
+ * CRUD style DB function for fundraiser_donation.
+ */
+function _fundraiser_delete_donation($did) {
+  db_delete('fundraiser_donation')->condition('did', $did)->execute();
 }
 
 /**

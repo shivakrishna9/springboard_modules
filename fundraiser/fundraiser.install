@@ -103,6 +103,30 @@ function fundraiser_schema() {
     ),
     'primary key' => array('nid'),
   );
+  $schema['fundraiser_donation'] = array(
+    'description' => 'Store primary donation information.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'Donation ID - other tables call it order_id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'Originating fundraiser node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Donating user',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+  );
   $schema['fundraiser_refund'] = array(
     'description' => 'Stores information about refunds made on donations',
     'fields' => array(
@@ -142,7 +166,6 @@ function fundraiser_schema() {
     'primary key' => array('refund_id'),
     'indexes' => array('refund_order_id' => array('order_id')),
   );
-// TODO - all this sf_field stuff, needs to go in its own table. Seriously.
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
     'fields' => array(
@@ -201,5 +224,5 @@ function fundraiser_update_last_removed() {
 
 // First update post Port:
 // TODO rename all table order_id 
-// Add new table to track fundraiser - nid - uid outside of Ubercart id.
 
+//TODO update script to load all data into the fundraiser_donation table.

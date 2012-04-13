@@ -532,7 +532,6 @@ function _fundraiser_sustainers_expand_date($element) {
   return $element;
 }
 
-
 /**
  * CRUD style DB function for fundraiser_recurring.
  */
