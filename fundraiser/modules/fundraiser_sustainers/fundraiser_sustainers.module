@@ -1057,7 +1057,7 @@ function fundraiser_ubercart_fundraiser_order_refund($order_id, $amount, $new_st
  */
 function fundraiser_ubercart_fundraiser_donation_create_future($donation) {
   $user = $donation->user;
-  $order_id = $donation->donation->did;
+  $order_id = $donation->did;
   $order = uc_order_load($order_id);
   $gateway = $donation->node->gateway;
   $orders = array();
@@ -1093,7 +1093,7 @@ function fundraiser_ubercart_fundraiser_donation_create_future($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_success_recurring($donation) {
   // Complete the sale in Ubercart.
-  $order = uc_order_load($donation->donation->did);
+  $order = uc_order_load($donation->did);
   uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
   uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id',
     array('@txn_id' => $result['data']['txn_id'])), 'admin');

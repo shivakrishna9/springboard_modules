@@ -1192,7 +1192,7 @@ function fundraiser_donation_create($donation) {
   // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
   $donation_record = array(
-    'did' => $donation->donation->did,
+    'did' => $donation->did,
     'nid' => $donation->nid,
     'uid' => $donation->uid
   );
@@ -1223,14 +1223,14 @@ function fundraiser_donation_process($donation) {
   }
   if (empty($charge_function)) {
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $donation->donation->did, '@nid' => $donation->node->nid), WATCHDOG_CRITICAL);
+      array('@id' => $donation->did, '@nid' => $donation->node->nid), WATCHDOG_CRITICAL);
     $result = array('success' => FALSE);
   }
   else {
     // Call the charge function and store the result.
     $data = array('txn_type' => 'auth_capture');
     $data = array_merge($data, $donation->donation->data);
-    $result = $charge_function($donation->donation->did, $donation->donation->donation_amount, $data);
+    $result = $charge_function($donation->did, $donation->donation->donation_amount, $data);
     $result['data'] = $data;
   }
   $donation->result = $result;
@@ -1262,7 +1262,8 @@ function fundraiser_donation_success($donation) {
  */
 function fundraiser_donation_get_donation($did) {
   $donation = (object) array();
-  $donation->donation->did = $did;
+  $donation->did = $did;
+  $donation->did = $did;
   // Grab basic data from our own systems.
   $donation_record = _fundraiser_get_donation_by_did($did);
   $donation->nid = $donation_record->nid;
@@ -1289,7 +1290,7 @@ function fundraiser_donation_decline($donation) {
   _fundraiser_update_tracking_value($donation->nid, 'gateway_failures');
   // Make a log entry.
   watchdog('fundraiser', 'Donation @id was declined by the payment gateway. Reason: @message',
-    array('@id' => $donation->donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG, NULL);
+    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
@@ -1307,7 +1308,7 @@ function fundraiser_donation_decline($donation) {
 function fundraiser_donation_exception($donation) {
   // Make a log entry.
   watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
-    array('@id' => $donation->donation->did, '@message' => $donation->result['message']), WATCHDOG_ERROR, NULL);
+    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_ERROR, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
@@ -1324,7 +1325,7 @@ function fundraiser_donation_exception($donation) {
 function fundraiser_donation_cancel($donation) {
   // Make a log entry
   watchdog('fundraiser', 'Donation @id was canceled by the user.',
-    array('@id' => $donation->donation->did), WATCHDOG_DEBUG, NULL);
+    array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {

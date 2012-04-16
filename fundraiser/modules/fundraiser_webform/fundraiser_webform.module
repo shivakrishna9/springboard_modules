@@ -396,7 +396,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   foreach ($results as $result) {
     $recurs_cid = $result->cid;
   }
-  if (!empty($recurs_cid)) {
+  if (!empty($recurs_cid) && isset($form_state['values']['submitted'][$recurs_cid])) {
     $value = $form_state['values']['submitted'][$recurs_cid];
     if (is_array($value)) {
       // If this is an array, then it is a single item checkbox
@@ -420,7 +420,7 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   // Relate the donation id to webform before we try to process the payment. //TODO change terminology
   $webform_order = array(
     'webform_nid' => $donation->nid,
-    'order_id' => $donation->donation->did,
+    'order_id' => $donation->did,
     'sid' => $donation->sid,
     'recurring_status' => $donation->recurs, //TODO do I actually need to save / reference this field?
   );
@@ -448,7 +448,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   }
   $webform_order = array(
     'webform_nid' => $donation->nid,
-    'order_id' => $donation->donation->did,  
+    'order_id' => $donation->did,  
     'gateway' => $donation->node->gateway,
     'sid' => $donation->sid,
     'txn_id' => $txn_id,
@@ -462,7 +462,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   if ($donation->recurs != $donation->donation->data['recurring_status']) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
-      'order_id' => $donation->donation->did,
+      'order_id' => $donation->did,
       'sid' => $donation->sid,
       'recurring_status' => $donation->donation->data['recurring_status'],
     );
@@ -475,7 +475,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
  */
 function fundraiser_webform_fundraiser_donation_decline($donation) {
   // Delete the webform order info.
-  _fundraiser_webform_delete_webform_order($donation->nid, $donation->donation->did);
+  _fundraiser_webform_delete_webform_order($donation->nid, $donation->did);
   _fundraiser_webform_delete_submissions($donation->sid);
 }
 
@@ -483,19 +483,19 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
-  $submission = _fundraiser_webform_get_webform_order_by_did($donation->donation->did);
+  $submission = _fundraiser_webform_get_webform_order_by_did($donation->did);
   $donation->sid = $submission->sid;
-  $donation->recurs = $submission->recurring_status; // Move this to sustainer.
-  $donation->submission = webform_get_submission($donation->nid, $donation->sid);
+  $donation->recurs = $submission->recurring_status;
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $donation->submission = webform_get_submission($donation->nid, $donation->sid); // From webform.submissions.inc
 }
 
 /**
  * Implements hook_fundraiser_replace_tokens().
  */
 function fundraiser_webform_fundraiser_replace_tokens($message, $donation) {
-  module_load_include('inc', 'webform', 'includes/webform.submissions');
   // Replace the message with webform psuedo-tokens.
-  $message = _webform_filter_values($message, $donation->node, $donation->submission, NULL, FALSE);
+  $message = _webform_filter_values($message, $donation->node, $donation->submission, NULL, FALSE); // From webform.module
   return $message;
 }
 
