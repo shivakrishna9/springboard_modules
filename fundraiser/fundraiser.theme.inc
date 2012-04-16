@@ -22,13 +22,6 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     'fundraiser_credit_card_expiration_date' => array(
       'render element' => 'element',    
     ),
-    // TODO move this out.
-    'sustainer_management_page' => array(
-      'variables' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 
-        'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 
-        'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),
-      'template' => 'templates/sustainer-management-page',
-    ),
     // Shows confirmaiton pages.
     'fundraiser_confirmation' => array(
       'variables' => array('node' => NULL, 'message' => NULL),
@@ -67,54 +60,6 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
     // Set the message for the template.
     $vars['confirmation_message'] = $message;
   }
-}
-
-/**
- * Theme function for the sustainer management page.
- *
- * @param $vars
- *   The variables passed into the theme function
- */
-function fundraiser_preprocess_sustainer_management_page(&$vars) {
-  global $user;
-  $profile_uid = arg(1);
-  // convert the array of orders to a nice data table
-  $header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
-  $rows = array();
-
-  // format the dates
-  $class = '';
-  foreach ($vars['orders'] as $id => &$order) {
-    $edit_link = l('$' . money_format('%i', $order['amount']), 'user/' . $profile_uid . '/recurring_overview/' . $id);
-    if ($id == $vars['order_id']) {
-      $class = 'recurring-order active';
-    }
-    else {
-      $class = 'recurring-order';
-    }
-    $rows[] = array(
-      'data' => array(
-        'amount' => $edit_link,
-        'start_date' => date('m/d/y', $order['start_date']),
-        'next_charge_date' => date('m/d/y', $order['next_charge_date']),
-        'expire_date' => date('m/d/y', $order['expire_date']),
-        'status' => $order['status'] == DONATION_CANCELLED ? 'cancelled' : 'active',
-      ),
-      'class' => $class,
-    );
-  }
-
-  $vars['orders'] = theme('table', array('header' => $header, 'rows' => $rows));
-
-  // format payment schedule into a data table
-  $payment_schedule_header = array('Amount', 'Charge Date', 'Processed Status');
-  // format some of the data in the array before output
-  foreach ($vars['payment_schedule'] as &$payment_schedule) {
-    $payment_schedule['amount'] = '$' . money_format('%i', $payment_schedule['amount']);
-    $payment_schedule['charge_date'] = date('m/d/y', $payment_schedule['charge_date']);
-    $payment_schedule['status'] = empty($payment_schedule['status']) ? 'pending' : $payment_schedule['status'];
-  }
-  $vars['payment_schedule'] = theme('table', array('header' => $payment_schedule_header, 'rows' => $vars['payment_schedule']));
 }
 
 /**

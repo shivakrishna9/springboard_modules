@@ -111,7 +111,10 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
       ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
   );
-  // Show whether or not it's a recurring donation //TODO move this to sustainer to handle.
+  // Show whether or not it's a recurring donation
+  // TODO In the future we should work out a way to move this administractive UI into fundraiser, to allow the
+  // reference to recurssion to move entirely out to sustainers, and abstract the display of field data for the
+  // webform user. As it stands, for now this remains here.
   if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
     $recurs = t('No');
     if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
@@ -306,6 +309,8 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     $errors = TRUE;
   }
 
+// TODO - these all need to be changed and updated to match how ubercart is pulled into our system now.
+// Perhaps with the validation running through fundraiser field stuff?
   //TODO move cc number stuff to Ubercart. Fundraiser doesn't know this stuff, and neither should webform.
   $cc_number = $fundraiser_fields['card_number'];
   $cc_cvv = $fundraiser_fields['card_cvv'];
@@ -390,7 +395,10 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
  */
   $donation->submission = $fundraiser_fields;
 
-  // Set if this was a recurring donation. TODO move this to sustainer.
+  // Set if this was a recurring donation.
+  // TODO In the future we should abstract retrieveing the field information from webform to allow this call
+  // to move this to sustainer. For now it can stay here, but to fully seperate we should have a field-handler
+  // implem,ented by fuundraiser_webform, driven by fundraiser to allow the sustainer system to pick up the data.
   $recurs = FALSE;
   $results = _fundraiser_webform_get_components_by_keys($donation->nid, array('recurs_monthly'));
   foreach ($results as $result) {
@@ -409,7 +417,6 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
     }
   }
   $donation->recurs = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
-  $donation->donation->recurs = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
   // TODO is there any other information about the submission I can grab at this point for use down the line?
 }
 
@@ -422,7 +429,9 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     'webform_nid' => $donation->nid,
     'order_id' => $donation->did,
     'sid' => $donation->sid,
-    'recurring_status' => $donation->recurs, //TODO do I actually need to save / reference this field?
+    'recurring_status' => $donation->recurs,
+    //TODO In the future we should clarify these data fields to clean up the database as a whole. For now this
+    // can live here until we clean up the database to remove redundant data like this.
   );
   _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
@@ -459,13 +468,15 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   _fundraiser_webform_update_submissions($donation->donation->uid, $donation->sid);
 
   // Update the recurring status, if it was changed by the payment gateway module
-  if ($donation->recurs != $donation->donation->data['recurring_status']) {
+  if (isset($donation->donation->data['recurring_status']) && ($donation->recurs != $donation->donation->data['recurring_status'])) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
       'order_id' => $donation->did,
       'sid' => $donation->sid,
       'recurring_status' => $donation->donation->data['recurring_status'],
     );
+    //TODO In the future we should clarify these data fields to clean up the database as a whole. For now this
+    // can live here until we clean up the database to remove redundant data like this.
     _fundraiser_webform_update_webform_order($webform_order);
   }
 }
@@ -480,14 +491,25 @@ function fundraiser_webform_fundraiser_donation_decline($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_webform_fundraiser_donation_cancel($donation) {
+  db_query('UPDATE {fundraiser_webform_order} ' .
+   'SET recurring_status = :recurring_status ' .
+   'WHERE order_id = :did',
+    array(':recurring_status' => DONATION_CANCELLED, ':did' => $donation->did));
+}
+
+/**
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
   $submission = _fundraiser_webform_get_webform_order_by_did($donation->did);
-  $donation->sid = $submission->sid;
-  $donation->recurs = $submission->recurring_status;
-  module_load_include('inc', 'webform', 'includes/webform.submissions');
-  $donation->submission = webform_get_submission($donation->nid, $donation->sid); // From webform.submissions.inc
+  if ($submission) {
+    $donation->sid = $submission->sid;
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $donation->submission = webform_get_submission($donation->nid, $donation->sid); // From webform.submissions.inc
+  }
 }
 
 /**

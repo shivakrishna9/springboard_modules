@@ -40,37 +40,6 @@ define('DONATION_CANCELLED', 2);
 require_once('fundraiser.theme.inc'); 
 
 /**
- * Implements hook_cron().
- */
-function fundraiser_cron() {
-  // If cron.php is being run while standalone cron is enabled, do nothing.
-  // This allows this code to still execute if cron is run from the status page.
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-      return 0;
-    }
-    else {
-      watchdog('fundraiser_cron', 'Fundraiser cron run.');
-    }
-  }
-  else {
-    watchdog('fundraiser_cron', 'Standard cron run.');
-  }
-  // Load all cron related functions.
-  module_load_include('inc', 'fundraiser', 'fundraiser.cron');
-  // Process recurring donations.
-  if (fundraiser_processor_key_match()) { // From fundraiser.cron.inc
-    fundraiser_process_recurring_donations(); // From fundraiser.cron.inc
-    // TODO: Provide hook here for cron complete on recurring donations?
-  }
-  else {
-    $message = 'The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.';
-    drupal_set_message(t($message), 'warning');
-    watchdog('fundraiser', $message, NULL, WATCHDOG_CRITICAL);
-  }
-}
-
-/**
  * Implements hook_permission().
  */
 function fundraiser_permission() {
@@ -102,10 +71,6 @@ function fundraiser_permission() {
     'clone donation form' => array(
       'title' => t('Clone donation form'), 
       'description' => t('Clone donation forms.'), 
-    ),
-    'cancel future donations' => array(
-      'title' => t('Cancel future donations'), 
-      'description' => t('Cancel future donations.'),
     ),
   );
 }
@@ -141,14 +106,6 @@ function fundraiser_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-  // Add the cron handler if it's enabled.
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    $items['fundraiser_cron'] = array(
-      'page callback' => 'fundraiser_cron',
-      'access callback' => TRUE,
-      'type' => MENU_CALLBACK,
-    );
-  }
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
     'title' => 'Fundraiser settings',
@@ -168,25 +125,7 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-  $items['admin/config/system/fundraiser/recurring'] = array(
-    'title' => 'Current Fundraiser Recurring Payments',
-    'page callback' => 'fundraiser_recurring_admin',
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
-    'file' => 'fundraiser.admin.inc',
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-  );
   // Donation management for admins.
-  $items['admin/store/orders/%/recurring/edit'] = array( //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Edit Recurring Donations',
-    'page callback' => 'fundraiser_recurring_edit_forms',
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
-    'file' => 'fundraiser.admin.inc',
-    'weight' => 2,
-    'type' => MENU_NORMAL_ITEM,
-  );
   $items['admin/store/orders/%/refund'] = array( //TODO - Move this to it's own page. Remove Ubercart as default path.
     'title' => 'Refund',
     'page callback' => 'fundraiser_show_refund_form',
@@ -196,16 +135,6 @@ function fundraiser_menu() {
     'weight' => 3,
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/store/orders/%/recurring/overview'] = array(  //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Recurring Info',
-    'page callback' => 'fundraiser_recurring_master_order_overview',
-    'access arguments' => array('view all orders'),
-    'access callback' => 'fundraiser_recurring_check_access',
-    'access arguments' => array(3),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 11,
-    'file' => 'fundraiser.admin.inc',
-  );
   return $items;
 }
 
@@ -214,17 +143,6 @@ function fundraiser_menu() {
  */
 function fundraiser_confirmations_perm($perm, $node) {
   if (_fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/**
- * Menu access callback, check if the user has recurring orders.
- */
-function fundraiser_recurring_check_access($did) {
-  $count = _fundraiser_recurring_exists($did);
-  if ($count > 0) {
     return TRUE;
   }
   return FALSE;
@@ -1127,10 +1045,12 @@ function fundraiser_donation_confirmation($form, &$form_state) {
   // Everything worked, redirect to the confirmation page as the last submit handler.
   $node = $form['#node'];
   $redirect_url = trim($node->redirect_url);
-  $did = $form_state['donation']->donation->did;
+  $did = $form_state['donation']->did;
 
   // Prepare the correct redirect path.
   $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+  // This is the up path configured per node in fundraiser_menu. Used as default;
+  $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
   if ($redirect_url == '<confirmation>') {
     // This is the default path configured per node in fundraiser_menu.
     $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
@@ -1200,16 +1120,23 @@ function fundraiser_donation_create($donation) {
 }
 
 /**
- * Donation processing, future donations need to be created.
+ * Donation processing, a donation needs to be created prior to processing.
  */
-function fundraiser_donation_create_future($donation) {
-  //TODO review this, figure out how we're going to create multiples.
-  // Make a record of each recurring donation in fundraiser recurring table.
-  foreach ($donations as $donation) {
-    _fundraiser_create_recurring($donation);
-  }
+function fundraiser_donation_update($donation) {
+  // Allow other modules to add additional fields to the order before processing the payment
+  module_invoke_all('fundraiser_donation_update_additional', $donation);
+  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_create_future', $donation);
+  module_invoke_all('fundraiser_donation_update', $donation);
+  // For now, our creation system is responsible for creating a did.
+  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
+  // Track the did, nid, uid internally so we can keep things in order.
+  $donation_record = array(
+    'did' => $donation->did,
+    'nid' => $donation->nid,
+    'uid' => $donation->uid
+  );
+  _fundraiser_update_donation($donation_record); //TODO consider merging this with the CRUD function.
 }
 
 /**
@@ -1244,10 +1171,6 @@ function fundraiser_donation_process($donation) {
 function fundraiser_donation_success($donation) {
   // Track the success.
   _fundraiser_update_tracking_value($donation->nid, 'conversions');
-  // If it's recurring, spawn all the future donations at this time.
-  if ($donation->donation->recurs == DONATION_RECURRING) {
-    fundraiser_donation_create_future($donation);
-  }
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
@@ -1318,9 +1241,8 @@ function fundraiser_donation_exception($donation) {
   module_invoke_all('fundraiser_donation_exception', $donation);
 }
 
-// TODO how does this get called?
 /**
- * Completes the processing of an order when it is cancelled by the user.
+ * Completes the processing of an order when it is cancelled by the user. For example, during sustainer call.
  */
 function fundraiser_donation_cancel($donation) {
   // Make a log entry
@@ -1354,7 +1276,6 @@ function _fundraiser_donation_context() {
  */
 function _fundraiser_field_info() {
   $context = _fundraiser_donation_context();
-
   // Donation amounts are handled in a special case.
   $fields['donation'] = array(
     '#name' => 'Donation',
@@ -2149,5 +2070,50 @@ function fundraiser_update_sf_user_profile($donation) {
       $action = 'upsert';
     }
     sf_queue_insert($update_user->uid, 'user', $action);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function sf_donation_hook_fundraiser_donation_update($donation) {
+  // put order back in queue so that amount gets updated in Salesforce
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function sf_donation_fundraiser_donation_cancel($donation) {
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+  // call out to saleforce module if installed
+  //if (module_exists('sf_donation')) {
+  //  sf_donation_canel_recurring_donations($master_order_id);
+  //}
+}
+
+
+/**
+ * Includes code for updating billing information for recurring donations.
+ * Each gateway will require it's own function named GATEWAY_ID_update_billing_information
+ * that accepts a payment reference id and billing information.
+ * The individual billing update function should return a boolean indicating success or failure
+ */
+// TODO move this out to Authorizenet module.
+/**
+ * Authorize.net billing information update function.
+ */
+function authorizenet_update_billing_information($reference_id, $billing_info) {
+  if (module_exists('authorizenet_cim')) {
+    return authorizenet_cim_update($reference_id, $billing_info);
+  }
+  else {
+    drupal_set_message(t('Unable to update billing information at this time'));
+    watchdog('fundraiser', 'Billing information for recurring donations cannot be updated because the authorize_cim module is missing.', NULL, WATCHDOG_CRITICAL);
+    return NULL;
   }
 }

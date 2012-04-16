@@ -55,9 +55,9 @@ function hook_fundraiser_donation_create_additional($donation) {}
 function hook_fundraiser_donation_create($donation) {}
 
 /**
- * For payment modules, respond to recursive donations, to create future ones.
+ * For payment modules, respond to create a donation.
  */
-function hook_fundraiser_donation_create_future($donation) {}
+function hook_fundraiser_donation_update($donation) {}
 
 /**
  * Respond to donation processing.
@@ -88,16 +88,6 @@ function hook_fundraiser_donation_cancel($donation) {}
  * Retrieve infomation from glue modules for a given donation.
  */
 function hook_fundraiser_donation_get_donation($donation) {}
-
-/**
- * Respond to a recurring donation successfully completed.
- */
-function hook_fundraiser_donation_success_recurring($donation) {}
-
-/**
- * Respond to a recurring donation declined.
- */
-function hook_fundraiser_donation_decline_recurring($donation) {}
 
 /**
  * Retrieve available gateway implementations.
