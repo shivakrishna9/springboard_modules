@@ -520,11 +520,19 @@ function _gm_authorizenet_charge($order, $amount, $data) {
 
   // If we didn't get an approval response code...
   if ($response[0] != '1') {
+    // Determine what kind of error happened
+    $response_code = $response[2];
+    $error_type = 'billing';
+    if (($response_code > 10 && $response_code != 37 && $response_code < 71) || ($response_code > 80 && $response_code != 127)) {
+      $error_type = 'gateway';
+    }
+
     // Fail the charge with the reason text in the decline message.
     $result = array(
       'success' => FALSE,
       'message' => t('Credit card payment declined: @message', array('@message' => $response[3])),
       'uid' => $user->uid,
+      'error type' => $error_type,
     );
   }
   else {

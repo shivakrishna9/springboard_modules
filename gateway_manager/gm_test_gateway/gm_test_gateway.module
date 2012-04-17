@@ -61,6 +61,7 @@ function gm_test_gateway_charge($order_id, $amount, $data) {
     'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $user->uid,
     'data' => array('txn_id' => 'TEST-TXNID-001'),
+    'error type' => ($success) ? '' : 'billing',
   );
 
   return $result;
