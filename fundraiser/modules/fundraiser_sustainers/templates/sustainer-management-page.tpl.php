@@ -1,8 +1,6 @@
 <div id="orders">
  <?php print $orders; ?>
 </div>
-<?php if(!$cancelled) :?>
-
 <div id="payment-info">
   <h2>Recurring Payment Info</h2>
   <dl>
@@ -14,6 +12,7 @@
     <dd><?php print $payment_info['orders_remaining']; ?></dd>
   </dl>
 </div>
+
 <div id="billing-info">
   <h2>Billing Address</h2>
   <address>
@@ -21,14 +20,16 @@
   <?php print $billing_info['billing_city']; ?>, <?php print $billing_info['billing_state']; ?> <?php print $billing_info['billing_postal_code']; ?>
   </address>
 </div>
+<?php if (!$cancelled) { ?>
 <div id="donation-amount-form">
-  <h2>Donation Amount</h2>
+  <h2>Update Donation Amount</h2>
   <?php print $amount_form; ?>
 </div>
 <div id="donation-billing-form">
   <h2>Update Your Credit Card Information</h2>
   <?php print $billing_form; ?>
 </div>
+<?php } ?>
 <div id="payment-schedule">
   <h2>Payment Schedule</h2>
   <?php print_r($payment_schedule); ?>
@@ -38,10 +39,4 @@
   <h2>Cancel Future Donations</h2>
   <?php print $cancel_form; ?>
 </div>
-<?php endif; ?>
-
-<?php else: ?>
-
-<div>The selected has been cancelled.</div>
-
 <?php endif; ?>
