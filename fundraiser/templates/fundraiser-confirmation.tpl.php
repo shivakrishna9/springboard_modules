@@ -17,7 +17,7 @@
 ?>
 
 <div class="fundraiser-confirmation">
-  <?php if ($confirmation_message): ?>
+  <?php if (isset($confirmation_message)): ?>
     <?php print $confirmation_message ?>
   <?php else: ?>
     <p><?php print t('Thank you, your submission has been received.'); ?></p>

@@ -5,85 +5,157 @@
  * Administration page callbacks for the fundraiser module.
  */
 
-/**
- * Form builder. Configure fundraiser module.
- */
-function fundraiser_admin_settings($form, &$form_state) {
-  $description = 'Use this option if you want donations to be exported to Salesforce.';
-  $attributes = array();
-  if (!module_exists('sf_donation')) {
-    $description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
-    $attributes['disabled'] = 'disabled';
+function fundraiser_sustainers_admin() {
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+// TODO signifigant security issues in the previous version of this query, needs to be reviewed on the 6.x branch. - SeH
+  $output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
+  <tr> 
+  <th>OrderID</th>
+  <th>User Name</th>
+  <th>Amount</th>
+  <th>Last Charged</th>
+  </tr>
+  ";
+
+  $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr '.
+    'WHERE fr.order_id = :order_id'.
+    'ORDER BY fr.order_id DESC',
+  array(':order_id' => arg(3)));
+
+  foreach ($results as $result) {
+    // Get the order data from our order handler (Ubercart).
+    $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+    $order = $order[0];
+    $user = user_load($order->uid);
+    $fundraiser = (array) $result;
+    $fundraiser['fee_amount'] = number_format($fundraiser['fee_amount'], 2, '.', '');
+    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $fundraiser['next_charge']));
+    $output .= "<tr>  
+    <td>$fundraiser[order_id]</td>
+    <td>$user[name]</td>
+    <td>$fundraiser[fee_amount]</td>
+    <td>$last_charge</td>
+    </tr>";
   }
-  $form['fundraiser_development_mode'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Development mode'),
-    '#default_value' => variable_get('fundraiser_development_mode', 0),
-    '#description' => t('Development mode allows you to access donation forms over HTTP.'),
-  );
+  $output .= "</table>";
+  return $output;
+}
 
-  $form['fundraiser_default_minimum'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Default minimum donation amount'),
-    '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
-    '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
-  );
+function fundraiser_sustainers_edit_form($master_order_id) {
+  if (is_numeric($master_order_id)) {
+    return _recurring_donation_edit_forms($master_order_id);
+  }
+}
 
-  $form['fundraiser_salesforce_integration'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Integrate with Salesforce'),
-    '#default_value' => variable_get('fundraiser_salesforce_integration', 0),
-    '#description' => t($description),
-    '#attributes' => $attributes,
-  );
+function _recurring_donation_edit_forms($master_order_id) {
+  // we need an unprocessed child order for billing information
+  $child_order_id = db_query('SELECT order_id FROM {fundraiser_recurring} '.
+    'WHERE master_order_id = :order_id and gateway_resp IS NULL LIMIT 1',
+    array(':order_id' => $master_order_id))->fetchColumn();
 
-  $form['fundraiser_all_countries'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Insert full list of countries into new donation forms'),
-    '#default_value' => variable_get('fundraiser_all_countries', 0),
-    '#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. When unchecked, on U.S and Canda will be inserted.'),
-  );
+  // Get the order data from our order handler (Ubercart).
+  $order = module_invoke_all('fundraiser_get_order', $order_id);
+  $order = $order[0];
+  $nid = $order->products[0]->nid;
+  $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
 
-  $form['fundraiser_gateway_messages'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display gateway messages'),
-    '#default_value' => variable_get('fundraiser_gateway_messages', 1),
-    '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
-  );
+  // Render multiple forms
+  $output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
 
-  $form['fundraiser_receipt_bcc'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Donation receipt bcc email address'),
-    '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
-    '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
-  );
+  // 4/5/2010 - commented out for time being because authorize.net does not support updating
+  //             CIM profiles at this time
+  // $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
 
-  // TODO Check gthis ot make sure these are the right tokens to display given the radical changes in this par tof D7. - SeH
-  $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
-    '#markup' => theme('token_tree', array('token_types' => array('user'))),
-  );
+  $output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
 
-  if (module_exists('form_layouts')) {
-    $form['fundraiser_form_layouts'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Form layouts settings'),
-      '#description' => t('Configure form layouts.'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form_layouts = array();
-    foreach (_form_layouts_template_list() as $template) {
-      $form_layouts[$template['theme']] = $template['name'];
+  return $output;
+}
+
+// TODO move to ubercart.
+function _get_billing_information($master_order_id, $order) {
+  $state = module_invoke_all('fundraiser_get_country_zone', $order->billing_zone);
+  $state = $state[0];
+  $orders_remaining = _remaining_recurring_charge_count($master_order_id);
+  $orders_processed = _processed_recurring_charge_count($master_order_id);
+  $donation_amount = '$' . money_format('%i', $order->order_total);
+// TODO come back to this - shouldn't this be in a themed template display? - SeH 1/11/12
+  $billing_str = "";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Bill to:</div>";
+  $billing_str .= "$order->billing_first_name $order->billing_last_name<br />";
+  $billing_str .= "$order->billing_street1<br />";
+  if (!empty($order->billing_street2)) {
+    $billing_str .= "$order->billing_street2<br />";
+  }
+  $billing_str .= "$order->billing_city, $state $order->billing_postal_code</div>";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Customer Info:</div>";
+  $billing_str .= "Customer Number: <a href='/user/$order->uid'>$order->uid</a><br />";
+  $billing_str .= "Primary email:<br />$order->primary_email</div>";
+  $billing_str .= "<div class='order-pane pos-left'>";
+  $billing_str .= "<div class='order-pane-title'>Recurring Payment Info:</div>";
+  $billing_str .= "Recurring Donation Amount: $donation_amount<br />";
+  $billing_str .= "Recurring Charges Processed: $orders_processed <br />";
+  $billing_str .= "Recurring Charges Remaining: $orders_remaining <br /></div>";
+  $billing_str .= "<div style='clear:both;'>&nbsp;</div>";
+  return $billing_str;
+}
+
+// TODO move to ubercart.
+function fundraiser_sustainers_master_overview($order_id) {
+// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
+  $output = "<h2>Recurring Orders</h2>";
+  $output .= "<table><thead>
+  <tr>
+  <th>Master Order ID</th>
+  <th>OrderID</th>
+  <th>User Name</th>
+  <th>Amount</th>
+  <th>Charge Date</th>
+  </tr></thead>
+  ";
+  if (empty($rows[1])) {
+    //we're actually looking at the order id and not the master_order_id
+    $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr ' .
+      'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
+      'ORDER BY fr.order_id ASC',
+    array(':order_id' => $order_id));
+    unset($rows);
+    foreach ($results as $result) {
+      // Get the order data from our order handler (Ubercart).
+      $order = module_invoke_all('fundraiser_get_order', $result->order_id);
+      $order = $order[0];
+      $user = user_load($order->uid);
+      $result->order_total = $order->order_total;
+      $result->name = $user->name;
+      $rows[] = (array) $result;
     }
-    $form['fundraiser_form_layouts']['fundraiser_form_layouts_default'] = array(
-      '#type' => 'select',
-      '#title' => t('Default form layout'),
-      '#description' => t('Select the default form layout.'),
-      '#default_value' => variable_get('fundraiser_form_layouts_default', 'one_column'),
-      '#options' => $form_layouts,
-    );
   }
-  return system_settings_form($form);
+
+  for ($i = 1; $i < count($rows); $i++) {
+    if (($i % 2) == 0) {
+      $class = 'even';
+    }
+    else {
+      $class = 'odd';
+    }
+    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'], 2, '.', '');
+    if ($rows[$i]['gateway_resp'] == 'canceled') {
+      $next_charge = 'Canceled';
+    }
+    else {
+      $next_charge = date("Y-m-d H:i:s", $rows[$i]['next_charge']);
+    }
+    $output .= "<tr class='$class'>
+    <td><a href='/admin/store/orders/" . $rows[$i]['master_order_id'] . "/recurring/edit'>" . $rows[$i]['master_order_id'] . "</a></td>
+    <td>" . $rows[$i]['order_id'] . "</td>
+    <td>" . $rows[$i]['name'] . "</td>
+    <td>" . $rows[$i]['fee_amount'] . "</td>
+    <td>$next_charge</td>
+    </tr>";
+  }
+  $output .= "</table>";
+  return $output;
 }
 
 /**

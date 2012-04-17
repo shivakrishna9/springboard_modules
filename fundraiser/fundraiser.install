@@ -103,6 +103,30 @@ function fundraiser_schema() {
     ),
     'primary key' => array('nid'),
   );
+  $schema['fundraiser_donation'] = array(
+    'description' => 'Store primary donation information.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'Donation ID - other tables call it order_id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'Originating fundraiser node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Donating user',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+  );
   $schema['fundraiser_refund'] = array(
     'description' => 'Stores information about refunds made on donations',
     'fields' => array(
@@ -142,84 +166,6 @@ function fundraiser_schema() {
     'primary key' => array('refund_id'),
     'indexes' => array('refund_order_id' => array('order_id')),
   );
-  $schema['fundraiser_recurring'] = array(
-    'description' => 'Stores information about recurring orders.',
-    'fields' => array(
-      'master_order_id' => array(
-        'description' => 'Master order ID from ubercart.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'order_id' => array(
-        'description' => 'This specific recurring order id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'next_charge' => array(
-        'description' => 'When to charge the order next.',
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'sf_opportunity_id' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'varchar',
-        'length' => '40',
-        'not null' => FALSE,
-      ),
-      'sf_recurring_id' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'int',
-        'not null' => FALSE,
-      ),
-      'sf_stagename' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
-      'sf_sync_status' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'gateway_resp' => array(
-        'description' => 'Gateway response to the charge.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
-      'attempts' => array(
-        'description' => 'Number of attempts made to charge.',
-        'type' => 'int',
-        'not null' => FALSE,
-        'default' => 0,
-      ),
-      'cancellation_reason' => array(
-        'description' => 'If cancelled, reason why.',
-        'type' => 'varchar',
-        'length' => '500',
-        'not null' => FALSE,
-      ),
-      'gateway' => array(
-        'description' => 'Gateway to process order with.',
-        'type' => 'varchar',
-        'length' => '100',
-        'not null' => FALSE,
-      ),
-      'txn_id' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'varchar',
-        'length' => '55',
-        'not null' => FALSE,
-      ),
-    ),
-    'primary key' => array('order_id'),
-  );
-// TODO - all this sf_field stuff, needs to go in its own table. Seriously.
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
     'fields' => array(
@@ -276,7 +222,26 @@ function fundraiser_update_last_removed() {
  * 7.x branch updates below.
  */
 
-// First update post Port:
-// TODO rename all table order_id 
-// Add new table to track fundraiser - nid - uid outside of Ubercart id.
-
+/**
+ * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
+ */
+function fundraiser_update_7000() {
+  // Create new table.
+  $donation_table = fundraiser_schema();
+  db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
+  // Get all existing fundraiser donation information, and load the fundriaser_donation table with it all.
+  // From ubercart's order tables.
+  $donations = db_query('SELECT o.order_id, f.nid, o.uid FROM {uc_orders} o ' .
+   'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id '.
+   'LEFT JOIN {fundraiser} f ON p.nid = f.nid ');
+  foreach ($donations as $donation) {
+    if (isset($donation->order_id) && isset($donation->nid) && isset($donation->uid)) { 
+      $record = array(
+        'did' => $donation->order_id,
+        'nid' => $donation->nid,
+        'uid' => $donation->uid,
+      );
+      drupal_write_record('fundraiser_donation', $record);
+    }
+  }
+}
