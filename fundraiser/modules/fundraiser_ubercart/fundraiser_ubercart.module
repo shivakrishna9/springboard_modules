@@ -244,8 +244,8 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   $donation->donation->order_total = $donation->donation->donation_amount;
   $donation->donation->products[0]->price = $donation->donation->donation_amount;
   // Update the card type based on given card number.
-  $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
-  uc_credit_cache('save', $order->payment_details, FALSE);
+  $donation->donation->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($donation->donation->payment_details['cc_number']);
+  uc_credit_cache('save', $donation->donation->payment_details, FALSE);
   uc_order_save($donation->donation);
   uc_credit_cache('clear');
 }

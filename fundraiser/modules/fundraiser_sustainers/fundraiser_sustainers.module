@@ -64,7 +64,7 @@ function fundraiser_sustainers_menu() {
 
   $items['user/%user/recurring_overview/%'] = array(
     'title' => 'My Recurring Donations',
-    'page callback' => 'fundraiser_sustainers_user_edit_forms',
+    'page callback' => 'fundraiser_sustainers_recurring_overview',
     'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
     'access arguments' => array(1),
     'page arguments' => array(1, 3),
@@ -310,7 +310,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
 /**
  * Menu callback, loads a specific order for the my recurring payments tab.
  */
-function fundraiser_sustainers_user_edit_forms($user, $did) {
+function fundraiser_sustainers_recurring_overview($user, $did) {
   // Grab the context so we have all the data we could need for display / format etc.
   $context = _fundraiser_donation_context();
 
@@ -321,14 +321,25 @@ function fundraiser_sustainers_user_edit_forms($user, $did) {
 
   // Grab all associated donation information.
   $donation = fundraiser_donation_get_donation($did);
-
-  // Get additional forms for display on this page.
-  $donation_amount_form = drupal_render( drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation) );
-  $billing_update_form = drupal_render( drupal_get_form('fundraiser_sustainers_billing_update_form', $donation, $context) );
-  $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $donation) );
+  // Grab the next to be charged for misc info.
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
+  $next_donation = $donation;
+  if ($remaining) {
+    $next_donation = fundraiser_donation_get_donation($remaining[0]->order_id);
+  }
 
   // Check if this order is already cancelled.
-  $cancelled = isset($donation->recurring->cancellation_reason);
+  $cancelled = $next_donation->recurring->cancellation_reason;
+      
+  // Get additional forms for display on this page.
+  $donation_amount_form = t('This recurring donation has been cancelled.');
+  $billing_update_form = t('This recurring donation has been cancelled.');
+  $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
+  if (empty($cancelled)) {
+    $donation_amount_form = drupal_render( drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation) );
+    $billing_update_form = drupal_render( drupal_get_form('fundraiser_sustainers_billing_update_form', $donation, $context) );
+    $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $donation) );
+  }
 
   // Gather further donation data.
   $billing_info = array(
@@ -345,7 +356,7 @@ function fundraiser_sustainers_user_edit_forms($user, $did) {
   $payment_info = array(
     'orders_remaining' => _fundraiser_sustainers_count_donations_recurr_remaining($did),
     'orders_processed' => _fundraiser_sustainers_count_donations_recurr_processed($did),
-    'donation_amount' => $donation->donation->order_total
+    'donation_amount' => $next_donation->donation->order_total
   );
 
   // Format payment schedule into a data table
@@ -371,7 +382,13 @@ function fundraiser_sustainers_user_edit_forms($user, $did) {
   if ($donations) {
     foreach ($donations as $master_donation) {
       $this_donation = fundraiser_donation_get_donation($master_donation->master_order_id);
-      $edit_link = l('$' . money_format('%i', $this_donation->donation->donation_amount),
+      // Grab the next to be charged for misc info.
+      $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->master_order_id);
+      $next_donation = $this_donation;
+      if ($remaining) {
+        $next_donation = fundraiser_donation_get_donation($remaining[0]->order_id);
+      }
+      $edit_link = l('$' . money_format('%i', $next_donation->donation->donation_amount),
         'user/' . $user->uid . '/recurring_overview/' . $master_donation->master_order_id);
       $class = 'recurring-order';
       if ($master_donation->master_order_id == $did) {
@@ -402,7 +419,7 @@ function fundraiser_sustainers_user_edit_forms($user, $did) {
       'billing_form' => $billing_update_form, 
       'cancel_form' => $cancel_form,
       'payment_schedule' => $donation_set,
-      'cancelled' => $cancelled,
+      'cancelled' => !empty($cancelled),
     )
   );
 
@@ -442,7 +459,7 @@ function fundraiser_sustainers_theme_registry_alter(&$theme_registry) {
 /**
  * Creates a form for donation amount update.
  */
-function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donation) {
+function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donation, $next_donation) {
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_order_id,
@@ -454,12 +471,12 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   $form['fee_amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation Amount'),
-    '#default_value' => $donation->donation->donation_amount,
+    '#default_value' => $next_donation->donation->donation_amount,
     '#size' => 10,
     '#required' => TRUE,
     '#description' => t('Your current donation amount is :amount. Minimum donation :minimum.',
       array(
-        ':amount' => money_format('%i', $donation->donation->donation_amount),
+        ':amount' => money_format('%i', $next_donation->donation->donation_amount),
         ':minimum' => money_format('%i', $donation->node->minimum_donation_amount))
       ),
     '#field_prefix' => '$',
@@ -496,7 +513,7 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     $old_amount = $donation->donation->donation_amount;
     $donation->donation->donation_amount = $amount;
     fundraiser_donation_update($donation);
-//TODO set message.
+//TODO set message. NO UC stuff here.
   global $user;
   uc_order_comment_save($donation->did, $user->uid, 
     t('Donation amount changed from :old to :new by an administrator.',
@@ -764,7 +781,7 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
     '#type' => 'submit',
     '#value' => t('Cancel all future payments'),
   );
-  return $form;
+  return $form;  
 }
 
 /**
@@ -782,10 +799,11 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   foreach ($donations as $donation) {
     fundraiser_donation_cancel($donation);
     // TODO move this into a different record loaction.
-    uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. ' .
+    uc_order_comment_save($master_did, $user->uid, 'Order canceled by an administrator. ' .
      'Reason: ' . $reason, 'order', 'canceled', FALSE);
   }
-  _fundraiser_sustainers_cancel_recurring_by_master($donation->did, $reason);
+  //TODO, these are failing to be updated int he recurring table.
+  _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
   drupal_set_message(t('All future payments cancelled.'));
 }
 
@@ -1012,8 +1030,8 @@ function _fundraiser_sustainers_delete_recurring_by_master($master_did) {
 function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
   db_query('UPDATE {fundraiser_recurring} '.
     'SET gateway_resp = \'canceled\', cancellation_reason = :reason '.
-    'WHERE master_order_id = :order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
-    array(':reason' => $reason, ':order_id' => $master_order_id));
+    'WHERE master_order_id = :master_order_id AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
+    array(':reason' => $reason, ':master_order_id' => $master_did));
 }
     
 /**
@@ -1109,7 +1127,7 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
    'LEFT JOIN {fundraiser_donation} d on r.order_id = d.did ' .
    'WHERE r.master_order_id = :master_did ' .
-   'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+   'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\' OR r.gateway_resp = \'canceled\') ' .
    'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
 }
