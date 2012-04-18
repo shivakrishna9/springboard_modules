@@ -4,8 +4,8 @@
  * Implementation of hook_views_default_views().
  */
 function page_wrappers_views_default_views() {
+ 
   $views = array();
-
   // Exported view: page_wrappers
   $view = new view;
   $view->name = 'page_wrappers';
@@ -370,7 +370,7 @@ function page_wrappers_views_default_views() {
       'relationship' => 'none',
     ),
   ));
-  $handler->override_option('header', '<a href="/node/add/page-wrapper">Create New Page Wrapper</a>');
+  $handler->override_option('header', l('Create New Page Wrapper', 'node/add/page-wrapper'));
   $handler->override_option('header_format', '1');
   $handler->override_option('header_empty', 1);
   $handler->override_option('path', 'admin/build/page-wrappers');
