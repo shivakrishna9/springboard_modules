@@ -155,7 +155,8 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 /**
  * Implements hook_fundraiser_donation_form().
  */
-function fundraiser_webform_fundraiser_donation_form($form, $form_state, $context) {
+function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
+  $context = $form['#context'];
   $node = node_load($form['#node']->nid);
 
   // Create a data structure that will tell us exactly where each webform component lives in the FAPI array.

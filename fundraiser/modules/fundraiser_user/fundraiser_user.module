@@ -127,7 +127,8 @@ function fundraiser_user_fundraiser_get_fundraiser_alter($fundraiser) {
 /**
  * Implements hook_fundraiser_donation_form_alter().
  */
-function fundraiser_user_fundraiser_donation_form_alter($form, $form_state, $context) {
+function fundraiser_user_fundraiser_donation_form_alter($form, $form_state) {
+  $context = $form['#context'];
   // Preload any fields if the user is logged in.
   // Loads profile fields in addition to base user data, and de-couples logged in user object.
   global $user;
