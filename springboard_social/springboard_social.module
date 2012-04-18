@@ -9,16 +9,17 @@
  */
 function springboard_social_init() {
   if (arg(0) == 'node' && is_numeric(arg(1))) {
-    $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', arg(1)));
-    if ($node_type == 'donation_form') {
-      $node = node_load(arg(1));
-      springboard_social_load_share($node);
+    // Load the node.
+    $node = menu_get_object();
+    // Add our CSS to the page if it's a donation form and share enabled.
+    if (isset($node->type) && $node->type == 'donation_form') {
       if ($node->fb_share_status) {
         $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_fb.css';
         drupal_add_css($path, 'module', 'all', FALSE);
       }
       if ($node->gplus_share_status) {
         $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_gplus.css';
+        drupal_add_css($path, 'module', 'all', FALSE);
       }
     }
   }
@@ -240,6 +241,12 @@ function springboard_social_load_share(&$node) {
  * Implements hook_nodeapi().
  */
 function springboard_social_nodeapi(&$node, $op) {
+  // This entire function only needs to fire for donation_forms. Anything else
+  // should exit immediately.
+  if ($node->type != 'donation_form') {
+    return;
+  }
+
   switch ($op) {
     case 'load':
       springboard_social_load_share($node);
@@ -326,5 +333,6 @@ function springboard_social_nodeapi(&$node, $op) {
     case 'delete':
       db_query('DELETE FROM {springboard_social_share} WHERE nid = %d', $node->nid);
       // delete from springboard_social_share
+      break;
   }
 }
