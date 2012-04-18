@@ -789,7 +789,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
           array('@did' => $donation->did));
       }
       // Create new orders based on expiration date as needed.
-      //TODO update this with new stuffs.
+      //TODO update this with new stuffs to make this work. Right now it doesn't.
+      // DITTO re cancel if the expire date is short.
       fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year);
       drupal_set_message(t('Billing information successfully updated'));
     }
@@ -855,7 +856,6 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-  //TODO, these are failing to be updated int he recurring table.
   _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
   drupal_set_message(t('All future payments cancelled.'));
 }
@@ -937,8 +937,6 @@ function fundraiser_sustainers_process_recurring_donations() {
   // Loop over the found orders
   foreach ($donations as $recurring) {
     // Recreate the donation to process from the given values.
-    // order_id = did for storing recurring orders. 
-    // TODO rename this column for consistant handling of terms.
     $donation = fundraiser_donation_get_donation($recurring->order_id);
     // The donation information should be at at $donation['donation'], ready to process.
     fundraiser_donation_process($donation);
