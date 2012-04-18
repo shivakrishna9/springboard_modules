@@ -6,426 +6,74 @@
  */
 
 function fundraiser_sustainers_admin() {
-// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
-// TODO signifigant security issues in the previous version of this query, needs to be reviewed on the 6.x branch. - SeH
-  $output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
-  <tr> 
-  <th>OrderID</th>
-  <th>User Name</th>
-  <th>Amount</th>
-  <th>Last Charged</th>
-  </tr>
-  ";
-
-  $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr '.
-    'WHERE fr.order_id = :order_id'.
-    'ORDER BY fr.order_id DESC',
-  array(':order_id' => arg(3)));
-
-  foreach ($results as $result) {
-    // Get the order data from our order handler (Ubercart).
-    $order = module_invoke_all('fundraiser_get_order', $result->order_id);
-    $order = $order[0];
-    $user = user_load($order->uid);
-    $fundraiser = (array) $result;
-    $fundraiser['fee_amount'] = number_format($fundraiser['fee_amount'], 2, '.', '');
-    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $fundraiser['next_charge']));
-    $output .= "<tr>  
-    <td>$fundraiser[order_id]</td>
-    <td>$user[name]</td>
-    <td>$fundraiser[fee_amount]</td>
-    <td>$last_charge</td>
-    </tr>";
-  }
-  $output .= "</table>";
-  return $output;
-}
-
-function fundraiser_sustainers_edit_form($master_order_id) {
-  if (is_numeric($master_order_id)) {
-    return _recurring_donation_edit_forms($master_order_id);
-  }
-}
-
-function _recurring_donation_edit_forms($master_order_id) {
-  // we need an unprocessed child order for billing information
-  $child_order_id = db_query('SELECT order_id FROM {fundraiser_recurring} '.
-    'WHERE master_order_id = :order_id and gateway_resp IS NULL LIMIT 1',
-    array(':order_id' => $master_order_id))->fetchColumn();
-
-  // Get the order data from our order handler (Ubercart).
-  $order = module_invoke_all('fundraiser_get_order', $order_id);
-  $order = $order[0];
-  $nid = $order->products[0]->nid;
-  $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
-
-  // Render multiple forms
-  $output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
-
-  // 4/5/2010 - commented out for time being because authorize.net does not support updating
-  //             CIM profiles at this time
-  // $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
-
-  $output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
-
-  return $output;
-}
-
-// TODO move to ubercart.
-function _get_billing_information($master_order_id, $order) {
-  $state = module_invoke_all('fundraiser_get_country_zone', $order->billing_zone);
-  $state = $state[0];
-  $orders_remaining = _remaining_recurring_charge_count($master_order_id);
-  $orders_processed = _processed_recurring_charge_count($master_order_id);
-  $donation_amount = '$' . money_format('%i', $order->order_total);
-// TODO come back to this - shouldn't this be in a themed template display? - SeH 1/11/12
-  $billing_str = "";
-  $billing_str .= "<div class='order-pane pos-left'>";
-  $billing_str .= "<div class='order-pane-title'>Bill to:</div>";
-  $billing_str .= "$order->billing_first_name $order->billing_last_name<br />";
-  $billing_str .= "$order->billing_street1<br />";
-  if (!empty($order->billing_street2)) {
-    $billing_str .= "$order->billing_street2<br />";
-  }
-  $billing_str .= "$order->billing_city, $state $order->billing_postal_code</div>";
-  $billing_str .= "<div class='order-pane pos-left'>";
-  $billing_str .= "<div class='order-pane-title'>Customer Info:</div>";
-  $billing_str .= "Customer Number: <a href='/user/$order->uid'>$order->uid</a><br />";
-  $billing_str .= "Primary email:<br />$order->primary_email</div>";
-  $billing_str .= "<div class='order-pane pos-left'>";
-  $billing_str .= "<div class='order-pane-title'>Recurring Payment Info:</div>";
-  $billing_str .= "Recurring Donation Amount: $donation_amount<br />";
-  $billing_str .= "Recurring Charges Processed: $orders_processed <br />";
-  $billing_str .= "Recurring Charges Remaining: $orders_remaining <br /></div>";
-  $billing_str .= "<div style='clear:both;'>&nbsp;</div>";
-  return $billing_str;
-}
-
-// TODO move to ubercart.
-function fundraiser_sustainers_master_overview($order_id) {
-// TODO come back to this, we should be using a theme table here, not constructing our own HTML. -SeH 1/11/12
-  $output = "<h2>Recurring Orders</h2>";
-  $output .= "<table><thead>
-  <tr>
-  <th>Master Order ID</th>
-  <th>OrderID</th>
-  <th>User Name</th>
-  <th>Amount</th>
-  <th>Charge Date</th>
-  </tr></thead>
-  ";
-  if (empty($rows[1])) {
-    //we're actually looking at the order id and not the master_order_id
-    $results = db_query('SELECT fr.* FROM {fundraiser_recurring} fr ' .
-      'WHERE master_order_id = (SELECT fr2.master_order_id from {fundraiser_recurring} fr2 where fr2.order_id=:order_id) ' .
-      'ORDER BY fr.order_id ASC',
-    array(':order_id' => $order_id));
-    unset($rows);
-    foreach ($results as $result) {
-      // Get the order data from our order handler (Ubercart).
-      $order = module_invoke_all('fundraiser_get_order', $result->order_id);
-      $order = $order[0];
-      $user = user_load($order->uid);
-      $result->order_total = $order->order_total;
-      $result->name = $user->name;
-      $rows[] = (array) $result;
+  $headers = array('Master Donation ID', 'User', 'Amount', 'Charge Date', 'Status');
+  $rows = array();
+  // Get the data.
+  $donation_sets = _fundraiser_sustainers_get_donation_sets();
+  if ($donation_sets) {
+    foreach ($donation_sets as $donation_set) {
+      $this_donation = fundraiser_donation_get_donation($donation_set->master_order_id);
+      $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_order_id);
+      $next_charge = fundraiser_donation_get_donation($next_charge->order_id);
+      $row = array();
+      $row[] = l($donation_set->master_order_id, 'admin/config/system/fundraiser/recurring/' . $donation_set->master_order_id . '/view');
+      $row[] = $this_donation->user->name;
+      $row[] = '$' . money_format('%i', $next_charge->donation->donation_amount);
+      $row[] = date('m/d/y', $donation_set->next_charge_date);
+      $row[] = $donation_set->status;
+      $rows[] = $row;
     }
   }
-
-  for ($i = 1; $i < count($rows); $i++) {
-    if (($i % 2) == 0) {
-      $class = 'even';
-    }
-    else {
-      $class = 'odd';
-    }
-    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'], 2, '.', '');
-    if ($rows[$i]['gateway_resp'] == 'canceled') {
-      $next_charge = 'Canceled';
-    }
-    else {
-      $next_charge = date("Y-m-d H:i:s", $rows[$i]['next_charge']);
-    }
-    $output .= "<tr class='$class'>
-    <td><a href='/admin/store/orders/" . $rows[$i]['master_order_id'] . "/recurring/edit'>" . $rows[$i]['master_order_id'] . "</a></td>
-    <td>" . $rows[$i]['order_id'] . "</td>
-    <td>" . $rows[$i]['name'] . "</td>
-    <td>" . $rows[$i]['fee_amount'] . "</td>
-    <td>$next_charge</td>
-    </tr>";
-  }
-  $output .= "</table>";
+  $output = '<h2>All Recurring Orders</h2>';
+  $output .= theme('table', array('header' => $headers, 'rows' => $rows));
   return $output;
 }
 
 /**
- * Refund tab on Orders
+ * Menu callback, provides administrators view into recurring donation information.
  */
-function fundraiser_show_refund_form($order_id) {
-  $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_css($base . '/css/refund.css');
-  drupal_add_js($base . '/js/refund.js');
-  return drupal_get_form('fundraiser_refund', $order_id);
+function fundraiser_sustainers_admin_view($did) {
+  $headers = array('Master ID', 'Donation ID', 'User', 'Amount', 'Charge Date', 'Status');
+  $rows = array();
+  // Get the data.
+  $donation = fundraiser_donation_get_donation($did);
+  $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
+  if ($donation_set) {
+    $donation_set = _fundraiser_sustainers_get_donations_recurr_by_masterdid($donation_set[0]->master_order_id);
+  }
+  if ($donation_set) {
+    foreach ($donation_set as $this_donation) {
+      $this_donation = fundraiser_donation_get_donation($this_donation->order_id);
+      $row = array();
+      $row[] = $this_donation->recurring->master_order_id;
+      $row[] = $this_donation->did;
+      $row[] = $this_donation->user->name;
+      $row[] = '$' . money_format('%i', $this_donation->donation->donation_amount);
+      $row[] = date('m/d/y', $this_donation->recurring->next_charge);
+      $row[] = $this_donation->recurring->gateway_resp;
+      $rows[] = $row;
+    }
+  }
+  $output = '<h2>Recurring Orders For #' . $donation_set[0]->master_order_id . '</h2>';
+  $output .= theme('table', array('header' => $headers, 'rows' => $rows));
+  return $output;
 }
 
 /**
- * Refund form
+ * Menu callback, provide way for admins to edit a recurring donation info directly.
  */
-function fundraiser_refund(&$form_state, $order_id) {
-  $form = array();
-  $order = module_invoke_all('fundraiser_get_order', $order_id);
-  $order = $order[0];
-  $form['#order_id'] = $order->order_id;
-
-  // Determine how much has been paid, less previous refunds.
-  $total_paid = module_invoke_all('fundraiser_get_order_paid', $order->order_id);
-  $total_paid = $total_paid[0];
-
-  // Get payment info
-  $payment_info = module_invoke_all('fundraiser_get_order_payment_info', $order->order_id);
-  $payment_info = $payment_info[0];
-
-  // Get refund info
-  $previous_refunds = module_invoke_all('fundraiser_get_order_refund_info', $order->order_id);
-  $previous_refunds = $previous_refunds[0];
-
-  $form['payment_summary'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Payment Summary'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-
-  if (!$payment_info) {
-    $form['payment_summary']['no_payments'] = array(
-      '#value' => 'No payments have been made on this order yet',
-      '#prefix' => '<div>',
-      '#suffix' => '</div>',
-    );
-
-  }
-  else {
-    $form['payment_summary']['payment_number'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment #'),
-      '#value' => $payment_info['receipt_id'],
-    );
-    $formated_price = module_invoke_all('fundraiser_format_price', $payment_info['received']);
-    $form['payment_summary']['payment_date'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment Date'),
-      '#value' => $formated_price[0],
-    );
-    $formated_price = module_invoke_all('fundraiser_format_price', $payment_info['amount']);
-    $form['payment_summary']['payment_total'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment Total'),
-      '#value' => $formated_price[0],
-    );
-    if ($previous_refunds < 0) {
-      $formated_price = module_invoke_all('fundraiser_format_price', $previous_refunds);
-      $form['payment_summary']['total_refunded'] = array(
-        '#type' => 'item',
-        '#title' => t('Total Previously Refunded'),
-        '#value' => $formated_price[0],
-      );
-    }
-  }
-
-  $form['refund_options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Refund Options'),
-    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
-     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-
-  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  $gateway = _fundraiser_get_donation_gateway($order->order_id);
-  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
-  if (!$can_refund || !$payment_info) {
-    // They've made a payment, but it cannot be refunded
-    if ($payment_info) {
-      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
-    }
-    // They have NOT made any payment yet, so there's nothing to refund
-    else {
-      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
-      // Even once the payment is made, they won't be able to refund it
-      if (!$can_refund) {
-        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
-          'make refunds after payments are processed on this order.';
-      }
-    }
-    $form['refund_options']['no_refund_explanation'] = array(
-      '#value' => $no_refund_text,
-      '#prefix' => '<strong>',
-      '#suffix' => '</strong>',
-    );
-  }
-  // Refund options
-  else {
-    $formated_price = module_invoke_all('fundraiser_format_price', $total_paid);
-    $form['refund_options']['full_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Full Refund (%amount)', array('%amount' => $formated_price[0])),
-      '#return_value' => 'full',
-      '#parents' => array('refund_type'),
-    );
-    $form['refund_options']['partial_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Partial Refund'),
-      '#return_value' => 'partial',
-      '#parents' => array('refund_type'),
-    );
-
-    $form['refund_options']['amount'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Amount to Refund'),
-      '#size' => 40,
-      '#maxlength' => 255,
-    );
-    $form['refund_options']['refund_notes'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Refund Notes'),
-      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
-      '#cols' => 60,
-      '#rows' => 5,
-      '#required' => TRUE,
-    );
-    $form['refund_options']['issue_refund'] = array(
-      '#type' => 'submit',
-      '#value' => t('Issue Refund'),
-      '#required' => TRUE,
-    );
-
-    $form['total_paid'] = array(
-      '#type' => 'hidden',
-      '#value' => number_format($total_paid, 2),
-    );
-  }
-
-  return $form;
-}
-
-
-/**
- * Validate the form
- */
-function fundraiser_refund_validate($form, &$form_state) {
-  // Make sure they chose a refund type
-  if (empty($form_state['values']['refund_type'])) {
-    form_set_error('refund_type', t('Choose a refund type.'));
-  }
-  // If it isn't a full refund, make sure they entered a valid value
-  elseif ($form_state['values']['refund_type'] != 'full') {
-    $amount = (float) $form_state['values']['amount'];
-    if (!($amount > 0)) {
-      form_set_error('amount', t('Enter a refund amount.'));
-    }
-    else {
-      // Make sure they don't try to refund more than was paid
-      $order_id = $form['#order_id'];
-      // Determine how much has been paid, less previous refunds
-      $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
-      $total_paid = $total_paid[0];
-      if ($amount > $total_paid) {
-        $context = array(
-          'revision' => 'formatted-original',
-          'type' => 'amount',
-        );
-        $formated_price = module_invoke_all('fundraiser_format_price',$total_paid);
-        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
-          'more than that can be refunded.', array('@paid' => $formated_price[0])));
-      }
-    }
-  }
-}
-
-/**
- * Submit the refund form
- */
-function fundraiser_refund_submit($form, &$form_state) {
-  // Get the order.
-  $order_id = $form['#order_id'];
-
-  // Determine how much has been paid, less previous refunds
-  $total_paid = module_invoke_all('fundraiser_get_order_paid', $order_id);
-  $total_paid = $total_paid[0];
-
-  // Partial refund
-  if ($form_state['values']['refund_type'] != 'full') {
-    $new_order_status = 'partially_refunded';
-    $amount = (float) $form_state['values']['amount'];
-    // Can't refund more than they've paid
-    // Use >= so that the status is set properly if they choose Partial Refund
-    // but refund the entire amount
-    if ($amount >= $total_paid) {
-      $amount = $total_paid;
-      $new_order_status = 'refunded';
-    }
-  }
-  // Full refund
-  else {
-    $new_order_status = 'refunded';
-    $amount = $total_paid;
-  }
-
-  // Make the charge amount negative
-  $amount = abs($amount) * -1;
-
-  // Get details on the original payment so we can load the payment gateway details
-  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} ' .
-    'WHERE order_id = :order_id ' .
-    'UNION '.
-    'SELECT gateway, txn_id FROM {fundraiser_recurring} '. 
-    'WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchObject();
-
-  if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($payment_details->gateway);
-    $refund_function = $info['refund_function'];
-    $data['config'] = $info['config'];
-  }
-  else {
-    $refund_function = fundraiser_refund_function($node->gateway);
-  }
-
-  // call the refund function and store the result
-  $result = $refund_function($order_id, $amount, $data);
-
-  if ($result['success']) {
-
-    $receipt_id = module_invoke_all('fundraiser_order_refund', $order_id, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
-    $receipt_id = $receipt_id[0];
-
-    // Save refund data for Fundraiser.
-    $refund = new stdClass();
-    $refund->order_id = $order_id;
-    $refund->receipt_id = $receipt_id;
-    $refund->amount = $amount;
-    $refund->txn_id = $result['data']['txn_id'];
-    $refund->reason = $reason;
-    drupal_write_record('fundraiser_refund', $refund);
-
-    // If using the Salesforce queue, queue up the updates
-    // This could be on hook couldn't it? - SeH
-    if (module_exists('queue_api')) {
-      // Update the original order
-      sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-      // Create the refund
-      sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
-    }
-
-    drupal_set_message(t('Refund has been issued.'), 'status');
-    drupal_goto('admin/store/orders/' . $order_id);
-  }
-  else {
-    // failed to process credit cart
-    $log_error = 'Refund on order ' . $order_id . ' failed gateway validation. Reason: ' . $result['message'];
-    watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
-    drupal_set_message($result['message']);
-    $form_state['rebuild'] = TRUE;
-    $form_state['values']['abort'] = TRUE;
+function fundraiser_sustainers_admin_edit($did) {
+  if (is_numeric($did)) {
+    $donation = fundraiser_donation_get_donation($did);
+    $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
+    $variables = fundraiser_sustainers_edit_form($donation->user, $donation_set[0]->master_order_id);
+    // TODO revise some of the theming here to account for this wierdness. It's too complex for sanity as is.
+    // Add additional info about the donator for the admin.
+    //$variables['billing_info'] .= 'Customer Number: <a href=\'/user/'.$donation->uid.'\'>'.$donation->user->name .' ('.$donation->uid.')</a><br />';
+    //$variables['billing_info'] .= 'Primary email: '. $donation->user->name .'</div>';
+    // Remove things we don't need the admin to use.
+    $variables['orders'] = '';
+    $variables['billing_form'] = '';
+    return theme('sustainer_management_page', $variables);
   }
 }
