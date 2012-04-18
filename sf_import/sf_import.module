@@ -54,11 +54,18 @@ function sf_import_cron() {
   $sf = salesforce_management_api_connect();
   if (is_object($sf)) {
 
-    $results = db_query("select f.fieldmap, f.drupal, f.salesforce, f.fields, f.businessSD, s.frequency, s.frequency_type, 
-      s.last_import, s.filters, s.updated_objects_only, s.import_new_objects from {sf_import_schedule} s
-      inner join {salesforce_management_field_map} f on f.fieldmap = s.fieldmap where s.next_import < unix_timestamp()");
+    $queue_processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+    $results = db_query(
+      'SELECT f.fieldmap, f.drupal, f.salesforce, f.fields, f.businessSD, s.frequency, s.frequency_type, 
+         s.last_import, s.filters, s.updated_objects_only, s.import_new_objects
+       FROM {sf_import_schedule} s
+       INNER JOIN {salesforce_management_field_map} f ON f.fieldmap = s.fieldmap 
+       WHERE s.next_import < unix_timestamp()
+       ORDER BY FIELD(f.drupal, ' . db_placeholders($queue_processing_order, 'varchar') . ');',
+      $queue_processing_order
+    );
 
-    while($data = db_fetch_object($results)) {
+    while ($data = db_fetch_object($results)) {
 
       // construct a query to submit to salesforce using the fields in the fieldmap
       $fields = unserialize($data->fields);
