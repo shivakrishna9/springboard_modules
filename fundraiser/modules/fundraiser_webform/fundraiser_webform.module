@@ -886,8 +886,13 @@ function _fundraiser_webform_create_components($fundraiser) {
  */
 function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
   // Tweak the field with a callback as needed.
-  if (isset($field['#callback']) && function_exists($field['#callback'])) {
-    $field = call_user_func($field['#callback'], $fundraiser, $field);
+  if (isset($field['#submit_callback']) && function_exists($field['#submit_callback'])) {
+    $field = call_user_func($field['#submit_callback'], $fundraiser, $field);
+  }
+  if (empty($field)) {
+    // The submit callback has the option of returning nothing to cancel creating the field.
+    // If so, return to skip.
+    return;
   }
   if (!isset($field['#type'])) {
     drupal_set_message('Error in creating component: '.print_r($field,TRUE));

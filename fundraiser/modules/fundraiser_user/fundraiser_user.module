@@ -336,7 +336,7 @@ function _fundraiser_user_create_component_map($component_map) {
 /**
  * CRUD style DB function for fundraiser_component_map.
  */
-function _fundraiser_user_get_component_map_by_nid_cid($nid, $did) {
+function _fundraiser_user_get_component_map_by_nid_cid($nid, $cid) {
   return db_query('SELECT * FROM {fundraiser_component_map} ' .
     'WHERE nid = :nid ' .
     'AND cid = :cid',
