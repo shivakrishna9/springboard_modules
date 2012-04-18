@@ -156,7 +156,6 @@ function sf_import_settings_delete($form, &$form_state) {
  * Form submission handler. Saves import settings to databaes
  */
 function sf_import_settings_form_submit($form, &$form_state) {
-
 	$table = 'sf_import_schedule';
 	$record = new stdClass();
 	$record->fieldmap = arg(4);
@@ -165,9 +164,24 @@ function sf_import_settings_form_submit($form, &$form_state) {
 	$record->import_new_objects = $form_state['values']['criteria']['import_new_objects'];
 	$record->frequency = $form_state['values']['frequency']['interval'];
 	$record->frequency_type = $form_state['values']['frequency']['interval_type'];
+
+	// make sure next_import isn't later than now + periodicity
+	$max_next_import = strtotime('+' . $record->frequency . ' ' . $record->frequency_type);
+	if (!($form_state['values']['next_import']) || $form_state['values']['next_import'] > $max_next_import) {
+	  $record->next_import = $max_next_import;
+	}
+	
+	// warn if periodicity is less than interval since last cron
+	if (($cron_last = variable_get('cron_last', FALSE)) && (time() - $cron_last > $max_next_import - time())) {
+	  drupal_set_message(
+      t('The last cron run was %interval ago, so it may not be running frequently enough for @frequency-@unit imports.', 
+        array('%interval' => format_interval(time() - $cron_last), '@frequency' => $record->frequency, '@unit' => substr($record->frequency_type, 0, -1))
+      ),
+      'warning'
+    );
+	}
 	
 	if ($form_state['values']['is_new']) {
-		$record->next_import = strtotime('+'. $record->frequency . ' ' . $record->frequency_type);
 		drupal_write_record($table, $record);
 	}
 	else {
