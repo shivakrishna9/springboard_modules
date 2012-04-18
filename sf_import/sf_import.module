@@ -94,6 +94,10 @@ function sf_import_cron() {
           $query .= ' and ' . $filters;
         }
       }
+      foreach (module_implements('sf_import_query_alter') as $module) {
+        $function = $module . '_sf_import_query_alter';
+        $function($query, $data);
+      }
 
       // query salesforce 
       $objects = $sf->client->query($query);
