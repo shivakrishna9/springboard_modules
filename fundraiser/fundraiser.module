@@ -1138,6 +1138,8 @@ function fundraiser_donation_update($donation) {
     'uid' => $donation->uid
   );
   _fundraiser_update_donation($donation_record);
+  // Refresh the cache. No need to change the donation object passed in, but stored value should be zapped.
+  fundraiser_donation_get_donation($donation->did, TRUE);
 }
 
 /**
@@ -1184,7 +1186,13 @@ function fundraiser_donation_success($donation) {
 /**
  * CRUD style donation get.
  */
-function fundraiser_donation_get_donation($did) {
+function fundraiser_donation_get_donation($did, $refresh = FALSE) {
+  // Pull from cached donation unless we are refreshing the cache.
+  static $donations;
+  if (!$refresh && isset($donations['did'])) {
+    return $donations['did'];
+  }
+  // If refreshing, or first load, pull all data from database.
   $donation = (object) array();
   $donation->did = $did;
   $donation->did = $did;
@@ -1199,10 +1207,11 @@ function fundraiser_donation_get_donation($did) {
     $donation->gateway = $gateway;
     $donation->node->gateway = $gateway;
   }
-
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_get_donation', $donation);
+  // Store the donation information into the cache.
+  $donations[$did] = $donation;
   return $donation;
 }
 
@@ -1266,8 +1275,12 @@ function fundraiser_donation_cancel($donation) {
  * Helper function, retrieve donation context as needed.
  */
 function _fundraiser_donation_context() {
-  $context = (object) array();
-  module_invoke_all('fundraiser_donation_form_context', $context);
+  // Pull from cached context during page execution.
+  static $context;
+  if (empty($context)) {
+    $context = (object) array();
+    module_invoke_all('fundraiser_donation_form_context', $context);
+  }
   return $context;
 }
 
@@ -1556,9 +1569,8 @@ function _fundraiser_field_blacklist() {
  * Helper function, collects gateway information by calling hook_fundraiser_gateway_info.
  */
 function _fundraiser_gateway_info($id = NULL) {
-  static $gateways = array();
-  // Cache the gateway during page load / processing.
-  // This does not cache across page load.
+  static $gateways;
+  // Cache the gateway during page execution.
   if (empty($gateways)) {
     if (module_exists('gateway_manager')) {
       $gateways = gateway_manager_gateway_info($payment_details->gateway);
@@ -1583,7 +1595,12 @@ function _fundraiser_gateway_info($id = NULL) {
  * Helper function, determine if this node type supports donation forms.
  */
 function _fundraiser_is_donation_type($type) {
-  return variable_get('fundraiser_' . $type, FALSE);
+  static $fundraiser_types;
+  // Cache fundraiser content types during page execution.
+  if (!isset($fundraiser_types[$type])) {
+    $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+  }
+  return $fundraiser_types[$type];
 }
 
 /**
@@ -1814,6 +1831,8 @@ function _fundraiser_get_donation_by_did($did) {
  */
 function _fundraiser_update_donation($donation) {
   // Cast donation just in case.
+  $donation = (array) $donation;
+  // Check for old data.
   $donation_data = FALSE;
   if (isset($donation['did'])) {
     $donation_data = _fundraiser_get_donation_by_did($donation['did']);

@@ -384,11 +384,11 @@ function fundraiser_sustainers_recurring_overview($user, $did) {
       $this_donation = fundraiser_donation_get_donation($master_donation->master_order_id);
       // Grab the next to be charged for misc info.
       $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->master_order_id);
-      $next_donation = $this_donation;
+      $this_next_donation = $this_donation;
       if ($remaining) {
-        $next_donation = fundraiser_donation_get_donation($remaining[0]->order_id);
+        $this_next_donation = fundraiser_donation_get_donation($remaining[0]->order_id);
       }
-      $edit_link = l('$' . money_format('%i', $next_donation->donation->donation_amount),
+      $edit_link = l('$' . money_format('%i', $this_next_donation->donation->donation_amount),
         'user/' . $user->uid . '/recurring_overview/' . $master_donation->master_order_id);
       $class = 'recurring-order';
       if ($master_donation->master_order_id == $did) {
@@ -851,6 +851,11 @@ function _fundraiser_sustainers_expand_date($element) {
       '#value' => $element['#value'][$type],
       '#attributes' => $element['#attributes'],
       '#options' => $options,
+    );
+    // Hide element day.
+    $element['day'] = array(
+      '#type' => 'hidden',
+      '#value' => 1,
     );
   }
   return $element;
