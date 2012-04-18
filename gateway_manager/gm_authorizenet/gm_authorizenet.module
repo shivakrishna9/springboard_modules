@@ -10,6 +10,15 @@
 define('gm_authorizenet_TEST_GATEWAY_URL', 'https://test.authorize.net/gateway/transact.dll');
 define('gm_authorizenet_LIVE_GATEWAY_URL', 'https://secure.authorize.net/gateway/transact.dll');
 
+
+// Define some error codes used to check the error type
+DEFINE('AUTH_NET_ERROR_DUPLICATE_TRANSACTION', 11);
+DEFINE('AUTH_NET_ERROR_CC_NUMBER_INVALID', 37);
+DEFINE('AUTH_NET_ERROR_INVALID_METHOD', 70);
+DEFINE('AUTH_NET_ERROR_INVALID_FORM_TYPE', 81);
+DEFINE('AUTH_NET_ERROR_AVS_MISMATCH', 127);
+
+
 /**
  * Implementation of hook_menu().
  */
@@ -523,7 +532,23 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // Determine what kind of error happened
     $response_code = $response[2];
     $error_type = 'billing';
-    if (($response_code > 10 && $response_code != 37 && $response_code < 71) || ($response_code > 80 && $response_code != 127)) {
+    /**
+     * Check the error code from authorize.net to determine if the error was a
+     * problem with the gateway (invalid credentials, duplicate transaction,
+     * etc) or a billing error (incorrect credit card number or CVV, etc).
+     *
+     * Unfortunately, the error codes aren't in any particular order, so simple
+     * billing errors are mixed in with more difficult-to-remedy errors,
+     * necessitating this complex logic to determine the error type.
+     *
+     * Error codes can be found here, under Transaction Response > Response Code
+     * Details
+     * http://developer.authorize.net/guides/DPM/wwhelp/wwhimpl/js/html/wwhelp.htm
+     */
+    if (($response_code >= AUTH_NET_ERROR_DUPLICATE_TRANSACTION
+          && $response_code != AUTH_NET_ERROR_CC_NUMBER_INVALID
+          && $response_code <= AUTH_NET_ERROR_INVALID_METHOD)
+        || ($response_code >= AUTH_NET_ERROR_INVALID_FORM_TYPE && $response_code != AUTH_NET_ERROR_AVS_MISMATCH)) {
       $error_type = 'gateway';
     }
 
