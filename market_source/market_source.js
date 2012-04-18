@@ -14,16 +14,16 @@ Drupal.behaviors.marketSourceInit = function (context) {
      */
     var urlParams = {};
     (function () {
-      var e,
-          a = /\+/g, // Regex for replacing addition symbol with a space
-          r = /([^&=]+)=?([^&]*)/g,
-          d = function (s) {
-            return decodeURIComponent(s.replace(a, " "));
+      var parsed,
+          regex = /([^&=]+)=?([^&]*)/g,
+          decode = function (value) {
+            // Regex for replacing addition symbol with a space
+            return decodeURIComponent(value.replace(/\+/g, " "));
           },
-          q = window.location.search.substring(1);
-      while (e = r.exec(q)) {
-        var keyname = new String(d(e[1]));
-        urlParams[keyname.toLowerCase()] = d(e[2]);
+          querystring = window.location.search.substring(1);
+      while (parsed = regex.exec(querystring)) {
+        var keyname = new String(decode(parsed[1]));
+        urlParams[keyname.toLowerCase()] = decode(parsed[2]);
       }
     })();
 
