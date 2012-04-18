@@ -256,8 +256,8 @@ function secure_prepopulate_submit(&$form, &$form_state) {
  *   The cipher text to decrypt. 
  */
 function secure_prepopulate_decrypt($cipher) {
-  $key = variable_get('secure_prepopulate_key', NULL);
-  $iv = variable_get('secure_prepopulate_iv', NULL);
+  $key = decrypt(variable_get('secure_prepopulate_key', NULL));
+  $iv = decrypt(variable_get('secure_prepopulate_iv', NULL));
   
   if (!$key || !$iv) {
     // log error and exit because we can't continue without a key

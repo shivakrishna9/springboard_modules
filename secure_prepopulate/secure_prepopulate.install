@@ -65,3 +65,24 @@ function secure_prepopulate_schema() {
   
   return $schema;
 }
+
+/**
+ * Implements hook_update().
+ * 
+ * Encrypt sensitive settings in the variable table.
+ * @see http://drupal.org/project/encrypt
+ */
+function secure_prepopulate_update_6001() {
+  module_load_include('module', 'encrypt');
+
+  $key = variable_get('secure_prepopulate_key', '');
+  $vector = variable_get('secure_prepopulate_iv', '');
+
+  if ($key) {
+    variable_set('secure_prepopulate_key', encrypt($key));
+  }
+  if ($vector) {
+    variable_set('secure_prepopulate_iv', encrypt($vector));
+  }
+
+}
