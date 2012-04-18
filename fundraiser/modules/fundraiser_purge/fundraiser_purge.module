@@ -1,0 +1,269 @@
+<?php
+
+/**
+ * @file
+ *
+ * This module is used to delete old donations from the system.
+ */
+ 
+/**
+ * Implemenation of hook_menu().
+ */
+function fundraiser_purge_menu() {
+  $items['admin/settings/fundraiser/purge'] = array(
+		'title' => t('Purge settings'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('fundraiser_purge_settings_form'),
+		'access arguments' => array('configure fundraiser purge'),
+		'file' => 'fundraiser_purge.admin.inc',
+		'type' => MENU_NORMAL_ITEM,
+	);
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function fundraiser_purge_perm() {
+  return array('configure fundraiser purge');
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function fundraiser_purge_cron() {
+  // get the purge age
+  $purge_age = variable_get('fundraiser_purge_age', 0);
+  
+  // no purge, return
+  if ($purge_age == 0) {
+    return;
+  }
+  
+  // get the ids of all the orders being purged
+  $purged_orders = _fundraiser_purge_order_ids($purge_age);
+
+  // webform submitted data
+  _fundraiser_purge_webform_submitted_data($purge_age);
+  // webform submissions
+  _fundraiser_purge_webform_submissions($purge_age);
+  // fundraiser webform order
+  _fundraiser_purge_webform_orders($purge_age);
+  // payment receipts
+  _fundraiser_purge_payment_receipts($purge_age);
+  // order log
+  _fundraiser_purge_order_log($purge_age);
+  // order comments
+  _fundraiser_purge_order_comments($purge_age);
+  // order admin comments
+  _fundraiser_purge_order_admin_comments($purge_age);
+  // order products
+  _fundraiser_purge_order_products($purge_age);
+  // orders
+  _fundraiser_purge_orders($purge_age);
+  
+  // log the purge
+  $purge_count = count($purged_orders);
+  watchdog('fundraiser_purge', 'Fundraiser purge has deleted @count donations that have been in the system longer then @age days.', array('@count' => $purge_count, '@age' => $purge_age), WATCHDOG_INFO);
+  
+  // invoke hook_fundraiser_purge that other modules can use for clean up
+  module_invoke_all('fundraiser_purge', $purged_orders);
+}
+
+/**
+ * Returns an array of order ids that were purged.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_order_ids($age) {
+  $order_ids = array();
+  $result = db_query("
+    SELECT order_id FROM {uc_orders} WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+    AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
+    AND order_id NOT IN (SELECT DISTINCT master_order_id FROM {fundraiser_recurring}) 
+    AND order_id NOT IN (SELECT order_id FROM {fundraiser_recurring})
+    ", $age);
+  while ($data = db_fetch_array($result)) {
+    $order_ids[] = $data['order_id'];
+  }
+  
+  return $order_ids;
+}
+
+/**
+ * Deletes webform_submitted_data.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_webform_submitted_data($age) {
+  db_query(
+    "
+      DELETE FROM {webform_submitted_data} 
+      WHERE sid IN (
+      SELECT fwo.sid FROM {fundraiser_webform_order} fwo 
+      INNER JOIN {uc_orders} o
+      ON o.order_id = fwo.order_id 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND o.order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes webform_submissions.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_webform_submissions($age) {
+  db_query(
+    "
+      DELETE FROM {webform_submissions} 
+      WHERE sid IN (
+      SELECT fwo.sid FROM {fundraiser_webform_order} fwo 
+      INNER JOIN {uc_orders} o
+      ON o.order_id = fwo.order_id 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND o.order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes fundraiser_webform_order records.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_webform_orders($age) {
+  db_query(
+    "
+      DELETE FROM {fundraiser_webform_order} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
+      AND order_id NOT IN (SELECT DISTINCT master_order_id FROM {fundraiser_recurring}))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_payment_receipts.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_payment_receipts($age) {
+  db_query(
+    "
+      DELETE FROM {uc_payment_receipts} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_order_log records.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_order_log($age) {
+  db_query(
+    "
+      DELETE FROM {uc_order_log} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_order_comments.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_order_comments($age) {
+  db_query(
+    "
+      DELETE FROM {uc_order_comments} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_order_admin_comments.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_order_admin_comments($age) {
+  db_query(
+    "
+      DELETE FROM {uc_order_admin_comments} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_order_products.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_order_products($age) {
+  db_query(
+    "
+      DELETE FROM {uc_order_products} 
+      WHERE order_id IN (
+      SELECT order_id FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed'))
+    ", 
+    $age
+  );
+}
+
+/**
+ * Deletes uc_orders.
+ *
+ * @param $age
+ *   The number of days that orders are allowed to remain in the system.
+ */
+function _fundraiser_purge_orders($age) {
+  db_query(
+    "
+      DELETE FROM {uc_orders} 
+      WHERE datediff(utc_timestamp(), from_unixtime(created)) > %d
+      AND order_status IN ('payment_received', 'refunded', 'partially_refunded', 'failed')
+      AND order_id NOT IN (SELECT DISTINCT master_order_id FROM {fundraiser_recurring}) 
+      AND order_id NOT IN (SELECT order_id FROM {fundraiser_recurring})
+    ", 
+    $age
+  );
+}
