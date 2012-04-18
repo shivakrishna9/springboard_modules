@@ -14,15 +14,16 @@ Drupal.behaviors.marketSourceInit = function (context) {
      */
     var urlParams = {};
     (function () {
-      var e,
-          a = /\+/g, // Regex for replacing addition symbol with a space
-          r = /([^&=]+)=?([^&]*)/g,
-          d = function (s) {
-            return decodeURIComponent(s.replace(a, " "));
+      var parsed,
+          regex = /([^&=]+)=?([^&]*)/g,
+          decode = function (value) {
+            // Regex for replacing addition symbol with a space
+            return decodeURIComponent(value.replace(/\+/g, " "));
           },
-          q = window.location.search.substring(1);
-      while (e = r.exec(q)) {
-        urlParams[d(e[1])] = d(e[2]);
+          querystring = window.location.search.substring(1);
+      while (parsed = regex.exec(querystring)) {
+        var keyname = new String(decode(parsed[1]));
+        urlParams[keyname.toLowerCase()] = decode(parsed[2]);
       }
     })();
 
@@ -93,6 +94,8 @@ Drupal.behaviors.marketSourceInit = function (context) {
     if (typeof qs_keys['referrer'] !== 'undefined') {
       // Store the referrer value in our qs_keys.
       qs_keys['referrer'] = referrer;
+      // Set the referrer cookie for backwards compat.
+      setCookie('referrer', qs_keys['referrer']);
     }
 
   }).addClass('marketsource-processed');
