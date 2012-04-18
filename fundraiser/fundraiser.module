@@ -1137,7 +1137,7 @@ function fundraiser_donation_update($donation) {
     'nid' => $donation->nid,
     'uid' => $donation->uid
   );
-  _fundraiser_update_donation($donation_record); //TODO consider merging this with the CRUD function.
+  _fundraiser_update_donation($donation_record);
 }
 
 /**
@@ -1556,14 +1556,17 @@ function _fundraiser_field_blacklist() {
  * Helper function, collects gateway information by calling hook_fundraiser_gateway_info.
  */
 function _fundraiser_gateway_info($id = NULL) {
-  //TODO add caching to this.
-  $gateways = array();
-  if (module_exists('gateway_manager')) {
-    $gateways = gateway_manager_gateway_info($payment_details->gateway);
-  }
-  else {
-    $gateways = module_invoke_all('fundraiser_gateway_info');
-    drupal_alter('fundraiser_gateway_info', $gateways);
+  static $gateways = array();
+  // Cache the gateway during page load / processing.
+  // This does not cache across page load.
+  if (empty($gateways)) {
+    if (module_exists('gateway_manager')) {
+      $gateways = gateway_manager_gateway_info($payment_details->gateway);
+    }
+    else {
+      $gateways = module_invoke_all('fundraiser_gateway_info');
+      drupal_alter('fundraiser_gateway_info', $gateways);
+    }
   }
   // Look up the gateway needed.
   if ($id != NULL) {
