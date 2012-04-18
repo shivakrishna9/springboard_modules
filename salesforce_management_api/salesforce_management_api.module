@@ -846,7 +846,7 @@ function salesforce_management_api_fieldmap_rid_load($rid) {
  *   The index of the fieldmap used to generate the export.
  */
 function salesforce_management_api_id_save($drupal_type, $oid, $sfid, $fieldmap) {
-  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = '%s'", $drupal_type, $oid);
+  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND (oid = '%s' OR sfid = '%s')", $drupal_type, $oid, $sfid);
   db_query("INSERT INTO {salesforce_management_object_map} (drupal_type, oid, sfid, fieldmap) VALUES ('%s', '%s', '%s', %d)", $drupal_type, $oid, $sfid, $fieldmap);
 }
 
