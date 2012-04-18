@@ -1292,7 +1292,7 @@ function _fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#callback' => '_fundraiser_field_info_amount_callback',
+    '#submit_callback' => '_fundraiser_field_info_amount_callback',
   );
   $fields['donation']['other_amount'] = array(
     '#name' => 'Other',
@@ -1303,7 +1303,7 @@ function _fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#callback' => '_fundraiser_field_info_other_amount_callback',
+    '#submit_callback' => '_fundraiser_field_info_other_amount_callback',
   );
   $fields['donor_information'] = array(
     '#name' => 'Your Information',
