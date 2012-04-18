@@ -1,0 +1,5 @@
+core = "6.x"
+name = "Springboard Compliance"
+package = "Jackson River Springboard - extras"
+project = ""
+version = "6.x-dev"
