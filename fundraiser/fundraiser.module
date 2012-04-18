@@ -447,28 +447,28 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   _fundraiser_update_fundraiser($fundraiser);
 }
 
-// TODO REMOVE THIS WE ARE NOT FOLLOWING THIS PATH IN THE FUTURE.
-// NO MORE OF THIS.
-// SERIOUSLY.
-// Replace with a 'is this a donation type' flag for donation info to attach to a node type.
-// For now, use Features or somethign to make sure donation_type has been created in the system.
 /**
- * Implements hook_node_info().
+ * Implements hook_form_alter().
  *
-function fundraiser_node_info() {
-  return array(
-    'donation_form' => array(
-      'name' => t('Donation Form'),
-      'base' => 'fundraiser', // All the functions are in fundraiser_X form.
-      'description' => t('Create a flexible form that users can use to donate to noble causes.'),
-      'help' => t('Create a flexible form that users can use to donate to noble causes.'),
-      'has_title' => TRUE,
-      'title_label' => t('Title'),
-      'locked' => TRUE,
-    ),
-  );
+ * Alter content type settings to add "Enable fundraiser?" checkbox.
+ */
+function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['type'])) {
+    $form['fundraiser_type'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['fundraiser_type']['fundraiser'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable fundraiser?'),
+      '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
+    );
+  }
 }
-*/
 
 /**
  * Node API Functions. Handle for each case of node operation.
@@ -827,6 +827,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
   // Such as available states and zones or the like. This information is provided
   // once from whatever module may need to set data to whatever module implements it.
   $context = _fundraiser_donation_context();
+  $form['#context'] = $context;
   // Add validation and submit routines for fundraiser to get called during submission.
   // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
   // We add these first to make sure they're available for the hook call.
@@ -834,9 +835,9 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#submit'][] = 'fundraiser_donation_submit';
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
-  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state, $context);
+  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
   // Call hook to allow final manipulations.
-  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state, $context);
+  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
   return $form;
 }
 
@@ -861,8 +862,8 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * Called from glue display module to submit additional data.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
-  // Retrieve context information for use later.
-  $context = _fundraiser_donation_context();
+  // Retrieve context information for use.
+  $context = $form['#context'];
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
   $donation->context = $context;
@@ -1579,8 +1580,7 @@ function _fundraiser_gateway_info($id = NULL) {
  * Helper function, determine if this node type supports donation forms.
  */
 function _fundraiser_is_donation_type($type) {
-  // TODO move this to a setting check, not a specific node type. Add caching.
-  return ($type == 'donation_form');
+  return variable_get('fundraiser_' . $type, FALSE);
 }
 
 /**
