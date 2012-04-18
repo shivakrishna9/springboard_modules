@@ -172,6 +172,22 @@ function fundraiser_sustainers_check_access($did) {
 }
 
 /**
+ * Implementation of hook_order().
+ * From http://www.ubercart.org/docs/api/hook_order
+ * When an order is deleted, keep fundraiser tables in sync. if it's a donation too.
+ */
+function fundraiser_sustainers_order($op, &$arg1, $arg2) {
+  switch ($op) {
+    case 'delete':
+      $donation = fundraiser_donation_get_donation($arg1->order_id);
+      if ($donation) {
+        fundraiser_donation_cancel($donation);
+      }
+      break;
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_sustainers_fundraiser_donation_success($donation) {
