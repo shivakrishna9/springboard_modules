@@ -357,7 +357,7 @@ function process_batches($ids) {
 			module_invoke_all('queue_processor', 'connection_error');
 			return;
 		}
-		
+
 		// if we got a response, process it
 		if (!empty($response)) {
 			process_batch_response($batch, $response);
@@ -959,15 +959,16 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 					
 				case 'boolean':
 				  if (is_string($value)) {
-				    switch (strtolower($value)) {
-				      case 'true':
-				      case '1':
-				        $value = 1;
-				        break;
-				      default:
-				        $value = 0; // default to false
+				    // get the list of string values that are considered true
+				    $valid_booleans = explode(',', variable_get('queue_processor_valid_booleans', 'true,yes,y,1'));
+				    // if the value is in the array set value as a SF friendly boolean true (1)
+				    if (in_array(strtolower(trim($value)), $valid_booleans)) {
+				      $value = 1;
 				    }
-				  }
+            else {
+              $value = 0; // default to false
+				    }
+          }
 				  else {
 				    $value = !empty($value) ? $value : 0; // default to false
 				  }

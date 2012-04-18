@@ -148,6 +148,20 @@ function queue_processor_admin_settings() {
     '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/queue_processor_cron'),
     '#default_value' => variable_get('queue_processor_standalone_cron_enabled', 0),
   );
+  
+  $form['queue_processor_validation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Validation settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  
+  $form['queue_processor_validation']['queue_processor_valid_booleans'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Mapped values to be considered true'),
+    '#description' => t('Enter a comma delimited list of values that will be converted to a true boolean value when exported to Salesforce.'),
+    '#default_value' => variable_get('queue_processor_valid_booleans', 'true,yes,y,1'),
+  );
 
 	// Actions
   $form['submit'] = array(
@@ -203,6 +217,7 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
 	variable_set('queue_summary_email', $form_state['values']['queue_summary_email']);
 	variable_set('queue_heap_destination', $form_state['values']['queue_heap_destination']);
 	variable_set('queue_retry_delay', $form_state['values']['queue_retry_delay']);
+	variable_set('queue_processor_valid_booleans', $form_state['values']['queue_processor_valid_booleans']);
   
 	drupal_set_message(t('Settings have been saved.'));
 }
@@ -217,6 +232,7 @@ function queue_processor_admin_settings_reset($form, &$form_state) {
 	variable_set('queue_summary_email', NULL);
 	variable_set('queue_heap_destination', 'queue');
 	variable_set('queue_retry_delay', 24);
+	variable_set('queue_processor_valid_booleans', 'true,yes,y,1');
 	
 	drupal_set_message(t('Settings have been reset.'));
 }
