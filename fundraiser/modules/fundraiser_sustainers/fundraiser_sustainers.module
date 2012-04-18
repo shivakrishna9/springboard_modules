@@ -52,25 +52,6 @@ function fundraiser_sustainers_permission() {
  * Implements hook_menu().
  */
 function fundraiser_sustainers_menu() {
-  $items['user/%user/recurring_overview'] = array(
-    'title' => 'My Recurring Donations',
-    'page callback' => 'fundraiser_sustainers_user_overview',
-    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
-    'access arguments' => array(1),
-    'page arguments' => array(1),
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-  );
-
-  $items['user/%user/recurring_overview/%'] = array(
-    'title' => 'My Recurring Donations',
-    'page callback' => 'fundraiser_sustainers_recurring_overview',
-    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
-    'access arguments' => array(1),
-    'page arguments' => array(1, 3),
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-  );
   // Add the cron handler if it's enabled.
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
     $items['fundraiser_cron'] = array(
@@ -79,36 +60,90 @@ function fundraiser_sustainers_menu() {
       'type' => MENU_CALLBACK,
     );
   }
+  // User interface.
+  $items['user/%user/recurring_overview'] = array(
+    'title' => 'My Recurring Donations',
+    'page callback' => 'fundraiser_sustainers_user_overview',
+    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
+    'access arguments' => array(1),
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['user/%user/recurring_overview/%'] = array(
+    'title' => 'My Recurring Donations',
+    'page callback' => 'fundraiser_sustainers_edit',
+    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
+    'access arguments' => array(1),
+    'page arguments' => array(1, 3),
+    'type' => MENU_LOCAL_TASK,
+  );
+  // Admin interface.
   $items['admin/config/system/fundraiser/recurring'] = array(
-    'title' => 'Recurring Donations',
+    'title' => 'Recurring',
     'page callback' => 'fundraiser_sustainers_admin',
     'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
+    'access arguments' => array('update', 1), // TODO create a better access system here. Better perms.
     'file' => 'fundraiser_sustainers.admin.inc',
-    'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/store/orders/%/recurring/edit'] = array(
-  //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Edit Recurring Donations',
-    'page callback' => 'fundraiser_sustainers_edit_form',
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
+  $items['admin/config/system/fundraiser/recurring/%'] = array(
+    'title' => 'View Donation',
+    'page callback' => 'fundraiser_sustainers_admin_view',
+    'page arguments' => array(5),
+    'access callback' => 'fundraiser_sustainers_check_access', // TODO create a better access system here. Better perms.
+    'access arguments' => array(5),
+    'type' => MENU_CALLBACK,
+    'tab_parent' => 'admin/config/system/fundraiser/recurring',
     'file' => 'fundraiser_sustainers.admin.inc',
-    'weight' => 2,
-    'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/store/orders/%/recurring/overview'] = array(
-  //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Recurring Donations',
-    'page callback' => 'fundraiser_sustainers_master_overview',
-    'access arguments' => array('view all orders'),
-    'access callback' => 'fundraiser_sustainers_check_access',
-    'access arguments' => array(3),
+  $items['admin/config/system/fundraiser/recurring/%/view'] = array(
+    'title' => 'View Donation',
+    'page callback' => 'fundraiser_sustainers_admin_view',
+    'page arguments' => array(5),
+    'access callback' => 'fundraiser_sustainers_check_access', // TODO create a better access system here. Better perms.
+    'access arguments' => array(5),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 11,
     'file' => 'fundraiser_sustainers.admin.inc',
   );
+  $items['admin/config/system/fundraiser/recurring/%/edit'] = array(
+    'title' => 'Edit Donation',
+    'page callback' => 'fundraiser_sustainers_admin_edit',
+    'page arguments' => array(5),
+    'access callback' => 'fundraiser_sustainers_check_access', // TODO create a better access system here. Better perms.
+    'access arguments' => array(5),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fundraiser_sustainers.admin.inc',
+  );
+  // If Ubercart exists. Show these as a tab there as well.
+  if (module_exists('uc_order')) {
+    $items['admin/store/orders/%/recurring'] = array(
+      'title' => 'Recurring',
+      'page callback' => 'fundraiser_sustainers_admin_view',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access',
+      'access arguments' => array(3),
+      'type' => MENU_LOCAL_TASK,
+      'file' => 'fundraiser_sustainers.admin.inc',
+    );
+    $items['admin/store/orders/%/recurring/recurring'] = array(
+      'title' => 'View Donation',
+      'page callback' => 'fundraiser_sustainers_admin_view',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access', // TODO create a better access system here. Better perms.
+      'access arguments' => array(3),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'file' => 'fundraiser_sustainers.admin.inc',
+    );
+    $items['admin/store/orders/%/recurring/edit'] = array(
+      'title' => 'Edit Donation',
+      'page callback' => 'fundraiser_sustainers_admin_edit',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access', // TODO create a better access system here. Better perms.
+      'access arguments' => array(3),
+      'file' => 'fundraiser_sustainers.admin.inc',
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
   return $items;
 }
 
@@ -310,7 +345,16 @@ function fundraiser_update_cron_settings($form, $form_state) {
 /**
  * Menu callback, loads a specific order for the my recurring payments tab.
  */
-function fundraiser_sustainers_recurring_overview($user, $did) {
+function fundraiser_sustainers_edit($user, $did) {
+  // This is wrapped so we can reuse the form in another location for admin purposes.
+  $variables = fundraiser_sustainers_edit_form($user, $did);
+  return theme('sustainer_management_page', $variables);
+}
+
+/**
+ * Provide administrative form for editting a donation set.
+ */
+function fundraiser_sustainers_edit_form($user, $did) {
   // Grab the context so we have all the data we could need for display / format etc.
   $context = _fundraiser_donation_context();
 
@@ -408,9 +452,7 @@ function fundraiser_sustainers_recurring_overview($user, $did) {
   }
   $donations = theme('table', array('header' => $donations_header, 'rows' => $donations_rows));
 
-  // Theme the output. TODO this is *idiotic*, replace / make coherant.
-  $output = theme('sustainer_management_page', 
-    array(
+  return array(
       'order_id' => $did,
       'orders' => $donations,
       'payment_info' => $payment_info,
@@ -420,10 +462,7 @@ function fundraiser_sustainers_recurring_overview($user, $did) {
       'cancel_form' => $cancel_form,
       'payment_schedule' => $donation_set,
       'cancelled' => !empty($cancelled),
-    )
-  );
-
-  return $output;
+    );
 }
 
 /**
@@ -1067,6 +1106,25 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   }
   return $donation_sets;
 }
+
+/**
+ * DB funct, get user donation set information that are recurring.
+ */
+function _fundraiser_sustainers_get_donation_sets() {
+  $donation_sets = db_query('SELECT r.master_order_id, MIN(r.next_charge) AS start_date, ' .
+   'MAX(r.next_charge) AS expire_date FROM {fundraiser_recurring} r ' .
+   'LEFT JOIN {fundraiser_donation} d on r.order_id = d.did ' .
+   'WHERE r.master_order_id = r.order_id ' .
+   'GROUP BY r.master_order_id ' .
+   'ORDER BY r.master_order_id DESC')->fetchAll();
+  foreach ($donation_sets as $index => $donation_set) {
+    $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_order_id);
+    $donation_sets[$index]->next_charge_date = $next_charge->next_charge;
+    $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+  }
+  return $donation_sets;
+}
+
 
 /**
  * DB funct, get order donations that are recurring.
