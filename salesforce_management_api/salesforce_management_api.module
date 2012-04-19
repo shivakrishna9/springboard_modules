@@ -846,7 +846,7 @@ function salesforce_management_api_fieldmap_rid_load($rid) {
  *   The index of the fieldmap used to generate the export.
  */
 function salesforce_management_api_id_save($drupal_type, $oid, $sfid, $fieldmap) {
-  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND oid = '%s'", $drupal_type, $oid);
+  db_query("DELETE FROM {salesforce_management_object_map} WHERE drupal_type = '%s' AND (oid = '%s' OR sfid = '%s')", $drupal_type, $oid, $sfid);
   db_query("INSERT INTO {salesforce_management_object_map} (drupal_type, oid, sfid, fieldmap) VALUES ('%s', '%s', '%s', %d)", $drupal_type, $oid, $sfid, $fieldmap);
 }
 
@@ -1058,7 +1058,7 @@ function salesforce_management_api_get_object_recordtypes($object) {
 	else {
     return array();
   }
-	return $types;
+  return $types;
 }
 
 /**
@@ -1136,4 +1136,27 @@ function salesforce_manangement_api_fieldmap_exists($drupal_type) {
     return TRUE;
   }
   return FALSE;
+}
+
+
+/**
+ * Utility function to produce an 18-character (case-insensitive) sfid from the 15-character version
+ * Thanks to http://astadiaemea.wordpress.com/2010/06/21/15-or-18-character-ids-in-salesforce-com-%E2%80%93-do-you-know-how-useful-unique-ids-are-to-your-development-effort/
+ */
+function salesforce_management_api_get_sfid18($sfid15) {
+  if ($sfid15 == null || strlen($sfid15) != 15) {
+    return '';
+  }
+  $checksum = '';
+  for ($i = 0; $i < 3; $i++) { // for each group of 5 characters
+    $bitmask = 0;
+    for ($j = 0; $j < 5; $j++) { // for each character
+      $char = substr($sfid15, $i*5 + $j, 1);
+      if (strpos('ABCDEFGHIJKLMNOPQRSTUVWXYZ', $char) !== FALSE) {
+        $bitmask += 1 << $j;
+      }
+    }
+    $checksum .= substr('ABCDEFGHIJKLMNOPQRSTUVWXYZ012345', $bitmask, 1);
+  }
+  return $sfid15 .''. $checksum;
 }

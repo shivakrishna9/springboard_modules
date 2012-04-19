@@ -517,7 +517,8 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
 		foreach($objects->records as $object) {
 			// look up the node id
 			$nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
-			if ($nid) {
+			
+			if ($nid && ($node = node_load($nid))) {
 				$node = node_load($nid);
 				update_node_values($node, $object, $map, $drupal, $salesforce);
 			}
