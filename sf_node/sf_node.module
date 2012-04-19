@@ -48,10 +48,15 @@ function sf_node_form_alter(&$form, $form_state, $form_id) {
     $form['sf_node'] = array(
       '#type' => 'fieldset',
       '#title' => t('Node integration'),
-      '#description' => t('Placeholder for any node integration settings.'),
+      '#description' => t('Salesforce node integration settings.'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#weight' => -1,
+    );
+    $form['sf_node']['sf_node_delete_action_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('When a node is deleted, keep the Salesforce record.'),
+      '#default_value' => variable_get('sf_node_delete_action_enabled', FALSE),
     );
   }
 }
