@@ -62,20 +62,20 @@ function fundraiser_webform_disable() {
  */
 function fundraiser_webform_schema() {
   $schema['fundraiser_webform_order'] = array(
-    'description' => 'TODO: please describe this table!',
+    'description' => 'Tracks the relationship of a webform submission to a specific donation.',
     'fields' => array(
       'webform_nid' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The original fundraiser node.',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'order_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The donation id.',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'sid' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The submission id.',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -86,19 +86,19 @@ function fundraiser_webform_schema() {
         'not null' => FALSE,
       ),
       'gateway' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The gateway submitted to.',
         'type' => 'varchar',
         'length' => '100',
         'not null' => FALSE,
       ),
       'txn_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The transaction id of the donation.',
         'type' => 'varchar',
         'length' => '55',
         'not null' => FALSE,
       ),
       'recurring_status' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The recurring status (y/n) of the donation.',
         'type' => 'int',
         'not null' => FALSE,
         'default' => 0,

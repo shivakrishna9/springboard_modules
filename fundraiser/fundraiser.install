@@ -80,22 +80,22 @@ function fundraiser_schema() {
         'not null' => FALSE,
       ),
       'confirmation_page_title' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The title for the confirmation page.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
       'confirmation_page_body' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The body for the confirmation page.',
         'type' => 'text',
         'not null' => FALSE,
       ),
       'confirmation_page_format' => array(
-        'description' => 'input type for the confirmation page textarea',
+        'description' => 'The format for the confirmation page body.',
         'type' => 'int',
       ),
       'redirect_url' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The redirect url for a confirmation page.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,

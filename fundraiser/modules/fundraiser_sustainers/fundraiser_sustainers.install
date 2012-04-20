@@ -77,7 +77,7 @@ function fundraiser_sustainers_schema() {
         'not null' => FALSE,
       ),
       'txn_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The transaction id for a given donation.',
         'type' => 'varchar',
         'length' => '55',
         'not null' => FALSE,

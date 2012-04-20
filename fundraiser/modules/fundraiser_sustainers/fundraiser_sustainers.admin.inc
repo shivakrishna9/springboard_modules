@@ -24,7 +24,7 @@ function fundraiser_sustainers_admin() {
       $rows[] = $row;
     }
   }
-  $output = '<h2>Recurring Orders</h2>';
+  $output = '<h2>All Recurring Orders</h2>';
   $output .= theme('table', array('header' => $headers, 'rows' => $rows));
   return $output;
 }
@@ -54,7 +54,7 @@ function fundraiser_sustainers_admin_view($did) {
       $rows[] = $row;
     }
   }
-  $output = '<h2>Recurring Orders</h2>';
+  $output = '<h2>Recurring Orders For #' . $donation_set[0]->master_order_id . '</h2>';
   $output .= theme('table', array('header' => $headers, 'rows' => $rows));
   return $output;
 }

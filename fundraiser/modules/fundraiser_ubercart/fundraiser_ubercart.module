@@ -49,19 +49,6 @@ function fundraiser_order_actions($order) {
 }
 
 /**
- * Implementation of hook_order().
- * From http://www.ubercart.org/docs/api/hook_order
- * When an order is deleted, keep fundraiser tables in sync.
- */
-function fundraiser_order($op, &$arg1, $arg2) {
-  switch ($op) {
-    case 'delete':
-      _fundraiser_delete_recurring($arg1->order_id); //TODO follow up on this. To remove or rename.
-      break;
-  }
-}
-
-/**
  * Implementation of hook_preprocess_uc_order().
  * From: http://www.ubercart.org/forum/development/18047/inserting_variables_invoices_ubercart_23_and_above
  * Adds additional variables for use in donation receipt emails sent by UC.
@@ -100,18 +87,17 @@ function fundraiser_ubercart_fundraiser_donation_form_context($context) {
   $countries = array();
   $zones = array();
   // Gather an array of countries.
-  $results = db_query('SELECT * FROM {uc_countries}');
-  foreach ($results as $result) {
+  $found_countries = _fundraiser_ubercart_get_countries();
+  foreach ($found_countries as $found_country) {
     // First load up id, name, iso code 2, iso code 3, and version from Ubercart.
-    $countries[$result->country_id] = $result;
-    $countries[$result->country_id]->zones = array();
-    $zone_results = db_query('SELECT * FROM {uc_zones} WHERE zone_country_id = :zone_country_id',
-      array(':zone_country_id' => $result->country_id));
-    foreach ($zone_results as $zone_result) {
+    $countries[$found_country->country_id] = $result;
+    $countries[$found_country->country_id]->zones = array();
+    $found_zones = _fundraiser_ubercart_get_zone_by_country($result->country_id);
+    foreach ($found_zones as $found_zone) {
       // For each zone load up, zone_id, zone country_id, zone, code, zone_name.
       // Store in the country and zone arrays.
-      $countries[$result->country_id]->zones[$zone_result->zone_id] = $zone_result;
-      $zones[$zone_result->zone_id] = $zone_result;
+      $countries[$found_country->country_id]->zones[$found_zone->zone_id] = $found_zone;
+      $zones[$found_zone->zone_id] = $found_zone;
     }
   }
   $context->countries = $countries;
@@ -127,10 +113,6 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $node = $donation->node;
   $fundraiser_fields = $donation->submission;
   $additional_fields = isset($donation->additional) ? $donation->additional : array();
-
-  // Generate an order given the values submitted, and return an order_id.
-  // Fundraiser uses the concept of an order (as per ubercart).
-  // So any hook creating an order should keep that in mind.
 
   // Pick out the values we need to generate an order.
   $donation_amount = $fundraiser_fields['amount'];
@@ -210,6 +192,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   uc_credit_cache('save', $order->payment_details, FALSE);
   // Save the order.
   uc_order_save($order);
+  uc_order_comment_save($donation->did, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
   // And add the data to the donation form to return it.
   $donation->donation = $order;  //TODO formalize this return array so we have a standard in/out.
   $donation->did = $order->order_id;
@@ -239,7 +222,6 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_ubercart_fundraiser_donation_update($donation) {
-  global $user;
   $old_amount = $donation->donation->order_total;
   $donation->donation->order_total = $donation->donation->donation_amount;
   $donation->donation->products[0]->price = $donation->donation->donation_amount;
@@ -248,6 +230,8 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   uc_credit_cache('save', $donation->donation->payment_details, FALSE);
   uc_order_save($donation->donation);
   uc_credit_cache('clear');
+  global $user;
+  uc_order_comment_save($donation->did, $user->uid, t('Donation updated by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /**
@@ -259,10 +243,9 @@ function fundraiser_ubercart_fundraiser_donation_success($donation) {
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
   uc_payment_enter($order->order_id, 'fundraiser', $donation->donation->order_total, 0, NULL, 
     t('Payment processed by the fundraiser module.'));
-// TODO move this to a db func.
-  db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = :order_id",
-    array(':order_id' => $donation->did));
-  // And done.
+  _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
+  global $user;
+  uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /**
@@ -270,10 +253,11 @@ function fundraiser_ubercart_fundraiser_donation_success($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   // Mark the sale in Ubercart as failed.
-//TODO move to db func.
-  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = :order_id", array(':order_id' => $donation->did));
+  _fundraiser_ubercart_update_order_status('failed', $donation->did);
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
+  global $user;
+  uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /**
@@ -288,10 +272,10 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Mark the sale in Ubercart as cancelled.
-  db_query('UPDATE {uc_orders} SET order_status = \'canceled\' '.
-    'WHERE order_id = :order_id', array(':order_id' => $donation->did));
+  _fundraiser_ubercart_update_order_status('canceled', $donation->did);
   // Make a comment on the order.
-  uc_order_comment_save($donation->did, 0, t('Payment was canceled.'));
+  global $user;
+  uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /** 
@@ -316,33 +300,33 @@ function _fundraiser_ubercart_get_cc_type($cardnumber) {
 }
 
 /**
- * Below here are orphan or unknown origin functions. To be reviewed later.
+ * DB function, update order status on a order.
  */
-
-/**
- * Sage billing information update function.
- */
-// TODO shouldn't this move elsewhere?
-function sage_update_billing_information($reference_id, $billing_info) {
-  // TODO hook here to load up order info. - SeH 
-  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
-  $data = array(
-    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
-    'billing_street1' => $billing_info['address_1'],
-    'billing_street2' => $billing_info['address_2'],
-    'billing_city' => $billing_info['city'],
-    'billing_zone' => $billing_info['state'],
-    'billing_postal_code' => $billing_info['zipcode'],
-    'billing_country' => $billing_info['country'],
-    'cc_number' => $billing_info['card_num'],
-    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
-    'cc_exp_year' => $billing_info['card_exp_date']['year'],
-  );
-  $response = uc_sage_vault_update($vault_id, $data);
-  // TODO: Need to add some better returns to the uc_sage module
-  return TRUE;
+function _fundraiser_ubercart_update_order_status($status, $order_id) {
+  db_query('UPDATE {uc_orders} SET order_status = :status ' .
+    'WHERE order_id = :order_id',
+    array(':status' => $status, ':order_id' => $order_id));
 }
 
+/**
+ * DB function, look in country table for country info.
+ */
+function _fundraiser_ubercart_get_countries() {
+  return db_query('SELECT * FROM {uc_countries}')->fetchAll();
+}
+
+/**
+ * DB function, look in zone table for zone info.
+ */
+function _fundraiser_ubercart_get_zone_by_country($country_id) {
+  return db_query('SELECT * FROM {uc_zones} ' .
+    'WHERE zone_country_id = :zone_country_id',
+    array(':zone_country_id' => $country_id)->fetchAll();
+}
+
+/**
+ * Below here are orphan or unknown origin functions. To be reviewed later.
+ */
 
 /**
  * Implements hook_fundraiser_get_credit_encryption_path(). //TODO where is this called?
