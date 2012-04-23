@@ -1,25 +1,22 @@
 
 -- SUMMARY --
-
+Capwiz Connect manages syncing Capwiz user data with Salesforce.
 
 
 -- REQUIREMENTS --
 
+* Salesforce Management API module.
 
-* Fundraiser reporting utilizes MySQL views. So the database user will need 'CREATE VIEW' priviledges
-
+* Queue Processor module.
 
 
 -- INSTALLATION --
-
-*  Need to patch Ubercart uc_cart.module fundraiser/uc_cart.module.patch needs to be applied to uc_cart.module
 
 * Install as usual, see http://drupal.org/node/70151 for further information.
 
 
 -- CONFIGURATION --
 
-* Global donation form settings can be configured here: admin/settings/fundraiser
 
 
 -- TROUBLESHOOTING --
@@ -32,6 +29,7 @@ Current maintainers:
 * Ben Clark (benclark) - http://drupal.org/user/115444 
 * Allen Freeman (afreeman) - http://http://drupal.org/user/450370
 * Sarah Hood (Bastlynn) - http://drupal.org/user/275249
+* Joel Rothschild (biwashingtonial) - http://drupal.org/user/442196 
 
 
 This project has been sponsored by:
