@@ -3,4 +3,4 @@ name = "Fundraiser Goals"
 description = "Activity goals"
 package = Jackson River Springboard 
 dependencies[] = 'fundraiser'
-version =  6.x-3.0-dev
+version =  6.x-3.1

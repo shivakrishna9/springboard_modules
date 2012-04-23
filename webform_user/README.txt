@@ -1,37 +1,28 @@
 
 -- SUMMARY --
-
+Add new user accounts and update account profile fields from Webform submission data.
 
 
 -- REQUIREMENTS --
 
-
-* Fundraiser reporting utilizes MySQL views. So the database user will need 'CREATE VIEW' priviledges
-
+* Webform module.
 
 
 -- INSTALLATION --
-
-*  Need to patch Ubercart uc_cart.module fundraiser/uc_cart.module.patch needs to be applied to uc_cart.module
 
 * Install as usual, see http://drupal.org/node/70151 for further information.
 
 
 -- CONFIGURATION --
 
-* Global donation form settings can be configured here: admin/settings/fundraiser
-
-
--- TROUBLESHOOTING --
+* Mapping of webform components to user profile fields is configured on a per-webform basis, via the webform mapping screen.
 
 
 
 -- CONTACT --
 Current maintainers:
 * Phillip Cave (pcave) - http://drupal.org/user/379888
-* Ben Clark (benclark) - http://drupal.org/user/115444 
 * Allen Freeman (afreeman) - http://http://drupal.org/user/450370
-* Sarah Hood (Bastlynn) - http://drupal.org/user/275249
 
 
 This project has been sponsored by:
