@@ -14,4 +14,4 @@ features[views_api][] = "api:2"
 name = "Page Wrappers"
 package = "Features"
 project = "page_wrappers"
-version =  6.x-3.0-dev
+version =  6.x-3.1

@@ -3,3 +3,4 @@ description = "Adds views integration for Springboard."
 name = "Springboard Views integration"
 package = "Jackson River Springboard"
 dependencies[] = "views"
+version = 6.x-3.1

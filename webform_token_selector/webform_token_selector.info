@@ -4,4 +4,4 @@ core = 6.x
 package = Jackson River Springboard - extras
 dependencies[] = webform_user
 dependencies[] = wysiwyg
-version =  6.x-3.0-dev
+version =  6.x-3.1

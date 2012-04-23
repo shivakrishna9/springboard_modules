@@ -3,4 +3,4 @@ description = Integrates the core node object and various node related modules w
 dependencies[] = salesforce_management_api
 package = Jackson River Springboard
 core = 6.x
-version =  6.x-3.0-dev
+version =  6.x-3.1
