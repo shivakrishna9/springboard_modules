@@ -17,7 +17,8 @@ function gateway_manager_list() {
   // get all the gateways so we can swap in a nice title
   $gateways = _managed_gateway_list();
   
-  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated FROM {gateway_manager_gateways} g LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
+  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status FROM {gateway_manager_gateways} g ".
+    "LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
   $data = array();
   
   while ($row = db_fetch_array($result)) {
@@ -28,10 +29,11 @@ function gateway_manager_list() {
     $gateway['user'] = $row['user'];
     $gateway['created'] = $row['created'];
     $gateway['updated'] = $row['updated']; 
+    $gateway['status'] = $row['status'] == 1 ? t('Active') : t('Inactive'); 
     $data[] = $gateway;
   }
   $output = drupal_get_form('gateway_manager_list_filter_form');
-  $output .= theme('table', array('Name', 'Provider', '# of Forms', 'User', 'Created', 'Updated'), $data);
+  $output .= theme('table', array('Name', 'Provider', '# of Forms', 'User', 'Created', 'Updated', 'Status'), $data);
   $output .= theme('pager', NULL, $count , $pager_num);
   return $output;
 }
@@ -121,6 +123,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   $type = isset($form_state['values']) ? $form_state['storage']['type'] : $gateway->type;
   $name = isset($form_state['values']) ? $form_state['storage']['name'] : $gateway->name;
   $terms = isset($form_state['values']) ? $form_state['storage']['terms'] : $gateway->terms; 
+  $status = isset($form_state['values']) ? $form_state['storage']['status'] : $gateway->status; 
   
   $config = array();
   if (isset($gateway)) {
@@ -151,12 +154,20 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#default_value' => $name,
     '#description' => t('The recognizable name of the payment gateway.'),
   );
+  $form['status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Active'),
+    '#weight' => 2,
+    '#default_value' => $status,
+    '#return_value' => 1,
+    '#description' => t('If this gateway is an active option for fundraiser donation forms.'),
+  );
   $form['type'] = array(
     '#type' => 'select',
     '#title' => t('Gateway type'),
     '#required' => TRUE,
     '#options' => $gateway_types,
-    '#weight' => 2,
+    '#weight' => 3,
     '#default_value' => $type,
     '#disabled' => $disabled,
     '#description' => t('Select the type of gateway to create.'),
@@ -167,7 +178,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#type' => 'fieldset',
     '#title' => t('Taxonomy'),
     '#collapsible' => TRUE,
-    '#weight' => 3,
+    '#weight' => 4,
   );
   
   $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
@@ -183,7 +194,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
         $form['settings'] = array(
           '#type' => 'fieldset',
           '#title' => t($title . ' settings'),
-          '#weight' => 4,
+          '#weight' => 5,
           '#collapsible' => TRUE,
         );
         $form['settings'][] = $gateway_settings;
@@ -195,7 +206,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   else {
     $form['submit'] = array(
       '#type' => 'submit',
-      '#weight' => 5,
+      '#weight' => 6,
       '#value' => 'Continue',
     );
     return $form;
@@ -211,6 +222,7 @@ function gateway_manager_edit_form_submit($form, &$form_state) {
   $form_state['storage']['type'] = $form_state['values']['type'];
   $form_state['storage']['name'] = $form_state['values']['name'];
   $form_state['storage']['terms'] = $form_state['values']['terms'];
+  $form_state['storage']['status'] = $form_state['values']['status'];
   return;
 }
 

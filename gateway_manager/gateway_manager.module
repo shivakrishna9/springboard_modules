@@ -200,25 +200,25 @@ function gateway_manager_settings_form_submit($form, &$form_state) {
   if ($form_state['values']['op'] == 'Delete') {
     drupal_goto('admin/settings/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
   }
-  
+
   $id = $form_state['values']['id'];
   $name = $form_state['values']['name'];
   $type = $form_state['values']['type'];
   $terms = $form_state['values']['terms'];
+  $status = $form_state['values']['status'];
   $config = gateway_manager_extract_config($form_state);
-
   if (empty($id)) {
-    gateway_manager_settings_insert($name, $type, $terms, $config);
+    gateway_manager_settings_insert($name, $type, $terms, $status, $config);
   }
   else {
-    gateway_manager_settings_update($id, $name, $type, $terms, $config);
+    gateway_manager_settings_update($id, $name, $type, $terms, $status, $config);
   }
 }
 
 /**
  * Creates a new payment gateway record.
  */
-function gateway_manager_settings_insert($name, $type, $terms, $config) {
+function gateway_manager_settings_insert($name, $type, $terms, $status, $config) {
   global $user;
   $record = new stdClass;
   $record->name = $name;
@@ -227,6 +227,7 @@ function gateway_manager_settings_insert($name, $type, $terms, $config) {
   $record->created = time();
   $record->updated = time();
   $record->config = serialize($config);
+  $record->status = $status;
   
   $result = drupal_write_record('gateway_manager_gateways', $record);
   if ($result) {
@@ -240,14 +241,15 @@ function gateway_manager_settings_insert($name, $type, $terms, $config) {
 /**
  * Updates an existing payment gateway record.
  */
-function gateway_manager_settings_update($id, $name, $type, $terms, $config) {
+function gateway_manager_settings_update($id, $name, $type, $terms, $status, $config) {
   global $user;
   $record->id = $id;
   $record->name = $name;
   $record->uid = $user->uid;
   $record->updated = time();
   $record->config = serialize($config);
-  
+  $record->status = $status;
+
   $result = drupal_write_record('gateway_manager_gateways', $record, array('id'));
   if ($result) {
     gateway_manager_settings_save_terms($id, $terms);
@@ -309,7 +311,9 @@ function gateway_manager_gateway_can_be_deleted($gateway) {
  * Builds an array of gateways that can be selected when creating a payment gateway.
  */
 function _gateway_manager_gateway_list() {
-  $result = db_query(db_rewrite_sql("SELECT g.id, g.name FROM {gateway_manager_gateways} g ORDER BY g.name", 'gateway_manager_gateways', 'id'));
+  $result = db_query(db_rewrite_sql('SELECT g.id, g.name FROM {gateway_manager_gateways} g ' .
+    'WHERE g.status = 1 ' .
+    'ORDER BY g.name', 'gateway_manager_gateways', 'id'));
   $gateways = array();
   while ($data = db_fetch_object($result)) {
     $gateways[$data->id] = $data->name;
