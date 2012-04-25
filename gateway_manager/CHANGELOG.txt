@@ -1,0 +1,5 @@
+
+gateway_manager 6.x-3.0, 2012-04-25
+------------------------------
+Added toggle status for gateways, allowing gateways to be deactivated from fundraiser select dropdowns without being deleted.
+- Bastlynn
