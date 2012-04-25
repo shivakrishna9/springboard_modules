@@ -89,6 +89,12 @@ function gateway_manager_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+     'status' => array(
+        'description' => t('Active or inactive toggle for this gateway.'),
+        'type' => 'int',
+        'default' => 1,
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('id'),
   );
@@ -113,4 +119,17 @@ function gateway_manager_schema() {
   );
   
   return $schema;
+}
+
+/**
+ * Update to add gateway manager toggle on/off field.
+ */
+function gateway_manager_update_6301() {
+  db_add_field('gateway_manager_gateways', 'status', array(
+        'description' => t('Active or inactive toggle for this gateway.'),
+        'type' => 'int',
+        'default' => 1,
+        'not null' => FALSE,
+      ));
+  db_query('UPDATE {gateway_manager_gateways} SET status = 1');
 }
