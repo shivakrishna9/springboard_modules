@@ -64,6 +64,15 @@ function gm_authorizenet_payment_gateway_managed() {
 function gm_authorizenet_settings_form($config = array()) {
   $login_data = _gm_authorizenet_login_data();
 
+  // Allow admin to set passing along emails.
+  $form['gm_authnet_hide_emails'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Do not pass donor email to Authnet'),
+    '#description' => t('Blocks submission of sensitive email information along with transactions.'),
+    '#default_value' => !empty($config['gm_authnet_hide_emails']) ? $config['gm_authnet_hide_emails'] : 0,
+    '#return_value' => 1,
+  );
+
   // Allow admin to set duplicate window
   $form['gm_authnet_duplicate_window'] = array(
     '#type' => 'select',
@@ -214,6 +223,11 @@ function _gm_authorizenet_cim_profile_create($order, $data) {
 
   // Help build the request.
   $request = _gm_authorizenet_cim_profile_create_request($order);
+
+  // Unset the user email if config says otherwise.
+  if ($data['config']['gm_authnet_hide_emails'] == 1) {
+    unset($request['profile']['email']);
+  }
 
   // Request a profile from auth.net.
   $xml = _gm_authorizenet_xml_api_wrapper('createCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
@@ -442,7 +456,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_country' => !$billing_country ? '' : $billing_country[0]['country_iso_code_2'],
     'x_phone' => substr($order->billing_phone, 0, 25),
     // 'x_fax' => substr('', 0, 25),
-    'x_email' => substr($order->primary_email, 0, 255),
     'x_cust_id' => substr($order->uid, 0, 20),
     'x_customer_ip' => substr(ip_address(), 0, 15),
 
@@ -463,6 +476,11 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_relay_response' => 'FALSE',
     'x_email_customer' => $data['config']['gm_authnet_aim_email_customer'] ? 'TRUE' : 'FALSE',
   );
+
+  // Set the user email if config says is ok.
+  if (!($data['config']['gm_authnet_hide_emails'] == 1) ) {
+    $submit_data['x_email'] = substr($order->primary_email, 0, 255);
+  }
 
   if (in_array($data['txn_type'], array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_CREDIT, UC_CREDIT_VOID))) {
     $submit_data['x_trans_id'] = $data['auth_id'];
