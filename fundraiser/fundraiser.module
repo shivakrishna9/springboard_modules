@@ -1572,7 +1572,13 @@ function fundraiser_webform_submit($form, &$form_state) {
  	uc_order_save($order);
 
   // relate the order to submission before we try and process the payment
-  db_query("INSERT INTO {fundraiser_webform_order} (webform_nid, order_id, sid, recurring_status) VALUES (%d, %d, %d, %d)", $node->nid, $order->order_id, $form_state['values']['details']['sid'], $order->data['recurring_status']);  
+  db_query(
+    "INSERT INTO {fundraiser_webform_order} 
+      (webform_nid, order_id, sid, recurring_status, user_agent) VALUES (%d, %d, %d, %d, '%s')
+    ;", 
+    $node->nid, $order->order_id, $form_state['values']['details']['sid'], 
+    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT']
+  );
   
   // additional data to pass to the payment gateway's charge function
  	$data = array(
@@ -2123,6 +2129,43 @@ function fundraiser_order($op, &$arg1, $arg2) {
       // remove the order from fundraiser tables
       db_query("DELETE FROM {fundraiser_recurring} WHERE order_id = %d", $arg1->order_id);
       break;
+  }
+}
+
+/**
+ * Implementation of hook_order_pane().
+ */
+function fundraiser_order_pane() {
+  $panes[] = array(
+    'id' => 'fundraiser',
+    'callback' => 'fundraiser_order_pane_fundraiser',
+    'title' => t('Fundraiser'),
+    'desc' => t('Additional data for donation orders.'),
+    'class' => 'abs-left',
+    'weight' => 7,
+    'show' => array('view', 'edit'),
+  );
+  return $panes;
+}
+
+/**
+ * Order pane callback.
+ */
+function fundraiser_order_pane_fundraiser($op, $arg1) {
+  switch ($op) {
+    case 'view':
+      $order_id = $arg1->order_id;
+      if ($submission = db_fetch_object(
+        db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id=%d;", $order_id)
+      )) {
+        $output['webform-submission'] = array(
+          '#value' => l(
+            t('Donation form submission'), 
+            "node/$submission->webform_nid/submission/$submission->sid"
+          ),
+        );
+      }
+      return drupal_render($output);
   }
 }
 

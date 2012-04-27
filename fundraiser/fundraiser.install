@@ -200,6 +200,13 @@ function fundraiser_schema() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'user_agent' => array(
+        'description' => t('The HTTP_USER_AGENT server variable value when donation form was submitted.'),
+        'type' => 'text',
+        'size' => 'small',
+        'not null' => FALSE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
@@ -932,5 +939,20 @@ function fundraiser_update_6309() {
   $ret = array();
   db_add_field($ret, 'fundraiser', 'confirmation_page_format', array('type' => 'int', 'not null' => FALSE));
   variable_del('fundraiser_confirmation_message_body_format');
+  return $ret;
+}
+
+/**
+ * Add column for remote agent identifier.
+ */
+function fundraiser_update_6310() {
+  $ret = array();
+  db_add_field($ret, 'fundraiser_webform_order', 'user_agent', array(
+    'description' => t('The HTTP_USER_AGENT server variable value when donation form was submitted.'),
+    'type' => 'text',
+    'size' => 'small',
+    'not null' => FALSE,
+    'default' => '',
+  ));
   return $ret;
 }
