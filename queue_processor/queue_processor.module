@@ -888,9 +888,16 @@ function move_to_permanent_failure(&$item, &$response) {
  */
 function move_retries_to_heap($max_items) {
 	$max_attempts = variable_get('queue_retry_max', 3);
-	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created, is_retry) SELECT
-		oid, sfid, type, fieldmap, action, unix_timestamp(), 1 FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d LIMIT %d",
-		time(), $max_attempts, $max_items);
+	db_query(
+    "INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created, is_retry)
+	    SELECT rq.oid, rq.sfid, rq.type, rq.fieldmap, rq.action, UNIX_TIMESTAMP(), 1
+        FROM {sf_retry_queue} rq
+	        LEFT JOIN {sf_heap} h ON h.oid=rq.oid
+        WHERE retry_date < %d AND attempts < %d AND h.oid IS NULL
+	      LIMIT %d
+    ;",
+		time(), $max_attempts, $max_items
+  );
 }
 
 /**
