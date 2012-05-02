@@ -1,0 +1,1 @@
+- Pull request: https://github.com/JacksonRiver/springboard_modules/pull/54 by afreeman: Fixed mystery "1" bug.
