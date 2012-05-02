@@ -215,7 +215,8 @@ function secure_prepopulate_after_build($form, &$form_state) {
             break;
           
           case 'checkboxes':
-            $field[$field['#webform_component']['form_key']]['#value'] = $field['#webform_component']['value'];
+            dsm('field:' . print_r($field, TRUE));
+            $field[$field['#webform_component']['value']]['#default_value'] = $field['#webform_component']['value'];
             break;  
             
           default:
