@@ -198,7 +198,8 @@ function market_source_generic_form_after_build($form, &$form_state) {
   }
 
   // Get form keys array.
-  $form_keys = _market_source_build_form_keys($form);
+  $prefix = isset($form['#market_source_prefix']) ? $form['#market_source_prefix'] : NULL;
+  $form_keys = _market_source_build_form_keys($form, $prefix);
 
   // Set the array.
   $settings = array(
