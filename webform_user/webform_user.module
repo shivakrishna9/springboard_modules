@@ -199,6 +199,16 @@ function webform_user_save_page_title($form, &$form_state) {
  * Implementation of hook_form_alter().
  */
 function webform_user_form_alter(&$form, $form_state, $form_id) {
+  // Disallow users from changing the mail keyform after it's been created.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    if ($node->is_webform_user) {
+      if ($form['form_key']['#default_value'] == 'mail') {
+        $form['form_key']['#access'] = FALSE;
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
+  }
 
   if ($form_id == 'webform_configure_form' && isset($form['nid']['#value'])) {
     $node = node_load($form['nid']['#value']);
