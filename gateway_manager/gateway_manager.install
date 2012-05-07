@@ -34,7 +34,6 @@ function gateway_manager_enable() {
       $vocabulary = (object) array(
         'name' => t('Payment Gateway Terms'),
         'machine_name' => 'payment_gateway_terms', 
-        'help' => $help,
         'module' => 'gateway_manager',
         'hierarchy' => '0',
       );
