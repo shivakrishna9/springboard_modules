@@ -137,7 +137,7 @@ function gateway_manager_gateway_info($id) {
  */
 function gateway_manager_gateway_load($id) {
   $gateway = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
-  $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
+  $result = db_query("SELECT tid FROM {taxonomy_term_gateway} WHERE gid = %d", $id);
   while ($data = db_fetch_array($result)) {
     $gateway->terms[] = $data['tid'];
   }
@@ -272,9 +272,9 @@ function gateway_manager_delete_gateway($id) {
  * Saves terms associated with a managed gateway.
  */
 function gateway_manager_settings_save_terms($gid, $terms) {
-  db_query("DELETE FROM {term_gateway} WHERE gid = %d", $gid);
+  db_query("DELETE FROM {taxonomy_term_gateway} WHERE gid = %d", $gid);
   foreach($terms as $term) {
-    db_query("INSERT INTO {term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
+    db_query("INSERT INTO {taxonomy_term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
   }
 }
 

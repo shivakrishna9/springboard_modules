@@ -11,14 +11,12 @@
  * Implementation of hook_install().
  */
 function gateway_manager_install() {
-	drupal_install_schema('gateway_manager');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function gateway_manager_uninstall() {
-	drupal_uninstall_schema('gateway_manager');
   $vid = variable_get('gateway_manager_vocabulary', '');
   taxonomy_del_vocabulary($vid);
 }
@@ -29,17 +27,18 @@ function gateway_manager_uninstall() {
 function gateway_manager_enable() {
   $vid = variable_get('gateway_manager_vocabulary', '');
   if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
-    $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'gateway_manager'"));
+    $vid = db_query(
+      "SELECT vid FROM {taxonomy_vocabulary} WHERE machine_name='payment_gateway_terms';"
+    )->fetchField();
     if (!$vid) {
-      $vocabulary = array(
+      $vocabulary = (object) array(
         'name' => t('Payment Gateway Terms'),
-        'multiple' => '1',
-        'required' => '0',
-        'hierarchy' => '0',
-        'relations' => '0',
+        'machine_name' => 'payment_gateway_terms', 
+        'help' => $help,
         'module' => 'gateway_manager',
+        'hierarchy' => '0',
       );
-      taxonomy_save_vocabulary($vocabulary);
+      taxonomy_vocabulary_save($vocabulary);
     }
     variable_set('gateway_manager_vocabulary', $vid);
   }
@@ -99,7 +98,7 @@ function gateway_manager_schema() {
     'primary key' => array('id'),
   );
   
-  $schema['term_gateway'] = array(
+  $schema['taxonomy_term_gateway'] = array(
     'description' => t('Table to store gateway related terms.'),
     'fields' => array(
       'gid' => array(
@@ -119,17 +118,4 @@ function gateway_manager_schema() {
   );
   
   return $schema;
-}
-
-/**
- * Update to add gateway manager toggle on/off field.
- */
-function gateway_manager_update_6301() {
-  db_add_field('gateway_manager_gateways', 'status', array(
-        'description' => t('Active or inactive toggle for this gateway.'),
-        'type' => 'int',
-        'default' => 1,
-        'not null' => FALSE,
-      ));
-  db_query('UPDATE {gateway_manager_gateways} SET status = 1');
 }
