@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function gateway_manager_menu() {
   $items['admin/settings/fundraiser/gateways'] = array(
@@ -56,7 +56,7 @@ function gateway_manager_menu() {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
@@ -94,19 +94,35 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implemenation of hook_nodeapi().
+ * Implements hook_node_insert().
  */
-function gateway_manager_nodeapi(&$node, $op) {
+function gateway_manager_node_insert($node) {
   // clear out the gateway cache when donation forms
   // are created, updated or deleted
   if ($node->type == 'donation_form') {
-    switch ($op) {
-      case 'insert':
-      case 'delete':
-      case 'update':
-        _gateway_manager_clear_cache();
-        break;
-    }
+    _gateway_manager_clear_cache();
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function gateway_manager_node_update($node) {
+  // clear out the gateway cache when donation forms
+  // are created, updated or deleted
+  if ($node->type == 'donation_form') {
+    _gateway_manager_clear_cache();
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function gateway_manager_node_delete($node) {
+  // clear out the gateway cache when donation forms
+  // are created, updated or deleted
+  if ($node->type == 'donation_form') {
+    _gateway_manager_clear_cache();
   }
 }
 
