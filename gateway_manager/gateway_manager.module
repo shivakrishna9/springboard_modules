@@ -152,9 +152,15 @@ function gateway_manager_gateway_info($id) {
  * Loads a payment gateway configuration by id.
  */
 function gateway_manager_gateway_load($id) {
-  $gateway = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
-  $result = db_query("SELECT tid FROM {taxonomy_term_gateway} WHERE gid = %d", $id);
-  while ($data = db_fetch_array($result)) {
+  $gateway = db_query(
+    "SELECT * FROM {gateway_manager_gateways} WHERE id = :id;", 
+    array(':id' => $id)
+  )->fetchObject();
+  $result = db_query(
+    "SELECT tid FROM {taxonomy_term_gateway} WHERE gid = :gid;", 
+    array(':gid' => $id)
+  );
+  while ($data = $result->fetchAssoc()) {
     $gateway->terms[] = $data['tid'];
   }
   //module_invoke_all('gateway_manager_gateway_load', $gateway);
@@ -163,10 +169,23 @@ function gateway_manager_gateway_load($id) {
 }
 
 /**
- * Implemenation of hook_perm().
+ * Implements hook_permission().
  */
-function gateway_manager_perm() {
-  return array('view payment gateway list', 'create payment gateway', 'edit any payment gateway', 'delete any payment gateway');
+function gateway_manager_permission() {
+  return array(
+    'view payment gateway list' => array(
+      'title' => t('View a list of payment gateways'),
+    ),
+    'create payment gateway' => array(
+      'title' => t('Create a new payment gateway'),
+    ),
+    'edit any payment gateway' => array(
+      'title' => t('Edit any payment gateway'),
+    ), 
+    'delete any payment gateway' => array(
+      'title' => t('Delete any payment gateway'),
+    ),
+  );
 }
 
 /**
@@ -196,7 +215,7 @@ function gateway_mananger_settings_form($form) {
   }
   elseif (isset($form['id']['#value'])) {
     $form['buttons']['delete_notice'] = array(
-      '#value' => t('* This payment gateway cannot be deleted because donation forms are assigned to it or there are pending recurring donations.'),
+      '#markup' => t('* This payment gateway cannot be deleted because donation forms are assigned to it or there are pending recurring donations.'),
       '#prefix' => '<div class="description">',
       '#suffix' => '</div>',
     );
@@ -277,7 +296,7 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
  * Deletes an existing payment gateway record.
  */
 function gateway_manager_delete_gateway($id) {
-  db_query("DELETE FROM {gateway_manager_gateways} WHERE id = %d", $id);
+  db_query("DELETE FROM {gateway_manager_gateways} WHERE id = :id", array(':id' => $id));
   // fire hook so other modules can react when a payment gateway is deleted.
   module_invoke_all('gateway_manager_gateway_delete', $id);
   drupal_set_message(t('Payment gateway successfully deleted.'));
@@ -288,9 +307,12 @@ function gateway_manager_delete_gateway($id) {
  * Saves terms associated with a managed gateway.
  */
 function gateway_manager_settings_save_terms($gid, $terms) {
-  db_query("DELETE FROM {taxonomy_term_gateway} WHERE gid = %d", $gid);
+  db_query("DELETE FROM {taxonomy_term_gateway} WHERE gid = :gid", array(':gid' => $gid));
   foreach($terms as $term) {
-    db_query("INSERT INTO {taxonomy_term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
+    db_query(
+      "INSERT INTO {taxonomy_term_gateway} (gid, tid) VALUES (:gid, :tid)", 
+      array(':gid' => $gid, ':tid' => $term)
+    );
   }
 }
 
@@ -325,11 +347,14 @@ function gateway_manager_gateway_can_be_deleted($gateway) {
  * Builds an array of gateways that can be selected when creating a payment gateway.
  */
 function _gateway_manager_gateway_list() {
-  $result = db_query(db_rewrite_sql('SELECT g.id, g.name FROM {gateway_manager_gateways} g ' .
-    'WHERE g.status = 1 ' .
-    'ORDER BY g.name', 'gateway_manager_gateways', 'id'));
+  $result = db_select('gateway_manager_gateways', 'g')
+    ->fields('g', array('id', 'name'))
+    ->where('g.status = 1')
+    ->orderBy('g.name')
+    ->execute()
+  ;
   $gateways = array();
-  while ($data = db_fetch_object($result)) {
+  while ($data = $result->fetchObject()) {
     $gateways[$data->id] = $data->name;
   }
   return $gateways;
@@ -347,9 +372,9 @@ function _gateway_manager_form_count($id) {
     $gateway_stats = $cached->data;
   }
   else { // otherwise, build an array of gateway stats and cache them
-    $result = db_query("SELECT gateway, count(nid) as count FROM {fundraiser} GROUP BY gateway");
+    $result = db_query("SELECT gateway, COUNT(nid) as count FROM {fundraiser} GROUP BY gateway");
     
-    while ($data = db_fetch_object($result)) {
+    while ($data = $result->fetchObject()) {
       $gateway_stats[$data->gateway] = $data->count;
     }
     
@@ -380,7 +405,10 @@ function _gateway_manager_gateway_in_use($id) {
 }
 
 function _gateway_manager_pending_donation_count($id) {
-  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE gateway = '%s' AND txn_id IS NULL", $id));
+  return db_query(
+    "SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE gateway = :id AND txn_id IS NULL", 
+    array(':id' => $id)
+  )->fetchField();
 }
 
 /**
@@ -392,11 +420,14 @@ function _gateway_manager_clear_cache() {
 }
 
 /**
- * Implemenation of donation_transaction_details().
+ * Implements hook_donation_transaction_details().
  */
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // look up the name of the gateway
-  $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
+  $gateway = db_query(
+    "SELECT name, type FROM {gateway_manager_gateways} WHERE id = :id", 
+    array(':id' => $details['gateway'])
+  )->fetchObject();
   $details['gateway'] = $gateway->name;
 }
 
@@ -410,16 +441,12 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
  * @return
  *   Array of gateway details
  */
-function gateway_manager_gateway_for_order($order_or_orderid) {
-  if (is_object($order_or_orderid)) {
-    $order = $order_or_orderid;
+function gateway_manager_gateway_for_order($order) {
+  if (is_numeric($order) && $order > 0) {
+    $order = uc_order_load($order);
   }
-  elseif ($order_or_orderid > 0) {
-    $order = uc_order_load($order_or_orderid);
-  }
-
-  if ($order->data['gateway'] > 0) {
+  if (is_object($order) && $order->data['gateway'] > 0) {
     return gateway_manager_gateway_info($order->data['gateway']);
   }
-  return null;
+  return NULL;
 }
