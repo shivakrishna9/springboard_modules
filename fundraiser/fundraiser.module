@@ -1055,8 +1055,7 @@ function fundraiser_walk_component_hierarchy($nid, $cid, &$path = array()) {
     $component_hierarchy[$nid] = array();
     $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = %d", $nid);
     while ($data = db_fetch_object($result)) {
-      $cid = $data->cid;
-      $component_hierarchy[$nid][$cid][] = $data;
+      $component_hierarchy[$nid][$data->cid][] = $data;
     }
   }
   // Build a path from the webform component to its topmost parent.
