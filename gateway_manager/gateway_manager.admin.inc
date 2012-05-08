@@ -3,24 +3,30 @@
 /**
  * @file
  * Admin functionality for the gateway manager module. 
- * 
  */
  
 /**
  * Displays a list of all configured payment gateways.
  */
 function gateway_manager_list() {
-  $filter = gateway_manager_filter_query();
   $pager_num = 0;
-  $count = 20;
+  $limit = 20;
   
   // get all the gateways so we can swap in a nice title
   $gateways = _managed_gateway_list();
-  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status FROM {gateway_manager_gateways} g ".
-    "LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
-   $data = array();
-  
-  while ($row = db_fetch_array($result)) {
+  $query = db_select('gateway_manager_gateways', 'g')
+    ->fields('g', array('id', 'name', 'type', 'status'))
+    ->extend('PagerDefault')
+  ;
+  $query->limit($limit);
+  $query->leftJoin('users', 'u', 'u.uid = g.uid');
+  $query->addField('u', 'name', 'user');
+  $query->addExpression('FROM_UNIXTIME(g.created)', 'created');
+  $query->addExpression('FROM_UNIXTIME(g.updated)', 'updated');
+  $query->gateway_manager_filter_query();
+  $result = $query->execute();
+      
+  while ($row = $result->fetchAssoc()) {
     $gateway = array();
     $gateway['name'] = l($row['name'], 'admin/settings/fundraiser/gateways/' . $row['id'] . '/edit');
     $gateway['type'] = _gateway_manager_get_gateway_title($gateways, $row['type']);;
@@ -88,16 +94,13 @@ function gateway_manager_list_filter_form_submit($form, &$form_state) {
 }
 
 /**
- * Returns a filter and related args to be applied to the payment gateway list page.
+ * Adds filter(s) to the payment gateway list page query as needed.
  */
-function gateway_manager_filter_query() {
-  $where = $args = array();
+function gateway_manager_filter_query($query) {
   if (isset($_SESSION['gateway_manager_filter'])) {
-    $where[] = "g.type = '%s'";
-    $args[] = $_SESSION['gateway_manager_filter'];
+    $query->condition('g.type', $_SESSION['gateway_manager_filter'], '=');
   }
-  $where = count($where) ? 'WHERE '. implode(' AND ', $where) : '';
-  return array('where' => $where, 'args' => $args);
+  return $query;
 }
 
 /**
