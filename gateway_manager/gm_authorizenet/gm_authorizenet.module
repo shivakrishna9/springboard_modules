@@ -585,7 +585,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
       'success' => TRUE,
       'comment' => $message,
       'message' => $message,
-      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
+      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6], 'auth_code' => $response[4]),
       'uid' => $user->uid,
     );
 

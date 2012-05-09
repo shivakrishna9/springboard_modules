@@ -1601,7 +1601,7 @@ function fundraiser_webform_submit($form, &$form_state) {
   $result = $charge_function($order->order_id, $donation_amount, $data);
 
  	if ($result['success']) {
- 	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message']);
+ 	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
  	  $node = node_load(array('nid' => $node_id));
  	  module_invoke_all('fundraiser_webform_submit', $user, $node, $form_state);
  	}
@@ -1626,8 +1626,11 @@ function fundraiser_webform_submit($form, &$form_state) {
  *   The id of the transaction that was returned from the gateway.
  * @param $message
  *   Any message that was returned by the gateway.
+ *
+ * @param $auth_code
+ * Authorization code returned by the payment gateway.
  */ 
-function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
+function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $auth_code = '') {
   // reload the order
   $order = uc_order_load($order_id);
   
@@ -1649,7 +1652,14 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL) {
   db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", 'payment_received', $order_id);
   
   // update the order/webform relationship
-  db_query("UPDATE {fundraiser_webform_order} SET gateway = '%s', txn_id = '%s' WHERE order_id = %d", $node->gateway, $transaction_id, $order_id);
+  db_query("UPDATE {fundraiser_webform_order}
+    SET
+      gateway = '%s',
+      txn_id = '%s',
+      auth_code = '%s'
+    WHERE
+      order_id = %d",
+   $node->gateway, $auth_code, $transaction_id, $order_id);
   
   // update the uid on the webform submission
   db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
