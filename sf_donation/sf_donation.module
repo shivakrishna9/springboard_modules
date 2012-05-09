@@ -45,7 +45,7 @@ function sf_donation_menu() {
  * the user has permission to edit Donation mapping
  */
 function sf_donation_mapping_form_access($node) {
-  return ($node->type == 'donation_form') && user_access('edit donation form mapping');
+  return (_fundraiser_is_donation_type($node)) && user_access('edit donation form mapping');
 }
 
 
@@ -433,7 +433,7 @@ function sf_donation_clone_map($nid, $new_nid) {
  * Implementaion of hook_nodeapi().
  */
 function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
   switch ($op) {
     case 'load':
       $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);

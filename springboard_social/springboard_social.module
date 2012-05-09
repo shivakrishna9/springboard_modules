@@ -12,7 +12,7 @@ function springboard_social_init() {
     // Load the node.
     $node = menu_get_object();
     // Add our CSS to the page if it's a donation form and share enabled.
-    if (isset($node->type) && $node->type == 'donation_form') {
+    if (isset($node->type) && _fundraiser_is_donation_type($node)) {
       if ($node->fb_share_status) {
         $path = drupal_get_path('module', 'springboard_social') . '/css/springboard_social_fb.css';
         drupal_add_css($path, 'module', 'all', FALSE);

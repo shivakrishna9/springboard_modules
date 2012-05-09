@@ -407,7 +407,7 @@ function email_confirmation_template_submit(&$form, $form_state) {
  * Implements hook_nodeapi().
  */
 function email_confirmation_nodeapi(&$node, $op) {
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
     switch ($op) {
       case 'load':
         $confirmation_settings = db_fetch_array(db_query('SELECT  
@@ -907,7 +907,7 @@ function email_confirmation_fundraiser_confirmations_perm($perm, $node) {
   $webform_node_types = variable_get('webform_node_types', '');
   if (in_array($node->type, $webform_node_types) && node_access($perm, $node)) {
     $is_webform_user = db_result(db_query('SELECT 1 FROM {webform_user} WHERE is_webform_user = 1 AND nid = %d ', $node->nid));
-    if ($node->type == 'donation_form' || $is_webform_user) {
+    if (_fundraiser_is_donation_type($node) || $is_webform_user) {
       return true;
     }
   }
