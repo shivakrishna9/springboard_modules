@@ -52,6 +52,7 @@ function fundraiser_perm() {
     'clone donation form',
     'cancel future donations',
     'edit donation form user mapping',
+    'manage own recurring donations',
   );
 }
 
@@ -1219,18 +1220,20 @@ function fundraiser_confirmations_perm($perm, $node) {
 /**
  * Determines if a user has any recurring donations.
  */
-function fundraiser_user_has_recurring_orders($user) {
+function fundraiser_user_has_recurring_orders($account) {
   $count = db_result(db_query(
     "
       SELECT count(u.order_id) FROM uc_orders u
       INNER JOIN fundraiser_recurring f on f.master_order_id = u.order_id
       WHERE u.uid = %d
     ",
-    $user->uid
+    $account->uid
   ));
   
   if ($count > 0) {
-    return TRUE;
+    // If a user has recurring donations, then check user_access() for
+    // necessary access permissions.
+    return user_access('manage own recurring donations', $account);
   }
   return FALSE;
 }
