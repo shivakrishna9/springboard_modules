@@ -1,0 +1,2 @@
+- Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
+
