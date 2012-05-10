@@ -183,7 +183,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#weight' => 4,
   );
   
-  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
+  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, NULL);
   $form['taxononmy']['terms']['#weight'] = 4;
   
   // if type has been selected, get the settings form for that type 
@@ -220,7 +220,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
  */
 function gateway_manager_edit_form_submit($form, &$form_state) {
   // Simply stick the choosen values into storage so that when the
-  // for reloads it will pull up the correct gateway config form
+  // form reloads it will pull up the correct gateway config form
   $form_state['storage']['type'] = $form_state['values']['type'];
   $form_state['storage']['name'] = $form_state['values']['name'];
   $form_state['storage']['terms'] = $form_state['values']['terms'];
@@ -236,7 +236,14 @@ function gateway_managed_gateway_delete_form(&$form_state, $gateway) {
     '#type' => 'hidden',
     '#value' => $gateway->id,
   );
-  return confirm_form($form, t('Are you sure you want to delete the payment gateway %name?', array('%name' => $gateway->name)), 'admin/settings/fundraiser/gateways', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+  return confirm_form(
+    $form, 
+    t('Are you sure you want to delete the payment gateway %name?', array('%name' => $gateway->name)), 
+    'admin/settings/fundraiser/gateways', 
+    t('This action cannot be undone.'), 
+    t('Delete'), 
+    t('Cancel')
+  );
 }
 
 function gateway_managed_gateway_delete_form_submit($form, &$form_state) {
@@ -264,21 +271,18 @@ function _gateway_manager_get_settings_function($gateways, $type) {
 function _gateway_manager_get_vid() {
   $vid = variable_get('gateway_manager_vocabulary', '');
   if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
-    $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'gateway_manager'"));
+    $vid = db_query("SELECT vid FROM {vocabulary} WHERE module = 'gateway_manager'")->fetchField();
     if (!$vid) {
-      $vocabulary = array(
+      $vocabulary = (object) array(
         'name' => t('Payment Gateway Terms'),
-        'multiple' => '1',
-        'required' => '0',
-        'hierarchy' => '0',
-        'relations' => '0',
+        'machine_name' => 'payment_gateway_terms', 
         'module' => 'gateway_manager',
+        'hierarchy' => '0',
       );
-      taxonomy_save_vocabulary($vocabulary);
+      taxonomy_vocabulary_save($vocabulary);
       $vid = $vocabulary['vid'];
     }
     variable_set('gateway_manager_vocabulary', $vid);
   }
-  
   return $vid;
 }
