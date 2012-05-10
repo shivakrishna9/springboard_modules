@@ -331,6 +331,12 @@ function fundraiser_schema() {
         'length' => '55',
         'not null' => FALSE,
       ),
+      'auth_code' => array(
+        'description' => t('Payment gateway authorization code'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('order_id'),
   );
@@ -976,5 +982,15 @@ function fundraiser_update_6311() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_webform_order', 'auth_code', $field);
+  
+  $recurring_field = array(
+    'description' => t('Payment gateway authorization code'),
+    'type' => 'varchar',
+    'length' => 64,
+    'not null' => FALSE,
+    'default' => '',
+  );
+  db_add_field($ret, 'fundraiser_recurring', 'auth_code', $recurring_field);
+  
   return $ret;
 }

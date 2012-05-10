@@ -1659,7 +1659,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
       auth_code = '%s'
     WHERE
       order_id = %d",
-   $node->gateway, $auth_code, $transaction_id, $order_id);
+    $node->gateway, $transaction_id, $auth_code, $order_id);
   
   // update the uid on the webform submission
   db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
@@ -2036,7 +2036,7 @@ function fundraiser_process_recurring_donations() {
   			uc_payment_enter($order_id, 'fundraiser_recurring', $total, 0, NULL, 'Submitted for payment via cron run.');
   			uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run. Transaction Id: @txn_id', array('@txn_id' => $result['data']['txn_id'])), 'admin'); 
   		  db_query("UPDATE {uc_orders} SET order_status = 'payment_received' WHERE order_id = %d", $order_id);
-  			db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = '%s' WHERE order_id = %d", $result['data']['txn_id'], $order_id);
+  			db_query("UPDATE {fundraiser_recurring} SET gateway_resp = 'success', txn_id = '%s', auth_code = '%s' WHERE order_id = %d", $result['data']['txn_id'], $result['data']['auth_code'], $order_id);
   
         // Send credit card notification email when only a single payment is left
         if (fundraiser_recurring_payments_remaining($order_info['master_order_id']) == 1) {

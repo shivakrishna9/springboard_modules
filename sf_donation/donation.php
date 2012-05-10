@@ -141,6 +141,7 @@ class Donation
   public $stage;
   public $payment_gateway;
   public $payment_transaction_id;
+  public $payment_authorization_code;
   
   function __construct($order_id, $sid) {
   
@@ -205,6 +206,7 @@ class Donation
     $txn_details = $this->_load_transaction_details($this->order_id);
     $this->payment_gateway = $txn_details['gateway'];
     $this->payment_transaction_id = $txn_details['txn_id'];
+    $this->payment_authorization_code = $txn_details['auth_code'];
     
     // if this is a recurring donation, make sure we get the right close date  	
   	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
@@ -290,11 +292,11 @@ class Donation
     $details = array();
     $result = db_query(
       "
-        SELECT order_id, gateway, txn_id 
+        SELECT order_id, gateway, txn_id, auth_code
         FROM {fundraiser_webform_order} 
         WHERE order_id = %d
         UNION
-        SELECT order_id, gateway, txn_id
+        SELECT order_id, gateway, txn_id, auth_code
         FROM {fundraiser_recurring}
         WHERE order_id = %d
       ",
@@ -304,6 +306,7 @@ class Donation
     while ($data = db_fetch_object($result)) {
       $details['gateway'] = $data->gateway;
       $details['txn_id'] = $data->txn_id;
+      $details['auth_code'] = $data->auth_code;
     }
     
     // allow other modules to alter the details
@@ -348,6 +351,7 @@ class Donation
       'stage' => 'Stage',
       'payment_gateway' => 'Payment Gateway',
       'payment_transaction_id' => 'Payment Transaction ID',
+      'payment_authorization_code' => 'Payment Authorization Code',
     );
   }
   
