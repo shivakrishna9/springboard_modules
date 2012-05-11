@@ -312,7 +312,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
       $direct_response = explode(',', $response['directResponse']);
       $result = array(
         'success' => TRUE,
-        'data' => array('module' => 'uc_authorizenet', 'txn_type' => $direct_response[11], 'txn_id' => $direct_response[6]),
+        'data' => array('module' => 'uc_authorizenet', 'txn_type' => $direct_response[11], 'txn_id' => $direct_response[6], 'auth_code' => $direct_response[4]),
       );
 
       // Build info message.
@@ -371,7 +371,7 @@ function _gm_authorizenet_cim_profile_get($order, $profile_id, $config) {
   );
 
   // Request a profile from auth.net.
-  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
+  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $config);
 
   // Parse the response.
   $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
@@ -389,7 +389,7 @@ function _gm_authorizenet_cim_payment_profile_get($order, $profile_id, $payment_
   );
 
   // Request a profile from auth.net.
-  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
+  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _gm_authorizenet_array_to_xml($request), $config);
   // Parse the response.
   $response = _gm_authorizenet_cim_parse_response(gm_authorizenet_xml_api($server, $xml));
   return $response['resultCode'] == 'Error' ? FALSE : $response;
@@ -585,7 +585,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
       'success' => TRUE,
       'comment' => $message,
       'message' => $message,
-      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
+      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6], 'auth_code' => $response[4]),
       'uid' => $user->uid,
     );
 

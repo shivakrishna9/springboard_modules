@@ -194,6 +194,12 @@ function fundraiser_schema() {
         'length' => '55',
         'not null' => FALSE,
       ),
+      'auth_code' => array(
+        'description' => t('Payment gateway authorization code'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
       'recurring_status' => array(
         'description' => t('TODO: please describe this field!'),
         'type' => 'int',
@@ -324,6 +330,12 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => '55',
         'not null' => FALSE,
+      ),
+      'auth_code' => array(
+        'description' => t('Payment gateway authorization code'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
       ),
     ),
     'primary key' => array('order_id'),
@@ -954,5 +966,31 @@ function fundraiser_update_6310() {
     'not null' => FALSE,
     'default' => '',
   ));
+  return $ret;
+}
+
+/**
+ * Add column for payment gateway authorization code.
+ */
+function fundraiser_update_6311() {
+  $ret = array();
+  $field = array(
+    'description' => t('Payment gateway authorization code'),
+    'type' => 'varchar',
+    'length' => 64,
+    'not null' => FALSE,
+    'default' => '',
+  );
+  db_add_field($ret, 'fundraiser_webform_order', 'auth_code', $field);
+  
+  $recurring_field = array(
+    'description' => t('Payment gateway authorization code'),
+    'type' => 'varchar',
+    'length' => 64,
+    'not null' => FALSE,
+    'default' => '',
+  );
+  db_add_field($ret, 'fundraiser_recurring', 'auth_code', $recurring_field);
+  
   return $ret;
 }
