@@ -1,0 +1,6 @@
+name = Webform Dupe Cop
+description = Stops duplicate Webform data submissions.
+package = Jackson River Springboard
+core = 6.x
+dependencies[] = webform
+version =  6.x-3.0-dev

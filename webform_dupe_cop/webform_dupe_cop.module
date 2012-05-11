@@ -1,0 +1,101 @@
+<?php
+/**
+ * @file
+ * Stops duplicate Webform data submissions.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function webform_dupe_cop_menu() {
+	$items['admin/settings/webform/webform-dupe-cop'] = array(
+    'title' => t('Webform dupe prevention settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_dupe_cop_settings_form'),
+		'access arguments' => array('manage webform duplicate submission prevention'),
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'webform_dupe_cop.admin.inc',
+	);
+	
+	return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function webform_dupe_cop_perm() {
+  return array('manage webform duplicate submission prevention');
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function webform_dupe_cop_form_alter(&$form, &$form_state, $form_id) {
+  if (strpos($form_id, 'webform_client_form_') === 0) {
+    if (is_array($form['#validate'])) {
+      array_push($form['#validate'], 'webform_dupe_cop_client_form_validate');
+    } else {
+      $form['#validate'][] = 'webform_dupe_cop_client_form_validate';
+    }
+    $form['#submit'][] = 'webform_dupe_cop_client_form_submit';
+  }
+}
+
+/**
+ * Form validation fails up front if the submitted values are an exact match with a prior submission
+ */
+function webform_dupe_cop_client_form_validate($form, &$form_state) {
+  $hash = webform_dupe_cop_submission_hash($form_state['values']['submitted']);
+  $nid = $form_state['values']['details']['nid'];
+  $timespan_hours = variable_get('webform_dupe_cop_hours', 0);
+  $minimum_timestamp = ($timespan_hours > 0) ? (time() - $timespan_hours * 60 * 60) : 0;
+  $submitted = db_result(db_query(
+    "SELECT submitted
+      FROM {webform_dupe_cop} wdc
+        INNER JOIN {webform_submissions} ws ON ws.sid=wdc.sid
+      WHERE wdc.submission_hash='%s' AND ws.nid=%d AND ws.submitted > %d
+    ;",
+    $hash, $nid, $minimum_timestamp
+  ));
+  if ($submitted) {
+    $date = format_date($submitted, 'custom',  'F j');
+    $time = format_date($submitted, 'custom', 'g:i a');
+    $message = variable_get(
+      'webform_dupe_cop_message', 
+      t('These exact values were already submitted on %date at %time.', array( 
+        '%date' => $date, '%time' => $time
+      ))
+    );
+    $message = str_replace('[date]', $date, $message);
+    $message = str_replace('[time]', $time, $message);
+    form_set_error('submitted', $message);
+  }
+}
+
+/**
+ * Form submission records an MD5 hash of the submitted values.
+ */
+function webform_dupe_cop_client_form_submit($form, &$form_state) {
+  $hash = webform_dupe_cop_submission_hash($form_state['values']['submitted_tree']);
+  $sid = $form_state['values']['details']['sid'];
+  db_query("INSERT INTO {webform_dupe_cop} SET sid=%d, submission_hash='%s';", $sid, $hash);
+}
+
+/**
+ * Utility function to produce standardized submitted values hash from an array.
+ * @param Array $values
+ */
+function webform_dupe_cop_submission_hash($values) {
+  $string = serialize($values);
+  $hash = md5($string);
+  return $hash;
+}
+
+/**
+ * Implementation of hook_webform_submission_delete().
+ */
+function webform_dupe_cop_webform_submission_delete($node, $submission) {
+  if ($sid = $submission->sid) {
+    db_query("DELETE FROM {webform_dupe_cop} WHERE sid=%d;", $sid);
+  }
+}
