@@ -204,13 +204,13 @@ function capwiz_connect_account_overview($account) {
   
   $form['user_mapping'] = array(
     '#type' => 'item',
-    '#value' => ($account->mapping_user) ? 'Set' : 'Not set',
+    '#value' => (isset($account->mapping_user)) ? 'Set' : 'Not set',
     '#title' => t('User Mapping'),
     '#weight' => 20,
   );
   $form['action_mapping'] = array(
     '#type' => 'item',
-    '#value' => ($account->mapping_action) ? 'Set' : 'Not set',
+    '#value' => (isset($account->mapping_action)) ? 'Set' : 'Not set',
     '#title' => t('Action Mapping'),
     '#weight' => 20,
   );
@@ -384,7 +384,6 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     }
   }
   foreach ($user_fields as $field_key => $field) {
-    $map_for_field = $account->mapping_user['map'][$field_key];
       
     // Capwiz field
     $form['map']['user_field'][$field_key] = array(
@@ -395,12 +394,12 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     $form['map']['drupal_user_field'][$field_key] = array(
       '#type' => 'select',
       '#options' => $drupal_user_fields,
-      '#default_value' => $account->mapping_user['map'][$field_key],
+      '#default_value' => (isset($account->mapping_user['map'][$field_key])) ? $account->mapping_user['map'][$field_key] : '',
     );
     // Overwrite business rules
     $form['map']['business'][$field_key] = array(
       '#type' => 'select',
-      '#default_value' => $account->mapping_user['business'][$field_key],
+      '#default_value' => (isset($account->mapping_user['business'][$field_key])) ? $account->mapping_user['business'][$field_key] : '',
       '#options' => array(
         '' => '',
         'blank' => t('Overwrite when blank'), 
@@ -415,6 +414,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   // This is a little goofy:
   //   Put an item in $form['capwiz_field_map'] for the label
   //   Put an item in $form['map']['drupal_user_field'] for the Drupal user field dropdown
+    
   $form['capwiz_field_map']['form_affiliation'] = array(
     '#type' => 'item',
     '#description' => t('Form Affiliation'),
@@ -422,12 +422,12 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   $form['map']['drupal_user_field']['form_affiliation'] = array(
     '#type' => 'select',
     '#options' => $drupal_user_fields,
-    '#default_value' => $account->mapping_user['map']['form_affiliation'],
+    '#default_value' => (isset($account->mapping_user['map']['form_affiliation'])) ? $account->mapping_user['map']['form_affiliation'] : '',
   );
   // Overwrite business rules for form affiliation
   $form['map']['business']['form_affiliation'] = array(
     '#type' => 'select',
-    '#default_value' => $account->mapping_user['business']['form_affiliation'],
+    '#default_value' => (isset($account->mapping_user['business']['form_affiliation'])) ? $account->mapping_user['business']['form_affiliation'] : '',
     '#options' => array(
       '' => '', 
       'blank' => t('Overwrite when blank'), 
@@ -482,7 +482,7 @@ function theme_capwiz_connect_user_mapping_form($form) {
       "Business rules Capwiz to Drupal",
     );
     
-    $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_user_mapping_form'));
+    $output = theme('table', $header, $rows, array('id' => 'capwiz_connect_user_mapping_form'));
 
     // Additional hard-coded fields that can be mapped
     $rows = array();

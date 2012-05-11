@@ -12,7 +12,7 @@
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
  */
 
-/**
+ /**
   * Implementation of hook_help().
   */
  function capwiz_connect_help($path, $arg) {
@@ -36,7 +36,7 @@
  */
 function capwiz_connect_menu() {
   $items = array();
-  
+
   $items['capwiz_legislative_update'] = array(
     'title' => 'Capwiz legislative update',
     'page callback' => 'capwiz_connect_legislative_update_start',
@@ -254,7 +254,7 @@ function capwiz_connect_legislative_update_start() {
 function capwiz_connect_account_load($id, $refresh_cache = FALSE) {
   static $account_details = array();
   
-  if ($id > 0 && (!$account_details[$id] || $refresh_cache)) {
+  if ($id > 0 && (!isset($account_details[$id]) || $refresh_cache)) {
     $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
     
     // Load existing mapping for users and actions for this Capwiz account
@@ -566,7 +566,6 @@ function _capwiz_connect_load_action($local_action_id) {
   }
   return NULL;
 }
-
 /**
  * Takes a Salesforce url and returns the server instance.
  *
