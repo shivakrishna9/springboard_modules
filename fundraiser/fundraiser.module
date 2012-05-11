@@ -278,7 +278,7 @@ function fundraiser_menu_alter(&$items) {
  */
 function fundraiser_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a donation form node
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
     $access = 0;
   }
 }
@@ -314,7 +314,7 @@ function fundraiser_access_clone() {
  * the user has permission to edit User mapping.
  */
 function fundraiser_mapping_form_access($node) {
-  return ($node->type == 'donation_form') && user_access('edit donation form user mapping');
+  return (_fundraiser_is_donation_type($node)) && user_access('edit donation form user mapping');
 }
 
 /**
@@ -825,7 +825,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     $node = $form['#parameters'][2];
 
     // handle donation form submissions
-    if ($node->type == 'donation_form' && arg(2) == 'submission') {    	
+    if (_fundraiser_is_donation_type($node) && arg(2) == 'submission') {    	
       // Set up a view only display of the donation amount
       $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
       $form['submitted']['donation']['display_amount'] = array(
@@ -871,7 +871,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     }
     
     // handle the donation form itself
-    if ($node->type == 'donation_form' && arg(2) != 'submission')
+    if (_fundraiser_is_donation_type($node) && arg(2) != 'submission')
 		{
 			$base = drupal_get_path('module', 'fundraiser');
 			drupal_add_js($base .'/jquery.alphanumeric.js');
@@ -1163,7 +1163,7 @@ function fundraiser_ahah_helper_disable_validation(&$form) {
  * Implementation of hook_webform_submission_update()
  */
 function fundraiser_webform_submission_update($node, $submission) {
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
     if (module_exists('queue_api')) {
       if ($order_id = db_result(db_query("SELECT f.order_id FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id WHERE f.webform_nid = %d AND f.sid = %d AND u.order_status = 'payment_received'", $node->nid, $submission->sid))) {
         // Determine if we need an INSERT or an UPDATE
@@ -1185,7 +1185,7 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   unset($submission->data['']);
   
   // remove senstive form data before the submission is saved to the database
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
     $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
     while ($data = db_fetch_object($result)) {
       $submission->data[$data->cid]['value'][0] = NULL;
@@ -1201,7 +1201,7 @@ function fundraiser_webform_submission_presave($node, &$submission) {
  */
 function fundraiser_webform_configure_access($perm, $node) {
   // don't show the 'Form settings' tab on donation forms
-  if ($node->type == 'donation_form') {
+  if (_fundraiser_is_donation_type($node)) {
     return false;
   }
   else { // run normal permission check
@@ -1210,7 +1210,7 @@ function fundraiser_webform_configure_access($perm, $node) {
 }
 
 function fundraiser_confirmations_perm($perm, $node) {
-  if (($node->type == 'donation_form') && node_access($perm, $node)) {
+  if ((_fundraiser_is_donation_type($node)) && node_access($perm, $node)) {
     return true;
   }
   return false;
@@ -2701,6 +2701,16 @@ function _fundraiser_field_blacklist() {
     'card_expiration_month',
     'card_expiration_year',
   );
+}
+
+/**
+ * Determines whether or not the node is a donation type.
+ *
+ * @param $node
+ *   The node to check.
+ */
+function _fundraiser_is_donation_type($node) {
+  return $node->type == 'donation_form';
 }
 
 /**
