@@ -36,41 +36,44 @@ function queue_processor_menu() {
 		'file' => 'queue_processor.reports.inc',
 	);
 	
-	$items['admin/reports/salesforce/current'] = array(
-		'title' => 'Currently queued items',
-		'page callback' => 'current_queue_report',
-		'access arguments' => array('view salesforce reports'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'queue_processor.reports.inc',
+  // If the Springboard Views module is not enabled use the default pages
+  if (!module_exists('springboard_views')) {
+    $items['admin/reports/salesforce/current'] = array(
+      'title' => 'Currently queued items',
+      'page callback' => 'current_queue_report',
+      'access arguments' => array('view salesforce reports'),
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'queue_processor.reports.inc',
 	);
+
+    $items['admin/reports/salesforce/batch'] = array(
+      'title' => 'Batch history',
+      'page callback' => 'batch_history_report',
+      'access arguments' => array('view salesforce reports'),
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'queue_processor.reports.inc',
+    );
 	
-	$items['admin/reports/salesforce/batch'] = array(
-		'title' => 'Batch history',
-		'page callback' => 'batch_history_report',
-		'access arguments' => array('view salesforce reports'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'queue_processor.reports.inc',
-	);
+    $items['admin/reports/salesforce/retries'] = array(
+      'title' => 'Retry queue',
+      'page callback' => 'retry_queue_report',
+      'access arguments' => array('view salesforce reports'),
+      'type' => MENU_NORMAL_ITEM,
+      'weight' => 20,
+      'file' => 'queue_processor.reports.inc',
+    );
 	
-	$items['admin/reports/salesforce/retries'] = array(
-		'title' => 'Retry queue',
-		'page callback' => 'retry_queue_report',
-		'access arguments' => array('view salesforce reports'),
-		'type' => MENU_NORMAL_ITEM,
-		'weight' => 20,
-		'file' => 'queue_processor.reports.inc',
-	);
-	
-	$items['admin/reports/salesforce/permanent-failures'] = array(
-		'title' => 'Permanent failures',
-	    'page callback' => 'drupal_get_form',
-		'page arguments' => array('permanent_failures_report'),
-		'access arguments' => array('view salesforce reports'),
-		'type' => MENU_NORMAL_ITEM,
-		'weight' => 30,
-		'file' => 'queue_processor.reports.inc',
-	);
-	
+    $items['admin/reports/salesforce/permanent-failures'] = array(
+      'title' => 'Permanent failures',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('permanent_failures_report'),
+      'access arguments' => array('view salesforce reports'),
+      'type' => MENU_NORMAL_ITEM,
+      'weight' => 30,
+      'file' => 'queue_processor.reports.inc',
+    );
+  }
+
 	$items['admin/reports/salesforce/batch/%'] = array(
 		'title' => 'Batch detail',
 		'page callback' => 'batch_detail',

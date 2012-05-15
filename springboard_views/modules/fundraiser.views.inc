@@ -1,23 +1,6 @@
 <?php
 
 /**
- * Implements hook_views_handlers().
- */
-function springboard_views_fundraiser_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'springboard_views') . '/modules/fundraiser',
-    ),
-    'handlers' => array(
-      // Field handlers
-      'fundraiser_handler_field_donation_amounts' => array(
-        'parent' => 'views_handler_field_prerender_list',
-      ),
-    ),
-  );
-}
-
-/**
  * Implementation of hook_views_data().
  */
 function springboard_views_fundraiser_views_data() {

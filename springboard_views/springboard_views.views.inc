@@ -4,8 +4,20 @@
  * Implements hook_views_handlers().
  */
 function springboard_views_views_handlers() {
-  $handlers = _springboard_views_invoke_all('views_handlers');
-  return $handlers;
+  return array(
+    'info' => array(
+      'path' => drupal_get_path('module', 'springboard_views') . '/handlers',
+    ),
+    'handlers' => array(
+      // Field handlers
+      'fundraiser_handler_field_donation_amounts' => array(
+        'parent' => 'views_handler_field_prerender_list',
+      ),
+      'queue_api_handler_field_batch_id' => array(
+        'parent' => 'views_handler_field',
+      ),
+    ),
+  );
 }
 
 /**
@@ -55,11 +67,19 @@ function _springboard_views_invoke_all($hook) {
     if (function_exists($function)) {
       $module_data = $function();
       if (!empty($module_data) && is_array($module_data)) {
-        $data += $module_data;
+  if ($hook == 'views_handlers') {
+    drupal_set_message('mod data: ' . print_r($module_data, true));
+  }
+        $data = array_merge($data, $module_data);
+  if ($hook == 'views_handlers') {
+    drupal_set_message('first: ' . print_r($data, true));
+  }
       }
     }
   }
-
+  if ($hook == 'views_handlers') {
+    drupal_set_message(print_r($data, true));
+  }
   return $data;
 }
 

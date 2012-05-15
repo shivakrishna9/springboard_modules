@@ -8,6 +8,20 @@ function springboard_views_views_api() {
 }
 
 /**
+* Implementation of hook_views_pre_render().
+*
+* When rendering one of our own views, insert a count into the header.
+*/
+function springboard_views_views_pre_render(&$view) {
+  // An array of view names and a pretty name for the status of the items
+  $sbv_views = array('sbv_batch' => 'Batched', 'sbv_queue' => 'Queued', 'sbv_retry_queue' => 'Retry', 'sbv_permanent_failure' => 'Failed');
+  if (!array_key_exists($view->name, $sbv_views)) {
+    return;
+  }
+  $view->attachment_before .= t('!status Items: !count items' , array('!status' => $sbv_views[$view->name],  '!count' => $view->total_rows));
+}
+
+/**
  * Returns a list of the available 'drupal_type' field values.
  */
 function springboard_views_sf_drupal_types() {
@@ -30,4 +44,200 @@ function springboard_views_gateway_response_options() {
     'canceled' => t('Canceled'),
     'failed' => t('Failed'),
   );
+}
+
+/**
+ * Implementation of hook_date_api_tables()
+ * 
+ * Tell Date which tables to look for date fields in.
+ */
+function springboard_views_date_api_tables() {
+  return array('sf_queue', 'sf_retry_queue', 'sf_permanent_failure', 'sf_batch');
+}
+
+/*
+ * Implementation of hook_date_api_fields()
+ * 
+ * Tell Date about our date fields
+ */
+function springboard_views_date_api_fields($field) {
+
+  $sf_queue_created = array(
+    // The type of date: DATE_UNIX, DATE_ISO, DATE_DATETIME.
+    'sql_type' => DATE_UNIX,
+    // Timezone handling options: 'none', 'site', 'date', 'utc'.
+    'tz_handling' => 'site',
+    // Granularity of this date field's db data.
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+  
+  $sf_retry_queue_created = array(
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+  
+  $sf_retry_queue_retry_date = array(
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+  
+  $sf_permanent_failure_date_added = array(
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+
+  $sf_batch_created = array(
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+    // Array of "table.field" values for related fields that should be loaded automatically in the Views SQL.
+    'related_fields' => array('sf_batch.start_time', 'sf_batch.end_time'),
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+
+  $sf_batch_start_time = array(
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+    'fromto' => array('sf_batch_start_time', 'sf_batch_end_time'),
+    'granularity' => array('year', 'month', 'day', 'hour', 'minute'),
+  );
+  
+  // END FIELD : just tell Date how to read from db, and how to handle TZ
+  $sf_batch_end_time = array (
+    'sql_type' => DATE_UNIX,
+    'tz_handling' => 'site',
+  );
+   
+  switch ($field) {
+    case 'sf_queue.created':
+      return $sf_queue_created;
+      break;
+    case 'sf_retry_queue.created':
+      return $sf_retry_queue_created;
+      break;
+    case 'sf_retry_queue.retry_date':
+      return $sf_retry_queue_retry_date;
+      break;
+    case 'sf_permanent_failure.date_added':
+      return $sf_permanent_failure_date_added;
+      break;
+    case 'sf_batch.created':
+      return $sf_batch_created;
+      break;
+    case 'sf_batch.start_time':
+      return $sf_batch_start_time;
+      break;
+    case 'sf_batch.end_time':
+      return $sf_batch_end_time;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_views_bulk_operations_object_info().
+ */
+function springboard_views_views_bulk_operations_object_info() {
+  $object_info = array(
+    'sf_permanent_failure' => array(
+      'type' => 'sf_permanent_failure',
+      'base_table' => 'sf_permanent_failure',
+      'load' => '_springboard_views_sf_permanent_failure_load',
+      'oid' => 'id',
+      'title' => 'oid',
+    ),
+    'sf_retry_queue' => array(
+      'type' => 'sf_retry_queue',
+      'base_table' => 'sf_retry_queue',
+      'load' => '_springboard_views_sf_retry_queue_load',
+      'oid' => 'id',
+      'title' => 'oid',
+    ),
+  );
+  return $object_info;
+}
+
+/**
+ * Implementation of hook_action_info().
+ */
+function springboard_views_action_info() {
+  return array(
+    'springboard_views_sf_permanent_failure_retry_action' => array(
+      'description' => t('Retry'),
+      'type' => 'sf_permanent_failure',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'sf_permanent_failure' => array('retry'),
+      ),
+    ),
+    'springboard_views_sf_permanent_failure_delete_action' => array(
+      'description' => t('Delete'),
+      'type' => 'sf_permanent_failure',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'sf_permanent_failure' => array('delete'),
+      ),
+    ),
+    'springboard_views_sf_retry_queue_retry_action' => array(
+      'description' => t('Retry'),
+      'type' => 'sf_retry_queue',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'sf_retry_queue' => array('retry'),
+      ),
+    ),
+    'springboard_views_sf_retry_queue_delete_action' => array(
+      'description' => t('Delete'),
+      'type' => 'sf_retry_queue',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'sf_retry_queue' => array('delete'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Load object from the sf_permanent_failure table
+ */
+function _springboard_views_sf_permanent_failure_load($id) {
+  return db_fetch_object(db_query("SELECT * FROM {sf_permanent_failure} WHERE id = %d", $id));
+}
+
+/**
+ * Load object from the sf_retry_queue table
+ */
+function _springboard_views_sf_retry_queue_load($id) {
+  return db_fetch_object(db_query("SELECT * FROM {sf_retry_queue} WHERE id = %d", $id));
+}
+
+/**
+ * Action to move an object back into the queue from the sf_permanent_failure table
+ */
+function springboard_views_sf_permanent_failure_retry_action($object, $context) {
+  sf_queue_insert($object->oid, $object->type, $object->action);
+  db_query('DELETE FROM {sf_permanent_failure} WHERE id = %d', $context['row']->id);
+}
+
+/**
+ * Action to delete an item from the sf_permanent_failure table
+ */
+function springboard_views_sf_permanent_failure_delete_action($object, $context) {
+  db_query('DELETE FROM {sf_permanent_failure} WHERE id = %d', $context['row']->id);
+}
+
+/**
+ * Action to move an object back into the queue from the sf_retry_queue table
+ */
+function springboard_views_sf_retry_queue_retry_action($object, $context) {
+  sf_queue_insert($object->oid, $object->type, $object->action);
+  db_query('DELETE FROM {sf_retry_queue} WHERE id = %d', $context['row']->id);
+}
+
+/**
+ * Action to delete an item from the sf_retry_queue table
+ */
+function springboard_views_sf_retry_queue_delete_action($object, $context) {
+  db_query('DELETE FROM {sf_retry_queue} WHERE id = %d', $context['row']->id);
 }
