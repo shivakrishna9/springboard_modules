@@ -39,46 +39,7 @@ function gm_authorizenet_silent_post() {
     }
     // Otherwise, let other modules act on the data.
     else {
-      /**
-       * @deprecated: uc_recurring is now a contrib module:
-       *   http://www.drupal.org/project/uc_recurring
-       *
-       * The function uc_recurring_fee_save() only exists in uc_recurring-1.x
-       * and the code below should be removed when that version of the module
-       * becomes unsupported.
-       *
-       * uc_recurring-2.x takes advantage of the hook_uc_auth_arb_payment()
-       */
-      // **** start @deprecated code ******
-      if (function_exists('uc_recurring_fee_save')) {
-        // Otherwise, update the recurring fee information in our database.
-        $fee = db_fetch_array(db_query("SELECT * FROM {uc_recurring_users} WHERE fee_handler = 'uc_authorizenet' AND data = '%s'", $_POST['x_subscription_id']));
-
-        // Only process if the fee actually exists!
-        if (!empty($fee)) {
-          // Update the interval counters.
-          $fee['remaining_intervals'] -= 1;
-          $fee['charged_intervals'] += 1;
-
-          // Set the next expected charge time.
-          $fee['next_charge'] = strtotime('+'. $fee['regular_interval'], $fee['next_charge']);
-
-          // Save the new values.
-          uc_recurring_fee_save('user', $fee);
-
-          // Log the ARB payment if enabled.
-          if (variable_get('uc_authnet_report_arb_post', FALSE)) {
-            watchdog('uc_authorizenet', 'ARB payment reported for order @order_id: <pre>@post</pre>', array('@order_id' => $fee['order_id'], '@post' => print_r($_POST, TRUE)));
-          }
-
-          // Let other modules act on the data.
-          module_invoke_all('uc_arb_payment', $_POST);
-        }
-      }
-      // **** \end @deprecated code ******
-      else {
-        module_invoke_all('uc_auth_arb_payment', $_POST);
-      }
+      module_invoke_all('uc_auth_arb_payment', $_POST);
     }
   }
 
@@ -86,7 +47,7 @@ function gm_authorizenet_silent_post() {
 }
 
 // Displays a form for customers to update their CC info.
-function gm_authorizenet_arb_user_update_form($form_state, $user, $rfid) {
+function gm_authorizenet_arb_user_update_form($form, &$form_state, $user, $rfid) {
   $form = array();
 
   $fee = uc_recurring_fee_load('user', $rfid);
@@ -147,7 +108,7 @@ function gm_authorizenet_arb_user_update_form_submit($form, &$form_state) {
 }
 
 // Displays a confirm form for customers to cancel their fees.
-function gm_authorizenet_arb_user_cancel_form($form_state, $user, $rfid) {
+function gm_authorizenet_arb_user_cancel_form($form, &$form_state, $user, $rfid) {
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $user->uid,
@@ -157,13 +118,20 @@ function gm_authorizenet_arb_user_cancel_form($form_state, $user, $rfid) {
     '#value' => $rfid,
   );
 
-  return confirm_form($form, t('Are you sure you wish to cancel this fee?'), 'user/'. $user->uid, t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
+  return confirm_form(
+    $form, 
+    t('Are you sure you wish to cancel this fee?'), 
+    'user/'. $user->uid, 
+    t('This action cannot be undone and may result in the termination of subscription services.'), 
+    t('Confirm'), 
+    t('Cancel')
+  );
 }
 
 function gm_authorizenet_arb_user_cancel_form_submit($form, &$form_state) {
   $fee = uc_recurring_fee_load('user', $form_state['values']['rfid']);
 
-  $result = gm_authorizenet_arb_cancel($fee['data'], $fee['order_id'], $fee);
+  $result = gm_authorizenet_arb_cancel($fee['data'], $fee['order_id'], $fee); //@TODO: where is this function??
 
   // If the cancellation was successful...
   if ($result) {
