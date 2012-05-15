@@ -158,14 +158,13 @@ function gm_authorizenet_settings_form($config = array()) {
     '#default_value' => !empty($config['gm_authnet_cim_mode']) ? $config['gm_authnet_cim_mode'] : 'disabled',
   );
 
-
   return $form;
 }
 
 /**
  * Implementation of hook_form_alter().
  */
-function gm_authorizenet_form_alter(&$form, $form_state, $form_id) {
+function gm_authorizenet_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_payment_gateways_form') {
     $form['#submit'][] = 'gm_authorizenet_payment_gateway_settings_submit';
   }
@@ -908,7 +907,7 @@ function _gm_authorizenet_login_data() {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
     // Setup our encryption object.
-    $crypt = new uc_encryption_class;
+    $crypt = new UbercartEncryption;
 
     // Decrypt the MD5 Hash.
     if (!empty($md5_hash)) {
@@ -938,7 +937,10 @@ function gm_authorizenet_refund($order_id, $amount, $data) {
   }
   
   if ($order_id > 0) {
-    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+    $payment_details = db_query(
+      "SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = :order_id", 
+      array(':order_id' => $order_id)
+    )->fetchObject();
     
     // Set the transaction type to credit, and the ID of the previous charge to refund against
     $data['txn_type'] = UC_CREDIT_CREDIT;
