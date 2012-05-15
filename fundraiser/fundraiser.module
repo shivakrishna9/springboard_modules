@@ -1220,6 +1220,8 @@ function fundraiser_confirmations_perm($perm, $node) {
  * Determines if a user has any recurring donations.
  */
 function fundraiser_user_has_recurring_orders($account) {
+  global $user;
+
   $count = db_result(db_query(
     "
       SELECT count(u.order_id) FROM uc_orders u
@@ -1232,7 +1234,8 @@ function fundraiser_user_has_recurring_orders($account) {
   if ($count > 0) {
     // If a user has recurring donations, then check user_access() for
     // necessary access permissions.
-    return user_access('manage own recurring donations', $account);
+    return user_access('cancel future donations') ||
+      (($user->uid === $account->uid) && user_access('manage own recurring donations'));
   }
   return FALSE;
 }
