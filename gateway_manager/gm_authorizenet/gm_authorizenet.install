@@ -33,5 +33,7 @@ function gm_authorizenet_requirements($phase) {
  */
 function gm_authorizenet_uninstall() {
   // Delete related variables all at once.
-  db_query("DELETE FROM {variable} WHERE name LIKE 'gm_authnet_%%'");
+  db_delete('variable')
+    ->condition('name', 'uc_authnet_%', 'LIKE')
+    ->execute();
 }

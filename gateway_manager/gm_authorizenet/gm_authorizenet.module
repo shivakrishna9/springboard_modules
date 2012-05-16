@@ -27,7 +27,7 @@ function gm_authorizenet_menu() {
 
   $items['authnet/silent-post'] = array(
     'page callback' => 'gm_authorizenet_silent_post',
-    'access callback' => 'gm_authorizenet_silent_post_access',
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'file' => 'gm_authorizenet.pages.inc',
   );
@@ -35,14 +35,8 @@ function gm_authorizenet_menu() {
   return $items;
 }
 
-
-// Make sure Authorize.Net always has access to send Silent POSTs.
-function gm_authorizenet_silent_post_access() {
-  return TRUE;
-}
-
 /**
- * Implementation of hook_payment_gateway_managed().
+ * Implements hook_payment_gateway_managed().
  */
 function gm_authorizenet_payment_gateway_managed() {
   $gateways[] = array(
@@ -61,7 +55,7 @@ function gm_authorizenet_payment_gateway_managed() {
 /**
  * Callback for payment gateway settings.
  */
-function gm_authorizenet_settings_form($config = array()) {
+function gm_authorizenet_settings_form($form, &$form_state, $config = array()) {
   $login_data = _gm_authorizenet_login_data();
 
   // Allow admin to set passing along emails.
@@ -162,10 +156,10 @@ function gm_authorizenet_settings_form($config = array()) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_FORM_ID_alter() for uc_payment_method_settings_form().
  */
-function gm_authorizenet_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'uc_payment_gateways_form') {
+function gm_authorizenet_form_uc_payment_method_settings_form_alter(&$form, &$form_state) {
+  if ($form_state['build_info']['args'][0] == 'credit') {
     $form['#submit'][] = 'gm_authorizenet_payment_gateway_settings_submit';
   }
 }
@@ -175,7 +169,7 @@ function gm_authorizenet_payment_gateway_settings_submit($form, &$form_state) {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
     // Setup our encryption object.
-    $crypt = new uc_encryption_class;
+    $crypt = new UbercartEncryption();
 
     // Encrypt the Login ID, Transaction key, and MD5 Hash.
     if (!empty($form_state['values']['uc_authnet_md5_hash'])) {
@@ -345,7 +339,7 @@ function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
   }
   else {
     return array(
-      'refId' => substr($order->order_id .'-'. time(), 0, 20),
+      'refId' => substr($order->order_id .'-'. REQUEST_TIME, 0, 20),
       'transaction' => array(
         'profileTransAuthCapture' => array(
           'amount' => $amount,
@@ -409,16 +403,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
 
-  $context = array(
-    'revision' => 'formatted-original',
-    'type' => 'amount',
-  );
-  $options = array(
-    'sign' => FALSE,
-    'thou' => FALSE,
-    'dec' => '.',
-  );
-
   // Build the POST data for the transaction.
   $submit_data = array(
     // Merchant Information
@@ -431,7 +415,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_method' => $order->payment_method == 'credit' ? 'CC' : 'ECHECK',
     'x_method' => 'CC',
     // 'x_recurring_billing' => 'FALSE',
-    'x_amount' => uc_price($amount, $context, $options),
+    'x_amount' => uc_currency_format($amount, FALSE, FALSE, '.'),
     'x_card_num' => $order->payment_details['cc_number'],
     'x_exp_date' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
     'x_card_code' => $order->payment_details['cc_cvv'],
@@ -584,7 +568,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
       'success' => TRUE,
       'comment' => $message,
       'message' => $message,
-      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
+      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6], 'txn_authcode' => $response[4]),
       'uid' => $user->uid,
     );
 
@@ -611,12 +595,16 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   }
 
   // Build an admin order comment.
-  $context = array(
-    'revision' => 'formatted-original',
-    'type' => 'amount',
+  $comment = t(
+    '<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array(
+      '@type' => _gm_authorizenet_txn_type($response[11]), 
+      '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), 
+      '@message' => $response[3], 
+      '@amount' => uc_currency_format($response[9]), 
+      '@avs' => _gm_authorizenet_avs($response[5]),
+    )
   );
-  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
-    array('@type' => _gm_authorizenet_txn_type($response[11]), '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), '@message' => $response[3], '@amount' => uc_price($response[9], $context), '@avs' => _gm_authorizenet_avs($response[5])));
 
   // Add the CVV response if enabled.
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
@@ -825,6 +813,7 @@ function _gm_authorize_cim_xml_billto($order) {
     'state' => substr(uc_get_zone_code($order->billing_zone), 0, 2),
     'zip' => substr($order->billing_postal_code, 0, 20),
     'country' => !$billing_country ? '' : $billing_country[0]['country_iso_code_2'],
+    'phoneNumber' => substr($order->billing_phone, 0, 25),
   );
 }
 
@@ -907,7 +896,7 @@ function _gm_authorizenet_login_data() {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
     // Setup our encryption object.
-    $crypt = new UbercartEncryption;
+    $crypt = new UbercartEncryption();
 
     // Decrypt the MD5 Hash.
     if (!empty($md5_hash)) {
