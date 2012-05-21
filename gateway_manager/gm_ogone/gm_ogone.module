@@ -50,7 +50,6 @@ function gm_ogone_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-
   
   return $items;
 }
@@ -60,8 +59,11 @@ function gm_ogone_menu() {
  */
 function gm_ogone_build_form($order) {
   drupal_add_js(drupal_get_path('module', 'gm_ogone') . '/gm_ogone.js');
-  $output = t("You are being redirected to Ogone to provide your payment details directly to the payment processor. One moment please.");
-  $output .= drupal_get_form('gm_ogone_post_form', $order);
+  $output = drupal_get_form('gm_ogone_post_form', $order);
+  $output['redirect-notice'] = array(
+    '#markup' => t("You are being redirected to Ogone to provide your payment details directly to the payment processor. One moment please."),
+    '#weight' => -1000,
+  );
   return $output;
 }
 
@@ -75,7 +77,6 @@ function gm_ogone_post_form(&$form_state, $order) {
   // Get the country name from the country ID
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $billing_country = !$billing_country ? '' : $billing_country[0]['country_iso_code_2'];
-  
   
   // Gather arguments that will be sent
   $arguments = array(
@@ -148,7 +149,6 @@ function gm_ogone_post_form(&$form_state, $order) {
     $arguments['LANGUAGE'] = $language_codes[$language->language];
   }
   
-  
   // Only send the ALIASUSAGE value if it's set
   if ($gateway_config['ALIASUSAGE'] && $arguments['ALIASOPERATION']) {
     $arguments['ALIASUSAGE'] = $gateway_config['ALIASUSAGE'];
@@ -203,18 +203,17 @@ function gm_ogone_post_form(&$form_state, $order) {
     $param_value = trim($param_value);
     $param_name = strtoupper($param_name);
     if (strlen($param_value) > 0) {
-        $sha1_signature .= $param_name . '=' . $param_value . $gateway_config['sha_in'];
-        $form[$param_name] = array(
-          '#type' => 'hidden',
-          '#value' => $param_value,
-        );
+      $sha1_signature .= $param_name . '=' . $param_value . $gateway_config['sha_in'];
+      $form[$param_name] = array(
+        '#type' => 'hidden',
+        '#value' => $param_value,
+      );
     }
   }
   $form['SHASIGN'] = array(
     '#type' => 'hidden',
     '#value' => sha1($sha1_signature),
   );
-  
   
   $form['#action'] = $gateway_config['url'];
   $form['#id'] = 'ogone-ecommerce-post';
@@ -325,7 +324,6 @@ function gm_ogone_charge_ecommerce($order_id, $amount, $data) {
 }
 
 
-
 /**
  * Charge a credit card using the DirectLink API
  * 
@@ -359,7 +357,6 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
     $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
   }
 
-
   // Get the country name from the country ID
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $billing_country = !$billing_country ? '' : $billing_country[0]['country_iso_code_2'];
@@ -386,7 +383,6 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
   if ($order->data['currency']) {
     $charge_details['CURRENCY'] = trim(strtoupper(stripslashes($order->data['currency'])));
   }
-
 
   $charge_result = ogone_directlink_api_charge_credit($gateway_config, $charge_details);
 
@@ -419,7 +415,6 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
 
   return $result;
 }
-
 
 
 /**
@@ -581,7 +576,6 @@ function gm_ogone_refund($order_id, $amount, $data) {
   
   $refund_result = ogone_directlink_api_refund($gateway_config, $charge_details);
   
-  
   if ($refund_result['SUCCESS']) {
     $context = array(
       'revision' => 'formatted-original',
@@ -638,7 +632,6 @@ function gm_ogone_billing_update($alias_id, $billing_info, $data) {
     $gateway_config['SHA1IN'] = $data['config']['gm_ogone_directlink_shain_test'];
   }
 
-
   // Get the country name from the country ID
   $billing_country = uc_get_country_data(array('country_id' => $billing_info['country']));
   $billing_country = !$billing_country ? '' : $billing_country[0]['country_iso_code_2'];
@@ -666,7 +659,6 @@ function gm_ogone_billing_update($alias_id, $billing_info, $data) {
   
   $references = array_keys($next_order->data['cc_txns']['references']);
   $alias_id = (int)array_shift($references);
-  
 
   // Build array of charge details
   $charge_details = array(
@@ -737,7 +729,6 @@ function gm_ogone_fundraiser_billing_update_alter(&$order, $billing_update_resul
  */
 function gm_ogone_directlink_settings_form($config = array()) {
   $form = _gm_ogone_common_settings_fields($config);
-  
 
   $form['gm_ogone_transaction_mode'] = array(
     '#type' => 'radios',
@@ -750,7 +741,6 @@ function gm_ogone_directlink_settings_form($config = array()) {
     '#default_value' => $config['gm_ogone_transaction_mode'],
     '#required' => TRUE,
   );
-  
   
   $form['security_keys'] = array(
     '#type' => 'fieldset',
@@ -899,10 +889,8 @@ function gm_ogone_ecommerce_settings_form($config = array()) {
     '#default_value' => isset($config['gm_ogone_alias_usage']) ? $config['gm_ogone_alias_usage'] : OGONE_DEFAULT_ALIAS_USAGE,
   );
   
-  
   return $form;
 }
-
 
 
 /**
@@ -943,7 +931,6 @@ function _gm_ogone_common_settings_fields($config = array()) {
     '#default_value' => $config['gm_ogone_password'],
     '#required' => TRUE,
   );
-
 
   $form['gm_ogone_transaction_mode'] = array(
     '#type' => 'radios',
@@ -996,10 +983,13 @@ function gm_ogone_order($op, &$arg1, $arg2) {
  *   The id of the order.
  */
 function _save_web_banking_data_to_order($wb_data, $order_id) {
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption();
 
   // Load up the existing data array.
-  $data = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $data = db_query(
+    "SELECT data FROM {uc_orders} WHERE order_id = :order_id", 
+    array(':order_id' => $order_id)
+  )->fetchField();
   $data = unserialize($data);
 
   // Stuff the serialized and encrypted direct debit details into the array.
@@ -1007,7 +997,10 @@ function _save_web_banking_data_to_order($wb_data, $order_id) {
   uc_store_encryption_errors($crypt, 'gm_paperless_direct_debit_gateway');
 
   // Save it again.
-  db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+  db_query(
+    "UPDATE {uc_orders} SET data = :data WHERE order_id = :order_id;", 
+    array(':data' => serialize($data), ':order_id' => $order_id)
+  );
 }
 
 /**
@@ -1015,7 +1008,7 @@ function _save_web_banking_data_to_order($wb_data, $order_id) {
  */
 function _load_web_banking_data_to_order($wb_data = NULL, $encrypted = TRUE) {
   $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption();
 
   if ($encrypted) {
     // decrypt stored direct debit data
@@ -1039,7 +1032,10 @@ function gm_ogone_feedback_accepted() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_query(
+    "SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = :order_id", 
+    array(':order_id' => $order_id)
+  )->fetchObject();
   
   if (_gm_ogone_check_feedback_sha()) {
     // If no Alias could be set, the donation cannot be recurring
@@ -1057,7 +1053,6 @@ function gm_ogone_feedback_accepted() {
       $order->payment_details['cc_exp_year'] = '20' . substr($payment_values['ED'], 2, 2);
     }
    	
-   	
     // If an alias ID is returned from Ogone, save it
     if (!empty($payment_values['ALIAS'])) {
       $order->data = uc_credit_log_reference($order_id, $payment_values['ALIAS'], $payment_values['CARDNO']);
@@ -1066,7 +1061,7 @@ function gm_ogone_feedback_accepted() {
     
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
-    uc_order_save($order); 
+      uc_order_save($order); 
     }
     
     fundraiser_order_accept($order_id, $transaction_id);
@@ -1086,7 +1081,10 @@ function gm_ogone_feedback_accepted() {
 function gm_ogone_feedback_declined() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_query(
+    "SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = :order_id;", 
+    array(':order_id' => $order_id)
+  )->fetchObject();
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_decline($order_id, $message);
@@ -1104,7 +1102,10 @@ function gm_ogone_feedback_declined() {
 function gm_ogone_feedback_exception() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_query(
+    "SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = :order_id;",
+    array(':order_id' => $order_id)
+  )->fetchObject();
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_exception($order_id, '');
@@ -1116,14 +1117,16 @@ function gm_ogone_feedback_exception() {
 }
 
 
-
 /**
  * Menu callback: cancelled payment
  */
 function gm_ogone_feedback_cancelled() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_query(
+    "SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = :order_id;",
+    array(':order_id' => $order_id)
+  )->fetchObject();
 
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_cancel($order_id);
@@ -1197,6 +1200,7 @@ function _gm_ogone_get_returned_values_no_clean() {
   }
   return $return_values;
 }
+
 
 /**
  * Get an array of the data passed back from the payment processor, and run
