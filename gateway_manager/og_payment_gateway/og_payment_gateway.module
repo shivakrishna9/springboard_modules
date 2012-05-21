@@ -7,14 +7,14 @@
  */
 
 /**
- * Implemenation of hook_init().
+ * Implements hook_init().
  */
 function og_payment_gateway_init() {
   drupal_add_css(drupal_get_path('module', 'og_payment_gateway') . '/og_payment_gateway.css');
 }
 
 /**
- * Implmentation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
   global $user;
@@ -88,7 +88,7 @@ function og_payment_gateway_filter_gateway_ajax($form, $form_state) {
 }
 
 /**
- * Implemenation of hook_gateway_manager_gateway_alter().
+ * Implements hook_gateway_manager_gateway_alter().
  */
 function og_payment_gateway_gateway_manager_gateway_alter(&$gateway) {
   $result = db_query(
@@ -104,21 +104,21 @@ function og_payment_gateway_gateway_manager_gateway_alter(&$gateway) {
 }
 
 /**
- * Implemenation of hook_gateway_manager_gateway_create().
+ * Implements hook_gateway_manager_gateway_create().
  */
 function og_payment_gateway_gateway_manager_gateway_create($gateway, $config) {
   og_payment_gateway_save_groups($gateway->id, $config['og_groups']);
 }
 
 /**
- * Implemenation of hook_gateway_manager_gateway_update().
+ * Implements hook_gateway_manager_gateway_update().
  */
 function og_payment_gateway_gateway_manager_gateway_update($gateway, $config) {
   og_payment_gateway_save_groups($gateway->id, $config['og_groups']);
 }
 
 /**
- * Implementation of hook_gateway_manager_gateway_delete().
+ * Implements hook_gateway_manager_gateway_delete().
  */
 function og_payment_gateway_gateway_manager_gateway_delete($id) {
   db_query(
@@ -146,20 +146,17 @@ function og_payment_gateway_save_groups($gateway_id, $groups) {
 }
 
 /**
- * Implemenation of hook_db_rewrite_sql().
+ * Implements hook_query_alter().
  *
  * Restricts the list of available payment gateways to those assigned to the same organic groups
  * as the user.
  */
-function og_payment_gateway_db_rewrite_sql($query, $primary_table, $primary_field, $args) {
+function og_payment_gateway_query_alter(QueryAlterableInterface $query) {
   global $user;
-  switch ($primary_table) {
-    case 'gateway_manager_gateways':
-      $array['join'] = 'INNER JOIN {og_payment_gateway} o ON o.gid = g.id';
-      $array['join'] .= ' INNER JOIN {og_uid} u on u.nid = o.group_nid';
-      $array['where'] = 'u.uid = ' . $user->uid;
-      return $array;
-      break;
+  if ($query->hasTag('gateway_manager_gateways')) {
+    $query->innerJoin('og_payment_gateway', 'o', 'o.gid = g.id');
+    $query->innerJoin('og_uid', 'u', 'u.nid = o.group_nid');
+    $query->condition('u.uid', $user->uid, '=');
   }
 }
 

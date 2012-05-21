@@ -351,6 +351,7 @@ function _gateway_manager_gateway_list() {
     ->fields('g', array('id', 'name'))
     ->where('g.status = 1')
     ->orderBy('g.name')
+    ->addTag('gateway_manager_gateways')
     ->execute()
   ;
   $gateways = array();
