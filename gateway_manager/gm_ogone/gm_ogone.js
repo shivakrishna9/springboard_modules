@@ -1,3 +1,3 @@
-$(document).ready(function() {
-  $('#ogone-ecommerce-post').submit();
+jQuery(document).ready(function() {
+  jQuery('#ogone-ecommerce-post').submit();
 });
