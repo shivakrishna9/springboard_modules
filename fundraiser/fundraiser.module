@@ -139,6 +139,24 @@ function fundraiser_menu() {
 }
 
 /**
+ * Implements hook_boost_is_cacheable().
+ *
+ * If Boost is enabled, make sure donation form nodes aren't cached.
+ */
+function fundraiser_boost_is_cacheable($parts) {
+  $args = $parts['args'];
+  if ($args[0] == 'node' && isset($args[1]) && is_numeric($args[1]) && !isset($args[2])) {
+    // It's a node, but is it a donation node?
+    $node = node_load($args[1]);
+    if (_fundraiser_is_donation_type($node)) {
+      // Don't cache donation forms
+      $parts['is_cacheable'] = FALSE;
+    }
+  }
+  return $parts;
+}
+
+/**
  * Menu access callback, check for donation type and node access.
  */
 function fundraiser_confirmations_perm($perm, $node) {
