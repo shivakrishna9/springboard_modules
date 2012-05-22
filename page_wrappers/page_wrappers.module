@@ -90,6 +90,9 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
         
       case 'update':
         $template = _page_wrappers_create_template($node);
+        if ($template) {
+          db_query("UPDATE {page_wrappers} SET template = '%s' WHERE nid = %d", $template, $node->nid);
+        }
         break;
         
       case 'delete':
