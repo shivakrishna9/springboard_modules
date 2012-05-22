@@ -380,6 +380,24 @@ function fundraiser_node_info() {
 }
 
 /**
+ * Implementation of hook_boost_is_cacheable().
+ * 
+ * If Boost is enabled, make sure donation form nodes aren't cached.
+ */
+function fundraiser_boost_is_cacheable($path) {
+  $args = explode('/', drupal_get_normal_path($path));
+  if ($args[0] == 'node' && isset($args[1]) && is_numeric($args[1]) && !isset($args[2])) {
+    // It's a node, but is it a donation node?
+    $node = node_load($args[1]);
+    if (_fundraiser_is_donation_type($node)) {
+      // Don't cache donation forms
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
