@@ -86,6 +86,7 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
       case 'insert':
         $template = _page_wrappers_create_template($node);
         db_query("INSERT INTO {page_wrappers} (nid, template) VALUES (%d, '%s')", $node->nid, $template);
+        break;
         
       case 'update':
         $template = _page_wrappers_create_template($node);
