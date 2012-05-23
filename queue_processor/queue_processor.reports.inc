@@ -236,15 +236,12 @@ function queue_processor_submit_retry($form, $form_state) {
   drupal_goto('admin/reports/salesforce/permanent-failures');
 }
 
+/**
+ * Move all items from the failure queue to the queue 
+ */
 function _queue_processor_retry_all_perm_failures() {
   $item_count = db_result(db_query('SELECT count(id) FROM {sf_permanent_failure}'));
-  db_query('INSERT INTO {sf_queue} 
-      (id, oid, type, fieldmap, action, created) 
-    (SELECT f.oid, f.type, o.sfid, f.fieldmap, f.action 
-    FROM {sf_permanent_failure} f 
-    LEFT JOIN {salesforce_management_object_map} o 
-      ON o.oid = f.oid 
-      AND o.drupal_type = f.type');
+  db_query('INSERT INTO {sf_queue} (oid, type, sfid, fieldmap, action, created) SELECT f.oid, f.type, o.sfid, f.fieldmap, f.action, unix_timestamp() FROM sf_permanent_failure f LEFT JOIN salesforce_management_object_map o ON o.oid = f.oid AND o.drupal_type = f.type');  
   db_query('DELETE FROM {sf_permanent_failure}');
   drupal_set_message(t('%items items where moved to the export queue.', array('%items' => $item_count)));
 }
