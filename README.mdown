@@ -8,3 +8,5 @@ If you are creating a new site from scratch, you have two options:
 
 * The easy way: [follow the installation instructions on GoSpringboard.com](http://www.gospringboard.com/documentation/installing-springboard/installing-distribution)
 * The nerdy way: Checkout the [Springboard-Build](https://github.com/JacksonRiver/Springboard-Build) project, and use [drush make](http://drupal.org/project/drush_make) to install it.
+
+Hi, Phillip!
