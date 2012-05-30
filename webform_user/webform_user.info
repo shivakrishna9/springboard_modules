@@ -9,6 +9,7 @@ dependencies[] = webform
 
 files[] = webform_user.install
 files[] = webform_user.module
-files[] webform_user.admin.inc
+files[] = webform_user.admin.inc
+files[] = tests/webform_user.test
 
 version=7.x-3.0-dev
