@@ -2185,15 +2185,37 @@ function fundraiser_order_pane_fundraiser($op, $arg1) {
   switch ($op) {
     case 'view':
       $order_id = $arg1->order_id;
-      if ($submission = db_fetch_object(
-        db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id=%d;", $order_id)
-      )) {
+      // query for a webform order record either for this order id or for its master order if it's a 
+      // recurrance of a recurring donation
+      $submission = db_fetch_object(db_query(
+        "SELECT wo.webform_nid, wo.sid, r.master_order_id 
+          FROM {fundraiser_webform_order} wo
+            LEFT JOIN {fundraiser_recurring} r ON r.master_order_id = wo.order_id 
+          WHERE %d IN (wo.order_id, r.order_id)
+        ;",
+        $order_id
+      ));
+      if ($submission) {
         $output['webform-submission'] = array(
           '#value' => l(
             t('Donation form submission'), 
             "node/$submission->webform_nid/submission/$submission->sid"
           ),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
+          '#weight' => 1
         );
+        if ($submission->master_order_id) {
+          $output['master-order'] = array(
+            '#value' => l(
+              t('Master order for recurring donations'),
+              "admin/store/orders/$submission->master_order_id"
+            ),
+            '#prefix' => '<p>',
+            '#suffix' => '</p>',
+            '#weight' => 2,
+          );
+        }
       }
       return drupal_render($output);
   }
