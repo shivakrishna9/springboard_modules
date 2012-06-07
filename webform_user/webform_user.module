@@ -8,8 +8,8 @@
  * Implementation of hook_menu().
  */
 function webform_user_menu() {
-	$items['node/%webform_menu/webform/webform_user'] = array(
-	  'title' => 'Related object field',
+  $items['node/%webform_menu/webform/webform_user'] = array(
+    'title' => 'Related object field',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_field_selection_form', 1),
 		'access callback' => 'user_access',
@@ -687,7 +687,7 @@ function webform_user_webform_submission_presave($node, &$submission) {
  *   Returns TRUE if the e-mail address is valid; FALSE otherwise.
  */
 function _webform_user_validate_email($mail) {
-  return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
+  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
 }
 
 /**
