@@ -888,9 +888,33 @@ function move_to_permanent_failure(&$item, &$response) {
  */
 function move_retries_to_heap($max_items) {
 	$max_attempts = variable_get('queue_retry_max', 3);
-	db_query("INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created, is_retry) SELECT
-		oid, sfid, type, fieldmap, action, unix_timestamp(), 1 FROM {sf_retry_queue} WHERE retry_date < %d AND attempts < %d LIMIT %d",
-		time(), $max_attempts, $max_items);
+  	
+	// first cull from the retry queue any entities already in the heap
+	$dupes = db_query(
+    "SELECT rq.oid, rq.type
+      FROM {sf_retry_queue} rq
+        INNER JOIN {sf_heap} h ON (h.oid=rq.oid AND h.type=rq.type)
+      WHERE rq.attempts < %d
+    ;",
+    $max_attempts
+  );
+	while ($dupe = db_fetch_array($dupes)) {
+	  db_query(
+      "DELETE FROM {sf_retry_queue} WHERE oid=%d AND type='%s';",
+      $dupe['oid'], $dupe['type']
+    );
+	}
+	
+	// now copy up to $max_items rows from the retry queue to the heap
+	db_query(
+    "INSERT INTO {sf_heap} (oid, sfid, type, fieldmap, action, created, is_retry)
+	    SELECT rq.oid, rq.sfid, rq.type, rq.fieldmap, rq.action, UNIX_TIMESTAMP(), 1
+        FROM {sf_retry_queue} rq
+        WHERE rq.retry_date < %d AND rq.attempts < %d
+	      LIMIT %d
+    ;",
+		time(), $max_attempts, $max_items
+  );
 }
 
 /**
