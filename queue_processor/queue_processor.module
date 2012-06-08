@@ -86,13 +86,13 @@ function queue_processor_menu() {
     'access arguments' => array('move item from retries queue'),
     'type' => MENU_CALLBACK,
   );
-  if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
-    $items['queue_processor_cron'] = array(
-      'page callback' => 'queue_processor_cron',
-      'access callback' => TRUE,
-      'type' => MENU_CALLBACK,
-    );
-  }
+
+  $items['queue_processor_cron'] = array(
+    'page callback' => 'queue_processor_standalone_cron',
+    'access callback' => 'queue_processor_standalone_cron_access',
+    'type' => MENU_CALLBACK,
+  );
+
 	return $items;
 }
 
@@ -133,18 +133,34 @@ function queue_processor_theme() {
 function queue_processor_cron() {
   // Bail on normal cron run if standalone cron is enabled.
   if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
-    // If standalone cron is enabled and cron.php is being run, do nothing.
-    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-      return 0;
-    }
-    else {
-      watchdog('queue_processor_cron', t('Standalone cron run.'));
-    }
+    // If standalone cron is enabled, do nothing.
+    return 0;
   }
   else {
+    // Process the queue normally.
     watchdog('queue_processor_cron', t('Standard cron run.'));
+    queue_processor_process();
   }
-  queue_processor_process();
+}
+
+/**
+ * Menu callback for the standalone cron.
+ */
+function queue_processor_standalone_cron() {
+  if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
+    // Process the queue.
+    watchdog('queue_processor_cron', t('Standalone cron run.'));
+    queue_processor_process();
+  }
+}
+
+/**
+ * Access callback for the standalone cron.
+ */
+function queue_processor_standalone_cron_access() {
+  // Check whether the standalone cron is enabled. If so, then grant access
+  // without checking user_access (equivalent to access callback => TRUE).
+  return variable_get('queue_processor_standalone_cron_enabled', FALSE);
 }
 
 /**
