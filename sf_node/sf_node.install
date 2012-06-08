@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * install/uninstall hooks for sf_node.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function sf_node_uninstall() {
+  variable_del('sf_node_delete_action_enabled');
+}
