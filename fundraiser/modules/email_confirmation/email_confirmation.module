@@ -512,11 +512,11 @@ function email_confirmation_fundraiser_order_success($order) {
     // Gather settings from the db and build the custom email
     if ($settings->tid) {
       $node = node_load($order->products[0]->nid);
-      $sid = db_fetch_object(db_query(
+      $sid = db_result(db_query(
         'SELECT sid FROM {fundraiser_webform_order} '.
         'WHERE order_id = %d',
         $order->order_id));
-      $submission = webform_get_submission($node->nid, $sid->sid);
+      $submission = webform_get_submission($node->nid, $sid);
       $result = db_fetch_object(db_query(
         'SELECT body, format FROM {node_revisions} nr '.
         'INNER JOIN {node} n '.
@@ -529,20 +529,31 @@ function email_confirmation_fundraiser_order_success($order) {
         'INNER JOIN {node} n ON n.vid = t.vid '.
         'WHERE t.nid=%d',
         $settings->tid));
+
       $message = array();
       $message['from_name'] = $settings->from_name;
       $message['from_address'] = $settings->reply_to_email;
       $message['subject'] = $settings->subject;
+     
       // Perform token replacements for "order" tokens and "all" tokens.
-      $message['html_body'] = _webform_filter_values($template_html, $node, $submission, NULL, FALSE, FALSE);
-      $message['html_body'] = token_replace($message['html_body'] l, 'order', $order);
+      // token replacement on the template, adds html_message to the message body via token replacement.
+      $message['html_body'] = token_replace($template_html, 'order', $order);
+
+      // 2nd pass performs order token replacement on combined template + message
       $message['html_body'] = token_replace($message['html_body'], 'order', $order);
+
+      // 3rd pass replaces generic "all" tokens
       $message['html_body'] = token_replace($message['html_body']);
+
+      // final pass attempts to replace webform token values
+      $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, FALSE);
+ 
+
       // Same as above, with check_plain() included to insure final output is plain text.
-      $message['text_body'] = _webform_filter_values($template_text, $node, $submission, NULL, FALSE, FALSE);
-      $message['text_body'] = token_replace($message['text_body'], 'order', $order);
+      $message['text_body'] = token_replace($template_text, 'order', $order);
       $message['text_body'] = token_replace($message['text_body'], 'order', $order);
       $message['text_body'] = token_replace($message['text_body']);
+      $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, FALSE);
       $message['text_body'] = check_plain($message['text_body']);
       $message['bcc'] = $settings->bcc_email;
       // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
