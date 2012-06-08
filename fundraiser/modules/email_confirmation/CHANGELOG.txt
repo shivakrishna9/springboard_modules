@@ -1,0 +1,4 @@
+CHANGELOG
+---------
+2012-05-11 By Bastlynn
+Adding webform token support to email confirmations.
