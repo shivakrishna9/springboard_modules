@@ -710,6 +710,8 @@ function _webform_user_save_profile_map($uid, &$map) {
       switch ($field['type']) {
         case 'text':
         case 'hidden':
+        case 'list_text':
+        case 'list_integer':
           if (in_array($field['name'], $map_keys)) {
             $edit[$field['name']] = array(
               'und' => array(
@@ -720,7 +722,7 @@ function _webform_user_save_profile_map($uid, &$map) {
             );
           }
           break;
-        // TODO: add support for select fields
+        // TODO: track down format for nonstandard fields like "link" and "email"
       }
   
     }
