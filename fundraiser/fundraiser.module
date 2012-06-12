@@ -1588,9 +1588,12 @@ function fundraiser_webform_submit($form, &$form_state) {
  	  $order->data['gateway'] = $node->gateway;
   }
   
-
  	// cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
+ 	
+ 	// allow other modules to alter the order before it is save
+  module_invoke_all('fundraiser_order_created', $order, $fundraiser_fields, $form_state['values']['details']['sid']);
+ 	
  	// save the order
  	uc_order_save($order);
 
