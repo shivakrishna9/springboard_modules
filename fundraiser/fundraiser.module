@@ -2751,7 +2751,6 @@ function _fundraiser_array_smart_merge($array, $override) {
  * TRUE if the address passes all validation, FALSE otherwise.
  */
 function fundraiser_validate_email($mail) {
-  drupal_set_message('wait, mail:' . $mail);
   return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
 }
 
