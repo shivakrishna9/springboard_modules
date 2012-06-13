@@ -268,12 +268,13 @@ $data = array();
   $data['resource'] = $resource;
   $data['timestamp'] = (int) trim($timestamp);
   $data['pubkey'] = trim($pubkey);
-  $data['privkey'] = trim(db_result(db_query("SELECT privkey FROM {springboard_api} WHERE pubkey = '%s'", $pubkey)));
+  $data['privkey'] = trim(db_result(db_query("SELECT privkey FROM {springboard_api} WHERE pubkey = '%s'", trim($pubkey))));
   $gen_checksum = sha1(json_encode($data));
-
+//  drupal_set_message('data:' . print_r($data, TRUE));
+//  drupal_set_message('checksum:' . $gen_checksum);
   if (trim($checksum) === $gen_checksum) {
     return TRUE;
   }
-  drupal_set_message('Error: Authentication failed.');
+
   return FALSE;
 }

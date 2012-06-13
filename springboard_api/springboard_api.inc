@@ -29,7 +29,7 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
  *
  * @param $nid
  * Node id of the requested webform.
- * 
+ *
  * @return
  * Returns an array of field definitions for the requested webform.
  */
@@ -80,17 +80,16 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
 }
 
 /**
- * Process a donation submitted via the API. 
+ * Process a donation submitted via the API.
  *
  * @param $submission
  * Array of webform values.
  */
 function springboard_api_submit_webform($submission) {
   unset($_SESSION['messages']);
-  $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['pubkey'], $submission['checksum']);
+  $valid = _springboard_api_validate_transaction('submit', $submission['time'], $submission['key'], $submission['checksum']);
   $error_code = (isset($submission['override_400']) && $submission['override_400']) ? 200 : 400;
   if ($valid) {
-
     springboard_api_validate_donation($submission, $error_code);
 
     //$submission = NULL;
@@ -100,14 +99,20 @@ function springboard_api_submit_webform($submission) {
 
     // Start with some defaults.
     $form_state = array(
-      'storage' => '',
+      'storage' => array(
+        'page_num' => 1,
+        'page_count' => 0,
+      ),
+      'clicked_button' => array(
+        '#parents' => array(),
+      ),
       'submitted' => 1,
       'values' => array(
-        'op' => 'Submit',
+        'op' => !empty($node->webform['submit_text']) ? $node->webform['submit_text'] : 'Submit',
         'submit' => 'Submit',
         'form_id' => 'webform_client_form_' . $submission['webform_nid'],
         'process_input' => 1,
-      ),  
+      ),
     );
 
     $results = db_query('
@@ -117,17 +122,18 @@ function springboard_api_submit_webform($submission) {
         wc.type,
         wc.extra,
         wc2.form_key as parent_key
-      FROM {webform_component} wc 
+      FROM {webform_component} wc
       LEFT JOIN {webform_component} wc2
-        ON wc2.cid = wc.pid 
+        ON wc2.cid = wc.pid
         AND wc2.nid = %d
       WHERE wc.nid = %d
       ORDER BY parent_key', $submission['webform_id'], $submission['webform_id']);
 
-    // FIXME: selects flake on numeric inputs due to incorrect default typecasting of submitted values by PHP. trim() helps but doesn't solve the problem.
+    // Build $form_state based on available webform components and data submitted by the API.
+    // Note $save is a temporary variable used to proxy portions of $form_state during the build process.
     while ($field = db_fetch_object($results)) {
       $submission[$field->form_key] = trim($submission[$field->form_key]);
-
+      
       if ($field->parent_key == NULL) {
           $save = &$form_state['values']['submitted'];
       }
@@ -139,16 +145,23 @@ function springboard_api_submit_webform($submission) {
         case 'fieldset';
           $form_state['values']['submitted'][$field->form_key] = array();
           break;
+        case 'hidden':
+          $save[$field->form_key] = $submission[$field->form_key];
+          $save[$field->cid] = $submission[$field->form_key];
+          $submission['data'][$field->cid]['value'] = array($submission[$field->form_key]);
+          break;
         case 'email':
         case 'textfield':
+        case 'textarea':
           $save[$field->form_key] = $submission[$field->form_key];
           break;
         case 'select':
           // FIXME: hack workaround for the recurring payment field
-          if ($field->form_key == 'recurs_monthly') {
-            $save[$field->form_key] = array(
-              'recurs' => $submission[$field->form_key],
-            );
+          if ($field->form_key === 'recurs_monthly' && isset($submission['recurs_monthly'])) {
+
+           if ($submission['recurs_monthly'] == 'recurs') {
+              $save['recurs_monthly'] = 'recurs';
+            }
             break;
           }
           $extra = unserialize($field->extra);
@@ -156,13 +169,21 @@ function springboard_api_submit_webform($submission) {
             $extra['multiple'] = 1;
           }
           if (!isset($extra['multiple']) || $extra['multiple'] == 0) {
+            // Fundraiser's form_alter nerfs both of these fields. Hoop jumping is required to get past this.
+            if ($field->form_key === 'card_expiration_month' || $field->form_key === 'card_expiration_year') {
+              $save['expiration_date'][$field->form_key] = $submission[$field->form_key];
+            }
             $save[$field->form_key] = $submission[$field->form_key];
           }
           else {
-          
-          $save[$field->form_key] = array();
-          $submission[$field->form_key] = explode(',', $submission[$field->form_key]);
-
+    
+            $save[$field->form_key] = array();
+            if (strpos($submission[$field->form_key], ',')) { 
+              $submission[$field->form_key] = explode(',', trim($submission[$field->form_key]));
+            }
+            else {
+              $submission[$field->form_key] = array(trim($submission[$field->form_key]));
+            }
             if (preg_match("/\n/", $extra['items'])) {
               $extra['items'] = explode("\n", $field->extra['items']);
             }
@@ -174,15 +195,15 @@ function springboard_api_submit_webform($submission) {
               $item = preg_replace('/\|.*$/', '', $item);
 
               if (in_array($item, $submission[$field->form_key])) {
-                $save[$field->form_key][$item] = $item; 
-              }
-              else {
-                $save[$field->form_key][$item] = '';
+                $save[$field->form_key][$item] = $item;
               }
             }
           
             foreach ($submission[$field->form_key] as $item) {
               $item = trim($item);
+              if (is_numeric($item)) {
+                $item = (int) $item;
+              }
               $save[$field->form_key][$item] = $item;
             }
           }
@@ -198,10 +219,15 @@ function springboard_api_submit_webform($submission) {
       }
     }
 
-    drupal_execute('webform_client_form_' . $submission['webform_nid'], $form_state, $node, $submission, FALSE, FALSE);
+
+    $form_state['clicked_button']['#post']['submitted'] = $form_state['values']['submitted'];
+    $submission = (object) $submission;  
+    drupal_execute('webform_client_form_' . $submission->webform_nid, $form_state, $node, $submission, FALSE, FALSE);
     $errors = form_get_errors();
     if (!$errors) {
-      return $_SESSION['messages'];
+      $messages = $_SESSION['messages'];
+      $messages[] = 'Submission processed.';
+      return $messages;
     }
     else {
       foreach($errors as $key => $message) {
@@ -209,8 +235,9 @@ function springboard_api_submit_webform($submission) {
         $item['field_key'] = str_replace(']', '', $key[count($key) -1]);
         $item['message'] = $message;
         $formatted_errors['errors'][] = $item;
+        watchdog('springboard_api', t('Error: !error', array('!error' => $message)), array(), WATCHDOG_ERROR);
       }
-      services_error('Error: One or more problems where detected with your submission.', $error_code, $formatted_errors);
+      services_error('Error: One or more problems were detected with your submission.', $error_code, $formatted_errors);
     }
 
   }
@@ -223,7 +250,7 @@ function springboard_api_submit_webform($submission) {
 
 /**
  * Validate donation array for required values.
- * 
+ *
  * @param $donation
  * Keyed array of submitted donation values.
  *
@@ -264,7 +291,7 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_list_order_ids() {
   $results = db_query('SELECT fwo.order_id FROM {springboard_webform_order} fwo UNION SELECT fr.order_id FROM {springboard_recurring} fr');
@@ -276,22 +303,22 @@ function _springboard_api_list_order_ids() {
 
 /**
  * Return an array of webform components for a given node.
- * 
+ *
  * @param $nid
  * Node ID
- * 
+ *
  * @return
  * Returns an array containing data from {webform_component}
  */
 function _springboard_api_get_webform_components($nid) {
-  $results = db_query('SELECT 
+  $results = db_query('SELECT
       form_key as field_id,
       name,
       type,
       value as default_value,
       mandatory as required,
       extra as details
-    FROM {webform_component} 
+    FROM {webform_component}
     WHERE nid = %d', $nid);
   while ($field = db_fetch_array($results)) {
 
