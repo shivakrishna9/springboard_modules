@@ -367,7 +367,8 @@ class CapizConnect {
     // Query for users that have been updated since the last time
     $sync_since = $this->account_details->user_sync_since;
     $start_offset = $this->account_details->user_sync_offset;
-    $users = $this->queryUsers($sync_since, $start_offset);
+    $batch_size = variable_get('capwiz_connect_user_batch_size', 100);
+    $users = $this->queryUsers($sync_since, $start_offset, $batch_size);
     
     // If $users is FALSE, there was an error connecting or querying users, and a
     // message will be logged to the watchdog
@@ -754,7 +755,8 @@ class CapizConnect {
     // Query for actions that have been updated since the last time
     $sync_since = $this->account_details->action_sync_since;
     $start_offset = $this->account_details->action_sync_offset;
-    $actions = $this->queryActions($sync_since, $start_offset);
+    $batch_size = variable_get('capwiz_connect_action_batch_size', 100);
+    $actions = $this->queryActions($sync_since, $start_offset, $batch_size);
     
     // If $actions is FALSE, there was an error connecting or querying actions,
     // and a message will be logged to the watchdo

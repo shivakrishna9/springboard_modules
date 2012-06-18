@@ -15,6 +15,20 @@ function capwiz_connect_settings($form_state) {
     '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l('capwiz_connect_cron', 'capwiz_connect_cron'))),
     '#default_value' => variable_get('capwiz_connect_standalone_cron_enabled', 0),
   );
+  $form['capwiz_connect_user_batch_size'] = array(
+    '#type' => 'select',
+    '#options' => drupal_map_assoc(array(10,50,100,200)),
+    '#title' => t('User Batch Amount'),
+    '#description' => t('Select the amount of Capwiz users to grab during the import process.'),
+    '#default_value' => variable_get('capwiz_connect_user_batch_size', 100),
+  );
+  $form['capwiz_connect_action_batch_size'] = array(
+    '#type' => 'select',
+    '#options' => drupal_map_assoc(array(10,50,100,200)),
+    '#title' => t('Action Batch Amount'),
+    '#description' => t('Select the amount of Capwiz actions to grab during the import process.'),
+    '#default_value' => variable_get('capwiz_connect_action_batch_size', 100),
+  );
   $form = system_settings_form($form);
 
   // Need to clear the menu cache after saving so that the independent cron
