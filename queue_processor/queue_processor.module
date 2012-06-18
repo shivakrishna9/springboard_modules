@@ -173,10 +173,18 @@ function queue_processor_process() {
 	$max_to_process = variable_get('queue_max_to_process', 1000);
 	
 	if ($sf) {
+	    print 'here';
 		watchdog('salesforce queue processor', t('Queue processing started'), NULL, WATCHDOG_INFO);
 		
 		// clean up anything that might be left over in the heap as a result of a fatal, non-recoverable error
 		queue_processor_clean_heap();
+
+        $result = db_query("SELECT type,COUNT(type) FROM {sf_queue} GROUP By type");
+        while($data = db_fetch_object($result)) {
+          $counts[] = $data;
+        }
+        print print_r($counts, true);
+        exit;
 
 		// move all currently queued items to the heap
 		db_query("UPDATE {sf_queue} SET locked = 1 LIMIT %d", $max_to_process);
