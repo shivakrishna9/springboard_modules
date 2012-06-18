@@ -14,19 +14,41 @@ require_once('fundraiser.fields.inc');
  * Implementation of hook_cron().
  */
 function fundraiser_cron() {
-  // Check for a file key before processing donations
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    // If cron.php is being run while standalone cron is enabled, do nothing.
-    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-      return 0;
-    }
-    else {
-      watchdog('fundraiser_cron', t('Standalone cron run.'));
-    }
+  // Bail on normal cron run if standalone cron is enabled.
+  if (variable_get('fundraiser_standalone_cron_enabled', FALSE)) {
+    // If standalone cron is enabled, do nothing.
+    return 0;
   }
   else {
     watchdog('fundraiser_cron', t('Standard cron run.'));
+    _fundraiser_cron_process();
   }
+}
+
+/**
+ * Menu callback for the standalone cron.
+ */
+function fundraiser_standalone_cron() {
+  if (variable_get('fundraiser_standalone_cron_enabled', FALSE)) {
+    // Process the queue.
+    watchdog('fundraiser_cron', t('Standalone cron run.'));
+    _fundraiser_cron_process();
+  }
+}
+
+/**
+ * Access callback for the standalone cron.
+ */
+function fundraiser_standalone_cron_access() {
+  // Check whether the standalone cron is enabled. If so, then grant access
+  // without checking user_access (equivalent to access callback => TRUE).
+  return variable_get('fundraiser_standalone_cron_enabled', FALSE);
+}
+
+/**
+ * Process calls to normal cron and standalone cron.
+ */
+function _fundraiser_cron_process() {
   if (fundraiser_processor_key_match()) {
     fundraiser_process_recurring_donations();
   }
@@ -36,7 +58,6 @@ function fundraiser_cron() {
     watchdog('fundraiser', $message, NULL, WATCHDOG_CRITICAL);
   }
 }
-
 
 /**
  * Implementation of hook_perm().
@@ -119,14 +140,12 @@ function fundraiser_menu() {
 	    'access arguments' => array("access content"),	
 	);
 	
-	// Add the cron handler if it's enabled.
-    if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-      $items['fundraiser_cron'] = array(
-        'page callback' => 'fundraiser_cron',
-        'access callback' => TRUE,
-        'type' => MENU_CALLBACK,
-      );
-    }
+  $items['fundraiser_cron'] = array(
+    'page callback' => 'fundraiser_standalone_cron',
+    'access callback' => 'fundraiser_standalone_cron_access',
+    'type' => MENU_CALLBACK,
+  );
+
 	$items['zones/js'] = array(
     'type' => MENU_CALLBACK,
     'page callback' => 'fundraiser_zones_ahah_render',
