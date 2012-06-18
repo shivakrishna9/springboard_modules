@@ -135,7 +135,8 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   }
 
   if ($form_id == 'fundraiser_confirmation_settings_form') {
-    
+    $node = node_load(array('nid' => $form['nid']['#value']));
+
     unset($form['email']);
     $form['#validate'] = array('email_confirmation_confirmation_form_validate');
     
@@ -208,14 +209,32 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       '#suffix' => '</div>',
       '#theme' => 'email_confirmation_template_wrapper',
     );
-    
-    $form['confirmation_template']['send_mail'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Enable confirmation emails on this webform.'),
-      '#description' => t(''),
-      '#default_value' => $defaults->send_mail,
-      '#weight' => -10,
-    );
+
+    // on donation forms, hide the "enable confirmation email" checkbox.
+    // it's confusing since email is always sent out on donation form submissions.
+    if ($node->type == 'donation_form') {
+      $form['confirmation_template']['send_mail'] = array(
+        '#type' => 'value',
+        '#value' => 1,
+      );
+      $form['confirmation_template']['default_notice'] = array(
+        '#type' => 'markup',
+        '#prefix' => '<div><p>',
+        '#suffix' => '</p></div>',
+        '#value' => t('Donation forms always send an email confirmation. If no template is selected, default values embedded in the Email Confirmation module will be used to format the confirmation email.'),
+        '#weight' => -10,
+      );
+    }
+    else {
+      $form['confirmation_template']['send_mail'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable confirmation emails on this webform.'),
+        '#description' => t(''),
+        '#default_value' => $defaults->send_mail,
+        '#weight' => -10,
+      );
+    }
+
     $form['confirmation_template']['template_wrapper']['email_template'] = array(
       '#type' => 'select',
       '#title' => t('Confirmation Email Template'),
