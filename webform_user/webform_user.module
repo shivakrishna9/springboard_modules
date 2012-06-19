@@ -12,43 +12,43 @@ function webform_user_menu() {
     'title' => 'Related object field',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_field_selection_form', 1),
-		'access callback' => 'user_access',
+    'access callback' => 'user_access',
     'access arguments' => array('Map webform submissions to Salesforce objects'),
     'weight' => 37,
     'type' => MENU_LOCAL_TASK,
     'file' => 'webform_user.admin.inc',
-	);
+  );
 	
-	$items['node/%webform_menu/webform/user_mapping'] = array(
+  $items['node/%webform_menu/webform/user_mapping'] = array(
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_mapping_form', 1),
-    'access callback' => '_webform_user_mapping_form_access',
+    'access callback' => 'webform_user_access',
     'access arguments' => array(1),
     'weight' => 30,
     'type' => MENU_LOCAL_TASK,
   );
 	
-	$items['node/%node/clone-webform-user'] = array(
-		'title' => 'Clone',
-		'page callback' => 'webform_user_clone',
-		'page arguments' => array(1),
-		'access callback' => 'webform_user_access',
-		'access arguments' => array(1),
-		'type' => MENU_LOCAL_TASK,
-		'file' => 'webform_user.admin.inc',
-	);
+  $items['node/%node/clone-webform-user'] = array(
+    'title' => 'Clone',
+    'page callback' => 'webform_user_clone',
+    'page arguments' => array(1),
+    'access callback' => 'webform_user_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'webform_user.admin.inc',
+  );
 	
-	$items['admin/settings/webform-user'] = array(
+  $items['admin/settings/webform-user'] = array(
     'title' => t('Webform user settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_settings_form'),
-		'access arguments' => array('Map webform submissions to Salesforce objects'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'webform_user.admin.inc',
-	);
+    'access arguments' => array('Map webform submissions to Salesforce objects'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_user.admin.inc',
+  );
 	
-	return $items;
+  return $items;
 }
 
 /**
@@ -80,11 +80,11 @@ function webform_user_theme() {
 }
 
 /**
- * Implementation of hook_perm().
+ * Implementation of hook_menu_alter().
  */
 function webform_user_menu_alter(&$items) {
-	// only show related object tab if the webform is webform_user and a salesforce object has been mapped
-	$items['node/%webform_menu/webform/webform_user']['access callback'] = '_webform_user_check_settings';
+  // only show related object tab if the webform is webform_user and a salesforce object has been mapped
+  $items['node/%webform_menu/webform/webform_user']['access callback'] = '_webform_user_check_settings';
 }
 
 /**
@@ -247,17 +247,17 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
     );
     
     if (module_exists('sf_webform')) {
-  	  $form['webform_user']['related_object'] = array(
-  	  	'#title' => t('Relate the user that submitted this webform to'),
-  	  	'#type' => 'radios',
-  	  	'#options' => array(
-  	  		'none' => t('None'),
-  	  		'account' => t('Account'),
-  	  		'contact' => t('Contact'),
-  	  	),
-  	  	'#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
-  	  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
-  	  );
+      $form['webform_user']['related_object'] = array(
+        '#title' => t('Relate the user that submitted this webform to'),
+        '#type' => 'radios',
+        '#options' => array(
+          'none' => t('None'),
+  	  'account' => t('Account'),
+  	  'contact' => t('Contact'),
+  	),
+  	'#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
+  	'#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
+       );
     }
 
     $form['webform_user']['send_new_user_email'] = array(
@@ -359,12 +359,6 @@ function webform_user_user_map_create($nid, $components) {
   drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
 }
 
-/**
- * Provides access to the mapping tabs if node has webform_user enabled form.
- */
-function _webform_user_mapping_form_access($node) {
-	return $node->is_webform_user;
-}
 
 /**
  * Theme function for mapping form
