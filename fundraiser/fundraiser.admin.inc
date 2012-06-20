@@ -370,6 +370,8 @@ function fundraiser_admin_settings() {
     '#type' => 'fieldset',
     '#title' => t('Unsecured Form Error'),
     '#description' => t('Configure how Fundraiser responds when a user attempts to view a donation form unsecured (HTTP)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $form['fundraiser_http_error']['fundraiser_http_error_message'] = array(
     '#type' => t('textarea'),
