@@ -363,25 +363,27 @@ function fundraiser_admin_settings() {
       '#options' => $form_layouts,
     );
     
-    $form['fundraiser_http_error'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Unsecured Form Error'),
-      '#description' => t('Configure how Fundraiser responds when a user attempts to view a donation form unsecured (HTTP)'),
-    );
-    $form['fundraiser_http_error']['fundraiser_http_error_message'] = array(
-      '#type' => t('textarea'),
-      '#title' => t('Error Message'),
-      '#description' => t('This message will be displayed to users that attempt to view a donation form that is unsecured.'),
-      '#default_value' => variable_get('fundraiser_http_error_message', t("We're sorry.
+
+  }
+
+  $form['fundraiser_http_error'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Unsecured Form Error'),
+    '#description' => t('Configure how Fundraiser responds when a user attempts to view a donation form unsecured (HTTP)'),
+  );
+  $form['fundraiser_http_error']['fundraiser_http_error_message'] = array(
+    '#type' => t('textarea'),
+    '#title' => t('Error Message'),
+    '#description' => t('This message will be displayed to users that attempt to view a donation form that is unsecured.'),
+    '#default_value' => variable_get('fundraiser_http_error_message', t("We're sorry.
 
 The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.
 
 An administrator has been notified and will correct the issue as soon as possible.
 
 Thanks for your understanding.")),
-    );
-  }
-
+  );
+  
   return system_settings_form($form);
 }
 

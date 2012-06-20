@@ -882,13 +882,29 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     }
     
     // handle the donation form itself
-    if (_fundraiser_is_donation_type($node) && arg(2) != 'submission')
-		{
-			$base = drupal_get_path('module', 'fundraiser');
-			drupal_add_js($base .'/jquery.alphanumeric.js');
-			drupal_add_js($base .'/fundraiser.js');
-			drupal_add_css($base . '/fundraiser-donation-form.css');
-	
+    if (_fundraiser_is_donation_type($node) && arg(2) != 'submission') {
+      // check to see if the form is being accessed over HTTPS, if not, disable access.
+      if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
+        $error = variable_get('fundraiser_http_error_message', t("We're sorry.
+
+The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.
+
+An administrator has been notified and will correct the issue as soon as possible.
+
+Thanks for your understanding."));
+        fundraiser_disable_elements($form);
+        $form['http_access_error'] = array(
+          '#type' => 'markup',
+          '#value' => $error,
+          '#access' => TRUE,
+        );
+      }
+
+      $base = drupal_get_path('module', 'fundraiser');
+      drupal_add_js($base .'/jquery.alphanumeric.js');
+      drupal_add_js($base .'/fundraiser.js');
+      drupal_add_css($base . '/fundraiser-donation-form.css');
+
 			$components = $node->webform['components'];
       // create an data structure that will tell us exactly where each webform component lives in the FAPI array
       $component_hierarchy = fundraiser_parse_components($node->nid, $components);
@@ -987,28 +1003,8 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			$form['#submit'][] = 'fundraiser_confirmation';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
 		}
-	}
-
-
-
- // check to see if the form is being accessed over HTTPS, if not, disable access.
-  if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
-    $error = variable_get('fundraiser_http_error_message', t("We're sorry.
-
-The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.
-
-An administrator has been notified and will correct the issue as soon as possible.
-
-Thanks for your understanding."));
-    fundraiser_disable_elements($form);
-    $form['http_access_error'] = array(
-      '#type' => 'markup',
-      '#value' => $error,
-      '#access' => TRUE,
-    );
   }
-	
-	//return $form;
+
 }
 
 
