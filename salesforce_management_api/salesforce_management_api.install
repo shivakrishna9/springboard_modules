@@ -201,3 +201,47 @@ function salesforce_management_api_update_6101() {
 
   return $updates;
 }
+
+/**
+ * Encrypt sensitive settings in the variable table.
+ * @see http://drupal.org/project/encrypt
+ */
+function salesforce_management_api_update_6300() {
+  $ret = array();
+  module_load_include('module', 'encrypt');
+
+  $username = variable_get('salesforce_management_api_username', '');
+  $password = variable_get('salesforce_management_api_password', '');
+  $token = variable_get('salesforce_management_api_token', '');
+
+  if ($username) {
+    variable_set('salesforce_management_api_username', encrypt($username));
+    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management API Username has been encrypted.');
+  }
+  if ($password) {
+    variable_set('salesforce_management_api_password', encrypt($password));
+    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management API Password has been encyrpted.');
+  }
+  if ($token) {
+    variable_set('salesforce_management_api_token', encrypt($token));
+    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management Token has been encyrpted.');
+  }
+
+  // Set the WSDL path variable
+  variable_set('salesforce_management_api_wsdl_file_path', drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient');
+  $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management WSDL path has been set to the module path.');
+
+  return $ret;
+}
+
+/**
+ * Set the WSDL path variable, in SB2 it was the module's directory, this is now configurable in SB3
+ */
+function salesforce_management_api_update_6301() {
+  $ret = array();
+
+  variable_set('salesforce_management_api_wsdl_file_path', drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient');
+  $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management WSDL path has been set to the module path.');
+
+  return $ret;
+}
