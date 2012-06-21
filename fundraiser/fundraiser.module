@@ -774,8 +774,8 @@ function fundraiser_view(&$node, $teaser = FALSE, $page = FALSE) {
     drupal_set_message(t('Fundraiser is currently running in development mode. Remember to !link this feature on production websites.', array('!link' => l('turn off', 'admin/settings/fundraiser'))));
   }
   
-  if (!fundraiser_is_secure() && !$teaser) {
-            $error = variable_get('fundraiser_http_error_message', t("We're sorry.
+  if ((!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) && !$teaser) {
+    $error = variable_get('fundraiser_http_error_message', t("We're sorry.
 
 The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.
 
