@@ -173,17 +173,40 @@ function queue_processor_process() {
 	$max_to_process = variable_get('queue_max_to_process', 1000);
 	
 	if ($sf) {
-	    print 'here';
 		watchdog('salesforce queue processor', t('Queue processing started'), NULL, WATCHDOG_INFO);
-		
+
 		// clean up anything that might be left over in the heap as a result of a fatal, non-recoverable error
 		queue_processor_clean_heap();
 
-        $result = db_query("SELECT type,COUNT(type) FROM {sf_queue} GROUP By type");
+        $queue_types = array();
+        $additional = 0;
+        $queue_processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+        $result = db_query("SELECT type,COUNT(type) as count FROM {sf_queue} GROUP By type");
         while($data = db_fetch_object($result)) {
-          $counts[] = $data;
+          $queue_types[$data->type] = $data->count;
         }
-        print print_r($counts, true);
+        print print_r($queue_processing_order, true);
+        // Get the amount to run per type
+        $per_type = round($max_to_process/(count($queue_types)));
+
+        // Set which type will receive the additional log rows by the highest ranked type in the queue
+        foreach ($queue_processing_order as $recipient) {
+          if (isset($queue_types[$recipient])) {
+            print print_r($recipient, true);
+            continue 1;
+          }
+        }
+
+        // Loop through each type, if the type doesn't have the max amount it can process then add that to the highest type from the order variable
+        foreach ($queue_types as $type => $count) {
+          if ($count < $per_type) {
+            $queue_types[$recipient] = $queue_types[$recipient] + ($per_type - $count);
+          }
+        }
+        
+        print 'rec: ' . $recipient;
+        print 'per: ' . $per_type;
+        print print_r($queue_types, true);
         exit;
 
 		// move all currently queued items to the heap
