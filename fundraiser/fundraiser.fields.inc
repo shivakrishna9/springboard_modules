@@ -407,8 +407,9 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
  */
 function fundraiser_create_year_field($nid, $pid) {
   $this_year = date('Y');
+  $cc_exp_year_range = variable_get('fundraiser_cc_exp_year_range', 10);
 	$years = $this_year . "\n";
-	for ($i = 1; $i <= 5; $i++) {
+	for ($i = 1; $i <= $cc_exp_year_range; $i++) {
     $years .= ($this_year + $i) . "\n";  
   }
 	
