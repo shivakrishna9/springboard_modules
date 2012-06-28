@@ -68,12 +68,11 @@ function fundraiser_preprocess_uc_order(&$variables) {
  * Implements hook_fundraiser_gateway_info().
  */
 function fundraiser_ubercart_fundraiser_gateway_info() {
-  // If no gateways are enabled, this returns an empty array.
-  // TODO - make sure where this is accounted for an emtpy is noted, and flagged as a thing to fix. - SeH
   // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
   // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
   // Returns in the format:
   // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
+  // If no gateways are enabled, this returns an empty array.
   return _uc_payment_gateway_list('', TRUE);
 }
 
@@ -83,6 +82,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
  * Returns context information to fundraiser to be used in other modules as needed for
  * form generation. In this case an array of information about countries and zones.
  */
+// TODO now that we have the field info array, perhaps this should be handed with callback there?
 function fundraiser_ubercart_fundraiser_donation_form_context($context) {
   $countries = array();
   $zones = array();
@@ -343,6 +343,15 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $user->name)), 'admin');
 }
 
+/**
+ * Implements hook_fundraiser_get_credit_encryption_path().
+ * This is called by modules that need to check for processing availablity outside of normal.
+ * Such as sustainer.
+ */
+function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
+  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+}
+
 /** 
  * Helper function, given a card number return likely type.
  */
@@ -393,16 +402,10 @@ function _fundraiser_ubercart_get_zone_by_country($country_id) {
  * Below here are orphan or unknown origin functions. To be reviewed later.
  */
 
-/**
- * Implements hook_fundraiser_get_credit_encryption_path(). //TODO where is this called?
- */
-function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
-  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
-}
 
 /**
- * Implements hook_fundraiser_decrypt_credit(). //TODO where is this called?
- */
+ * Implements hook_fundraiser_decrypt_credit(). //TODO where is this called? Nowhere.
+ *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
   $crypt = new uc_encryption_class;
@@ -411,11 +414,11 @@ function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
   return $cc_data;
 }
+*/
 
-// Theme / formaty code, really should get refactored at some point. -SeH
-
+// Theme / formaty code, really should get refactored and moved to fundraiser. -SeH
 /**
- * Implements hook_fundraiser_format_price(). //tODO where is this called?
+ * Implements hook_fundraiser_format_price();
  */
 function fundraiser_ubercart_fundraiser_format_price($price) {
   return theme('uc_price', array('price' => $price));

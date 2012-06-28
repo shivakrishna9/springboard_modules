@@ -992,6 +992,9 @@ function fundraiser_sustainers_processor_key_match() {
   if (!empty($key)) {
     return ($key == $_SERVER['HTTP_HOST']);
   }
+  // This is to check that we have everything configured for safe charging.
+  // If not, we should throw an issue about it and not try to process stuff.
+  // This value is normally set un the glue module for payment.
   $dir = module_invoke_all('fundraiser_get_credit_encryption_path');
   $dir = $dir[0];
   if ($dir && $dir !== t('Not configured, see below.')) {

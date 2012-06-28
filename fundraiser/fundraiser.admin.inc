@@ -9,12 +9,6 @@
  * Form builder. Configure fundraiser module.
  */
 function fundraiser_admin_settings($form, &$form_state) {
-  $description = 'Use this option if you want donations to be exported to Salesforce.';
-  $attributes = array();
-  if (!module_exists('sf_donation')) {
-    $description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
-    $attributes['disabled'] = 'disabled';
-  }
   $form['fundraiser_development_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Development mode'),
@@ -29,6 +23,13 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
   );
 
+  // TODO perhaps this should move to another module and be added here with form alter?
+  $description = 'Use this option if you want donations to be exported to Salesforce.';
+  $attributes = array();
+  if (!module_exists('sf_donation')) {
+    $description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
+    $attributes['disabled'] = 'disabled';
+  }
   $form['fundraiser_salesforce_integration'] = array(
     '#type' => 'checkbox',
     '#title' => t('Integrate with Salesforce'),
@@ -58,11 +59,13 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
   );
 
-  // TODO Check gthis ot make sure these are the right tokens to display given the radical changes in this par tof D7. - SeH
+  // TODO Check this to make sure these are the right tokens to display given the radical changes in this part of D7. - SeH
   $form['fundraiser_cc_expiration_message']['tokens']['user'] = array(
     '#markup' => theme('token_tree', array('token_types' => array('user'))),
   );
 
+
+  // TODO perhaps this should move to another module and be added here with form alter?
   if (module_exists('form_layouts')) {
     $form['fundraiser_form_layouts'] = array(
       '#type' => 'fieldset',

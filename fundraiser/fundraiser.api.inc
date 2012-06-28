@@ -60,11 +60,6 @@ function hook_fundraiser_donation_create($donation) {}
 function hook_fundraiser_donation_update($donation) {}
 
 /**
- * Respond to donation processing.
- */
-function hook_fundraiser_donation_success($donation, $result) {}
-
-/**
  * Respond if a donation was successfully completed at the gateway.
  */
 function hook_fundraiser_donation_success($donation) {}

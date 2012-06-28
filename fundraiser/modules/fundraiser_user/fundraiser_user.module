@@ -4,7 +4,7 @@
  * @file
  * User profile code for fundraiser_webform.
  * THIS CODE DUPLICATES MUCH OF WEBFORM_USER.
- * Future work on this module should include a merger of these two pieces of code.
+ * Future work on this module should include a merger of these two pieces of code, removing the specialized nature of this module.
  */
  
 /**
