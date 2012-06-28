@@ -58,7 +58,7 @@ function secure_prepopulate_theme() {
   return array(
     'secure_prepopulate_welcome_message' => array(
       'arguments' => array('values' => null, 'nid' => null),
-      'template' => 'secure-prepopulate-welcome-message',
+      'template' => 'templates/secure-prepopulate-welcome-message',
       'pattern' => 'secure_prepopulate_welcome_message_[0-9]+',
     ),
   );

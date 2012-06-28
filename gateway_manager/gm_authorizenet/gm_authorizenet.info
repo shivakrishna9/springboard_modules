@@ -1,4 +1,3 @@
-; $Id: gm_authorizenet.info,v 1.0.0.0 2011/01/05 21:13:22 pcave Exp $
 name = Authorize.net Managed
 description = Process payments using Authorize.net.
 dependencies[] = fundraiser

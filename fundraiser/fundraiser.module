@@ -141,6 +141,34 @@ function fundraiser_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_boost_is_cacheable().
+ *
+ * If Boost is enabled, make sure donation form nodes aren't cached.
+ */
+function fundraiser_boost_is_cacheable($parts) {
+  $args = $parts['args'];
+  if ($args[0] == 'node' && isset($args[1]) && is_numeric($args[1]) && !isset($args[2])) {
+    // It's a node, but is it a donation node?
+    $node = node_load($args[1]);
+    if (_fundraiser_is_donation_type($node)) {
+      // Don't cache donation forms
+      $parts['is_cacheable'] = FALSE;
+    }
+  }
+  return $parts;
+}
+
+/**
+ * Menu access callback, check for donation type and node access.
+ */
+function fundraiser_confirmations_perm($perm, $node) {
+  if (_fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
 // TODO come back to fix these. This is no longer how tokens work. vvv
 /**      
  * Implementation of hook_token_list().
