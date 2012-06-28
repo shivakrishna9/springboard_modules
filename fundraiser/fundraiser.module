@@ -128,6 +128,10 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
+  // TODO add a donations listing page.
+  // To be deactivated if ubercart orders is detected.
+  // Off of this page will also be linked donation display, and  refund display.
+  // Allowing us to have these features without Ubercart dependancy.
   return $items;
 }
 
@@ -1183,8 +1187,326 @@ function fundraiser_donation_decline($donation) {
   module_invoke_all('fundraiser_donation_decline', $donation);
 }
 
+// TODO how does this get called?
 /**
- * CRUD style donation get.
+ * Donation processing, a given donation experienced an exception.
+ */
+// Is this functionally different from fundraiser_order_decline ? TODO - come back to this - SeH
+function fundraiser_donation_exception($donation) {
+  // Make a log entry.
+  watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
+    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_ERROR, NULL);
+  // Show gateay message if appropriate.
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($donation->result['message']);
+  }
+  // Allow other modules to respond to the exception.
+  module_invoke_all('fundraiser_donation_exception', $donation);
+}
+
+/**
+ * Donation processing, a given donation needs to be cancelled.
+ * Generally, only available for Authorize.net gteway donations. For example, during sustainer call.
+ */
+function fundraiser_donation_cancel($donation) {
+  // Make a log entry
+  watchdog('fundraiser', 'Donation @id was canceled by the user.',
+    array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
+  // Show gateay message if appropriate.
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message(t('Your payment has been canceled'));
+  }
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_cancel', $donation);
+}
+
+/**
+ * Donation processing, a given donation needs to be refunded.
+ */
+function fundraiser_donation_refund($donation) {
+  // Grab the gateway from the fundraiser configured gateway.
+  // Later this will be stored with the donation (since the gateway for the fundraiser may change).
+  $info = _fundraiser_gateway_info($donation->node->gateway);
+  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    $charge_function = isset($info['credit']) ? $info['credit'] : '';
+  }
+  if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
+    $result = array('success' => FALSE);
+  }
+  else {
+    // Execute the charge, generally implemented under the payment glue module.
+    // Allows for multiple responses during this process.
+    module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
+  }
+}
+
+/**
+ * Refund form for donations processed with gateways that allow for it.
+ */
+
+/**
+ * Menu callback for refund tab on donations.
+ */
+function fundraiser_show_refund_form($did) {
+  $base = drupal_get_path('module', 'fundraiser');
+  drupal_add_css($base . '/css/refund.css');
+  drupal_add_js($base . '/js/refund.js');
+  return drupal_get_form('_fundraiser_refund', $did);
+}
+
+/**
+ * Refund form
+ */
+function _fundraiser_refund(&$form_state, $did) {
+  $form = array();
+  // Given a donation ID, grab all relevant information to create the form.
+  $donation = fundraiser_donation_get_donation($did);
+  $form['#donation'] = $donation;
+  $form['payment_summary'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Summary'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  // TODO get payment info here. These are purely informational markup.
+  if (!$payment_info) {
+    $form['payment_summary']['no_payments'] = array(
+      '#value' => 'No payments have been made on this order yet',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+  }
+  else {
+    $form['payment_summary']['payment_number'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment #'),
+      '#value' => $payment_info['receipt_id'],
+    );
+    $form['payment_summary']['payment_date'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Date'),
+      '#value' => $payment_info['received'],
+    ); 
+    $form['payment_summary']['payment_total'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Total'),
+      '#value' => $payment_info['amount'],
+    );
+    // TODO get previous refunds here.
+    if ($previous_refunds < 0) {
+      $form['payment_summary']['total_refunded'] = array(
+        '#type' => 'item',
+        '#title' => t('Total Previously Refunded'),
+        '#value' => $previous_refunds,
+      );
+    }
+  }
+
+  // Form for submitting a refund.
+  $form['refund_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refund Options'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
+     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
+  $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation(). First from donation info, then fundraiser if not on doantion.
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
+  if (!$can_refund || !$payment_info) {
+    // They've made a payment, but it cannot be refunded
+    if ($payment_info) {
+      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
+    }
+    // They have NOT made any payment yet, so there's nothing to refund
+    else {
+      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
+      // Even once the payment is made, they won't be able to refund it
+      if (!$can_refund) {
+        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+          'make refunds after payments are processed on this order.';
+      }
+    }
+    $form['refund_options']['no_refund_explanation'] = array(
+      '#value' => $no_refund_text,
+      '#prefix' => '<strong>',
+      '#suffix' => '</strong>',
+    );
+  }
+  // Provide refund options
+  else {
+    $form['refund_options']['full_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Full Refund (%amount)', array('%amount' => $total_paid)),
+      '#return_value' => 'full',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['partial_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Partial Refund'),
+      '#return_value' => 'partial',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['amount'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Amount to Refund'),
+      '#size' => 40,
+      '#maxlength' => 255,
+    );
+    $form['refund_options']['refund_notes'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Refund Notes'),
+      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+      '#cols' => 60,
+      '#rows' => 5,
+      '#required' => TRUE,
+    );
+    $form['refund_options']['issue_refund'] = array(
+      '#type' => 'submit',
+      '#value' => t('Issue Refund'),
+      '#required' => TRUE,
+    );
+    $form['total_paid'] = array(
+      '#type' => 'hidden',
+      '#value' => number_format($total_paid, 2),
+    );
+  }
+  return $form;
+}
+
+/**
+ * Validate the form
+ */
+function _fundraiser_refund_validate($form, &$form_state) {
+  // Make sure they chose a refund type
+  if (empty($form_state['values']['refund_type'])) {
+    form_set_error('refund_type', t('Choose a refund type.'));
+  }
+  // If it isn't a full refund, make sure they entered a valid value
+  elseif ($form_state['values']['refund_type'] != 'full') {
+    $amount = (float) $form_state['values']['amount'];
+    if (!($amount > 0)) {
+      form_set_error('amount', t('Enter a refund amount.'));
+    }
+    else {
+      // Make sure they don't try to refund more than was paid
+      $did = $form['#donation']->did;
+      // Determine how much has been paid, less previous refunds
+      // TODO find out how much paid
+      $total_paid = '';
+      if ($amount > $total_paid) {
+        $context = array(
+          'revision' => 'formatted-original',
+          'type' => 'amount',
+        );
+        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
+          'more than that can be refunded.', array('@paid' => $total_paid)));
+      }
+    }
+  }
+}
+
+/**
+ * Submit the refund form
+ */
+function _fundraiser_refund_submit($form, &$form_state) {
+  // Get the donation.
+  $did = $form['#donation']->did;
+
+  // Determine how much has been paid, less previous refunds
+  // TODO find out how much paid
+  $total_paid = '';
+
+  // Partial refund
+  if ($form_state['values']['refund_type'] != 'full') {
+    $new_order_status = 'partially_refunded';
+    $amount = (float) $form_state['values']['amount'];
+    // Can't refund more than they've paid
+    // Use >= so that the status is set properly if they choose Partial Refund
+    // but refund the entire amount
+    if ($amount >= $total_paid) {
+      $amount = $total_paid;
+      $new_order_status = 'refunded';
+    }
+  }
+  // Full refund
+  else {
+    $new_order_status = 'refunded';
+    $amount = $total_paid;
+  }
+
+  // Make the charge amount negative
+  $amount = abs($amount) * -1;
+
+  // Get details on the original payment so we can load the payment gateway details
+  // TODO move this to a helper function.
+  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} ' .
+    'WHERE order_id = :order_id ' .
+    'UNION '.
+    'SELECT gateway, txn_id FROM {fundraiser_recurring} '. 
+    'WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchObject();
+
+// TODO HOOKS HERE.
+
+  if (module_exists('gateway_manager')) {
+    $info = gateway_manager_gateway_info($payment_details->gateway);
+    $refund_function = $info['refund_function'];
+    $data['config'] = $info['config'];
+  }
+  else {
+    $refund_function = fundraiser_refund_function($node->gateway);
+  }
+  // call the refund function and store the result
+  $result = $refund_function($order_id, $amount, $data);
+  if ($result['success']) {
+    $receipt_id = module_invoke_all('fundraiser_order_refund', $order_id, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
+    $receipt_id = $receipt_id[0];
+
+    // Save refund data for Fundraiser.
+    $refund = new stdClass();
+    $refund->order_id = $order_id;
+    $refund->receipt_id = $receipt_id;
+    $refund->amount = $amount;
+    $refund->txn_id = $result['data']['txn_id'];
+    $refund->reason = $reason;
+    drupal_write_record('fundraiser_refund', $refund);
+
+    // If using the Salesforce queue, queue up the updates
+    // This could be on hook couldn't it? - SeH
+    if (module_exists('queue_api')) {
+      // Update the original order
+      sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+      // Create the refund
+      sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
+    }
+
+    drupal_set_message(t('Refund has been issued.'), 'status');
+//    drupal_goto('admin/store/orders/' . $order_id);
+  }
+  else {
+    // failed to process credit cart
+    $log_error = 'Refund on order ' . $order_id . ' failed gateway validation. Reason: ' . $result['message'];
+    watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
+    drupal_set_message($result['message']);
+    $form_state['rebuild'] = TRUE;
+    $form_state['values']['abort'] = TRUE;
+  }
+}
+
+/**
+ * Helper functions.
+ */
+
+/**
+ * Helper function, given a donation id - get everything that goes with it.
  */
 function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // Pull from cached donation unless we are refreshing the cache.
@@ -1207,52 +1529,16 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
     $donation->gateway = $gateway;
     $donation->node->gateway = $gateway;
   }
+
+  // TODO figure out how much has been paind and or refundded and add that here. // START
+
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_get_donation', $donation);
+  module_invoke_all('fundraiser_donation_get_donation', $donation); // TODO check that these return all they need to. Even submission data.
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;
 }
-
-// TODO how does this get called?
-/**
- * Completes the processing of an order when an error occurs.
- */
-// Is this functionally different from fundraiser_order_decline ? TODO - come back to this - SeH
-function fundraiser_donation_exception($donation) {
-  // Make a log entry.
-  watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
-    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_ERROR, NULL);
-  // Show gateay message if appropriate.
-  $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
-    drupal_set_message($donation->result['message']);
-  }
-  // Allow other modules to respond to the exception.
-  module_invoke_all('fundraiser_donation_exception', $donation);
-}
-
-/**
- * Completes the processing of an order when it is cancelled by the user.
- * Generally, only available for Authorize.net gteway donations. For example, during sustainer call.
- */
-function fundraiser_donation_cancel($donation) {
-  // Make a log entry
-  watchdog('fundraiser', 'Donation @id was canceled by the user.',
-    array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
-  // Show gateay message if appropriate.
-  $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
-    drupal_set_message(t('Your payment has been canceled'));
-  }
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_cancel', $donation);
-}
-
-/**
- * Helper functions.
- */
 
 /**
  * Helper function, given the array from field_info - get the listed keys.
@@ -1867,7 +2153,6 @@ function authorizenet_update_billing_information($reference_id, $billing_info) {
     return NULL;
   }
 }
-
 
 /**
  * Sage billing information update function.

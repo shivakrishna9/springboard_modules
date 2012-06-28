@@ -250,4 +250,5 @@ function fundraiser_update_7000() {
       drupal_write_record('fundraiser_donation', $record);
     }
   }
+  // Rename refund table values and all. TODO
 }
