@@ -31,13 +31,9 @@
 // TODO: Fundraiser Confirmations are going to be DROPPED IN FAVOR OF EMAIL CONFIRMATIONS.
 // WE ARE NO LONGER GOING TO DIFFERNTIATE ON THAT.
 
-define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation');
-define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation');
-define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');
-define('RECURRING_DONATION_STATUS', 'pending_future_payment');
-define('DONATION_NON_RECURRING', 0);
-define('DONATION_RECURRING', 1);
-define('DONATION_CANCELLED', 2);
+define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation'); // Used in sf_queru_insert, so move over there.
+define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation'); // Used in sf_queru_insert, so move over there.
+define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');  // Used in sf_queru_insert, so move over there.
 
 // Include theme related functions.
 require_once('fundraiser.theme.inc');
@@ -653,7 +649,8 @@ function fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#submit_callback' => '_fundraiser_field_info_amount_callback',
+    '#create_callback' => '_fundraiser_amount_field_create', // To be called during field creation.
+    // #submit_callback => '', // Called during submission of the form to map values.
   );
   $fields['donation']['other_amount'] = array(
     '#title' => 'Other',
@@ -664,7 +661,8 @@ function fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#submit_callback' => '_fundraiser_field_info_other_amount_callback',
+    '#create_callback' => '_fundraiser_other_amount_field_create',
+    '#validate_callback' => '_fundraiser_other_amount_field_validate', // Called during submission of the form to map values.
   );
   $fields['donor_information'] = array(
     '#title' => 'Your Information',
@@ -685,6 +683,7 @@ function fundraiser_field_info() {
     '#title' => 'Email',
     '#type' => 'textfield',
     '#required' => 1,
+    '#validate_callback' => '_fundraiser_other_amount_field_validate',
   );
   $fields['billing_information'] = array(
     '#title' => 'Credit Card Billing Information',
@@ -777,7 +776,7 @@ function fundraiser_field_info() {
     ),
   );
   $months = "1|January\n";
-  $months .= "2|Feburary\n";
+  $months .= "2|February\n";
   $months .= "3|March\n";
   $months .= "4|April\n";
   $months .= "5|May\n";
@@ -834,7 +833,7 @@ function fundraiser_field_info() {
 /**
  * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
  */
-function _fundraiser_field_info_amount_callback($fundraiser, $field) {
+function _fundraiser_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts)) {
     return $field;
@@ -874,7 +873,7 @@ function _fundraiser_field_info_amount_callback($fundraiser, $field) {
 /**
  * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
  */
-function _fundraiser_field_info_other_amount_callback($fundraiser, $field) {
+function _fundraiser_other_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, drop the amount_other field, and use amount as is.
   if (empty($fundraiser->donation_amounts)) {
     return '';
@@ -887,6 +886,37 @@ function _fundraiser_field_info_other_amount_callback($fundraiser, $field) {
   $fields['donation']['other_amount']['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
   // Return the field to be created.
   return $field;
+}
+
+/**
+ * Validation callback for field other_amount.
+ */
+function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
+  // Look for other amount.
+  if ($submission_fields['amount'] == "other") {
+    $donation_amount = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
+    // Make sure other amount is numeric.
+    if (!is_numeric($donation_amount)) {
+      return t('You must enter a valid donation amount');
+    }
+  }
+
+  // Check for minimum amount.
+  $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
+  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
+  $minimum_donation_amount = number_format($minimum_donation_amount, 2);
+  if ($donation_amount < $minimum_donation_amount) {
+    return t('Your donation amount must be greater than or equal to @min_amount.', array('@min_amount' => $minimum_donation_amount));
+  }
+}
+
+/**
+ * Validation callback for field email.
+ */
+function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
+  if (!_fundraiser_validate_email($value)) {
+    return t('You must enter a valid email address.');
+  }
 }
 
 /**
@@ -958,9 +988,9 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   $donation->nid = $form['#node']->nid;
   $donation->node = $form['#node'];
 
-  // Call hook to validate donation values against fundraiser needs and sub module needs.
+  // Call hook to gather submission donation values for the donation.
   module_invoke_all('fundraiser_donation_submit', $form, $form_state, $donation);
-  // $donation->submission contains the submitted values from the form, as well as sid.
+  // $donation->submission now contains the submitted values from the form.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation)) {
@@ -1000,29 +1030,7 @@ stdClass Object
     [nid] => Fundraiser Node NID
     [node] => Node Object
     [sid] => Submission ID
-    [submission] => Array (Currently a submission array from Webform.)
-        (
-            [cid] => 
-            [amount] => 10
-            [other_amount] => a
-            [first_name] => First Name
-            [last_name] => Last Name
-            [email] => person@example.com
-            [address] => 1234 Drupal Ave
-            [address_line_2] => Apt 1234
-            [city] => Drupalville
-            [country] => 840
-            [state] => 44
-            [zip] => 12345
-            [card_number] => 4111111111111111
-            [card_cvv] => 123
-            [0] => recurs
-            [card_expiration_month] => 4
-            [card_expiration_year] => 2012
-            [ms] => default_ms
-            [referrer] => d
-            [initial_referrer] => f
-        )
+    [submission] => Array of values by field key as found in fundraiser_field_info().
     [donation] => UcOrder Object (Currently an Order object from Ubercart.)
         (
             [order_id] => 71
@@ -1142,7 +1150,6 @@ function fundraiser_donation_failed_validation($errors) {
 function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
   module_invoke_all('fundraiser_donation_create_additional', $donation);
-  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
@@ -1314,7 +1321,10 @@ function fundraiser_donation_cancel($donation) {
  * Helper function, given the array from field_info - get the listed keys.
  * WARNING: Recursion is here to walk the field info array to gather form keys.
  */
-function _fundraiser_get_field_keys($field_info, $keys = array()) {
+function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
   $children = element_children($field_info);
   $keys = array_merge($keys, $children);
   foreach ($children as $child) {
