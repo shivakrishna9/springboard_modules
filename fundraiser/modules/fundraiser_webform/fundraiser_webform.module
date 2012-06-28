@@ -61,7 +61,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   // Make sure we are dealing with a donation form.
   if (_fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
-    $required_fields = _fundraiser_field_info();
+    $required_fields = fundraiser_field_info();
     // TODO Locate each field, and see which one is flagged as required. If required, deny delete.
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
@@ -80,6 +80,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
  * Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
  */
 function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
+
   // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
@@ -92,6 +93,22 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
       $form = fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
   }
+
+  // Do not allow users to muck with defined form keys in component editting form.
+  // They're named what they're named for a reason.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    if (_fundraiser_is_donation_type($node->type)) {
+      $defined_fields = fundraiser_field_info();
+      // Walk array of defined fields to gather keys.
+      $preserved_keys = _fundraiser_get_field_keys($defined_fields);
+      $form_key = $form['form_key']['#default_value'];
+      if (in_array($form_key, $preserved_keys)) {
+        $form['form_key']['#access'] = FALSE;
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
+	}
   return $form;
 }
 
@@ -179,7 +196,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Make sure the year field always has a good range of years.
   $this_year = date('Y');
   $years = array($this_year => $this_year);
-  for ($i = 1; $i <= 5; $i++) {
+  for ($i = 1; $i <= 10; $i++) { // Up to 10 years out.
     $years[$this_year + $i] = $this_year + $i;
   }
   $cc_exp_year_field['#options'] = $years;
@@ -310,9 +327,9 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     $errors = TRUE;
   }
 
-// TODO - these all need to be changed and updated to match how ubercart is pulled into our system now.
-// Perhaps with the validation running through fundraiser field stuff?
-  //TODO move cc number stuff to Ubercart. Fundraiser doesn't know this stuff, and neither should webform.
+  // TODO - these all need to be changed and updated to match how ubercart is pulled into our system now.
+  // Perhaps with the validation running through fundraiser field stuff?
+  // TODO move cc number stuff to Ubercart. Fundraiser doesn't know this stuff, and neither should webform.
   $cc_number = $fundraiser_fields['card_number'];
   $cc_cvv = $fundraiser_fields['card_cvv'];
   $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
@@ -488,7 +505,6 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
 function fundraiser_webform_fundraiser_donation_decline($donation) {
   // Delete the webform order info.
   _fundraiser_webform_delete_webform_order($donation->nid, $donation->did);
-  _fundraiser_webform_delete_submissions($donation->sid);
 }
 
 /**
@@ -605,27 +621,27 @@ function fundraiser_webform_get_donation_gateway($did, $gateway) {
 }
 
 /**
- * Implements hook_fundraiser_field_info_alter().
+ * Implements hookfundraiser_field_info_alter().
  */
-function fundraiser_webform_fundraiser_field_info_alter($fields) {
+function fundraiser_webformfundraiser_field_info_alter($fields) {
   $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'email', 'address', 'address_line_2',
     'city', 'zip', 'country', 'state');
   foreach(element_children($fields) as $key) {
-    $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
+    $fields[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
   return $fields;
 }
 
 /**
- * Handles recursion for fundraiser_sustainers_fundraiser_field_info_alter().
+ * Handles recursion for fundraiser_sustainersfundraiser_field_info_alter().
  */
-function _fundraiser_webform_fundraiser_field_info_alter($field_key, $field, $map) {
+function _fundraiser_webformfundraiser_field_info_alter($field_key, $field, $map) {
   if (isset($map[$field_key])) {
     $field['#email'] = 1;
   }
   // Check for children. Recursion occurs here.
   foreach(element_children($field) as $key) {
-    $field[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $field[$key], $map);
+    $field[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $field[$key], $map);
   }
   return $field;
 }
@@ -791,14 +807,6 @@ function _fundraiser_webform_update_submissions($uid, $sid) {
 }
 
 /**
- * DB function, delete submission data for a failed order.
- */
-function _fundraiser_webform_delete_submissions($sid) {
-  db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
-  db_delete('webform_submissions')->condition('sid', $sid)->execute();
-}
-
-/**
  * DB function, get webform component form elements.
  */
 function _fundraiser_webform_get_amount_count($nid) {
@@ -870,7 +878,7 @@ function _fundraiser_webform_delete_component($nid, $form_key) {
  */
 function _fundraiser_webform_create_components($fundraiser) {
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = _fundraiser_field_info();
+  $fields = fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
   $child_weight = 0;
@@ -905,7 +913,7 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
     $component['nid'] = $fundraiser->nid;
     $component['pid'] = $pid;
     $component['form_key'] = $field_key;
-    $component['name'] = isset($field['#name']) ? $field['#name'] : '';
+    $component['name'] = isset($field['#title']) ? $field['#title'] : '';
     if (isset($field['#value'])) {
       $component['value'] = $field['#value'];
     }
@@ -938,7 +946,7 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
     $pid = $donation_component->cid;
   }
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = _fundraiser_field_info();
+  $fields = fundraiser_field_info();
   $had_select = _fundraiser_webform_get_amount_count($fundraiser->nid);
 
   // First handle the amount field changes, we will always have an 'amount' component.
