@@ -47,7 +47,7 @@ function hook_fundraiser_donation_failed_validation($errors) {}
 /**
  * Retrieve additional fields for donation creation.
  */
-function hook_fundraiser_donation_create_additional($donation) {}
+function hook_fundraiser_donation_create_add_data($donation) {}
 
 /**
  * For payment modules, respond to create a donation.
@@ -58,11 +58,6 @@ function hook_fundraiser_donation_create($donation) {}
  * For payment modules, respond to create a donation.
  */
 function hook_fundraiser_donation_update($donation) {}
-
-/**
- * Respond to donation processing.
- */
-function hook_fundraiser_donation_success($donation, $result) {}
 
 /**
  * Respond if a donation was successfully completed at the gateway.

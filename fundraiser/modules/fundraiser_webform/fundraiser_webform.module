@@ -61,7 +61,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   // Make sure we are dealing with a donation form.
   if (_fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
-    $required_fields = _fundraiser_field_info();
+    $required_fields = fundraiser_field_info();
     // TODO Locate each field, and see which one is flagged as required. If required, deny delete.
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
@@ -80,6 +80,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
  * Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
  */
 function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
+
   // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
@@ -92,6 +93,21 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
       $form = fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
   }
+
+  // Do not allow users to muck with defined form keys in component editting form.
+  // They're named what they're named for a reason.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    if (_fundraiser_is_donation_type($node->type)) {
+      // Walk array of defined fields to gather keys.
+      $preserved_keys = _fundraiser_get_field_keys();
+      $form_key = $form['form_key']['#default_value'];
+      if (in_array($form_key, $preserved_keys)) {
+        $form['form_key']['#access'] = FALSE;
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
+	}
   return $form;
 }
 
@@ -179,7 +195,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Make sure the year field always has a good range of years.
   $this_year = date('Y');
   $years = array($this_year => $this_year);
-  for ($i = 1; $i <= 5; $i++) {
+  for ($i = 1; $i <= 10; $i++) { // Up to 10 years out.
     $years[$this_year + $i] = $this_year + $i;
   }
   $cc_exp_year_field['#options'] = $years;
@@ -279,79 +295,42 @@ function _fundraiser_webform_client_state_ajax_submit($form, $form_state) {
   return _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'state'));
 }
 
-// add hook_fundraiser_donation_validate_field() for UBERCART fields. TODO.
+/**
+ * Helper function, validate the results of a webform submission to the defined fields in fundraiser.
+ */
+function _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $keys[$child] = '';
+    if (isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
+      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
+      if (isset($error_message) && !empty($error_message)) {
+        form_set_error($child, $error_message);
+        $errors = TRUE;
+      }
+    }
+    $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields, $field_info[$child], $errors);
+  }
+  return $errors;
+}
 
 /**
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']); // From fundraiser.module.
-  $node_id = $form_state['values']['details']['nid'];
-  $errors = FALSE;
-  $donation_amount = $fundraiser_fields['amount'];
-  $email = $fundraiser_fields['email'];
-  // Look for other amount.
-  if ($donation_amount == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
-    // Make sure other amount is numeric.
-    if (!is_numeric($donation_amount)) {
-      form_set_error('other_amount', "You must enter a valid donation amount.");
-      $errors = TRUE;
-    }
-  }
-
-  // Check for minimum amount.
-  $fundraiser = _fundraiser_get_fundraiser_by_nid($node_id);
-  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
-  $minimum_donation_amount = number_format($minimum_donation_amount, 2);
-  if ($donation_amount < $minimum_donation_amount) {
-    form_set_error('submitted][donation][other_amount', 
-      'Your donation amount must be greater than or equal to $minimum_donation_amount.');
-    $errors = TRUE;
-  }
-
-// TODO - these all need to be changed and updated to match how ubercart is pulled into our system now.
-// Perhaps with the validation running through fundraiser field stuff?
-  //TODO move cc number stuff to Ubercart. Fundraiser doesn't know this stuff, and neither should webform.
-  $cc_number = $fundraiser_fields['card_number'];
-  $cc_cvv = $fundraiser_fields['card_cvv'];
-  $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
-  $cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-
-  // Validate the card number. By Ubercart. TODO yank this out.
-  $valid_card = module_invoke_all('fundraiser_validate_card', $cc_number);
-  if (!empty($cc_number) && ( !$valid_card[0]|| !ctype_digit($cc_number) )) {
-    form_set_error('submitted][credit_card_information][card_number',
-      'You have entered an invalid credit card number.');
-    $errors = TRUE;
-  }
-  // Validate the card expiration date. By Ubercart.
-  $valid_date = module_invoke_all('fundraiser_validate_card_expiration', $cc_expiration_month, $cc_expiration_year);
-  if (!empty($cc_expiration_month) && !empty($cc_expiration_year) && !$valid_date[0]) {
-    form_set_error('submitted][credit_card_information][expiration_date][card_expiration_month',
-      t('The credit card you entered has expired.'));
-    form_set_error('submitted][credit_card_information][expiration_date][card_expiration_year', ' ');
-    $errors = TRUE;
-  }
-  // Validate the CVV Number.  By Ubercart.
-  $valid_cvv = module_invoke_all('fundraiser_validate_card_cvv', $cc_cvv);
-  if (!empty($cc_cvv) && !$valid_cvv[0]) {
-    form_set_error('submitted][credit_card_information][card_cvv', t('You have entered an invalid CVV number.'));
-    $errors = TRUE;
-  }
-
-  // Validate email address.
-  if (!_fundraiser_validate_email($email)) {
-    form_set_error('email', t('You must enter a valid email address.'));
-    $errors = TRUE;
-  }
+  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
+  $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields);
 
   // Create watchdog entry on validation errors.
   if ($errors) {
     $base = drupal_get_path('module', 'fundraiser_webform');
-    drupal_add_js($base . '/js/jquery.alphanumeric.js');
-    drupal_add_js($base . '/js/fundraiser.js');
-    drupal_add_css($base . '/css/fundraiser-donation-form.css');
+    // TODO check if this is still neede din D7.
+    //drupal_add_js($base . '/js/jquery.alphanumeric.js');
+    //drupal_add_js($base . '/js/fundraiser.js');
+    //drupal_add_css($base . '/css/fundraiser-donation-form.css');
 
     $message = "The following donation form fields failed local validation:\n\n";
     $check_errors = form_get_errors();
@@ -361,6 +340,8 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       $message .= array_pop($keys) . "\n";
     }
 
+    // SCRUB DATA. We do not want to save these in the error watchdog message.
+    // We can be sure these fields are in the set, since they're declared in fundraiser.
     $fundraiser_fields['card_number'] = substr_replace($fundraiser_fields['card_number'],
       str_repeat('*', strlen($fundraiser_fields['card_number'])), 0);
     $fundraiser_fields['card_cvv'] = substr_replace($fundraiser_fields['card_cvv'],
@@ -380,45 +361,38 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 }
 
 /**
+ * Helper function, map the results of a webform submission to the defined fields in fundraiser.
+ */
+function _fundraiser_webform_map_field_keys($submission_fields, $field_info = NULL, $keys = array()) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $keys[$child] = '';
+    if (isset($field_info[$child]['#submit_callback']) && function_exists($field_info[$child]['#submit_callback'])) {
+      $keys[$child] = call_user_func($field_info[$child]['#submit_callback'], $submission_fields[$child]);
+    }
+    elseif (isset($submission_fields[$child])) {
+      $keys[$child] = $submission_fields[$child];
+    }
+    $keys = _fundraiser_webform_map_field_keys($submission_fields, $field_info[$child], $keys);
+  }
+  return $keys;
+}
+
+/**
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
   // Retrieve data from the submission.
   $sid = $form_state['values']['details']['sid'];
   $donation->sid = $sid;
-  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
-/**
- * The values returned here are:
- *  amount, card_number, card_expiration_month, card_expiration_year, first_name, last_name, email, address,
- *  address_line_2, city, state, zip, quantity, other_amount.
- *
- * In the future should this change, a mapping function to map the keywords from one to the other would be good.
- */
-  $donation->submission = $fundraiser_fields;
-
-  // Set if this was a recurring donation.
-  // TODO In the future we should abstract retrieveing the field information from webform to allow this call
-  // to move this to sustainer. For now it can stay here, but to fully seperate we should have a field-handler
-  // implem,ented by fuundraiser_webform, driven by fundraiser to allow the sustainer system to pick up the data.
-  $recurs = FALSE;
-  $results = _fundraiser_webform_get_components_by_keys($donation->nid, array('recurs_monthly'));
-  foreach ($results as $result) {
-    $recurs_cid = $result->cid;
-  }
-  if (!empty($recurs_cid) && isset($form_state['values']['submitted'][$recurs_cid])) {
-    $value = $form_state['values']['submitted'][$recurs_cid];
-    if (is_array($value)) {
-      // If this is an array, then it is a single item checkbox
-      if (isset($value[0])) {
-        $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
-      }
-    }
-    else {
-      $recurs = $value == 'recurs' ? TRUE : FALSE;
-    }
-  }
-  $donation->recurs = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
-  // TODO is there any other information about the submission I can grab at this point for use down the line?
+  // Given the set of fields defined in fundraiser, gab results here that match those fields.
+  // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
+  // And we prevent those values from being overwritten, we can pass the results as a map between the two.
+  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
+  $donation->submission = _fundraiser_webform_map_field_keys($submission_fields);
 }
 
 /**
@@ -430,9 +404,10 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     'webform_nid' => $donation->nid,
     'order_id' => $donation->did,
     'sid' => $donation->sid,
-    'recurring_status' => $donation->recurs,
-    //TODO In the future we should clarify these data fields to clean up the database as a whole. For now this
-    // can live here until we clean up the database to remove redundant data like this.
+    'recurring_status' => $donation->submission['recurs_monthly'],
+    // TODO In the future we should clarify these data fields to clean up the database as a whole.
+    // For now this can live here until we clean up the database to remove redundant data like this.
+    // This data really should be handled in sustainers ONLY.
   );
   _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
@@ -450,15 +425,12 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
  */
 function fundraiser_webform_fundraiser_donation_success($donation) {
   // Record that the donation was successful for the webform submission.
-  // TODO for some reason the transaction id isn't coming back on test gateway.
-  // So this is set by default at the moment to '-'.
-  $txn_id = '-';
-  if (isset($donation->result['data']['txn_id'])) {
-    $txn_id = $donation->result['data']['txn_id'];
+  if (isset($donation->data['txn_id'])) {
+    $txn_id = $donation->data['txn_id'];
   }
   $webform_order = array(
     'webform_nid' => $donation->nid,
-    'order_id' => $donation->did,  
+    'order_id' => $donation->did,
     'gateway' => $donation->node->gateway,
     'sid' => $donation->sid,
     'txn_id' => $txn_id,
@@ -469,7 +441,8 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   _fundraiser_webform_update_submissions($donation->donation->uid, $donation->sid);
 
   // Update the recurring status, if it was changed by the payment gateway module
-  if (isset($donation->donation->data['recurring_status']) && ($donation->recurs != $donation->donation->data['recurring_status'])) {
+  // TODO This should be moved or removed entirely. We don't need ot know this stuff here!
+  if (isset($donation->donation->data['recurring_status']) && ($donation->submission['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
       'order_id' => $donation->did,
@@ -486,10 +459,12 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
  * Implements hook_fundraiser_donation_decline().
  */
 function fundraiser_webform_fundraiser_donation_decline($donation) {
-  // Delete the webform order info.
+  // Delete the webform order info. // TODO check this, do we realyl want to delete this info?
+  // Shouldn't we instead just mark it as failed in case we need it later?
   _fundraiser_webform_delete_webform_order($donation->nid, $donation->did);
-  _fundraiser_webform_delete_submissions($donation->sid);
 }
+
+define('DONATION_CANCELLED', 2); // TODO is this really needed, or should be handled other ways?
 
 /**
  * Implements hook_fundraiser_donation_cancel().
@@ -605,27 +580,27 @@ function fundraiser_webform_get_donation_gateway($did, $gateway) {
 }
 
 /**
- * Implements hook_fundraiser_field_info_alter().
+ * Implements hookfundraiser_field_info_alter().
  */
-function fundraiser_webform_fundraiser_field_info_alter($fields) {
+function fundraiser_webformfundraiser_field_info_alter($fields) {
   $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'email', 'address', 'address_line_2',
     'city', 'zip', 'country', 'state');
   foreach(element_children($fields) as $key) {
-    $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
+    $fields[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
   return $fields;
 }
 
 /**
- * Handles recursion for fundraiser_sustainers_fundraiser_field_info_alter().
+ * Handles recursion for fundraiser_sustainersfundraiser_field_info_alter().
  */
-function _fundraiser_webform_fundraiser_field_info_alter($field_key, $field, $map) {
+function _fundraiser_webformfundraiser_field_info_alter($field_key, $field, $map) {
   if (isset($map[$field_key])) {
     $field['#email'] = 1;
   }
   // Check for children. Recursion occurs here.
   foreach(element_children($field) as $key) {
-    $field[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $field[$key], $map);
+    $field[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $field[$key], $map);
   }
   return $field;
 }
@@ -791,14 +766,6 @@ function _fundraiser_webform_update_submissions($uid, $sid) {
 }
 
 /**
- * DB function, delete submission data for a failed order.
- */
-function _fundraiser_webform_delete_submissions($sid) {
-  db_delete('webform_submitted_data')->condition('sid', $sid)->execute();
-  db_delete('webform_submissions')->condition('sid', $sid)->execute();
-}
-
-/**
  * DB function, get webform component form elements.
  */
 function _fundraiser_webform_get_amount_count($nid) {
@@ -870,7 +837,7 @@ function _fundraiser_webform_delete_component($nid, $form_key) {
  */
 function _fundraiser_webform_create_components($fundraiser) {
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = _fundraiser_field_info();
+  $fields = fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
   $child_weight = 0;
@@ -886,8 +853,8 @@ function _fundraiser_webform_create_components($fundraiser) {
  */
 function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
   // Tweak the field with a callback as needed.
-  if (isset($field['#submit_callback']) && function_exists($field['#submit_callback'])) {
-    $field = call_user_func($field['#submit_callback'], $fundraiser, $field);
+  if (isset($field['#create_callback']) && function_exists($field['#create_callback'])) {
+    $field = call_user_func($field['#create_callback'], $fundraiser, $field);
   }
   if (empty($field)) {
     // The submit callback has the option of returning nothing to cancel creating the field.
@@ -905,7 +872,7 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
     $component['nid'] = $fundraiser->nid;
     $component['pid'] = $pid;
     $component['form_key'] = $field_key;
-    $component['name'] = isset($field['#name']) ? $field['#name'] : '';
+    $component['name'] = isset($field['#title']) ? $field['#title'] : '';
     if (isset($field['#value'])) {
       $component['value'] = $field['#value'];
     }
@@ -938,7 +905,7 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
     $pid = $donation_component->cid;
   }
   // Poll other modules for the information they would normally provide to the donation form.
-  $fields = _fundraiser_field_info();
+  $fields = fundraiser_field_info();
   $had_select = _fundraiser_webform_get_amount_count($fundraiser->nid);
 
   // First handle the amount field changes, we will always have an 'amount' component.

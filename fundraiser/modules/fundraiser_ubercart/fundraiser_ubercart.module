@@ -16,7 +16,8 @@ function fundraiser_ubercart_mail_alter(&$message) {
     $nid = $parts[1];
     $node = node_load($nid);
     // Make changes.
-    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
+      ' <' . $node->receipt_email_address . '>';
     $bcc = variable_get('fundraiser_receipt_bcc', '');
     if (!empty($bcc)) {
       $message['headers']['Bcc'] = $bcc;
@@ -67,13 +68,11 @@ function fundraiser_preprocess_uc_order(&$variables) {
  * Implements hook_fundraiser_gateway_info().
  */
 function fundraiser_ubercart_fundraiser_gateway_info() {
-  // If no gateways are enabled, this returns an empty array.
-  // TODO - make sure where this is accounted for an emtpy is noted, and flagged as a thing to fix. - SeH
-  // From Ubsercart http://api.lullabot.com/_uc_payment_gateway_list/7
+  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
   // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
   // Returns in the format:
   // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
-  // TODO check that this is the format we want and we don't want to transform it to something else.
+  // If no gateways are enabled, this returns an empty array.
   return _uc_payment_gateway_list('', TRUE);
 }
 
@@ -83,6 +82,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
  * Returns context information to fundraiser to be used in other modules as needed for
  * form generation. In this case an array of information about countries and zones.
  */
+// TODO now that we have the field info array, perhaps this should be handed with callback there?
 function fundraiser_ubercart_fundraiser_donation_form_context($context) {
   $countries = array();
   $zones = array();
@@ -106,16 +106,63 @@ function fundraiser_ubercart_fundraiser_donation_form_context($context) {
 }
 
 /**
+ * Implements hook_fundraiser_field_info_alter().
+ */
+function fundraiser_ubercart_fundraiser_field_info_alter($fields) {
+  // Add our own validation routines to the billing fields for credit cards.
+  $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_ubercart_card_number_field_validate';
+  $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_ubercart_card_cvv_field_validate';
+  $fields['credit_card_information']['card_expiration_month']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
+  $fields['credit_card_information']['card_expiration_year']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
+}
+
+/**
+ * Validation callback for field card_number.
+ */
+function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $submission_fields, $value) {
+  $valid = _uc_credit_valid_card_number($value);
+  if (!empty($cc_number) && (!$valid || !ctype_digit($value) )) {
+    return t('You have entered an invalid credit card number.');
+  }
+}
+
+/**
+ * Validation callback for field card_cvv.
+ */
+function _fundraiser_ubercart_card_cvv_field_validate($form, $form_state, $submission_fields, $value) {
+  $valid =_uc_credit_valid_cvv($value);
+  if (!empty($cc_cvv) && !$valid) {
+    return t('You have entered an invalid CVV number.');
+  }
+}
+
+/**
+ * Validation callback for field card_expiration_month, card_expiration_year.
+ */
+function _fundraiser_ubercart_card_expiration_year_field_validate($form, $form_state, $submission_fields, $value) {
+  $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
+  $cc_expiration_year = $fundraiser_fields['card_expiration_year'];
+  $valid = _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
+  if (!empty($cc_expiration_month) && !empty($cc_expiration_year) && !$valid) {
+    return t('The credit card you entered has expired.');
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_create().
  */
 function fundraiser_ubercart_fundraiser_donation_create($donation) {
+  // Get basic information from the donation node.
   $user = $donation->user;
   $node = $donation->node;
-  $fundraiser_fields = $donation->submission;
-  $additional_fields = isset($donation->additional) ? $donation->additional : array();
+  $fundraiser_fields = $donation->submission; // Fields are keyed as per field_info in fundraiser.
 
   // Pick out the values we need to generate an order.
   $donation_amount = $fundraiser_fields['amount'];
+  if ($donation_amount == "other") {
+    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
+  }
+
   $cc_number = $fundraiser_fields['card_number'];
   $cc_cvv = $fundraiser_fields['card_cvv'];
   $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
@@ -130,11 +177,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $billing_state = $fundraiser_fields['state'];
   $billing_zipcode = $fundraiser_fields['zip'];
   $quantity = isset($fundraiser_fields['quantity']) && !empty($fundraiser_fields['quantity']) ? $fundraiser_fields['quantity'] : 1;
-
-  // Look for other amount if set.
-  if ($donation_amount == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
-  }
+  $data = isset($fundraiser_fields['data']) ? $fundraiser_fields['data'] : '';
 
   // Create a UC order.
   $order = uc_order_new($user->uid);
@@ -181,22 +224,44 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     'cc_bank' => '',
   );
   $order->line_items = array();
-  foreach ($additional_fields as $field => $value) {
-    $order->data[$field] = $value;
-  }
+
   // If using the gateway manager, store the gateway that was used to make the payment
   if (module_exists('gateway_manager')) {
     $order->data['gateway'] = $node->gateway;
   }
+
+  // Lastly add order data field information.
+  foreach ($data as $field => $value) {
+    $order->data[$field] = $value;
+  }
+
   // Cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
+
   // Save the order.
   uc_order_save($order);
   uc_order_comment_save($donation->did, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
-  // And add the data to the donation form to return it.
-  $donation->donation = $order;  //TODO formalize this return array so we have a standard in/out.
+
+  // We only need to return the did at this point.
+  // When we charge later, this is the only value that the glue module will need.
+  // No one outside of the glue module should need the order data otherwise.
   $donation->did = $order->order_id;
-  $donation->donation->donation_amount = $order->order_total;
+  $donation->donation_amount = $donation_amount; // Total cost * quantity.
+  $donation->data = $order->data; // TODO check if we actually need this for submission later.
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ */
+function fundraiser_donation_process($donation, $charge_function) {
+  // Execute the charge as per the given gateway.
+  $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
+  $donation->data = array_merge($data, $donation->data);
+  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+  // Have to pass up to the system.
+  $donation->result['success'] = $result['success'];
+  $donation->result['comment'] = $result['comment'];
+  $donation->result['message'] = $result['message'];
 }
 
 /**
@@ -238,13 +303,13 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_ubercart_fundraiser_donation_success($donation) {
-  // Complete the sale in Ubercart.
+  // Mark as complete. Complete the sale in Ubercart.
   $order = uc_order_load($donation->did);
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $donation->donation->order_total, 0, NULL, 
+  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL, 
     t('Payment processed by the fundraiser module.'));
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
-  global $user;
+  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
   uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $user->name)), 'admin');
 }
 
@@ -256,7 +321,7 @@ function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   _fundraiser_ubercart_update_order_status('failed', $donation->did);
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
-  global $user;
+  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
   uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $user->name)), 'admin');
 }
 
@@ -276,6 +341,15 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Make a comment on the order.
   global $user;
   uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $user->name)), 'admin');
+}
+
+/**
+ * Implements hook_fundraiser_get_credit_encryption_path().
+ * This is called by modules that need to check for processing availablity outside of normal.
+ * Such as sustainer.
+ */
+function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
+  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
 }
 
 /** 
@@ -328,16 +402,10 @@ function _fundraiser_ubercart_get_zone_by_country($country_id) {
  * Below here are orphan or unknown origin functions. To be reviewed later.
  */
 
-/**
- * Implements hook_fundraiser_get_credit_encryption_path(). //TODO where is this called?
- */
-function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
-  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
-}
 
 /**
- * Implements hook_fundraiser_decrypt_credit(). //TODO where is this called?
- */
+ * Implements hook_fundraiser_decrypt_credit(). //TODO where is this called? Nowhere.
+ *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
   $crypt = new uc_encryption_class;
@@ -346,39 +414,11 @@ function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
   return $cc_data;
 }
+*/
 
+// Theme / formaty code, really should get refactored and moved to fundraiser. -SeH
 /**
- * Implements hook_fundraiser_validate_card(). //TODO where is this called?
- */
-function fundraiser_ubercart_fundraiser_validate_card($cc_number){
-  if(variable_get('uc_credit_validate_numbers', TRUE)) {
-    return _uc_credit_valid_card_number($cc_number);
-  }
-  return FALSE;
-}
-
-/**
- * Implements hook_fundraiser_validate_card_expiration(). //TODO where is this called?
- */
-function fundraiser_ubercart_fundraiser_validate_card_expiration($cc_expiration_month, $cc_expiration_year){
-  return _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
-}
-
-
-/**
- * Implements hook_fundraiser_validate_card_cvv(). //TODO where is this called?
- */
-function fundraiser_ubercart_fundraiser_validate_card_cvv($cc_cvv){
-  if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-    return _uc_credit_valid_cvv($cc_cvv);
-  }
-  return FALSE;
-}
-
-// Theme / formaty code, really should get refactored at some point. -SeH
-
-/**
- * Implements hook_fundraiser_format_price().//tODO where is this called?
+ * Implements hook_fundraiser_format_price();
  */
 function fundraiser_ubercart_fundraiser_format_price($price) {
   return theme('uc_price', array('price' => $price));
