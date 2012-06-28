@@ -128,16 +128,6 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-  // Donation management for admins.
-  $items['admin/store/orders/%/refund'] = array( //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Refund',
-    'page callback' => 'fundraiser_show_refund_form',
-    'page arguments' => array(3),
-    'access arguments' => array('edit orders'),
-    'file' => 'fundraiser.admin.inc',
-    'weight' => 3,
-    'type' => MENU_LOCAL_TASK,
-  );
   return $items;
 }
 
