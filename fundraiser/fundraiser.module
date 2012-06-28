@@ -649,8 +649,7 @@ function fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#create_callback' => '_fundraiser_amount_field_create', // To be called during field creation.
-    // #submit_callback => '', // Called during submission of the form to map values.
+    '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
     '#title' => 'Other',
@@ -661,8 +660,9 @@ function fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#create_callback' => '_fundraiser_other_amount_field_create',
+    '#create_callback' => '_fundraiser_other_amount_field_create', // To be called during field creation.
     '#validate_callback' => '_fundraiser_other_amount_field_validate', // Called during submission of the form to map values.
+    // #submit_callback => '', // Called during submission of the form to map values.
   );
   $fields['donor_information'] = array(
     '#title' => 'Your Information',
@@ -889,7 +889,7 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
 }
 
 /**
- * Validation callback for field other_amount.
+ * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
   // Look for other amount.
@@ -911,7 +911,7 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
 }
 
 /**
- * Validation callback for field email.
+ * Validation callback for field email. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
   if (!_fundraiser_validate_email($value)) {
@@ -993,7 +993,7 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // $donation->submission now contains the submitted values from the form.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
-  if (!empty($donation)) {
+  if (!empty($donation->submission)) {
     // Create the donation to process, allows other modules to modify results by hooks.
     fundraiser_donation_create($donation);
     // The created donation information should be at at $donation->donation, ready to process.
@@ -1011,7 +1011,9 @@ function fundraiser_donation_submit(&$form, &$form_state) {
     }
   }
   else {
-    $result = array('success' => FALSE);
+    // No submission was able to be found. So we really have nothing to go on.
+    // Mark this as a failure and move on.
+    $donation->result = $result = array('success' => FALSE);
   }
   // Add the donation and result info to the form_state so we can reference it later.
   $form_state['donation'] = $donation;
@@ -1029,103 +1031,17 @@ stdClass Object
     [user] => User Object
     [nid] => Fundraiser Node NID
     [node] => Node Object
-    [sid] => Submission ID
-    [submission] => Array of values by field key as found in fundraiser_field_info().
-    [donation] => UcOrder Object (Currently an Order object from Ubercart.)
-        (
-            [order_id] => 71
-            [uid] => 1
-            [order_status] => in_checkout
-            [order_total] => 10
-            [primary_email] => person@example.com
-            [delivery_first_name] => 
-            [delivery_last_name] => 
-            [delivery_phone] => 
-            [delivery_company] => 
-            [delivery_street1] => 
-            [delivery_street2] => 
-            [delivery_city] => 
-            [delivery_zone] => 0
-            [delivery_postal_code] => 
-            [delivery_country] => 840
-            [billing_first_name] => First Name
-            [billing_last_name] => Last Name
-            [billing_phone] => 
-            [billing_company] => 
-            [billing_street1] => 1234 Drupal Ave
-            [billing_street2] => Apt 1234
-            [billing_city] => Drupalville
-            [billing_zone] => 44
-            [billing_postal_code] => 12345
-            [billing_country] => 840
-            [products] => Array
-                (
-                    [0] => stdClass Object
-                        (
-                            [price] => 10
-                            [qty] => 1
-                            [title] => Test Donation Form
-                            [nid] => 1
-                            [data] => Array
-                                (
-                                    [shippable] => 
-                                    [model] => 
-                                    [varprice] => 10
-                                    [module] => uc_product
-                                )
-
-                            [order_id] => 71
-                            [weight_units] => lb
-                            [order_product_id] => 50
-                            [model] => 
-                            [cost] => 0
-                            [weight] => 0
-                        )
-
-                )
-            [line_items] => Array
-                (
-                )
-            [payment_method] => credit
-            [data] => Array
-                (
-                    [recurring_status] => 1
-                )
-            [created] => 1334151019
-            [modified] => 1334151019
-            [currency] => USD
-            [product_count] => 1
-            [host] => 127.0.0.1
-            [payment_details] => Array
-                (
-                    [cc_type] => visa
-                    [cc_owner] => 
-                    [cc_number] => 4111111111111111
-                    [cc_start_month] => 
-                    [cc_start_year] => 
-                    [cc_exp_month] => 4
-                    [cc_exp_year] => 2012
-                    [cc_issue] => 
-                    [cc_cvv] => 123
-                    [cc_bank] => 
-                )
-
-            [did] => 71
-            [recurs] => 1
-            [donation_amount] => 10
-        )
-    [result] => Array  (Currently a result array from Ubercart.)
+    [sid] =>  Glue Module Provided Submission ID, used by the glue module to track its info.
+    [submission] => Array of values by field key as found in fundraiser_field_info() (flattened array).
+    [did] => Glue Module Provided Donation ID, used by the glue module to track its info.
+    [donation_amount] => Amount to Charge
+    [data] => Additional Data for Charge // TODO this may be available on load in Glue, so not need to be passed up.
+    [result] => 
         (
             [success] => 1
             [comment] => Card charged, resolution code: 0022548315
             [message] => Credit card payment processed successfully.
             [uid] => 1
-            [data] => Array
-                (
-                    [txn_type] => auth_capture
-                    [recurring_status] => 1
-                )
-
         )
 )
 */
@@ -1149,7 +1065,8 @@ function fundraiser_donation_failed_validation($errors) {
  */
 function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
-  module_invoke_all('fundraiser_donation_create_additional', $donation);
+  module_invoke_all('fundraiser_donation_create_add_data', $donation);
+  // Populates $donation->submission['data'] with results;
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
@@ -1166,7 +1083,8 @@ function fundraiser_donation_create($donation) {
 }
 
 /**
- * Donation processing, a donation needs to be created prior to processing.
+ * Donation processing, a donation needs to be updated with new information prior to processing.
+ * For example, in the course of updating a sustainers information.
  */
 function fundraiser_donation_update($donation) {
   // Allow other modules to add additional fields to the donation before processing the payment
@@ -1177,10 +1095,12 @@ function fundraiser_donation_update($donation) {
   // For now, our creation system is responsible for creating a did.
   // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
+  $fundraiser_node = node_load($donation->nid);
   $donation_record = array(
     'did' => $donation->did,
     'nid' => $donation->nid,
     'uid' => $donation->uid
+    'gateway' => $fundraiser_node->gateway,
   );
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -1191,26 +1111,25 @@ function fundraiser_donation_update($donation) {
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {
+  // Grab the gateway from the fundraiser configured gateway.
+  // Later this will be stored with the donation (since the gateway for the fundraiser may change).
   $info = _fundraiser_gateway_info($donation->node->gateway);
+  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
     $charge_function = isset($info['credit']) ? $info['credit'] : '';
   }
   if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $donation->did, '@nid' => $donation->node->nid), WATCHDOG_CRITICAL);
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
     $result = array('success' => FALSE);
   }
   else {
-    // Call the charge function and store the result.
-    $data = array('txn_type' => 'auth_capture');
-    $data = array_merge($data, $donation->donation->data);
-    $result = $charge_function($donation->did, $donation->donation->donation_amount, $data);
-    $result['data'] = $data;
+    // Execute the charge, generally implemented under the payment glue module.
+    // Allows for multiple responses during this process.
+    module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
-  $donation->result = $result;
-  // Allow other modules to respond to the success.
-  module_invoke_all('fundraiser_donation_process', $donation, $result);
 }
 
 /**
@@ -1226,6 +1145,24 @@ function fundraiser_donation_success($donation) {
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
+}
+
+/**
+ * Donation processing, a given donation was declined.
+ */
+function fundraiser_donation_decline($donation) {
+  // Track this failure.
+  _fundraiser_update_tracking_value($donation->nid, 'gateway_failures');
+  // Make a log entry.
+  watchdog('fundraiser', 'Donation @id was declined by the payment gateway. Reason: @message',
+    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG, NULL);
+  // Show gateay message if appropriate.
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($donation->result['message']);
+  }
+  // Allow other modules to respond to the decline.
+  module_invoke_all('fundraiser_donation_decline', $donation);
 }
 
 /**
@@ -1258,24 +1195,6 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;
-}
-
-/**
- * Donation processing, a given donation was declined.
- */
-function fundraiser_donation_decline($donation) {
-  // Track this failure.
-  _fundraiser_update_tracking_value($donation->nid, 'gateway_failures');
-  // Make a log entry.
-  watchdog('fundraiser', 'Donation @id was declined by the payment gateway. Reason: @message',
-    array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG, NULL);
-  // Show gateay message if appropriate.
-  $display_message = variable_get('fundraiser_gateway_messages', 1);
-  if ($display_message) {
-    drupal_set_message($donation->result['message']);
-  }
-  // Allow other modules to respond to the decline.
-  module_invoke_all('fundraiser_donation_decline', $donation);
 }
 
 // TODO how does this get called?
@@ -1355,13 +1274,16 @@ function _fundraiser_gateway_info($id = NULL) {
   // Cache the gateway during page execution.
   if (empty($gateways)) {
     if (module_exists('gateway_manager')) {
+      // If we have the gateway manager turned on, we ask it.
       $gateways = gateway_manager_gateway_info($payment_details->gateway);
     }
     else {
+      // If not, we go asking anyone else - usually the payment glue module.
       $gateways = module_invoke_all('fundraiser_gateway_info');
       drupal_alter('fundraiser_gateway_info', $gateways);
     }
   }
+
   // Look up the gateway needed.
   if ($id != NULL) {
     foreach ($gateways as $key => $gateway) {
@@ -1863,7 +1785,6 @@ function fundraiser_webform_submission_update($node, $submission) {
     }
   }
 }
-
 
 //TODO move you to another module for profile handling in post submission.
 /**

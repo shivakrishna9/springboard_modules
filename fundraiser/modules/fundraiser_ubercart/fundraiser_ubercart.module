@@ -70,11 +70,10 @@ function fundraiser_preprocess_uc_order(&$variables) {
 function fundraiser_ubercart_fundraiser_gateway_info() {
   // If no gateways are enabled, this returns an empty array.
   // TODO - make sure where this is accounted for an emtpy is noted, and flagged as a thing to fix. - SeH
-  // From Ubsercart http://api.lullabot.com/_uc_payment_gateway_list/7
+  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
   // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
   // Returns in the format:
   // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
-  // TODO check that this is the format we want and we don't want to transform it to something else.
   return _uc_payment_gateway_list('', TRUE);
 }
 
@@ -156,11 +155,14 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   // Get basic information from the donation node.
   $user = $donation->user;
   $node = $donation->node;
-  $fundraiser_fields = $donation->submission;
-  $additional_fields = isset($donation->additional) ? $donation->additional : array();
+  $fundraiser_fields = $donation->submission; // Fields are keyed as per field_info in fundraiser.
 
   // Pick out the values we need to generate an order.
   $donation_amount = $fundraiser_fields['amount'];
+  if ($donation_amount == "other") {
+    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
+  }
+
   $cc_number = $fundraiser_fields['card_number'];
   $cc_cvv = $fundraiser_fields['card_cvv'];
   $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
@@ -175,11 +177,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $billing_state = $fundraiser_fields['state'];
   $billing_zipcode = $fundraiser_fields['zip'];
   $quantity = isset($fundraiser_fields['quantity']) && !empty($fundraiser_fields['quantity']) ? $fundraiser_fields['quantity'] : 1;
-
-  // Look for other amount if set.
-  if ($donation_amount == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
-  }
+  $data = isset($fundraiser_fields['data']) ? $fundraiser_fields['data'] : '';
 
   // Create a UC order.
   $order = uc_order_new($user->uid);
@@ -226,22 +224,44 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     'cc_bank' => '',
   );
   $order->line_items = array();
-  foreach ($additional_fields as $field => $value) {
-    $order->data[$field] = $value;
-  }
+
   // If using the gateway manager, store the gateway that was used to make the payment
   if (module_exists('gateway_manager')) {
     $order->data['gateway'] = $node->gateway;
   }
+
+  // Lastly add order data field information.
+  foreach ($data as $field => $value) {
+    $order->data[$field] = $value;
+  }
+
   // Cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
+
   // Save the order.
   uc_order_save($order);
   uc_order_comment_save($donation->did, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
-  // And add the data to the donation form to return it.
-  $donation->donation = $order;  //TODO formalize this return array so we have a standard in/out.
+
+  // We only need to return the did at this point.
+  // When we charge later, this is the only value that the glue module will need.
+  // No one outside of the glue module should need the order data otherwise.
   $donation->did = $order->order_id;
-  $donation->donation->donation_amount = $order->order_total;
+  $donation->donation_amount = $donation_amount; // Total cost * quantity.
+  $donation->data = $order->data; // TODO check if we actually need this for submission later.
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ */
+function fundraiser_donation_process($donation, $charge_function) {
+  // Execute the charge as per the given gateway.
+  $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
+  $donation->data = array_merge($data, $donation->data);
+  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+  // Have to pass up to the system.
+  $donation->result['success'] = $result['success'];
+  $donation->result['comment'] = $result['comment'];
+  $donation->result['message'] = $result['message'];
 }
 
 /**
@@ -283,13 +303,13 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_ubercart_fundraiser_donation_success($donation) {
-  // Complete the sale in Ubercart.
+  // Mark as complete. Complete the sale in Ubercart.
   $order = uc_order_load($donation->did);
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $donation->donation->order_total, 0, NULL, 
+  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL, 
     t('Payment processed by the fundraiser module.'));
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
-  global $user;
+  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
   uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $user->name)), 'admin');
 }
 
@@ -301,7 +321,7 @@ function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   _fundraiser_ubercart_update_order_status('failed', $donation->did);
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
-  global $user;
+  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
   uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $user->name)), 'admin');
 }
 
