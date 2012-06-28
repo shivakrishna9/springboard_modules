@@ -18,6 +18,8 @@ function fundraiser_triggers_menu_alter(&$items) {
   $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
 }
 
+// TODO make triggers for each hook of the process, so we can get in there with actions.
+
 /**
  * Implementation of hook_hook_info().
  */
