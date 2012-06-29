@@ -240,7 +240,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
     // Flatten form state array so we can get the user selection easier.
     $fields = _fundraiser_array_flatten($form_state); // From fundraiser.module.
     // Country/state dependant drop down code
-    $available_zones = $context->zones;
+    $available_zones = isset($context->zones) ? $context->zones : array();
     if (array_key_exists('country', $fields)) {
       // Grab the selected country from $form_state, and set default.
       $country_field['#default_value'] = $fields['country'];
@@ -922,7 +922,7 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
   else {
     // If the current component is already a select, just update with current donation amount values.
     if ($had_select) {
-      $extra = $fields['donation']['amount']['#extra'];
+      $extra = isset($fields['donation']['amount']['#extra']) ? $fields['donation']['amount']['#extra'] : array();
       // Construct a set of options based on the configured amounts.
       $formatted_amounts = '';
       foreach ($fundraiser->donation_amounts as $amount => $label) {
@@ -953,7 +953,7 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
     $result = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
     // Pre-existing entry in the DB for this form component and it's still enabled so we update.
     if ($result) {
-      $extra = $fields['donation']['other_amount']['#extra'];
+      $extra = isset($fields['donation']['other_amount']['#extra']) ? $fields['donation']['amount']['#extra'] : array();
       $extra['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
       _fundraiser_webform_update_component($fundraiser->nid, 'other_amount', array('extra' => serialize($extra)));
       $message .= t('Other donation amount options have been updated.');
