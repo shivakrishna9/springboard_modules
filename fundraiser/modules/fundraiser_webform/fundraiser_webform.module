@@ -169,10 +169,32 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 }
 
 /**
+ * Helper function, validate the results of a webform submission to the defined fields in fundraiser.
+ */
+function _fundraiser_webform_modify_field_keys(&$form, $form_state, $component_hierarchy, $field_info = NULL) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    if (isset($field_info[$child]['#display_callback']) && function_exists($field_info[$child]['#display_callback'])) {
+      // Locate the field in form to modify if it exists in the components.
+      if (isset($component_hierarchy[$child])) {
+        $this_field =& _fundraiser_webform_find_field($form, $component_hierarchy[$child]);
+        $field = call_user_func($field_info[$child]['#display_callback'], $form, $form_state, $this_field);
+        $this_field = $field;
+      }
+    }
+    // Check for any further children.
+    _fundraiser_webform_modify_field_keys($form, $form_state, $component_hierarchy, $field_info[$child]);
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_form().
  */
 function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
-  $context = $form['#context'];
+  // Grab the node.
   $node = node_load($form['#node']->nid);
 
   // Create a data structure that will tell us exactly where each webform component lives in the FAPI array.
@@ -184,6 +206,9 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
   drupal_add_js( $base . '/js/fundraiser.js', 'file');
   drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
+
+  // Modify form displays according to callback settings.
+  _fundraiser_webform_modify_field_keys($form, $form_state, $component_hierarchy);
 
   // Combine expiration month and year into a single component.
   $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
@@ -220,45 +245,6 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $cc_exp_month_field = NULL;
   $cc_exp_year_field = NULL;
 
-  // Alter country drop down to populate zone drop down.
-  if (isset($component_hierarchy['country'])) {
-    $country_field =& _fundraiser_webform_find_field($form, $component_hierarchy['country']);
-    $country_field['#ajax'] = array(
-      'callback' => '_fundraiser_webform_client_state_ajax_submit',
-      'wrapper' => 'zone-select-wrapper',
-      'method' => 'replace',
-      'effect' => 'fade',
-    );
-  }
-
-  // Add a wrapper around the state field so it can be replaced via ajax.
-  if (isset($component_hierarchy['state'])) {
-    $state_field =& _fundraiser_webform_find_field($form, $component_hierarchy['state']);
-    // Add the wrapper for AJAX to react to.
-    $state_field['#prefix'] = '<div id="zone-select-wrapper">';
-    $state_field['#suffix'] = '</div>';
-    // Flatten form state array so we can get the user selection easier.
-    $fields = _fundraiser_array_flatten($form_state); // From fundraiser.module.
-    // Country/state dependant drop down code
-    $available_zones = isset($context->zones) ? $context->zones : array();
-    if (array_key_exists('country', $fields)) {
-      // Grab the selected country from $form_state, and set default.
-      $country_field['#default_value'] = $fields['country'];
-      // Filter options down to just the zones available for this country.
-      if (isset($context->countries[ $country_field['#default_value'] ])) {
-        $available_zones = $context->countries[ $country_field['#default_value'] ]->zones;
-      }
-    }
-    // Given available zones, filter the dropdown to match.
-    if (!empty($available_zones)) {
-      $new_zone_options = array();
-      foreach ($available_zones as $zone_id => $zone) {
-        $new_zone_options[$zone_id] = $zone->zone_name;
-      }
-      $state_field['#options'] = $new_zone_options;
-    }
-  }
-
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
     theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.gif' )) .
@@ -266,7 +252,8 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
     '</div>';
 
   // Add a submit handler in advance of the webform_client_form_submit to cleanup after our move.
-  // Important: It needs to run before webform runs, so it's getting put at the fornt of the array.
+  // This handler moves the expiration date stuff back where webform expects it to be.
+  // Important: It needs to run before webform runs, so it's getting put at the front of the array.
   array_unshift($form['#submit'], '_fundraiser_webform_pre_submit_cleanup');
   return $form;
 }
@@ -287,13 +274,6 @@ function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
   unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
 }
 
-/**
- * AJAX callback for dealing with changes to the donation form.
- */
-function _fundraiser_webform_client_state_ajax_submit($form, $form_state) {
-  // Get the form item we want to render.
-  return _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'state'));
-}
 
 /**
  * Helper function, validate the results of a webform submission to the defined fields in fundraiser.
@@ -327,11 +307,6 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   // Create watchdog entry on validation errors.
   if ($errors) {
     $base = drupal_get_path('module', 'fundraiser_webform');
-    // TODO check if this is still neede din D7.
-    //drupal_add_js($base . '/js/jquery.alphanumeric.js');
-    //drupal_add_js($base . '/js/fundraiser.js');
-    //drupal_add_css($base . '/css/fundraiser-donation-form.css');
-
     $message = "The following donation form fields failed local validation:\n\n";
     $check_errors = form_get_errors();
     $validation_errors = is_array($check_errors) ? array_keys($check_errors) : array();
@@ -353,7 +328,6 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
       watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
     }
     // Provide data to fundraiser about the node that failed to validate.
-    // TODO check if returning the nid is enough or if other context information will be needed.
     $errors = array();
     $errors['nid'] = $form_state['values']['details']['nid'];
     return $errors; // So fundraiser can pick up on the failure.
@@ -667,6 +641,15 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
     }
   }
   return $path;
+}
+
+/**
+ * Implements hook_fundraiser_get_form_field().
+ */
+function fundraiser_webform_fundraiser_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key.
+  // Returns it when found.
+  return _fundraiser_webform_find_field($form,_fundraiser_webform_parse_component($form['#node']->nid, $field_key));
 }
 
 /**

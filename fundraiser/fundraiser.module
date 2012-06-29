@@ -622,16 +622,6 @@ function _fundraiser_ask_form($amount_values = array()) {
 }
 
 /**
- * Form helper function, required to get stylesheets and scripts added to the donation form after a validation error.
- * see: http://drupal.org/node/645880
- */
-//function _fundraiser_validation_includes($element, $form_state) {
-//  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
-//  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js');
-//  return $element;
-//}
-
-/**
  * Callback handler for the donation ask amount form #ajax.
  */
 function _fundraiser_donation_settings_form_amounts($form, $form_state) {
@@ -652,15 +642,22 @@ function fundraiser_field_info() {
   // Allow for others to modify as needed.
   drupal_alter('fundraiser_field_info', $fields);
   // And return.
-  return (array) $fields;
+  return $fields;
+}
+
+/**
+ * Asks the display glue module(s) for field information.
+ * Allowing other modules to find a field as needed in a form - for example - for AJAX return values.
+ */
+function fundraiser_find_form_field($form, $field_key) {
+  // Expected to return a form render array for the requested form element.
+  return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
 }
 
 /**
  * Implements hook_fundraiser_field_info().
  */
 function fundraiser_fundraiser_field_info() {
-  // Context so we can grab things like zones.
-  $context = _fundraiser_donation_context();
   // Donation amounts are handled in a special case.
   $fields['donation'] = array(
     '#title' => 'Donation',
@@ -732,52 +729,16 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 1,
   );
-  if (isset($context->countries)) {
-    $default_available = array(840, 124);
-    // From ubercart defaults. 840 = US, 124 = CA.
-    $include_all_countries = variable_get('fundraiser_all_countries', 0); 
-    $options = '';
-    if ($include_all_countries) {
-      foreach ($context->countries as $country_id => $country) {
-        $options .= $country_id . '|' . $country->country_name . "\n";
-      }
-    }
-    else {
-      foreach ($context->countries as $country_id => $country) {
-        if (in_array($country_id, $default_available)) {
-          $options .= $country_id . '|' . $country->country_name . "\n";
-        }
-      }
-    }
-     $fields['billing_information']['country'] = array(
-      '#title' => 'Country',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
-  }
-  if (isset($context->zones)) { 
-    $options = '';
-    foreach ($context->zones as $zone_id => $zone) {
-      $options .= $zone_id . '|' . $zone->zone_name . "\n";
-    }
-    $fields['billing_information']['state'] = array(
-      '#title' => 'State/Province',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
-  }
+   $fields['billing_information']['country'] = array(
+    '#title' => 'Country',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['state'] = array(
+    '#title' => 'State/Province',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
   $fields['billing_information']['zip'] = array(
     '#title' => 'ZIP/Postal Code',
     '#type' => 'textfield',
@@ -952,11 +913,6 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
-  // Add donation context information. This provides context for billing information
-  // Such as available states and zones or the like. This information is provided
-  // once from whatever module may need to set data to whatever module implements it.
-  $context = _fundraiser_donation_context();
-  $form['#context'] = $context;
   // Add validation and submit routines for fundraiser to get called during submission.
   // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
   // We add these first to make sure they're available for the hook call.
@@ -998,11 +954,8 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * one donation processed per submission.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
-  // Retrieve context information for use.
-  $context = $form['#context'];
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
-  $donation->context = $context;
   // Using user load to avoid user object being carried by ref around.
   global $user;
   $donation->uid = $user->uid;
@@ -1562,20 +1515,6 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
     $keys = _fundraiser_get_field_keys($field_info[$child], $keys);
   }
   return $keys;
-}
-
-/**
- * Helper function, retrieve donation context as needed.
- */
-function _fundraiser_donation_context() {
-  // Pull from cached context during page execution.
-  // Thread safe. Erased after page execution is completed.
-  static $context;
-  if (empty($context)) {
-    $context = (object) array();
-    module_invoke_all('fundraiser_donation_form_context', $context);
-  }
-  return $context;
 }
 
 /**
