@@ -3,3 +3,4 @@ description = Support sustainer behaviors for fundraiser.
 core = 7.x
 package = Jackson River Springboard
 version =  7.x-3.0-dev
+dependencies[] = fundraiser

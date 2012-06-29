@@ -6,6 +6,25 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+// TODO like confirmation, perhaps this is better with a generic solution that this module then overrides.
+// But for now, this will live here because Fundraiser doesn't have a generic donation summary page.
+// Since we don't have that UI figured out, Order will do. And so: Ubercart dependancy.
+function fundraiser_ubercart_menu() {
+  // Donation management for admins.
+  $items['admin/store/orders/%/refund'] = array(
+    'title' => 'Refund',
+    'page callback' => 'fundraiser_show_refund_form',
+    'page arguments' => array(3),
+    'access arguments' => array('edit orders'),
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
  * Implemenation of hook_mail_alter().
  */
 function fundraiser_ubercart_mail_alter(&$message) {
@@ -50,6 +69,18 @@ function fundraiser_order_actions($order) {
 }
 
 /**
+ * Implements hook_fundraiser_gateway_info().
+ */
+function fundraiser_ubercart_fundraiser_gateway_info() {
+  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
+  // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
+  // Returns in the format:
+  // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
+  // If no gateways are enabled, this returns an empty array.
+  return _uc_payment_gateway_list('', TRUE);
+}
+
+/**
  * Implementation of hook_preprocess_uc_order().
  * From: http://www.ubercart.org/forum/development/18047/inserting_variables_invoices_ubercart_23_and_above
  * Adds additional variables for use in donation receipt emails sent by UC.
@@ -62,18 +93,6 @@ function fundraiser_preprocess_uc_order(&$variables) {
       $variables['fundraiser_message'] = $fundraiser->receipt_email_message;
       break;
   }
-}
-
-/**
- * Implements hook_fundraiser_gateway_info().
- */
-function fundraiser_ubercart_fundraiser_gateway_info() {
-  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
-  // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
-  // Returns in the format:
-  // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
-  // If no gateways are enabled, this returns an empty array.
-  return _uc_payment_gateway_list('', TRUE);
 }
 
 /**
