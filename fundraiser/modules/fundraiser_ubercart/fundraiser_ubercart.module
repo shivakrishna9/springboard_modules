@@ -109,9 +109,9 @@ function fundraiser_ubercart_fundraiser_donation_form_context($context) {
   $found_countries = _fundraiser_ubercart_get_countries();
   foreach ($found_countries as $found_country) {
     // First load up id, name, iso code 2, iso code 3, and version from Ubercart.
-    $countries[$found_country->country_id] = $result;
+    $countries[$found_country->country_id] = $found_country;
     $countries[$found_country->country_id]->zones = array();
-    $found_zones = _fundraiser_ubercart_get_zone_by_country($result->country_id);
+    $found_zones = _fundraiser_ubercart_get_zone_by_country($found_country->country_id);
     foreach ($found_zones as $found_zone) {
       // For each zone load up, zone_id, zone country_id, zone, code, zone_name.
       // Store in the country and zone arrays.
