@@ -342,13 +342,13 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     // SCRUB DATA. We do not want to save these in the error watchdog message.
     // We can be sure these fields are in the set, since they're declared in fundraiser.
-    $fundraiser_fields['card_number'] = substr_replace($fundraiser_fields['card_number'],
-      str_repeat('*', strlen($fundraiser_fields['card_number'])), 0);
-    $fundraiser_fields['card_cvv'] = substr_replace($fundraiser_fields['card_cvv'],
-      str_repeat('*', strlen($fundraiser_fields['card_cvv'])), 0);
+    $submission_fields['card_number'] = substr_replace($submission_fields['card_number'],
+      str_repeat('*', strlen($submission_fields['card_number'])), 0);
+    $submission_fields['card_cvv'] = substr_replace($submission_fields['card_cvv'],
+      str_repeat('*', strlen($submission_fields['card_cvv'])), 0);
 
     $message .= "\n\nSubmitted Values:\n\n";
-    foreach ($fundraiser_fields as $key => $value) {
+    foreach ($submission_fields as $key => $value) {
       $message .= $key . ': ' . $value . "\n";
       watchdog('fundraiser_webform', $message, NULL, WATCHDOG_DEBUG, NULL);
     }
