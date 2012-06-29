@@ -61,7 +61,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   // Make sure we are dealing with a donation form.
   if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
-    $required_fields = fundraiser_field_info();
+    $required_fields = _fundraiser_get_field_keys();
     // TODO Locate each field, and see which one is flagged as required. If required, deny delete.
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
@@ -79,7 +79,7 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
  * Implements hook_form_alter().
  * Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
  */
-function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
+function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
@@ -90,7 +90,7 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
     // Handle the donation form display.
     if (fundraiser_is_donation_type($form['#node']->type)  && arg(2) != 'submission') { // From fundraiser.module.
       // From fundraiser.module, calls hooks to create form and submission paths.
-      $form = fundraiser_donation_form($form, $form_state); // From fundraiser.module.
+      fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
   }
 
@@ -321,7 +321,7 @@ function _fundraiser_webform_validate_field_keys($form, $form_state, $submission
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
+  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted']); // From fundraiser.module.
   $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields);
 
   // Create watchdog entry on validation errors.
