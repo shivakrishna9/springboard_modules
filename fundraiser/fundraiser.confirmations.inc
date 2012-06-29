@@ -9,7 +9,7 @@
  * Menu access callback, check for donation type and node access.
  */
 function fundraiser_confirmations_perm($perm, $node) {
-  if (_fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
+  if (fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
     return TRUE;
   }
   return FALSE;

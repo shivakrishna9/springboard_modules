@@ -25,7 +25,7 @@ function fundraiser_webform_menu_alter(&$items) {
  */
 function fundraiser_webform_configure_access($perm, $node) {
   // Don't show the 'Form settings' tab on donation forms.
-  if (_fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
+  if (fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
     return FALSE;
   }
   else {
@@ -40,7 +40,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
   // Remove any non-component form fields from the submitted data.
   unset($submission->data['']);
   // Remove senstive form data before the submission is saved to the database.
-  if (_fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
+  if (fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
     $results = _fundraiser_webform_get_components_by_keys($node->nid, array('card_number', 'card_cvv', 'card_expiration_date'));
     foreach ($results as $result) {
       // Set sensitive info to NULL.
@@ -59,7 +59,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
 // TODO look into using preprocess to intercept?
 function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   // Make sure we are dealing with a donation form.
-  if (_fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
+  if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
     $required_fields = fundraiser_field_info();
     // TODO Locate each field, and see which one is flagged as required. If required, deny delete.
@@ -84,11 +84,11 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
   // Alter the webform client form.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
-    if (_fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') { // From fundraiser.module.
+    if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') { // From fundraiser.module.
       fundraiser_webform_submission_display($form, $form_state);
     }
     // Handle the donation form display.
-    if (_fundraiser_is_donation_type($form['#node']->type)  && arg(2) != 'submission') { // From fundraiser.module.
+    if (fundraiser_is_donation_type($form['#node']->type)  && arg(2) != 'submission') { // From fundraiser.module.
       // From fundraiser.module, calls hooks to create form and submission paths.
       $form = fundraiser_donation_form($form, $form_state); // From fundraiser.module.
     }
@@ -98,7 +98,7 @@ function fundraiser_webform_form_alter(&$form, $form_state, $form_id) {
   // They're named what they're named for a reason.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
-    if (_fundraiser_is_donation_type($node->type)) {
+    if (fundraiser_is_donation_type($node->type)) {
       // Walk array of defined fields to gather keys.
       $preserved_keys = _fundraiser_get_field_keys();
       $form_key = $form['form_key']['#default_value'];

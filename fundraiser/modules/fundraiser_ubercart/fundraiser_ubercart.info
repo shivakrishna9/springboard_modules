@@ -2,6 +2,7 @@ name = Fundraiser Ubercart
 description = Implements donation handling for Fundraiser with Ubercart.
 core = 7.x
 package = Jackson River Springboard
+dependencies[] = fundraiser
 dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = uc_cart

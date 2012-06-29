@@ -29,7 +29,7 @@ function fundraiser_user_menu() {
  * Menu access callback, returns TRUE if current node is a donation form.
  */
 function _fundraiser_user_mapping_form_access($node) {
-  return _fundraiser_is_donation_type($node->type); // From fundraiser.module.
+  return fundraiser_is_donation_type($node->type); // From fundraiser.module.
 }
 
 /**
