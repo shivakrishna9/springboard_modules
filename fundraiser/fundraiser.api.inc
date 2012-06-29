@@ -5,11 +5,6 @@
  */
 
 /**
- * Allow modifications to the fundraiser settings form.
- */
-function hook_fundraiser_donation_settings_form_alter($form, $form_state, $node) {}
-
-/**
  * For display modules, retrieve donation form implementation.
  */
 function hook_fundraiser_donation_form($form, $form_state, $context) {}
