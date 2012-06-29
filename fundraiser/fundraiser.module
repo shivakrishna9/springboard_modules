@@ -421,8 +421,8 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
 function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
     _fundraiser_donation_settings_form($form, $form_state);
-    // Allow other modules to add or modify additional fundraiser settings.
-    module_invoke_all('fundraiser_donation_settings_form_alter', $form, $form_state);
+    // Other modules that need to add to the settings form should also implement
+    // hook_form_BASE_FORM_ID_alter, or any of the other form alter hooks.
   }
 }
 
@@ -443,7 +443,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   }
   // Check if this is being called on an enabled node type.
   if (!fundraiser_is_donation_type($node->type)) {
-    return $form;
+    return;
   }
   // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
@@ -536,6 +536,9 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. '.
       'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
+/*
+// Removed for the moment, cause AJAX is NOT cooperating $form_state['values'] is not getting set.
+// I have no idea why, the examples given at d.o indicate this is the right way to do this.
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
@@ -547,7 +550,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'effect' => 'fade',
     ),
   );
-
+*/
   // Additional fundraiser settings.
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -566,35 +569,34 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   // TODO when confirmation are removed, this goes elswhere.
   /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
   $form['confirmation_page_title'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' =>  isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
   );
   $form['confirmation_page_body'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
   );
   $form['receipt_email_from'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
   );
   $form['receipt_email_address'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
   );
   $form['receipt_email_subject'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
   );
   $form['receipt_email_message'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   $form['redirect_url'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->redirect_url) ? $node->redirect_url : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
-  return $form;
 }
 
 /**
