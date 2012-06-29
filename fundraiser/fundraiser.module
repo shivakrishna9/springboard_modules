@@ -421,8 +421,8 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
 function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_type($form['#node']->type)) {
     _fundraiser_donation_settings_form($form, $form_state);
-    // Allow other modules to add or modify additional fundraiser settings.
-    module_invoke_all('fundraiser_donation_settings_form_alter', $form, $form_state);
+    // Other modules that need to add to the settings form should also implement
+    // hook_form_BASE_FORM_ID_alter, or any of the other form alter hooks.
   }
 }
 
@@ -443,7 +443,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   }
   // Check if this is being called on an enabled node type.
   if (!fundraiser_is_donation_type($node->type)) {
-    return $form;
+    return;
   }
   // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
@@ -536,6 +536,9 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. '.
       'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
+/*
+// Removed for the moment, cause AJAX is NOT cooperating $form_state['values'] is not getting set.
+// I have no idea why, the examples given at d.o indicate this is the right way to do this.
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
@@ -547,7 +550,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'effect' => 'fade',
     ),
   );
-
+*/
   // Additional fundraiser settings.
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -566,35 +569,34 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   // TODO when confirmation are removed, this goes elswhere.
   /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
   $form['confirmation_page_title'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' =>  isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
   );
   $form['confirmation_page_body'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
   );
   $form['receipt_email_from'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
   );
   $form['receipt_email_address'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
   );
   $form['receipt_email_subject'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
   );
   $form['receipt_email_message'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   $form['redirect_url'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->redirect_url) ? $node->redirect_url : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
-  return $form;
 }
 
 /**
@@ -620,16 +622,6 @@ function _fundraiser_ask_form($amount_values = array()) {
 }
 
 /**
- * Form helper function, required to get stylesheets and scripts added to the donation form after a validation error.
- * see: http://drupal.org/node/645880
- */
-//function _fundraiser_validation_includes($element, $form_state) {
-//  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
-//  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js');
-//  return $element;
-//}
-
-/**
  * Callback handler for the donation ask amount form #ajax.
  */
 function _fundraiser_donation_settings_form_amounts($form, $form_state) {
@@ -645,7 +637,27 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
  * And requests additional field information from other modules that need to define them.
  */
 function fundraiser_field_info() {
-  $context = _fundraiser_donation_context();
+  // Request additional fields from other modules.
+  $fields = module_invoke_all('fundraiser_field_info');
+  // Allow for others to modify as needed.
+  drupal_alter('fundraiser_field_info', $fields);
+  // And return.
+  return $fields;
+}
+
+/**
+ * Asks the display glue module(s) for field information.
+ * Allowing other modules to find a field as needed in a form - for example - for AJAX return values.
+ */
+function fundraiser_find_form_field($form, $field_key) {
+  // Expected to return a form render array for the requested form element.
+  return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
+}
+
+/**
+ * Implements hook_fundraiser_field_info().
+ */
+function fundraiser_fundraiser_field_info() {
   // Donation amounts are handled in a special case.
   $fields['donation'] = array(
     '#title' => 'Donation',
@@ -717,52 +729,16 @@ function fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 1,
   );
-  if (isset($context->countries)) {
-    $default_available = array(840, 124);
-    // From ubercart defaults. 840 = US, 124 = CA.
-    $include_all_countries = variable_get('fundraiser_all_countries', 0); 
-    $options = '';
-    if ($include_all_countries) {
-      foreach ($context->countries as $country_id => $country) {
-        $options .= $country_id . '|' . $country->country_name . "\n";
-      }
-    }
-    else {
-      foreach ($context->countries as $country_id => $country) {
-        if (in_array($country_id, $default_available)) {
-          $options .= $country_id . '|' . $country->country_name . "\n";
-        }
-      }
-    }
-     $fields['billing_information']['country'] = array(
-      '#title' => 'Country',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
-  }
-  if (isset($context->zones)) { 
-    $options = '';
-    foreach ($context->zones as $zone_id => $zone) {
-      $options .= $zone_id . '|' . $zone->zone_name . "\n";
-    }
-    $fields['billing_information']['state'] = array(
-      '#title' => 'State/Province',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
-  }
+   $fields['billing_information']['country'] = array(
+    '#title' => 'Country',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['state'] = array(
+    '#title' => 'State/Province',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
   $fields['billing_information']['zip'] = array(
     '#title' => 'ZIP/Postal Code',
     '#type' => 'textfield',
@@ -836,9 +812,6 @@ function fundraiser_field_info() {
       'width' => 5,
     ),
   );
-  // Request additional fields from other modules.
-  $fields = module_invoke_all('fundraiser_field_info', $fields);
-  drupal_alter('fundraiser_field_info', $fields);
   return $fields;
 }
 
@@ -903,21 +876,21 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
 /**
  * Validation callback for field other_amount. Called during form validation.
  */
-function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
+function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
+  $value = $submission_fields['amount'];
   // Look for other amount.
   if ($submission_fields['amount'] == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
+    $value = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
     // Make sure other amount is numeric.
-    if (!is_numeric($donation_amount)) {
+    if (!is_numeric($value)) {
       return t('You must enter a valid donation amount');
     }
   }
-
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
   $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
-  if ($donation_amount < $minimum_donation_amount) {
+  if ($value < $minimum_donation_amount) {
     return t('Your donation amount must be greater than or equal to @min_amount.', array('@min_amount' => $minimum_donation_amount));
   }
 }
@@ -940,11 +913,6 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
-  // Add donation context information. This provides context for billing information
-  // Such as available states and zones or the like. This information is provided
-  // once from whatever module may need to set data to whatever module implements it.
-  $context = _fundraiser_donation_context();
-  $form['#context'] = $context;
   // Add validation and submit routines for fundraiser to get called during submission.
   // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
   // We add these first to make sure they're available for the hook call.
@@ -952,11 +920,10 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#submit'][] = 'fundraiser_donation_submit';
 
   // When confirmations are moved, this goes elsewhere.
+  $form['#submit'][] = 'fundraiser_donation_post_submit';
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
   $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
-  // Call hook to allow final manipulations.
-  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
   return $form;
 }
 
@@ -987,11 +954,8 @@ function fundraiser_donation_validate(&$form, &$form_state) {
  * one donation processed per submission.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
-  // Retrieve context information for use.
-  $context = $form['#context'];
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
-  $donation->context = $context;
   // Using user load to avoid user object being carried by ref around.
   global $user;
   $donation->uid = $user->uid;
@@ -1014,25 +978,32 @@ function fundraiser_donation_submit(&$form, &$form_state) {
       $donation->result['message'] = '';
     }
     // The results should be at $donation->result, ready to respond to the aftermath.
-    $result = $donation->result;
-    if (isset($result['success']) && $result['success']) {
+    if (isset($donation->result['success']) && $donation->result['success']) {
       fundraiser_donation_success($donation);
     }
     else {
+      $donation->result['success'] = FALSE;
       fundraiser_donation_decline($donation);
     }
   }
   else {
     // No submission was able to be found. So we really have nothing to go on.
     // Mark this as a failure and move on.
-    $donation->result = $result = array('success' => FALSE);
+    $donation->result['success'] = FALSE;
   }
   // Add the donation and result info to the form_state so we can reference it later.
-  $form_state['donation'] = $donation;
-  $form_state['result'] = $result;
+  $form_state['#donation'] = $donation;
+}
+
+/**
+ * Submit callback after donation submitted, but before confirmation.
+ */
+function fundraiser_donation_post_submit(&$form, &$form_state) {
   // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
   // Such as in cases of failures or the like. Return the donation object and result.
-  module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $donation, $result);
+  // We return form_state here, because we cannot pass arrays by reference in module calls.
+  // See: http://drupal.org/node/353494 for a detailed discussion of this one.
+  $form_state = module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
 }
 
 /**
@@ -1135,7 +1106,7 @@ function fundraiser_donation_process($donation) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
       array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
-    $result = array('success' => FALSE);
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
   }
   else {
     // Execute the charge, generally implemented under the payment glue module.
@@ -1544,20 +1515,6 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
     $keys = _fundraiser_get_field_keys($field_info[$child], $keys);
   }
   return $keys;
-}
-
-/**
- * Helper function, retrieve donation context as needed.
- */
-function _fundraiser_donation_context() {
-  // Pull from cached context during page execution.
-  // Thread safe. Erased after page execution is completed.
-  static $context;
-  if (empty($context)) {
-    $context = (object) array();
-    module_invoke_all('fundraiser_donation_form_context', $context);
-  }
-  return $context;
 }
 
 /**
