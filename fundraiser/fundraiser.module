@@ -1153,7 +1153,7 @@ function fundraiser_donation_process($donation) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
       array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
-    $result = array('success' => FALSE);
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
   }
   else {
     // Execute the charge, generally implemented under the payment glue module.
