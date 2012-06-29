@@ -647,14 +647,17 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
 function fundraiser_field_info() {
   // Request additional fields from other modules.
   $fields = module_invoke_all('fundraiser_field_info');
-  //drupal_alter('fundraiser_field_info', $fields);
-  drupal_set_message(print_r($fields,TRUE));
+  // Allow for others to modify as needed.
+  drupal_alter('fundraiser_field_info', $fields);
+  // And return.
+  return (array) $fields;
 }
 
 /**
  * Implements hook_fundraiser_field_info().
  */
 function fundraiser_fundraiser_field_info() {
+  // Context so we can grab things like zones.
   $context = _fundraiser_donation_context();
   // Donation amounts are handled in a special case.
   $fields['donation'] = array(
