@@ -398,7 +398,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
 /**
  * Implements hook_fundraiser_donation_post_submit().
  */
-function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation, $result) {
+function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation) {
   // Relate the donation id to webform before we try to process the payment. //TODO change terminology
   $webform_order = array(
     'webform_nid' => $donation->nid,
@@ -411,13 +411,17 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   );
   _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
-  if (!$donation->result['success']) {
+  if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
     unset($form_state['values']['details']['sid']);
-    form_set_error('credit_card_information][card_number', $donation->result['message']);
+    if (!isset($donation->result['message']) || empty($donation->result['message'])) {
+      $donation->result['message'] = 'Your card has been denied. Please try another.';
+    }
+    form_set_error('card_number', $donation->result['message']);
     $form_state['values']['details']['finished'] = 0;
     $form_state['rebuild'] = TRUE;
   }
+  return $form_state;
 }
 
 /**

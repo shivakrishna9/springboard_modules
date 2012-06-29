@@ -964,11 +964,10 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#submit'][] = 'fundraiser_donation_submit';
 
   // When confirmations are moved, this goes elsewhere.
+  $form['#submit'][] = 'fundraiser_donation_post_submit';
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
-  module_invoke_all('fundraiser_donation_form', $form, $form_state);
-  // Call hook to allow final manipulations.
-  module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
+  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
   return $form;
 }
 
@@ -1026,25 +1025,32 @@ function fundraiser_donation_submit(&$form, &$form_state) {
       $donation->result['message'] = '';
     }
     // The results should be at $donation->result, ready to respond to the aftermath.
-    $result = $donation->result;
-    if (isset($result['success']) && $result['success']) {
+    if (isset($donation->result['success']) && $donation->result['success']) {
       fundraiser_donation_success($donation);
     }
     else {
+      $donation->result['success'] = FALSE;
       fundraiser_donation_decline($donation);
     }
   }
   else {
     // No submission was able to be found. So we really have nothing to go on.
     // Mark this as a failure and move on.
-    $donation->result = $result = array('success' => FALSE);
+    $donation->result['success'] = FALSE;
   }
   // Add the donation and result info to the form_state so we can reference it later.
-  $form_state['donation'] = $donation;
-  $form_state['result'] = $result;
+  $form_state['#donation'] = $donation;
+}
+
+/**
+ * Submit callback after donation submitted, but before confirmation.
+ */
+function fundraiser_donation_post_submit(&$form, &$form_state) {
   // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
   // Such as in cases of failures or the like. Return the donation object and result.
-  module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $donation, $result);
+  // We return form_state here, because we cannot pass arrays by reference in module calls.
+  // See: http://drupal.org/node/353494 for a detailed discussion of this one.
+  $form_state = module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
 }
 
 /**
