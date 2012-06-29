@@ -918,18 +918,18 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields,  $value) {
   // Look for other amount.
   if ($submission_fields['amount'] == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
+    $value = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
     // Make sure other amount is numeric.
-    if (!is_numeric($donation_amount)) {
+    if (!is_numeric($value)) {
       return t('You must enter a valid donation amount');
     }
   }
-
+drupal_set_message('VALUE:'.print_r($value,TRUE));
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
   $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
-  if ($donation_amount < $minimum_donation_amount) {
+  if ($value < $minimum_donation_amount) {
     return t('Your donation amount must be greater than or equal to @min_amount.', array('@min_amount' => $minimum_donation_amount));
   }
 }
@@ -966,9 +966,9 @@ function fundraiser_donation_form(&$form, &$form_state) {
   // When confirmations are moved, this goes elsewhere.
   $form['#submit'][] = 'fundraiser_donation_confirmation';
   // Call hook to allow sub modules to add / manipulate the form.
-  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
+  module_invoke_all('fundraiser_donation_form', $form, $form_state);
   // Call hook to allow final manipulations.
-  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
+  module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
   return $form;
 }
 
