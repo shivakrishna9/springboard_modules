@@ -19,24 +19,20 @@ function fundraiser_sustainers_cron() {
   // If cron.php is being run while standalone cron is enabled, do nothing.
   // This allows this code to still execute if cron is run from the status page.
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
-      return 0;
-    }
-    else {
-      watchdog('fundraiser_cron', 'Fundraiser cron run.', NULL, WATCHDOG_INFO);
-    }
+    // We don't even try it on cron if this isn't configured.
+    return 0;
   }
   else {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
-  }
-  // Process recurring donations.
-  if (fundraiser_sustainers_processor_key_match()) {
-    fundraiser_sustainers_process_recurring_donations();
-  }
-  else {
-    $message = 'The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.';
-    drupal_set_message(t($message), 'warning');
-    watchdog('fundraiser_cron', $message, NULL, WATCHDOG_CRITICAL);
+    // Process recurring donations.
+    if (fundraiser_sustainers_processor_key_match()) {
+      fundraiser_sustainers_process_recurring_donations();
+    }
+    else {
+      $message = 'The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.';
+      drupal_set_message(t($message), 'warning');
+      watchdog('fundraiser_cron', $message, NULL, WATCHDOG_CRITICAL);
+    }
   }
 }
 
@@ -61,13 +57,12 @@ function fundraiser_sustainers_permission() {
  */
 function fundraiser_sustainers_menu() {
   // Add the cron handler if it's enabled.
-  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
-    $items['fundraiser_cron'] = array(
-      'page callback' => 'fundraiser_sustainers_cron',
-      'access callback' => TRUE,
-      'type' => MENU_CALLBACK,
-    );
-  }
+  $items['fundraiser_cron'] = array(
+    'page callback' => 'fundraiser_sustainers_cron',
+    'access callback' => 'fundraiser_sustainers_cron_access',
+    'type' => MENU_CALLBACK,
+  );
+
   // User interface.
   $items['user/%user/recurring_overview'] = array(
     'title' => 'My Recurring Donations',
@@ -152,6 +147,16 @@ function fundraiser_sustainers_menu() {
     );
   }
   return $items;
+}
+
+/**
+ * Access callback for runnign standalone cron.
+ */
+function fundraiser_sustainers_cron_access() {
+  if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
