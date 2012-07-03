@@ -1570,26 +1570,6 @@ function _fundraiser_is_secure() {
  */
 
 /**
- * Helper function function, flatten given arrays. Generically useful function.
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- * Careful: Here be recursion.
- */
-function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = array()) {
-  foreach ($array as $key => $child) {
-    if (is_array($child)) {
-      $newArray = &_fundraiser_array_flatten($child, $preserve_keys, $newArray);
-    }
-    elseif ($preserve_keys + is_string($key) > 1) {
-      $newArray[$key] = $child;
-    }
-    else {
-      $newArray[] = $child;
-    }
-  }
-  return $newArray;
-}
-
-/**
  * Helper function, smarter version of array_merge_recursive: overwrites scalar values.
  * @see PHP Manual on: array-merge-recursive comment #82976.
  * Future plans: this may need to be moved to a toolkit module for use by all our modules.

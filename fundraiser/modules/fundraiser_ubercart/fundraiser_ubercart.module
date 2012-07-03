@@ -192,7 +192,7 @@ function _fundraiser_ubercart_card_expiration_year_field_validate($form, $form_s
  */
 function _fundraiser_ubercart_country_field_display($form, $form_state, $field) {
   // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_array_flatten($form_state); // From fundraiser.module.
+  $fields = _fundraiser_ubercart_submission_flatten($form_state); // From fundraiser.module.
   // Set the default country if form_state has it.
   if (array_key_exists('country', $fields)) {
     $field['#default_value'] = $fields['country'];
@@ -204,6 +204,22 @@ function _fundraiser_ubercart_country_field_display($form, $form_state, $field) 
     'effect' => 'fade',
   );
   return $field;
+}
+
+/**
+ * Helper function, flatten webforms submitted tree into an array mapping fields to values.
+ */
+function _fundraiser_ubercart_submission_flatten($submit_tree) {
+  $flat_array = array();
+  foreach ($submit_tree as $key => $value) {
+    if (!is_array($submit_tree[$key])) {
+      $flat_array[$key] = $value;
+    }
+    else {
+      $flat_array = array_merge($flat_array, _fundraiser_ubercart_submission_flatten($value));
+    }
+  }
+  return $flat_array;
 }
 
 /**
@@ -221,7 +237,7 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
   // Get countries.
   $countries = fundraiser_ubercart_get_countries();
   // Flatten form state array so we can get the user selection easier.
-  $fields = _fundraiser_array_flatten($form_state); // From fundraiser.module.
+  $fields = _fundraiser_ubercart_submission_flatten($form_state); // From fundraiser.module.
   // Country/state dependant drop down code
   $available_zones = isset($countries->zones) ? $countries->zones : array();
   // Filter the available zones by the set country.
@@ -356,7 +372,7 @@ function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_func
   $donation->data = array_merge($data, $donation->data);
   $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
   // Have to pass up to the system.
-  $donation->result = $result;
+  $donation->result = $donation->data = $result;
 }
 
 /**

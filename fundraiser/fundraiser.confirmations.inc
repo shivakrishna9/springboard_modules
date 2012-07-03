@@ -207,10 +207,6 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
  * Submit handler, handles the final destination redirect after donation completed.
  */
 function fundraiser_donation_confirmation($form, &$form_state) {
-  // Check if we need to rebuild before we redirect anywhere.
-  if ($form_state['rebuild']) {
-    return;
-  }
   // Everything worked, redirect to the confirmation page as the last submit handler.
   $node = $form['#node'];
   $redirect_url = trim($node->redirect_url);

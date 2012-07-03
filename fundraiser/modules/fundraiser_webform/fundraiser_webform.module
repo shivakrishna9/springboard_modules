@@ -301,7 +301,7 @@ function _fundraiser_webform_validate_field_keys($form, $form_state, $submission
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted']); // From fundraiser.module.
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']); // From fundraiser.module.
   $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields);
 
   // Create watchdog entry on validation errors.
@@ -334,26 +334,6 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   }
 }
 
-/**
- * Helper function, map the results of a webform submission to the defined fields in fundraiser.
- */
-function _fundraiser_webform_map_field_keys($submission_fields, $field_info = NULL, $keys = array()) {
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    $keys[$child] = '';
-    if (isset($field_info[$child]['#submit_callback']) && function_exists($field_info[$child]['#submit_callback'])) {
-      $keys[$child] = call_user_func($field_info[$child]['#submit_callback'], $submission_fields[$child]);
-    }
-    elseif (isset($submission_fields[$child])) {
-      $keys[$child] = $submission_fields[$child];
-    }
-    $keys = _fundraiser_webform_map_field_keys($submission_fields, $field_info[$child], $keys);
-  }
-  return $keys;
-}
 
 /**
  * Implements hook_fundraiser_donation_submit().
@@ -365,8 +345,34 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // Given the set of fields defined in fundraiser, gab results here that match those fields.
   // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as a map between the two.
-  $submission_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']); // From fundraiser.module.
-  $donation->submission = _fundraiser_webform_map_field_keys($submission_fields);
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']); // From fundraiser.module.
+  $donation->submission = $submission_fields;
+}
+
+/**
+ * Helper function, flatten webforms submitted tree into an array mapping fields to values.
+ * Technically this isn't fully flat, so much as it puts values for all defiend fields at the top level.
+ * There is still nesting for field sets going on.
+ */
+function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
+  if ($submission_keys == NULL) {
+    $components = _fundraiser_webform_get_components_by_nid($nid);
+    foreach ($components as $component) {
+      if ($component->type != 'fieldset') {
+        $submission_keys[] = $component->form_key;
+      }
+    } 
+  }
+  $flat_array = array();
+  foreach ($submit_tree as $key => $value) {
+    $flat_array[$key] = $value;
+    if (is_array($value)) {
+      $flat_array = array_merge($flat_array, _fundraiser_webform_submission_flatten($nid, $value, $submission_keys, $fieldset_keys));
+    }
+  }
+  // Filter to only submission key results.
+  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys,$submission_keys));
+  return $flat_array;
 }
 
 /**
@@ -416,7 +422,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   _fundraiser_webform_update_webform_order($webform_order);
 
   // Update the uid on the webform submission table.
-  _fundraiser_webform_update_submissions($donation->donation->uid, $donation->sid);
+  _fundraiser_webform_update_submissions($donation->uid, $donation->sid);
 
   // Update the recurring status, if it was changed by the payment gateway module
   // TODO This should be moved or removed entirely. We don't need ot know this stuff here!

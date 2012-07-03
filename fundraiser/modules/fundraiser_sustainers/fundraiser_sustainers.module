@@ -198,17 +198,29 @@ function fundraiser_sustainers_order($op, &$arg1, $arg2) {
 
 /**
  * Implements hook_fundraiser_donation_success().
- */
+ */ //START HERE - now  we process through and create multiple donations for each one.
 function fundraiser_sustainers_fundraiser_donation_success($donation) {
   // If this has been flagged as a recurring dontation, spawn all the future donations at this time.
-  if ($donation->submission['recurs_monthly'] == DONATION_RECURRING) {
+  $recurs = FALSE;
+  if (is_array($donation->submission['recurs_monthly'])) {
+    // If this is an array, then it is a single item checkbox
+    if (isset($donation->submission['recurs_monthly'][0])) {
+      $recurs = ($donation->submission['recurs_monthly'][0] == 'recurs') ? TRUE : FALSE;
+    }
+  }
+  else {
+    $recurs = ($donation->submission['recurs_monthly'] == 'recurs') ? TRUE : FALSE;
+  }
+
+  if ($recurs == DONATION_RECURRING) {
+drupal_set_message('RECURS'); 
     $donation->recurring->master_order_id = $donation->did;
-    $months = _fundraiser_months_between_dates($donation->submission['card_expiration_month'], $donation->submission['card_expiration_year']);
+    $months = _fundraiser_months_between_dates($donation->submission['card_expiration_month'],
+      $donation->submission['card_expiration_year']);
     if ($months > 0 ) {
       $master_did = $donation->did;
       $gateway = $donation->node->gateway;
       $new_donation = (object) array();
-      $new_donation->context = $donation->context;
       $new_donation->uid = $donation->uid;
       $new_donation->user = $donation->user;
       $new_donation->nid = $donation->nid;
@@ -302,28 +314,9 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
       'items' => 'recurs|Yes',
       'multiple' => 'Y',
-    '#submit_callback' => '_fundraiser_sustainers_recurr_field_submit',
     ),
   );
   return $fields;
-}
-
-/**
- * Callback for recurs during submission. Maps the recurs value to a boolean.
- */
-function _fundraiser_sustainers_recurr_field_submit($value) {
-  // Set if this was a recurring donation, mapping a Yes result to a boolean result.
-  $recurs = FALSE;
-  if (is_array($value)) {
-    // If this is an array, then it is a single item checkbox
-    if (isset($value[0])) {
-      $recurs = $value[0] == 'recurs' ? TRUE : FALSE;
-    }
-  }
-  else {
-    $recurs = $value == 'recurs' ? TRUE : FALSE;
-  }
-  return $recurs;
 }
 
 /**
