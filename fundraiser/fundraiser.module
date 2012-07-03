@@ -1049,7 +1049,7 @@ function fundraiser_donation_failed_validation($errors) {
 function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
   module_invoke_all('fundraiser_donation_create_add_data', $donation);
-  // Populates $donation->submission['data'] with results;
+  // Populates $donation->data, $donation->donation with results;
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
@@ -1495,7 +1495,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_get_donation', $donation); // TODO check that these return all they need to. Even submission data.
+  module_invoke_all('fundraiser_donation_get_donation', $donation);
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;
@@ -1568,26 +1568,6 @@ function _fundraiser_is_secure() {
 /**
  * Generic helper functions. These may need to go into a diff. module.
  */
-
-/**
- * Helper function function, flatten given arrays. Generically useful function.
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- * Careful: Here be recursion.
- */
-function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = array()) {
-  foreach ($array as $key => $child) {
-    if (is_array($child)) {
-      $newArray = &_fundraiser_array_flatten($child, $preserve_keys, $newArray);
-    }
-    elseif ($preserve_keys + is_string($key) > 1) {
-      $newArray[$key] = $child;
-    }
-    else {
-      $newArray[] = $child;
-    }
-  }
-  return $newArray;
-}
 
 /**
  * Helper function, smarter version of array_merge_recursive: overwrites scalar values.
