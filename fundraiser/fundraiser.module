@@ -1495,7 +1495,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_get_donation', $donation); // TODO check that these return all they need to. Even submission data.
+  module_invoke_all('fundraiser_donation_get_donation', $donation);
   // Store the donation information into the cache.
   $donations[$did] = $donation;
   return $donation;

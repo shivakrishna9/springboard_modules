@@ -346,7 +346,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as a map between the two.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']); // From fundraiser.module.
-  $donation->submission = $submission_fields;
+  $donation->donation = $submission_fields;
 }
 
 /**
@@ -426,7 +426,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
 
   // Update the recurring status, if it was changed by the payment gateway module
   // TODO This should be moved or removed entirely. We don't need ot know this stuff here!
-  if (isset($donation->donation->data['recurring_status']) && ($donation->submission['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
+  if (isset($donation->donation->data['recurring_status']) && ($donation->donation['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
       'order_id' => $donation->did,
@@ -460,9 +460,12 @@ function fundraiser_webform_fundraiser_donation_cancel($donation) {
     array(':recurring_status' => DONATION_CANCELLED, ':did' => $donation->did));
 }
 
+// Commented out, this retrieves the initial submission data.
+// This should be the responsibility of a different module.
+// Left available in case we decide to use it later.
 /**
  * Implements hook_fundraiser_donation_get_donation().
- */
+ *
 function fundraiser_webform_fundraiser_donation_get_donation($donation) {
   $submission = _fundraiser_webform_get_webform_order_by_did($donation->did);
   if ($submission) {
@@ -471,6 +474,7 @@ function fundraiser_webform_fundraiser_donation_get_donation($donation) {
     $donation->submission = webform_get_submission($donation->nid, $donation->sid); // From webform.submissions.inc
   }
 }
+*/
 
 /**
  * Implements hook_fundraiser_replace_tokens().

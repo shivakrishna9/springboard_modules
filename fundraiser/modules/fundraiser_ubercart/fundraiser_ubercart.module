@@ -267,7 +267,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   // Get basic information from the donation node.
   $user = $donation->user;
   $node = $donation->node;
-  $fundraiser_fields = $donation->submission; // Fields are keyed as per field_info in fundraiser.
+  $fundraiser_fields = $donation->donation;
 
   // Pick out the values we need to generate an order.
   $donation_amount = $fundraiser_fields['amount'];
@@ -381,8 +381,36 @@ function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_func
 function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   // Load order specific information for donation.
   $order = uc_order_load($donation->did);
-  $donation->donation = $order;
-  $donation->donation->donation_amount = $order->order_total;
+
+  // We don't load donation information directly. Map values based on field_info.
+  // Yes, this means we don't load all of the order data into this object. That's good.
+  // It creates a formalized standard structure.
+  $map = array(
+    'amount' => 'order_total',
+    'other_amount' => '',
+    'first_name' => 'billing_first_name',
+    'last_name' => 'billing_last_name',
+    'email' => 'primary_email',
+    'address' => 'billing_street1',
+    'address_line_2' => 'billing_street2',
+    'city' => 'billing_city',
+    'country' => 'billing_country',
+    'state' => 'billing_zone',
+    'zip' => 'billing_postal_code',
+  );
+  $field_info = _fundraiser_get_field_keys();
+  foreach ($field_info as $field_name) {
+    if (isset($map[$field_name])) {
+      $order_name = $map[$field_name];
+      $donation->donation[$field_name] = isset($order->$order_name) ? $order->$order_name : '';
+    }
+  }
+
+  // Add the order status data.
+  $donation->status = $order->order_status;
+
+  // Add specific order data.
+  $donation->data = isset($order->data) ? $order->data : array();
   $ref_id = '';
   if (isset($order->data['cc_txns']['references'])) {
     $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
@@ -391,20 +419,25 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
     'txn_type' => 'reference_txn',
     'ref_id' => $ref_id,
   );
-  $donation->donation->data = array_merge($donation->donation->data, $data);
+  $donation->data = array_merge($donation->data, $data);
 }
 
 /**
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_ubercart_fundraiser_donation_update($donation) {
-  $old_amount = $donation->donation->order_total;
-  $donation->donation->order_total = $donation->donation->donation_amount;
-  $donation->donation->products[0]->price = $donation->donation->donation_amount;
+  // Get the original order.
+  $order = uc_order_load($donation->did);
+
+  // Load the order with new data.
+  $old_amount = $order->order_total;
+  $order->order_total = $donation->donation['amount'];
+  $order->products[0]->price = $donation->donation['amount'];
+
   // Update the card type based on given card number.
-  $donation->donation->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($donation->donation->payment_details['cc_number']);
-  uc_credit_cache('save', $donation->donation->payment_details, FALSE);
-  uc_order_save($donation->donation);
+  $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
+  uc_credit_cache('save', $order->payment_details, FALSE);
+  uc_order_save($order);
   uc_credit_cache('clear');
   global $user;
   uc_order_comment_save($donation->did, $user->uid, t('Donation updated by :user.', array(':user' => $user->name)), 'admin');
