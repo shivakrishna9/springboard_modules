@@ -1049,7 +1049,7 @@ function fundraiser_donation_failed_validation($errors) {
 function fundraiser_donation_create($donation) {
   // Allow other modules to add additional fields to the order before processing the payment
   module_invoke_all('fundraiser_donation_create_add_data', $donation);
-  // Populates $donation->submission['data'] with results;
+  // Populates $donation->data, $donation->donation with results;
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
