@@ -19,7 +19,6 @@ function fundraiser_sustainers_admin() {
       $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_order_id);
       $next_charge = fundraiser_donation_get_donation($next_charge->order_id);
       $row = array();
-drupal_set_message(print_r($next_charge,1));
       $row[] = l($donation_set->master_order_id, 'admin/config/system/fundraiser/recurring/' . $donation_set->master_order_id . '/view');
       $row[] = $this_donation->user->name;
       $row[] = '$' . money_format('%i', $next_charge->donation['amount']);
