@@ -22,7 +22,7 @@ function fundraiser_sustainers_admin() {
       $row[] = l($donation_set->master_did, 'admin/config/system/fundraiser/recurring/' . $donation_set->master_did . '/view');
       $row[] = $this_donation->user->name;
       $row[] = '$' . money_format('%i', $next_charge->donation['amount']);
-      $row[] = date('m/d/y', $donation_set->next_charge_date);
+      $row[] = date('m/d/y', $donation_set->next_charge);
       $row[] = $donation_set->status;
       $rows[] = $row;
     }
