@@ -861,10 +861,10 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   if (!isset($donation->recurring->master_did)) {
     // If this has been flagged as a recurring dontation, spawn all the future donations at this time.
     $recurs = FALSE;
-    if (is_bool($donation->donation['recurs_monthly']) {
+    if (is_bool($donation->donation['recurs_monthly'])) {
       $recurs = $donation->donation['recurs_monthly'];
     }
-    elseif (is_array($donation->donation['recurs_monthly']) && isset(isset($donation->donation['recurs_monthly'][0]))) {
+    elseif (is_array($donation->donation['recurs_monthly']) && isset($donation->donation['recurs_monthly'][0])) {
       $recurs = ($donation->donation['recurs_monthly'][0] == 'recurs') ? TRUE : FALSE;
     }
     else {
