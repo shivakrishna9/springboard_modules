@@ -51,7 +51,7 @@ function fundraiser_sustainers_menu() {
   );
   // User interface.
   $items['user/%user/recurring_overview'] = array(
-    'title' => 'My Recurring Donations',
+    'title' => 'My recurring donations',
     'page callback' => 'fundraiser_sustainers_user_overview',
     'page arguments' => array(1),
     'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
@@ -59,7 +59,7 @@ function fundraiser_sustainers_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   $items['user/%user/recurring_overview/%'] = array(
-    'title' => 'My Recurring Donations',
+    'title' => 'My recurring donations',
     'page callback' => 'fundraiser_sustainers_edit',
     'page arguments' => array(1, 3),
     'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
@@ -68,14 +68,14 @@ function fundraiser_sustainers_menu() {
   );
   // Admin interface.
   $items['admin/config/system/fundraiser/recurring'] = array(
-    'title' => 'Recurring',
+    'title' => 'Recurring donations',
     'page callback' => 'fundraiser_sustainers_admin',
     'access arguments' => array('administrate recurring donations'),
     'file' => 'fundraiser_sustainers.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/config/system/fundraiser/recurring/%'] = array(
-    'title' => 'View Donation',
+    'title' => 'View donation',
     'page callback' => 'fundraiser_sustainers_admin_view',
     'page arguments' => array(5),
     'access callback' => 'fundraiser_sustainers_check_access',
@@ -85,7 +85,7 @@ function fundraiser_sustainers_menu() {
     'file' => 'fundraiser_sustainers.admin.inc',
   );
   $items['admin/config/system/fundraiser/recurring/%/view'] = array(
-    'title' => 'View Donation',
+    'title' => 'View donation',
     'page callback' => 'fundraiser_sustainers_admin_view',
     'page arguments' => array(5),
     'access callback' => 'fundraiser_sustainers_check_access',
@@ -94,7 +94,7 @@ function fundraiser_sustainers_menu() {
     'file' => 'fundraiser_sustainers.admin.inc',
   );
   $items['admin/config/system/fundraiser/recurring/%/edit'] = array(
-    'title' => 'Edit Donation',
+    'title' => 'Edit donation',
     'page callback' => 'fundraiser_sustainers_admin_edit',
     'page arguments' => array(5),
     'access callback' => 'fundraiser_sustainers_check_access',
@@ -105,7 +105,7 @@ function fundraiser_sustainers_menu() {
   // If Ubercart exists. Show these as a tab there as well.
   if (module_exists('uc_order')) {
     $items['admin/store/orders/%/recurring'] = array(
-      'title' => 'Recurring',
+      'title' => 'Recurring donations',
       'page callback' => 'fundraiser_sustainers_admin_view',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',
@@ -114,7 +114,7 @@ function fundraiser_sustainers_menu() {
       'file' => 'fundraiser_sustainers.admin.inc',
     );
     $items['admin/store/orders/%/recurring/recurring'] = array(
-      'title' => 'View Donation',
+      'title' => 'View donation',
       'page callback' => 'fundraiser_sustainers_admin_view',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',
@@ -123,7 +123,7 @@ function fundraiser_sustainers_menu() {
       'file' => 'fundraiser_sustainers.admin.inc',
     );
     $items['admin/store/orders/%/recurring/edit'] = array(
-      'title' => 'Edit Donation',
+      'title' => 'Edit donation',
       'page callback' => 'fundraiser_sustainers_admin_edit',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',

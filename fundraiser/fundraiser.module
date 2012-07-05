@@ -28,13 +28,6 @@
  * glue moduled between them are the only systems aware of more than one module at a time.
  */
 
-// TODO: Fundraiser Confirmations are going to be DROPPED IN FAVOR OF EMAIL CONFIRMATIONS.
-// WE ARE NO LONGER GOING TO DIFFERNTIATE ON THAT.
-
-define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation'); // Used in sf_queru_insert, so move over there.
-define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation'); // Used in sf_queru_insert, so move over there.
-define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');  // Used in sf_queru_insert, so move over there.
-
 // Include theme related functions.
 require_once('fundraiser.theme.inc');
 // Include confirmation stuff.
@@ -48,6 +41,10 @@ function fundraiser_permission() {
     'administer fundraiser' => array(
       'title' => t('Administer fundraiser'), 
       'description' => t('Perform administration tasks for fundraiser.'),
+    ),
+    'refund donations' => array(
+      'title' => t('Refund donations'), 
+      'description' => t('Refund donations for fundraiser.'),
     ),
     'create donation form' => array(
       'title' => t('Create donation form'), 
@@ -127,6 +124,22 @@ function fundraiser_menu() {
     'access arguments' => array("administer fundraiser"),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
+  );
+  $items['admin/config/system/fundraiser/donations'] = array(
+    'title' => 'Donations',
+    'page callback' => 'fundraiser_donations_admin',
+    'access arguments' => array('administer fundraiser'),
+    'file' => 'fundraiser.donations.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/fundraiser/donations/%'] = array(
+    'title' => 'View donation',
+    'page callback' => 'fundraiser_donations_admin_view',
+    'page arguments' => array(5),
+    'access arguments' => array('administer fundraiser'),
+    'type' => MENU_CALLBACK,
+    'tab_parent' => 'admin/config/system/fundraiser/donations',
+    'file' => 'fundraiser.donations.inc',
   );
   // TODO add a donations listing page.
   // To be deactivated if ubercart orders is detected.
@@ -1049,7 +1062,7 @@ stdClass Object
     [sid] =>  Glue Module Provided Submission ID, used by the glue module to track its info.
     [submission] => Array of values by field key as found in fundraiser_field_info() (flattened array).
     [did] => Glue Module Provided Donation ID, used by the glue module to track its info.
-    [donation_amount] => Amount to Charge
+    [donation] => Array of standard donation information (keys by field info)
     [data] => Additional Data for Charge // TODO this may be available on load in Glue, so not need to be passed up.
     [result] => 
         (
@@ -1248,16 +1261,19 @@ function fundraiser_donation_refund($donation) {
  * Menu callback for refund tab on donations.
  */
 function fundraiser_show_refund_form($did) {
-  $base = drupal_get_path('module', 'fundraiser');
-  drupal_add_css($base . '/css/refund.css');
-  drupal_add_js($base . '/js/refund.js');
-  return drupal_get_form('_fundraiser_refund', $did);
+  if (!user_access('refund donations')) {
+    drupal_set_message(t('You do not have access to refund donations.'));
+    return '';
+  }
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/refund.css');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/refund.js');
+  return drupal_render( drupal_get_form('_fundraiser_refund', $did) );
 }
 
 /**
  * Refund form
  */
-function _fundraiser_refund(&$form_state, $did) {
+function _fundraiser_refund($form, &$form_state, $did) {
   $form = array();
   // Given a donation ID, grab all relevant information to create the form.
   $donation = fundraiser_donation_get_donation($did);
@@ -1442,10 +1458,10 @@ function _fundraiser_refund_submit($form, &$form_state) {
   // Get details on the original payment so we can load the payment gateway details
   // TODO move this to a helper function.
   $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} ' .
-    'WHERE order_id = :order_id ' .
+    'WHERE did = :did ' .
     'UNION '.
     'SELECT gateway, txn_id FROM {fundraiser_recurring} '. 
-    'WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchObject();
+    'WHERE did = :did', array(':did' => $did))->fetchObject();
 
 // TODO HOOKS HERE.
 
@@ -1458,14 +1474,14 @@ function _fundraiser_refund_submit($form, &$form_state) {
     $refund_function = fundraiser_refund_function($node->gateway);
   }
   // call the refund function and store the result
-  $result = $refund_function($order_id, $amount, $data);
+  $result = $refund_function($did, $amount, $data);
   if ($result['success']) {
-    $receipt_id = module_invoke_all('fundraiser_order_refund', $order_id, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
+    $receipt_id = module_invoke_all('fundraiser_order_refund', $did, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
     $receipt_id = $receipt_id[0];
 
     // Save refund data for Fundraiser.
     $refund = new stdClass();
-    $refund->order_id = $order_id;
+    $refund->did = $did;
     $refund->receipt_id = $receipt_id;
     $refund->amount = $amount;
     $refund->txn_id = $result['data']['txn_id'];
@@ -1482,11 +1498,11 @@ function _fundraiser_refund_submit($form, &$form_state) {
     }
 
     drupal_set_message(t('Refund has been issued.'), 'status');
-//    drupal_goto('admin/store/orders/' . $order_id);
+//    drupal_goto('admin/store/orders/' . $did);
   }
   else {
     // failed to process credit cart
-    $log_error = 'Refund on order ' . $order_id . ' failed gateway validation. Reason: ' . $result['message'];
+    $log_error = 'Refund on donation ' . $did . ' failed gateway validation. Reason: ' . $result['message'];
     watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
     drupal_set_message($result['message']);
     $form_state['rebuild'] = TRUE;
@@ -1783,6 +1799,13 @@ function _fundraiser_get_donation_by_did($did) {
 }
 
 /**
+ * DB function for fundraiser_donation.
+ */
+function _fundraiser_get_donations() {
+  return db_query('SELECT * FROM {fundraiser_donation}')->fetchAll();
+}
+
+/**
  * CRUD style DB function for fundraiser_donation.
  */
 function _fundraiser_update_donation($donation) {
@@ -1870,7 +1893,7 @@ function _fundraiser_delete_refund($rid) {
  */
 function _fundraiser_get_refund_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE order_id = :did',
+    'WHERE did = :did',
     array(':did' => $did))->fetchAll();
 }
 
@@ -1966,165 +1989,4 @@ function _fundraiser_update_tracking_value($nid, $field) {
     $tracking->$field++;
     _fundraiser_update_tracking($tracking);
   }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-//REMOVE ALL BELOW THIS POINT.
-
-/**
- * Adds an order to the Salesforce queue.
- *
- * @param $order
- *   The order to add to the queue.
- */
-// TODO: This should really be moved to the SF Donation module where it can listen for new orders being created.
-// NAME THIS AS PER: 
-function fundraiser_add_to_queue($donation) {
-  if (module_exists('queue_api')) {
-    if ($donation->donation->recurs == DONATION_RECURRING) {
-      sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
-    }
-    else {
-      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-    }
-  }
-}
-// Called inc ron on donation success charge.
-//      // Check for Salesforce Fundraiser module and update order status
-//      if (module_exists('sf_donation')) {
-//        sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-//      }
-
-/**
- * Implemenation of queue_report_item_name().  TODO where does this come from??
- */
-function fundraiser_queue_report_item_title_alter(&$row) {
-  if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
-    $title = 'Donation ' . $row['oid'];
-    $row['title'] = $title;
-  }
-  elseif ($row['type'] == 'refund') {
-    $did = db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id",
-      array(':refund_id' => $row['oid']))->fetchColumn();
-    $title = 'Donation ' . $did;
-    $row['title'] = $title;
-  }
-}
-
-/**
- * Implementation of hook_webform_submission_update()
- * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
- */
- // TODO this looks like it should be in another module based on what it does, perhaps sf_queue? - SeH 1/12/12
- // Update - move to sf_donation.
-function fundraiser_webform_submission_update($node, $submission) {
-  if ($node->type == 'donation_form') {
-    if (module_exists('queue_api')) {
-      $order_id = db_query('SELECT f.order_id FROM {fundraiser_webform_order} f ' .
-        'INNER JOIN {uc_orders} u ON u.order_id = f.order_id ' .
-        'WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = \'payment_received\'',
-        array(':webform_nid' => $node->nid, ':sid' => $submission->sid))->fetchColumn();
-      if ($order_id) {
-        // Determine if we need an INSERT or an UPDATE
-        $action = 'create';
-        $sfid = db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = :oid AND drupal_type = \'donation\'', 
-          array(':oid' => $order_id))->fetchColumn();
-        if ($sfid) {
-          $action = 'update';
-        }
-        sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
-      }
-    }
-  }
-}
-
-//TODO move you to another module for profile handling in post submission.
-/**
- * Updates the profile of user that submitted the donation.
- */
-// NAME THIS AS PER: hook_fundraiser_donation_success();
-function fundraiser_update_sf_user_profile($donation) {
-
-  // If the SF Queue API is enabled, insert this user into the queue
-  // TODO - hook, move this out to be hookable on update.
-  if (module_exists('queue_api')) {
-    // Insert user back into queue
-    $action = 'update';
-    if (empty($update_user->salesforce_contact_id)) {
-      $action = 'upsert';
-    }
-    sf_queue_insert($update_user->uid, 'user', $action);
-  }
-}
-
-/**
- * Implements hook_fundraiser_donation_update().
- */
-function sf_donation_hook_fundraiser_donation_update($donation) {
-  // put order back in queue so that amount gets updated in Salesforce
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
-}
-
-/**
- * Implements hook_fundraiser_donation_cancel().
- */
-function sf_donation_fundraiser_donation_cancel($donation) {
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
-  // call out to saleforce module if installed
-  //if (module_exists('sf_donation')) {
-  //  sf_donation_canel_recurring_donations($master_order_id);
-  //}
-}
-
-
-/**
- * Includes code for updating billing information for recurring donations.
- * Each gateway will require it's own function named GATEWAY_ID_update_billing_information
- * that accepts a payment reference id and billing information.
- * The individual billing update function should return a boolean indicating success or failure
- */
-// TODO move this out to Authorizenet module.
-/**
- * Authorize.net billing information update function.
- */
-function authorizenet_fundraiser_donation_update($donation) {
-  $reference_id = $donation->donation->reference_id; // Make sure this is set by the related field.
-  $billing_info = ''; // TODO construct this out of the donation info.
-  if (module_exists('authorizenet_cim')) {
-    return authorizenet_cim_update($reference_id, $billing_info);
-  }
-  else {
-    drupal_set_message(t('Unable to update billing information at this time'));
-    watchdog('fundraiser', 'Billing information for recurring donations cannot be updated because the authorize_cim module is missing.', NULL, WATCHDOG_CRITICAL);
-    return NULL;
-  }
-}
-
-/**
- * Sage billing information update function.
- */
-// TODO shouldn't this move elsewhere?
-function sage_fundraiser_donation_update($donation) {
-  $reference_id = $donation->donation->reference_id;
-  $billing_info = ''; // TODO construct this out of the donation info.
-  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
-  $data = array(
-    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
-    'billing_street1' => $billing_info['address_1'],
-    'billing_street2' => $billing_info['address_2'],
-    'billing_city' => $billing_info['city'],
-    'billing_zone' => $billing_info['state'],
-    'billing_postal_code' => $billing_info['zipcode'],
-    'billing_country' => $billing_info['country'],
-    'cc_number' => $billing_info['card_num'],
-    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
-    'cc_exp_year' => $billing_info['card_exp_date']['year'],
-  );
-  $response = uc_sage_vault_update($vault_id, $data);
-  // TODO: Need to add some better returns to the uc_sage module
-  return TRUE;
 }

@@ -91,7 +91,7 @@ function fundraiser_sustainers_schema() {
 /**
  * Implements hook_update_N().
  */
-function funraiser_sustainers_update_7000(&$sandbox) {
+function fundraiser_sustainers_update_7001(&$sandbox) {
   // Rename the table columns that used to be called order to donation.
   $master_did_field = array(
     'master_did' => array(

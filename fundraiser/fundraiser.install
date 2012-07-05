@@ -142,8 +142,8 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'order_id' => array(
-        'description' => 'Ubercart order ID the refund applies to',
+      'did' => array(
+        'description' => 'Donation ID the refund applies to',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -170,7 +170,7 @@ function fundraiser_schema() {
       ),
     ),
     'primary key' => array('refund_id'),
-    'indexes' => array('refund_order_id' => array('order_id')),
+    'indexes' => array('refund_did' => array('did')),
   );
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
@@ -231,7 +231,7 @@ function fundraiser_update_last_removed() {
 /**
  * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
  */
-function fundraiser_update_7000() {
+function fundraiser_update_7001() {
   // Create new table.
   $donation_table = fundraiser_schema();
   db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
@@ -250,5 +250,16 @@ function fundraiser_update_7000() {
       drupal_write_record('fundraiser_donation', $record);
     }
   }
-  // Rename refund table values and all. TODO
+
+  // Rename the table columns that used to be called order to donation.
+  $fundraiser_refund = array(
+    'did' => array(
+      'description' => 'This specific recurring order id.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  db_drop_index('fundraiser_refund', 'refund_order_id');
+  db_change_field('fundraiser_refund', 'order_id', 'did', $did_field, array('indexes' => array('refund_did' => array('did'))) );
 }
