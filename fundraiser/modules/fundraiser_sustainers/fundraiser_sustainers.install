@@ -11,13 +11,13 @@ function fundraiser_sustainers_schema() {
   $schema['fundraiser_recurring'] = array(
     'description' => 'Stores information about recurring orders.',
     'fields' => array(
-      'master_order_id' => array(
+      'master_did' => array(
         'description' => 'Master order ID from ubercart.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'order_id' => array(
+      'did' => array(
         'description' => 'This specific recurring order id.',
         'type' => 'int',
         'unsigned' => TRUE,
@@ -86,4 +86,29 @@ function fundraiser_sustainers_schema() {
     'primary key' => array('order_id'),
   );
   return $schema;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function funraiser_sustainers_update_7000(&$sandbox) {
+  // Rename the table columns that used to be called order to donation.
+  $master_did_field = array(
+    'master_did' => array(
+      'description' => 'Master order ID from ubercart.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  $did_field = array(
+    'did' => array(
+      'description' => 'This specific recurring order id.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  db_change_field('fundraiser_recurring', 'master_order_id', 'master_did', $master_did_field, array('primary key' => array('did')));
+  db_change_field('fundraiser_recurring', 'order_id', 'did', $did_field);
 }
