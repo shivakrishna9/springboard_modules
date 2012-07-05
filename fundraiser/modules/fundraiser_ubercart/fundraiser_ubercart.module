@@ -261,121 +261,6 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
 }
 
 /**
- * Implements hook_fundraiser_donation_create().
- */
-function fundraiser_ubercart_fundraiser_donation_create($donation) {
-  // Get basic information from the donation node.
-  $user = $donation->user;
-  $node = $donation->node;
-  $fundraiser_fields = $donation->donation;
-
-  // Pick out the values we need to generate an order.
-  $donation_amount = $fundraiser_fields['amount'];
-  if ($donation_amount == "other") {
-    $donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
-  }
-
-  $cc_number = $fundraiser_fields['card_number'];
-  $cc_cvv = $fundraiser_fields['card_cvv'];
-  $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
-  $cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-  $first_name = $fundraiser_fields['first_name'];
-  $last_name = $fundraiser_fields['last_name'];
-  $email = $fundraiser_fields['email'];
-  $billing_address = $fundraiser_fields['address'];
-  $billing_address_2 = $fundraiser_fields['address_line_2'];
-  $billing_city = $fundraiser_fields['city'];
-  $billing_country = $fundraiser_fields['country'];
-  $billing_state = $fundraiser_fields['state'];
-  $billing_zipcode = $fundraiser_fields['zip'];
-  $quantity = isset($fundraiser_fields['quantity']) && !empty($fundraiser_fields['quantity']) ? $fundraiser_fields['quantity'] : 1;
-  $data = isset($fundraiser_fields['data']) ? $fundraiser_fields['data'] : array();
-
-  // Create a UC order.
-  $order = uc_order_new($user->uid);
-  $product = uc_product_load(array($node->nid => $node));
-
-  $order->products[0] = $product;
-  $order->products[0]->price = $donation_amount;
-  $order->products[0]->qty = $quantity;
-  $order->products[0]->title = $node->title;
-  $order->products[0]->nid = $node->nid;
-  $order->products[0]->data = array(
-    'shippable' => isset($order->products[0]->shippable) ? $order->products[0]->shippable : FALSE,
-    'model' => isset($order->products[0]->model) ? $order->products[0]->model : '',
-    'varprice' => $donation_amount,
-    'module' => 'uc_product',
-  );
-
-  // Multiply amount by quantity if available.
-  if (!empty($quantity)) {
-    $donation_amount = $donation_amount * $quantity;
-  }
-
-  // Set order properties.
-  $order->primary_email = $email;
-  $order->order_total = $donation_amount;
-  $order->billing_first_name = $first_name;
-  $order->billing_last_name = $last_name;
-  $order->billing_city = $billing_city;
-  $order->billing_street1 = $billing_address;
-  $order->billing_street2 = $billing_address_2;
-  $order->billing_postal_code = $billing_zipcode;
-  $order->billing_zone = $billing_state;
-  $order->billing_country = $billing_country;
-  $order->payment_method = 'credit';
-  $order->payment_details = array(
-    'cc_type' => _fundraiser_ubercart_get_cc_type($cc_number),
-    'cc_owner' => '',
-    'cc_number' => $cc_number,
-    'cc_start_month' => '',
-    'cc_start_year' => '',
-    'cc_exp_month' => $cc_expiration_month,
-    'cc_exp_year' => $cc_expiration_year,
-    'cc_issue' => '',
-    'cc_cvv' => $cc_cvv,
-    'cc_bank' => '',
-  );
-  $order->line_items = array();
-
-  // If using the gateway manager, store the gateway that was used to make the payment
-  if (module_exists('gateway_manager')) {
-    $order->data['gateway'] = $node->gateway;
-  }
-
-  // Lastly add order data field information.
-  foreach ($data as $field => $value) {
-    $order->data[$field] = $value;
-  }
-
-  // Cache the cc details stored by the handler.
-  uc_credit_cache('save', $order->payment_details, FALSE);
-
-  // Save the order.
-  uc_order_save($order);
-  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
-
-  // We only need to return the did at this point.
-  // When we charge later, this is the only value that the glue module will need.
-  // No one outside of the glue module should need the order data otherwise.
-  $donation->did = $order->order_id;
-  $donation->donation_amount = $donation_amount; // Total cost * quantity.
-  $donation->data = $order->data;
-}
-
-/**
- * Implements hook_fundraiser_donation_process().
- */
-function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_function) {
-  // Execute the charge as per the given gateway.
-  $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
-  $donation->data = array_merge($data, $donation->data);
-  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
-  // Have to pass up to the system.
-  $donation->result = $donation->data = $result;
-}
-
-/**
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
@@ -405,6 +290,11 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
       $donation->donation[$field_name] = isset($order->$order_name) ? $order->$order_name : '';
     }
   }
+  $donation->donation['card_number'] = $order->payment_details['cc_number'];
+  $donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
+  $donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
+  $donation->donation['card_cvv'] = $order->payment_details['card_cvv'];
+  $donation->donation['cc_type'] = $order->payment_details['cc_type'];
 
   // Add the order status data.
   $donation->status = $order->order_status;
@@ -423,6 +313,108 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_create().
+ */
+function fundraiser_ubercart_fundraiser_donation_create($donation) {
+  // Get basic information from the donation node.
+  $user = $donation->user;
+  $node = $donation->node;
+
+  // Pick out the values we need to generate an order.
+  if ($donation->donation['amount'] == "other") {
+    $donation->donation['amount'] = preg_replace("/[^\d\.]/i", "", $donation->donation['other_amount']);
+  }
+
+  // Determine quantity and data from donation values.
+  $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
+  $data = isset($donation->donation['data']) ? $donation->donation['data'] : array();
+
+  // Create a UC order.
+  $order = uc_order_new($user->uid);
+  $product = uc_product_load(array($node->nid => $node));
+  $order->products[0] = $product;
+  $order->products[0]->price = $donation->donation['amount'];
+  $order->products[0]->qty = $quantity;
+  $order->products[0]->title = $node->title;
+  $order->products[0]->nid = $node->nid;
+  $order->products[0]->data = array(
+    'shippable' => isset($order->products[0]->shippable) ? $order->products[0]->shippable : FALSE,
+    'model' => isset($order->products[0]->model) ? $order->products[0]->model : '',
+    'varprice' => $donation->donation['amount'],
+    'module' => 'uc_product',
+  );
+
+  // Multiply charge amount by quantity if available.
+  if (!empty($quantity)) {
+    $donation->donation['amount'] = $donation->donation['amount'] * $quantity;
+  }
+
+  // Billing properties.
+  $order->primary_email = $donation->donation['email'];
+  $order->order_total = $donation->donation['amount'];
+  $order->billing_first_name = $donation->donation['first_name'];
+  $order->billing_last_name = $donation->donation['last_name'];
+  $order->billing_city = $donation->donation['city'];
+  $order->billing_street1 = $donation->donation['address'];
+  $order->billing_street2 = $donation->donation['address_line_2'];
+  $order->billing_postal_code = $donation->donation['zip'];
+  $order->billing_zone = $donation->donation['state'];
+  $order->billing_country = $donation->donation['country'];
+
+  // Card properties.
+  $order->payment_method = 'credit';
+  $order->payment_details = array(
+    'cc_type' => _fundraiser_ubercart_get_cc_type($donation->donation['card_number']),
+    'cc_owner' => '',
+    'cc_number' => $donation->donation['card_number'],
+    'cc_start_month' => '',
+    'cc_start_year' => '',
+    'cc_exp_month' => $donation->donation['card_expiration_month'],
+    'cc_exp_year' => $donation->donation['card_expiration_year'],
+    'cc_issue' => '',
+    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_bank' => '',
+  );
+  $order->line_items = array();
+
+  // If using the gateway manager, store the gateway that was used to make the payment
+  if (module_exists('gateway_manager')) {
+    $order->data['gateway'] = $node->gateway;
+  }
+
+  // Lastly add order data field information.
+  foreach ($data as $field => $value) {
+    $order->data[$field] = $value;
+  }
+
+  // Cache the cc details stored by the handler.
+  uc_credit_cache('save', $order->payment_details, FALSE);
+
+  // Save the order.
+  uc_order_save($order);
+  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
+
+  // We only need to return the did at this point.
+  // When we charge later, this is the only value that the glue module will need.
+  // No one outside of the glue module should need the order data otherwise.
+  $donation->did = $order->order_id;
+  $donation->donation_amount = $donation->donation['amount'];
+  $donation->data = $order->data;
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ */
+function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_function) {
+  // Execute the charge as per the given gateway.
+  $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
+  $donation->data = array_merge($data, $donation->data);
+  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+  // Have to pass up to the system.
+  $donation->result = $donation->data = $result;
+}
+
+/**
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_ubercart_fundraiser_donation_update($donation) {
@@ -430,13 +422,40 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   $order = uc_order_load($donation->did);
 
   // Load the order with new data.
-  // TODO update for ALL values of an order!
   $old_amount = $order->order_total;
   $order->order_total = $donation->donation['amount'];
   $order->products[0]->price = $donation->donation['amount'];
 
+  // Billing information.
+  $order->primary_email = $donation->donation['email'];
+  $order->order_total = $donation->donation['amount'];
+  $order->billing_first_name = $donation->donation['first_name'];
+  $order->billing_last_name = $donation->donation['last_name'];
+  $order->billing_city = $donation->donation['city'];
+  $order->billing_street1 = $donation->donation['address'];
+  $order->billing_street2 = $donation->donation['address_line_2'];
+  $order->billing_postal_code = $donation->donation['zip'];
+  $order->billing_zone = $donation->donation['state'];
+  $order->billing_country = $donation->donation['country'];
+
+  // Card information.
+  $order->payment_method = 'credit';
+  $order->payment_details = array(
+    'cc_owner' => isset($order->payment_details['cc_type']) ? $order->payment_details['cc_type'] : '',
+    'cc_number' => $donation->donation['card_number'],
+    'cc_start_month' => isset($order->payment_details['cc_start_month']) ? $order->payment_details['cc_start_month'] : '',
+    'cc_start_year' => isset($order->payment_details['cc_start_year']) ? $order->payment_details['cc_start_year'] : '',
+    'cc_exp_month' => $donation->donation['card_expiration_month'],
+    'cc_exp_year' => $donation->donation['card_expiration_year'],
+    'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
+    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
+  );
+
   // Update the card type based on given card number.
   $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
+
+  // Save the updated order.
   uc_credit_cache('save', $order->payment_details, FALSE);
   uc_order_save($order);
   uc_credit_cache('clear');
