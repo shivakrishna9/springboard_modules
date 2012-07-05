@@ -169,7 +169,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 }
 
 /**
- * Helper function, validate the results of a webform submission to the defined fields in fundraiser.
+ * Helper function, display webform options to the defined fields in fundraiser.
  */
 function _fundraiser_webform_modify_field_keys(&$form, $form_state, $component_hierarchy, $field_info = NULL) {
   if ($field_info == NULL) {
@@ -274,39 +274,16 @@ function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
   unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
 }
 
-
-/**
- * Helper function, validate the results of a webform submission to the defined fields in fundraiser.
- */
-function _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    $keys[$child] = '';
-    if (isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
-      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
-      if (isset($error_message) && !empty($error_message)) {
-        form_set_error($child, $error_message);
-        $errors = TRUE;
-      }
-    }
-    $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields, $field_info[$child], $errors);
-  }
-  return $errors;
-}
-
 /**
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']); // From fundraiser.module.
-  $errors = _fundraiser_webform_validate_field_keys($form, $form_state, $submission_fields);
+  // Submission fields are keyed according to the fields in fundraiser_field_info().
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
+  $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
   // Create watchdog entry on validation errors.
   if ($errors) {
-    $base = drupal_get_path('module', 'fundraiser_webform');
     $message = "The following donation form fields failed local validation:\n\n";
     $check_errors = form_get_errors();
     $validation_errors = is_array($check_errors) ? array_keys($check_errors) : array();
@@ -344,8 +321,9 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   $donation->sid = $sid;
   // Given the set of fields defined in fundraiser, gab results here that match those fields.
   // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
-  // And we prevent those values from being overwritten, we can pass the results as a map between the two.
-  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']); // From fundraiser.module.
+  // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
+  // Other modules will have to be more particular.
+  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   $donation->donation = $submission_fields;
 }
 

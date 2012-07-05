@@ -637,10 +637,14 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
  * And requests additional field information from other modules that need to define them.
  */
 function fundraiser_field_info() {
-  // Request additional fields from other modules.
-  $fields = module_invoke_all('fundraiser_field_info');
-  // Allow for others to modify as needed.
-  drupal_alter('fundraiser_field_info', $fields);
+  static $fields;
+  // Cache fundraiser content types during page execution.
+  if (empty($fields)) {
+    // Request additional fields from other modules.
+    $fields = module_invoke_all('fundraiser_field_info');
+    // Allow for others to modify as needed.
+    drupal_alter('fundraiser_field_info', $fields);
+  }
   // And return.
   return $fields;
 }
@@ -652,6 +656,34 @@ function fundraiser_field_info() {
 function fundraiser_find_form_field($form, $field_key) {
   // Expected to return a form render array for the requested form element.
   return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
+}
+
+/**
+ * Process through given submission fields to validate them. Recursive.
+ */
+function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
+  // Grab field info, we'll use this all the way down.
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  // Check for errors by field info array.
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $keys[$child] = '';
+    // Check only if the submission field is set. 
+    // And the additional validate callback exists.
+    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
+      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
+      if (isset($error_message) && !empty($error_message)) {
+        // Set the error.
+        form_set_error($child, $error_message);
+        $errors = TRUE;
+      }
+    }
+    // Recurse down.
+    $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info[$child], $errors);
+  }
+  return $errors;
 }
 
 /**
@@ -1598,17 +1630,6 @@ function _fundraiser_validate_email($mail) {
 }
 
 /**
- * Helper function, returns months between today's datestamp and $exp_date -1
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- */
-function _fundraiser_months_between_dates($exp_month, $exp_year) {
-  $startDate = strtotime("now");
-  $stopDate = mktime(0, 0, 0, $exp_month, 1, $exp_year);
-  $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
-  return $nrmonths;
-}
-
-/**
  * DB functions.
  */
 
@@ -2070,7 +2091,9 @@ function sf_donation_fundraiser_donation_cancel($donation) {
 /**
  * Authorize.net billing information update function.
  */
-function authorizenet_update_billing_information($reference_id, $billing_info) {
+function authorizenet_fundraiser_donation_update($donation) {
+  $reference_id = $donation->donation->reference_id; // Make sure this is set by the related field.
+  $billing_info = ''; // TODO construct this out of the donation info.
   if (module_exists('authorizenet_cim')) {
     return authorizenet_cim_update($reference_id, $billing_info);
   }
@@ -2085,8 +2108,9 @@ function authorizenet_update_billing_information($reference_id, $billing_info) {
  * Sage billing information update function.
  */
 // TODO shouldn't this move elsewhere?
-function sage_update_billing_information($reference_id, $billing_info) {
-  // TODO hook here to load up order info. - SeH 
+function sage_fundraiser_donation_update($donation) {
+  $reference_id = $donation->donation->reference_id;
+  $billing_info = ''; // TODO construct this out of the donation info.
   $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
   $data = array(
     'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
