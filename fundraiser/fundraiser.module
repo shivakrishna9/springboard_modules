@@ -1254,13 +1254,7 @@ function fundraiser_webform_submission_presave($node, &$submission) {
  * Permission check for webform form settings tab.
  */
 function fundraiser_webform_configure_access($perm, $node) {
-  // don't show the 'Form settings' tab on donation forms
-  if (_fundraiser_is_donation_type($node)) {
-    return false;
-  }
-  else { // run normal permission check
-    return node_access($perm, $node);
-  }
+  return node_access($perm, $node);
 }
 
 function fundraiser_confirmations_perm($perm, $node) {
