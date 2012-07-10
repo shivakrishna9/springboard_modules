@@ -130,6 +130,13 @@ function fundraiser_schema() {
         'length' => '50',
         'not null' => TRUE,
       ),
+      'txn_id' => array(
+        'description' => 'The transaction id of the donation.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+      //TODO add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
   );
@@ -231,7 +238,7 @@ function fundraiser_update_last_removed() {
 /**
  * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
  */
-function fundraiser_update_7001() {
+function fundraiser_update_7000() {
   // Create new table.
   $donation_table = fundraiser_schema();
   db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
@@ -247,6 +254,13 @@ function fundraiser_update_7001() {
         'nid' => $donation->nid,
         'uid' => $donation->uid,
       );
+      // Add gateway and transaction information from webform.
+      $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
+        array(':did' => $donation->order_id));
+      if (foreach($gateway_infos as $gateway_info)) {
+        $record['gateway'] = $gateway_info->gateway;
+        $record['txn_id'] = $gateway_info->txn_id;
+      }
       drupal_write_record('fundraiser_donation', $record);
     }
   }
