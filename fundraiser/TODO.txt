@@ -10,6 +10,17 @@ TO DO LIST FOR FUTURE DEVELOPMENT
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //REMOVE ALL BELOW THIS POINT.
 
+function queue_api_fundraiser_donation_refund_success($donation) {
+  // If using the Salesforce queue, queue up the updates
+  // This could be on hook couldn't it? - SeH
+  if (module_exists('queue_api')) {
+    // Update the original order
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+    // Create the refund
+    sf_queue_insert($donation->refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
+  }
+}
+
 define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation'); // Used in sf_queru_insert, so move over there.
 define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation'); // Used in sf_queru_insert, so move over there.
 define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');  // Used in sf_queru_insert, so move over there.
