@@ -141,10 +141,6 @@ function fundraiser_menu() {
     'tab_parent' => 'admin/config/system/fundraiser/donations',
     'file' => 'fundraiser.donations.inc',
   );
-  // TODO add a donations listing page.
-  // To be deactivated if ubercart orders is detected.
-  // Off of this page will also be linked donation display, and  refund display.
-  // Allowing us to have these features without Ubercart dependancy.
   return $items;
 }
 
@@ -309,6 +305,7 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
  * Implements hook_node_delete().
  */
 function fundraiser_node_delete($node) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_delete_fundraiser($node);
   }
@@ -318,6 +315,7 @@ function fundraiser_node_delete($node) {
  * Implements hook_node_insert().
  */
 function fundraiser_node_insert($node) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_create_fundraiser($node);
   }
@@ -328,6 +326,7 @@ function fundraiser_node_insert($node) {
  */
 function fundraiser_node_load($nodes, $types) {
   foreach ($nodes as $node) {
+    // If this isn't a fundraiser type, ignore it.
     if (fundraiser_is_donation_type($node->type)) {
       // Get the fundraiser information.
       // This also loads additional data presented from other modules to FR.
@@ -346,6 +345,7 @@ function fundraiser_node_load($nodes, $types) {
  * Implements hook_node_presave().
  */
 function fundraiser_node_presave($node) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     // Check the submission to remove the donation amounts marked.
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
@@ -373,6 +373,7 @@ function fundraiser_node_presave($node) {
  * Implements hook_node_update().
  */
 function fundraiser_node_update($node) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_update_fundraiser($node);
   }
@@ -382,6 +383,7 @@ function fundraiser_node_update($node) {
  * Implements hook_node_validate().
  */
 function fundraiser_node_validate($node, $form, &$form_state) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     // If each given amount if numeric, we're ok.
     // Since the form is set to TREE at this point, we need to account for that in our addressing path.
@@ -400,6 +402,7 @@ function fundraiser_node_validate($node, $form, &$form_state) {
  * Implements hook_node_view().
  */
 function fundraiser_node_view($node, $view_mode, $langcode) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     // Track the pageview.
     if ($view_mode == 'full') {
@@ -425,13 +428,14 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
 }
 
 /**
- * Form modification functions.
+ * Fundraiser form modification functions.
  */
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for node forms.
  */
 function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
+  // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($form['#node']->type)) {
     _fundraiser_donation_settings_form($form, $form_state);
     // Other modules that need to add to the settings form should also implement
@@ -440,8 +444,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Form function. This form collects the information to create donation forms per donation node types.
- *
+ * Fundraiser form. This form collects the information to create donation forms per donation node types.
  * This is added to the node display via form_alter when editting nodes of the correct type.
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
@@ -642,12 +645,21 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
 }
 
 /**
+ * The fundraiser field API is an additional API that focuses on the creation, handling and updating of
+ * fields in the fundraiser system. Since both field display and charge processing are agnostic in this system,
+ * we need a central location through which information about the fields fundraiser expects may flow.
+ * The field_info array is it. Fundraiser builds the array from it's own information and any information
+ * presented to it by other modules. Other modules also have the opportunity to add validation and submit routines
+ * for each of these fields, and will have access to the submitted results according to the field keys given.
+ * This system is the backbone of how one glue module may speak to and interact with the other.
+ */
+
+/**
  * Donation field definitions.
  */
 
 /**
- * Provides a list of fields to be defined by the display module.
- * And requests additional field information from other modules that need to define them.
+ * Provides a list of fields to be defined by the display module. Requests additional field information from other modules that need to define them.
  */
 function fundraiser_field_info() {
   static $fields;
@@ -663,44 +675,16 @@ function fundraiser_field_info() {
 }
 
 /**
- * Asks the display glue module(s) for field information.
- * Allowing other modules to find a field as needed in a form - for example - for AJAX return values.
- */
-function fundraiser_find_form_field($form, $field_key) {
-  // Expected to return a form render array for the requested form element.
-  return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
-}
-
-/**
- * Process through given submission fields to validate them. Recursive.
- */
-function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
-  // Grab field info, we'll use this all the way down.
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  // Check for errors by field info array.
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    $keys[$child] = '';
-    // Check only if the submission field is set. 
-    // And the additional validate callback exists.
-    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
-      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
-      if (isset($error_message) && !empty($error_message)) {
-        // Set the error.
-        form_set_error($child, $error_message);
-        $errors = TRUE;
-      }
-    }
-    // Recurse down.
-    $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info[$child], $errors);
-  }
-  return $errors;
-}
-
-/**
- * Implements hook_fundraiser_field_info().
+ * Implements hook_fundraiser_field_info(), providing the core set of fields that fundraiser must have.
+ *
+ * The #create_callback is used for fields whose settings are dependant on the values given during field creation.
+ * For example, the amount field could be displayed as a select box or as a text field depending on fundraiser's settings.
+ * So the field callback checks during field creation based on the associated fundraiser node to determine which.
+ *
+ * The #display_callback is an additional callback to allow another module to override display from the glue module.
+ * This is useful if another module can provide a more focused implementation of the form element than the glue module can.
+ * For example, the chargeing module may be more aware of available countries/states than the glue module, and can override
+ * the creation and display to match this allowing for an AJAX interface.
  */
 function fundraiser_fundraiser_field_info() {
   // Donation amounts are handled in a special case.
@@ -708,6 +692,9 @@ function fundraiser_fundraiser_field_info() {
     '#title' => 'Donation',
     '#type' => 'fieldset',
     '#required' => 0,
+    //'#create_callback' => '',
+    //'#display_callback' => '',
+    //'#validate_callback' => '',
   );
   $fields['donation']['amount'] = array(
     '#title' => 'Amount',
@@ -729,9 +716,8 @@ function fundraiser_fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
-    '#create_callback' => '_fundraiser_other_amount_field_create', // To be called during field creation.
-    '#validate_callback' => '_fundraiser_other_amount_field_validate', // Called during submission of the form to map values.
-    // #submit_callback => '', // Called during submission of the form to map values.
+    '#create_callback' => '_fundraiser_other_amount_field_create',
+    '#validate_callback' => '_fundraiser_other_amount_field_validate',
   );
   $fields['donor_information'] = array(
     '#title' => 'Your Information',
@@ -950,6 +936,63 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
 }
 
 /**
+ * Asks the display glue module(s) for field information.
+ * This allows other modules to find a field as needed in a form array.
+ * For example - for retrieveing the AJAX return values of a form.
+ */
+function fundraiser_find_form_field($form, $field_key) {
+  // Expected to return a form render array for the requested form element.
+  // Not a direct link unfortunately.
+  return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
+}
+
+/**
+ * Asks the display glue module(s) to update field information.
+ * This allows other modules to update a field as needed in a form array.
+ */
+function fundraiser_update_form_field(&$form, $field_key, $new_field) {
+  // Expected to return a form render array for the requested form element.
+  // Not a direct link unfortunately.
+  $form = module_invoke_all('fundraiser_update_form_field', $form, $field_key, $new_field);
+}
+
+/**
+ * There is no need for a creation function here to handle creating fields in a hook.
+ * That is something the display glue module should be able to handle on it's own
+ * given access to the callback information. No reason to put that in the central module.
+ */
+
+/**
+ * Process through given submission fields to validate on the fly. Recursive.
+ * This handles the calls to additional validation callbacks as defined in the field_info array.
+ * May be called by any module that needs to perform validation on a submitted array. See sustainers.
+ */
+function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
+  // Grab field info, we'll use this all the way down.
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  // Check for errors by field info array.
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $keys[$child] = '';
+    // Check only if the submission field is set. 
+    // And the additional validate callback exists.
+    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
+      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
+      if (isset($error_message) && !empty($error_message)) {
+        // Set the error.
+        form_set_error($child, $error_message);
+        $errors = TRUE;
+      }
+    }
+    // Recurse down.
+    $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info[$child], $errors);
+  }
+  return $errors;
+}
+
+/**
  * Donation form functions.
  */
 
@@ -1052,6 +1095,227 @@ function fundraiser_donation_post_submit(&$form, &$form_state) {
 }
 
 /**
+ * Reffund donation form functions.
+ */
+
+/**
+ * Menu callback for refund tab on donations.
+ */
+function fundraiser_show_refund_form($did) {
+  if (!user_access('refund donations')) {
+    drupal_set_message(t('You do not have access to refund donations.'));
+    return '';
+  }
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/refund.css');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/refund.js');
+  return drupal_render( drupal_get_form('_fundraiser_refund', $did) );
+}
+
+/**
+ * Refund form
+ */
+function _fundraiser_refund($form, &$form_state, $did) {
+  $form = array();
+  // Given a donation ID, grab all relevant information to create the form.
+  $donation = fundraiser_donation_get_donation($did);
+  $form['#donation'] = $donation;
+  $form['payment_summary'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Summary'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  // TODO get payment info here. These are purely informational markup.
+  if (!isset($donation->payment)) {
+    $form['payment_summary']['no_payments'] = array(
+      '#type' => 'item',
+      '#markup' => 'No payments have been made on this order yet',
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+  }
+  else {
+    $form['payment_summary']['payment_number'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment #'),
+      '#markup' => $donation->payment['receipt_id'],
+    );
+    $form['payment_summary']['payment_date'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Date'),
+      '#markup' => $donation->payment['receipt_date'],
+    ); 
+    $form['payment_summary']['payment_total'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Total'),
+      '#markup' => $donation->payment['amount'],
+    );
+    // TODO get previous refunds here.
+    if ($previous_refunds < 0) {
+      $form['payment_summary']['total_refunded'] = array(
+        '#type' => 'item',
+        '#title' => t('Total Previously Refunded'),
+        '#markup' => $donation->payment['refund_summary'],
+      );
+    }
+  }
+
+  // Form for submitting a refund.
+  $form['refund_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refund Options'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
+     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
+  $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation().
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
+  //if (!$can_refund || !isset($donation->payment)) {
+  if(0){
+    // They've made a payment, but it cannot be refunded
+    if (isset($donation->payment)) {
+      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
+    }
+    // They have NOT made any payment yet, so there's nothing to refund
+    else {
+      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
+      // Even once the payment is made, they won't be able to refund it
+      if (!$can_refund) {
+        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+          'make refunds after payments are processed on this order.';
+      }
+    }
+    $form['refund_options']['no_refund_explanation'] = array(
+      '#value' => $no_refund_text,
+      '#prefix' => '<strong>',
+      '#suffix' => '</strong>',
+    );
+  }
+  // Provide refund options
+  else {
+    $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+    $form['refund_options']['full_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Full Refund (%amount)', array('%amount' => $able_to_refund)),
+      '#return_value' => 'full',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['partial_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Partial Refund'),
+      '#return_value' => 'partial',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['amount'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Amount to Refund'),
+      '#size' => 40,
+      '#maxlength' => 255,
+    );
+    $form['refund_options']['refund_notes'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Refund Notes'),
+      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+      '#cols' => 60,
+      '#rows' => 5,
+      '#required' => TRUE,
+    );
+    $form['refund_options']['issue_refund'] = array(
+      '#type' => 'submit',
+      '#value' => t('Issue Refund'),
+      '#required' => TRUE,
+    );
+    $form['total_paid'] = array(
+      '#type' => 'hidden',
+      '#value' => number_format($able_to_refund, 2),
+    );
+  }
+  return $form;
+}
+
+/**
+ * Validate the form
+ */
+function _fundraiser_refund_validate($form, &$form_state) {
+  // Make sure they chose a refund type
+  if (empty($form_state['values']['refund_type'])) {
+    form_set_error('refund_type', t('Choose a refund type.'));
+  }
+  // If it isn't a full refund, make sure they entered a valid value
+  elseif ($form_state['values']['refund_type'] != 'full') {
+    $amount = (float) $form_state['values']['amount'];
+    if (!($amount > 0)) {
+      form_set_error('amount', t('Enter a refund amount.'));
+    }
+    else {
+      // Make sure they don't try to refund more than was paid
+      $did = $form['#donation']->did;
+      // Determine how much has been paid, less previous refunds
+      $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+      if ($amount > $able_to_refund) {
+        $context = array(
+          'revision' => 'formatted-original',
+          'type' => 'amount',
+        );
+        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
+          'more than that can be refunded.', array('@paid' => $able_to_refund)));
+      }
+    }
+  }
+}
+
+/**
+ * Submit the refund form
+ */
+function _fundraiser_refund_submit($form, &$form_state) {
+  // Get the donation.
+  $did = $form['#donation']->did;
+
+  // Determine how much has been paid, less previous refunds
+  $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+
+  // Partial refund
+  if ($form_state['values']['refund_type'] != 'full') {
+    $new_order_status = 'partially_refunded';
+    $amount = (float) $form_state['values']['amount'];
+    // Can't refund more than they've paid
+    // Use >= so that the status is set properly if they choose Partial Refund
+    // but refund the entire amount
+    if ($amount >= $able_to_refund) {
+      $amount = $able_to_refund;
+      $new_order_status = 'refunded';
+    }
+  }
+  // Full refund
+  else {
+    $new_order_status = 'refunded';
+    $amount = $able_to_refund;
+  }
+
+  // Make the charge amount negative
+  $amount = abs($amount) * -1;
+  $donation->donation['refund_amount'] = $amount;
+  $donation->donation['refund_reason'] = $form_state['values']['refund_notes'];
+  fundraiser_donation_refund($donation);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($donation->result['message'])) {
+    $donation->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    fundraiser_donation_refund_success($donation);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    fundraiser_donation_refund_decline($donation);
+    $form_state['rebuild'] = TRUE;
+    $form_state['values']['abort'] = TRUE;
+  }
+}
+
+/**
   A donation object takes the form:
 stdClass Object
 (
@@ -1106,6 +1370,7 @@ function fundraiser_donation_create($donation) {
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid,  // Submission user id.
     'gateway' => $fundraiser_node->gateway,
+    'txn_id' => $fundraiser_node->txn_id, //TODO fill this in.
   );
   _fundraiser_create_donation($donation_record);
 }
@@ -1129,6 +1394,7 @@ function fundraiser_donation_update($donation) {
     'nid' => $donation->nid,
     'uid' => $donation->uid,
     'gateway' => $fundraiser_node->gateway,
+    'txn_id' => $fundraiser_node->txn_id, //TODO fill this in.
   );
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -1232,15 +1498,18 @@ function fundraiser_donation_cancel($donation) {
  * Donation processing, a given donation needs to be refunded.
  */
 function fundraiser_donation_refund($donation) {
+  if (!isset($donation->donation['refund_amount']) || empty($donation->donation['refund_amount'])
+    || !is_numeric($donation->donation['refund_amount'])) {
+    return; // Not a valid amount to refund.
+  }
   // Grab the gateway from the fundraiser configured gateway.
-  // Later this will be stored with the donation (since the gateway for the fundraiser may change).
   $info = _fundraiser_gateway_info($donation->node->gateway);
   // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
-  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
-  if (empty($charge_function)) {
-    $charge_function = isset($info['credit']) ? $info['credit'] : '';
+  $refund_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($refund_function)) {
+    $refund_function = isset($info['credit']) ? $info['credit'] : '';
   }
-  if (empty($charge_function)) {
+  if (empty($refund_function)) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
       array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
@@ -1249,265 +1518,37 @@ function fundraiser_donation_refund($donation) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
-    module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
+    module_invoke_all('fundraiser_donation_refund', $donation, $refund_function);
   }
 }
 
 /**
- * Refund form for donations processed with gateways that allow for it.
+ * Donation processing, a given refund was successful.
  */
-
-/**
- * Menu callback for refund tab on donations.
- */
-function fundraiser_show_refund_form($did) {
-  if (!user_access('refund donations')) {
-    drupal_set_message(t('You do not have access to refund donations.'));
-    return '';
-  }
-  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/refund.css');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/refund.js');
-  return drupal_render( drupal_get_form('_fundraiser_refund', $did) );
+function fundraiser_donation_refund_success($donation) {
+  // Save refund data for fundraiser.
+  $refund = new stdClass();
+  $refund->did = $donation->did;
+  $refund->receipt_id = $receipt_id; // TODO what is this? the transaction id?
+  $refund->amount = $donation->donation['refund_amount'];
+  $refund->txn_id = $donation->result['data']['txn_id'];
+  $refund->reason = $donation->donation['refund_reason'];
+  drupal_write_record('fundraiser_refund', $refund);
+  $donation->refund = $refund;
+  drupal_set_message(t('Refund has been issued.'), 'status');
+  // Allow other modules to respond to the refund success. Such as SF modules.
+  module_invoke_all('fundraiser_donation_refund_success', $donation);
 }
 
 /**
- * Refund form
+ * Donation processing, a given refund was declined.
  */
-function _fundraiser_refund($form, &$form_state, $did) {
-  $form = array();
-  // Given a donation ID, grab all relevant information to create the form.
-  $donation = fundraiser_donation_get_donation($did);
-  $form['#donation'] = $donation;
-  $form['payment_summary'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Payment Summary'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-  // TODO get payment info here. These are purely informational markup.
-  if (!$payment_info) {
-    $form['payment_summary']['no_payments'] = array(
-      '#value' => 'No payments have been made on this order yet',
-      '#prefix' => '<div>',
-      '#suffix' => '</div>',
-    );
-  }
-  else {
-    $form['payment_summary']['payment_number'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment #'),
-      '#value' => $payment_info['receipt_id'],
-    );
-    $form['payment_summary']['payment_date'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment Date'),
-      '#value' => $payment_info['received'],
-    ); 
-    $form['payment_summary']['payment_total'] = array(
-      '#type' => 'item',
-      '#title' => t('Payment Total'),
-      '#value' => $payment_info['amount'],
-    );
-    // TODO get previous refunds here.
-    if ($previous_refunds < 0) {
-      $form['payment_summary']['total_refunded'] = array(
-        '#type' => 'item',
-        '#title' => t('Total Previously Refunded'),
-        '#value' => $previous_refunds,
-      );
-    }
-  }
-
-  // Form for submitting a refund.
-  $form['refund_options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Refund Options'),
-    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
-     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation(). First from donation info, then fundraiser if not on doantion.
-  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
-  if (!$can_refund || !$payment_info) {
-    // They've made a payment, but it cannot be refunded
-    if ($payment_info) {
-      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
-    }
-    // They have NOT made any payment yet, so there's nothing to refund
-    else {
-      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
-      // Even once the payment is made, they won't be able to refund it
-      if (!$can_refund) {
-        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
-          'make refunds after payments are processed on this order.';
-      }
-    }
-    $form['refund_options']['no_refund_explanation'] = array(
-      '#value' => $no_refund_text,
-      '#prefix' => '<strong>',
-      '#suffix' => '</strong>',
-    );
-  }
-  // Provide refund options
-  else {
-    $form['refund_options']['full_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Full Refund (%amount)', array('%amount' => $total_paid)),
-      '#return_value' => 'full',
-      '#parents' => array('refund_type'),
-    );
-    $form['refund_options']['partial_refund'] = array(
-      '#type' => 'radio',
-      '#title' => t('Partial Refund'),
-      '#return_value' => 'partial',
-      '#parents' => array('refund_type'),
-    );
-    $form['refund_options']['amount'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Amount to Refund'),
-      '#size' => 40,
-      '#maxlength' => 255,
-    );
-    $form['refund_options']['refund_notes'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Refund Notes'),
-      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
-      '#cols' => 60,
-      '#rows' => 5,
-      '#required' => TRUE,
-    );
-    $form['refund_options']['issue_refund'] = array(
-      '#type' => 'submit',
-      '#value' => t('Issue Refund'),
-      '#required' => TRUE,
-    );
-    $form['total_paid'] = array(
-      '#type' => 'hidden',
-      '#value' => number_format($total_paid, 2),
-    );
-  }
-  return $form;
-}
-
-/**
- * Validate the form
- */
-function _fundraiser_refund_validate($form, &$form_state) {
-  // Make sure they chose a refund type
-  if (empty($form_state['values']['refund_type'])) {
-    form_set_error('refund_type', t('Choose a refund type.'));
-  }
-  // If it isn't a full refund, make sure they entered a valid value
-  elseif ($form_state['values']['refund_type'] != 'full') {
-    $amount = (float) $form_state['values']['amount'];
-    if (!($amount > 0)) {
-      form_set_error('amount', t('Enter a refund amount.'));
-    }
-    else {
-      // Make sure they don't try to refund more than was paid
-      $did = $form['#donation']->did;
-      // Determine how much has been paid, less previous refunds
-      // TODO find out how much paid
-      $total_paid = '';
-      if ($amount > $total_paid) {
-        $context = array(
-          'revision' => 'formatted-original',
-          'type' => 'amount',
-        );
-        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
-          'more than that can be refunded.', array('@paid' => $total_paid)));
-      }
-    }
-  }
-}
-
-/**
- * Submit the refund form
- */
-function _fundraiser_refund_submit($form, &$form_state) {
-  // Get the donation.
-  $did = $form['#donation']->did;
-
-  // Determine how much has been paid, less previous refunds
-  // TODO find out how much paid
-  $total_paid = '';
-
-  // Partial refund
-  if ($form_state['values']['refund_type'] != 'full') {
-    $new_order_status = 'partially_refunded';
-    $amount = (float) $form_state['values']['amount'];
-    // Can't refund more than they've paid
-    // Use >= so that the status is set properly if they choose Partial Refund
-    // but refund the entire amount
-    if ($amount >= $total_paid) {
-      $amount = $total_paid;
-      $new_order_status = 'refunded';
-    }
-  }
-  // Full refund
-  else {
-    $new_order_status = 'refunded';
-    $amount = $total_paid;
-  }
-
-  // Make the charge amount negative
-  $amount = abs($amount) * -1;
-
-  // Get details on the original payment so we can load the payment gateway details
-  // TODO move this to a helper function.
-  $payment_details = db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} ' .
-    'WHERE did = :did ' .
-    'UNION '.
-    'SELECT gateway, txn_id FROM {fundraiser_recurring} '. 
-    'WHERE did = :did', array(':did' => $did))->fetchObject();
-
-// TODO HOOKS HERE.
-
-  if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($payment_details->gateway);
-    $refund_function = $info['refund_function'];
-    $data['config'] = $info['config'];
-  }
-  else {
-    $refund_function = fundraiser_refund_function($node->gateway);
-  }
-  // call the refund function and store the result
-  $result = $refund_function($did, $amount, $data);
-  if ($result['success']) {
-    $receipt_id = module_invoke_all('fundraiser_order_refund', $did, $amount, $new_order_status, $result['data']['txn_id'], $form_state['values']['refund_notes']);
-    $receipt_id = $receipt_id[0];
-
-    // Save refund data for Fundraiser.
-    $refund = new stdClass();
-    $refund->did = $did;
-    $refund->receipt_id = $receipt_id;
-    $refund->amount = $amount;
-    $refund->txn_id = $result['data']['txn_id'];
-    $refund->reason = $reason;
-    drupal_write_record('fundraiser_refund', $refund);
-
-    // If using the Salesforce queue, queue up the updates
-    // This could be on hook couldn't it? - SeH
-    if (module_exists('queue_api')) {
-      // Update the original order
-      sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-      // Create the refund
-      sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
-    }
-
-    drupal_set_message(t('Refund has been issued.'), 'status');
-//    drupal_goto('admin/store/orders/' . $did);
-  }
-  else {
-    // failed to process credit cart
-    $log_error = 'Refund on donation ' . $did . ' failed gateway validation. Reason: ' . $result['message'];
-    watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
-    drupal_set_message($result['message']);
-    $form_state['rebuild'] = TRUE;
-    $form_state['values']['abort'] = TRUE;
-  }
+function fundraiser_donation_refund_decline($donation) {
+  watchdog('fundraiser', 'Refund on donation #%did failed gateway validation. Reason: %reason.',
+    array('%did' => $donation->did, '%reason' => $donation->result['message']), WATCHDOG_DEBUG);
+  drupal_set_message($donation->result['message']);
+  // Allow other modules to respond to the refund decline.
+  module_invoke_all('fundraiser_donation_refund_decline', $donation);
 }
 
 /**
@@ -1532,14 +1573,20 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->node = node_load($donation_record->nid);
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
-  // Grab gateway information.
+
+  // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);
   if (isset($gateway['id'] )) {
     $donation->gateway = $gateway;
     $donation->node->gateway = $gateway;
   }
+  $donation->txn_id = $donation_record->txn_id; //TODO fill this in.
 
-  // TODO figure out how much has been paind and or refundded and add that here. // START
+  // TODO figure out how much has been paind and or refundded and add that here.
+  $donation->payment['receipt_id']; // An id for payment.
+  $donation->payment['receipt_date']; // When payed.
+  $donation->payment['refund_summary']; // Textual rendered list of existing refunds.
+  $donation->payment['refunded_total']; // How much has already been refunded.
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.
