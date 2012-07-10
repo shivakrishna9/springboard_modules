@@ -9,13 +9,11 @@ class EmailWrappersMailSystemInterface implements MailSystemInterface {
 
   public function format(array $message) {
     $message['body'] = implode("\n\n", $message['body']);
-    drupal_set_message('body during formatting:<pre><code>' . $message['body'] . '</code></pre>');
     return $message;
   }
 
   public function mail(array $message) {
     // tweak headers
-    drupal_set_message('mail method invoked');
     $message['headers']['Content-Type'] = 'multipart/alternative; charset=UTF-8; boundary="' . $message['params']['boundary'] . '"';
     $mimeheaders = array();
     foreach ($message['headers'] as $name => $value) {
