@@ -8,11 +8,8 @@
 /**
  * Implements hook_menu().
  */
-// TODO like confirmation, perhaps this is better with a generic solution that this module then overrides.
-// But for now, this will live here because Fundraiser doesn't have a generic donation summary page.
-// Since we don't have that UI figured out, Order will do. And so: Ubercart dependancy.
 function fundraiser_ubercart_menu() {
-  // Donation management for admins.
+  // Add donation management for admins to store menus.
   $items['admin/store/orders/%/refund'] = array(
     'title' => 'Refund',
     'page callback' => 'fundraiser_show_refund_form',
@@ -53,6 +50,22 @@ function fundraiser_ubercart_mail_alter(&$message) {
     }
     $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
     $message['subject'] = $node->receipt_email_subject;
+  }
+}
+
+/**
+ * Implements hook_form_alter.
+ */
+function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
+  // Add a setting to the fundraiser administation page to run on SF exports.
+  if ($form_id == 'fundraiser_admin_settings') {
+    $form['fundraiser']['fundraiser_all_countries'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Insert full list of countries into new donation forms'),
+      '#default_value' => variable_get('fundraiser_all_countries', 0),
+      '#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. ' .
+        'When unchecked, only U.S and Canda will be inserted.'),
+    );
   }
 }
 
@@ -424,7 +437,7 @@ function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_func
   $donation->data = array_merge($data, $donation->data);
   $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
   // Have to pass up to the system.
-  $donation->result = $donation->data = $result; // TODO checkt hat this is right re: double up on result / data.
+  $donation->result = $result;
 }
 
 /**
@@ -617,12 +630,12 @@ function _fundraiser_ubercart_get_zone_by_country($country_id) {
 }
 
 /**
- * Below here are orphan or unknown origin functions. To be reviewed later.
+ * Below here are orphan or unknown origin functions. To be reviewed later. TODO
  */
 
 
 /**
- * Implements hook_fundraiser_decrypt_credit(). //TODO where is this called? Nowhere.
+ * Implements hook_fundraiser_decrypt_credit(). //where is this called?.
  *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();

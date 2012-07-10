@@ -582,7 +582,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
 
-  // TODO when confirmation are removed, this goes elswhere.
+  // TODO this should probably go on a different table, not here.
   /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
   $form['confirmation_page_title'] = array(
     '#type' => 'value',
@@ -1197,11 +1197,10 @@ function _fundraiser_refund($form, &$form_state, $did) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
-  // TODO get payment info here. These are purely informational markup.
   if (!isset($donation->payment)) {
     $form['payment_summary']['no_payments'] = array(
       '#type' => 'item',
-      '#markup' => 'No payments have been made on this order yet',
+      '#markup' => t('No payments have been made on this order yet.'),
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
@@ -1220,10 +1219,9 @@ function _fundraiser_refund($form, &$form_state, $did) {
     $form['payment_summary']['payment_total'] = array(
       '#type' => 'item',
       '#title' => t('Payment Total'),
-      '#markup' => $donation->payment['amount'],
+      '#markup' => $donation->donation['amount'],
     );
-    // TODO get previous refunds here.
-    if ($previous_refunds < 0) {
+    if (isset($donation->payment['refund_summary'])) {
       $form['payment_summary']['total_refunded'] = array(
         '#type' => 'item',
         '#title' => t('Total Previously Refunded'),
@@ -1241,22 +1239,22 @@ function _fundraiser_refund($form, &$form_state, $did) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
+
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
   $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation().
   $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
-  //if (!$can_refund || !isset($donation->payment)) {
-  if(0){
+  if (!$can_refund || !isset($donation->payment)) {
     // They've made a payment, but it cannot be refunded
     if (isset($donation->payment)) {
-      $no_refund_text = 'Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.';
+      $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.');
     }
     // They have NOT made any payment yet, so there's nothing to refund
     else {
-      $no_refund_text = 'No payments have been processed on this order, so no refunds can be made yet.';
+      $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
       // Even once the payment is made, they won't be able to refund it
       if (!$can_refund) {
-        $no_refund_text .= ' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
-          'make refunds after payments are processed on this order.';
+        $no_refund_text .= t(' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+          'make refunds after payments are processed on this order.');
       }
     }
     $form['refund_options']['no_refund_explanation'] = array(
@@ -1399,7 +1397,7 @@ stdClass Object
     [submission] => Array of values by field key as found in fundraiser_field_info() (flattened array).
     [did] => Glue Module Provided Donation ID, used by the glue module to track its info.
     [donation] => Array of standard donation information (keys by field info)
-    [data] => Additional Data for Charge // TODO this may be available on load in Glue, so not need to be passed up.
+    [data] => Additional Data for Charge //TODO check if this actually needs to be passed around
     [result] => 
         (
             [success] => 1
@@ -1434,7 +1432,6 @@ function fundraiser_donation_create($donation) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
-  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
   $fundraiser_node = node_load($donation->nid);
   $donation_record = array(
@@ -1458,7 +1455,6 @@ function fundraiser_donation_update($donation) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
   // For now, our creation system is responsible for creating a did.
-  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
   $fundraiser_node = node_load($donation->nid);
   $donation_record = array(
@@ -1531,11 +1527,10 @@ function fundraiser_donation_decline($donation) {
   module_invoke_all('fundraiser_donation_decline', $donation);
 }
 
-// TODO how does this get called?
+// TODO how does this even get called? Is this functionally different from a decline?
 /**
  * Donation processing, a given donation experienced an exception.
  */
-// Is this functionally different from fundraiser_order_decline ? TODO - come back to this - SeH
 function fundraiser_donation_exception($donation) {
   // Make a log entry.
   watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
@@ -1652,9 +1647,10 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
     $donation->gateway = $gateway;
     $donation->node->gateway = $gateway;
   }
-  $donation->txn_id = '';//$donation_record->txn_id; //TODO fill this in.
+  // Grab the transaction id if it exists, add it here.
+  $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
 
-  // TODO figure out how much has been paind and or refundded and add that here.
+  // TODO figure out how much has been paid and or refunded and add that here.
   $donation->payment['receipt_id'] = ''; // An id for payment.
   $donation->payment['receipt_date'] = ''; // When payed.
   $donation->payment['refund_summary'] = ''; // Textual rendered list of existing refunds.
@@ -1723,6 +1719,22 @@ function fundraiser_is_donation_type($type) {
     $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
   }
   return $fundraiser_types[$type];
+}
+
+/** 
+ * Helper function, determine if this node type supports donation forms.
+ */
+function fundraiser_get_donation_types() {
+  // For all types, check if they are a fundraiser type.
+  static $fundraiser_types;
+  // Cache fundraiser content types during page execution.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    if (!isset($fundraiser_types[$type])) {
+      $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+    }
+  }
+  return $fundraiser_types;
 }
 
 /**

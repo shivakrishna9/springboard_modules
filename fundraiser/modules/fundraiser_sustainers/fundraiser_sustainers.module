@@ -235,7 +235,7 @@ function fundraiser_sustainers_user_overview($user) {
     drupal_goto('user/' . $user->uid);
   }
   else {
-    // Forward user to the first listed donation. (TODO perhaps replace with a view a la admin view.)
+    // Forward user to the first listed donation.
     drupal_goto('user/' . $user->uid . '/recurring_overview/' . $donations[0]->master_did);
   }
 }
@@ -436,7 +436,6 @@ function fundraiser_sustainers_edit_form($did) {
       $this_donation = fundraiser_donation_get_donation($this_donation->did);
       $donations_row['amount'] = '$' . money_format('%i', $this_donation->donation['amount']);
       $donations_row['charge_date'] = date('m/d/y', $this_donation->recurring->next_charge);
-      //TODO here, make this a user friendly set of options.
       $donations_row['status'] = empty($this_donation->status) ? 'pending' : $this_donation->status;
       $donations_rows[] = $donations_row;
     }
@@ -850,7 +849,7 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) '.
       'WHERE did = :did', array(':did' => $donation->did)
     );
-    // get the number of times this order has been attempted
+    // Get the number of times this order has been attempted
     $attempt_count = db_query('SELECT attempts FROM {fundraiser_recurring} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
     if ($attempt_count == 3) {

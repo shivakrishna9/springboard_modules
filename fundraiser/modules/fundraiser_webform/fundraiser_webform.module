@@ -62,7 +62,6 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
   if (fundraiser_is_donation_type($form['node']['#value']->type)) { // From fundraiser.module.
     // Check vs. required fields to make sure we can't delete them.
     $required_fields = _fundraiser_get_field_keys();
-    // TODO Locate each field, and see which one is flagged as required. If required, deny delete.
     $cid = $form['component']['#value']['cid'];
     $component = $form['node']['#value']->webform['components'][$cid];
     // Check to see if the form_key is in our required fields array
@@ -127,10 +126,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
       ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
   );
-  // Show whether or not it's a recurring donation
-  // TODO In the future we should work out a way to move this administractive UI into fundraiser, to allow the
-  // reference to recurssion to move entirely out to sustainers, and abstract the display of field data for the
-  // webform user. As it stands, for now this remains here.
+  // Show whether or not it's a recurring donation.
   if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
     $recurs = t('No');
     if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
@@ -336,7 +332,7 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
  * Implements hook_fundraiser_donation_post_submit().
  */
 function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation) {
-  // Relate the donation id to webform before we try to process the payment. //TODO change terminology
+  // Relate the donation id to webform before we try to process the payment.
   $webform_order = array(
     'webform_nid' => $donation->nid,
     'order_id' => $donation->did,
@@ -396,16 +392,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   }
 }
 
-/**
- * Implements hook_fundraiser_donation_decline().
- */
-function fundraiser_webform_fundraiser_donation_decline($donation) {
-  // Delete the webform order info. // TODO check this, do we realyl want to delete this info?
-  // Shouldn't we instead just mark it as failed in case we need it later?
-  _fundraiser_webform_delete_webform_order($donation->nid, $donation->did);
-}
-
-define('DONATION_CANCELLED', 2); // TODO is this really needed, or should be handled other ways?
+define('DONATION_CANCELLED', 2);
 
 /**
  * Implements hook_fundraiser_donation_cancel().
@@ -717,7 +704,6 @@ function _fundraiser_webform_get_webform_order_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_webform_order} ' .
     'WHERE order_id = :did', // TODO change this terminology.
     array(':did' => $did))->fetchObject();
-    // For now, there can be only one. TODO change this later.
 }
 
 /**
