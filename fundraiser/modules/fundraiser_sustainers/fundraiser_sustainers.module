@@ -555,119 +555,82 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#type' => 'hidden',
     '#value' => $donation->uid,
   );
-  $form['billing_address'] = array(
+
+  // The rest of this is based on fields generated from fundraiser.
+  $field_info = fundraiser_field_info();
+  // The parts we need to allow for updating: donor info, billing and credit card.
+  $form['billing_information'] = array(
     '#type' => 'fieldset',
     '#title' => t('Billing Address'),
     '#attributes' => array('id' => 'billing-address'),
   );
-  $form['billing_address']['first_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('First Name'),
-    '#required' => TRUE,
-    '#default_value' => $donation->donation['first_name'],
-  );
-  $form['billing_address']['last_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Last Name'),
-    '#required' => TRUE,  
-    '#default_value' => $donation->donation['last_name'],
-  );
-  $form['billing_address']['email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Email Address'),
-    '#required' => TRUE,
-    '#default_value' => $donation->donation['email'],
-  );
-  $form['billing_address']['address_1'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Address Line 1'),
-    '#size' => 30,
-    '#required' => TRUE,
-    '#default_value' => $donation->donation['address'],
-  );
-  $form['billing_address']['address_2'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Address Line 2'),
-    '#size' => 30,
-    '#default_value' => $donation->donation['address_line_2'],
-  );
-  $form['billing_address']['city'] = array(
-    '#type' => 'textfield',
-    '#title' => t('City'),
-    '#size' => 30,
-    '#required' => TRUE,
-    '#default_value' => $donation->donation['city'],
-  );
-  // TODO replicate the AJAXy behavior as per the original donation node.
-  // This will require a callback to the field information.
-  // Truthfully this entire form should exercise callbacks.
-  if (isset($context->countries)) {
-    $options = array();
-    foreach ($context->countries as $country_id => $country) {
-      $options[$country_id] = $country->country_name;
-    }
-    $form['billing_address']['country'] = array(
-      '#type' => 'select',
-      '#title' => 'Country',
-      '#options' => $options,
-      '#required' => TRUE,  
-      '#default_value' => $donation->donation['country'],
-    );
+  $billing_fields = array_merge($field_info['donor_information'], $field_info['billing_information']);
+  foreach (element_children($billing_fields) as $field_key) {
+    $field = $billing_fields[$field_key];
+    $form['billing_information'][$field_key] = _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field);
   }
-  if (isset($context->zones)) {
-    $options = array();
-    foreach ($context->zones as $zone_id => $zone) {
-      $options[$zone_id] = $zone->zone_name;
-    }
-    $form['billing_address']['state'] = array(
-      '#type' => 'select',
-      '#title' => 'State',
-      '#options' => $options,
-      '#required' => TRUE,
-      '#default_value' => $donation->donation['state'],
-    );
-  }
-  $form['billing_address']['zipcode'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Postal Code',
-    '#size' => 5,
-    '#maxlength' => 11,
-    '#required' => TRUE,  
-    '#default_value' => $donation->donation['zip'],
-  );
-  // No defaults here, because we don't store this information.
-  $form['cc_info'] = array(
+
+  // CC info.
+  $form['credit_card_information'] = array(
     '#type' => 'fieldset',
     '#title' => 'Credit Card Information',
     '#attributes' => array('id' => 'credit-card-info'),
   );
-  $form['cc_info']['card_number'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Card Number',
-    '#size' => 20,
-    '#required' => TRUE,
-    '#maxlength' => 20,
-  );
-  // Format this a bit.
-  $form['cc_info']['card_exp_date'] = array(
-    '#type' => 'date',
-    '#required' => TRUE,
-    '#title' => 'Expiration Date',
-    '#default_value' => array('year' => date('Y'), 'month' => 1, 'day' => 1),
-    '#process' => array('_fundraiser_sustainers_expand_date'),
-  );
-  $form['cc_info']['card_cvv'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Security Code',
-    '#required' => TRUE,
-    '#size' => 5,
-    '#maxlength' => 5,
-  );
+  $cc_fields = $field_info['credit_card_information'];
+  foreach (element_children($cc_fields) as $field_key) {
+    $field = $cc_fields[$field_key];
+    $form['credit_card_information'][$field_key] = _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field);
+  }
+  // Unset CC number values.
+  unset($form['credit_card_information']['card_number']['#default_value']);
+  unset($form['credit_card_information']['card_expiration_month']['#default_value']);
+  unset($form['credit_card_information']['card_expiration_year']['#default_value']);
+  unset($form['credit_card_information']['card_cvv']['#default_value']);
+
+  // Unset the recurring donation option if it exists. We don't want it here.
+  if (isset($form['credit_card_information']['recurs_monthly'])) {
+    unset($form['credit_card_information']['recurs_monthly']);
+  }
+
+  // And add a submit button.
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save changes'),
   );
+  // Modify form displays according to callback settings.
+  // This allows any other systems to modify the available options with callbacks.
+  $form['#calling_module'] = 'fundraiser_sustainers';
+  fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
   return $form;
+}
+
+/**
+ * Helper function, generate fields from given field_info.
+ */
+function _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field_info) {
+  $field = array(
+    '#type' => $field_info['#type'],
+    '#title' => t('@title', array('@title' => $field_info['#title'])),
+    '#required' => (isset($field_info['#required']) && $field_info['#required'] == 1) ? TRUE : FALSE,
+    '#default_value' => $donation->donation[$field_key],
+  );
+  if ($field_info['#type'] == 'select') {
+    $options = array();
+    $items = $field_info['#extra']['items'];
+    $items = explode("\n", $items);
+    foreach ($items as $item) {
+      $items_values = explode('|', $item);
+      $key = trim($items_values[0]);
+      $label = isset($items_values[1]) ? trim($items_values[1]) : $key;
+      if (!empty($key)) {
+        $options[$key] = $label;
+      }
+    }
+    $field['#options'] = $options;
+    $field['#multiple'] =
+      (isset($field_info['#extra']['multiple']) && $field_info['#extra']['multiple'] == 1) ? TRUE : FALSE;
+  }
+  return $field;
 }
 
 /**
@@ -676,10 +639,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
 function fundraiser_sustainers_billing_update_form_validate($form, &$form_state) {
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   // Select only the ones we want to validate with fundraiser.
-  $submission_fields['card_number'] = $form_state['values']['card_number'];
-  $submission_fields['card_cvv'] = $form_state['values']['card_cvv'];
-  $submission_fields['card_expiration_month'] = $form_state['values']['card_exp_date']['month'];
-  $submission_fields['card_expiration_year'] = $form_state['values']['card_exp_date']['year'];
+  $submission_fields = $form_state['values'];
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
   if ($errors) {
     // We've set a form_error by now.
@@ -694,24 +654,16 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
   // We only update donations to come, not ones already processed.
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  $exp_month = $form_state['values']['card_exp_date']['month'];
-  $exp_year = $form_state['values']['card_exp_date']['year'];
+  $submitted_values = $form_state['values'];
+  // Remove unnessecary values.
+  unset($submitted_values['master_did']);
+  unset($submitted_values['uid']);
   foreach ($donations as $donation) {
+    // Get the original donation.
     $donation = fundraiser_donation_get_donation($donation->did);
-    // Update each one.
-    $donation->donation['first_name'] =  $form_state['values']['first_name'];
-    $donation->donation['last_name'] = $form_state['values']['last_name'];
-    $donation->donation['email'] = $form_state['values']['email'];
-    $donation->donation['address'] = $form_state['values']['address_1'];
-    $donation->donation['address_line_2'] = $form_state['values']['address_2'];
-    $donation->donation['city'] = $form_state['values']['city'];
-    $donation->donation['country'] = $form_state['values']['country'];
-    $donation->donation['state'] = $form_state['values']['state'];    
-    $donation->donation['zip'] = $form_state['values']['zipcode'];
-    $donation->donation['card_number'] = $form_state['values']['card_number'];
-    $donation->donation['card_expiration_month'] = $form_state['values']['card_exp_date']['month'];
-    $donation->donation['card_expiration_year'] = $form_state['values']['card_exp_date']['year'];
-    $donation->donation['card_cvv'] = $form_state['values']['card_cvv'];
+    // Update it.
+    $donation->donation = array_merge($donation->donation, $submitted_values);
+    // Save each donation.
     fundraiser_donation_update($donation);
     watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
       array('@did' => $donation->did));
@@ -719,7 +671,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
   // Create new orders based on expiration date as needed.  
-  _fundraiser_sustainers_create_future_orders($master_donation, $form_state['values']['card_exp_date']['month'], $form_state['values']['card_exp_date']['year']);
+  _fundraiser_sustainers_create_future_orders($master_donation, $form_state['values']['card_expiration_month'],
+    $form_state['values']['card_expiration_year']);
   drupal_set_message(t('Billing information successfully updated'));
 }
 
@@ -926,7 +879,7 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
 
 /**
  * Helper function, override of Drupal core expand_date found in includes/form.inc
- */
+ *
 function _fundraiser_sustainers_expand_date($element) {
   // Default to current date
   if (empty($element['#value'])) {
@@ -977,6 +930,7 @@ function _fundraiser_sustainers_expand_date($element) {
   }
   return $element;
 }
+//*/
 
 /**
  * Helper function, loads the recurring donation processor key.

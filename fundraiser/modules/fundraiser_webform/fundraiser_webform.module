@@ -95,7 +95,7 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
   }
 
   // Do not allow users to muck with defined form keys in component editting form.
-  // They're named what they're named for a reason.
+  // They're named what they're named for a reason and we need those keys to remain unharmed.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
     if (fundraiser_is_donation_type($node->type)) {
@@ -169,28 +169,6 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 }
 
 /**
- * Helper function, display webform options to the defined fields in fundraiser.
- */
-function _fundraiser_webform_modify_field_keys(&$form, $form_state, $component_hierarchy, $field_info = NULL) {
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    if (isset($field_info[$child]['#display_callback']) && function_exists($field_info[$child]['#display_callback'])) {
-      // Locate the field in form to modify if it exists in the components.
-      if (isset($component_hierarchy[$child])) {
-        $this_field =& _fundraiser_webform_find_field($form, $component_hierarchy[$child]);
-        $field = call_user_func($field_info[$child]['#display_callback'], $form, $form_state, $this_field);
-        $this_field = $field;
-      }
-    }
-    // Check for any further children.
-    _fundraiser_webform_modify_field_keys($form, $form_state, $component_hierarchy, $field_info[$child]);
-  }
-}
-
-/**
  * Implements hook_fundraiser_donation_form().
  */
 function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
@@ -208,7 +186,8 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
 
   // Modify form displays according to callback settings.
-  _fundraiser_webform_modify_field_keys($form, $form_state, $component_hierarchy);
+  $form['#calling_module'] = 'fundraiser_webform';
+  fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
 
   // Combine expiration month and year into a single component.
   $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
@@ -403,7 +382,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   _fundraiser_webform_update_submissions($donation->uid, $donation->sid);
 
   // Update the recurring status, if it was changed by the payment gateway module
-  // TODO This should be moved or removed entirely. We don't need ot know this stuff here!
+  // TODO This should be moved or removed entirely. We don't need to know this stuff here!
   if (isset($donation->donation->data['recurring_status']) && ($donation->donation['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
@@ -635,9 +614,20 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
  * Implements hook_fundraiser_get_form_field().
  */
 function fundraiser_webform_fundraiser_get_form_field($form, $field_key) {
-  // Walks a given form looking for the given key.
-  // Returns it when found.
-  return _fundraiser_webform_find_field($form,_fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+  // Walks a given form looking for the given key. Returns it when found.
+  return _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+}
+
+/**
+ * Implements hook_fundraiser_update_form_field().
+ */
+function fundraiser_webform_fundraiser_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+  // Update the field in the form.
+  $field = $new_field;
+  // Return the form for the calling function.
+  return $form;
 }
 
 /**
