@@ -237,7 +237,7 @@ function _fundraiser_ubercart_submission_flatten($submit_tree) {
  */
 function _fundraiser_ubercart_client_state_ajax_submit($form, $form_state, &$mess = '') {
   // Get the form item we want to render.
-  return fundraiser_find_form_field($form, 'state');
+  return fundraiser_get_form_field($form['#calling_module'], $form, 'state');
 }
 
 /**

@@ -940,20 +940,69 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
  * This allows other modules to find a field as needed in a form array.
  * For example - for retrieveing the AJAX return values of a form.
  */
-function fundraiser_find_form_field($form, $field_key) {
-  // Expected to return a form render array for the requested form element.
-  // Not a direct link unfortunately.
-  return module_invoke_all('fundraiser_get_form_field', $form, $field_key);
+function fundraiser_get_form_field($calling_module, $form, $field_key) {
+  // Get the form element from the given form.
+  if (module_hook($calling_module, 'fundraiser_get_form_field')) {
+    return module_invoke($calling_module, 'fundraiser_get_form_field', $form, $field_key);
+  }
+  else {
+    // Assume the form is a regularly constructed form and find it in a child somewhere.
+    return _fundraiser_get_form_field($form, $field_key);
+  }
+}
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and return it.
+ * Recursive.
+ */
+function _fundraiser_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Return the found array.
+      return $form[$child];
+    }
+    else {
+      // Check this child for other children.
+      $found = _fundraiser_get_form_field($form[$child], $field_key);
+      if (!empty($found)) {
+        return $found;
+      }
+    }
+  }
 }
 
 /**
  * Asks the display glue module(s) to update field information.
  * This allows other modules to update a field as needed in a form array.
  */
-function fundraiser_update_form_field(&$form, $field_key, $new_field) {
-  // Expected to return a form render array for the requested form element.
-  // Not a direct link unfortunately.
-  $form = module_invoke_all('fundraiser_update_form_field', $form, $field_key, $new_field);
+function fundraiser_update_form_field($calling_module, $form, $field_key, $new_field) {
+  // Save the changed form element.
+  if (module_hook($calling_module, 'fundraiser_update_form_field')) {
+    return module_invoke($calling_module, 'fundraiser_update_form_field', $form, $field_key, $new_field);
+  }
+  else {
+    return _fundraiser_update_form_field($form, $field_key, $new_field);
+  }
+}
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and update it.
+ * Recursive.
+ */
+function _fundraiser_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Update the array.
+      $form[$child] = array_merge($form[$child], $new_field);
+    }
+    else {
+      // Check this child for other children.
+     $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
+    }
+  }
+  return $form;
 }
 
 /**
@@ -961,6 +1010,27 @@ function fundraiser_update_form_field(&$form, $field_key, $new_field) {
  * That is something the display glue module should be able to handle on it's own
  * given access to the callback information. No reason to put that in the central module.
  */
+
+/**
+ * Process through given submission fields to change their display form on the fly. Recursive.
+ * Calling module provides the identity of the display glue module. Usually webform, could be sustainers.
+ */
+function fundraiser_display_form_fields($calling_module, &$form, $form_state, $field_info = NULL) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    if (isset($field_info[$child]['#display_callback']) && function_exists($field_info[$child]['#display_callback'])) {
+      // Get the field, update it, and put it back.
+      $this_field = fundraiser_get_form_field($calling_module, $form, $child);
+      $new_field = call_user_func($field_info[$child]['#display_callback'], $form, $form_state, $this_field);
+      $form = fundraiser_update_form_field($calling_module, $form, $child, $new_field);
+    }
+    // Check for any further children.
+    fundraiser_display_form_fields($calling_module, $form, $form_state, $field_info[$child]);
+  }
+}
 
 /**
  * Process through given submission fields to validate on the fly. Recursive.
@@ -978,8 +1048,10 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
     $keys[$child] = '';
     // Check only if the submission field is set. 
     // And the additional validate callback exists.
-    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback']) && function_exists($field_info[$child]['#validate_callback'])) {
-      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state, $submission_fields, $submission_fields[$child]);
+    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback'])
+      && function_exists($field_info[$child]['#validate_callback'])) {
+      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state,
+        $submission_fields, $submission_fields[$child]);
       if (isset($error_message) && !empty($error_message)) {
         // Set the error.
         form_set_error($child, $error_message);
@@ -1580,13 +1652,13 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
     $donation->gateway = $gateway;
     $donation->node->gateway = $gateway;
   }
-  $donation->txn_id = $donation_record->txn_id; //TODO fill this in.
+  $donation->txn_id = '';//$donation_record->txn_id; //TODO fill this in.
 
   // TODO figure out how much has been paind and or refundded and add that here.
-  $donation->payment['receipt_id']; // An id for payment.
-  $donation->payment['receipt_date']; // When payed.
-  $donation->payment['refund_summary']; // Textual rendered list of existing refunds.
-  $donation->payment['refunded_total']; // How much has already been refunded.
+  $donation->payment['receipt_id'] = ''; // An id for payment.
+  $donation->payment['receipt_date'] = ''; // When payed.
+  $donation->payment['refund_summary'] = ''; // Textual rendered list of existing refunds.
+  $donation->payment['refunded_total'] = ''; // How much has already been refunded.
 
   // Call hooks to re-create the donation info.
   // The glue modules handle everything else once handed fundraisers info.

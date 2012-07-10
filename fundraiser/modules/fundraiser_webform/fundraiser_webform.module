@@ -169,27 +169,6 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 }
 
 /**
- * Process through given submission fields to change their display form on the fly. Recursive.
- */
-function _fundraiser_webform_display_form_fields(&$form, $form_state, $field_info = NULL) {
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    if (isset($field_info[$child]['#display_callback']) && function_exists($field_info[$child]['#display_callback'])) {
-      // Locate the field in form to modify if it exists in the components.
-      // Using these to allow for other modules to tweak results during update.
-      $this_field = fundraiser_find_form_field($form, $child);
-      $this_field = call_user_func($field_info[$child]['#display_callback'], $form, $form_state, $this_field);
-      fundraiser_update_form_field($form, $child, $this_field);
-    }
-    // Check for any further children.
-    _fundraiser_webform_display_form_fields($form, $form_state, $field_info[$child]);
-  }
-}
-
-/**
  * Implements hook_fundraiser_donation_form().
  */
 function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
@@ -207,7 +186,8 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
 
   // Modify form displays according to callback settings.
-  _fundraiser_webform_display_form_fields($form, $form_state);
+  $form['#calling_module'] = 'fundraiser_webform';
+  fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
 
   // Combine expiration month and year into a single component.
   $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
