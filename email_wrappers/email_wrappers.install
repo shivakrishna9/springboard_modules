@@ -1,0 +1,339 @@
+<?php
+
+/**
+ * @file Email Wrappers install/uninstall/update functions.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function email_wrappers_install() {
+  if (module_exists('og')) {
+    variable_set('email_wrappers_og_filter', 0);
+  }
+  _email_wrappers_create_fields();
+  
+  // we need to add an entry to the mail_system variable for our implementation of MailSystemInterface.
+  // @see: http://drupal.org/node/900794
+  $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  $mail_system = array_merge($mail_system, array('email_wrappers' => 'EmailWrappersMailSystemInterface'));
+  variable_set('mail_system', $mail_system);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+
+function email_wrappers_uninstall() {
+  variable_del('email_wrappers_og_filter');
+  // delete email_wrapper nodes.
+  _email_wrappers_delete_nodes();
+
+  // remove fields implemented by this module.
+  _email_wrappers_delete_fields();
+
+  // delete the email wrapper content type.
+  node_type_delete('email_wrapper');
+  field_purge_batch(1000);
+  
+  // back out changes to mail_system variable.
+  $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  unset($mail_system['email_wrappers']);
+  variable_set('mail_system', $mail_system);
+}
+
+function email_wrappers_schema() {
+$schema['email_wrappers_webform'] = array(
+    'description' => t('Stores data for donation_form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => 'node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'eid' => array(
+        'description' => 'email id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'tid' => array(
+        'description' => t('template node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bcc' => array(
+        'description' => t('BCC email addresses'),
+        'type' => 'text',
+      ),
+      'html_message' => array(
+        'description' => t('HTML version of the email message.'),
+        'type' => 'text',
+      ),
+      'html_message_format' => array(
+        'description' => t('Input format'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'text_message' => array(
+        'description' => t('Text version of the email message.'),
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid', 'eid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update().
+ */
+function email_wrappers_update_7000() {
+  // TODO: copy data from {fundraiser_confirmations} to {email_wrappers}, drop original table.
+  // TODO: move settings data from variable emaiL_confirmation_og_filter to email_wrapper_og_filter
+}
+
+/**
+ * Create required fields and associate them with the "Email Template" content type.
+ */
+function _email_wrappers_create_fields() {
+  $t = get_t();
+  // implement node type.
+  if (!in_array('email_wrapper', node_type_get_names())) {
+    $type = array(
+      'type' => 'email_wrapper',
+      'name' => $t('Email Wrapper'),
+      'description' => $t('Create theme templates for emails sent by your website.'),
+      'base' => 'node_content',
+      'custom' => 1,
+      'modified' => 1,
+      'locked' => 0,
+      'title_label' => st('Internal Title'),
+    );
+    $type = node_type_set_defaults($type);
+    node_type_save($type);
+  }
+
+  // implement fields. "_instance" defines the instance settings used
+  // by field_create_instance().
+  $fields = array(
+    'from_name' => array(
+      'field_name' => 'email_wrapper_from_name',
+      'type' => 'text',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_from_name',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'label' => st('From Name'),
+        'description' => st('This name is displayed in the "From:" portion of an email.'),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 1,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'from_email' => array(
+      'field_name' => 'email_wrapper_from_email',
+      'type' => 'text',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_from_email',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('From Email'),
+        'description' => st('The email address to display in the "From:" portion of the email.'),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 2,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'reply_to_email' => array(
+      'field_name' => 'email_wrapper_reply_email',
+      'type' => 'text',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_reply_email',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('Reply To Email'),
+        'description' => st('The email address to display in the "Reply To:" portion of the email.'),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 3,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'bcc_email' => array(
+      'field_name' => 'email_wrapper_bcc_email',
+      'type' => 'text',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_bcc_email',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'label' => st('BCC Emails'),
+        'description' => st('You may (optionally) include one or more email addresses to BCC'),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 4,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'subject' => array(
+      'field_name' => 'email_wrapper_subject',
+      'type' => 'text',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_subject',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('Subject'),
+        'description' => st('Email subject line.'),
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 5,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'html_template' => array(
+      'field_name' => 'email_wrapper_html_template',
+      'type' => 'text_with_summary',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_html_template',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('HTML Template'),
+        'description' => st('HTML version of the email body.'),
+        'widget' => array(
+          'type' => 'text_with_summary',
+          'weight' => 6,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'html_message' => array(
+      'field_name' => 'email_wrapper_html_message',
+      'type' => 'text_with_summary',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_html_message',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('HTML Message'),
+        'description' => st('HTML version of the email message.'),
+        'widget' => array(
+          'type' => 'text_with_summary',
+          'weight' => 7,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'text_template' => array(
+      'field_name' => 'email_wrapper_text_template',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_text_template',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('Text Template'),
+        'description' => st('Text version of the email body.'),
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 8,
+          'settings' => array(),
+        ),
+      ),
+    ),
+    'text_message' => array(
+      'field_name' => 'email_wrapper_text_message',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'email_wrapper_text_message',
+        'entity_type' => 'node',
+        'bundle' => 'email_wrapper',
+        'required' => TRUE,
+        'label' => st('Text Message'),
+        'description' => st('Text version of the email message.'),
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 9,
+          'settings' => array(),
+        ),
+      ),
+    ),
+  );
+
+
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+
+    field_create_field($values);
+    field_create_instance($instance);
+  }
+  
+}
+
+function _email_wrappers_delete_fields() {
+  $fields = array(
+    'email_wrapper_from_name',
+    'email_wrapper_from_email',
+    'email_wrapper_reply_email',
+    'email_wrapper_bcc_email',
+    'email_wrapper_subject',
+    'email_wrapper_html_template',
+    'email_wrapper_text_template',
+  );
+  foreach ($fields as $field_name) {
+    $field = field_info_instance('node', $field_name, 'email_wrapper');
+    field_delete_instance($field);
+    $field = field_info_field($field_name);
+    field_delete_field($field);
+  }
+  drupal_set_message('Email Wrapper fields deleted.');
+}
+
+function _email_wrappers_delete_nodes() {
+ require_once('email_wrappers.module');
+ $nids = email_wrappers_get_nodes();
+ node_delete_multiple($nids);
+ drupal_set_message('Email Wrappers have been deleted.');
+}
+
