@@ -712,7 +712,7 @@ function _springboard_fundraiser_report() {
   ctools_include('modal');
   $title = $access_results->internal_name;
   $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
-        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
+        INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id 
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
         $nid));
   $total_donations = round($total_donations) . '.00';

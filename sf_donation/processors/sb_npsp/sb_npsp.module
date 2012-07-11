@@ -91,7 +91,7 @@ function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
 	    // Handle donations
 	    else {
 	      $order_id = (int)$batch['records'][$i]->oid;
-  			db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, $order_id);
+  			db_query("UPDATE {fundraiser_webform_donation} SET sfid = '%s' WHERE did = %d", $sfid, $order_id);
 	    }
 	    
 			$user_ids = _sf_donation_load_user_salesforce_ids_from_order($order_id);
@@ -140,7 +140,7 @@ function sb_npsp_recurring_donation_postprocess(&$batch, &$responses, $item_coun
 				for ($j = 0; $j < $opportunities->size; $j++) {
 					if ($j == 0) {
 						// first opportunity is the master. now that we have it's opportunity id, add it  
-						db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $master_order_id);
+						db_query("UPDATE {fundraiser_webform_donation} SET sfid = '%s' WHERE did = %d", $opportunities->records[$j]->Id, $master_order_id);
 						//db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $master_order_id);
 						salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $master_order_id, $opportunities->records[$j]->Id, 0);
 						sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');

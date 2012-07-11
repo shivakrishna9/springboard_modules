@@ -28,6 +28,7 @@ function fundraiser_sustainers_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      // TODO strongly consider moving these to another table.
       'sf_opportunity_id' => array(
         'description' => 'TODO: please describe this field!',
         'type' => 'varchar',
@@ -52,6 +53,7 @@ function fundraiser_sustainers_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      // This shoud be moved to fundraiser donation.
       'gateway_resp' => array(
         'description' => 'Gateway response to the charge.',
         'type' => 'varchar',
@@ -70,12 +72,14 @@ function fundraiser_sustainers_schema() {
         'length' => '500',
         'not null' => FALSE,
       ),
+       // This shoud be moved to fundraiser donation.
       'gateway' => array(
         'description' => 'Gateway to process order with.',
         'type' => 'varchar',
         'length' => '100',
         'not null' => FALSE,
       ),
+      // This shoud be moved to fundraiser donation.
       'txn_id' => array(
         'description' => 'The transaction id for a given donation.',
         'type' => 'varchar',
