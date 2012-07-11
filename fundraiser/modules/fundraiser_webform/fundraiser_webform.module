@@ -353,7 +353,7 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     // Tell webform we're not done and rebuild the form.
     unset($form_state['values']['details']['sid']);
     if (!isset($donation->result['message']) || empty($donation->result['message'])) {
-      $donation->result['message'] = 'Your card has been denied. Please try another.';
+      $donation->result['message'] = t('Your card has been denied. Please try another.');
     }
     form_set_error('card_number', $donation->result['message']);
     $form_state['values']['details']['finished'] = 0;
