@@ -207,31 +207,34 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
  * Submit handler, handles the final destination redirect after donation completed.
  */
 function fundraiser_donation_confirmation($form, &$form_state) {
-  // Everything worked, redirect to the confirmation page as the last submit handler.
-  $node = $form['#node'];
-  $redirect_url = trim($node->redirect_url);
-  $did = $form_state['#donation']->did;
+  // No confirmation page, something went wrong.
+  if (isset($form_state['#donation']->did)) {
+    // Everything worked, redirect to the confirmation page as the last submit handler.
+    $node = $form['#node'];
+    $redirect_url = trim($node->redirect_url);
+    $did = $form_state['#donation']->did;
 
-  // Prepare the correct redirect path.
-  $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-  // This is the up path configured per node in fundraiser_menu. Used as default;
-  $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
-  if ($redirect_url == '<confirmation>') {
-    // This is the default path configured per node in fundraiser_menu.
+    // Prepare the correct redirect path.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+    // This is the up path configured per node in fundraiser_menu. Used as default;
     $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
+    if ($redirect_url == '<confirmation>') {
+      // This is the default path configured per node in fundraiser_menu.
+      $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
+    }
+    elseif (valid_url($redirect_url, TRUE)) {
+      // This is the path set by the user.
+      $redirect = array($redirect_url);
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      // This is the reconstructed path from the user.
+      $parts = parse_url($redirect_url);
+      $query = $parts['query'] ? array_merge($parts['query'], array('did'=> $did)) : array('did' => $did);
+      $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
+    }
+    // And we add the redirect to the form processing for the final step.
+    $form_state['redirect'] = $redirect;
   }
-  elseif (valid_url($redirect_url, TRUE)) {
-    // This is the path set by the user.
-    $redirect = array($redirect_url);
-  }
-  elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
-    // This is the reconstructed path from the user.
-    $parts = parse_url($redirect_url);
-    $query = $parts['query'] ? array_merge($parts['query'], array('did'=> $did)) : array('did' => $did);
-    $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
-  }
-  // And we add the redirect to the form processing for the final step.
-  $form_state['redirect'] = $redirect;
 }
 
 /**
