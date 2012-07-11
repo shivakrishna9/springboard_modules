@@ -155,7 +155,7 @@ function fundraiser_schema() {
         'not null' => TRUE,
       ),
       'receipt_id' => array(
-        'description' => 'Ubercart receipt ID of the payment',
+        'description' => 'Donation ID of the payment',
         'type' => 'int',
         'not null' => TRUE,
       ),
