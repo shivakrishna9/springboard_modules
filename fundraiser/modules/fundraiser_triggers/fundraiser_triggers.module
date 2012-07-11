@@ -25,34 +25,34 @@ function fundraiser_triggers_trigger_info() {
   return array(
     'fundraiser' => array(
       'fundraiser_donation_create' => array(
-        'label' => t('When either saving new content or updating existing content'),
+        'label' => t('After a donation has just been created.'),
       ), 
       'fundraiser_donation_update' => array(
-        'label' => t('When either saving new content or updating existing content'),
+        'label' => t('After a donation has been updated.'),
       ), 
       'fundraiser_donation_process' => array(
-        'label' => t('After saving new content'),
+        'label' => t('After a donation has been processed.'),
       ), 
       'fundraiser_donation_success' => array(
-        'label' => t('After saving updated content'),
+        'label' => t('After a donation has sucessfully been charged.'),
       ), 
       'fundraiser_donation_decline' => array(
-        'label' => t('After deleting content'),
+        'label' => t('After a donation has been declined.'),
       ), 
       'fundraiser_donation_exception' => array(
-        'label' => t('When content is viewed by an authenticated user'),
+        'label' => t('After a donation has encountered an exception.'),
       ),
       'fundraiser_donation_cancel' => array(
-        'label' => t('When content is viewed by an authenticated user'),
+        'label' => t('After a donation has been cancelled.'),
       ),
       'fundraiser_donation_refund' => array(
-        'label' => t('When content is viewed by an authenticated user'),
+        'label' => t('After a donation has been refunded.'),
       ),
       'fundraiser_donation_refund_success' => array(
-        'label' => t('When content is viewed by an authenticated user'),
+        'label' => t('After a refund has been processed successfully.'),
       ),
       'fundraiser_donation_refund_decline' => array(
-        'label' => t('When content is viewed by an authenticated user'),
+        'label' => t('After a refund was declined.'),
       ),
     ),
   );
