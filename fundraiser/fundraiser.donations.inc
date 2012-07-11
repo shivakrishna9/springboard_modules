@@ -42,7 +42,7 @@ function fundraiser_donations_admin_view($did) {
   // Get the data.
   $donation = fundraiser_donation_get_donation($did);
   $output = '';
-  $output = 'VIEW A DONATION AS ADMIN'.print_r($donation,1); //TODO set up view of donation.
+  //$output = 'VIEW A DONATION AS ADMIN'.print_r(array_keys($donation),1); //TODO set up view of donation.
   if (user_access('refund donations')) {
     $output .= fundraiser_show_refund_form($did);
   }
