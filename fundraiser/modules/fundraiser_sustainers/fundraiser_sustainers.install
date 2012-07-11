@@ -12,19 +12,19 @@ function fundraiser_sustainers_schema() {
     'description' => 'Stores information about recurring orders.',
     'fields' => array(
       'master_did' => array(
-        'description' => 'Master order ID from ubercart.',
+        'description' => 'Master donation id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'did' => array(
-        'description' => 'This specific recurring order id.',
+        'description' => 'This specific recurring donation id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'next_charge' => array(
-        'description' => 'When to charge the order next.',
+        'description' => 'When to charge the donation next.',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -99,7 +99,7 @@ function fundraiser_sustainers_update_7001(&$sandbox) {
   // Rename the table columns that used to be called order to donation.
   $master_did_field = array(
     'master_did' => array(
-      'description' => 'Master order ID from ubercart.',
+      'description' => 'Master donation id.',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
@@ -107,7 +107,7 @@ function fundraiser_sustainers_update_7001(&$sandbox) {
   );
   $did_field = array(
     'did' => array(
-      'description' => 'This specific recurring order id.',
+      'description' => 'This specific recurring donation id.',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
