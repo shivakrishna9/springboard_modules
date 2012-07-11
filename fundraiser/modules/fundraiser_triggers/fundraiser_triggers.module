@@ -18,45 +18,184 @@ function fundraiser_triggers_menu_alter(&$items) {
   $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
 }
 
-// TODO make triggers for each hook of the process, so we can get in there with actions.
-
 /**
- * Implementation of hook_hook_info().
+ * Implements hook_trigger_info().
  */
-function fundraiser_triggers_hook_info() {
+function fundraiser_triggers_trigger_info() {
   return array(
     'fundraiser' => array(
-      'fundraiser' => array(
-        'sustainer_payment_declined' => array(
-          'runs when' => t('A sustainer\'s credit card payment is declined'),
-        ),
+      'fundraiser_donation_create' => array(
+        'label' => t('When either saving new content or updating existing content'),
+      ), 
+      'fundraiser_donation_update' => array(
+        'label' => t('When either saving new content or updating existing content'),
+      ), 
+      'fundraiser_donation_process' => array(
+        'label' => t('After saving new content'),
+      ), 
+      'fundraiser_donation_success' => array(
+        'label' => t('After saving updated content'),
+      ), 
+      'fundraiser_donation_decline' => array(
+        'label' => t('After deleting content'),
+      ), 
+      'fundraiser_donation_exception' => array(
+        'label' => t('When content is viewed by an authenticated user'),
+      ),
+      'fundraiser_donation_cancel' => array(
+        'label' => t('When content is viewed by an authenticated user'),
+      ),
+      'fundraiser_donation_refund' => array(
+        'label' => t('When content is viewed by an authenticated user'),
+      ),
+      'fundraiser_donation_refund_success' => array(
+        'label' => t('When content is viewed by an authenticated user'),
+      ),
+      'fundraiser_donation_refund_decline' => array(
+        'label' => t('When content is viewed by an authenticated user'),
       ),
     ),
   );
 }
 
 /**
- * Implementation of hook_fundraiser().
+ * Implements hook_fundraiser_donation_create().
  */
-function fundraiser_triggers_fundraiser($op, $order) {
-  $aids = _trigger_get_hook_aids('fundraiser', $op);
+function fundraiser_triggers_fundraiser_donation_create($donation) {
   $context = array(
-    'hook' => 'fundraiser',
-    'op' => $op,
-    'order' => $order,
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_create',
+    'donation' => $donation,
   );
-  $dummy = new stdClass();
-  actions_do(array_keys($aids), $dummy, $context);
+  $aids = trigger_get_assigned_actions('fundraiser_donation_create');
+  actions_do(array_keys($aids), $donation, $context);
 }
 
 /**
- * Implementation of hook_action_info_alter().
+ * Implements hook_fundraiser_donation_update().
  */
-function fundraiser_triggers_action_info_alter(&$info) {
-  if (isset($info['token_actions_send_email_action']['hooks']['fundraiser'])) {
-    array_merge($info['token_actions_send_email_action']['hooks']['fundraiser'], array('sustainer_payment_declined'));
-  }
-  else {
-    $info['token_actions_send_email_action']['hooks']['fundraiser'] = array('sustainer_payment_declined');
-  }
+function fundraiser_triggers_fundraiser_donation_update($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_update',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_update');
+  actions_do(array_keys($aids), $donation, $context);
+}
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function fundraiser_triggers_fundraiser_donation_update($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_update',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_update');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ */
+function fundraiser_triggers_fundraiser_donation_process($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_process',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_process');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function fundraiser_triggers_fundraiser_donation_success($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_success',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_success');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_decline().
+ */
+function fundraiser_triggers_fundraiser_donation_decline($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_decline',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_decline');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_exception().
+ */
+function fundraiser_triggers_fundraiser_donation_exception($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_exception',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_exception');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_triggers_fundraiser_donation_cancel($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_cancel',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_cancel');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_refund().
+ */
+function fundraiser_triggers_fundraiser_donation_refund($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_refund',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_refund');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_refund_success().
+ */
+function fundraiser_triggers_fundraiser_donation_refund_success($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_refund_success',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_refund_success');
+  actions_do(array_keys($aids), $donation, $context);
+}
+
+/**
+ * Implements hook_fundraiser_donation_refund_decline().
+ */
+function fundraiser_triggers_fundraiser_donation_refund_decline($donation) {
+  $context = array(
+    'group' => 'fundraiser',
+    'hook' => 'fundraiser_donation_refund_decline',
+    'donation' => $donation,
+  );
+  $aids = trigger_get_assigned_actions('fundraiser_donation_refund_decline');
+  actions_do(array_keys($aids), $donation, $context);
 }
