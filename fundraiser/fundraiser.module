@@ -5,29 +5,6 @@
  * Provides behaviors to handle donation form creation and donation submission.
  */
 
-/**
- * IMPLEMENTATION NOTES:
- *
- * The exact implementation of a donor form as displayed to a user to place a donation has been moved
- * to an exterior module. By default webform. So long as we are using an exterior module to display the 
- * form we want, the exact details will be handled by a glue module to link fundraiser to whatever display
- * implementation we use. This allows us future flexibility and separation of concerns in code.
- *
- * As a result this module does not form_alter webform forms. That's the glue's job. It also means
- * that picking the workflow back up of processing a donation is by executing a process call in fundraiser
- * from the submit in the glue module. So if you don't see a straight path from one to the other in this module
- * it's because the control of flow goes into the glue module before coming back here.
- *
- * Donations themselves are also tracked in an exterior module. By default ubercart. A glue module is
- * provided for this as well. Donations are stored as orders in Ubercart, and the glue module translates. So
- * the exterior module handling the purchasing stage of things is the one that needs to be aware of things like
- * states, user info, and the like. To allow multiple gateways to be used depending on the fundraiser, fundraiser 
- * does interact with a list of available gateways for use during processing.
- *
- * In practice this means, exterior modules are blind to each other, and fundraiser is blind to them. The
- * glue moduled between them are the only systems aware of more than one module at a time.
- */
-
 // Include theme related functions.
 require_once('fundraiser.theme.inc');
 // Include confirmation stuff.
@@ -662,16 +639,6 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
 }
 
 /**
- * The fundraiser field API is an additional API that focuses on the creation, handling and updating of
- * fields in the fundraiser system. Since both field display and charge processing are agnostic in this system,
- * we need a central location through which information about the fields fundraiser expects may flow.
- * The field_info array is it. Fundraiser builds the array from it's own information and any information
- * presented to it by other modules. Other modules also have the opportunity to add validation and submit routines
- * for each of these fields, and will have access to the submitted results according to the field keys given.
- * This system is the backbone of how one glue module may speak to and interact with the other.
- */
-
-/**
  * Donation field definitions.
  */
 
@@ -693,15 +660,6 @@ function fundraiser_field_info() {
 
 /**
  * Implements hook_fundraiser_field_info(), providing the core set of fields that fundraiser must have.
- *
- * The #create_callback is used for fields whose settings are dependant on the values given during field creation.
- * For example, the amount field could be displayed as a select box or as a text field depending on fundraiser's settings.
- * So the field callback checks during field creation based on the associated fundraiser node to determine which.
- *
- * The #display_callback is an additional callback to allow another module to override display from the glue module.
- * This is useful if another module can provide a more focused implementation of the form element than the glue module can.
- * For example, the chargeing module may be more aware of available countries/states than the glue module, and can override
- * the creation and display to match this allowing for an AJAX interface.
  */
 function fundraiser_fundraiser_field_info() {
   // Donation amounts are handled in a special case.
