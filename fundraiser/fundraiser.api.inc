@@ -127,7 +127,7 @@ function hook_fundraiser_donation_exception($donation) {}
 function hook_fundraiser_donation_cancel($donation) {}
 
 /**
- * For charge glue modules, respond to a cancelled donation.
+ * For charge glue modules, attempt to process a refund.
  * Return nothing, but update the donation object with success results.
  */
 function hook_fundraiser_donation_refund($donation, $refund_function) {}
