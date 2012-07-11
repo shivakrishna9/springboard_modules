@@ -162,36 +162,52 @@ function fundraiser_boost_is_cacheable($parts) {
   return $parts;
 }
 
-// TODO come back to fix these. This is no longer how tokens work. vvv
-/**      
- * Implementation of hook_token_list().
+/**
+ * Implements hook_token_info().
  */
-function fundraiser_token_list($type = 'all') {
-  if ($type == 'fundraiser' || $type == 'all') {
-    $tokens['fundraiser']['fundraiser-cc-last-four']  = t('The last four digits of the credit card used for the order.');
-    $tokens['fundraiser']['fundraiser-cc-card-exp-month'] = t('The credit card expiration month.');
-    $tokens['fundraiser']['fundraiser-cc-card-exp-year'] = t('The credit card expiration year.');
-    $tokens['fundraiser']['fundraiser-cc-card-type'] = t('The credit card type used for the order.');
-  }
-  return $tokens;
+function fundraiser_token_info() {
+  // Add a donation type.
+  $info['types']['donation'] = array(
+    'name' => t('Donation tokens'),
+    'description' => t('Tokens related to specific donations.'),
+    'needs-data' => 'donation',
+  );
+  $info['tokens']['donation']['fundraiser-cc-last-four'] = array(
+    'name' => t('Ending CC number'),
+    'description' => t('The last four digits of the credit card used for the donation.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-exp-month'] = array(
+    'name' => t('CC expiration month'),
+    'description' => t('The credit card expiration month.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-exp-year'] = array(
+    'name' => t('CC expiration year'),
+    'description' => t('The credit card expiration year.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-type'] = array(
+    'name' => t('CC type'),
+    'description' => t('The credit card type used for the donation.'),
+  );
+  return $info;
 }
 
 /**
- * Implementation of hook_token_values().
+ * Implementation of hook_tokens().
  */
-function fundraiser_token_values($type, $object = NULL) {
-  $values = array();
+function fundraiser_tokens($type, $tokens, array $data = array(), array $options = array())
+  $replacements = array();
   switch ($type) {
-    case 'fundraiser':
-      $values['fundraiser-cc-last-four'] = substr($object->payment_details['cc_number'], -4);
-      $values['fundraiser-cc-card-exp-month'] = $object->payment_details['cc_exp_month'];
-      $values['fundraiser-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
-      $values['fundraiser-cc-card-type'] = ucfirst($object->payment_details['cc_type']);
+    case 'donation':
+      if (!empty($data->donation)) {
+        $replacements['fundraiser-cc-last-four'] = substr($data->donation['card_number'], -4);
+        $replacements['fundraiser-cc-card-exp-month'] = $data->donation['card_expiration_month'];
+        $replacements['fundraiser-cc-card-exp-year'] = $data->donation['card_expiration_year'];
+        $replacements['fundraiser-cc-card-type'] = ucfirst($data->donation['cc_type']);
+      }
       break;
   }
-  return $values;
+  return $replacements;
 }
-// TODO ^^^
 
 /**
  * Provides an additional mechanism to combine running regular token replacement
@@ -199,10 +215,11 @@ function fundraiser_token_values($type, $object = NULL) {
  */
 function _fundraiser_replace_tokens($message, $donation) {
   // First replace the normal token set.
-  $message = token_replace($message, array('order' => $donation->donation));
+  $message = token_replace($message, $donation);
+
   // Then replace based on the glue modules. Specifically for webform, which uses non-standard tokens.
   $message = module_invoke_all('fundraiser_replace_tokens', $message, $donation);
-  return $message[0];  // Return the first member of the result array, aka the message.
+  return $message[0];
 }
 
 /**

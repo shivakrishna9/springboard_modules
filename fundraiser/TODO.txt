@@ -121,8 +121,8 @@ function fundraiser_queue_report_item_title_alter(&$row) {
 function fundraiser_webform_submission_update($node, $submission) {
   if ($node->type == 'donation_form') {
     if (module_exists('queue_api')) {
-      $order_id = db_query('SELECT f.order_id FROM {fundraiser_webform_order} f ' .
-        'INNER JOIN {uc_orders} u ON u.order_id = f.order_id ' .
+      $did = db_query('SELECT f.did FROM {fundraiser_webform_donation} f ' .
+        'INNER JOIN {uc_orders} u ON u.order_id = f.did ' .
         'WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = \'payment_received\'',
         array(':webform_nid' => $node->nid, ':sid' => $submission->sid))->fetchColumn();
       if ($order_id) {

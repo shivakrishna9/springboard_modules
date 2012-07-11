@@ -335,7 +335,7 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
   // Relate the donation id to webform before we try to process the payment.
   $webform_order = array(
     'webform_nid' => $donation->nid,
-    'order_id' => $donation->did,
+    'did' => $donation->did,
     'sid' => $donation->sid,
     'recurring_status' => $donation->submission['recurs_monthly'],
     // TODO In the future we should clarify these data fields to clean up the database as a whole.
@@ -367,7 +367,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   }
   $webform_order = array(
     'webform_nid' => $donation->nid,
-    'order_id' => $donation->did,
+    'did' => $donation->did,
     'gateway' => $donation->node->gateway,
     'sid' => $donation->sid,
     'txn_id' => $txn_id,
@@ -382,7 +382,7 @@ function fundraiser_webform_fundraiser_donation_success($donation) {
   if (isset($donation->donation->data['recurring_status']) && ($donation->donation['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
     $webform_order = array(
       'webform_nid' => $donation->nid,
-      'order_id' => $donation->did,
+      'did' => $donation->did,
       'sid' => $donation->sid,
       'recurring_status' => $donation->donation->data['recurring_status'],
     );
@@ -398,9 +398,9 @@ define('DONATION_CANCELLED', 2);
  * Implements hook_fundraiser_donation_cancel().
  */
 function fundraiser_webform_fundraiser_donation_cancel($donation) {
-  db_query('UPDATE {fundraiser_webform_order} ' .
+  db_query('UPDATE {fundraiser_webform_donation} ' .
    'SET recurring_status = :recurring_status ' .
-   'WHERE order_id = :did',
+   'WHERE did = :did',
     array(':recurring_status' => DONATION_CANCELLED, ':did' => $donation->did));
 }
 
@@ -645,9 +645,9 @@ function _fundraiser_webform_create_webform_order($webform_order) {
   $webform_order = (array) $webform_order;
   // Check for old data.
   $webform_order_data = FALSE;
-  if (isset($webform_order['webform_nid']) && isset($webform_order['order_id'])) {
+  if (isset($webform_order['webform_nid']) && isset($webform_order['did'])) {
     $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did(
-      $webform_order['webform_nid'], $webform_order['order_id']);
+      $webform_order['webform_nid'], $webform_order['did']);
   }
   if (!$webform_order_data) {
     $record = $webform_order;
@@ -662,9 +662,9 @@ function _fundraiser_webform_create_webform_order($webform_order) {
  * CRUD style DB function for fundraiser_webform_order.
  */
 function _fundraiser_webform_get_webform_order_by_nid_did($nid, $did) {
-  return db_query('SELECT * FROM {fundraiser_webform_order} ' .
+  return db_query('SELECT * FROM {fundraiser_webform_donation} ' .
     'WHERE webform_nid = :nid ' .
-    'AND order_id = :did', // TODO change this terminology.
+    'AND did = :did', // TODO change this terminology.
     array(':nid' => $nid, ':did' => $did))->fetchObject();
 }
 
@@ -676,9 +676,9 @@ function _fundraiser_webform_update_webform_order($webform_order) {
   $webform_order = (array) $webform_order;
   // Check for old data.
   $webform_order_data = FALSE;
-  if (isset($webform_order['webform_nid']) && isset($webform_order['order_id'])) {
+  if (isset($webform_order['webform_nid']) && isset($webform_order['did'])) {
     $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did(
-      $webform_order['webform_nid'], $webform_order['order_id']);
+      $webform_order['webform_nid'], $webform_order['did']);
   }
   if (!$webform_order_data) {
     _fundraiser_webform_create_webform_order($webform_order);
@@ -686,7 +686,7 @@ function _fundraiser_webform_update_webform_order($webform_order) {
   else {
     $record = array_merge((array) $webform_order_data, $webform_order); 
     // Merge data together so we get everything in the record.
-    drupal_write_record('fundraiser_webform_order', $webform_order, array('webform_nid', 'order_id'));
+    drupal_write_record('fundraiser_webform_order', $webform_order, array('webform_nid', 'did'));
   }
 }
 
@@ -694,15 +694,15 @@ function _fundraiser_webform_update_webform_order($webform_order) {
  * CRUD style DB function for fundraiser_webform_order.
  */
 function _fundraiser_webform_delete_webform_order($nid, $did) {
-  db_delete('fundraiser_webform_order')->condition('webform_nid', $nid)->condition('order_id', $did)->execute();
+  db_delete('fundraiser_webform_order')->condition('webform_nid', $nid)->condition('did', $did)->execute();
 }
 
 /**
  * DB function, get submission from a donation form.
  */
 function _fundraiser_webform_get_webform_order_by_did($did) {
-  return db_query('SELECT * FROM {fundraiser_webform_order} ' .
-    'WHERE order_id = :did', // TODO change this terminology.
+  return db_query('SELECT * FROM {fundraiser_webform_donation} ' .
+    'WHERE did = :did', // TODO change this terminology.
     array(':did' => $did))->fetchObject();
 }
 

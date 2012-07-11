@@ -255,6 +255,7 @@ function fundraiser_update_7000() {
         'uid' => $donation->uid,
       );
       // Add gateway and transaction information from webform.
+      // Note on the update for fundraiser_webform 7001 this table is renamed to fundraiser_webform_donation
       $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
         array(':did' => $donation->order_id));
       foreach($gateway_infos as $gateway_info) {

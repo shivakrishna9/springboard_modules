@@ -81,7 +81,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
     $sid = $matches[1];  
     
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order_id = db_result(db_query("SELECT did FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
     
     // load the order and make sure the information in the order matches what was submitted
     $order = uc_order_load($order_id);
@@ -102,7 +102,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->assertEqual($order->products[0]->nid, $node->nid, t('Make sure the product\'s node id is equal to the node id of the donation form'));
      
     // verify fundraiser_webform_order record
-    $webform_order = db_fetch_array(db_query("SELECT * FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $webform_order = db_fetch_array(db_query("SELECT * FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
     $this->assertEqual($webform_order['webform_nid'], $node->nid, t('Make sure the correct node id is stored in submission order mapping table'));
     $this->assertEqual($webform_order['order_id'], $order_id, t('Make sure the correct order id is stored in submission order mapping table'));
     $this->assertEqual($webform_order['sid'], $sid, t('Make sure the correct submission id is stored in submission order mapping table')); 
@@ -142,7 +142,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
     $sid = $matches[1];  
     
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order_id = db_result(db_query("SELECT did FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
     $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
     $this->assertEqual($count, 3, t('Make sure the 3 recurring orders were created.')); 
 
@@ -184,7 +184,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->assertEqual($order->order_status, 'failed', t('Make sure order status is set to failed'));
     
     // make sure there is no fundraiser_webform_order entry
-    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_webform_donation} WHERE order_id = %d", $order_id));
     $this->assertEqual($count, 0, t('No fundraiser_webform_order created'));
     
     // make sure no invalid values are saved to the profile_values table

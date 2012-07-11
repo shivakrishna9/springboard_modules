@@ -1039,7 +1039,7 @@ function gm_ogone_feedback_accepted() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     // If no Alias could be set, the donation cannot be recurring
@@ -1086,7 +1086,7 @@ function gm_ogone_feedback_accepted() {
 function gm_ogone_feedback_declined() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_decline($order_id, $message);
@@ -1104,7 +1104,7 @@ function gm_ogone_feedback_declined() {
 function gm_ogone_feedback_exception() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_exception($order_id, '');
@@ -1123,7 +1123,7 @@ function gm_ogone_feedback_exception() {
 function gm_ogone_feedback_cancelled() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
 
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_cancel($order_id);

@@ -938,7 +938,7 @@ function gm_authorizenet_refund($order_id, $amount, $data) {
   }
   
   if ($order_id > 0) {
-    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
+    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_donation} WHERE did = %d', array($order_id)));
     
     // Set the transaction type to credit, and the ID of the previous charge to refund against
     $data['txn_type'] = UC_CREDIT_CREDIT;
