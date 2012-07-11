@@ -194,7 +194,7 @@ function fundraiser_token_info() {
 /**
  * Implementation of hook_tokens().
  */
-function fundraiser_tokens($type, $tokens, array $data = array(), array $options = array())
+function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
   switch ($type) {
     case 'donation':
