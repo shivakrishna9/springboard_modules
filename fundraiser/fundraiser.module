@@ -1165,7 +1165,7 @@ function _fundraiser_refund($form, &$form_state, $did) {
   $form = array();
   // Given a donation ID, grab all relevant information to create the form.
   $donation = fundraiser_donation_get_donation($did);
-  $form['#donation'] = $donation;
+  $form['#donation'] = $form_state['#donation'] = $donation;
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
     '#title' => t('Payment Summary'),
@@ -1311,7 +1311,7 @@ function _fundraiser_refund_validate($form, &$form_state) {
  */
 function _fundraiser_refund_submit($form, &$form_state) {
   // Get the donation.
-  $did = $form['#donation']->did;
+  $donation = $form['#donation'];
 
   // Determine how much has been paid, less previous refunds
   $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
@@ -1339,9 +1339,9 @@ function _fundraiser_refund_submit($form, &$form_state) {
   $donation->donation['refund_amount'] = $amount;
   $donation->donation['refund_reason'] = $form_state['values']['refund_notes'];
   // A refunded donation is simply another donation with a reverse charge on it.
+  $donation->refunded_donation_did = $donation->did;
   unset($donation->did);
   $refund = clone $donation;
-  $refund->refunded_donation_did = $donation->did;
   fundraiser_donation_create($refund);
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_refund($refund);
@@ -1350,7 +1350,7 @@ function _fundraiser_refund_submit($form, &$form_state) {
     $refund->result['message'] = '';
   }
   // The results should be at $donation->result, ready to respond to the aftermath.
-  if (isset($refund->result['success']) && $refund->result['success']) {
+  if (isset($refund->result['success']) && $refund->result['success'] == TRUE) {
     fundraiser_donation_refund_success($refund);
   }
   else {
@@ -1392,7 +1392,7 @@ function fundraiser_donation_create($donation) {
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid,  // Submission user id.
     'gateway' => $fundraiser_node->gateway,
-    'txn_id' => $fundraiser_node->txn_id, //TODO fill this in.
+    'txn_id' => '',
   );
   _fundraiser_create_donation($donation_record);
 }
@@ -1413,7 +1413,7 @@ function fundraiser_donation_update($donation) {
     'nid' => $donation->nid,
     'uid' => $donation->uid,
     'gateway' => $fundraiser_node->gateway,
-    'txn_id' => $fundraiser_node->txn_id, //TODO fill this in.
+    'txn_id' => '',
   );
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -1549,10 +1549,10 @@ function fundraiser_donation_refund_success($refund) {
   $record->did = $refund->refunded_donation_did;
   $record->receipt_id = $refund->did;
   $record->amount = $refund->donation['refund_amount'];
-  $record->txn_id = $refund->result['data']['txn_id'];
+  $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : '';
   $record->reason = $refund->donation['refund_reason'];
-  drupal_write_record('fundraiser_refund', $refund);
-  $donation->refund = $refund;
+  drupal_write_record('fundraiser_refund', $record);
+  $refund->refund = $record;
   drupal_set_message(t('Refund has been issued.'), 'status');
   // Allow other modules to respond to the refund success. Such as SF modules.
   module_invoke_all('fundraiser_donation_refund_success', $refund);
@@ -1607,14 +1607,13 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   foreach ($refunds as $refund) {
     // TODO figure out how much has been paid and or refunded and add that here.
     $refund_donation = fundraiser_donation_get_donation($refund->receipt_id);
-    $donation->payment[]['receipt_id'] = $refund_donation->did;
-    $donation->payment[]['receipt_date'] = $refund_donation->last_changed;
+    $donation->payment['receipts'][] = array('id' => $refund_donation->did, 'date' => $refund_donation->last_changed);
     $refunded_total += abs($refund_donation->donation['amount']);
-    $refund_summary[] = t('Refund #%id for %amount on %date.',
+    $refund_summary[] = t('Refund #%id for $%amount on %date.',
       array('%id' => $refund_donation->did, '%amount' => abs($refund_donation->donation['amount']),
-        '%date' => date('m/d/y', $refund_donation->last_changed)));
+        '%date' => date('m/d/y', $refund_donation->last_changed))); //TODO fix up value display for international.
   }
-  $donation->payment['refunded_summary'] = theme('list-items', array('items' => $refund_summary));
+  $donation->payment['refunded_summary'] = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
   $donation->payment['refunded_total'] = $refunded_total;
 
   // Call hooks to re-create the donation info.
