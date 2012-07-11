@@ -83,18 +83,6 @@ function fundraiser_triggers_fundraiser_donation_update($donation) {
   $aids = trigger_get_assigned_actions('fundraiser_donation_update');
   actions_do(array_keys($aids), $donation, $context);
 }
-/**
- * Implements hook_fundraiser_donation_update().
- */
-function fundraiser_triggers_fundraiser_donation_update($donation) {
-  $context = array(
-    'group' => 'fundraiser',
-    'hook' => 'fundraiser_donation_update',
-    'donation' => $donation,
-  );
-  $aids = trigger_get_assigned_actions('fundraiser_donation_update');
-  actions_do(array_keys($aids), $donation, $context);
-}
 
 /**
  * Implements hook_fundraiser_donation_process().
