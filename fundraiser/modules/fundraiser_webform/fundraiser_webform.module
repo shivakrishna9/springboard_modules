@@ -165,6 +165,26 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_fundraiser_get_form_field().
+ */
+function fundraiser_webform_fundraiser_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key. Returns it when found.
+  return _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+}
+
+/**
+ * Implements hook_fundraiser_update_form_field().
+ */
+function fundraiser_webform_fundraiser_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
+  // Update the field in the form.
+  $field = $new_field;
+  // Return the form for the calling function.
+  return $form;
+}
+
+/**
  * Implements hook_fundraiser_donation_form().
  */
 function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
@@ -286,14 +306,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   }
 }
 
-
 /**
  * Implements hook_fundraiser_donation_submit().
  */
 function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $donation) {
-  // Retrieve data from the submission.
-  $sid = $form_state['values']['details']['sid'];
-  $donation->sid = $sid;
   // Given the set of fields defined in fundraiser, gab results here that match those fields.
   // Since we used the fundraiser_field_info keys to generate our webform components with the same form keys
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
@@ -332,17 +348,6 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
  * Implements hook_fundraiser_donation_post_submit().
  */
 function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation) {
-  // Relate the donation id to webform before we try to process the payment.
-  $webform_order = array(
-    'webform_nid' => $donation->nid,
-    'did' => $donation->did,
-    'sid' => $donation->sid,
-    'recurring_status' => $donation->submission['recurs_monthly'],
-    // TODO In the future we should clarify these data fields to clean up the database as a whole.
-    // For now this can live here until we clean up the database to remove redundant data like this.
-    // This data really should be handled in sustainers ONLY.
-  );
-  _fundraiser_webform_create_webform_order($webform_order);
   // Handle behavior if it was a failure.
   if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
@@ -355,78 +360,6 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     $form_state['rebuild'] = TRUE;
   }
   return $form_state;
-}
-
-/**
- * Implements hook_fundraiser_donation_success().
- */
-function fundraiser_webform_fundraiser_donation_success($donation) {
-  // Record that the donation was successful for the webform submission.
-  if (isset($donation->data['txn_id'])) {
-    $txn_id = $donation->data['txn_id'];
-  }
-  $webform_order = array(
-    'webform_nid' => $donation->nid,
-    'did' => $donation->did,
-    'gateway' => $donation->node->gateway,
-    'sid' => $donation->sid,
-    'txn_id' => $txn_id,
-  );
-  _fundraiser_webform_update_webform_order($webform_order);
-
-  // Update the uid on the webform submission table.
-  _fundraiser_webform_update_submissions($donation->uid, $donation->sid);
-
-  // Update the recurring status, if it was changed by the payment gateway module
-  // TODO This should be moved or removed entirely. We don't need to know this stuff here!
-  if (isset($donation->donation->data['recurring_status']) && ($donation->donation['recurs_monthly'] != $donation->donation->data['recurring_status'])) {
-    $webform_order = array(
-      'webform_nid' => $donation->nid,
-      'did' => $donation->did,
-      'sid' => $donation->sid,
-      'recurring_status' => $donation->donation->data['recurring_status'],
-    );
-    //TODO In the future we should clarify these data fields to clean up the database as a whole. For now this
-    // can live here until we clean up the database to remove redundant data like this.
-    _fundraiser_webform_update_webform_order($webform_order);
-  }
-}
-
-define('DONATION_CANCELLED', 2);
-
-/**
- * Implements hook_fundraiser_donation_cancel().
- */
-function fundraiser_webform_fundraiser_donation_cancel($donation) {
-  db_query('UPDATE {fundraiser_webform_donation} ' .
-   'SET recurring_status = :recurring_status ' .
-   'WHERE did = :did',
-    array(':recurring_status' => DONATION_CANCELLED, ':did' => $donation->did));
-}
-
-// Commented out, this retrieves the initial submission data.
-// This should be the responsibility of a different module.
-// Left available in case we decide to use it later.
-/**
- * Implements hook_fundraiser_donation_get_donation().
- *
-function fundraiser_webform_fundraiser_donation_get_donation($donation) {
-  $submission = _fundraiser_webform_get_webform_order_by_did($donation->did);
-  if ($submission) {
-    $donation->sid = $submission->sid;
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $donation->submission = webform_get_submission($donation->nid, $donation->sid); // From webform.submissions.inc
-  }
-}
-*/
-
-/**
- * Implements hook_fundraiser_replace_tokens().
- */
-function fundraiser_webform_fundraiser_replace_tokens($message, $donation) {
-  // Replace the message with webform psuedo-tokens.
-  $message = _webform_filter_values($message, $donation->node, $donation->submission, NULL, FALSE); // From webform.module
-  return $message;
 }
 
 /**
@@ -586,26 +519,6 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
 }
 
 /**
- * Implements hook_fundraiser_get_form_field().
- */
-function fundraiser_webform_fundraiser_get_form_field($form, $field_key) {
-  // Walks a given form looking for the given key. Returns it when found.
-  return _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
-}
-
-/**
- * Implements hook_fundraiser_update_form_field().
- */
-function fundraiser_webform_fundraiser_update_form_field($form, $field_key, $new_field) {
-  // Walks a given form looking for the given key. Returns it when found.
-  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, $field_key));
-  // Update the field in the form.
-  $field = $new_field;
-  // Return the form for the calling function.
-  return $form;
-}
-
-/**
  * Helper function, returns a reference to an element of a FAPI array based on a known path.
  * This returns a reference to the form variable, allowing for manipulation into the form array.
  */
@@ -624,75 +537,6 @@ function &_fundraiser_webform_find_field(&$form, $path) {
 /**
  * DB functions.
  */
-
-/**
- * CRUD style DB function for fundraiser_webform_order.
- */
-function _fundraiser_webform_create_webform_order($webform_order) {
-  // Cast donation just in case.
-  $webform_order = (array) $webform_order;
-  // Check for old data.
-  $webform_order_data = FALSE;
-  if (isset($webform_order['webform_nid']) && isset($webform_order['did'])) {
-    $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did(
-      $webform_order['webform_nid'], $webform_order['did']);
-  }
-  if (!$webform_order_data) {
-    $record = $webform_order;
-    drupal_write_record('fundraiser_webform_order', $record);
-  }
-  else {
-    _fundraiser_webform_update_webform_order($webform_order);
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_webform_order.
- */
-function _fundraiser_webform_get_webform_order_by_nid_did($nid, $did) {
-  return db_query('SELECT * FROM {fundraiser_webform_donation} ' .
-    'WHERE webform_nid = :nid ' .
-    'AND did = :did', // TODO change this terminology.
-    array(':nid' => $nid, ':did' => $did))->fetchObject();
-}
-
-/**
- * CRUD style DB function for fundraiser_webform_order.
- */
-function _fundraiser_webform_update_webform_order($webform_order) {
-  // Cast donation just in case.
-  $webform_order = (array) $webform_order;
-  // Check for old data.
-  $webform_order_data = FALSE;
-  if (isset($webform_order['webform_nid']) && isset($webform_order['did'])) {
-    $webform_order_data = _fundraiser_webform_get_webform_order_by_nid_did(
-      $webform_order['webform_nid'], $webform_order['did']);
-  }
-  if (!$webform_order_data) {
-    _fundraiser_webform_create_webform_order($webform_order);
-  }
-  else {
-    $record = array_merge((array) $webform_order_data, $webform_order); 
-    // Merge data together so we get everything in the record.
-    drupal_write_record('fundraiser_webform_order', $webform_order, array('webform_nid', 'did'));
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_webform_order.
- */
-function _fundraiser_webform_delete_webform_order($nid, $did) {
-  db_delete('fundraiser_webform_order')->condition('webform_nid', $nid)->condition('did', $did)->execute();
-}
-
-/**
- * DB function, get submission from a donation form.
- */
-function _fundraiser_webform_get_webform_order_by_did($did) {
-  return db_query('SELECT * FROM {fundraiser_webform_donation} ' .
-    'WHERE did = :did', // TODO change this terminology.
-    array(':did' => $did))->fetchObject();
-}
 
 /**
  * DB function, update submissions table with the right uid, sids.
