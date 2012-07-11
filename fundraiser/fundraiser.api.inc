@@ -1,6 +1,29 @@
 <?php
 
 /**
+ * IMPLEMENTATION NOTES:
+ *
+ * The exact implementation of a donor form as displayed to a user to place a donation has been moved
+ * to an exterior module. (currently webform) So long as we are using an exterior module to display the 
+ * form we want, the exact details will be handled by a glue module to link fundraiser to whatever display
+ * implementation we use. This allows us future flexibility and separation of concerns in code.
+ *
+ * As a result this module does not form_alter webform forms. That's the glue's job. It also means
+ * that picking the workflow back up of processing a donation is by executing a process call in fundraiser
+ * from the submit in the glue module. So if you don't see a straight path from one to the other in this module
+ * it's because the control of flow goes into the glue module before coming back here.
+ *
+ * Donations themselves are also tracked in an exterior module. (currently ubercart) A glue module is
+ * provided for this as well. Donations are stored as orders in Ubercart, and the glue module translates. So
+ * the exterior module handling the purchasing stage of things is the one that needs to be aware of things like
+ * states, user info, and the like. To allow multiple gateways to be used depending on the fundraiser, fundraiser 
+ * does interact with a list of available gateways for use during processing.
+ *
+ * In practice this means, exterior modules are blind to each other, and fundraiser is blind to them. The
+ * glue moduled between them are the only systems aware of more than one module at a time.
+ */
+
+/**
  * Available fundraiser hooks.
  */
 
@@ -160,3 +183,133 @@ function hook_fundraiser_delete_fundraiser_alter($fundraiser) {}
  * Return gateway information from a given donation.
  */
 function hook_fundraiser_get_donation_gateway($did, $gateway) {}
+
+/**
+ * An example donation object. This is the object returned when you request a donation object.
+ * It is built by hooks that query the various sub and glue modules, and is cached at that time.
+ * Use this object to gather all your values that may be needed during donation processing.
+ * It is worth noting, all fields under [donation] are keyed according to the field information
+ * provided by the fundraiser field api.
+
+stdClass Object
+(
+    [did] => 1
+    [nid] => 1
+    [node] => stdClass Node Object
+    [uid] => 1
+    [user] => stdClass User Object
+    [gateway] => Array
+        (
+            [title] => Test Gateway
+            [description] => Process credit card payments through the Test Gateway.
+            [credit] => test_gateway_charge
+            [id] => test_gateway
+            [enabled] => 1
+        )
+    [txn_id] => ''
+    [payment] => Array
+        (
+            [receipt_id] => ''
+            [receipt_date] => ''
+            [refund_summary] => ''
+            [refunded_total] => ''
+        )
+    [donation] => Array
+        (
+            [recurs_monthly] => ''
+            [amount] => 10
+            [other_amount] => ''
+            [first_name] => firstname
+            [last_name] => lastname;
+            [email] => example@example.com
+            [address] => address1
+            [address_line_2] => address2
+            [city] => city
+            [country] => 840
+            [state] => 15
+            [zip] => 12345
+            [card_number] => 1111
+            [card_expiration_month] => 6
+            [card_expiration_year] => 2012
+            [card_cvv] => ''
+            [cc_type] => visa
+        )
+    [status] => failed
+    [last_changed] => timestamp
+    [data] => Array
+        (
+            [cc_data] => <encrypted cc data string> 
+            [txn_type]=> reference_txn
+            [ref_id] => ''
+        )
+)
+
+ */
+
+/**
+ * The fundraiser field API is an additional API that focuses on the creation, handling and updating of
+ * fields in the fundraiser system. Since both field display and charge processing are agnostic in this system,
+ * we need a central location through which information about the fields fundraiser expects may flow.
+ * The field_info array is it. Fundraiser builds the array from it's own information and any information
+ * presented to it by other modules. Other modules also have the opportunity to add validation and submit routines
+ * for each of these fields, and will have access to the submitted results according to the field keys given.
+ * This system is the backbone of how one glue module may speak to and interact with the other.
+ *
+ * The #create_callback is used for fields whose settings are dependant on the values given during field creation.
+ * For example, the amount field could be displayed as a select box or as a text field depending on fundraiser's settings.
+ * So the field callback checks during field creation based on the associated fundraiser node to determine which.
+ *
+ * The #display_callback is an additional callback to allow another module to override display from the glue module.
+ * This is useful if another module can provide a more focused implementation of the form element than the glue module can.
+ * For example, the chargeing module may be more aware of available countries/states than the glue module, and can override
+ * the creation and display to match this allowing for an AJAX interface.
+ */
+ 
+/**
+ * An example field info structure. This array allows modules to check with fundraiser
+ * regarding any fields it thinks it needs. Use this array to generate forms, submit results,
+ * or tell other modules how to generate, display, or validate your own fields.
+
+Array
+(
+    [donation] => Array
+        (
+            [#title] => Donation
+            [#type] => fieldset
+            [#required] => 0
+            [amount] => Array
+                (
+                    [#title] => Amount
+                    [#type] => textfield
+                    [#required] => 1
+                    [#extra] => Array
+                        (
+                            [description] => ''
+                            [width] => 10
+                            [field_prefix] => $
+                        )
+
+                    [#create_callback] => _fundraiser_amount_field_create
+                )
+
+            [other_amount] => Array
+                (
+                    [#title] => Other
+                    [#type] => textfield
+                    [#required] => 0
+                    [#extra] => Array
+                        (
+                            [description] => Minimum payment $10.
+                            [width] => 10
+                            [field_prefix] => $
+                        )
+
+                    [#create_callback] => _fundraiser_other_amount_field_create
+                    [#display_callback] => ''
+                    [#validate_callback] => _fundraiser_other_amount_field_validate
+                )
+
+        )
+)
+
+ */
