@@ -21,7 +21,9 @@ function fundraiser_donations_admin() {
       $row[] = l($this_donation->did, 'admin/config/system/fundraiser/donations/' . $this_donation->did);
       $row[] = $this_donation->user->name;
       $row[] = '$' . money_format('%i', $this_donation->donation['amount']);
-      $row[] = date('m/d/y', isset($this_donation->payment['receipt_date']) ? $this_donation->payment['receipt_date'] : $this_donation->last_changed);
+      $date = isset($this_donation->payment['receipt_date']) && !empty($this_donation->payment['receipt_date']) ?
+        $this_donation->payment['receipt_date'] : $this_donation->last_changed;
+      $row[] = date('m/d/y', $date);
       $row[] = $this_donation->status;
       $rows[] = $row;
     }
