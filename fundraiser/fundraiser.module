@@ -1279,6 +1279,9 @@ function _fundraiser_refund($form, &$form_state, $did) {
  * Validate the form
  */
 function _fundraiser_refund_validate($form, &$form_state) {
+  // Get the donation.
+  $donation = $form['#donation'];
+
   // Make sure they chose a refund type
   if (empty($form_state['values']['refund_type'])) {
     form_set_error('refund_type', t('Choose a refund type.'));
@@ -1286,12 +1289,10 @@ function _fundraiser_refund_validate($form, &$form_state) {
   // If it isn't a full refund, make sure they entered a valid value
   elseif ($form_state['values']['refund_type'] != 'full') {
     $amount = (float) $form_state['values']['amount'];
-    if (!($amount > 0)) {
+    if ($amount <= 0) {
       form_set_error('amount', t('Enter a refund amount.'));
     }
     else {
-      // Make sure they don't try to refund more than was paid
-      $did = $form['#donation']->did;
       // Determine how much has been paid, less previous refunds
       $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
       if ($amount > $able_to_refund) {
@@ -1321,8 +1322,7 @@ function _fundraiser_refund_submit($form, &$form_state) {
     $new_order_status = 'partially_refunded';
     $amount = (float) $form_state['values']['amount'];
     // Can't refund more than they've paid
-    // Use >= so that the status is set properly if they choose Partial Refund
-    // but refund the entire amount
+    // Use >= so that the status is set properly if they choose Partial Refund.
     if ($amount >= $able_to_refund) {
       $amount = $able_to_refund;
       $new_order_status = 'refunded';
@@ -1336,12 +1336,13 @@ function _fundraiser_refund_submit($form, &$form_state) {
 
   // Make the charge amount negative
   $amount = abs($amount) * -1;
+  $refund = clone $donation;
+  $refund->donation['amount'] = $amount;
+  // A refunded donation is simply another donation with a reverse charge on it.
+  $refund->refunded_donation_did = $refund->did;
+  unset($refund->did);
   $donation->donation['refund_amount'] = $amount;
   $donation->donation['refund_reason'] = $form_state['values']['refund_notes'];
-  // A refunded donation is simply another donation with a reverse charge on it.
-  $donation->refunded_donation_did = $donation->did;
-  unset($donation->did);
-  $refund = clone $donation;
   fundraiser_donation_create($refund);
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_refund($refund);
@@ -1355,6 +1356,7 @@ function _fundraiser_refund_submit($form, &$form_state) {
   }
   else {
     $donation->result['success'] = FALSE;
+    drupal_set_message(t('Your refund failed to be processed.'));
     fundraiser_donation_refund_decline($refund);
     $form_state['rebuild'] = TRUE;
     $form_state['values']['abort'] = TRUE;
