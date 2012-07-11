@@ -685,10 +685,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
     'did' => $donation->did,
     'master_did' => $donation->did,
     'next_charge' => strtotime('now'),
-    'gateway' => $donation->node->gateway,
     'gateway_resp' => 'success',
     'attempts' => 1,
-    'txn_id' => '',
   );
   // Update the recurring table.
   _fundraiser_sustainers_create_recurring($recurring_donation);
@@ -717,7 +715,6 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
         'master_did' => $donation->did,
         'did' => $new_donation->did,
         'next_charge' => strtotime('+ '. $processed_months .' months'),
-        'gateway' => $donation->node->gateway,
       );
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
@@ -865,7 +862,6 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
   }
 }
 
-
 /**
  * Implements hook_fundraiser_donation_cancel().
  */
@@ -875,61 +871,6 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
     _fundraiser_sustainers_delete_recurring($donation->did);
   }
 }
-
-/**
- * Helper function, override of Drupal core expand_date found in includes/form.inc
- *
-function _fundraiser_sustainers_expand_date($element) {
-  // Default to current date
-  if (empty($element['#value'])) {
-    $element['#value'] = array(
-      'day' => format_date(time(), 'custom', 'j'),
-      'month' => format_date(time(), 'custom', 'n'),
-      'year' => format_date(time(), 'custom', 'Y')
-    );
-  }
-  $element['#tree'] = TRUE;
-
-  // Determine the order of day, month, year in the site's chosen date format.
-  $format = variable_get('date_format_short', 'm/d/Y - H:i');
-  $sort = array();
-  $sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
-  $sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
-  $sort['year'] = strpos($format, 'Y');
-  asort($sort);
-  $order = array_keys($sort);
-  $current_year = date('Y');
-
-  // Output multi-selector for date.
-  foreach ($order as $type) {
-    switch ($type) {
-      case 'day':
-        $options = drupal_map_assoc(range(1, 31));
-        break;
-      case 'month':
-        $options = drupal_map_assoc(range(1, 12), 'map_month');
-        break;
-      case 'year':
-        $options = drupal_map_assoc(range($current_year, $current_year + 10));
-        break;
-    }
-    $parents = $element['#parents'];
-    $parents[] = $type;
-    $element[$type] = array(
-      '#type' => 'select',
-      '#value' => $element['#value'][$type],
-      '#attributes' => $element['#attributes'],
-      '#options' => $options,
-    );
-    // Hide element day.
-    $element['day'] = array(
-      '#type' => 'hidden',
-      '#value' => 1,
-    );
-  }
-  return $element;
-}
-//*/
 
 /**
  * Helper function, loads the recurring donation processor key.
