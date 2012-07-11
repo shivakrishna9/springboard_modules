@@ -1466,11 +1466,9 @@ function fundraiser_donation_create($donation) {
  * For example, in the course of updating a sustainers information.
  */
 function fundraiser_donation_update($donation) {
-  // Allow other modules to add additional fields to the donation before processing the payment
-  module_invoke_all('fundraiser_donation_update_additional', $donation);
-  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
+  // The additional fields $donation->additional, ready to process.
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
   $fundraiser_node = node_load($donation->nid);
@@ -2060,7 +2058,7 @@ function _fundraiser_get_donation_gateway($did) {
       'WHERE d.did = :did', array(':did' => $did))->fetchField();
   }
   // Now ask if any other module wants to override this result.
-  module_invoke('get_donation_gateway', $did, $gateway);
+  module_invoke('fundraiser_get_donation_gateway', $did, $gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
   if (isset($gateway->gateway)) {
     return _fundraiser_gateway_info($gateway->gateway);

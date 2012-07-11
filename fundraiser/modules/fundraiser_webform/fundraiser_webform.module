@@ -500,18 +500,6 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 }
 
 /**
- * Implements hook_get_donation_gateway().
- */
-function fundraiser_webform_get_donation_gateway($did, $gateway) {
-  // Get details on the original payment so we can load the payment gateway details.
-  $submission = _fundraiser_webform_get_webform_order_by_did($did);
-  if (!$submission) {
-    return '';
-  }
-  return $submission->gateway;
-}
-
-/**
  * Implements hookfundraiser_field_info_alter().
  */
 function fundraiser_webformfundraiser_field_info_alter($fields) {
