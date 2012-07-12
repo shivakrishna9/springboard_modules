@@ -300,6 +300,12 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  $form['fundraiser_cc_expiration_message']['fundraiser_sustainers_no_email'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send expiration email'),
+    '#description' => t('If this option is enabled then emails will be sent when a card is about to expire.'),
+    '#default_value' => variable_get('fundraiser_sustainers_no_email', TRUE),
+  );
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Email subject'),
@@ -911,6 +917,11 @@ function fundraiser_sustainers_processor_key_match() {
  * Helper function, kicks off an email to a sustainer to remind them their credit card is about to expire.
  */
 function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
+  // Short circuit this email if the configuration for fundraiser says don't send it.
+  if (variable_get('fundraiser_sustainers_no_email', TRUE)) {
+    return;
+  }
+  // Otherwise, send it.
   $user = user_load($uid);
   // Load the last remaining order so we can get some info for the email.
   $did = db_query('SELECT did FROM {fundraiser_recurring} WHERE master_did = :master_did AND gateway_resp IS NULL LIMIT 0,1',
