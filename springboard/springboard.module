@@ -692,12 +692,12 @@ function springboard_quick_jump_submit($form, $form_state) {
  * Syncronization callback for Springboard Sync button.
  */
 function _springboard_syncronize($op = 'both') {
-  if (module_exists('queue_processor') && ($op == 'fundraiser' || $op == 'both')) {
+  if (module_exists('queue_processor') && ($op == 'queue_processor' || $op == 'both')) {
     module_load_include('module', 'queue_processor');
     queue_processor_process();
     drupal_set_message('Salesforce queues have been processed.');
   }
-  if (module_exists('fundraiser') && ($op == 'queue_processor' || $op == 'both')) {
+  if (module_exists('fundraiser') && ($op == 'fundraiser' || $op == 'both')) {
     module_load_include('module', 'fundraiser');
     fundraiser_process_recurring_donations();
     drupal_set_message('Recurring donations have been processed.');
