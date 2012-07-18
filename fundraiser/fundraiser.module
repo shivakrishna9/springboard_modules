@@ -1023,6 +1023,12 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 		}
   }
 
+  // Alter the form on the webform's Form Settings tab
+  if ($form_id == 'webform_configure_form' && _fundraiser_is_donation_type($form['#parameters'][2])) {
+    // Hide fields that are on the Confirmations tab
+    $form['submission']['confirmation_wrapper']['#access'] = FALSE;
+    $form['submission']['redirection']['#access'] = FALSE;
+  }
 }
 
 
