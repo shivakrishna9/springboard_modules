@@ -8,11 +8,8 @@ Move the following code to the correct locations in other modules:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //REMOVE ALL BELOW THIS POINT.
 
-/**
- * Implements hook_form_alter
- */
 function form_layouts_form_alter(&$form, &$form_state, $form_id) {
-  // Add a setting to the fundraiser administation page to run on form layouts.
+  // Add a setting to the fundraiser administration page to run on form layouts.
   if ($form_id == 'fundraiser_admin_settings') {
     if (module_exists('form_layouts')) {
       $form['fundraiser_form_layouts'] = array(
@@ -37,11 +34,8 @@ function form_layouts_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-/**
- * Implements hook_form_alter
- */
 function sf_donation_form_alter(&$form, &$form_state, $form_id) {
-  // Add a setting to the fundraiser administation page to run on SF exports.
+  // Add a setting to the fundraiser administration page to run on SF exports.
   if ($form_id == 'fundraiser_admin_settings') {
     $description = 'Use this option if you want donations to be exported to Salesforce.';
     $attributes = array();
@@ -55,44 +49,24 @@ function sf_donation_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+// Only used in sf_queru_insert, so move over there.
+define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation');
+define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation');
+define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');
+
+function queue_api_fundraiser_donation_success($donation) {
+  if ($donation->donation['recurs_monthly'] == TRUE) {
+    sf_queue_insert($donation->did, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
+  }
+  else {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+  }
+}
+
 function queue_api_fundraiser_donation_refund_success($donation) {
-  // If using the Salesforce queue, queue up the updates
-  // This could be on hook couldn't it? - SeH
-  if (module_exists('queue_api')) {
-    // Update the original order
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-    // Create the refund
-    sf_queue_insert($donation->refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
-  }
+  sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  sf_queue_insert($donation->refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
 }
-
-define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation'); // Used in sf_queru_insert, so move over there.
-define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation'); // Used in sf_queru_insert, so move over there.
-define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');  // Used in sf_queru_insert, so move over there.
-
-/**
- * Adds an order to the Salesforce queue.
- *
- * @param $order
- *   The order to add to the queue.
- */
-// TODO: This should really be moved to the SF Donation module where it can listen for new orders being created.
-// NAME THIS AS PER: 
-function fundraiser_add_to_queue($donation) {
-  if (module_exists('queue_api')) {
-    if ($donation->donation->recurs == DONATION_RECURRING) {
-      sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
-    }
-    else {
-      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-    }
-  }
-}
-// Called inc ron on donation success charge.
-//      // Check for Salesforce Fundraiser module and update order status
-//      if (module_exists('sf_donation')) {
-//        sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-//      }
 
 /**
  * Implemenation of queue_report_item_name().  TODO where does this come from??
@@ -179,7 +153,6 @@ function sf_donation_fundraiser_donation_cancel($donation) {
   //}
 }
 
-
 /**
  * Includes code for updating billing information for recurring donations.
  * Each gateway will require it's own function named GATEWAY_ID_update_billing_information
@@ -190,6 +163,9 @@ function sf_donation_fundraiser_donation_cancel($donation) {
 /**
  * Authorize.net billing information update function.
  */
+// Trigger on hook_fundraiser_donation_update
+// Since the value is finalized AFTER this is run, you can grab the orig out of the DB and compare.
+// to determine if you need to update. (chances are you do, update is called for a reason.)
 function authorizenet_fundraiser_donation_update($donation) {
   $reference_id = $donation->donation->reference_id; // Make sure this is set by the related field.
   $billing_info = ''; // TODO construct this out of the donation info.
@@ -206,6 +182,7 @@ function authorizenet_fundraiser_donation_update($donation) {
 /**
  * Sage billing information update function.
  */
+// Trigger on hook_fundraiser_donation_update
 // TODO shouldn't this move elsewhere?
 function sage_fundraiser_donation_update($donation) {
   $reference_id = $donation->donation->reference_id;
