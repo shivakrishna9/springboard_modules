@@ -2,9 +2,7 @@
 TO DO LIST FOR FUTURE DEVELOPMENT
 ---------------------------------
 
-1) Cleanup further for hook and CRUD driven behaviors.
-2) Document clearly API for all other modules in Suite to follow / use.
-3) Move the following code to the correct locations in other modules:
+Move the following code to the correct locations in other modules:
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
