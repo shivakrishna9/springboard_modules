@@ -537,16 +537,7 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
  * Implements hook_fundraiser_donation_refund().
  */
 function fundraiser_ubercart_fundraiser_donation_refund($donation, $refund_function) {
-  // Get the data array.
-  $data = array();
-  if (module_exists('gateway_manager')) {
-    $info = gateway_manager_gateway_info($donation->node->gateway);
-    $data['config'] = $info['config'];
-  }
-  // Execute the refund.
-  $result = $refund_function($donation->did, $donation->donation['refund_amount'], $data);
-  // Have to pass up to the system.
-  $donation->result = $result;
+  fundraiser_ubercart_fundraiser_donation_process($donation, $refund_function);
 }
 
 /**
