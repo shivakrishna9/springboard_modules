@@ -316,6 +316,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   $donation->donation = $submission_fields;
+  $donation->sid = $form_state['values']['details']['sid']; 
 }
 
 /**
