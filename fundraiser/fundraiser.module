@@ -8,7 +8,7 @@
 // Include theme related functions.
 require_once('fundraiser.theme.inc');
 // Include confirmation stuff.
-require_once('fundraiser.confirmations.inc'); 
+require_once('fundraiser.confirmations.inc');
 
 /**
  * Implements hook_permission().
@@ -16,36 +16,36 @@ require_once('fundraiser.confirmations.inc');
 function fundraiser_permission() {
   return array(
     'administer fundraiser' => array(
-      'title' => t('Administer fundraiser'), 
+      'title' => t('Administer fundraiser'),
       'description' => t('Perform administration tasks for fundraiser.'),
     ),
     'refund donations' => array(
-      'title' => t('Refund donations'), 
+      'title' => t('Refund donations'),
       'description' => t('Refund donations for fundraiser.'),
     ),
     'create donation form' => array(
-      'title' => t('Create donation form'), 
+      'title' => t('Create donation form'),
       'description' => t('Create donation forms.'),
     ),
     'edit own donation form' => array(
-      'title' => t('Edit own donation form'), 
-      'description' => t('Edit own donation forms.'), 
+      'title' => t('Edit own donation form'),
+      'description' => t('Edit own donation forms.'),
     ),
     'edit any donation form' => array(
-      'title' => t('Edit any donation form'), 
-      'description' => t('Edit any donation forms.'), 
+      'title' => t('Edit any donation form'),
+      'description' => t('Edit any donation forms.'),
     ),
     'delete own donation form' => array(
-      'title' => t('Delete own donation form'), 
-      'description' => t('Delete own donation forms.'), 
+      'title' => t('Delete own donation form'),
+      'description' => t('Delete own donation forms.'),
     ),
     'delete any donation form' => array(
-      'title' => t('Delete any donation form'), 
-      'description' => t('Delete any donation forms.'), 
+      'title' => t('Delete any donation form'),
+      'description' => t('Delete any donation forms.'),
     ),
     'clone donation form' => array(
-      'title' => t('Clone donation form'), 
-      'description' => t('Clone donation forms.'), 
+      'title' => t('Clone donation form'),
+      'description' => t('Clone donation forms.'),
     ),
   );
 }
@@ -86,7 +86,7 @@ function fundraiser_menu() {
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
     'title' => 'Fundraiser settings',
-    'description' => t('Configurations for the Fundraiser system.'),
+    'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
     'access arguments' => array("administer fundraiser"),
@@ -95,7 +95,7 @@ function fundraiser_menu() {
   );
   $items['admin/config/system/fundraiser/settings'] = array(
     'title' => 'Fundraiser settings',
-    'description' => t('Configurations for the Fundraiser system.'),
+    'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
     'access arguments' => array("administer fundraiser"),
@@ -169,17 +169,17 @@ function fundraiser_token_info() {
 }
 
 /**
- * Implementation of hook_tokens().
+ * Implements hook_tokens().
  */
 function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
   switch ($type) {
     case 'donation':
       if (!empty($data->donation)) {
-        $replacements['fundraiser-cc-last-four'] = substr($data->donation['card_number'], -4);
+        $replacements['fundraiser-cc-last-four'] = drupal_substr($data->donation['card_number'], -4);
         $replacements['fundraiser-cc-card-exp-month'] = $data->donation['card_expiration_month'];
         $replacements['fundraiser-cc-card-exp-year'] = $data->donation['card_expiration_year'];
-        $replacements['fundraiser-cc-card-type'] = ucfirst($data->donation['cc_type']);
+        $replacements['fundraiser-cc-card-type'] = drupal_ucfirst($data->donation['cc_type']);
       }
       break;
   }
@@ -235,7 +235,7 @@ function fundraiser_clone_access_alter(&$access, $node) {
  */
 function fundraiser_clone_node_alter(&$node, $context) {
   // Set the internal name.
-  $node->internal_name = t('Clone of ') . $context['original_node']->internal_name;
+  $node->internal_name = t('Clone of %internal', array('%internal' => $context['original_node']->internal_name));
   // The additional load in hook_node_load already will have brought in additional node data.
   // The additional saves in hook_node_insert / hook_node_update will save the additional node data.
 }
@@ -250,7 +250,7 @@ function fundraiser_views_api() {
 }
 
 /**
- * Implementation of hook_access().
+ * Implementshook_access().
  */
 function fundraiser_access($op, $node, $account) {
   if (fundraiser_is_donation_type($node->type)) {
@@ -345,12 +345,12 @@ function fundraiser_node_presave($node) {
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       // If the remove marker is set.
       if (isset($donation_amount['remove']) && $donation_amount['remove'] == 1) {
-         unset($node->amount_wrapper['donation_amounts'][$index]);
+        unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
       // Or if the values aren't set.
       if (empty($donation_amount['label']) && empty($donation_amount['amount'])) {
-         unset($node->amount_wrapper['donation_amounts'][$index]);
+        unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
     }
@@ -523,7 +523,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
       $donation_amounts = array(
-        array(10, '$10'), 
+        array(10, '$10'),
         array(20, '$20'),
         array(50, '$50'),
         array(100, '$100'),
@@ -543,7 +543,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     }
   }
   $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. '.
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. ' .
       'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
 /*
@@ -560,7 +560,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'effect' => 'fade',
     ),
   );
-*/
+ */
   // Additional fundraiser settings.
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -735,7 +735,7 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 1,
   );
-   $fields['billing_information']['country'] = array(
+  $fields['billing_information']['country'] = array(
     '#title' => 'Country',
     '#type' => 'textfield',
     '#required' => 1,
@@ -974,7 +974,7 @@ function _fundraiser_update_form_field($form, $field_key, $new_field) {
     }
     else {
       // Check this child for other children.
-     $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
+      $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
     }
   }
   return $form;
@@ -1021,7 +1021,7 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
   $children = element_children($field_info);
   foreach ($children as $child) {
     $keys[$child] = '';
-    // Check only if the submission field is set. 
+    // Check only if the submission field is set.
     // And the additional validate callback exists.
     if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback'])
       && function_exists($field_info[$child]['#validate_callback'])) {
@@ -1029,7 +1029,7 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
         $submission_fields, $submission_fields[$child]);
       if (isset($error_message) && !empty($error_message)) {
         // Set the error.
-        form_set_error($child, $error_message);
+        form_set_error($child, $error_message); // Coder: This is ok.
         $errors = TRUE;
       }
     }
@@ -1185,7 +1185,7 @@ function _fundraiser_refund($form, &$form_state, $did) {
       '#type' => 'item',
       '#title' => t('Payment Total'),
       '#markup' => $donation->donation['amount'],
-    ); 
+    );
     $form['payment_summary']['refunded_total'] = array(
       '#type' => 'item',
       '#title' => t('Refunded Total'),
@@ -1223,7 +1223,7 @@ function _fundraiser_refund($form, &$form_state, $did) {
       $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
       // Even once the payment is made, they won't be able to refund it
       if (!$can_refund) {
-        $no_refund_text .= t(' However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+        $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
           'make refunds after payments are processed on this order.');
       }
     }
@@ -1445,6 +1445,7 @@ function fundraiser_donation_process($donation) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
+    $refund->data['config'] = isset($info['config']) ? $info['config'] : '';
     module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
 }
@@ -1675,7 +1676,7 @@ function _fundraiser_gateway_info($id = NULL) {
   return (array) $gateways;
 }
 
-/** 
+/**
  * Helper function, determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
@@ -1687,7 +1688,7 @@ function fundraiser_is_donation_type($type) {
   return $fundraiser_types[$type];
 }
 
-/** 
+/**
  * Helper function, determine if this node type supports donation forms.
  */
 function fundraiser_get_donation_types() {
@@ -1716,7 +1717,7 @@ function _fundraiser_is_secure() {
 
 /**
  * Helper function, smarter version of array_merge_recursive: overwrites scalar values.
- * @see PHP Manual on: array-merge-recursive comment #82976.
+ * See PHP Manual on: array-merge-recursive comment #82976.
  * Future plans: this may need to be moved to a toolkit module for use by all our modules.
  */
 function _fundraiser_array_smart_merge($array, $override) {
@@ -1753,13 +1754,13 @@ function _fundraiser_create_fundraiser($fundraiser) {
   $fundraiser = (array) $fundraiser;
   $fundraiser_data = FALSE;
   if (isset($fundraiser['nid'])) {
-    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
   }
   if (!$fundraiser_data) {
     // Implode donation amounds for saving.
     $imploded_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $donation_amount) {
-       $imploded_amounts[] = implode('|', $donation_amount);
+      $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
@@ -1809,7 +1810,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
   $fundraiser = (array) $fundraiser;
   $fundraiser_data = FALSE;
   if (isset($fundraiser['nid'])) {
-    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
   }
   if (!$fundraiser_data) {
     _fundraiser_create_fundraiser($fundraiser);
@@ -1819,7 +1820,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // Implode donation amounds for saving.
     $imploded_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $donation_amount) {
-       $imploded_amounts[] = implode('|', $donation_amount);
+      $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
@@ -2049,7 +2050,7 @@ function _fundraiser_create_tracking($tracking) {
 function _fundraiser_get_tracking_by_nid($nid) {
   return db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
 }
- 
+
 /**
  * CRUD style DB function for fundraiser_tracking.
  */

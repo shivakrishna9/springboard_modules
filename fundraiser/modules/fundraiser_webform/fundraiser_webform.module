@@ -106,7 +106,7 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
         $form['form_key']['#value'] = $form['form_key']['#default_value'];
       }
     }
-	}
+  }
   return $form;
 }
 
@@ -131,7 +131,7 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     $recurs = t('No');
     if (isset($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0])
       && ($form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs')) {
-      $recurs = t('Yes'); 
+      $recurs = t('Yes');
     }
     $form['submitted']['donation']['recurring'] = array(
       '#markup' => '<div class="form-item"><label>' . t('Recurring Donation?') .
@@ -261,9 +261,9 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
  * So: We put everything back after we're done so that webform never knows the difference.
  */
 function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
-  $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] = 
+  $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] =
       $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_month'];
-  $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] = 
+  $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] =
       $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_year'];
   // Remove 'expiration_date' so webform doesn't get confused when it tries to process.
   unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
@@ -290,9 +290,9 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     // SCRUB DATA. We do not want to save these in the error watchdog message.
     // We can be sure these fields are in the set, since they're declared in fundraiser.
     $submission_fields['card_number'] = substr_replace($submission_fields['card_number'],
-      str_repeat('*', strlen($submission_fields['card_number'])), 0);
+      str_repeat('*', drupal_strlen($submission_fields['card_number'])), 0);
     $submission_fields['card_cvv'] = substr_replace($submission_fields['card_cvv'],
-      str_repeat('*', strlen($submission_fields['card_cvv'])), 0);
+      str_repeat('*', drupal_strlen($submission_fields['card_cvv'])), 0);
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
@@ -316,7 +316,7 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   $donation->donation = $submission_fields;
-  $donation->sid = $form_state['values']['details']['sid']; 
+  $donation->sid = $form_state['values']['details']['sid'];
 }
 
 /**
@@ -331,7 +331,7 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
       if ($component->type != 'fieldset') {
         $submission_keys[] = $component->form_key;
       }
-    } 
+    }
   }
   $flat_array = array();
   foreach ($submit_tree as $key => $value) {
@@ -341,7 +341,7 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
     }
   }
   // Filter to only submission key results.
-  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys,$submission_keys));
+  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
   return $flat_array;
 }
 
@@ -439,7 +439,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 function fundraiser_webformfundraiser_field_info_alter($fields) {
   $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'email', 'address', 'address_line_2',
     'city', 'zip', 'country', 'state');
-  foreach(element_children($fields) as $key) {
+  foreach (element_children($fields) as $key) {
     $fields[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
   return $fields;
@@ -453,7 +453,7 @@ function _fundraiser_webformfundraiser_field_info_alter($field_key, $field, $map
     $field['#email'] = 1;
   }
   // Check for children. Recursion occurs here.
-  foreach(element_children($field) as $key) {
+  foreach (element_children($field) as $key) {
     $field[$key] = _fundraiser_webformfundraiser_field_info_alter($key, $field[$key], $map);
   }
   return $field;
@@ -498,7 +498,7 @@ function _fundraiser_webform_parse_components($nid, $components) {
  * Builds a path from the webform component to it's topmost parent.
  * Recursion is here. Be careful.
  */
-function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array()) { 
+function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array()) {
   // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
   static $component_hierarchy = array();
   if (empty($component_hierarchy[$nid])) {
@@ -544,7 +544,7 @@ function &_fundraiser_webform_find_field(&$form, $path) {
  */
 function _fundraiser_webform_update_submissions($uid, $sid) {
   db_query('UPDATE {webform_submissions} SET ' .
-    'uid = :uid '.
+    'uid = :uid ' .
     'WHERE sid = :sid',
     array(':uid' => $uid, ':sid' => $sid));
 }
@@ -569,7 +569,7 @@ function _fundraiser_webform_get_amount_count($nid) {
 function _fundraiser_webform_get_components_by_nid($nid) {
   return db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid',
-    array(':nid'=>$nid))->fetchAll();
+    array(':nid' => $nid))->fetchAll();
 }
 
 /**
@@ -592,7 +592,7 @@ function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
   return db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid ' .
     'AND form_key IN (:form_keys)',
-    array(':nid'=>$nid, ':form_keys' => $form_keys))->fetchAll();
+    array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
 }
 
 /**
@@ -646,7 +646,7 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
     return;
   }
   if (!isset($field['#type'])) {
-    drupal_set_message('Error in creating component: '.print_r($field,TRUE));
+    drupal_set_message(t('Error in creating component: %field', array('%field' => print_r($field, TRUE))));
     return;
   }
   // Check if empty.
@@ -672,7 +672,7 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
     $components[$pid] = $component;
     // Check for children. Recursion occurs here.
     $child_weight = 0;
-    foreach(element_children($field) as $key) {
+    foreach (element_children($field) as $key) {
       _fundraiser_webform_create_component($fundraiser, $key, $field[$key], $pid, $child_weight);
       $child_weight++;
     }
@@ -753,7 +753,7 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
     _fundraiser_webform_delete_component($fundraiser->nid, 'other_amount');
     $message .= t('Other amount options have been disabled on the form.');
   }
-  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/'.$fundraiser->nid);
+  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/' . $fundraiser->nid);
 }
 
 

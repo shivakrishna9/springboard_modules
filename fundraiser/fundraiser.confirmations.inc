@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Provides confirmation behaviors.
+ */
+
+/**
  * Fundraiser confirmation features. Provided, but expected to be over ridden by glue
  * modules that handle submission forms. Webform for example already has it's own.
  */
@@ -30,7 +35,7 @@ function fundraiser_donation_confirmation_page($node, $did) {
     }
     $output = theme(
       array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'),
-      array('node' => $node,'message' => $message)
+      array('node' => $node, 'message' => $message)
     );
   }
   return $output;
@@ -229,7 +234,7 @@ function fundraiser_donation_confirmation($form, &$form_state) {
     elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
       // This is the reconstructed path from the user.
       $parts = parse_url($redirect_url);
-      $query = $parts['query'] ? array_merge($parts['query'], array('did'=> $did)) : array('did' => $did);
+      $query = $parts['query'] ? array_merge($parts['query'], array('did' => $did)) : array('did' => $did);
       $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
     }
     // And we add the redirect to the form processing for the final step.
