@@ -1445,6 +1445,7 @@ function fundraiser_donation_process($donation) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
+    $refund->data['config'] = isset($info['config']) ? $info['config'] : '';
     module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
 }
