@@ -26,19 +26,19 @@ function fundraiser_triggers_trigger_info() {
     'fundraiser' => array(
       'fundraiser_donation_create' => array(
         'label' => t('After a donation has just been created.'),
-      ), 
+      ),
       'fundraiser_donation_update' => array(
         'label' => t('After a donation has been updated.'),
-      ), 
+      ),
       'fundraiser_donation_process' => array(
         'label' => t('After a donation has been processed.'),
-      ), 
+      ),
       'fundraiser_donation_success' => array(
         'label' => t('After a donation has sucessfully been charged.'),
-      ), 
+      ),
       'fundraiser_donation_decline' => array(
         'label' => t('After a donation has been declined.'),
-      ), 
+      ),
       'fundraiser_donation_exception' => array(
         'label' => t('After a donation has encountered an exception.'),
       ),

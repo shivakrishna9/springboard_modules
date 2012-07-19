@@ -54,7 +54,7 @@ function fundraiser_ubercart_mail_alter(&$message) {
 }
 
 /**
- * Implements hook_form_alter.
+ * Implements hook_form_alter().
  */
 function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
   // Add a setting to the fundraiser administation page to run on SF exports.
@@ -70,15 +70,15 @@ function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_order_actions() from Ubercart.
+ * Implements hook_order_actions() from Ubercart.
  * Add a refund option to the Order list.
  * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
  */
 function fundraiser_order_actions($order) {
   $gateway = _fundraiser_get_donation_gateway($order->order_id);
   $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
-  if (user_access('edit orders') && 
-    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && $can_refund) {  
+  if (user_access('edit orders') &&
+    (in_array($order->order_status, array('payment_received', 'partially_refunded')) || empty($order->order_status)) && $can_refund) {
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
     $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
     $actions[] = array(
@@ -104,7 +104,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
 }
 
 /**
- * Implementation of hook_preprocess_uc_order().
+ * Implements hook_preprocess_uc_order().
  * From: http://www.ubercart.org/forum/development/18047/inserting_variables_invoices_ubercart_23_and_above
  * Adds additional variables for use in donation receipt emails sent by UC.
  */
@@ -126,7 +126,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
   // From ubercart defaults. 840 = US, 124 = CA.
 
   $countries = fundraiser_ubercart_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', 0); 
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
   $default_available = array(840, 124);
   $options = '';
   if ($include_all_countries) {
@@ -321,7 +321,7 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
 
   // Add the order status data.
   $donation->status = isset($order->order_status) ? $order->order_status : 'unkown';
-  
+
   // Time of charge.
   $donation->last_changed = $order->modified;
 
@@ -496,7 +496,7 @@ function fundraiser_ubercart_fundraiser_donation_success($donation) {
   // Mark as complete. Complete the sale in Ubercart.
   $order = uc_order_load($donation->did);
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL, 
+  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
     t('Payment processed by the fundraiser module.'));
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
   global $user; // Completing user is NOT ALWAYS the same as the given submission user.
@@ -549,22 +549,22 @@ function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
   return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
 }
 
-/** 
+/**
  * Helper function, given a card number return likely type.
  */
 function _fundraiser_ubercart_get_cc_type($cardnumber) {
   $cardtype = "UNKNOWN";
-  $len = strlen($cardnumber);
-  if ( $len == 15 && substr($cardnumber, 0, 1) == '3' ) {
+  $len = drupal_strlen($cardnumber);
+  if ( $len == 15 && drupal_substr($cardnumber, 0, 1) == '3' ) {
     $cardtype = "amex";
   }
-  elseif ( $len == 16 && substr($cardnumber, 0, 4) == '6011' ) {
+  elseif ( $len == 16 && drupal_substr($cardnumber, 0, 4) == '6011' ) {
     $cardtype = "discover";
   }
-  elseif ( $len == 16 && substr($cardnumber, 0, 1) == '5' ) {
+  elseif ( $len == 16 && drupal_substr($cardnumber, 0, 1) == '5' ) {
     $cardtype = "mc";
   }
-  elseif ( ($len == 16 || $len == 13) && substr($cardnumber, 0, 1) == '4' ) {
+  elseif ( ($len == 16 || $len == 13) && drupal_substr($cardnumber, 0, 1) == '4' ) {
     $cardtype = "visa";
   }
   return ( $cardtype );
@@ -636,7 +636,7 @@ function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
   return $cc_data;
 }
-*/
+ */
 
 // Theme / formaty code, really should get refactored and moved to fundraiser. -SeH
 /**

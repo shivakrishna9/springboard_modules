@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function fundraiser_theme($existing, $type, $theme, $path) {
   return array(
@@ -20,7 +20,7 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     ),
     // Shows CC year and data as a merged widget.
     'fundraiser_credit_card_expiration_date' => array(
-      'render element' => 'element',    
+      'render element' => 'element',
     ),
     // Shows confirmaiton pages.
     'fundraiser_confirmation' => array(
@@ -96,7 +96,7 @@ function theme_fundraiser_credit_card_expiration_date($element) {
   return '<div class=\'expiration-date-wrapper clear-block\'>' . $month . '</div>';
 }
 
-/** 
+/**
  * Theme the ask amounts table on webform creation.
  */
 function theme_fundraiser_ask_amounts($element) {

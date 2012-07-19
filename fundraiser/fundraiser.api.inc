@@ -1,10 +1,15 @@
 <?php
 
 /**
+ * @file
+ * Provides documentation of available fundraiser hooks.
+ */
+
+/**
  * IMPLEMENTATION NOTES:
  *
  * The exact implementation of a donor form as displayed to a user to place a donation has been moved
- * to an exterior module. (currently webform) So long as we are using an exterior module to display the 
+ * to an exterior module. (currently webform) So long as we are using an exterior module to display the
  * form we want, the exact details will be handled by a glue module to link fundraiser to whatever display
  * implementation we use. This allows us future flexibility and separation of concerns in code.
  *
@@ -16,7 +21,7 @@
  * Donations themselves are also tracked in an exterior module. (currently ubercart) A glue module is
  * provided for this as well. Donations are stored as orders in Ubercart, and the glue module translates. So
  * the exterior module handling the purchasing stage of things is the one that needs to be aware of things like
- * states, user info, and the like. To allow multiple gateways to be used depending on the fundraiser, fundraiser 
+ * states, user info, and the like. To allow multiple gateways to be used depending on the fundraiser, fundraiser
  * does interact with a list of available gateways for use during processing.
  *
  * In practice this means, exterior modules are blind to each other, and fundraiser is blind to them. The
@@ -238,7 +243,7 @@ stdClass Object
     [last_changed] => timestamp
     [data] => Array
         (
-            [cc_data] => <encrypted cc data string> 
+            [cc_data] => <encrypted cc data string>
             [txn_type]=> reference_txn
             [ref_id] => ''
         )
@@ -264,7 +269,7 @@ stdClass Object
  * For example, the chargeing module may be more aware of available countries/states than the glue module, and can override
  * the creation and display to match this allowing for an AJAX interface.
  */
- 
+
 /**
  * An example field info structure. This array allows modules to check with fundraiser
  * regarding any fields it thinks it needs. Use this array to generate forms, submit results,

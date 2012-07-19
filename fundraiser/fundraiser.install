@@ -251,10 +251,10 @@ function fundraiser_update_7000() {
   // Get all existing fundraiser donation information, and load the fundriaser_donation table with it all.
   // From ubercart's order tables.
   $donations = db_query('SELECT o.order_id, f.nid, o.uid FROM {uc_orders} o ' .
-   'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id '.
+   'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id ' .
    'LEFT JOIN {fundraiser} f ON p.nid = f.nid ');
   foreach ($donations as $donation) {
-    if (isset($donation->order_id) && isset($donation->nid) && isset($donation->uid)) { 
+    if (isset($donation->order_id) && isset($donation->nid) && isset($donation->uid)) {
       $record = array(
         'did' => $donation->order_id,
         'nid' => $donation->nid,
@@ -264,7 +264,7 @@ function fundraiser_update_7000() {
       // Note on the update for fundraiser_webform 7001 this table is dropped.
       $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
         array(':did' => $donation->order_id));
-      foreach($gateway_infos as $gateway_info) {
+      foreach ($gateway_infos as $gateway_info) {
         $record['sid'] = $gateway_info->sid;
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
@@ -272,7 +272,7 @@ function fundraiser_update_7000() {
       // Note on the update for fundraiser_sustainers 7001 these fields are dropped and order_id renamed.
       $gateway_infos = db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :did',
         array(':did' => $donation->order_id));
-      foreach($gateway_infos as $gateway_info) {
+      foreach ($gateway_infos as $gateway_info) {
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
       }
