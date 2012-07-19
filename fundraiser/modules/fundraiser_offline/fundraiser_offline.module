@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Fundraiser offline, provide a way for an administrative user to sumbit a donation
+ * on behalf of another account. Handles donations coming from outside of the site.
+ */
+
+// Add a flag on the fundraiser configuration form to mark as available offline.
+
+// Menu function to provide offline page, and FR lookup.
+
+// Menu access callback
+
+// Menu callback to provide form.
+
+// Validate.
+
+// Submit.
+
+// Fundraiser hooks for create, submit, etc to make sure those values are available during offline mode.
+// Get will return additional offline info and mark the donation as an offline source.
+// Success / fail will set the values.
+
+// CRUD functions to mark offline nodes.
+
+// CRUD functions to save offline data like user submitted etc.
