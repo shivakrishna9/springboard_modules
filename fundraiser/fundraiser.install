@@ -125,7 +125,7 @@ function fundraiser_schema() {
         'not null' => TRUE,
       ),
       'sid' => array(
-        'description' => 'Originating fundraiser node',
+        'description' => 'Submission identifier',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
