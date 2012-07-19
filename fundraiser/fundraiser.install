@@ -124,6 +124,12 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'sid' => array(
+        'description' => 'Submission identifier',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'gateway' => array(
         'description' => 'The payment gateway the donation form uses to process credit cards.',
         'type' => 'varchar',
@@ -239,7 +245,7 @@ function fundraiser_update_last_removed() {
  * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
  */
 function fundraiser_update_7000() {
-  // Create new table.
+  // Create new donation table.
   $donation_table = fundraiser_schema();
   db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
   // Get all existing fundraiser donation information, and load the fundriaser_donation table with it all.
@@ -259,6 +265,7 @@ function fundraiser_update_7000() {
       $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
         array(':did' => $donation->order_id));
       foreach($gateway_infos as $gateway_info) {
+        $record['sid'] = $gateway_info->sid;
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
       }

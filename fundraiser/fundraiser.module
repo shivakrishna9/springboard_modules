@@ -1104,7 +1104,7 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // $donation->donation now contains the submitted values from the form.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
-  if (!empty($donation->submission)) {
+  if (!empty($donation->donation)) {
     // Create the donation to process, allows other modules to modify results by hooks.
     fundraiser_donation_create($donation);
     // The created donation information should be at at $donation->donation, ready to process.
@@ -1142,7 +1142,7 @@ function fundraiser_donation_post_submit(&$form, &$form_state) {
 }
 
 /**
- * Reffund donation form functions.
+ * Refund donation form functions.
  */
 
 /**
@@ -1393,6 +1393,7 @@ function fundraiser_donation_create($donation) {
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid,  // Submission user id.
+    'sid' => $donation->sid,  // Submission id.
     'gateway' => $fundraiser_node->gateway,
     'txn_id' => '',
   );
@@ -1414,6 +1415,7 @@ function fundraiser_donation_update($donation) {
     'did' => $donation->did,
     'nid' => $donation->nid,
     'uid' => $donation->uid,
+    'sid' => $donation->sid,
     'gateway' => $fundraiser_node->gateway,
     'txn_id' => '',
   );
@@ -1538,6 +1540,8 @@ function fundraiser_donation_refund($refund) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
+    // Allows for multiple responses during this process.
+    $refund->data['config'] = isset($info['config']) ? $info['config'] : '';
     module_invoke_all('fundraiser_donation_refund', $refund, $refund_function);
   }
 }
