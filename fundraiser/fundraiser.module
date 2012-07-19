@@ -1445,7 +1445,8 @@ function fundraiser_donation_process($donation) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
-    $refund->data['config'] = isset($info['config']) ? $info['config'] : '';
+    $config = isset($info['config']) ? $info['config'] : '';
+    $donation->data['config'] = array_merge($donation->data['config'], $config);
     module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
 }
@@ -1541,8 +1542,8 @@ function fundraiser_donation_refund($refund) {
   else {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
-    // Allows for multiple responses during this process.
-    $refund->data['config'] = isset($info['config']) ? $info['config'] : '';
+    $config = isset($info['config']) ? $info['config'] : '';
+    $refund->data['config'] = array_merge($refund->data['config'], $config);
     module_invoke_all('fundraiser_donation_refund', $refund, $refund_function);
   }
 }
