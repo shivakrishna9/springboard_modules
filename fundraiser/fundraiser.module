@@ -628,12 +628,18 @@ function fundraiser_validate(&$node) {
  */
 function fundraiser_insert($node) {
 
+  // If not set these fields get default values.
+  $node->receipt_email_from = isset($node->receipt_email_from) ? $node->receipt_email_from : variable_get('site_name', '');
+  $node->receipt_email_address = isset($node->receipt_email_address) ? $node->receipt_email_address : variable_get('site_mail', '');
+  $node->receipt_email_subject = isset($node->receipt_email_subject) ? $node->receipt_email_subject : 'Thank you for your donation';
+  $node->redirect_url = isset($node->redirect_url) ? $node->redirect_url : '<confirmation>';
+
   db_query(
     "
       INSERT INTO {fundraiser}
-      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, redirect_url)
+      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url)
       VALUES
-      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
     ",
     $node->nid,
     $node->gateway,
@@ -641,10 +647,14 @@ function fundraiser_insert($node) {
     $node->show_other_amount,
     $node->internal_name,
     $node->minimum_donation_amount,
-    variable_get('site_name', ''),
-    variable_get('site_mail', ''),
-    t('Thank you for your donation'),
-    '<confirmation>'
+    $node->receipt_email_from,
+    $node->receipt_email_address,
+    $node->receipt_email_subject,
+    $node->receipt_email_message,
+    $node->confirmation_page_title,
+    $node->confirmation_page_body,
+    $node->confirmation_page_format,
+    $node->redirect_url
   );
   
   // skip some steps if the form is being cloned
