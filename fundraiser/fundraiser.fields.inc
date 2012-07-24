@@ -533,8 +533,20 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field_type, 'select')) {
+
+      $amount_cid = _fundraiser_find_cid($node, 'amount');
+      $old_value = $node->webform['components'][$amount_cid]['value'];
       $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
-      db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      
+      // if the original default value of the webform component isn't a valid option we want to update it with defaults.
+      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default.
+      if ($old_value && !in_array($old_value, $donation_amounts)) {
+        db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      }
+      else {
+        db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND form_key = 'amount'", $data, $node->nid);
+      }
+
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
       $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
     }
