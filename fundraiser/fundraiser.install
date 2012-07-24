@@ -354,7 +354,8 @@ function fundraiser_schema() {
       ),
     ),
     'primary key' => array('order_id'),
-  );
+    'indexes' => array('master_order_id' => array('master_order_id')),
+	);
 	
 	$schema['fundraiser_component_map'] = array(
 	  'description' => t('TODO: please describe this table!'),
@@ -1006,6 +1007,17 @@ function fundraiser_update_6311() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_recurring', 'auth_code', $recurring_field);
+  
+  return $ret;
+}
+
+/**
+ * Add index of master_order_id to {fundraiser_recurring}
+ */
+function fundraiser_update_6312() {
+  $ret = array();
+  
+  db_add_index($ret, 'fundraiser_recurring', 'master_order_id', array('master_order_id'));
   
   return $ret;
 }
