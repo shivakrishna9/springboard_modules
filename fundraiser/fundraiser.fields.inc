@@ -438,7 +438,7 @@ function fundraiser_create_year_field($nid, $pid) {
 function fundraiser_create_month_field($nid, $pid) {
   // expiration month
   $months = "1|January\n";
-  $months .= "2|Feburary\n";
+  $months .= "2|February\n";
 	$months .= "3|March\n";
 	$months .= "4|April\n";
 	$months .= "5|May\n";
