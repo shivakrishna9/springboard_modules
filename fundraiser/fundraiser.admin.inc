@@ -295,7 +295,14 @@ function fundraiser_admin_settings() {
 	 '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
 	 '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
 	);
-	
+
+  $form['fundraiser_cc_exp_year_range'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Credit card expiration year range'),
+    '#description' => t('Specify the number of years from now that will be the maximum credit card expiration year.'),
+    '#default_value' => variable_get('fundraiser_cc_exp_year_range', 10),
+  );
+
 	$form['fundraiser_cc_expiration_message'] = array(
 	 '#type' => 'fieldset',
 	 '#title' => t('Credit card expiration email'),

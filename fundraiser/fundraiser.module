@@ -960,7 +960,8 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // make sure the year field always has a good range of years
     	$this_year = date('Y');
     	$years = array($this_year => $this_year);
-    	for ($i = 1; $i <= 5; $i++) {
+    	$cc_exp_year_range = variable_get('fundraiser_cc_exp_year_range', 10);
+    	for ($i = 0; $i <= $cc_exp_year_range; $i++) {
         $years[$this_year + $i] = $this_year + $i;
       }
       $cc_exp_year_field['#options'] = $years;

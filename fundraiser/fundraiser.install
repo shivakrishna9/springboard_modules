@@ -24,6 +24,7 @@ function fundraiser_uninstall() {
   variable_del('fundraiser_standalone_cron_enabled');
   variable_del('fundraiser_form_layouts_default');
   variable_del('fundraiser_http_error_message');
+  variable_del('fundraiser_cc_exp_year_range');
   
   drupal_uninstall_schema('fundraiser');
   db_query("DROP VIEW {fundraiser_webform_data}");
