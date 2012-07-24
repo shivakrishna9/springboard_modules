@@ -1023,6 +1023,12 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 		}
   }
 
+  // Alter the form on the webform's Form Settings tab
+  if ($form_id == 'webform_configure_form' && _fundraiser_is_donation_type($form['#parameters'][2])) {
+    // Hide fields that are on the Confirmations tab
+    $form['submission']['confirmation_wrapper']['#access'] = FALSE;
+    $form['submission']['redirection']['#access'] = FALSE;
+  }
 }
 
 
@@ -1254,13 +1260,7 @@ function fundraiser_webform_submission_presave($node, &$submission) {
  * Permission check for webform form settings tab.
  */
 function fundraiser_webform_configure_access($perm, $node) {
-  // don't show the 'Form settings' tab on donation forms
-  if (_fundraiser_is_donation_type($node)) {
-    return false;
-  }
-  else { // run normal permission check
-    return node_access($perm, $node);
-  }
+  return node_access($perm, $node);
 }
 
 function fundraiser_confirmations_perm($perm, $node) {
