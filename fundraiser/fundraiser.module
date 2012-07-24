@@ -2781,10 +2781,19 @@ function _fundraiser_array_smart_merge($array, $override) {
   return $array;
 }
 
+/**
+ * Validate email address field.
+ *
+ * @param $mail
+ * email address submitted by user.
+ *
+ * @return
+ * TRUE if the address passes all validation, FALSE otherwise.
+ */
 function fundraiser_validate_email($mail) {
-	return eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
-	//return preg_match("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail);
+  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
 }
+
 
 function _fundraiser_field_blacklist() {
   return array(
