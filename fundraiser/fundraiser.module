@@ -2041,6 +2041,9 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 	// determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
 	$counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
 	
+	// grab the donation form url
+	$donation_form_url = _fundraiser_donation_form_path($order->products[0]->nid);
+	
 	for($i = 1; $i <= $counter; $i++) {
 		$next_order = uc_order_new($user->uid);
 		// copy all values to new order
@@ -2053,8 +2056,9 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 		uc_order_save($next_order);
 		$next_charge = strtotime("+$i months");
 		
+		
 		// make a record of the recurring order
-		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_id, $next_charge, $gateway);
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url);
 		
 		// add a comment to the order stating when it will be charged
 		uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
