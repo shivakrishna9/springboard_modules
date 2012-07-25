@@ -425,7 +425,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   // No one outside of the glue module should need the order data otherwise.
   $donation->did = $order->order_id;
   $donation->donation_amount = $donation->donation['amount'];
-  $donation->data = $order->data;
+  $donation->data = (object) array_merge( (array) $donation->data, (array) $order->data);
 }
 
 /**
