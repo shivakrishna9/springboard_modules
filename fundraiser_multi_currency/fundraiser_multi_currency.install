@@ -2,16 +2,13 @@
 /**
  * @file
  * Install, update and uninstall functions for the fundraiser_multi_currency module.
- *
  */
-
 
 /**
  * Implements hook_schema().
  */
 function fundraiser_multi_currency_schema() {
   $schema = array();
-
   $schema['fundraiser_currencies'] = array(
     'description' => 'Default currencies to use for donation forms',
     'fields' => array(
@@ -48,8 +45,6 @@ function fundraiser_multi_currency_schema() {
  * Implements hook_install().
  */
 function fundraiser_multi_currency_install() {
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_install_schema('fundraiser_multi_currency')
   _fundraiser_multi_currency_insert_defaults();
 }
 
@@ -57,12 +52,10 @@ function fundraiser_multi_currency_install() {
  * Implements hook_uninstall().
  */
 function fundraiser_multi_currency_uninstall() {
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_uninstall_schema('fundraiser_multi_currency')
 }
 
 /**
- *
+ * Insert default available currancies.
  */
 function _fundraiser_multi_currency_insert_defaults() {
   $ret = array();
@@ -81,16 +74,12 @@ function _fundraiser_multi_currency_insert_defaults() {
     'code' => 'GBP',
     'name' => 'UK Pounds',
   );
-
-
-  foreach ($currencies as $values) {
-    if (!db_query("SELECT 1 FROM {fundraiser_currencies} WHERE code = :code", array(':code' => $values['code']))->fetchField()) {
-      $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",   $values['symbol'], $values['code'], $values['name']);
-      // TODO update_sql has been removed. Use the database API for any schema or data changes.
-      $ret[] = array() /* update_sql($sql) */;
+  foreach ($currencies as $record) {
+    if (!db_query('SELECT 1 FROM {fundraiser_currencies} WHERE code = :code', array(':code' => $record['code']))->fetchField()) {
+      //drupal_write_record('fundraiser_currencies', $record); Not using write record here per doc.
+      db_insert('fundraiser_currencies')->fields($record)->execute();
     }
   }
-  return $ret;
 }
 
 /**
@@ -98,9 +87,5 @@ function _fundraiser_multi_currency_insert_defaults() {
  * Load defaults into the db for sites that don't already have them.
  */
 function fundraiser_multi_currency_update_6001() {
-  $ret = _fundraiser_multi_currency_insert_defaults();
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
+  _fundraiser_multi_currency_insert_defaults();
 }
