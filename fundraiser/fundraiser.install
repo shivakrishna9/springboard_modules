@@ -804,6 +804,7 @@ function fundraiser_update_6210() {
  * 2 separate field for month and year.
  */
 function fundraiser_update_6300() {
+  $ret = array();
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   $result = db_query("SELECT * FROM {webform_component} WHERE form_key = 'card_expiration_date'");
   while ($data = db_fetch_object($result)) {
@@ -819,14 +820,36 @@ function fundraiser_update_6300() {
     // delete old field
     db_query("DELETE FROM {webform_component} WHERE cid = %d and nid = %d", $data->cid, $data->nid);
   }
+
+  //update the mail map
+  $ret[] = update_sql("UPDATE fundraiser_component_map set map_id = 'mail' WHERE map_id = 'email'");
+  //update the zip code map
+  $ret[] = update_sql("UPDATE fundraiser_component_map set map_id = 'profile_zip' WHERE map_id = 'profile_postal_code'");
+  //update the zip code profile field name
+  $ret[] = update_sql("UPDATE profile_fields set name = 'profile_zip' WHERE name = 'profile_postal_code'");
+  
+  //Update the webform recurs_monthly field select values
+  $result = db_query("SELECT * FROM {webform_component} WHERE form_key = 'recurs_monthly'");
+  while ($data = db_fetch_array($result)) {
+    $extra = unserialize($data['extra']);
+    // If this is the standard setup then the first option will have the 1 value
+    if (strpos($extra['items'], '1|') === 0) {
+      $extra['items'] = str_replace("1|", "recurs|", $extra['items']);
+      $extra = serialize($extra);      
+      db_query("UPDATE {webform_component} SET extra = '%s' WHERE cid = %d and nid = %d", $extra, $data['cid'], $data['nid']);
+    }
+  }
+
+  return $ret;
 }
 
 /**
  * Convert donation froms to a real node type.
  */
 function fundraiser_update_6301() {
+  $ret = array();
   // create table for storing new donation form nodes
-  db_query(
+  $ret[] = update_sql(
     "
       CREATE TABLE {fundraiser} (
       nid int(10) unsigned NOT NULL,
@@ -851,9 +874,10 @@ function fundraiser_update_6301() {
   $result = variable_get('webform_node_types', array());
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
+  $ret[] = array('success' => TRUE, 'query' => 'Added donation form to webform types variable.');
   
   // make a copy of all items in fundraiser_gateway
-  db_query(
+  $ret[] = update_sql(
     "
       INSERT INTO {fundraiser}
       (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name)
@@ -863,8 +887,9 @@ function fundraiser_update_6301() {
   );
   
   // change all donation form webforms to the new donation_form content type
-  db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
-  db_query("DROP TABLE {fundraiser_gateway}");
+  $ret[] = update_sql("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
+  $ret[] = update_sql("DROP TABLE {fundraiser_gateway}");
+  return $ret;
 }
 
 /**
@@ -930,6 +955,8 @@ function fundraiser_update_6305() {
     $result[] = 'donation_form';
     variable_set('webform_node_types_primary', $result);
   }
+  $ret[] = array('success' => TRUE, 'query' => 'Added donation form to webform primary types variable.');
+  return $ret;
 }
 
 /**
@@ -953,6 +980,8 @@ function fundraiser_update_6306() {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
     }
   }
+  $ret[] = array('success' => TRUE, 'query' => 'Renamed webform compenent form keys.');
+  return $ret;
 }
 
 /**
@@ -969,9 +998,12 @@ function fundraiser_update_6307() {
  * Remove fundraiser tokens module.
  */
 function fundraiser_update_6308() {
+  $ret = array();
   if (module_exists('fundraiser_tokens')) {
     module_disable(array('fundraiser_tokens'));
+    $ret[] = array('success' => TRUE, 'query' => 'Disabled the fundraiser tokens module.');
   }
+  return $ret;
 }
 
 /**

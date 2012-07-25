@@ -168,6 +168,9 @@ function sf_donation_update_6101() {
  * Update 6202: Reorganize fundraiser salesforce maps
  */
 function sf_donation_update_6202() {
+  // set the default backend
+  variable_set('sf_donation_backend', 'npsp');
+  
   // first add some new fields
   db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
   db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
@@ -188,26 +191,36 @@ function sf_donation_update_6202() {
 }
 
 function sf_donation_upgrade_fieldmaps() {
+  // map the other existing fields that are programmatically mapped in version 2
+  require_once 'donation.php';
+  $integrator = _sf_donation_current_donation_integrator();
+  $default_map = DonationMapper::GetDefaultMap($integrator['id']);
+  if (is_array($default_map)) {
+    $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
+  }
+    
   // get unique nids for each defined map
   $result = db_query("SELECT DISTINCT nid FROM {fundraiser_salesforce_map}");
   
   while ($data = db_fetch_object($result)) {
+    $this_map = $default_map;
+    
     // get all fields in the map
     $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m 
                       INNER JOIN webform_component w ON m.cid = w.cid AND m.nid = w.nid
                       WHERE w.nid = %d", $data->nid);
     
-    $fields = array();
     while ($field = db_fetch_object($map)) {
-      $fields[$field->map_id] = $field->form_key;
+      if (!array_key_exists($field->map_id, $this_map)) {
+        $this_map[$field->map_id] = $field->form_key; 
+      }
     }
     
-    db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES (%d, '%s', '%s')", $data->nid, serialize($fields), 'Opportunity');
+    db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES (%d, '%s', '%s')", $data->nid, serialize($this_map), 'Opportunity');
     db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);                  
   }
   
 }
-
 
 /**
  * Update 6203: Add refunds to the queue_processing_order variable
