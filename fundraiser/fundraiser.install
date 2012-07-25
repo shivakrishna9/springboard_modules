@@ -281,7 +281,7 @@ function fundraiser_update_7000() {
   }
 
   // Rename the table columns that used to be called order to donation.
-  $fundraiser_refund = array(
+  $did_field = array(
     'did' => array(
       'description' => 'This specific recurring order id.',
       'type' => 'int',
@@ -290,5 +290,6 @@ function fundraiser_update_7000() {
     ),
   );
   db_drop_index('fundraiser_refund', 'refund_order_id');
-  db_change_field('fundraiser_refund', 'order_id', 'did', $did_field, array('indexes' => array('refund_did' => array('did'))) );
+  db_change_field('fundraiser_refund', 'order_id', 'did', $did_field);
+  db_add_index('fundraiser_refund', 'refund_did', array('did'));
 }
