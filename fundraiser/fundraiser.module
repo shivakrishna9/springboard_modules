@@ -1633,14 +1633,17 @@ function fundraiser_webform_submit($form, &$form_state) {
  	
  	// save the order
  	uc_order_save($order);
+ 	
+ 	// grab the donation form url
+ 	$donation_form_url = _fundraiser_donation_form_path($node->nid);
 
   // relate the order to submission before we try and process the payment
   db_query(
     "INSERT INTO {fundraiser_webform_order}
-      (webform_nid, order_id, sid, recurring_status, user_agent) VALUES (%d, %d, %d, %d, '%s')
+      (webform_nid, order_id, sid, recurring_status, user_agent, form_url) VALUES (%d, %d, %d, %d, '%s', '%s')
     ;",
     $node->nid, $order->order_id, $form_state['values']['details']['sid'],
-    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT']
+    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url
   );
   
   // additional data to pass to the payment gateway's charge function
@@ -2779,6 +2782,23 @@ function _fundraiser_array_smart_merge($array, $override) {
     }
   }
   return $array;
+}
+
+/**
+ * Returns the donation form's path alias.
+ */
+function _fundraiser_donation_form_path($nid) {
+  global $base_url;
+  $alias = drupal_lookup_path('alias', $_GET['q']);
+  
+  // if there is no alias, use the node id
+  if (!empty($alias)) {
+    return $base_url . '/' . $alias;
+  }
+  else {
+    return $base_url . '/node/' . $nid;
+  }
+  
 }
 
 /**

@@ -1,2 +1,7 @@
-- Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
+2012-05-10  Ben Clark <ben.clark@jacksonriver.com>
 
+  * Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
+
+2012-07-25  Phillip Cave  <phillip.cave@jacksonriver.com>
+  
+  * Store the url alias of the donation form when a donation is made.

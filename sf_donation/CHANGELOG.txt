@@ -1,0 +1,3 @@
+2012-07-25  Phillip Cave  <phillip.cave@jacksonriver.com>
+  
+  * Load the donation_form_url property from the value stored in the database.
