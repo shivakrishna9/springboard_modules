@@ -589,6 +589,28 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
 }
 
 /**
+ * retrieves component cid from the node webform components array.
+ *
+ * @param $node
+ * Node object
+ *
+ * @param $form_key
+ * Form key of the component we are looking for
+ *
+ * @return
+ * Returns the cid for the webform component or FALSE if no matching component was found.
+ */
+function _fundraiser_find_cid($node, $form_key) {
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['form_key'] == $form_key) {
+      return $component['cid'];
+    }
+  }
+  return FALSE;
+}
+
+
+/**
  * Inserts amount webform component
  * 
  * @param $nid
