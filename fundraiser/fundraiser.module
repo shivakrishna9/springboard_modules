@@ -1381,10 +1381,8 @@ function fundraiser_donation_failed_validation($errors) {
  * Donation processing, a donation needs to be created prior to processing.
  */
 function fundraiser_donation_create($donation) {
-  // Allow other modules to add additional fields to the order before processing the payment
-  module_invoke_all('fundraiser_donation_create_add_data', $donation);
-  // Populates $donation->data, $donation->donation with results;
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
+  // This is a good location to update $donation->data for processing.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
