@@ -8,6 +8,7 @@
  * Implements hook_enable().
  */
 function fundraiser_ubercart_enable() {
+  fundraiser_disable();
   fundraiser_ubercart_install_configure_settings();
   fundraiser_ubercart_install_create_countries();
 }
