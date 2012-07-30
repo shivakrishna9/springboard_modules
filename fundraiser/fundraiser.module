@@ -1444,7 +1444,9 @@ function fundraiser_donation_process($donation) {
     // Execute the charge, generally implemented under the payment glue module.
     // Allows for multiple responses during this process.
     $config = isset($info['config']) ? $info['config'] : array();
-    $donation->data['config'] = array_merge($donation->data['config'], $config);
+    $donation->data = (array) $donation->data;
+    $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
+    $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
     module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
 }
