@@ -52,6 +52,7 @@ function fundraiser_multi_currency_install() {
  * Implements hook_uninstall().
  */
 function fundraiser_multi_currency_uninstall() {
+  drupal_set_message(t('Nodes that previously had a currancy field - still do. Be sure to update your donation forms.'));
 }
 
 /**
