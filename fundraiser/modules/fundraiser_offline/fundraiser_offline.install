@@ -3,3 +3,48 @@
  * @file
  * Install, update and uninstall functions for the fundraiser module.
  */
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_offline_schema() {
+  // We have to track if a node is offline or not somehow.
+  // And rather than loading up variables with a massive array: table.
+  $schema['fundraiser_offline'] = array(
+    'description' => 'Stored fundraiser nodes marked as offline',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The offline fundraiser nid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'The status of the fundraiser nid.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  $schema['fundraiser_offline_donation'] = array(
+    'description' => 'Stored fundraiser nodes marked as offline',
+    // May be used to collect more information as we go.
+    'fields' => array(
+      'did' => array(
+        'description' => 'The offline donation did.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'The offline fundraiser nid.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  return $schema;
+}
