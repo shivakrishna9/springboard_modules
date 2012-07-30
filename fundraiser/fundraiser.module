@@ -1057,9 +1057,17 @@ function fundraiser_donation_form(&$form, &$form_state) {
   // When confirmations are moved, this goes elsewhere.
   $form['#submit'][] = 'fundraiser_donation_post_submit';
   $form['#submit'][] = 'fundraiser_donation_confirmation';
+
   // Call hook to allow sub modules to add / manipulate the form.
-  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
-  return $form;
+  // NOTE: we are not using module_invoke_all on purpose here.
+  // Node objects (common on webform objs) flag as recursive warnings.
+  //$form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
+  foreach (module_implements('fundraiser_donation_form') as $module) {
+    $result = module_invoke($module, 'fundraiser_donation_form', $form, $form_state);
+    if (isset($result) && is_array($result)) {
+      $form = array_merge($form, $result);
+    }
+  }
 }
 
 /**
