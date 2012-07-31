@@ -36,6 +36,7 @@ function fundraiser_offline_menu() {
     'title' => 'Offline fundraisers',
     'page callback' => 'fundraiser_offline_form_lookup',
     'access arguments' => array('process offline donations'),
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -44,6 +45,8 @@ function fundraiser_offline_menu() {
  * Implements menu callback page.
  */
 function fundraiser_offline_form($form, $form_state, $nid = '') {
+  // Set offline mode once this form is viewed.
+  // We unset it after the form is submitted.
   _fundraiser_offline_is_offline(TRUE);
   // Our lookup form is added to ajax-style update the displayed form.
   $form['fundraiser_offline'] = array(
@@ -75,6 +78,7 @@ function fundraiser_offline_form($form, $form_state, $nid = '') {
   }
   if (isset($nid) && is_numeric($nid)) {
     $node = node_load(1);
+    $node->fundraiser_offline_mode = TRUE;
     $form['#suffix'] = '<div id="fundraiser-offline-node">' . drupal_render(node_view($node)) . '</div>';
   }
   return $form;
@@ -199,6 +203,17 @@ function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
  */
 function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (_fundraiser_offline_is_offline()) {
+    // Before we display an offline mode we need to check if this form is being displayed
+    // from a normal path. If it is then we need to back out of offline mode asap.
+    // Since that indicates a user was on an offlilne form, did not submit it, and has
+    // now moved to looking at a normal donation form someplace else.
+    // $path = current_path(); // Current path, regardless of alias.
+    // if ($path == 'node/' . $form['#node']->nid) {
+    if (!isset($form['#node']->fundraiser_offline_mode) || $form['#node']->fundraiser_offline_mode != TRUE) {
+      _fundraiser_offline_is_offline(FALSE);
+      return; // Bail out.
+    }
+    // Otherwise, we're in the clear and still in offline mode.
     // Remove required flag for these fields.
     $fields = array('email', 'card_cvv');
     _fundraiser_offline_form_not_required($form, $fields);
@@ -218,32 +233,21 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_post_submit().
+ */
+function fundraiser_offline_fundraiser_donation_post_submit($form, $form_state, $donation) {
+  // Check our offline state and turn it off if need be.
+  if (_fundraiser_offline_is_offline()) {
+    // Turn off the offline mode now that we've submitted the form.
+    _fundraiser_offline_is_offline(FALSE);
+  }
+}
+
+/**
  * Additional submit form at the end of the donation form. Controls redirect in offline mode.
  */
 function _fundraiser_offline_fundraiser_donation_form_submit($form, &$form_state) {
   $form['redirect'] = url('admin/fundraiser_offline/' . $form['#node']->nid);
-}
-
-/**
- * Helper function, given a donation form and field list make the lsited fields not required.
- */
-function _fundraiser_offline_form_not_required(&$form, $fields) {
-  foreach ($fields as $field_name) {
-    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
-    $field['#required'] = FALSE;
-    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
-  }
-}
-
-/**
- * Helper function, given a donation form and field list make the lsited fields not required.
- */
-function _fundraiser_offline_form_not_hidden(&$form, $fields) {
-  foreach ($fields as $field_name) {
-    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
-    $field['#type'] = 'textfield';
-    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
-  }
 }
 
 /**
@@ -253,14 +257,14 @@ function _fundraiser_offline_form_not_hidden(&$form, $fields) {
 /**
  * Implements hook_fundraiser_donation_submit().
  */
-function fundraiser_offline_fundraiser_donation_submit($donation) {
+function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $donation) {
   // Check our offline state.
   if (_fundraiser_offline_is_offline()) {
     // Correct the uid, the logged in user is NOT the originating user.
     $donation->uid = 0;
     if (!isset($donation->donation['email'])) {
       // If the email has not been set, then we need to set it here.
-      $donation['email'] = _fundraiser_offline_generate_email();
+      $donation->donation['email'] = _fundraiser_offline_generate_email();
     }
     else {
       // If the email is set, see if we can locate the correct user to match the order.
@@ -293,7 +297,6 @@ function fundraiser_offline_fundraiser_donation_success($donation) {
 function fundraiser_offline_fundraiser_donation_decline($donation) {
   // Check our offline state.
   if (_fundraiser_offline_is_offline()) {
-    // TODO mark here anything else we need to include, such as user submission data for the logged in user.
     $record['nid'] = $donation->nid;
     $record['did'] = $donation->did;
     global $user;
@@ -309,12 +312,14 @@ function fundraiser_offline_fundraiser_donation_decline($donation) {
 /**
  * Helper function, note if we're offline or not. (Generally tied to page settings.)
  */
-function _fundraiser_offline_is_offline($set = FALSE) {
-  static $offline;
-  if ($set == TRUE) {
-    $offline = TRUE;
+function _fundraiser_offline_is_offline($set = '') {
+  if ($set === TRUE) {
+    $_SESSION['fundraiser_offline'] = TRUE;
   }
-  return $offline;
+  if (isset($_SESSION['fundraiser_offline'])  && $set === FALSE) {
+    unset($_SESSION['fundraiser_offline']);
+  }
+  return isset($_SESSION['fundraiser_offline']) ? TRUE : FALSE;
 }
 
 /**
@@ -322,6 +327,32 @@ function _fundraiser_offline_is_offline($set = FALSE) {
  */
 function _fundraiser_offline_generate_email() {
   return sprintf('%s@%s', time(), 'sb-offline-donation.com');
+}
+
+/**
+ * Helper function, given a donation form and field list make the lsited fields not required.
+ */
+function _fundraiser_offline_form_not_required(&$form, $fields) {
+  foreach ($fields as $field_name) {
+    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
+    $field['#required'] = FALSE;
+    // Account for webform specific oddity.
+    if (isset($field['#webform_component']['mandatory'])) {
+      $field['#webform_component']['mandatory'] = 0;
+    }
+    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
+  }
+}
+
+/**
+ * Helper function, given a donation form and field list make the lsited fields not required.
+ */
+function _fundraiser_offline_form_not_hidden(&$form, $fields) {
+  foreach ($fields as $field_name) {
+    $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
+    $field['#type'] = 'textfield';
+    $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
+  }
 }
 
 /**
@@ -391,9 +422,9 @@ function _fundraiser_offline_create_offline_donation($donation) {
   // Check for old data.
   $donation_data = FALSE;
   if (isset($donation['did'])) {
-    $donation_data = _fundraiser_offline_get_offline_by_did($fundraiser['did']);
+    $donation_data = _fundraiser_offline_get_offline_by_did($donation['did']);
   }
-  if (!$fundraiser_data) {
+  if (!$donation_data) {
     $record = $donation;
     drupal_write_record('fundraiser_offline_donation', $record);
   }
@@ -419,10 +450,10 @@ function _fundraiser_offline_update_offline_donation($donation) {
   $donation = (array) $donation;
   // Check for old data.
   $donation_data = FALSE;
-  if (isset($donation['nid'])) {
+  if (isset($donation['did'])) {
     $donation_data = _fundraiser_offline_get_offline_by_did($donation['did']);
   }
-  if (!$fundraiser_data) {
+  if (!$donation_data) {
     _fundraiser_offline_create_offline_donation($donation);
   }
   else {
