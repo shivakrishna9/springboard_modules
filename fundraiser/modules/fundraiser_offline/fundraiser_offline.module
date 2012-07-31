@@ -72,32 +72,6 @@ function fundraiser_offline_form($form, $form_state) {
       $form['#suffix'] = '<div id="fundraiser-offline-node">' . drupal_render(node_view($node)) . '</div>';
     }
   }
-  // Stuff we need to do during this process:
-  // During offline there's a few things we may want to do during display:
-  // unhide fields, set defaults for fields, etc.
-  // One thing we definately want to do is INTERCEPT EMAILS.
-  // No sending emails out for offline systems.
-  // Do not validate email and cvv when in offline mode
-	// offline donations don't require an email, so let's jimmy one up
-	/*
-	if (_fundraiser_is_offline($form, $form_state) && empty($email)) {
-    $email = _fundraiser_generate_offline_email();
-    $temporary_user = TRUE;
-    // Save values for when form is reloaded to make it easier for user to enter data.
-    $_SESSION['fundraiser_offline_cid'] = $fundraiser_fields['cid'];
-    $_SESSION['fundraiser_offline_source_code'] = $fundraiser_fields['source_code'];
-	}
-  // Save information pertaining to an offline donation
-  $created_by = $order->uid;
-  $offline = FALSE;
-        
-  if (_fundraiser_is_offline($form, $form_state)) {
-    // created by will be the logged in user
-    $created_by = $user->uid;
-    $offline = TRUE;
-  }
-	*/
-  // And of course don't redirect elsewhere after we're done.
   return $form;
 }
 
@@ -132,10 +106,14 @@ function fundraiser_offline_form_js($form, $form_state) {
 }
 
 /**
- * Helper function, note if we're offline or not. (Generally tied to page settings.)
+ * Implements hook_mail_alter(). We want to intercept any email comfirmations coming out to the user.
  */
-function _fundraiser_offline_is_offline() {
-  return TRUE;
+function fundraiser_mail_alter(&$message) {
+  // Intercept all emails being sent in response to actions on this page. *All* of them.
+  // This includes rules triggered emails, so we need to keep that in mind while working.
+  if (_fundraiser_offline_is_offline()) {
+    $message['send'] = FALSE; // Cancel the email, core versions 7.12 and later.
+  }
 }
 
 /**
@@ -206,22 +184,84 @@ function fundraiser_offline_node_update($node) {
 }
 
 /**
- * Hooks to mark a donation as an offline donation during creation.
+ * Implements hook_fundraiser_field_info_alter(). Tweak offline field states on the fly.
  */
+function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
+  // Only tweak the settings if we are displaying from an offline form.
+  // Field information is cached on load but vanishes after page load.
+  // So this tweak is Only in effect for so long as the page is generated and processed.
+  if (_fundraiser_offline_is_offline()) {
+    unset($fields['donor_information']['email']['#validate_callback']);
+    unset($fields['credit_card_information']['card_cvv']['#validate_callback']);
+  }
+  return $fields;
+}
+
+/**
+ * Implements hook_fundraiser_donation_form(). Tweak display to remove confirmation submits.
+ */
+function fundraiser_offline_fundraiser_donation_form() {
+  if (_fundraiser_offline_is_offline()) {
+    // No confirmation submit for us.
+    $remove = array('fundraiser_donation_confirmation');
+    $form['#submit'] = array_diff($form['#submit'], $remove);
+    return $form;
+  }
+}
+
+/**
+ * Hooks to handle a donation as an offline donation.
+ */
+
+/**
+ * Implements hook_fundraiser_donation_submit().
+ */
+function fundraiser_offline_fundraiser_donation_submit($donation) {
+  // Check our offline state.
+  if (_fundraiser_offline_is_offline()) {
+    // Correct the uid, the logged in user is NOT the originating user.
+    $donation->uid = 0;
+    if (!isset($donation->donation['email']) {
+      // If the email has not been set, then we need to set it here.
+      $donation['email'] = _fundraiser_offline_generate_email();
+    }
+    else {
+      // If the email is set, see if we can locate the correct user to match the order.
+      $found_user = user_load_by_mail($mail);
+      if (isset($found_user->uid)) {
+        $donation->uid = $found_user->uid;
+        $donation->user = $found_user;
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_offline_fundraiser_donation_success($donation) {
-  // This could be an offline node submission.
-  if (isset($donation->node->fundraiser_offline) && $donation->node->fundraiser_offline == TRUE)) {
-    // Check our offline state.
-    if (_fundraiser_offline_is_offline()) {
-      // TODO mark here anything else we need to include, such as user submission data for the logged in user.
-      $record['nid'] = $donation->nid;
-      $record['did'] = $donation->did;
-      _fundraiser_offline_create_offline_donation($record);
-    }
+  // Check our offline state.
+  if (_fundraiser_offline_is_offline()) {
+    $record['nid'] = $donation->nid;
+    $record['did'] = $donation->did;
+    global $user;
+    $record['uid'] = $user->uid;
+    _fundraiser_offline_create_offline_donation($record);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function fundraiser_offline_fundraiser_donation_success($donation) {
+  // Check our offline state.
+  if (_fundraiser_offline_is_offline()) {
+    // TODO mark here anything else we need to include, such as user submission data for the logged in user.
+    $record['nid'] = $donation->nid;
+    $record['did'] = $donation->did;
+    global $user;
+    $record['uid'] = $user->uid;
+    _fundraiser_offline_create_offline_donation($record);
   }
 }
 
@@ -229,16 +269,37 @@ function fundraiser_offline_fundraiser_donation_success($donation) {
  * Implements hook_fundraiser_donation_decline().
  */
 function fundraiser_offline_fundraiser_donation_decline($donation) {
-  // This could be an offline node submission.
-  if (isset($donation->node->fundraiser_offline) && $donation->node->fundraiser_offline == TRUE)) {
-    // Check our offline state.
-    if (_fundraiser_offline_is_offline()) {
-      // TODO mark here anything else we need to include, such as user submission data for the logged in user.
-      $record['nid'] = $donation->nid;
-      $record['did'] = $donation->did;
-      _fundraiser_offline_create_offline_donation($record);
-    }
+  // Check our offline state.
+  if (_fundraiser_offline_is_offline()) {
+    // TODO mark here anything else we need to include, such as user submission data for the logged in user.
+    $record['nid'] = $donation->nid;
+    $record['did'] = $donation->did;
+    global $user;
+    $record['uid'] = $user->uid;
+    _fundraiser_offline_create_offline_donation($record);
   }
+}
+
+/**
+ * Helper functions.
+ */
+
+/**
+ * Helper function, note if we're offline or not. (Generally tied to page settings.)
+ */
+function _fundraiser_offline_is_offline() {
+  $path = current_path(); // Returns current path regardless of aliasing.
+  if ($path == 'admin/fundraiser_offline') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function, create a new temporary email account.
+ */
+function _fundraiser_offline_generate_email() {
+  return sprintf('%s@%s', time(), 'sb-offline-donation.com');
 }
 
 /**

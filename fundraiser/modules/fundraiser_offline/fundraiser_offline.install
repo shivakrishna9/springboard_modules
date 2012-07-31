@@ -43,6 +43,12 @@ function fundraiser_offline_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'uid' => array(
+        'description' => 'The offline fundraiser user.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('nid'),
   );
