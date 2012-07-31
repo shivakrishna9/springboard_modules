@@ -85,7 +85,7 @@ function fundraiser_offline_form_lookup($string = '') {
       $matches[$offline->nid] = t('@title [nid: @nid]', array('@title' => $offline->title, '@nid' => $offline->nid)),
     }
   }
-  drupal_json_output($matches); 
+  drupal_json_output($matches);
 }
 
 /**
