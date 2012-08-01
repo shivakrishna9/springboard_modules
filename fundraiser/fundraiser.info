@@ -6,3 +6,6 @@ package = Jackson River Springboard
 dependencies[] = views
 dependencies[] = profile
 dependencies[] = token
+;Add testing files.
+files[] = tests/fundraiser.test
+files[] = tests/submission.test

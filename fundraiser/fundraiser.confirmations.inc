@@ -13,7 +13,7 @@
 /**
  * Menu access callback, check for donation type and node access.
  */
-function fundraiser_confirmations_perm($perm, $node) {
+function fundraiser_confirmations_perm($perm, $node) { // Coder: This is ok.
   if (fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
     return TRUE;
   }
@@ -24,7 +24,7 @@ function fundraiser_confirmations_perm($perm, $node) {
  * Menu callback, display fundraiser confirmation page.
  */
 function fundraiser_donation_confirmation_page($node, $did) {
-  drupal_set_title(check_plain($node->confirmation_page_title));
+  drupal_set_title($node->confirmation_page_title);
   if (empty($output)) {
     $message = '';
     $donation = fundraiser_donation_get_donation($did);

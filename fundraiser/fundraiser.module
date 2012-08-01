@@ -250,20 +250,20 @@ function fundraiser_views_api() {
 }
 
 /**
- * Implementshook_access().
+ * Implementshook_node_access().
  */
-function fundraiser_access($op, $node, $account) {
+function fundraiser_node_access($node, $op, $account) {
   if (fundraiser_is_donation_type($node->type)) {
     $is_author = $account->uid == $node->uid;
     switch ($op) {
       case 'create':
-        return user_access('create donation form', $account) ? TRUE : NULL;
+        return user_access('create donation form', $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
       case 'update':
         return ((user_access('edit own donation form', $account) && $is_author) ||
-          user_access('edit any donation form', $account)) ? TRUE : NULL;
+          user_access('edit any donation form', $account)) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
       case 'delete':
         return ((user_access('delete own donation form', $account) && $is_author) ||
-          user_access('delete any donation form', $account)) ? TRUE : NULL;
+          user_access('delete any donation form', $account)) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
     }
   }
 }
