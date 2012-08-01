@@ -102,6 +102,9 @@ function secure_prepopulate_init() {
     if (!secure_prepopulate_is_expired($qs)) {
     // run af param through decryption routine
       if ($fields = secure_prepopulate_decrypt($af)) {
+        // Provide an alter hook for changing the $fields array. Putting it
+        // here so we have access to $nid.
+        drupal_alter('secure_prepopulate_data', $fields, $nid);
         $_SESSION['secure_prepopulate_values'][$nid] = $fields;
         if ($fields['uid']) {
           secure_prepopulate_login_user($fields['uid']);
