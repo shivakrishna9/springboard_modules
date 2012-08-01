@@ -302,6 +302,7 @@ function fundraiser_node_delete($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_delete_fundraiser($node);
+    _fundraiser_delete_tracking($node->nid);
   }
 }
 
@@ -2090,9 +2091,14 @@ function _fundraiser_delete_tracking($nid) {
  */
 function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
-  // Check to make sure we weren't handed a bad field name.
+  // No tracking data? Create one.
   if (!$tracking) {
     $tracking->nid = $nid;
+    _fundraiser_create_tracking($tracking);
+    $tracking = _fundraiser_get_tracking_by_nid($nid);
+  }
+  // Check to make sure we weren't handed a non-existing track.
+  if (isset($tracking->field)) {
     $tracking->$field++;
     _fundraiser_update_tracking($tracking);
   }
