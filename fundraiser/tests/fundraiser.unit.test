@@ -33,8 +33,8 @@ class FundraiserUnitTestSetup extends DrupalUnitTestCase {
       'test_gateway',
       'fundraiser',
       'market_source',
-      'fundraiser_ubercart', // Temporary requirements.
-      'fundraiser_webform', // Temporary requirements.
+      'fundraiser_ubercart',
+      'fundraiser_webform',
     );
 
     // Install any additional modules specified by helper modules
@@ -42,97 +42,6 @@ class FundraiserUnitTestSetup extends DrupalUnitTestCase {
     foreach ($modules as $module) {
       drupal_install_modules(array($module));
     }
-
-    // Create ubercart settings.
-    $this->setupPayment();
-    $this->setupProfileFields();
-
-    // Create donation_node content type.
-    $settings = array(
-      'type' => 'donation_type',
-      'title_label' => 'Donation Form',
-    );
-    $content_type = $this->drupalCreateContentType($settings);
-    variable_set('fundraiser_donation_type', TRUE);
-  }
-
-  /**
-   * Implements tearDown().
-   */
-  function tearDown() {
-    // Delete nodes
-    $result = db_query('SELECT nid FROM {node}');
-    while ($node = db_fetch_array($result)) {
-      node_delete($node['nid']);
-    }
-
-    // Call the parent to continue teardown.
-    parent::tearDown();
-  }
-
-  /**
-   * Create a user with profile fields.
-   */
-  function drupalCreateUser($permissions) {
-    // Call the parent to setup the base user.
-    $user = parent::drupalCreateUser($permissions);
-    $user->profile_first_name = $this->randomName();
-    $user->profile_last_name = $this->randomName();
-    $user->profile_address = $this->randomString() . ' '. $this->randomName();
-    $user->profile_address_line_2 = $this->randomName();
-    $user->profile_city = $this->randomName();
-    $user->profile_state = $this->randomName();
-    $user->profile_zip = 20009;
-    $user->profile_country = 'US';
-    user_save($user);
-    return $user;
-  }
-
-  /**
-   * Performs the installation and configuration of payment methods
-   */
-  function setupPayment() {
-    variable_set('uc_pg_test_gateway_enabled', 1);
-    variable_set('uc_pg_test_gateway_cc_txn_type', 'auth_capture');
-    variable_set('uc_payment_credit_gateway', 'test_gateway');
-    variable_set('uc_credit_debug', 1);
-    variable_set('fundraiser_development_mode', 1);
-  }
-
-  /**
-   * Creates the standard profile fields used by the fundraiser module.
-   */
-  function setupProfileFields() {
-    $fields[] = array('title' => 'First Name', 'name' => 'profile_first_name', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'Last Name', 'name' => 'profile_last_name', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'Address', 'name' => 'profile_address', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'Address Line 2', 'name' => 'profile_address_line_2', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'City', 'name' => 'profile_city', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'State', 'name' => 'profile_state', 'category' => 'Personal Information', 'type' => 'selection');
-    $fields[] = array('title' => 'Zip', 'name' => 'profile_zip', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'Country', 'name' => 'profile_country', 'category' => 'Personal Information', 'type' => 'textfield');
-    $fields[] = array('title' => 'Campaign Id', 'name' => 'profile_cid', 'category' => 'System', 'type' => 'textfield');
-    $fields[] = array('title' => 'Market Source', 'name' => 'profile_ms', 'category' => 'System', 'type' => 'textfield');
-    $fields[] = array('title' => 'Referrer', 'name' => 'profile_referrer', 'category' => 'System', 'type' => 'textfield');
-    $fields[] = array('title' => 'Initial Referrer', 'name' => 'profile_initial_referrer', 'category' => 'System', 'type' => 'textfield');
-    $fields[] = array('title' => 'Salesforce Account Id', 'name' => 'profile_salesforce_account_id', 'category' => 'System', 'type' => 'textfield');
-    $fields[] = array('title' => 'Salesforce Contact Id', 'name' => 'profile_salesforce_contact_id', 'category' => 'System', 'type' => 'textfield');
-    foreach ($fields as $field) {
-      $edit['explanation'] = $this->randomName(50);
-      $type = $field['type'];
-      unsert($field['type']);
-      $this->drupalPost('admin/config/people/profile/add/' . $field[$type], $field, t('Save field'));
-    }
-  }
-
-  /**
-   * Create a fundraiser content node.
-   */
-  function drupalCreateFundraiserNode() {
-    $settings = array(
-      'type' => 'donation_type',
-    );
-    return $this->drupalCreateNode($settings);
   }
 }
 
@@ -302,7 +211,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $this->assertEqual(FALSE, $result, 'fundraiser_is_donation_type() returned FALSE for a non-fundraiser enabled content type.', 'testFundraiserHelperFunctions');
     $results = fundraiser_get_donation_types();
     $types = array(
-      'donation_type' => TRUE,
       'type_1' => TRUE,
       'type_2' => TRUE,
       'type_3' => TRUE,
