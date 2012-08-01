@@ -1568,7 +1568,7 @@ function fundraiser_donation_refund_success($refund) {
   $record->amount = $refund->donation['refund_amount'];
   $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : '';
   $record->reason = $refund->donation['refund_reason'];
-  drupal_write_record('fundraiser_refund', $record);
+  _fundraiser_create_refund($record);
   $refund->refund = $record;
   drupal_set_message(t('Refund has been issued.'), 'status');
   // Allow other modules to respond to the refund success. Such as SF modules.
