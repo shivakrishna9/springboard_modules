@@ -5,9 +5,9 @@
  * Fundraiser module submission tests.
  */
 
-include_once(dirname(__FILE__) . '/fundraiser.test');
+include_once('fundraiser.test');
 
-class FundraiserSubmissionTestCase extends FundraiserTestCase {
+class FundraiserSubmissionTestCase extends FundraiserWebTestSetup {
   /**
    * Implementation of getInfo().
    */
