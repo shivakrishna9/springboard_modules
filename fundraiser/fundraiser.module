@@ -1571,7 +1571,6 @@ function _fundraiser_get_form_field($form, $field_key) {
   }
 }
 
-
 /**
  * Given a standard (non webform, nothing fancy, form array. Locate a given key and update it.
  * Recursive.
