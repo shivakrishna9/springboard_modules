@@ -213,7 +213,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $field['#updated'] = 'UpdatedValue2';
     $form = _fundraiser_update_form_field($form, 'field3', $field);
     $this->assertEqual($form['field2']['field3']['#updated'], 'UpdatedValue2', '_fundraiser_update_form_field() updated the nested field.', 'testFundraiserHelperFunctions');
-    // Update this nested field.
+    // Update this field.
     $field = _fundraiser_get_form_field($form, 'field1');
     $field['#updated'] = 'UpdatedValue3';
     $form = _fundraiser_update_form_field($form, 'field1', $field);
