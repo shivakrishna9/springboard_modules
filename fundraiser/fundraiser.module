@@ -928,27 +928,6 @@ function fundraiser_get_form_field($calling_module, $form, $field_key) {
 }
 
 /**
- * Given a standard (non webform, nothing fancy, form array. Locate a given key and return it.
- * Recursive.
- */
-function _fundraiser_get_form_field($form, $field_key) {
-  // Walks a given form looking for the given key. Returns it when found.
-  foreach (element_children($form) as $child) {
-    if ($child == $field_key) {
-      // Return the found array.
-      return $form[$child];
-    }
-    else {
-      // Check this child for other children.
-      $found = _fundraiser_get_form_field($form[$child], $field_key);
-      if (!empty($found)) {
-        return $found;
-      }
-    }
-  }
-}
-
-/**
  * Asks the display glue module(s) to update field information.
  * This allows other modules to update a field as needed in a form array.
  */
@@ -960,25 +939,6 @@ function fundraiser_update_form_field($calling_module, $form, $field_key, $new_f
   else {
     return _fundraiser_update_form_field($form, $field_key, $new_field);
   }
-}
-
-/**
- * Given a standard (non webform, nothing fancy, form array. Locate a given key and update it.
- * Recursive.
- */
-function _fundraiser_update_form_field($form, $field_key, $new_field) {
-  // Walks a given form looking for the given key. Returns it when found.
-  foreach (element_children($form) as $child) {
-    if ($child == $field_key) {
-      // Update the array.
-      $form[$child] = array_merge($form[$child], $new_field);
-    }
-    else {
-      // Check this child for other children.
-      $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
-    }
-  }
-  return $form;
 }
 
 /**
@@ -1584,6 +1544,51 @@ function fundraiser_donation_refund_decline($refund) {
   drupal_set_message($refund->result['message']);
   // Allow other modules to respond to the refund decline.
   module_invoke_all('fundraiser_donation_refund_decline', $refund);
+}
+
+/**
+ * Fundraiser's own get/set functions for handling fields in forms.
+ */
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and return it.
+ * Recursive.
+ */
+function _fundraiser_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Return the found array.
+      return $form[$child];
+    }
+    else {
+      // Check this child for other children.
+      $found = _fundraiser_get_form_field($form[$child], $field_key);
+      if (!empty($found)) {
+        return $found;
+      }
+    }
+  }
+}
+
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and update it.
+ * Recursive.
+ */
+function _fundraiser_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Update the array.
+      $form[$child] = array_merge($form[$child], $new_field);
+    }
+    else {
+      // Check this child for other children.
+      $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
+    }
+  }
+  return $form;
 }
 
 /**
