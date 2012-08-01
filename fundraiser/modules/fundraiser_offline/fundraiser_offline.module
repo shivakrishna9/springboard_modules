@@ -328,7 +328,7 @@ function _fundraiser_offline_generate_email() {
 }
 
 /**
- * Helper function, given a donation form and field list make the lsited fields not required.
+ * Helper function, given a donation form and field list make the listed fields not required.
  */
 function _fundraiser_offline_form_not_required(&$form, $fields) {
   foreach ($fields as $field_name) {
@@ -339,7 +339,7 @@ function _fundraiser_offline_form_not_required(&$form, $fields) {
 }
 
 /**
- * Helper function, given a donation form and field list make the lsited fields not required.
+ * Helper function, given a donation form and field list make the listed fields not required.
  */
 function _fundraiser_offline_form_not_hidden(&$form, $fields) {
   foreach ($fields as $field_name) {
