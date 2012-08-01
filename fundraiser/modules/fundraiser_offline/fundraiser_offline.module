@@ -69,8 +69,7 @@ function fundraiser_offline_form($form, $form_state, $nid = '') {
   if (isset($form_state['values']['nid'])) {
     // Grab the nid value out of the string. Should be in the format X [nid:Y]
     $form['#suffix'] = '<div id="fundraiser-offline-node">' .
-      t('No donation form found matching %string. Please select a new one.', array('%string' => $form_state['values']['nid'])) .
-      '</div>';
+      t('No donation form found matching %string. Please select a new one.', array('%string' => $form_state['values']['nid'])) . '</div>';
     preg_match('/^(?:\s*|(.*) )?\[\s*nid\s*:\s*(\d+)\s*\]$/', $form_state['values']['nid'], $matches);
     if (!empty($matches)) {
       $nid = $matches[2];
@@ -153,7 +152,7 @@ function fundraiser_offline_node_delete($node) {
 function fundraiser_offline_node_insert($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
-    fundraiser_node_update($node);
+    fundraiser_offline_node_update($node);
   }
 }
 
@@ -205,11 +204,10 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
   if (_fundraiser_offline_is_offline()) {
     // Before we display an offline mode we need to check if this form is being displayed
     // from a normal path. If it is then we need to back out of offline mode asap.
-    // Since that indicates a user was on an offlilne form, did not submit it, and has
+    // Since that indicates a user was on an offline form, did not submit it, and has
     // now moved to looking at a normal donation form someplace else.
-    // $path = current_path(); // Current path, regardless of alias.
-    // if ($path == 'node/' . $form['#node']->nid) {
-    if (!isset($form['#node']->fundraiser_offline_mode) || $form['#node']->fundraiser_offline_mode != TRUE) {
+    $path = current_path(); // Current path, regardless of alias.
+    if ($path == 'node/' . $form['#node']->nid || !isset($form['#node']->fundraiser_offline_mode) || $form['#node']->fundraiser_offline_mode != TRUE) {
       _fundraiser_offline_is_offline(FALSE);
       return; // Bail out.
     }
@@ -336,10 +334,6 @@ function _fundraiser_offline_form_not_required(&$form, $fields) {
   foreach ($fields as $field_name) {
     $field = fundraiser_get_form_field('fundraiser_multi_currency', $form, $field_name);
     $field['#required'] = FALSE;
-    // Account for webform specific oddity.
-    if (isset($field['#webform_component']['mandatory'])) {
-      $field['#webform_component']['mandatory'] = 0;
-    }
     $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, $field_name, $field);
   }
 }
