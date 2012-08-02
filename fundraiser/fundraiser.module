@@ -1709,13 +1709,9 @@ function fundraiser_is_donation_type($type) {
  */
 function fundraiser_get_donation_types() {
   // For all types, check if they are a fundraiser type.
-  static $fundraiser_types;
-  // Cache fundraiser content types during page execution.
   $types = node_type_get_types();
   foreach ($types as $type => $type_info) {
-    if (!isset($fundraiser_types[$type])) {
-      $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
-    }
+    $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
   }
   return $fundraiser_types;
 }
