@@ -34,7 +34,7 @@ class FundraiserUnitTestSetup extends DrupalUnitTestCase {
       'fundraiser',
       'market_source',
       'fundraiser_ubercart',
-      'fundraiser_webform',
+      'fundraiser_webform'
     );
 
     // Install any additional modules specified by helper modules
@@ -615,7 +615,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $this->assertEqual($retrieved->pageviews, 3, '_fundraiser_create_tracking() correctly fell back to _fundraiser_update_tracking().', 'testTrackingDBFunctions');
 
     // Update a third with wrong creation code.
-    $defaults['nid'] => 2;
+    $defaults['nid'] = 2;
     $tracking = $defaults;
     _fundraiser_update_tracking($tracking);
     // Expect to see a row with updated values.

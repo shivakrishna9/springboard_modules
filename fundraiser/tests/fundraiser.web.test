@@ -30,7 +30,7 @@ class FundraiserWebTestSetup extends DrupalWebTestCase {
       'fundraiser',
       'market_source',
       'fundraiser_ubercart', // Temporary requirements.
-      'fundraiser_webform', // Temporary requirements.
+      'fundraiser_webform' // Temporary requirements.
     );
 
     // Install any additional modules specified by helper modules

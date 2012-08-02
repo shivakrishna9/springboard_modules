@@ -5,7 +5,7 @@
  * Fundraiser module submission tests.
  */
 
-include_once('fundraiser.test');
+module_load_include('test', 'fundraiser', 'tests/fundraiser.web');
 
 class FundraiserSubmissionTestCase extends FundraiserWebTestSetup {
   /**

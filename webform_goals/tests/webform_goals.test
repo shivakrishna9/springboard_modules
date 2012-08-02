@@ -7,7 +7,7 @@
  */
 
 
-class FundraiserGoalsUITestCase extends FundraiserTestCase {
+class FundraiserGoalsUITestCase extends FundraiserWebTestSetup {
   /**
    * Implementation of getInfo().
    */
