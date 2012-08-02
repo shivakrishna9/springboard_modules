@@ -24,12 +24,6 @@ class FundraiserUnitTestSetup extends DrupalWebTestCase {
       'fundraiser_ubercart',
       'fundraiser_webform'
     );
-
-    // Install any additional modules specified by helper modules
-    $modules = func_get_args();
-    foreach ($modules as $module) {
-      drupal_install_modules(array($module));
-    }
   }
 }
 
