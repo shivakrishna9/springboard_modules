@@ -20,21 +20,9 @@ class FundraiserUnitTestSetup extends DrupalWebTestCase {
   function setUp() {
     // Call the parent to set all of the base modules up.
     parent::setUp(
-      'webform',
-      'profile',
-      'token',
-      'uc_store',
-      'uc_order',
-      'uc_cart',
-      'uc_product',
-      'uc_payment',
-      'uc_credit',
-      'ca',
-      'test_gateway',
       'fundraiser',
       'fundraiser_ubercart',
-      'fundraiser_webform',
-      'market_source'
+      'fundraiser_webform'
     );
 
     // Install any additional modules specified by helper modules
@@ -191,12 +179,11 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $this->assertEqual($expected, $results, '_fundraiser_get_field_keys() returned the correct flattened list of field keys.', 'testFundraiserHelperFunctions');
 
     // Test content type identification.
-    $content_types = array('type_1', 'type_2', 'type_3');
+    $content_types = array('type_one', 'type_two', 'type_three');
     foreach ($content_types as $type) {
       // Create donation_node content type.
       $settings = array(
-        'type' => 'type',
-        'title_label' => $type.' Form',
+        'type' => $type,
       );
       $content_type = $this->drupalCreateContentType($settings);
       variable_set('fundraiser_' . $type, TRUE);
@@ -204,24 +191,25 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Create donation_node content type.
     $settings = array(
       'type' => 'not_type',
-      'title_label' => $type.' Form',
     );
     $content_type = $this->drupalCreateContentType($settings);
-    $result = fundraiser_is_donation_type('type_1');
+    $result = fundraiser_is_donation_type('type_one');
     $this->assertEqual(TRUE, $result, 'fundraiser_is_donation_type() returned TRUE for a fundraiser enabled content type.', 'testFundraiserHelperFunctions');
     $result = fundraiser_is_donation_type('not_type');
     $this->assertEqual(FALSE, $result, 'fundraiser_is_donation_type() returned FALSE for a non-fundraiser enabled content type.', 'testFundraiserHelperFunctions');
     $results = fundraiser_get_donation_types();
     $types = array(
-      'type_1' => TRUE,
-      'type_2' => TRUE,
-      'type_3' => TRUE,
+      'article' => FALSE, // Content types added during setUp.
+      'page' => FALSE, // Content types added during setUp.
+      'type_one' => TRUE,
+      'type_two' => TRUE,
+      'type_three' => TRUE,
       'not_type' => FALSE,
     );
     // Order doesn't matter, we don't have a reliable return of orders from content type.
     ksort($results);
     ksort($types);
-    $this->assertEqual($types, $results, 'fundraiser_get_donation_types() returned a list of content types with correct fundraiser enabled results.', 'testFundraiserHelperFunctions');
+    $this->assertEqual($types, $results, 'fundraiser_get_donation_types() returned a list of correct fundraiser enabled results.', 'testFundraiserHelperFunctions');
 
     //Test for HTTPS security checks.
     $orig = isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : 'n/a';
@@ -271,8 +259,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       $this->assertEqual($email[1], $result, '_fundraiser_validate_email() returned ' . $email[1] . ' for ' . $email[0] . '.', 'testFundraiserHelperFunctions');
     }
   }
-
-
 
   /**
    * Unit test DB functions for fundraiser.
