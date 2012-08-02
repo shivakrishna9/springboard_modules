@@ -21,8 +21,6 @@ class FundraiserUnitTestSetup extends DrupalWebTestCase {
     // Call the parent to set all of the base modules up.
     parent::setUp( array(
         'fundraiser',
-        'fundraiser_ubercart',
-        'fundraiser_webform',
       )
     );
   }
@@ -292,30 +290,24 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     $this->assertEqual($count, 1, '_fundraiser_create_fundraiser() created only one row.', 'testFundraiserDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result, (object) $defaults, '_fundraiser_create_fundraiser() created correct defaults.', 'testFundraiserDBFunctions');
-    $fundraiser = $defaults;
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_create_fundraiser() created correct defaults.', 'testFundraiserDBFunctions');
     $defaults['donation_amounts'] = array(
       array('10', '$10'),
       array('20', '$20'),
       array('30', '$30'),
     );
+    $fundraiser = $defaults;
 
     // Get it.
     $retrieved = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
     // Expect to see a row with default values.
-    $this->assertIdentical($retrieved, (object) $fundraiser, '_fundraiser_get_fundraiser_by_nid() retrieved correct row.', 'testFundraiserDBFunctions');
+    $this->assertEqual($retrieved, (object) $fundraiser, '_fundraiser_get_fundraiser_by_nid() retrieved correct row.', 'testFundraiserDBFunctions');
 
     // Update it.
     $fundraiser['gateway'] = 'SpecificGateway';
-    $fundraiser['donation_amounts'] = array(
-      array('10', '$10'),
-      array('20', '$20'),
-      array('30', '$30'),
-    );
     _fundraiser_update_fundraiser($fundraiser);
-    $fundraiser['donation_amounts'] = '10|$10,20|$20,30|$30';
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_donation_by_did($fundraiser['did']);
+    $retrieved = _fundraiser_get_donation_by_did($fundraiser['nid']);
     $this->assertEqual($retrieved->gateway, $fundraiser['gateway'], '_fundraiser_update_fundraiser() updated the gateway value.', 'testFundraiserDBFunctions');
 
     // Create a second with the same example.
@@ -330,11 +322,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $this->assertEqual($count, 2, '_fundraiser_update_donation() correctly fell back to _fundraiser_create_fundraiser().', 'testFundraiserDBFunctions');
 
     // Update with wrong creation code.
-    $fundraiser['donation_amounts'] = array(
-      array('10', '$10'),
-      array('20', '$20'),
-      array('30', '$30'),
-    );
     _fundraiser_create_fundraiser($fundraiser);
     $fundraiser['donation_amounts'] = '10|$10,20|$20,30|$30';
     // Expect to see the same number of rows.
@@ -355,11 +342,12 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_delete_fundraiser() deleted only one row.', 'testFundraiserDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result->nid, $defaults['nid'], '_fundraiser_delete_donation() deleted correct row.', 'testFundraiserDBFunctions');
+    $this->assertEqual($this_result->nid, $defaults['nid'], '_fundraiser_delete_donation() deleted correct row.', 'testFundraiserDBFunctions');
 
     // Now to test the non CRUD DB functions.
     $nids = array(2);
     $retrieved = _fundraiser_get_fundraiser_by_nids($nids);
+    $count = 0;
     foreach ($retrieved as $this_result) {
       $count++;
     }
@@ -394,13 +382,13 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     $this->assertEqual($count, 1, '_fundraiser_create_donation() created only one row.', 'testDonationDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result, (object) $defaults, '_fundraiser_create_donation() created correct defaults.', 'testDonationDBFunctions');
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_create_donation() created correct defaults.', 'testDonationDBFunctions');
     $donation = $defaults;
 
     // Get it.
     $retrieved = _fundraiser_get_donation_by_did($donation['did']);
     // Expect to see a row with default values.
-    $this->assertIdentical($retrieved, (object) $donation, '_fundraiser_get_donation_by_did() retrieved correct row.', 'testDonationDBFunctions');
+    $this->assertEqual($retrieved, (object) $donation, '_fundraiser_get_donation_by_did() retrieved correct row.', 'testDonationDBFunctions');
 
     // Update it.
     $donation['gateway'] = 'SpecificGateway';
@@ -440,10 +428,11 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_delete_donation() deleted only one row.', 'testDonationDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result->did, $defaults['did'], '_fundraiser_delete_donation() deleted correct row.', 'testDonationDBFunctions');
+    $this->assertEqual($this_result->did, $defaults['did'], '_fundraiser_delete_donation() deleted correct row.', 'testDonationDBFunctions');
 
     // Now to test the non CRUD DB functions.
     $retrieved = _fundraiser_get_donations();
+    $count = 0;
     foreach ($retrieved as $this_result) {
       $count++;
     }
@@ -478,18 +467,18 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     $this->assertEqual($count, 1, '_fundraiser_create_refund() created only one row.', 'testRefundDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result->did, $defaults['did'], '_fundraiser_create_refund() created correct did.', 'testRefundDBFunctions');
-    $this->assertIdentical($this_result->receipt_id, $defaults['receipt_id'], '_fundraiser_create_refund() created correct receipt_id.', 'testRefundDBFunctions');
-    $this->assertIdentical($this_result->amount, $defaults['amount'], '_fundraiser_create_refund() created correct amount.', 'testRefundDBFunctions');
-    $this->assertIdentical($this_result->txn_id, $defaults['txn_id'], '_fundraiser_create_refund() created correct txn_id.', 'testRefundDBFunctions');
-    $this->assertIdentical($this_result->reason, $defaults['reason'], '_fundraiser_create_refund() created correct reason.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->did, $defaults['did'], '_fundraiser_create_refund() created correct did.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->receipt_id, $defaults['receipt_id'], '_fundraiser_create_refund() created correct receipt_id.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->amount, $defaults['amount'], '_fundraiser_create_refund() created correct amount.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->txn_id, $defaults['txn_id'], '_fundraiser_create_refund() created correct txn_id.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->reason, $defaults['reason'], '_fundraiser_create_refund() created correct reason.', 'testRefundDBFunctions');
     $refund = $defaults;
     $refund['refund_id'] = $this_result->refund_id;
 
     // Get it.
     $retrieved = _fundraiser_get_refund_by_rid($refund->refund_id);
     // Expect to see a row with default values.
-    $this->assertIdentical($retrieved, (object) $refund, '_fundraiser_get_refund_by_rid() retrieved correct row.', 'testRefundDBFunctions');
+    $this->assertEqual($retrieved, (object) $refund, '_fundraiser_get_refund_by_rid() retrieved correct row.', 'testRefundDBFunctions');
 
     // Update it.
     $refund['reason'] = 'SpecificReason';
@@ -530,19 +519,21 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_delete_refund() deleted only one row.', 'testRefundDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result->did, $defaults['did'], '_fundraiser_delete_refund() deleted correct row.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result->did, $defaults['did'], '_fundraiser_delete_refund() deleted correct row.', 'testRefundDBFunctions');
     $refund = $defaults;
     $refund['refund_id'] = $this_result->refund_id;
 
     // Now to test the non CRUD DB functions.
     // Expect to get one result with the right did.
     $retrieved = _fundraiser_get_refund_by_did(3);
+    $count = 0;
     foreach ($retrieved as $this_result) {
       $count++;
     }
-    $this->assertIdentical($this_result, (object) $refund, '_fundraiser_get_refund_by_did(2) retrieved correct row.', 'testRefundDBFunctions');
+    $this->assertEqual($this_result, (object) $refund, '_fundraiser_get_refund_by_did(2) retrieved correct row.', 'testRefundDBFunctions');
     // Expect to get no results with the wrong did.
     $retrieved = _fundraiser_get_refund_by_did(1);
+    $count = 0;
     foreach ($retrieved as $this_result) {
       $count++;
     }
@@ -579,13 +570,13 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     $this->assertEqual($count, 1, '_fundraiser_create_tracking() created only one row.', 'testTrackingDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result, (object) $defaults, '_fundraiser_create_tracking() created correct defaults.', 'testTrackingDBFunctions');
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_create_tracking() created correct defaults.', 'testTrackingDBFunctions');
     $tracking = $defaults;
 
     // Get it.
     $retrieved = _fundraiser_get_tracking_by_nid(1);
     // Expect to see a row with default values.
-    $this->assertIdentical($retrieved, (object) $tracking, '_fundraiser_get_tracking_by_nid() retrieved correct row.', 'testTrackingDBFunctions');
+    $this->assertEqual($retrieved, (object) $tracking, '_fundraiser_get_tracking_by_nid() retrieved correct row.', 'testTrackingDBFunctions');
 
     // Update it.
     $tracking['pageviews']++;
@@ -607,7 +598,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     _fundraiser_update_tracking($tracking);
     // Expect to see a row with updated values.
     $retrieved = _fundraiser_get_tracking_by_nid(2);
-    $this->assertIdentical($retrieved, (object) $defaults, '_fundraiser_update_tracking() correctly fell back to _fundraiser_create_tracking().', 'testTrackingDBFunctions');
+    $this->assertEqual($retrieved, (object) $defaults, '_fundraiser_update_tracking() correctly fell back to _fundraiser_create_tracking().', 'testTrackingDBFunctions');
 
     // Delete them.
     _fundraiser_delete_tracking(1);
@@ -619,7 +610,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_delete_tracking() deleted only one row.', 'testTrackingDBFunctions');
     // Expect to see a row with default values.
-    $this->assertIdentical($this_result, (object) $defaults, '_fundraiser_delete_tracking() deleted the correct row.', 'testTrackingDBFunctions');
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_delete_tracking() deleted the correct row.', 'testTrackingDBFunctions');
 
     // Now to test the non CRUD DB functions.
     _fundraiser_update_tracking_value(1, 'pageviews');

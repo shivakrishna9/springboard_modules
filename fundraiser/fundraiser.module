@@ -1976,7 +1976,7 @@ function _fundraiser_update_refund($refund) {
  * CRUD style DB function for fundraiser_refund.
  */
 function _fundraiser_delete_refund($rid) {
-  db_delete('fundraiser_recurring')->condition('refund_id', $rid)->execute();
+  db_delete('fundraiser_refund')->condition('refund_id', $rid)->execute();
 }
 
 /**
