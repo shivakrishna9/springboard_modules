@@ -12,7 +12,7 @@
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class FundraiserTestSetup extends DrupalWebTestCase {
+class FundraiserUnitTestSetup extends DrupalWebTestCase {
 
   /**
    * Implemenation of setUp().
@@ -32,9 +32,9 @@ class FundraiserTestSetup extends DrupalWebTestCase {
       'ca',
       'test_gateway',
       'fundraiser',
-      'market_source',
       'fundraiser_ubercart',
-      'fundraiser_webform'
+      'fundraiser_webform',
+      'market_source'
     );
 
     // Install any additional modules specified by helper modules
@@ -43,18 +43,12 @@ class FundraiserTestSetup extends DrupalWebTestCase {
       drupal_install_modules(array($module));
     }
   }
-  
-  /**
-   * Private function called to complete setup for web test. Otherwise in unit test mode.
-   */
-  function fundraiserWebTestSetup() {
-  }
 }
 
 /**
  * Fundraiser testing class.
  */
-class FundraiserUnitTestCase extends FundraiserTestSetup {
+class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.

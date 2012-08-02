@@ -7,4 +7,4 @@ dependencies[] = views
 dependencies[] = profile
 dependencies[] = token
 ;Add testing files.
-files[] = tests/fundraiser.test
+files[] = tests/fundraiser.unit.test
