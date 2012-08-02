@@ -19,10 +19,11 @@ class FundraiserUnitTestSetup extends DrupalWebTestCase {
    */
   function setUp() {
     // Call the parent to set all of the base modules up.
-    parent::setUp(
-      'fundraiser',
-      'fundraiser_ubercart',
-      'fundraiser_webform'
+    parent::setUp( array(
+        'fundraiser',
+        'fundraiser_ubercart',
+        'fundraiser_webform',
+      )
     );
   }
 }
