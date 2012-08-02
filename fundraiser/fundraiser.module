@@ -1656,7 +1656,9 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
   $children = element_children($field_info);
   $keys = array_merge($keys, $children);
   foreach ($children as $child) {
-    $keys = _fundraiser_get_field_keys($field_info[$child], $keys);
+    if ($field_info[$child] != NULL && !empty($field_info[$child])) {
+      $keys = _fundraiser_get_field_keys($field_info[$child], $keys);
+    }
   }
   return $keys;
 }
