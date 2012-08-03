@@ -504,8 +504,8 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
     $component_hierarchy[$nid] = array();
     $results = _fundraiser_webform_get_components_by_nid($nid);
     foreach ($results as $data) {
-      $cid = $data->cid;
-      $component_hierarchy[$nid][$cid][] = $data;
+      $this_cid = $data->cid;
+      $component_hierarchy[$nid][$this_cid][] = $data;
     }
   }
   // Build a path from the webform component to its topmost parent.
