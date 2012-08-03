@@ -43,7 +43,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
   }
 
   /**
-   * Unit test internal form field get/set functions.
+   * Unit test DB related functions.
    */
   function testFundraiserWebformDBFunctions() {
     $defaults = array(
@@ -126,15 +126,154 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     $this->assertEqual($count, 3, '_fundraiser_webform_get_amount_count() retrieved correct number of amount fields.', 'testFundraiserWebformDBFunctions');
   }
 
+  /**
+   * Unit test component creation function - per field info declared by Fundraiser API.
+   */
+  function testFundraiserWebformComponentFunctions() {
+    // First create test data, here, a donation content type and node to test against.
+    $fundraiser->nid = 1;
+    $fields['key_one'] = array(
+      '#title' => 'Key One',
+      '#type' => 'fieldset',
+      '#required' => 0,
+    );
+    $fields['key_one']['key_two'] = array(
+      '#title' => 'Key Two',
+      '#type' => 'select',
+      '#value' => '1',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => 'Example Desc',
+        'items' => "1|one\n,2|two\n,3|three\n",
+        'width' => 10,
+        'field_prefix' => 'Example Prefix',
+        'private' => 0,
+      ),
+    );
+    $fields['key_one']['key_three'] = array(
+      '#title' => 'Key Three',
+      '#type' => 'textfield',
+      '#required' => 1,
+    );
+    $fields['key_one']['key_four'] = array(
+      '#title' => 'Key Four',
+      '#type' => 'fieldset',
+      '#required' => 0,
+    );
+    $fields['key_one']['key_four']['key_five'] = array(
+      '#title' => 'Key Five',
+      '#type' => 'textfield',
+      '#required' => 1,
+    );
+    $fields['key_six'] = array(
+      '#title' => 'Key Six',
+      '#type' => 'textfield',
+      '#required' => 0,
+    );
+    $child_weight = 0;
+    foreach ($fields as $field_key => $field) {
+      _fundraiser_webform_create_component($fundraiser, $field_key, $field, 0, $child_weight);
+      $child_weight++;
+    }
+    $keys = array('key_one', 'key_two', 'key_three', 'key_four', 'key_five', 'key_six');
+
+    // Then we test each field for existance and correctness.
+    $results = _fundraiser_webform_get_components_by_keys(1, $keys);
+    // For each result, we expect a component to exist.
+    $this->assertEqual(count($results), 6, '_fundraiser_webform_create_component() created the correct number of components.', 'testFundraiserWebformComponentFunctions');
+    // Check that keys have all correct data.
+    $this->assertEqual($results[0]->type, $fields['key_one']['#type'], '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->nid, 1, '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->pid, $results[0]->cid, '_fundraiser_webform_create_component() nested fields correctly.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->form_key, 'key_two', '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->name, $fields['key_one']['key_two']['#title'], '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->type, $fields['key_one']['key_two']['#type'], '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->value, $fields['key_one']['key_two']['#value'], '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->extra, serialize($fields['key_one']['key_two']['#extra']), '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[1]->mandatory, $fields['key_one']['key_two']['#required'], '_fundraiser_webform_create_component() created the correct settings.', 'testFundraiserWebformComponentFunctions');
+    $this->assertEqual($results[4]->pid, $results[3]->cid, '_fundraiser_webform_create_component() nested fields correctly down two levels.', 'testFundraiserWebformComponentFunctions');
+
+    // Check the paths are as expected.
+    $retrieved = _fundraiser_webform_walk_component_hierarchy(1, $results[0]->cid);
+    $expected = array('key_one');
+    $this->assertEqual($retrieved, $expected, '_fundraiser_webform_walk_component_hierarchy() got correct path from nested fields.', 'testFundraiserWebformComponentFunctions');
+    $retrieved = _fundraiser_webform_walk_component_hierarchy(1, $results[1]->cid);
+    $expected = array('key_one', 'key_two');
+    $this->assertEqual($retrieved, $expected, '_fundraiser_webform_walk_component_hierarchy() got correct path from nested fields.', 'testFundraiserWebformComponentFunctions');
+    $retrieved = _fundraiser_webform_walk_component_hierarchy(1, $results[2]->cid);
+    $expected = array('key_one', 'key_three');
+    $this->assertEqual($retrieved, $expected, '_fundraiser_webform_walk_component_hierarchy() got correct path from nested fields.', 'testFundraiserWebformComponentFunctions');
+    $retrieved = _fundraiser_webform_walk_component_hierarchy(1, $results[4]->cid);
+    $expected = array('key_one', 'key_four', 'key_five');
+    $this->assertEqual($retrieved, $expected, '_fundraiser_webform_walk_component_hierarchy() got correct path from nested fields.', 'testFundraiserWebformComponentFunctions');
+  }
+
+  /**
+   * Unit test form manipulation for webform form components during form creation.
+   */
+  function testFundraiserWebformFAPIFunctions() {
 /**
-_fundraiser_webform_update_amount_components
-_fundraiser_webform_create_component
-_fundraiser_webform_create_components
-_fundraiser_webform_find_field
-_fundraiser_webform_walk_component_hierarchy
 _fundraiser_webform_parse_components
 _fundraiser_webform_parse_component
 _fundraiser_webformfundraiser_field_info_alter
+    $fields['donation']['amount'] = array(
+      '#title' => 'Amount',
+      '#type' => 'textfield',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => '',
+        'width' => 10,
+        'field_prefix' => '$',
+      ),
+      '#create_callback' => '_fundraiser_amount_field_create',
+    );
+    $fields['donation']['other_amount'] = array(
+      '#title' => 'Other',
+      '#type' => 'textfield',
+      '#required' => 0,
+      '#extra' => array(
+        'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
+        'width' => 10,
+        'field_prefix' => '$',
+      ),
+      '#create_callback' => '_fundraiser_other_amount_field_create',
+      '#validate_callback' => '_fundraiser_other_amount_field_validate',
+    );
+_fundraiser_webform_find_field
 _fundraiser_webform_submission_flatten
+*/
+  }
+
+  /**
+   * Unit test amount field creation as declared by Fundraiser API.
+   */
+  function testFundraiserWebformAmountFieldFunctions() {
+  }
+
+/**
+    $fields['donation']['amount'] = array(
+      '#title' => 'Amount',
+      '#type' => 'textfield',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => '',
+        'width' => 10,
+        'field_prefix' => '$',
+      ),
+      '#create_callback' => '_fundraiser_amount_field_create',
+    );
+    $fields['donation']['other_amount'] = array(
+      '#title' => 'Other',
+      '#type' => 'textfield',
+      '#required' => 0,
+      '#extra' => array(
+        'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
+        'width' => 10,
+        'field_prefix' => '$',
+      ),
+      '#create_callback' => '_fundraiser_other_amount_field_create',
+      '#validate_callback' => '_fundraiser_other_amount_field_validate',
+    );
+_fundraiser_webform_update_amount_components
 */
 }
