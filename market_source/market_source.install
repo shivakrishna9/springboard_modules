@@ -22,3 +22,31 @@ function market_source_update_6000() {
   variable_set('market_source_validity_period', 6);
   return array();
 }
+
+/**
+ * Modify hidden components to render correctly with Webform 3.18 or higher
+ */
+function market_source_update_6001() {
+  $ret = array();
+  $extra = serialize(array(
+    'hidden_type' => 'hidden',
+    'conditional_operator' => '=',
+    'private' => 0,
+  ));
+
+  $fields = array(
+   'ms',
+   'cid',
+   'referrer',
+   'initial_referrer',
+  );
+  $custom_fields = variable_get('market_source_custom_fields', array());
+  foreach ($custom_fields as $field) {
+    $fields[] = $field['key'];
+  }
+  
+  foreach ($fields as $form_key) {
+    $ret[] = update_sql("UPDATE {webform_component} SET extra='%s' WHERE form_key='%s'", $extra, $form_key);
+  }
+  return $ret;
+}

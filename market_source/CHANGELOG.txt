@@ -1,0 +1,2 @@
+= Update 6001 =
+Webform has altered how hidden components are rendered. Existing Market Source components need their configuration updated so they are rendered as hidden form components instead of Form API values. See Assembla #453 (ACLU space) for more details.

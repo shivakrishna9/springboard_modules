@@ -404,67 +404,80 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'form_key' => 'ms',
     'name' => 'Market Source',
     'type' => 'hidden',
-    'extra' => array('description' => '',),
-    'mandatory' => 1, 
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 1,
     'weight' => 20,
     'email' => 1,
     'maps_to' => 'profile_ms',
   );
 
-	// campaign id
-	$components['campaign'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => $default_campaign,
-	  'form_key' => 'cid',
-	  'name' => t('Campaign ID'),
-	  'type' => 'hidden',
-	  'extra' => array('description' => ''),
-	  'mandatory' => 1,
-	  'weignt' => 21,
-	  'email' => 1,
-	  'maps_to' => 'profile_cid',
-	);
+  // campaign id
+  $components['campaign'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => $default_campaign,
+    'form_key' => 'cid',
+    'name' => t('Campaign ID'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 1,
+    'weignt' => 21,
+    'email' => 1,
+    'maps_to' => 'profile_cid',
+  );
   
-	// referrer
-	$components['referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0 ,
-	  'value' => '',
-	  'form_key' => 'referrer', 
-	  'name' => t('Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => ''),
-	  'mandatory' => 0, 
-	  'weight' => 22,
-	  'email' => 1,
-	  'maps_to' => 'profile_referrer',
-	);
+  // referrer
+  $components['referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0 ,
+    'value' => '',
+    'form_key' => 'referrer',
+    'name' => t('Referrer'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 0,
+    'weight' => 22,
+    'email' => 1,
+    'maps_to' => 'profile_referrer',
+  );
 	
-	// initial referrer
-	$components['initial_referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => '',
-	  'form_key' => 'initial_referrer', 
-	  'name' => t('Initial Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => '',),
-	  'mandatory' => 0, 
-	  'weight' => 23, 
-	  'email' => 1,
-	  'maps_to' => 'profile_initial_referrer',
-	);
-	
-	// If any custom fields have been configured, add them as well
-	$custom_fields = variable_get('market_source_custom_fields', array());
+  // initial referrer
+  $components['initial_referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => '',
+    'form_key' => 'initial_referrer',
+    'name' => t('Initial Referrer'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'maps_to' => 'profile_initial_referrer',
+  );
 
-	if (count($custom_fields)) {
-	  foreach ($custom_fields as $custom_field) {
-	    $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
-	  }
-	}
-  return $components;  
+  // If any custom fields have been configured, add them as well
+  $custom_fields = variable_get('market_source_custom_fields', array());
+
+  if (count($custom_fields)) {
+    foreach ($custom_fields as $custom_field) {
+      $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
+    }
+  }
+
+  return $components;
 }
 
 /**
