@@ -668,9 +668,6 @@ function fundraiser_fundraiser_field_info() {
     '#title' => 'Donation',
     '#type' => 'fieldset',
     '#required' => 0,
-    //'#create_callback' => '',
-    //'#display_callback' => '',
-    //'#validate_callback' => '',
   );
   $fields['donation']['amount'] = array(
     '#title' => 'Amount',
