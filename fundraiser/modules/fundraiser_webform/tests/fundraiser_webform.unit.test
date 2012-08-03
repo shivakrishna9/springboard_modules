@@ -1,0 +1,140 @@
+<?php
+
+/**
+ * The following functions need unit test coverage.
+ */
+
+/**
+ * @file
+ * Fundraiser module tests.
+ */
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserWebformUnitTestSetup extends DrupalWebTestCase {
+
+  /**
+   * Implemenation of setUp().
+   */
+  function setUp() {
+    // Call the parent to set all of the base modules up.
+    parent::setUp( array(
+        'fundraiser_webform',
+      )
+    );
+  }
+}
+
+/**
+ * Fundraiser testing class.
+ */
+class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser webform unit tests',
+      'description' => 'Tests fundraiser webform functions as unit tests.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Unit test internal form field get/set functions.
+   */
+  function testFundraiserWebformDBFunctions() {
+    $defaults = array(
+      'nid' => 1,
+      'cid' => 1,
+      'pid' => 0,
+      'form_key' => 'key_id',
+      'name' => 'Field name',
+      'type' => 'teextfield',
+      'value' => 'Field value',
+      'extra' => serialize(array('Extra data')),
+      'mandatory' => 0,
+      'weight' => 0,
+    );
+    drupal_write_record('webform_component', $defaults);
+    // Now that we have a component on record we can test all the DB stuff against it.
+    
+    // Test getting unserialized extra.
+    $retrieved = _fundraiser_webform_get_extra_by_key($defaults['nid'], 'key_id');
+    $this->assertEqual($retrieved, array('Extra data'), '_fundraiser_webform_get_extra_by_key() returned the correct unserialized result.', 'testFundraiserWebformDBFunctions');
+
+    // Add a second component row.
+    $defaults2 = $defaults;
+    $defaults2['cid'] = 2;
+    $defaults2['form_key'] = 'key_id_2';
+    drupal_write_record('webform_component', $defaults2);
+    $results = _fundraiser_webform_get_components_by_nid($defaults['nid']);
+    $count = 0;
+    $counted_for_nid = 0;
+    foreach ($results as $this_result) {
+      $count++;
+      if ($this_result->nid == $defaults['nid']) {
+        $counted_for_nid++;
+      }
+    }
+    $this->assertEqual($count, 2, '_fundraiser_webform_get_components_by_nid() returned the correct number of results.', 'testFundraiserWebformDBFunctions');
+    $this->assertEqual($counted_for_nid, $count, '_fundraiser_webform_get_components_by_nid() returned results for this nid.', 'testFundraiserWebformDBFunctions');
+
+    // Test retrieval of node component.
+    $retrieved = _fundraiser_webform_get_component_by_nid_key($defaults['nid'], 'key_id_2');
+    $this->assertEqual($retrieved, (object) $defaults2, '_fundraiser_webform_get_component_by_nid_key() returned the correct result.', 'testFundraiserWebformDBFunctions');
+
+    // Test retrieval of a specific component.
+    $results = _fundraiser_webform_get_components_by_keys($defaults['nid'], array('key_id', 'key_id_2'));
+    $this->assertEqual($results[0], (object) $defaults, '_fundraiser_webform_get_components_by_keys() returned the correct field result.', 'testFundraiserWebformDBFunctions');
+    $this->assertEqual($results[1], (object) $defaults2, '_fundraiser_webform_get_components_by_keys() returned the correct field result.', 'testFundraiserWebformDBFunctions');
+    $count = 0;
+    foreach ($results as $this_result) {
+      $count++;
+    }
+    $this->assertEqual($count, 2, '_fundraiser_webform_get_components_by_keys() returned the correct number of results.', 'testFundraiserWebformDBFunctions');
+
+    // Test component updating.
+    $defaults['name'] = 'Updated field name';
+    _fundraiser_webform_update_component($defaults['nid'], $defaults['form_key'], $defaults);
+    $retrieved = _fundraiser_webform_get_component_by_nid_key($defaults['nid'], $defaults['form_key']);
+    $this->assertEqual($retrieved->name, $defaults['name'], '_fundraiser_webform_update_component() updated the correct field value.', 'testFundraiserWebformDBFunctions');
+
+    // Test component deleteing.
+    _fundraiser_webform_delete_component($defaults2['nid'], $defaults2['form_key']);
+    $results = _fundraiser_webform_get_components_by_nid($defaults['nid']);
+    $count = 0;
+    foreach ($results as $this_result) {
+      $count++;
+    }
+    $this->assertEqual($count, 1, '_fundraiser_webform_delete_component() deleted the correct number of results.', 'testFundraiserWebformDBFunctions');
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_webform_delete_component() deleted the correct field.', 'testFundraiserWebformDBFunctions');
+
+    // Test how many amount fields are retrieved.
+    _fundraiser_webform_delete_component($defaults['nid'], $defaults['form_key']);
+    $defaults['form_key'] = 'amount';
+    $defaults['type'] = 'select';
+    $defaults['cid'] = 1;
+    drupal_write_record('webform_component', $defaults);
+    $defaults['cid']++;
+    drupal_write_record('webform_component', $defaults);
+    $defaults['cid']++;
+    drupal_write_record('webform_component', $defaults);
+    $count = _fundraiser_webform_get_amount_count($defaults['nid']);
+    $this->assertEqual($count, 3, '_fundraiser_webform_get_amount_count() retrieved correct number of amount fields.', 'testFundraiserWebformDBFunctions');
+  }
+
+/**
+_fundraiser_webform_update_amount_components
+_fundraiser_webform_create_component
+_fundraiser_webform_create_components
+_fundraiser_webform_find_field
+_fundraiser_webform_walk_component_hierarchy
+_fundraiser_webform_parse_components
+_fundraiser_webform_parse_component
+_fundraiser_webformfundraiser_field_info_alter
+_fundraiser_webform_submission_flatten
+*/
+}

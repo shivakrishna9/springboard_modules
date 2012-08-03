@@ -5,3 +5,5 @@ package = Jackson River Springboard
 dependencies[] = webform
 dependencies[] = fundraiser
 version =  7.x-3.0-dev
+;Testing files
+files[] = tests/fundraiser_webform.unit.test

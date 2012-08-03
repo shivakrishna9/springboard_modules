@@ -320,32 +320,6 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
 }
 
 /**
- * Helper function, flatten webforms submitted tree into an array mapping fields to values.
- * Technically this isn't fully flat, so much as it puts values for all defiend fields at the top level.
- * There is still nesting for field sets going on.
- */
-function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
-  if ($submission_keys == NULL) {
-    $components = _fundraiser_webform_get_components_by_nid($nid);
-    foreach ($components as $component) {
-      if ($component->type != 'fieldset') {
-        $submission_keys[] = $component->form_key;
-      }
-    }
-  }
-  $flat_array = array();
-  foreach ($submit_tree as $key => $value) {
-    $flat_array[$key] = $value;
-    if (is_array($value)) {
-      $flat_array = array_merge($flat_array, _fundraiser_webform_submission_flatten($nid, $value, $submission_keys, $fieldset_keys));
-    }
-  }
-  // Filter to only submission key results.
-  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
-  return $flat_array;
-}
-
-/**
  * Implements hook_fundraiser_donation_post_submit().
  */
 function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation) {
@@ -464,8 +438,33 @@ function _fundraiser_webformfundraiser_field_info_alter($field_key, $field, $map
  */
 
 /**
- * Helper function.
- * Creates a nested array of where a component exists in the FAPI array.
+ * Helper function, flatten webforms submitted tree into an array mapping fields to values.
+ * Technically this isn't fully flat, so much as it puts values for all defiend fields at the top level.
+ * There is still nesting for field sets going on.
+ */
+function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
+  if ($submission_keys == NULL) {
+    $components = _fundraiser_webform_get_components_by_nid($nid);
+    foreach ($components as $component) {
+      if ($component->type != 'fieldset') {
+        $submission_keys[] = $component->form_key;
+      }
+    }
+  }
+  $flat_array = array();
+  foreach ($submit_tree as $key => $value) {
+    $flat_array[$key] = $value;
+    if (is_array($value)) {
+      $flat_array = array_merge($flat_array, _fundraiser_webform_submission_flatten($nid, $value, $submission_keys, $fieldset_keys));
+    }
+  }
+  // Filter to only submission key results.
+  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
+  return $flat_array;
+}
+
+/**
+ * Helper function. Creates a nested array of where a component exists in the FAPI array.
  */
 function _fundraiser_webform_parse_component($nid, $form_key) {
   $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
@@ -533,87 +532,6 @@ function &_fundraiser_webform_find_field(&$form, $path) {
       return $form[$v];
     }
   }
-}
-
-/**
- * DB functions.
- */
-
-/**
- * DB function, update submissions table with the right uid, sids.
- */
-function _fundraiser_webform_update_submissions($uid, $sid) {
-  db_query('UPDATE {webform_submissions} SET ' .
-    'uid = :uid ' .
-    'WHERE sid = :sid',
-    array(':uid' => $uid, ':sid' => $sid));
-}
-
-/**
- * DB function, get webform component form elements.
- */
-function _fundraiser_webform_get_amount_count($nid) {
-  $results = db_query('SELECT COUNT(nid) as count FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key LIKE \'amount\' ' .
-    'AND type = \'select\'',
-    array(':nid' => $nid));
-  foreach ($results as $result) {
-    return $result->count;
-  }
-}
-
-/**
- * DB function, get webform component form elements.
- */
-function _fundraiser_webform_get_components_by_nid($nid) {
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid',
-    array(':nid' => $nid))->fetchAll();
-}
-
-/**
- * DB function, select webform component given node, form key info.
- */
-function _fundraiser_webform_get_component_by_nid_key($nid, $form_key) {
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key = :form_key',
-    array(':nid' => $nid, ':form_key' => $form_key))->fetchObject();
-}
-
-/**
- * DB function, get webform component form elements.
- */
-function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
-  if (!is_array($form_keys)) {
-    $form_keys = array($form_keys);
-  }
-  return db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key IN (:form_keys)',
-    array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
-}
-
-/**
- * DB function, update webform component given node, form key info.
- */
-function _fundraiser_webform_update_component($nid, $form_key, $fields) {
-  db_update('webform_component')
-    ->fields($fields)
-    ->condition('nid', $nid)
-    ->condition('form_key', $form_key)
-    ->execute();
-}
-
-/**
- * DB function, delete webform component given node, form key info.
- */
-function _fundraiser_webform_delete_component($nid, $form_key) {
-  db_delete('webform_component')
-    ->condition('nid', $nid)
-    ->condition('form_key', $form_key)
-    ->execute();
 }
 
 /**
@@ -756,14 +674,84 @@ function _fundraiser_webform_update_amount_components($fundraiser) {
   watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/' . $fundraiser->nid);
 }
 
+/**
+ * DB functions.
+ */
 
 /**
  * DB function, given a nid and field key, get and *unserialize* the extra field from webform component.
  */
 function _fundraiser_webform_get_extra_by_key($nid, $form_key) {
-  $extra = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
-  if ($extra) {
-    return unserialize($extra->extra);
+  $results = _fundraiser_webform_get_component_by_nid_key($nid, $form_key);
+  if ($results) {
+    return unserialize($results->extra);
   }
   return FALSE;
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_components_by_nid($nid) {
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid',
+    array(':nid' => $nid))->fetchAll();
+}
+
+/**
+ * DB function, select webform component given node, form key info.
+ */
+function _fundraiser_webform_get_component_by_nid_key($nid, $form_key) {
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key = :form_key',
+    array(':nid' => $nid, ':form_key' => $form_key))->fetchObject();
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
+  if (!is_array($form_keys)) {
+    $form_keys = array($form_keys);
+  }
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key IN (:form_keys)',
+    array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
+}
+
+/**
+ * DB function, update webform component given node, form key info.
+ */
+function _fundraiser_webform_update_component($nid, $form_key, $fields) {
+  db_update('webform_component')
+    ->fields($fields)
+    ->condition('nid', $nid)
+    ->condition('form_key', $form_key)
+    ->execute();
+}
+
+/**
+ * DB function, delete webform component given node, form key info.
+ */
+function _fundraiser_webform_delete_component($nid, $form_key) {
+  db_delete('webform_component')
+    ->condition('nid', $nid)
+    ->condition('form_key', $form_key)
+    ->execute();
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _fundraiser_webform_get_amount_count($nid) {
+  $results = db_query('SELECT COUNT(nid) as count FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key LIKE \'amount\' ' .
+    'AND type = \'select\'',
+    array(':nid' => $nid));
+  foreach ($results as $result) {
+    return $result->count;
+  }
 }
