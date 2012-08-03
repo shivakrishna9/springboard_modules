@@ -260,11 +260,11 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Setup.
     $defaults = array(
       'nid' => 1,
-      'gateway' => $this->randomString(),
-      'receipt_email_from' => $this->randomString(),
-      'receipt_email_address' => $this->randomString(),
-      'receipt_email_subject' => $this->randomString(),
-      'receipt_email_message' => $this->randomString(),
+      'gateway' => 'Gateway id',
+      'receipt_email_from' => 'Email from',
+      'receipt_email_address' => 'Email address',
+      'receipt_email_subject' => 'Email subject',
+      'receipt_email_message' => 'Email message',
       'donation_amounts' => array(
         array('10', '$10'),
         array('20', '$20'),
@@ -272,11 +272,11 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       ),
       'show_other_amount' => 1,
       'minimum_donation_amount' => 10,
-      'internal_name' => $this->randomString(),
-      'confirmation_page_title' => $this->randomString(),
-      'confirmation_page_body' => $this->randomString(),
+      'internal_name' => 'Internal name',
+      'confirmation_page_title' => 'Page title',
+      'confirmation_page_body' => 'Page body',
       'confirmation_page_format' => 2,
-      'redirect_url' => $this->randomString(),
+      'redirect_url' => 'Redirect URL',
     );
 
     // For this node, create a new tracking record.
@@ -368,8 +368,8 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       'nid' => 2,
       'uid' => 3,
       'sid' => 4,
-      'gateway' => $this->randomString(),
-      'txn_id' => $this->randomString(),
+      'gateway' => 'Gateway id',
+      'txn_id' => 'Transaction id',
     );
 
     // For this node, create a new tracking record.
@@ -453,8 +453,8 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       'did' => 1,                            // Original donation id.
       'receipt_id' => 2,                     // New reverse donation id.
       'amount' => 50,                        // Amount refunded.
-      'txn_id' => $this->randomName(),       // Transaction id.
-      'reason' => $this->randomString(),     // Reason given.
+      'txn_id' => 'Transaction_id',          // Transaction id.
+      'reason' => 'Some reason given',       // Reason given.
     );
 
     // For this node, create a new tracking record.
@@ -614,15 +614,15 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     // Expect a node with tracking to update the field.
     _fundraiser_update_tracking_value($defaults['nid'], 'pageviews');
     $retrieved = _fundraiser_get_tracking_by_nid($defaults['nid']);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' correctly updated the value.', 'testTrackingDBFunctions');
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() correctly updated the value.', 'testTrackingDBFunctions');
     // Expect a node without tracking to create a row with updated field.
     _fundraiser_update_tracking_value($tracking['nid'], 'pageviews');
     $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' correctly created a row and updated the value.', 'testTrackingDBFunctions');
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() correctly created a row and updated the value.', 'testTrackingDBFunctions');
     // Expect a bad field value to not change anything.
     _fundraiser_update_tracking_value($tracking['nid'], 'notARealFieldName');
     $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' ignored a bad field name.', 'testTrackingDBFunctions');
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() ignored a bad field name.', 'testTrackingDBFunctions');
 
     // Clean up created nodes.
     _fundraiser_delete_tracking($tracking['nid']);
