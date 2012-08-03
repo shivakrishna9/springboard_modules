@@ -353,9 +353,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_get_fundraiser_by_nids() got only one row.', 'testFundraiserDBFunctions');
-
-    // Clean up last created row.
-    _fundraiser_delete_fundraiser($defaults['nid']);
   }
 
   /**
@@ -438,9 +435,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     }
     // Expect to see only one row left.
     $this->assertEqual($count, 1, '_fundraiser_get_donations() got only one row.', 'testDonationDBFunctions');
-
-    // Clean up last created row.
-    _fundraiser_delete_donation($defaults['did']);
   }
 
   /**
@@ -538,9 +532,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       $count++;
     }
     $this->assertEqual($count, 0, '_fundraiser_get_refund_by_did(1) retrieved no rows.', 'testRefundDBFunctions');
-
-    // Clean up last created row.
-    _fundraiser_delete_refund($refund['refund_id']);
   }
 
   /**
@@ -623,10 +614,6 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     _fundraiser_update_tracking_value($tracking['nid'], 'notARealFieldName');
     $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
     $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() ignored a bad field name.', 'testTrackingDBFunctions');
-
-    // Clean up created nodes.
-    _fundraiser_delete_tracking($tracking['nid']);
-    _fundraiser_delete_tracking($defaults['nid']);
   }
 
 }
