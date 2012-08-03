@@ -307,7 +307,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $fundraiser['gateway'] = 'SpecificGateway';
     _fundraiser_update_fundraiser($fundraiser);
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_donation_by_did($fundraiser['nid']);
+    $retrieved = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
     $this->assertEqual($retrieved->gateway, $fundraiser['gateway'], '_fundraiser_update_fundraiser() updated the gateway value.', 'testFundraiserDBFunctions');
 
     // Create a second with the same example.
@@ -325,7 +325,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     _fundraiser_create_fundraiser($fundraiser);
     $fundraiser['donation_amounts'] = '10|$10,20|$20,30|$30';
     // Expect to see the same number of rows.
-    $result = db_query('SELECT * FROM {fundraiser_donation}');
+    $result = db_query('SELECT * FROM {fundraiser}');
     $count = 0;
     foreach ($result as $this_result) {
       $count++;
@@ -334,7 +334,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
 
     // Delete them.
     _fundraiser_delete_fundraiser($fundraiser['nid']);
-    $result = db_query('SELECT * FROM {fundraiser_donation}');
+    $result = db_query('SELECT * FROM {fundraiser}');
     $count = 0;
     foreach ($result as $this_result) {
       $count++;
@@ -476,7 +476,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $refund['refund_id'] = $this_result->refund_id;
 
     // Get it.
-    $retrieved = _fundraiser_get_refund_by_rid($refund->refund_id);
+    $retrieved = _fundraiser_get_refund_by_rid($refund['refund_id']);
     // Expect to see a row with default values.
     $this->assertEqual($retrieved, (object) $refund, '_fundraiser_get_refund_by_rid() retrieved correct row.', 'testRefundDBFunctions');
 
@@ -484,7 +484,7 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $refund['reason'] = 'SpecificReason';
     _fundraiser_update_refund($refund);
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_refund_by_rid($refund->refund_id);
+    $retrieved = _fundraiser_get_refund_by_rid($refund['refund_id']);
     $this->assertEqual($retrieved->reason, $refund['reason'], '_fundraiser_update_refund() updated the reason value.', 'testRefundDBFunctions');
 
     // Create a second with the same example.
@@ -557,24 +557,23 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       'conversions' => 0,
       'local_failures' => 0,
       'gateway_failures' => 0,
-      'latest_load_time' => 0,
     );
 
     // For this node, create a new tracking record.
-    _fundraiser_create_tracking($tracking);
+    _fundraiser_create_tracking($defaults);
     // Expect to see a row in {fundraiser_tracking} for this node.
-    $result = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => 1));
+    $result = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $defaults['nid']));
     $count = 0;
     foreach ($result as $this_result) {
       $count++;
     }
     $this->assertEqual($count, 1, '_fundraiser_create_tracking() created only one row.', 'testTrackingDBFunctions');
     // Expect to see a row with default values.
-    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_create_tracking() created correct defaults.', 'testTrackingDBFunctions');
+    $this->assertEqual($this_result, (object) $defaults, '_fundraiser_create_tracking() '.print_r($this_result,1).'created correct defaults.', 'testTrackingDBFunctions');
     $tracking = $defaults;
 
     // Get it.
-    $retrieved = _fundraiser_get_tracking_by_nid(1);
+    $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
     // Expect to see a row with default values.
     $this->assertEqual($retrieved, (object) $tracking, '_fundraiser_get_tracking_by_nid() retrieved correct row.', 'testTrackingDBFunctions');
 
@@ -582,26 +581,25 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $tracking['pageviews']++;
     _fundraiser_update_tracking($tracking);
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_tracking_by_nid(1);
+    $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
     $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking() updated pageviews value.', 'testTrackingDBFunctions');
 
     // Create a second with the same example.
     $tracking['pageviews']++;
     _fundraiser_create_tracking($tracking);
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_tracking_by_nid(1);
+    $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
     $this->assertEqual($retrieved->pageviews, 3, '_fundraiser_create_tracking() correctly fell back to _fundraiser_update_tracking().', 'testTrackingDBFunctions');
 
     // Update a third with wrong creation code.
     $defaults['nid'] = 2;
-    $tracking = $defaults;
-    _fundraiser_update_tracking($tracking);
+    _fundraiser_update_tracking($defaults);
     // Expect to see a row with updated values.
-    $retrieved = _fundraiser_get_tracking_by_nid(2);
+    $retrieved = _fundraiser_get_tracking_by_nid($defaults['nid']);
     $this->assertEqual($retrieved, (object) $defaults, '_fundraiser_update_tracking() correctly fell back to _fundraiser_create_tracking().', 'testTrackingDBFunctions');
 
     // Delete them.
-    _fundraiser_delete_tracking(1);
+    _fundraiser_delete_tracking($tracking['nid']);
     $result = db_query('SELECT * FROM {fundraiser_tracking}');
     $count = 0;
     foreach ($result as $this_result) {
@@ -613,22 +611,22 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
     $this->assertEqual($this_result, (object) $defaults, '_fundraiser_delete_tracking() deleted the correct row.', 'testTrackingDBFunctions');
 
     // Now to test the non CRUD DB functions.
-    _fundraiser_update_tracking_value(1, 'pageviews');
-    _fundraiser_update_tracking_value(2, 'pageviews');
     // Expect a node with tracking to update the field.
-    $retrieved = _fundraiser_get_tracking_by_nid(2);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() correctly updated the value.', 'testTrackingDBFunctions');
+    _fundraiser_update_tracking_value($defaults['nid'], 'pageviews');
+    $retrieved = _fundraiser_get_tracking_by_nid($defaults['nid']);
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' correctly updated the value.', 'testTrackingDBFunctions');
     // Expect a node without tracking to create a row with updated field.
-    $retrieved = _fundraiser_get_tracking_by_nid(1);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() correctly created a row and updated the value.', 'testTrackingDBFunctions');
+    _fundraiser_update_tracking_value($tracking['nid'], 'pageviews');
+    $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' correctly created a row and updated the value.', 'testTrackingDBFunctions');
     // Expect a bad field value to not change anything.
-    _fundraiser_update_tracking_value(1, 'notARealFieldName');
-    $retrieved = _fundraiser_get_tracking_by_nid(1);
-    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() ignored a bad field name.', 'testTrackingDBFunctions');
+    _fundraiser_update_tracking_value($tracking['nid'], 'notARealFieldName');
+    $retrieved = _fundraiser_get_tracking_by_nid($tracking['nid']);
+    $this->assertEqual($retrieved->pageviews, 2, '_fundraiser_update_tracking_value() '.print_r($retrieved,1).' ignored a bad field name.', 'testTrackingDBFunctions');
 
     // Clean up created nodes.
-    _fundraiser_delete_tracking(1);
-    _fundraiser_delete_tracking(2);
+    _fundraiser_delete_tracking($tracking['nid']);
+    _fundraiser_delete_tracking($defaults['nid']);
   }
 
 }

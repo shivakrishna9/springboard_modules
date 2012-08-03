@@ -301,7 +301,7 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
 function fundraiser_node_delete($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
-    _fundraiser_delete_fundraiser($node);
+    _fundraiser_delete_fundraiser($node->nid);
     _fundraiser_delete_tracking($node->nid);
   }
 }
@@ -1833,10 +1833,10 @@ function _fundraiser_update_fundraiser($fundraiser) {
 /**
  * CRUD style DB function for fundraiser.
  */
-function _fundraiser_delete_fundraiser($fundraiser) {
-  db_delete('fundraiser')->condition('nid', $fundraiser->nid)->execute();
+function _fundraiser_delete_fundraiser($nid) {
+  db_delete('fundraiser')->condition('nid', $nid)->execute();
   // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_delete_fundraiser_alter', $fundraiser);
+  module_invoke_all('fundraiser_delete_fundraiser_alter', $nid);
 }
 
 /**
@@ -1856,7 +1856,7 @@ function _fundraiser_get_fundraiser_by_nids($nids) {
  */
 function _fundraiser_delete_fundraisers($nodes) {
   foreach ($nodes as $node) {
-    _fundraiser_delete_fundraiser($node);
+    _fundraiser_delete_fundraiser($node->nid);
   }
 }
 
@@ -2081,7 +2081,7 @@ function _fundraiser_update_tracking_value($nid, $field) {
     $tracking = _fundraiser_get_tracking_by_nid($nid);
   }
   // Check to make sure we weren't handed a non-existing track.
-  if (isset($tracking->field)) {
+  if (isset($tracking->$field)) {
     $tracking->$field++;
     _fundraiser_update_tracking($tracking);
   }
