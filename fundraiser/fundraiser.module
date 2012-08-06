@@ -279,10 +279,9 @@ function fundraiser_menu() {
  * Implemenation of hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
-  // workaround for douchebaggy bug where only uid 1 can see custom triggers
-  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
   if (module_exists('trigger')) {
-    $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+    $items['admin/build/trigger/fundraiser']['access callback'] = 'user_access';
+    $items['admin/build/trigger/fundraiser']['access arguments'] = array('administer site configuration');
   }
 
   // alter some built-in webform menu items
