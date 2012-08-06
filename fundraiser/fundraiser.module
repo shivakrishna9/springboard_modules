@@ -824,38 +824,39 @@ function fundraiser_fundraiser_field_info() {
  */
 function _fundraiser_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, use amount as is.
-  if (empty($fundraiser->donation_amounts)) {
+  if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
     return $field;
   }
-  // Since we have an array of donation_amounts, set the field data to match.
-  $keys = array_keys($fundraiser->donation_amounts);
-  // Construct a set of options based on the configured amounts.
-  $formatted_amounts = '';
-  foreach ($fundraiser->donation_amounts as $amount => $label) {
-    if (!$label) {
-      $formatted_amounts .= $amount . '|$' . $amount;
+  // Else we want a select field.
+  if (is_array($fundraiser->donation_amounts)) {
+    // Since we have an array of donation_amounts, set the field data to match.
+    $keys = array_keys($fundraiser->donation_amounts);
+    // Construct a set of options based on the configured amounts.
+    $formatted_amounts = '';
+    foreach ($fundraiser->donation_amounts as $amount => $label) {
+      if (!$label) {
+        $formatted_amounts .= $amount . '|$' . $amount;
+      }
+      else {
+        $formatted_amounts .= $amount . '|' . $label;
+      }
+      $formatted_amounts .= "\n";
     }
-    else {
-      $formatted_amounts .= $amount . '|' . $label;
+    if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
+      $formatted_amounts .= 'other|Other';
     }
-    $formatted_amounts .= "\n";
-  }
-  if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
-    $formatted_amounts .= 'other|Other';
-  }
-  // Update the field.
-  $field = array(
-    '#title' => 'Please select your tax-deductible gift amount below',
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
+    $field['#title'] = t('Please select your tax-deductible gift amount below');
+    $field['#type'] = 'select';
+    $field['#extra'] = array(
       'description' => '',
       'items' => $formatted_amounts,
       'multiple' => 0,
-    ),
-    '#value' => $keys[0],
-  );
-  // Return the field to be created.
+    );
+    $field['#value'] = $keys[0];
+  }
+  if ($fundraiser->show_other_amount == 1) {
+    $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  }
   return $field;
 }
 
@@ -864,15 +865,15 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
  */
 function _fundraiser_other_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, drop the amount_other field, and use amount as is.
-  if (empty($fundraiser->donation_amounts)) {
-    return '';
+  if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
+    return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // If the show other options is disallowed, unset it.
   if (!$fundraiser->show_other_amount) {
-    return '';
+    return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $fields['donation']['other_amount']['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  $fields['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
   // Return the field to be created.
   return $field;
 }

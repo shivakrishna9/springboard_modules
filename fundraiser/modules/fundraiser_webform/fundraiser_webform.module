@@ -376,7 +376,7 @@ function fundraiser_webform_fundraiser_create_fundraiser_alter($fundraiser) {
   }
   $fundraiser->donation_amounts = $donation_amounts;
   // Create the components for the fundraiser, amount and otherwise.
-  $components = _fundraiser_webform_create_components($fundraiser);
+  _fundraiser_webform_update_components($fundraiser);
 }
 
 /**
@@ -397,14 +397,8 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
     ksort($donation_amounts, SORT_NUMERIC);
   }
   $fundraiser->donation_amounts = $donation_amounts;
-  // Update the webform component table with new data.
-  if ($fundraiser->show_other_amount == 1) {
-    $other_amount = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'other_amount');
-    $other_amount['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.'; // TODO - fix for international audience.
-    _fundraiser_webform_update_component($fundraiser->nid, 'other_amount', array('extra' => serialize($other_amount)));
-  }
   // Update the amount components for the fundraiser.
-  _fundraiser_webform_update_amount_components($fundraiser);
+  _fundraiser_webform_update_components($fundraiser);
 }
 
 /**
@@ -537,29 +531,34 @@ function &_fundraiser_webform_find_field(&$form, $path) {
 /**
  * Helper function, creates all donation specific webform components
  */
-function _fundraiser_webform_create_components($fundraiser) {
+function _fundraiser_webform_update_components($fundraiser) {
   // Poll other modules for the information they would normally provide to the donation form.
   $fields = fundraiser_field_info();
   // Start creating fields based on the component.
   $components = array();
   $child_weight = 0;
   foreach ($fields as $field_key => $field) {
-    _fundraiser_webform_create_component($fundraiser, $field_key, $field, 0, $child_weight);
+    _fundraiser_webform_update_component($fundraiser, $field_key, $field, 0, $child_weight);
     $child_weight++;
   }
-  return $components;
 }
 
 /**
- * Helper function, handles recursion for _fundraiser_webform_create_components().
+ * Helper function, handles recursion for _fundraiser_webform_update_components().
  */
-function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
+function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
   // Tweak the field with a callback as needed.
   if (isset($field['#create_callback']) && function_exists($field['#create_callback'])) {
     $field = call_user_func($field['#create_callback'], $fundraiser, $field);
   }
-  if (empty($field)) {
-    // The submit callback has the option of returning nothing to cancel creating the field.
+  if (empty($field) || $field === FALSE) {
+    // The submit callback has the option of returning nothing to cancel creating the field, or to delete it.
+    if ($field === FALSE) {
+      // Delete the field.
+      _fundraiser_webform_delete_component($fundraiser->nid, $field_key);
+      // We do NOT use a standard webform_component_delete here. That's a recursive and submission destructive act.
+      //webform_component_delete($fundraiser, $component); //START
+    }
     // If so, return to skip.
     return;
   }
@@ -569,7 +568,7 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
   }
   // Check if empty.
   if (!empty($field)) {
-    // Donation amount.
+    // Create the field array.
     $component = array();
     $component['nid'] = $fundraiser->nid;
     $component['pid'] = $pid;
@@ -586,92 +585,25 @@ function _fundraiser_webform_create_component($fundraiser, $field_key, $field, $
       $component['maps_to'] = $field['#profile_map'];
     }
     $component['weight'] = $weight;
-    $pid = webform_component_insert($component);
-    $components[$pid] = $component;
+
+    // Now that the array has been created, with all the right create callbacks. Figure out if we're updating or inserting.
+    $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
+    if (isset($orig_field->cid) && !empty($orig_field->cid)) {
+      $pid = $orig_field->cid;
+      $component = array_merge((array) $orig_field, (array) $component);
+      webform_component_update($component);
+    }
+    else {
+      $pid = webform_component_insert($component);
+    }
+
     // Check for children. Recursion occurs here.
     $child_weight = 0;
     foreach (element_children($field) as $key) {
-      _fundraiser_webform_create_component($fundraiser, $key, $field[$key], $pid, $child_weight);
+      _fundraiser_webform_update_component($fundraiser, $key, $field[$key], $pid, $child_weight);
       $child_weight++;
     }
   }
-}
-
-/**
- * Helper function, updates ask amount and show other amount webform components.
- */
-function _fundraiser_webform_update_amount_components($fundraiser) {
-  // Get the donation component for the pid of the two fields we're looking at.
-  $donation_components = _fundraiser_webform_get_components_by_keys($fundraiser->nid, array('donation'));
-  foreach ($donation_components as $donation_component) {
-    $pid = $donation_component->cid;
-  }
-  // Poll other modules for the information they would normally provide to the donation form.
-  $fields = fundraiser_field_info();
-  $had_select = _fundraiser_webform_get_amount_count($fundraiser->nid);
-
-  // First handle the amount field changes, we will always have an 'amount' component.
-  // If no donation amounts are available, then we have a textfield.
-  if (!count($fundraiser->donation_amounts)) {
-    // If the amount field used to have select, we're deleteing it and creating a new field.
-    if ($had_select) {
-      _fundraiser_webform_delete_component($fundraiser->nid, 'amount');
-      _fundraiser_webform_create_component($fundraiser, 'amount', $fields['donation']['amount'], $pid);
-    }
-    // Otherwise, the amount field is already a text field and we can leave it alone safely.
-  }
-  // Else we are adding (or updating) select fields.
-  else {
-    // If the current component is already a select, just update with current donation amount values.
-    if ($had_select) {
-      $extra = isset($fields['donation']['amount']['#extra']) ? $fields['donation']['amount']['#extra'] : array();
-      // Construct a set of options based on the configured amounts.
-      $formatted_amounts = '';
-      foreach ($fundraiser->donation_amounts as $amount => $label) {
-        if (!$label) {
-          $formatted_amounts .= $amount . '|$' . $amount;
-        }
-        else {
-          $formatted_amounts .= $amount . '|' . $label;
-        }
-        $formatted_amounts .= "\n";
-      }
-      if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
-        $formatted_amounts .= 'other|Other';
-      }
-      $extra['items'] = $formatted_amounts;
-      _fundraiser_webform_update_component($fundraiser->nid, 'amount', array('extra' => serialize($extra)));
-    }
-    // We had a textfield, we need to create a select field instead.
-    else {
-      _fundraiser_webform_delete_component($fundraiser->nid, 'amount');
-      _fundraiser_webform_create_component($fundraiser, 'amount', $fields['donation']['amount'], $pid);
-    }
-  }
-  $message = t('The @node_title donation form has been updated.', array('@node_title' => $fundraiser->title));
-
-  // Then handle the changes for the other_amount component, we may or may not have one of those.
-  if ($fundraiser->show_other_amount && $had_select) {
-    $result = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
-    // Pre-existing entry in the DB for this form component and it's still enabled so we update.
-    if ($result) {
-      $extra = isset($fields['donation']['other_amount']['#extra']) ? $fields['donation']['amount']['#extra'] : array();
-      $extra['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-      _fundraiser_webform_update_component($fundraiser->nid, 'other_amount', array('extra' => serialize($extra)));
-      $message .= t('Other donation amount options have been updated.');
-    }
-    // Other amount doesn't already exist.
-    else {
-      _fundraiser_webform_create_component($fundraiser, 'other_amount', $fields['donation']['other_amount'], $pid);
-      $message .= t('Other amount options have been added to the form.');
-    }
-  }
-  // Other amount is disabled or there are no select options so the component needs to be removed if it exists.
-  else {
-    _fundraiser_webform_delete_component($fundraiser->nid, 'other_amount');
-    $message .= t('Other amount options have been disabled on the form.');
-  }
-  watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, 'node/' . $fundraiser->nid);
 }
 
 /**
@@ -719,17 +651,6 @@ function _fundraiser_webform_get_components_by_keys($nid, $form_keys) {
     'WHERE nid = :nid ' .
     'AND form_key IN (:form_keys)',
     array(':nid' => $nid, ':form_keys' => $form_keys))->fetchAll();
-}
-
-/**
- * DB function, update webform component given node, form key info.
- */
-function _fundraiser_webform_update_component($nid, $form_key, $fields) {
-  db_update('webform_component')
-    ->fields($fields)
-    ->condition('nid', $nid)
-    ->condition('form_key', $form_key)
-    ->execute();
 }
 
 /**
