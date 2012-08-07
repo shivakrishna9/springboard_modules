@@ -46,7 +46,12 @@ function market_source_update_6001() {
   }
   
   foreach ($fields as $form_key) {
-    $ret[] = update_sql("UPDATE {webform_component} SET extra='%s' WHERE form_key='%s'", $extra, $form_key);
+    $sql = sprintf("UPDATE {webform_component} SET extra='%s' WHERE form_key='%s'", $extra, $form_key);
+    $result = db_query($sql);
+    $ret[] = array(
+      'success' => $result ? TRUE : FALSE,
+      'query' => $sql,
+    );
   }
   return $ret;
 }
