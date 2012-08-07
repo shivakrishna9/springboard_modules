@@ -41,7 +41,14 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
       'group' => 'Springboard',
     );
   }
- 
+
+  /**
+   * Test coverage performed elsewhere as part of API unit testing.
+   * --------------------------------------------------------------
+   * _fundraiser_amount_field_create is tested in fundraiser_webform.unit.test
+   * _fundraiser_other_amount_field_create is tested in fundraiser_webform.unit.test
+   */
+
   /**
    * Unit test internal form field get/set functions.
    */
