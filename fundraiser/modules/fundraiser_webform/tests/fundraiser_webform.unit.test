@@ -213,6 +213,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
 
   /**
    * Unit test amount field creation as declared by Fundraiser API. Testing amounts separately b/c they're tricky.
+   * ALERT: This is technically an integration test of the Fundraiser Webform implementation of create callbacks in field creation.
    */
   function testFundraiserWebformAmountFieldFunctions() {
     $fundraiser->nid = 1;
@@ -222,7 +223,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
       array('30', '$30'),
     );
     $fundraiser->show_other_amount = 1;
-    $fundraiser->minimum_donation_amount= '10';
+    $fundraiser->minimum_donation_amount = 10;
     $fields['donation'] = array(
       '#title' => 'Donation',
       '#type' => 'fieldset',
@@ -237,7 +238,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
         'width' => 10,
         'field_prefix' => '$',
       ),
-      '#create_callback' => '_fundraiser_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform.
+      '#create_callback' => '_fundraiser_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform field creation.
     );
     $fields['donation']['other_amount'] = array(
       '#title' => 'Other',
@@ -248,7 +249,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
         'width' => 10,
         'field_prefix' => '$',
       ),
-      '#create_callback' => '_fundraiser_other_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform.
+      '#create_callback' => '_fundraiser_other_amount_field_create', // This tests code in fundraiser.module in conjunction with fundraiser_webform field creation.
       '#validate_callback' => '_fundraiser_other_amount_field_validate',
     );
     $child_weight = 0;
@@ -265,17 +266,24 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     // It should be type select.
     $this->assertEqual($retrieved->type, 'select', '_fundraiser_webform_update_component() created the amount type correctly.', 'testFundraiserWebformAmountFieldFunctions');
     // It should have a flattened array of donation amounts.
-//TODO translate this expected per array results from extra serialized.
-//    $this->assertEqual($retrieved->extra['items'], $flattened_donation_amounts, '_fundraiser_webform_update_component() created the other items correctly.', 'testFundraiserWebformAmountFieldFunctions');
-//    $expected = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-//    $this->assertEqual($retrieved->extra['description'], $expected, '_fundraiser_webform_update_component() created the amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
+    $expected = serialize(array(
+      'description' => 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.',
+      'items' => '10|$10' . "\n" . '20|$20' . "\n" . '30|$30' . "\n" . 'other|Other',
+      'multiple' => 0,
+      'private' => 0,
+    ));
+    $this->assertEqual($retrieved->extra, $expected, '_fundraiser_webform_update_component() created the extra settings correctly.', 'testFundraiserWebformAmountFieldFunctions');
     // There should be an other_amount field.
     $retrieved = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
     $this->assertEqual(empty($retrieved->name), FALSE, '_fundraiser_webform_update_component() created the other amount field correctly.', 'testFundraiserWebformAmountFieldFunctions');
-    // It should have the correct description.
-//TODO translate this expected per array results from extra serialized.
-//    $expected = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-//    $this->assertEqual($retrieved->extra['description'], $expected, '_fundraiser_webform_update_component() created the other amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
+    // It should have the correct description./Users/cg176010/Desktop/house
+    $expected = serialize(array(
+      'description' => 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.',
+      'width' => 10,
+      'field_prefix' => '$',
+      'private' => 0,
+    ));
+    $this->assertEqual($retrieved->extra, $expected, '_fundraiser_webform_update_component() created the other amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
 
     // Change settings. Minimum donation amount is now 20.
     $fundraiser->donation_amounts = array(
@@ -283,7 +291,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
       array('20', '$20'),
       array('30', '$30'),
     );
-    $fundraiser->minimum_donation_amount= '20';
+    $fundraiser->minimum_donation_amount = 20;
     $fundraiser->show_other_amount = 1;
     $child_weight = 0;
     foreach ($fields as $field_key => $field) {
@@ -292,18 +300,26 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     }
     $retrieved = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
     // It should have the correct description.
-    $expected = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-//TODO translate this expected per array results from extra serialized.
-//    $this->assertEqual($retrieved->name, $expected, '_fundraiser_webform_update_component() created the amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
+    $expected = serialize(array(
+      'description' => 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.',
+      'items' => '10|$10' . "\n" . '20|$20' . "\n" . '30|$30' . "\n" . 'other|Other',
+      'multiple' => 0,
+      'private' => 0,
+    ));
+    $this->assertEqual($retrieved->extra, $expected, '_fundraiser_webform_update_component() created the amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
     $retrieved = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
     // It should have the correct description.
-    $expected = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-//TODO translate this expected per array results from extra serialized.
-//    $this->assertEqual($retrieved->name, $expected, '_fundraiser_webform_update_component() created the other amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
+    $expected = serialize(array(
+      'description' => 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.',
+      'width' => 10,
+      'field_prefix' => '$',
+      'private' => 0,
+    ));
+    $this->assertEqual($retrieved->extra, $expected, '_fundraiser_webform_update_component() created the other amount description correctly.', 'testFundraiserWebformAmountFieldFunctions');
 
     // Change settings. No donation amount select box.
     $fundraiser->donation_amounts = '';
-    $fundraiser->minimum_donation_amount= '20';
+    $fundraiser->minimum_donation_amount = 10;
     $fundraiser->show_other_amount = 1;
     $child_weight = 0;
     foreach ($fields as $field_key => $field) {
@@ -317,13 +333,13 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     // There should NOT be an other_amount field.
     $this->assertEqual(empty($retrieved), TRUE, '_fundraiser_webform_update_component() deleted the other amount field correctly.', 'testFundraiserWebformAmountFieldFunctions');
 
-    // Change settings.
+    // Change settings. No other field allowed.
     $fundraiser->donation_amounts = array(
       array('10', '$10'),
       array('20', '$20'),
       array('30', '$30'),
     );
-    $fundraiser->minimum_donation_amount= '10';
+    $fundraiser->minimum_donation_amount = 10;
     $fundraiser->show_other_amount = 0;
     $child_weight = 0;
     foreach ($fields as $field_key => $field) {
@@ -333,6 +349,14 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
     $retrieved = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
     // It should be type textfield.
     $this->assertEqual($retrieved->type, 'select', '_fundraiser_webform_update_component() created the amount type correctly.', 'testFundraiserWebformAmountFieldFunctions');
+    // There should not be an other item available.
+    $expected = serialize(array(
+      'description' => '',
+      'items' => '10|$10' . "\n" . '20|$20' . "\n" . '30|$30',
+      'multiple' => 0,
+      'private' => 0,
+    ));
+    $this->assertEqual($retrieved->extra, $expected, '_fundraiser_webform_update_component() created the extra settings correctly.', 'testFundraiserWebformAmountFieldFunctions');
     $retrieved = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'other_amount');
     // There should NOT be an other_amount field.
     $this->assertEqual(empty($retrieved), TRUE, '_fundraiser_webform_update_component() created the other amount field correctly.', 'testFundraiserWebformAmountFieldFunctions');
