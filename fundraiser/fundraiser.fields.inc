@@ -252,6 +252,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		'multiple' => 0,
 		'aslist' => 'Y',
 	);
+        $billing_country['value'] = '840';
 	$billing_country['mandatory'] = 1; 
 	$billing_country['weight'] = 6; 
 	$billing_country['email'] = 1;
