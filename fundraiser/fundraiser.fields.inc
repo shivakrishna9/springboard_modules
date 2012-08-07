@@ -407,8 +407,9 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
  */
 function fundraiser_create_year_field($nid, $pid) {
   $this_year = date('Y');
+  $cc_exp_year_range = variable_get('fundraiser_cc_exp_year_range', 10);
 	$years = $this_year . "\n";
-	for ($i = 1; $i <= 5; $i++) {
+	for ($i = 1; $i <= $cc_exp_year_range; $i++) {
     $years .= ($this_year + $i) . "\n";  
   }
 	
@@ -437,7 +438,7 @@ function fundraiser_create_year_field($nid, $pid) {
 function fundraiser_create_month_field($nid, $pid) {
   // expiration month
   $months = "1|January\n";
-  $months .= "2|Feburary\n";
+  $months .= "2|February\n";
 	$months .= "3|March\n";
 	$months .= "4|April\n";
 	$months .= "5|May\n";

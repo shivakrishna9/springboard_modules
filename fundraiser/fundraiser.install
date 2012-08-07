@@ -4,16 +4,31 @@
  */
 function fundraiser_install() {
   variable_set('fundraiser_development_mode', 1);
-  drupal_install_schema('fundraiser');	
+  drupal_install_schema('fundraiser');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function fundraiser_uninstall() {
-	drupal_uninstall_schema('fundraiser');
-	db_query("DROP VIEW {fundraiser_webform_data}");
-	db_query("DROP VIEW {fundraiser_webform_recurring_order}");
+
+  // ditch admin settings vars
+  variable_del('fundraiser_development_mode');
+  variable_del('fundraiser_default_minimum');
+  variable_del('fundraiser_salesforce_integration');
+  variable_del('fundraiser_all_countries');
+  variable_del('fundraiser_gateway_messages');
+  variable_del('fundraiser_receipt_bcc');
+  variable_del('fundraiser_cc_exp_subject');
+  variable_del('fundraiser_cc_exp_body');
+  variable_del('fundraiser_standalone_cron_enabled');
+  variable_del('fundraiser_form_layouts_default');
+  variable_del('fundraiser_http_error_message');
+  variable_del('fundraiser_cc_exp_year_range');
+  
+  drupal_uninstall_schema('fundraiser');
+  db_query("DROP VIEW {fundraiser_webform_data}");
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
 }
 
 /**
@@ -26,7 +41,7 @@ function fundraiser_enable() {
 	/**
 	 *  Add the donation_form node type to the array of node types handled
 	 * by the webform module.
-	 * 
+	 *
 	 * The default value is array('webform') because this variable starts
 	 * off empty, until an admin chooses webform node types at
 	 * admin/settings/webform. If you save the webform_node_types as an
@@ -45,7 +60,7 @@ function fundraiser_enable() {
   }
 }
 
-/** 
+/**
  * Implementation of hook_disable().
  */
 function fundraiser_disable() {
@@ -154,7 +169,7 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
-      ),  
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -339,7 +354,8 @@ function fundraiser_schema() {
       ),
     ),
     'primary key' => array('order_id'),
-  );
+    'indexes' => array('master_order_id' => array('master_order_id')),
+	);
 	
 	$schema['fundraiser_component_map'] = array(
 	  'description' => t('TODO: please describe this table!'),
@@ -430,7 +446,7 @@ function remove_ubercart_settings() {
 	// remove each ubercart status
 	foreach ($statuses as $status_id => $status) {
 		db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status_id);
-	}	
+	}
 }
 
 // Returns an array of fundraiser module specific order statuses
@@ -769,7 +785,7 @@ function fundraiser_update_6210() {
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})");
 }
 
-/** 
+/**
  * Version 3.0 - Remove the credit card expiration date from donation forms and replace it with
  * 2 separate field for month and year.
  */
@@ -825,14 +841,14 @@ function fundraiser_update_6301() {
   // make a copy of all items in fundraiser_gateway
   db_query(
     "
-      INSERT INTO {fundraiser} 
+      INSERT INTO {fundraiser}
       (nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name)
-      SELECT 
+      SELECT
       nid, gateway, confirmation_email_from_name, confirmation_email_from_email, confirmation_email_subject, confirmation_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name from {fundraiser_gateway}
     "
   );
   
-  // change all donation form webforms to the new donation_form content type   
+  // change all donation form webforms to the new donation_form content type
   db_query("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
   db_query("DROP TABLE {fundraiser_gateway}");
 }
@@ -921,7 +937,7 @@ function fundraiser_update_6306() {
   while ($data = db_fetch_object($result)) {
     foreach($changes as $old_key => $new_key) {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
-    }  
+    }
   }
 }
 
@@ -991,6 +1007,17 @@ function fundraiser_update_6311() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_recurring', 'auth_code', $recurring_field);
+  
+  return $ret;
+}
+
+/**
+ * Add index of master_order_id to {fundraiser_recurring}
+ */
+function fundraiser_update_6312() {
+  $ret = array();
+  
+  db_add_index($ret, 'fundraiser_recurring', 'master_order_id', array('master_order_id'));
   
   return $ret;
 }

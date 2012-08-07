@@ -10,6 +10,7 @@ function springboard_views_queue_api_views_data() {
   $data['sf_queue']['table'] = array(
     'group' => t('Salesforce queue'),
     'base' => array(
+      'field' => 'id',
       'title' => t('Salesforce queue'),
       'help' => t('Items in the active queue to be synced to Salesforce.'),
     ),
@@ -30,13 +31,13 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_queue']['oid'] = array(
-    'title' => t('Queued object'),
-    'help' => t('The queued object.'),
+    'title' => t('Object ID'),
+    'help' => t('The ID of the object.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_numeric',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -99,8 +100,8 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_queue']['type'] = array(
-    'title' => t('Queued object type'),
-    'help' => t('The queued object type.'),
+    'title' => t('Object type'),
+    'help' => t('The object type.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
@@ -171,6 +172,7 @@ function springboard_views_queue_api_views_data() {
   $data['sf_retry_queue']['table'] = array(
     'group' => t('Salesforce retry queue'),
     'base' => array(
+      'field' => 'id',
       'title' => t('Salesforce retry queue'),
       'help' => t('Items in the retry queue to be synced to Salesforce.'),
     ),
@@ -191,13 +193,13 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_retry_queue']['oid'] = array(
-    'title' => t('Queued object'),
-    'help' => t('The queued object.'),
+    'title' => t('Object ID'),
+    'help' => t('The ID of the object.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_numeric',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -260,8 +262,8 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_retry_queue']['type'] = array(
-    'title' => t('Queued object type'),
-    'help' => t('The queued object type.'),
+    'title' => t('Object type'),
+    'help' => t('The object type.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
@@ -359,11 +361,12 @@ function springboard_views_queue_api_views_data() {
   $data['sf_permanent_failure']['table'] = array(
     'group' => t('Salesforce permanent failures'),
     'base' => array(
+      'field' => 'id', 
       'title' => t('Salesforce permanent failures'),
       'help' => t('Items in the retry queue to be synced to Salesforce.'),
     ),
   );
-
+  
   // SF permanent failures fields
   $data['sf_permanent_failure']['id'] = array(
     'title' => t('Primary key: ID'),
@@ -373,13 +376,13 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_permanent_failure']['oid'] = array(
-    'title' => t('Failed object'),
-    'help' => t('The failed object.'),
+    'title' => t('Object ID'),
+    'help' => t('The ID of the object.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_numeric',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -442,8 +445,8 @@ function springboard_views_queue_api_views_data() {
     ),
   );
   $data['sf_permanent_failure']['type'] = array(
-    'title' => t('Failed object type'),
-    'help' => t('The failed object type.'),
+    'title' => t('Object type'),
+    'help' => t('The object type.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
@@ -454,7 +457,7 @@ function springboard_views_queue_api_views_data() {
   );
   $data['sf_permanent_failure']['fieldmap'] = array(
     'title' => t('Fieldmap'),
-    'help' => t('The ID of the fieldmap associated with this failed object.'),
+    'help' => t('The ID of the fieldmap.'),
     'field' => array(
       'handler' => 'views_handler_field',
     ),
@@ -475,6 +478,127 @@ function springboard_views_queue_api_views_data() {
   $data['sf_permanent_failure']['date_added'] = array(
     'title' => t('Date added'),
     'help' => t('The date this item was added to the permanent failures.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+  
+  // SF queue table metadata
+  $data['sf_batch']['table'] = array(
+    'group' => t('Salesforce batch'),
+    'base' => array(
+      'field' => 'id',
+      'title' => t('Salesforce batch'),
+      'help' => t('Items that have been moved to the batch before sending to Salesforce.'),
+    ),
+  );
+
+  // SF queue fields
+  $data['sf_batch']['id'] = array(
+    'title' => t('Primary key: ID'),
+    'help' => t('The primary key of the sf_batch table.'),
+    'field' => array(
+      'handler' => 'queue_api_handler_field_batch_id',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['sf_batch']['type'] = array(
+    'title' => t('Object type'),
+    'help' => t('The object type.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'springboard_views_sf_drupal_types',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['sf_batch']['created'] = array(
+    'title' => t('Created'),
+    'help' => t('The date this item was added to the batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+  $data['sf_batch']['record_count'] = array(
+    'title' => t('Items'),
+    'help' => t('Total count of items in this batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['sf_batch']['success_count'] = array(
+    'title' => t('Successes'),
+    'help' => t('Total count of successfuly processed items in this batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['sf_batch']['failure_count'] = array(
+    'title' => t('Failures'),
+    'help' => t('Total count of failed items in this batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['sf_batch']['start_time'] = array(
+    'title' => t('Start time'),
+    'help' => t('The date this batch was first processed.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+  $data['sf_batch']['end_time'] = array(
+    'title' => t('End time'),
+    'help' => t('The date this batch completed processing.'),
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,

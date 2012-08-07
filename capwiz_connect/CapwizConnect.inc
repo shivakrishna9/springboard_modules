@@ -24,6 +24,9 @@ class CapizConnect {
   public static $STAT_CREATE_OK = 4;
   public static $STAT_CREATE_FAIL = 8;
   
+  // Status value when saving actions
+  public static $STAT_DUPLICATE_MESSAGE = 16;
+ 
   /**
    * Create a single instance of CapizConnect.
    */
@@ -402,11 +405,11 @@ class CapizConnect {
       // Log stats for users collected for this account
       $severity = WATCHDOG_INFO;
       $message = "Updated users for %account_name. Created: %created. Updated: %updated.";
-      if ($create_fail > 0) {
+      if ($save_counts[self::$STAT_CREATE_FAIL] > 0) {
         $message .= " Failed to create: %create_fail.";
         $severity = WATCHDOG_ERROR;
       }
-      if ($update_fail > 0) {
+      if ($save_counts[self::$STAT_UPDATE_FAIL] > 0) {
         $message .= " Failed to update: %update_fail.";
         $severity = WATCHDOG_ERROR;
       }
@@ -778,6 +781,7 @@ class CapizConnect {
         self::$STAT_UPDATE_OK => 0,
         self::$STAT_CREATE_FAIL => 0,
         self::$STAT_UPDATE_FAIL => 0,
+        self::$STAT_DUPLICATE_MESSAGE => 0, 
       );
         
       // Loop over the returned users and save them to the DB
@@ -789,13 +793,16 @@ class CapizConnect {
       // Log stats for users collected for this account
       $severity = WATCHDOG_INFO;
       $message = "Updated actions for %account_name. Created: %created. Updated: %updated.";
-      if ($create_fail > 0) {
+      if ($save_counts[self::$STAT_CREATE_FAIL] > 0) {
         $message .= " Failed to create: %create_fail.";
         $severity = WATCHDOG_ERROR;
       }
-      if ($update_fail > 0) {
+      if ($save_counts[self::$STAT_UPDATE_FAIL] > 0) {
         $message .= " Failed to update: %update_fail.";
         $severity = WATCHDOG_ERROR;
+      }
+      if ($save_counts[self::$STAT_DUPLICATE_MESSAGE]) {
+        $message .= " Ignored duplicate messages: %duplicate_message.";
       }
       $message_vars = array(
         '%account_name' => $this->account_details->display_name,
@@ -803,6 +810,7 @@ class CapizConnect {
         '%updated' => $save_counts[self::$STAT_UPDATE_OK],
         '%create_fail' => $save_counts[self::$STAT_CREATE_FAIL],
         '%update_fail' => $save_counts[self::$STAT_UPDATE_FAIL],
+        '%duplicate_message' => $save_counts[self::$STAT_DUPLICATE_MESSAGE],
       );
       watchdog('capwiz_connect', $message, $message_vars, $severity);
     }
@@ -839,6 +847,12 @@ class CapizConnect {
       'data' => serialize($action),
       'action_timestamp' => strtotime($action->dtAction),
     );
+    
+    // Check if this is a duplicate message. Capwiz creates an event for each message recipient selected by the user, we only need to record one of them
+    $duplicate_message = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE capwiz_alert_id='%s' AND capwiz_user_id='%s' AND action_timestamp=%d AND message_id != %d", $record['capwiz_alert_id'], $record['capwiz_user_id'], $record['action_timestamp'], $message_id));
+    if ($duplicate_message > 0) {
+      return self::$STAT_DUPLICATE_MESSAGE;
+    }
         
     // Check if this action (identified by message ID) is already in our DB
     $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE message_id='%s'", $message_id));

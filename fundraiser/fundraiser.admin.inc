@@ -158,7 +158,7 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
   $node->confirmation_page_body = $form_state['values']['body'];
   $node->confirmation_page_format = $form_state['values']['confirmation_page_format'];
   $node->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
-  $node->receipt_email_address = $form_state['values']['receipt_email_address']; 
+  $node->receipt_email_address = $form_state['values']['receipt_email_address'];
   $node->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
   $node->receipt_email_message = $form_state['values']['receipt_email_message'];
   $node->redirect_url = $form_state['values']['redirect_url'];
@@ -167,7 +167,7 @@ function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
 
 /**
  * Clones a donation form and related fieldmaps
- * 
+ *
  * @param $nid
  * Integer Node ID
  */
@@ -240,7 +240,7 @@ function fundraiser_clone_donation_form($nid) {
 }
 
 
-/** 
+/**
  * Form builder. Configure fundraiser.
  *
  */
@@ -295,7 +295,14 @@ function fundraiser_admin_settings() {
 	 '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
 	 '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
 	);
-	
+
+  $form['fundraiser_cc_exp_year_range'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Credit card expiration year range'),
+    '#description' => t('Specify the number of years from now that will be the maximum credit card expiration year.'),
+    '#default_value' => variable_get('fundraiser_cc_exp_year_range', 10),
+  );
+
 	$form['fundraiser_cc_expiration_message'] = array(
 	 '#type' => 'fieldset',
 	 '#title' => t('Credit card expiration email'),
@@ -362,8 +369,30 @@ function fundraiser_admin_settings() {
       '#default_value' => variable_get('fundraiser_form_layouts_default', 'one_column'),
       '#options' => $form_layouts,
     );
+    
+
   }
 
+  $form['fundraiser_http_error'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Unsecured Form Error'),
+    '#description' => t('Configure how Fundraiser responds when a user attempts to view a donation form unsecured (HTTP)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fundraiser_http_error']['fundraiser_http_error_message'] = array(
+    '#type' => t('textarea'),
+    '#title' => t('Error Message'),
+    '#description' => t('This message will be displayed to users that attempt to view a donation form that is unsecured.'),
+    '#default_value' => variable_get('fundraiser_http_error_message', t("We're sorry.
+
+The donation form you are trying to access has not been secured properly. Safeguarding your personal information is extremely importance to us, therefore we cannot accept donations from this form at this time.
+
+An administrator has been notified and will correct the issue as soon as possible.
+
+Thanks for your understanding.")),
+  );
+  
   return system_settings_form($form);
 }
 
@@ -397,13 +426,13 @@ function fundraiser_monthly_report() {
 	if ($_SESSION['fundraiser_report_filters']) {
 		$start_date = $_SESSION['fundraiser_report_filters']['from_date'];
 		$end_date = $_SESSION['fundraiser_report_filters']['to_date'];
-		$sql = "select 
-							u.order_id, 
+		$sql = "select
+							u.order_id,
 							u.uid,
 							u.order_status,
-							s.sfid, 
-							u.billing_first_name, 
-							u.billing_last_name, 
+							s.sfid,
+							u.billing_first_name,
+							u.billing_last_name,
 							u.primary_email,
 							u.billing_street1,
 							u.billing_street2,
@@ -412,29 +441,29 @@ function fundraiser_monthly_report() {
 							z.zone_code,
 							u.billing_postal_code,
 							c.country_iso_code_2,
-							u.created as date, 
-							u.order_total, 
+							u.created as date,
+							u.order_total,
 							p.received,
 							op.nid,
 							op.title,
 							fd.campaign_id,
 							fd.market_source
-						from 
+						from
 							uc_orders u inner join fundraiser_webform_order s on s.order_id = u.order_id
 							inner join {uc_payment_receipts} p on p.order_id = u.order_id
 							inner join {uc_countries} c on c.country_id = u.billing_country
-							inner join {uc_zones} z on z.zone_id = u.billing_zone 
+							inner join {uc_zones} z on z.zone_id = u.billing_zone
 							inner join {uc_order_products} op on op.order_id = u.order_id
 							inner join {fundraiser_webform_order} wo on wo.order_id = u.order_id
 							inner join {fundraiser_webform_data} fd on fd.sid = wo.sid and fd.nid = wo.webform_nid
-							where u.order_status = 'payment_received' and u.created between %d and %d 
-						union select 
+							where u.order_status = 'payment_received' and u.created between %d and %d
+						union select
 							r.order_id,
-							u.uid, 
+							u.uid,
 							u.order_status,
-							r.sf_opportunity_id, 
+							r.sf_opportunity_id,
 							u.billing_first_name,
-							u.billing_last_name, 
+							u.billing_last_name,
 							u.primary_email,
 							u.billing_street1,
 							u.billing_street2,
@@ -443,14 +472,14 @@ function fundraiser_monthly_report() {
 							z.zone_code,
 							u.billing_postal_code,
 							c.country_iso_code_2,
-							next_charge, 
-							u.order_total, 
+							next_charge,
+							u.order_total,
 							p.received,
 							op.nid,
 							op.title,
 							fd.campaign_id,
 							fd.market_source
-						from fundraiser_recurring r inner join uc_orders u on u.order_id = r.order_id 
+						from fundraiser_recurring r inner join uc_orders u on u.order_id = r.order_id
 							inner join {uc_payment_receipts} p on p.order_id = u.order_id
 							inner join {uc_countries} c on c.country_id = u.billing_country
 							inner join {uc_zones} z on z.zone_id = u.billing_zone
@@ -468,10 +497,10 @@ function fundraiser_monthly_report() {
 	while ($data = db_fetch_object($result)) {
 		$cc_data = decrypt_credit_card($data->data);
 		$rows[] = array(
-			$data->order_id, 
-			$data->sfid ? $data->sfid : 'Not Exported', 
+			$data->order_id,
+			$data->sfid ? $data->sfid : 'Not Exported',
 			$data->uid,
-			$data->billing_first_name, 
+			$data->billing_first_name,
 			$data->billing_last_name,
 			$data->primary_email,
 			$data->billing_street1,
@@ -515,7 +544,7 @@ function fundraiser_monthly_report() {
 	 	echo $out;
 	 	exit;
 	}
-	else {	
+	else {
 		$output = drupal_get_form('fundraiser_report_form');
 		if ($_SESSION['fundraiser_report_filters']) {
 			$output .= '<h3>Date Range: ' . date('m/d/Y', $start_date) . ' - ' . date('m/d/Y', $end_date) . '</h3>';
@@ -583,16 +612,16 @@ function fundraiser_report_form_submit($form, &$form_state) {
 	$export = array_shift($form_state['values']['export']);
 	
 	$from_year = $form_state['values']['from_date']['year'];
-	$to_year = $form_state['values']['to_date']['year']; 
+	$to_year = $form_state['values']['to_date']['year'];
 	
-	$from_month = $form_state['values']['from_date']['month']; 
+	$from_month = $form_state['values']['from_date']['month'];
 	$to_month = $form_state['values']['to_date']['month'];
 		
-	$from_day = $form_state['values']['from_date']['day'];	
+	$from_day = $form_state['values']['from_date']['day'];
 	$to_day = $form_state['values']['to_date']['day'];
 
 	$from_date = mktime(0, 0, 0, $from_month, $from_day, $from_year);
-	$to_date = mktime(23, 59, 59, $to_month, $to_day, $to_year);	
+	$to_date = mktime(23, 59, 59, $to_month, $to_day, $to_year);
 	
 	$_SESSION['fundraiser_report_filters'] = array(
 		'from_date' => $from_date,
