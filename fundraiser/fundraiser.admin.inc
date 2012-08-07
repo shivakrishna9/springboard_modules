@@ -281,14 +281,32 @@ function fundraiser_admin_settings() {
 		'#default_value' => variable_get('fundraiser_all_countries', 0),
 		'#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. When unchecked, on U.S and Canda will be inserted.'),
 	);
-	
+        if (variable_get('fundraiser_all_countries', 0)) {
+	  $countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
+          $country_options = array_merge(array('0' => t('- select country -')),$countries['#options']);
+        }
+        else {
+          $country_options = array(
+             '0' => t('- select country -'),
+             '840' => t('United States'),
+             '124' => t('Canada'),
+          );
+        }
+      
+        $form['fundraiser_default_country'] = array(
+          '#type' => 'select',
+          '#title' => t('Default country'),
+          '#description' => t('Select the default value for the billing country field on new donation forms.'),
+          '#options' => $country_options,
+          '#default_value' => variable_get('fundraiser_default_country', ''),
+        );
+
 	$form['fundraiser_gateway_messages'] = array(
 	 '#type' => 'checkbox',
 	 '#title' => t('Display gateway messages'),
 	 '#default_value' => variable_get('fundraiser_gateway_messages', 1),
 	 '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
 	);
-	
 	$form['fundraiser_receipt_bcc'] = array(
 	 '#type' => 'textfield',
 	 '#title' => t('Donation receipt bcc email address'),

@@ -1022,25 +1022,3 @@ function fundraiser_update_6312() {
   return $ret;
 }
 
-/**
- * Default country components to US (840) if no default is selected.
- */
-function fundraiser_update_6313() {
-  $ret = array();
-  $sql = "
-    UPDATE {webform_component} 
-    SET value = '840'
-    WHERE form_key = 'country'
-      AND value = '' 
-      AND nid IN (
-        SELECT nid FROM {node} 
-        WHERE type = 'donation_form'
-      )
-  ";
-  $result = db_query($sql);
-  $ret[] = array(
-    'success' => $result ? TRUE : FALSE,
-    'query' => $sql,
-  );
-  return $ret;
-}
