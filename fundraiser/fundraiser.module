@@ -833,18 +833,16 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
     $keys = array_keys($fundraiser->donation_amounts);
     // Construct a set of options based on the configured amounts.
     $formatted_amounts = '';
-    foreach ($fundraiser->donation_amounts as $amount => $label) {
-      if (!$label) {
-        $formatted_amounts .= $amount . '|$' . $amount;
+    foreach ($fundraiser->donation_amounts as $index => $values) {
+      if (count($values) == 1) {
+        $values[] = '|$' . $values[0];
       }
-      else {
-        $formatted_amounts .= $amount . '|' . $label;
-      }
-      $formatted_amounts .= "\n";
+      $formatted_amounts[] = implode('|', $values);
     }
     if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
-      $formatted_amounts .= 'other|Other';
+      $formatted_amounts[] = 'other|Other';
     }
+    $formatted_amounts = implode("\n", $formatted_amounts);
     $field['#title'] = t('Please select your tax-deductible gift amount below');
     $field['#type'] = 'select';
     $field['#extra'] = array(
@@ -873,7 +871,7 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $fields['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
   // Return the field to be created.
   return $field;
 }
