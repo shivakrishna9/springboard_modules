@@ -34,9 +34,9 @@ function fundraiser_webform_configure_access($perm, $node) {
 }
 
 /**
- * Implements hook_node_type_update().
+ * Implements hook_node_type_insert().
  */
-function fundraiser_webform_node_type_update($info) {
+function fundraiser_webform_node_type_insert($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
     webform_node_type('update', $info); // From webform.module.
     // Add as a primary type too.
@@ -44,6 +44,13 @@ function fundraiser_webform_node_type_update($info) {
     $webform_types[] = $info->type;
     variable_set('webform_node_types_primary', $webform_types);
   }
+}
+
+/**
+ * Implements hook_node_type_update().
+ */
+function fundraiser_webform_node_type_update($info) {
+  fundraiser_webform_node_type_update($info);
 }
 
 /**
