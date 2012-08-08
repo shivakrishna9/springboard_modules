@@ -34,6 +34,32 @@ function fundraiser_webform_configure_access($perm, $node) {
 }
 
 /**
+ * Implements hook_node_type_update().
+ */
+function fundraiser_webform_node_type_update($info) {
+  if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+    webform_node_type('update', $info); // From webform.module.
+    // Add as a primary type too.
+    $webform_types = webform_variable_get('webform_node_types_primary');
+    $webform_types[] = $info->type;
+    variable_set('webform_node_types_primary', $webform_types);
+  }
+}
+
+/**
+ * Implements hook_node_type_delete().
+ */
+function fundraiser_webform_node_type_delete($info) {
+  if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+    webform_node_type('delete', $info); // From webform.module.
+    // Remove as a primary type too.
+    $webform_types = webform_variable_get('webform_node_types_primary');
+    unset($webform_types[ $info->type] );
+    variable_set('webform_node_types_primary', $webform_types);
+  }
+}
+
+/**
  * Implements hook_webform_submission_presave().
  */
 function fundraiser_webform_webform_submission_presave($node, &$submission) {
