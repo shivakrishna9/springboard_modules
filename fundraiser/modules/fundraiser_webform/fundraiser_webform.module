@@ -458,19 +458,6 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
 }
 
 /**
- * Helper function. Creates a nested array of where a component exists in the FAPI array.
- */
-function _fundraiser_webform_parse_component($nid, $form_key) {
-  $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
-  foreach ($results as $result) {
-    $cid = $result->cid;
-  }
-  $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid)) . ']';
-  parse_str($component_path, $output); // Convert string to a nested array.
-  return $output;
-}
-
-/**
  * Helper function.
  * Creates a nested array of where components exist in the FAPI array for all components in a webform.
  * This is needed because the webform module allows the user to move components around. Therefore
@@ -484,6 +471,19 @@ function _fundraiser_webform_parse_components($nid, $components) {
     $component_hierarchy[$component['form_key']] = $output;
   }
   return $component_hierarchy;
+}
+
+/**
+ * Helper function. Creates a nested array of where a component exists in the FAPI array.
+ */
+function _fundraiser_webform_parse_component($nid, $form_key) {
+  $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
+  foreach ($results as $result) {
+    $cid = $result->cid;
+  }
+  $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid)) . ']';
+  parse_str($component_path, $output); // Convert string to a nested array.
+  return $output;
 }
 
 /**
