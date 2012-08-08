@@ -496,10 +496,10 @@ function _fundraiser_webform_submission_flatten($nid, $submit_tree, $submission_
  * This is needed because the webform module allows the user to move components around. Therefore
  * we must be able to find them if they are not in their usual spot.
  */
-function _fundraiser_webform_parse_components($nid, $components) {
+function _fundraiser_webform_parse_components($nid, $components, $reset = FALSE) {
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
-    $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid)) . ']';
+    $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid, $reset)) . ']';
     parse_str($component_path, $output); // Convert string to a nested array.
     $component_hierarchy[$component['form_key']] = $output;
   }
@@ -509,12 +509,12 @@ function _fundraiser_webform_parse_components($nid, $components) {
 /**
  * Helper function. Creates a nested array of where a component exists in the FAPI array.
  */
-function _fundraiser_webform_parse_component($nid, $form_key) {
+function _fundraiser_webform_parse_component($nid, $form_key, $reset = FALSE) {
   $results = _fundraiser_webform_get_components_by_keys($nid, array($form_key));
   foreach ($results as $result) {
     $cid = $result->cid;
   }
-  $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid)) . ']';
+  $component_path = 'submitted[' . implode('][', _fundraiser_webform_walk_component_hierarchy($nid, $cid, $reset)) . ']';
   parse_str($component_path, $output); // Convert string to a nested array.
   return $output;
 }
@@ -524,10 +524,10 @@ function _fundraiser_webform_parse_component($nid, $form_key) {
  * Builds a path from the webform component to it's topmost parent.
  * Recursion is here. Be careful.
  */
-function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array()) {
+function _fundraiser_webform_walk_component_hierarchy($nid, $cid, $reset = FALSE, &$path = array()) {
   // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
   static $component_hierarchy = array();
-  if (empty($component_hierarchy[$nid])) {
+  if (empty($component_hierarchy[$nid]) || $reset == TRUE) {
     $component_hierarchy[$nid] = array();
     $results = _fundraiser_webform_get_components_by_nid($nid);
     foreach ($results as $data) {
@@ -540,7 +540,7 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
     foreach ($component_hierarchy[$nid][$cid] as $data) {
       array_unshift($path, $data->form_key);
       if ($data->pid > 0) {
-        _fundraiser_webform_walk_component_hierarchy($nid, $data->pid, $path);
+        _fundraiser_webform_walk_component_hierarchy($nid, $data->pid, FALSE, $path);
       }
     }
   }
