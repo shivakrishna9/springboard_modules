@@ -560,25 +560,25 @@ function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
  * Helper function, given a card number return likely type.
  */
 function _fundraiser_ubercart_get_cc_type($cardnumber) {
-  $cardtype = "UNKNOWN";
+  $cardtype = 'UNKNOWN';
   $len = drupal_strlen($cardnumber);
   if ( $len == 15 && drupal_substr($cardnumber, 0, 1) == '3' ) {
-    $cardtype = "amex";
+    $cardtype = 'amex';
   }
   elseif ( $len == 16 && drupal_substr($cardnumber, 0, 4) == '6011' ) {
-    $cardtype = "discover";
+    $cardtype = 'discover';
   }
   elseif ( $len == 16 && drupal_substr($cardnumber, 0, 1) == '5' ) {
-    $cardtype = "mc";
+    $cardtype = 'mc';
   }
   elseif ( ($len == 16 || $len == 13) && drupal_substr($cardnumber, 0, 1) == '4' ) {
-    $cardtype = "visa";
+    $cardtype = 'visa';
   }
   return ( $cardtype );
 }
 
 /**
- * Helper function, gather ubercarts coutnry information into a central location.
+ * Helper function, gather ubercarts country information into a central location.
  */
 function fundraiser_ubercart_get_countries() {
   $countries = array();
