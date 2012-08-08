@@ -50,7 +50,7 @@ function fundraiser_webform_node_type_insert($info) {
  * Implements hook_node_type_update().
  */
 function fundraiser_webform_node_type_update($info) {
-  fundraiser_webform_node_type_update($info);
+  fundraiser_webform_node_type_insert($info);
 }
 
 /**
