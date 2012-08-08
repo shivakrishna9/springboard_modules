@@ -547,6 +547,8 @@ function _fundraiser_webform_update_components($fundraiser) {
  * Helper function, handles recursion for _fundraiser_webform_update_components().
  */
 function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $pid = 0, $weight = 0) {
+  // Include the webform module that allows components to be created.
+  module_load_include('inc', 'webform', 'includes/webform.components');
   // Tweak the field with a callback as needed.
   if (isset($field['#create_callback']) && function_exists($field['#create_callback'])) {
     $field = call_user_func($field['#create_callback'], $fundraiser, $field);
