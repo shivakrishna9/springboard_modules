@@ -7,3 +7,5 @@ dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = uc_cart
 version =  7.x-3.0-dev
+;Testing files
+files[] = tests/fundraiser_ubercart.unit.test

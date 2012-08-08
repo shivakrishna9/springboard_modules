@@ -215,6 +215,7 @@ function _fundraiser_ubercart_card_expiration_year_field_validate($form, $form_s
  */
 function _fundraiser_ubercart_country_field_display($form, $form_state, $field) {
   // Flatten form state array so we can get the user selection easier.
+  drupal_set_message(print_r($form_state,1));
   $fields = _fundraiser_ubercart_submission_flatten($form_state);
   // Set the default country if form_state has it.
   if (array_key_exists('country', $fields)) {
