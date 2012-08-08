@@ -428,9 +428,9 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
 }
 
 /**
- * Implements hookfundraiser_field_info_alter().
+ * Implements hook_fundraiser_field_info_alter().
  */
-function fundraiser_webformfundraiser_field_info_alter($fields) {
+function fundraiser_webform_fundraiser_field_info_alter($fields) {
   $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'email', 'address', 'address_line_2',
     'city', 'zip', 'country', 'state');
   foreach (element_children($fields) as $key) {
@@ -443,7 +443,7 @@ function fundraiser_webformfundraiser_field_info_alter($fields) {
  * Handles recursion for fundraiser_sustainersfundraiser_field_info_alter().
  */
 function _fundraiser_webformfundraiser_field_info_alter($field_key, $field, $map) {
-  if (isset($map[$field_key])) {
+  if (in_array($field_key, $map)) {
     $field['#email'] = 1;
   }
   // Check for children. Recursion occurs here.
