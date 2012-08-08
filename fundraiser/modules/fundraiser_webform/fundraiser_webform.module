@@ -258,7 +258,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
     $cc_info_field['expiration_date'] = array();
     $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
     $cc_info_field['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-    $cc_info_field['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
+    $cc_info_field['expiration_date']['#weight'] = isset($cc_exp_month_field['#weight']) ? $cc_exp_month_field['#weight'] : 0;
     $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
   }
   else {
@@ -536,10 +536,12 @@ function _fundraiser_webform_walk_component_hierarchy($nid, $cid, &$path = array
     }
   }
   // Build a path from the webform component to its topmost parent.
-  foreach ($component_hierarchy[$nid][$cid] as $data) {
-    array_unshift($path, $data->form_key);
-    if ($data->pid > 0) {
-      _fundraiser_webform_walk_component_hierarchy($nid, $data->pid, $path);
+  if (isset($component_hierarchy[$nid][$cid])) {
+    foreach ($component_hierarchy[$nid][$cid] as $data) {
+      array_unshift($path, $data->form_key);
+      if ($data->pid > 0) {
+        _fundraiser_webform_walk_component_hierarchy($nid, $data->pid, $path);
+      }
     }
   }
   return $path;
