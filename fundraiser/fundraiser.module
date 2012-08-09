@@ -927,6 +927,11 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         fundraiser_disable_elements($form);
       }
 
+      // Pull the correct action out of form_state if it's there to avoid AHAH+Validation action-rewrite.
+      if (isset($form_state['action'])) {
+        $form['#action'] = $form_state['action'];
+      }  
+
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js($base .'/jquery.alphanumeric.js');
       drupal_add_js($base .'/fundraiser.js');
@@ -1157,6 +1162,8 @@ function _fundraiser_ahah_helper_render($field = NULL) {
   // variables.
   $form['#post'] = $_POST;
   $form['#programmed'] = FALSE;
+  // Stash original form action to avoid overwriting with drupal_rebuild_form().
+  $form_state['action'] = $form['#action'];
   $form_state['post'] = $_POST;
   
   // $form_state['storage']['#ahah_helper']['file'] has been set, to know
