@@ -422,6 +422,18 @@ function fundraiser_schema() {
     ),
     'primary key' => array('nid'),
   );
+  $schema['fundraiser_secure'] = array(
+    'description' => t('Store confirmation view data, used to secure confirmation pages.'),
+    'fields' => array(
+      'sid' => array(
+        'description' => t('Webform submission id'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
   return $schema;
 }
 
@@ -1019,5 +1031,17 @@ function fundraiser_update_6312() {
   
   db_add_index($ret, 'fundraiser_recurring', 'master_order_id', array('master_order_id'));
   
+  return $ret;
+}
+
+/**
+ * Add secure table. Tracks which confirmation pages have been viewed. This data is used to secure
+ * order confirmation pages from prying eyes.
+ */
+function fundraiser_update_6313() {
+  $ret = array();
+  $schema = fundraiser_schema();
+  db_create_table($ret, 'fundraiser_secure', $schema['fundraiser_secure']);
+  menu_rebuild();
   return $ret;
 }
