@@ -1546,7 +1546,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
 	$first_name = $fundraiser_fields['first_name'];
 	$last_name = $fundraiser_fields['last_name'];
-	$email = $fundraiser_fields['email'];
+	// Trim the whitespace on the mail field.
+	$email = trim($fundraiser_fields['email']);
 	$billing_address = $fundraiser_fields['address'];
 	$billing_address_2 = $fundraiser_fields['address_line_2'];
 	$billing_city = $fundraiser_fields['city'];
