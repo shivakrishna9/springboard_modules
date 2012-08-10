@@ -171,18 +171,20 @@ function sf_donation_update_6202() {
   // set the default backend
   variable_set('sf_donation_backend', 'npsp');
   
+  // store our updates
+  $updates = array();
+  
   // first add some new fields
-  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
-  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
-  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN fields text");
-  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN salesforce varchar(50)");
-  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN remove int(11)");
-  db_query("UPDATE {fundraiser_salesforce_map} SET remove = 1");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN fields text");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN salesforce varchar(50)");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN remove int(11)");
+  $updates[] = update_sql("UPDATE {fundraiser_salesforce_map} SET remove = 1");
   
   // update existing fieldmaps to the new format
   sf_donation_upgrade_fieldmaps();
   
-  $updates = array();
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN remove");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN cid");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN map_id");
