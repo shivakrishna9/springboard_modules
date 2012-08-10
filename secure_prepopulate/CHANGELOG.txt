@@ -1,1 +1,6 @@
+2012-07-30  Ben Clark  <ben.clark@jacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_clear_session): Check whether the 
+    $_SESSION['secure_prepopulate_values'] array is empty after unsetting the $nid element.
+
 - Pull request: https://github.com/JacksonRiver/springboard_modules/pull/54 by afreeman: Fixed mystery "1" bug.
