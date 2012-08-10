@@ -127,19 +127,57 @@ function webform_user_update_6101() {
  * Update 6102: Add webform_user_component_map
  */
 function webform_user_update_6102() {
-	$updates = array();
+  // add webform_user_component_map	
+	db_query(
+	 "
+	   CREATE TABLE `webform_user_component_map` (
+	   `nid` int(10) unsigned NOT NULL,
+	   `cid` int(10) unsigned NOT NULL,
+	   `map_id` varchar(100) NOT NULL,
+	   PRIMARY KEY (`nid`,`cid`))
+	 "
+	);
 	
-	$sql = <<<SQL
-	CREATE TABLE `webform_user_component_map` (
-	  `nid` int(10) unsigned NOT NULL,
-	  `cid` int(10) unsigned NOT NULL,
-	  `map_id` varchar(100) NOT NULL,
-	  PRIMARY KEY (`nid`,`cid`)
-	)
-SQL;
-  $updates[] = update_sql($sql);
+	// load up profile fields
+	$fields_array = array();
+	$result = db_query("SELECT name FROM {profile_fields}");
+	while ($data = db_fetch_object($result)) {
+  	$fields_array[] = $data->name;
+	}
 	
-	return $updates;
+	// troll through existing webform_user forms and add a map record
+	$result = db_query("SELECT nid FROM {webform_user} WHERE is_webform_user = 1");
+	while ($data = db_fetch_object($result)) {
+  	// update the form key for profile_postal_code to profile_zip
+  	db_query("UPDATE {webform_component} SET form_key = 'profile_zip' WHERE form_key = 'profile_postal_code' AND nid = %d", $data->nid);
+  	// get the components for each webform
+  	$component_query = db_query("SELECT cid, form_key FROM {webform_component} WHERE nid = %d", $data->nid);
+    while ($component = db_fetch_object($component_query)) {
+      if (in_array($component->form_key, $fields_array)) {
+        db_query(
+          "
+            INSERT INTO {webform_user_component_map} 
+            (nid, cid, map_id)
+            VALUES
+            (%d, %d, '%s')
+          ",
+          $data->nid, $component->cid, $component->form_key
+        );
+      }
+      // handle mail field because this is not a profile field
+      if ($component->form_key == 'mail') {
+        db_query(
+          "
+            INSERT INTO {webform_user_component_map} 
+            (nid, cid, map_id)
+            VALUES
+            (%d, %d, '%s')
+          ",
+          $data->nid, $component->cid, $component->form_key
+        );
+      }
+    }
+  }
 }
 
 /**
