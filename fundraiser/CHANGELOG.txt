@@ -1,2 +1,9 @@
 - Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
 
+08-10-2012 Allen Freeman <allen.freeman@jacksonriver.com>
+---------------------------------------------------------
+  * fundraiser.module, fundraiser_form_alter(): added tests to prevent country/state default values from being manipulated when the current user
+    is not authenticated (uid 0).
+
+  * fundraiser.module, fundraiser_form_alter(): reordered country/state default handling code to only set defaults from the user profile
+    if the current user is authenticated. 
