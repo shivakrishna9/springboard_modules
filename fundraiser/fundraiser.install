@@ -124,6 +124,25 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'sid' => array(
+        'description' => 'Submission identifier',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'description' => 'The payment gateway the donation form uses to process credit cards.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+      ),
+      'txn_id' => array(
+        'description' => 'The transaction id of the donation.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
+      //TODO add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
   );
@@ -136,13 +155,13 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'order_id' => array(
-        'description' => 'Ubercart order ID the refund applies to',
+      'did' => array(
+        'description' => 'Donation ID the refund applies to',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'receipt_id' => array(
-        'description' => 'Ubercart receipt ID of the payment',
+        'description' => 'Donation ID of the payment',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -164,7 +183,7 @@ function fundraiser_schema() {
       ),
     ),
     'primary key' => array('refund_id'),
-    'indexes' => array('refund_order_id' => array('order_id')),
+    'indexes' => array('refund_did' => array('did')),
   );
   $schema['fundraiser_tracking'] = array(
     'description' => 'Store conversion & pageview information for donation forms.',
@@ -226,22 +245,51 @@ function fundraiser_update_last_removed() {
  * D7 upgrade, copy donation information out of Ubercart orders, into a location where fundraiser can track it.
  */
 function fundraiser_update_7000() {
-  // Create new table.
+  // Create new donation table.
   $donation_table = fundraiser_schema();
   db_create_table('fundraiser_donation', $donation_table['fundraiser_donation']);
   // Get all existing fundraiser donation information, and load the fundriaser_donation table with it all.
   // From ubercart's order tables.
   $donations = db_query('SELECT o.order_id, f.nid, o.uid FROM {uc_orders} o ' .
-   'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id '.
+   'LEFT JOIN {uc_order_products} p ON o.order_id = p.order_id ' .
    'LEFT JOIN {fundraiser} f ON p.nid = f.nid ');
   foreach ($donations as $donation) {
-    if (isset($donation->order_id) && isset($donation->nid) && isset($donation->uid)) { 
+    if (isset($donation->order_id) && isset($donation->nid) && isset($donation->uid)) {
       $record = array(
         'did' => $donation->order_id,
         'nid' => $donation->nid,
         'uid' => $donation->uid,
       );
+      // Add gateway and transaction information from webform.
+      // Note on the update for fundraiser_webform 7001 this table is dropped.
+      $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
+        array(':did' => $donation->order_id));
+      foreach ($gateway_infos as $gateway_info) {
+        $record['sid'] = $gateway_info->sid;
+        $record['gateway'] = $gateway_info->gateway;
+        $record['txn_id'] = $gateway_info->txn_id;
+      }
+      // Note on the update for fundraiser_sustainers 7001 these fields are dropped and order_id renamed.
+      $gateway_infos = db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :did',
+        array(':did' => $donation->order_id));
+      foreach ($gateway_infos as $gateway_info) {
+        $record['gateway'] = $gateway_info->gateway;
+        $record['txn_id'] = $gateway_info->txn_id;
+      }
       drupal_write_record('fundraiser_donation', $record);
     }
   }
+
+  // Rename the table columns that used to be called order to donation.
+  $did_field = array(
+    'did' => array(
+      'description' => 'This specific recurring order id.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  db_drop_index('fundraiser_refund', 'refund_order_id');
+  db_change_field('fundraiser_refund', 'order_id', 'did', $did_field);
+  db_add_index('fundraiser_refund', 'refund_did', array('did'));
 }

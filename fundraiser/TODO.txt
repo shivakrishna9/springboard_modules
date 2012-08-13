@@ -2,7 +2,205 @@
 TO DO LIST FOR FUTURE DEVELOPMENT
 ---------------------------------
 
-1) Cleanup further for hook and CRUD driven behaviors.
-2) Orders => Donations  - terminology change throughout.
-3) Separate Webform based behaviors out.
-4) Document clearly API for all other modules in Suite to follow / use.
+Move the following code to the correct locations in other modules:
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//REMOVE ALL BELOW THIS POINT.
+
+function form_layouts_form_alter(&$form, &$form_state, $form_id) {
+  // Add a setting to the fundraiser administration page to run on form layouts.
+  if ($form_id == 'fundraiser_admin_settings') {
+    if (module_exists('form_layouts')) {
+      $form['fundraiser_form_layouts'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Form layouts settings'),
+        '#description' => t('Configure form layouts.'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form_layouts = array();
+      foreach (_form_layouts_template_list() as $template) {
+        $form_layouts[$template['theme']] = $template['name'];
+      }
+      $form['fundraiser_form_layouts']['fundraiser_form_layouts_default'] = array(
+        '#type' => 'select',
+        '#title' => t('Default form layout'),
+        '#description' => t('Select the default form layout.'),
+        '#default_value' => variable_get('fundraiser_form_layouts_default', 'one_column'),
+        '#options' => $form_layouts,
+      );
+    }
+  }
+}
+
+function sf_donation_form_alter(&$form, &$form_state, $form_id) {
+  // Add a setting to the fundraiser administration page to run on SF exports.
+  if ($form_id == 'fundraiser_admin_settings') {
+    $description = 'Use this option if you want donations to be exported to Salesforce.';
+    $attributes = array();
+    $form['fundraiser_salesforce_integration'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Integrate with Salesforce'),
+      '#default_value' => variable_get('fundraiser_salesforce_integration', 0),
+      '#description' => t($description),
+      '#attributes' => $attributes,
+    );
+  }
+}
+
+// Only used in sf_queru_insert, so move over there.
+define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation');
+define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation');
+define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');
+
+function queue_api_fundraiser_donation_success($donation) {
+  if ($donation->donation['recurs_monthly'] == TRUE) {
+    sf_queue_insert($donation->did, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
+  }
+  else {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
+  }
+}
+
+function queue_api_fundraiser_donation_refund_success($donation) {
+  sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  sf_queue_insert($donation->refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
+}
+
+/**
+ * Implemenation of queue_report_item_name().  TODO where does this come from??
+ */
+function fundraiser_queue_report_item_title_alter(&$row) {
+  if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
+    $title = 'Donation ' . $row['oid'];
+    $row['title'] = $title;
+  }
+  elseif ($row['type'] == 'refund') {
+    $did = db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id",
+      array(':refund_id' => $row['oid']))->fetchColumn();
+    $title = 'Donation ' . $did;
+    $row['title'] = $title;
+  }
+}
+
+/**
+ * Implementation of hook_webform_submission_update()
+ * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
+ */
+ // TODO this looks like it should be in another module based on what it does, perhaps sf_queue? - SeH 1/12/12
+ // Update - move to sf_donation.
+function fundraiser_webform_submission_update($node, $submission) {
+  if ($node->type == 'donation_form') {
+    if (module_exists('queue_api')) {
+      $did = db_query('SELECT f.did FROM {fundraiser_webform_donation} f ' .
+        'INNER JOIN {uc_orders} u ON u.order_id = f.did ' .
+        'WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = \'payment_received\'',
+        array(':webform_nid' => $node->nid, ':sid' => $submission->sid))->fetchColumn();
+      if ($order_id) {
+        // Determine if we need an INSERT or an UPDATE
+        $action = 'create';
+        $sfid = db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = :oid AND drupal_type = \'donation\'', 
+          array(':oid' => $order_id))->fetchColumn();
+        if ($sfid) {
+          $action = 'update';
+        }
+        sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
+      }
+    }
+  }
+}
+
+//TODO move you to another module for profile handling in post submission.
+/**
+ * Updates the profile of user that submitted the donation.
+ */
+// NAME THIS AS PER: hook_fundraiser_donation_success();
+function fundraiser_update_sf_user_profile($donation) {
+
+  // If the SF Queue API is enabled, insert this user into the queue
+  // TODO - hook, move this out to be hookable on update.
+  if (module_exists('queue_api')) {
+    // Insert user back into queue
+    $action = 'update';
+    if (empty($update_user->salesforce_contact_id)) {
+      $action = 'upsert';
+    }
+    sf_queue_insert($update_user->uid, 'user', $action);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ */
+function sf_donation_hook_fundraiser_donation_update($donation) {
+  // put order back in queue so that amount gets updated in Salesforce
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function sf_donation_fundraiser_donation_cancel($donation) {
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+  // call out to saleforce module if installed
+  //if (module_exists('sf_donation')) {
+  //  sf_donation_canel_recurring_donations($master_order_id);
+  //}
+}
+
+/**
+ * Includes code for updating billing information for recurring donations.
+ * Each gateway will require it's own function named GATEWAY_ID_update_billing_information
+ * that accepts a payment reference id and billing information.
+ * The individual billing update function should return a boolean indicating success or failure
+ */
+// TODO move this out to Authorizenet module.
+/**
+ * Authorize.net billing information update function.
+ */
+// Trigger on hook_fundraiser_donation_update
+// Since the value is finalized AFTER this is run, you can grab the orig out of the DB and compare.
+// to determine if you need to update. (chances are you do, update is called for a reason.)
+function authorizenet_fundraiser_donation_update($donation) {
+  $reference_id = $donation->donation->reference_id; // Make sure this is set by the related field.
+  $billing_info = ''; // TODO construct this out of the donation info.
+  if (module_exists('authorizenet_cim')) {
+    return authorizenet_cim_update($reference_id, $billing_info);
+  }
+  else {
+    drupal_set_message(t('Unable to update billing information at this time'));
+    watchdog('fundraiser', 'Billing information for recurring donations cannot be updated because the authorize_cim module is missing.', NULL, WATCHDOG_CRITICAL);
+    return NULL;
+  }
+}
+
+/**
+ * Sage billing information update function.
+ */
+// Trigger on hook_fundraiser_donation_update
+// TODO shouldn't this move elsewhere?
+function sage_fundraiser_donation_update($donation) {
+  $reference_id = $donation->donation->reference_id;
+  $billing_info = ''; // TODO construct this out of the donation info.
+  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
+  $data = array(
+    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
+    'billing_street1' => $billing_info['address_1'],
+    'billing_street2' => $billing_info['address_2'],
+    'billing_city' => $billing_info['city'],
+    'billing_zone' => $billing_info['state'],
+    'billing_postal_code' => $billing_info['zipcode'],
+    'billing_country' => $billing_info['country'],
+    'cc_number' => $billing_info['card_num'],
+    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
+    'cc_exp_year' => $billing_info['card_exp_date']['year'],
+  );
+  $response = uc_sage_vault_update($vault_id, $data);
+  // TODO: Need to add some better returns to the uc_sage module
+  return TRUE;
+}

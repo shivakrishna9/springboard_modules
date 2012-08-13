@@ -1,11 +1,14 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the fundraiser_multi_currency module.
+ */
 
 /**
  * Implements hook_schema().
  */
 function fundraiser_multi_currency_schema() {
   $schema = array();
-  
   $schema['fundraiser_currencies'] = array(
     'description' => 'Default currencies to use for donation forms',
     'fields' => array(
@@ -42,7 +45,6 @@ function fundraiser_multi_currency_schema() {
  * Implements hook_install().
  */
 function fundraiser_multi_currency_install() {
-  drupal_install_schema('fundraiser_multi_currency');
   _fundraiser_multi_currency_insert_defaults();
 }
 
@@ -50,38 +52,35 @@ function fundraiser_multi_currency_install() {
  * Implements hook_uninstall().
  */
 function fundraiser_multi_currency_uninstall() {
-  drupal_uninstall_schema('fundraiser_multi_currency');
+  drupal_set_message(t('Nodes that previously had a currancy field - still do. Be sure to update your donation forms.'));
 }
 
 /**
- * 
+ * Insert default available currancies.
  */
 function _fundraiser_multi_currency_insert_defaults() {
   $ret = array();
   $currencies[] =  array(
-      'symbol' => '$',
-      'code' => 'USD',
-      'name' => 'US Dollars',
-    );
-    $currencies[] =  array(
-      'symbol' => '€',
-      'code' => 'EUR',
-      'name' => 'Euros',
-    );
-    $currencies[] =  array(
-      'symbol' => '£',
-      'code' => 'GBP',
-      'name' => 'UK Pounds',
-    );
-
-
-  foreach($currencies as $values) {
-    if (!db_result(db_query("SELECT 1 FROM {fundraiser_currencies} WHERE code='%s'", $values['code']))) {
-      $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",  $values['symbol'], $values['code'], $values['name']);
-      $ret[] = update_sql($sql);
+    'symbol' => '$',
+    'code' => 'USD',
+    'name' => 'US Dollars',
+  );
+  $currencies[] =  array(
+    'symbol' => '€',
+    'code' => 'EUR',
+    'name' => 'Euros',
+  );
+  $currencies[] =  array(
+    'symbol' => '£',
+    'code' => 'GBP',
+    'name' => 'UK Pounds',
+  );
+  foreach ($currencies as $record) {
+    if (!db_query('SELECT 1 FROM {fundraiser_currencies} WHERE code = :code', array(':code' => $record['code']))->fetchField()) {
+      //drupal_write_record('fundraiser_currencies', $record); Not using write record here per doc.
+      db_insert('fundraiser_currencies')->fields($record)->execute();
     }
   }
-  return $ret;
 }
 
 /**
@@ -89,6 +88,5 @@ function _fundraiser_multi_currency_insert_defaults() {
  * Load defaults into the db for sites that don't already have them.
  */
 function fundraiser_multi_currency_update_6001() {
-  $ret = _fundraiser_multi_currency_insert_defaults();
-  return $ret;
+  _fundraiser_multi_currency_insert_defaults();
 }

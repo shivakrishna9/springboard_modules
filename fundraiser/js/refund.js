@@ -13,7 +13,6 @@ Drupal.behaviors.enableAmountForPartialRefund = {
       amountBox.val('');
     }
   });
-};
 
   })(jQuery); }
 } 

@@ -11,23 +11,24 @@ function fundraiser_sustainers_schema() {
   $schema['fundraiser_recurring'] = array(
     'description' => 'Stores information about recurring orders.',
     'fields' => array(
-      'master_order_id' => array(
-        'description' => 'Master order ID from ubercart.',
+      'master_did' => array(
+        'description' => 'Master donation id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'order_id' => array(
-        'description' => 'This specific recurring order id.',
+      'did' => array(
+        'description' => 'This specific recurring donation id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'next_charge' => array(
-        'description' => 'When to charge the order next.',
+        'description' => 'When to charge the donation next.',
         'type' => 'int',
         'not null' => TRUE,
       ),
+      // TODO strongly consider moving these to another table.
       'sf_opportunity_id' => array(
         'description' => 'TODO: please describe this field!',
         'type' => 'varchar',
@@ -52,6 +53,7 @@ function fundraiser_sustainers_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      // SF fields should not be here.
       'gateway_resp' => array(
         'description' => 'Gateway response to the charge.',
         'type' => 'varchar',
@@ -70,20 +72,37 @@ function fundraiser_sustainers_schema() {
         'length' => '500',
         'not null' => FALSE,
       ),
-      'gateway' => array(
-        'description' => 'Gateway to process order with.',
-        'type' => 'varchar',
-        'length' => '100',
-        'not null' => FALSE,
-      ),
-      'txn_id' => array(
-        'description' => 'The transaction id for a given donation.',
-        'type' => 'varchar',
-        'length' => '55',
-        'not null' => FALSE,
-      ),
     ),
-    'primary key' => array('order_id'),
+    'primary key' => array('did'),
   );
   return $schema;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function fundraiser_sustainers_update_7001(&$sandbox) {
+  // Rename the table columns that used to be called order to donation.
+  $master_did_field = array(
+    'master_did' => array(
+      'description' => 'Master donation id.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  $did_field = array(
+    'did' => array(
+      'description' => 'This specific recurring donation id.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  );
+  db_change_field('fundraiser_recurring', 'master_order_id', 'master_did', $master_did_field, array('primary key' => array('did')));
+  db_change_field('fundraiser_recurring', 'order_id', 'did', $did_field);
+
+  // Drop fields that are redundant with fundraiser_donation.
+  db_drop_field('fundraiser_recurring', 'txn_id');
+  db_drop_field('fundraiser_recurring', 'gateway');
 }

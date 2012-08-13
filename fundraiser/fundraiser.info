@@ -3,14 +3,8 @@ name = Fundraiser
 description = Fundraising Module
 core = 7.x
 package = Jackson River Springboard
-;Temporary dependencies, eventually the relationship will go the other way.
-dependencies[] = fundraiser_webform
-dependencies[] = fundraiser_ubercart
-dependencies[] = fundraiser_triggers
-dependencies[] = fundraiser_sustainers
-dependencies[] = fundraiser_user
-; Dependencies
 dependencies[] = views
-dependencies[] = webform
 dependencies[] = profile
 dependencies[] = token
+;Testing files
+files[] = tests/fundraiser.unit.test

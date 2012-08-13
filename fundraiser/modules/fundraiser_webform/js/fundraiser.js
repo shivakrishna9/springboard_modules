@@ -11,7 +11,7 @@ Drupal.behaviors.fundraiserCheckCode = {
 	$('#edit-submitted-donation-quantity').change(function() {
 		$('#total').empty();
 		var total = this.value * $('#webform-component-amount input:radio:checked').val();
-		$('#edit-submitted-donation-quantity').after('<p id="total">Total: $' + total + '</p>');
+		$('#edit-submitted-donation-quantity').after('<p id="total">Total: $' + total + '</p>'); // TODO check money symbols.
 	});
 	
 	$('#edit-submitted-donation-other-amount').change(function() {
@@ -24,7 +24,11 @@ Drupal.behaviors.fundraiserCheckCode = {
 	  $(this).hide();
 	  $('.fundraiser_submit_message').hide();
     
-    $(this).after('<div class="donation-processing-wrapper"><p class="donation-thank-you">Thank you.</p><p class="donation-processing">Your donation is being processed.</p><div class="donation-processing-spinner"></div></div>');
+    $(this).after('<div class="donation-processing-wrapper">' +
+        '<p class="donation-thank-you">Thank you.</p>' +
+        '<p class="donation-processing">Your donation is being processed.</p>' +
+        '<div class="donation-processing-spinner"></div>' +
+      '</div>');
 	});
 });
 

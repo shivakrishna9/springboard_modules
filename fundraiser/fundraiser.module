@@ -5,39 +5,10 @@
  * Provides behaviors to handle donation form creation and donation submission.
  */
 
-/**
- * IMPLEMENTATION NOTES:
- *
- * The exact implementation of a donor form as displayed to a user to place a donation has been moved
- * to an exterior module. By default webform. So long as we are using an exterior module to display the 
- * form we want, the exact details will be handled by a glue module to link fundraiser to whatever display
- * implementation we use. This allows us future flexibility and separation of concerns in code.
- *
- * As a result this module does not form_alter webform forms. That's the glue's job. It also means
- * that picking the workflow back up of processing a donation is by executing a process call in fundraiser
- * from the submit in the glue module. So if you don't see a straight path from one to the other in this module
- * it's because the control of flow goes into the glue module before coming back here.
- *
- * Donations themselves are also tracked in an exterior module. By default ubercart. A glue module is
- * provided for this as well. Donations are stored as orders in Ubercart, and the glue module translates. So
- * the exterior module handling the purchasing stage of things is the one that needs to be aware of things like
- * states, user info, and the like. To allow multiple gateways to be used depending on the fundraiser, fundraiser 
- * does interact with a list of available gateways for use during processing.
- *
- * In practice this means, exterior modules are blind to each other, and fundraiser is blind to them. The
- * glue moduled between them are the only systems aware of more than one module at a time.
- */
-
-define('FUNDRAISER_SINGLE_DONATION_TYPE', 'donation');
-define('FUNDRAISER_RECURRING_DONATION_TYPE', 'recurring_donation');
-define('FUNDRAISER_DONATION_REFUND_TYPE', 'refund');
-define('RECURRING_DONATION_STATUS', 'pending_future_payment');
-define('DONATION_NON_RECURRING', 0);
-define('DONATION_RECURRING', 1);
-define('DONATION_CANCELLED', 2);
-
 // Include theme related functions.
-require_once('fundraiser.theme.inc'); 
+require_once('fundraiser.theme.inc');
+// Include confirmation stuff.
+require_once('fundraiser.confirmations.inc');
 
 /**
  * Implements hook_permission().
@@ -45,32 +16,36 @@ require_once('fundraiser.theme.inc');
 function fundraiser_permission() {
   return array(
     'administer fundraiser' => array(
-      'title' => t('Administer fundraiser'), 
+      'title' => t('Administer fundraiser'),
       'description' => t('Perform administration tasks for fundraiser.'),
     ),
+    'refund donations' => array(
+      'title' => t('Refund donations'),
+      'description' => t('Refund donations for fundraiser.'),
+    ),
     'create donation form' => array(
-      'title' => t('Create donation form'), 
+      'title' => t('Create donation form'),
       'description' => t('Create donation forms.'),
     ),
     'edit own donation form' => array(
-      'title' => t('Edit own donation form'), 
-      'description' => t('Edit own donation forms.'), 
+      'title' => t('Edit own donation form'),
+      'description' => t('Edit own donation forms.'),
     ),
     'edit any donation form' => array(
-      'title' => t('Edit any donation form'), 
-      'description' => t('Edit any donation forms.'), 
+      'title' => t('Edit any donation form'),
+      'description' => t('Edit any donation forms.'),
     ),
     'delete own donation form' => array(
-      'title' => t('Delete own donation form'), 
-      'description' => t('Delete own donation forms.'), 
+      'title' => t('Delete own donation form'),
+      'description' => t('Delete own donation forms.'),
     ),
     'delete any donation form' => array(
-      'title' => t('Delete any donation form'), 
-      'description' => t('Delete any donation forms.'), 
+      'title' => t('Delete any donation form'),
+      'description' => t('Delete any donation forms.'),
     ),
     'clone donation form' => array(
-      'title' => t('Clone donation form'), 
-      'description' => t('Clone donation forms.'), 
+      'title' => t('Clone donation form'),
+      'description' => t('Clone donation forms.'),
     ),
   );
 }
@@ -89,6 +64,7 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
+  // MOVE TO CONFIRMATIONS
   $items['node/%node/fundraiser/confirmations'] = array(
     'title' => 'Confirmations',
     'page callback' => 'drupal_get_form',
@@ -98,6 +74,7 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 1,
   );
+  // MOVE TO CONFIRMATIONS
   $items['node/%node/confirmation/%'] = array(
     'title' => 'Webform submission',
     'load arguments' => array(1),
@@ -109,7 +86,7 @@ function fundraiser_menu() {
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
     'title' => 'Fundraiser settings',
-    'description' => t('Configurations for the Fundraiser system.'),
+    'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
     'access arguments' => array("administer fundraiser"),
@@ -118,22 +95,28 @@ function fundraiser_menu() {
   );
   $items['admin/config/system/fundraiser/settings'] = array(
     'title' => 'Fundraiser settings',
-    'description' => t('Configurations for the Fundraiser system.'),
+    'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
     'access arguments' => array("administer fundraiser"),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-  // Donation management for admins.
-  $items['admin/store/orders/%/refund'] = array( //TODO - Move this to it's own page. Remove Ubercart as default path.
-    'title' => 'Refund',
-    'page callback' => 'fundraiser_show_refund_form',
-    'page arguments' => array(3),
-    'access arguments' => array('edit orders'),
-    'file' => 'fundraiser.admin.inc',
-    'weight' => 3,
+  $items['admin/config/system/fundraiser/donations'] = array(
+    'title' => 'Donations',
+    'page callback' => 'fundraiser_donations_admin',
+    'access arguments' => array('administer fundraiser'),
+    'file' => 'fundraiser.donations.inc',
     'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/fundraiser/donations/%'] = array(
+    'title' => 'View donation',
+    'page callback' => 'fundraiser_donations_admin_view',
+    'page arguments' => array(5),
+    'access arguments' => array('administer fundraiser'),
+    'type' => MENU_CALLBACK,
+    'tab_parent' => 'admin/config/system/fundraiser/donations',
+    'file' => 'fundraiser.donations.inc',
   );
   return $items;
 }
@@ -148,7 +131,7 @@ function fundraiser_boost_is_cacheable($parts) {
   if ($args[0] == 'node' && isset($args[1]) && is_numeric($args[1]) && !isset($args[2])) {
     // It's a node, but is it a donation node?
     $node = node_load($args[1]);
-    if (_fundraiser_is_donation_type($node)) {
+    if (fundraiser_is_donation_type($node)) {
       // Don't cache donation forms
       $parts['is_cacheable'] = FALSE;
     }
@@ -157,45 +140,51 @@ function fundraiser_boost_is_cacheable($parts) {
 }
 
 /**
- * Menu access callback, check for donation type and node access.
+ * Implements hook_token_info().
  */
-function fundraiser_confirmations_perm($perm, $node) {
-  if (_fundraiser_is_donation_type($node->type) && node_access($perm, $node)) {
-    return TRUE;
-  }
-  return FALSE;
-}
-
-// TODO come back to fix these. This is no longer how tokens work. vvv
-/**      
- * Implementation of hook_token_list().
- */
-function fundraiser_token_list($type = 'all') {
-  if ($type == 'fundraiser' || $type == 'all') {
-    $tokens['fundraiser']['fundraiser-cc-last-four']  = t('The last four digits of the credit card used for the order.');
-    $tokens['fundraiser']['fundraiser-cc-card-exp-month'] = t('The credit card expiration month.');
-    $tokens['fundraiser']['fundraiser-cc-card-exp-year'] = t('The credit card expiration year.');
-    $tokens['fundraiser']['fundraiser-cc-card-type'] = t('The credit card type used for the order.');
-  }
-  return $tokens;
+function fundraiser_token_info() {
+  // Add a donation type.
+  $info['types']['donation'] = array(
+    'name' => t('Donation tokens'),
+    'description' => t('Tokens related to specific donations.'),
+    'needs-data' => 'donation',
+  );
+  $info['tokens']['donation']['fundraiser-cc-last-four'] = array(
+    'name' => t('Ending CC number'),
+    'description' => t('The last four digits of the credit card used for the donation.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-exp-month'] = array(
+    'name' => t('CC expiration month'),
+    'description' => t('The credit card expiration month.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-exp-year'] = array(
+    'name' => t('CC expiration year'),
+    'description' => t('The credit card expiration year.'),
+  );
+  $info['tokens']['donation']['fundraiser-cc-card-type'] = array(
+    'name' => t('CC type'),
+    'description' => t('The credit card type used for the donation.'),
+  );
+  return $info;
 }
 
 /**
- * Implementation of hook_token_values().
+ * Implements hook_tokens().
  */
-function fundraiser_token_values($type, $object = NULL) {
-  $values = array();
+function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
   switch ($type) {
-    case 'fundraiser':
-      $values['fundraiser-cc-last-four'] = substr($object->payment_details['cc_number'], -4);
-      $values['fundraiser-cc-card-exp-month'] = $object->payment_details['cc_exp_month'];
-      $values['fundraiser-cc-card-exp-year'] = $object->payment_details['cc_exp_year'];
-      $values['fundraiser-cc-card-type'] = ucfirst($object->payment_details['cc_type']);
+    case 'donation':
+      if (!empty($data->donation)) {
+        $replacements['fundraiser-cc-last-four'] = drupal_substr($data->donation['card_number'], -4);
+        $replacements['fundraiser-cc-card-exp-month'] = $data->donation['card_expiration_month'];
+        $replacements['fundraiser-cc-card-exp-year'] = $data->donation['card_expiration_year'];
+        $replacements['fundraiser-cc-card-type'] = drupal_ucfirst($data->donation['cc_type']);
+      }
       break;
   }
-  return $values;
+  return $replacements;
 }
-// TODO ^^^
 
 /**
  * Provides an additional mechanism to combine running regular token replacement
@@ -203,10 +192,11 @@ function fundraiser_token_values($type, $object = NULL) {
  */
 function _fundraiser_replace_tokens($message, $donation) {
   // First replace the normal token set.
-  $message = token_replace($message, array('order' => $donation->donation));
+  $message = token_replace($message, $donation);
+
   // Then replace based on the glue modules. Specifically for webform, which uses non-standard tokens.
   $message = module_invoke_all('fundraiser_replace_tokens', $message, $donation);
-  return $message[0];  // Return the first member of the result array, aka the message.
+  return $message[0];
 }
 
 /**
@@ -245,7 +235,7 @@ function fundraiser_clone_access_alter(&$access, $node) {
  */
 function fundraiser_clone_node_alter(&$node, $context) {
   // Set the internal name.
-  $node->internal_name = t('Clone of ') . $context['original_node']->internal_name;
+  $node->internal_name = t('Clone of %internal', array('%internal' => $context['original_node']->internal_name));
   // The additional load in hook_node_load already will have brought in additional node data.
   // The additional saves in hook_node_insert / hook_node_update will save the additional node data.
 }
@@ -260,209 +250,22 @@ function fundraiser_views_api() {
 }
 
 /**
- * Implementation of hook_access().
+ * Implementshook_node_access().
  */
-function fundraiser_access($op, $node, $account) {
-  if (_fundraiser_is_donation_type($node->type)) {
+function fundraiser_node_access($node, $op, $account) {
+  if (fundraiser_is_donation_type($node->type)) {
     $is_author = $account->uid == $node->uid;
     switch ($op) {
       case 'create':
-        return user_access('create donation form', $account) ? TRUE : NULL;
+        return user_access('create donation form', $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
       case 'update':
         return ((user_access('edit own donation form', $account) && $is_author) ||
-          user_access('edit any donation form', $account)) ? TRUE : NULL;
+          user_access('edit any donation form', $account)) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
       case 'delete':
         return ((user_access('delete own donation form', $account) && $is_author) ||
-          user_access('delete any donation form', $account)) ? TRUE : NULL;
+          user_access('delete any donation form', $account)) ? NODE_ACCESS_ALLOW : NODE_ACCESS_IGNORE;
     }
   }
-}
-
-/**
- * Menu callback, display fundraiser confirmation page.
- */
-function fundraiser_donation_confirmation_page($node, $did) {
-  drupal_set_title(check_plain($node->confirmation_page_title));
-  if (empty($output)) {
-    $message = '';
-    $donation = fundraiser_donation_get_donation($did);
-    if (!empty($donation)) {
-      if (!empty($donation->node->confirmation_page_body)) {
-        $message = _fundraiser_replace_tokens($donation->node->confirmation_page_body, $donation);
-      }
-    }
-    $output = theme(
-      array('fundraiser_confirmation_' . $node->nid, 'fundraiser_confirmation'),
-      array('node' => $node,'message' => $message)
-    );
-  }
-  return $output;
-}
-
-/**
- * Form for fundraiser confirmation page settings.
- */
-function fundraiser_confirmation_settings_form($form, &$form_state, $node) {
-  // Additional values have been loaded on node_load, so are available here.
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-  $form['confirmation_page'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation page settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['confirmation_page']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Page title'),
-    '#default_value' => isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
-  );
-  $body_format = $node->confirmation_page_format ? $node->confirmation_page_format : NULL;
-  $form['confirmation_page']['body'] = array(
-    '#type' => 'text_format',
-    '#title' => t('Confirmation message'),
-    '#default_value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
-    '#format' => isset($body_format) ? $body_format : NULL,
-  );
-  $form['confirmation_page']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['confirmation_page']['tokens']['help'] = array(
-    // TODO follow up on this to make sure that the tokens we are using are the right ones.
-    // Currently displays both regular tokens and webform tokens.
-    '#markup' => theme('token_tree', array('token_types' => array('node'))) . theme('webform_token_help', array()),
-  );
-  // Redirection settings.
-  if (isset($node->redirect_url) && strpos($node->redirect_url, '<') === 0) {
-    $redirect = trim($node->redirect_url, '<>');
-    // Redirection is set to front page.
-    if ($redirect == 'front') {
-      $redirect = 'url';
-      $redirect_url = $node->redirect_url;
-    }
-    else {
-      $redirect_url = '';
-    }
-  }
-  else {
-    $redirect = 'url';
-    $redirect_url = isset($node->redirect_url) ? $node->redirect_url : '';
-  }
-  $form['confirmation_page']['redirection'] = array(
-    '#type' => 'item',
-    '#title' => t('Redirection location'),
-    '#theme' => 'webform_advanced_redirection_form',
-    '#description' => t('Choose where to redirect the user upon successful submission.'),
-  );
-  $form['confirmation_page']['redirection']['redirect'] = array(
-    '#type' => 'radios',
-    '#default_value' => $redirect,
-    '#options' => array(
-      'confirmation' => t('Confirmation page'),
-      'url' => t('Custom URL'),
-    ),
-  );
-  $form['confirmation_page']['redirection']['redirect_url'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Redirect URL'),
-    '#description' => t('URL to redirect the user to upon successful submission.'),
-    '#default_value' => $redirect_url,
-    '#maxlength' => 255,
-  );
-  $form['email'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation email settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['email']['receipt_email_address'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Address'),
-    '#description' => t('The email address that the receipt email will come from.'),
-    '#weight' => -4.6,
-    '#maxlength' => 255,
-    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_from'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email From'),
-    '#description' => t('The name that is associated with the receipt email address.'),
-    '#weight' => -4.5,
-    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Subject'),
-    '#description' => t('The subject of the donation receipt email.'),
-    '#weight' => -4.4,
-    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation Email Message'),
-    '#weight' => -4.3,
-    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 300,
-  );
-  return $form;
-}
-
-/**
- * Validation function for fundraiser_webform_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_validate($form, &$form_state) {
-  // Validate the email address.
-  if (!_fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
-    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
-  }
-  // Ensure the entered redirect URL is valid.
-  if ($form_state['values']['redirect'] == 'url') {
-    $redirect_url = trim($form_state['values']['redirect_url']);
-    if (empty($redirect_url)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('A valid URL is required for custom redirection.'));
-    }
-    elseif (strpos($redirect_url, 'http') === 0 && !valid_url($redirect_url, TRUE)) {
-      form_error($form['confirmation_page']['redirection']['redirect_url'], t('The entered URL is not a valid address.'));
-    }
-    else {
-      form_set_value($form['confirmation_page']['redirection']['redirect_url'], $redirect_url, $form_state);
-    }
-  }
-  elseif ($form_state['values']['redirect'] == 'confirmation') {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-  else {
-    form_set_value($form['confirmation_page']['redirection']['redirect_url'], '<confirmation>', $form_state);
-  }
-}
-
-/**
- * Submit function for fundraiser_webform_confirmation_settings_form().
- */
-function fundraiser_confirmation_settings_form_submit($form, &$form_state) {
-  // Get the fundraiser and all the node information that comes with it.
-  $fundraiser = node_load($form_state['values']['nid']);
-  // Update the fundraiser with the submitted material.
-  $fundraiser->confirmation_page_title = check_plain($form_state['values']['title']);
-  $fundraiser->confirmation_page_body = $form_state['values']['body']['value'];
-  $fundraiser->confirmation_page_format = $form_state['values']['body']['format'];
-  $fundraiser->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
-  $fundraiser->receipt_email_address = $form_state['values']['receipt_email_address'];
-  $fundraiser->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
-  $fundraiser->receipt_email_message = $form_state['values']['receipt_email_message'];
-  $fundraiser->redirect_url = $form_state['values']['redirect_url'];
-  // Save it.
-  _fundraiser_update_fundraiser($fundraiser);
 }
 
 /**
@@ -496,8 +299,10 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
  * Implements hook_node_delete().
  */
 function fundraiser_node_delete($node) {
-  if (_fundraiser_is_donation_type($node->type)) {
-    _fundraiser_delete_fundraiser($node);
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
+    _fundraiser_delete_fundraiser($node->nid);
+    _fundraiser_delete_tracking($node->nid);
   }
 }
 
@@ -505,7 +310,8 @@ function fundraiser_node_delete($node) {
  * Implements hook_node_insert().
  */
 function fundraiser_node_insert($node) {
-  if (_fundraiser_is_donation_type($node->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_create_fundraiser($node);
   }
 }
@@ -515,7 +321,8 @@ function fundraiser_node_insert($node) {
  */
 function fundraiser_node_load($nodes, $types) {
   foreach ($nodes as $node) {
-    if (_fundraiser_is_donation_type($node->type)) {
+    // If this isn't a fundraiser type, ignore it.
+    if (fundraiser_is_donation_type($node->type)) {
       // Get the fundraiser information.
       // This also loads additional data presented from other modules to FR.
       // AKA fundraiser_webform and fundraiser_profile data.
@@ -533,17 +340,18 @@ function fundraiser_node_load($nodes, $types) {
  * Implements hook_node_presave().
  */
 function fundraiser_node_presave($node) {
-  if (_fundraiser_is_donation_type($node->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
     // Check the submission to remove the donation amounts marked.
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       // If the remove marker is set.
       if (isset($donation_amount['remove']) && $donation_amount['remove'] == 1) {
-         unset($node->amount_wrapper['donation_amounts'][$index]);
+        unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
       // Or if the values aren't set.
       if (empty($donation_amount['label']) && empty($donation_amount['amount'])) {
-         unset($node->amount_wrapper['donation_amounts'][$index]);
+        unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
     }
@@ -560,7 +368,8 @@ function fundraiser_node_presave($node) {
  * Implements hook_node_update().
  */
 function fundraiser_node_update($node) {
-  if (_fundraiser_is_donation_type($node->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_update_fundraiser($node);
   }
 }
@@ -569,7 +378,8 @@ function fundraiser_node_update($node) {
  * Implements hook_node_validate().
  */
 function fundraiser_node_validate($node, $form, &$form_state) {
-  if (_fundraiser_is_donation_type($node->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
     // If each given amount if numeric, we're ok.
     // Since the form is set to TREE at this point, we need to account for that in our addressing path.
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
@@ -587,7 +397,8 @@ function fundraiser_node_validate($node, $form, &$form_state) {
  * Implements hook_node_view().
  */
 function fundraiser_node_view($node, $view_mode, $langcode) {
-  if (_fundraiser_is_donation_type($node->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($node->type)) {
     // Track the pageview.
     if ($view_mode == 'full') {
       _fundraiser_update_tracking_value($node->nid, 'pageviews');
@@ -607,28 +418,28 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
         array('!link' => l('turn off', 'admin/config/system/fundraiser'))));
     }
   }
-  // Glue display modules are responsible for using hook_node_view to display themselves with the node.
+  // NOTE: Glue display modules are responsible for using hook_node_view to display themselves with the node.
   // Some, like webform based glue modules, already do the work of displaying on a form themselves.
 }
 
 /**
- * Form modification functions.
+ * Fundraiser form modification functions.
  */
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for node forms.
  */
 function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
-  if (_fundraiser_is_donation_type($form['#node']->type)) {
+  // If this isn't a fundraiser type, ignore it.
+  if (fundraiser_is_donation_type($form['#node']->type)) {
     _fundraiser_donation_settings_form($form, $form_state);
-    // Allow other modules to add or modify additional fundraiser settings.
-    module_invoke_all('fundraiser_donation_settings_form_alter', $form, $form_state);
+    // Other modules that need to add to the settings form should also implement
+    // hook_form_BASE_FORM_ID_alter, or any of the other form alter hooks.
   }
 }
 
 /**
- * Form function. This form collects the information to create donation forms per donation node types.
- *
+ * Fundraiser form. This form collects the information to create donation forms per donation node types.
  * This is added to the node display via form_alter when editting nodes of the correct type.
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
@@ -642,8 +453,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $node = $form['#node'];
   }
   // Check if this is being called on an enabled node type.
-  if (!_fundraiser_is_donation_type($node->type)) {
-    return $form;
+  if (!fundraiser_is_donation_type($node->type)) {
+    return;
   }
   // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
@@ -713,7 +524,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
       $donation_amounts = array(
-        array(10, '$10'), 
+        array(10, '$10'),
         array(20, '$20'),
         array(50, '$50'),
         array(100, '$100'),
@@ -733,9 +544,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     }
   }
   $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. '.
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. ' .
       'If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
+/*
+// Removed for the moment, cause AJAX is NOT cooperating $form_state['values'] is not getting set.
+// I have no idea why, the examples given at d.o indicate this is the right way to do this.
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'submit',
     '#value' => t('Add another'),
@@ -747,6 +561,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'effect' => 'fade',
     ),
   );
+ */
+  // Additional fundraiser settings.
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show other amount option'),
@@ -760,37 +576,38 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#description' => t('The minimum acceptable donation amount.'),
     '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
-  /* Hidden fields. These are set later or else where. */
+
+  // TODO this should probably go on a different table, not here.
+  /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
   $form['confirmation_page_title'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' =>  isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
   );
   $form['confirmation_page_body'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
   );
   $form['receipt_email_from'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
   );
   $form['receipt_email_address'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
   );
   $form['receipt_email_subject'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
   );
   $form['receipt_email_message'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   $form['redirect_url'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => isset($node->redirect_url) ? $node->redirect_url : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
-  return $form;
 }
 
 /**
@@ -816,20 +633,367 @@ function _fundraiser_ask_form($amount_values = array()) {
 }
 
 /**
- * Form helper function, required to get stylesheets and scripts added to the donation form after a validation error.
- * see: http://drupal.org/node/645880
- */
-//function _fundraiser_validation_includes($element, $form_state) {
-//  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
-//  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser_form.js');
-//  return $element;
-//}
-
-/**
  * Callback handler for the donation ask amount form #ajax.
  */
 function _fundraiser_donation_settings_form_amounts($form, $form_state) {
   return $form['fundraiser_settings']['amount_wrapper']['donation_amounts'];
+}
+
+/**
+ * Donation field definitions.
+ */
+
+/**
+ * Provides a list of fields to be defined by the display module. Requests additional field information from other modules that need to define them.
+ */
+function fundraiser_field_info() {
+  static $fields;
+  // Cache fundraiser content types during page execution.
+  if (empty($fields)) {
+    // Request additional fields from other modules.
+    $fields = module_invoke_all('fundraiser_field_info');
+    // Allow for others to modify as needed.
+    drupal_alter('fundraiser_field_info', $fields);
+  }
+  // And return.
+  return $fields;
+}
+
+/**
+ * Implements hook_fundraiser_field_info(), providing the core set of fields that fundraiser must have.
+ */
+function fundraiser_fundraiser_field_info() {
+  // Donation amounts are handled in a special case.
+  $fields['donation'] = array(
+    '#title' => 'Donation',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['donation']['amount'] = array(
+    '#title' => 'Amount',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 10,
+      'field_prefix' => '$',
+    ),
+    '#create_callback' => '_fundraiser_amount_field_create',
+  );
+  $fields['donation']['other_amount'] = array(
+    '#title' => 'Other',
+    '#type' => 'textfield',
+    '#required' => 0,
+    '#extra' => array(
+      'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
+      'width' => 10,
+      'field_prefix' => '$',
+    ),
+    '#create_callback' => '_fundraiser_other_amount_field_create',
+    '#validate_callback' => '_fundraiser_other_amount_field_validate',
+  );
+  $fields['donor_information'] = array(
+    '#title' => 'Your Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['donor_information']['first_name'] = array(
+    '#title' => 'First Name',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['donor_information']['last_name'] = array(
+    '#title' => 'Last Name',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['donor_information']['email'] = array(
+    '#title' => 'Email',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#validate_callback' => '_fundraiser_email_field_validate',
+  );
+  $fields['billing_information'] = array(
+    '#title' => 'Credit Card Billing Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['billing_information']['address'] = array(
+    '#title' => 'Address',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['address_line_2'] = array(
+    '#title' => 'Address Line 2',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['city'] = array(
+    '#title' => 'City',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['country'] = array(
+    '#title' => 'Country',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['state'] = array(
+    '#title' => 'State/Province',
+    '#type' => 'textfield',
+    '#required' => 1,
+  );
+  $fields['billing_information']['zip'] = array(
+    '#title' => 'ZIP/Postal Code',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 10,
+      'maxlength' => 5,
+    ),
+  );
+  $fields['credit_card_information'] = array(
+    '#title' => 'Credit Card Information',
+    '#type' => 'fieldset',
+    '#required' => 0,
+  );
+  $fields['credit_card_information']['card_number'] = array(
+    '#title' => 'Card Number',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'width' => 20,
+    ),
+  );
+  $months = "1|January\n";
+  $months .= "2|February\n";
+  $months .= "3|March\n";
+  $months .= "4|April\n";
+  $months .= "5|May\n";
+  $months .= "6|June\n";
+  $months .= "7|July\n";
+  $months .= "8|August\n";
+  $months .= "9|September\n";
+  $months .= "10|October\n";
+  $months .= "11|November\n";
+  $months .= "12|December\n";
+  $fields['credit_card_information']['card_expiration_month'] = array(
+    '#title' => 'Expiration Month',
+    '#type' => 'select',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'items' => $months,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    ),
+  );
+  $this_year = date('Y');
+  $years = $this_year . "\n";
+  for ($i = 1; $i <= 5; $i++) {
+    $years .= ($this_year + $i) . "\n";
+  }
+  $fields['credit_card_information']['card_expiration_year'] = array(
+    '#title' => 'Expiration Year',
+    '#type' => 'select',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'items' => $years,
+      'multiple' => 0,
+      'aslist' => 'Y',
+    ),
+  );
+  $fields['credit_card_information']['card_cvv'] = array(
+    '#title' => 'Card Security Code',
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'maxlength' => 4,
+      'width' => 5,
+    ),
+  );
+  return $fields;
+}
+
+/**
+ * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
+ */
+function _fundraiser_amount_field_create($fundraiser, $field) {
+  // If donation amounts don't exist, use amount as is.
+  if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
+    return $field;
+  }
+  // Else we want a select field.
+  if (is_array($fundraiser->donation_amounts)) {
+    // Since we have an array of donation_amounts, set the field data to match.
+    $keys = array_keys($fundraiser->donation_amounts);
+    // Construct a set of options based on the configured amounts.
+    $formatted_amounts = '';
+    foreach ($fundraiser->donation_amounts as $index => $values) {
+      if (count($values) == 1) {
+        $values[] = '|$' . isset($values[0]) ? $values[0] : $values;
+      }
+      $formatted_amounts[] = implode('|', $values);
+    }
+    if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
+      $formatted_amounts[] = 'other|Other';
+    }
+    $formatted_amounts = implode("\n", $formatted_amounts);
+    $field['#title'] = t('Please select your tax-deductible gift amount below');
+    $field['#type'] = 'select';
+    $field['#extra'] = array(
+      'description' => '',
+      'items' => $formatted_amounts,
+      'multiple' => 0,
+    );
+    $field['#value'] = $keys[0];
+  }
+  if ($fundraiser->show_other_amount == 1) {
+    $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  }
+  return $field;
+}
+
+/**
+ * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
+ */
+function _fundraiser_other_amount_field_create($fundraiser, $field) {
+  // If donation amounts don't exist, drop the amount_other field, and use amount as is.
+  if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
+    return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
+  }
+  // If the show other options is disallowed, unset it.
+  if (!$fundraiser->show_other_amount) {
+    return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
+  }
+  // Update the min with fundraiser's min.
+  $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  // Return the field to be created.
+  return $field;
+}
+
+/**
+ * Validation callback for field other_amount. Called during form validation.
+ */
+function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
+  $value = $submission_fields['amount'];
+  // Look for other amount.
+  if ($submission_fields['amount'] == "other") {
+    $value = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
+    // Make sure other amount is numeric.
+    if (!is_numeric($value)) {
+      return t('You must enter a valid donation amount');
+    }
+  }
+  // Check for minimum amount.
+  $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
+  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
+  $minimum_donation_amount = number_format($minimum_donation_amount, 2);
+  if ($value < $minimum_donation_amount) {
+    return t('Your donation amount must be greater than or equal to @min_amount.', array('@min_amount' => $minimum_donation_amount));
+  }
+}
+
+/**
+ * Validation callback for field email. Called during form validation.
+ */
+function _fundraiser_email_field_validate($form, $form_state, $submission_fields,  $value) {
+  if (!_fundraiser_validate_email($value)) {
+    return t('You must enter a valid email address.');
+  }
+}
+
+/**
+ * Asks the display glue module(s) for field information.
+ * This allows other modules to find a field as needed in a form array.
+ * For example - for retrieveing the AJAX return values of a form.
+ */
+function fundraiser_get_form_field($calling_module, $form, $field_key) {
+  // Get the form element from the given form.
+  if (module_hook($calling_module, 'fundraiser_get_form_field')) {
+    return module_invoke($calling_module, 'fundraiser_get_form_field', $form, $field_key);
+  }
+  else {
+    // Assume the form is a regularly constructed form and find it in a child somewhere.
+    return _fundraiser_get_form_field($form, $field_key);
+  }
+}
+
+/**
+ * Asks the display glue module(s) to update field information.
+ * This allows other modules to update a field as needed in a form array.
+ */
+function fundraiser_update_form_field($calling_module, $form, $field_key, $new_field) {
+  // Save the changed form element.
+  if (module_hook($calling_module, 'fundraiser_update_form_field')) {
+    return module_invoke($calling_module, 'fundraiser_update_form_field', $form, $field_key, $new_field);
+  }
+  else {
+    return _fundraiser_update_form_field($form, $field_key, $new_field);
+  }
+}
+
+/**
+ * There is no need for a creation function here to handle creating fields in a hook.
+ * That is something the display glue module should be able to handle on it's own
+ * given access to the callback information. No reason to put that in the central module.
+ */
+
+/**
+ * Process through given submission fields to change their display form on the fly. Recursive.
+ * Calling module provides the identity of the display glue module. Usually webform, could be sustainers.
+ */
+function fundraiser_display_form_fields($calling_module, &$form, $form_state, $field_info = NULL) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    if (isset($field_info[$child]['#display_callback']) && function_exists($field_info[$child]['#display_callback'])) {
+      // Get the field, update it, and put it back.
+      $this_field = fundraiser_get_form_field($calling_module, $form, $child);
+      $new_field = call_user_func($field_info[$child]['#display_callback'], $form, $form_state, $this_field);
+      $form = fundraiser_update_form_field($calling_module, $form, $child, $new_field);
+    }
+    // Check for any further children.
+    fundraiser_display_form_fields($calling_module, $form, $form_state, $field_info[$child]);
+  }
+}
+
+/**
+ * Process through given submission fields to validate on the fly. Recursive.
+ * This handles the calls to additional validation callbacks as defined in the field_info array.
+ * May be called by any module that needs to perform validation on a submitted array. See sustainers.
+ */
+function fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info = NULL, $errors = FALSE) {
+  // Grab field info, we'll use this all the way down.
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  // Check for errors by field info array.
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $keys[$child] = '';
+    // Check only if the submission field is set.
+    // And the additional validate callback exists.
+    if (isset($submission_fields[$child]) && isset($field_info[$child]['#validate_callback'])
+      && function_exists($field_info[$child]['#validate_callback'])) {
+      $error_message = call_user_func($field_info[$child]['#validate_callback'], $form, $form_state,
+        $submission_fields, $submission_fields[$child]);
+      if (isset($error_message) && !empty($error_message)) {
+        // Set the error.
+        form_set_error($child, $error_message); // Coder: This is ok.
+        $errors = TRUE;
+      }
+    }
+    // Recurse down.
+    $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields, $field_info[$child], $errors);
+  }
+  return $errors;
 }
 
 /**
@@ -841,22 +1005,26 @@ function _fundraiser_donation_settings_form_amounts($form, $form_state) {
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
-  // Add donation context information. This provides context for billing information
-  // Such as available states and zones or the like. This information is provided
-  // once from whatever module may need to set data to whatever module implements it.
-  $context = _fundraiser_donation_context();
-  $form['#context'] = $context;
   // Add validation and submit routines for fundraiser to get called during submission.
   // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
   // We add these first to make sure they're available for the hook call.
   $form['#validate'][] = 'fundraiser_donation_validate';
   $form['#submit'][] = 'fundraiser_donation_submit';
+
+  // When confirmations are moved, this goes elsewhere.
+  $form['#submit'][] = 'fundraiser_donation_post_submit';
   $form['#submit'][] = 'fundraiser_donation_confirmation';
+
   // Call hook to allow sub modules to add / manipulate the form.
-  $form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
-  // Call hook to allow final manipulations.
-  $form = module_invoke_all('fundraiser_donation_form_alter', $form, $form_state);
-  return $form;
+  // NOTE: we are not using module_invoke_all on purpose here.
+  // Node objects (common on webform objs) flag as recursive warnings.
+  //$form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
+  foreach (module_implements('fundraiser_donation_form') as $module) {
+    $result = module_invoke($module, 'fundraiser_donation_form', $form, $form_state);
+    if (isset($result) && is_array($result)) {
+      $form = array_merge($form, $result);
+    }
+  }
 }
 
 /**
@@ -878,14 +1046,17 @@ function fundraiser_donation_validate(&$form, &$form_state) {
 /**
  * Donation form, submission routine on data returned from glue display module.
  * Called from glue display module to submit additional data.
+ * NOTE: This is the right function to call repeatedly (with different data as needed)
+ * if you need to submit n+ donations on any single submission.
+ * Assumption in all of the fundraiser system is that one submission of a form = one donation.
+ * So keep that in mind as you work, if you need to make more than one donation at a time
+ * then it is better to falsify multiple submissions to the form than to try and shove more than
+ * one donation processed per submission.
  */
 function fundraiser_donation_submit(&$form, &$form_state) {
-  // Retrieve context information for use.
-  $context = $form['#context'];
   // Create the donation object and load it with the submitted information for the donation.
   $donation = (object) array();
-  $donation->context = $context;
-  //Using user load to avoid user object being carried by ref around.
+  // Using user load to avoid user object being carried by ref around.
   global $user;
   $donation->uid = $user->uid;
   $donation->user = user_load($user->uid);
@@ -893,12 +1064,12 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   $donation->nid = $form['#node']->nid;
   $donation->node = $form['#node'];
 
-  // Call hook to validate donation values against fundraiser needs and sub module needs.
+  // Call hook to gather submission donation values for the donation.
   module_invoke_all('fundraiser_donation_submit', $form, $form_state, $donation);
-  // $donation->submission contains the submitted values from the form, as well as sid.
+  // $donation->donation now contains the submitted values from the form.
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
-  if (!empty($donation)) {
+  if (!empty($donation->donation)) {
     // Create the donation to process, allows other modules to modify results by hooks.
     fundraiser_donation_create($donation);
     // The created donation information should be at at $donation->donation, ready to process.
@@ -907,200 +1078,253 @@ function fundraiser_donation_submit(&$form, &$form_state) {
       $donation->result['message'] = '';
     }
     // The results should be at $donation->result, ready to respond to the aftermath.
-    $result = $donation->result;
-    if (isset($result['success']) && $result['success']) {
+    if (isset($donation->result['success']) && $donation->result['success']) {
       fundraiser_donation_success($donation);
     }
     else {
+      $donation->result['success'] = FALSE;
       fundraiser_donation_decline($donation);
     }
   }
   else {
-    $result = array('success' => FALSE);
+    // No submission was able to be found. So we really have nothing to go on.
+    // Mark this as a failure and move on.
+    $donation->result['success'] = FALSE;
   }
   // Add the donation and result info to the form_state so we can reference it later.
-  $form_state['donation'] = $donation;
-  $form_state['result'] = $result;
+  $form_state['#donation'] = $donation;
+}
+
+/**
+ * Submit callback after donation submitted, but before confirmation.
+ */
+function fundraiser_donation_post_submit(&$form, &$form_state) {
   // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
   // Such as in cases of failures or the like. Return the donation object and result.
-  module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $donation, $result);
+  // We return form_state here, because we cannot pass arrays by reference in module calls.
+  // See: http://drupal.org/node/353494 for a detailed discussion of this one.
+  $form_state = module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
 }
 
 /**
-  A donation object takes the form:
-stdClass Object
-(
-    [uid] => Donator User UID
-    [user] => Donator User Object
-    [nid] => Fundraiser Node NID
-    [node] => Fundraiser Node Object
-    [sid] => Submission ID
-    [submission] => Array (Currently a submission array from Webform.)
-        (
-            [cid] => 
-            [amount] => 10
-            [other_amount] => a
-            [first_name] => First Name
-            [last_name] => Last Name
-            [email] => person@example.com
-            [address] => 1234 Drupal Ave
-            [address_line_2] => Apt 1234
-            [city] => Drupalville
-            [country] => 840
-            [state] => 44
-            [zip] => 12345
-            [card_number] => 4111111111111111
-            [card_cvv] => 123
-            [0] => recurs
-            [card_expiration_month] => 4
-            [card_expiration_year] => 2012
-            [ms] => default_ms
-            [referrer] => d
-            [initial_referrer] => f
-        )
-    [donation] => UcOrder Object (Currently an Order object from Ubercart.)
-        (
-            [order_id] => 71
-            [uid] => 1
-            [order_status] => in_checkout
-            [order_total] => 10
-            [primary_email] => person@example.com
-            [delivery_first_name] => 
-            [delivery_last_name] => 
-            [delivery_phone] => 
-            [delivery_company] => 
-            [delivery_street1] => 
-            [delivery_street2] => 
-            [delivery_city] => 
-            [delivery_zone] => 0
-            [delivery_postal_code] => 
-            [delivery_country] => 840
-            [billing_first_name] => First Name
-            [billing_last_name] => Last Name
-            [billing_phone] => 
-            [billing_company] => 
-            [billing_street1] => 1234 Drupal Ave
-            [billing_street2] => Apt 1234
-            [billing_city] => Drupalville
-            [billing_zone] => 44
-            [billing_postal_code] => 12345
-            [billing_country] => 840
-            [products] => Array
-                (
-                    [0] => stdClass Object
-                        (
-                            [price] => 10
-                            [qty] => 1
-                            [title] => Test Donation Form
-                            [nid] => 1
-                            [data] => Array
-                                (
-                                    [shippable] => 
-                                    [model] => 
-                                    [varprice] => 10
-                                    [module] => uc_product
-                                )
-
-                            [order_id] => 71
-                            [weight_units] => lb
-                            [order_product_id] => 50
-                            [model] => 
-                            [cost] => 0
-                            [weight] => 0
-                        )
-
-                )
-            [line_items] => Array
-                (
-                )
-            [payment_method] => credit
-            [data] => Array
-                (
-                    [recurring_status] => 1
-                )
-            [created] => 1334151019
-            [modified] => 1334151019
-            [currency] => USD
-            [product_count] => 1
-            [host] => 127.0.0.1
-            [payment_details] => Array
-                (
-                    [cc_type] => visa
-                    [cc_owner] => 
-                    [cc_number] => 4111111111111111
-                    [cc_start_month] => 
-                    [cc_start_year] => 
-                    [cc_exp_month] => 4
-                    [cc_exp_year] => 2012
-                    [cc_issue] => 
-                    [cc_cvv] => 123
-                    [cc_bank] => 
-                )
-
-            [did] => 71
-            [recurs] => 1
-            [donation_amount] => 10
-        )
-    [result] => Array  (Currently a result array from Ubercart.)
-        (
-            [success] => 1
-            [comment] => Card charged, resolution code: 0022548315
-            [message] => Credit card payment processed successfully.
-            [uid] => 1
-            [data] => Array
-                (
-                    [txn_type] => auth_capture
-                    [recurring_status] => 1
-                )
-
-        )
-)
-*/
+ * Refund donation form functions.
+ */
 
 /**
- * Submit handler, handles the final destination redirect after donation completed.
+ * Menu callback for refund tab on donations.
  */
-function fundraiser_donation_confirmation($form, &$form_state) {
-  // Everything worked, redirect to the confirmation page as the last submit handler.
-  $node = $form['#node'];
-  $redirect_url = trim($node->redirect_url);
-  $did = $form_state['donation']->did;
-
-  // Prepare the correct redirect path.
-  $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-  // This is the up path configured per node in fundraiser_menu. Used as default;
-  $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
-  if ($redirect_url == '<confirmation>') {
-    // This is the default path configured per node in fundraiser_menu.
-    $redirect = array('node/' . $node->nid . '/confirmation/' . $did);
+function fundraiser_show_refund_form($did) {
+  if (!user_access('refund donations')) {
+    drupal_set_message(t('You do not have access to refund donations.'));
+    return '';
   }
-  elseif (valid_url($redirect_url, TRUE)) {
-    // This is the path set by the user.
-    $redirect = array($redirect_url);
-  }
-  elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
-    // This is the reconstructed path from the user.
-    $parts = parse_url($redirect_url);
-    $query = $parts['query'] ? array_merge($parts['query'], array('did'=> $did)) : array('did' => $did);
-    $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
-  }
-  // And we add the redirect to the form processing for the final step.
-  $form_state['redirect'] = $redirect;
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/refund.css');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/refund.js');
+  return drupal_render( drupal_get_form('_fundraiser_refund', $did) );
 }
 
 /**
- * TODO figure out where this comes from - webform? - SeH 1/10/12
+ * Refund form
  */
-function fundraiser_confirmation_page_tokens($type) {
-  if ($type == 'donation_form') {
-    $order_tokens = array();
-    $items = token_get_list('order');
-    foreach ($items as $module => $tokens) {
-      foreach ($tokens as $token => $desc) {
-        $order_tokens['order']['[' . $token . ']'] = $desc;
+function _fundraiser_refund($form, &$form_state, $did) {
+  $form = array();
+  // Given a donation ID, grab all relevant information to create the form.
+  $donation = fundraiser_donation_get_donation($did);
+  $form['#donation'] = $form_state['#donation'] = $donation;
+  $form['payment_summary'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Summary'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  if (!isset($donation->payment)) {
+    $form['payment_summary']['no_payments'] = array(
+      '#type' => 'item',
+      '#markup' => t('No payments have been made on this order yet.'),
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+  }
+  else {
+    $form['payment_summary']['payment_total'] = array(
+      '#type' => 'item',
+      '#title' => t('Payment Total'),
+      '#markup' => $donation->donation['amount'],
+    );
+    $form['payment_summary']['refunded_total'] = array(
+      '#type' => 'item',
+      '#title' => t('Refunded Total'),
+      '#markup' => $donation->payment['refunded_total'],
+    );
+    if (isset($donation->payment['refunded_summary'])) {
+      $form['payment_summary']['refunded_summary'] = array(
+        '#type' => 'item',
+        '#title' => t('Previously Refunded'),
+        '#markup' => $donation->payment['refunded_summary'],
+      );
+    }
+  }
+
+  // Form for submitting a refund.
+  $form['refund_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refund Options'),
+    '#description' => t('Note that refunds can only be applied to payments that have been settled in the payment processor. This typically ' .
+     'happens every night; if the payment was made today, you will probably need to wait until tomorrow to issue a refund.'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  // Only show the refund form if the payment was made through a payment gateway that can handle refunds
+  $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation().
+  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
+  if (!$can_refund || !isset($donation->payment)) {
+    // They've made a payment, but it cannot be refunded
+    if (isset($donation->payment)) {
+      $no_refund_text = t('Refunds cannot be made on this order. The payment was made on a payment gateway that does not support refunds.');
+    }
+    // They have NOT made any payment yet, so there's nothing to refund
+    else {
+      $no_refund_text = t('No payments have been processed on this order, so no refunds can be made yet.');
+      // Even once the payment is made, they won't be able to refund it
+      if (!$can_refund) {
+        $no_refund_text .= ' ' . t('However, because this order was made on a payment gateway that does not support refunds, you will not be able to ' .
+          'make refunds after payments are processed on this order.');
       }
     }
-    return $order_tokens;
+    $form['refund_options']['no_refund_explanation'] = array(
+      '#value' => $no_refund_text,
+      '#prefix' => '<strong>',
+      '#suffix' => '</strong>',
+    );
+  }
+  // Provide refund options
+  else {
+    $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+    $form['refund_options']['full_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Full Refund (%amount)', array('%amount' => $able_to_refund)),
+      '#return_value' => 'full',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['partial_refund'] = array(
+      '#type' => 'radio',
+      '#title' => t('Partial Refund'),
+      '#return_value' => 'partial',
+      '#parents' => array('refund_type'),
+    );
+    $form['refund_options']['amount'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Amount to Refund'),
+      '#size' => 40,
+      '#maxlength' => 255,
+    );
+    $form['refund_options']['refund_notes'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Refund Notes'),
+      '#description' => t('Please provide reference information about this refund (Requestor, reason, etc.)'),
+      '#cols' => 60,
+      '#rows' => 5,
+      '#required' => TRUE,
+    );
+    $form['refund_options']['issue_refund'] = array(
+      '#type' => 'submit',
+      '#value' => t('Issue Refund'),
+      '#required' => TRUE,
+    );
+    $form['total_paid'] = array(
+      '#type' => 'hidden',
+      '#value' => number_format($able_to_refund, 2),
+    );
+  }
+  return $form;
+}
+
+/**
+ * Validate the form
+ */
+function _fundraiser_refund_validate($form, &$form_state) {
+  // Get the donation.
+  $donation = $form['#donation'];
+
+  // Make sure they chose a refund type
+  if (empty($form_state['values']['refund_type'])) {
+    form_set_error('refund_type', t('Choose a refund type.'));
+  }
+  // If it isn't a full refund, make sure they entered a valid value
+  elseif ($form_state['values']['refund_type'] != 'full') {
+    $amount = (float) $form_state['values']['amount'];
+    if ($amount <= 0) {
+      form_set_error('amount', t('Enter a refund amount.'));
+    }
+    else {
+      // Determine how much has been paid, less previous refunds
+      $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+      if ($amount > $able_to_refund) {
+        $context = array(
+          'revision' => 'formatted-original',
+          'type' => 'amount',
+        );
+        form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
+          'more than that can be refunded.', array('@paid' => $able_to_refund)));
+      }
+    }
+  }
+}
+
+/**
+ * Submit the refund form
+ */
+function _fundraiser_refund_submit($form, &$form_state) {
+  // Get the donation.
+  $donation = $form['#donation'];
+
+  // Determine how much has been paid, less previous refunds
+  $able_to_refund = $donation->donation['amount'] - $donation->payment['refunded_total'];
+
+  // Partial refund
+  if ($form_state['values']['refund_type'] != 'full') {
+    $new_order_status = 'partially_refunded';
+    $amount = (float) $form_state['values']['amount'];
+    // Can't refund more than they've paid
+    // Use >= so that the status is set properly if they choose Partial Refund.
+    if ($amount >= $able_to_refund) {
+      $amount = $able_to_refund;
+      $new_order_status = 'refunded';
+    }
+  }
+  // Full refund
+  else {
+    $new_order_status = 'refunded';
+    $amount = $able_to_refund;
+  }
+
+  // Make the charge amount negative
+  $amount = abs($amount) * -1;
+  $refund = clone $donation;
+  $refund->donation['amount'] = $amount;
+  // A refunded donation is simply another donation with a reverse charge on it.
+  $refund->refunded_donation_did = $refund->did;
+  unset($refund->did);
+  $donation->donation['refund_amount'] = $amount;
+  $donation->donation['refund_reason'] = $form_state['values']['refund_notes'];
+  fundraiser_donation_create($refund);
+  // The created donation information should be at at $donation->donation, ready to process.
+  fundraiser_donation_refund($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($refund->result['success']) && $refund->result['success'] == TRUE) {
+    fundraiser_donation_refund_success($refund);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    drupal_set_message(t('Your refund failed to be processed.'));
+    fundraiser_donation_refund_decline($refund);
+    $form_state['rebuild'] = TRUE;
+    $form_state['values']['abort'] = TRUE;
   }
 }
 
@@ -1122,41 +1346,44 @@ function fundraiser_donation_failed_validation($errors) {
  * Donation processing, a donation needs to be created prior to processing.
  */
 function fundraiser_donation_create($donation) {
-  // Allow other modules to add additional fields to the order before processing the payment
-  module_invoke_all('fundraiser_donation_create_additional', $donation);
-  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
+  // This is a good location to update $donation->data for processing.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
-  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
+  $fundraiser_node = node_load($donation->nid);
   $donation_record = array(
-    'did' => $donation->did,
-    'nid' => $donation->nid,
-    'uid' => $donation->uid
+    'did' => $donation->did, // Donation id.
+    'nid' => $donation->nid, // Fundraiser node id.
+    'uid' => $donation->uid,  // Submission user id.
+    'sid' => $donation->sid,  // Submission id.
+    'gateway' => $fundraiser_node->gateway,
+    'txn_id' => '',
   );
   _fundraiser_create_donation($donation_record);
 }
 
 /**
- * Donation processing, a donation needs to be created prior to processing.
+ * Donation processing, a donation needs to be updated with new information prior to processing.
+ * For example, in the course of updating a sustainers information.
  */
 function fundraiser_donation_update($donation) {
-  // Allow other modules to add additional fields to the order before processing the payment
-  module_invoke_all('fundraiser_donation_update_additional', $donation);
-  // The additional fields $donation->additional, ready to process.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
+  // The additional fields $donation->additional, ready to process.
   // For now, our creation system is responsible for creating a did.
-  // TODO - in the future change this, perhaps adding a table to track did to non-fundraiser id.
   // Track the did, nid, uid internally so we can keep things in order.
+  $fundraiser_node = node_load($donation->nid);
   $donation_record = array(
     'did' => $donation->did,
     'nid' => $donation->nid,
-    'uid' => $donation->uid
+    'uid' => $donation->uid,
+    'sid' => $donation->sid,
+    'gateway' => $fundraiser_node->gateway,
+    'txn_id' => '',
   );
   _fundraiser_update_donation($donation_record);
-  // Refresh the cache. No need to change the donation object passed in, but stored value should be zapped.
+  // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
 }
 
@@ -1164,26 +1391,29 @@ function fundraiser_donation_update($donation) {
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {
+  // Grab the gateway from the fundraiser configured gateway.
+  // Later this will be stored with the donation (since the gateway for the fundraiser may change).
   $info = _fundraiser_gateway_info($donation->node->gateway);
+  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
     $charge_function = isset($info['credit']) ? $info['credit'] : '';
   }
   if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $donation->did, '@nid' => $donation->node->nid), WATCHDOG_CRITICAL);
-    $result = array('success' => FALSE);
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
   }
   else {
-    // Call the charge function and store the result.
-    $data = array('txn_type' => 'auth_capture');
-    $data = array_merge($data, $donation->donation->data);
-    $result = $charge_function($donation->did, $donation->donation->donation_amount, $data);
-    $result['data'] = $data;
+    // Execute the charge, generally implemented under the payment glue module.
+    // Allows for multiple responses during this process.
+    $config = isset($info['config']) ? $info['config'] : array();
+    $donation->data = (array) $donation->data;
+    $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
+    $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
+    module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
   }
-  $donation->result = $result;
-  // Allow other modules to respond to the success.
-  module_invoke_all('fundraiser_donation_process', $donation, $result);
 }
 
 /**
@@ -1199,38 +1429,6 @@ function fundraiser_donation_success($donation) {
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
-}
-
-/**
- * CRUD style donation get.
- */
-function fundraiser_donation_get_donation($did, $refresh = FALSE) {
-  // Pull from cached donation unless we are refreshing the cache.
-  static $donations;
-  if (!$refresh && isset($donations['did'])) {
-    return $donations['did'];
-  }
-  // If refreshing, or first load, pull all data from database.
-  $donation = (object) array();
-  $donation->did = $did;
-  $donation->did = $did;
-  // Grab basic data from our own systems.
-  $donation_record = _fundraiser_get_donation_by_did($did);
-  $donation->nid = $donation_record->nid;
-  $donation->node = node_load($donation_record->nid);
-  $donation->uid = $donation_record->uid;
-  $donation->user = user_load($donation_record->uid);
-  $gateway = _fundraiser_get_donation_gateway($did);
-  if (isset($gateway['id'] )) {
-    $donation->gateway = $gateway;
-    $donation->node->gateway = $gateway;
-  }
-  // Call hooks to re-create the donation info.
-  // The glue modules handle everything else once handed fundraisers info.
-  module_invoke_all('fundraiser_donation_get_donation', $donation);
-  // Store the donation information into the cache.
-  $donations[$did] = $donation;
-  return $donation;
 }
 
 /**
@@ -1251,11 +1449,10 @@ function fundraiser_donation_decline($donation) {
   module_invoke_all('fundraiser_donation_decline', $donation);
 }
 
-// TODO how does this get called?
+// TODO how does this even get called? Is this functionally different from a decline?
 /**
- * Completes the processing of an order when an error occurs.
+ * Donation processing, a given donation experienced an exception.
  */
-// Is this functionally different from fundraiser_order_decline ? TODO - come back to this - SeH
 function fundraiser_donation_exception($donation) {
   // Make a log entry.
   watchdog('fundraiser', 'An error occurred while processing donation @id. Error: @message',
@@ -1270,7 +1467,8 @@ function fundraiser_donation_exception($donation) {
 }
 
 /**
- * Completes the processing of an order when it is cancelled by the user. For example, during sustainer call.
+ * Donation processing, a given donation needs to be cancelled.
+ * Generally, only available for Authorize.net gteway donations. For example, during sustainer call.
  */
 function fundraiser_donation_cancel($donation) {
   // Make a log entry
@@ -1281,8 +1479,162 @@ function fundraiser_donation_cancel($donation) {
   if ($display_message) {
     drupal_set_message(t('Your payment has been canceled'));
   }
-  // Allow other modules to respond to the cancel. Including Ubercart.
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_cancel', $donation);
+}
+
+/**
+ * Donation processing, a given donation needs to be refunded.
+ */
+function fundraiser_donation_refund($refund) {
+  if (!isset($refund->donation['refund_amount']) || empty($refund->donation['refund_amount'])
+    || !is_numeric($refund->donation['refund_amount'])) {
+    return; // Not a valid amount to refund.
+  }
+  // Grab the gateway from the fundraiser configured gateway.
+  $info = _fundraiser_gateway_info($refund->node->gateway);
+  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
+  $refund_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($refund_function)) {
+    $refund_function = isset($info['credit']) ? $info['credit'] : '';
+  }
+  if (empty($refund_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $refund->did, '@nid' => $refund->nid), WATCHDOG_CRITICAL);
+    $result = array('success' => FALSE);
+  }
+  else {
+    // Execute the charge, generally implemented under the payment glue module.
+    // Allows for multiple responses during this process.
+    $config = isset($info['config']) ? $info['config'] : array();
+    $refund->data['config'] = array_merge($refund->data['config'], $config);
+    module_invoke_all('fundraiser_donation_refund', $refund, $refund_function);
+  }
+}
+
+/**
+ * Donation processing, a given refund was successful.
+ */
+function fundraiser_donation_refund_success($refund) {
+  // Save refund data for fundraiser.
+  $record = new stdClass();
+  $record->did = $refund->refunded_donation_did;
+  $record->receipt_id = $refund->did;
+  $record->amount = $refund->donation['refund_amount'];
+  $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : '';
+  $record->reason = $refund->donation['refund_reason'];
+  _fundraiser_create_refund($record);
+  $refund->refund = $record;
+  drupal_set_message(t('Refund has been issued.'), 'status');
+  // Allow other modules to respond to the refund success. Such as SF modules.
+  module_invoke_all('fundraiser_donation_refund_success', $refund);
+}
+
+/**
+ * Donation processing, a given refund was declined.
+ */
+function fundraiser_donation_refund_decline($refund) {
+  watchdog('fundraiser', 'Refund on donation #%did failed gateway validation. Reason: %reason.',
+    array('%did' => $refund->refunded_donation_did, '%reason' => $refund->result['message']), WATCHDOG_DEBUG);
+  drupal_set_message($refund->result['message']);
+  // Allow other modules to respond to the refund decline.
+  module_invoke_all('fundraiser_donation_refund_decline', $refund);
+}
+
+/**
+ * Utility function, given a donation id - get everything that goes with it.
+ */
+function fundraiser_donation_get_donation($did, $refresh = FALSE) {
+  // Pull from cached donation unless we are refreshing the cache.
+  static $donations;
+  if (!$refresh && isset($donations['did'])) {
+    return $donations['did'];
+  }
+  // If refreshing, or first load, pull all data from database.
+  $donation = (object) array();
+  $donation->did = $did;
+  // Grab basic data from our own systems.
+  $donation_record = _fundraiser_get_donation_by_did($did);
+  $donation->nid = $donation_record->nid;
+  $donation->node = node_load($donation_record->nid);
+  $donation->uid = $donation_record->uid;
+  $donation->user = user_load($donation_record->uid);
+
+  // Grab gateway information and replace it in the node too if found.
+  $gateway = _fundraiser_get_donation_gateway($did);
+  if (isset($gateway['id'] )) {
+    $donation->gateway = $gateway;
+    $donation->node->gateway = $gateway;
+  }
+  // Grab the transaction id if it exists, add it here.
+  $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
+
+  $refunds = _fundraiser_get_refund_by_did($did);
+  $refund_summary = array();
+  $refunded_total = 0;
+  foreach ($refunds as $refund) {
+    // TODO figure out how much has been paid and or refunded and add that here.
+    $refund_donation = fundraiser_donation_get_donation($refund->receipt_id);
+    $donation->payment['receipts'][] = array('id' => $refund_donation->did, 'date' => $refund_donation->last_changed);
+    $refunded_total += abs($refund_donation->donation['amount']);
+    $refund_summary[] = t('Refund #%id for $%amount on %date.',
+      array('%id' => $refund_donation->did, '%amount' => abs($refund_donation->donation['amount']),
+        '%date' => date('m/d/y', $refund_donation->last_changed))); //TODO fix up value display for international.
+  }
+  $donation->payment['refunded_summary'] = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
+  $donation->payment['refunded_total'] = $refunded_total;
+
+  // Call hooks to re-create the donation info.
+  // The glue modules handle everything else once handed fundraisers info.
+  module_invoke_all('fundraiser_donation_get_donation', $donation);
+  // Store the donation information into the cache.
+  $donations[$did] = $donation;
+  return $donation;
+}
+
+/**
+ * Fundraiser's own get/set functions for handling fields in forms.
+ */
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and return it.
+ * Recursive.
+ */
+function _fundraiser_get_form_field($form, $field_key) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Return the found array.
+      return $form[$child];
+    }
+    else {
+      // Check this child for other children.
+      $found = _fundraiser_get_form_field($form[$child], $field_key);
+      if (!empty($found)) {
+        return $found;
+      }
+    }
+  }
+}
+
+/**
+ * Given a standard (non webform, nothing fancy, form array. Locate a given key and update it.
+ * Recursive.
+ */
+function _fundraiser_update_form_field($form, $field_key, $new_field) {
+  // Walks a given form looking for the given key. Returns it when found.
+  foreach (element_children($form) as $child) {
+    if ($child == $field_key) {
+      // Update the array.
+      $form[$child] = array_merge($form[$child], $new_field);
+    }
+    else {
+      // Check this child for other children.
+      $form[$child] = _fundraiser_update_form_field($form[$child], $field_key, $new_field);
+    }
+  }
+  return $form;
 }
 
 /**
@@ -1290,297 +1642,21 @@ function fundraiser_donation_cancel($donation) {
  */
 
 /**
- * Helper function, retrieve donation context as needed.
+ * Helper function, given the array from field_info - get the listed keys.
+ * WARNING: Recursion is here to walk the field info array to gather form keys.
  */
-function _fundraiser_donation_context() {
-  // Pull from cached context during page execution.
-  static $context;
-  if (empty($context)) {
-    $context = (object) array();
-    module_invoke_all('fundraiser_donation_form_context', $context);
+function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
   }
-  return $context;
-}
-
-/**
- * Helper function, provides a list of fields to be defined by the display module.
- * And requests additional field information from other modules that need to define them.
- */
-function _fundraiser_field_info() {
-  $context = _fundraiser_donation_context();
-  // Donation amounts are handled in a special case.
-  $fields['donation'] = array(
-    '#name' => 'Donation',
-    '#type' => 'fieldset',
-    '#required' => 0,
-  );
-  $fields['donation']['amount'] = array(
-    '#name' => 'Amount',
-    '#type' => 'textfield',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'width' => 10,
-      'field_prefix' => '$',
-    ),
-    '#submit_callback' => '_fundraiser_field_info_amount_callback',
-  );
-  $fields['donation']['other_amount'] = array(
-    '#name' => 'Other',
-    '#type' => 'textfield',
-    '#required' => 0,
-    '#extra' => array(
-      'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
-      'width' => 10,
-      'field_prefix' => '$',
-    ),
-    '#submit_callback' => '_fundraiser_field_info_other_amount_callback',
-  );
-  $fields['donor_information'] = array(
-    '#name' => 'Your Information',
-    '#type' => 'fieldset',
-    '#required' => 0,
-  );
-  $fields['donor_information']['first_name'] = array(
-    '#name' => 'First Name',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  $fields['donor_information']['last_name'] = array(
-    '#name' => 'Last Name',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  $fields['donor_information']['email'] = array(
-    '#name' => 'Email',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  $fields['billing_information'] = array(
-    '#name' => 'Credit Card Billing Information',
-    '#type' => 'fieldset',
-    '#required' => 0,
-  );
-  $fields['billing_information']['address'] = array(
-    '#name' => 'Address',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  $fields['billing_information']['address_line_2'] = array(
-    '#name' => 'Address Line 2',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  $fields['billing_information']['city'] = array(
-    '#name' => 'City',
-    '#type' => 'textfield',
-    '#required' => 1,
-  );
-  if (isset($context->countries)) {
-    $default_available = array(840, 124);
-    // From ubercart defaults. 840 = US, 124 = CA.
-    $include_all_countries = variable_get('fundraiser_all_countries', 0); 
-    $options = '';
-    if ($include_all_countries) {
-      foreach ($context->countries as $country_id => $country) {
-        $options .= $country_id . '|' . $country->country_name . "\n";
-      }
+  $children = element_children($field_info);
+  $keys = array_merge($keys, $children);
+  foreach ($children as $child) {
+    if ($field_info[$child] != NULL && !empty($field_info[$child])) {
+      $keys = _fundraiser_get_field_keys($field_info[$child], $keys);
     }
-    else {
-      foreach ($context->countries as $country_id => $country) {
-        if (in_array($country_id, $default_available)) {
-          $options .= $country_id . '|' . $country->country_name . "\n";
-        }
-      }
-    }
-     $fields['billing_information']['country'] = array(
-      '#name' => 'Country',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
   }
-  if (isset($context->zones)) { 
-    $options = '';
-    foreach ($context->zones as $zone_id => $zone) {
-      $options .= $zone_id . '|' . $zone->zone_name . "\n";
-    }
-    $fields['billing_information']['state'] = array(
-      '#name' => 'State/Province',
-      '#type' => 'select',
-      '#required' => 1,
-      '#extra' => array(
-        'description' => '',
-        'items' => $options,
-        'multiple' => 0,
-        'aslist' => 'Y',
-      ),
-    );
-  }
-  $fields['billing_information']['zip'] = array(
-    '#name' => 'ZIP/Postal Code',
-    '#type' => 'textfield',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'width' => 10,
-      'maxlength' => 5,
-    ),
-  );
-  $fields['credit_card_information'] = array(
-    '#name' => 'Credit Card Information',
-    '#type' => 'fieldset',
-    '#required' => 0,
-  );
-  $fields['credit_card_information']['card_number'] = array(
-    '#name' => 'Card Number',
-    '#type' => 'textfield',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'width' => 20,
-    ),
-  );
-  $months = "1|January\n";
-  $months .= "2|Feburary\n";
-  $months .= "3|March\n";
-  $months .= "4|April\n";
-  $months .= "5|May\n";
-  $months .= "6|June\n";
-  $months .= "7|July\n";
-  $months .= "8|August\n";
-  $months .= "9|September\n";
-  $months .= "10|October\n";
-  $months .= "11|November\n";
-  $months .= "12|December\n";
-  $fields['credit_card_information']['card_expiration_month'] = array(
-    '#name' => 'Expiration Month',
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'items' => $months,
-      'multiple' => 0,
-      'aslist' => 'Y',
-    ),
-  );
-  $this_year = date('Y');
-  $years = $this_year . "\n";
-  for ($i = 1; $i <= 5; $i++) {
-    $years .= ($this_year + $i) . "\n";
-  }
-  $fields['credit_card_information']['card_expiration_year'] = array(
-    '#name' => 'Expiration Year',
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'items' => $years,
-      'multiple' => 0,
-      'aslist' => 'Y',
-    ),
-  );
-  $fields['credit_card_information']['card_cvv'] = array(
-    '#name' => 'Card Security Code',
-    '#type' => 'textfield',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'maxlength' => 4,
-      'width' => 5,
-    ),
-  );
-
-  $fields = module_invoke_all('fundraiser_field_info', $fields);
-  drupal_alter('fundraiser_field_info', $fields);
-  return $fields;
-
-/*   $fields = array(
-     // Move these four to Market Source for declaration.
-    'ms',
-    'referrer',
-    'initial_referrer',
-    'cid', // Campaign id.
-*/
-
-}
-
-/**
- * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
- */
-function _fundraiser_field_info_amount_callback($fundraiser, $field) {
-  // If donation amounts don't exist, use amount as is.
-  if (empty($fundraiser->donation_amounts)) {
-    return $field;
-  }
-  // Since we have an array of donation_amounts, set the field data to match.
-  $keys = array_keys($fundraiser->donation_amounts);
-  // Construct a set of options based on the configured amounts.
-  $formatted_amounts = '';
-  foreach ($fundraiser->donation_amounts as $amount => $label) {
-    if (!$label) {
-      $formatted_amounts .= $amount . '|$' . $amount;
-    }
-    else {
-      $formatted_amounts .= $amount . '|' . $label;
-    }
-    $formatted_amounts .= "\n";
-  }
-  if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
-    $formatted_amounts .= 'other|Other';
-  }
-  // Update the field.
-  $field = array(
-    '#name' => 'Please select your tax-deductible gift amount below',
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'items' => $formatted_amounts,
-      'multiple' => 0,
-    ),
-    '#value' => $keys[0],
-  );
-  // Return the field to be created.
-  return $field;
-}
-
-/**
- * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
- */
-function _fundraiser_field_info_other_amount_callback($fundraiser, $field) {
-  // If donation amounts don't exist, drop the amount_other field, and use amount as is.
-  if (empty($fundraiser->donation_amounts)) {
-    return '';
-  }
-  // If the show other options is disallowed, unset it.
-  if (!$fundraiser->show_other_amount) {
-    return '';
-  }
-  // Update the min with fundraiser's min.
-  $fields['donation']['other_amount']['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
-  // Return the field to be created.
-  return $field;
-}
-
-/**
- * Helper function, these are the fields we can't delete.
- */
-// This is only used in webform_token_selector/webform_token_selector.module
-// Should it be moved to that module?
-function _fundraiser_field_blacklist() {
-  return array(
-    'card_number',
-    'card_cvv',
-    'recurs_monthly',
-    'card_expiration_month',
-    'card_expiration_year',
-  );
+  return $keys;
 }
 
 /**
@@ -1591,13 +1667,16 @@ function _fundraiser_gateway_info($id = NULL) {
   // Cache the gateway during page execution.
   if (empty($gateways)) {
     if (module_exists('gateway_manager')) {
+      // If we have the gateway manager turned on, we ask it.
       $gateways = gateway_manager_gateway_info($payment_details->gateway);
     }
     else {
+      // If not, we go asking anyone else - usually the payment glue module.
       $gateways = module_invoke_all('fundraiser_gateway_info');
       drupal_alter('fundraiser_gateway_info', $gateways);
     }
   }
+
   // Look up the gateway needed.
   if ($id != NULL) {
     foreach ($gateways as $key => $gateway) {
@@ -1609,16 +1688,28 @@ function _fundraiser_gateway_info($id = NULL) {
   return (array) $gateways;
 }
 
-/** 
+/**
  * Helper function, determine if this node type supports donation forms.
  */
-function _fundraiser_is_donation_type($type) {
+function fundraiser_is_donation_type($type) {
   static $fundraiser_types;
   // Cache fundraiser content types during page execution.
   if (!isset($fundraiser_types[$type])) {
     $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
   }
   return $fundraiser_types[$type];
+}
+
+/**
+ * Helper function, determine if this node type supports donation forms.
+ */
+function fundraiser_get_donation_types() {
+  // For all types, check if they are a fundraiser type.
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+  }
+  return $fundraiser_types;
 }
 
 /**
@@ -1633,62 +1724,12 @@ function _fundraiser_is_secure() {
  */
 
 /**
- * Helper function function, flatten given arrays. Generically useful function.
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- * Careful: Here be recursion.
- */
-function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = array()) {
-  foreach ($array as $key => $child) {
-    if (is_array($child)) {
-      $newArray = &_fundraiser_array_flatten($child, $preserve_keys, $newArray);
-    }
-    elseif ($preserve_keys + is_string($key) > 1) {
-      $newArray[$key] = $child;
-    }
-    else {
-      $newArray[] = $child;
-    }
-  }
-  return $newArray;
-}
-
-/**
- * Helper function, smarter version of array_merge_recursive: overwrites scalar values.
- * @see PHP Manual on: array-merge-recursive comment #82976.
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- */
-function _fundraiser_array_smart_merge($array, $override) {
-  if (is_array($array) && is_array($override)) {
-    foreach ($override as $k => $v) {
-      if (isset($array[$k]) && is_array($v) && is_array($array[$k])) {
-        $array[$k] = _fundraiser_array_smart_merge($array[$k], $v);
-      }
-      else {
-        $array[$k] = $v;
-      }
-    }
-  }
-  return $array;
-}
-
-/**
  * Helper function, check if given string is an email format. Generically useful function.
  * Future plans: this may need to be moved to a toolkit module for use by all our modules.
  */
 function _fundraiser_validate_email($mail) {
   // eregi is depr in PHP 5.3. Replaced with preg_match, adding lower case options.
   return preg_match("/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$/", $mail);
-}
-
-/**
- * Helper function, returns months between today's datestamp and $exp_date -1
- * Future plans: this may need to be moved to a toolkit module for use by all our modules.
- */
-function _fundraiser_months_between_dates($exp_month, $exp_year) {
-  $startDate = strtotime("now");
-  $stopDate = mktime(0, 0, 0, $exp_month, 1, $exp_year);
-  $nrmonths = ((idate('Y', $stopDate) * 12) + idate('m', $stopDate)) - ((idate('Y', $startDate) * 12) + idate('m', $startDate));
-  return $nrmonths;
 }
 
 /**
@@ -1702,13 +1743,13 @@ function _fundraiser_create_fundraiser($fundraiser) {
   $fundraiser = (array) $fundraiser;
   $fundraiser_data = FALSE;
   if (isset($fundraiser['nid'])) {
-    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
   }
   if (!$fundraiser_data) {
     // Implode donation amounds for saving.
     $imploded_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $donation_amount) {
-       $imploded_amounts[] = implode('|', $donation_amount);
+      $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
@@ -1758,7 +1799,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
   $fundraiser = (array) $fundraiser;
   $fundraiser_data = FALSE;
   if (isset($fundraiser['nid'])) {
-    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']); 
+    $fundraiser_data = _fundraiser_get_fundraiser_by_nid($fundraiser['nid']);
   }
   if (!$fundraiser_data) {
     _fundraiser_create_fundraiser($fundraiser);
@@ -1768,7 +1809,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // Implode donation amounds for saving.
     $imploded_amounts = array();
     foreach ($fundraiser['donation_amounts'] as $donation_amount) {
-       $imploded_amounts[] = implode('|', $donation_amount);
+      $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
@@ -1788,10 +1829,10 @@ function _fundraiser_update_fundraiser($fundraiser) {
 /**
  * CRUD style DB function for fundraiser.
  */
-function _fundraiser_delete_fundraiser($fundraiser) {
-  db_delete('fundraiser')->condition('nid', $fundraiser->nid)->execute();
+function _fundraiser_delete_fundraiser($nid) {
+  db_delete('fundraiser')->condition('nid', $nid)->execute();
   // And invoke the hooks for all the other modules to respond.
-  module_invoke_all('fundraiser_delete_fundraiser_alter', $fundraiser);
+  module_invoke_all('fundraiser_delete_fundraiser_alter', $nid);
 }
 
 /**
@@ -1811,7 +1852,7 @@ function _fundraiser_get_fundraiser_by_nids($nids) {
  */
 function _fundraiser_delete_fundraisers($nodes) {
   foreach ($nodes as $node) {
-    _fundraiser_delete_fundraiser($node);
+    _fundraiser_delete_fundraiser($node->nid);
   }
 }
 
@@ -1842,6 +1883,13 @@ function _fundraiser_get_donation_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_donation} ' .
     'WHERE did = :did',
     array(':did' => $did))->fetchObject();
+}
+
+/**
+ * DB function for fundraiser_donation.
+ */
+function _fundraiser_get_donations() {
+  return db_query('SELECT * FROM {fundraiser_donation}')->fetchAll();
 }
 
 /**
@@ -1924,7 +1972,7 @@ function _fundraiser_update_refund($refund) {
  * CRUD style DB function for fundraiser_refund.
  */
 function _fundraiser_delete_refund($rid) {
-  db_delete('fundraiser_recurring')->condition('refund_id', $rid)->execute();
+  db_delete('fundraiser_refund')->condition('refund_id', $rid)->execute();
 }
 
 /**
@@ -1932,21 +1980,28 @@ function _fundraiser_delete_refund($rid) {
  */
 function _fundraiser_get_refund_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE order_id = :did',
+    'WHERE did = :did',
     array(':did' => $did))->fetchAll();
 }
 
 /**
  * DB Function, Check if the given order was made on a payment gateway that supports refunds
  */
-// TODO this information should be pullable for NON recurring donations too.
-// This should be in the donation table (the new one that combines did, uid, nid, etc).
 function _fundraiser_get_donation_gateway($did) {
   $gateway = (object) array();
+  // First check the donation table.
+  $gateway->gateway = db_query('SELECT d.gateway FROM {fundraiser_donation} d ' .
+    'WHERE d.did = :did', array(':did' => $did))->fetchField();
+  // Then fall back to the gateway on the original fundraiser.
+  if (!isset($gateway) || empty($gateway)) {
+    $gateway->gateway = db_query('SELECT f.gateway FROM {fundraiser} f ' .
+      'LEFT JOIN {fundraiser_donation} d ON f.nid = d.nid ' .
+      'WHERE d.did = :did', array(':did' => $did))->fetchField();
+  }
   // Now ask if any other module wants to override this result.
-  module_invoke('get_donation_gateway', $did, $gateway);
+  module_invoke('fundraiser_get_donation_gateway', $did, $gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
-  if ((!$gateway) && isset($gateway->gateway)) {
+  if (isset($gateway->gateway)) {
     return _fundraiser_gateway_info($gateway->gateway);
   }
   // If nothing has been found, return nothing.
@@ -1984,7 +2039,7 @@ function _fundraiser_create_tracking($tracking) {
 function _fundraiser_get_tracking_by_nid($nid) {
   return db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
 }
- 
+
 /**
  * CRUD style DB function for fundraiser_tracking.
  */
@@ -2015,170 +2070,15 @@ function _fundraiser_delete_tracking($nid) {
  */
 function _fundraiser_update_tracking_value($nid, $field) {
   $tracking = _fundraiser_get_tracking_by_nid($nid);
-  // Check to make sure we weren't handed a bad field name.
+  // No tracking data? Create one.
   if (!$tracking) {
     $tracking->nid = $nid;
+    _fundraiser_create_tracking($tracking);
+    $tracking = _fundraiser_get_tracking_by_nid($nid);
+  }
+  // Check to make sure we weren't handed a non-existing track.
+  if (isset($tracking->$field)) {
     $tracking->$field++;
     _fundraiser_update_tracking($tracking);
   }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-//REMOVE ALL BELOW THIS POINT.
-
-/**
- * Adds an order to the Salesforce queue.
- *
- * @param $order
- *   The order to add to the queue.
- */
-// TODO: This should really be moved to the SF Donation module where it can listen for new orders being created.
-// NAME THIS AS PER: 
-function fundraiser_add_to_queue($donation) {
-  if (module_exists('queue_api')) {
-    if ($donation->donation->recurs == DONATION_RECURRING) {
-      sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
-    }
-    else {
-      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-    }
-  }
-}
-// Called inc ron on donation success charge.
-//      // Check for Salesforce Fundraiser module and update order status
-//      if (module_exists('sf_donation')) {
-//        sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-//      }
-
-/**
- * Implemenation of queue_report_item_name().  TODO where does this come from??
- */
-function fundraiser_queue_report_item_title_alter(&$row) {
-  if ($row['type'] == 'donation' || $row['type'] == 'recurring_donation') {
-    $title = 'Donation ' . $row['oid'];
-    $row['title'] = $title;
-  }
-  elseif ($row['type'] == 'refund') {
-    $did = db_query("SELECT order_id FROM {fundraiser_refund} WHERE refund_id = :refund_id",
-      array(':refund_id' => $row['oid']))->fetchColumn();
-    $title = 'Donation ' . $did;
-    $row['title'] = $title;
-  }
-}
-
-/**
- * Implementation of hook_webform_submission_update()
- * From webform, see http://drupalcontrib.org/api/drupal/contributions--webform--webform_hooks.php/function/hook_webform_submission_update/7
- */
- // TODO this looks like it should be in another module based on what it does, perhaps sf_queue? - SeH 1/12/12
- // Update - move to sf_donation.
-function fundraiser_webform_submission_update($node, $submission) {
-  if ($node->type == 'donation_form') {
-    if (module_exists('queue_api')) {
-      $order_id = db_query('SELECT f.order_id FROM {fundraiser_webform_order} f ' .
-        'INNER JOIN {uc_orders} u ON u.order_id = f.order_id ' .
-        'WHERE f.webform_nid = :webform_nid AND f.sid = :sid AND u.order_status = \'payment_received\'',
-        array(':webform_nid' => $node->nid, ':sid' => $submission->sid))->fetchColumn();
-      if ($order_id) {
-        // Determine if we need an INSERT or an UPDATE
-        $action = 'create';
-        $sfid = db_query('SELECT sfid FROM {salesforce_management_object_map} WHERE oid = :oid AND drupal_type = \'donation\'', 
-          array(':oid' => $order_id))->fetchColumn();
-        if ($sfid) {
-          $action = 'update';
-        }
-        sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE, $action);
-      }
-    }
-  }
-}
-
-
-//TODO move you to another module for profile handling in post submission.
-/**
- * Updates the profile of user that submitted the donation.
- */
-// NAME THIS AS PER: hook_fundraiser_donation_success();
-function fundraiser_update_sf_user_profile($donation) {
-
-  // If the SF Queue API is enabled, insert this user into the queue
-  // TODO - hook, move this out to be hookable on update.
-  if (module_exists('queue_api')) {
-    // Insert user back into queue
-    $action = 'update';
-    if (empty($update_user->salesforce_contact_id)) {
-      $action = 'upsert';
-    }
-    sf_queue_insert($update_user->uid, 'user', $action);
-  }
-}
-
-/**
- * Implements hook_fundraiser_donation_update().
- */
-function sf_donation_hook_fundraiser_donation_update($donation) {
-  // put order back in queue so that amount gets updated in Salesforce
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
-}
-
-/**
- * Implements hook_fundraiser_donation_cancel().
- */
-function sf_donation_fundraiser_donation_cancel($donation) {
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
-  // call out to saleforce module if installed
-  //if (module_exists('sf_donation')) {
-  //  sf_donation_canel_recurring_donations($master_order_id);
-  //}
-}
-
-
-/**
- * Includes code for updating billing information for recurring donations.
- * Each gateway will require it's own function named GATEWAY_ID_update_billing_information
- * that accepts a payment reference id and billing information.
- * The individual billing update function should return a boolean indicating success or failure
- */
-// TODO move this out to Authorizenet module.
-/**
- * Authorize.net billing information update function.
- */
-function authorizenet_update_billing_information($reference_id, $billing_info) {
-  if (module_exists('authorizenet_cim')) {
-    return authorizenet_cim_update($reference_id, $billing_info);
-  }
-  else {
-    drupal_set_message(t('Unable to update billing information at this time'));
-    watchdog('fundraiser', 'Billing information for recurring donations cannot be updated because the authorize_cim module is missing.', NULL, WATCHDOG_CRITICAL);
-    return NULL;
-  }
-}
-
-
-/**
- * Sage billing information update function.
- */
-// TODO shouldn't this move elsewhere?
-function sage_update_billing_information($reference_id, $billing_info) {
-  // TODO hook here to load up order info. - SeH 
-  $vault_id = db_query("SELECT vault_id from {uc_sage_vault} WHERE guid = :guid", array(':guid' => $reference_id))->fetchColumn();
-  $data = array(
-    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
-    'billing_street1' => $billing_info['address_1'],
-    'billing_street2' => $billing_info['address_2'],
-    'billing_city' => $billing_info['city'],
-    'billing_zone' => $billing_info['state'],
-    'billing_postal_code' => $billing_info['zipcode'],
-    'billing_country' => $billing_info['country'],
-    'cc_number' => $billing_info['card_num'],
-    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
-    'cc_exp_year' => $billing_info['card_exp_date']['year'],
-  );
-  $response = uc_sage_vault_update($vault_id, $data);
-  // TODO: Need to add some better returns to the uc_sage module
-  return TRUE;
 }

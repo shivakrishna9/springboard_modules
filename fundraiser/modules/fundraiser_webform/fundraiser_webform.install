@@ -9,7 +9,7 @@
  */
 function fundraiser_webform_uninstall() {
   db_query("DROP VIEW {fundraiser_webform_data}");
-  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}"); //TODO rename this view.
 }
 
 /**
@@ -27,16 +27,14 @@ function fundraiser_webform_enable() {
    * handled as webforms.
    */
   $result = variable_get('webform_node_types', array('webform'));
-  $result[] = 'donation_form'; //TODO make this more in keeping with node type nuetral.
+  $result = array_merge($result, fundraiser_get_donation_types());
   variable_set('webform_node_types', $result);
 
   // New for webform 3.9.
   // 3Let webform know the primary purpose of this node type is for webforms
   $result = variable_get('webform_node_types_primary', array('webform'));
-  if (!in_array('donation_form', $result)) {
-    $result[] = 'donation_form';
-    variable_set('webform_node_types_primary', $result);
-  }
+  $result = array_merge($result, fundraiser_get_donation_types());
+  variable_set('webform_node_types_primary', $result);
 }
 
 /**
@@ -47,8 +45,9 @@ function fundraiser_webform_disable() {
   // Not really necessary, but still good to clean up after ourselves
   $result = variable_get('webform_node_types', array('webform'));
   if (is_array($result)) {
+    $fundraiser_types = fundraiser_get_donation_types();
     foreach ($result as $index => $type) {
-      if ($type == 'donation_form') {
+      if (!in_array($type, $fundraiser_types)) {
         unset($result[$index]);
         variable_set('webform_node_types', $result);
         break;
@@ -58,57 +57,9 @@ function fundraiser_webform_disable() {
 }
 
 /**
- * Implements hook_schema().
+ * Implements hook_update_N().
  */
-function fundraiser_webform_schema() {
-  $schema['fundraiser_webform_order'] = array(
-    'description' => 'Tracks the relationship of a webform submission to a specific donation.',
-    'fields' => array(
-      'webform_nid' => array(
-        'description' => 'The original fundraiser node.',
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'order_id' => array(
-        'description' => 'The donation id.',
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'sid' => array(
-        'description' => 'The submission id.',
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'sfid' => array(
-        'description' => 'TODO: please describe this field!',
-        'type' => 'varchar',
-        'length' => '40',
-        'not null' => FALSE,
-      ),
-      'gateway' => array(
-        'description' => 'The gateway submitted to.',
-        'type' => 'varchar',
-        'length' => '100',
-        'not null' => FALSE,
-      ),
-      'txn_id' => array(
-        'description' => 'The transaction id of the donation.',
-        'type' => 'varchar',
-        'length' => '55',
-        'not null' => FALSE,
-      ),
-      'recurring_status' => array(
-        'description' => 'The recurring status (y/n) of the donation.',
-        'type' => 'int',
-        'not null' => FALSE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('webform_nid', 'order_id'),
-  );
-  return $schema;
+function fundraiser_webform_update_7001(&$sandbox) {
+  // Drop the table.
+  db_drop_table('fundraiser_webform_order');
 }
-
-// TODO first update post Port:
-// Rename table correctly, rename all order id correctly.
-// Resolve the webform order mapping system.

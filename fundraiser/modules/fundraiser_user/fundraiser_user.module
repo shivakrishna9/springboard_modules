@@ -3,8 +3,8 @@
 /**
  * @file
  * User profile code for fundraiser_webform.
- * THIS CODE DUPLICATES MUCH OF WEBFORM_USER.
- * Future work on this module should include a merger of these two pieces of code.
+ * THIS CODE DUPLICATES MUCH OF WEBFORM_USER AND SHOULD BE REPLACED WITH IST.
+ * Future work on this module should include a merger of these two pieces of code, removing the specialized nature of this module.
  */
  
 /**
@@ -29,7 +29,7 @@ function fundraiser_user_menu() {
  * Menu access callback, returns TRUE if current node is a donation form.
  */
 function _fundraiser_user_mapping_form_access($node) {
-  return _fundraiser_is_donation_type($node->type); // From fundraiser.module.
+  return fundraiser_is_donation_type($node->type); // From fundraiser.module.
 }
 
 /**
@@ -89,7 +89,7 @@ function fundraiser_user_mapping_form($form, &$form_state, $node) {
     );
   }
   else {
-    $form['mapping']['type']['#theme'] = 'fundraiser_mapping_options'; //TODO rename the theme function here.
+    $form['mapping']['type']['#theme'] = 'fundraiser_mapping_options'; //TODO rename the theme function here. Currently lives in fundraiser.theme.inc.
     $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   }
   return $form;
@@ -220,7 +220,7 @@ function fundraiser_user_fundraiser_donation_success($donation) {
   $map = _fundraiser_user_create_profile_values_map($nid, $sid);
 
   // If this is Anon, upload the user data from a given uid instead.
-  // If this isn't Anon, but the values don't match, use the given. -- TODO check on this. -SeH
+  // If this isn't Anon, but the values don't match, use the given.
   if ($this_user->uid == 0) {
     $this_user = user_load($uid);
   }

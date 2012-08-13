@@ -1,14 +1,13 @@
 <?php
-// $Id$
 
 /**
  * @file
  * Fundraiser module submission tests.
  */
 
-include_once(dirname(__FILE__) . '/fundraiser.test');
+module_load_include('test', 'fundraiser', 'tests/fundraiser.web');
 
-class FundraiserSubmissionTestCase extends FundraiserTestCase {
+class FundraiserSubmissionTestCase extends FundraiserWebTestSetup {
   /**
    * Implementation of getInfo().
    */
@@ -33,7 +32,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
   function tearDown() {
     parent::tearDown();
   }
-  
+
   /**
    * Tests that a donation form is correctly prepopulated with user profile values
    */
@@ -45,11 +44,11 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
 
     // convert user profile state and country fields to numeric codes before testing
     $state = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $this->_user->profile_state));
-    $country = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $this->_user->profile_country)); 
-    
+    $country = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = '%s'", $this->_user->profile_country));
+
     $node = $this->testFundraiserForm();
-    $this->drupalGet('node/' . $node->nid); 
-    $this->pass(var_export($this->drupalGetContent(), TRUE)); 
+    $this->drupalGet('node/' . $node->nid);
+    $this->pass(var_export($this->drupalGetContent(), TRUE));
     $this->assertFieldById('edit-submitted-donor-information-first-name', $this->_user->profile_first_name, 'The First Name field is set correctly.');
     $this->assertFieldById('edit-submitted-donor-information-last-name', $this->_user->profile_last_name, 'The Last Name field is set correctly.');
     $this->assertFieldById('edit-submitted-donor-information-email', $this->_user->mail, 'The Email field is set correctly.');
@@ -60,7 +59,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->assertFieldById('edit-submitted-billing-information-country', $country, "The Country field is set correctly.");
     $this->assertFieldById('edit-submitted-billing-information-state', $state, "The State field is set correctly.");
   }
-  
+
   /**
    * Tests a one-time donation from anonymous user
    */
@@ -70,19 +69,19 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
 
     $data = $this->createTestData();
     $submission = $this->createSubmission($data);
-    
+
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
-    
+
     $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
-      
+
     // Get the SID of the new submission.
     $matches = array();
     preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
-    $sid = $matches[1];  
-    
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
-    
+    $sid = $matches[1];
+
+    $order_id = db_result(db_query("SELECT did FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
+
     // load the order and make sure the information in the order matches what was submitted
     $order = uc_order_load($order_id);
     $this->assertEqual($order->order_total, $data['amount'], t('Make sure the amount submitted is equal to the order total'));
@@ -100,19 +99,19 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->assertEqual($order->payment_details['cc_cvv'], $data['cc_cvv'], t('Make sure the credit card cvv submitted equals credit card cvv in order'));
     $this->assertEqual($order->payment_details['cc_type'], 'visa', t('Make sure the credit card type submitted is visa'));
     $this->assertEqual($order->products[0]->nid, $node->nid, t('Make sure the product\'s node id is equal to the node id of the donation form'));
-     
+
     // verify fundraiser_webform_order record
-    $webform_order = db_fetch_array(db_query("SELECT * FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $webform_order = db_fetch_array(db_query("SELECT * FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
     $this->assertEqual($webform_order['webform_nid'], $node->nid, t('Make sure the correct node id is stored in submission order mapping table'));
     $this->assertEqual($webform_order['order_id'], $order_id, t('Make sure the correct order id is stored in submission order mapping table'));
-    $this->assertEqual($webform_order['sid'], $sid, t('Make sure the correct submission id is stored in submission order mapping table')); 
-    $this->assertEqual($webform_order['gateway'], 'test_gateway', t('Make sure the correct payment gateway is stored in submission order mapping table')); 
-    $this->assertEqual($webform_order['recurring_status'], 0, t('Make sure the correct recurring status is stored in submission order mapping table')); 
-     
-    $this->pass(var_export($order, TRUE)); 
-             
+    $this->assertEqual($webform_order['sid'], $sid, t('Make sure the correct submission id is stored in submission order mapping table'));
+    $this->assertEqual($webform_order['gateway'], 'test_gateway', t('Make sure the correct payment gateway is stored in submission order mapping table'));
+    $this->assertEqual($webform_order['recurring_status'], 0, t('Make sure the correct recurring status is stored in submission order mapping table'));
+
+    $this->pass(var_export($order, TRUE));
+
   }
-  
+
   /**
    * Recurring donation submission test
    */
@@ -126,71 +125,71 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $cc_exp_month = date('n', $future);
     $cc_exp_year = date('Y', $future);
     $cc_exp_day = date('j', $future);
-    
+
     // change credit card expiration date 3 months into the future
     $submission["submitted[credit_card_information][recurs_monthly][recurs]"] = 'recurs';
     $submission["submitted[credit_card_information][expiration_date][card_expiration_month]"] = $cc_exp_month;
     $submission["submitted[credit_card_information][expiration_date][card_expiration_year]"] = $cc_exp_year;
-    
+
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
-    
+
     $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
-      
+
     // Get the SID of the new submission.
     $matches = array();
     preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
-    $sid = $matches[1];  
-    
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
-    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
-    $this->assertEqual($count, 3, t('Make sure the 3 recurring orders were created.')); 
+    $sid = $matches[1];
+
+    $order_id = db_result(db_query("SELECT did FROM {fundraiser_webform_donation} WHERE sid = %d", $sid));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id)); // Coder: this is ok.
+    $this->assertEqual($count, 3, t('Make sure the 3 recurring orders were created.'));
 
     // get the id of the next recurring order
-    $next_order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge LIMIT 1", $order_id));
+    $next_order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge LIMIT 1", $order_id)); // Coder: this is ok.
     $yesterday = strtotime("-1 day");
     db_query("UPDATE {fundraiser_recurring} SET next_charge = %d WHERE order_id = %d", $yesterday, $next_order_id);
     fundraiser_process_recurring_donations();
-    
+
     $order = uc_order_load($next_order_id);
-    $this->assertEqual($order->order_status, 'payment_received', t('Make sure order status is changed to payment_received when a recurring donation is successfully processed during a cron run.')); 
+    $this->assertEqual($order->order_status, 'payment_received', t('Make sure order status is changed to payment_received when a recurring donation is successfully processed during a cron run.'));
   }
-  
+
   /**
    * Gateway failure test
    */
   function testGatewayFailure() {
     // clear out all orders before running test
     $this->clearOrders();
-    
+
     $this->fundraiserReset();
     $node = $this->testFundraiserForm();
 
     $data = $this->createTestData();
-    
+
     // change to an invalid credit cart number (test gateway)
     $data['cc_number'] = '0000000000000000';
     $submission = $this->createSubmission($data);
-    
+
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
-    
+
     $this->assertText(t('Credit card charge failed.'), t('Make sure the text "Credit card charge failed." appear after credit card is declined'));
-    
+
     // Make sure all data is in order
-    $order_id = db_result(db_query("SELECT order_id FROM {uc_orders} LIMIT 1;"));
+    $order_id = db_result(db_query("SELECT order_id FROM {uc_orders} LIMIT 1;")); // Coder: this is ok.
     $order = uc_order_load($order_id);
-    
+
     $this->assertEqual($order->order_status, 'failed', t('Make sure order status is set to failed'));
-    
+
     // make sure there is no fundraiser_webform_order entry
-    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_webform_donation} WHERE order_id = %d", $order_id)); // Coder: this is ok.
     $this->assertEqual($count, 0, t('No fundraiser_webform_order created'));
-    
+
     // make sure no invalid values are saved to the profile_values table
-    $count = db_result(db_query("SELECT COUNT(*) FROM {profile_values} WHERE uid = %d", 0));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {profile_values} WHERE uid = %d", 0)); // Coder: this is ok.
     $this->assertEqual($count, 0, t('No profile values were created for the anonymous user'));
-    
+
     // correct cc number and re-submit
     $submission["submitted[credit_card_information][card_number]"] = '4111111111111111';
     $this->drupalPost(NULL, $submission, t('Submit'));
@@ -210,7 +209,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('You must enter a valid donation amount.'), t('Amount field is valid'));
-  } 
+  }
 
   /**
    * Test first name field validation
@@ -224,7 +223,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('First Name field is required.'), t('First name field is valid'));
-  } 
+  }
 
   /**
    * Test last name field validation
@@ -238,8 +237,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Last Name field is required.'), t('Last name field is valid'));
-  }  
-  
+  }
+
   /**
    * Test email field validation
    */
@@ -252,8 +251,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Email field is required.'), t('Email field is valid'));
-  } 
-  
+  }
+
   /**
    * Test address field validation
    */
@@ -266,8 +265,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Address field is required.'), t('Address field is valid'));
-  } 
-  
+  }
+
   /**
    * Test city field validation
    */
@@ -280,7 +279,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('City field is required.'), t('City field is valid'));
-  } 
+  }
 
   /**
    * Test state field validation
@@ -294,8 +293,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('State/Province field is required.'), t('State/Province field is valid'));
-  } 
-  
+  }
+
   /**
    * Test country field validation
    */
@@ -308,8 +307,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Country field is required.'), t('State/Province field is valid'));
-  } 
-  
+  }
+
   /**
    * Test zipcode field validation
    */
@@ -322,8 +321,8 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('ZIP/Postal Code field is required.'), t('Zipcode field is valid'));
-  } 
-  
+  }
+
   /**
    * Make sure card number field is required
    */
@@ -337,7 +336,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Card Number field is required.'), t('Make sure card number field is required.'));
   }
-  
+
   /**
    * Make sure card number field only accepts valid credit card numbers
    */
@@ -385,7 +384,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
       'cc_exp_day' => date('j', $tomorrow),
     );
   }
-  
+
   function createSubmission($data) {
     $edit1["submitted[donation][amount]"] = $data['amount'];
     $edit1["submitted[donor_information][first_name]"] = $data['first_name'];
@@ -402,13 +401,13 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $edit1["submitted[credit_card_information][card_cvv]"] = $data['cc_cvv'];
     return $edit1;
   }
-  
+
   function clearOrders() {
-    db_query("truncate {uc_orders}"); 
-    db_query("truncate uc_order_comments"); 
-    db_query("truncate uc_order_admin_comments"); 
-    db_query("truncate uc_order_products"); 
-    db_query("truncate uc_order_line_items"); 
+    db_query("truncate {uc_orders}");
+    db_query("truncate uc_order_comments");
+    db_query("truncate uc_order_admin_comments");
+    db_query("truncate uc_order_products");
+    db_query("truncate uc_order_line_items");
     db_query("truncate uc_payment_receipts");
   }
 }

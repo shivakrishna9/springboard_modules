@@ -1,27 +1,20 @@
 <?php
-// $Id$
 
 /**
  * @file
  * Fundraiser module tests.
  */
 
-class FundraiserTestCase extends DrupalWebTestCase {
-  private $_fundraiser_node;
-  public $_user;
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserWebTestSetup extends DrupalWebTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Fundraiser configuration',
-      'description' => 'Tests the setup and configuration of donation forms.',
-      'group' => 'Springboard',
-    );
-  }
-  
   /**
    * Implemenation of setUp().
    */
   function setUp() {
+    // Call the parent to set all of the base modules up.
     parent::setUp(
       'webform',
       'profile',
@@ -35,15 +28,131 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'ca',
       'test_gateway',
       'fundraiser',
-      'market_source'
+      'market_source',
+      'fundraiser_ubercart', // Temporary requirements.
+      'fundraiser_webform' // Temporary requirements.
     );
-    
+
     // Install any additional modules specified by helper modules
     $modules = func_get_args();
     foreach ($modules as $module) {
       drupal_install_modules(array($module));
     }
-    
+
+    // Create ubercart settings.
+    $this->setupPayment();
+    $this->setupProfileFields();
+
+    // Create donation_node content type.
+    $settings = array(
+      'type' => 'donation_type',
+      'title_label' => 'Donation Form',
+    );
+    $content_type = $this->drupalCreateContentType($settings);
+    variable_set('fundraiser_donation_type', TRUE);
+  }
+
+  /**
+   * Implements tearDown().
+   */
+  function tearDown() {
+    // Delete nodes
+    $result = db_query('SELECT nid FROM {node}');
+    while ($node = db_fetch_array($result)) {
+      node_delete($node['nid']);
+    }
+
+    // Call the parent to continue teardown.
+    parent::tearDown();
+  }
+
+  /**
+   * Create a user with profile fields.
+   */
+  function drupalCreateUser($permissions) {
+    // Call the parent to setup the base user.
+    $user = parent::drupalCreateUser($permissions);
+    $user->profile_first_name = $this->randomName($number = 8);
+    $user->profile_last_name = $this->randomName($number = 8);
+    $user->profile_address = $this->randomString($number = 8) . ' '. $this->randomName($number = 8);
+    $user->profile_address_line_2 = $this->randomName($number = 8);
+    $user->profile_city = $this->randomName($number = 8);
+    $user->profile_state = $this->randomName($number = 8);
+    $user->profile_zip = 20009;
+    $user->profile_country = 'US';
+    user_save($user);
+    return $user;
+  }
+
+  /**
+   * Performs the installation and configuration of payment methods
+   */
+  function setupPayment() {
+    variable_set('uc_pg_test_gateway_enabled', 1);
+    variable_set('uc_pg_test_gateway_cc_txn_type', 'auth_capture');
+    variable_set('uc_payment_credit_gateway', 'test_gateway');
+    variable_set('uc_credit_debug', 1);
+    variable_set('fundraiser_development_mode', 1);
+  }
+
+  /**
+   * Creates the standard profile fields used by the fundraiser module.
+   */
+  function setupProfileFields() {
+    $fields[] = array('title' => 'First Name', 'name' => 'profile_first_name', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'Last Name', 'name' => 'profile_last_name', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'Address', 'name' => 'profile_address', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'Address Line 2', 'name' => 'profile_address_line_2', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'City', 'name' => 'profile_city', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'State', 'name' => 'profile_state', 'category' => 'Personal Information', 'type' => 'selection');
+    $fields[] = array('title' => 'Zip', 'name' => 'profile_zip', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'Country', 'name' => 'profile_country', 'category' => 'Personal Information', 'type' => 'textfield');
+    $fields[] = array('title' => 'Campaign Id', 'name' => 'profile_cid', 'category' => 'System', 'type' => 'textfield');
+    $fields[] = array('title' => 'Market Source', 'name' => 'profile_ms', 'category' => 'System', 'type' => 'textfield');
+    $fields[] = array('title' => 'Referrer', 'name' => 'profile_referrer', 'category' => 'System', 'type' => 'textfield');
+    $fields[] = array('title' => 'Initial Referrer', 'name' => 'profile_initial_referrer', 'category' => 'System', 'type' => 'textfield');
+    $fields[] = array('title' => 'Salesforce Account Id', 'name' => 'profile_salesforce_account_id', 'category' => 'System', 'type' => 'textfield');
+    $fields[] = array('title' => 'Salesforce Contact Id', 'name' => 'profile_salesforce_contact_id', 'category' => 'System', 'type' => 'textfield');
+    foreach ($fields as $field) {
+      $edit['explanation'] = $this->randomName(50);
+      $type = $field['type'];
+      unsert($field['type']);
+      $this->drupalPost('admin/config/people/profile/add/' . $field[$type], $field, t('Save field'));
+    }
+  }
+
+  /**
+   * Create a fundraiser content node.
+   */
+  function drupalCreateFundraiserNode() {
+    $settings = array(
+      'type' => 'donation_type',
+    );
+    return $this->drupalCreateNode($settings);
+  }
+}
+
+/**
+ * Fundraiser testing class.
+ */
+class FundraiserWebTestCase extends FundraiserWebTestSetup {
+  private $_fundraiser_node;
+  public $_user;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser configuration',
+      'description' => 'Tests the setup and configuration of donation forms using fundraiser_ubercart, fundraiser_webform.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Implemenation of setUp().
+   */
+  function setUp() {
+    parent::setUp();
+    // Create ourselves a user with profile settings.
     $permissions = array(
       'administer blocks',
       'access content',
@@ -55,84 +164,16 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'delete all webform submissions',
       'create donation form',
     );
-    
-    // Create and log in our privileged user.
-    $this->_user =  $this->drupalCreateUser($permissions);
-    
-    // Create ubercart settings
-    $this->setupPayment();
-    $this->setupProfileFields();
-    $this->setProfileFields();
+    $this->_user = $this->drupalCreateUser($permissions);
   }
-  
-  /**
-   * Implementation of tearDown().
-   */
-  function tearDown() {
-    // Delete nodes
-    $result = db_query('SELECT nid FROM {node}');
-    while ($node = db_fetch_array($result)) {
-      node_delete($node['nid']);
-    }
 
-    parent::tearDown();
-  }
-  
-  /**
-   * Performs the installation and configuration of payment methods
-   */
-  function setupPayment() {
-    variable_set('uc_pg_test_gateway_enabled', 1);
-    variable_set('uc_pg_test_gateway_cc_txn_type', 'auth_capture');
-    variable_set('uc_payment_credit_gateway', 'test_gateway');
-    variable_set('uc_credit_debug', 1);
-    variable_set('fundraiser_development_mode', 1);
-  }
-  
-  /**
-   * Creates the stanard profile fields used by the fundraiser module.
-   */
-  function setupProfileFields() {
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('First Name', 'profile_first_name', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Last Name', 'profile_last_name', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Address', 'profile_address', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Address Line 2', 'profile_address_line_2', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('City', 'profile_city', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('State', 'profile_state', 'Personal Information', 'selection', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Zip', 'profile_zip', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Country', 'profile_country', 'Personal Information', 'textfield', 2)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Campaign Id', 'profile_cid', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Market Source', 'profile_ms', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Referrer', 'profile_referrer', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Initial Referrer', 'profile_initial_referrer', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4)");
-    db_query("INSERT INTO {profile_field} (title, name, category, type, visibility) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4)");
-  }
-  
-  function setProfileFields() {
-    $personal = array();
-    $personal['profile_first_name'] = 'John';
-    $personal['profile_last_name'] = 'Doe';
-    $personal['profile_address'] = '100 Elm Street';
-    $personal['profile_address_line_2'] = '#5';
-    $personal['profile_city'] = 'Washington';
-    $personal['profile_state'] = 'DC';
-    $personal['profile_zip'] = 20009;
-    $personal['profile_country'] = 'US';
-    _fundraiser_profile_save_profile($personal, $this->_user, 'Personal Information');
-    $system = array();
-    $system['profile_cid'] = '';
-    $system['profile_ms'] = 'market-source';
-    $system['profile_referrer'] = '';
-  }
-  
   /**
    *
    */
   function fundraiserReset() {
     $this->_fundraiser_node = NULL;
   }
-  
+
   function testFundraiserDonationAmounts() {
     $node = $this->testFundraiserForm();
     foreach ($node->webform['components'] as $cid => $component) {
@@ -140,25 +181,25 @@ class FundraiserTestCase extends DrupalWebTestCase {
         $amounts = explode("\n", $component['extra']['items']);
         $items = count($amounts); // there should be 5 (4 amounts and other)
         $this->assertEqual($items, 5, t('Verify the donation form has 4 donation amounts'));
-        
+
         $amount = explode('|', $amounts[0]);
         $this->assertEqual($amount[0], 10, t('Verify the first donation amount is 10'));
-        
+
         $amount = explode('|', $amounts[1]);
         $this->assertEqual($amount[0], 20, t('Verify the second donation amount is 20'));
-        
+
         $amount = explode('|', $amounts[2]);
         $this->assertEqual($amount[0], 50, t('Verify the third donation amount is 50'));
-        
+
         $amount = explode('|', $amounts[3]);
         $this->assertEqual($amount[0], 100, t('Verify the third donation amount is 100'));
-        
+
         $amount = explode('|', $amounts[4]);
         $this->assertEqual($amount[0], 'other', t('Verify the last donation amount is other'));
       }
     }
   }
-  
+
   function testFundraiserFields() {
     $node = $this->testFundraiserForm();
      // loop over and create an array of form keys
@@ -167,68 +208,68 @@ class FundraiserTestCase extends DrupalWebTestCase {
       $keys[] = $component['form_key'];
     }
     //$this->pass(var_export($node, TRUE));
-    
+
     // make sure all the required fields have been added to the form
     $valid = in_array('ms', $keys);
     $this->assertTrue($valid, t('Verify the market source component is added to the donation form'));
-    
+
     $valid = in_array('cid', $keys);
     $this->assertTrue($valid, t('Verify the campaign id component is added to the donation form'));
-    
+
     $valid = in_array('referrer', $keys);
     $this->assertTrue($valid, t('Verify the referrer component is added to the donation form'));
-    
+
     $valid = in_array('initial_referrer', $keys);
     $this->assertTrue($valid, t('Verify the initial referrer component is added to the donation form'));
-    
+
     $valid = in_array('amount', $keys);
     $this->assertTrue($valid, t('Verify the amount component is added to the donation form'));
-    
+
     $valid = in_array('other_amount', $keys);
     $this->assertTrue($valid, t('Verify the other amount component is added to the donation form'));
-    
+
     $valid = in_array('first_name', $keys);
     $this->assertTrue($valid, t('Verify the first name component is added to the donation form'));
-    
+
     $valid = in_array('last_name', $keys);
     $this->assertTrue($valid, t('Verify the last name component is added to the donation form'));
-    
+
     $valid = in_array('email', $keys);
     $this->assertTrue($valid, t('Verify the email component is added to the donation form'));
-    
+
     $valid = in_array('address', $keys);
     $this->assertTrue($valid, t('Verify the billing address component is added to the donation form'));
-    
+
     $valid = in_array('address_line_2', $keys);
     $this->assertTrue($valid, t('Verify the billing address 2 component is added to the donation form'));
-    
+
     $valid = in_array('city', $keys);
     $this->assertTrue($valid, t('Verify the billing city component is added to the donation form'));
-    
+
     $valid = in_array('country', $keys);
     $this->assertTrue($valid, t('Verify the billing country component is added to the donation form'));
-    
+
     $valid = in_array('state', $keys);
     $this->assertTrue($valid, t('Verify the billing state component is added to the donation form'));
-    
+
     $valid = in_array('zip', $keys);
     $this->assertTrue($valid, t('Verify the billing zipcode component is added to the donation form'));
-    
+
     $valid = in_array('card_number', $keys);
     $this->assertTrue($valid, t('Verify the credit card number component is added to the donation form'));
-    
+
     $valid = in_array('card_expiration_month', $keys);
     $this->assertTrue($valid, t('Verify the credit card expiration month component is added to the donation form'));
-    
+
     $valid = in_array('card_expiration_year', $keys);
     $this->assertTrue($valid, t('Verify the credit card expiration year component is added to the donation form'));
-    
+
     $valid = in_array('card_cvv', $keys);
     $this->assertTrue($valid, t('Verify the credit card cvv component is added to the donation form'));
-    
+
     $valid = in_array('recurs_monthly', $keys);
     $this->assertTrue($valid, t('Verify the recurs monthly component is added to the donation form'));
-    
+
   }
 
   function testFundraiserForm() {
@@ -236,7 +277,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     if (isset($this->_fundraiser_node)) {
       return $this->_fundraiser_node;
     }
-    
+
     $settings = array(
      'type' => 'donation_form',
      'language' => '',
@@ -287,14 +328,14 @@ class FundraiserTestCase extends DrupalWebTestCase {
         'emails' => array(),
       ),
     );
-    
+
     if (isset($args[0]['settings'])) {
       $settings = array_merge($settings, $args[0]['settings']);
     }
-    
+
     $node = $this->drupalCreateNode($settings);
     $node = node_load($node->nid, TRUE);
-    
+
     $this->_fundraiser_node = $node;
 
     return $this->_fundraiser_node;
