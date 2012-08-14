@@ -36,10 +36,12 @@ function sf_entity_menu() {
     }
 
     $uri_callback = $info['uri callback'];
-    $uri = $uri_callback($stub);
+    if (function_exists($uri_callback)) {
+      $uri = $uri_callback($stub);
+    }
 
     // Don't create a local task if the uri callback could not be obtained.
-    if(!isset($uri['path']) || !is_array($uri)) {
+    if(!isset($uri) || !isset($uri['path']) || !is_array($uri)) {
       continue;
     }
 
