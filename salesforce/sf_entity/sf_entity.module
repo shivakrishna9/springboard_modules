@@ -121,92 +121,13 @@ function sf_entity_entity_load(&$entities, $type) {
   }
 }
 
-function sf_entity_save($entity, $type, $op) {
-  // When importing *from* Salesforce, don't export *back* to Salesforce.
-  if (isset($entity->sf_entity_skip_export)) {
-    return;
-  }
-
-  // Allow modules to alter the Salesforce object and fieldmap prior to saving,
-  // or to claim it for queue processing.
-  foreach (module_implements('salesforce_api_pre_save') as $module) {
-    $function = $module . '_salesforce_api_pre_save';
-    $continue = $function($entity, $type, $op);
-    if ($continue === FALSE) {
-      return;
-    }
-  }
-
-  // If this is an update, and the node already has a Salesforce mapping,
-  // try to load it. If the load fails, we need to fetch the appropriate
-  // fieldmap. Either way, we're upserting the Salesforce record.
-  $salesforce = (object) array('name' => NULL, 'sfid' => NULL);
-  list($oid, $vid, $bundle) = entity_extract_ids($type, $entity);
-  if ($oid) {
-    $salesforce = salesforce_api_id_load($oid, $type, $bundle);
-  }
-
-  // If we have an existing link, attempt to load the associated map.
-  if (!empty($salesforce->name)) {
-    $map = salesforce_api_salesforce_fieldmap_load($salesforce->name);
-  }
-
-  // If the Salesforce link wasn't found, or if it was found but associated to a
-  // non-existent map, load any maps associated with this entity type.
-  // @todo: Determine why this isn't loading maps that should be there.
-  if (empty($salesforce->name) || empty($map)) {
-    $maps = salesforce_api_salesforce_fieldmap_load_by(array('drupal_entity' => $type, 'drupal_bundle' => $bundle));
-    if (empty($maps)) {
-      return;
-    }
-  }
-  // Otherwise, assign the single map as an array so we only have to write
-  // the preceding logic once.
-  else {
-    $maps = array($map->name => $map);
-  }
-
-  foreach ($maps as $map) {
-    $auto_create = $map->automatic & SALESFORCE_AUTO_SYNC_CREATE;
-    $auto_update = $map->automatic & SALESFORCE_AUTO_SYNC_UPDATE;
-    if ((!$auto_create && $op == 'insert')
-          || (!$auto_update && $op == 'update')) {
-      unset($maps[$map->name]);
-    }
-  }
-
-  // If all our maps were unset, abort this procedure.
-  if (empty($maps)) {
-    return;
-  }
-
-  // Otherwise, use the first fieldmap.
-  $map = reset($maps);
-  $salesforce->name = $map->name;
-
-  // Check if there is more than one fieldmap in the result.
-  // @todo: Is it necessary to use AND instead of &&
-  if (user_access('administer salesforce') AND next($maps)) {
-    if (!empty($map->description)) {
-      $description = '(' . $map->description . ')';
-    }
-    drupal_set_message(t('Warning: more than one "automatic" salesforce mapping detected. Used fieldmap !map_name @map_description.', array('!map_name' => l($map->name, SALESFORCE_PATH_FIELDMAPS . '/' . $map->name . '/edit'), '@map_description' => $description)), 'warning');
-  }
-
-  // Finally, export the entity to Salesforce.
-  try {
-    sf_entity_export($entity, $salesforce->name, $salesforce->sfid);
-  } catch (Exception $e) {
-    salesforce_api_log(SALESFORCE_LOG_SOME, 'Exception while attempting to export entity: ' . $e->getMessage(), array(), WATCHDOG_ERROR, l('view', entity_uri($type, $entity)));
-  }
-}
-
 /**
  * Implements hook_entity_insert().
  * Exports an entity on initial save if the fieldmap is configured accordingly.
  */
 function sf_entity_entity_insert($entity, $type) {
-  sf_entity_save($entity, $type, 'insert');
+  list($oid, $vid, $bundle) = entity_extract_ids($type, $entity);
+  salesforce_api_export($type, $bundle, $oid, $entity);
 }
 
 /**
@@ -214,7 +135,8 @@ function sf_entity_entity_insert($entity, $type) {
  * Exports an entity on update if the fieldmap is configured accordingly.
  */
 function sf_entity_entity_update($entity, $type) {
-  sf_entity_save($entity, $type, 'update');
+  list($oid, $vid, $bundle) = entity_extract_ids($type, $entity);
+  salesforce_api_export($type, $bundle, $oid, $entity);
 }
 
 /**
@@ -738,136 +660,6 @@ function sf_entity_salesforce_form_submit($form, &$form_state) {
       }
       break;
   }
-}
-
-/**
- * Exports an entity to Salesforce using the specified fieldmap and stores the
- *   ID of the Salesforce object for the entity.
- *
- * @param object $entity
- *   The entity to export
- * @param string $name
- *   The name of the fieldmap used to create the export object.
- * @param string $sfid
- *   The Salesforce ID of the object you want to update.  If left NULL, a new
- *     object will be created at Salesforce.
- * @return bool
- *   TRUE or FALSE indicating the success of the operation.
- */
-function sf_entity_export($entity, $name, $sfid = NULL) {
-  // Load the fieldmap so we can get the object name.
-  $map = salesforce_api_salesforce_fieldmap_load($name);
-  list($id, $vid, $bundle) = entity_extract_ids($map->drupal_entity, $entity);
-
-  // Attempt to connect to Salesforce.
-  $sf = salesforce_api_connect();
-  if (!isset($sf) || !is_object($sf)) {
-    // Let modules react to a failure to export this entity.
-    module_invoke_all('salesforce_api_export_connect_fail', $id, $name, $sfid);
-    drupal_set_message(t('Unable to connect to Salesforce using <a href="!url">current credentials</a>.', array('!url' => url(SALESFORCE_PATH_ADMIN))));
-    return FALSE;
-  }
-
-  if (empty($entity)) {
-    salesforce_api_log(SALESFORCE_LOG_SOME, 'sf_entity_export was provided an empty entity to export: ' . print_r($entity, 1), array(), WATCHDOG_ERROR);
-    return FALSE;
-  }
-
-  // Look for any matching records which we might want to update instead of creating duplicates.
-  if (empty($sfid)) {
-    $matches = salesforce_api_search_for_duplicates('export', $map->drupal_entity, $map->drupal_bundle, $entity, $name);
-    if (!empty($matches)) {
-      $sfid = reset($matches);
-      $entity->salesforce->sfid = $sfid;
-      salesforce_api_id_save($id, $sfid, $name, $map->drupal_entity, $map->drupal_bundle, 'export');
-      $entity = entity_load($map->drupal_entity, array($id), array(), TRUE);
-    }
-  }
-  // Create an object for export based on the specified fieldmap.
-  $object = salesforce_api_fieldmap_export_create($name, $entity);
-  $object->Id = $sfid;
-
-  // Allow modules to alter the Salesforce object and fieldmap prior to export.
-  foreach (module_implements('salesforce_api_pre_export') as $module) {
-    $function = $module . '_salesforce_api_pre_export';
-    $continue = $function($object, $map, $id);
-    if ($continue === FALSE) {
-      return;
-    }
-  }
-
-  // If any modules altered the fieldmap, ensure that the new fieldmap name
-  // is used for the rest of the export.
-  if ($map->name != $name) {
-    $name = $map->name;
-  }
-
-  try {
-    $response = $sf->client->upsert('Id', array($object), $map->salesforce);
-  }
-  catch (Exception $e) {
-    salesforce_api_log(SALESFORCE_LOG_SOME, 'Exception while attempting to upsert entity: %msg <pre>%e</pre>', array('%msg' => $e->getMessage(), '%e' => print_r($e, TRUE)), WATCHDOG_ERROR, l('view', entity_uri($map->drupal_entity, $entity)));
-  }
-
-  // Check to see if response is an array of objects
-  if (is_array($response) && count($response) > 0) {
-    $response = $response[0];
-  }
-
-  // If we got errors, handle them before proceeding
-  if (isset($response->errors) && is_object($response->errors)) {
-    // If we got "Entity is deleted" and we're configured to unlink and upsert,
-    // do it.
-    if ($response->errors->statusCode == 'ENTITY_IS_DELETED'
-    // ENTITY_IS_DELETED error is also returned if any lookup-field values
-    // reference deleted Salesforce Records. If the fields property references
-    // "Id" or if fields is empty, then we know that the the primary record was
-    // deleted. Otherwise we don't have a good way to react.
-      && ($response->errors->fields == 'Id' || empty($response->errors->fields))
-      && SALESFORCE_DELETED_POLICY_UPSERT == variable_get('salesforce_api_entity_deleted_policy', SALESFORCE_DELETED_POLICY_UPSERT)) {
-      // If the entity is deleted, unlink ALL the linked drupal objects.
-      salesforce_api_id_unlink(array('sfid' => $object->Id));
-      $entity->salesforce->sfid = $object->Id = NULL;
-
-      // Look for any matching records which we might want to update instead of
-      // creating duplicates. Assume that salesforce_api_search_for_duplicates()
-      // will never return a deleted record.
-      $matches = salesforce_api_search_for_duplicates('export', $map->drupal_entity, $map->drupal_bundle, $entity, $name);
-      if (!empty($matches)) {
-        $sfid = reset($matches);
-        $entity->salesforce->sfid = $sfid;
-      }
-
-      salesforce_api_log(SALESFORCE_LOG_SOME, 'Salesforce record deleted. Attempting to unlink and upsert. <pre>%response</pre>',
-        array('%response' => print_r($response, 1)), WATCHDOG_ERROR, l('view', entity_uri($map->drupal_entity, $entity)));
-      try {
-        $response = $sf->client->upsert('Id', array($object), $map->salesforce);
-      }
-      catch (Exception $e) {
-        salesforce_api_log(SALESFORCE_LOG_SOME, 'Exception while attempting to upsert entity: %msg <pre>%e</pre>',
-          array('%msg' => $e->getMessage(), '%e' => print_r($e, TRUE)), WATCHDOG_ERROR, l('view', entity_uri($map->drupal_entity, $entity)));
-      }
-    }
-  }
-
-  // If the export was successful, save the Salesforce ID for the Drupal entity.
-  if (isset($response->success) && $response->success == TRUE) {
-    // Store the Salesforce ID for the entity and return TRUE.
-    salesforce_api_id_save($id, $response->id, $name, $map->drupal_entity, $map->drupal_bundle, 'export');
-  }
-  else {
-    // Otherwise log the error.
-    if (user_access('administer salesforce')) {
-      sf_dpm($response);
-    }
-    salesforce_api_log(SALESFORCE_LOG_SOME, 'Salesforce returned an unsuccessful response: ' . print_r($response, 1), array(),
-      WATCHDOG_ERROR, l('entity ' . $id, entity_uri($map->drupal_entity, $entity)));
-  }
-  // Allow other modules to respond after an export.
-  module_invoke_all('salesforce_api_post_export', $object, $map, $id, $response);
-  // Return the status of the export.
-  $result = (isset($response->success) && $response->success == TRUE) ? TRUE : FALSE;
-  return $result;
 }
 
 /**
