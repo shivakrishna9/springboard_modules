@@ -33,7 +33,7 @@ define('DSR_PARTIALLY_REFUNDED_AGGREGATE_D', "SELECT COALESCE(SUM(pr.amount), 0)
  */
 function dsr_menu() {
   $items['admin/settings/dsr'] = array(
-    'title' => t('Gift file settings'),
+    'title' => t('DSR settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('dsr_settings'),
 		'access arguments' => array('administer dsr'),
