@@ -1061,11 +1061,13 @@ function salesforce_api_fieldmap_field_options($object, $type = NULL, $name = NU
  *   The name of the fieldmap used to process the Drupal object for the export.
  * @param $drupal_data
  *   The Drupal object used to generate the export.
+ * @param object $existing_sf_object
+ *   The existing Salesforce object being updated.
  * @return
  *   An object containing data ready for export to Salesforce or FALSE if
  *     the operation failed.
  */
-function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL) {
+function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $existing_sf_object = NULL) {
   // Load the fieldmap from the database.
   $map = salesforce_api_salesforce_fieldmap_load($name);
   // Fail if the fieldmap does not exist.
@@ -1260,7 +1262,193 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL) {
   if (!empty($fieldsToNull)) {
     $object->fieldsToNull = $fieldsToNull;
   }
+  
+  // Invoke hook_salesforce_api_fieldmap_export_create($sf_object, $fieldmap, $drupal_data, $existing_sf_object).
+  foreach (module_implements('salesforce_api_fieldmap_export_create') as $module) {
+    $function = $module . '_salesforce_api_fieldmap_export_create';
+    $function($object, $map, $drupal_data, $existing_sf_object);
+  }
+  
   return $object;
+}
+
+/**
+ * Synchs Drupal data to Salesforce.
+ * 
+ * @param string $drupal_type
+ *   The type of Drupal record being exported (e.g., node, user, webform_submission).
+ * @param string $drupal_bundle
+ *   The secondary type identifier of the the Drupal record
+ * @param string $drupal_id
+ *   The Drupal record's internal ID (e.g., oid for an entity)
+ * @param object $drupal_data
+ *   An object, such as a node object, containing the data to be synched
+ * @param string $fieldmap_name
+ *   OPTIONAL. Machine name of the fieldmap to use. (Any other candidates will be ignored.)
+ */
+function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupal_data, $fieldmap_name = NULL) {
+  // When importing *from* Salesforce, don't export *back* to Salesforce.
+  if (isset($drupal_data->sf_entity_skip_export)) {
+    return FALSE;
+  }
+  
+  // Got data?
+  if (empty($drupal_data)) {
+    salesforce_api_log(
+      SALESFORCE_LOG_SOME, 
+      'salesforce_api_export was provided an empty %type %bundle data record to export: !data',
+      array('%type' => $drupal_type, '%bundle' => $drupal_bundle, '!data' => print_r($drupal_data, 1)),
+      WATCHDOG_ERROR
+    );
+    return FALSE;
+  }
+      
+  // Look for existing Salesforce object mapped to this Drupal record.
+  //@todo: when salesforce_api_id_load() is refactored to accommodate multiple return values, move this to inside the fieldmap loop
+  $existing = salesforce_api_id_load($drupal_id, $drupal_type, $drupal_bundle);
+  $sf_function = isset($existing->sfid) ? 'update' : 'create';
+  
+  // Was a fieldmap specified?
+  if (!empty($fieldmap_name)) {
+    $fieldmaps = array($fieldmap_name);
+  }
+  else {
+    // No, so query all fieldsmaps for this type+bundle combination.
+    $fieldmaps = db_query(
+      "SELECT name FROM {salesforce_fieldmap} WHERE drupal_entity = :type AND drupal_bundle = :bundle",
+      array(':type' => $drupal_type, ':bundle' => $bundle)
+    )->fetchCol();
+  }
+  
+  // Loop over all fieldmaps
+  foreach ($fieldmaps as $fieldmap) {
+    // Load the complete fieldmap.
+    $fieldmap = salesforce_api_salesforce_fieldmap_load($fieldmap);
+    
+    // Skip this fieldmap if it isn't set to automatically sync on this SF function.
+    $is_automatic = (bool) $fieldmap->automatic & (
+        ($sf_function == 'update') ? SALESFORCE_AUTO_SYNC_UPDATE : SALESFORCE_AUTO_SYNC_CREATE
+    );
+    if (!$is_automatic) continue;
+    
+    // Invoke hook_salesforce_api_export().
+    foreach (module_implements('salesforce_api_export') as $module) {
+      $function = $module . '_salesforce_api_export';
+      $continue = $function($fieldmap, $drupal_data);
+      if ($continue === FALSE) {
+        // Stop processing this fieldmap.
+        continue;
+      }
+    }
+    
+    // Attempt to connect to Salesforce (if we haven't already).
+    if (!isset($sf)) {
+      $sf = salesforce_api_connect();
+      if (!isset($sf) || !is_object($sf)) {
+        // Let modules react to a failure to export this object.
+        module_invoke_all('salesforce_api_export_connect_fail', $drupal_id, $fieldmap->name, $existing->sfid);
+        //@todo: do we really want this next line's message to appear for all users?
+        drupal_set_message(t('Unable to connect to Salesforce using <a href="!url">current credentials</a>.', array('!url' => url(SALESFORCE_PATH_ADMIN))));
+        return FALSE;
+      }
+      
+      // Get an existing Salesforce object if possible. Fieldmap logic may use it to determine which fields to populate.
+      $existing_sf_object = new stdClass();
+      if ($sf_function == 'create') {
+        // Dupe check for existing Salesforce records, if an active module is implementing hook_sf_find_match().
+        $matches = salesforce_api_search_for_duplicates('export', $drupal_type, $drupal_bundle, $drupal_data, $fieldmap->name);
+        if (!empty($matches)) {
+          $existing_sf_object = $matches[0];
+          salesforce_api_id_save($drupal_id, $existing_sf_object->Id, $fieldmap->name, $drupal_type, $drupal_bundle, 'export');
+        }
+      }
+      else {
+        // Query Salesforce for data in the fields this fieldmap cares about.
+        $fields = array_keys($fieldmap->fields);
+        $sf_query = 'SELECT ' . implode(',', $fields) . ' FROM ' . $fieldmap->salesforce . 
+          " WHERE Id = '" . $existing->sfid . "'"
+        ;
+        try {
+          $result = $sf->client->query($sf_query);
+        }
+        catch (Exception $e) {
+          salesforce_api_log(SALESFORCE_LOG_SOME, 'Exception in sf_prematch stage: ' . $e->getMessage(), array(), WATCHDOG_ALERT);
+          return;
+        }
+        if ($result->size > 0) {
+          $existing_sf_object = $result->records[0];
+        }
+      }
+      
+      // Create an object for export based on the specified fieldmap.
+      $sf_object = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data, $existing_sf_object);
+      $sf_object->Id = $existing_sf_object->Id;
+      
+      // Upsert against dedupe key (if given in the fieldmap) or else Id.
+      try {
+        $upsert_key = !empty($fieldmap->dedupe_key) ? $fieldmap->dedupe_key : 'Id';
+        $response = $sf->client->upsert($upsert_key, array($sf_object), $fieldmap->salesforce);
+      }
+      catch (Exception $e) {
+        salesforce_api_log(
+          SALESFORCE_LOG_SOME, 
+          'Exception while attempting to upsert %type %bundle record: %msg <pre>!e</pre>', 
+          array('%type' => $drupal_type, '%bundle' => $drupal_bundle, '%msg' => $e->getMessage(), '!e' => print_r($e, TRUE)), 
+          WATCHDOG_ERROR
+        );
+      }
+      
+      // Check to see if response is an array of objects
+      if (is_array($response) && count($response) > 0) {
+        $response = $response[0];
+      }
+      
+      // If we got errors, handle them before proceeding
+      if (isset($response->errors) && is_object($response->errors)) {
+        // If we got "Entity is deleted" and we're configured to unlink and upsert,
+        // do it.
+        if ($response->errors->statusCode == 'ENTITY_IS_DELETED'
+          // ENTITY_IS_DELETED error is also returned if any lookup-field values
+          // reference deleted Salesforce Records. If the fields property references
+          // "Id" or if fields is empty, then we know that the the primary record was
+          // deleted. Otherwise we don't have a good way to react.
+          && ($response->errors->fields == 'Id' || empty($response->errors->fields))
+          && SALESFORCE_DELETED_POLICY_UPSERT == variable_get('salesforce_api_entity_deleted_policy', SALESFORCE_DELETED_POLICY_UPSERT)
+        ) {
+          salesforce_api_log(
+            SALESFORCE_LOG_SOME, 
+            'Salesforce record deleted. Attempting to unlink and re-export. <pre>!response</pre>',
+            array('!response' => print_r($response, 1)), 
+            WATCHDOG_ERROR
+          );
+          
+          // If the entity was deleted, unlink ALL the linked drupal objects.
+          salesforce_api_id_unlink(array('sfid' => $object->Id));
+          
+          // Re-export on this fieldmap, now that the deleted object's SFID is gone.
+          salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, $drupal_data, $fieldmap->name);
+        }
+      }
+      
+      // If the export was successful, save the Salesforce ID for the Drupal record.
+      $result = (isset($response->success) && $response->success == TRUE) ? TRUE : FALSE;
+      if ($result) {
+        salesforce_api_id_save($drupal_id, $response->Id, $fieldmap->name, $drupal_type, $drupal_bundle, 'export');
+        $drupal_data->salesforce->sfid = $response->Id;  //@todo: salesforce should eventually be an array keyed by fieldmap name
+      }
+      else {
+        // Otherwise log the error.
+        if (user_access('administer salesforce')) {
+          sf_dpm($response);
+        }
+        salesforce_api_log(SALESFORCE_LOG_SOME, 'Salesforce returned an unsuccessful response: ' . print_r($response, 1), array(),
+          WATCHDOG_ERROR, l('entity ' . $id, entity_uri($map->drupal_entity, $entity)));
+      }
+            
+      // Allow other modules to respond after an export.
+      module_invoke_all('salesforce_api_post_export', $sf_object, $fieldmap, $drupal_id, $response);
+    }
+  }
 }
 
 /**
