@@ -134,7 +134,7 @@ function sf_prematch_export($entity_name, $bundle_name, $drupal_object, $map, $m
         return;
       case 1:
       default:
-        return $result->records[0]->Id;
+        return $result->records;
         break;
     }
   }
