@@ -507,7 +507,6 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   $pid = db_result(db_query('SELECT cid FROM {webform_component} WHERE nid = %d AND form_key="donation"', $node->nid));
   // Amount webform component should be a textfield if no donation amounts are available.
   if (!count($donation_amounts)) {
-    drupal_set_message('no donation amounts');
     $has_select = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "amount" AND type = "select"', $node->nid));
     if ($has_select) {
       $amount = array();
@@ -529,7 +528,6 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
     }
   }
   else {
-    drupal_set_message('update query');
     $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
     $field = db_fetch_object(db_query('SELECT cid, type, extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
     
