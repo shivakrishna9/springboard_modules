@@ -1042,6 +1042,5 @@ function fundraiser_update_6313() {
   $ret = array();
   $schema = fundraiser_schema();
   db_create_table($ret, 'fundraiser_secure', $schema['fundraiser_secure']);
-  menu_rebuild();
   return $ret;
 }
