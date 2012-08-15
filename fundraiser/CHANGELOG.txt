@@ -6,3 +6,12 @@
     
 - Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
 
+08-10-2012  Allen Freeman <allen.freeman@jacksonriver.com>
+----------------------------------------------------------
+  * fundraiser.install, fundraiser_schema(): added definition for {fundraiser_secure} table.
+  * fundraiser.install, fundraiser_schema(): added update hook to add {fundraiser_secure} table.
+  * fundraiser.module, fundraiser_menu(): changed access callback for confirmations page, removed access arguments.
+  * fundraiser.module, fundraiser_preprocess_fundraiser_confirmation(): added function call to flag sid as viewed.
+  * fundraiser.module, fundraiser_access_confirmation(): added function.
+  * fundraiser.module, fundraiser_secure_confirmation(): added function.
+  * fundraiser.module, fundraiser_secure_confirmation_flag(): added function.

@@ -258,7 +258,7 @@ function fundraiser_menu() {
     'load arguments' => array(1),
     'page callback' => 'fundraiser_donation_confirmation',
     'page arguments' => array(1),
-    'access arguments' => array("access content"),
+    'access callback' => 'fundraiser_access_confirmation',
     'type' => MENU_CALLBACK,
   );
   
@@ -298,6 +298,17 @@ function fundraiser_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a donation form node
   if (_fundraiser_is_donation_type($node)) {
     $access = 0;
+  }
+}
+
+/**
+ * Deny access if a confirmation page has already been viewed.
+ */
+function fundraiser_access_confirmation() {
+  global $user;
+  $sid = $_GET['sid'];
+  if (is_numeric($sid) && $user->uid != 1) {
+    return !fundraiser_secure_confirmation($sid);
   }
 }
 
@@ -1398,6 +1409,9 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
     
     // set a variable that can be used in the template
     $vars['confirmation_message'] = $message;
+    
+    // Flag sid as viewed
+    fundraiser_secure_confirmation_flag($sid);
   }
 }
 
@@ -2944,4 +2958,29 @@ function fundraiser_token_values($type, $object = NULL) {
       break;
   }
   return $values;
+}
+
+/**
+ * Checks if a confirmation page has been viewed.
+ *
+ * @param $sid
+ * webform submission id
+ *
+ * @return
+ * TRUE if the confirmation page has been viewed, otherwise FALSE.
+ */
+function fundraiser_secure_confirmation($sid) {
+  return db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid)) ? TRUE : FALSE;
+}
+
+/**
+ * Flag confirmation page as viewed.
+ *
+ * @param $sid
+ * webform submission id
+ */
+function fundraiser_secure_confirmation_flag($sid) {
+  if(!db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid))) {
+    db_query('INSERT INTO {fundraiser_secure} (sid) VALUES (%s)', $sid);
+  }
 }
