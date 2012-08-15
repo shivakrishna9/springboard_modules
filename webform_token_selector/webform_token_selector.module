@@ -72,6 +72,17 @@ function webform_token_selector_wysiwyg_plugin($editor, $version) {
 }
 
 /**
+ * Implementation of hook_ckeditor_plugin().
+ */
+function webform_token_selector_ckeditor_plugin() {
+  return array('webform_token_selector' => array(
+    'name' => 'webform-tokens',
+    'desc' => t('Webform Token Select'),
+    'path' => drupal_get_path('module', 'webform_token_selector') .'/ckeditor/'
+  ));
+}
+
+/**
  * Generates all possible fundraiser tokens and passes them to theme function.
  *
  * @param: $nid
