@@ -17,11 +17,8 @@ function dsr_create_multipart_email($params) {
    'Content-Transfer-Encoding' => '8Bit',
    'X-Mailer' => 'Drupal',
   );
-
-  $default_from = $params['from_name'] . ' <' . $params['from_address'] . '>';
-  $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
   
-  if (!empty($params->bcc_address)) {
+  if (!empty($params['bcc_address'])) {
     $headers['Bcc'] = $params['bcc_address'];
   }
   //
