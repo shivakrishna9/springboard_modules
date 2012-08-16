@@ -220,19 +220,28 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
  */
 function _dsr_discrepancy_links($discrepancies, $start_date, $end_date) {
   $links = array();
+  $options = array(
+    'absolute' => TRUE,
+  );
   // posted
   if ($discrepancies['Posted Transactions']['count'] || $discrepancies['Posted Transactions']['amount']) {
-    $links[] = l('View discrepancy report for posted donations', DSR_RECONCILIATION_PATH . '/report/posted/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)));
+    $link_text = 'View discrepancy report for posted donations';
+    $link_path = url(DSR_RECONCILIATION_PATH . '/report/posted/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
+    $links[] = l($link_text, $link_path);
   }
   
   //refunded
   if ($discrepancies['Refunded Transactions']['count'] || $discrepancies['Refunded Transactions']['amount']) {
-    $links[] = l('View discrepancy report for refunded donations', DSR_RECONCILIATION_PATH . '/report/refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)));
+    $link_text = 'View discrepancy report for refunded donations';
+    $link_path = url(DSR_RECONCILIATION_PATH . '/report/refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
+    $links[] = l($link_text, $link_path);
   }
   
   // partially refunded
   if ($discrepancies['Partially Refunded Transactions']['count'] || $discrepancies['Partially Refunded Transactions']['amount']) {
-    $links[] = l('View discrepancy report for partially refunded donations', DSR_RECONCILIATION_PATH . '/report/partially_refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)));
+    $link_text = 'View discrepancy report for partially refunded donations';
+    $link_path = url(DSR_RECONCILIATION_PATH . '/report/partially_refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
+    $links[] = l($link_text, $link_path);
   }
   
   return $links;
@@ -817,7 +826,7 @@ function dsr_mail_reconciliation_summary($start_date, $end_date, $stats) {
 
   if (!empty($email)) {
     
-    drupal_mail('dsr', 'dsr_reconciliation_summary', $email, language_default(), $params);
+    drupal_mail('dsr', 'dsr_reconciliation_summary', $email, language_default(), $params, $from = NULL);
   }
 }
 
