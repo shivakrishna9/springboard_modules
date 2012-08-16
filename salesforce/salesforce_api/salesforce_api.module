@@ -1334,7 +1334,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
     // Invoke hook_salesforce_api_export().
     foreach (module_implements('salesforce_api_export') as $module) {
       $function = $module . '_salesforce_api_export';
-      $continue = $function($fieldmap, $drupal_data);
+      $continue = $function($fieldmap, $drupal_id, $drupal_data, $existing);
       if ($continue === FALSE) {
         // Stop processing this fieldmap.
         continue;

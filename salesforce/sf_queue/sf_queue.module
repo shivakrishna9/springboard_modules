@@ -43,20 +43,20 @@ function sf_queue_menu() {
 }
 
 /**
- * Implements hook_salesforce_api_pre_export().
+ * Implements hook_salesforce_api_export().
  */
-function sf_queue_salesforce_api_pre_export($sf_object, $map, $oid) {
-  // If queue is not in use, return;
+function sf_queue_salesforce_api_export($fieldmap, $drupal_id, $drupal_data, $existing = NULL) {
+  // If queue is not in use, don't enqueue and don't short-circuit the export.
   if (!variable_get('sf_queue_enabled', FALSE)) {
     watchdog('sf_queue', "Salesforce Export Queue module is enabled but the queue is not.");
     return;
   }
-  $op = empty($sf_object->Id) ? 'create' : 'update';
+  $op = isset($existing->sfid) ? 'create' : 'update';  // Note that create-op data hasn't been dupe checked yet.
   $settings = variable_get('sf_queue_settings', _sf_queue_default_settings());
   if (!in_array($op, $settings['cron_operations'])) {
     return TRUE;
   }
-  return sf_queue_enqueue($op, $sf_object, $map, $oid);
+  return sf_queue_enqueue($op, $drupal_data, $fieldmap, $drupal_id, isset($existing->sfid) ? $existing->sfid : '');
 }
 
 /**
@@ -112,19 +112,20 @@ function sf_queue_salesforce_api_delete($sfid, $map, $oid) {
 /**
  * Helper function to add / update a queue item.
  */
-function sf_queue_enqueue($op, $sf_object, $map, $oid) {
+function sf_queue_enqueue($op, $drupal_data, $map, $oid, $sfid) {
   $drupal_type = $map->drupal_entity . '_' . $map->drupal_bundle;
   $object = (object) array(
     'sf_op' => $op,
     'oid' => $oid,
     'attempts' => 0,
     'created' => REQUEST_TIME,
-    'sfid' => empty($sf_object->Id) ? '' : $sf_object->Id, // will be blank on create
-    'drupal_type' => $drupal_type,
+    'sfid' => $sfid,
+    'drupal_type' => $map->drupal_entity,
+    'drupal_bundle' => $map->drupal_bundle,
     'sf_type' => $map->salesforce,
     'name' => md5(microtime()),
     'fieldmap_name' => $map->name,
-    'sf_data' => $sf_object,
+    'drupal_data' => $drupal_data,
   );
   $update = array();
   // If an existing operation is queued for this drupal object / fieldmap pair,
@@ -132,9 +133,9 @@ function sf_queue_enqueue($op, $sf_object, $map, $oid) {
   $existing = db_query(
     "SELECT oid
       FROM {salesforce_export_queue}
-      WHERE drupal_type=:drupal_type AND fieldmap_name=:fieldmap_name AND oid=:oid
+      WHERE fieldmap_name=:fieldmap_name AND oid=:oid
     ;", 
-    array(':drupal_type' => $drupal_type, ':fieldmap_name' => $map->name, ':oid' => $oid)
+    array(':fieldmap_name' => $map->name, ':oid' => $oid)
   )->fetchAssoc();
   if ($existing) {
     $update = 'oid';
