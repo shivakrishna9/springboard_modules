@@ -282,17 +282,17 @@ function fundraiser_refund_submit($form, &$form_state) {
   // Get details on the original payment so we can load the payment gateway details
   $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order_id, $order_id));
   
-  if (module_exists('gateway_manager')) {
- 	  $info = gateway_manager_gateway_info($payment_details->gateway);
- 	  $refund_function = $info['refund_function'];
- 	  $data['config'] = $info['config'];
- 	}
- 	else {
- 	  $refund_function = fundraiser_refund_function($node->gateway);
- 	}
+  $payment_gateway = module_invoke_all('fundraiser_gateway', 'refund function', $payment_details->gateway);
+  $refund_function = $payment_gateway['refund_function'];
+  // If additional config options were passed include them
+  if (!empty($payment_gateway['config'])) {
+    $data['config'] = $payment_gateway['config'];
+  }
 
- 	// call the refund function and store the result
-  $result = $refund_function($order->order_id, $amount, $data);
+  if ($refund_function) {
+    // call the refund function and store the result
+    $result = $refund_function($order->order_id, $amount, $data);
+  }
   
   if ($result['success']) {
 		// enter the payment
