@@ -375,6 +375,11 @@ function secure_prepopulate_expire($qs) {
  */
 function secure_prepopulate_clear_session($nid) {
   unset($_SESSION['secure_prepopulate_values'][$nid]);
+  // Is the array empty? Let's remove it in case it's the only thing keeping
+  // the session alive.
+  if (empty($_SESSION['secure_prepopulate_values'])) {
+    unset($_SESSION['secure_prepopulate_values']);
+  }
 }
 
 /**

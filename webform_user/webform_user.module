@@ -604,6 +604,8 @@ function webform_user_webform_submit($form, &$form_state) {
   $submitted = $form_state;
   // Only process if the form is completed and it's a webform_user form.
   $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
+  // Trim the whitespace on the mail field.
+  $fields['mail'] = trim($fields['mail']);
 
   if ($form_state['values']['op'] == $submit_op && $node->is_webform_user) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);

@@ -258,7 +258,7 @@ function fundraiser_menu() {
     'load arguments' => array(1),
     'page callback' => 'fundraiser_donation_confirmation',
     'page arguments' => array(1),
-    'access arguments' => array("access content"),
+    'access callback' => 'fundraiser_access_confirmation',
     'type' => MENU_CALLBACK,
   );
   
@@ -279,10 +279,9 @@ function fundraiser_menu() {
  * Implemenation of hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
-  // workaround for douchebaggy bug where only uid 1 can see custom triggers
-  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
   if (module_exists('trigger')) {
-    $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+    $items['admin/build/trigger/fundraiser']['access callback'] = 'user_access';
+    $items['admin/build/trigger/fundraiser']['access arguments'] = array('administer site configuration');
   }
 
   // alter some built-in webform menu items
@@ -299,6 +298,17 @@ function fundraiser_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a donation form node
   if (_fundraiser_is_donation_type($node)) {
     $access = 0;
+  }
+}
+
+/**
+ * Deny access if a confirmation page has already been viewed.
+ */
+function fundraiser_access_confirmation() {
+  global $user;
+  $sid = $_GET['sid'];
+  if (is_numeric($sid) && $user->uid != 1) {
+    return !fundraiser_secure_confirmation($sid);
   }
 }
 
@@ -628,12 +638,18 @@ function fundraiser_validate(&$node) {
  */
 function fundraiser_insert($node) {
 
+  // If not set these fields get default values.
+  $node->receipt_email_from = isset($node->receipt_email_from) ? $node->receipt_email_from : variable_get('site_name', '');
+  $node->receipt_email_address = isset($node->receipt_email_address) ? $node->receipt_email_address : variable_get('site_mail', '');
+  $node->receipt_email_subject = isset($node->receipt_email_subject) ? $node->receipt_email_subject : 'Thank you for your donation';
+  $node->redirect_url = isset($node->redirect_url) ? $node->redirect_url : '<confirmation>';
+
   db_query(
     "
       INSERT INTO {fundraiser}
-      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, redirect_url)
+      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url)
       VALUES
-      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
     ",
     $node->nid,
     $node->gateway,
@@ -641,10 +657,14 @@ function fundraiser_insert($node) {
     $node->show_other_amount,
     $node->internal_name,
     $node->minimum_donation_amount,
-    variable_get('site_name', ''),
-    variable_get('site_mail', ''),
-    t('Thank you for your donation'),
-    '<confirmation>'
+    $node->receipt_email_from,
+    $node->receipt_email_address,
+    $node->receipt_email_subject,
+    $node->receipt_email_message,
+    $node->confirmation_page_title,
+    $node->confirmation_page_body,
+    $node->confirmation_page_format,
+    $node->redirect_url
   );
   
   // skip some steps if the form is being cloned
@@ -918,6 +938,11 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         fundraiser_disable_elements($form);
       }
 
+      // Pull the correct action out of form_state if it's there to avoid AHAH+Validation action-rewrite.
+      if (isset($form_state['action'])) {
+        $form['#action'] = $form_state['action'];
+      }  
+
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js($base .'/jquery.alphanumeric.js');
       drupal_add_js($base .'/fundraiser.js');
@@ -1148,6 +1173,8 @@ function _fundraiser_ahah_helper_render($field = NULL) {
   // variables.
   $form['#post'] = $_POST;
   $form['#programmed'] = FALSE;
+  // Stash original form action to avoid overwriting with drupal_rebuild_form().
+  $form_state['action'] = $form['#action'];
   $form_state['post'] = $_POST;
   
   // $form_state['storage']['#ahah_helper']['file'] has been set, to know
@@ -1382,6 +1409,9 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
     
     // set a variable that can be used in the template
     $vars['confirmation_message'] = $message;
+    
+    // Flag sid as viewed
+    fundraiser_secure_confirmation_flag($sid);
   }
 }
 
@@ -1537,7 +1567,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
 	$first_name = $fundraiser_fields['first_name'];
 	$last_name = $fundraiser_fields['last_name'];
-	$email = $fundraiser_fields['email'];
+	// Trim the whitespace on the mail field.
+	$email = trim($fundraiser_fields['email']);
 	$billing_address = $fundraiser_fields['address'];
 	$billing_address_2 = $fundraiser_fields['address_line_2'];
 	$billing_city = $fundraiser_fields['city'];
@@ -2927,4 +2958,29 @@ function fundraiser_token_values($type, $object = NULL) {
       break;
   }
   return $values;
+}
+
+/**
+ * Checks if a confirmation page has been viewed.
+ *
+ * @param $sid
+ * webform submission id
+ *
+ * @return
+ * TRUE if the confirmation page has been viewed, otherwise FALSE.
+ */
+function fundraiser_secure_confirmation($sid) {
+  return db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid)) ? TRUE : FALSE;
+}
+
+/**
+ * Flag confirmation page as viewed.
+ *
+ * @param $sid
+ * webform submission id
+ */
+function fundraiser_secure_confirmation_flag($sid) {
+  if(!db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid))) {
+    db_query('INSERT INTO {fundraiser_secure} (sid) VALUES (%s)', $sid);
+  }
 }

@@ -1,0 +1,10 @@
+2012-08-16  Allen Freeman <allen.freeman@jacksonriver.com?
+
+    * dsr.module (dsr_mail_reconciliation_summary): explicitly declared use of default From address
+    * dsr.module (dsr_discrepancy_links): links now produce external urls via the url() function.
+    * dsr.email.inc (dsr_create_multipart_email): removed code that was overwriting default From address in
+      mail headers.
+
+2012-08-14  Phillip Cave  <phillip.cave@jacksonriver.com>
+
+    * dsr.module (dsr_menu): Change DSR menu title to 'DSR settings'.
