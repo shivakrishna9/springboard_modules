@@ -864,6 +864,42 @@ function fundraiser_clone_form($form, &$form_state) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds a setting that allows the user to specify this content type as a donation type.
+ */
+function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['#node_type'])) {
+    $form['fundraiser_type'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['fundraiser_type']['fundraiser'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable fundraiser?'),
+      '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
+    );
+  }
+}
+
+/**
+ * Implements hook_node_type().
+ */
+function fundraiser_node_type($op, $info) {
+if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+    webform_node_type('update', $info); // From webform.module.
+    // Add as a primary type too.
+    $webform_types = webform_variable_get('webform_node_types_primary');
+    $webform_types[] = $info->type;
+    variable_set('webform_node_types_primary', $webform_types);
+  }
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function fundraiser_form_alter(&$form, $form_state, $form_id) {
