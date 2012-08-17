@@ -1,6 +1,15 @@
 2012-05-02  Allen Freeman  <allen.freeman@jacksonriver.com>
 
-    * secure_prepopulate.module (secure_prepopulate_after_build): Fixed mystery "1" bug.
+    * secure_prepopulate.module (secure_prepopulate_after_build): Fixed mystery
+      "1" bug.
+
+
+2012-07-30  Ben Clark  <ben.clark@jacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_clear_session): Check
+      whether the $_SESSION['secure_prepopulate_values'] array is empty after
+      unsetting the $nid element.
+
 
 2012-08-10  Ben Clark  <benjamin.clark@jacksonriver.com>
 
