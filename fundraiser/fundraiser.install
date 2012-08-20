@@ -1076,3 +1076,13 @@ function fundraiser_update_6313() {
   db_create_table($ret, 'fundraiser_secure', $schema['fundraiser_secure']);
   return $ret;
 }
+
+/**
+ * Enables the fundraiser_uc_gateway_module.
+ */
+function fundraiser_update_6314() {
+  $ret = array();
+  module_enable(array('fundraiser_uc_gateway'));
+  $ret[] = array('success' => TRUE, 'query' => 'Enabled the Fundraiser UC Gateway module.');
+  return $ret;
+}
