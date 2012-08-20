@@ -307,8 +307,14 @@ function fundraiser_clone_access_alter(&$access, $node) {
 function fundraiser_access_confirmation() {
   global $user;
   $sid = $_GET['sid'];
-  if (is_numeric($sid) && $user->uid != 1) {
-    return !fundraiser_secure_confirmation($sid);
+  if (is_numeric($sid)) {
+    // if not uid 1, check to see if the page can be viewed
+    if ($user->uid != 1) {
+      return !fundraiser_secure_confirmation($sid);
+    }
+    else {
+      return TRUE; // uid 1
+    }
   }
 }
 
