@@ -184,9 +184,9 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
         t('The field key may only contain alphanumeric characters and underscores.'));
     }
-    if (!empty($field['default']) && !preg_match('/^[a-zA-Z0-9_+-\s]+$/', $field['default'])) {
+    if (!empty($field['default']) && !preg_match('/^[a-zA-Z0-9_+-\s%\[]]+$/', $field['default'])) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][default',
-        t('The default value may only contain alphanumeric characters, whitespace and underscores.'));
+        t('The default value may only contain alphanumeric characters, whitespace, underscores, square brackets and the percent sign.'));
     }
   }
 }
