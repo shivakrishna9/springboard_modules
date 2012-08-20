@@ -76,7 +76,7 @@ function fundraiser_offline_form($form, $form_state, $nid = '') {
     }
   }
   if (isset($nid) && is_numeric($nid)) {
-    $node = node_load(1);
+    $node = node_load($nid);
     $node->fundraiser_offline_mode = TRUE;
     $form['#suffix'] = '<div id="fundraiser-offline-node">' . drupal_render(node_view($node)) . '</div>';
   }
