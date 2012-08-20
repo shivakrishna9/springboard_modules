@@ -61,18 +61,9 @@ function gateway_manager_menu() {
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'donation_form_node_form':
-      // change the list of options in the payment gateway list
-      $form['fundraiser_settings']['gateway']['#options'] = _gateway_manager_gateway_list();
+      // Add a wrapper around the payment gateway field
       $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
       $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
-      
-      // If there are no gateways configured, the required gateway dropdown
-      // will be empty, so warn the user
-      if (empty($form['fundraiser_settings']['gateway']['#options'])) {
-        $link = l('Configure payment gateways in the gateway manager.', 'admin/settings/fundraiser/gateways');
-        drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured. !link', array('!link' => $link)), 'warning');
-      }
-
       break;
   }
   
@@ -107,6 +98,30 @@ function gateway_manager_nodeapi(&$node, $op) {
         _gateway_manager_clear_cache();
         break;
     }
+  }
+}
+
+/**
+ * Implementation of hook_fundraiser_gateway
+ */
+function gateway_manager_fundraiser_gateway($op, $arg) {
+  switch ($op) {
+    case 'select options':
+      return array('Gateway Manager' => _gateway_manager_gateway_list());
+    case 'charge function':
+      if (is_numeric($arg)) {
+        $info = gateway_manager_gateway_info($arg);
+        $gateway['charge_function'] = $info['charge_function'];
+        $gateway['config'] = $info['config'];
+        return $gateway;
+      }
+    case 'refund function':
+      if (is_numeric($arg)) {
+        $info = gateway_manager_gateway_info($arg);
+        $gateway['refund_function'] = $info['refund_function'];
+        $gateway['config'] = $info['config'];
+        return $gateway;
+      }
   }
 }
 
