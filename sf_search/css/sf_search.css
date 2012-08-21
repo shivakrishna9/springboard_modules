@@ -3,9 +3,12 @@
 /* search form */
 #sf-search-search-form {
   border: 1px solid #666;
-  margin: 0px;
   background-color: #ffff99;
-  width: 100%
+  margin-bottom:0px;
+}
+
+#fundraiser-offline-form {
+ margin-bottom:20px;
 }
 
 #sf-search-search-form .form-radios {
