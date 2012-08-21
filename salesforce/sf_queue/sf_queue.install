@@ -121,7 +121,7 @@ function sf_queue_schema() {
       'sf_type' => array('sf_type'),
       'sf_op' => array('sf_op'),
       'created' => array('created'),
-      'fieldmap_drupal' => array('fieldmap_name', 'drupal_type'),
+      'fieldmap_drupal' => array('fieldmap_name', 'drupal_type', 'drupal_bundle'),
     ),
     'unique keys' => array(
       'name' => array('name'),

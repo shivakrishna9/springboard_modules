@@ -154,6 +154,13 @@ function salesforce_api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'dedupe_key' => array(
+        'description' => 'The Salesforce field to check against when deduping',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => 'Id',
+      ),
       'description' => array(
         'description' => 'Name or brief description of this fieldmap',
         'type' => 'varchar',
@@ -169,7 +176,10 @@ function salesforce_api_schema() {
       ),
     ),
     'primary key' => array('fieldmap'),
-    'unique keys' => array('name' => array('name')),
+    'unique keys' => array(
+      'name' => array('name'),
+      'name_sf_type_drupal_type' => array('name', 'drupal_type', 'drupal_bundle', 'salesforce'),
+    ),
   );
 
   return $schema;
