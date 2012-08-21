@@ -697,8 +697,8 @@ function salesforce_api_valid_email_address($mail) {
  *   An array containing the fieldmap data using the following keys and values:
  *   - fieldmap: the numeric index of the fieldmap. (Will not be present on creation.)
  *   - fieldmap_name: the machine-readable name of the fieldmap. (Only set on creation.)
- *   - drupal_entity: the kind of Drupal entity being mapped.
- *   - drupal_bundle: the name of the bundle for this entity. (Always 'user' for the user entity.)
+ *   - drupal_type: the kind of Drupal object being mapped.
+ *   - drupal_bundle: the name of the bundle for this type. (Always 'user' for the user entity.)
  *   - salesforce: the name of a Salesforce object.
  *   - automatic: whether or not the sync should be automatic
  *   - description: a short title or description of the fieldmap
@@ -728,21 +728,21 @@ function salesforce_api_fieldmap_save(&$map) {
 /**
  * Remove a field from all fieldmaps. This is particularly useful for implementations
  * of hook_field_delete_instance. May be use to delete an occurrence
- * in a single fieldmap (by supplying drupal_entity, drupal_bundle and/or salesforce_type), or every
+ * in a single fieldmap (by supplying drupal_type, drupal_bundle and/or salesforce_type), or every
  * occurence in all fieldmaps (by supplying only the fieldname).
  *
  * @param string $fieldname
  *  The name of the field to be deleted. Either a Field API field, or a Salesforce field
  * @param array $conditions (optional)
- *  If given, limit deleting of the field to this Drupal entity, Drupal bundle, and/or Salesforce type.
- *  These are the fields in the {salesforce_fieldmap} table: drupal_entity, drupal_bundle, salesforce
+ *  If given, limit deleting of the field to this Drupal type, Drupal bundle, and/or Salesforce type.
+ *  These are the fields in the {salesforce_fieldmap} table: drupal_type, drupal_bundle, salesforce
  * @see sf_entity/sf_entity.module:sf_entity_field_delete_instance
  * @todo Ensure that this behaves correctly, especially for if it is a Salesforce field being deleted.
  */
 function salesforce_api_fieldmap_field_delete($fieldname, $conditions = array()) {
-  // If entity, bundle, and/or salesforce type are specified, load just the fieldmaps for that combination of conditions.
-  if(isset($conditions['drupal_entity']) && isset($conditions['drupal_bundle']) && isset($conditions['salesforce']) ||
-     isset($conditions['drupal_entity']) || isset($conditions['salesforce'])) {
+  // If Drupal type, bundle, and/or Salesforce type are specified, load just the fieldmaps for that combination of conditions.
+  if(isset($conditions['drupal_type']) && isset($conditions['drupal_bundle']) && isset($conditions['salesforce']) ||
+     isset($conditions['drupal_type']) || isset($conditions['salesforce'])) {
     $maps = salesforce_api_salesforce_fieldmap_load_by($conditions);
   }
   // Otherwise, load all fieldmaps.
@@ -753,7 +753,7 @@ function salesforce_api_fieldmap_field_delete($fieldname, $conditions = array())
   foreach($maps as $map) {
     // In the extremely unlikely event that a Salesforce field and a Drupal
     // field share the same name, this function handles both.
-    if (isset($conditions['drupal_entity']) && !empty($conditions['drupal_entity'])) {
+    if (isset($conditions['drupal_type']) && !empty($conditions['drupal_type'])) {
       $drupal_fieldname = array_search($fieldname, $map->fields);
       if ($drupal_fieldname) {
         unset($map->fields[$drupal_fieldname]);
@@ -834,20 +834,20 @@ function salesforce_api_fieldmap_delete($fieldmap) {
 }
 
 /**
- * Given a Drupal entity type and Drupal object id, delete an object mapping
+ * Given a Drupal object type and Drupal object id, delete an object mapping
  *
  * @param string $oid
- * @param string $entity_name
- * @param string $bundle_name (optional)
+ * @param string $drupal_type
+ * @param string $drupal_bundle (optional)
  * @return int
  *   The number of object mappings deleted.
  */
-function salesforce_api_delete_object_map($oid, $entity_name, $bundle_name = NULL) {
+function salesforce_api_delete_object_map($oid, $drupal_type, $drupal_bundle = NULL) {
   $num_deleted = db_delete('salesforce_object_map');
-  if(isset($bundle_name) && !empty($bundle_name)) {
-    $num_deleted->condition('drupal_bundle', $bundle_name);
+  if(isset($drupal_bundle) && !empty($drupal_bundle)) {
+    $num_deleted->condition('drupal_bundle', $drupal_bundle);
   }
-  $num_deleted->condition('drupal_entity', $entity_name)
+  $num_deleted->condition('drupal_type', $drupal_type)
     ->condition('oid', $oid)
     ->execute();
   return $num_deleted;
@@ -856,7 +856,7 @@ function salesforce_api_delete_object_map($oid, $entity_name, $bundle_name = NUL
 /**
  * Returns an array of fieldmaps for use as options in the Forms API.
  *
- * @param $drupal_entity
+ * @param $drupal_type
  *   Filters the fieldmaps by Drupal object.
  * @param $drupal_bundle
  *   Filters the fieldmaps by Drupal bundle.
@@ -867,14 +867,14 @@ function salesforce_api_delete_object_map($oid, $entity_name, $bundle_name = NUL
  * @return
  *   A FAPI options array of all the matching fieldmaps.
  */
-function salesforce_api_fieldmap_options($drupal_entity = NULL, $drupal_bundle = NULL, $salesforce = NULL, $automatic = NULL) {
+function salesforce_api_fieldmap_options($drupal_type = NULL, $drupal_bundle = NULL, $salesforce = NULL, $automatic = NULL) {
   $options = array();
 
   // This does not need to not be optimized for performance since it's only an admin interface.
   $maps = salesforce_api_salesforce_fieldmap_load_all();
 
   foreach ($maps as $map) {
-    if ($drupal_entity && $map->drupal_entity != $drupal_entity) {
+    if ($drupal_type && $map->drupal_type != $drupal_type) {
       continue;
     }
     if ($drupal_bundle && $map->drupal_bundle != $drupal_bundle) {
@@ -888,7 +888,7 @@ function salesforce_api_fieldmap_options($drupal_entity = NULL, $drupal_bundle =
     }
     // Setup some replacement args for the label.
     $args = array(
-      '@drupal' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_entity, $map->drupal_bundle),
+      '@drupal' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle),
       '@salesforce' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce),
     );
     $options[$map->name] = t('Drupal @drupal to Salesforce @salesforce', $args);
@@ -904,14 +904,14 @@ function salesforce_api_fieldmap_options($drupal_entity = NULL, $drupal_bundle =
  * @param string $type
  *   valid values: 'drupal' or 'salesforce'
  *   Specify a type to filter the return value to objects of that type.
- * @param string $entity
+ * @param string $drupal_type
  *   valid values: if $type == 'salesforce', this should also be 'salesforce'
- *   if $type == 'drupal', this should be a valid entity name
- *   Specify an entity name to filter the return value to that entity alone.
+ *   if $type == 'drupal', this should be a valid Drupal type name
+ *   Specify a Drupal type name to filter the return value to that type alone.
  *   If this parameter is supplied, you must specify a type.
- * @param string $bundle
+ * @param string $drupal_bundle
  *   Specify a bundle name to further filter the return value by bundle.
- *   If this parameter is supplied, you must specify an entity.
+ *   If this parameter is supplied, you must specify a Drupal type.
  * @param bool $reset
  *   Whether to reset the cache of object definitions.
  * @return
@@ -919,7 +919,7 @@ function salesforce_api_fieldmap_options($drupal_entity = NULL, $drupal_bundle =
  *  If no arguments, all fieldmap objects will be returned.
  *  If $type is specified, only objects of that type will be returned, etc.
  */
-function salesforce_api_fieldmap_objects_load($type = NULL, $entity = NULL, $bundle = NULL, $reset = FALSE) {
+function salesforce_api_fieldmap_objects_load($type = NULL, $drupal_type = NULL, $drupal_bundle = NULL, $reset = FALSE) {
   static $objects = array();
 
   // If we have not yet cached the object definitions...
@@ -940,19 +940,19 @@ function salesforce_api_fieldmap_objects_load($type = NULL, $entity = NULL, $bun
   // If a particular object type was specified...
   if (!empty($type)) {
     // And a particular object was specified...
-    if (!empty($entity)) {
+    if (!empty($drupal_type)) {
       // Return that object definition if it exists or FALSE if it does not.
-      if (!empty($bundle)) {
-        if (isset($objects[$type][$entity][$bundle])) {
-          return $objects[$type][$entity][$bundle];
+      if (!empty($drupal_bundle)) {
+        if (isset($objects[$type][$drupal_type][$drupal_bundle])) {
+          return $objects[$type][$drupal_type][$drupal_bundle];
         }
         else {
           return FALSE;
         }
       }
       else {
-        if (isset($objects[$type][$entity])) {
-          return $objects[$type][$entity];
+        if (isset($objects[$type][$drupal_type])) {
+          return $objects[$type][$drupal_type];
         }
         else {
           return FALSE;
@@ -988,18 +988,18 @@ function salesforce_api_toolkit_installed() {
 
 /**
  * Returns the label for the object of the specified type and name.
- * Note that both the $type and $entity parameters will be 'salesforce'
+ * Note that both the $type and $drupal_type parameters will be 'salesforce'
  * in the case of Salesforce objects.
  *
  * @param $type
- * @param $entity
- * @param $bundle
+ * @param $drupal_type
+ * @param $drupal_bundle
  * @return string
  *   The label for the object.
  */
-function salesforce_api_fieldmap_object_label($type, $entity, $bundle) {
+function salesforce_api_fieldmap_object_label($type, $drupal_type, $drupal_bundle) {
   // Get the object definition.
-  $object = salesforce_api_fieldmap_objects_load($type, $entity, $bundle);
+  $object = salesforce_api_fieldmap_objects_load($type, $drupal_type, $drupal_bundle);
 
   // If no label is specified, return the object name.
   if (!isset($object['label']) && isset($object['fields']['name'])) {
@@ -1013,7 +1013,7 @@ function salesforce_api_fieldmap_object_label($type, $entity, $bundle) {
  * Returns a string of description text for the specified fieldmap.
  */
 function salesforce_api_fieldmap_description($map) {
-  return t('Maps Salesforce %salesforce objects to Drupal %drupal objects.', array('%drupal' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_entity, $map->drupal_bundle), '%salesforce' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce)));
+  return t('Maps Salesforce %salesforce objects to Drupal %drupal objects.', array('%drupal' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle), '%salesforce' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce)));
 }
 
 /**
@@ -1076,7 +1076,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
     return FALSE;
   }
 
-  $drupal_object_definition = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_entity, $map->drupal_bundle);
+  $drupal_object_definition = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type, $map->drupal_bundle);
   $sf_object_definition = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
   $object = new stdClass();
 
@@ -1104,7 +1104,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
           break;
         case 'tokens':
           if (isset($map->fields[$sf_fieldname]['value'])) {
-            $value = token_replace($map->fields[$sf_fieldname]['value'], array($map->drupal_entity => $drupal_data), array('clear' => TRUE, 'sanitize' => FALSE));
+            $value = token_replace($map->fields[$sf_fieldname]['value'], array($map->drupal_type => $drupal_data), array('clear' => TRUE, 'sanitize' => FALSE));
           }
           break;
         case 'php':
@@ -1281,7 +1281,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
  * @param string $drupal_bundle
  *   The secondary type identifier of the the Drupal record
  * @param string $drupal_id
- *   The Drupal record's internal ID (e.g., oid for an entity)
+ *   The Drupal record's internal ID (e.g., oid for a Drupal entity)
  * @param object $drupal_data
  *   An object, such as a node object, containing the data to be synched
  * @param string $fieldmap_name
@@ -1289,7 +1289,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
  */
 function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupal_data, $fieldmap_name = NULL) {
   // When importing *from* Salesforce, don't export *back* to Salesforce.
-  if (isset($drupal_data->sf_entity_skip_export)) {
+  if (isset($drupal_data->sf_skip_export)) {
     return FALSE;
   }
   
@@ -1316,7 +1316,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
   else {
     // No, so query all fieldsmaps for this type+bundle combination.
     $fieldmaps = db_query(
-      "SELECT name FROM {salesforce_fieldmap} WHERE drupal_entity = :type AND drupal_bundle = :bundle",
+      "SELECT name FROM {salesforce_fieldmap} WHERE drupal_type = :type AND drupal_bundle = :bundle",
       array(':type' => $drupal_type, ':bundle' => $bundle)
     )->fetchCol();
   }
@@ -1442,8 +1442,9 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
         if (user_access('administer salesforce')) {
           sf_dpm($response);
         }
-        salesforce_api_log(SALESFORCE_LOG_SOME, 'Salesforce returned an unsuccessful response: ' . print_r($response, 1), array(),
-          WATCHDOG_ERROR, l('entity ' . $id, entity_uri($map->drupal_entity, $entity)));
+        salesforce_api_log(SALESFORCE_LOG_SOME, 'Salesforce returned an unsuccessful response: ' . print_r($response, 1), array(), WATCHDOG_ERROR
+//@todo:check that object is entity first? or should we use a hook to let integration modules provide this link?           l('entity ' . $id, entity_uri($map->drupal_type, $entity))
+        );
       }
             
       // Allow other modules to respond after an export.
@@ -1454,7 +1455,9 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
 
 /**
  * Loads the Salesforce ID and fieldmap index of a Drupal object.
- *
+ * 
+ * @param $oid
+ *   The Drupal object ID.
  * @param $type
  *   The type of the Drupal object you are requesting data for; node or user.
  * @param $id
@@ -1464,13 +1467,13 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
  *     empty array if no data was found.
  */
  // @todo: What to do if this returns multiple results?
-function salesforce_api_id_load($oid, $entity_name, $bundle_name = NULL) {
+function salesforce_api_id_load($oid, $drupal_type, $drupal_bundle = NULL) {
   // Query the main ID table for the associated data.
   if(empty($bundle)) {
-    $result = db_query("SELECT sfid, name FROM {salesforce_object_map} WHERE drupal_entity = :drupal_entity AND oid = :oid", array(':drupal_entity' => $entity_name, ':oid' => $oid));
+    $result = db_query("SELECT sfid, name FROM {salesforce_object_map} WHERE drupal_type = :drupal_type AND oid = :oid", array(':drupal_type' => $drupal_type, ':oid' => $oid));
   }
   else {
-    $result = db_query("SELECT sfid, name FROM {salesforce_object_map} WHERE drupal_entity = :drupal_entity AND drupal_bundle = :drupal_bundle AND oid = :oid", array(':drupal_entity' => $entity_name, 'drupal_bundle' => $bundle_name, ':oid' => $oid));
+    $result = db_query("SELECT sfid, name FROM {salesforce_object_map} WHERE drupal_type = :drupal_type AND drupal_bundle = :drupal_bundle AND oid = :oid", array(':drupal_type' => $drupal_type, 'drupal_bundle' => $drupal_bundle, ':oid' => $oid));
   }
   $data = $result->fetchObject();
   // Return an empty array if no data was found.
@@ -1514,9 +1517,9 @@ function salesforce_api_get_id_with_sfid($sfid, $name = NULL) {
  *   The Salesforce ID of the associated object in the Salesforce database.
  * @param string $name
  *   The name of the fieldmap used to generate the export.
- * @param string $entity_name
- *   The type of Drupal entity being saved.
- * @param string $bundle_name
+ * @param string $drupal_type
+ *   The type of Drupal object being saved.
+ * @param string $drupal_bundle
  *   The Drupal bundle type being saved.
  * @param string $op_type
  *   The type of operation being performed. Possible values are 'import', 'export', and 'link'.
@@ -1524,11 +1527,11 @@ function salesforce_api_get_id_with_sfid($sfid, $name = NULL) {
  *   TRUE if was successful in saving the link, FALSE otherwise.
  * @todo salesforce_api_id_save_multi()
  */
-function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity_name = NULL, $bundle_name = NULL, $op_type = NULL) {
+function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $drupal_type = NULL, $drupal_bundle = NULL, $op_type = NULL) {
   // Allows other modules to respond to salesforce_api_id_save being called.
   foreach (module_implements('salesforce_api_id_save_alter') as $module) {
     $function = $module . '_salesforce_api_id_save_alter';
-    $continue = $function($oid, $sfid, $name, $entity_name, $bundle_name, $op_type);
+    $continue = $function($oid, $sfid, $name, $drupal_type, $drupal_bundle, $op_type);
     if ($continue === FALSE) {
       return FALSE;
     }
@@ -1537,7 +1540,7 @@ function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity
   if ($oid) {
     $oid = (int) $oid;
   }
-  if ($oid && $sfid && $name && $entity_name && $bundle_name && $op_type) {
+  if ($oid && $sfid && $name && $drupal_type && $drupal_bundle && $op_type) {
     ($op_type == 'export') ? $fieldname = 'last_export' : $fieldname = 'last_import';
     $result = db_merge('salesforce_object_map')
       ->key(array(
@@ -1548,8 +1551,8 @@ function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity
         'oid' => $oid,
         'sfid' => $sfid,
         'name' => $name,
-        'drupal_entity' => $entity_name,
-        'drupal_bundle' => $bundle_name,
+        'drupal_type' => $drupal_type,
+        'drupal_bundle' => $drupal_bundle,
         'created' => REQUEST_TIME,
         $fieldname => REQUEST_TIME,
       ))
@@ -1559,21 +1562,21 @@ function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity
       ->execute();
     // Log if an insert has been performed.
     if ($result == MergeQuery::STATUS_INSERT) {
-      salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, successfully linked Drupal !entity : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!entity' => $entity_name, '!bundle' => $bundle_name, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name));
+      salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, successfully linked Drupal !drupal_type : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!drupal_type' => $drupal_type, '!bundle' => $drupal_bundle, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name));
       return TRUE;
     }
     // Log if an update has been performed.
     elseif ($result == MergeQuery::STATUS_UPDATE) {
-      salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, successfully re-saved linkage between Drupal !entity : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!entity' => $entity_name, '!bundle' => $bundle_name, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name));
+      salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, successfully re-saved linkage between Drupal !drupal_type : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!drupal_type' => $drupal_type, '!bundle' => $drupal_bundle, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name));
       return TRUE;
     }
     // Otherwise, log an error.
     else {
-       salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, failed to link Drupal !entity : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!entity' => $entity_name, '!bundle' => $bundle_name, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name), WATCHDOG_ERROR);
+       salesforce_api_log(SALESFORCE_LOG_ALL, 'On !op, failed to link Drupal !drupal_type : !bundle !oid to Salesforce ID !sfid with fieldmap !name', array('!op' => $op_type, '!drupal_type' => $drupal_type, '!bundle' => $drupal_bundle, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name), WATCHDOG_ERROR);
     }
   }
   else {
-    salesforce_api_log(SALESFORCE_LOG_ALL, 'Attempted to save Drupal->Salesforce linkage with insufficient information. Drupal entity: !entity, Drupal bundle: !bundle, Drupal entity id: !oid, Salesforce ID: !sfid, Fieldmap: !name, Operation: !op', array('!entity' => $entity_name, '!bundle' => $bundle_name, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name, '!op' => $op_type), WATCHDOG_ERROR);
+    salesforce_api_log(SALESFORCE_LOG_ALL, 'Attempted to save Drupal->Salesforce linkage with insufficient information. Drupal object: !drupal_type, Drupal bundle: !bundle, Drupal object id: !oid, Salesforce ID: !sfid, Fieldmap: !name, Operation: !op', array('!drupal_type' => $drupal_type, '!bundle' => $drupal_bundle, '!oid' => $oid, '!sfid' => $sfid, '!name' => $name, '!op' => $op_type), WATCHDOG_ERROR);
     return FALSE;
   }
 }
@@ -1591,8 +1594,8 @@ function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity
  *     - 'name'
  *        machine name of the fieldmap corresponding to this linkage.
  *
- *     - 'drupal_entity'
- *        The type of Drupal entity being exported.
+ *     - 'drupal_type'
+ *        The type of Drupal object being exported.
  *
  *     - 'sfid'
  *        the salesforce id of the object
@@ -1605,7 +1608,7 @@ function salesforce_api_id_save($oid = NULL, $sfid = NULL, $name = NULL, $entity
  *  In other words, minimal valid key combinations are:
  *    - 'sfid'
  *    - 'name', 'oid'
- *    - 'drupal_entity', 'oid'
+ *    - 'drupal_type', 'oid'
  */
 // @todo: Need to add drupal_bundle in here as an option?
 //        Would need to be combined with something, probably, in order to make it meaningful.
@@ -1614,7 +1617,7 @@ function salesforce_api_id_unlink($args) {
   $valid_args =
     !empty($args['sfid'])
     || (!empty($args['oid'])
-        && (!empty($args['drupal_entity']) || !empty($args['name'])));
+        && (!empty($args['drupal_type']) || !empty($args['name'])));
   if (!$valid_args) {
     return FALSE;
   }
@@ -1626,8 +1629,8 @@ function salesforce_api_id_unlink($args) {
   if(!empty($args['sfid'])) {
     $num_deleted->condition('sfid', $args['sfid']);
   }
-  if(!empty($args['drupal_entity'])) {
-    $num_deleted->condition('drupal_entity', $args['drupal_entity']);
+  if(!empty($args['drupal_type'])) {
+    $num_deleted->condition('drupal_type', $args['drupal_type']);
   }
   if(!empty($args['name'])) {
     $num_deleted->condition('name', $args['name']);
@@ -1670,11 +1673,11 @@ function salesforce_api_delete_salesforce_objects($sfids) {
 /**
  * Wrapper function for the sf_find_match hook, implemented by sf_match in the core Salesforce Suite.
  */
-function salesforce_api_search_for_duplicates($direction, $entity_name, $bundle_name, $object, $fieldmap_name) {
+function salesforce_api_search_for_duplicates($direction, $drupal_type, $drupal_bundle, $object, $fieldmap_name) {
   // Call hook_sf_find_match to give opportunity to try to match existing sf object instead
   // of creating a new one. No hook_sf_find_match is defined out of the box. Developers must
   // implement their own logic for this one.
-  return module_invoke_all('sf_find_match', $direction, $entity_name, $bundle_name, $object, $fieldmap_name);
+  return module_invoke_all('sf_find_match', $direction, $drupal_type, $drupal_bundle, $object, $fieldmap_name);
 }
 
 /**
@@ -2387,19 +2390,19 @@ function salesforce_api_import_salesforce_fieldmap_validate($form, &$form_state)
     form_error($form['object'], t('Unable to get a fieldmap from the import. Errors reported: @errors', array('@errors' => $errors)));
   }
 
-  if (empty($salesforce_fieldmap->drupal_entity)
+  if (empty($salesforce_fieldmap->drupal_type)
     || empty($salesforce_fieldmap->drupal_bundle)
     || empty($salesforce_fieldmap->salesforce)) {
     form_error($form['object'], t('This fieldmap cannot be imported; the object definition is invalid.'));
     return;
   }
 
-  if (!salesforce_api_fieldmap_source_entity_enabled($salesforce_fieldmap)) {
-    form_error($form['object'], t('This fieldmap cannot be imported, because the module which supports the Drupal entity "%entity" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%entity' => $salesforce_fieldmap->drupal_entity)));
+  if (!salesforce_api_fieldmap_source_type_enabled($salesforce_fieldmap)) {
+    form_error($form['object'], t('This fieldmap cannot be imported, because the module which supports the Drupal drupal_type%entity" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%drupal_type' => $salesforce_fieldmap->drupal_type)));
   }
 
   if (!salesforce_api_fieldmap_source_bundle_enabled($salesforce_fieldmap)) {
-    form_error($form['object'], t('This fieldmap cannot be imported, because the module which supports the Drupal entity type "%bundle" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%entity' => $salesforce_fieldmap->drupal_bundle)));
+    form_error($form['object'], t('This fieldmap cannot be imported, because the module which supports the Drupal bundle "%drupal_bundle" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%drupal_bundle' => $salesforce_fieldmap->drupal_bundle)));
   }
 
   // Try to enable the Salesforce object if it was not found.
@@ -2410,26 +2413,26 @@ function salesforce_api_import_salesforce_fieldmap_validate($form, &$form_state)
 }
 
 /**
- * Helper function to determine whether the Drupal entity for a given
+ * Helper function to determine whether the Drupal type for a given
  * fieldmap is available.
  *
  * @param object $map
  * @return boolean
  */
-function salesforce_api_fieldmap_source_entity_enabled($map) {
-  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_entity);
+function salesforce_api_fieldmap_source_type_enabled($map) {
+  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type);
   return !empty($source);
 }
 
 /**
- * Helper function to determine whether the bundle for the Drupal entity for a given
+ * Helper function to determine whether the bundle for the Drupal type for a given
  * fieldmap is available.
  *
  * @param object $map
  * @return boolean
  */
 function salesforce_api_fieldmap_source_bundle_enabled($map) {
-  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_entity, $map->drupal_bundle);
+  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type, $map->drupal_bundle);
   return !empty($source);
 }
 

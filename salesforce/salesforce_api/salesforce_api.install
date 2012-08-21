@@ -60,8 +60,8 @@ function salesforce_api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'drupal_entity' => array(
-        'description' => 'Drupal entity name (e.g. "node", "user")',
+      'drupal_type' => array(
+        'description' => 'Drupal type name (e.g. "node", "user")',
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
@@ -96,7 +96,7 @@ function salesforce_api_schema() {
     'indexes' => array(
       'sfid' => array('sfid'),
       'name' => array('name'),
-      'entity_bundle_oid' => array('drupal_entity', 'drupal_bundle', 'oid'),
+      'type_bundle_oid' => array('drupal_type', 'drupal_bundle', 'oid'),
     ),
     // Primary key has been changed to the fieldmap:
     // one fieldmapping for each Drupal object - cf. [#1018690-8]
@@ -140,8 +140,8 @@ function salesforce_api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'drupal_entity' => array(
-        'description' => 'The Drupal entity for this fieldmap (e.g. "node", "user").',
+      'drupal_type' => array(
+        'description' => 'The Drupal type for this fieldmap (e.g. "node", "user").',
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,

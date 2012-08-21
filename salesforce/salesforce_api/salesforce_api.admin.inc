@@ -381,7 +381,7 @@ function _salesforce_api_field_admin_format_row($map, $options = array()) {
 
   $auto = implode(', ', $auto);
   $row = array(
-    salesforce_api_fieldmap_object_label('drupal', $map->drupal_entity, $map->drupal_bundle),
+    salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle),
     salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce),
     $auto,
     array(
@@ -404,9 +404,9 @@ function salesforce_api_fieldmap_add_form($form, &$form_state) {
 
   // @todo: Find out why a bare 'node' would get loaded (no bundle)
   $drupal_objects = salesforce_api_fieldmap_objects_load('drupal');
-  foreach ($drupal_objects as $entity_name => $bundles) {
+  foreach ($drupal_objects as $type => $bundles) {
     foreach ($bundles as $bundle_name => $bundle_data) {
-      $options[$entity_name . ':' . $bundle_name] = $bundle_data['label'];
+      $options[$type . ':' . $bundle_name] = $bundle_data['label'];
     }
   }
 
@@ -485,8 +485,8 @@ function salesforce_api_fieldmap_add_form_submit($form, &$form_state) {
  *   The numeric index of the new fieldmap.
  */
 function salesforce_api_fieldmap_create($values) {
-  // Break out the Drupal entity and bundle from the selected option.
-  list($values['drupal_entity'], $values['drupal_bundle']) =
+  // Break out the Drupal type and bundle from the selected option.
+  list($values['drupal_type'], $values['drupal_bundle']) =
     explode(':', $values['drupal'], 2);
   unset($values['drupal']);
   // Create the fieldmap object.
@@ -625,12 +625,12 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
 
   // Fail with an error message if either the source or target object
   // definitions were not found.
-  if (!salesforce_api_fieldmap_source_entity_enabled($map)) {
-    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal entity "%entity" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%entity' => $map->drupal_entity)), 'error');
+  if (!salesforce_api_fieldmap_source_type_enabled($map)) {
+    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal type "%type" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%type' => $map->drupal_type)), 'error');
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
   if (!salesforce_api_fieldmap_source_bundle_enabled($map)) {
-    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal entity type "%bundle" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%bundle' => $map->drupal_bundle)), 'error');
+    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal bundle "%bundle" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%bundle' => $map->drupal_bundle)), 'error');
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
   if (!salesforce_api_fieldmap_target_enabled($map)) {
@@ -638,7 +638,7 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
 
-  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_entity, $map->drupal_bundle);
+  $source = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type, $map->drupal_bundle);
   $target = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
 
   $automatic = array(
@@ -814,7 +814,7 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
     );
     $form['token_help']['help'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array($map->drupal_entity),
+      '#token_types' => array($map->drupal_type),
       '#global_types' => TRUE,
     );
   }

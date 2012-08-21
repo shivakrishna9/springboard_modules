@@ -18,7 +18,7 @@ function salesforce_api_fieldmap_features_export_options() {
   $maps = salesforce_api_salesforce_fieldmap_load_all();
   $options = array();
   foreach ($maps as $machine_name => $map) {
-    $options[$machine_name] = $map->drupal_entity . ' : ' . $map->drupal_bundle . ' => ' . $map->salesforce;
+    $options[$machine_name] = $map->drupal_type . ' : ' . $map->drupal_bundle . ' => ' . $map->salesforce;
   }
   return $options;
 }
