@@ -1322,6 +1322,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
   }
   
   // Loop over all fieldmaps
+  $result = FALSE;
   foreach ($fieldmaps as $fieldmap) {
     // Load the complete fieldmap.
     $fieldmap = salesforce_api_salesforce_fieldmap_load($fieldmap);
@@ -1451,6 +1452,8 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
       module_invoke_all('salesforce_api_post_export', $sf_object, $fieldmap, $drupal_id, $response);
     }
   }
+  
+  return $result;
 }
 
 /**
