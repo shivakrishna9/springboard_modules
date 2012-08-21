@@ -180,7 +180,7 @@ function sf_entity_entity_delete($entity, $type) {
  * @param array $instance
  */
 function sf_entity_field_delete_instance($instance) {
-  salesforce_api_fieldmap_field_delete($instance['field_name'], array('drupal_entity' => $instance['entity_type'], 'drupal_bundle' => $instance['bundle']));
+  salesforce_api_fieldmap_field_delete($instance['field_name'], array('drupal_type' => $instance['entity_type'], 'drupal_bundle' => $instance['bundle']));
 }
 
 /**
@@ -188,9 +188,11 @@ function sf_entity_field_delete_instance($instance) {
  * Flushes the entity cache for a given entity when it has been unlinked.
 */
 function sf_entity_salesforce_api_post_unlink($args) {
-  if(isset($args['drupal_entity'])) {
-    $entity_name = $args['drupal_entity'];
-    entity_get_controller($entity_name)->resetCache();
+  if(isset($args['drupal_type'])) {
+    $entity_name = $args['drupal_type'];
+    if ($controller = entity_get_controller($entity_name)) {
+      $controller->resetCache();
+    }
   }
 }
 
@@ -600,7 +602,6 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
 
 /**
  * Form submit handler for the [entity-name]/%/salesforce form.
- *
  */
 function sf_entity_salesforce_form_submit($form, &$form_state) {
   if($form_state['values']['op'] == t('Export') || $form_state['values']['op'] == t('Import') || $form_state['values']['op'] == t('Create Link')) {
@@ -611,11 +612,11 @@ function sf_entity_salesforce_form_submit($form, &$form_state) {
     $entity = current($entities);
   }
   switch ($form_state['values']['op']) {
-    // Export the node to Salesforce.
+    // Export the entity to Salesforce.
     case t('Export'):
       $sfid = empty($form_state['values']['sfid'])
         ? NULL : $form_state['values']['sfid'];
-      if (sf_entity_export($entity, $form_state['values']['fieldmap'], $sfid)) {
+      if (salesforce_api_export($entity_type, $bundle, $oid, $entity)) {
         drupal_set_message(t('%entity successfully exported to Salesforce.', array('%entity' => $form_state['values']['entity type'])));
       }
       else {
@@ -706,12 +707,12 @@ function sf_entity_import($sf_data, $name, $id = NULL, $options = array()) {
   $map = salesforce_api_salesforce_fieldmap_load($name);
 
   // Load the object definitions.
-  $drupal_object_definition = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_entity, $map->drupal_bundle);
+  $drupal_object_definition = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type, $map->drupal_bundle);
   $salesforce_object_definition = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
 
   // Load the entity to update, if there is one.
   if(!empty($id)) {
-    $entities = entity_load($map->drupal_entity, array($id));
+    $entities = entity_load($map->drupal_type, array($id));
   }
   else {
     $entity = $entities = NULL;
@@ -725,11 +726,11 @@ function sf_entity_import($sf_data, $name, $id = NULL, $options = array()) {
   $create = FALSE;
   if (empty($id) || empty($entity)) {
     // Look for any matching records which we might want to update instead of creating duplicates.
-    $matches = salesforce_api_search_for_duplicates('import', $map->drupal_entity, $map->drupal_bundle, $sf_data, $name);
+    $matches = salesforce_api_search_for_duplicates('import', $map->drupal_type, $map->drupal_bundle, $sf_data, $name);
     if (!empty($matches)) {
       $id = reset($matches);
       if (!empty($id)) {
-        $entities = entity_load($map->drupal_entity, array($id));
+        $entities = entity_load($map->drupal_type, array($id));
         if (is_array($entities)) {
           $entity = current($entities);
         }
@@ -741,15 +742,15 @@ function sf_entity_import($sf_data, $name, $id = NULL, $options = array()) {
     if (empty($entity)) {
       $create = TRUE;
       $ids = array(NULL, NULL, $map->drupal_bundle);
-      $entity = entity_create_stub_entity($map->drupal_entity, $ids);
+      $entity = entity_create_stub_entity($map->drupal_type, $ids);
       $entity->is_new = TRUE;
     }
   }
-  list($id, $vid, $bundle) = entity_extract_ids($map->drupal_entity, $entity);
+  list($id, $vid, $bundle) = entity_extract_ids($map->drupal_type, $entity);
 
   $core_types = array('node', 'user', 'taxonomy_term');
-  if (isset($entity->is_new) && $entity->is_new == TRUE && in_array($map->drupal_entity, $core_types)) {
-    _sf_entity_import_preprocess_entity($entity, $map->drupal_entity, $map->drupal_bundle);
+  if (isset($entity->is_new) && $entity->is_new == TRUE && in_array($map->drupal_type, $core_types)) {
+    _sf_entity_import_preprocess_entity($entity, $map->drupal_type, $map->drupal_bundle);
   }
 
   $changed_fields = 0;
@@ -815,26 +816,26 @@ function sf_entity_import($sf_data, $name, $id = NULL, $options = array()) {
     return $id;
   }
 
-  _sf_entity_import_process_entity($entity, $map->drupal_entity, $map->drupal_bundle);
+  _sf_entity_import_process_entity($entity, $map->drupal_type, $map->drupal_bundle);
 
-  $entity->sf_entity_skip_export = TRUE;
+  $entity->sf_skip_export = TRUE;
   // It would be nice if we could just call entity_save($entity), but there is
   // no entity_save. Fortunately core modules all implement their save
   // functions in almost the exact same way, and they all call entity_invoke()
   // so that our hook_entity_update and hook_entity_insert will fire properly.
-  $function = $map->drupal_entity . '_save';
+  $function = $map->drupal_type . '_save';
   if (function_exists($function)) {
     $function($entity);
   }
   else {
     if (isset($entity->is_new) || empty($id)) {
-      module_invoke_all('entity_insert', $entity, $map->drupal_entity);
+      module_invoke_all('entity_insert', $entity, $map->drupal_type);
     }
     else {
-      module_invoke_all('entity_update', $entity, $map->drupal_entity);
+      module_invoke_all('entity_update', $entity, $map->drupal_type);
     }
   }
-  list($id, $vid, $bundle) = entity_extract_ids($map->drupal_entity, $entity);
+  list($id, $vid, $bundle) = entity_extract_ids($map->drupal_type, $entity);
 
   // If the entity id has been set...
   if (!empty($id)) {
@@ -852,13 +853,13 @@ function sf_entity_import($sf_data, $name, $id = NULL, $options = array()) {
         $sfid = $sf_data->Id;
       }
       if (!empty($sfid)) {
-        salesforce_api_id_save($id, $sfid, $name, $map->drupal_entity, $map->drupal_bundle, 'import');
+        salesforce_api_id_save($id, $sfid, $name, $map->drupal_type, $map->drupal_bundle, 'import');
       }
     }
   }
   // Allow modules to respond after an import.
   module_invoke_all('salesforce_api_post_import', $entity, $name, $sf_data, $create);
-  unset($entity->sf_entity_skip_export);
+  unset($entity->sf_skip_export);
 
   // Return the Drupal ID of the imported entity.
   return $id;
@@ -1212,7 +1213,7 @@ function sf_entity_default_salesforce_fieldmaps($drupal = NULL, $sf = NULL) {
       'disabled' => FALSE,
       'name' => 'salesforce_api_default_node_page_campaign_fieldmap',
       'automatic' => SALESFORCE_AUTO_SYNC_OFF,
-      'drupal_entity' => 'node',
+      'drupal_type' => 'node',
       'drupal_bundle' => 'page',
       'salesforce' => 'Campaign',
       'fields' => array('Name' => 'title', 'Description' => 'body:value'),
@@ -1222,7 +1223,7 @@ function sf_entity_default_salesforce_fieldmaps($drupal = NULL, $sf = NULL) {
       'disabled' => FALSE,
       'name' => 'salesforce_api_default_user_contact_fieldmap',
       'automatic' => SALESFORCE_AUTO_SYNC_OFF,
-      'drupal_entity' => 'user',
+      'drupal_type' => 'user',
       'drupal_bundle' => 'user',
       'salesforce' => 'Contact',
       'fields' => array('LastName' => 'name', 'Email' => 'mail'),
