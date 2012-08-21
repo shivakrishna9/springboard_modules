@@ -141,7 +141,7 @@ function sf_queue_enqueue($op, $drupal_data, $map, $oid, $sfid) {
     $update = 'oid';
     $object->oid = $existing['oid'];
   }
-
+  
   // If we successfully wrote to the queue, then we return FALSE to prevent an
   // immediate salesforce export. If we failed to write to the queue, log an
   // error but don't prevent the export.
@@ -285,112 +285,226 @@ function sf_queue_handle_deletes($settings) {
  *   allotted processing time limit.
  */
 function sf_queue_handle_upserts($settings) {
+  // Prepare a query of the queue item totals for each fieldmap with insert/create actions pending.
   $counts = db_select('salesforce_export_queue', 'q');
-  $counts->addField('q', 'sf_type');
-  $counts->addExpression('COUNT(q.sf_type)', 'total');
+  $counts->addField('q', 'fieldmap_name');
+  $counts->addExpression('COUNT(q.fieldmap_name)', 'total');
   $counts->condition('sf_op', array('upsert', 'insert', 'create'));
-  $counts->groupBy('sf_type');
+  $counts->groupBy('fieldmap_name');
   $counts->orderBy('total', 'DESC');
   
+  // Prepare a query for each fieldmap's queue items.
   $enqueued = db_select('salesforce_export_queue', 'q')
     ->fields('q', array(
-      'id', 'oid', 'fieldmap_name', 'drupal_type', 'sf_type', 'sfid', 'sf_data'
+      'id', 'oid', 'fieldmap_name', 'sfid', 'drupal_data'
     ))
   ;
+  $enqueued->condition('sf_op', array('upsert', 'insert', 'create'));
   $enqueued->orderBy('created');
   $enqueued->range(0, $settings['cron_num_objects']);
   
+  // Limit both queries to the configured maximum number of retry attempts.
   if ($settings['retry_num_attempts'] >= 0) {
     $counts->condition('attempts', $settings['retry_num_attempts'] + 1, '<');
     $enqueued->condition('attempts', $settings['retry_num_attempts'] + 1, '<');
   }
+  
+  // Limit the counts query to the configured minimum number of queue items.
   if ($settings['cron_min_threshold']) {
     $counts->havingCondition('total', $settings['cron_min_threshold'], '>=');
   }
   
-  $done = FALSE;
+  // Iterate over all fieldmaps with insert/create actions pending, until we run out of time.
+  $counts_results = $counts->execute();
   $timeout_time = $settings['start_time'] + $settings['limit'];
+  while ($timeout_time > time()  &&  $count = $counts_results->fetchObject()) {
+    // Make sure we have a Salesforce connection.
+    if (!isset($sf)) {
+      $sf = salesforce_api_connect();
+    }
+    
+    // Load the fieldmap.
+    $fieldmap = salesforce_api_salesforce_fieldmap_load($count->fieldmap_name);
+    $export_objects = array();
+//    $dedupe_drupal_field = $fieldmap->fields[$fieldmap->dedupe_key];
+    $dedupe_field_enquote = TRUE; //@todo: un-hardwire this
 
-  $count_results = $counts->execute();
-
-  while ($timeout_time > time()  &&  $row = $count_results->fetchAssoc()) {
-    $sf_type = $row['sf_type'];
-    foreach (array('update', 'create') as $op) {
-      $op_done = FALSE;
-      $args = array($op, $sf_type, $settings['retry_num_attempts'] + 1);
-      while ($timeout_time > time()  &&  !$op_done) {
-        $items = $ids = $objects = array();
-        $enqueued_per_type = clone $enqueued;
-        $enqueued_per_type->condition('sf_type', $sf_type, '=');
-        $enqueued_per_type->condition('sf_op', $op, '=');
-        $enqueued_results = $enqueued_per_type->execute();
-        while ($queue_item = $enqueued_results->fetchAssoc()) {
-          $ids[] = $queue_item['id'];
-          $items[] = $queue_item;
-          $object = unserialize($queue_item['sf_data']);
-          if ($op == 'create') {
-            unset($object->Id);
-          }
-          $objects[] = $object;
+    // Query all update/insert queue items for this fieldmap.
+    $enqueued_per_fieldmap = clone $enqueued;
+    $enqueued_per_fieldmap->condition('fieldmap_name', $fieldmap->name, '=');
+    $queue_items = $enqueued_per_fieldmap->execute();
+    
+    // Iterate over queue items, preparing for dedupe query.
+    $existing_sf_objects = array();
+    $known_sfids = array();
+    $dedupe_keys = array();
+    foreach ($queue_items as $queue_item) {
+      if (!empty($queue_item->sfid)) {
+        $known_sfids[] = $queue_item->sfid;
+      } else {
+        $dedupe_value = _sf_queue_get_dedupe_value($fieldmap, $queue_item);
+        if (!empty($dedupe_value)) {
+          $dedupe_keys[$dedupe_value] = FALSE;
         }
-        if (count($ids) > 0) {
-          try {
-            $sf = salesforce_api_connect();
-            $responses = $sf->client->{$op}($objects, $sf_type);
-            error_log(print_r($responses, 1));
-            list($wins, $fails) = sf_queue_handle_responses($responses, $items);
-          }
-          catch (Exception $e) {
-            sf_queue_handle_exception($e, $responses);
-            continue;
-          }
-          error_log(print_r($wins, 1));
-          error_log(print_r($fails, 1));
-          if (count($fails) > 0) {
-            watchdog('sf_queue', "Failed objects [<pre>" . print_r($objects, TRUE) . "</pre>]");
-          }
-          if (count($wins) == 0) {
-            break;
-          }
-          // Instead of using salesforce_api_id_save to generate 2 SQL queries per
-          // record, we collect them all to do 2 massive queries for all the
-          // records at once.
-          db_delete('salesforce_object_map')
-            ->condition('oid', array_values($wins), 'IN')
-            ->execute()
+      }
+    }
+    
+    // Prepare to query Salesforce for existing records.
+    $sf_fields = array_keys($fieldmap->fields);
+    if (!in_array('Id', $sf_fields)) {
+      $sf_fields[] = 'Id';
+    }
+    $query_stub = 'SELECT ' . implode(',', $sf_fields) . ' FROM ' . $fieldmap->salesforce . ' WHERE ';
+    $query_stub_length = strlen($sf_select) + strlen("Id IN () OR $fieldmap->dedupe_key IN ()");
+    $dedupe_values = array_keys($dedupe_keys);
+    $sfids = $known_sfids;
+    
+    // Submit queries of up to SALESFORCE_API_QUERY_CHAR_MAX characters until we've looked up everything.
+    while (!empty($sfids) || !empty($dedupe_values)) {
+      // Build query.
+      $query_sfids = ',';
+      $query_dedupe_values = ',';
+      while (SALESFORCE_API_QUERY_CHAR_MAX > (
+        $query_stub_length + strlen($query_condition_sfids) + strlen($query_condition_dedupe)
+      )) {
+        if (!empty($sfids)) {
+          $query_sfids = '"' . array_pop($sfids) . '",' . $query_sfids;
+        } else if (!empty($dedupe_values)) {
+          $query_dedupe_values = 
+            ($dedupe_field_enquote ? '"' : '')
+            . array_pop($dedupe_values)
+            . ($dedupe_field_enquote ? '",' : ',')
+            . $query_dedupe_values
           ;
-          
-          $insert = db_insert('salesforce_object_map')
-            ->fields(array(
-              'drupal_entity', 'drupal_bundle', 'oid', 'sfid', 'name', 'created', 'last_export'
-            ))
-          ;
-          $offset = 0;
-          foreach ($wins as $sfid => $oid) {
-            $drupal_type = $items[$offset]['drupal_type'];
-            $delimiter_pos = strpos($drupal_type, '_');
-            $drupal_entity = substr($drupal_type, 0, $delimiter_pos);
-            $drupal_bundle = substr($drupal_type, $delimiter_pos + 1);
-            $insert->values(array(
-              'drupal_entity' => $drupal_entity,
-              'drupal_bundle' => $drupal_bundle,
-              'oid' => $oid,
-              'sfid' => $sfid,
-              'name' => $items[$offset]['fieldmap_name'],
-              'created' => time(),
-              'last_export' => time(),
-            ));
-            $offset++;
-          }
-          $insert->execute();
-        }
-        else {
-          $op_done = TRUE;
+        } else {
           break;
         }
-      } // while time limit for each operation
-    } // foreach operation
+      }
+      $query_sfids = substr($query_sfids, 0, -1);
+      $query_dedupe_values = substr($query_dedupe_values, 0, -1);
+      $query = $query_stub;
+      if (strlen($query_sfids) > 1) {
+        $query .= "Id IN ($query_sfids)";
+        if (strlen($query_dedupe_values) > 1) {
+          $query .= ' OR ';
+        }
+      }
+      if (strlen($query_dedupe_values) > 1) {
+        $query .= "$fieldmap->dedupe_key IN ($query_dedupe_values)"; 
+      }
+      
+      // Submit query and process results.
+      try {
+        $result = $sf->client->query($query);
+      }
+      catch (Exception $e) {
+        salesforce_api_log(
+          SALESFORCE_LOG_SOME, 
+          'Exception in sf_queue_handle_upserts: ' . $e->getMessage(), 
+          array(), 
+          WATCHDOG_ALERT
+        );
+        // This sinks us, so abort.
+        return;
+      }
+      if ($result->size > 0) {
+        foreach ($result->records as $existing_object) {
+          $existing_sf_objects[$existing_object->Id] = $existing_object;
+          if (isset($dedupe_keys[ $existing_object->{$fieldmap->dedupe_key} ])) {
+            $dedupe_keys[ $existing_object->{$fieldmap->dedupe_key} ] = $existing_object->Id;
+          }
+        }
+      }
+    }
+    
+    // Iterate over queue items again, this time building and submitting an upsert request.
+    $done_trying = FALSE;  //@todo: is this $done_trying logic really what we want? won't it just hammer the API with the same upsert until the cron time limit is reached?
+    while ($timeout_time > time()  &&  !$done_trying) {
+      $items = $ids = $objects = array();
+      foreach ($queue_items as $queue_item) {
+        $ids[] = $queue_item->id;
+        $items[] = $queue_item;
+        $drupal_data = (object) unserialize($queue_item->drupal_data);
+                
+        // Do we have an existing Salesforce object?
+        $existing_sf_object = NULL;
+        if (!empty($queue_item->sfid)) {
+          $existing_sf_object = $existing_sf_objects[$queue_item->sfid];
+        } else {
+          $dedupe_value = _sf_queue_get_dedupe_value($fieldmap, $queue_item);
+          if (!empty($dedupe_value) && $dedupe_keys[$dedupe_value] !== FALSE) {
+            $existing_sf_object = $existing_sf_objects[$dedupe_keys[$dedupe_value]];
+          }
+        }
+        
+        // Generate Salesforce object for export.
+        $objects[] = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data, $existing_sf_object);
+        
+        if ($sf_op == 'create') {
+          unset($object->Id);
+        }
+        $objects[] = $object;
+      }
+      if (count($ids) > 0) {
+        try {
+          $responses = $sf->client->upsert($objects, $fieldmap->salesforce);
+          error_log(print_r($responses, 1));  //@todo: remove after testing
+          list($wins, $fails) = sf_queue_handle_responses($responses, $items);
+        }
+        catch (Exception $e) {
+          sf_queue_handle_exception($e, $responses);
+          continue;
+        }
+        error_log(print_r($wins, 1));  //@todo: remove after testing
+        error_log(print_r($fails, 1));  //@todo: remove after testing
+        if (count($fails) > 0) {
+          watchdog('sf_queue', "Failed objects [<pre>" . print_r($objects, TRUE) . "</pre>]");
+        }
+        if (count($wins) == 0) {
+          break;
+        }
+        // Instead of using salesforce_api_id_save to generate 2 SQL queries per
+        // record, we collect them all to do 2 massive queries for all the
+        // records at once.
+        db_delete('salesforce_object_map')
+          ->condition('oid', array_values($wins), 'IN')
+          ->execute()
+        ;
+        $insert = db_insert('salesforce_object_map')
+          ->fields(array(
+            'drupal_entity', 'drupal_bundle', 'oid', 'sfid', 'name', 'created', 'last_export'
+          ))
+        ;
+        $offset = 0;
+        foreach ($wins as $sfid => $oid) {
+          $insert->values(array(
+            'drupal_entity' => $fieldmap->drupal_entity,
+            'drupal_bundle' => $fieldmap->drupal_bundle,
+            'oid' => $oid,
+            'sfid' => $sfid,
+            'name' => $items[$offset]->fieldmap_name,
+            'created' => time(),
+            'last_export' => time(),
+          ));
+          $offset++;
+        }
+        $insert->execute();
+      }
+      else {
+        $done_trying = TRUE;
+        break;
+      }
+    } // while time limit for each operation
   } // while sf_type loop
+}
+
+function _sf_queue_get_dedupe_value($fieldmap, $queue_item) {
+  //@todo: Replace this with a less kludgy approach that maps just the field and not the whole object?
+  //@todo: Does the dedupe key actually have to be mapped by the fieldmap? If not, then this has to be replaced.
+  $drupal_data = (object) unserialize($queue_item->drupal_data);
+  $sf_object = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data);
+  $dedupe_value = $sf_object->{$fieldmap->dedupe_key};
+  return $dedupe_value;
 }
 
 /**

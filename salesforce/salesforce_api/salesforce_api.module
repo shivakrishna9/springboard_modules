@@ -8,6 +8,7 @@
 
 define('SALESFORCE_API_MINIMUM_VERSION', 1);
 define('SALESFORCE_API_CURRENT_VERSION', 1);
+define('SALESFORCE_API_QUERY_CHAR_MAX', 10000);
 
 // Define default directory paths for the Toolkit and WSDL files.
 define('SALESFORCE_DIR', drupal_get_path('module', 'salesforce_api'));
