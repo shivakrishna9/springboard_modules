@@ -280,6 +280,7 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
     // create some convenience vars
     $nid = $form['#node']->nid;
     $fid = $user_fieldmap['fieldmap'];
+    $form['#component_hierarchy'] = fundraiser_parse_components($form['#node']->nid, $form['#node']->webform['components']);
 
     // add some hidden fields so that our javascript can pluck out some values
     $form['nid'] = array(
@@ -291,7 +292,7 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
       '#type' => 'hidden',
       '#value' => $fid,
     );
-  
+
     // get the metadata of the mapped object so we can extract some nice field labels  
     $saleforce_metadata = salesforce_management_api_fieldmap_objects_load('salesforce', $user_fieldmap['salesforce']);
 

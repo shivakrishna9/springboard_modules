@@ -68,7 +68,7 @@ function fundraiser_offline_form(&$form_state, $nid = '') {
     '#title' => t('Select a donation form'),
     '#weight' => -10,
   );
-  $form['fundraiser_offline']['nid'] = array(
+  $form['fundraiser_offline']['offline_nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Form'),
     '#autocomplete_path' => 'fundraiser_offline/lookup',
@@ -81,18 +81,18 @@ function fundraiser_offline_form(&$form_state, $nid = '') {
   );
   // On this page we simply render and return the donation node for display, allowing it to submit to itself.
   $form['#suffix'] = '<div id="fundraiser-offline-node">' . t('No donation form selected yet. Please select one.') . '</div>';
-  if (isset($form_state['values']) && isset($form_state['values']['nid'])) {
+  if (isset($form_state['values']) && isset($form_state['values']['offline_nid'])) {
     // Grab the nid value out of the string. Should be in the format X [nid:Y]
     $form['#suffix'] = '<div id="fundraiser-offline-node">' .
-      t('No donation form found matching %string. Please select a new one.', array('%string' => $form_state['values']['nid'])) . '</div>';
-    preg_match('/^(?:\s*|(.*) )?\[\s*nid\s*:\s*(\d+)\s*\]$/', $form_state['values']['nid'], $matches);
+      t('No donation form found matching %string. Please select a new one.', array('%string' => $form_state['values']['offline_nid'])) . '</div>';
+    preg_match('/^(?:\s*|(.*) )?\[\s*nid\s*:\s*(\d+)\s*\]$/', $form_state['values']['offline_nid'], $matches);
     if (!empty($matches)) {
       $nid = $matches[2];
     }
   }
   if (isset($nid) && is_numeric($nid)) {
-    $form['#node']->nid = $nid;
-    $node = node_load($nid);
+    $form['#node'] = $node = node_load($nid);
+    $form['fundraiser_offline']['offline_nid']['#default_value'] = t('@title [nid: @nid]', array('@title' => $node->title, '@nid' => $node->nid));
     $node->fundraiser_offline_mode = TRUE;
     // Use node_view to display the actual node, with rendered Webform components.
     $form['#suffix'] = '<div id="fundraiser-offline-node">' . node_view($node, FALSE, FALSE, FALSE) . '</div>';
@@ -259,7 +259,6 @@ function fundraiser_offline_form_alter(&$form, &$form_state, $form_id) {
     $path = drupal_lookup_path('source'); // Current path, regardless of alias.
     if ($path == 'node/' . $form['#parameters'][2]->nid || !isset($form['#parameters'][2]->fundraiser_offline_mode) || $form['#parameters'][2]->fundraiser_offline_mode != TRUE) {
       _fundraiser_offline_is_offline(FALSE);
-  drupal_set_message('here');
       return; // Bail out.
     }
     // Otherwise, we're in the clear and still in offline mod.e
