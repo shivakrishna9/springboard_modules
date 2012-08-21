@@ -51,7 +51,7 @@ function sf_queue_salesforce_api_export($fieldmap, $drupal_id, $drupal_data, $ex
     watchdog('sf_queue', "Salesforce Export Queue module is enabled but the queue is not.");
     return;
   }
-  $op = isset($existing->sfid) ? 'create' : 'update';  // Note that create-op data hasn't been dupe checked yet.
+  $op = (isset($existing->sfid) && !empty($existing->sfid)) ? 'update' : 'create';  // Note that create-op data hasn't been dupe checked yet.
   $settings = variable_get('sf_queue_settings', _sf_queue_default_settings());
   if (!in_array($op, $settings['cron_operations'])) {
     return TRUE;
@@ -113,14 +113,13 @@ function sf_queue_salesforce_api_delete($sfid, $map, $oid) {
  * Helper function to add / update a queue item.
  */
 function sf_queue_enqueue($op, $drupal_data, $map, $oid, $sfid) {
-  $drupal_type = $map->drupal_entity . '_' . $map->drupal_bundle;
   $object = (object) array(
     'sf_op' => $op,
     'oid' => $oid,
     'attempts' => 0,
     'created' => REQUEST_TIME,
     'sfid' => $sfid,
-    'drupal_type' => $map->drupal_entity,
+    'drupal_type' => $map->drupal_type,
     'drupal_bundle' => $map->drupal_bundle,
     'sf_type' => $map->salesforce,
     'name' => md5(microtime()),
@@ -147,7 +146,7 @@ function sf_queue_enqueue($op, $drupal_data, $map, $oid, $sfid) {
   // error but don't prevent the export.
   if (drupal_write_record('salesforce_export_queue', $object, $update)) {
     if (user_access('administer salesforce')) {
-      drupal_set_message(t('Drupal !type queued for Salesforce export.', array('!type' => $drupal_type)));
+      drupal_set_message(t('Drupal !type queued for Salesforce export.', array('!type' => $map->drupal_type)));
     }
     return FALSE;
   }
@@ -289,7 +288,7 @@ function sf_queue_handle_upserts($settings) {
   $counts = db_select('salesforce_export_queue', 'q');
   $counts->addField('q', 'fieldmap_name');
   $counts->addExpression('COUNT(q.fieldmap_name)', 'total');
-  $counts->condition('sf_op', array('upsert', 'insert', 'create'));
+  $counts->condition('sf_op', array('update', 'create', 'upsert'));
   $counts->groupBy('fieldmap_name');
   $counts->orderBy('total', 'DESC');
   
@@ -299,7 +298,7 @@ function sf_queue_handle_upserts($settings) {
       'id', 'oid', 'fieldmap_name', 'sfid', 'drupal_data'
     ))
   ;
-  $enqueued->condition('sf_op', array('upsert', 'insert', 'create'));
+  $enqueued->condition('sf_op', array('update', 'create', 'upsert'));
   $enqueued->orderBy('created');
   $enqueued->range(0, $settings['cron_num_objects']);
   
@@ -326,13 +325,12 @@ function sf_queue_handle_upserts($settings) {
     // Load the fieldmap.
     $fieldmap = salesforce_api_salesforce_fieldmap_load($count->fieldmap_name);
     $export_objects = array();
-//    $dedupe_drupal_field = $fieldmap->fields[$fieldmap->dedupe_key];
     $dedupe_field_enquote = TRUE; //@todo: un-hardwire this
 
     // Query all update/insert queue items for this fieldmap.
     $enqueued_per_fieldmap = clone $enqueued;
     $enqueued_per_fieldmap->condition('fieldmap_name', $fieldmap->name, '=');
-    $queue_items = $enqueued_per_fieldmap->execute();
+    $queue_items = $enqueued_per_fieldmap->execute()->fetchAll();
     
     // Iterate over queue items, preparing for dedupe query.
     $existing_sf_objects = array();
@@ -344,6 +342,10 @@ function sf_queue_handle_upserts($settings) {
       } else {
         $dedupe_value = _sf_queue_get_dedupe_value($fieldmap, $queue_item);
         if (!empty($dedupe_value)) {
+          if ($dedupe_field_enquote) {
+            // SOQL text comparisons are case insensitive.
+            $dedupe_value = strtoupper($dedupe_value);
+          }
           $dedupe_keys[$dedupe_value] = FALSE;
         }
       }
@@ -355,41 +357,41 @@ function sf_queue_handle_upserts($settings) {
       $sf_fields[] = 'Id';
     }
     $query_stub = 'SELECT ' . implode(',', $sf_fields) . ' FROM ' . $fieldmap->salesforce . ' WHERE ';
-    $query_stub_length = strlen($sf_select) + strlen("Id IN () OR $fieldmap->dedupe_key IN ()");
+    $query_stub_length = strlen($query_stub) + strlen("Id IN () OR $fieldmap->dedupe_key IN ()");
     $dedupe_values = array_keys($dedupe_keys);
     $sfids = $known_sfids;
     
     // Submit queries of up to SALESFORCE_API_QUERY_CHAR_MAX characters until we've looked up everything.
     while (!empty($sfids) || !empty($dedupe_values)) {
       // Build query.
-      $query_sfids = ',';
-      $query_dedupe_values = ',';
+      $query_sfids = '';
+      $query_dedupe_values = '';
       while (SALESFORCE_API_QUERY_CHAR_MAX > (
-        $query_stub_length + strlen($query_condition_sfids) + strlen($query_condition_dedupe)
+        $query_stub_length + strlen($query_sfids) + strlen($query_dedupe_values)
       )) {
         if (!empty($sfids)) {
           $query_sfids = '"' . array_pop($sfids) . '",' . $query_sfids;
         } else if (!empty($dedupe_values)) {
-          $query_dedupe_values = 
-            ($dedupe_field_enquote ? '"' : '')
-            . array_pop($dedupe_values)
-            . ($dedupe_field_enquote ? '",' : ',')
-            . $query_dedupe_values
-          ;
+          if ($dedupe_field_enquote) {
+            //@todo: escape quotes in value
+            $query_dedupe_values = "'" . array_pop($dedupe_values) . "'," . $query_dedupe_values;
+          } else {
+            $query_dedupe_values = array_pop($dedupe_values) . ',' . $query_dedupe_values;
+          }
         } else {
           break;
         }
       }
-      $query_sfids = substr($query_sfids, 0, -1);
-      $query_dedupe_values = substr($query_dedupe_values, 0, -1);
       $query = $query_stub;
-      if (strlen($query_sfids) > 1) {
+      if (strlen($query_sfids) > 0) {
+        $query_sfids = substr($query_sfids, 0, -1);
         $query .= "Id IN ($query_sfids)";
-        if (strlen($query_dedupe_values) > 1) {
+        if (strlen($query_dedupe_values) > 0) {
           $query .= ' OR ';
         }
       }
-      if (strlen($query_dedupe_values) > 1) {
+      if (strlen($query_dedupe_values) > 0) {
+        $query_dedupe_values = substr($query_dedupe_values, 0, -1);
         $query .= "$fieldmap->dedupe_key IN ($query_dedupe_values)"; 
       }
       
@@ -410,8 +412,13 @@ function sf_queue_handle_upserts($settings) {
       if ($result->size > 0) {
         foreach ($result->records as $existing_object) {
           $existing_sf_objects[$existing_object->Id] = $existing_object;
-          if (isset($dedupe_keys[ $existing_object->{$fieldmap->dedupe_key} ])) {
-            $dedupe_keys[ $existing_object->{$fieldmap->dedupe_key} ] = $existing_object->Id;
+          $dedupe_value = $existing_object->{$fieldmap->dedupe_key};
+          if ($dedupe_field_enquote) {
+            // SOQL text comparisons are case insensitive.
+            $dedupe_value = strtoupper($dedupe_value);
+          }
+          if (isset($dedupe_keys[$dedupe_value])) {
+            $dedupe_keys[$dedupe_value] = $existing_object->Id;
           }
         }
       }
@@ -425,13 +432,17 @@ function sf_queue_handle_upserts($settings) {
         $ids[] = $queue_item->id;
         $items[] = $queue_item;
         $drupal_data = (object) unserialize($queue_item->drupal_data);
-                
+        
         // Do we have an existing Salesforce object?
         $existing_sf_object = NULL;
         if (!empty($queue_item->sfid)) {
           $existing_sf_object = $existing_sf_objects[$queue_item->sfid];
         } else {
           $dedupe_value = _sf_queue_get_dedupe_value($fieldmap, $queue_item);
+          if ($dedupe_field_enquote) {
+            // SOQL text comparisons are case insensitive.
+            $dedupe_value = strtoupper($dedupe_value);
+          }
           if (!empty($dedupe_value) && $dedupe_keys[$dedupe_value] !== FALSE) {
             $existing_sf_object = $existing_sf_objects[$dedupe_keys[$dedupe_value]];
           }
@@ -439,17 +450,14 @@ function sf_queue_handle_upserts($settings) {
         
         // Generate Salesforce object for export.
         $objects[] = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data, $existing_sf_object);
-        
-        if ($sf_op == 'create') {
-          unset($object->Id);
-        }
-        $objects[] = $object;
       }
+      
+      // If any objects are ready for export, ship them to the Salesforce API.
       if (count($ids) > 0) {
         try {
-          $responses = $sf->client->upsert($objects, $fieldmap->salesforce);
+          $responses = $sf->client->upsert($fieldmap->dedupe_key, $objects, $fieldmap->salesforce);
           error_log(print_r($responses, 1));  //@todo: remove after testing
-          list($wins, $fails) = sf_queue_handle_responses($responses, $items);
+          list($wins, $fails) = sf_queue_handle_responses($responses, $queue_item->oid, $fieldmap);
         }
         catch (Exception $e) {
           sf_queue_handle_exception($e, $responses);
@@ -472,23 +480,23 @@ function sf_queue_handle_upserts($settings) {
         ;
         $insert = db_insert('salesforce_object_map')
           ->fields(array(
-            'drupal_entity', 'drupal_bundle', 'oid', 'sfid', 'name', 'created', 'last_export'
+            'drupal_type', 'drupal_bundle', 'oid', 'sfid', 'name', 'created', 'last_export'
           ))
         ;
-        $offset = 0;
         foreach ($wins as $sfid => $oid) {
           $insert->values(array(
-            'drupal_entity' => $fieldmap->drupal_entity,
+            'drupal_type' => $fieldmap->drupal_type,
             'drupal_bundle' => $fieldmap->drupal_bundle,
             'oid' => $oid,
             'sfid' => $sfid,
-            'name' => $items[$offset]->fieldmap_name,
+            'name' => $fieldmap->name,
             'created' => time(),
             'last_export' => time(),
           ));
-          $offset++;
         }
         $insert->execute();
+        //@todo: re-figure this $done_trying stuff
+        $done_trying = TRUE;
       }
       else {
         $done_trying = TRUE;
@@ -511,15 +519,14 @@ function _sf_queue_get_dedupe_value($fieldmap, $queue_item) {
  * @todo Please document this function.
  * @see http://drupal.org/node/1354
  */
-function sf_queue_handle_responses($responses, $dataset) {
+function sf_queue_handle_responses($responses, $oid, $fieldmap) {
   $wins = $fails = array();
   if (!is_array($responses)) {
     $responses = array($responses);
   }
   foreach ($responses as $key => $response) {
-    $item = $dataset[$key];
     if (!empty($response->success)) {
-      $wins[$response->id] = $item['oid'];
+      $wins[$response->id] = $oid;
     }
     else {
       if (isset($response->errors) && is_array($response->errors) && is_object($response->errors[0])) {
@@ -534,18 +541,24 @@ function sf_queue_handle_responses($responses, $dataset) {
         );
         watchdog('sf_queue', $error_str);
       }
-      $fails[] = $item['oid'];
+      $fails[] = $oid;
     }
   }
   if (count($wins) > 0) {
     db_delete('salesforce_export_queue')
-      ->condition('oid', array_values($wins), 'IN')
+      ->condition('oid', array_values($wins))
+      ->condition('drupal_type', $fieldmap->drupal_type)
+      ->condition('drupal_bundle', $fieldmap->drupal_bundle)
+      ->execute();
     ;
   }
   if (count($fails) > 0) {
     db_query(
-      "UPDATE {salesforce_export_queue} SET attempts = attempts + 1 WHERE oid IN (:oids);",
-      array(':oids' => $fails)
+      "UPDATE {salesforce_export_queue} 
+        SET attempts = attempts + 1 
+        WHERE oid IN (:oids) AND drupal_type = :drupal_type AND drupal_bundle = :drupal_bundle
+      ;",
+      array(':oids' => $fails, ':drupal_type' => $fieldmap->drupal_type, ':drupal_bundle' => $fieldmap->drupal_bundle)
     );
   }
   return array($wins, $fails);

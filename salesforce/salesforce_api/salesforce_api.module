@@ -1317,7 +1317,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
     // No, so query all fieldsmaps for this type+bundle combination.
     $fieldmaps = db_query(
       "SELECT name FROM {salesforce_fieldmap} WHERE drupal_type = :type AND drupal_bundle = :bundle",
-      array(':type' => $drupal_type, ':bundle' => $bundle)
+      array(':type' => $drupal_type, ':bundle' => $drupal_bundle)
     )->fetchCol();
   }
   
@@ -1384,7 +1384,9 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
       
       // Create an object for export based on the specified fieldmap.
       $sf_object = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data, $existing_sf_object);
-      $sf_object->Id = $existing_sf_object->Id;
+      if (isset($existing_sf_object->Id)) {
+        $sf_object->Id = $existing_sf_object->Id;
+      }
       
       // Upsert against dedupe key (if given in the fieldmap) or else Id.
       try {
