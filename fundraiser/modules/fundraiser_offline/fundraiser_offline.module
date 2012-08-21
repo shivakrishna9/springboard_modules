@@ -66,6 +66,7 @@ function fundraiser_offline_form(&$form_state, $nid = '') {
   $form['fundraiser_offline'] = array(
     '#type' => 'fieldset',
     '#title' => t('Select a donation form'),
+    '#weight' => -10,
   );
   $form['fundraiser_offline']['nid'] = array(
     '#type' => 'textfield',
