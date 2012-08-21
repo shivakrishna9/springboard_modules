@@ -1,0 +1,82 @@
+/* styles for sf_search module */
+
+/* search form */
+#sf-search-search-form {
+  border: 1px solid #666;
+  margin: 0px;
+  background-color: #ffff99;
+  width: 100%
+}
+
+#sf-search-search-form .form-radios {
+  margin-bottom: 20px;
+  margin-left: 20px;
+}
+
+#edit-sf-search-type-search-wrapper,
+#edit-sf-search-type-lookup-wrapper {
+  display: inline;
+  margin-right: 5px;
+}
+
+#edit-sf-search-query {
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+#edit-sf-search-query-wrapper,
+#edit-sf-search-donor-id-wrapper {
+  display: inline;
+  
+}
+
+#edit-sf-search-search-form-submit {
+  float: inline;
+}
+
+#sf-search-no-results {
+  display: none;
+}
+
+#edit-sf-search-search-form-submit,
+#edit-sf-search-lookup-form-submit {
+  margin: 0;
+}
+
+/* search results */
+#sf-search-container {
+  position: relative;
+  margin-top: 0px;
+  /*width: 100%;*/
+  border: 0;
+  padding: 0;
+}
+
+#sf-search-panel {
+  padding: 0;
+  position: absolute;   /*Panel will overlap  content */
+  z-index: 100;
+  display: none;
+  top: 0;
+  width: 100%;
+  background-color: #f1f1f1;
+  border-right: 1px solid #666;
+  border-left: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+
+/* data tables stuff */
+#sf-contacts_length,
+#sf-contacts_filter {
+  display: none;
+}
+
+.sf-search-searching {
+  background: url(/sites/all/modules/springboard/sf_search/img/loader.gif) no-repeat right center;
+  background-color: #fff;
+}
+
+#sf-contacts tbody tr {
+  cursor: pointer;
+}
+  
