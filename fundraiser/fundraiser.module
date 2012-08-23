@@ -1901,9 +1901,14 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
  *   Any message that was returned by the gateway.
  */
 function fundraiser_order_decline($order_id, $message) {
+  
+  module_invoke_all('fundraiser_order_failure', $order_id);
+
+  
   // make the order as failed
- 	db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
- 	// make a log entry
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+
+  // make a log entry
   watchdog('fundraiser', t('Order !id was declined by the payment gateway. Reason: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_DEBUG, NULL);
   
   // clean up
