@@ -58,6 +58,9 @@ function fundraiser_enable() {
     $result[] = 'donation_form';
     variable_set('webform_node_types_primary', $result);
   }
+
+  // Enable fundraiser for the built-in donation_form node type (legacy).
+  variable_set('fundraiser_donation_form', TRUE);
 }
 
 /**
@@ -1084,5 +1087,16 @@ function fundraiser_update_6314() {
   $ret = array();
   module_enable(array('fundraiser_uc_gateway'));
   $ret[] = array('success' => TRUE, 'query' => 'Enabled the Fundraiser UC Gateway module.');
+  return $ret;
+}
+
+/**
+ * Conversion to donation form on any content type.
+ */
+function fundraiser_update_6315() {
+  $ret = array();
+  // make donation_form node type a donation type
+  variable_set('fundraiser_donation_form', TRUE);
+  $ret[] = array('success' => TRUE, 'query' => 'Donation form enabled the donation_form content type.');
   return $ret;
 }

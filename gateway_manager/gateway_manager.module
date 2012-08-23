@@ -90,7 +90,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 function gateway_manager_nodeapi(&$node, $op) {
   // clear out the gateway cache when donation forms
   // are created, updated or deleted
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
       case 'insert':
       case 'delete':
