@@ -591,7 +591,7 @@ function fundraiser_node_insert(&$node) {
  * Implemenation of hook_update().
  */
 function fundraiser_node_update(&$node) {
-  drupal_set_message('<pre>' . print_r($node, true) . '</pre>');
+  //drupal_set_message('<pre>' . print_r($node, true) . '</pre>');
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
@@ -689,11 +689,10 @@ function fundraiser_node_load(&$node) {
   for ($i = 0; $i < count($items); ++$i) {
     $item = explode('|', $items[$i]);
     if ($item[0] != 'other') {
-
       $amount = 'amount_' . $i;
       $label = 'label_' . $i;
-      $fundraiser->$amount = $item[0];
-      $fundraiser->$label = $item[1];
+      $node->$amount = $item[0];
+      $node->$label = $item[1];
       ++$count;
     }
   }
@@ -819,8 +818,7 @@ if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
  *   The node being added/edited.
  */
 function fundraiser_node_settings(&$form, $node) {
-  drupal_set_message('this is a donation type. it needs donation form settings');
-
+  
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
 
@@ -981,9 +979,28 @@ function fundraiser_node_settings(&$form, $node) {
 }
 
 /**
+ * Submit handler for node type form.
+ *
+ * Adds type to webform variable when marked as a fundraiser type.
+ */
+function fundraiser_node_type_form_submit(&$form, &$form_state) {
+  if ($form_state['values']['fundraiser']) {
+    fundraiser_webform_types_primary($form_state['values']['type'], 'insert');
+  }
+  else {
+    fundraiser_webform_types_primary($form_state['values']['type'], 'delete'); 
+  }
+}
+
+/**
  * Implements hook_form_alter().
  */
 function fundraiser_form_alter(&$form, $form_state, $form_id) {
+
+  if ($form_id == 'node_type_form') {
+    // add a submission handler to set webform_node_types_primary if type is flagged as donation type
+    $form['#submit'][] = 'fundraiser_node_type_form_submit';
+  }
 
   // add fundraiser settings to node add/edit form
   if (isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type) && substr($form_id, -10) == '_node_form') {
@@ -2925,6 +2942,41 @@ function fundraiser_is_donation_type($type) {
     $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
   }
   return $fundraiser_types[$type];
+}
+
+/**
+ * Helper function, adds node type fo webform_node_types_primary array.
+ */
+function fundraiser_webform_types_primary($type, $op) {
+  $primary_types = variable_get('webform_node_types_primary', array('webform'));
+  $types = variable_get('webform_node_types', array('webform'));
+
+  switch ($op) {
+    case 'insert':
+      if (!in_array($type, $types)) {
+        $types[] = $type;
+        variable_set('webform_node_types', $types);      
+      }
+      if (!in_array($type, $primary_types)) {
+        $primary_types[] = $type;
+        variable_set('webform_node_types_primary', $primary_types);
+      }
+      break;
+
+    case 'delete':
+      if (in_array($type, $types)) {
+        $index = array_search($type, $types);
+        unset($types[$index]);
+        variable_set('webform_node_types', $types);
+      }
+
+      if (in_array($type, $primary_types)) {
+        $index = array_search($type, $primary_types);
+        unset($primary_types[$index]);
+        variable_set('webform_node_types_primary', $primary_types);
+      }
+      break;
+  }
 }
 
 /**
