@@ -2933,7 +2933,7 @@ function _fundraiser_field_blacklist() {
 }
 
 /**
- * Helper function, determine if this node type supports donation forms.
+ * Determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
   static $fundraiser_types;
