@@ -33,6 +33,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'ca',
       'test_gateway',
       'fundraiser',
+      'fundraiser_uc_gateway',
       'market_source'
     );
     
@@ -229,6 +230,37 @@ class FundraiserTestCase extends DrupalWebTestCase {
     
   }
 
+  function createFundraiserType($type, $name) {
+    $content_type = new stdClass();
+    $content_type->type = $type;
+    $content_type->name = $name;
+    $content_type->orig_type = '';
+    $content_type->old_type = '';
+    $content_type->description = '';
+    $content_type->help = ''; 
+    $content_type->min_word_count = 0;
+    $content_type->title_label = 'Title';
+    $content_type->body_label = 'Body';
+    $content_type->has_title = 1;
+    $content_type->has_body = 1;
+    $content_type->module = 'node';
+    $content_type->custom = 1;
+    $content_type->modified = 1;
+    $content_type->locked = '';
+
+    node_type_save($content_type);
+    node_types_rebuild();
+
+    // we have to fudge here since we're not actually submitting the form
+    $primary_types = variable_get('webform_node_types_primary', array('webform'));
+    $types = variable_get('webform_node_types', array('webform'));
+    $primary_types[] = $type;
+    variable_set('webform_node_types_primary', $primary_types);
+    $types[] = $type;
+    variable_set('webform_node_types', $types);  
+    variable_set('fundraiser_' . $type, TRUE);
+  }
+
   function testFundraiserForm() {
     $args = func_get_args();
     if (isset($this->_fundraiser_node)) {
@@ -269,13 +301,15 @@ class FundraiserTestCase extends DrupalWebTestCase {
      'show_other_amount' => '1',
      'minimum_donation_amount' => '10',
      'internal_name' => 'Test Donation Form',
+     'redirect_url' => '<confirmation>',
      'is_being_cloned' => '0',
      'webform' => array(
         'confirmation' => 'Thanks!',
         'confirmation_format' => FILTER_FORMAT_DEFAULT,
-        'redirect_url' => '<confirmation>',
         'teaser' => '0',
-        'allow_draft' => '1',
+        'allow_draft' => '0',
+        'status' => '1',
+        'record_exists' => '1',
         'submit_text' => '',
         'submit_limit' => '-1',
         'submit_interval' => '-1',

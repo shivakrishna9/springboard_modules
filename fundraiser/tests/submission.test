@@ -68,10 +68,16 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
 
     $data = $this->createTestData();
     $submission = $this->createSubmission($data);
-    
+    $this->pass(var_export($submission, TRUE)); 
     $this->drupalGet('node/' . $node->nid);
     $this->drupalPost(NULL, $submission, t('Submit'));
     
+    $count = db_fetch_object(db_query("SELECT * FROM {uc_orders}"));  
+    $this->pass(var_export($count, TRUE));  
+    $this->pass(var_export($this->drupalGetContent(), TRUE)); 
+
+    
+
     $this->assertText(t('Credit card payment processed successfully.'), t('Make sure the text "Type: Authorization and capture" appear after successful donation form submission'));
       
     // Get the SID of the new submission.
@@ -153,7 +159,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $order = uc_order_load($next_order_id);
     $this->assertEqual($order->order_status, 'payment_received', t('Make sure order status is changed to payment_received when a recurring donation is successfully processed during a cron run.')); 
   }
-  
+
   /**
    * Gateway failure test
    */
@@ -237,7 +243,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Last Name field is required.'), t('Last name field is valid'));
   }  
-  
+
   /**
    * Test email field validation
    */
@@ -265,7 +271,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Address field is required.'), t('Address field is valid'));
   } 
-  
+
   /**
    * Test city field validation
    */
@@ -307,7 +313,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Country field is required.'), t('State/Province field is valid'));
   } 
-  
+
   /**
    * Test zipcode field validation
    */
@@ -321,7 +327,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('ZIP/Postal Code field is required.'), t('Zipcode field is valid'));
   } 
-  
+
   /**
    * Make sure card number field is required
    */
@@ -335,7 +341,7 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
     $this->drupalPost(NULL, $submission, t('Submit'));
     $this->assertText(t('Card Number field is required.'), t('Make sure card number field is required.'));
   }
-  
+
   /**
    * Make sure card number field only accepts valid credit card numbers
    */
@@ -366,10 +372,12 @@ class FundraiserSubmissionTestCase extends FundraiserTestCase {
 
   function createTestData() {
     $tomorrow = strtotime("+1 day");
+    $first_name = $this->randomName(7);
+    $last_name = $this->randomName(5);
     return array(
       'amount' => 10,
-      'first_name' => $this->randomName(7),
-      'last_name' => $this->randomName(5),
+      'first_name' => $first_name,
+      'last_name' => $last_name,
       'mail' => $first_name . '.' . $last_name . '@example.com',
       'address' => $this->randomName(25),
       'city' => $this->randomName(15),
