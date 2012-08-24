@@ -86,7 +86,7 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
 		
-		if (fundraiser_is_donation_type($node)) {		
+    if (fundraiser_is_donation_type($node->type)) {		
       $theme = _form_layouts_theme_template($node->nid);
       $form['#theme'] = array($theme . '_' . $node->nid, $theme);
     }

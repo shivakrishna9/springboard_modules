@@ -2936,7 +2936,7 @@ function _fundraiser_field_blacklist() {
  * Determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
-  static $fundraiser_types;
+  static $fundraiser_types = array();
   // Cache fundraiser content types during page execution.
   if (!isset($fundraiser_types[$type])) {
     $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
