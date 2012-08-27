@@ -328,7 +328,7 @@ function fundraiser_access_clone() {
 
   if (is_numeric($nid)) {
     $node = node_load($nid);
-    if (!strcmp($node->type, 'donation_form')) {
+    if (fundraiser_is_donation_type($node->type)) {
 
       if (user_access('clone donation form')) {
         $access = TRUE;
@@ -376,7 +376,7 @@ function fundraiser_preprocess_page(&$vars) {
  * Implmentation of hook_confirmation_page_tokens().
  */
 function fundraiser_confirmation_page_tokens($type) {
-  if ($type == 'donation_form') {
+  if (fundraiser_is_donation_type($type)) {
     $order_tokens = array();
     $items = token_get_list('order');
     foreach($items as $module => $tokens) {
@@ -749,7 +749,7 @@ function fundraiser_is_secure() {
  */
 function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state) {
   // makes sure we are dealing with a donation form
-  if ($form['node']['#value']->type == 'donation_form') {
+  if (fundraiser_is_donation_type($form['node']['#value']->type)) {
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
     $required_fields = fundraiser_required_fields();
     
