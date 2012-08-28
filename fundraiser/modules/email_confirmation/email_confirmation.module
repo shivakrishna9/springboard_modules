@@ -212,7 +212,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
 
     // on donation forms, hide the "enable confirmation email" checkbox.
     // it's confusing since email is always sent out on donation form submissions.
-    if ($node->type == 'donation_form') {
+    if (fundraiser_is_donation_type($node->type)) {
       $form['confirmation_template']['send_mail'] = array(
         '#type' => 'value',
         '#value' => 1,
@@ -344,7 +344,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     *  such would require a nontrivial refactoring of fundraiser and email confirmations to 
     *  get working for all webform content types. 
     */
-    if ($form['#parameters'][2]->type != 'donation_form') {
+    if (fundraiser_is_donation_type($form['#parameters'][2]->type)) {
       unset($form['confirmation_page']);
       $form['confirmation_template']['#collapsed'] = FALSE;
    
@@ -355,7 +355,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   }
   
   // Add a submit handler to basic webforms, this reeks of a hack.
-  if (strpos($form_id, 'webform_client_form') === 0 && $form['#node']->type != 'donation_form') {
+  if (strpos($form_id, 'webform_client_form') === 0 && fundraiser_is_donation_type($form['#node']->type)) {
     $form['#submit'][] = 'email_confirmation_webform_send_mail';
   }
 }
