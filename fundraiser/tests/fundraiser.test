@@ -261,14 +261,14 @@ class FundraiserTestCase extends DrupalWebTestCase {
     variable_set('fundraiser_' . $type, TRUE);
   }
 
-  function testFundraiserForm() {
+  function testFundraiserForm($type = 'donation_form') {
     $args = func_get_args();
     if (isset($this->_fundraiser_node)) {
       return $this->_fundraiser_node;
     }
     
     $settings = array(
-     'type' => 'donation_form',
+     'type' => $type,
      'language' => '',
      'uid' => '1',
      'status' => '1',
