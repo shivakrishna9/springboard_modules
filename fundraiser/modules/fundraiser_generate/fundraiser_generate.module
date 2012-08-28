@@ -163,8 +163,9 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
  * Generates an option list of donation forms on the site.
  */
 function _fundraiser_generate_get_forms() {
+  $donation_types = fundraiser_enabled_types();
   $forms = array();
-  $result = db_query("SELECT nid, title FROM {node} WHERE type = 'donation_form' ORDER BY title");
+  $result = db_query("SELECT nid, title FROM {node} WHERE type IN (" . db_placeholders($donation_types, 'text') . ") ORDER BY title", $donation_types);
   while ($data = db_fetch_object($result)) {
     $forms[$data->nid] = $data->title;
   }

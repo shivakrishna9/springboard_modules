@@ -119,7 +119,7 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
  * Make sure the layout gets cloned.
  */
 function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($node->type != 'donation_form') {
+  if (fundraiser_is_donation_type($node->type)) {
     // Nothing to do here.
     return;
   }

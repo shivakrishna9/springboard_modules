@@ -797,19 +797,6 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_node_type().
- */
-function fundraiser_node_type($op, $info) {
-if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
-    webform_node_type('update', $info); // From webform.module.
-    // Add as a primary type too.
-    $webform_types = webform_variable_get('webform_node_types_primary');
-    $webform_types[] = $info->type;
-    variable_set('webform_node_types_primary', $webform_types);
-  }
-}
-
-/**
  * Adds fundraiser specific fields to the node add/edit form.
  *
  * @param $form
@@ -2936,12 +2923,47 @@ function _fundraiser_field_blacklist() {
  * Determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
-  static $fundraiser_types = array();
+  static $fundraiser_types;
   // Cache fundraiser content types during page execution.
   if (!isset($fundraiser_types[$type])) {
     $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
   }
   return $fundraiser_types[$type];
+}
+
+/**
+ * Helper function, returns a list of fundraiser enabled types.
+ */
+function fundraiser_get_donation_types() {
+  static $fundraiser_types;
+  // Cache types during page execution
+  if (!isset($fundraiser_types)) {
+    // For all types, check if they are a fundraiser type.
+    $types = node_get_types();
+    foreach ($types as $type => $type_info) {
+      $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+    }
+  }
+
+  return $fundraiser_types;
+}
+
+/** 
+ * Helper function, returns an array of fundraiser types.
+ */
+function fundraiser_enabled_types() {
+  static $fundraiser_types;
+
+  if (!isset($fundraiser_types)) {
+    $types = fundraiser_get_donation_types();
+    foreach ($types as $type => $enabled) {
+      if ($enabled) {
+        $fundraiser_types[] = $type;
+      }
+    }
+  }
+
+  return $fundraiser_types;
 }
 
 /**

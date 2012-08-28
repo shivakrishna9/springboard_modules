@@ -102,7 +102,7 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
   }
   // On donation forms, load the available currencies and put them in the JS object
   else if (strstr($form_id, 'webform_client_form') && is_object($form['#node'])) {
-    if ($form['#node']->type == 'donation_form') {
+    if (fundraiser_is_donation_type($form['#node']->type)) {
       // Find reference to the currency and amount form fields
       $currency_component = &_fundraiser_multi_currency_find_webform_component($form['submitted'], 'currency');
       $amount_component = &_fundraiser_multi_currency_find_webform_component($form['submitted'], 'amount');
