@@ -1,4 +1,10 @@
-2012-08-16  Allen Freeman <allen.freeman@jacksonriver.com?
+2012-08-30 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * dsr.module (_dsr_parse_aggregate_result) : format SF aggregate results with number_format()
+    * dsr.reports.inc (theme_dsr_report_table): format Drupal results with number_format()
+
+
+2012-08-16  Allen Freeman <allen.freeman@jacksonriver.com>
 
     * dsr.module (dsr_mail_reconciliation_summary): explicitly declared use of default From address
     * dsr.module (dsr_discrepancy_links): links now produce external urls via the url() function.

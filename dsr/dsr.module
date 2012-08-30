@@ -648,6 +648,10 @@ function _dsr_parse_aggregate_result($response) {
       $results['total_amount'] += $use_indices ? $record->any[0] : $record->any['total_amount'];
       $results['total_count'] += $use_indices ? $record->any[1] : $record->any['total_count'];
     }
+
+    // ditch extra precision on floats, also pads missing precision with 0's
+    $results['total_amount'] = number_format((float) $results['total_amount'], 2);
+
     return $results;
   }
 
