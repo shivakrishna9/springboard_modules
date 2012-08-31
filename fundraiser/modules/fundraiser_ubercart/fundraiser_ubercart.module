@@ -624,7 +624,7 @@ function _fundraiser_ubercart_get_countries() {
  */
 function _fundraiser_ubercart_get_zone_by_country($country_id) {
   return db_query('SELECT * FROM {uc_zones} ' .
-    'WHERE zone_country_id = :zone_country_id',
+    'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
     array(':zone_country_id' => $country_id))->fetchAll();
 }
 
