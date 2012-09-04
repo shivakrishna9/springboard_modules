@@ -129,16 +129,10 @@ function webform_user_is_webform_user($node) {
  */
 function webform_user_node_validate($node, &$form, &$form_state) {
 
-  if (_webform_user_is_webform_user_node_type($node->type)) {
-
-    if (isset($form['webform_user']['is_webform_user']['#value']) && $form['webform_user']['is_webform_user']['#value'] && module_exists('fundraiser') && $form['fundraiser']['is_donation_form']['#value']) {
-      form_set_error('is_webform_user', t('The webform_user webform cannot be used in conjunction with the fundraising webform.'));
-    }
-  
+  if (_webform_user_is_webform_user_node_type($node->type)) {  
     if (isset($form['webform_user']['is_webform_user']['#value']) && !_webform_user_validate_checkbox($form['webform_user']['is_webform_user']['#value'])) {
       form_set_error('is_webform_user', t('Invalid choice for enabling webform user.'));
     }
- 
   }
 }
 
@@ -253,18 +247,43 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
     }
   }
   
-  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
-  
   // see if we're on a node type that allows webform user
+  // Not sure we need this and can't drop the enable webform user / type to the node type creation level,
+  // Instead of having it in a separate admin config page. If we put it here instead,
+  // users can mark content types as they make them without having to go to other pages.
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
+  if ($form_id == 'node_type_form' && in_array($form['#node_type']->type, $webform_user_node_types)) {
+    $form['webform_user'] = array(
+      '#title' => t('Webform user settings'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $fields = _webform_user_get_profile_fields();
+    $options = array('webform_user_all_profile_fields' => t('All profile fields.'));
+    foreach ($fields as $field) {
+      $options[$field['name']] = check_plain($field['title']);
+    }
+    $form['webform_user']['webform_user_default_fields'] = array(
+      '#type' => 'checkboxes',
+      '#options' => $options,
+      '#default_value' => variable_get('webform_user_default_fields_' . $form['#node_type']->type, array('webform_user_all_profile_fields')),
+      '#title' => t('Default fields'),
+      '#description' => t('Select profile fields to automatically create components for.'),
+    ); 
+  }
+
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
+  // Modify the options on a specific instance of this node type.
   if (in_array(str_ireplace('_node_form', '', $form_id), $webform_user_node_types)) {
     $node = $form['#node'];
     $form['webform_user'] = array(
       '#title' => t('Webform user settings'),
       '#type' => 'fieldset',
-      '#collapsible' => 1,
-      '#collapsed' => 1,
-      '#weight' => 1,
-      '#access' => 1,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
     );
     
     $form['webform_user']['is_webform_user'] = array(
@@ -279,26 +298,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
       '#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
       '#type' => 'checkbox',
       '#default_value' => isset($node->send_new_user_email) ? $node->send_new_user_email : NULL,
-    );
-
-    $form['webform_user']['default_settings'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Default settings'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $fields = _webform_user_get_profile_fields();
-    $options = array('webform_user_all_profile_fields' => t('All profile fields.'));
-    foreach ($fields as $field) {
-      $options[$field['name']] = check_plain($field['title']);
-    }
-    $form['webform_user']['default_settings']['default_webform_user_profile_fields'] = array(
-      '#type' => 'checkboxes',
-      '#options' => $options,
-      '#default_value' => isset($node->default_webform_user_profile_fields) ? $node->default_webform_user_profile_fields : NULL,
-      '#title' => t('Default fields'),
-      '#description' => t('Select profile fields to automatically create components for.'),
-    );  
+    ); 
   }
 
   if (strpos($form_id, "webform_client") !== FALSE) {
@@ -891,7 +891,6 @@ function _webform_user_get_profile_fields() {
   );
     
   foreach ($results as $result) {
- 
     $result->data = unserialize($result->data);
     $result->extra = unserialize($result->extra);
     $field['fid'] = $result->id;
@@ -908,6 +907,17 @@ function _webform_user_get_profile_fields() {
     $fields[] = $field;
   }
 
+  // Grab settings from D7 profile (straight install).
+  $categories = _user_categories();
+  foreach ($categories as $category) {
+    $profile_fields = _profile_get_fields($category['name'], FALSE);
+    foreach ($profile_fields as $profile_field) {
+      $field = (array) $profile_field;
+      $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
+      $field['value'] = NULL;
+      $fields[] = $field;
+    }
+  }
   return $fields;
 }
 
@@ -959,12 +969,13 @@ function _webform_user_create_webform_components(&$node) {
   
   foreach ($fields as $field) {
     // Filter our fields only to those marked in the profile configuration for this
-    // node type. Users can always add more if the default allows.
+    // node type. Users can always add more as needed, this is just for default configurations.
     $all = FALSE;
-    if (empty($node->default_webform_user_profile_fields) || in_array('webform_user_all_profile_fields', $node->default_webform_user_profile_fields)) {
+    $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
+    if (empty($default_fields) || in_array('webform_user_all_profile_fields', $default_fields)) {
       $all = TRUE;
     }
-    if ($all || in_array($field['name'], $node->default_webform_user_profile_fields)) {
+    if ($all || in_array($field['name'], $default_fields)) {
       // Create a Webform component array for the field.
       $item = array(
         'nid' => $node->nid,
