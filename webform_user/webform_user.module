@@ -280,6 +280,25 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
       '#type' => 'checkbox',
       '#default_value' => isset($node->send_new_user_email) ? $node->send_new_user_email : NULL,
     );
+
+    $form['webform_user']['default_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Default settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $fields = _webform_user_get_profile_fields();
+    $options = array('webform_user_all_profile_fields' => t('All profile fields.'));
+    foreach ($fields as $field) {
+      $options[$field['name']] = check_plain($field['title']);
+    }
+    $form['webform_user']['default_settings']['default_webform_user_profile_fields'] = array(
+      '#type' => 'checkboxes',
+      '#options' => $options,
+      '#default_value' => isset($node->default_webform_user_profile_fields) ? $node->default_webform_user_profile_fields : NULL,
+      '#title' => t('Default fields'),
+      '#description' => t('Select profile fields to automatically create components for.'),
+    );  
   }
 
   if (strpos($form_id, "webform_client") !== FALSE) {
@@ -936,86 +955,73 @@ function _webform_user_create_webform_components(&$node) {
 
   // Process non-fieldset results.
   $fields = _webform_user_get_profile_fields();
-
-  // This is where webform user decides the additional webform components to create.
-  // This is also where we could get doubled up values in combination with fundraisers component creation,
-  // and dupe / misc fields that end users don't want to see. (Facebook profile scraping for example at IFAW
-  // would result in a Seriously Huge Number of non-relevent / hidden-to-the-user components getting created.)
-  //
-  // We could dodge the issue and remove default field creation entirely from webform_user and leave it up to 
-  // the user to make a field which is then available to be mapped to a profile field, but the idea here is to make it easy to
-  // use right? But if we create all profile fields, users have to delete. If we create none, users have to create.
-  //
-  // Only solution I see is a 'default' mapping per node type: Where fields to be created are marked, fields to be created
-  // by another module are mapped (via hook or somesuch). So that by the time we get here - we know what the user wants.
-  // Possibly available under the same checkmark where a user selects that something is to be a user-profile-field.
-  //
-  // At that form is where we could filter out fields for which components, based on the node->type,
-  // Are going to be created by other modules (aka address info etc for donation type modules)
-  // And filter out those which we don't want a user setting from a form, such as those from Facebook profile data.
-  // The form would be added in webform_user_form_alter() under hte node_form alterations.
-  // And just used as part of this defaulting.
-  // If the specific node needs an additional component, the user can always make it, or delete anythign not not-deletable
-  // (aka not mail, and not a fundraiser component).
+  drupal_alter('webform_user_get_profile_fields', $fields);
   
   foreach ($fields as $field) {
-    
-    // Create a Webform component array for the field.
-    $item = array(
-      'nid' => $node->nid,
-      'form_key' => str_replace('profile_', '', $field['name']),
-      'pid' => 0,
-      'name' => $field['title'],
-      'type' => $field['type'],
-      'mandatory' => $field['mandatory'],
-      'weight' => $field['weight'],
-      'email' => 1,
-      'extra' => array(
-        'description' => isset($field['explanation']) ? $field['explanation'] : '',
-      ),
-    );
-
-    // Transform the component array for certain field types.
-    switch ($item['type']) {
-      case 'checkbox':
-        $item['type'] = 'select';
-        $item['extra']['items'] = $field['name'] . '|' . $field['title'];
-        $item['extra']['aslist'] = 0;
-        $item['extra']['multiple'] = 'Y';
-        break;
-
-      case 'list':
-        $item['type'] = 'textarea';
-        break;
-      
-      case 'text':
-        $item['type'] = 'textfield';
-        break;
-      case 'list_text':
-      case 'list_integer':
-      case 'list_float':
-        $field['options'] = _webform_user_implode_options($field['options']);
-        $item['type'] = 'select';
-        $item['extra']['items'] = $field['options'];
-        $item['extra']['aslist'] = 'Y';
-        $item['extra']['multiple'] = 0;
-        break;
-
-      case 'url':
-        $item['type'] = 'textfield';
-        break;
+    // Filter our fields only to those marked in the profile configuration for this
+    // node type. Users can always add more if the default allows.
+    $all = FALSE;
+    if (empty($node->default_webform_user_profile_fields) || in_array('webform_user_all_profile_fields', $node->default_webform_user_profile_fields)) {
+      $all = TRUE;
     }
+    if ($all || in_array($field['name'], $node->default_webform_user_profile_fields)) {
+      // Create a Webform component array for the field.
+      $item = array(
+        'nid' => $node->nid,
+        'form_key' => str_replace('profile_', '', $field['name']),
+        'pid' => 0,
+        'name' => $field['title'],
+        'type' => $field['type'],
+        'mandatory' => $field['mandatory'],
+        'weight' => $field['weight'],
+        'email' => 1,
+        'extra' => array(
+          'description' => isset($field['explanation']) ? $field['explanation'] : '',
+        ),
+      );
 
-    // Add the component to the Webform.
-    $cid = webform_component_insert($item);
-    
-    // Add the component mapping record
-    $map = array(
-      'nid' => $node->nid,
-      'cid' => $cid,
-      'map_id' => $field['name'],
-    );
-    drupal_write_record('webform_user_component_map', $map);
+      // Transform the component array for certain field types.
+      switch ($item['type']) {
+        case 'checkbox':
+          $item['type'] = 'select';
+          $item['extra']['items'] = $field['name'] . '|' . $field['title'];
+          $item['extra']['aslist'] = 0;
+          $item['extra']['multiple'] = 'Y';
+          break;
+
+        case 'list':
+          $item['type'] = 'textarea';
+          break;
+
+        case 'text':
+          $item['type'] = 'textfield';
+          break;
+        case 'list_text':
+        case 'list_integer':
+        case 'list_float':
+          $field['options'] = _webform_user_implode_options($field['options']);
+          $item['type'] = 'select';
+          $item['extra']['items'] = $field['options'];
+          $item['extra']['aslist'] = 'Y';
+          $item['extra']['multiple'] = 0;
+          break;
+
+        case 'url':
+          $item['type'] = 'textfield';
+          break;
+      }
+
+      // Add the component to the Webform.
+      $cid = webform_component_insert($item);
+
+      // Add the component mapping record
+      $map = array(
+        'nid' => $node->nid,
+        'cid' => $cid,
+        'map_id' => $field['name'],
+      );
+      drupal_write_record('webform_user_component_map', $map);
+    }
   }
 }
 
