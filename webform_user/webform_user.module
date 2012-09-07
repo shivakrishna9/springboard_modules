@@ -966,15 +966,15 @@ function _webform_user_create_webform_components(&$node) {
   // Process non-fieldset results.
   $fields = _webform_user_get_profile_fields();
   drupal_alter('webform_user_get_profile_fields', $fields);
-  
+
+  $all = FALSE;
+  $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
+  if (empty($default_fields) || in_array('webform_user_all_profile_fields', $default_fields)) {
+    $all = TRUE;
+  }
   foreach ($fields as $field) {
     // Filter our fields only to those marked in the profile configuration for this
     // node type. Users can always add more as needed, this is just for default configurations.
-    $all = FALSE;
-    $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
-    if (empty($default_fields) || in_array('webform_user_all_profile_fields', $default_fields)) {
-      $all = TRUE;
-    }
     if ($all || in_array($field['name'], $default_fields)) {
       // Create a Webform component array for the field.
       $item = array(
