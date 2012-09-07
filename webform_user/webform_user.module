@@ -900,14 +900,16 @@ function _webform_user_get_profile_fields() {
   }
 
   // Grab settings from D7 profile (straight install).
-  $categories = _user_categories();
-  foreach ($categories as $category) {
-    $profile_fields = _profile_get_fields($category['name'], FALSE);
-    foreach ($profile_fields as $profile_field) {
-      $field = (array) $profile_field;
-      $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
-      $field['value'] = NULL;
-      $fields[] = $field;
+  if (function_exists('_profile_get_fields')) {
+    $categories = _user_categories();
+    foreach ($categories as $category) {
+      $profile_fields = _profile_get_fields($category['name'], FALSE);
+      foreach ($profile_fields as $profile_field) {
+        $field = (array) $profile_field;
+        $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
+        $field['value'] = NULL;
+        $fields[] = $field;
+      }
     }
   }
   return $fields;
