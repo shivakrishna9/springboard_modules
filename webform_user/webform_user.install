@@ -1,51 +1,53 @@
 <?php
-// $Id$
 
 /**
- * @file installation file for Webform User module
+ * @file
+ * Installation file for Webform User module.
  */
 
-function webform_user_install() {
-
-}
-
+/**
+ * Implements hook_uninstall().
+ */
 function webform_user_uninstall() {
   variable_del('webform_user_node_types');
 }
 
 /**
- * Implementation of hook_enable().
+ * Implements hook_enable().
  */
 function webform_user_enable() {
-  // tell the queue about the type
+  // Inform queue_processor about this change if it exists.
   if (module_exists('queue_processor')) {
     queue_processor_add_type('webform_user');
   }
 }
 
 /**
- * Implementation of hook_disable().
+ * Implements hook_disable().
  */
 function webform_user_disable() {
-  // remove our type from the queue processor
+  // Inform queue_processor about this change if it exists.
   if (module_exists('queue_processor')) {
     queue_processor_remove_type('webform_user');
   }
 }
 
+/**
+ * Implements hook_schema().
+ */
 function webform_user_schema() {
   $schema['webform_user'] = array(
-    'description' => 'TODO: please describe this table!',
+    'description' => 'Track nodes that are enabled as webform user nodes.',
     'fields' => array(
       'nid' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'is_webform_user' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Boolean, if this is a webform user',
         'type' => 'int',
         'unsigned' => TRUE,
         'size' => 'tiny',
@@ -53,7 +55,7 @@ function webform_user_schema() {
         'default' => 0,
       ),
       'authenticate_submitters' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Boolean, if we log users in',
         'type' => 'int',
         'unsigned' => TRUE,
         'size' => 'tiny',
@@ -61,19 +63,19 @@ function webform_user_schema() {
         'default' => 0,
       ),
       'send_new_user_email' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Boolean, if we send new users email',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'confirmation_page_title' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Title for the confirmation page', // TODO does this belong here?
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
       'email_field' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'Which field is used for email',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
@@ -84,24 +86,23 @@ function webform_user_schema() {
       'nid' => array('nid'),
     ),
   );
-  
   $schema['webform_user_component_map'] = array(
-    'description' => 'TODO: please describe this table!',
+    'description' => 'The map of fields on a node to user profile fields',
     'fields' => array(
       'nid' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'cid' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The webform component',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'map_id' => array(
-        'description' => 'TODO: please describe this field!',
+        'description' => 'The profile field to map to',
         'type' => 'varchar',
         'length' => '100',
         'not null' => TRUE,
@@ -109,7 +110,6 @@ function webform_user_schema() {
     ),
     'primary key' => array('nid', 'cid'),
   );
-  
-  
   return $schema;
 }
+

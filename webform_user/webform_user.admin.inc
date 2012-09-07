@@ -5,7 +5,6 @@
  * Administration page callbacks for the webform_user module.
  */
 
-
 /**
  * Settings form for webform_user
  */
@@ -43,13 +42,13 @@ function webform_user_settings_form_submit($form, &$form_state) {
   // we need to add the selected node types to the webform_node_types_primary variable so that a webform record is added by default
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   $webform_user_node_types = $form_state['values']['webform_user_node_types'];
-  
+
   foreach ($webform_user_node_types as $type => $enabled) {
     if ($enabled && !in_array($type, $webform_node_types_primary)) {
       $webform_node_types_primary[] = $type;
     }
   }
-  
+
   // re-save the variable
   variable_set('webform_node_types_primary', $webform_node_types_primary);
 }
@@ -78,14 +77,13 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '#node' => $node,
     'mapping' => array(),
   );
-  
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
   );
-  
   $form['info'] = array(
-    '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the webform form is submitted, the user\'s profile will be updated with the values from the form.',
+    '#value' => t('This form allows you to map the submitted form values to Drupal user and profile fields. ' .
+      'When the webform form is submitted, the user\'s profile will be updated with the values from the form.'),
     '#weight' => 0,
   );
 
@@ -93,19 +91,15 @@ function webform_user_mapping_form($form, $form_state, $node) {
     t('Webform Component'),
     t('Profile Field'),
   );
-  
-  // The NULL option and any core account fields have to be handled separately now that profile fields
-  // are implemented as entity fields.
+  // The NULL option and any core account fields have to be handled separately.
   $options = array(
-    '' => '--Select One--',
+    '' => t('--Select One--'),
     'mail' => t('E-mail address'),
   );
-  
   $profile_fields = _webform_user_get_profile_fields();
-  foreach($profile_fields as $field) {
+  foreach ($profile_fields as $field) {
     $options[$field['name']] = $field['title'];
   }
-  
   $form['mapping'] = array(
     '#prefix' => '<div id="fields">',
     '#suffix' => '</div>',
@@ -114,9 +108,7 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '#header' => $header,
     '#rows' => array(),
   );
-  
 
- 
   foreach ($node->webform['components']  as $cid => $component) {
     if (isset($node->map[$cid])) {
       $default = $node->map[$cid];
@@ -131,20 +123,17 @@ function webform_user_mapping_form($form, $form_state, $node) {
         '#options' => $options,
         '#default_value' => $default,
       );
-      
       $form['mapping'][$cid] = array(
         'component_cid' => &$select,
       );
-      
       $form['mapping']['#rows'][] = array(
         array('data' => $component['name']),
         array('data' => &$select),
       );
       unset($select);
     }
-    
   }
-  
+
   $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   return $form;
 }
@@ -153,14 +142,13 @@ function webform_user_mapping_form($form, $form_state, $node) {
  * Submit handler for user profile mapping form.
  */
 function webform_user_mapping_form_submit($form, &$form_state) {
- 
+  // Remove the old map.
   $query = db_delete('webform_user_component_map');
   $query->condition('nid', $form['#node']->nid);
   $query->execute();
-
+  // Add the new map.
   foreach ($form_state['values']['mapping'] as $key => $values) {
     if (!empty($values['component_cid'])) {
-      
       $query = db_insert('webform_user_component_map');
       $query->fields(array(
         'nid' => $form['#node']->nid,
@@ -170,7 +158,6 @@ function webform_user_mapping_form_submit($form, &$form_state) {
       $query->execute();
     }
   }
-  
-   drupal_set_message(t('Profile mapping has been saved'));
+  drupal_set_message(t('Profile mapping has been saved'));
 }
 
