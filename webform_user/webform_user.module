@@ -1067,9 +1067,8 @@ function _webform_user_create_webform_components(&$node) {
         'description' => '',
       ),
     );
-
-    // Add the fieldset component and store its ID in a lookup table.
-    $fieldset_lookup[$fieldset['category_normalized']] = webform_component_insert($item);
+    // Add the fieldset definition array and store its ID in a lookup table.
+    $fieldset_lookup[$fieldset['category_normalized']] = $item;
   }
 
   $all = FALSE;
@@ -1078,18 +1077,21 @@ function _webform_user_create_webform_components(&$node) {
     $all = TRUE;
   }
   // Process non-fieldset results.
+  $fieldset_created = array();
   foreach ($fields as $field) {
-    if ($all || in_array('profile_' . $field['name'], $default_fields)) {
+    if ($all || in_array($field['name'], $default_fields)) {
       $fieldset_id = 0;
-drupal_set_message('a');
-      // Get the fieldset ID.
-      foreach ($fieldset_lookup as $key => $val) {
-        if ($key == $field['category_normalized']) {
-          $fieldset_id = $val;
-          break;
-        }
+      // Avoid creating fieldsets we don't need.
+      // Get the fieldset ID if it's already been created.
+      if (isset($fieldset_created[ $field['category_normalized'] ])) {
+        $fieldset_id = $fieldset_created[ $field['category_normalized'] ];
       }
-  
+      else {
+        $item = $fieldset_lookup[ $field['category_normalized'] ];
+        $fieldset_created[ $field['category_normalized'] ] = webform_component_insert($item);
+        $fieldset_id = $fieldset_created[ $field['category_normalized'] ];
+      }
+
       // Create a Webform component array for the field.
       $item = array(
         'nid' => $node->nid,
