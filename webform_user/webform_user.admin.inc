@@ -12,11 +12,13 @@
 function webform_user_settings_form() {
   // get a list of all webform enabled node types
   $webform_enabled_types = variable_get('webform_node_types', array('webform'));
-
+  $node_types = node_type_get_types();
   // make a friendly list of options
   $options = array();
   foreach ($webform_enabled_types as $type) {
-    $options[$type] = $node_types[$type]->name;
+    if (!empty($type)) {
+      $options[$type] = $node_types[$type]->name;
+    }
   }
 
   $form['webform_user_node_types'] = array(
