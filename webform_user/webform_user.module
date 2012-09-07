@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -7,20 +6,19 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function webform_user_menu() {
   $items['node/%node/webform/user_mapping'] = array(
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_mapping_form', 1),
-    'access callback' => 'webform_user_mapping_access',
+    'access callback' => '_webform_user_mapping_access',
     'access arguments' => array(1),
     'weight' => 30,
     'type' => MENU_LOCAL_TASK,
     'file' => 'webform_user.admin.inc',
   );
-  
   $items['admin/config/content/webform-user'] = array(
     'title' => 'Webform user settings',
     'description' => 'Select webform content types that will register or update user accounts when submitted',
@@ -30,7 +28,6 @@ function webform_user_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'webform_user.admin.inc',
   );
-  
   return $items;
 }
 
@@ -38,12 +35,10 @@ function webform_user_menu() {
  * Clone component map settings.
  */
 function webform_user_clone_component_map($node, $original_nid) {
-
   $select = db_select('webform_user_component_map', 'm')
     ->condition('nid', $original_nid, '=')
     ->fields('m', array('cid', 'map_id'));
   $select->addExpression($node->nid, 'nid');
-
   db_insert('webform_user_component_map')
     ->from($select)
     ->execute();
@@ -64,19 +59,15 @@ function webform_user_clone_node($node, $original_nid) {
       'email_field',
   ));
   $select->addExpression($node->nid, 'nid');
-
   db_insert('webform_user')
     ->from($select)
     ->execute();
-  
 }
 
-
 /**
- * Implementation of hook_preprocess_webform_confirmation().
- *
+ * Implements hook_preprocess_webform_confirmation().
  * Replace any webform component tokens before displaying confirmation page.
- */
+ */ // TODO does this belong here? Are we overriding confirmation pages?
 function webform_user_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->is_webform_user) {
     $webform_user = _webform_user_load_webform_user($vars['node']->nid);
@@ -89,7 +80,6 @@ function webform_user_preprocess_webform_confirmation(&$vars) {
     $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE);
   }
 }
-
 
 /**
  * Only show the related object field tab if the form is webform_user and it has been mapped to a salesforce object
@@ -104,7 +94,6 @@ function _webform_user_check_settings($op) {
   return FALSE;
 }
 
-
 /**
  * Check to see if the current node is webform user.
  *
@@ -115,40 +104,34 @@ function _webform_user_check_settings($op) {
  * TRUE if node is webform user, otherwise FALSE.
  */
 function webform_user_is_webform_user($node) {
-  
   if (isset($node->is_webform_user)) {
     return $node->is_webform_user ? TRUE : FALSE;
   }
-  
   return FALSE;
-
 }
 
 /**
  * Implements hook_node_validate().
  */
 function webform_user_node_validate($node, &$form, &$form_state) {
-
-  if (_webform_user_is_webform_user_node_type($node->type)) {  
+  if (_webform_user_is_webform_user_node_type($node->type)) {
     if (isset($form['webform_user']['is_webform_user']['#value']) && !_webform_user_validate_checkbox($form['webform_user']['is_webform_user']['#value'])) {
       form_set_error('is_webform_user', t('Invalid choice for enabling webform user.'));
     }
   }
 }
 
-
 /**
  * Implements hook_node_insert().
  */
 function webform_user_node_insert($node) {
-
+  // If the new node is a clone, clone things.
   if (isset($node->clone_from_original_nid)) {
     webform_user_clone_component_map($node, $node->clone_from_original_nid);
     webform_user_clone_node($node, $node->clone_from_original_nid);
   }
-
+  // If the newly created node is a webform user node, set the defaults and create comps.
   if (_webform_user_is_webform_user_node_type($node->type)) {
-
     if (webform_user_is_webform_user($node)) {
       _webform_user_set_values($node);
       _webform_user_create_webform_components($node);
@@ -160,21 +143,15 @@ function webform_user_node_insert($node) {
  * Implements hook_node_update().
  */
 function webform_user_node_update($node) {
-
   if (_webform_user_is_webform_user_node_type($node->type)) {
-
     // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
     $current_node = node_load($node->nid);
-
     if (!_webform_user_is_webform_user($current_node->nid) && webform_user_is_webform_user($node) && $current_node->webform['components'][1]['form_key'] != 'mail') {
       _webform_user_create_webform_components($node);
     }
-        
-    // save the values
     _webform_user_set_values($node);
   }
 }
-
 
 /**
  * Implements hook_node_delete().
@@ -189,39 +166,29 @@ function webform_user_node_delete($node) {
  * Implements hook_node_load().
  */
 function webform_user_node_load($nodes, $types) {
-
   $results = db_query('SELECT * FROM {webform_user} WHERE nid IN(:nids)', array(':nids' => array_keys($nodes)), array('fetch' => PDO::FETCH_ASSOC));
   $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN(:nids)', array(':nids' => array_keys($nodes)), array('fetch' => PDO::FETCH_ASSOC));
- 
   foreach ($results as $webform_user) {
-    
     $nodes[$webform_user['nid']]->is_webform_user = $webform_user['is_webform_user'];
     $nodes[$webform_user['nid']]->send_new_user_email = $webform_user['send_new_user_email'];
     $nodes[$webform_user['nid']]->confirmation_page_title = $webform_user['confirmation_page_title'];
-
     $map = array();
     foreach ($maps as $row) {
       if ($row['nid'] == $webform_user['nid']) {
         $map[$row['cid']] = $row['map_id'];
       }
     }
-    
     $nodes[$webform_user['nid']]->map = $map;
   }
 }
 
-function webform_user_save_page_title($form, &$form_state) {
-  $title = check_plain($form_state['values']['page_title']);
-  $nid = $form_state['values']['nid'];
-  
-  db_query("UPDATE {webform_user} SET confirmation_page_title = '%s' WHERE nid = %d", $title, $nid);
-}
-
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
-function webform_user_form_alter(&$form, $form_state, $form_id) {
+function webform_user_form_alter(&$form, &$form_state, $form_id) {
+
   // Disallow users from changing the mail keyform after it's been created.
+  // It is critical that we have a matching key id for this value.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
     if ($node->is_webform_user) {
@@ -232,6 +199,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
     }
   }
 
+  // On webform configuration forms, provide override for the Page title.
   if ($form_id == 'webform_configure_form' && isset($form['nid']['#value'])) {
     $node = node_load($form['nid']['#value']);
     if (webform_user_is_webform_user($node)) {
@@ -242,12 +210,11 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
         '#weight' => 0,
         '#default_value' => $webform_user['confirmation_page_title'],
       );
-
       $form['#submit'][] = 'webform_user_save_page_title';
     }
   }
-  
-  // see if we're on a node type that allows webform user
+
+  // If we're on a node type that allows webform user
   // Not sure we need this and can't drop the enable webform user / type to the node type creation level,
   // Instead of having it in a separate admin config page. If we put it here instead,
   // users can mark content types as they make them without having to go to other pages.
@@ -271,11 +238,11 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get('webform_user_default_fields_' . $form['#node_type']->type, array('webform_user_all_profile_fields')),
       '#title' => t('Default fields'),
       '#description' => t('Select profile fields to automatically create components for.'),
-    ); 
+    );
   }
 
-  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
   // Modify the options on a specific instance of this node type.
+  $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
   if (in_array(str_ireplace('_node_form', '', $form_id), $webform_user_node_types)) {
     $node = $form['#node'];
     $form['webform_user'] = array(
@@ -285,42 +252,38 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
     );
-    
     $form['webform_user']['is_webform_user'] = array(
       '#title' => t('Create or update users when this webform is submitted.'),
       '#type' => 'checkbox',
       '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : NULL,
-      '#description' => t('When checked, user profile fields will automatically be added to the webform. When the form is submitted, new users will be created using those form values.'),
+      '#description' => t('When checked, user profile fields will automatically be added to the webform. ' .
+        'When the form is submitted, new users will be created using those form values.'),
     );
-    
     $form['webform_user']['send_new_user_email'] = array(
       '#title' => t('Send new users a e-mail with their account details.'),
       '#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
       '#type' => 'checkbox',
       '#default_value' => isset($node->send_new_user_email) ? $node->send_new_user_email : NULL,
-    ); 
+    );
   }
 
+  // For the webform itself, we map the value of the given submission profile.
   if (strpos($form_id, "webform_client") !== FALSE) {
- 
     $node = node_load($form['#node']->nid);
     $components = $node->webform['components'];
-
     global $user;
     $user_data = user_load($user->uid);
-
+    // If the user is logged in.
     if (user_is_logged_in() && webform_user_is_webform_user($node)) {
-
-     $component_hierarchy = webform_user_parse_components($node->nid, $components);
-     $fields = _webform_user_get_profile_fields();
-
-     $map = webform_user_user_map($node->nid);
-
+      $component_hierarchy = webform_user_parse_components($node->nid, $components);
+      $fields = _webform_user_get_profile_fields();
+      $map = webform_user_user_map($node->nid);
+      // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
- 
           $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (empty($form_field['#default_value']) && isset($user_data->$profile_field)) {
+            // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
             if (is_array($user_data->$profile_field)) {
               $current_field = $user_data->$profile_field;
@@ -329,7 +292,8 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
             else {
               $profile_value = $user_data->$profile_field;
             }
-          switch ($form_field['#type']) {
+            // Set the value.
+            switch ($form_field['#type']) {
               case 'date':
                 $form_field['#default_value'] = $profile_value;
                 break;
@@ -342,16 +306,25 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
             }
-          }
-        }
-      }
-    }
-  
+          } // End if webform empty with a profile field value.
+        } // End if field is in component heirarchy.
+      } // End foreach  
+    } // End if the user is logged in.
     // Add a new validation handler.
     $form['#validate'][] = 'webform_user_webform_validate';
     // Add new submit handler.
     $form['#submit'][] = 'webform_user_webform_submit';
   }
+
+}
+
+/**
+ * Submit handler for webform configuration form.
+ */
+function webform_user_save_page_title($form, &$form_state) {
+  $title = check_plain($form_state['values']['page_title']);
+  $nid = $form_state['values']['nid'];
+  db_query("UPDATE {webform_user} SET confirmation_page_title = '%s' WHERE nid = %d", $title, $nid);
 }
 
 /**
@@ -359,8 +332,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
  */
 function webform_user_user_map($nid) {
   $map = array();
-  $result = db_query(
-    "
+  $result = db_query('
       SELECT w.form_key, c.cid, c.map_id, w.type, f.field_name
       FROM {webform_component} w
       INNER JOIN {webform_user_component_map} c
@@ -369,15 +341,12 @@ function webform_user_user_map($nid) {
       LEFT JOIN {field_config_instance} f
         ON f.id = c.map_id
       WHERE c.nid = :nid
-      ORDER BY c.cid
-    ",
+      ORDER BY c.cid',
     array(':nid' => $nid)
   );
-  
   while ($row = $result->fetchObject()) {
     $map[$row->form_key] = $row->field_name ? $row->field_name : $row->map_id;
   }
-  
   return $map;
 }
 
@@ -386,14 +355,12 @@ function webform_user_user_map($nid) {
  */
 function _webform_user_get_map($nid, $fields) {
   $map = webform_user_user_map($nid);
- 
   if ($map) {
     foreach ($map as $key => $value) {
       if (isset($fields[$key])) {
         $map2[$value] = $fields[$key];
       }
     }
-    
     return $map2;
   }
   return array();
@@ -417,17 +384,12 @@ function webform_user_user_map_create($nid, $components) {
 
 /**
  * Provides access to the mapping tabs if node has webform_user enabled form.
- *
  */
-function webform_user_mapping_access($node) {
-
+function _webform_user_mapping_access($node) {
   $access = webform_user_is_webform_user($node);
-
-  drupal_alter('webform_user_mapping_access', $access);
+  drupal_alter('_webform_user_mapping_access', $access);
   return $access;
 }
-
-
 
 /**
  * Version of profile_save_profile that includes hidden profile fields.
@@ -442,25 +404,21 @@ function webform_user_mapping_access($node) {
  *
  */
 function _webform_user_profile_save_profile($updates, $uid) {
-
-   for ($i = 0; $i < count($updates); $i++) {
-     $mapped_field = $updates[$i];
-     if (_profile_field_serialize($mapped_field['type'])) {
-       $mapped_field['data'] = serialize($mapped_field['data']);
-     }
-
-     db_query("DELETE FROM {profile_values} WHERE fid = :fid AND uid = :uid", array(
-       ':fid' => $mapped_field['fid'],
-       ':uid' => $uid)
-     );
-     db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (:fid, :uid, :data)", array(
-       ':fid' => $mapped_field['fid'],
-       ':uid' => $uid,
-       ':data' => $mapped_field['data'])
-     );
-     
-     
-   }
+  for ($i = 0; $i < count($updates); $i++) {
+    $mapped_field = $updates[$i];
+    if (_profile_field_serialize($mapped_field['type'])) {
+      $mapped_field['data'] = serialize($mapped_field['data']);
+    }
+    db_query("DELETE FROM {profile_values} WHERE fid = :fid AND uid = :uid", array(
+      ':fid' => $mapped_field['fid'],
+      ':uid' => $uid)
+    );
+    db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (:fid, :uid, :data)", array(
+      ':fid' => $mapped_field['fid'],
+      ':uid' => $uid,
+      ':data' => $mapped_field['data'])
+    );
+  }
 }
 
 /**
@@ -483,7 +441,6 @@ function &webform_user_find_field(&$form, $path) {
  * we must be able to find them if they are not in their usual spot.
  */
 function webform_user_parse_components($nid, $components) {
-
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
     $component_path = 'submitted[' . implode('][', webform_user_walk_component_hierarchy($nid, $cid)) . ']';
@@ -497,14 +454,11 @@ function webform_user_parse_components($nid, $components) {
  * Creates a nested array of where a component exists in the FAPI array.
  */
 function webform_user_parse_component($nid, $form_key) {
-
-
   $results = db_query("SELECT cid FROM {webform_component} WHERE nid = :nid and form_key = :form_key", array(
     ':nid' => $nid,
     ':form_key' => $form_key)
   );
   $cid = $results->fetchColumn();
-
   $component_path = 'submitted[' . implode('][', webform_user_walk_component_hierarchy($nid, $cid)) . ']';
   parse_str($component_path, $output); // convert string to a nested array
   return $output;
@@ -514,7 +468,6 @@ function webform_user_parse_component($nid, $form_key) {
  * Builds a path from the webform component to it's topmost parent.
  */
 function webform_user_walk_component_hierarchy($nid, $cid, $path = array()) {
-
   $result = db_query('SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid and cid = :cid', array(
     ':nid' => $nid,
     ':cid' => $cid)
@@ -531,7 +484,6 @@ function webform_user_walk_component_hierarchy($nid, $cid, $path = array()) {
 function _webform_user_add_webform_defaults(&$node, &$user) {
   // Reload user object to ensure profile field values are present.
   $account = user_load($user->uid);
-  
   $fields = _webform_user_get_profile_fields();
   foreach ($node->webform['components'] as $ckey => $component) {
     foreach ($fields as $fkey => $field) {
@@ -547,7 +499,6 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
         else {
           $node->webform['components'][$ckey]['value'] = check_plain($account->$component['form_key']);
         }
-
         unset($fields[$fkey]);
       }
     }
@@ -572,10 +523,8 @@ function webform_user_webform_submit($form, &$form_state) {
   global $user;
   $account = new stdClass;
   $node = node_load($form_state['values']['details']['nid']);
-
   // Only process if the form is completed and it's a webform_user form.
   $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
-
   if ($form_state['values']['op'] == $submit_op && webform_user_is_webform_user($node)) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
@@ -591,7 +540,6 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user with matching email address.
     elseif (isset($account->uid) && $form_state['redirect']) {
-
       // Update the existing user account.
       _webform_user_save_profile_map($account->uid, $map);
       $sid = $form_state['values']['details']['sid'];
@@ -611,7 +559,6 @@ function webform_user_webform_submit($form, &$form_state) {
         'status' => 1,
       );
       $account = user_save('', $user_fields);
-      
       // Update the new user account.
       _webform_user_save_profile_map($account->uid, $map);
       // Update the submission record with the id of the new user
@@ -620,7 +567,6 @@ function webform_user_webform_submit($form, &$form_state) {
         ':uid' => $account->uid,
         ':sid' => $sid)
       );
-      
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
         // Manually set the password so it appears in the e-mail.
@@ -631,14 +577,12 @@ function webform_user_webform_submit($form, &$form_state) {
   }
 }
 
-
 /**
  * Implements hook_webform_submission_presave().
  *
  * We're using this to prevent webform from changing the owner of a submission when a webform_user submission is edited.
  */
 function webform_user_webform_submission_presave($node, &$submission) {
-  
   if (webform_user_is_webform_user($node) && isset($submission->sid)) {
     $results = db_query('SELECT uid FROM {webform_submissions} where sid = :sid', array(':sid' => $submission->sid));
     $uid = $results->fetchColumn();
@@ -665,7 +609,6 @@ function _webform_user_validate_email($mail) {
  */
 function _webform_user_flatten_tree($tree, $nid = NULL) {
   $items = array();
-
   foreach ($tree as $key => $val) {
     // look up the type of component
     $results = db_query("SELECT type FROM {webform_component} WHERE nid = :nid AND form_key = :form_key", array(
@@ -673,7 +616,6 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
       ':form_key' => $key)
     );
     $type = $results->fetchColumn();
-    
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
       if ($type == 'date') {
@@ -711,7 +653,6 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
       $items[$key] = $val;
     }
   }
-
   return $items;
 }
 
@@ -719,23 +660,18 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
  * Saves mapped profile data
  */
 function _webform_user_save_profile_map($uid, &$map) {
-
   if ($map) {
     global $user;
     $map_keys = array_keys($map);
     $edit = array();
-    
     if ($user->uid == 0) {
       $account = user_load($uid);
     }
     else {
       $account = $user;
     }
-    
     $profile_fields = _webform_user_get_profile_fields();
-
     foreach ($profile_fields as $field) {
-
       switch ($field['type']) {
         case 'text':
         case 'hidden':
@@ -751,14 +687,12 @@ function _webform_user_save_profile_map($uid, &$map) {
           break;
         // TODO: add support for select fields
       }
-  
     }
     if (count($edit) && $account->uid) {
       user_save($account, $edit);
     }
   }
 }
-
 
 /**
  * Checks to see if a checkbox value is valid.
@@ -798,10 +732,8 @@ function _webform_user_is_webform_user($nid) {
 
 function _webform_user_is_webform_user_node_type($type) {
   $webform_user_node_types = array_filter(variable_get('webform_user_node_types', array('webform')));
-  
   return in_array($type, $webform_user_node_types) ? TRUE : FALSE;
 }
-
 
 /**
  * Saves the values of the is_webform_user checkbox when the selected node is created.
@@ -813,12 +745,8 @@ function _webform_user_is_webform_user_node_type($type) {
  */
 function _webform_user_set_values(&$node) {
   $is_webform_user = $node->is_webform_user ? TRUE : FALSE;
-
   $send_new_user_email = $node->send_new_user_email ? 1 : 0;
-
-  $result = db_query("SELECT count(*) FROM {webform_user} WHERE nid = :nid", array(':nid' => $node->nid));
-  $exists = $result->fetchColumn();
-
+  $exists = db_query('SELECT 1 FROM {webform_user} WHERE nid = :nid', array(':nid' => $node->nid))->fetchColumn();
   if (!$exists && $is_webform_user) {
     db_query(
       "INSERT INTO {webform_user} (nid, is_webform_user, send_new_user_email)
@@ -829,7 +757,6 @@ function _webform_user_set_values(&$node) {
         ':send_new_user_email' => $send_new_user_email
       )
     );
-
   }
   else {
     db_update('webform_user')
@@ -841,7 +768,6 @@ function _webform_user_set_values(&$node) {
       ->execute();
   }
 }
-
 
 /**
  * Clears data from the webform_user and webform_user_component_map tables when a node is deleted.
@@ -865,22 +791,18 @@ function _webform_user_delete_node_values($node) {
  */
 function _webform_user_normalize_name($name) {
   // make lowercase, drop special chars, replace spaces with underscores
-  return preg_replace(array('/[^a-z0-9_\s]/', '/\s+/'), array('', '_'), strtolower($name));
+  return preg_replace(array('/[^a-z0-9_\s]/', '/\s+/'), array('', '_'), drupal_strtolower($name));
 }
-
 
 /**
  * Fetch an array of user profile fields.
  */
 function _webform_user_get_profile_fields() {
- 
   $fields = array();
   $entity_types = array('user');
-  
   if (module_exists('profile2')) {
     $entity_types[] = 'profile2';
   }
-
   $results = db_query(
     'SELECT i.id, i.field_name, i.data, c.data as extra, c.type
      FROM {field_config_instance} i
@@ -889,7 +811,6 @@ function _webform_user_get_profile_fields() {
      WHERE entity_type IN (:types)',
     array(':types' => $entity_types)
   );
-    
   foreach ($results as $result) {
     $result->data = unserialize($result->data);
     $result->extra = unserialize($result->extra);
@@ -906,7 +827,6 @@ function _webform_user_get_profile_fields() {
     $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
     $fields[] = $field;
   }
-
   // Grab settings from D7 profile (straight install).
   if (function_exists('_profile_get_fields')) {
     $categories = _user_categories();
@@ -923,7 +843,6 @@ function _webform_user_get_profile_fields() {
   return $fields;
 }
 
-
 /**
  * Creates Webform components for the selected Webform node. One component for each user profile field + a
  * component for email address.
@@ -932,13 +851,10 @@ function _webform_user_get_profile_fields() {
  *   An object representation of the selected node.
  */
 function _webform_user_create_webform_components(&$node) {
-
   // include webform component functions
   module_load_include('inc', 'webform', 'includes/webform.components');
-
   $items = array();
   $fieldset_lookup = array();
-
   // Add the e-mail field.
   $mail_field = array(
     'nid' => $node->nid,
@@ -953,9 +869,7 @@ function _webform_user_create_webform_components(&$node) {
       'description' => '',
     ),
   );
-
   $cid = webform_component_insert($mail_field);
-    
   // Add the component mapping record
   $map = array(
     'nid' => $node->nid,
@@ -963,12 +877,9 @@ function _webform_user_create_webform_components(&$node) {
     'map_id' => 'mail',
   );
   drupal_write_record('webform_user_component_map', $map);
-
-
   // Process non-fieldset results.
   $fields = _webform_user_get_profile_fields();
   drupal_alter('webform_user_get_profile_fields', $fields);
-
   $all = FALSE;
   $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
   if (empty($default_fields) || in_array('webform_user_all_profile_fields', $default_fields)) {
@@ -992,7 +903,6 @@ function _webform_user_create_webform_components(&$node) {
           'description' => isset($field['explanation']) ? $field['explanation'] : '',
         ),
       );
-
       // Transform the component array for certain field types.
       switch ($item['type']) {
         case 'checkbox':
@@ -1001,11 +911,9 @@ function _webform_user_create_webform_components(&$node) {
           $item['extra']['aslist'] = 0;
           $item['extra']['multiple'] = 'Y';
           break;
-
         case 'list':
           $item['type'] = 'textarea';
           break;
-
         case 'text':
           $item['type'] = 'textfield';
           break;
@@ -1018,15 +926,12 @@ function _webform_user_create_webform_components(&$node) {
           $item['extra']['aslist'] = 'Y';
           $item['extra']['multiple'] = 0;
           break;
-
         case 'url':
           $item['type'] = 'textfield';
           break;
       }
-
       // Add the component to the Webform.
       $cid = webform_component_insert($item);
-
       // Add the component mapping record
       $map = array(
         'nid' => $node->nid,
@@ -1037,7 +942,6 @@ function _webform_user_create_webform_components(&$node) {
     }
   }
 }
-
 
 /**
  * Convert an associative array into a formatted string suitable for consumption by a
@@ -1073,7 +977,6 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
       elseif ($relationship->related_object == 'contact') {
         $id = $user->salesforce_contact_id;
       }
-      
       // continue if we've got an id
       if ($id) {
         // add the extra relationship field
@@ -1082,6 +985,4 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
     }
   }
 }
-
-
 
