@@ -812,7 +812,7 @@ function _webform_user_is_webform_user_node_type($type) {
   if (isset($types[$type])) {
     return $types[$type];
   }
-  $types[$type] = variable_get('webform_user_' . $form['#node_type']->type, FALSE);
+  $types[$type] = variable_get('webform_user_' . $type, FALSE);
   return $types[$type];
 }
 
