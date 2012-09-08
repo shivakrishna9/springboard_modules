@@ -9,7 +9,7 @@ class WebformUserTestCase extends DrupalWebTestCase {
     parent::setUp('webform', 'webform_user', 'profile2');
 
     // create some profile fields
-    // "normal" core profile field
+    // 'normal' core profile field
     $field_name = 'firstname';
     $field = array(
       'field_name' => $field_name,
@@ -83,7 +83,7 @@ class WebformUserTestCase extends DrupalWebTestCase {
     // log in our editor
     $this->drupalLogin($this->users['editor']);
     $edit = array(
-      'title' => 'Test Webform User',
+      'title' => t('Test Webform User'),
       'body[und][0][value]' => 'test',
       'is_webform_user' => 1,
     );
@@ -104,12 +104,13 @@ class WebformUserTestCase extends DrupalWebTestCase {
     $this->drupalPost('node/1', $edit, t('Submit'));
 
     // confirm new user account created
-    $uid = db_query('SELECT uid FROM {users} WHERE mail = :mail AND name = :name', array(':mail' => 'test@example.com', ':name' => 'test@example.com'))->fetchField();
+    $uid = db_query('SELECT uid FROM {users} WHERE mail = :mail AND name = :name',
+      array(':mail' => 'test@example.com', ':name' => 'test@example.com'))->fetchField();
     $this->assertTrue($uid, t('user id found: @uid', array('@uid' => $uid)));
 
     // confirm profile values set
     $this->drupalLogin($this->users['admin']);
-    $this->drupalGet("user/$uid/edit");
+    $this->drupalGet('user/' . $uid . '/edit');
     // TODO: provide a method for generic field checking so we can expand this test to deal with multiple profile field types.
     $this->assertFieldById('edit-firstname-und-0-value', 'testname', t('Profile value set for firstname field.'));
 
@@ -122,10 +123,10 @@ class WebformUserTestCase extends DrupalWebTestCase {
     $this->drupalPost('node/1', $edit, t('Submit'));
 
     // confirm user profile values are updated
-    $this->drupalGet("user/3/edit");
+    $this->drupalGet('user/3/edit');
     $this->assertFieldById('edit-firstname-und-0-value', 'admintest', t('Profile value updated for firstname field.'));
     // view form, confirm defaults set from user profile
-    $this->drupalGet("node/1");
+    $this->drupalGet('node/1');
     $this->assertFieldById('edit-submitted-firstname', 'admintest', t('Default component value set from core field value.'));
   }
 

@@ -113,3 +113,17 @@ function webform_user_schema() {
   return $schema;
 }
 
+/**
+ * Implements hook_update_N().
+ */
+function webform_user_update_7000(&$sandbox) {
+  $current_webform_user_types = variable_get('webform_user_node_types', array('webform'));
+  // For each type set at the time of update, create a new
+  // variable under the new format for vars. Each should already be
+  // activated for webform.
+  foreach ($current_webform_user_types as $type) {
+    variable_get('webform_user_' . $type, FALSE);
+  }
+  // Clean up after ourselves.
+  variable_del('webform_user_node_types');
+}
