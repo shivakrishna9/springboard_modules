@@ -15,18 +15,10 @@ function webform_user_menu() {
     'page arguments' => array('webform_user_mapping_form', 1),
     'access callback' => '_webform_user_mapping_access',
     'access arguments' => array(1),
-    'weight' => 30,
     'type' => MENU_LOCAL_TASK,
-    'file' => 'webform_user.admin.inc',
   );
-  $items['admin/config/content/webform-user'] = array(
-    'title' => 'Webform user settings',
-    'description' => 'Select webform content types that will register or update user accounts when submitted',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_user_settings_form'),
-    'access arguments' => array('Map webform submissions to Salesforce objects'),
-    'type' => MENU_NORMAL_ITEM,
-  );
+  // For webform user settings page.
+  // 'access arguments' => array('Map webform submissions to Salesforce objects'),
   return $items;
 }
 
@@ -37,19 +29,6 @@ function _webform_user_mapping_access($node) {
   $access = _webform_user_is_webform_user_node($node);
   drupal_alter('_webform_user_mapping_access', $access);
   return $access;
-}
-
-/**
- * Only show the related object field tab if the form is webform_user and it has been mapped to a salesforce object
- */ // TODO - called from where?
-function _webform_user_check_settings($op) {
-  if ($op == 'Map webform submissions to Salesforce objects') {
-    $node = node_load(arg(1));
-    if (_webform_user_is_webform_user_node($node) && !empty($node->sf_webform_object)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
 }
 
 /**
@@ -103,6 +82,19 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
       }
     }
   }
+}
+
+/**
+ * Only show the related object field tab if the form is webform_user and it has been mapped to a salesforce object
+ */ // TODO - called from where?
+function _webform_user_check_settings($op) {
+  if ($op == 'Map webform submissions to Salesforce objects') {
+    $node = node_load(arg(1));
+    if (_webform_user_is_webform_user_node($node) && !empty($node->sf_webform_object)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
@@ -422,7 +414,6 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '#header' => $header,
     '#rows' => array(),
   );
-
   foreach ($node->webform['components']  as $cid => $component) {
     if (isset($node->map[$cid])) {
       $default = $node->map[$cid];
@@ -458,14 +449,14 @@ function webform_user_mapping_form($form, $form_state, $node) {
 function webform_user_mapping_form_submit($form, &$form_state) {
   // Remove the old map.
   $query = db_delete('webform_user_component_map');
-  $query->condition('nid', $form['#node']->nid);
+  $query->condition('nid', $form_state['values']['nid']);
   $query->execute();
   // Add the new map.
   foreach ($form_state['values']['mapping'] as $key => $values) {
     if (!empty($values['component_cid'])) {
       $query = db_insert('webform_user_component_map');
       $query->fields(array(
-        'nid' => $form['#node']->nid,
+        'nid' => $form_state['values']['nid'],
         'cid' => $key,
         'map_id' => $values['component_cid'],
       ));
@@ -526,16 +517,18 @@ function webform_user_node_delete($node) {
  * Implements hook_node_load().
  */
 function webform_user_node_load($nodes, $types) {
-  $results = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)))->fetchAssoc();
+  $webform_users = db_query('SELECT * FROM {webform_user} WHERE nid IN (:nids)',
+    array(':nids' => array_keys($nodes)));
   $maps = db_query('SELECT nid, cid, map_id FROM {webform_user_component_map} WHERE nid IN (:nids)',
-    array(':nids' => array_keys($nodes)))->fetchAssoc();
-  foreach ($results as $webform_user) {
+    array(':nids' => array_keys($nodes)));
+  foreach ($webform_users as $webform_user) {
+    $webform_user = (array) $webform_user;
     $nodes[ $webform_user['nid'] ]->is_webform_user = $webform_user['is_webform_user'];
     $nodes[ $webform_user['nid'] ]->send_new_user_email = $webform_user['send_new_user_email'];
     $nodes[ $webform_user['nid'] ]->confirmation_page_title = $webform_user['confirmation_page_title'];
     $map = array();
     foreach ($maps as $row) {
+      $row = (array) $row;
       if ($row['nid'] == $webform_user['nid']) {
         $map[ $row['cid'] ] = $row['map_id'];
       }
@@ -847,30 +840,53 @@ function _webform_user_save_profile_map($uid, &$map) {
   if ($map) {
     $map_keys = array_keys($map);
     $account = user_load($uid);
-    $edit = array();
+    $profile = $profile2 = array();
     $profile_fields = _webform_user_get_profile_fields();
     foreach ($profile_fields as $field) {
       switch ($field['type']) {
         case 'text':
+        case 'textfield':
+        case 'url':
         case 'hidden':
         case 'list_text':
         case 'list_integer':
+        case 'checkbox':
+
           if (in_array($field['name'], $map_keys)) {
-            $edit[$field['name']] = array(
+            $profile2[$field['name']] = array(
               'und' => array(
                 0 => array(
                   'value' => $map[$field['name']],
                 ),
               ),
             );
+            $profile[$field['name']] = $map[$field['name']];
           }
           break;
         // TODO: track down format for nonstandard fields like 'link' and 'email'
       }
     }
-    if (count($edit) && $account->uid) {
-      // This works for standard profile AND profile2.
-      user_save($account, $edit);
+    if (count($profile) && $account->uid) {
+      // This works for standard profile AND profile2? Not directly, split between them.
+      // For profile 2 - store as entity fields.
+      // For regular profile - store in profile table.
+      if (function_exists('_profile_get_fields')) {
+        $categories = profile_user_categories();
+        // Loop on each category.
+        foreach ($categories as $category) {
+          $expected_fields = _profile_get_fields($category['name'], FALSE);
+          foreach ($expected_fields as $expected_field) {
+            if (!isset($profile[ $expected_field->name ])) {
+              $profile[ $expected_field->name ] = '';
+            }
+          }
+          profile_save_profile($profile, $account, $category['name']);
+        }
+      }
+      else {
+        // Profile two saves on entity fields.
+        user_save($account, $profile2);
+      }
     }
   } // End if map.
 }
