@@ -123,10 +123,10 @@ class FundraiserUbercartUnitTestCase extends FundraiserUbercartUnitTestSetup {
 
     // An example form to flatten for value.
     $form_state['donation']['amount'] = 'Please select your tax-deductible gift amount below';
-    $form_state['email'] = 'Email';
+    $form_state['mail'] = 'Email';
     $flattened = _fundraiser_ubercart_submission_flatten($form_state);
     $this->assertEqual($flattened['amount'], 'Please select your tax-deductible gift amount below', print_r($flattened,1).'_fundraiser_ubercart_submission_flatten() got correct field.', 'testUbercartCardFunctions');
-    $this->assertEqual($flattened['email'], 'Email', '_fundraiser_ubercart_submission_flatten() got correct field.', 'testUbercartCardFunctions');
+    $this->assertEqual($flattened['mail'], 'Email', '_fundraiser_ubercart_submission_flatten() got correct field.', 'testUbercartCardFunctions');
 
     /**
      * test creation and execution of an order by donation_process stages.

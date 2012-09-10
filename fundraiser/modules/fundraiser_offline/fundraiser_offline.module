@@ -191,7 +191,7 @@ function fundraiser_offline_fundraiser_field_info_alter(&$fields) {
   // So this tweak is Only in effect for so long as the page is generated and processed.
   if (_fundraiser_offline_is_offline()) {
     drupal_set_message(t('This donation form is in offline mode.'));
-    unset($fields['donor_information']['email']['#validate_callback']);
+    unset($fields['donor_information']['mail']['#validate_callback']);
     unset($fields['credit_card_information']['card_cvv']['#validate_callback']);
   }
   return $fields;
@@ -213,7 +213,7 @@ function fundraiser_offline_fundraiser_donation_form($form, $form_state) {
     }
     // Otherwise, we're in the clear and still in offline mode.
     // Remove required flag for these fields.
-    $fields = array('email', 'card_cvv');
+    $fields = array('mail', 'card_cvv');
     _fundraiser_offline_form_not_required($form, $fields);
     // Expose these fields.
     $fields = array('cid', 'ms');
@@ -260,9 +260,9 @@ function fundraiser_offline_fundraiser_donation_submit($form, $form_state, $dona
   if (_fundraiser_offline_is_offline()) {
     // Correct the uid, the logged in user is NOT the originating user.
     $donation->uid = 0;
-    if (!isset($donation->donation['email'])) {
+    if (!isset($donation->donation['mail'])) {
       // If the email has not been set, then we need to set it here.
-      $donation->donation['email'] = _fundraiser_offline_generate_email();
+      $donation->donation['mail'] = _fundraiser_offline_generate_email();
     }
     else {
       // If the email is set, see if we can locate the correct user to match the order.
