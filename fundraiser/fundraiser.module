@@ -834,11 +834,11 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
     $keys = array_keys($fundraiser->donation_amounts);
     // Construct a set of options based on the configured amounts.
     $formatted_amounts = '';
-    foreach ($fundraiser->donation_amounts as $index => $values) {
-      if (count($values) == 1) {
-        $values[] = '|$' . is_array($values) ? $values[0] : $values;
+    foreach ($fundraiser->donation_amounts as $value => $label) {
+      if (empty($label)) {
+        $label = '$' . $value;
       }
-      $formatted_amounts[] = implode('|', $values);
+      $formatted_amounts[] = implode('|', array($value, $label));
     }
     if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
       $formatted_amounts[] = 'other|Other';
