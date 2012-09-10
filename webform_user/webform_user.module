@@ -158,15 +158,6 @@ function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
       $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
     }
   }
-  else {
-  // Else, remove it if it was set before.
-    if (in_array($type, $webform_node_types)) {
-      $webform_node_types = array_diff($webform_node_types, array($type));
-    }
-    if (in_array($type, $webform_node_types_primary)) {
-      $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
-    }
-  }
   // Re-save the variables.
   variable_set('webform_node_types', $webform_node_types);
   variable_set('webform_node_types_primary', $webform_node_types_primary);
@@ -181,7 +172,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
   // It is critical that we have a matching key id for this value, and it shouldn't change.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
-    if ($node->is_webform_user) {
+    if (isset($node->is_webform_user) && $node->is_webform_user) {
       if ($form['form_key']['#default_value'] == 'mail') {
         $form['form_key']['#access'] = FALSE;
         $form['form_key']['#value'] = $form['form_key']['#default_value'];
@@ -244,7 +235,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
-          $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          $form_field =& _webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (empty($form_field['#default_value']) && isset($user_data->$profile_field)) {
             // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
@@ -297,7 +288,7 @@ function webform_user_save_page_title($form, &$form_state) {
 function webform_user_webform_validate($form, &$form_state) {
   $node = node_load($form_state['values']['details']['nid']);
   $fields = _webform_user_flatten_tree($form_state['values']['submitted'], $node->nid);
-  if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email($fields['mail'])) {
+  if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email(isset($fields['mail']) ? $fields['mail'] : '')) {
     form_set_error('mail', t('Please enter a valid email address.'));
   }
 }
@@ -542,10 +533,10 @@ function webform_user_node_load($nodes, $types) {
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
  */
-function &webform_user_find_field(&$form, $path) {
+function &_webform_user_find_field(&$form, $path) {
   foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) {
-      return webform_user_find_field($form[$v], $path[$v]); // Recursion.
+      return _webform_user_find_field($form[$v], $path[$v]); // Recursion.
     }
     else {
       return $form[$v];
@@ -966,7 +957,7 @@ function _webform_user_set_values(&$node) {
   }
   else {
   // Or update it.
-    drupal_write_record('webform_user', $record, array('nide'));
+    drupal_write_record('webform_user', $record, array('nid'));
   }
 }
 

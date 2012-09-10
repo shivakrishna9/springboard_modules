@@ -108,6 +108,37 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
 }
 
 /**
+ * Implements hook_form_alter().
+ * Alter content type settings to add "Enable fundraiser?" checkbox.
+ */
+function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'fundraiser_webform_form_node_type_form_alter_submit';
+}
+
+/**
+ * Submit callback for fundraiser_webform_form_node_type_form_alter()
+ */
+function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
+  $is_enabled = $form_state['values']['fundraiser'];
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
+  $type = $form_state['values']['type'];
+  // Make sure this content type is enabled for webform if not already.
+  // Add the selected node types to the webform_node_types_primary so a webform is added by default.
+  if ($is_enabled) {
+    if (!in_array($type, $webform_node_types)) {
+      $webform_node_types = array_merge($webform_node_types, array($type));
+    }
+    if (!in_array($type, $webform_node_types_primary)) {
+      $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
+    }
+  }
+  // Re-save the variables.
+  variable_set('webform_node_types', $webform_node_types);
+  variable_set('webform_node_types_primary', $webform_node_types_primary);
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  * Adds the admin form for webform to the fundraiser settings form.
  */
