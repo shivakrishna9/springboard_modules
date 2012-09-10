@@ -38,7 +38,7 @@ function _webform_user_mapping_access($node) {
 function webform_user_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->is_webform_user) {
     $webform_user = _webform_user_load_webform_user($vars['node']->nid);
-    // set title if available
+    // Set title if available.
     if (!empty($webform_user['confirmation_page_title'])) {
       drupal_set_title($webform_user['confirmation_page_title']);
     }
@@ -240,7 +240,6 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     // If the user is logged in.
     if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
       $component_hierarchy = webform_user_parse_components($node->nid, $components);
-      $fields = _webform_user_get_profile_fields();
       $map = webform_user_user_map($node->nid);
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
@@ -262,7 +261,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
                 $form_field['#default_value'] = $profile_value;
                 break;
               case 'checkboxes':
-                if ($profile_value) { // will be a 0 if unchecked
+                if ($profile_value) { // Will be a 0 if unchecked.
                   $form_field['#default_value'] = array($profile_value);
                 }
                 break;
@@ -318,7 +317,8 @@ function webform_user_webform_submit($form, &$form_state) {
 
     // We have a uid, so this is an authenticated user, update if this isn't an edit.
     // TODO: What if the logged in user is NOT the submission user?
-    // See: offline fundraiser, or other trickery mid submission.
+    // See: offline fundraiser or other trickery mid submission.
+    // Would it not be better to grab the user from sub. data?
     // This could potentially update the logged in user INSTEAD of the submitted user.
     if ($user->uid && $form_state['redirect']) {
       // Update the existing user account.
@@ -361,7 +361,7 @@ function webform_user_webform_submit($form, &$form_state) {
 }
 
 /**
- * User mapping form.
+ * Menu callback form, provides user interface to set up form fields to profile fields mapping.
  *
  * Webform User can map webform components to user profile fields. Values added to the user profile for these fields
  * will be used to populate default values for webform components they are mapped to.
@@ -402,8 +402,8 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '' => t('--Select One--'),
     'mail' => t('E-mail address'),
   );
-  $profile_fields = _webform_user_get_profile_fields();
-  foreach ($profile_fields as $field) {
+  $fields = _webform_user_get_profile_fields();
+  foreach ($fields as $field) {
     $options[$field['name']] = $field['title'];
   }
   $form['mapping'] = array(
@@ -438,7 +438,6 @@ function webform_user_mapping_form($form, $form_state, $node) {
       unset($select);
     }
   }
-
   $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   return $form;
 }
@@ -591,7 +590,7 @@ function webform_user_walk_component_hierarchy($nid, $cid, $path = array()) {
   while ($data = $result->fetchObject()) {
     array_unshift($path, $data->form_key);
     if ($data->pid > 0) {
-      webform_user_walk_component_hierarchy($nid, $data->pid, $path);
+      webform_user_walk_component_hierarchy($nid, $data->pid, $path); // Recursion.
     }
   }
   return $path;
@@ -680,32 +679,27 @@ function _webform_user_create_webform_components(&$node) {
   // Include webform component functions to allow creation.
   module_load_include('inc', 'webform', 'includes/webform.components');
 
-  // Add the e-mail field first.
-  $mail_field = array(
-    'nid' => $node->nid,
-    'pid' => 0,
-    'form_key' => 'mail',
-    'name' => 'E-mail address',
-    'type' => 'textfield',
-    'mandatory' => 1,
-    'weight' => 0,
-    'email' => 1,
-    'extra' => array(
-      'description' => '',
-    ),
-  );
-  $cid = webform_component_insert($mail_field);
-  $map = array(
-    'nid' => $node->nid,
-    'cid' => $cid,
-    'map_id' => 'mail',
-  );
-  drupal_write_record('webform_user_component_map', $map);
-
   // Process additional fields.
   $items = array();
   $fieldset_lookup = array();
   $fields = _webform_user_get_profile_fields();
+  // Add the e-mail field.
+  $mail_field = array(
+    'name' => 'mail',
+    'title' => 'E-mail address',
+    'type' => 'textfield',
+    'mandatory' => 1,
+    'weight' => 0,
+    'explanantion' => '',
+    'options' => NULL,
+  );
+  unshift($fields, $mail_field);
+  /**
+   * Hook available to other modules: hook_webform_user_get_profile_fields().
+   * This allows other modules to filter, add to, or modify profile fields that
+   * are created by webform user. Allowing for example fundraiser to avoid
+   * duplication of effort, or custom modules to filter out results.
+   */
   drupal_alter('webform_user_get_profile_fields', $fields);
   $all = FALSE;
   $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
@@ -715,16 +709,17 @@ function _webform_user_create_webform_components(&$node) {
   foreach ($fields as $field) {
     // Filter our fields only to those marked in the profile configuration for this
     // node type. Users can always add more as needed, this is just for default configurations.
-    if ($all || in_array($field['name'], $default_fields)) {
+    // The mail field can always be created.
+    if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail)) {
       // Create a webform component array for the field.
       $item = array(
         'nid' => $node->nid,
-        'form_key' => str_replace('profile_', '', $field['name']),
+        'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
         'pid' => 0,
         'name' => $field['title'],
         'type' => $field['type'],
-        'mandatory' => $field['mandatory'],
-        'weight' => $field['weight'],
+        'mandatory' => isset($field['mandatory']) ? $field['mandatory'] : 0,
+        'weight' => isset($field['weight']) ? $field['weight'] : 0,
         'email' => 1,
         'extra' => array(
           'description' => isset($field['explanation']) ? $field['explanation'] : '',
@@ -837,12 +832,15 @@ function _webform_user_validate_email($mail) {
  * Helper function, save mapped profile data to given user.
  */
 function _webform_user_save_profile_map($uid, &$map) {
+  // The saved map has to handle saving to both profile2 / entity fields. And profile.module.
   if ($map) {
+    // First loop through the map and fields to grab results.
     $map_keys = array_keys($map);
     $account = user_load($uid);
-    $profile = $profile2 = array();
-    $profile_fields = _webform_user_get_profile_fields();
-    foreach ($profile_fields as $field) {
+    $profile_values = array();
+    $fields = _webform_user_get_profile_fields();
+    foreach ($fields as $field) {
+      // So far no types actually require a unique solution.
       switch ($field['type']) {
         case 'text':
         case 'textfield':
@@ -851,52 +849,38 @@ function _webform_user_save_profile_map($uid, &$map) {
         case 'list_text':
         case 'list_integer':
         case 'checkbox':
-
+        default:
+          // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], $map_keys)) {
-            $profile2[$field['name']] = array(
-              'und' => array(
-                0 => array(
-                  'value' => $map[$field['name']],
-                ),
-              ),
-            );
-            $profile[$field['name']] = $map[$field['name']];
+            $profile[ $field['name'] ]['und'][0]['value'] = $map[ $field['name'] ];
           }
-          break;
-        // TODO: track down format for nonstandard fields like 'link' and 'email'
+        break;
+        // TODO: track down format for nonstandard fields like 'email'
       }
     }
+    // Fields found, now save them.
     if (count($profile) && $account->uid) {
-      // This works for standard profile AND profile2? Not directly, split between them.
-      // For profile 2 - store as entity fields.
-      // For regular profile - store in profile table.
+      // If the standard profile field system is active, use that.
       if (function_exists('_profile_get_fields')) {
         $categories = profile_user_categories();
         // Loop on each category.
+        $this_profile = array();
         foreach ($categories as $category) {
           $expected_fields = _profile_get_fields($category['name'], FALSE);
           foreach ($expected_fields as $expected_field) {
             if (!isset($profile[ $expected_field->name ])) {
-              $profile[ $expected_field->name ] = '';
+              $this_profile[ $expected_field->name ] = $profile[ $field['name'] ]['und'][0]['value'];
             }
           }
-          profile_save_profile($profile, $account, $category['name']);
+          profile_save_profile($this_profile, $account, $category['name']);
         }
       }
       else {
-        // Profile two saves on entity fields.
-        user_save($account, $profile2);
+      // Profile2 and entity fields saves on entity fields.
+        user_save($account, $profile);
       }
     }
   } // End if map.
-}
-
-/**
- * Helper function, creates a machine-readable version of a given name.
- */ //TODO called from where?
-function _webform_user_normalize_name($name) {
-  // Make lowercase, drop special chars, replace spaces with underscores.
-  return preg_replace(array('/[^a-z0-9_\s]/', '/\s+/'), array('', '_'), drupal_strtolower($name));
 }
 
 /**
@@ -907,12 +891,22 @@ function _webform_user_normalize_name($name) {
  * Database function, fetch an array of user profile fields.
  */
 function _webform_user_get_profile_fields() {
+  /**
+   * Returns an array of fields with the following fields set:
+   * name - form key
+   * title - human readable name
+   * type - webform component type
+   * mandatory - required or not (optional, defaults to 0)
+   * weight - order of display (optional, defaults to 0)
+   * explanation - description (optional, defaults to '')
+   * options - array of select options, required for type list_float
+   */
   $fields = array();
 
-  // Grab settings from profile2 module.
+  // Grab settings from profile2 module AND from fields manually added on profile.
   $entity_types = array('user');
   if (module_exists('profile2')) {
-    $entity_types[] = 'profile2';
+    $entity_types[] = 'profile2'; // Add profile2 values.
   }
   $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
     'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
@@ -920,31 +914,33 @@ function _webform_user_get_profile_fields() {
     array(':types' => $entity_types)
   );
   foreach ($results as $result) {
+    $field = array();
     $result->data = unserialize($result->data);
     $result->extra = unserialize($result->extra);
-    $field['fid'] = $result->id;
-    $field['title'] = $result->data['label'];
     $field['name'] = $result->field_name;
+    $field['title'] = $result->data['label'];
     $field['type'] = $result->type;
-    $field['explanantion'] = $result->data['description'];
-    $field['category'] = NULL;
-    $field['value'] = isset($result->data['default_value']['value']) ? $result->data['default_value'][0]['value'] : NULL;
-    $field['weight'] = $result->data['widget']['weight'];
     $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
-    $field['visibility'] = NULL;
+    $field['weight'] = $result->data['widget']['weight'];
+    $field['explanantion'] = $result->data['description'];
     $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
     $fields[] = $field;
   }
 
-  //  And or grab settings from D7 profile (straight install).
+  //  And or grab settings from D7 profile module.
   if (function_exists('_profile_get_fields')) {
     $categories = _user_categories();
     foreach ($categories as $category) {
       $profile_fields = _profile_get_fields($category['name'], FALSE);
       foreach ($profile_fields as $profile_field) {
-        $field = (array) $profile_field;
+        $field = array();
+        $field['name'] = $profile_field->name;
+        $field['title'] = $profile_field->title;
+        $field['type'] = $profile_field->type;
         $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
-        $field['value'] = NULL;
+        $field['weight'] = $profile_field->weight;
+        $field['explanantion'] = $profile_field->explanantion;
+        $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
         $fields[] = $field;
       }
     }
