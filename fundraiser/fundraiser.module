@@ -836,7 +836,7 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
     $formatted_amounts = '';
     foreach ($fundraiser->donation_amounts as $index => $values) {
       if (count($values) == 1) {
-        $values[] = '|$' . isset($values[0]) ? $values[0] : $values;
+        $values[] = '|$' . is_array($values) ? $values[0] : $values;
       }
       $formatted_amounts[] = implode('|', $values);
     }
