@@ -838,6 +838,9 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       if (count($values) == 1) {
         $this_value[] = '|$' . isset($values[0]) ? $values[0] : $values;
       }
+      else {
+        $this_value = $values;
+      }
       $formatted_amounts[] = implode('|', $this_value);
     }
     if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
