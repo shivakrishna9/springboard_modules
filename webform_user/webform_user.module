@@ -244,7 +244,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
-          $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          $form_field =& _webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (empty($form_field['#default_value']) && isset($user_data->$profile_field)) {
             // Figure out what the value is.
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
@@ -542,10 +542,10 @@ function webform_user_node_load($nodes, $types) {
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
  */
-function &webform_user_find_field(&$form, $path) {
+function &_webform_user_find_field(&$form, $path) {
   foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) {
-      return webform_user_find_field($form[$v], $path[$v]); // Recursion.
+      return _webform_user_find_field($form[$v], $path[$v]); // Recursion.
     }
     else {
       return $form[$v];
@@ -966,7 +966,7 @@ function _webform_user_set_values(&$node) {
   }
   else {
   // Or update it.
-    drupal_write_record('webform_user', $record, array('nide'));
+    drupal_write_record('webform_user', $record, array('nid'));
   }
 }
 
