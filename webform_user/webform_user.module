@@ -400,7 +400,6 @@ function webform_user_mapping_form($form, $form_state, $node) {
   // The NULL option and any core account fields have to be handled separately.
   $options = array(
     '' => t('--Select One--'),
-    'mail' => t('E-mail address'),
   );
   $fields = _webform_user_get_profile_fields();
   foreach ($fields as $field) {
@@ -683,17 +682,6 @@ function _webform_user_create_webform_components(&$node) {
   $items = array();
   $fieldset_lookup = array();
   $fields = _webform_user_get_profile_fields();
-  // Add the e-mail field.
-  $mail_field = array(
-    'name' => 'mail',
-    'title' => 'E-mail address',
-    'type' => 'textfield',
-    'mandatory' => 1,
-    'weight' => 0,
-    'explanantion' => '',
-    'options' => NULL,
-  );
-  unshift($fields, $mail_field);
   /**
    * Hook available to other modules: hook_webform_user_get_profile_fields().
    * This allows other modules to filter, add to, or modify profile fields that
@@ -710,7 +698,7 @@ function _webform_user_create_webform_components(&$node) {
     // Filter our fields only to those marked in the profile configuration for this
     // node type. Users can always add more as needed, this is just for default configurations.
     // The mail field can always be created.
-    if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail')) {
+    if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail') {
       // Create a webform component array for the field.
       $item = array(
         'nid' => $node->nid,
@@ -902,6 +890,17 @@ function _webform_user_get_profile_fields() {
    * options - array of select options, required for type list_float
    */
   $fields = array();
+  // Add the e-mail field first.
+  $mail_field = array(
+    'name' => 'mail',
+    'title' => 'E-mail address',
+    'type' => 'textfield',
+    'mandatory' => 1,
+    'weight' => 0,
+    'explanantion' => '',
+    'options' => NULL,
+  );
+  $fields[] = $mail_field;
 
   // Grab settings from profile2 module AND from fields manually added on profile.
   $entity_types = array('user');
