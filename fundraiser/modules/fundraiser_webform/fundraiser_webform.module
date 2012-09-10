@@ -112,59 +112,92 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
  * Adds the admin form for webform to the fundraiser settings form.
  */
 function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
-  $form['fundraiser_webform'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Fundraiser webform'),
-    '#description' => t('Configure fundraiser webform settings.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
   if (module_exists('webform_user')) {
-    $form['fundraiser_sustainers']['webform_users'] = array(
+    $form['fundraiser_webform'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Webform user settings'),
-      '#description' => t('Configure webform user integration.'),
+      '#title' => t('Fundraiser webform'),
+      '#description' => t('Configure fundraiser webform settings.'),
       '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
+      '#collapsed' => FALSE,
     );
-    $form['fundraiser_sustainers']['webform_users']['help'] = array(
-      '#markup' => t('Webform user creates webform components. Since fundraiser also creates components for user data, in ' .
-      'order to avoid doubling up on component creation a map of fundraiser given components to user profile components ' .
-      'needs to be created. This will prevent webform user from also creating the same components that fundraiser handles. ' .
-      'For each profile field listed here set which (if any) fundraiser field will handle creating it, fields left unmapped ' .
-      'will be created by webform user. Mapping submission data to user profiles remains the same.'),
+    $form['fundraiser_webform']['webform_users'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Webform user integration'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['fundraiser_webform']['webform_users']['help'] = array(
+      '#markup' => '<div>' . t('Webform user creates webform components. Because Fundraiser also creates components for user ' .
+      'data we need to avoid doubling up on component creation. Therefore a map of fundraiser components to user profile components ' .
+      'needs to be created. This will prevent webform user from creating the same components that fundraiser already handles. ' .
+      'For each profile field listed here set which (if any) fundraiser field will handle creating a component for it instead. ' .
+      'Fields left unmapped will be created by webform user.').'</div>',
     );
     // If the module exists, we can use it's functions.
     $profile_fields = _webform_user_get_profile_fields();
     $fundraiser_fields = _fundraiser_webform_get_nonfieldset_keys();
-    $options = array();
-    foreach ($fundraiser_fields as $field_kiey => $fundraiser_field) {
-      $options[$field_kiey] = $fundraiser_field['#title'];
+    $current_map = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
+    $form['fundraiser_webform']['webform_users']['mapping'] = array(
+      '#prefix' => '<div id="webform-user-field-mapping">',
+      '#suffix' => '</div>',
+      '#tree' => TRUE,
+      '#theme' => 'table',
+      '#header' => array(t('Profile field'), t('Matching component will be created by this Fundraiser field') ),
+      '#rows' => array(),
+    );
+    $options = array('0' => t('--Not handled by Fundraiser--'));
+    foreach ($fundraiser_fields as $field_key => $fundraiser_field) {
+      $options[$field_key] = $fundraiser_field['#title'];      
     }
     // Now we just need to note which of these fields map to which fundraiser fields.
-    // That will 
+    foreach ($profile_fields as $profile_field) {
+      $name = $profile_field['name'];
+      // Mail is a special case, and should be doubled up on always.
+      // It is required by both modules, and field name has been coordinated to match.
+      $form['fundraiser_webform']['webform_users']['mapping'][$name] = array(
+        '#id' => 'field-' . $name,
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => isset($current_map[$name]) ? $current_map[$name] : '',
+      );
+      if ($name == 'mail') {
+        $form['fundraiser_webform']['webform_users']['mapping'][$name]['#default_value'] = 'mail';
+        $form['fundraiser_webform']['webform_users']['mapping'][$name]['#disabled'] = TRUE;
+        $form['fundraiser_webform']['webform_users']['mapping'][$name]['#description'] =
+          t('Mail field is required by both modules and the field names match by default.');
+      }
+      $form['fundraiser_webform']['webform_users']['mapping']['#rows'][] = array(
+        array('data' => $profile_field['title']),
+        array('data' => &$form['fundraiser_webform']['webform_users']['mapping'][$name]), // Pointer is important.
+      );
+    }
+    $form['#submit'][] = 'fundraiser_webform_to_webform_user_map_submit';
   }
 }
 
 /**
- * Helper function, given the array from field_info - get the listed fields for NON fieldset fields, flattened.
- * WARNING: Recursion is here to walk the field info array to gather form keys.
+ * Submit handler for mapping fundraiser fields to webform object objects.
  */
-function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
-  if ($field_info == NULL) {
-    $field_info = fundraiser_field_info();
-  }
-  $children = element_children($field_info);
-  foreach ($children as $child) {
-    // If this child is a defined field, but not a fieldset, add it.
-    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
-      $fields[$child] = $field_info[$child];
+function fundraiser_webform_to_webform_user_map_submit($form, &$form_state) {
+  variable_set('fundraiser_webform_to_user_map', $form_state['values']['mapping']);
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ */
+function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
+  // ONLY do this for fundraiser nodes. Other nodes that are also webform are to be left alone.
+  if (fundraiser_is_donation_type($node->type)) {
+    // For every field that fundraiser will be handling the creation, remove it from webform user creation.
+    $mapping = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
+    foreach ($fields as $index => $profile_field) {
+      $name = $profile_field['name'];
+      if (isset($mapping[ $name ]) &&  $mapping[ $name ]) {
+        // This field will be created by fundraiser, so we don't need to set it up in webform user.
+        unset($fields[$index]);
+      }
     }
-    if (is_array($field_info[$child]) && !empty($field_info[$child])) {
-      $fields = _fundraiser_webform_get_nonfieldset_keys($field_info[$child], $fields);
-    }
   }
-  return $fields;
 }
 
 /**
@@ -701,6 +734,27 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       $child_weight++;
     }
   }
+}
+
+/**
+ * Helper function, given the array from field_info - get the listed fields for NON fieldset fields, flattened.
+ * WARNING: Recursion is here to walk the field info array to gather form keys.
+ */
+function _fundraiser_webform_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    // If this child is a defined field, but not a fieldset, add it.
+    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
+      $fields[$child] = $field_info[$child];
+    }
+    if (is_array($field_info[$child]) && !empty($field_info[$child])) {
+      $fields = _fundraiser_webform_get_nonfieldset_keys($field_info[$child], $fields);
+    }
+  }
+  return $fields;
 }
 
 /**

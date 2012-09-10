@@ -476,6 +476,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#weight' => -4.96,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
   );
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
@@ -835,9 +836,9 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
     $formatted_amounts = '';
     foreach ($fundraiser->donation_amounts as $index => $values) {
       if (count($values) == 1) {
-        $values[] = '|$' . isset($values[0]) ? $values[0] : $values;
+        $this_value[] = '|$' . isset($values[0]) ? $values[0] : $values;
       }
-      $formatted_amounts[] = implode('|', $values);
+      $formatted_amounts[] = implode('|', $this_value);
     }
     if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
       $formatted_amounts[] = 'other|Other';
