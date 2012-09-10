@@ -133,15 +133,6 @@ function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state
       $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
     }
   }
-  else {
-  // Else, remove it if it was set before.
-    if (in_array($type, $webform_node_types)) {
-      $webform_node_types = array_diff($webform_node_types, array($type));
-    }
-    if (in_array($type, $webform_node_types_primary)) {
-      $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
-    }
-  }
   // Re-save the variables.
   variable_set('webform_node_types', $webform_node_types);
   variable_set('webform_node_types_primary', $webform_node_types_primary);
