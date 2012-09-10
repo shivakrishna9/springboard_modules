@@ -108,6 +108,28 @@ function fundraiser_webform_form_webform_component_delete_form_alter(&$form, &$f
 }
 
 /**
+ * Implements hook_form_alter().
+ * Alter content type settings to add "Enable fundraiser?" checkbox.
+ */
+function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'fundraiser_webform_form_node_type_form_alter_submit';
+}
+
+/**
+ * Submit callback for fundraiser_webform_form_node_type_form_alter()
+ */
+function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
+  // Update webform default variables to make sure fundraiser nodes get set.
+  $result = variable_get('webform_node_types', array('webform'));
+  $result = array_merge($result, fundraiser_get_donation_types());
+  variable_set('webform_node_types', $result);
+
+  $result = variable_get('webform_node_types_primary', array('webform'));
+  $result = array_merge($result, fundraiser_get_donation_types());
+  variable_set('webform_node_types_primary', $result);
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  * Adds the admin form for webform to the fundraiser settings form.
  */
