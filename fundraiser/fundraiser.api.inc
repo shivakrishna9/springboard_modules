@@ -226,7 +226,7 @@ stdClass Object
             [other_amount] => ''
             [first_name] => firstname
             [last_name] => lastname;
-            [email] => example@example.com
+            [mail] => example@example.com
             [address] => address1
             [address_line_2] => address2
             [city] => city

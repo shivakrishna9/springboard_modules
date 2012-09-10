@@ -707,7 +707,7 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 1,
   );
-  $fields['donor_information']['email'] = array(
+  $fields['donor_information']['mail'] = array(
     '#title' => 'Email',
     '#type' => 'textfield',
     '#required' => 1,

@@ -451,7 +451,7 @@ class FundraiserWebformUnitTestCase extends FundraiserWebformUnitTestSetup {
       'donor_information' => array(
         'first_name' => 'First name',
         'last_name' => 'Last name',
-        'email' => 'example@example.com',
+        'mail' => 'example@example.com',
       ),
       'billing_information' => array(
         'address' => 'First address line',
