@@ -710,7 +710,7 @@ function _webform_user_create_webform_components(&$node) {
     // Filter our fields only to those marked in the profile configuration for this
     // node type. Users can always add more as needed, this is just for default configurations.
     // The mail field can always be created.
-    if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail)) {
+    if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail')) {
       // Create a webform component array for the field.
       $item = array(
         'nid' => $node->nid,
