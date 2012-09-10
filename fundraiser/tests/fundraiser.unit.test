@@ -1,10 +1,6 @@
 <?php
 
 /**
- * The following functions need unit test coverage.
- */
-
-/**
  * @file
  * Fundraiser module tests.
  */
@@ -256,7 +252,8 @@ class FundraiserUnitTestCase extends FundraiserUnitTestSetup {
 
     foreach ($emails as $email) {
       $result = _fundraiser_validate_email($email[0]);
-      $this->assertEqual($email[1], $result, '_fundraiser_validate_email() returned ' . $email[1] . ' for ' . $email[0] . '.', 'testFundraiserHelperFunctions');
+      $this->assertEqual($email[1], $result, '_fundraiser_validate_email() returned ' . $email[1] .
+        ' for ' . $email[0] . '.', 'testFundraiserHelperFunctions');
     }
   }
 
