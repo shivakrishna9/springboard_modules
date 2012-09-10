@@ -297,7 +297,7 @@ function webform_user_save_page_title($form, &$form_state) {
 function webform_user_webform_validate($form, &$form_state) {
   $node = node_load($form_state['values']['details']['nid']);
   $fields = _webform_user_flatten_tree($form_state['values']['submitted'], $node->nid);
-  if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email($fields['mail'])) {
+  if (_webform_user_is_webform_user_node($node) && !_webform_user_validate_email(isset($fields['mail']) ? $fields['mail'] : '')) {
     form_set_error('mail', t('Please enter a valid email address.'));
   }
 }
