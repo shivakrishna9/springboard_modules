@@ -755,13 +755,29 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       webform_component_update($component);
     }
     else {
-      $pid = webform_component_insert($component);
+      $cid = webform_component_insert($component);
+      if (module_exists('webform_user') && _webform_user_is_webform_user_node($fundraiser)) {
+        static $mapping;
+        if (empty($mapping)) {
+          $mapping = variable_get('fundraiser_webform_to_user_map', array('mail' => 'mail'));
+        }
+        // Add the component mapping record if there is a map value for this.
+        $found_key = array_search($component['form_key'], $mapping);
+        if ($found_key) {
+          $map = array(
+            'nid' => $fundraiser->nid,
+            'cid' => $cid,
+            'map_id' => $found_key,
+          );
+          drupal_write_record('webform_user_component_map', $map);
+        }
+      }
     }
 
     // Check for children. Recursion occurs here.
     $child_weight = 0;
     foreach (element_children($field) as $key) {
-      _fundraiser_webform_update_component($fundraiser, $key, $field[$key], $pid, $child_weight);
+      _fundraiser_webform_update_component($fundraiser, $key, $field[$key], $cid, $child_weight);
       $child_weight++;
     }
   }
