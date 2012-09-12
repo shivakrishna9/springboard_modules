@@ -232,6 +232,13 @@ function fundraiser_schema() {
         'not null' => FALSE,
         'default' => '',
       ),
+      'form_url' => array(
+        'description' => t('The full url of the donation form that the order was created from.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
@@ -355,6 +362,13 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => 64,
         'not null' => FALSE,
+      ),
+      'form_url' => array(
+        'description' => t('The full url of the donation form that the order was created from.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
       ),
     ),
     'primary key' => array('order_id'),
@@ -1100,4 +1114,43 @@ function fundraiser_update_6315() {
   variable_set('fundraiser_donation_form', TRUE);
   $ret[] = array('success' => TRUE, 'query' => 'Donation form enabled the donation_form content type.');
   return $ret;
+}
+
+/**
+ * Add the form_url column to fundraiser_webform_order and fundraiser_recurring to track actual url.
+ */
+function fundraiser_update_6316() {
+  global $base_url;
+  
+  $ret = array();
+  $field =  array(
+    'description' => t('The full url of the donation form that the order was created from.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'default' => '',
+  );
+  db_add_field($ret, 'fundraiser_webform_order', 'form_url', $field);
+  
+  $recurring_field = array(
+    'description' => t('The full url of the donation form that the order was created from.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'defautl' => '',
+  );
+  db_add_field($ret, 'fundraiser_recurring', 'form_url', $recurring_field);
+  
+  $form_path = $base_url . '/node/';
+  
+  // update existing records to old default
+  db_query("UPDATE {fundraiser_webform_order} SET form_url = concat('%s', webform_nid)", $form_path);
+  db_query("
+    UPDATE {fundraiser_recurring} r
+    INNER JOIN {fundraiser_webform_order} f
+    ON f.order_id = r.master_order_id
+    SET r.form_url = concat('%s', f.webform_nid)", $form_path
+  );
+  
+  return $ret;  
 }

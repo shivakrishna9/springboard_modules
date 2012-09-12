@@ -1781,13 +1781,16 @@ function fundraiser_webform_submit($form, &$form_state) {
  	// save the order
  	uc_order_save($order);
 
+  // grab the donation form url
+  $donation_form_url = _fundraiser_donation_form_path($node->nid);
+
   // relate the order to submission before we try and process the payment
   db_query(
     "INSERT INTO {fundraiser_webform_order}
-      (webform_nid, order_id, sid, recurring_status, user_agent) VALUES (%d, %d, %d, %d, '%s')
+      (webform_nid, order_id, sid, recurring_status, user_agent, form_url) VALUES (%d, %d, %d, %d, '%s', '%s')
     ;",
     $node->nid, $order->order_id, $form_state['values']['details']['sid'],
-    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT']
+    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url
   );
   
   // additional data to pass to the payment gateway's charge function
@@ -2163,6 +2166,9 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 	// determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
 	$counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
 	
+  // grab the donation form url
+  $donation_form_url = _fundraiser_donation_form_path($order->products[0]->nid);
+
 	for($i = 1; $i <= $counter; $i++) {
 		$next_order = uc_order_new($user->uid);
 		// copy all values to new order
@@ -2176,7 +2182,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 		$next_charge = strtotime("+$i months");
 		
 		// make a record of the recurring order
-		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_id, $next_charge, $gateway);
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url);
 		
 		// add a comment to the order stating when it will be charged
 		uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
@@ -2763,6 +2769,22 @@ function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = Arra
     }
   }
   return $newArray;
+}
+
+/**
+ * Returns the donation form's path alias.
+ */
+function _fundraiser_donation_form_path($nid) {
+  global $base_url;
+  $alias = drupal_lookup_path('alias', $_GET['q']);
+  
+  // if there is no alias, use the node id
+  if (!empty($alias)) {
+    return $base_url . '/' . $alias;
+  }
+  else {
+    return $base_url . '/node/' . $nid;
+  } 
 }
 
 function _fundraiser_get_cc_type($cardnumber) {

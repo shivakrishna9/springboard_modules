@@ -1,3 +1,7 @@
 2012-07-24  Phillip Cave  <phillip.cave@jacksonriver.com>
 
     * sf_donation.install: Added update hook to convert version 2 donation fieldmaps to version 3.
+
+2012-07-25  Phillip Cave  <phillip.cave@jacksonriver.com>
+  
+  	* Load the donation_form_url property from the value stored in the database.    

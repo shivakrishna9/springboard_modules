@@ -171,7 +171,6 @@ class Donation
     $this->cc_type = $order->payment_details['cc_type'];
     $this->donation_form_name = $order->products[0]->title;
     $this->donation_form_nid = $order->products[0]->nid;
-    $this->donation_form_url = $base_url . '/node/' . $order->products[0]->nid;
     $this->order_status = $order->order_status;
     $this->billing_first_name = $order->billing_first_name;
     $this->billing_last_name = $order->billing_last_name;
@@ -207,6 +206,7 @@ class Donation
     $this->payment_gateway = $txn_details['gateway'];
     $this->payment_transaction_id = $txn_details['txn_id'];
     $this->payment_authorization_code = $txn_details['auth_code'];
+    $this->donation_form_url = $txn_details['form_url'];
     
     // if this is a recurring donation, make sure we get the right close date  	
   	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
@@ -292,11 +292,11 @@ class Donation
     $details = array();
     $result = db_query(
       "
-        SELECT order_id, gateway, txn_id, auth_code
+        SELECT order_id, gateway, txn_id, auth_code, form_url
         FROM {fundraiser_webform_order} 
         WHERE order_id = %d
         UNION
-        SELECT order_id, gateway, txn_id, auth_code
+        SELECT order_id, gateway, txn_id, auth_code, form_url
         FROM {fundraiser_recurring}
         WHERE order_id = %d
       ",
@@ -307,6 +307,7 @@ class Donation
       $details['gateway'] = $data->gateway;
       $details['txn_id'] = $data->txn_id;
       $details['auth_code'] = $data->auth_code;
+      $details['form_url'] = $data->form_url;
     }
     
     // allow other modules to alter the details
