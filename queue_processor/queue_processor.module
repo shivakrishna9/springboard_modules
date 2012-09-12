@@ -181,8 +181,8 @@ function queue_processor_process() {
 		// clean up anything that might be left over in the heap as a result of a fatal, non-recoverable error
 		queue_processor_clean_heap();
 
-		// move all currently queued items to the heap
-		db_query("UPDATE {sf_queue} SET locked = 1 LIMIT %d", $max_to_process);
+		// move oldest queued items to the heap
+		db_query("UPDATE {sf_queue} SET locked = 1 ORDER BY created ASC LIMIT %d", $max_to_process);
 		$result = db_query("SELECT * FROM {sf_queue} WHERE locked = 1");
 	
 		while($data = db_fetch_object($result)) {

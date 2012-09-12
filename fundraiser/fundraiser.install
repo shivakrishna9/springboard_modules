@@ -181,28 +181,28 @@ function fundraiser_schema() {
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'webform_nid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Webform node id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'order_id' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Ubercart order id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'sid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Webform submission id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'sfid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Salesforce ID of the related donation record.'),
         'type' => 'varchar',
         'length' => '40',
         'not null' => FALSE,
       ),
       'gateway' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Payment gateway used to process the order.'),
         'type' => 'varchar',
         'length' => '100',
         'not null' => FALSE,
@@ -216,11 +216,11 @@ function fundraiser_schema() {
       'auth_code' => array(
         'description' => t('Payment gateway authorization code'),
         'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
+        'length' => '64',
+        'not null' => FALSE,
       ),
       'recurring_status' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('recurring donation order flag'),
         'type' => 'int',
         'not null' => FALSE,
         'default' => 0,
@@ -354,7 +354,7 @@ function fundraiser_schema() {
         'description' => t('Payment gateway authorization code'),
         'type' => 'varchar',
         'length' => 64,
-        'not null' => TRUE,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('order_id'),

@@ -230,6 +230,23 @@ class FundraiserTestCase extends DrupalWebTestCase {
     
   }
 
+  /*
+  function testAlternateType() {
+    $type = $this->createFundraiserType('event', 'Event');
+    $this->fundraiserReset();
+
+     $node = $this->testFundraiserForm('event');
+      
+    $keys = array();
+    foreach ($node->webform['components'] as $cid => $component) {
+      $keys[] = $component['form_key'];
+    }   
+
+    $valid = in_array('first_name', $keys);
+    $this->assertTrue($valid, t('Verify the first name component is added to the donation form'));
+  }
+  */
+
   function createFundraiserType($type, $name) {
     $content_type = new stdClass();
     $content_type->type = $type;
