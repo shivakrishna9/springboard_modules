@@ -279,20 +279,21 @@ function sf_node_fieldmap_objects($type) {
               // For example, I might set a handler for text fields that takes
               // the selected input format into account.
             case 'filefield':
-							$export_handler = '_sf_node_export_cck_file';
-							$import_handler = '_sf_node_import_cck_file';
-							break;
-							
+              $export_handler = '_sf_node_export_cck_file';
+              $import_handler = '_sf_node_import_cck_file';
+              break;
             case 'nodereference':
               $export_handler = '_sf_node_export_cck_nodereference';
               $import_handler = '_sf_node_import_cck_nodereference';
               break;  
-            
+            case 'userreference':
+              $export_handler = '_sf_node_export_cck_userreference';
+              $import_handler = '_sf_node_import_cck_userreference';
+              break;  
             case 'link':
             	$export_handler = '_sf_node_export_cck_link';
             	$import_handler = '_sf_node_import_cck_link';
             	break;
-            	
             default:
               $export_handler = '_sf_node_export_cck_default';
               $import_handler = '_sf_node_import_cck_default';
@@ -324,19 +325,66 @@ function sf_node_fieldmap_objects($type) {
 
 function _sf_node_export_cck_nodereference($source, $field) {
   $data = $source->$field;
-  // look up node title
+  
+  // look up SF object id for the referenced node
   $nid = $data[0]['nid'];
-  $title = db_result(db_query("SELECT title from {node} WHERE nid = %d", $nid));
-  return $title;
+  $sfid = NULL;
+  if ($nid) {
+    $sfid = db_result(db_query(
+      "SELECT sfid FROM {salesforce_management_object_map} WHERE oid=%d AND drupal_type LIKE 'node_%%';",
+      $nid
+    ));
+  }
+  return $sfid;
 }
 
-function _sf_node_import_cck_nodereference(&$node, $key, $source, $field) {
+function _sf_node_import_cck_nodereference(&$node, $key, $value) {
   $data = $node->$key;
 
-  $data[0]['value'] = $source->$field;
-
-  $node->$key = $data;
+  if (!empty($value)) {
+    // convert SF object id to Drupal nid
+    $nid = db_result(db_query(
+      "SELECT oid FROM {salesforce_management_object_map} WHERE sfid='%s' AND drupal_type LIKE 'node_%%';",
+      $value
+    ));
+    if ($nid) {
+      $data[0]['nid'] = $nid;
+      $node->$key = $data;
+    }
+  }
 }
+
+function _sf_node_export_cck_userreference($source, $field) {
+  $data = $source->$field;
+  
+  // look up SF object id for the referenced user
+  $uid = $data[0]['uid'];
+  $sfid = NULL;
+  if ($uid) {
+    $sfid = db_result(db_query(
+      "SELECT sfid FROM {salesforce_management_object_map} WHERE oid=%d AND drupal_type='user';",
+      $uid
+    ));
+  }
+  return $sfid;
+}
+
+function _sf_node_import_cck_userreference(&$node, $key, $value) {
+  $data = $node->$key;
+
+  if (!empty($value)) {
+    // convert SF object id to Drupal uid
+    $uid = db_result(db_query(
+      "SELECT oid FROM {salesforce_management_object_map} WHERE sfid='%s' AND drupal_type='user';",
+      $value
+    ));
+    if ($uid) {
+      $data[0]['uid'] = $uid;
+      $node->$key = $data;
+    }
+  }
+}
+
 
 // Returns the basic value of a CCK field from $array[0]['value'].
 function _sf_node_export_cck_default($source, $field) {
@@ -348,10 +396,28 @@ function _sf_node_export_cck_default($source, $field) {
 }
 
 // Returns the basic value of a CCK field from $array[0]['value'].
-function _sf_node_import_cck_default(&$node, $key, $source, $field) {
+function _sf_node_import_cck_default(&$node, $key, $value) {
   $data = $node->$key;
+  
+  $data[0]['value'] = $value;
+  
+  $node->$key = $data;
+}
 
-  $data[0]['value'] = $source->$field;
+// Returns the url value of a CCK link.
+function _sf_node_export_cck_link($source, $field) {
+  // Get the data array for the field.
+  $data = $source->$field;
+
+  // Return the first value; currently doesn't support multiple value fields.
+  return $data[0]['url'];
+}
+
+// Sets the url and title values of a CCK link.
+function _sf_node_import_cck_link(&$node, $key, $value) {
+  $data = $node->$key;
+  
+  $data[0]['title'] = $data[0]['url'] = $value;
 
   $node->$key = $data;
 }
@@ -370,58 +436,40 @@ function _sf_node_export_cck_todate($source, $field) {
 }
 
 // Returns the todate for a CCK date field.
-function _sf_node_import_cck_todate(&$node, $key, $source, $field) {
+function _sf_node_import_cck_todate(&$node, $key, $value) {
   // drupal_* string functions are not necessary since these are machine names.
   $key = substr($key, 0, strlen($key) - 7);
 
   $data = $node->$key;
 
-  $data[0]['value2'] = $source->$field;
+  $data[0]['value2'] = $value;
 
   $node->$key = $data;
 }
 
 // Returns the url of a CCK file field.
 function _sf_node_export_cck_file($source, $field) {
-	GLOBAL $base_url;
-	// Get the data array for the field.
-  $data = $source->$field;
-
-  // Return the first value; currently doesn't support multiple value fields.
-	if (!empty($data[0]['filepath'])) {
-  	return $base_url . '/' . $data[0]['filepath'];
-	}
-	return '';
-}
-
-function _sf_node_import_cck_file(&$node, $key, $source, $field) {
-	GLOBAL $base_url;
-	// drupal_* string functions are not necessary since these are machine names.
-  $key = substr($key, 0, strlen($key) - 7);
-
-  $data = $node->$key;
-
-  $data[0]['filepath'] = str_replace($base_url .'/', '', $source->$field); // strip the base url if found
-
-  $node->$key = $data;
-}
-
-// Returns the url value of a CCK link.
-function _sf_node_export_cck_link($source, $field) {
+  GLOBAL $base_url;
   // Get the data array for the field.
   $data = $source->$field;
 
   // Return the first value; currently doesn't support multiple value fields.
-  return $data[0]['url'];
+  if (!empty($data[0]['filepath'])) {
+    return $base_url . '/' . $data[0]['filepath'];
+  }
+  return '';
 }
 
-// Sets the url and title values of a CCK link.
-function _sf_node_import_cck_link(&$node, $key, $source, $field) {
+function _sf_node_import_cck_file(&$node, $key, $value) {
   $data = $node->$key;
-  
-  $data[0]['title'] = $data[0]['url'] = $source->field;
-  
-  $node->$key = $data;
+  if (!empty($value)) {
+    GLOBAL $base_url;
+    // drupal_* string functions are not necessary since these are machine names.
+    $key = substr($key, 0, strlen($key) - 7);
+    $data = $node->$key;
+    $data[0]['filepath'] = str_replace($base_url .'/', '', $value); // strip the base url if found
+    $node->$key = $data;
+  }
 }
 
 /** 
@@ -456,7 +504,9 @@ function import_node_updates($sfids, $fieldmap) {
 			foreach($objects as $object) {
 				// load the node
         $node = node_load($sfids[$object->Id]);
-				update_node_values($node, $object, $map, $drupal, $salesforce);
+        if ($nid = update_node_values($node, $object, $map, $drupal, $salesforce)) {
+        	module_invoke_all('sf_node_node_updated', $node, $object);
+        }
 			}
 		}
 		else {
@@ -484,6 +534,7 @@ function import_node_updates($sfids, $fieldmap) {
  *   The nid of the imported node or FALSE on failure.
  */
 function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
+
   // Loop through the fields on the fieldmap.
   foreach ($map['fields'] as $value => $key) {
     // Otherwise set the field on the export object to the value of the source field if it's present on the source object.
@@ -498,10 +549,16 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
     
     // Let the import handler do it's work
     if (isset($drupal['fields'][$key]['import'])) {
-      $drupal['fields'][$key]['import']($node, $key, $object, $map_value);
+    	$drupal['fields'][$key]['import']($node, $key, $map_value);
     }
     else {
-      $node->$key = $map_value;
+  	  $node->$key = $map_value;
+    }
+
+    // call hook_sf_node_update_node_value() to allow custom value alterations
+    foreach (module_implements('sf_node_update_node_value') as $module) {
+      $function = $module .'_sf_node_update_node_value';
+      $function($value, $key, $node, $object, $sf_value, $drupal_value, $rule, $drupal['fields'][$key]);
     }
   }
   // add something to the node we can check on nodeapi so that we don't put it back into the queue
@@ -528,9 +585,10 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
 			// look up the node id
 			$nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
 			
-			if ($nid && ($node = node_load($nid))) {
+			if ($nid) {
 				$node = node_load($nid);
 				update_node_values($node, $object, $map, $drupal, $salesforce);
+				module_invoke_all('sf_node_node_updated', $node, $object);
 			}
 			else if ($import_new_objects) {
 				module_load_include('inc', 'node', 'node.pages');
@@ -538,7 +596,10 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
 				$node->type = str_replace('node_', '', $type);
 				node_object_prepare($node);
 				update_node_values($node, $object, $map, $drupal, $salesforce);
+				module_invoke_all('sf_node_node_imported', $node, $object);
+				
 				salesforce_management_api_id_save($type, $node->nid, $object->Id, $fieldmap);
+				
 				// stick the node back in the queue so that it can be exported to SF with any additional drupal values
 				sf_queue_insert($node->nid, $type, 'update');
 			}
