@@ -859,13 +859,13 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
 function fundraiser_sustainers_fundraiser_donation_decline($donation) {
   if ($donation->donation['recurs_monthly'] == TRUE) {
     // Update data internal to fundraiser. TODO move this db stuff.
-    db_query('UPDATE {fundraiser_recurring} SET ' .
+    db_query('UPDATE {fundraiser_sustainers} SET ' .
       'gateway_resp = \'failed\', attempts = attempts + 1, ' .
       'next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))) ' .
       'WHERE did = :did', array(':did' => $donation->did)
     );
     // Get the number of times this order has been attempted
-    $attempt_count = db_query('SELECT attempts FROM {fundraiser_recurring} WHERE did = :did',
+    $attempt_count = db_query('SELECT attempts FROM {fundraiser_sustainers} WHERE did = :did',
       array(':did' => $donation->did))->fetchColumn();
     if ($attempt_count == 3) {
       // Final attempt, add debug alert.
@@ -937,7 +937,7 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   // Otherwise, send it.
   $user = user_load($uid);
   // Load the last remaining order so we can get some info for the email.
-  $did = db_query('SELECT did FROM {fundraiser_recurring} WHERE master_did = :master_did AND gateway_resp IS NULL LIMIT 0,1', // Coder: this is ok.
+  $did = db_query('SELECT did FROM {fundraiser_sustainers} WHERE master_did = :master_did AND gateway_resp IS NULL LIMIT 0,1', // Coder: this is ok.
     array(':master_did' => $master_did))->fetchColumn();
   $donation = fundraiser_donation_get_donation($did);
 
@@ -983,7 +983,7 @@ function _fundraiser_sustainers_create_recurring($donation) {
  * CRUD style DB function for fundraiser_recurring.
  */
 function _fundraiser_sustainers_get_recurring_by_did($did) {
-  return db_query('SELECT * FROM {fundraiser_recurring} ' .
+  return db_query('SELECT * FROM {fundraiser_sustainers} ' .
     'WHERE did = :did',
     array(':did' => $did))->fetchObject();
 }
@@ -1017,7 +1017,7 @@ function _fundraiser_sustainers_delete_recurring($did) {
  * DB function, cancel recurring given a master did. (Do not delete!)
  */
 function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
-  db_query('UPDATE {fundraiser_recurring} ' .
+  db_query('UPDATE {fundraiser_sustainers} ' .
     'SET gateway_resp = \'canceled\', cancellation_reason = :reason ' .
     'WHERE master_did = :master_did AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
     array(':reason' => $reason, ':master_did' => $master_did));
@@ -1028,7 +1028,7 @@ function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason)
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
-    'MAX(r.next_charge) AS expire_date FROM {fundraiser_recurring} r ' .
+    'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE d.uid = :uid ' .
     'GROUP BY r.master_did ' .
@@ -1053,7 +1053,7 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
  */
 function _fundraiser_sustainers_get_donation_sets() {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
-    'MAX(r.next_charge) AS expire_date FROM {fundraiser_recurring} r ' .
+    'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = r.did ' .
     'GROUP BY r.master_did ' .
@@ -1072,7 +1072,7 @@ function _fundraiser_sustainers_get_donation_sets() {
  * Called in admin pages.
  */
 function _fundraiser_sustainers_get_donations_recurr_by_member($did) {
-  $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE d.did = :did OR r.master_did = :master_did ' .
     'ORDER BY r.next_charge ASC', array(':did' => $did, ':master_did' => $did))->fetchAll();
@@ -1084,7 +1084,7 @@ function _fundraiser_sustainers_get_donations_recurr_by_member($did) {
  */
 function _fundraiser_sustainers_get_donations_next_charge($master_did) {
   $now = strtotime('now');
-  return db_query('SELECT * FROM {fundraiser_recurring} ' .
+  return db_query('SELECT * FROM {fundraiser_sustainers} ' .
     'WHERE master_did = :master_did ' .
     'AND next_charge > :now ' .
     'ORDER BY next_charge ASC ' .
@@ -1097,7 +1097,7 @@ function _fundraiser_sustainers_get_donations_next_charge($master_did) {
  * Called in admin pages.
  */
 function _fundraiser_sustainers_get_donations_recurr_by_masterdid($master_did) {
-  $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
@@ -1119,7 +1119,7 @@ function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
  * DB funct, get order donation sets that are remaining.
  */
 function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
-  $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
     'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\' OR r.gateway_resp = \'canceled\') ' .
@@ -1142,7 +1142,7 @@ function _fundraiser_sustainers_count_donations_recurr_processed($master_did) {
  * DB funct, get order donation sets that are processed.
  */
 function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
-  $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
     'AND r.gateway_resp = \'success\' ' .
@@ -1155,7 +1155,7 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
  */
 function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $time_limit = strtotime('now');
-  $donations = db_query('SELECT * FROM {fundraiser_recurring} r ' .
+  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
     'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .

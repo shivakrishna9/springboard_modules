@@ -8,7 +8,7 @@
  * Implements hook_schema().
  */
 function fundraiser_sustainers_schema() {
-  $schema['fundraiser_recurring'] = array(
+  $schema['fundraiser_sustainers'] = array(
     'description' => 'Stores information about recurring orders.',
     'fields' => array(
       'master_did' => array(
@@ -81,28 +81,21 @@ function fundraiser_sustainers_schema() {
 /**
  * Implements hook_update_N().
  */
-function fundraiser_sustainers_update_7001(&$sandbox) {
-  // Rename the table columns that used to be called order to donation.
-  $master_did_field = array(
-    'master_did' => array(
-      'description' => 'Master donation id.',
-      'type' => 'int',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
-    ),
-  );
-  $did_field = array(
-    'did' => array(
-      'description' => 'This specific recurring donation id.',
-      'type' => 'int',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
-    ),
-  );
-  db_change_field('fundraiser_recurring', 'master_order_id', 'master_did', $master_did_field, array('primary key' => array('did')));
-  db_change_field('fundraiser_recurring', 'order_id', 'did', $did_field);
+function fundraiser_sustainers_update_7000(&$sandbox) {
+  // Copy all data over from the old fundraiser_recurring table to the new table in the correct location.
+  db_query('INSERT INTO {fundraiser_sustainers} ' .
+    '(master_did, did, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
+      'gateway_resp, attempts, cancellation_reason) ' .
+    'SELECT master_order_id, order_id, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
+      'gateway_resp, attempts, cancellation_reason '.
+    'FROM {fundraiser_recurring}');
+}
 
-  // Drop fields that are redundant with fundraiser_donation.
-  db_drop_field('fundraiser_recurring', 'txn_id');
-  db_drop_field('fundraiser_recurring', 'gateway');
+/**
+ * Implements hook_update_N().
+ */
+function fundraiser_sustainers_update_7001(&$sandbox) {
+  // Drop fundraiser_recurring table. All data has been moved out of it by now. (Hence why this is on hook 7001.
+  // See hook 7000 in fundraiser.install.
+  db_drop_table('fundraiser_recurring');
 }

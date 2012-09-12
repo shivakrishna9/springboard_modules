@@ -269,7 +269,7 @@ function fundraiser_update_7000() {
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
       }
-      // Note on the update for fundraiser_sustainers 7001 these fields are dropped and order_id renamed.
+      // Note on the update for fundraiser_sustainers 7001 where this table goes away.
       $gateway_infos = db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :did',
         array(':did' => $donation->order_id));
       foreach ($gateway_infos as $gateway_info) {
