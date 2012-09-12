@@ -364,8 +364,8 @@ function email_wrappers_mail_alter(&$message) {
 function email_wrappers_render_email_body($eid, $message, $settings) {
   $eid = $message['params']['email']['eid'];
   $boundary = $message['params']['boundary'];
-  $html_raw = str_replace('%message', $settings['html_message'], $settings['html_template']);
-  $text_raw = str_replace('%message', $settings['text_message'], $settings['text_template']);
+  $html_raw = str_replace('%html_message', $settings['html_message'], $settings['html_template']);
+  $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
   
   $multi_body  = "
 
