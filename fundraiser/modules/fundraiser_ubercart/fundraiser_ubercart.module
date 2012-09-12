@@ -193,7 +193,7 @@ function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $su
  */
 function _fundraiser_ubercart_card_cvv_field_validate($form, $form_state, $submission_fields, $value) {
   $valid =_uc_credit_valid_cvv($value);
-  if (!empty($cc_cvv) && !$valid) {
+  if (!empty($value) && !$valid) {
     return t('You have entered an invalid CVV number.');
   }
 }
