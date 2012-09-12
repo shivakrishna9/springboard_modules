@@ -730,11 +730,14 @@ function _webform_user_create_webform_components(&$node) {
       $fieldset_id = 0;
       // Get the fieldset ID, or create it if it doesn't already exist.
       // Prevents fieldsets that aren't being used from getting created.
-      if (isset($fieldset_created[ $field['category_key'] ])){
-        $fieldset_id = $fieldset_created[ $field['category_key'] ];
-      }
-      else {
-        $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
+
+      if (isset($field['category_key']) && !empty($field['category_key'])) {
+        if (isset($fieldset_created[ $field['category_key'] ])){
+          $fieldset_id = $fieldset_created[ $field['category_key'] ];
+        }
+        else {
+          $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
+        }
       }
 
       $item = array(
