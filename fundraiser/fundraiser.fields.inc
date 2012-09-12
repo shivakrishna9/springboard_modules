@@ -252,6 +252,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 		'multiple' => 0,
 		'aslist' => 'Y',
 	);
+        $billing_country['value'] = variable_get('fundraiser_default_country', '');
 	$billing_country['mandatory'] = 1;
 	$billing_country['weight'] = 6;
 	$billing_country['email'] = 1;
@@ -529,23 +530,24 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   }
   else {
     $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
-    $field = db_fetch_object(db_query('SELECT cid, type, extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
+    $field_type = db_result(db_query('SELECT type FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
     
     // If the current component is a select update with current donation amount values.
-    if (!strcmp($field->type, 'select')) {
-      $current_extra = unserialize($field->extra);
-      $extra = array(
-        'description' => isset($current_extra['description']) ? $current_extra['description'] : '',
-        'items' => $formatted_amounts,
-        'multiple' => isset($current_extra['multiple']) ? $current_extra['multiple'] : 0,
-      );
-      // hoop jumping required because webform only includes the title_display array key/value if has been customized at some point.
-      if (isset($current_extra['title_display'])) {
-        $extra['title_display'] = $current_extra['title_display'];
-      }
+    if (!strcmp($field_type, 'select')) {
+
+      $amount_cid = _fundraiser_find_cid($node, 'amount');
+      $old_value = $node->webform['components'][$amount_cid]['value'];
+      $data = serialize(array('description' => "", 'items' => $formatted_amounts, 'multiple' => 0));
       
-      $data = serialize($extra);
-      db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      // if the original default value of the webform component isn't a valid option we want to update it with defaults.
+      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default.
+      if ($old_value && !in_array($old_value, $donation_amounts)) {
+        db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
+      }
+      else {
+        db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND form_key = 'amount'", $data, $node->nid);
+      }
+
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
       $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
     }
@@ -586,6 +588,28 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   }
   watchdog('fundraiser', $message, array(), WATCHDOG_NOTICE, "node/$node->nid");
 }
+
+/**
+ * retrieves component cid from the node webform components array.
+ *
+ * @param $node
+ * Node object
+ *
+ * @param $form_key
+ * Form key of the component we are looking for
+ *
+ * @return
+ * Returns the cid for the webform component or FALSE if no matching component was found.
+ */
+function _fundraiser_find_cid($node, $form_key) {
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['form_key'] == $form_key) {
+      return $component['cid'];
+    }
+  }
+  return FALSE;
+}
+
 
 /**
  * Inserts amount webform component

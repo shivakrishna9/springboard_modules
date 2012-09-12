@@ -25,10 +25,11 @@ function fundraiser_uninstall() {
   variable_del('fundraiser_form_layouts_default');
   variable_del('fundraiser_http_error_message');
   variable_del('fundraiser_cc_exp_year_range');
-  
+  variable_del('fundraiser_donation_form');
+
   drupal_uninstall_schema('fundraiser');
   db_query("DROP VIEW {fundraiser_webform_data}");
-  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}");  
 }
 
 /**
@@ -58,6 +59,9 @@ function fundraiser_enable() {
     $result[] = 'donation_form';
     variable_set('webform_node_types_primary', $result);
   }
+
+  // Enable fundraiser for the built-in donation_form node type (legacy).
+  variable_set('fundraiser_donation_form', TRUE);
 }
 
 /**
@@ -177,28 +181,28 @@ function fundraiser_schema() {
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'webform_nid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Webform node id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'order_id' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Ubercart order id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'sid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Webform submission id'),
         'type' => 'int',
         'not null' => TRUE,
       ),
       'sfid' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Salesforce ID of the related donation record.'),
         'type' => 'varchar',
         'length' => '40',
         'not null' => FALSE,
       ),
       'gateway' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Payment gateway used to process the order.'),
         'type' => 'varchar',
         'length' => '100',
         'not null' => FALSE,
@@ -212,11 +216,11 @@ function fundraiser_schema() {
       'auth_code' => array(
         'description' => t('Payment gateway authorization code'),
         'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
+        'length' => '64',
+        'not null' => FALSE,
       ),
       'recurring_status' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('recurring donation order flag'),
         'type' => 'int',
         'not null' => FALSE,
         'default' => 0,
@@ -225,6 +229,13 @@ function fundraiser_schema() {
         'description' => t('The HTTP_USER_AGENT server variable value when donation form was submitted.'),
         'type' => 'text',
         'size' => 'small',
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'form_url' => array(
+        'description' => t('The full url of the donation form that the order was created from.'),
+        'type' => 'varchar',
+        'length' => '255',
         'not null' => FALSE,
         'default' => '',
       ),
@@ -350,7 +361,14 @@ function fundraiser_schema() {
         'description' => t('Payment gateway authorization code'),
         'type' => 'varchar',
         'length' => 64,
-        'not null' => TRUE,
+        'not null' => FALSE,
+      ),
+      'form_url' => array(
+        'description' => t('The full url of the donation form that the order was created from.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => '',
       ),
     ),
     'primary key' => array('order_id'),
@@ -1085,4 +1103,54 @@ function fundraiser_update_6314() {
   module_enable(array('fundraiser_uc_gateway'));
   $ret[] = array('success' => TRUE, 'query' => 'Enabled the Fundraiser UC Gateway module.');
   return $ret;
+}
+
+/**
+ * Conversion to donation form on any content type.
+ */
+function fundraiser_update_6315() {
+  $ret = array();
+  // make donation_form node type a donation type
+  variable_set('fundraiser_donation_form', TRUE);
+  $ret[] = array('success' => TRUE, 'query' => 'Donation form enabled the donation_form content type.');
+  return $ret;
+}
+
+/**
+ * Add the form_url column to fundraiser_webform_order and fundraiser_recurring to track actual url.
+ */
+function fundraiser_update_6316() {
+  global $base_url;
+  
+  $ret = array();
+  $field =  array(
+    'description' => t('The full url of the donation form that the order was created from.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'default' => '',
+  );
+  db_add_field($ret, 'fundraiser_webform_order', 'form_url', $field);
+  
+  $recurring_field = array(
+    'description' => t('The full url of the donation form that the order was created from.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'defautl' => '',
+  );
+  db_add_field($ret, 'fundraiser_recurring', 'form_url', $recurring_field);
+  
+  $form_path = $base_url . '/node/';
+  
+  // update existing records to old default
+  db_query("UPDATE {fundraiser_webform_order} SET form_url = concat('%s', webform_nid)", $form_path);
+  db_query("
+    UPDATE {fundraiser_recurring} r
+    INNER JOIN {fundraiser_webform_order} f
+    ON f.order_id = r.master_order_id
+    SET r.form_url = concat('%s', f.webform_nid)", $form_path
+  );
+  
+  return $ret;  
 }

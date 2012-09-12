@@ -343,7 +343,7 @@ function market_source_nodeapi(&$node, $op) {
       // Skip adding custom webform components if the node is being cloned.
       if (!$node->is_being_cloned && !$node->clone_from_original_nid) {
         // make sure this node type contains a webform and it's not a donation form.
-        if ($node->type != 'donation_form' && in_array($node->type, $webform_types)) {
+        if (!fundraiser_is_donation_type($node->type) && in_array($node->type, $webform_types)) {
           module_load_include('inc', 'webform', 'includes/webform.components');
           // don't add standard fields to webform_user because it handles the fields itself 
           if (module_exists('webform_user') && $node->is_webform_user) {

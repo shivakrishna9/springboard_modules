@@ -1,4 +1,12 @@
-2012-08-14 Allen Freeman <allen.freeman@jacksonriver.com>
+2012-09-03  Allen Freeman  <allen.freeman@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_preprocess_fundraiser_confirmation): renamed template_preprocess_fundraiser_confirmation.
+      This corrects order of execution when other contributed modules try to modify template variables.
+      See: http://drupal.org/node/223430
+    * templates/fundraiser-confirmation.tpl.php: added support for $confirmation_message prefix and $confirmation_message_suffix
+      template variables.
+
+2012-08-14  Allen Freeman  <allen.freeman@jacksonriver.com>
 
     * fundraiser.fields.inc (_fundraiser_update_amount_webform_component): added code to preserve custom component
     settings when the ask amount component is updated by Fundraiser.

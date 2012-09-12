@@ -24,7 +24,7 @@ Drupal.behaviors.fundraiserBehavior = function() {
     $id = $(this).attr('id');
     window.fundraiser_amount = {
       id : $id,
-      amount : $amount,
+      amount : $amount
     }
   });
   // Auto-populate label fields when amount is entered

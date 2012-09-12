@@ -97,7 +97,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
   if (is_numeric((string) $edit['post']['fundraiser_goal_parent_item']) && $edit['post']['fundraiser_goal_parent_item'] ) {
     $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['post']['fundraiser_goal_parent_item']));
     // If it's a donation form set type to total donations.
-    if ($type == 'donation_form') {
+    if (fundraiser_is_donation_type($type)) {
       $goal_type = 2;
     }
   }
@@ -106,7 +106,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
     // get type
     $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['values']['fundraiser_goal_parent_item']));
     // if it's a donation form add max donation as an option
-    if ($type == 'donation_form') {
+    if (fundraiser_is_donation_type($type)) {
 
       $goal_type = 2;
     }

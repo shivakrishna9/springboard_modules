@@ -70,7 +70,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   // If the payment gateway for the donation form does not include credit card fields (such
   // as Ogone), remove them from the donation form
   if (strpos($form_id, 'webform_client_form_') === 0) {
-    if ($form['#node']->type == 'donation_form' && $form['#node']->gateway > 0) {
+    if (fundraiser_is_donation_type($form['#node']->type) && $form['#node']->gateway > 0) {
       $gateway = gateway_manager_gateway_info($form['#node']->gateway);
       if ($gateway['gateway_details']['hide_cc_fields']) {
         foreach (element_children($form['submitted']['credit_card_information']) as $field_name) {
@@ -90,7 +90,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 function gateway_manager_nodeapi(&$node, $op) {
   // clear out the gateway cache when donation forms
   // are created, updated or deleted
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
       case 'insert':
       case 'delete':

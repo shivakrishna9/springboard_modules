@@ -212,7 +212,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
 
     // on donation forms, hide the "enable confirmation email" checkbox.
     // it's confusing since email is always sent out on donation form submissions.
-    if ($node->type == 'donation_form') {
+    if (fundraiser_is_donation_type($node->type)) {
       $form['confirmation_template']['send_mail'] = array(
         '#type' => 'value',
         '#value' => 1,
@@ -344,7 +344,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     *  such would require a nontrivial refactoring of fundraiser and email confirmations to 
     *  get working for all webform content types. 
     */
-    if ($form['#parameters'][2]->type != 'donation_form') {
+    if (fundraiser_is_donation_type($form['#parameters'][2]->type)) {
       unset($form['confirmation_page']);
       $form['confirmation_template']['#collapsed'] = FALSE;
    
@@ -355,7 +355,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
   }
   
   // Add a submit handler to basic webforms, this reeks of a hack.
-  if (strpos($form_id, 'webform_client_form') === 0 && $form['#node']->type != 'donation_form') {
+  if (strpos($form_id, 'webform_client_form') === 0 && fundraiser_is_donation_type($form['#node']->type)) {
     $form['#submit'][] = 'email_confirmation_webform_send_mail';
   }
 }
@@ -426,7 +426,7 @@ function email_confirmation_template_submit(&$form, $form_state) {
  * Implements hook_nodeapi().
  */
 function email_confirmation_nodeapi(&$node, $op) {
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
       case 'load':
         $confirmation_settings = db_fetch_array(db_query('SELECT  
@@ -673,15 +673,23 @@ function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
 
-    // $object is only valid on donation forms, so we need to default to arg(1) to catch
-    // node id's on webform submissions.
-    $nid = $object->products[0]->nid ? $object->products[0]->nid : arg(1);
+    // $object contains UC order values on donation forms and the node object on webforms.
+    $nid = $object->products[0]->nid ? $object->products[0]->nid : $object->nid;
 
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
-    $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format, FALSE);
-   
+
+    $php_filter = db_result(db_query('SELECT format FROM {filter_formats} WHERE name = "PHP code"'));
+
+    // We want to prevent core filters from manipulating template markup unless the php filter is selected.
+    if ($php_filter && $data->html_message_format == $php_filter) {
+      $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format, FALSE);
+    }
+    else {
+      $values['confirmation-message-html'] = $data->html_message;
+    }
+    $values['order-node-title'] = check_plain($node->title);
     return $values;
   }
 }
@@ -942,7 +950,7 @@ function email_confirmation_fundraiser_confirmations_perm($perm, $node) {
   $webform_node_types = variable_get('webform_node_types', '');
   if (in_array($node->type, $webform_node_types) && node_access($perm, $node)) {
     $is_webform_user = db_result(db_query('SELECT 1 FROM {webform_user} WHERE is_webform_user = 1 AND nid = %d ', $node->nid));
-    if (_fundraiser_is_donation_type($node) || $is_webform_user) {
+    if (fundraiser_is_donation_type($node->type) || $is_webform_user) {
       return true;
     }
   }
@@ -980,16 +988,13 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $message['subject'] = $settings->subject;
 
     // Perform token replacements for "order" tokens and "all" tokens.
-    $message['html_body'] = token_replace($template_html, 'all');
-    $message['html_body'] = token_replace($message['html_body'], 'all');
-    $message['html_body'] = token_replace($message['html_body']);
-    $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, TRUE);
+    $message['html_body'] = token_replace($template_html, 'order', $node);
+    $message['html_body'] = token_replace($message['html_body'], 'order', $node);
+
      
     // Same as above, with check_plain() included to insure final output is plain text.
-    $message['text_body'] = token_replace($template_text, 'all');
-    $message['text_body'] = token_replace($message['text_body'], 'all');
-    $message['text_body'] = token_replace($message['text_body']);
-    $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, TRUE);
+    $message['text_body'] = token_replace($template_text, 'all', $node);
+    $message['text_body'] = token_replace($message['text_body'], 'all', $node);
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 

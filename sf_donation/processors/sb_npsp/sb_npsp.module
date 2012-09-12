@@ -45,6 +45,7 @@ function sb_npsp_create_donation($order_id, $account_id, $sid) {
   if (!empty($recurring_details)) {
     $object['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
     $object['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
+    $object['StageName'] = 'Pledged'; 
   }
   return $object;
 }

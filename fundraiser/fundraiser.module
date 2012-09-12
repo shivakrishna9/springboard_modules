@@ -276,7 +276,7 @@ function fundraiser_menu() {
 }
 
 /**
- * Implemenation of hook_menu_alter().
+ * Implements hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
   if (module_exists('trigger')) {
@@ -296,7 +296,7 @@ function fundraiser_menu_alter(&$items) {
  */
 function fundraiser_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a donation form node
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     $access = 0;
   }
 }
@@ -328,7 +328,7 @@ function fundraiser_access_clone() {
 
   if (is_numeric($nid)) {
     $node = node_load($nid);
-    if (!strcmp($node->type, 'donation_form')) {
+    if (fundraiser_is_donation_type($node->type)) {
 
       if (user_access('clone donation form')) {
         $access = TRUE;
@@ -349,7 +349,7 @@ function fundraiser_access_clone() {
  * the user has permission to edit User mapping.
  */
 function fundraiser_mapping_form_access($node) {
-  return (_fundraiser_is_donation_type($node)) && user_access('edit donation form user mapping');
+  return (fundraiser_is_donation_type($node->type)) && user_access('edit donation form user mapping');
 }
 
 /**
@@ -376,7 +376,7 @@ function fundraiser_preprocess_page(&$vars) {
  * Implmentation of hook_confirmation_page_tokens().
  */
 function fundraiser_confirmation_page_tokens($type) {
-  if ($type == 'donation_form') {
+  if (fundraiser_is_donation_type($type)) {
     $order_tokens = array();
     $items = token_get_list('order');
     foreach($items as $module => $tokens) {
@@ -424,7 +424,7 @@ function fundraiser_boost_is_cacheable($path) {
   if ($args[0] == 'node' && isset($args[1]) && is_numeric($args[1]) && !isset($args[2])) {
     // It's a node, but is it a donation node?
     $node = node_load($args[1]);
-    if (_fundraiser_is_donation_type($node)) {
+    if (fundraiser_is_donation_type($node->type)) {
       // Don't cache donation forms
       return FALSE;
     }
@@ -436,38 +436,15 @@ function fundraiser_boost_is_cacheable($path) {
  * Implementation of hook_form().
  */
 function fundraiser_form($node, $edit = NULL) {
-
-  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
-  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
-
+  
   $type = node_get_types('type', $node);
 
-  // payment gateway list
-  $gateway_options = module_invoke_all('fundraiser_gateway', 'select options', $node);
-  
-  // Warn the user if there are no payment gateways.
-  if (empty($gateway_options)) {
-    drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured'), 'warning');
-  }
-  
-  // Workaround for  D6 core #ahah bug
-  //$form['#action'] = $edit['nid']['#value'] ? url('node/'. $edit['nid']['#value'] .'/edit') : url('node/add/donation-form');
-  
   $form['title'] = array(
     '#type' => 'textfield',
     '#title' => check_plain($type->title_label),
     '#required' => TRUE,
     '#default_value' => $node->title,
     '#weight' => -5,
-    '#maxlength' => 255,
-  );
-  
-  $form['internal_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Internal Name'),
-    '#required' => TRUE,
-    '#default_value' => $node->internal_name,
-    '#weight' => -4.99,
     '#maxlength' => 255,
   );
   
@@ -482,160 +459,66 @@ function fundraiser_form($node, $edit = NULL) {
   );
   $form['body_filter']['filter'] = filter_form($node->format);
 
-  $form['fundraiser_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Fundraiser settings'),
-    '#weight' => -4.96,
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  
-  /* add amount #aha */
-  $form['fundraiser_settings']['amount_wrapper'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Ask amounts'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#prefix' => '<div class="clear-block" id="ask-wrapper">',
-    '#suffix' => '</div>',
-  );
-
-  $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
-    '#prefix' => '<div id="ask-amounts">',
-    '#suffix' => '</div>',
-    '#theme' => 'fundraiser_ask_amounts',
-  );
-  
-  // Retrieve saved values if available
-  $amount_values = array();
-  if (is_numeric($node->nid)) {
-    $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
-    $amount_values = unserialize(db_result($results));
-    $amount_values = preg_split('/\n/', trim($amount_values['items']));
-  }
-
- // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
- // how many field sets to build.
- if ($edit['values']['amount_delta']) {
-    $delta = $edit['values']['amount_delta'];
-  }
-  // Otherwise we start by generating enough fields to house the data currently in the database.
-  elseif (count($amount_values)) {
-    $delta = count($amount_values);
-  }
-  // New forms default to three sets of amount|label fields.
-  else {
-    $delta = 3;
-  }
-  
-  $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta'] = array(
-    '#type' => 'value',
-    '#value' => $delta,
-  );
-  
-  for ($i = 0; $i < $delta; ++$i ) {
-    $form['fundraiser_settings']['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $edit, $amount_values);
-  }
-  
-  $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
-  );
-  
-  $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
-    '#type' => 'submit',
-    '#value' => t('Add another'),
-    '#description' => t("Click here to add more choices."),
-    '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
-    '#ahah' => array(
-      'path' => 'fundraiser_ask/js',
-      'wrapper' => 'ask-amounts',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-  );
-
-  $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array (
-		'#type' => 'checkbox',
-		'#title' => t('Show other amount option'),
-		'#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
-		'#default_value' => $node->show_other_amount,
-	);
-	
-	$form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
-		'#type' => 'textfield',
-		'#title' => t('Minimum donation amount'),
-		'#description' => t('The minimum acceptable donation amount.'),
-		'#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
-	);
-	
-	$form['fundraiser_settings']['gateway'] = array(
-		'#type' => 'select',
-		'#title' => t('Payment Gateway'),
-		'#options' => $gateway_options,
-		'#weight' => -5,
-		'#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-		'#default_value' => $node->gateway,
-		'#required' => TRUE,
-	);
-	
-  /* hidden fields */
-  $form['confirmation_page_title'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->confirmation_page_title,
-  );
-  $form['confirmation_page_body'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->confirmation_page_body,
-  );
-  $form['receipt_email_from'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->receipt_email_from,
-  );
-  $form['receipt_email_address'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->receipt_email_address,
-  );
-  $form['receipt_email_subject'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->receipt_email_subject,
-  );
-  $form['receipt_email_message'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->receipt_email_message,
-  );
-  $form['redirect_url'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->redirect_url,
-  );
-  $form['#after_build'][] = '_fundraiser_validation_includes';
   return $form;
 }
 
 
 /**
- * Implementation of hook_validate().
+ * Validation handler for donation form settings.
  */
-function fundraiser_validate(&$node) {
+function fundraiser_node_settings_validate($form, $form_state) {
   $donation_amounts = array();
-  for($i = 0; $i < $node->amount_delta; ++$i) {
+  for($i = 0; $i < $form_state['values']['amount_delta']; ++$i) {
     $value = 'amount_' . $i;
-    if ($node->$value) {
-      if (is_numeric($node->$value)) {
-        $donation_amounts[] = $node->$value;
+    if ($form_state['values'][$value]) {
+      if (is_numeric($form_state['values'][$value])) {
+        $donation_amounts[] = $form_state['values'][$value];
       }
       else {
-        form_set_error($value, t('Ask amounts must be numeric, you entered "@s".', array("@s" => $node->$value)));
+        form_set_error($value, t('Ask amounts must be numeric, you entered "@s".', array("@s" => $form_state['values'][$value])));
         break;
       }
     }
   }
-  $node->donation_amounts = implode(',', $donation_amounts);
+  $form_state['values']['donation_amounts'] = implode(',', $donation_amounts);
 }
 
 /**
- * Implementation of hook_insert().
+ * Implements hook_nodeapi().
  */
-function fundraiser_insert($node) {
+function fundraiser_nodeapi(&$node, $op, $teaser, $page) {
+  if (fundraiser_is_donation_type($node->type)) {
+    switch($op) {
+      case 'view':
+        fundraiser_node_view($node, $teaser, $page);
+        break;
+
+      case 'load':
+        fundraiser_node_load($node);
+        break;
+
+      case 'insert':
+        fundraiser_node_insert($node);
+        break;
+
+      case 'update':
+        fundraiser_node_update($node);
+        break;
+
+      case 'delete':
+        fundraiser_node_delete($node);
+        break;
+    }
+  }
+}
+
+/**
+ * Inserts data for new donation forms.
+ *
+ * @param $node
+ *   The new donation node being inserted.
+ */
+function fundraiser_node_insert(&$node) {
 
   // If not set these fields get default values.
   $node->receipt_email_from = isset($node->receipt_email_from) ? $node->receipt_email_from : variable_get('site_name', '');
@@ -646,28 +529,41 @@ function fundraiser_insert($node) {
   db_query(
     "
       INSERT INTO {fundraiser}
-      (nid, gateway, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url)
-      VALUES
-      (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+      (
+        nid,
+        gateway,
+        donation_amounts,
+        show_other_amount,
+        internal_name,
+        minimum_donation_amount,
+        receipt_email_from,
+        receipt_email_address,
+        receipt_email_subject,
+        receipt_email_message,
+        confirmation_page_title,
+        confirmation_page_body,
+        confirmation_page_format,
+        redirect_url
+      )
+      VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
     ",
-    $node->nid,
-    $node->gateway,
-    $node->donation_amounts,
-    $node->show_other_amount,
-    $node->internal_name,
-    $node->minimum_donation_amount,
-    $node->receipt_email_from,
-    $node->receipt_email_address,
-    $node->receipt_email_subject,
-    $node->receipt_email_message,
-    $node->confirmation_page_title,
-    $node->confirmation_page_body,
-    $node->confirmation_page_format,
-    $node->redirect_url
+        $node->nid,
+        $node->gateway,
+        $node->donation_amounts,
+        $node->show_other_amount,
+        $node->internal_name,
+        $node->minimum_donation_amount,
+        $node->receipt_email_from,
+        $node->receipt_email_address,
+        $node->receipt_email_subject,
+        $node->receipt_email_message,
+        $node->confirmation_page_title,
+        $node->confirmation_page_body,
+        $node->confirmation_page_format,
+        $node->redirect_url
   );
-  
-  // skip some steps if the form is being cloned
 
+  // skip some steps if the form is being cloned
   if (!$node->is_being_cloned) {
 
     $donation_amounts = array();
@@ -685,7 +581,7 @@ function fundraiser_insert($node) {
     $components = fundraiser_create_webform_components($node->nid, $donation_amounts, $node->show_other_amount, $node->minimum_donation_amount);
 
     // automap
-  	fundraiser_user_map_create($node->nid, $components);
+    fundraiser_user_map_create($node->nid, $components);
     // fire a hook that other modules can utilize to add additional processing when a donation form is created
     module_invoke_all('fundraiser_form_insert', $node, $components);
   }
@@ -694,8 +590,8 @@ function fundraiser_insert($node) {
 /**
  * Implemenation of hook_update().
  */
-function fundraiser_update($node) {
-
+function fundraiser_node_update(&$node) {
+  //drupal_set_message('<pre>' . print_r($node, true) . '</pre>');
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
     "
@@ -756,18 +652,27 @@ function fundraiser_update($node) {
 }
 
 /**
- * Implementation of hook_delete().
+ * Deletes a fundraiser record when the node is deleted.
  */
-function fundraiser_delete(&$node) {
+function fundraiser_node_delete(&$node) {
   db_query("DELETE FROM {fundraiser} WHERE nid = %d", $node->nid);
 }
 
 /**
- * Implementation of hook_load().
+ * Implements the load $op in hook_nodeapi().
+ *
+ * @param $node
+ *   The node being loaded.
  */
-function fundraiser_load($node) {
+function fundraiser_node_load(&$node) {
+  // load all fundraiser properties
+  $fundraiser = db_fetch_array(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
+  
+  // add each property to the node object
+  foreach ($fundraiser as $field => $value) {
+    $node->{$field} = $value;
+  }
 
-  $fundraiser = db_fetch_object(db_query("SELECT gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message, donation_amounts, show_other_amount, internal_name, minimum_donation_amount, confirmation_page_title, confirmation_page_body, confirmation_page_format, redirect_url FROM {fundraiser} WHERE nid = %d", $node->nid));
   // get the user profile map
   $result = db_query("SELECT cid, map_id FROM {fundraiser_component_map} WHERE nid = %d", $node->nid);
   while($row = db_fetch_array($result)){
@@ -784,23 +689,29 @@ function fundraiser_load($node) {
   for ($i = 0; $i < count($items); ++$i) {
     $item = explode('|', $items[$i]);
     if ($item[0] != 'other') {
-
       $amount = 'amount_' . $i;
       $label = 'label_' . $i;
-      $fundraiser->$amount = $item[0];
-      $fundraiser->$label = $item[1];
+      $node->$amount = $item[0];
+      $node->$label = $item[1];
       ++$count;
     }
   }
-  $fundraiser->amount_delta = $count;
-  $fundraiser->map = $map;
-  return $fundraiser;
+  
+  $node->amount_delta = $count;
+  $node->map = $map;
 }
 
 /**
- * Implemenation of hook_view().
+ * Handles the view $op for hook_nodeapi().
+ *
+ * @param $node
+ *   The node being viewed.
+ * @param $teaser
+ *   Flag to indicate teaser view.
+ * @param $page
+ *   Flag to indicate page view.
  */
-function fundraiser_view(&$node, $teaser = FALSE, $page = FALSE) {
+function fundraiser_node_view(&$node, $teaser = FALSE, $page = FALSE) {
   if (!$teaser && $page) {
     fundraiser_track_pageview();
   }
@@ -838,7 +749,7 @@ function fundraiser_is_secure() {
  */
 function fundraiser_form_webform_component_delete_form_alter(&$form, &$form_state) {
   // makes sure we are dealing with a donation form
-  if ($form['node']['#value']->type == 'donation_form') {
+  if (fundraiser_is_donation_type($form['node']['#value']->type)) {
     module_load_include('inc', 'fundraiser', 'fundraiser.fields');
     $required_fields = fundraiser_required_fields();
     
@@ -863,17 +774,225 @@ function fundraiser_clone_form($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds a setting that allows the user to specify this content type as a donation type.
+ */
+function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['#node_type'])) {
+    $form['fundraiser_type'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['fundraiser_type']['fundraiser'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable fundraiser?'),
+      '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
+    );
+  }
+}
+
+/**
+ * Adds fundraiser specific fields to the node add/edit form.
+ *
+ * @param $form
+ *   The form to add the fields to.
+ * @param $node
+ *   The node being added/edited.
+ */
+function fundraiser_node_settings(&$form, $node) {
+  
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
+
+  // payment gateway list
+  $gateway_options = module_invoke_all('fundraiser_gateway', 'select options', $node);
+  
+  // warn the user if there are no payment gateways.
+  if (empty($gateway_options)) {
+    drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured'), 'warning');
+  }
+
+  $form['fundraiser_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['fundraiser_settings']['internal_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Internal Name'),
+    '#required' => TRUE,
+    '#default_value' => $node->internal_name,
+    '#weight' => -5,
+    '#maxlength' => 255,
+  );
+  
+  /* add amount #aha */
+  $form['fundraiser_settings']['amount_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Ask amounts'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -3,
+    '#prefix' => '<div class="clear-block" id="ask-wrapper">',
+    '#suffix' => '</div>',
+  );
+
+  $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
+    '#prefix' => '<div id="ask-amounts">',
+    '#suffix' => '</div>',
+    '#theme' => 'fundraiser_ask_amounts',
+  );
+  
+  // Retrieve saved values if available
+  $amount_values = array();
+  if (is_numeric($node->nid)) {
+    $results = db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
+    $amount_values = unserialize(db_result($results));
+    $amount_values = preg_split('/\n/', trim($amount_values['items']));
+  }
+
+ // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
+ // how many field sets to build.
+ if ($edit['values']['amount_delta']) {
+    $delta = $edit['values']['amount_delta'];
+  }
+  // Otherwise we start by generating enough fields to house the data currently in the database.
+  elseif (count($amount_values)) {
+    $delta = count($amount_values);
+  }
+  // New forms default to three sets of amount|label fields.
+  else {
+    $delta = 3;
+  }
+  
+  $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta'] = array(
+    '#type' => 'value',
+    '#value' => $delta,
+  );
+  
+  for ($i = 0; $i < $delta; ++$i ) {
+    $form['fundraiser_settings']['amount_wrapper']['amounts'][] = _fundraiser_ask_form($i, $edit, $amount_values);
+  }
+  
+  $form['fundraiser_settings']['amount_wrapper']['help'] = array(
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
+  );
+  
+  $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add another'),
+    '#description' => t("Click here to add more choices."),
+    '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
+    '#ahah' => array(
+      'path' => 'fundraiser_ask/js',
+      'wrapper' => 'ask-amounts',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+  $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array (
+    '#type' => 'checkbox',
+    '#title' => t('Show other amount option'),
+    '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
+    '#default_value' => $node->show_other_amount,
+  );
+  
+  $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum donation amount'),
+    '#description' => t('The minimum acceptable donation amount.'),
+    '#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
+  );
+  
+  $form['fundraiser_settings']['gateway'] = array(
+    '#type' => 'select',
+    '#title' => t('Payment Gateway'),
+    '#options' => $gateway_options,
+    '#weight' => -4,
+    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
+    '#default_value' => $node->gateway,
+    '#required' => TRUE,
+  );
+  
+  /* hidden fields */
+  $form['confirmation_page_title'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_title,
+  );
+  $form['confirmation_page_body'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_body,
+  );
+  $form['receipt_email_from'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_from,
+  );
+  $form['receipt_email_address'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_address,
+  );
+  $form['receipt_email_subject'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_subject,
+  );
+  $form['receipt_email_message'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_message,
+  );
+  $form['redirect_url'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->redirect_url,
+  );
+
+  // TODO: write submit handler, check permissions before displaying button
+  $form['buttons']['clone'] = array(
+    '#type' => 'submit',
+    '#value' => 'Clone',
+    '#submit' => array('fundraiser_clone_form'),
+    '#weight' => 100,
+  );
+
+  $form['#validate'][] = 'fundraiser_node_settings_validate';
+  $form['#after_build'][] = '_fundraiser_validation_includes';
+}
+
+/**
+ * Submit handler for node type form.
+ *
+ * Adds type to webform variable when marked as a fundraiser type.
+ */
+function fundraiser_node_type_form_submit(&$form, &$form_state) {
+  if ($form_state['values']['fundraiser']) {
+    fundraiser_webform_types_primary($form_state['values']['type'], 'insert');
+  }
+  else {
+    fundraiser_webform_types_primary($form_state['values']['type'], 'delete'); 
+  }
+}
+
+/**
+ * Implements hook_form_alter().
  */
 function fundraiser_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == 'donation_form_node_form') {
-    // TODO: write submit handler, check permissions before displaying button
-    $form['buttons']['clone'] = array(
-      '#type' => 'submit',
-      '#value' => 'Clone',
-      '#submit' => array('fundraiser_clone_form'),
-      '#weight' => 100,
-    );
+
+  if ($form_id == 'node_type_form') {
+    // add a submission handler to set webform_node_types_primary if type is flagged as donation type
+    $form['#submit'][] = 'fundraiser_node_type_form_submit';
+  }
+
+  // add fundraiser settings to node add/edit form
+  if (isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type) && substr($form_id, -10) == '_node_form') {
+    // add fundraiser settings to the node form
+    fundraiser_node_settings($form, $form['#node']);
   }
   			
 	if (strstr($form_id, 'webform_client_form')) {
@@ -885,7 +1004,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     $node = $form['#parameters'][2];
 
     // handle donation form submissions
-    if (_fundraiser_is_donation_type($node) && arg(2) == 'submission') {
+    if (fundraiser_is_donation_type($node->type) && arg(2) == 'submission') {
       // Set up a view only display of the donation amount
       $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
       $form['submitted']['donation']['display_amount'] = array(
@@ -931,7 +1050,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     }
     
     // handle the donation form itself
-    if (_fundraiser_is_donation_type($node) && arg(2) != 'submission') {
+    if (fundraiser_is_donation_type($node->type) && arg(2) != 'submission') {
       // check to see if the form is being accessed over HTTPS, if not, disable access.
       if (!fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0)) {
         fundraiser_disable_elements($form);
@@ -1049,7 +1168,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
   }
 
   // Alter the form on the webform's Form Settings tab
-  if ($form_id == 'webform_configure_form' && _fundraiser_is_donation_type($form['#parameters'][2])) {
+  if ($form_id == 'webform_configure_form' && fundraiser_is_donation_type($form['#parameters'][2]->type)) {
     // Hide fields that are on the Confirmations tab
     $form['submission']['confirmation_wrapper']['#access'] = FALSE;
     $form['submission']['redirection']['#access'] = FALSE;
@@ -1250,7 +1369,7 @@ function fundraiser_disable_elements(&$form) {
  * Implementation of hook_webform_submission_update()
  */
 function fundraiser_webform_submission_update($node, $submission) {
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     if (module_exists('queue_api')) {
       if ($order_id = db_result(db_query("SELECT f.order_id FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id WHERE f.webform_nid = %d AND f.sid = %d AND u.order_status = 'payment_received'", $node->nid, $submission->sid))) {
         // Determine if we need an INSERT or an UPDATE
@@ -1272,7 +1391,7 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   unset($submission->data['']);
   
   // remove senstive form data before the submission is saved to the database
-  if (_fundraiser_is_donation_type($node)) {
+  if (fundraiser_is_donation_type($node->type)) {
     $result = db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key IN ('card_number', 'card_cvv', 'card_expiration_date')", $node->nid);
     while ($data = db_fetch_object($result)) {
       $submission->data[$data->cid]['value'][0] = NULL;
@@ -1291,7 +1410,7 @@ function fundraiser_webform_configure_access($perm, $node) {
 }
 
 function fundraiser_confirmations_perm($perm, $node) {
-  if ((_fundraiser_is_donation_type($node)) && node_access($perm, $node)) {
+  if ((fundraiser_is_donation_type($node->type)) && node_access($perm, $node)) {
     return true;
   }
   return false;
@@ -1389,9 +1508,14 @@ function fundraiser_user_map_create($nid, $components) {
 }
 
 /**
- * Implemenation of hook_preprocess_fundraiser_confirmation().
+ * Implemenation of template_preprocess_fundraiser_confirmation().
+ *
+ * Sets $confirmation_message template variable.
+ * Other supported template variables:
+ * - $confirmation_message_prefix: displays before the confirmation message.
+ * - $confirmation_message_suffix: displays after the confirmation message.
  */
-function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
+function template_preprocess_fundraiser_confirmation(&$vars) {
   $sid = $vars['sid'];
   if ($sid) {
     // load up the id of the order
@@ -1662,13 +1786,16 @@ function fundraiser_webform_submit($form, &$form_state) {
  	// save the order
  	uc_order_save($order);
 
+  // grab the donation form url
+  $donation_form_url = _fundraiser_donation_form_path($node->nid);
+
   // relate the order to submission before we try and process the payment
   db_query(
     "INSERT INTO {fundraiser_webform_order}
-      (webform_nid, order_id, sid, recurring_status, user_agent) VALUES (%d, %d, %d, %d, '%s')
+      (webform_nid, order_id, sid, recurring_status, user_agent, form_url) VALUES (%d, %d, %d, %d, '%s', '%s')
     ;",
     $node->nid, $order->order_id, $form_state['values']['details']['sid'],
-    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT']
+    $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url
   );
   
   // additional data to pass to the payment gateway's charge function
@@ -2044,6 +2171,9 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 	// determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
 	$counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
 	
+  // grab the donation form url
+  $donation_form_url = _fundraiser_donation_form_path($order->products[0]->nid);
+
 	for($i = 1; $i <= $counter; $i++) {
 		$next_order = uc_order_new($user->uid);
 		// copy all values to new order
@@ -2057,7 +2187,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 		$next_charge = strtotime("+$i months");
 		
 		// make a record of the recurring order
-		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_id, $next_charge, $gateway);
+		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url);
 		
 		// add a comment to the order stating when it will be charged
 		uc_order_comment_save($new_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $next_charge))), 'admin');
@@ -2646,6 +2776,22 @@ function _fundraiser_array_flatten($array, $preserve_keys = 1, &$newArray = Arra
   return $newArray;
 }
 
+/**
+ * Returns the donation form's path alias.
+ */
+function _fundraiser_donation_form_path($nid) {
+  global $base_url;
+  $alias = drupal_lookup_path('alias', $_GET['q']);
+  
+  // if there is no alias, use the node id
+  if (!empty($alias)) {
+    return $base_url . '/' . $alias;
+  }
+  else {
+    return $base_url . '/node/' . $nid;
+  } 
+}
+
 function _fundraiser_get_cc_type($cardnumber) {
 	$cardtype = "UNKNOWN";
 	$len = strlen($cardnumber);
@@ -2801,13 +2947,85 @@ function _fundraiser_field_blacklist() {
 }
 
 /**
- * Determines whether or not the node is a donation type.
- *
- * @param $node
- *   The node to check.
+ * Determine if this node type supports donation forms.
  */
-function _fundraiser_is_donation_type($node) {
-  return $node->type == 'donation_form';
+function fundraiser_is_donation_type($type) {
+  static $fundraiser_types;
+  // Cache fundraiser content types during page execution.
+  if (!isset($fundraiser_types[$type])) {
+    $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+  }
+  return $fundraiser_types[$type];
+}
+
+/**
+ * Helper function, returns a list of fundraiser enabled types.
+ */
+function fundraiser_get_donation_types() {
+  static $fundraiser_types;
+  // Cache types during page execution
+  if (!isset($fundraiser_types)) {
+    // For all types, check if they are a fundraiser type.
+    $types = node_get_types();
+    foreach ($types as $type => $type_info) {
+      $fundraiser_types[$type] = variable_get('fundraiser_' . $type, FALSE);
+    }
+  }
+
+  return $fundraiser_types;
+}
+
+/** 
+ * Helper function, returns an array of fundraiser types.
+ */
+function fundraiser_enabled_types() {
+  static $fundraiser_types;
+
+  if (!isset($fundraiser_types)) {
+    $types = fundraiser_get_donation_types();
+    foreach ($types as $type => $enabled) {
+      if ($enabled) {
+        $fundraiser_types[] = $type;
+      }
+    }
+  }
+
+  return $fundraiser_types;
+}
+
+/**
+ * Helper function, adds node type fo webform_node_types_primary array.
+ */
+function fundraiser_webform_types_primary($type, $op) {
+  $primary_types = variable_get('webform_node_types_primary', array('webform'));
+  $types = variable_get('webform_node_types', array('webform'));
+
+  switch ($op) {
+    case 'insert':
+      if (!in_array($type, $types)) {
+        $types[] = $type;
+        variable_set('webform_node_types', $types);      
+      }
+      if (!in_array($type, $primary_types)) {
+        $primary_types[] = $type;
+        variable_set('webform_node_types_primary', $primary_types);
+      }
+      break;
+
+    case 'delete':
+      if (in_array($type, $types)) {
+        $index = array_search($type, $types);
+        unset($types[$index]);
+        variable_set('webform_node_types', $types);
+      }
+
+      if (in_array($type, $primary_types)) {
+        $index = array_search($type, $primary_types);
+        unset($primary_types[$index]);
+        variable_set('webform_node_types_primary', $primary_types);
+      }
+      break;
+  }
 }
 
 /**
