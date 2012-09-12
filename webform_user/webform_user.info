@@ -4,4 +4,4 @@ package = Jackson River Springboard
 core = 6.x
 dependencies[] = profile
 dependencies[] = webform
-version =  6.x-3.0-dev
+version =  6.x-3.2

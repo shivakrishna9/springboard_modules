@@ -3,4 +3,4 @@ description = Adds batch processing capabilities to all Salesforce integration m
 core = 6.x
 package = Jackson River Springboard
 dependencies[] = salesforce_management_api
-version =  6.x-3.0-dev
+version =  6.x-3.2

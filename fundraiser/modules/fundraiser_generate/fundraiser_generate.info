@@ -4,4 +4,4 @@ core = 6.x
 package = Jackson River Springboard - development
 dependencies[] = fundraiser
 dependencies[] = devel_generate
-version =  6.x-3.1
+version =  6.x-3.2

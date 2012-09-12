@@ -7,4 +7,4 @@ dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = profile
 dependencies[] = uc_cart
-version =  6.x-3.0-dev
+version =  6.x-3.2

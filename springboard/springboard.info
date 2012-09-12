@@ -2,5 +2,5 @@ name = Springboard
 description = Springboard provides a coherent interface for administering your site
 core = 6.x
 package = Jackson River Springboard
-version =  6.x-3.0-dev
+version =  6.x-3.2
 dependencies[] = 'ctools'
