@@ -756,7 +756,7 @@ function sf_donation_export_opportunity_contact_roles() {
 	if ($sf) {	
 		
 		// get all un-exported records
-		$result = db_query("SELECT contact_id, opportunity_id, role FROM {sf_donation_opportunity_contact_role} WHERE exported = %d", 0);
+		$result = db_query("SELECT contact_id, opportunity_id, role FROM {sf_donation_opportunity_contact_role} WHERE contact_id != '' AND exported = %d", 0);
 		$contact_roles = array();
 		while ($data = db_fetch_object($result)) {
 			// create the object
