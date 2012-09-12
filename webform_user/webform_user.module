@@ -863,7 +863,6 @@ function _webform_user_save_profile_map($uid, &$map) {
   // The saved map has to handle saving to both profile2 / entity fields. And profile.module.
   if ($map) {
     // First loop through the map and fields to grab results.
-    $map_keys = array_keys($map);
     $account = user_load($uid);
     $profile_values = array();
     $fields = _webform_user_get_profile_fields();
@@ -879,8 +878,8 @@ function _webform_user_save_profile_map($uid, &$map) {
         case 'checkbox':
         default:
           // Only add the profile result if the name is in the keys.
-          if (in_array($field['name'], $map_keys)) {
-            $profile[ $field['name'] ]['und'][0]['value'] = $map[ $field['name'] ];
+          if (in_array($field['name'], array_keys($map))) {
+            $profile_values[ $field['name'] ] = $map[ $field['name'] ];
           }
         break;
         // TODO: track down format for nonstandard fields like 'email'
@@ -892,21 +891,23 @@ function _webform_user_save_profile_map($uid, &$map) {
       if (function_exists('_profile_get_fields')) {
         $categories = profile_user_categories();
         // Loop on each category.
-        $this_profile = array();
         foreach ($categories as $category) {
+          $this_profile = array();
           $expected_fields = _profile_get_fields($category['name'], FALSE);
           foreach ($expected_fields as $expected_field) {
             if (!isset($profile[ $expected_field->name ])) {
-              $this_profile[ $expected_field->name ] = $profile[ $field['name'] ]['und'][0]['value'];
+              $this_profile[ $expected_field->name ] = $profile_values[ $expected_field->name ];
             }
           }
           profile_save_profile($this_profile, $account, $category['name']);
         }
       }
-      else {
       // Profile2 and entity fields saves on entity fields.
-        user_save($account, $profile);
+      // (Both Profile and Profile2 can be installed, so we do both.)
+      foreach ($profile_values as $field_name => $field_value) {
+        $account[ $field_name ]['und'][0]['value'] = $field_value;
       }
+      user_save($account, $profile);
     }
   } // End if map.
 }
