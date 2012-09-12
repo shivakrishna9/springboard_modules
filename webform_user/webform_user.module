@@ -230,7 +230,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     $user_data = user_load($user->uid);
     // If the user is logged in.
     if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
-      $component_hierarchy = webform_user_parse_components($node->nid, $components);
+      $component_hierarchy = __webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
@@ -536,7 +536,8 @@ function webform_user_node_load($nodes, $types) {
 function &_webform_user_find_field(&$form, $path) {
   foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) {
-      return _webform_user_find_field($form[$v], $path[$v]); // Recursion.
+      // Recurse if there are more keys.
+      return _webform_user_find_field($form[$v], $path[$v]);
     }
     else {
       return $form[$v];
@@ -545,15 +546,16 @@ function &_webform_user_find_field(&$form, $path) {
 }
 
 /**
+ * Helper function.
  * Creates a nested array of where components exist in the FAPI array for all components in a webform.
- * This is needed because the fundraiser module allows the user to move components around. Therefore
+ * This is needed because the webform module allows the user to move components around. Therefore
  * we must be able to find them if they are not in their usual spot.
  */
-function webform_user_parse_components($nid, $components) {
+function __webform_user_parse_components($nid, $components, $reset = FALSE) {
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
-    $component_path = 'submitted[' . implode('][', webform_user_walk_component_hierarchy($nid, $cid)) . ']';
-    parse_str($component_path, $output);
+    $component_path = 'submitted[' . implode('][', _webform_user_walk_component_hierarchy($nid, $cid, $reset)) . ']';
+    parse_str($component_path, $output); // Convert string to a nested array.
     $component_hierarchy[$component['form_key']] = $output;
   }
   return $component_hierarchy;
@@ -562,11 +564,10 @@ function webform_user_parse_components($nid, $components) {
 /**
  * Creates a nested array of where a component exists in the FAPI array.
  */
-function webform_user_parse_component($nid, $form_key) {
+function _webform_user_parse_component($nid, $form_key) {
   $results = db_query('SELECT cid FROM {webform_component} WHERE nid = :nid and form_key = :form_key',
-    array(':nid' => $nid, ':form_key' => $form_key));
-  $cid = $results->fetchColumn();
-  $component_path = 'submitted[' . implode('][', webform_user_walk_component_hierarchy($nid, $cid)) . ']';
+    array(':nid' => $nid, ':form_key' => $form_key))->fetchColumn();
+  $component_path = 'submitted[' . implode('][', _webform_user_walk_component_hierarchy($nid, $cid, $reset)) . ']';
   parse_str($component_path, $output);
   return $output;
 }
@@ -574,13 +575,24 @@ function webform_user_parse_component($nid, $form_key) {
 /**
  * Builds a path from the webform component to it's topmost parent.
  */
-function webform_user_walk_component_hierarchy($nid, $cid, $path = array()) {
-  $result = db_query('SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid and cid = :cid',
-    array(':nid' => $nid, ':cid' => $cid));
-  while ($data = $result->fetchObject()) {
-    array_unshift($path, $data->form_key);
-    if ($data->pid > 0) {
-      webform_user_walk_component_hierarchy($nid, $data->pid, $path); // Recursion.
+function _webform_user_walk_component_hierarchy($nid, $cid, $reset = FALSE, &$path = array()) {
+  // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
+  static $component_hierarchy = array();
+  if (empty($component_hierarchy[$nid]) || $reset == TRUE) {
+    $component_hierarchy[$nid] = array();
+    $result = db_query('SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid', array(':nid' => $nid));
+    foreach ($result as $data) {
+      $this_cid = $data->cid;
+      $component_hierarchy[$nid][$this_cid][] = $data;
+    }
+  }
+  // Build a path from the webform component to its topmost parent.
+  if (isset($component_hierarchy[$nid][$cid])) {
+    foreach ($component_hierarchy[$nid][$cid] as $data) {
+      array_unshift($path, $data->form_key);
+      if ($data->pid > 0) {
+        _webform_user_walk_component_hierarchy($nid, $data->pid, FALSE, $path);
+      }
     }
   }
   return $path;
