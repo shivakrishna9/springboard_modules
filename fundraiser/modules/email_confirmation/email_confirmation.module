@@ -961,7 +961,10 @@ function email_confirmation_webform_send_mail($form, $form_state) {
   if ($settings->send_mail) {
 
     // We need to track down the cid for the mail field. This submitted value is used as the To: field in the sent mail.  
-    $mail_cid = _email_confirmation_find_cid('mail', $form_state['webform']['component_tree']['children']);  
+    $mail_cid = _email_confirmation_find_cid('mail', (isset($form_state['webform']['component_tree']['children']) ? $form_state['webform']['component_tree']['children'] : $form['#node']->webform['components']));  
+    $node = $form['#node'];
+    $sid = $form_state['values']['details']['sid'];
+    $submission = webform_get_submission($node->nid, $sid); 
     
     $user_email = $form_state['values']['submitted'][$mail_cid];
     
@@ -979,11 +982,14 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     // Perform token replacements for "order" tokens and "all" tokens.
     $message['html_body'] = token_replace($template_html, 'all');
     $message['html_body'] = token_replace($message['html_body'], 'all');
-
-
+    $message['html_body'] = token_replace($message['html_body']);
+    $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, TRUE);
+     
     // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'all');
     $message['text_body'] = token_replace($message['text_body'], 'all');
+    $message['text_body'] = token_replace($message['text_body']);
+    $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, TRUE);
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 
