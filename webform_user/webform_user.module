@@ -692,6 +692,28 @@ function _webform_user_create_webform_components(&$node) {
    * duplication of effort, or custom modules to filter out results.
    */
   drupal_alter('webform_user_profile_fields', $fields, $node);
+
+  // Set up fieldsets for entry.
+  $fieldset_lookup = $fieldset_created = array();
+  foreach ($fields as $field) {
+    $item = array(
+      'nid' => $node->nid,
+      'pid' => 0,
+      'form_key' => $field['category_key'],
+      'name' => $field['category_name'],
+      'type' => 'fieldset',
+      'weight' => 0,
+      'extra' => array(
+        'collapsible' => 1,
+        'collapsed' => 0,
+        'description' => '',
+      ),
+    );
+    // Add the fieldset component and store its ID in a lookup table.
+    $fieldset_lookup[$field['category_key']] = $item;
+  }
+
+  // Process fields. (If a fieldset has no available fields, don't create it.
   $all = FALSE;
   $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
   if (empty($default_fields) || in_array('webform_user_all_profile_fields', $default_fields)) {
@@ -703,10 +725,20 @@ function _webform_user_create_webform_components(&$node) {
     // The mail field can always be created.
     if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail') {
       // Create a webform component array for the field.
+      $fieldset_id = 0;
+      // Get the fieldset ID, or create it if it doesn't already exist.
+      // Prevents fieldsets that aren't being used from getting created.
+      if (isset($fieldset_created[ $field['category_key'] ])){
+        $fieldset_id = $fieldset_created[ $field['category_key'] ];
+      }
+      else {
+        $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
+      }
+
       $item = array(
         'nid' => $node->nid,
         'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
-        'pid' => 0,
+        'pid' => $fieldset_id,
         'name' => $field['title'],
         'type' => $field['type'],
         'mandatory' => isset($field['mandatory']) ? $field['mandatory'] : 0,
@@ -891,6 +923,8 @@ function _webform_user_get_profile_fields() {
    * weight - order of display (optional, defaults to 0)
    * explanation - description (optional, defaults to '')
    * options - array of select options, required for type list_float
+   * category_key - form key for the fieldset for the profile
+   * category_name - human readable profile field value
    */
   $fields = array();
   // Add the e-mail field first.
@@ -926,6 +960,9 @@ function _webform_user_get_profile_fields() {
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
     $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
+    // FOR NOW: field groups are only coming in from a field group module for these values. Leave it alone.
+    $field['category_key'] = NULL;
+    $field['category_name'] = NULL;
     $fields[] = $field;
   }
 
@@ -943,6 +980,8 @@ function _webform_user_get_profile_fields() {
         $field['weight'] = $profile_field->weight;
         $field['explanantion'] = isset($profile_field->explanantion) ? $profile_field->explanantion : '';
         $field['options'] = isset($profile_field->options) ? $profile_field->options : NULL;
+        $field['category_key'] = isset($category['name']) ? $category['name'] : NULL;
+        $field['category_name'] = isset($category['title']) ? $category['title'] : NULL;
         $fields[] = $field;
       }
     }
