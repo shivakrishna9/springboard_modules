@@ -16,6 +16,11 @@
  */
 ?>
 
+<?php if ($confirmation_message_prefix): ?>
+<div class="fundraiser-confirmation-prefix">
+  <?php print $confirmation_message_prefix ?>
+</div>
+<?php endif; ?>
 <div class="fundraiser-confirmation">
   <?php if ($confirmation_message): ?>
     <?php print $confirmation_message ?>
@@ -23,6 +28,11 @@
     <p><?php print t('Thank you, your submission has been received.'); ?></p>
   <?php endif; ?>
 </div>
+<?php if ($confirmation_message_suffix): ?>
+<div class="fundraiser-confirmation-suffix">
+  <?php print $confirmation_message_suffix; ?>
+</div>
+<?php endif; ?>
 <div class="share">
   <?php if ($springboard_social_share) { print $springboard_social_share; } ?>
 </div>

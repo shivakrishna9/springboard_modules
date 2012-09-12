@@ -1508,9 +1508,14 @@ function fundraiser_user_map_create($nid, $components) {
 }
 
 /**
- * Implemenation of hook_preprocess_fundraiser_confirmation().
+ * Implemenation of template_preprocess_fundraiser_confirmation().
+ *
+ * Sets $confirmation_message template variable.
+ * Other supported template variables:
+ * - $confirmation_message_prefix: displays before the confirmation message.
+ * - $confirmation_message_suffix: displays after the confirmation message.
  */
-function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
+function template_preprocess_fundraiser_confirmation(&$vars) {
   $sid = $vars['sid'];
   if ($sid) {
     // load up the id of the order
