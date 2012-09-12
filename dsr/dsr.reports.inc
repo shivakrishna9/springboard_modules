@@ -244,7 +244,7 @@ function theme_dsr_report_table($label, $sf_data, $drupal_data) {
   $rows[] = array(
     '<strong>Drupal</strong>',
     $drupal_data['total_count'],
-    (float) rtrim($drupal_data['total_amount'], "0"),
+    number_format((float) $drupal_data['total_amount'], 2, '.', ','),
   );
   $rows[] = array(
     '<strong>Salesforce</strong>',
@@ -256,7 +256,7 @@ function theme_dsr_report_table($label, $sf_data, $drupal_data) {
       $rows[] = array(
         "<em>$type</em>",
         $data['total_count'],
-        $data['total_amount'],
+        number_format((float) $data['total_amount'], 2, '.', ','),
       );
     }
   }
