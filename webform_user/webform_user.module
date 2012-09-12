@@ -696,21 +696,23 @@ function _webform_user_create_webform_components(&$node) {
   // Set up fieldsets for entry.
   $fieldset_lookup = $fieldset_created = array();
   foreach ($fields as $field) {
-    $item = array(
-      'nid' => $node->nid,
-      'pid' => 0,
-      'form_key' => $field['category_key'],
-      'name' => $field['category_name'],
-      'type' => 'fieldset',
-      'weight' => 0,
-      'extra' => array(
-        'collapsible' => 1,
-        'collapsed' => 0,
-        'description' => '',
-      ),
-    );
-    // Add the fieldset component and store its ID in a lookup table.
-    $fieldset_lookup[$field['category_key']] = $item;
+    if (isset($field['category_key']) && !empty($field['category_key'])) {
+      $item = array(
+        'nid' => $node->nid,
+        'pid' => 0,
+        'form_key' => $field['category_key'],
+        'name' => $field['category_name'],
+        'type' => 'fieldset',
+        'weight' => 0,
+        'extra' => array(
+          'collapsible' => 1,
+          'collapsed' => 0,
+          'description' => '',
+        ),
+      );
+      // Add the fieldset component and store its ID in a lookup table.
+      $fieldset_lookup[$field['category_key']] = $item;
+    }
   }
 
   // Process fields. (If a fieldset has no available fields, don't create it.
