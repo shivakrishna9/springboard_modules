@@ -673,15 +673,23 @@ function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
 
-    // $object is only valid on donation forms, so we need to default to arg(1) to catch
-    // node id's on webform submissions.
-    $nid = $object->products[0]->nid ? $object->products[0]->nid : arg(1);
+    // $object contains UC order values on donation forms and the node object on webforms.
+    $nid = $object->products[0]->nid ? $object->products[0]->nid : $object->nid;
 
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
     $values['confirmation-message-text'] = check_plain($values['confirmation-message-text']);
-    $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format, FALSE);
-   
+
+    $php_filter = db_result(db_query('SELECT format FROM {filter_formats} WHERE name = "PHP code"'));
+
+    // We want to prevent core filters from manipulating template markup unless the php filter is selected.
+    if ($php_filter && $data->html_message_format == $php_filter) {
+      $values['confirmation-message-html'] = check_markup($data->html_message, $data->html_message_format, FALSE);
+    }
+    else {
+      $values['confirmation-message-html'] = $data->html_message;
+    }
+    $values['order-node-title'] = check_plain($node->title);
     return $values;
   }
 }
@@ -980,16 +988,13 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $message['subject'] = $settings->subject;
 
     // Perform token replacements for "order" tokens and "all" tokens.
-    $message['html_body'] = token_replace($template_html, 'all');
-    $message['html_body'] = token_replace($message['html_body'], 'all');
-    $message['html_body'] = token_replace($message['html_body']);
-    $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, TRUE);
+    $message['html_body'] = token_replace($template_html, 'order', $node);
+    $message['html_body'] = token_replace($message['html_body'], 'order', $node);
+
      
     // Same as above, with check_plain() included to insure final output is plain text.
-    $message['text_body'] = token_replace($template_text, 'all');
-    $message['text_body'] = token_replace($message['text_body'], 'all');
-    $message['text_body'] = token_replace($message['text_body']);
-    $message['text_body'] = _webform_filter_values($message['text_body'], $node, $submission, NULL, FALSE, TRUE);
+    $message['text_body'] = token_replace($template_text, 'all', $node);
+    $message['text_body'] = token_replace($message['text_body'], 'all', $node);
     $message['text_body'] = check_plain($message['text_body']);
     $message['bcc'] = $settings->bcc_email;
 

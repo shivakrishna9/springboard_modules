@@ -1,4 +1,11 @@
-CHANGELOG
----------
-2012-05-11 By Bastlynn
-Adding webform token support to email confirmations.
+2012-08-10   Allen Freeman  <allen.freeman@jacksonriver.com>
+
+    * email_confirmation.module, email_confirmation_token_values(): removed naive dependency on arg() to provide node API on webform submissions.
+      This fixes a compatibilty issue with Springboard API that was resulting in blank HTML emails.
+
+    * email_confirmation.module, email_confirmation_webform_send_mail(): updated calls to token_replace() to work with the changes to
+      email_confirmation_token_values().
+
+2012-05-11  Sarah Hood  <sarah.hood@jacksonriver.com>
+
+	* Adding webform token support to email confirmations.
