@@ -1,2 +1,37 @@
-- Pull request: https://github.com/JacksonRiver/springboard_modules/pull/59 by benclark: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
+2012-08-14 Allen Freeman <allen.freeman@jacksonriver.com>
 
+    * fundraiser.fields.inc (_fundraiser_update_amount_webform_component): added code to preserve custom component
+    settings when the ask amount component is updated by Fundraiser.
+
+- https://github.com/JacksonRiver/springboard_modules/pull/118
+
+2012-08-09  Phillip Cave  <phillip.cave@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_form_alter): Added check for form_state['#action']. If found assign form['#action]
+    the value to workaround #ahah validation bug. See http://drupal.org/node/591696. form_state['#action'] gets set in
+    _fundraiser_ahah_helper_render().
+
+2012-08-10  Ben Clark  <ben.clark@jacksonriver.com>
+    * fundraiser.module: Fixed access issues with recurring payment tab (user/%user/recurring_overview/%).
+    See https://github.com/JacksonRiver/springboard_modules/pull/59.
+
+2012-08-10  Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.install, fundraiser_schema(): added definition for {fundraiser_secure} table.
+    
+    * fundraiser.install, fundraiser_schema(): added update hook to add {fundraiser_secure} table.
+    
+    * fundraiser.module, fundraiser_menu(): changed access callback for confirmations page, removed access arguments.
+    
+    * fundraiser.module, fundraiser_preprocess_fundraiser_confirmation(): added function call to flag sid as viewed.
+  
+    * fundraiser.module, fundraiser_access_confirmation(): added function.
+  
+    * fundraiser.module, fundraiser_secure_confirmation(): added function.
+  
+    * fundraiser.module, fundraiser_secure_confirmation_flag(): added function.
+    
+2012-08-20  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.module: Improved gateway management. See pull request
+    https://github.com/JacksonRiver/springboard_modules/pull/121.

@@ -1,1 +1,29 @@
-- Pull request: https://github.com/JacksonRiver/springboard_modules/pull/54 by afreeman: Fixed mystery "1" bug.
+2012-05-02  Allen Freeman  <allen.freeman@jacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_after_build): Fixed mystery
+      "1" bug.
+
+
+2012-07-30  Ben Clark  <ben.clark@jacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_clear_session): Check
+      whether the $_SESSION['secure_prepopulate_values'] array is empty after
+      unsetting the $nid element.
+
+
+2012-08-10  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_init): Adding an alter hook
+      for changing the $fields array after it has been decrypted. Hook usage:
+
+      /**
+       * Implements hook_secure_prepopulate_data_alter().
+       */
+      function hook_secure_prepopulate_data_alter(&$data, $nid) {
+        if ($node = node_load($nid)) {
+          // Add to the prepopulated data.
+          $data['node_created'] = $node->created;
+        }
+        // Remove data, too.
+        unset($data['address_line_2']);
+      }

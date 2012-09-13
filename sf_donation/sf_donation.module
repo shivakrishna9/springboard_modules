@@ -477,8 +477,8 @@ function sf_donation_sf_donation($op, $order_id, $sfid, $message) {
  * Implemenation of hook_menu_alter().
  */
 function sf_donation_menu_alter(&$items) {
-	// not sure why this is needed, but the custom trigger was not showing up without it
-	$items['admin/build/trigger/sf_donation']['access callback'] = TRUE;
+  $items['admin/build/trigger/sf_donation']['access callback'] = 'user_access';
+  $items['admin/build/trigger/sf_donation']['access arguments'] = array('administer site configuration');
 }
 
 /**

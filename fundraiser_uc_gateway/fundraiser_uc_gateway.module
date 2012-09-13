@@ -1,0 +1,117 @@
+<?php
+
+/**
+ * @file
+ * This module enables Ubercart Payment Gateways for use with the Fundraiser module.
+ * It also includes functionality to copy UC Gateways over to the Gateway Manager module.
+ */
+
+/**
+ * Implementation of hook_fundraiser_gateway
+ */
+function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
+  $uc_gateways = _payment_gateway_list('', TRUE);
+  switch ($op) {
+    case 'select options':
+      foreach ($uc_gateways as $uc) {
+        $gateways[$uc['id']] = $uc['title'];
+      }
+      return array('Ubercart' => $gateways);
+    case 'charge function':
+      foreach ($uc_gateways as $uc) {
+        if ($uc['id'] == $arg) {
+          $gateway['charge_function'] = $uc['credit'];
+          return $gateway;
+        }
+      }
+      break;
+    case 'refund function':
+      foreach ($uc_gateways as $uc) {
+        if ($uc['id'] == $arg && $uc['credit_refund']) {
+          $gateway['refund_function'] = $uc['credit_refund'];
+          return $gateway;
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_form_form_id_alter
+ *
+ * Add our convert buttons to the Ubercart payment gateway form
+ */
+function fundraiser_uc_gateway_form_uc_payment_gateways_form_alter(&$form, $form_state) {
+  if (!module_exists('gateway_manager')) {
+    return;
+  }
+
+  if (!empty($form['gateways']['authorizenet']) && module_exists('gm_authorizenet')) {
+    $form['gateways']['authorizenet']['convert_authorizenet'] = array(
+      '#type' => 'submit',
+      '#value' => 'Convert to the Payment Gateway Manager module.',
+      '#submit' => array('fundraiser_uc_gateway_form_convert_authorizenet'),
+    );
+  }
+}
+
+/**
+ * Form submit handler to convert UC Authorize.net to Gateway Manager
+ */
+function fundraiser_uc_gateway_form_convert_authorizenet(&$form, $form_state) {
+  $old_type = 'authorizenet';
+
+  $name = 'Authorize.net UC Copy';
+  $type = 'gm_authorizenet';
+  $terms = array();
+  $status = $config['status'] = $form_state['values']['uc_pg_authorizenet_enabled'];
+
+  $config['gm_authnet_hide_emails'] = 1;
+  $config['gm_authnet_duplicate_window'] = $form_state['values']['uc_authnet_duplicate_window'];
+  $config['gm_authnet_api_login_id'] = $form_state['values']['uc_authnet_api_login_id'];
+  $config['gm_authnet_api_transaction_key'] = $form_state['values']['uc_authnet_api_transaction_key'];
+  $config['gm_authnet_api_test_gateway_url'] = $form_state['values']['uc_authnet_api_test_gateway_url'];
+  $config['gm_authnet_api_live_gateway_url'] = $form_state['values']['uc_authnet_api_live_gateway_url'];
+  $config['gm_authnet_aim_txn_mode'] = $form_state['values']['uc_authnet_aim_txn_mode'];
+  $config['gm_authnet_aim_email_customer'] = $form_state['values']['uc_authnet_aim_email_customer'];
+  $config['gm_authnet_response_debug'] = $form_state['values']['uc_authnet_response_debug'];
+  $config['gm_authnet_cim_profile'] = $form_state['values']['uc_authnet_cim_profile'];
+  $config['gm_authnet_cim_mode'] = $form_state['values']['uc_authnet_cim_mode'];
+
+  fundraiser_uc_gateway_settings_copy($form, $name, $type, $terms, $status, $config, $old_type);
+}
+
+/**
+ * Creates a new payment gateway record from the UC settings, updates the fundraiser tables and redirects the user
+ *
+ * Similar to gateway_manager_settings_insert
+ */
+function fundraiser_uc_gateway_settings_copy(&$form, $name, $type, $terms, $status, $config, $old_type) {
+  global $user;
+  $record = new stdClass;
+  $record->name = $name;
+  $record->uid = $user->uid;
+  $record->type = $type;
+  $record->created = time();
+  $record->updated = time();
+  $record->config = serialize($config);
+  $record->status = $status;
+
+  $result = drupal_write_record('gateway_manager_gateways', $record);
+  if (!$result) {
+    drupal_set_message('The values were not copied over properly', 'warning');
+    return;
+  }
+
+  gateway_manager_settings_save_terms($record->id, $terms);
+  module_invoke_all('gateway_manager_gateway_create', $record, $config);
+
+  // Update all the tables where the old gateway was referenced
+  db_query("UPDATE fundraiser SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+  db_query("UPDATE fundraiser_webform_order SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+  db_query("UPDATE fundraiser_recurring SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+
+  drupal_set_message('The settings have been copied over and the fundraiser tables updated.');
+  drupal_set_message('The Ubercart Authorize.net settings remain. If they are no longer needed please disable the UC Authorize.net module.');
+  $form['#redirect'] = array('admin/settings/fundraiser/gateways/' . $record->id . '/edit');
+}

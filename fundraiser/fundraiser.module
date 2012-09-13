@@ -258,7 +258,7 @@ function fundraiser_menu() {
     'load arguments' => array(1),
     'page callback' => 'fundraiser_donation_confirmation',
     'page arguments' => array(1),
-    'access arguments' => array("access content"),
+    'access callback' => 'fundraiser_access_confirmation',
     'type' => MENU_CALLBACK,
   );
   
@@ -279,10 +279,9 @@ function fundraiser_menu() {
  * Implemenation of hook_menu_alter().
  */
 function fundraiser_menu_alter(&$items) {
-  // workaround for douchebaggy bug where only uid 1 can see custom triggers
-  // TODO: Has this been patched yet? Is there an issue in the queue for Triggers? - AF 5/3/2011
   if (module_exists('trigger')) {
-    $items['admin/build/trigger/fundraiser']['access callback'] = TRUE;
+    $items['admin/build/trigger/fundraiser']['access callback'] = 'user_access';
+    $items['admin/build/trigger/fundraiser']['access arguments'] = array('administer site configuration');
   }
 
   // alter some built-in webform menu items
@@ -299,6 +298,23 @@ function fundraiser_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a donation form node
   if (_fundraiser_is_donation_type($node)) {
     $access = 0;
+  }
+}
+
+/**
+ * Deny access if a confirmation page has already been viewed.
+ */
+function fundraiser_access_confirmation() {
+  global $user;
+  $sid = $_GET['sid'];
+  if (is_numeric($sid)) {
+    // if not uid 1, check to see if the page can be viewed
+    if ($user->uid != 1) {
+      return !fundraiser_secure_confirmation($sid);
+    }
+    else {
+      return TRUE; // uid 1
+    }
   }
 }
 
@@ -427,18 +443,11 @@ function fundraiser_form($node, $edit = NULL) {
   $type = node_get_types('type', $node);
 
   // payment gateway list
-  $payment_gateways = _payment_gateway_list('', TRUE);
-  $gateway_options = array();
-  foreach ($payment_gateways as $gateway) {
-  	$gateway_options[$gateway['id']] = $gateway['title'];
-  }
+  $gateway_options = module_invoke_all('fundraiser_gateway', 'select options', $node);
   
-  // Warn the user if there are no payment gateways. If the gateway_manager
-  // module is enabled, it sets the gateway dropdown values in
-  // gateway_manager_form_alter(), so it's handled there
-  if (empty($gateway_options) && !module_exists('gateway_manager')) {
-    $link = l('Configure payment gateways in the Ubercart settings.', 'admin/store/settings/payment/edit/gateways');
-    drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured. !link', array('!link' => $link)), 'warning');
+  // Warn the user if there are no payment gateways.
+  if (empty($gateway_options)) {
+    drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured'), 'warning');
   }
   
   // Workaround for  D6 core #ahah bug
@@ -928,6 +937,11 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         fundraiser_disable_elements($form);
       }
 
+      // Pull the correct action out of form_state if it's there to avoid AHAH+Validation action-rewrite.
+      if (isset($form_state['action'])) {
+        $form['#action'] = $form_state['action'];
+      }  
+
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js($base .'/jquery.alphanumeric.js');
       drupal_add_js($base .'/fundraiser.js');
@@ -1158,6 +1172,8 @@ function _fundraiser_ahah_helper_render($field = NULL) {
   // variables.
   $form['#post'] = $_POST;
   $form['#programmed'] = FALSE;
+  // Stash original form action to avoid overwriting with drupal_rebuild_form().
+  $form_state['action'] = $form['#action'];
   $form_state['post'] = $_POST;
   
   // $form_state['storage']['#ahah_helper']['file'] has been set, to know
@@ -1392,6 +1408,9 @@ function fundraiser_preprocess_fundraiser_confirmation(&$vars) {
     
     // set a variable that can be used in the template
     $vars['confirmation_message'] = $message;
+    
+    // Flag sid as viewed
+    fundraiser_secure_confirmation_flag($sid);
   }
 }
 
@@ -1547,7 +1566,8 @@ function fundraiser_webform_submit($form, &$form_state) {
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
 	$first_name = $fundraiser_fields['first_name'];
 	$last_name = $fundraiser_fields['last_name'];
-	$email = $fundraiser_fields['email'];
+	// Trim the whitespace on the mail field.
+	$email = trim($fundraiser_fields['email']);
 	$billing_address = $fundraiser_fields['address'];
 	$billing_address_2 = $fundraiser_fields['address_line_2'];
 	$billing_city = $fundraiser_fields['city'];
@@ -1630,10 +1650,8 @@ function fundraiser_webform_submit($form, &$form_state) {
     $order->data[$field] = $value;
   }
   
-  // If using the gateway manager, store the gateway that was used to make the payment
-  if (module_exists('gateway_manager')) {
- 	  $order->data['gateway'] = $node->gateway;
-  }
+  // Store the gateway that was used to make the payment
+  $order->data['gateway'] = $node->gateway;
   
  	// cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
@@ -1658,20 +1676,19 @@ function fundraiser_webform_submit($form, &$form_state) {
  		'txn_type' => 'auth_capture',
  	);
  	
- 	// varaible to hold the name of the payment gateway charge function we need to call
+ 	// variable to hold the name of the payment gateway charge function we need to call
  	$charge_function = NULL;
- 	
- 	// if the gateway manager module is in use, attempt to extract the charge function from there
- 	if (module_exists('gateway_manager')) {
- 	  $info = gateway_manager_gateway_info($node->gateway);
- 	  $charge_function = $info['charge_function'];
- 	  $data['config'] = $info['config'];
- 	}
- 	else {
- 	  $charge_function = fundraiser_charge_function($node->gateway);
- 	}
-  // call the charge function and store the result
-  $result = $charge_function($order->order_id, $donation_amount, $data);
+    $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $node->gateway);
+    $charge_function = $payment_gateway['charge_function'];
+    // If additional config options were passed include them
+    if (!empty($payment_gateway['config'])) {
+      $data['config'] = $payment_gateway['config'];
+    }
+
+    if ($charge_function) {
+      // call the charge function and store the result
+      $result = $charge_function($order->order_id, $donation_amount, $data);
+    }
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
@@ -1769,9 +1786,14 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
  *   Any message that was returned by the gateway.
  */
 function fundraiser_order_decline($order_id, $message) {
+  
+  module_invoke_all('fundraiser_order_failure', $order_id);
+
+  
   // make the order as failed
- 	db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
- 	// make a log entry
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+
+  // make a log entry
   watchdog('fundraiser', t('Order !id was declined by the payment gateway. Reason: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_DEBUG, NULL);
   
   // clean up
@@ -1877,32 +1899,6 @@ function fundraiser_confirmation($form, &$form_state) {
   }
   
   $form_state['redirect'] = $redirect;
-}
-
-/**
- * Returns the charge function associated with the specified gateway
- */
-function fundraiser_charge_function($type) {
-  $gateways = _payment_gateway_list('', TRUE);
-  foreach ($gateways as $key => $gateway) {
-   if ($gateway['id'] == $type) {
-      return $gateway['credit'];
-   }
-  }
-  return NULL;
-}
-
-/**
- * Returns the refund function associated with the specified gateway
- */
-function fundraiser_refund_function($type) {
-  $gateways = _payment_gateway_list('', TRUE);
-  foreach ($gateways as $key => $gateway) {
-    if ($gateway['id'] == $type && $gateway['credit_refund']) {
-      return $gateway['credit_refund'];
-    }
-  }
-  return NULL;
 }
 
 /**
@@ -2706,28 +2702,17 @@ function _fundraiser_months_between_dates($exp_month, $exp_year){
 function _fundraiser_charge_function($order_id, $nid, &$data) {
   // first, see if the gateway is stored with the order
   $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $order_id));
-  
+
   if (empty($gateway)) {
     // get the gateway from the original donation form
     $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = %d", $nid));
   }
 
-  if (module_exists('gateway_manager')) {
-   	$info = gateway_manager_gateway_info($gateway);
-   	$charge_function = $info['charge_function'];
-   	$data['config'] = $info['config'];
-   	return $charge_function;
+  $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $gateway);
+  if ($payment_gateway['charge_function']) {
+    return $payment_gateway['charge_function'];
   }
-  else {
-    $gateways = _payment_gateway_list('', TRUE);
-    // get the charge function for the given gateway
-    foreach ($gateways as $k => $v){
-		  if ($v['id'] == $gateway) {
-			 return $v['credit'];
-		  }
-		}
-	}
-	
+
   return FALSE;
 }
 
@@ -2899,15 +2884,11 @@ function _fundraiser_validation_includes($element, $form_state) {
 function fundraiser_gateway_can_refund_order($order) {
   // Get details on the original payment so we can load the payment gateway details
   $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order->order_id, $order->order_id));
-  
-  if (module_exists('gateway_manager')) {
- 	  $info = gateway_manager_gateway_info($payment_details->gateway);
- 	  $refund_function = $info['refund_function'];
- 	}
- 	else {
- 	  $refund_function = fundraiser_refund_function($node->gateway);
- 	}
-  return trim($refund_function) != '';
+  $payment_gateway = module_invoke_all('fundraiser_gateway', 'refund function', $payment_details->gateway);
+  if ($payment_gateway['refund_function']) {
+    return $payment_gateway['refund_function'];
+  }
+  return FALSE;
 }
 
 /**
@@ -2937,4 +2918,29 @@ function fundraiser_token_values($type, $object = NULL) {
       break;
   }
   return $values;
+}
+
+/**
+ * Checks if a confirmation page has been viewed.
+ *
+ * @param $sid
+ * webform submission id
+ *
+ * @return
+ * TRUE if the confirmation page has been viewed, otherwise FALSE.
+ */
+function fundraiser_secure_confirmation($sid) {
+  return db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid)) ? TRUE : FALSE;
+}
+
+/**
+ * Flag confirmation page as viewed.
+ *
+ * @param $sid
+ * webform submission id
+ */
+function fundraiser_secure_confirmation_flag($sid) {
+  if(!db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid))) {
+    db_query('INSERT INTO {fundraiser_secure} (sid) VALUES (%s)', $sid);
+  }
 }
