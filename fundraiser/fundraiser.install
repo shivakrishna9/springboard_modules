@@ -1173,6 +1173,6 @@ function fundraiser_update_6317(&$sandbox) {
     'default' => '0',
   );
   $ret = array();
-  db_add_field($ret, 'fundraiser_recurring', 'lock_id', $lock_id)
+  db_add_field($ret, 'fundraiser_recurring', 'lock_id', $lock_id);
   return $ret;
 }
