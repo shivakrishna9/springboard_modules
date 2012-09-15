@@ -43,3 +43,9 @@
 
     * fundraiser.module: Improved gateway management. See pull request
     https://github.com/JacksonRiver/springboard_modules/pull/121.
+    
+2012-19-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
+
+    * fundraiser.module: Added lock feature when processing recursing tables to avoid re-queuing donations.
+    See: https://www.assembla.com/spaces/jr-springboard/tickets/347
+    * fundraiser.install: Added lock field to recurring table, set default values during update hook.
