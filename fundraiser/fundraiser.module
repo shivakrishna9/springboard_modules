@@ -2203,9 +2203,12 @@ function fundraiser_process_recurring_donations() {
   $successes = 0;
   $fails = 0;
 
+  $uni_batch_id = uniqid();
 	$orders_to_process = db_query("SELECT * FROM {fundraiser_recurring} WHERE next_charge < %d AND
-		(gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3", time());
-	
+		(gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3 AND lock_id = '0'", time());
+  db_query("UPDATE {fundraiser_recurring} SET lock_id = '%s' WHERE next_charge < %d AND
+		(gateway_resp IS NULL OR gateway_resp = 'failed') AND attempts < 3 AND lock_id = '0'", $uni_batch_id, time());
+
 	// loop over the found orders
 	while ($order_info = db_fetch_array($orders_to_process)) {
 		$order_id = $order_info['order_id'];
