@@ -370,6 +370,12 @@ function fundraiser_schema() {
         'not null' => FALSE,
         'default' => '',
       ),
+      'lock_id' => array(
+        'description' => t('Lock id for recurring batches to prevent requeue.'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('order_id'),
     'indexes' => array('master_order_id' => array('master_order_id')),
@@ -1153,4 +1159,20 @@ function fundraiser_update_6316() {
   );
   
   return $ret;  
+}
+
+/**
+ * Add the lock id field and set it to zero by default. #347.
+ */
+function fundraiser_update_6317(&$sandbox) {
+  $lock_id = array(
+    'description' => t('Lock id for recurring batches to prevent requeue.'),
+    'type' => 'varchar',
+    'length' => '55',
+    'not null' => FALSE,
+    'default' => '0',
+  );
+  $ret = array();
+  db_add_field($ret, 'fundraiser_recurring', 'lock_id', $lock_id)
+  return $ret;
 }
