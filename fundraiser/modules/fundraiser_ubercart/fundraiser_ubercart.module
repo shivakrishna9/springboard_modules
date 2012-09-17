@@ -111,9 +111,11 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
 function fundraiser_preprocess_uc_order(&$variables) {
   switch ($variables['op']) {
     case 'checkout-mail':
-      $nid = $variables['order']->products[0]->nid;
-      $fundraiser = _fundraiser_get_fundraiser_by_nid($nid);
-      $variables['fundraiser_message'] = $fundraiser->receipt_email_message;
+      if (isset($variables['order']->products[0]->nid)) {
+        $nid = $variables['order']->products[0]->nid;
+        $fundraiser = _fundraiser_get_fundraiser_by_nid($nid);
+        $variables['fundraiser_message'] = $fundraiser->receipt_email_message;
+      }
       break;
   }
 }
