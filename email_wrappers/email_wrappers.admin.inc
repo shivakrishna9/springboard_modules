@@ -8,7 +8,7 @@
  */
 function email_wrappers_admin() {
   $form = array();
-  $form['email_wrappers_og_filter'] = array(
+  $form['emaiL_wrappers_og_filter'] = array(
     '#type' => 'checkbox',
     '#title' => t('Limit templates by group.'),
     '#description' => t('Use OG group membership to resitrict available confirmation templates. When this is enabled content editors will only see email templates assigned to groups they are members of when creating or editing donation forms.'),
