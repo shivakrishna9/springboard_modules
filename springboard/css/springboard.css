@@ -43,7 +43,7 @@ body .dashboard #springboard-jump-pane form {
 div.springboard-pane {
   padding: 5px;
   margin: 3px;
-  float:left;
+  display: inline-block;
 }
 
 div.springboard-pane p {

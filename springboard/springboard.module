@@ -7,11 +7,21 @@
 
 require_once('springboard.admin.inc');
 
+
 /**
- * Implements hook_perm()
+ * Implements hook_permission().
  */
-function springboard_perm() {
-  return array('administer springboard', 'access springboard dashboard');
+function springboard_permission() {
+  return array(
+    'administer springboard' => array(
+      'title' => t('Administer Springboard'),
+      'description' => t('Perform administration tasks for springboard.'),
+    ),
+    'access springboard dashboard' => array(
+      'title' => t('Access the Springboard dashboard'),
+      'description' => t('Access the main landing page for springboard.'),
+    ),
+  );
 }
 
 /**
@@ -483,26 +493,28 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
   }
 }
 
-
 /**
  * Implements hook_theme().
  */
-function springboard_theme() {
+function springboard_theme($existing, $type, $theme, $path) {
   return array(
     'springboard_sf_status' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'springboard_jump' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'springboard_logo' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'springboard_fundraiser_performance' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'springboard_help' => array(
-      'arguments' => array(),
+      'variables' => array(),
+    ),
+    'springboard_admin_menu' => array(
+      'variables' => array(),
     ),
   );
 }
@@ -526,24 +538,35 @@ function springboard_springboard_dashboard_panes() {
     'description' => t('Logo pane'),
     'content' => theme_springboard_logo(),
   );
+  $panes['springboard_admin_menu'] = array(
+    'label' => 'Admin Menu',
+    'description' => t('Admin menu'),
+    'content' => theme_springboard_admin_menu(),
+  );
 
   return $panes;
 }
 
 /**
- * Theme function for the Springboard Fundraiser Performance pane.
+ * Preprocess function for the Springboard fundraiser performance pane.
  */
-function theme_springboard_fundraiser_performance() {
+function template_preprocess_springboard_fundraiser_performance(&$vars) {
   module_load_include('inc', 'ctools', 'includes/ajax');
   ctools_include('modal');
   ctools_modal_add_js();
   // TODO: add code to find and display form layout if/when this becomes available.
   $forms = array();
+  $vars['rows'] = array();
   // Given the scattered nature of this data I predict this page is going to perform poorly.
-  $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
+  $query = db_select('node', 'n');
+  $query->innerJoin('fundraiser', 'f', 'f.nid = n.nid');
+  $query->fields('n', array('nid'))
+    ->fields('f', array('internal_name'))
+    ->range(0,10);
+  $result = $query->execute();
 
-  while ($donation_form = db_fetch_object($results)) {
-    
+  while ($donation_form = $result->fetchObject()) {
+      drupal_set_message(print_r($donation_form, 1));
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
     $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
@@ -572,11 +595,17 @@ function theme_springboard_fundraiser_performance() {
   }
   usort($forms, "_springboard_sort_by_conversion");
   foreach($forms as $form) {
-    $rows[] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
+    $vars['rows'][] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
   }
+}
+
+/**
+ * Theme function for the Springboard fundraiser performance pane.
+ */
+function theme_springboard_fundraiser_performance($vars) {
   $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
   $output = '<div class="springboard-pane" id="fundraiser-performance-pane">';
-  $output .= theme_table($headers, $rows);
+  $output .= theme('table', array('headers' => $headers, 'rows' => $vars['rows']));
   $output .= '</div>';
   return $output;
 }
@@ -620,14 +649,12 @@ function theme_springboard_sf_status() {
  * Theme function for the Springboard logo pane.
  */
 function theme_springboard_logo() {
-  $theme = variable_get('theme_default', 'garland');
-  $settings = theme_get_settings($theme);
- 
-  if (!$settings['default_logo'] = 0) {
+  $theme = variable_get('theme_default', '0');
+  if (theme_get_setting('default_logo', $theme) == 1) {
     $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
   }
   else {
-    $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="150" alt="Site logo" />'; // this prints out path to you uploaded logo
+    $logo =  '<img src="' . base_path() . theme_get_setting('logo_path', $theme) . '" width="150" alt="Site logo" />'; // this prints out path to you uploaded logo
   }
   
   $output = '<div class="springboard-pane" id="springboard-logo-pane">';
@@ -640,9 +667,17 @@ function theme_springboard_logo() {
  * Theme function for the Springboard Quick Jump pane.
  */
 function theme_springboard_jump() {
+  ctools_include('jump-menu');
+  $types = fundraiser_get_donation_types();
+  foreach ($types as $type => $enabled) {
+    if ($enabled && node_access('create', $type)) {
+      $targets[url('node/add/' . $type)] = 'Create ' . node_type_get_name($type);
+    }
+  }
+  $options = array();
   $output = '<div class="springboard-pane" id="springboard-jump-pane">';
   $output .= '<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/springboard.png" width=300>';
-  $output .= drupal_get_form('springboard_quick_jump');
+  $output .= drupal_render(drupal_get_form('ctools_jump_menu', $targets, $options));
   $output .= '</div>';
   return $output;
 }
@@ -656,31 +691,19 @@ function theme_springboard_help() {
 }
 
 /**
- * Quick jump form.
+ * Menu pages
  */
-function springboard_quick_jump() {
-  $options = array(
-    'node/add/donation-form' => 'Create Donation Page',
-    'node/add/webform' => 'Create Webform',
-  );
-  $form['destination'] = array(
-    '#type' => 'select',
-    '#title' => t("Jump To"),
-    '#options' => $options,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Go'),
-  );
-  return $form;
-}
-
-
-/**
- * Submit handler for quick jump form.
- */
-function springboard_quick_jump_submit($form, $form_state) {
-  drupal_goto($form_state['values']['destination']);
+function theme_springboard_admin_menu() {
+  $output = '';
+  $item = db_query("SELECT mlid, menu_name FROM {menu_links} ml WHERE ml.router_path = :path AND module = 'system'", array(':path' => 'admin/springboard'))->fetchAssoc();
+  $tree = menu_tree_all_data($item['menu_name']);
+  $tree = reset($tree);
+  foreach ($tree['below'] as $key => $data) {
+    if ($data['link']['mlid'] == $item['mlid']) {
+      $output .= drupal_render(menu_tree_output($data['below']));  
+    }
+  }
+  return $output ? $output : t('You do not have any administrative items.') ;
 }
 
 /**
@@ -791,7 +814,6 @@ function _springboard_percentage($a, $b) {
   else {
     return 'N/A';
   }
-
 }
 
 /**

@@ -8,22 +8,27 @@
  */
 function springboard_admin() {
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
-  
+  $content = '';
   $main_menu = menu_get_item('admin/springboard');
   if (variable_get('springboard_salesforce_enabled', 0)) {
-    $content = drupal_get_form('springboard_welcome');
+    $content .= drupal_get_form('springboard_welcome');
   }
 
   $content .= '<div class="dashboard">';
 
-  // We'll need the enabled panes for the dashboard.
-  $results = db_query('SELECT * FROM {springboard_panes} WHERE status = 1 order by weight, delta');
-  while ($pane = db_fetch_object($results)) {
+  // Load the enabled panes for the dashboard.
+  $results = db_select('springboard_panes', 'sp')
+    ->fields('sp')
+    ->condition('status', 1, '=')
+    ->orderBy('weight')
+    ->orderBy('delta')
+    ->execute();
+
+  while ($pane = $results->fetchObject()) {
     $content .= theme($pane->delta);
   }
   $content .= '</div>';
 
-  
   //$content .= theme('admin_block_content', $content);
   return $content;
 }
@@ -34,7 +39,7 @@ function springboard_admin() {
  */
 function springboard_admin_settings() {
   // TODO: add support for pane weights.
- 
+
   $results = db_query('SELECT delta, status FROM {springboard_panes}');
   while ($item = db_fetch_object($results)) {
     $panes[$item->delta] = $item->delta;
@@ -45,10 +50,7 @@ function springboard_admin_settings() {
     else {
       $enabled_panes[$item->delta] = 0;
     }
-    
-
   }
-
 
   $form = array();
   $form['panes'] = array(
