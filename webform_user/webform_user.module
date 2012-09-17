@@ -885,9 +885,14 @@ function _webform_user_save_profile_map($uid, &$map) {
         // TODO: track down format for nonstandard fields like 'email'
       }
     }
-    // Fields found, now save them.
-    if (count($profile_values) > 0 && $account->uid) {
+    // Starting with the mail field.
+    if (isset($profile_values['mail'])) {
+      $account->mail = $profile_values['mail'];
+      unset($profile_values['mail']);
+    }
 
+    // Fields found, now save the rest of the fields.
+    if (count($profile_values) > 0 && $account->uid) {
       // Profile2 and entity fields saves on entity fields.
       // (Both Profile and Profile2 can be installed, so we do both.)
       foreach ($profile_values as $field_name => $field_value) {
