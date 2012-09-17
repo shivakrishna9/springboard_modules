@@ -679,6 +679,7 @@ function fundraiser_fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
+    '#allow_update' => 1,
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
@@ -690,6 +691,7 @@ function fundraiser_fundraiser_field_info() {
       'width' => 10,
       'field_prefix' => '$',
     ),
+    '#allow_update' => 1,
     '#create_callback' => '_fundraiser_other_amount_field_create',
     '#validate_callback' => '_fundraiser_other_amount_field_validate',
   );

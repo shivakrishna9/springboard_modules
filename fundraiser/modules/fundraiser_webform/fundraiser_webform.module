@@ -746,16 +746,20 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       $component['maps_to'] = $field['#profile_map'];
     }
     $component['weight'] = $weight;
+    $allow_update = isset($field['#allow_update']) ? $field['#allow_update'] : 0;
 
     // Now that the array has been created, with all the right create callbacks. Figure out if we're updating or inserting.
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
       $cid = $orig_field->cid;
-      // Temporary unset. On updates we actually don't reset fundraiser fields.
-      // We don't want to override what the system already has in place for the most part.
-      // TODO - figure out how to resolve this in light of amount? Perhaps another #value?
-      // $component = array_merge((array) $orig_field, (array) $component);
-      // webform_component_update($component);
+      // Usually only fundraiser amount, and other amount fields are allowed to be updated.
+      if ($allow_update) {
+        $component['pid'] = $orig_field->pid; // Keep the original parentage, could be set by user.
+        $component['name'] = $orig_field->name; // Keep the original name, could be set by user.
+        $component['value'] = $orig_field->value; // Keep the original value, could be set by user.
+        $component = array_merge((array) $orig_field, (array) $component);
+        webform_component_update($component);
+      }
     }
     else {
       $cid = webform_component_insert($component);
