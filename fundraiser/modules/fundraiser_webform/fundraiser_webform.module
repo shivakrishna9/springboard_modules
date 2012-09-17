@@ -718,7 +718,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
       // Delete the field.
       _fundraiser_webform_delete_component($fundraiser->nid, $field_key);
       // We do NOT use a standard webform_component_delete here. That's a recursive and submission destructive act.
-      //webform_component_delete($fundraiser, $component); //START
+      // webform_component_delete($fundraiser, $component);
     }
     // If so, return to skip.
     return;
@@ -740,7 +740,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     }
     $component['type'] = isset($field['#type']) ? $field['#type'] : '';
     $component['extra'] = isset($field['#extra']) ? $field['#extra'] : array('description' => '');
-    $component['mandatory'] = isset($field['#required']) ? $field['#required'] : '';
+    $component['mandatory'] = isset($field['#required']) ? $field['#required'] : 0;
     $component['email'] = isset($field['#email']) ? 1 : 0;
     if (isset($field['#profile_map'])) {
       $component['maps_to'] = $field['#profile_map'];
@@ -750,9 +750,12 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     // Now that the array has been created, with all the right create callbacks. Figure out if we're updating or inserting.
     $orig_field = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, $component['form_key']);
     if (isset($orig_field->cid) && !empty($orig_field->cid)) {
-      $pid = $orig_field->cid;
-      $component = array_merge((array) $orig_field, (array) $component);
-      webform_component_update($component);
+      $cid = $orig_field->cid;
+      // Temporary unset. On updates we actually don't reset fundraiser fields.
+      // We don't want to override what the system already has in place for the most part.
+      // TODO - figure out how to resolve this in light of amount? Perhaps another #value?
+      // $component = array_merge((array) $orig_field, (array) $component);
+      // webform_component_update($component);
     }
     else {
       $cid = webform_component_insert($component);
