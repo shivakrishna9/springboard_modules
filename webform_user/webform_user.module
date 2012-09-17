@@ -886,7 +886,22 @@ function _webform_user_save_profile_map($uid, &$map) {
       }
     }
     // Fields found, now save them.
-    if (count($profile) && $account->uid) {
+    if (count($profile_values) > 0 && $account->uid) {
+
+      // Profile2 and entity fields saves on entity fields.
+      // (Both Profile and Profile2 can be installed, so we do both.)
+      foreach ($profile_values as $field_name => $field_value) {
+        if (isset($account->{$field_name})) {
+          if (is_array($account->{$field_name})) {
+            $account->{$field_name}['und'][0]['value'] = $field_value;
+          }
+//          else {
+//            $account->{$field_name} = $field_value;
+//          }
+        }
+      }
+      user_save($account);
+
       // If the standard profile field system is active, use that.
       if (function_exists('_profile_get_fields')) {
         $categories = profile_user_categories();
@@ -902,12 +917,6 @@ function _webform_user_save_profile_map($uid, &$map) {
           profile_save_profile($this_profile, $account, $category['name']);
         }
       }
-      // Profile2 and entity fields saves on entity fields.
-      // (Both Profile and Profile2 can be installed, so we do both.)
-      foreach ($profile_values as $field_name => $field_value) {
-        $account[ $field_name ]['und'][0]['value'] = $field_value;
-      }
-      user_save($account, $profile);
     }
   } // End if map.
 }
