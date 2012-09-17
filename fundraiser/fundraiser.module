@@ -727,7 +727,7 @@ function fundraiser_fundraiser_field_info() {
   $fields['billing_information']['address_line_2'] = array(
     '#title' => 'Address Line 2',
     '#type' => 'textfield',
-    '#required' => 1,
+    '#required' => 0,
   );
   $fields['billing_information']['city'] = array(
     '#title' => 'City',
