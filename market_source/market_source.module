@@ -496,13 +496,13 @@ function market_source_fundraiser_create_webform_components($nid) {
 
 /**
  * Create a formatted webform component array.
- * 
+ *
  * @param $custom_field
  * Custom field array containing field key and field name values.
- * 
+ *
  * @param $nid
  * Node id of the webform to add the component to.
- * 
+ *
  * @return
  * Returns a keyed array containing the minimum necessary data to create a new webform component via
  * webform_component_insert().
@@ -510,16 +510,19 @@ function market_source_fundraiser_create_webform_components($nid) {
 function market_source_create_webform_component($custom_field, $nid) {
   $component = array(
     'nid' => $nid,
-  	'pid' => 0,
-  	'value' => $custom_field['default'],
-  	'form_key' => $custom_field['key'], 
-  	'name' => $custom_field['name'],
-  	'type' => 'hidden',  
-  	'extra' => array('description' => '',),
-  	'mandatory' => 0, 
-  	'weight' => 23, 
-  	'email' => 1,
-  	'maps_to' => '',
+    'pid' => 0,
+    'value' => $custom_field['default'],
+    'form_key' => $custom_field['key'],
+    'name' => $custom_field['name'],
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'maps_to' => '',
   );
   return $component;
 }
