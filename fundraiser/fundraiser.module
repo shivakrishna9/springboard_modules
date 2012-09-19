@@ -801,10 +801,14 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
  *
  * @param $form
  *   The form to add the fields to.
+ *
+ * @param $edit
+ * $form_state from the parent formm required to utlize posted values during ahah form rebuild.
+ *
  * @param $node
  *   The node being added/edited.
  */
-function fundraiser_node_settings(&$form, $node) {
+function fundraiser_node_settings(&$form, $edit, $node) {
   
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
@@ -975,7 +979,7 @@ function fundraiser_node_type_form_submit(&$form, &$form_state) {
     fundraiser_webform_types_primary($form_state['values']['type'], 'insert');
   }
   else {
-    fundraiser_webform_types_primary($form_state['values']['type'], 'delete'); 
+    fundraiser_webform_types_primary($form_state['values']['type'], 'delete');
   }
 }
 
@@ -992,7 +996,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
   // add fundraiser settings to node add/edit form
   if (isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type) && substr($form_id, -10) == '_node_form') {
     // add fundraiser settings to the node form
-    fundraiser_node_settings($form, $form['#node']);
+    fundraiser_node_settings($form, $form_state, $form['#node']);
   }
   			
 	if (strstr($form_id, 'webform_client_form')) {
@@ -1059,7 +1063,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // Pull the correct action out of form_state if it's there to avoid AHAH+Validation action-rewrite.
       if (isset($form_state['action'])) {
         $form['#action'] = $form_state['action'];
-      }  
+      }
 
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js($base .'/jquery.alphanumeric.js');
@@ -2795,7 +2799,7 @@ function _fundraiser_donation_form_path($nid) {
   }
   else {
     return $base_url . '/node/' . $nid;
-  } 
+  }
 }
 
 function _fundraiser_get_cc_type($cardnumber) {
@@ -2981,7 +2985,7 @@ function fundraiser_get_donation_types() {
   return $fundraiser_types;
 }
 
-/** 
+/**
  * Helper function, returns an array of fundraiser types.
  */
 function fundraiser_enabled_types() {
@@ -3010,7 +3014,7 @@ function fundraiser_webform_types_primary($type, $op) {
     case 'insert':
       if (!in_array($type, $types)) {
         $types[] = $type;
-        variable_set('webform_node_types', $types);      
+        variable_set('webform_node_types', $types);
       }
       if (!in_array($type, $primary_types)) {
         $primary_types[] = $type;
