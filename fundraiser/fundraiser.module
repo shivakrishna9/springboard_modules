@@ -884,14 +884,16 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
   $value = $submission_fields['amount'];
-  // Look for other amount.
+  // Look for other amount if set.
   if ($submission_fields['amount'] == "other") {
-    $value = preg_replace("/[^\d\.]/i", "", $submission_fields['other_amount']);
-    // Make sure other amount is numeric.
-    if (!is_numeric($value)) {
-      return t('You must enter a valid donation amount');
-    }
+    $value = $submission_fields['other_amount'];
   }
+
+  // Check for valid value.
+  if (!preg_match('/^\d*(\.\d*)?$/', $value)) {
+    return t('Donation amount must be in a valid number format. No commas and only one decimal point.');
+  }
+
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
   $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
