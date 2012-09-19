@@ -5,6 +5,26 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function fundraiser_webform_install() {
+  // Clean up from older versions of fundraiser.
+  if (db_table_exists('fundraiser_webform_order')) {
+    // Rename webform components for email key to mail key. (Part of the compatibility for webform_user.)
+    db_query('UPDATE {webform_component} w '.
+      'INNER JOIN {fundraiser} f ON w.nid = f.nid '.
+      'SET w.form_key = \'mail\' '.
+      'WHERE w.form_key = \'email\' AND w.nid = f.nid ');
+    // The table doesn't go away yet, because we may still need it for fundraiser.
+    // But if fundraiser has flagged that it's done porting data, we can drop it.
+    if (variable_get('fundraiser_port_webform_done', FALSE)) {
+      db_drop_table('fundraiser_webform_order');
+      variable_det('fundraiser_port_webform_done');
+    }
+  }
+}
+
+/**
  * Implements hook_uninstall().
  */
 function fundraiser_webform_uninstall() {
@@ -54,12 +74,4 @@ function fundraiser_webform_disable() {
       }
     }
   }
-}
-
-/**
- * Implements hook_update_N().
- */
-function fundraiser_webform_update_7001(&$sandbox) {
-  // Drop the table.
-  db_drop_table('fundraiser_webform_order');
 }

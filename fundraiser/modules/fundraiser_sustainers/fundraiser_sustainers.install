@@ -79,23 +79,25 @@ function fundraiser_sustainers_schema() {
 }
 
 /**
- * Implements hook_update_N().
+ * Implements hook_install().
  */
-function fundraiser_sustainers_update_7000(&$sandbox) {
-  // Copy all data over from the old fundraiser_recurring table to the new table in the correct location.
-  db_query('INSERT INTO {fundraiser_sustainers} ' .
-    '(master_did, did, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
-      'gateway_resp, attempts, cancellation_reason) ' .
-    'SELECT master_order_id, order_id, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
-      'gateway_resp, attempts, cancellation_reason '.
-    'FROM {fundraiser_recurring}');
-}
+function fundraiser_sustainers_install() {
+  // First we need to checkif old data from old tables is still around.
+  // If we've never pulled any of this data before, we need to move it over.
+  if (db_table_exists('fundraiser_recurring')) {
+    // Copy all data over from the old fundraiser_recurring table to the new table in the correct location.
+    db_query('INSERT INTO {fundraiser_sustainers} ' .
+      '(master_did, did, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
+        'gateway_resp, attempts, cancellation_reason) ' .
+      'SELECT master_order_id, order_id, next_charge, sf_opportunity_id, sf_recurring_id, sf_stagename, sf_sync_status, ' .
+        'gateway_resp, attempts, cancellation_reason '.
+      'FROM {fundraiser_recurring}');
 
-/**
- * Implements hook_update_N().
- */
-function fundraiser_sustainers_update_7001(&$sandbox) {
-  // Drop fundraiser_recurring table. All data has been moved out of it by now. (Hence why this is on hook 7001.
-  // See hook 7000 in fundraiser.install.
-  db_drop_table('fundraiser_recurring');
+    // The table doesn't go away yet, because we may still need it for fundraiser.
+    // But if fundraiser has flagged that it's done porting data, we can drop it.
+    if (variable_get('fundraiser_port_recurring_done', FALSE)) {
+      db_drop_table('fundraiser_recurring');
+      variable_det('fundraiser_port_recurring_done');
+    }
+  }
 }
