@@ -49,3 +49,8 @@
     * fundraiser.module: Added lock feature when processing recursing tables to avoid re-queuing donations.
     See: https://www.assembla.com/spaces/jr-springboard/tickets/347
     * fundraiser.install: Added lock field to recurring table, set default values during update hook.
+
+2012-09-18  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.module:  Improve validation of donation amount
+    See: https://github.com/JacksonRiver/springboard_modules/pull/136
