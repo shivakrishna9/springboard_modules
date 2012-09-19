@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * MODULE module web tests. Web tests are intended to test user interaction.
+ * Use where you need to test user behavior on a rendered page.
+ */
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class MODULEWebTestSetup extends DrupalWebTestCase {
+
+  /**
+   * Implements setUp().
+   */
+  function setUp() {
+    // Call the parent to set all of the base modules up.
+    parent::setUp( array(
+        'MODULE',
+      )
+    );
+    // Perform any additional setup as needed for this web test.
+    // This may include user setup, roles, or the like.
+  }
+}
+
+/**
+ * MODULE unit testing class.
+ */
+class MODULEWebTestCase extends MODULEWebTestSetup {
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'MODULE web tests',
+      'description' => 'Tests MODULE user stories as web tests.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Example unit test.
+   */
+  function testMODULETestName() {
+    // Place assertions here.
+  }
+}

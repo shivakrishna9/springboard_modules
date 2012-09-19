@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * @file
+ * MODULE module unit tests. Unit tests are intended to test specific functions.
+ * Use mostly for helper functions or other such tests where you can control specific
+ * input and output without needing user behavior on a rendered page.
+ */
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ * This example uses web instead of unit as the base to make setup and teardown
+ * easier for test running, this includes install hoooks (and table schema) setup.
+ */
+class MODULEUnitTestSetup extends DrupalWebTestCase {
+
+  /**
+   * Implements setUp().
+   */
+  function setUp() {
+    // Call the parent to set all of the base modules up.
+    parent::setUp( array(
+        'MODULE',
+      )
+    );
+    // Perform any additional setup as needed for this unit test.
+    // This may include user setup, roles, or the like.
+    // For unit tests there may not be any additional setup needed.
+  }
+}
+
+/**
+ * MODULE unit testing class.
+ */
+class MODULEUnitTestCase extends MODULEUnitTestSetup {
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'MODULE unit tests',
+      'description' => 'Tests MODULE functions as unit tests.',
+      'group' => 'Springboard',
+    );
+  }
+
+  /**
+   * Example unit test.
+   */
+  function testMODULETestName() {
+    // Place assertions here.
+  }
+}
