@@ -9,3 +9,7 @@
 2012-05-11  Sarah Hood  <sarah.hood@jacksonriver.com>
 
 	* Adding webform token support to email confirmations.
+
+2012-09-20  Sarah Hood  <sarah.hood@jacksonriver.com>
+
+    * In hook_form_alter setting conditional to negative value on fundraiser_is_donation_type

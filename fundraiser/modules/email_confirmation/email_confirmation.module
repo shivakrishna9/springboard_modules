@@ -344,7 +344,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     *  such would require a nontrivial refactoring of fundraiser and email confirmations to 
     *  get working for all webform content types. 
     */
-    if (fundraiser_is_donation_type($form['#parameters'][2]->type)) {
+    if (!fundraiser_is_donation_type($form['#parameters'][2]->type)) {
       unset($form['confirmation_page']);
       $form['confirmation_template']['#collapsed'] = FALSE;
    
