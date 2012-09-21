@@ -1,0 +1,180 @@
+<?php
+
+/**
+ * @file
+ * Provides the ability to re-title a confirmation page differently from
+ * the webform that generated it. Also enables the use of node and related
+ * tokens for use on the confirmation page, where not already provided by
+ * webform.
+ */
+  
+/**
+ * Implements hook_preprocess_webform_confirmation().
+ * Overrides the template during preprocess to insert correct token values on display.
+ * Replace any webform component tokens before displaying confirmation page.
+ */
+function webform_confirmations_preprocess_webform_confirmation(&$vars) {
+  if (isset($vars['node']->nid) && _webform_confirmations_is_configured($vars['node'])) {
+    // Set title if available from configurations.
+    if (!empty($webform_confirmations->webform_confirmations_title)) {
+      drupal_set_title($webform_confirmations->webform_confirmations_title);
+    }
+    // Replace webform tokens for the submission.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+    $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, TRUE);
+    // Replace drupal tokens for the submission.
+    $token_set = array('node' => node_load($vars['node']->nid));
+    drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
+    $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_state, $form_id) {
+  // On webform configuration forms, provide override for the Page title and notice re: token support.
+  $node = node_load($form['nid']['#value']);
+  // Webform tokens for use in the custom URL redirect are implemented
+  // in webform/includes/webform.pages.inc: 
+  // Tokens for the page text - are NOT implemented in normal webform.
+  // So we also need to tweak the token display message to say we'll support it.
+  $form['submission']['confirmation']['confirmation_page_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page title'),
+    '#weight' => 0,
+    '#default_value' => isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
+  );
+  $form['submission']['help'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $token_set = array('node');
+  // Then add any other token set as needed.
+  drupal_alter('webform_confirmations_token_info', $token_set, $node);
+  $form['submission']['help']['tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set)),
+  );
+  $form['submission']['help']['webform_tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Webform tokens'),
+    '#description' => theme('webform_token_help', array()),
+  );
+  // Tweak display messages.
+  $form['submission']['confirmation']['#description'] .= ' ' . t('The message supports Drupal tokens and Webform token replacements. ' .
+    '(See tokens below).');
+  $form['submission']['redirection']['#description'] = t('Choose where to redirect the user upon successful submission. The Custom URL ' .
+    'option supports Webform token replacements. (See tokens below).');
+  // Shuffle things later into the form.
+  $total_submit_limit = $form['submission']['total_submit_limit'];
+  $submit_limit = $form['submission']['submit_limit'];
+  $status = $form['submission']['status'];
+  unset($form['submission']['total_submit_limit']);
+  unset($form['submission']['submit_limit']);
+  unset($form['submission']['status']);
+  $form['submission']['total_submit_limit'] = $total_submit_limit;
+  $form['submission']['submit_limit'] = $submit_limit;
+  $form['submission']['status'] = $status;
+  // Add submit.
+  $form['#submit'][] = '_webform_confirmations_submit';
+}
+
+/**
+ * Submit handler for webform configuration form.
+ */
+function _webform_confirmations_submit($form, &$form_state) {
+  $confirmation['nid'] = $form_state['values']['nid'];
+  $confirmation['confirmation_page_title'] = check_plain($form_state['values']['confirmation']['confirmation_page_title']);
+  _webform_confirmations_update($confirmation);
+}
+
+/**
+ * Implements hook_node_load().
+ */
+function webform_confirmations_node_load($nodes, $types) {
+  $webform_confirmations = _webform_confirmations_get_by_nids(array_keys($nodes));
+  foreach ($webform_confirmations as $webform_confirmation) {
+    $nodes[ $webform_confirmation->nid ]->webform_confirmations_set = 1;
+    $nodes[ $webform_confirmation->nid ]->confirmation_page_title =
+      isset($webform_confirmation->confirmation_page_title) ? $webform_confirmation->confirmation_page_title : '';
+  }
+}
+
+/**
+ * Helper function, check if node is configured for confirmations.
+ */
+function _webform_confirmations_is_configured($node) {
+  return isset($node->webform_confirmations_set) ? $node->webform_confirmations_set : FALSE;
+}
+
+/**
+ * DB Functions.
+ */
+
+/**
+ * CRUD style DB function for webform_confirmations.
+ */
+function _webform_confirmations_create($confirmation) {
+  // Cast confirmation data just in case.
+  $confirmation = (array) $confirmation;
+  // Check for old data.
+  $confirmation_data = FALSE;
+  if (isset($confirmation['nid'])) {
+    $confirmation_data = _webform_confirmations_get_by_nid($confirmation['nid']);
+  }
+  if (!$confirmation_data) {
+    $record = $confirmation;
+    drupal_write_record('webform_confirmations', $record);
+  }
+  else {
+    _webform_confirmations_update($confirmation);
+  }
+}
+
+/**
+ * CRUD style DB function for webform_confirmations.
+ */
+function _webform_confirmations_get_by_nid($nid) {
+  return db_query('SELECT * FROM {webform_confirmations} WHERE nid = :nid',
+    array(':nid' => $nid))->fetchObject();
+}
+
+/**
+ * CRUD style DB function for webform_confirmations.
+ */
+function _webform_confirmations_update($confirmation) {
+  // Cast confirmation just in case.
+  $confirmation = (array) $confirmation;
+  // Check for old data.
+  $confirmation_data = FALSE;
+  if (isset($confirmation['nid'])) {
+    $confirmation_data = _webform_confirmations_get_by_nid($confirmation['nid']);
+  }
+  if (!$confirmation_data) {
+    _webform_confirmations_create($confirmation);
+  }
+  else {
+    $record = array_merge((array) $confirmation_data, $confirmation);
+    drupal_write_record('webform_confirmations', $record, 'nid');
+  }
+}
+
+/**
+ * CRUD style DB function for webform_confirmations.
+ */
+function _webform_confirmations_delete($nid) {
+  db_delete('webform_confirmations')->condition('nid', $nid)->execute();
+}
+
+/**
+ * DB function for webform_confirmations.
+ */
+function _webform_confirmations_get_by_nids($nids) {
+  return db_query('SELECT * FROM {webform_confirmations} WHERE nid IN (:nids)',
+    array(':nids' => $nids));
+}

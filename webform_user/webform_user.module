@@ -32,23 +32,6 @@ function _webform_user_mapping_access($node) {
 }
 
 /**
- * Implements hook_preprocess_webform_confirmation().
- * Replace any webform component tokens before displaying confirmation page.
- */
-function webform_user_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->is_webform_user) {
-    $webform_user = _webform_user_load_webform_user($vars['node']->nid);
-    // Set title if available.
-    if (!empty($webform_user['confirmation_page_title'])) {
-      drupal_set_title($webform_user['confirmation_page_title']);
-    }
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-    $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE);
-  }
-}
-
-/**
  * Implements hook_webform_submission_presave().
  * We're using this to prevent webform from changing the owner of a submission when a webform_user submission is edited.
  */
@@ -180,21 +163,6 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 
-  // On webform configuration forms, provide override for the Page title.
-  if ($form_id == 'webform_configure_form' && isset($form['nid']['#value'])) {
-    $node = node_load($form['nid']['#value']);
-    if (_webform_user_is_webform_user_node($node)) {
-      $webform_user = _webform_user_load_webform_user($form['nid']['#value']);
-      $form['submission']['confirmation_wrapper']['page_title'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Page title'),
-        '#weight' => 0,
-        '#default_value' => $webform_user['confirmation_page_title'],
-      );
-      $form['#submit'][] = 'webform_user_save_page_title';
-    }
-  }
-
   // Modify the options on a specific instance of this node type.
   if (strpos($form_id, '_node_form') !== FALSE
     && _webform_user_is_webform_user_node_type(str_ireplace('_node_form', '', $form_id))) {
@@ -270,16 +238,6 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'webform_user_webform_submit';
   }
 
-}
-
-/**
- * Submit handler for webform configuration form.
- */
-function webform_user_save_page_title($form, &$form_state) {
-  $title = check_plain($form_state['values']['page_title']);
-  $nid = $form_state['values']['nid'];
-  db_query('UPDATE {webform_user} SET confirmation_page_title = :title WHERE nid = :nid',
-    array(':title' => $title, ':nid' => $nid));
 }
 
 /**
@@ -514,7 +472,6 @@ function webform_user_node_load($nodes, $types) {
     $webform_user = (array) $webform_user;
     $nodes[ $webform_user['nid'] ]->is_webform_user = $webform_user['is_webform_user'];
     $nodes[ $webform_user['nid'] ]->send_new_user_email = $webform_user['send_new_user_email'];
-    $nodes[ $webform_user['nid'] ]->confirmation_page_title = $webform_user['confirmation_page_title'];
     $map = array();
     foreach ($maps as $row) {
       $row = (array) $row;
@@ -900,9 +857,6 @@ function _webform_user_save_profile_map($uid, &$map) {
           if (is_array($account->{$field_name})) {
             $account->{$field_name}['und'][0]['value'] = $field_value;
           }
-//          else {
-//            $account->{$field_name} = $field_value;
-//          }
         }
       }
       user_save($account);
@@ -950,7 +904,7 @@ function _webform_user_get_profile_fields() {
   // Add the e-mail field first.
   $mail_field = array(
     'name' => 'mail',
-    'title' => 'E-mail address',
+    'title' => t('E-mail address'),
     'type' => 'textfield',
     'mandatory' => 1,
     'weight' => 0,
@@ -1089,7 +1043,6 @@ function webform_user_clone_node($node, $original_nid) {
       'related_object',
       'foreign_key_field',
       'send_new_user_email',
-      'confirmation_page_title',
       'email_field',
   ));
   $select->addExpression($node->nid, 'nid');

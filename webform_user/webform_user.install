@@ -68,12 +68,6 @@ function webform_user_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'confirmation_page_title' => array(
-        'description' => 'Title for the confirmation page', // TODO does this belong here?
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
       'email_field' => array(
         'description' => 'Which field is used for email',
         'type' => 'varchar',

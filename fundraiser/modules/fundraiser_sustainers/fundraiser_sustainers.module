@@ -182,6 +182,25 @@ function fundraiser_sustainer_standalone_cron() {
 }
 
 /**
+ * Implemenation of hook_mail(). // TODO shouldn't this move to sustainers?
+ */
+function fundraiser_sustainer_mail($key, &$message, &$params) {
+  switch ($key) {
+    case 'fundraiser_cc_notification':
+      $body = variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].');
+      // Do some token replacements.
+      $tokens = array('[exp_month]', '[exp_year]', '[cc_type]', '[cc_last_4]', '[amount]');
+      $replaces = array($params['exp_month'], $params['exp_year'], $params['cc_type'], $params['cc_last_4'], $params['amount']);
+      $body = str_replace($tokens, $replaces, $body);
+      // Replace any user tokens via the token module.
+      $body = token_replace($body, 'user', $params['user']);
+      $message['subject'] = variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire');
+      $message['body'] = $body;
+      break;
+  }
+}
+
+/**
  * Helper function, kick off recurring donations for payment. Called on cron usually.
  */
 function fundraiser_sustainers_process_recurring_donations() {
