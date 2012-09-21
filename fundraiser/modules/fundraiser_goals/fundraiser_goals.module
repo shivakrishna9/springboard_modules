@@ -107,8 +107,8 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
         $defaults = db_fetch_object(db_query('SELECT * FROM {fundraiser_goals} WHERE pid = %d AND delta = "basic"', $form_state['values']['nid']));
       }
 
-      // Set goal type based on form type. 
-      (!strcmp('donation_form_node_form', $form_id)) ? $goal_type = 2 : $goal_type = 1;
+      // Set goal type based on form type.        
+      (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) ? $goal_type = 2 : $goal_type = 1;
 
       $form['fundraiser_settings']['fundraiser_goals'] = array(
         '#type' => 'fieldset',
