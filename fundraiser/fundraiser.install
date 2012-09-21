@@ -79,27 +79,6 @@ function fundraiser_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
-      'confirmation_page_title' => array(
-        'description' => 'The title for the confirmation page.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
-      'confirmation_page_body' => array(
-        'description' => 'The body for the confirmation page.',
-        'type' => 'text',
-        'not null' => FALSE,
-      ),
-      'confirmation_page_format' => array(
-        'description' => 'The format for the confirmation page body.',
-        'type' => 'int',
-      ),
-      'redirect_url' => array(
-        'description' => 'The redirect url for a confirmation page.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => FALSE,
-      ),
     ),
     'primary key' => array('nid'),
   );

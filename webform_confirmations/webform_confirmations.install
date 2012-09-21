@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function webform_confirmations_schema() {
+  $schema['webform_confirmations'] = array(
+    'description' => 'Track nodes that are enabled as webform user nodes.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'confirmation_page_title' => array(
+        'description' => 'Title for the confirmation page',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function webform_confirmations_install() {
+  // First we need to check if old data from old tables is still around.
+  // If we've never pulled any of this data before, we need to move it over.
+  // Check for table, and fields.
+  if (db_table_exists('webform_user') && db_field_exists('webform_user', 'confirmation_page_title')) {
+    // Copy all data over from the old tables to the new table.
+    db_query('REPLACE INTO {webform_confirmations} ' .
+      '(nid, confirmation_page_title) ' .
+      'SELECT nid, confirmation_page_title '.
+      'FROM {webform_user}');
+    // If we're done, we can drop the old fields.
+    db_drop_field('webform_user', 'confirmation_page_title');
+  }
+  // Check for table, and fields.
+  if (db_table_exists('fundraiser') && db_field_exists('fundraiser', 'confirmation_page_title')) {
+    // Copy all data over from the old tables to the new table.
+    db_query('REPLACE INTO {webform_confirmations} ' .
+      '(nid, confirmation_page_title) ' .
+      'SELECT nid, confirmation_page_title '.
+      'FROM {fundraiser}');
+    // If we're done, we can drop the old fields.
+    db_drop_field('fundraiser', 'confirmation_page_title');
+    // Move additional settings over to the proper configuration tracking in webform proper.
+    db_query('REPLACE INTO {webform} ' .
+      '(nid, confirmation, confirmation_format, redirect_url) ' .
+      'SELECT nid, confirmation_page_body, confirmation_page_format, redirect_url '.
+      'FROM {fundraiser}');
+    db_drop_field('fundraiser', 'confirmation_page_body');
+    db_drop_field('fundraiser', 'confirmation_page_format');
+    db_drop_field('fundraiser', 'redirect_url');
+  }
+}
