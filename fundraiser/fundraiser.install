@@ -261,7 +261,9 @@ function fundraiser_update_7000() {
         'uid' => $donation->uid,
       );
       // Add gateway and transaction information from webform.
-      // Note on the update for fundraiser_webform 7001 this table is dropped.
+      // The table doesn't go away yet, because we will still need it for fundraiser_sustainer.
+      // But we can throw a signal that fundraiser is done with it to let sustainer delete.
+      variable_set('fundraiser_port_webform_done', TRUE);
       $gateway_infos = db_query('SELECT * FROM {fundraiser_webform_order} WHERE order_id = :did',
         array(':did' => $donation->order_id));
       foreach ($gateway_infos as $gateway_info) {
@@ -269,7 +271,9 @@ function fundraiser_update_7000() {
         $record['gateway'] = $gateway_info->gateway;
         $record['txn_id'] = $gateway_info->txn_id;
       }
-      // Note on the update for fundraiser_sustainers 7001 where this table goes away.
+      // The table doesn't go away yet, because we will still need it for fundraiser_sustainer.
+      // But we can throw a signal that fundraiser is done with it to let sustainer delete.
+      variable_set('fundraiser_port_recurring_done', TRUE);
       $gateway_infos = db_query('SELECT * FROM {fundraiser_recurring} WHERE order_id = :did',
         array(':did' => $donation->order_id));
       foreach ($gateway_infos as $gateway_info) {
@@ -292,11 +296,4 @@ function fundraiser_update_7000() {
   db_drop_index('fundraiser_refund', 'refund_order_id');
   db_change_field('fundraiser_refund', 'order_id', 'did', $did_field);
   db_add_index('fundraiser_refund', 'refund_did', array('did'));
-  
-  // Now that we've moved all this stuff around.
-  // Rename webform components for email key to mail key. (Part of the compatibility for webform_user.)
-  db_query('UPDATE {webform_component} w '.
-    'INNER JOIN {fundraiser} f ON w.nid = f.nid '.
-    'SET w.form_key = \'mail\' '.
-    'WHERE w.form_key = \'email\' AND w.nid = f.nid ');
 }
