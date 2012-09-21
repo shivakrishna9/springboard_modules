@@ -9,7 +9,7 @@
  * Implements hook_webform_confirmations_token_info_alter().
  */
 function fundraiser_webform_webform_confirmations_token_info_alter(&$tokens, $node) {
-  if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+  if (fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
     // $tokens is a keyed array, at minimum comes in as array('node');
     $tokens[] = 'donation';
   }
