@@ -15,6 +15,10 @@
  */
 function webform_confirmations_preprocess_webform_confirmation(&$vars) {
   if (isset($vars['node']->nid) && _webform_confirmations_is_configured($vars['node'])) {
+    // Reprocess the message. Webform properly uses a strip_tag here that will kill all HTML.
+    // So for our purposes, we need to reprocess the set message to get the correct values.
+    $vars['confirmation_message'] = check_markup($vars['node']->webform['confirmation'], $vars['node']->webform['confirmation_format'], '', TRUE);
+    // We get check_markup() from filter.module.
     // Set title if available from configurations.
     if (!empty($vars['node']->confirmation_page_title)) {
       drupal_set_title($vars['node']->confirmation_page_title);
