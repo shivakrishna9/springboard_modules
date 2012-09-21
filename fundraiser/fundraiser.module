@@ -6,9 +6,81 @@
  */
 
 // Include theme related functions.
-require_once('fundraiser.theme.inc');
-// Include confirmation stuff.
-require_once('fundraiser.confirmations.inc');
+require_once('fundraiser.theme.inc'); //TODO merge this back in.
+
+
+// THESE settings likely to be replaced elsewhere? Hold onto them for the moment.
+/**
+ * Form for fundraiser confirmation page settings.
+ *
+function webform_confirmations_settings_form($form, &$form_state, $node) {
+  // Additional values have been loaded on node_load, so are available here.
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
+
+  $form['email'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Confirmation email settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['email']['receipt_email_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Receipt Email Address'),
+    '#description' => t('The email address that the receipt email will come from.'),
+    '#weight' => -4.6,
+    '#maxlength' => 255,
+    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
+    '#required' => TRUE,
+  );
+  $form['email']['receipt_email_from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Receipt Email From'),
+    '#description' => t('The name that is associated with the receipt email address.'),
+    '#weight' => -4.5,
+    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
+    '#required' => TRUE,
+  );
+  $form['email']['receipt_email_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Receipt Email Subject'),
+    '#description' => t('The subject of the donation receipt email.'),
+    '#weight' => -4.4,
+    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
+    '#required' => TRUE,
+  );
+  $form['email']['receipt_email_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Confirmation Email Message'),
+    '#weight' => -4.3,
+    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+    '#weight' => 300,
+  );
+  return $form;
+}
+//*/
+
+/**
+ * Validation function for fundraiser_webform_confirmation_settings_form().
+ *
+function webform_confirmations_settings_form_validate($form, &$form_state) {
+  // Validate the email address.
+  if (!_fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
+    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
+  }
+}
+
+// Update the fundraiser with the submitted material.\
+//  $fundraiser->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
+//  $fundraiser->receipt_email_address = $form_state['values']['receipt_email_address'];
+//  $fundraiser->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
+//  $fundraiser->receipt_email_message = $form_state['values']['receipt_email_message'];
+//*/
 
 /**
  * Implements hook_permission().
@@ -54,35 +126,6 @@ function fundraiser_permission() {
  * Implements hook_menu().
  */
 function fundraiser_menu() {
-  // Paths for fundraiser per node stuff.
-  $items['node/%node/fundraiser'] = array(
-    'title' => 'Fundraiser',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_confirmation_settings_form', 1),
-    'access callback' => 'fundraiser_confirmations_perm',
-    'access arguments' => array('update', 1),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 1,
-  );
-  // MOVE TO CONFIRMATIONS
-  $items['node/%node/fundraiser/confirmations'] = array(
-    'title' => 'Confirmations',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_confirmation_settings_form', 1),
-    'access callback' => 'fundraiser_confirmations_perm',
-    'access arguments' => array('update', 1),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 1,
-  );
-  // MOVE TO CONFIRMATIONS
-  $items['node/%node/confirmation/%'] = array(
-    'title' => 'Webform submission',
-    'load arguments' => array(1),
-    'page callback' => 'fundraiser_donation_confirmation_page',
-    'page arguments' => array(1, 3),
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-  );
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
     'title' => 'Fundraiser settings',
@@ -145,27 +188,64 @@ function fundraiser_boost_is_cacheable($parts) {
 function fundraiser_token_info() {
   // Add a donation type.
   $info['types']['donation'] = array(
-    'name' => t('Donation tokens'),
+    'name' => t('Current donation'),
     'description' => t('Tokens related to specific donations.'),
     'needs-data' => 'donation',
   );
-  $info['tokens']['donation']['fundraiser-cc-last-four'] = array(
-    'name' => t('Ending CC number'),
-    'description' => t('The last four digits of the credit card used for the donation.'),
+  // Donation tokens by field.
+  $info['tokens']['donation'] = _fundraiser_donation_token_info();
+  // Donation basic data.
+  $info['tokens']['donation']['did'] = array(
+    'name' => t('Donation ID'),
+    'description' => t('The unique ID of the donation.'),
   );
-  $info['tokens']['donation']['fundraiser-cc-card-exp-month'] = array(
-    'name' => t('CC expiration month'),
-    'description' => t('The credit card expiration month.'),
+  $info['tokens']['donation']['node'] = array(
+    'name' => t('Fundraiser Node'),
+    'description' => t('The fundraiser node the donation came from.'), 
+    'type' => 'node',
   );
-  $info['tokens']['donation']['fundraiser-cc-card-exp-year'] = array(
-    'name' => t('CC expiration year'),
-    'description' => t('The credit card expiration year.'),
+  $info['tokens']['donation']['user'] = array(
+    'name' => t('Donating User'),
+    'description' => t('The user account the donation came from.'), 
+    'type' => 'user',
   );
-  $info['tokens']['donation']['fundraiser-cc-card-type'] = array(
-    'name' => t('CC type'),
+  // Modify given fields.
+  if (isset($info['tokens']['donation']['card_number'])) {
+    $info['tokens']['donation']['card_number'] = array(
+      'name' => t('Ending Card Number'),
+      'description' => t('The last four digits of the credit card used for the donation.'),
+    );
+  }
+  // Add an extra one from charge modules.
+  $info['tokens']['donation']['card_type'] = array(
+    'name' => t('Card Type'),
     'description' => t('The credit card type used for the donation.'),
   );
   return $info;
+}
+
+/**
+ * Recursive to build up form info for tokens.
+ */
+function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
+  if ($fields == NULL) {
+    $fields = fundraiser_field_info();
+  }
+  $children = element_children($fields);
+  foreach ($children as $child) {
+    if (isset($fields[$child]['#type']) && $fields[$child]['#type'] != 'fieldset') {
+      // Add children.
+      $tokens[$child] = array(
+        'name' => isset($fields[$child]['#title']) ? $fields[$child]['#title'] : $child,
+        'description' => t('Donation field information.'),
+      );
+    }
+    else {
+      // Recurse for more.
+      $tokens = _fundraiser_donation_token_info($fields[$child], $tokens);
+    }
+  }
+  return $tokens;
 }
 
 /**
@@ -173,49 +253,32 @@ function fundraiser_token_info() {
  */
 function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
-  switch ($type) {
-    case 'donation':
-      if (!empty($data->donation)) {
-        $replacements['fundraiser-cc-last-four'] = drupal_substr($data->donation['card_number'], -4);
-        $replacements['fundraiser-cc-card-exp-month'] = $data->donation['card_expiration_month'];
-        $replacements['fundraiser-cc-card-exp-year'] = $data->donation['card_expiration_year'];
-        $replacements['fundraiser-cc-card-type'] = drupal_ucfirst($data->donation['cc_type']);
-      }
-      break;
+  if ($type = 'donation' && !empty($data['donation'])) {
+    $donation = $data['donation'];
+    // All set fields.
+    $data = is_array($donation->donation) ? $donation->donation : array();
+    // User and etc types.
+    $data['did'] = isset($donation->did) ? $donation->did : '';
+    $data['node'] = isset($donation->node) ? $donation->node : '';
+    $data['user'] = isset($donation->user) ? $donation->user : '';
+    // Specific changes.
+    $data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
+    $data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
+  }
+  // Replace the given tokens.
+  $replacements = array();
+  foreach ($tokens as $key => $token) {
+    if (isset($data[$key])) {
+      $replacements[ $token ] = $data[$key]; 
+    }
+  }
+  if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+    $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+  }
+  if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+    $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
   }
   return $replacements;
-}
-
-/**
- * Provides an additional mechanism to combine running regular token replacement
- * and token replacement from other sources (webform).
- */
-function _fundraiser_replace_tokens($message, $donation) {
-  // First replace the normal token set.
-  $message = token_replace($message, $donation);
-
-  // Then replace based on the glue modules. Specifically for webform, which uses non-standard tokens.
-  $message = module_invoke_all('fundraiser_replace_tokens', $message, $donation);
-  return $message[0];
-}
-
-/**
- * Implemenation of hook_mail().
- */
-function fundraiser_mail($key, &$message, &$params) {
-  switch ($key) {
-    case 'fundraiser_cc_notification':
-      $body = variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].');
-      // Do some token replacements.
-      $tokens = array('[exp_month]', '[exp_year]', '[cc_type]', '[cc_last_4]', '[amount]');
-      $replaces = array($params['exp_month'], $params['exp_year'], $params['cc_type'], $params['cc_last_4'], $params['amount']);
-      $body = str_replace($tokens, $replaces, $body);
-      // Replace any user tokens via the token module.
-      $body = token_replace($body, 'user', $params['user']);
-      $message['subject'] = variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire');
-      $message['body'] = $body;
-      break;
-  }
 }
 
 /**
@@ -580,14 +643,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
 
   // TODO this should probably go on a different table, not here.
   /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
-  $form['confirmation_page_title'] = array(
-    '#type' => 'value',
-    '#value' =>  isset($node->confirmation_page_title) ? $node->confirmation_page_title : '',
-  );
-  $form['confirmation_page_body'] = array(
-    '#type' => 'value',
-    '#value' => isset($node->confirmation_page_body) ? $node->confirmation_page_body : '',
-  );
   $form['receipt_email_from'] = array(
     '#type' => 'value',
     '#value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
@@ -603,10 +658,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $form['receipt_email_message'] = array(
     '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
-  );
-  $form['redirect_url'] = array(
-    '#type' => 'value',
-    '#value' => isset($node->redirect_url) ? $node->redirect_url : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
 }
@@ -1018,7 +1069,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
 
   // When confirmations are moved, this goes elsewhere.
   $form['#submit'][] = 'fundraiser_donation_post_submit';
-  $form['#submit'][] = 'fundraiser_donation_confirmation';
 
   // Call hook to allow sub modules to add / manipulate the form.
   // NOTE: we are not using module_invoke_all on purpose here.
