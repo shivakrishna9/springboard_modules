@@ -404,7 +404,7 @@ function fundraiser_node_load($nodes, $types) {
  */
 function fundraiser_node_presave($node) {
   // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_is_donation_type($node->type) && isset($node->amount_wrapper)) {
     // Check the submission to remove the donation amounts marked.
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       // If the remove marker is set.
