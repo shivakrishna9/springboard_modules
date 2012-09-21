@@ -6,4 +6,4 @@ version =  7.x-dev
 
 files[] = webform_goals.module
 files[] = webform_goals.admin.inc
-files[] = tests/webform_goals.test
+;files[] = tests/webform_goals.test

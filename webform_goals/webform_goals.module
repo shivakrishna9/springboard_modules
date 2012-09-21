@@ -450,7 +450,7 @@ function webform_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       // Webform node
       if (is_numeric($pid)) {
         $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc
-          INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id
+          INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id
           WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
           $pid));
       }
@@ -458,8 +458,8 @@ function webform_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
       else {
         $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
         $progress = db_result(db_query("SELECT SUM(uo.order_total) FROM {uc_orders} uo
-          INNER JOIN {fundraiser_webform_order} fwo
-            ON fwo.order_id = uo.order_id
+          INNER JOIN {fundraiser_webform_donation} fwo
+            ON fwo.did = uo.order_id
           INNER JOIN {webform_submitted_data} wsd
             ON wsd.sid = fwo.sid
           WHERE wsd.cid = %d

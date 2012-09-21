@@ -290,13 +290,13 @@ class Donation
     $details = array();
     $result = db_query(
       "
-        SELECT order_id, gateway, txn_id 
-        FROM {fundraiser_webform_order} 
-        WHERE order_id = %d
+        SELECT did, gateway, txn_id 
+        FROM {fundraiser_webform_donation} 
+        WHERE did = %d
         UNION
-        SELECT order_id, gateway, txn_id
+        SELECT did, gateway, txn_id
         FROM {fundraiser_recurring}
-        WHERE order_id = %d
+        WHERE did = %d
       ",
       $order_id, $order_id
     );
