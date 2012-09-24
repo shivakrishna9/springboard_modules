@@ -2959,6 +2959,20 @@ function _fundraiser_field_blacklist() {
 }
 
 /**
+ * Determine if this form is a donation form edit form.
+ *
+ * @param $form_id
+ *   The id of the form to check.
+ * @param $form
+ *   The actual form.
+ */
+function fundraiser_is_donation_edit_form($form_id, $form) {
+  return substr($form_id, -10) == '_node_form'
+    && isset($form['#node']) 
+    && fundraiser_is_donation_type($form['#node']->type); 
+}
+
+/**
  * Determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
