@@ -66,25 +66,25 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       $form['access'][] = $form['og_nodeapi'];
       unset($form['og_nodeapi']);
       break;
-      
-    case 'donation_form_node_form':
-      // move the gateway selector into the groups fieldset
-      $form['og_nodeapi']['gateway'] = $form['fundraiser_settings']['gateway'];
-      $form['og_nodeapi']['gateway']['#weight'] = 1;
-      $form['og_nodeapi']['visible']['og_groups']['#ahah'] = array(
-        'path' => 'og-payment-gateway/filter/ahah',  
-        'wrapper' => 'gateway',
-        'event' => 'change',  
-      );
-      unset($form['fundraiser_settings']['gateway']);
-      // if the current user belongs to more than 1 group, add a group filter
-      if (count($user->og_groups) > 1) {
-        $options = array('' => t('-- Select --'));
-        foreach($user->og_groups as $id => $group) {
-          $options[$id] = $group['title'];
-        }
+  } 
+
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
+    // move the gateway selector into the groups fieldset
+    $form['og_nodeapi']['gateway'] = $form['fundraiser_settings']['gateway'];
+    $form['og_nodeapi']['gateway']['#weight'] = 1;
+    $form['og_nodeapi']['visible']['og_groups']['#ahah'] = array(
+      'path' => 'og-payment-gateway/filter/ahah',  
+      'wrapper' => 'gateway',
+      'event' => 'change',  
+    );
+    unset($form['fundraiser_settings']['gateway']);
+    // if the current user belongs to more than 1 group, add a group filter
+    if (count($user->og_groups) > 1) {
+      $options = array('' => t('-- Select --'));
+      foreach($user->og_groups as $id => $group) {
+        $options[$id] = $group['title'];
       }
-      break;
+    }
   }
 }
 
