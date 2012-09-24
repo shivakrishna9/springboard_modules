@@ -597,7 +597,7 @@ function webform_user_webform_validate($form, &$form_state) {
  * Process webform submissions.
  */
 function webform_user_webform_submit($form, &$form_state) {
-  
+
   global $user;
   $account = new stdClass();
   $node = node_load(array('nid' => $form_state['values']['details']['nid']));
@@ -607,18 +607,21 @@ function webform_user_webform_submit($form, &$form_state) {
   // Trim the whitespace on the mail field.
   $fields['mail'] = trim($fields['mail']);
 
+  // Only perform action on user account if this isn't an edit.
+  $submission_is_new = $form_state['values']['details']['is_new'];
+
   if ($form_state['values']['op'] == $submit_op && $node->is_webform_user) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
-    
+
     // Authenticated user, update if this isn't an edit.
-    if ($user->uid && $form_state['redirect']) {
+    if ($user->uid && $submission_is_new) {
       // Update the existing user account.
       $account = $user;
       _webform_user_save_profile_map($user->uid, $map);
     }
     // Anonymous user with matching email address.
-    elseif (($account = user_load(array('mail' => $fields['mail']))) && $form_state['redirect']) {
+    elseif (($account = user_load(array('mail' => $fields['mail']))) && $submission_is_new) {
 
       // Update the existing user account.
       _webform_user_save_profile_map($account->uid, $map);
@@ -626,7 +629,7 @@ function webform_user_webform_submit($form, &$form_state) {
       db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
     }
     // Anonymous user, new to Drupal.
-    elseif ($form_state['redirect']) {
+    elseif ($submission_is_new) {
       // Register the user.
       $user_fields = array(
         'name' => $fields['mail'],
@@ -636,18 +639,18 @@ function webform_user_webform_submit($form, &$form_state) {
         'status' => 1,
       );
       $account = user_save('', $user_fields);
-      
+
       if ($fields['ms'] || $fields['cid']) {
         $fields['profile_ms'] = $fields['ms'];
         $fields['profile_cid'] = $fields['cid'];
       }
-      
+
       // Update the new user account.
       _webform_user_save_profile_map($account->uid, $map);
       // Update the submission record with the id of the new user
       $sid = $form_state['values']['details']['sid'];
       db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $sid);
-      
+
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
       	// Manually set the password so it appears in the e-mail.
