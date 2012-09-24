@@ -1601,22 +1601,25 @@ function fundraiser_webform_validate($form, &$form_state) {
 	$cc_expiration_month = $fundraiser_fields['card_expiration_month'];
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
 	$email = $fundraiser_fields['email'];
-	
-	// look for other amount
-	if ($donation_amount == "other") {
-		$donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
-		// make sure other amount is numeric
-		if (!is_numeric($donation_amount)) {
-			form_set_error('other_amount', "You must enter a valid donation amount.");
-			$errors = true;
-		}
-	}
-	
+
+    $amount_field = 'submitted][donation][amount';
+    // look for other amount
+    if ($donation_amount == "other") {
+      $donation_amount = $fundraiser_fields['other_amount'];
+      $amount_field = 'submitted][donation][other_amount';
+    }
+
+    // Ensure we have a valid donation amount
+    if (!preg_match('/^\d*(\.\d*)?$/', $donation_amount)) {
+      form_set_error($amount_field, t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
+      $errors = true;
+    }
+
 	// check for minimum amount
 	$minimum_donation_amount = db_result(db_query("select minimum_donation_amount from {fundraiser} where nid = %d", $node_id));
 	$minimum_donation_amount = number_format($minimum_donation_amount, 2);
 	if ($donation_amount < $minimum_donation_amount) {
-		form_set_error('submitted][donation][other_amount', "Your donation amount must be greater than or equal to $minimum_donation_amount.");
+		form_set_error($amount_field, "Your donation amount must be greater than or equal to $minimum_donation_amount.");
 		$errors = true;
 	}
 	
@@ -1716,7 +1719,7 @@ function fundraiser_webform_submit($form, &$form_state) {
 	
 	// look for other amount
 	if ($donation_amount == "other") {
-		$donation_amount = preg_replace("/[^\d\.]/i", "", $fundraiser_fields['other_amount']);
+		$donation_amount = $fundraiser_fields['other_amount'];
 	}
 
   // create a new order
