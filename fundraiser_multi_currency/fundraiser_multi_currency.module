@@ -73,7 +73,7 @@ function fundraiser_multi_currency_perm() {
  * Add the multi-currency option to the Donation node add form.
  */
 function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
-  if (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
     // Only add teh multi-currency option to the form when creating a donation
     // form, not when editing it
     if (!($form['#node']->nid > 0)) {

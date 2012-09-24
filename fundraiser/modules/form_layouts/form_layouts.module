@@ -93,7 +93,7 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
   }
   
   // add a dropdown for the user to pick the layout
-  if (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
     $nid = $form['#node']->nid;
     
     // get the available template files and doctor it up for a select list

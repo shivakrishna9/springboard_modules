@@ -108,7 +108,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
       }
 
       // Set goal type based on form type.        
-      (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) ? $goal_type = 2 : $goal_type = 1;
+      (fundraiser_is_donation_edit_form($form_id, $form)) ? $goal_type = 2 : $goal_type = 1;
 
       $form['fundraiser_settings']['fundraiser_goals'] = array(
         '#type' => 'fieldset',

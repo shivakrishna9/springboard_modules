@@ -68,7 +68,7 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       break;
   } 
 
-  if (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
     // move the gateway selector into the groups fieldset
     $form['og_nodeapi']['gateway'] = $form['fundraiser_settings']['gateway'];
     $form['og_nodeapi']['gateway']['#weight'] = 1;

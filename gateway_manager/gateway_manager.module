@@ -59,7 +59,7 @@ function gateway_manager_menu() {
  * Implementation of hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
-  if (substr($form_id, -10) == '_node_form' && isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type)) {
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
     // Add a wrapper around the payment gateway field
     $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
     $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
