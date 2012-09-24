@@ -54,3 +54,7 @@
 
     * fundraiser.module:  Improve validation of donation amount
     See: https://github.com/JacksonRiver/springboard_modules/pull/136
+
+2012-09-20 Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.module:  Prevent anonymous user from recieving incorrect country code
