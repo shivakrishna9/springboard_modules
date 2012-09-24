@@ -2231,6 +2231,7 @@ function fundraiser_process_recurring_donations() {
    	$charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
    	
    	if (empty($charge_function)) {
+      db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
    	  watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
    	}
    	else {
@@ -2259,7 +2260,8 @@ function fundraiser_process_recurring_donations() {
   			db_query("UPDATE {fundraiser_recurring} SET
   				gateway_resp = 'failed',
   				attempts = attempts + 1,
-  				next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
+  				next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
+  				lock_id = '0' 
   				WHERE order_id = %d", $order_id
   			);
   			// get the number of times this order has been attempted
