@@ -1598,17 +1598,14 @@ function fundraiser_webform_validate($form, &$form_state) {
   // there are certain conditions (eg. drupal_execute()) where we want to
   // be able to sidestep validation.
   $validate = TRUE;
-  $validate_contrib = module_invoke_all('fundraiser_validate_webform_submission', $form_state, $validate);
+  $validate_contrib = module_invoke_all('fundraiser_validate_webform_enabled', $form_state, $validate);
   foreach ($validate_contrib as $value) {
     if (!$value) {
-      $validate = FALSE;
+      // if any hook invoked returns false, turn off validation.
+      return 1;
     }
   }
 
-  // if any hook invoked returns false, turn off validation.
-  if (!$validate) {
-    return 1;
-  }
 	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
 	
 	$node_id = $form_state['values']['details']['nid'];
