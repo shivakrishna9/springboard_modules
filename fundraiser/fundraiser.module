@@ -1594,6 +1594,21 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
  * Validate donation form submissions.
  */
 function fundraiser_webform_validate($form, &$form_state) {
+
+  // there are certain conditions (eg. drupal_execute()) where we want to
+  // be able to sidestep validation.
+  $validate = TRUE;
+  $validate_contrib = module_invoke_all('fundraiser_validate_webform_submission', $form_state, $validate);
+  foreach ($validate_contrib as $value) {
+    if (!$value) {
+      $validate = FALSE;
+    }
+  }
+
+  // if any hook invoked returns false, turn off validation.
+  if (!$validate) {
+    return 1;
+  }
 	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
 	
 	$node_id = $form_state['values']['details']['nid'];
@@ -1806,9 +1821,17 @@ function fundraiser_webform_submit($form, &$form_state) {
   );
   
   // additional data to pass to the payment gateway's charge function
- 	$data = array(
- 		'txn_type' => 'auth_capture',
- 	);
+  $data = array(
+    'txn_type' => 'auth_capture',
+  );
+
+  if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
+    $data = array(
+      'txn_type' => 'reference_txn',
+      'ref_id' => $form_state['fundraiser_reference_txn_id']
+    
+    );
+  }
  	
  	// variable to hold the name of the payment gateway charge function we need to call
  	$charge_function = NULL;
@@ -2265,7 +2288,7 @@ function fundraiser_process_recurring_donations() {
   				gateway_resp = 'failed',
   				attempts = attempts + 1,
   				next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
-  				lock_id = '0' 
+  				lock_id = '0'
   				WHERE order_id = %d", $order_id
   			);
   			// get the number of times this order has been attempted
@@ -2968,8 +2991,8 @@ function _fundraiser_field_blacklist() {
  */
 function fundraiser_is_donation_edit_form($form_id, $form) {
   return substr($form_id, -10) == '_node_form'
-    && isset($form['#node']) 
-    && fundraiser_is_donation_type($form['#node']->type); 
+    && isset($form['#node'])
+    && fundraiser_is_donation_type($form['#node']->type);
 }
 
 /**
