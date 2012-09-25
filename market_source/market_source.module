@@ -48,7 +48,7 @@ function market_source_init() {
   $ms_cookie_domain = '';
   // Per RFC 2109, cookie domains must contain at least one dot other than the
   // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.
-  if (count(explode('.', $market_source_cookie_domain)) > 1 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
+  if (count(explode('.', $market_source_cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $market_source_cookie_domain))) {
     $ms_cookie_domain = $market_source_cookie_domain;
   }
   // Add other variables to the JS settings array.
@@ -345,7 +345,7 @@ function market_source_nodeapi(&$node, $op) {
         // make sure this node type contains a webform and it's not a donation form.
         if (!fundraiser_is_donation_type($node->type) && in_array($node->type, $webform_types)) {
           module_load_include('inc', 'webform', 'includes/webform.components');
-          // don't add standard fields to webform_user because it handles the fields itself 
+          // don't add standard fields to webform_user because it handles the fields itself
           if (module_exists('webform_user') && $node->is_webform_user) {
             $custom_fields = variable_get('market_source_custom_fields', array());
             foreach ($custom_fields as $custom_field) {
@@ -404,67 +404,80 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'form_key' => 'ms',
     'name' => 'Market Source',
     'type' => 'hidden',
-    'extra' => array('description' => '',),
-    'mandatory' => 1, 
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 1,
     'weight' => 20,
     'email' => 1,
     'maps_to' => 'profile_ms',
   );
 
-	// campaign id
-	$components['campaign'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => $default_campaign,
-	  'form_key' => 'cid',
-	  'name' => t('Campaign ID'),
-	  'type' => 'hidden',
-	  'extra' => array('description' => ''),
-	  'mandatory' => 1,
-	  'weignt' => 21,
-	  'email' => 1,
-	  'maps_to' => 'profile_cid',
-	);
+  // campaign id
+  $components['campaign'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => $default_campaign,
+    'form_key' => 'cid',
+    'name' => t('Campaign ID'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 1,
+    'weignt' => 21,
+    'email' => 1,
+    'maps_to' => 'profile_cid',
+  );
   
-	// referrer
-	$components['referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0 ,
-	  'value' => '',
-	  'form_key' => 'referrer', 
-	  'name' => t('Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => ''),
-	  'mandatory' => 0, 
-	  'weight' => 22,
-	  'email' => 1,
-	  'maps_to' => 'profile_referrer',
-	);
+  // referrer
+  $components['referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0 ,
+    'value' => '',
+    'form_key' => 'referrer',
+    'name' => t('Referrer'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 0,
+    'weight' => 22,
+    'email' => 1,
+    'maps_to' => 'profile_referrer',
+  );
 	
-	// initial referrer
-	$components['initial_referrer'] = array(
-	  'nid' => $nid,
-	  'pid' => 0,
-	  'value' => '',
-	  'form_key' => 'initial_referrer', 
-	  'name' => t('Initial Referrer'),
-	  'type' => 'hidden',  
-	  'extra' => array('description' => '',),
-	  'mandatory' => 0, 
-	  'weight' => 23, 
-	  'email' => 1,
-	  'maps_to' => 'profile_initial_referrer',
-	);
-	
-	// If any custom fields have been configured, add them as well
-	$custom_fields = variable_get('market_source_custom_fields', array());
+  // initial referrer
+  $components['initial_referrer'] = array(
+    'nid' => $nid,
+    'pid' => 0,
+    'value' => '',
+    'form_key' => 'initial_referrer',
+    'name' => t('Initial Referrer'),
+    'type' => 'hidden',
+    'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'maps_to' => 'profile_initial_referrer',
+  );
 
-	if (count($custom_fields)) {
-	  foreach ($custom_fields as $custom_field) {
-	    $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
-	  }
-	}
-  return $components;  
+  // If any custom fields have been configured, add them as well
+  $custom_fields = variable_get('market_source_custom_fields', array());
+
+  if (count($custom_fields)) {
+    foreach ($custom_fields as $custom_field) {
+      $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
+    }
+  }
+
+  return $components;
 }
 
 /**
@@ -483,13 +496,13 @@ function market_source_fundraiser_create_webform_components($nid) {
 
 /**
  * Create a formatted webform component array.
- * 
+ *
  * @param $custom_field
  * Custom field array containing field key and field name values.
- * 
+ *
  * @param $nid
  * Node id of the webform to add the component to.
- * 
+ *
  * @return
  * Returns a keyed array containing the minimum necessary data to create a new webform component via
  * webform_component_insert().
@@ -499,12 +512,15 @@ function market_source_create_webform_component($custom_field, $nid) {
     'nid' => $nid,
   	'pid' => 0,
   	'value' => $custom_field['default'],
-  	'form_key' => $custom_field['key'], 
+  	'form_key' => $custom_field['key'],
   	'name' => $custom_field['name'],
-  	'type' => 'hidden',  
-  	'extra' => array('description' => '',),
-  	'mandatory' => 0, 
-  	'weight' => 23, 
+  	'type' => 'hidden',
+  	'extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  	'mandatory' => 0,
+  	'weight' => 23,
   	'email' => 1,
   	'maps_to' => '',
   );

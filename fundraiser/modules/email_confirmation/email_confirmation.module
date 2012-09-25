@@ -662,6 +662,7 @@ function email_confirmation_token_list($type = 'all') {
   if ($type == 'order') {
     $tokens['order']['confirmation-message-text'] = t('The text version of the donation confirmation message.');
     $tokens['order']['confirmation-message-html'] = t('The HTML version of the donation confirmation message.');
+    $tokens['order']['order-node-title'] = t('Title property of the parent webform node.');
   }
   return $tokens;
 }
@@ -675,6 +676,7 @@ function email_confirmation_token_values($type, $object = NULL) {
 
     // $object contains UC order values on donation forms and the node object on webforms.
     $nid = $object->products[0]->nid ? $object->products[0]->nid : $object->nid;
+    $node = node_load($nid);
 
     $data = db_fetch_object(db_query('SELECT html_message, html_message_format, text_message, text_message_format FROM {fundraiser_confirmations} WHERE nid=%d', $nid));
     $values['confirmation-message-text'] = check_markup($data->text_message, $data->text_message_format, FALSE);
@@ -967,13 +969,14 @@ function email_confirmation_webform_send_mail($form, $form_state) {
   $settings = db_fetch_object(db_query('SELECT * FROM {fundraiser_confirmations} WHERE nid = %d', $nid));
 
   if ($settings->send_mail) {
+    // We need to track down the cid for the mail field. This submitted value is used as the To: field in the sent mail.
+    $node = node_load($nid);
 
-    // We need to track down the cid for the mail field. This submitted value is used as the To: field in the sent mail.  
-    $mail_cid = _email_confirmation_find_cid('mail', (isset($form_state['webform']['component_tree']['children']) ? $form_state['webform']['component_tree']['children'] : $form['#node']->webform['components']));  
-    $node = $form['#node'];
-    $sid = $form_state['values']['details']['sid'];
-    $submission = webform_get_submission($node->nid, $sid); 
-    
+    // Search for the email address by the mail and email form keys
+    if (!$mail_cid = _email_confirmation_find_cid('mail', $node->webform['components'])) {
+      $mail_cid = _email_confirmation_find_cid('email', $node->webform['components']);
+    }
+
     $user_email = $form_state['values']['submitted'][$mail_cid];
     
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
@@ -991,7 +994,7 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $message['html_body'] = token_replace($template_html, 'order', $node);
     $message['html_body'] = token_replace($message['html_body'], 'order', $node);
 
-     
+
     // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'all', $node);
     $message['text_body'] = token_replace($message['text_body'], 'all', $node);
