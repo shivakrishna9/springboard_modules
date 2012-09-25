@@ -358,21 +358,23 @@ function capwiz_connect_cron_process() {
   foreach ($all_accounts as $account_id => $account_details) {
     // Connect to the API for this account
     $connection = capwiz_connect($account_id);
+
+    // Get the current sync type
+    $sync_type = variable_get('capwiz_connect_cron_sync_type_' . $account_id, 'users');
     
-    // Sync down a batch of users
-    watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
-    $connection->syncUsersBatch();
-    
-    // Only sync actions once all the users have been synced, since Actions
-    // cannot be synced to Salesforce before the users
-    if (!$connection->hasMoreUsers()) {
+    if ($sync_type == 'users') {
+      // Sync down a batch of users
+      watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
+      $connection->syncUsersBatch();
+      $next_sync = 'actions';
+    }
+    else {
       watchdog('capwiz_connect', t('Begin syncing a batch of actions from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
       // Sync down a batch of actions
       $connection->syncActionsBatch();
+      $next_sync = 'users';
     }
-    else {
-      watchdog('capwiz_connect', t('Skipping sync of actions from Capwiz for account %account_name: waiting until all users have been synced before syncing actions.', array('%account_name' => $account_details->display_name)));
-    }
+    variable_set('capwiz_connect_cron_sync_type_' . $account_id, $next_sync);
   }
   return '';
 }
