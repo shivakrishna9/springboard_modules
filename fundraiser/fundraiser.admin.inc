@@ -28,7 +28,7 @@ function fundraiser_admin_settings($form, &$form_state) {
   $form['fundraiser']['fundraiser_default_amounts'] = array(
     '#type' => 'textarea',
     '#title' => t('Default amounts'),
-    '#default_value' => variable_get('fundraiser_default_amounts', '10|$10'."\n".'20|$20'."\n".'50|$50'."\n".'100|$100'),
+    '#default_value' => variable_get('fundraiser_default_amounts', '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100'),
     '#description' => t('Enter the default donation amounts that will be used on new donation forms.'),
   );
   $form['fundraiser']['fundraiser_receipt_bcc'] = array(
