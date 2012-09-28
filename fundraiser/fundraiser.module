@@ -8,7 +8,6 @@
 // Include theme related functions.
 require_once('fundraiser.theme.inc'); //TODO merge this back in.
 
-
 // THESE settings likely to be replaced elsewhere? Hold onto them for the moment.
 /**
  * Form for fundraiser confirmation page settings.
@@ -316,7 +315,8 @@ function fundraiser_views_api() {
  * Implementshook_node_access().
  */
 function fundraiser_node_access($node, $op, $account) {
-  if (fundraiser_is_donation_type($node->type)) {
+   // Without an idea who the owner is or type is we can't assess access. So don't rock the boat.
+  if ( isset($node->type) && isset($node->uid) && fundraiser_is_donation_type($node->type)) {
     $is_author = $account->uid == $node->uid;
     switch ($op) {
       case 'create':
