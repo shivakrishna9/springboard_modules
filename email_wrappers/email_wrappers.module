@@ -21,7 +21,7 @@ function email_wrappers_menu() {
     'access arguments' => array('administer content'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/settings/email-wrappers'] = array(
+  $items['admin/config/system/email-wrappers'] = array(
     'title' => 'Confirmation settings',
     'description' => 'Administer email confirmation settings.',
     'access arguments' => array('administer site configuration'),
