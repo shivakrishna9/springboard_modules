@@ -587,12 +587,18 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $donation_amounts = isset($node->donation_amounts) ? $node->donation_amounts : array();
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
-      $donation_amounts = array(
-        array(10, '$10'),
-        array(20, '$20'),
-        array(50, '$50'),
-        array(100, '$100'),
-      );
+      $default_amounts = variable_get('fundraiser_default_amounts', '10|$10'."\n".'20|$20'."\n".'50|$50'."\n".'100|$100');
+      $default_amounts = explode("/n", $default_amounts);
+      $default_amounts = array_unique($default_amounts);
+      $exploded_amounts = array();
+      foreach ($default_amounts as $default_amount) {
+        $these_amounts = explode('|', $default_amount);
+        if (count($these_amounts) == 1) {
+          $these_amounts[1] = '$' . $these_amounts[0];
+        }
+        $exploded_amounts[] = $these_amounts;
+      }
+      $donation_amounts = $exploded_amounts;
     }
   }
   // Default provide one spare blank for users to fill in.
