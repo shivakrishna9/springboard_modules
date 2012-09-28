@@ -12,6 +12,9 @@ function fundraiser_admin_settings($form, &$form_state) {
   $form['fundraiser'] = array(
     '#type' => 'fieldset',
     '#title' => t('Fundraiser general settings'),
+    '#description' => t('Configure fundraiser settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
   $form['fundraiser']['fundraiser_development_mode'] = array(
     '#type' => 'checkbox',
