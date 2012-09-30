@@ -900,6 +900,8 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       $formatted_amounts[] = implode('|', array($value, $label));
     }
     if ($fundraiser->show_other_amount && count($fundraiser->donation_amounts)) {
+      // Strip out other other|Other combiantions and make sure this is at the end.
+      $formatted_amounts = array_diff($formatted_amounts, array('other|Other'));
       $formatted_amounts[] = 'other|Other';
     }
     $formatted_amounts = implode("\n", $formatted_amounts);
