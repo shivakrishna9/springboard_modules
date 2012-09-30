@@ -847,12 +847,12 @@ function fundraiser_fundraiser_field_info() {
       'description' => '',
       'items' => $months,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
   );
   $this_year = date('Y');
   $years = $this_year . "\n";
-  for ($i = 1; $i <= 5; $i++) {
+  for ($i = 1; $i <= 15; $i++) {
     $years .= ($this_year + $i) . "\n";
   }
   $fields['credit_card_information']['card_expiration_year'] = array(
@@ -863,7 +863,7 @@ function fundraiser_fundraiser_field_info() {
       'description' => '',
       'items' => $years,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
   );
   $fields['credit_card_information']['card_cvv'] = array(
