@@ -5,7 +5,10 @@ Drupal.behaviors.fundraiserBehavior = {
   // Auto-populate the internal name field
   $("#edit-title").blur(function() {
     var title = $(this).attr('value');
-    $("#edit-internal-name").val(title);
+    var currently = $("#edit-internal-name").attr('value');
+    if (currently.length == 0) {
+      $("#edit-internal-name").val(title);
+    }
   });
 
   // Auto focus on the amounts.
