@@ -151,7 +151,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
       'description' => '',
       'items' => $options,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
     '#display_callback' => '_fundraiser_ubercart_country_field_display',
   );
@@ -167,7 +167,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
       'description' => '',
       'items' => $options,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
     '#display_callback' => '_fundraiser_ubercart_zone_field_display',
   );
