@@ -175,7 +175,6 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
   // Add our own validation routines to the billing fields for credit cards.
   $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_ubercart_card_number_field_validate';
   $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_ubercart_card_cvv_field_validate';
-  $fields['credit_card_information']['card_expiration_month']['#validate_callback'] = '';
   $fields['credit_card_information']['card_expiration_year']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
   return $fields;
 }
