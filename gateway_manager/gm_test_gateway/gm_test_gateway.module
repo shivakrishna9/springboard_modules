@@ -10,6 +10,10 @@
  * Hook Functions (Ubercart)
  ******************************************************************************/
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_test_gateway_payment_gateway_managed() {
   $gateways[] = array(
     'id' => 'test_gateway',
@@ -26,6 +30,10 @@ function gm_test_gateway_payment_gateway_managed() {
  * Module and Helper Functions
  ******************************************************************************/
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_test_gateway_charge($order_id, $amount, $data) {
   global $user;
   $order = uc_order_load($order_id);

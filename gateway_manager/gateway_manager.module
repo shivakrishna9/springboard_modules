@@ -2,14 +2,14 @@
 
 /**
  * @file
- * This module provides functionality for creating multiple versions of the same payment gateway with different settings. 
+ * This module provides functionality for creating multiple versions of the same payment gateway with different settings.
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function gateway_manager_menu() {
-  $items['admin/settings/fundraiser/gateways'] = array(
+  $items['admin/config/fundraiser/gateways'] = array(
     'title' => t('Payment gateways'),
     'page callback' => 'gateway_manager_list',
     'access callback' => 'user_access',
@@ -17,14 +17,14 @@ function gateway_manager_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'gateway_manager.admin.inc',
   );
-  $items['admin/settings/fundraiser/gateways/list'] = array(
+  $items['admin/config/fundraiser/gateways/list'] = array(
     'title' => t('List'),
     'access callback' => 'user_access',
     'access arguments' => array('view payment gateway list'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
-  );  
-  $items['admin/settings/fundraiser/gateways/add'] = array(
+  );
+  $items['admin/config/fundraiser/gateways/add'] = array(
     'title' => t('Add payment gateway'),
     'page callback' => 'gateway_manager_gateway_add',
     'access callback' => 'user_access',
@@ -33,7 +33,7 @@ function gateway_manager_menu() {
     'file' => 'gateway_manager.admin.inc',
     'weight' => 1,
   );
-  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
+  $items['admin/config/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
     'title' => t('Edit payment gateway'),
     'page callback' => 'gateway_manager_gateway_edit',
     'page arguments' => array(4),
@@ -42,7 +42,7 @@ function gateway_manager_menu() {
     'access arguments' => array('edit any payment gateway'),
     'file' => 'gateway_manager.admin.inc',
   );
-  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
+  $items['admin/config/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
     'title' => t('Delete payment gateway'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gateway_managed_gateway_delete_form', 4),
@@ -56,7 +56,7 @@ function gateway_manager_menu() {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_edit_form($form_id, $form)) {
@@ -64,7 +64,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
     $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
     $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
   }
-  
+
   // If the payment gateway for the donation form does not include credit card fields (such
   // as Ogone), remove them from the donation form
   if (strpos($form_id, 'webform_client_form_') === 0) {
@@ -85,7 +85,8 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Implemenation of hook_nodeapi().
  */
-function gateway_manager_nodeapi(&$node, $op) {
+function gateway_manager_nodeapi_OLD(&$node, $op) {
+  // TODO Remaining code in this function needs to be moved to the appropriate new hook function.
   // clear out the gateway cache when donation forms
   // are created, updated or deleted
   if (fundraiser_is_donation_type($node->type)) {
@@ -100,7 +101,7 @@ function gateway_manager_nodeapi(&$node, $op) {
 }
 
 /**
- * Implementation of hook_fundraiser_gateway
+ * Implements hook_fundraiser_gateway().
  */
 function gateway_manager_fundraiser_gateway($op, $arg) {
   switch ($op) {
@@ -130,18 +131,18 @@ function gateway_manager_gateway_info($id) {
   $gateway_types = _managed_gateway_list();
   $gateway = gateway_manager_gateway_load($id);
   $gateway_info = array();
-  
+
   $gateway_info['config'] = unserialize($gateway->config);
   $gateway_info['type'] = $gateway->type;
-  
-  foreach($gateway_types as $options) {
+
+  foreach ($gateway_types as $options) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
       $gateway_info['refund_function'] = $options['credit_refund'];
       $gateway_info['gateway_details'] = $options;
     }
   }
-  
+
   return $gateway_info;
 }
 
@@ -151,8 +152,8 @@ function gateway_manager_gateway_info($id) {
 function gateway_manager_gateway_load($id) {
   static $gateways = array();
   if (!isset($gateways[$id])) {
-    $gateways[$id] = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
-    $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
+    $gateways[$id] = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = :id", array(':id' => $id)));
+    $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = :gid", array(':gid' => $id));
     while ($data = db_fetch_array($result)) {
       $gateways[$id]->terms[] = $data['tid'];
     }
@@ -163,10 +164,27 @@ function gateway_manager_gateway_load($id) {
 }
 
 /**
- * Implemenation of hook_perm().
+ * Implemenation of hook_permission().
  */
-function gateway_manager_perm() {
-  return array('view payment gateway list', 'create payment gateway', 'edit any payment gateway', 'delete any payment gateway');
+function gateway_manager_permission() {
+  return array(
+    'view payment gateway list' => array(
+      'title' => t('view payment gateway list'),
+      'description' => t('TODO Add a description for \'view payment gateway list\''),
+    ),
+    'create payment gateway' => array(
+      'title' => t('create payment gateway'),
+      'description' => t('TODO Add a description for \'create payment gateway\''),
+    ),
+    'edit any payment gateway' => array(
+      'title' => t('edit any payment gateway'),
+      'description' => t('TODO Add a description for \'edit any payment gateway\''),
+    ),
+    'delete any payment gateway' => array(
+      'title' => t('delete any payment gateway'),
+      'description' => t('TODO Add a description for \'delete any payment gateway\''),
+    ),
+  );
 }
 
 /**
@@ -211,7 +229,7 @@ function gateway_mananger_settings_form($form) {
 function gateway_manager_settings_form_submit($form, &$form_state) {
   // check to see if the gateway is being deleted
   if ($form_state['values']['op'] == 'Delete') {
-    drupal_goto('admin/settings/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
+    drupal_goto('admin/config/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
   }
 
   $id = $form_state['values']['id'];
@@ -237,17 +255,17 @@ function gateway_manager_settings_insert($name, $type, $terms, $status, $config)
   $record->name = $name;
   $record->uid = $user->uid;
   $record->type = $type;
-  $record->created = time();
-  $record->updated = time();
+  $record->created = REQUEST_TIME;
+  $record->updated = REQUEST_TIME;
   $record->config = serialize($config);
   $record->status = $status;
-  
+
   $result = drupal_write_record('gateway_manager_gateways', $record);
   if ($result) {
     gateway_manager_settings_save_terms($record->id, $terms);
     module_invoke_all('gateway_manager_gateway_create', $record, $config);
     drupal_set_message(t('Payment gateway @name created successfully.', array('@name' => $name)));
-    drupal_goto('admin/settings/fundraiser/gateways');
+    drupal_goto('admin/config/fundraiser/gateways');
   }
 }
 
@@ -259,7 +277,7 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
   $record->id = $id;
   $record->name = $name;
   $record->uid = $user->uid;
-  $record->updated = time();
+  $record->updated = REQUEST_TIME;
   $record->config = serialize($config);
   $record->status = $status;
 
@@ -268,7 +286,7 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
     gateway_manager_settings_save_terms($id, $terms);
     module_invoke_all('gateway_manager_gateway_update', $record, $config);
     drupal_set_message(t('Payment gateway @name updated successfully.', array('@name' => $name)));
-    drupal_goto('admin/settings/fundraiser/gateways');
+    drupal_goto('admin/config/fundraiser/gateways');
   }
 }
 
@@ -276,20 +294,35 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
  * Deletes an existing payment gateway record.
  */
 function gateway_manager_delete_gateway($id) {
-  db_query("DELETE FROM {gateway_manager_gateways} WHERE id = %d", $id);
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("DELETE FROM {gateway_manager_gateways} WHERE id = %d", $id) */
+  db_delete('gateway_manager_gateways')
+  ->condition('id', $id)
+  ->execute();
   // fire hook so other modules can react when a payment gateway is deleted.
   module_invoke_all('gateway_manager_gateway_delete', $id);
   drupal_set_message(t('Payment gateway successfully deleted.'));
-  drupal_goto('admin/settings/fundraiser/gateways');
+  drupal_goto('admin/config/fundraiser/gateways');
 }
 
 /**
  * Saves terms associated with a managed gateway.
  */
 function gateway_manager_settings_save_terms($gid, $terms) {
-  db_query("DELETE FROM {term_gateway} WHERE gid = %d", $gid);
-  foreach($terms as $term) {
-    db_query("INSERT INTO {term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("DELETE FROM {term_gateway} WHERE gid = %d", $gid) */
+  db_delete('term_gateway')
+  ->condition('gid', $gid)
+  ->execute();
+  foreach ($terms as $term) {
+    // TODO Please review the conversion of this statement to the D7 database API syntax.
+    /* db_query("INSERT INTO {term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term) */
+    $id = db_insert('term_gateway')
+  ->fields(array(
+      'gid' => $gid,
+      'tid' => $term,
+    ))
+  ->execute();
   }
 }
 
@@ -300,7 +333,7 @@ function gateway_manager_extract_config(&$form_state) {
   $exclusions = array('name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
   $config = array();
   // loop over form values and only save those
-  foreach($form_state['values'] as $k => $v) {
+  foreach ($form_state['values'] as $k => $v) {
     if (!in_array($k, $exclusions)) {
       $config[$k] = $v;
     }
@@ -324,6 +357,7 @@ function gateway_manager_gateway_can_be_deleted($gateway) {
  * Builds an array of gateways that can be selected when creating a payment gateway.
  */
 function _gateway_manager_gateway_list() {
+  // TODO Please convert this statement to the D7 database API syntax.
   $result = db_query(db_rewrite_sql('SELECT g.id, g.name FROM {gateway_manager_gateways} g ' .
     'WHERE g.status = 1 ' .
     'ORDER BY g.name', 'gateway_manager_gateways', 'id'));
@@ -340,26 +374,26 @@ function _gateway_manager_gateway_list() {
 function _gateway_manager_form_count($id) {
   $cid = 'gateway_manager_form_count';
   $gateway_stats = array();
-  
+
   // if the stats are cached, pull them from there
   if ($cached = cache_get($cid, 'cache')) {
     $gateway_stats = $cached->data;
   }
   else { // otherwise, build an array of gateway stats and cache them
     $result = db_query("SELECT gateway, count(nid) as count FROM {fundraiser} GROUP BY gateway");
-    
+
     while ($data = db_fetch_object($result)) {
       $gateway_stats[$data->gateway] = $data->count;
     }
-    
-    cache_set($cid, $gateway_stats, 'cache', time() + (60 * 60 * 24));
+
+    cache_set($cid, $gateway_stats, 'cache', REQUEST_TIME + (60 * 60 * 24));
   }
-  
+
   if (array_key_exists($id, $gateway_stats)) {
     return $gateway_stats[$id];
   }
-  
-  return 0;  
+
+  return 0;
 }
 
 /**
@@ -374,12 +408,12 @@ function _gateway_manager_gateway_in_use($id) {
   if ($form_count > 0 || $donation_count > 0) {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
 function _gateway_manager_pending_donation_count($id) {
-  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE gateway = '%s' AND txn_id IS NULL", $id));
+  return db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE gateway = :gateway AND txn_id IS NULL", array(':gateway' => $id))->fetchField();
 }
 
 /**
@@ -395,17 +429,17 @@ function _gateway_manager_clear_cache() {
  */
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // look up the name of the gateway
-  $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = %d", $details['gateway']));
+  $gateway = db_fetch_object(db_query("SELECT name, type FROM {gateway_manager_gateways} WHERE id = :id", array(':id' => $details['gateway'])));
   $details['gateway'] = $gateway->name;
 }
 
 
 /**
  * Get the payment gateway for the given order object or order ID
- * 
+ *
  * @param $order_or_orderid
  *   Ubercart order object, or an order ID: either will be handled
- * 
+ *
  * @return
  *   Array of gateway details
  */

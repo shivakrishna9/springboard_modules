@@ -6,6 +6,7 @@ dependencies[] = gateway_manager
 ;dependencies[] = uc_credit
 
 package = Jackson River Springboard - payment
-core = 6.x
+core = 7.x
 php = 5.0
 version =  6.x-3.0-dev
+

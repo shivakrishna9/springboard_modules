@@ -20,7 +20,7 @@ DEFINE('AUTH_NET_ERROR_AVS_MISMATCH', 127);
 
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function gm_authorizenet_menu() {
   $items = array();
@@ -31,18 +31,22 @@ function gm_authorizenet_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'gm_authorizenet.pages.inc',
   );
-  
+
   return $items;
 }
 
 
 // Make sure Authorize.Net always has access to send Silent POSTs.
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_authorizenet_silent_post_access() {
   return TRUE;
 }
 
 /**
- * Implementation of hook_payment_gateway_managed().
+ * Implements hook_payment_gateway_managed().
  */
 function gm_authorizenet_payment_gateway_managed() {
   $gateways[] = array(
@@ -139,7 +143,7 @@ function gm_authorizenet_settings_form($config = array()) {
   $form['cim_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('CIM settings'),
-    '#description' => t('These settings pertain to the Authorize.Net Customer Information Management service.')
+    '#description' => t('These settings pertain to the Authorize.Net Customer Information Management service.'),
   );
   $form['cim_settings']['gm_authnet_cim_profile'] = array(
     '#type' => 'checkbox',
@@ -163,7 +167,7 @@ function gm_authorizenet_settings_form($config = array()) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function gm_authorizenet_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'uc_payment_gateways_form') {
@@ -172,6 +176,10 @@ function gm_authorizenet_form_alter(&$form, $form_state, $form_id) {
 }
 
 // Submit handler for payment gateway settings form to encrypt fields.
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_authorizenet_payment_gateway_settings_submit($form, &$form_state) {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
@@ -189,6 +197,10 @@ function gm_authorizenet_payment_gateway_settings_submit($form, &$form_state) {
 }
 
 // Main handler for processing credit card transactions.
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_authorizenet_charge($order_id, $amount, $data) {
   // Load the order.
   $order = uc_order_load($order_id);
@@ -199,7 +211,7 @@ function gm_authorizenet_charge($order_id, $amount, $data) {
     case UC_CREDIT_REFERENCE_TXN:
       return _gm_authorizenet_cim_profile_charge($order, $amount, $data);
 
-    // Set a reference only.
+      // Set a reference only.
     case UC_CREDIT_REFERENCE_SET:
       // Return the error message if this failed.
       if ($message = _gm_authorizenet_cim_profile_create($order, $data)) {
@@ -209,7 +221,7 @@ function gm_authorizenet_charge($order_id, $amount, $data) {
         return array('success' => TRUE, 'message' => t('New customer profile created successfully at Authorize.Net.'));
       }
 
-    // Accommodate all other transaction types.
+      // Accommodate all other transaction types.
     default:
       return _gm_authorizenet_charge($order, $amount, $data);
   }
@@ -253,17 +265,17 @@ function _gm_authorizenet_cim_profile_create($order, $data) {
  */
 function _gm_authorizenet_cim_profile_create_request($order) {
   return array(
-    'refId' => substr($order->order_id .'-'. time(), 0, 20),
+    'refId' => substr($order->order_id . '-' . REQUEST_TIME, 0, 20),
     'profile' => array(
       'merchantCustomerId' => substr($order->uid, 0, 20),
-      'description' => substr(t('Order @order taking place at @date', array('@order' => $order->order_id, '@date' => format_date(time()))), 0, 255),
+      'description' => substr(t('Order @order taking place at @date', array('@order' => $order->order_id, '@date' => format_date(REQUEST_TIME))), 0, 255),
       'email' => substr($order->primary_email, 0, 255),
       'paymentProfiles' => array(
         'billTo' => _gm_authorize_cim_xml_billto($order),
         'payment' => array(
           'creditCard' => array(
             'cardNumber' => $order->payment_details['cc_number'],
-            'expirationDate' => $order->payment_details['cc_exp_year'] .'-'. str_pad($order->payment_details['cc_exp_month'], 2, '0', STR_PAD_LEFT),
+            'expirationDate' => $order->payment_details['cc_exp_year'] . '-' . str_pad($order->payment_details['cc_exp_month'], 2, '0', STR_PAD_LEFT),
           ),
         ),
       ),
@@ -304,7 +316,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
       $result = array(
         'success' => FALSE,
       );
-      $comment[] = '('. $response['resultCode'] .': '. $response['text'] .')';
+      $comment[] = '(' . $response['resultCode'] . ': ' . $response['text'] . ')';
     }
 
     // Transaction succeeded.
@@ -312,7 +324,12 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
       $direct_response = explode(',', $response['directResponse']);
       $result = array(
         'success' => TRUE,
-        'data' => array('module' => 'uc_authorizenet', 'txn_type' => $direct_response[11], 'txn_id' => $direct_response[6], 'auth_code' => $direct_response[4]),
+        'data' => array(
+          'module' => 'uc_authorizenet',
+          'txn_type' => $direct_response[11],
+          'txn_id' => $direct_response[6],
+          'auth_code' => $direct_response[4],
+        ),
       );
 
       // Build info message.
@@ -346,7 +363,7 @@ function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
   }
   else {
     return array(
-      'refId' => substr($order->order_id .'-'. time(), 0, 20),
+      'refId' => substr($order->order_id . '-' . REQUEST_TIME, 0, 20),
       'transaction' => array(
         'profileTransAuthCapture' => array(
           'amount' => $amount,
@@ -404,7 +421,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   // Build a description of the order for logging in Auth.Net.
   $description = array();
   foreach ((array) $order->products as $product) {
-    $description[] = $product->qty .'x '. $product->model;
+    $description[] = $product->qty . 'x ' . $product->model;
   }
 
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
@@ -425,7 +442,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // Merchant Information
     'x_login' => $data['config']['gm_authnet_api_login_id'],
     'x_tran_key' => $data['config']['gm_authnet_api_transaction_key'],
-
     // Transaction Information
     'x_version' => '3.1',
     'x_type' => _gm_authorizenet_txn_map($data['txn_type']),
@@ -434,17 +450,15 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_recurring_billing' => 'FALSE',
     'x_amount' => uc_price($amount, $context, $options),
     'x_card_num' => $order->payment_details['cc_number'],
-    'x_exp_date' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
+    'x_exp_date' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'x_card_code' => $order->payment_details['cc_cvv'],
     // 'x_trans_id' => '',
     // 'x_auth_code' => '',
     'x_test_request' => $data['config']['gm_authnet_aim_txn_mode'] == 'live_test' ? 'TRUE' : 'FALSE',
     'x_duplicate_window' => $data['config']['gm_authnet_duplicate_window'],
-
     // Order Information
     'x_invoice_num' => $order->order_id,
     'x_description' => substr(implode(', ', $description), 0, 255),
-
     // Customer Information
     'x_first_name' => substr($order->billing_first_name, 0, 50),
     'x_last_name' => substr($order->billing_last_name, 0, 50),
@@ -458,7 +472,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_fax' => substr('', 0, 25),
     'x_cust_id' => substr($order->uid, 0, 20),
     'x_customer_ip' => substr(ip_address(), 0, 15),
-
     // Shipping Information
     'x_ship_to_first_name' => substr($order->delivery_first_name, 0, 50),
     'x_ship_to_last_name' => substr($order->delivery_last_name, 0, 50),
@@ -468,7 +481,6 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'x_ship_to_state' => substr(uc_get_zone_code($order->delivery_zone), 0, 40),
     'x_ship_to_zip' => substr($order->delivery_postal_code, 0, 20),
     'x_ship_to_country' => !$delivery_country ? '' : $delivery_country[0]['country_iso_code_2'],
-
     // Extra Information
     'x_delim_data' => 'TRUE',
     'x_delim_char' => '|',
@@ -497,9 +509,9 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   // Translate the data array into a string we can POST.
   $post_fields = array();
   foreach ($submit_data as $key => $value) {
-    $post_fields[] = $key .'='. urlencode($value);
+    $post_fields[] = $key . '=' . urlencode($value);
   }
-  
+
   // Setup the cURL request.
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $post_url);
@@ -522,7 +534,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
   $response = explode('|', $result);
 
   if ($data['config']['gm_authnet_response_debug']) {
-    watchdog('gm_authorizenet', 'Debug response: !data', array('!data' => '<pre>'. check_plain(print_r($response, TRUE)) .'</pre>'));
+    watchdog('gm_authorizenet', 'Debug response: !data', array('!data' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>'));
   }
 
   // Trim off the encapsulating character from the results.
@@ -566,7 +578,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     if (($response_code >= AUTH_NET_ERROR_DUPLICATE_TRANSACTION
           && $response_code != AUTH_NET_ERROR_CC_NUMBER_INVALID
           && $response_code <= AUTH_NET_ERROR_INVALID_METHOD)
-        || ($response_code >= AUTH_NET_ERROR_INVALID_FORM_TYPE && $response_code != AUTH_NET_ERROR_AVS_MISMATCH)) {
+         || ($response_code >= AUTH_NET_ERROR_INVALID_FORM_TYPE && $response_code != AUTH_NET_ERROR_AVS_MISMATCH)) {
       $error_type = 'gateway';
     }
 
@@ -585,7 +597,12 @@ function _gm_authorizenet_charge($order, $amount, $data) {
       'success' => TRUE,
       'comment' => $message,
       'message' => $message,
-      'data' => array('module' => 'gm_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6], 'auth_code' => $response[4]),
+      'data' => array(
+        'module' => 'gm_authorizenet',
+        'txn_type' => $response[11],
+        'txn_id' => $response[6],
+        'auth_code' => $response[4],
+      ),
       'uid' => $user->uid,
     );
 
@@ -621,7 +638,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
 
   // Add the CVV response if enabled.
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-    $comment .= '<br />'. t('CVV match: @cvv', array('@cvv' => _gm_authorizenet_cvv($response[38])));
+    $comment .= '<br />' . t('CVV match: @cvv', array('@cvv' => _gm_authorizenet_cvv($response[38])));
   }
 
   // Save the comment to the order.
@@ -656,7 +673,7 @@ function gm_authorizenet_xml_api($server, $xml) {
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $post_url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, Array("Content-Type: text/xml"));
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
   curl_setopt($ch, CURLOPT_HEADER, 1);
   curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
   curl_setopt($ch, CURLOPT_POST, 1);
@@ -678,11 +695,11 @@ function gm_authorizenet_xml_api($server, $xml) {
  *   merchant authentication information.
  */
 function _gm_authorizenet_xml_api_wrapper($request, $xml, $config) {
-  return '<?xml version="1.0" encoding="utf-8"?><'. $request
-        .' xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"><merchantAuthentication>'
-        .'<name>'. $config['gm_authnet_api_login_id'] .'</name>'
-        .'<transactionKey>'. $config['gm_authnet_api_transaction_key']
-        .'</transactionKey></merchantAuthentication>'. $xml .'</'. $request .'>';
+  return '<?xml version="1.0" encoding="utf-8"?><' . $request
+        . ' xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"><merchantAuthentication>'
+        . '<name>' . $config['gm_authnet_api_login_id'] . '</name>'
+        . '<transactionKey>' . $config['gm_authnet_api_transaction_key']
+        . '</transactionKey></merchantAuthentication>' . $xml . '</' . $request . '>';
 }
 
 // Converts a hierarchical array of elements into an XML string.
@@ -693,11 +710,11 @@ function _gm_authorizenet_array_to_xml($data) {
   foreach ($data as $element => $contents) {
     if (is_array($contents)) {
       // Render the element with its child elements.
-      $xml .= '<'. $element .'>'. _gm_authorizenet_array_to_xml($contents) .'</'. $element .'>';
+      $xml .= '<' . $element . '>' . _gm_authorizenet_array_to_xml($contents) . '</' . $element . '>';
     }
     else {
       // Render the element with its contents.
-      $xml .= '<'. $element .'>'. htmlspecialchars($contents) .'</'. $element .'>';
+      $xml .= '<' . $element . '>' . htmlspecialchars($contents) . '</' . $element . '>';
     }
   }
 
@@ -706,7 +723,7 @@ function _gm_authorizenet_array_to_xml($data) {
 
 // Returns the message text for an AVS response code.
 function _gm_authorizenet_avs($code) {
-  $text = $code .' - ';
+  $text = $code . ' - ';
 
   switch ($code) {
     case 'A':
@@ -755,7 +772,7 @@ function _gm_authorizenet_avs($code) {
 
 // Returns the message text for a CVV match.
 function _gm_authorizenet_cvv($code) {
-  $text = $code .' - ';
+  $text = $code . ' - ';
 
   switch ($code) {
     case 'M':
@@ -881,8 +898,8 @@ function _gm_authorizenet_arb_parse_response($content) {
 
 // Helper function for parsing responses; adapted from sample PHP for ARB.
 function _gm_authorizenet_substr_between($string, $element) {
-  $open = '<'. $element .'>';
-  $close = '</'. $element .'>';
+  $open = '<' . $element . '>';
+  $close = '</' . $element . '>';
 
   // Fail if we can't find the open or close tag for the element.
   if (strpos($string, $open) === FALSE || strpos($string, $close) === FALSE) {
@@ -931,20 +948,20 @@ function _gm_authorizenet_login_data() {
  * Issue a refund
  */
 function gm_authorizenet_refund($order_id, $amount, $data) {
-  $amount = (float)$amount;
+  $amount = (float) $amount;
   // Make the charge amount negative
   if ($amount > 0) {
     $amount = $amount * -1;
   }
-  
+
   if ($order_id > 0) {
-    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
-    
+    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = :order_id', array(':order_id' => array($order_id))));
+
     // Set the transaction type to credit, and the ID of the previous charge to refund against
     $data['txn_type'] = UC_CREDIT_CREDIT;
     $data['auth_id'] = $payment_details->txn_id;
-    
+
     return gm_authorizenet_charge($order_id, $amount, $data);
- }
+  }
   return array();
 }

@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_requirements().
+ * Implements hook_requirements().
  */
 function gm_authorizenet_requirements($phase) {
   $t = get_t();
@@ -25,7 +25,15 @@ function gm_authorizenet_requirements($phase) {
   return $requirements;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_authorizenet_uninstall() {
   // Delete related variables all at once.
-  db_query("DELETE FROM {variable} WHERE name LIKE 'gm_authnet_%%'");
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("DELETE FROM {variable} WHERE name LIKE 'gm_authnet_%%'") */
+  db_delete('variable')
+  ->condition('name', 'gm_authnet_%%', 'LIKE')
+  ->execute();
 }

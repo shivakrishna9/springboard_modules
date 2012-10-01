@@ -1,4 +1,10 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the gateway_manager_ref module.
+ *
+ */
+
 
 /**
  * Implements hook_install().
