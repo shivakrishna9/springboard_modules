@@ -113,17 +113,14 @@ function market_source_user_register_after_build($form, &$form_state) {
     // Do not add form keys when the form has been submitted.
     return $form;
   }
-
   // Get form keys array.
   $form_keys = _market_source_build_form_keys($form, 'profile_');
-
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => array(
     'form_keys' => array(
       $form['#id'] => $form_keys,
     ),
   )), 'setting');
-
   // Mandatory return value for #after_build callbacks.
   return $form;
 }
@@ -150,7 +147,6 @@ function market_source_webform_after_build($form, &$form_state) {
     // Do not add form keys when the form has been submitted.
     return $form;
   }
-
   // When viewing a submission record, expose Market Source fields for editing.
   if (!empty($form['#submission'])) {
     $qs_keys = _market_source_build_qs_keys();
@@ -172,11 +168,9 @@ function market_source_webform_after_build($form, &$form_state) {
         $form['#id'] => $form_keys,
       ),
     );
-
     // Add form_keys to the JS settings array.
     drupal_add_js(array('market_source' => $settings), 'setting');
   }
-
   // Mandatory return value for #after_build callbacks.
   return $form;
 }
@@ -208,21 +202,17 @@ function market_source_generic_form_after_build($form, &$form_state) {
     // Do not add form keys when the form has been submitted.
     return $form;
   }
-
   // Get form keys array.
   $prefix = isset($form['#market_source_prefix']) ? $form['#market_source_prefix'] : NULL;
   $form_keys = _market_source_build_form_keys($form, $prefix);
-
   // Set the array.
   $settings = array(
     'form_keys' => array(
       $form['#id'] => $form_keys,
     ),
   );
-
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => $settings), 'setting');
-
   // Mandatory return value for #after_build callbacks.
   return $form;
 }
@@ -375,10 +365,7 @@ function market_source_node_insert($node) {
  */
 function market_source_create_standard_components($nid, $default_campaign = NULL) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-
-  // array to hold all the components that need to be created.
   $components = array();
-
   $components['market_source'] = array(
     'nid' => $nid,
     'pid' => 0,
@@ -395,8 +382,6 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_ms',
   );
-
-  // campaign id
   $components['campaign'] = array(
     'nid' => $nid,
     'pid' => 0,
@@ -413,8 +398,6 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_cid',
   );
-
-  // referrer
   $components['referrer'] = array(
     'nid' => $nid,
     'pid' => 0 ,
@@ -431,8 +414,6 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_referrer',
   );
-
-  // initial referrer
   $components['initial_referrer'] = array(
     'nid' => $nid,
     'pid' => 0,
@@ -449,10 +430,8 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_initial_referrer',
   );
-
   // If any custom fields have been configured, add them as well
   $custom_fields = variable_get('market_source_custom_fields', array());
-
   if (count($custom_fields)) {
     foreach ($custom_fields as $custom_field) {
       $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
