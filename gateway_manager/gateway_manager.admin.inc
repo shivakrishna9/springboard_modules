@@ -12,13 +12,15 @@ function gateway_manager_list() {
   $filter = gateway_manager_filter_query();
   $pager_num = 0;
   $count = 20;
+  //TODO come back and do this sanely.
   $gateways = module_invoke_all('gateway_manager_gateway_info');
-  $results = pager_query(db_rewrite_sql('' .
-    'SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status ' .
+  $query = db_select('SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, ' .
+    'from_unixtime(g.updated) as updated, g.status ' .
     'FROM {gateway_manager_gateways} g ' .
     'LEFT OUTER JOIN users u on u.uid = g.uid ' .
-    $filter['where'], 'g', 'id'),
-    $count, $pager_num, NULL, $filter['args']);
+    $filter['where'])->extend('PagerDefault');
+  $results = $query->limit(20)->execute();
+//    $count, $pager_num, NULL, $filter['args']);
   $data = array();
   foreach ($results as $result) {
     $gateway = array();
