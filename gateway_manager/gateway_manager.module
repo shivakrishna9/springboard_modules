@@ -59,27 +59,16 @@ function gateway_manager_menu() {
  * Implementation of hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
-  switch ($form_id) {
-    case 'donation_form_node_form':
-      // change the list of options in the payment gateway list
-      $form['fundraiser_settings']['gateway']['#options'] = _gateway_manager_gateway_list();
-      $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
-      $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
-      
-      // If there are no gateways configured, the required gateway dropdown
-      // will be empty, so warn the user
-      if (empty($form['fundraiser_settings']['gateway']['#options'])) {
-        $link = l('Configure payment gateways in the gateway manager.', 'admin/settings/fundraiser/gateways');
-        drupal_set_message(t('In order to create donation forms, there must be at least one payment gateway configured. !link', array('!link' => $link)), 'warning');
-      }
-
-      break;
+  if (fundraiser_is_donation_edit_form($form_id, $form)) {
+    // Add a wrapper around the payment gateway field
+    $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
+    $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
   }
   
   // If the payment gateway for the donation form does not include credit card fields (such
   // as Ogone), remove them from the donation form
   if (strpos($form_id, 'webform_client_form_') === 0) {
-    if ($form['#node']->type == 'donation_form' && $form['#node']->gateway > 0) {
+    if (fundraiser_is_donation_type($form['#node']->type) && $form['#node']->gateway > 0) {
       $gateway = gateway_manager_gateway_info($form['#node']->gateway);
       if ($gateway['gateway_details']['hide_cc_fields']) {
         foreach (element_children($form['submitted']['credit_card_information']) as $field_name) {
@@ -99,7 +88,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 function gateway_manager_nodeapi(&$node, $op) {
   // clear out the gateway cache when donation forms
   // are created, updated or deleted
-  if ($node->type == 'donation_form') {
+  if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
       case 'insert':
       case 'delete':
@@ -107,6 +96,30 @@ function gateway_manager_nodeapi(&$node, $op) {
         _gateway_manager_clear_cache();
         break;
     }
+  }
+}
+
+/**
+ * Implementation of hook_fundraiser_gateway
+ */
+function gateway_manager_fundraiser_gateway($op, $arg) {
+  switch ($op) {
+    case 'select options':
+      return array('Gateway Manager' => _gateway_manager_gateway_list());
+    case 'charge function':
+      if (is_numeric($arg)) {
+        $info = gateway_manager_gateway_info($arg);
+        $gateway['charge_function'] = $info['charge_function'];
+        $gateway['config'] = $info['config'];
+        return $gateway;
+      }
+    case 'refund function':
+      if (is_numeric($arg)) {
+        $info = gateway_manager_gateway_info($arg);
+        $gateway['refund_function'] = $info['refund_function'];
+        $gateway['config'] = $info['config'];
+        return $gateway;
+      }
   }
 }
 
@@ -136,14 +149,17 @@ function gateway_manager_gateway_info($id) {
  * Loads a payment gateway configuration by id.
  */
 function gateway_manager_gateway_load($id) {
-  $gateway = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
-  $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
-  while ($data = db_fetch_array($result)) {
-    $gateway->terms[] = $data['tid'];
+  static $gateways = array();
+  if (!isset($gateways[$id])) {
+    $gateways[$id] = db_fetch_object(db_query("SELECT * FROM {gateway_manager_gateways} WHERE id = %d", $id));
+    $result = db_query("SELECT tid FROM {term_gateway} WHERE gid = %d", $id);
+    while ($data = db_fetch_array($result)) {
+      $gateways[$id]->terms[] = $data['tid'];
+    }
+    //module_invoke_all('gateway_manager_gateway_load', $gateways[$id]);
+    drupal_alter('gateway_manager_gateway', $gateways[$id]);
   }
-  //module_invoke_all('gateway_manager_gateway_load', $gateway);
-  drupal_alter('gateway_manager_gateway', $gateway);
-  return $gateway;
+  return $gateways[$id];
 }
 
 /**
@@ -204,7 +220,6 @@ function gateway_manager_settings_form_submit($form, &$form_state) {
   $terms = $form_state['values']['terms'];
   $status = $form_state['values']['status'];
   $config = gateway_manager_extract_config($form_state);
-
   if (empty($id)) {
     gateway_manager_settings_insert($name, $type, $terms, $status, $config);
   }
@@ -226,7 +241,7 @@ function gateway_manager_settings_insert($name, $type, $terms, $status, $config)
   $record->updated = time();
   $record->config = serialize($config);
   $record->status = $status;
-
+  
   $result = drupal_write_record('gateway_manager_gateways', $record);
   if ($result) {
     gateway_manager_settings_save_terms($record->id, $terms);

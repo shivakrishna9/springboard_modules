@@ -1,4 +1,3 @@
-; $Id$
 name = Organic groups payment gateway
 description = Allows payment gateways to be assigned to organic groups
 core = 6.x

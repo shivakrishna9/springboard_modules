@@ -1,4 +1,3 @@
-; $Id$
 name = Payment Gateway Manager
 description = Allows a user to configure multiple versions of the same payment gateway with different settings.
 core = 6.x

@@ -16,9 +16,10 @@ function gateway_manager_list() {
   
   // get all the gateways so we can swap in a nice title
   $gateways = _managed_gateway_list();
+  
   $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status FROM {gateway_manager_gateways} g ".
     "LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
-   $data = array();
+  $data = array();
   
   while ($row = db_fetch_array($result)) {
     $gateway = array();
@@ -27,7 +28,7 @@ function gateway_manager_list() {
     $gateway['form_count'] = _gateway_manager_form_count($row['id']);
     $gateway['user'] = $row['user'];
     $gateway['created'] = $row['created'];
-    $gateway['updated'] = $row['updated'];
+    $gateway['updated'] = $row['updated']; 
     $gateway['status'] = $row['status'] == 1 ? t('Active') : t('Inactive'); 
     $data[] = $gateway;
   }
@@ -121,7 +122,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
 
   $type = isset($form_state['values']) ? $form_state['storage']['type'] : $gateway->type;
   $name = isset($form_state['values']) ? $form_state['storage']['name'] : $gateway->name;
-  $terms = isset($form_state['values']) ? $form_state['storage']['terms'] : $gateway->terms;
+  $terms = isset($form_state['values']) ? $form_state['storage']['terms'] : $gateway->terms; 
   $status = isset($form_state['values']) ? $form_state['storage']['status'] : $gateway->status; 
   
   $config = array();
@@ -181,7 +182,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   );
   
   $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
-  $form['taxononmy']['terms']['#weight'] = 4;
+  $form['taxononmy']['terms']['#weight'] = 3;
   
   // if type has been selected, get the settings form for that type 
   if (isset($type)) {

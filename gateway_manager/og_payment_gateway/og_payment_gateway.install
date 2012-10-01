@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Install file for the og payment gateway module. 

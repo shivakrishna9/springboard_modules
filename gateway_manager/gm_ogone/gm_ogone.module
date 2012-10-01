@@ -1039,7 +1039,7 @@ function gm_ogone_feedback_accepted() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
   $transaction_id = $payment_values['PAYID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     // If no Alias could be set, the donation cannot be recurring
@@ -1086,7 +1086,7 @@ function gm_ogone_feedback_accepted() {
 function gm_ogone_feedback_declined() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_decline($order_id, $message);
@@ -1104,7 +1104,7 @@ function gm_ogone_feedback_declined() {
 function gm_ogone_feedback_exception() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
   
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_exception($order_id, '');
@@ -1123,7 +1123,7 @@ function gm_ogone_feedback_exception() {
 function gm_ogone_feedback_cancelled() {
   $payment_values = _gm_ogone_get_returned_values();
   $order_id = $payment_values['ORDERID'];
-  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_donation} WHERE did = %d", $order_id));
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
 
   if (_gm_ogone_check_feedback_sha()) {
     fundraiser_order_cancel($order_id);
@@ -1171,28 +1171,28 @@ function _gm_ogone_get_returned_values_no_clean() {
   
   if (empty($return_values)) {
     $return_values = array(
-      'AAVCHECK' => trim($_GET['AAVCheck']),
-      'ACCEPTANCE' => trim($_GET['ACCEPTANCE']),
-      'ALIAS' => trim($_GET['ALIAS']),
-      'AMOUNT' => trim($_GET['amount']),
-      'BRAND' => trim($_GET['BRAND']),
-      'CARDNO' => trim($_GET['CARDNO']),
-      'CCCTY'=> trim($_GET['CCCTY']),
-      'CN' => trim($_GET['CN']),
-      'CURRENCY' => trim($_GET['currency']),
-      'CVCCHECK' => trim($_GET['CVCCheck']),
-      'ECI' => trim($_GET['ECI']),
-      'ED' => trim($_GET['ED']),
-      'IP' => trim($_GET['IP']),
-      'IPCTY' => trim($_GET['IPCTY']),
-      'NCERROR' => trim($_GET['NCERROR']),
-      'ORDERID' => trim($_GET['orderID']),
-      'PAYID' => trim($_GET['PAYID']),
-      'PM' => trim($_GET['PM']),
-      'STATUS' => trim($_GET['STATUS']),
-      'TRXDATE' => trim($_GET['TRXDATE']),
-      'VC' => trim($_GET['VC']),
-      'SHASIGN' => trim($_GET['SHASIGN']),
+      'AAVCHECK' => $_GET['AAVCheck'],
+      'ACCEPTANCE' => $_GET['ACCEPTANCE'],
+      'ALIAS' => $_GET['ALIAS'],
+      'AMOUNT' => $_GET['amount'],
+      'BRAND' => $_GET['BRAND'],
+      'CARDNO' => $_GET['CARDNO'],
+      'CCCTY'=> $_GET['CCCTY'],
+      'CN' => $_GET['CN'],
+      'CURRENCY' => $_GET['currency'],
+      'CVCCHECK' => $_GET['CVCCheck'],
+      'ECI' => $_GET['ECI'],
+      'ED' => $_GET['ED'],
+      'IP' => $_GET['IP'],
+      'IPCTY' => $_GET['IPCTY'],
+      'NCERROR' => $_GET['NCERROR'],
+      'ORDERID' => $_GET['orderID'],
+      'PAYID' => $_GET['PAYID'],
+      'PM' => $_GET['PM'],
+      'STATUS' => $_GET['STATUS'],
+      'TRXDATE' => $_GET['TRXDATE'],
+      'VC' => $_GET['VC'],
+      'SHASIGN' => $_GET['SHASIGN'],
     );
   }
   return $return_values;
