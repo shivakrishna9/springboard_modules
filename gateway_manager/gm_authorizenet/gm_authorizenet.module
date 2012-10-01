@@ -46,9 +46,9 @@ function gm_authorizenet_silent_post_access() {
 }
 
 /**
- * Implements hook_payment_gateway_managed().
+ * Implements hook_gateway_manager_gateway_info().
  */
-function gm_authorizenet_payment_gateway_managed() {
+function gm_authorizenet_gateway_manager_gateway_info() {
   $gateways[] = array(
     'id' => 'gm_authorizenet',
     'title' => t('Authorize.net'),

@@ -14,7 +14,7 @@
  * @todo Please document this function.
  * @see http://drupal.org/node/1354
  */
-function gm_test_gateway_payment_gateway_managed() {
+function gm_test_gateway_gateway_manager_gateway_info() {
   $gateways[] = array(
     'id' => 'test_gateway',
     'title' => t('Test Gateway'),

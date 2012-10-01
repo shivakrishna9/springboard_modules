@@ -76,9 +76,9 @@ function gm_cybersource_payment_gateway_settings_submit($form, &$form_state) {
  ******************************************************************************/
 
 /**
- * Implements hook_payment_gateway_managed().
+ * Implements hook_gateway_manager_gateway_info().
  */
-function gm_cybersource_payment_gateway_managed() {
+function gm_cybersource_gateway_manager_gateway_info() {
   $gateways[] = array(
     'id' => 'cybersource',
     'title' => t('CyberSource'),

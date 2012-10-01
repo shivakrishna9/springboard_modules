@@ -25,9 +25,7 @@ processing.
 -- CONFIGURATION --
 
 * Once the module is installed you may add as many payment gateways, including multiple instances
-of a single paymet gateway type, via the payment gateway admin interface: admin/settings/fundraiser/gateways 
-
-
+of a single payment gateway type, via the payment gateway admin interface: admin/settings/fundraiser/gateways 
 
 -- CONTACT --
 Current maintainers:

@@ -3,7 +3,6 @@
 /**
  * @file
  * Admin functionality for the gateway manager module.
- *
  */
 
 /**
@@ -13,15 +12,15 @@ function gateway_manager_list() {
   $filter = gateway_manager_filter_query();
   $pager_num = 0;
   $count = 20;
-
-  // get all the gateways so we can swap in a nice title
-  $gateways = _managed_gateway_list();
-
-  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status FROM {gateway_manager_gateways} g " .
-    "LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
+  $gateways = module_invoke_all('gateway_manager_gateway_info');
+  $results = pager_query(db_rewrite_sql('' .
+    'SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status ' .
+    'FROM {gateway_manager_gateways} g ' .
+    'LEFT OUTER JOIN users u on u.uid = g.uid ' .
+    $filter['where'], 'g', 'id'),
+    $count, $pager_num, NULL, $filter['args']);
   $data = array();
-
-  while ($row = db_fetch_array($result)) {
+  foreach ($results as $result) {
     $gateway = array();
     $gateway['name'] = l($row['name'], 'admin/config/fundraiser/gateways/' . $row['id'] . '/edit');
     $gateway['type'] = _gateway_manager_get_gateway_title($gateways, $row['type']);
@@ -54,7 +53,7 @@ function _gateway_manager_get_gateway_title($gateways, $type) {
  * Creates a form used to filter the master payment gateway list by provider.
  */
 function gateway_manager_list_filter_form($form) {
-  $gateways = _managed_gateway_list();
+  $gateways = module_invoke_all('gateway_manager_gateway_info');
   $options = array(t('-- Select --'));
   foreach ($gateways as $gateway) {
     $options[$gateway['id']] = $gateway['title'];
@@ -119,12 +118,10 @@ function gateway_manager_gateway_add() {
  * Form for editing payment gateways.
  */
 function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
-
   $type = isset($form_state['values']) ? $form_state['storage']['type'] : $gateway->type;
   $name = isset($form_state['values']) ? $form_state['storage']['name'] : $gateway->name;
   $terms = isset($form_state['values']) ? $form_state['storage']['terms'] : $gateway->terms;
   $status = isset($form_state['values']) ? $form_state['storage']['status'] : $gateway->status;
-
   $config = array();
   if (isset($gateway)) {
     $form['id'] = array(
@@ -133,19 +130,15 @@ function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
     );
     $config = unserialize($gateway->config);
   }
-
   $disabled = FALSE;
   if (isset($gateway)) {
     $disabled = TRUE;
   }
-
-  $gateways = _managed_gateway_list();
-
+  $gateways = module_invoke_all('gateway_manager_gateway_info');
   $gateway_types = array('' => '--select--');
   foreach ($gateways as $gateway) {
     $gateway_types[$gateway['id']] = $gateway['title'];
   }
-
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
@@ -172,7 +165,6 @@ function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
     '#disabled' => $disabled,
     '#description' => t('Select the type of gateway to create.'),
   );
-
   $vid = _gateway_manager_get_vid();
   $form['taxononmy'] = array(
     '#type' => 'fieldset',
@@ -180,10 +172,9 @@ function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
     '#collapsible' => TRUE,
     '#weight' => 4,
   );
-
-  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
+  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid,
+    t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
   $form['taxononmy']['terms']['#weight'] = 3;
-
   // if type has been selected, get the settings form for that type
   if (isset($type)) {
     $title = _gateway_manager_get_gateway_title($gateways, $type);
@@ -234,9 +225,14 @@ function gateway_managed_gateway_delete_form(&$form_state, $gateway) {
     '#type' => 'hidden',
     '#value' => $gateway->id,
   );
-  return confirm_form($form, t('Are you sure you want to delete the payment gateway %name?', array('%name' => $gateway->name)), 'admin/config/fundraiser/gateways', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to delete the payment gateway %name?',
+    array('%name' => $gateway->name)), 'admin/config/fundraiser/gateways',
+    t('This action cannot be undone.'), t('Delete'), t('Cancel'));
 }
 
+/**
+ * Submit the confirmation form.
+ */
 function gateway_managed_gateway_delete_form_submit($form, &$form_state) {
   $gid = $form_state['values']['id'];
   if ($form_state['values']['confirm']) {
@@ -262,21 +258,20 @@ function _gateway_manager_get_settings_function($gateways, $type) {
 function _gateway_manager_get_vid() {
   $vid = variable_get('gateway_manager_vocabulary', '');
   if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
-    $vid = db_query("SELECT vid FROM {taxonomy_vocabulary} WHERE module = :module", array(':module' => 'gateway_manager'))->fetchField();
+    $vid = db_query('SELECT vid FROM {taxonomy_vocabulary} WHERE module = :module',
+      array(':module' => 'gateway_manager'))->fetchField();
     if (!$vid) {
-      $vocabulary = array(
+      $vocabulary = (object) array(
         'name' => t('Payment Gateway Terms'),
-        'multiple' => '1',
-        'required' => '0',
+        'machine_name' => 'payment_gateway_terms',
+        'description' => t('Managed gateways'),
         'hierarchy' => '0',
-        'relations' => '0',
         'module' => 'gateway_manager',
       );
-      taxonomy_vocabulary_save($vocabulary /* TODO Vocabulary object replaces array $vocabulary */);
-      $vid = $vocabulary['vid'];
+      taxonomy_vocabulary_save($vocabulary);
+      $vid = $vocabulary->vid;
     }
     variable_set('gateway_manager_vocabulary', $vid);
   }
-
   return $vid;
 }

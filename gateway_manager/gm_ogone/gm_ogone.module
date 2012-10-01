@@ -227,9 +227,9 @@ function gm_ogone_post_form($form, &$form_state, $order) {
  * Hook Functions (Ubercart)
  ******************************************************************************/
 /**
- * Implements hook_payment_gateway_managed().
+ * Implements hook_gateway_manager_gateway_info().
  */
-function gm_ogone_payment_gateway_managed() {
+function gm_ogone_gateway_manager_gateway_info() {
   $gateways[] = array(
     'id' => 'gm_ogone_ecommerce',
     'title' => t('Ogone e-Commerce'),

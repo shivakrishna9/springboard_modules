@@ -8,17 +8,12 @@
 /**
  * Implements hook_install().
  */
-function gateway_manager_install() {
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_install_schema('gateway_manager')
-}
+function gateway_manager_install() {}
 
 /**
  * Implements hook_uninstall().
  */
 function gateway_manager_uninstall() {
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_uninstall_schema('gateway_manager')
   $vid = variable_get('gateway_manager_vocabulary', '');
   taxonomy_vocabulary_delete($vid);
 }
@@ -29,17 +24,18 @@ function gateway_manager_uninstall() {
 function gateway_manager_enable() {
   $vid = variable_get('gateway_manager_vocabulary', '');
   if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
-    $vid = db_query("SELECT vid FROM {taxonomy_vocabulary} WHERE module = :module", array(':module' => 'gateway_manager'))->fetchField();
+    $vid = db_query('SELECT vid FROM {taxonomy_vocabulary} WHERE module = :module',
+      array(':module' => 'gateway_manager'))->fetchField();
     if (!$vid) {
-      $vocabulary = array(
+      $vocabulary = (object) array(
         'name' => t('Payment Gateway Terms'),
-        'multiple' => '1',
-        'required' => '0',
+        'machine_name' => 'payment_gateway_terms',
+        'description' => t('Managed gateways'),
         'hierarchy' => '0',
-        'relations' => '0',
         'module' => 'gateway_manager',
       );
-      taxonomy_vocabulary_save($vocabulary /* TODO Vocabulary object replaces array $vocabulary */);
+      taxonomy_vocabulary_save($vocabulary);
+      $vid = $vocabulary->vid;
     }
     variable_set('gateway_manager_vocabulary', $vid);
   }
@@ -122,25 +118,8 @@ function gateway_manager_schema() {
 }
 
 /**
- * Update to add gateway manager toggle on/off field.
+ * Implements hook_update_last_removed().
  */
-function gateway_manager_update_6301() {
-  $ret = array();
-  db_add_field('gateway_manager_gateways', 'status', array(
-    'description' => t('Active or inactive toggle for this gateway.'),
-    'type' => 'int',
-    'default' => 1,
-    'not null' => FALSE,
-  ));
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query('UPDATE {gateway_manager_gateways} SET status = 1') */
-  db_update('gateway_manager_gateways')
-  ->fields(array(
-    'status' => 1,
-  ))
-  ->execute();
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
+function gateway_manager_update_last_removed() {
+  return 6301;
 }

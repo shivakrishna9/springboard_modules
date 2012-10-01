@@ -6,4 +6,3 @@ dependencies[] = fundraiser
 dependencies[] = uc_credit
 dependencies[] = taxonomy
 version =  6.x-3.0-dev
-
