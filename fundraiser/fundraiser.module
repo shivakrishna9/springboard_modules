@@ -1460,9 +1460,6 @@ function fundraiser_donation_process($donation) {
   // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
-    $charge_function = isset($info['credit']) ? $info['credit'] : '';
-  }
-  if (empty($charge_function)) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
       array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
@@ -1558,9 +1555,6 @@ function fundraiser_donation_refund($refund) {
   $info = _fundraiser_gateway_info($refund->node->gateway);
   // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
   $refund_function = isset($info['charge_function']) ? $info['charge_function'] : '';
-  if (empty($refund_function)) {
-    $refund_function = isset($info['credit']) ? $info['credit'] : '';
-  }
   if (empty($refund_function)) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
@@ -1729,6 +1723,7 @@ function _fundraiser_gateway_info($id = NULL) {
   static $gateways;
   // Cache the gateway during page execution.
   if (empty($gateways)) {
+    // TODO should this be merged so both modules present info from UC / Managed?
     if (module_exists('gateway_manager')) {
       // If we have the gateway manager turned on, we ask it.
       $gateways = gateway_manager_gateway_info($payment_details->gateway);
@@ -2062,7 +2057,7 @@ function _fundraiser_get_donation_gateway($did) {
       'WHERE d.did = :did', array(':did' => $did))->fetchField();
   }
   // Now ask if any other module wants to override this result.
-  module_invoke('fundraiser_get_donation_gateway', $did, $gateway);
+  module_invoke('fundraiser_get_donation_gateway_alter', $did, $gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.
   if (isset($gateway->gateway)) {
     return _fundraiser_gateway_info($gateway->gateway);
