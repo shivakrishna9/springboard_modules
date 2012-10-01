@@ -14,7 +14,7 @@ function gateway_manager_menu() {
     'page callback' => 'gateway_manager_list',
     'access callback' => 'user_access',
     'access arguments' => array('view payment gateway list'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'gateway_manager.admin.inc',
   );
   $items['admin/config/fundraiser/gateways/list'] = array(
@@ -51,7 +51,6 @@ function gateway_manager_menu() {
     'access arguments' => array(4),
     'file' => 'gateway_manager.admin.inc',
   );
-
   return $items;
 }
 
@@ -59,7 +58,7 @@ function gateway_manager_menu() {
  * Implements hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
-  if (fundraiser_is_donation_edit_form($form_id, $form)) {
+  if (isset($form['#node']->type) && fundraiser_is_donation_type($form['#node']->type)) {
     // Add a wrapper around the payment gateway field
     $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
     $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
@@ -118,6 +117,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
   switch ($op) {
     case 'select options':
       return array('Gateway Manager' => _gateway_manager_gateway_list());
+    break;
     case 'charge function':
       if (is_numeric($arg)) {
         $info = gateway_manager_gateway_info($arg);
@@ -125,6 +125,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $gateway['config'] = $info['config'];
         return $gateway;
       }
+    break;
     case 'refund function':
       if (is_numeric($arg)) {
         $info = gateway_manager_gateway_info($arg);
@@ -132,6 +133,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $gateway['config'] = $info['config'];
         return $gateway;
       }
+    break;
   }
 }
 
@@ -141,15 +143,17 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
 function gateway_manager_gateway_info($id) {
   $gateway = gateway_manager_gateway_load($id);
   $gateway_info = array();
-  $gateway_info['config'] = unserialize($gateway->config);
-  $gateway_info['type'] = $gateway->type;
+  $gateway_info['config'] = isset($gateway->config) ? unserialize($gateway->config) : array();
+  $gateway_info['type'] = isset($gateway->type) ? $gateway->type : '';
   $gateway_types = module_invoke_all('gateway_manager_gateway_info');
   foreach ($gateway_types as $options) {
-    if ($options['id'] == $gateway->type) {
+    $type = isset($gateway->type) ? $gateway->type : '';
+    if ($id == $type) {
       $gateway_info['id'] = $options['id'];
-      $gateway_info['charge_function'] = $options['credit'];
-      $gateway_info['refund_function'] = $options['credit_refund'];
-      $gateway_info['gateway_details'] = $options;
+      $gateway_info['title'] = isset($options['title']) ? $options['title'] : '';
+      $gateway_info['charge_function'] = isset($options['credit']) ? $options['credit'] : '';
+      $gateway_info['refund_function'] = isset($options['credit_refund']) ? $options['credit_refund'] : $gateway_info['charge_function'];
+      $gateway_info['gateway_details'] = isset($options) ? $options : array();
     }
   }
   return $gateway_info;
@@ -161,10 +165,10 @@ function gateway_manager_gateway_info($id) {
 function gateway_manager_gateway_load($id) {
   static $gateways = array();
   if (!isset($gateways[$id])) {
-    $gateways[$id] = db_fetch_object(db_query('SELECT * FROM {gateway_manager_gateways} WHERE id = :id',
-      array(':id' => $id)));
-    $result = db_query('SELECT tid FROM {term_gateway} WHERE gid = :gid', array(':gid' => $id));
-    while ($data = db_fetch_array($result)) {
+    $gateways[$id] = db_query('SELECT * FROM {gateway_manager_gateways} WHERE id = :id',
+      array(':id' => $id))->fetchObject();
+    $results = db_query('SELECT tid FROM {term_gateway} WHERE gid = :gid', array(':gid' => $id));
+    foreach ($results as $result) {
       $gateways[$id]->terms[] = $data['tid'];
     }
     drupal_alter('gateway_manager_gateway', $gateways[$id]);
@@ -309,7 +313,7 @@ function gateway_manager_settings_save_terms($gid, $terms) {
   ->condition('gid', $gid)
   ->execute();
   foreach ($terms as $term) {
-    $record = ('gid' => $gid, 'tid' => $term);
+    $record = array('gid' => $gid, 'tid' => $term);
     $result = drupal_write_record('term_gateway', $record);
   }
 }
