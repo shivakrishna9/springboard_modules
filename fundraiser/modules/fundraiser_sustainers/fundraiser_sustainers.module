@@ -982,7 +982,7 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
  */
 
 /**
- * CRUD style DB function for fundraiser_recurring.
+ * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_create_recurring($donation) {
   // Cast donation just in case.
@@ -994,7 +994,7 @@ function _fundraiser_sustainers_create_recurring($donation) {
   }
   if (!$donation_data) {
     $record = $donation;
-    drupal_write_record('fundraiser_recurring', $record);
+    drupal_write_record('fundraiser_sustainers', $record);
   }
   else {
     _fundraiser_sustainers_update_recurring($donation);
@@ -1002,7 +1002,7 @@ function _fundraiser_sustainers_create_recurring($donation) {
 }
 
 /**
- * CRUD style DB function for fundraiser_recurring.
+ * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_get_recurring_by_did($did) {
   return db_query('SELECT * FROM {fundraiser_sustainers} ' .
@@ -1011,7 +1011,7 @@ function _fundraiser_sustainers_get_recurring_by_did($did) {
 }
 
 /**
- * CRUD style DB function for fundraiser_recurring.
+ * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_update_recurring($donation) {
   // Cast donation just in case.
@@ -1024,15 +1024,15 @@ function _fundraiser_sustainers_update_recurring($donation) {
   }
   else {
     $record = array_merge((array) $donation_data, $donation); // Merge data together so we get everything in the record.
-    drupal_write_record('fundraiser_recurring', $record, 'did');
+    drupal_write_record('fundraiser_sustainers', $record, 'did');
   }
 }
 
 /**
- * CRUD style DB function for fundraiser_recurring.
+ * CRUD style DB function for fundraiser_sustainers.
  */
 function _fundraiser_sustainers_delete_recurring($did) {
-  db_delete('fundraiser_recurring')->condition('did', $did)->execute();
+  db_delete('fundraiser_sustainers')->condition('did', $did)->execute();
 }
 
 /**
