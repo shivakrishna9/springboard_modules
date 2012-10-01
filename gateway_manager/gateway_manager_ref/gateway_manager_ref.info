@@ -6,6 +6,3 @@ dependencies[] = gateway_manager
 dependencies[] = content
 dependencies[] = text
 dependencies[] = optionwidgets
-
-version =  6.x-3.0-dev
-

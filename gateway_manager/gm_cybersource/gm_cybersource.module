@@ -33,14 +33,14 @@ function gm_cybersource_menu() {
  * @todo Please document this function.
  * @see http://drupal.org/node/1354
  */
-function gm_cybersource_receipt_access() {
+function gm_cybersource_receipt_access() { // Coder: This is ok.
   return TRUE;
 }
 
 /**
  * Implements hook_form_alter().
  */
-function gm_cybersource_form_alter(&$form, $form_state, $form_id) {
+function gm_cybersource_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'gateway_manager_edit_form') {
     // make sure our submit handler runs first so we can encrypt sensitive data before saving
     array_unshift($form['#submit'], 'gm_cybersource_payment_gateway_settings_submit');
@@ -71,9 +71,9 @@ function gm_cybersource_payment_gateway_settings_submit($form, &$form_state) {
   }
 }
 
-/*******************************************************************************
+/**
  * Hook Functions (Ubercart)
- ******************************************************************************/
+ */
 
 /**
  * Implements hook_gateway_manager_gateway_info().
@@ -312,8 +312,8 @@ function gm_cybersource_charge($order_id, $amount, $data) {
       $request['purchaseTotals_currency'] = 'USD';
       $request['purchaseTotals_grandTotalAmount'] = $amount;
 
-      drupal_set_message('<pre>' . print_r($config, TRUE) . '</pre>');
-      drupal_set_message('<pre>' . print_r($request, TRUE) . '</pre>');
+      drupal_set_message('<pre>' . print_r($config, TRUE) . '</pre>'); // Coder: This is ok.
+      drupal_set_message('<pre>' . print_r($request, TRUE) . '</pre>'); // Coder: This is ok.
 
       break;
   }
@@ -624,7 +624,8 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   catch (SoapFault $exception) {
     // Log and display errors if Ubercart is unable to connect via SOAP.
     watchdog('gm_cybersource', 'Unable to connect to CyberSource via SOAP.', array(), WATCHDOG_ERROR);
-    drupal_set_message(t('We apologize for the delay, but we are unable to process your credit card at this time. Please <a href="!url">contact sales</a> to complete your order.', array('!url' => url('contact'))), 'error');
+    drupal_set_message(t('We apologize for the delay, but we are unable to process your credit card at this time.' .
+      ' Please <a href="!url">contact sales</a> to complete your order.', array('!url' => url('contact'))), 'error'); // Coder: This is ok.
   }
 
   // Process a reply from CyberSource.
@@ -1010,7 +1011,8 @@ function gm_cybersource_calculate_tax($order) {
   catch (SoapFault $exception) {
     // Log and display errors if Ubercart is unable to connect via SOAP.
     watchdog('gm_cybersource', 'Unable to connect to CyberSource via SOAP.', array(), WATCHDOG_ERROR);
-    drupal_set_message(t('We apologize for the delay, but we are unable to process your credit card at this time. Please <a href="!url">contact sales</a> to complete your order.', array('!url' => url('contact'))), 'error');
+    drupal_set_message(t('We apologize for the delay, but we are unable to process your credit card at this time. ' .
+      'Please <a href="!url">contact sales</a> to complete your order.', array('!url' => url('contact'))), 'error'); // Coder: This is ok.
   }
 
   // Process a reply from CyberSource.

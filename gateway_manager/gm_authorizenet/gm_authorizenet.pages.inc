@@ -21,7 +21,7 @@ function gm_authorizenet_silent_post() {
     $args = array(
       '!arb' => $arb ? 'ARB ' : '',
       '@order_id' => $_POST['x_invoice_num'],
-      '@post' => print_r($_POST, true),
+      '@post' => print_r($_POST, TRUE),
     );
     watchdog('uc_authorizenet', '!arbSilent POST received for order @order_id: <pre>@post</pre>', $args);
   }
@@ -35,7 +35,7 @@ function gm_authorizenet_silent_post() {
   if ($arb) {
 
     // Compare our expected MD5 Hash against what was received.
-    $md5 = strtoupper(md5($login_data['md5_hash'] . $_POST['x_trans_id'] . $_POST['x_amount']));
+    $md5 = drupal_strtoupper(md5($login_data['md5_hash'] . $_POST['x_trans_id'] . $_POST['x_amount'])); // Coder: This is ok.
 
     // Post an error message if the MD5 hash does not validate.
     if ($_POST['x_MD5_Hash'] != $md5) {
@@ -173,7 +173,8 @@ function gm_authorizenet_arb_user_cancel_form($form_state, $user, $rfid) {
     '#value' => $rfid,
   );
 
-  return confirm_form($form, t('Are you sure you wish to cancel this fee?'), 'user/' . $user->uid, t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you wish to cancel this fee?'), 'user/' . $user->uid,
+    t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
 }
 
 /**

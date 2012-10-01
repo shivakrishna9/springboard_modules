@@ -14,7 +14,7 @@ define('OGONE_DEFAULT_ALIAS_USAGE', 'Check the box below to allow the payment ga
  */
 function gm_ogone_menu() {
   $items['ogone/post/%uc_order'] = array(
-    'title' => t('Redirecting to Ogone...'),
+    'title' => 'Redirecting to Ogone...',
     'page callback' => 'gm_ogone_build_form',
     'page arguments' => array(2),
     'access callback' => TRUE,
@@ -178,7 +178,7 @@ function gm_ogone_post_form($form, &$form_state, $order) {
           $arguments['BRAND'] = 'iDEAL';
         }
         // Sofort Uberweisung
-        else if ($wb_brand == 'SOFORT UBERWEISUNG') {
+        elseif ($wb_brand == 'SOFORT UBERWEISUNG') {
           $arguments['PM'] = 'DirectEBankingDE';
           $arguments['BRAND'] = 'DirectEbankingDE';
         }
@@ -223,9 +223,10 @@ function gm_ogone_post_form($form, &$form_state, $order) {
 }
 
 
-/*******************************************************************************
+/**
  * Hook Functions (Ubercart)
- ******************************************************************************/
+ */
+
 /**
  * Implements hook_gateway_manager_gateway_info().
  */
@@ -1045,9 +1046,10 @@ function _load_web_banking_data_to_order($wb_data = NULL, $encrypted = TRUE) {
 }
 
 
-/*******************************************************************************
+/**
  * Ogone Feedback Functions
- ******************************************************************************/
+ */
+
 /**
  * Menu callback: successful payment
  */
@@ -1172,10 +1174,10 @@ function _gm_ogone_check_feedback_sha() {
 
   $sha1_signature = strtoupper(sha1($sha1_signature));
   if ($sha1_signature == $return_values['SHASIGN']) {
-    return true;
+    return TRUE;
   }
   else {
-    return false;
+    return FALSE;
   }
 }
 

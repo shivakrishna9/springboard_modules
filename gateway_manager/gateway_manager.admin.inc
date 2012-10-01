@@ -62,7 +62,7 @@ function gateway_manager_list_filter_form($form) {
     '#type' => 'select',
     '#title' => t('Filter by gateway provider'),
     '#options' => $options,
-    '#default_value' => $_SESSION['gateway_manager_filter'],
+    '#default_value' => $_SESSION['gateway_manager_filter'], // Coder: This is ok.
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -80,10 +80,10 @@ function gateway_manager_list_filter_form($form) {
  */
 function gateway_manager_list_filter_form_submit($form, &$form_state) {
   if ($form_state['values']['op'] == 'Filter' && !empty($form_state['values']['filter'])) {
-    $_SESSION['gateway_manager_filter'] = $form_state['values']['filter'];
+    $_SESSION['gateway_manager_filter'] = $form_state['values']['filter']; // Coder: This is ok.
   }
   else {
-    unset($_SESSION['gateway_manager_filter']);
+    unset($_SESSION['gateway_manager_filter']); // Coder: This is ok.
   }
 }
 
@@ -92,9 +92,9 @@ function gateway_manager_list_filter_form_submit($form, &$form_state) {
  */
 function gateway_manager_filter_query() {
   $where = $args = array();
-  if (isset($_SESSION['gateway_manager_filter'])) {
+  if (isset($_SESSION['gateway_manager_filter'])) { // Coder: This is ok.
     $where[] = "g.type = '%s'";
-    $args[] = $_SESSION['gateway_manager_filter'];
+    $args[] = $_SESSION['gateway_manager_filter']; // Coder: This is ok.
   }
   $where = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
   return array('where' => $where, 'args' => $args);
@@ -173,7 +173,7 @@ function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
     '#weight' => 4,
   );
   $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid,
-    t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
+    t('Categorize this payment gateway by selecting applicable terms.'), 1, NULL);
   $form['taxononmy']['terms']['#weight'] = 3;
   // if type has been selected, get the settings form for that type
   if (isset($type)) {
@@ -184,7 +184,7 @@ function gateway_manager_edit_form($form, &$form_state = NULL, $gateway) {
       if (is_array($gateway_settings)) {
         $form['settings'] = array(
           '#type' => 'fieldset',
-          '#title' => t($title . ' settings'),
+          '#title' => t('@title settings', array('@title' => $title)),
           '#weight' => 5,
           '#collapsible' => TRUE,
         );

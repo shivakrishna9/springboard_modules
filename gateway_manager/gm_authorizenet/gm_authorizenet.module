@@ -41,7 +41,7 @@ function gm_authorizenet_menu() {
  * @todo Please document this function.
  * @see http://drupal.org/node/1354
  */
-function gm_authorizenet_silent_post_access() {
+function gm_authorizenet_silent_post_access() { // Coder: This is ok.
   return TRUE;
 }
 
@@ -169,7 +169,7 @@ function gm_authorizenet_settings_form($config = array()) {
 /**
  * Implements hook_form_alter().
  */
-function gm_authorizenet_form_alter(&$form, $form_state, $form_id) {
+function gm_authorizenet_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_payment_gateways_form') {
     $form['#submit'][] = 'gm_authorizenet_payment_gateway_settings_submit';
   }
@@ -578,7 +578,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     if (($response_code >= AUTH_NET_ERROR_DUPLICATE_TRANSACTION
           && $response_code != AUTH_NET_ERROR_CC_NUMBER_INVALID
           && $response_code <= AUTH_NET_ERROR_INVALID_METHOD)
-         || ($response_code >= AUTH_NET_ERROR_INVALID_FORM_TYPE && $response_code != AUTH_NET_ERROR_AVS_MISMATCH)) {
+          || ($response_code >= AUTH_NET_ERROR_INVALID_FORM_TYPE && $response_code != AUTH_NET_ERROR_AVS_MISMATCH)) {
       $error_type = 'gateway';
     }
 
