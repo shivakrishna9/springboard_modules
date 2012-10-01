@@ -1,0 +1,5 @@
+2012-09-28  Phillip Cave  <phillip.cave@jacksonriver.com>
+
+    * queue_processor.module (queue_processor_standalone_cron): Add exclusive lock to the queue processor
+    standalone cron routine to prevent parallel execution of the queue. This change will prevent objects
+    from being put into more than 1 batch during processing.
