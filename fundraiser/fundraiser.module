@@ -544,7 +544,9 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
   foreach ($gateways as $gateway) {
-    $gateway_options[$gateway['id']] = $gateway['title'];
+    if (isset($gateway['id'])) {
+      $gateway_options[$gateway['id']] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
+    }
   }
   if (empty($gateway_options)) {
     $gateway_options[-1] = t('No gateways are available. Please configure one.');
@@ -1726,7 +1728,7 @@ function _fundraiser_gateway_info($id = NULL) {
     // TODO should this be merged so both modules present info from UC / Managed?
     if (module_exists('gateway_manager')) {
       // If we have the gateway manager turned on, we ask it.
-      $gateways = gateway_manager_gateway_info($payment_details->gateway);
+      $gateways = gateway_manager_gateway_info($id);
     }
     else {
       // If not, we go asking anyone else - usually the payment glue module.
