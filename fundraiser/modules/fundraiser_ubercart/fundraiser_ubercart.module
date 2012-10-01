@@ -97,10 +97,16 @@ function fundraiser_order_actions($order) {
 function fundraiser_ubercart_fundraiser_gateway_info() {
   // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
   // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
-  // Returns in the format:
   // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
   // If no gateways are enabled, this returns an empty array.
-  return _uc_payment_gateway_list('', TRUE);
+  $uc_gateways = _uc_payment_gateway_list('', TRUE);
+  foreach ($uc_gateways as $id => $gateway) {
+    $uc_gateways['id'] = $id;
+    $uc_gateways['charge_function'] = $uc_gateways['credit'];
+    $uc_gateways['refund_function'] = isset($uc_gateways['credit_refund']) ? $uc_gateways['credit_refund'] : $uc_gateways['credit'];
+    $uc_gateways['gateway_details'] = $uc_gateways;
+  }
+  return $uc_gateways;
 }
 
 /**
