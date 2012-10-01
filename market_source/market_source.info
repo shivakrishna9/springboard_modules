@@ -2,12 +2,8 @@ name = Market Source
 description = Provides a way to track which campaigns and market sources drive users to the site.
 core = 7.x
 package = Jackson River Springboard
-
 files[] = market_source.module
 files[] = market_source.admin.inc
 files[] = market_source.tests
 files[] = tests/market_source.test
-
 dependencies[] = webform
-
-scripts[] = market_source.js

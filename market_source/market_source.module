@@ -23,14 +23,6 @@ function market_source_menu() {
     'access arguments' => array('administer site configuration'),
     'file' => 'market_source.admin.inc',
   );
-  $items['admin/config/search/market-source/delete/%'] = array(
-    'title' => 'Remove Custom Market Source Field?',
-    'type' => MENU_CALLBACK,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('market_source_delete_custom_field', 5),
-    'access arguments' => array('administer site configuration'),
-    'file' => 'market_source.admin.inc',
-  );
   return $items;
 }
 
@@ -39,8 +31,8 @@ function market_source_menu() {
  */
 function market_source_init() {
   // Add JavaScript to each page load.
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'market_source') . '/jquery-cookie.js');
+  drupal_add_js(drupal_get_path('module', 'market_source') . '/market_source.js');
   // Get cookie domain info.
   $market_source_cookie_domain = variable_get('market_source_cookie_domain', '');
   $ms_cookie_domain = '';
@@ -55,6 +47,35 @@ function market_source_init() {
     'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
     'cookie_domain' => $market_source_cookie_domain,
   )), 'setting');
+}
+
+/**
+ * Implements hook_theme().
+ */
+function market_source_theme($existing, $type, $theme, $path) {
+  return array(
+    'market_source_admin_global_fields_table' => array(
+      'arguments' => array('element' => NULL),
+      'file' => 'market_source.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function market_source_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'register') {
+    // Add the qs_keys as hidden fields on the user registration form.
+    $form = array();
+    $qs_keys = _market_source_build_qs_keys();
+    foreach (array_keys($qs_keys) as $key) {
+      $form['profile_' . $key] = array(
+        '#type' => 'hidden',
+      );
+    }
+    return $form;
+  }
 }
 
 /**
@@ -78,9 +99,8 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       $form['#validate'][] = 'market_source_user_register_cid_validate';
     }
   }
-  
-  // Replaces hook_user() register op.
-  if ($form_id == 'user_register_form') {
+  elseif ($form_id == 'user_register_form') {
+    // Replaces hook_user() register op.
     // Add the qs_keys as hidden fields on the user registration form.
     $form = array();
     $qs_keys = _market_source_build_qs_keys();
@@ -89,7 +109,17 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'hidden',
       );
     }
-    return $form;
+  }
+  else {
+    $additional_forms = variable_get('market_source_additional_forms', array());
+    if (array_search($form_id, $additional_forms) !== FALSE) {
+      // Add an #after_build callback for webforms.
+      $form['#after_build'][] = 'market_source_generic_form_after_build';
+      // Add validation callback for campaigns.
+      if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+        $form['#validate'][] = 'market_source_generic_form_cid_validate';
+      }
+    }
   }
 }
 
@@ -184,6 +214,47 @@ function market_source_webform_cid_validate($form, &$form_state) {
         // Set the cid to the form's default cid.
         form_set_value($cid_element, $cid_component['value'], $form_state);
       }
+    }
+  }
+}
+
+/**
+ * #after_build callback for generic forms.
+ */
+function market_source_generic_form_after_build($form, &$form_state) {
+  if ($form_state['submitted']) {
+    // Do not add form keys when the form has been submitted.
+    return $form;
+  }
+
+  // Get form keys array.
+  $prefix = isset($form['#market_source_prefix']) ? $form['#market_source_prefix'] : NULL;
+  $form_keys = _market_source_build_form_keys($form, $prefix);
+
+  // Set the array.
+  $settings = array(
+    'form_keys' => array(
+      $form['#id'] => $form_keys,
+    ),
+  );
+
+  // Add form_keys to the JS settings array.
+  drupal_add_js(array('market_source' => $settings), 'setting');
+
+  // Mandatory return value for #after_build callbacks.
+  return $form;
+}
+
+/**
+ * Campaign ID validation callback for generic forms.
+ */
+function market_source_generic_form_cid_validate($form, &$form_state) {
+  // If campaign validation is enabled, validate.
+  if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
+    $cid = &_market_source_form_find_element($form_state['values'], 'cid');
+    if (!empty($cid) && !_market_source_validate_cid($cid)) {
+      // Set the cid to empty.
+      $cid = '';
     }
   }
 }
@@ -303,14 +374,14 @@ function market_source_node_insert($node) {
     if (in_array($node->type, $webform_types)) {
       module_load_include('inc', 'webform', 'includes/webform.components');
       $components = market_source_create_standard_components($node->nid);
-          // insert all the components
+      // insert all the components
       foreach ($components as $component) {
         webform_component_insert($component);
       }
     }
   }
-
 }
+
 
 /**
  * Adds the default market source components.
@@ -461,4 +532,34 @@ function market_source_create_webform_component($custom_field, $nid) {
   return $component;
 }
 
+/**
+ * Legacy support: Fetches the user's referring market source (if any).
+ */
+function market_source_get_ms() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
 
+/**
+ * Legacy support: Fetches the user's referring campaign ID (if any).
+ */
+function market_source_get_cid() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
+
+/**
+ * Legacy support: Fetches the user's referring URL (if any).
+ */
+function market_source_get_referrer() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
+
+/**
+ * Legacy support: Fetches the user's initial referring URL (if any).
+ */
+function market_source_get_initial_referrer() {
+  // Return empty string. Client-side JS will handle all of this.
+  return '';
+}
