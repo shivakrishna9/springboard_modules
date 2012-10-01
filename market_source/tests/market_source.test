@@ -4,7 +4,7 @@
  * @file
  * Test suite for Market Source module.
  */
- 
+
 class MarketSourceTestCase extends DrupalWebTestCase {
   protected $privileged_user;
 
@@ -15,10 +15,10 @@ class MarketSourceTestCase extends DrupalWebTestCase {
       'group' => 'Market Source',
     );
   }
-  
+
   public function setUp() {
     parent::setUp('market_source', 'webform');
-    
+
     $this->privileged_user = $this->drupalCreateUser(array(
       'administer site configuration',
       'access all webform results',
@@ -27,7 +27,7 @@ class MarketSourceTestCase extends DrupalWebTestCase {
       ));
     $this->drupalLogin($this->privileged_user);
   }
-  
+
   public function testMarketSourceAdminSettings() {
 
     // confirm admin form elements.
@@ -47,19 +47,19 @@ class MarketSourceTestCase extends DrupalWebTestCase {
     $this->assertText('UTM Medium', t('Custom field name found.'));
     $this->assertText('utm_medium', t('Custom form key found.'));
     $this->assertText('utm default', t('Custom default value found.'));
-    
+
     // confirm delete
     $this->drupalGet('admin/config/search/market-source/delete/0');
     $this->assertText('Warning: you are about to permanently remove a custom Market Source field. Are you sure?');
-    
+
     $this->drupalPost('admin/config/search/market-source/delete/0', array('field_delta' => 0), 'Remove');
     $this->assertNoText('UTM Medium', t('Custom field was removed.'));
-    
+
   }
-  
+
   public function testMarketSourceCreateWebform() {
     $default_campaign = variable_get('market_source_default_campaign');
-    
+
      // re-add custom field for other tests.
     $settings = array(
       'new_name' => 'UTM Large',
@@ -67,12 +67,12 @@ class MarketSourceTestCase extends DrupalWebTestCase {
       'new_default' => 'utm large default',
     );
     $this->drupalPost('admin/config/search/market-source', $settings, 'Save settings');
-    
+
     $settings = array(
       'type' => 'webform',
     );
 
-    // confirm components are created.    
+    // confirm components are created.
     $node = $this->drupalCreateNode($settings);
     $path = 'node/' . $node->nid . '/webform';
     $this->drupalGet($path);
@@ -82,7 +82,7 @@ class MarketSourceTestCase extends DrupalWebTestCase {
     $this->assertText('Initial Referrer', t('Initial Referrer component found.'));
     $this->assertText('UTM Large', t('Custom component found.'));
     $this->assertText('utm large default', t('Custom component default value found.'));
-    
+
     // Submit results and confirm
     $options = array(
       'query' => array(
@@ -97,6 +97,3 @@ class MarketSourceTestCase extends DrupalWebTestCase {
   }
 }
 
-
-
-?>

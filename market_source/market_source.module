@@ -9,7 +9,7 @@
 define('MARKET_SOURCE_VALUE_MAXLENGTH', 255);
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function market_source_menu() {
   $items = array();
@@ -27,7 +27,7 @@ function market_source_menu() {
 }
 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function market_source_init() {
   // Add JavaScript to each page load.
@@ -62,26 +62,9 @@ function market_source_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implementation of hook_user().
+ * Implements hook_form_alter().
  */
-function market_source_user($op, &$edit, &$account, $category = NULL) {
-  if ($op == 'register') {
-    // Add the qs_keys as hidden fields on the user registration form.
-    $form = array();
-    $qs_keys = _market_source_build_qs_keys();
-    foreach (array_keys($qs_keys) as $key) {
-      $form['profile_' . $key] = array(
-        '#type' => 'hidden',
-      );
-    }
-    return $form;
-  }
-}
-
-/**
- * Implementation of hook_form_alter().
- */
-function market_source_form_alter(&$form, $form_state, $form_id) {
+function market_source_form_alter(&$form, &$form_state, $form_id) {
   // Alter webforms.
   if (isset($form['#node']->nid) && !empty($form['#node']->webform) && $form_id == 'webform_client_form_' . $form['#node']->nid) {
     // Add an #after_build callback for webforms.
@@ -117,7 +100,7 @@ function market_source_form_alter(&$form, $form_state, $form_id) {
       $form['#after_build'][] = 'market_source_generic_form_after_build';
       // Add validation callback for campaigns.
       if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
-        $form['#validate'][] = 'market_source_generic_form_cid_validate';
+        $form['#validate'][] = 'market_source_generic_form_cid_validate'; // Coder: Is ok, this is what the global is called in settings.php.
       }
     }
   }
@@ -350,7 +333,7 @@ function _market_source_validate_cid($val) {
   $val = trim($val);
   if (!empty($val)) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
-      if (strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+      if (drupal_strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = salesforce_management_api_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
@@ -393,7 +376,7 @@ function market_source_node_insert($node) {
  */
 function market_source_create_standard_components($nid, $default_campaign = NULL) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-  
+
   // array to hold all the components that need to be created.
   $components = array();
 
@@ -408,7 +391,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
       'description' => '',
       'hidden_type' => 'hidden',
       ),
-    'mandatory' => 1, 
+    'mandatory' => 1,
     'weight' => 20,
     'email' => 1,
     'maps_to' => 'profile_ms',
@@ -437,14 +420,14 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'nid' => $nid,
     'pid' => 0 ,
     'value' => '',
-    'form_key' => 'referrer', 
+    'form_key' => 'referrer',
     'name' => t('Referrer'),
-    'type' => 'hidden',  
+    'type' => 'hidden',
     'extra' => array(
       'description' => '',
       'hidden_type' => 'hidden',
       ),
-    'mandatory' => 0, 
+    'mandatory' => 0,
     'weight' => 22,
     'email' => 1,
     'maps_to' => 'profile_referrer',
@@ -455,15 +438,15 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'nid' => $nid,
     'pid' => 0,
     'value' => '',
-    'form_key' => 'initial_referrer', 
+    'form_key' => 'initial_referrer',
     'name' => t('Initial Referrer'),
-    'type' => 'hidden',  
+    'type' => 'hidden',
     'extra' => array(
       'description' => '',
       'hidden_type' => 'hidden',
       ),
-    'mandatory' => 0, 
-    'weight' => 23, 
+    'mandatory' => 0,
+    'weight' => 23,
     'email' => 1,
     'maps_to' => 'profile_initial_referrer',
   );
@@ -476,7 +459,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
       $components[$custom_field['key']] = market_source_create_webform_component($custom_field, $nid);
     }
   }
-  return $components;  
+  return $components;
 }
 
 /**
@@ -484,7 +467,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
  *
  * @param $nid
  * Node ID
- * 
+ *
  * @return
  * returns an array of formatted webform components.
  */
@@ -501,13 +484,13 @@ function market_source_fundraiser_create_webform_components($nid) {
 
 /**
  * Create a formatted webform component array.
- * 
+ *
  * @param $custom_field
  * Custom field array containing field key and field name values.
- * 
+ *
  * @param $nid
  * Node id of the webform to add the component to.
- * 
+ *
  * @return
  * Returns a keyed array containing the minimum necessary data to create a new webform component via
  * webform_component_insert().
@@ -517,15 +500,15 @@ function market_source_create_webform_component($custom_field, $nid) {
     'nid' => $nid,
     'pid' => 0,
     'value' => $custom_field['default'],
-    'form_key' => $custom_field['key'], 
+    'form_key' => $custom_field['key'],
     'name' => $custom_field['name'],
-    'type' => 'hidden',  
+    'type' => 'hidden',
     'extra' => array(
       'description' => '',
       'hidden_type' => 'hidden',
       ),
-    'mandatory' => 0, 
-    'weight' => 23, 
+    'mandatory' => 0,
+    'weight' => 23,
     'email' => 1,
     'maps_to' => '',
   );

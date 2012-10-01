@@ -1,7 +1,8 @@
 /**
  * Store and parse market source data in cookies.
  */
-Drupal.behaviors.marketSourceInit = function (context) {
+Drupal.behaviors.marketSourceInit = {
+  attach: function(context) { (function($) {
 
   $('body:not(.marketsource-processed)', context).each(function(i) {
     if (typeof Drupal.settings.market_source === 'undefined' ||
@@ -99,12 +100,15 @@ Drupal.behaviors.marketSourceInit = function (context) {
     }
 
   }).addClass('marketsource-processed');
+
+  })(jQuery); }
 }
 
 /**
  * Populate the market source fields in this page's webforms.
  */
-Drupal.behaviors.marketSourceFormPopulate = function (context) {
+Drupal.behaviors.marketSourceFormPopulate = {
+  attach: function(context) { (function($) {
 
   if (typeof Drupal.settings.market_source === 'undefined' ||
     typeof Drupal.settings.market_source.form_keys === 'undefined' ||
@@ -148,4 +152,5 @@ Drupal.behaviors.marketSourceFormPopulate = function (context) {
     }
   }
 
+  })(jQuery); }
 }
