@@ -9,7 +9,7 @@
  * Implements hook_menu().
  */
 function gateway_manager_menu() {
-  $items['admin/config/fundraiser/gateways'] = array(
+  $items['admin/config/system/fundraiser/gateways'] = array(
     'title' => 'Payment gateways',
     'page callback' => 'gateway_manager_list',
     'access callback' => 'user_access',
@@ -17,14 +17,14 @@ function gateway_manager_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'gateway_manager.admin.inc',
   );
-  $items['admin/config/fundraiser/gateways/list'] = array(
+  $items['admin/config/system/fundraiser/gateways/list'] = array(
     'title' => 'List',
     'access callback' => 'user_access',
     'access arguments' => array('view payment gateway list'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-  $items['admin/config/fundraiser/gateways/add'] = array(
+  $items['admin/config/system/fundraiser/gateways/add'] = array(
     'title' => 'Add payment gateway',
     'page callback' => 'gateway_manager_gateway_add',
     'access callback' => 'user_access',
@@ -33,7 +33,7 @@ function gateway_manager_menu() {
     'file' => 'gateway_manager.admin.inc',
     'weight' => 1,
   );
-  $items['admin/config/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
+  $items['admin/config/system/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
     'title' => 'Edit payment gateway',
     'page callback' => 'gateway_manager_gateway_edit',
     'page arguments' => array(4),
@@ -42,7 +42,7 @@ function gateway_manager_menu() {
     'access arguments' => array('edit any payment gateway'),
     'file' => 'gateway_manager.admin.inc',
   );
-  $items['admin/config/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
+  $items['admin/config/system/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
     'title' => 'Delete payment gateway',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gateway_managed_gateway_delete_form', 4),
@@ -235,7 +235,7 @@ function gateway_mananger_settings_form($form) {
  */
 function gateway_manager_settings_form_submit($form, &$form_state) {
   if ($form_state['values']['op'] == 'Delete') {
-    drupal_goto('admin/config/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
+    drupal_goto('admin/config/system/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
   }
   $id = $form_state['values']['id'];
   $name = $form_state['values']['name'];
@@ -269,7 +269,7 @@ function gateway_manager_settings_insert($name, $type, $terms, $status, $config)
     gateway_manager_settings_save_terms($record->id, $terms);
     module_invoke_all('gateway_manager_gateway_create', $record, $config);
     drupal_set_message(t('Payment gateway @name created successfully.', array('@name' => $name)));
-    drupal_goto('admin/config/fundraiser/gateways');
+    drupal_goto('admin/config/system/fundraiser/gateways');
   }
 }
 
@@ -289,7 +289,7 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
     gateway_manager_settings_save_terms($id, $terms);
     module_invoke_all('gateway_manager_gateway_update', $record, $config);
     drupal_set_message(t('Payment gateway @name updated successfully.', array('@name' => $name)));
-    drupal_goto('admin/config/fundraiser/gateways');
+    drupal_goto('admin/config/system/fundraiser/gateways');
   }
 }
 
@@ -302,7 +302,7 @@ function gateway_manager_delete_gateway($id) {
   ->execute();
   module_invoke_all('gateway_manager_gateway_delete', $id);
   drupal_set_message(t('Payment gateway successfully deleted.'));
-  drupal_goto('admin/config/fundraiser/gateways');
+  drupal_goto('admin/config/system/fundraiser/gateways');
 }
 
 /**

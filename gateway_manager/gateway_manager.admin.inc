@@ -22,7 +22,7 @@ function gateway_manager_list() {
   $data = array();
   foreach ($results as $result) {
     $gateway = array();
-    $gateway['name'] = l($row['name'], 'admin/config/fundraiser/gateways/' . $row['id'] . '/edit');
+    $gateway['name'] = l($row['name'], 'admin/config/system/fundraiser/gateways/' . $row['id'] . '/edit');
     $gateway['type'] = _gateway_manager_get_gateway_title($gateways, $row['type']);
     $gateway['form_count'] = _gateway_manager_form_count($row['id']);
     $gateway['user'] = $row['user'];
@@ -226,7 +226,7 @@ function gateway_managed_gateway_delete_form(&$form_state, $gateway) {
     '#value' => $gateway->id,
   );
   return confirm_form($form, t('Are you sure you want to delete the payment gateway %name?',
-    array('%name' => $gateway->name)), 'admin/config/fundraiser/gateways',
+    array('%name' => $gateway->name)), 'admin/config/system/fundraiser/gateways',
     t('This action cannot be undone.'), t('Delete'), t('Cancel'));
 }
 
