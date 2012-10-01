@@ -11,7 +11,7 @@
  * @return array
  *   Returns a system_settings_form() formatted Form API array.
  */
-function market_source_admin_settings_form(&$form_state) {
+function market_source_admin_settings_form($form, &$form_state) {
   $form = array();
   $form['market_source_default_campaign'] = array(
     '#type' => 'textfield',
@@ -41,16 +41,18 @@ function market_source_admin_settings_form(&$form_state) {
   $form['advanced']['market_source_additional_forms'] = array(
     '#title' => t('Additional forms to process'),
     '#type' => 'textarea',
-    '#description' => t('Specify any additional forms to process. By default, Market Source will process all webforms and the user registration form. Enter the internal Drupal form ID, one per line.'),
+    '#description' => t('Specify any additional forms to process. By default, Market Source will process all webforms and the user ' .
+      'registration form. Enter the internal Drupal form ID, one per line.'),
     '#default_value' => implode("\n", $additional_forms),
   );
-  // Custom global fields.
+ // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
     '#title' => t('Webform Custom Global Fields'),
-    '#description' => t('Any global custom fields created will be added as webform components to your webforms when they are created. Custom fields are not retroactively applied to existing webforms.'),
+    '#description' => t('Any global custom fields created will be added as webform components to your webforms when they are created. ' .
+      'Custom fields are not retroactively applied to existing webforms. Leave blank to remove a field.'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE,
     '#tree' => TRUE,
   );
   $form['market_source_global_fields']['custom_fields_wrapper'] = array(
@@ -114,12 +116,10 @@ function market_source_admin_settings_form(&$form_state) {
     '#description' => t('This is the domain name Market Source cookies will exist under.'),
     '#default_value' => variable_get('market_source_cookie_domain', $cookie_domain),
   );
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save settings'),
   );
-
   return $form;
 }
 
@@ -127,6 +127,7 @@ function market_source_admin_settings_form(&$form_state) {
  * AHAH callback for the Add More button for custom fields.
  */
 function market_source_admin_add_more_ahah($form, $form_state)  {
+  $form['market_source_global_fields']['custom_fields_wrapper']['#collapsed'] = FALSE;
   return $form['market_source_global_fields']['custom_fields_wrapper'];
 }
 
@@ -155,6 +156,10 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
         t('The default value may only contain alphanumeric characters, whitespace, underscores, square brackets and the percent sign.'));
     }
   }
+  if (!(count(explode('.', $values['market_source_cookie_domain'])) > 1 && !is_numeric(str_replace('.', '', $values['market_source_cookie_domain'])))) {
+    form_set_error('market_source_cookie_domain', t('Your cookie settings will not work. Either you do not have enough of a domain path to be used ' .
+      'or you have used an IP address as the domain.'));
+  }
 }
 
 /**
@@ -162,7 +167,6 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
  */
 function market_source_admin_settings_form_submit($form, &$form_state) {
   $values = &$form_state['values'];
-
   // Set the default campaign value.
   variable_set('market_source_default_campaign', $values['market_source_default_campaign']);
   // Set whether to validate campaigns.
@@ -189,7 +193,6 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
     }
   }
   variable_set('market_source_custom_fields', $custom_fields);
-
   variable_set('market_source_cookie_domain', '');
   $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
   // Per RFC 2109, cookie domains must contain at least one dot other than the
@@ -202,17 +205,16 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
       'or you have used an IP address as the domain. The full site domain will be used.'), 'error');
   }
   // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.
-
   drupal_set_message(t('Market Source settings saved.'));
 }
 
 /**
  * Theme custom fields as a table.
  */
-function theme_market_source_admin_global_fields_table($element) {
+function theme_market_source_admin_global_fields_table($vars) {
+  $element = $vars['element'];
   $header = array();
   $rows = array();
-
   foreach (element_children($element) as $i) {
     $row = array();
     foreach (element_children($element[$i]) as $f) {
@@ -229,6 +231,5 @@ function theme_market_source_admin_global_fields_table($element) {
       'data' => $row,
     );
   }
-
-  return theme('table', $header, $rows);
+  return theme('table', array('header' => $header, 'rows' => $rows));
 }
