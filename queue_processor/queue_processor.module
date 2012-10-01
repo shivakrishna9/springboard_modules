@@ -153,7 +153,16 @@ function queue_processor_standalone_cron() {
   if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
     // Process the queue.
     watchdog('queue_processor_cron', t('Standalone cron run.'));
-    queue_processor_process();
+    
+    // Acquire an excluse lock on the process
+    if (lock_acquire('queue_processor_standalone_cron')) {
+    	queue_processor_process();
+    	watchdog('queue_processor_cron', 'Queue processor cron run completed.', array(), WATCHDOG_NOTICE);
+    	lock_release('queue_processor_standalone_cron');
+	}
+	else {
+		watchdog('queue_processor_cron', 'Attempting to re-run queue processor cron while it is already running.', array(), WATCHDOG_WARNING);
+	}
   }
 }
 
