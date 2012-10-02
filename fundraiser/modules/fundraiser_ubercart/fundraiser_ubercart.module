@@ -102,7 +102,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
   $uc_gateways = _uc_payment_gateway_list('', TRUE);
   foreach ($uc_gateways as $id => $gateway) {
     $uc_gateways['id'] = $id;
-    $uc_gateways['charge_function'] = $uc_gateways['credit'];
+    $uc_gateways['charge_function'] = isset($uc_gateways['credit']) ? $uc_gateways['credit'] : '';
     $uc_gateways['refund_function'] = isset($uc_gateways['credit_refund']) ? $uc_gateways['credit_refund'] : $uc_gateways['credit'];
     $uc_gateways['gateway_details'] = $uc_gateways;
   }
