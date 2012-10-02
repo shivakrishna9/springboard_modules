@@ -7,7 +7,7 @@
 /**
  * Implements hook_views_data().
  */
-function springboard_views_fundraiser_views_data() {
+function springboard_views_fundraiser_sustainers_views_data() {
   $data = array();
   $data['fundraiser_sustainers']['table'] = array(
     'group' => t('Fundraiser recurring donations'),

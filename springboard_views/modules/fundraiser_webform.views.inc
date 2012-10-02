@@ -7,7 +7,7 @@
 /**
  * Implements hook_views_data().
  */
-function springboard_views_fundraiser_views_data() {
+function springboard_views_fundraiser_webform_views_data() {
   $data = array();
   $data['webform_submissions']['table'] = array(
     'group' => t('Fundraiser donation'),

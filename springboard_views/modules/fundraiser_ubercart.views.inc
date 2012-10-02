@@ -7,7 +7,7 @@
 /**
  * Implements hook_views_data().
  */
-function springboard_views_fundraiser_views_data() {
+function springboard_views_fundraiser_ubercart_views_data() {
   $data = array();
   $data['uc_orders']['table'] = array(
     'group' => t('Fundraiser donation'),
