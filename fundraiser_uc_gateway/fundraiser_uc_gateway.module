@@ -10,7 +10,8 @@
  * Implementation of hook_fundraiser_gateway
  */
 function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
-  $uc_gateways = _payment_gateway_list('', TRUE);
+  $uc_gateways = _fundraiser_uc_gateway_payment_gateway_list();
+
   switch ($op) {
     case 'select options':
       foreach ($uc_gateways as $uc) {
@@ -21,6 +22,7 @@ function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
       foreach ($uc_gateways as $uc) {
         if ($uc['id'] == $arg) {
           $gateway['charge_function'] = $uc['credit'];
+          $gateway['id'] = $arg;
           return $gateway;
         }
       }
@@ -29,11 +31,32 @@ function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
       foreach ($uc_gateways as $uc) {
         if ($uc['id'] == $arg && $uc['credit_refund']) {
           $gateway['refund_function'] = $uc['credit_refund'];
+          $gateway['id'] = $arg;
+          return $gateway;
+        }
+      }
+      break;
+    case 'billing update':
+      foreach ($uc_gateways as $uc) {
+        if ($uc['id'] == $arg) {
+          $gateway['billing_update_function'] = $uc['billing_update'];
+          $gateway['id'] = $arg;
           return $gateway;
         }
       }
       break;
   }
+}
+
+/**
+ * Wrapper function for ubercarts _payment_gateway_list() that
+ * also provides an alter hook.
+ */
+function _fundraiser_uc_gateway_payment_gateway_list() {
+  $uc_gateways = _payment_gateway_list('', TRUE);
+   // Allow other modules to alter the payment gateways.
+  drupal_alter('uc_payment_gateway', $uc_gateways);
+  return $uc_gateways;
 }
 
 /**

@@ -111,6 +111,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $info = gateway_manager_gateway_info($arg);
         $gateway['charge_function'] = $info['charge_function'];
         $gateway['config'] = $info['config'];
+        $gateway['id'] = $arg;
         return $gateway;
       }
     case 'refund function':
@@ -118,6 +119,15 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $info = gateway_manager_gateway_info($arg);
         $gateway['refund_function'] = $info['refund_function'];
         $gateway['config'] = $info['config'];
+        $gateway['id'] = $arg;
+        return $gateway;
+      }
+    case 'billing update':
+      if (is_numeric($arg)) {
+        $info = gateway_manager_gateway_info($arg);
+        $gateway['billing_update_function'] = $info['billing_update_function'];
+        $gateway['config'] = $info['config'];
+        $gateway['id'] = $arg;
         return $gateway;
       }
   }
@@ -138,6 +148,7 @@ function gateway_manager_gateway_info($id) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
       $gateway_info['refund_function'] = $options['credit_refund'];
+      $gateway_info['billing_update_function'] = $options['billing_update'];
       $gateway_info['gateway_details'] = $options;
     }
   }

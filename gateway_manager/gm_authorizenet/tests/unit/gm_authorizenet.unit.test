@@ -1,0 +1,40 @@
+<?php
+
+class GmAuthorizeNetUnitTestCase extends DrupalUnitTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'GM Authorize.net unit tests',
+      'description' => 'Low level unit tests for authorize.net gateway functionality.',
+      'group' => 'Payment Gateway Manager',
+    );
+  }
+
+  function testCIMCreation() {
+    $this->assertTrue(TRUE, 'TODO: Add real unit tests.');
+  } 
+
+  /**
+   * Simulated gateway config.
+   */
+  function getGatewayConfig() {
+    return array(
+      'config' => array(
+        'id' => 27,
+        'status' => 1,
+        'gm_authnet_hide_emails' => 0,
+        'gm_authnet_duplicate_window' => 120,
+        'gm_authnet_api_login_id' => '6d25RJhdsEN',
+        'gm_authnet_api_transaction_key' => '48W86D8Yt6y5yWe5',
+        'gm_authnet_api_test_gateway_url' => 'https://test.authorize.net/gateway/transact.dll',
+        'gm_authnet_api_live_gateway_url' => 'https://secure.authorize.net/gateway/transact.dll',
+        'gm_authnet_aim_txn_mode' => 'developer_test',
+        'gm_authnet_aim_email_customer' => 0,
+        'gm_authnet_response_debug' => 1,
+        'gm_authnet_cim_profile' => 1,
+        'gm_authnet_cim_mode' => 'developer',
+      ),
+    );
+  }
+
+}
