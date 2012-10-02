@@ -230,10 +230,11 @@ function springboard_api_submit_webform($submission) {
       return $messages;
     }
     else {
+      $formatted_errors = array();
       foreach($errors as $key => $message) {
+        $item = array('field_key' => '', 'message' => $message);
         $key = explode('][', $key);
-        $item['field_key'] = str_replace(']', '', $key[count($key) -1]);
-        $item['message'] = $message;
+        $item['field_key'] =$key[count($key) -1];
         $formatted_errors['errors'][] = $item;
         watchdog('springboard_api', t('Error: !error', array('!error' => $message)), array(), WATCHDOG_ERROR);
       }

@@ -66,7 +66,7 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       $form['access'][] = $form['og_nodeapi'];
       unset($form['og_nodeapi']);
       break;
-  } 
+  }
 
   if (fundraiser_is_donation_edit_form($form_id, $form)) {
     // move the gateway selector into the groups fieldset
@@ -78,13 +78,6 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
       'event' => 'change',  
     );
     unset($form['fundraiser_settings']['gateway']);
-    // if the current user belongs to more than 1 group, add a group filter
-    if (count($user->og_groups) > 1) {
-      $options = array('' => t('-- Select --'));
-      foreach($user->og_groups as $id => $group) {
-        $options[$id] = $group['title'];
-      }
-    }
   }
 }
 
@@ -201,10 +194,11 @@ function og_payment_gateway_filter_gateways($nids = array()) {
   global $user;
   $sql = 'SELECT g.id, g.name FROM {gateway_manager_gateways} g INNER JOIN {og_payment_gateway} o ON o.gid = g.id INNER JOIN og_uid u ON u.nid = o.group_nid WHERE u.uid = %d';
   if (count($nids)) {
-    $sql .= ' AND o.group_nid IN (%s)';
+    $sql .= ' AND o.group_nid IN (' . db_placeholders($nids, 'int') . ')';
   }
-  $result = db_query($sql, $user->uid, implode(',', $nids));
-  
+  $data = array_merge(array($user->uid), $nids);
+  $result = db_query($sql, $data);
+
   $gateways = array();
   while ($data = db_fetch_object($result)) {
     $gateways[$data->id] = $data->name;
