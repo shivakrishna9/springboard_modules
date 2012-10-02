@@ -9,7 +9,9 @@
  */
 function springboard_views_fundraiser_views_data() {
   $data = array();
-  // Fundraiser table metadata
+  /**
+   * Fundraiser table metadata.
+   */
   $data['fundraiser']['table'] = array(
     'group' => t('Fundraiser donation forms'),
     'join' => array(
@@ -19,7 +21,6 @@ function springboard_views_fundraiser_views_data() {
       ),
     ),
   );
-  // Fundraiser fields
   $data['fundraiser']['gateway'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway the donation form uses to process credit cards.'),
@@ -140,13 +141,12 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
 
-  // --------------------------------------------------------------------------
-  // fundraiser_webform_order table metadata
+  /**
+   * Fundraiser_donation table metadata. Relationships to fundraiser node, and donationg user.
+   */
   $data['fundraiser_donation']['table'] = array(
     'group' => t('Fundraiser doantions'),
   );
-
-  // fundraiser_webform_order fields
   $data['fundraiser_donation']['nid'] = array(
     'title' => t('Fundraiser node'),
     'help' => t('Fundraiser node related to a donation.'),
@@ -167,13 +167,10 @@ function springboard_views_fundraiser_views_data() {
       'label' => t('Donating node'),
     ),
   );
-  $data['fundraiser_donation']['sid'] = array(
-    'title' => t('Submission'),
-    'help' => t('Submission related to a donation.'),
-  );
+  /*
   $data['fundraiser_donation']['sfid'] = array(
     'title' => t('Salesforce object'),
-    'help' => t('Salesforce object related to a fundraiser webform submission.'),
+    'help' => t('Salesforce object related to a donation.'),
     'relationship' => array(
       'base' => 'salesforce_management_object_map',
       'base field' => 'sfid',
@@ -188,6 +185,7 @@ function springboard_views_fundraiser_views_data() {
       'label' => t('Salesforce object'),
     ),
   );
+  */
   $data['fundraiser_donation']['gateway'] = array(
     'title' => t('Gateway'),
     'help' => t('The payment gateway used on this donation.'),
@@ -217,13 +215,18 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
 
-  // --------------------------------------------------------------------------
-  // Fundraiser_refund table metadata
+  /**
+   * Fundraiser_tracking table metadata. Left joined to the charged back donation.
+   */
   $data['fundraiser_refund']['table'] = array(
     'group' => t('Fundraiser refunds'),
+    'join' => array(
+      'donation' => array(
+        'left_field' => 'did',
+        'field' => 'refund_id',
+      ),
+    ),
   );
-
-  // Fundraiser_refund fields
   $data['fundraiser_refund']['refund_id'] = array(
     'title' => t('Refund ID'),
     'help' => t('References a single refund.'),
@@ -290,142 +293,9 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
 
-  // --------------------------------------------------------------------------
-  // Fundraiser_recurring table metadata
-  $data['fundraiser_recurring']['table'] = array(
-    'group' => t('Fundraiser recurring donations'),
-    'join' => array(
-      'uc_orders' => array(
-        'left_field' => 'order_id',
-        'field' => 'order_id',
-      ),
-    ),
-  );
-/*
-  // Fundraiser_recurring fields
-  $data['fundraiser_recurring']['master_order_id'] = array(
-    'title' => t('Master order'),
-    'help' => t('Master Ubercart order for this recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_numeric',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['order_id'] = array(
-    'title' => t('Recurring order'),
-    'help' => t('A single recurring donation Ubercart order.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_boolean_operator',
-      'label' => t('Order is recurring'),
-      'accept null' => TRUE,
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['next_charge'] = array(
-    'title' => t('Date of next charge'),
-    'help' => t('Date of the next recurring charge.'),
-    'field' => array(
-      'handler' => 'views_handler_field_date',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_date',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort_date',
-    ),
-  );
-  //$data['fundraiser_recurring']['sf_opportunity_id'] = array();
-  //$data['fundraiser_recurring']['sf_recurring_id'] = array();
-  //$data['fundraiser_recurring']['sf_stagename'] = array();
-  //$data['fundraiser_recurring']['sf_sync_status'] = array();
-  $data['fundraiser_recurring']['gateway_resp'] = array(
-    'title' => t('Gateway response'),
-    'help' => t('Response from the payment gateway for a recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_in_operator',
-      'options callback' => 'springboard_views_gateway_response_options',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['attempts'] = array(
-    'title' => t('Attempts'),
-    'help' => t('Number of attempted charges for a recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field_numeric',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_numeric',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['cancellation_reason'] = array(
-    'title' => t('Cancellation reason'),
-    'help' => t('The reason provided for the cancellation of a recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['gateway'] = array(
-    'title' => t('Gateway'),
-    'help' => t('The payment gateway used on a recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
-  $data['fundraiser_recurring']['txn_id'] = array(
-    'title' => t('Transaction ID'),
-    'help' => t('The transaction ID used on a recurring donation.'),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
- */
-  // --------------------------------------------------------------------------
-  // Fundraiser_component_map table metadata
-  // TODO
-
-  // --------------------------------------------------------------------------
-  // Fundraiser_tracking table metadata
+  /**
+   * Fundraiser_tracking table metadata. Left joined to the tracked fundraiser node.
+   */
   $data['fundraiser_tracking']['table'] = array(
     'group' => t('Fundraiser tracking'),
     'join' => array(
@@ -435,8 +305,6 @@ function springboard_views_fundraiser_views_data() {
       ),
     ),
   );
-
-  // Fundraiser_tracking fields
   $data['fundraiser_tracking']['pageviews'] = array(
     'title' => t('Page views'),
     'help' => t('Number of times the donation form has been viewed.'),
@@ -494,6 +362,5 @@ function springboard_views_fundraiser_views_data() {
     ),
   );
 
-  // --------------------------------------------------------------------------
   return $data;
 }
