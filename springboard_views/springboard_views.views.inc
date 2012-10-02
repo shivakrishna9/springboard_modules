@@ -26,7 +26,7 @@ function springboard_views_views_handlers() {
 /**
  * Implements hook_views_data().
  */
-function springboard_views_data() {
+function springboard_views_views_data() {
   $data = _springboard_views_invoke_all('views_data');
   return $data;
 }

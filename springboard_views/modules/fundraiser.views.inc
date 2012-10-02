@@ -8,7 +8,6 @@
  * Implements hook_views_data().
  */
 function springboard_views_fundraiser_views_data() {
-drupal_set_message('found');
   $data = array();
   /**
    * Fundraiser table metadata.

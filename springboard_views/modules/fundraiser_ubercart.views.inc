@@ -18,6 +18,7 @@ function springboard_views_fundraiser_ubercart_views_data() {
       ),
     ),
   );
+  /* Ubercart has already defined it's fieldset.
   $data['uc_orders']['order_status'] = array(
     'title' => t('Donation status'),
     'help' => t('The current status of a donation.'),
@@ -148,7 +149,6 @@ function springboard_views_fundraiser_ubercart_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-/*
   $data['uc_orders']['created'] = array(
     'title' => t('Created date'),
     'help' => t('The created date of a donation.'),
@@ -162,7 +162,6 @@ function springboard_views_fundraiser_ubercart_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-*/
   $data['uc_orders']['currency'] = array(
     'title' => t('Currency'),
     'help' => t('The currency type of a donation.'),
@@ -176,5 +175,6 @@ function springboard_views_fundraiser_ubercart_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
+ */
   return $data;
 }
