@@ -222,19 +222,15 @@ function gm_sage_charge($order_id, $amount, $data) {
       return gm_sage_https_bankcard_request($order, $amount, $data);
 
     case UC_CREDIT_REFERENCE_SET:
-      $guid = gm_sage_vault_insert($order);
+      $vault = gm_sage_vault_insert($order, $data);
 
-      if (!empty($guid)) {
-        $success = TRUE;
-        drupal_set_message(t('Customer data stored in the Sage Vault for future transactions.'));
-        uc_order_comment_save($order->order_id, $user->uid, t('New Sage Vault GUID: @guid', array('@guid' => $guid)), 'admin');
+      // Return the error message if this failed.
+      if ($vault['success'] == FALSE) {
+        return array('success' => FALSE, 'message' => $vault['message'], 'log_payment' => FALSE);
       }
       else {
-        $success = FALSE;
-        drupal_set_message(t('An error occurred that prevented the storage of the customer data in the Sage Vault.'), 'error');
+        return array('success' => TRUE, 'message' => $vault['message'], 'log_payment' => FALSE);
       }
-
-      return array('success' => $success, 'log_payment' => FALSE);
 
     case UC_CREDIT_REFERENCE_TXN:
       return gm_sage_vault_bankcard_request($order, $amount, $data);
@@ -515,31 +511,34 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
  * @param $order
  *   An order object containing a uid and relevant billing address info for the
  *     credit card being stored.
- * @param $cc_number
- *   If included, the full credit card number to be stored; requires the
- *     inclusion of the expiration month and year parameters.
- * @param $cc_exp_month
- *   The expiration month of the credit card to be stored.
- * @param $cc_exp_year
- *   The expiration year of the credit card to be stored.
+ * @param $data
+ *   Data about the order from the gateway manager
  * @return
  *   The GUID returned by Sage representing the customer data in the Vault.
  */
-function gm_sage_vault_insert($order, $cc_number = NULL, $cc_exp_month = NULL, $cc_exp_year = NULL) {
-  // If no CC data was passed in, pull it from the order object.
-  if (empty($cc_number)) {
-    $cc_number = $order->payment_details['cc_number'];
-    $cc_exp_month = $order->payment_details['cc_exp_month'];
-    $cc_exp_year = $order->payment_details['cc_exp_year'];
-  }
+function gm_sage_vault_insert($order, $data = array()) {
+  $cc_number = $order->payment_details['cc_number'];
+  $cc_exp_month = $order->payment_details['cc_exp_month'];
+  $cc_exp_year = $order->payment_details['cc_exp_year'];
 
   // Build the API parameters for the INSERT_DATA request.
-  $data = array(
+  $params = array(
     'CARDNUMBER' => $cc_number,
     'EXPIRATION_DATE' => sprintf("%02d", intval($cc_exp_month)) . substr($cc_exp_year, -2),
   );
 
-  $response = gm_sage_api_request($data, GM_SAGE_SERVICE_VAULT, 'INSERT_CREDIT_CARD_DATA');
+  $response = gm_sage_api_request($params, GM_SAGE_SERVICE_VAULT, 'INSERT_CREDIT_CARD_DATA');
+  
+  if (!$response) {
+    uc_order_comment_save($order->order_id, 0, t('Sage: Vault record failed.<br />@error - @text', array('@error' => $response['code'], '@text' => $response['text'])), 'admin');
+    return array('success' => FALSE, 'message' => t('An error occurred that prevented the storage of the customer data in the Sage Vault.'));
+  }
+  else {
+    $guid = substr($response->DataSet->asXML(), strpos($response->DataSet->asXML(), '<GUID>') + 6, 32);
+    uc_credit_log_reference($order->order_id, $guid, $order->payment_details['cc_number']);
+    uc_order_comment_save($order->order_id, 0, t('Sage: Vault record created - @id', array('@id' => substr($response->DataSet->asXML(), strpos($response->DataSet->asXML(), '<GUID>') + 6, 32))));
+    return array('success' => TRUE, 'message' => t('Customer data stored in the Sage Vault for future transactions.'));
+  }
 
   // Store the GUID and associated data in the database.
   $data = array(
