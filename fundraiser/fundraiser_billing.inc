@@ -13,22 +13,21 @@
  * Generic function that is called by the fundraiser module.
  */
 function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_info) {
-  $function = $gateway_id . '_update_billing_information';
-  return $function($reference_id, $billing_info);
-}
- 
-/** 
- * Authorize.net billing information update function.
- */
-function authorizenet_update_billing_information($reference_id, $billing_info) {
-  if (module_exists('authorizenet_cim')) {
-    return authorizenet_cim_update($reference_id, $billing_info);
+  $payment_gateway = module_invoke_all('fundraiser_gateway', 'billing update', $gateway_id);
+  $data = array();
+
+  if (!empty($payment_gateway['billing_update_function'])) {
+    if (!empty($payment_gateway['config'])) {
+      $data['config'] = $payment_gateway['config'];
+    }
+    return $payment_gateway['billing_update_function']($reference_id, $billing_info, $data);
   }
   else {
-    drupal_set_message(t('Unable to update billing information at this time'));
-    watchdog('fundraiser', t('Billing information for recurring donations cannot be updated because the authorize_cim module is missing.'), NULL, WATCHDOG_CRITICAL);
-    return null;    
+    return array('success' => FALSE,
+      'message' => t('Billing information updates not supported in gateway @gateway.',
+        array('@gateway' => $gateway_id)));
   }
+
 }
 
 /** 

@@ -185,7 +185,8 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
 	// we can only continue if we have a gateway and reference_id
 	if ($payment_details['gateway'] && $payment_details['reference_id']) {
     $result = fundraiser_update_billing_info($payment_details['gateway']['id'], $payment_details['reference_id'], $form_state['values']);
-    if ($result) {
+    
+    if ($result['success']) {
       watchdog('fundraiser', t('Billing information was updated for profile @profile', array('@profile' => $payment_details['reference_id']), NULL, WATCHDOG_INFO));
       $orders = _get_pending_recurring_orders($master_order_id); 
       while($row = db_fetch_object($orders)) {
@@ -203,7 +204,8 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
       drupal_set_message(t('Billing information successfully updated'));
     }
     else {
-      drupal_set_message(t('Unable to update billing information at this time'));
+      drupal_set_message(t('Unable to update billing information at this time.'));
+      watchdog('fundraiser', 'Billing information update failed for sustainer series @id while processing with gateway @gateway.', array('@id' => $master_order_id, '@gateway' => $payment_details['gateway']['id']));
     }
     
 	}
@@ -450,30 +452,14 @@ function _fundraiser_get_payment_details($order_id) {
     $donation_form_nid = $order->products[0]->nid;
     $gateway = db_result(db_query("SELECT gateway FROM {fundraiser} WHERE nid = %d", $donation_form_nid));
   }
-  
+
   // get the gateway's details
-  $details['gateway'] = _fundraiser_lookup_gateway_details($gateway);
+  $details['gateway'] = module_invoke_all('fundraiser_gateway', 'billing update', $gateway);
   
   // get the txn reference from the order
   $references = array_keys($order->data['cc_txns']['references']);
   $details['reference_id'] = array_shift($references);
-  
   return $details;
-}
-
-/** 
- * Look up a payment gateway's details based on it's id
- */
-function _fundraiser_lookup_gateway_details($gateway) {
-  $gateways = _payment_gateway_list('', TRUE);
-  
-  // use the name to look up the gateway
-  foreach ($gateways as $k => $v) {
-    if ($v['id'] == $gateway){
-      return $v;
-    }
-  }
-  return FALSE;
 }
 
 /**
