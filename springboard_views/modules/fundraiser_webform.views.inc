@@ -9,13 +9,25 @@
  */
 function springboard_views_fundraiser_webform_views_data() {
   $data = array();
+  $data['fundraiser_donation']['sid'] = array(
+    'title' => t('Donation submission'),
+    'help' => t('Webform submission related to a donation.'),
+    'relationship' => array(
+      'base' => 'webform_submissions',
+      'base field' => 'sid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Donation submission'),
+    ),
+  );
+  /**
+   * Webform submission tables.
+   */
   $data['webform_submissions']['table'] = array(
-    'group' => t('Fundraiser donation'),
-    'join' => array(
-      'fundraiser_donation' => array(
-        'left_field' => 'sid',
-        'field' => 'sid',
-      ),
+    'group' => t('Webform submission'),
+    'base' => array(
+      'field' => 'sid',
+      'title' => t('Webform submissions'),
+      'help' => t('Webform submissions made.'),
     ),
   );
   $data['webform_submissions']['uid'] = array(
@@ -25,7 +37,7 @@ function springboard_views_fundraiser_webform_views_data() {
       'base' => 'user',
       'base field' => 'uid',
       'handler' => 'views_handler_relationship',
-      'label' => t('Submission entry'),
+      'label' => t('Submitting user'),
     ),
   );
 /*

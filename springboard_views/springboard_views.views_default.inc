@@ -8,7 +8,7 @@
  * Implements hook_views_default_views().
  */
 function springboard_views_views_default_views() {
-  /*
+  /**
    * View 'sbv_batch'
    */
   $view = new view;
@@ -470,7 +470,7 @@ function springboard_views_views_default_views() {
   ));
   $views[$view->name] = $view;
 
-  /*
+  /**
    * View 'sbv_permanent_failure'
    */
   $view = new view;
@@ -848,7 +848,7 @@ function springboard_views_views_default_views() {
   ));
   $views[$view->name] = $view;
 
-  /*
+  /**
    * View 'sbv_queue'
    */
   $view = new view;
@@ -1184,7 +1184,7 @@ function springboard_views_views_default_views() {
   ));
   $views[$view->name] = $view;
 
-  /*
+  /**
    * View 'sbv_retry_queue'
    */
   $view = new view;
@@ -1639,6 +1639,296 @@ function springboard_views_views_default_views() {
     'name' => 'navigation',
   ));
   $views[$view->name] = $view;
-
+  /**
+   * View 'sbv_donations'
+   */
+  $view = new view();
+  $view->name = 'sbv_donations';
+  $view->description = 'Donations currently in the system';
+  $view->tag = 'springboard_views';
+  $view->base_table = 'fundraiser_donation';
+  $view->human_name = 'sbv_donations';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+  
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Donations';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer fundraiser';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '35';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'gateway_1' => 'gateway_1',
+    'txn_id' => 'txn_id',
+    'billing_first_name' => 'billing_first_name',
+    'billing_last_name' => 'billing_first_name',
+    'billing_street1' => 'billing_street1',
+    'billing_street2' => 'billing_street1',
+    'billing_city' => 'billing_street1',
+    'country_name' => 'billing_street1',
+    'zone_name' => 'billing_street1',
+    'zone_code' => 'billing_street1',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'gateway_1' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'txn_id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'billing_first_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => ' ',
+      'empty_column' => 0,
+    ),
+    'billing_last_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'billing_street1' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '</br>',
+      'empty_column' => 0,
+    ),
+    'billing_street2' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'billing_city' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'country_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'zone_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'zone_code' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  /* Relationship: Fundraiser donations: Donating user */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  /* Relationship: Fundraiser donations: Fundraiser node */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  /* Relationship: Fundraiser donations: Donation order */
+  $handler->display->display_options['relationships']['did']['id'] = 'did';
+  $handler->display->display_options['relationships']['did']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['did']['field'] = 'did';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'nid';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['relationship'] = 'nid';
+  /* Field: Content: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'node';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
+  $handler->display->display_options['fields']['type']['relationship'] = 'nid';
+  /* Field: User: Uid */
+  $handler->display->display_options['fields']['uid']['id'] = 'uid';
+  $handler->display->display_options['fields']['uid']['table'] = 'users';
+  $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['relationship'] = 'uid';
+  /* Field: User: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'users';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  $handler->display->display_options['fields']['name']['relationship'] = 'uid';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  /* Field: Order: Billing address: First name */
+  $handler->display->display_options['fields']['billing_first_name']['id'] = 'billing_first_name';
+  $handler->display->display_options['fields']['billing_first_name']['table'] = 'uc_orders';
+  $handler->display->display_options['fields']['billing_first_name']['field'] = 'billing_first_name';
+  $handler->display->display_options['fields']['billing_first_name']['relationship'] = 'did';
+  /* Field: Order: Billing address: Last name */
+  $handler->display->display_options['fields']['billing_last_name']['id'] = 'billing_last_name';
+  $handler->display->display_options['fields']['billing_last_name']['table'] = 'uc_orders';
+  $handler->display->display_options['fields']['billing_last_name']['field'] = 'billing_last_name';
+  $handler->display->display_options['fields']['billing_last_name']['relationship'] = 'did';
+  /* Field: Order: Billing address: Street address 1 */
+  $handler->display->display_options['fields']['billing_street1']['id'] = 'billing_street1';
+  $handler->display->display_options['fields']['billing_street1']['table'] = 'uc_orders';
+  $handler->display->display_options['fields']['billing_street1']['field'] = 'billing_street1';
+  $handler->display->display_options['fields']['billing_street1']['relationship'] = 'did';
+  /* Field: Order: Billing address: Street address 2 */
+  $handler->display->display_options['fields']['billing_street2']['id'] = 'billing_street2';
+  $handler->display->display_options['fields']['billing_street2']['table'] = 'uc_orders';
+  $handler->display->display_options['fields']['billing_street2']['field'] = 'billing_street2';
+  $handler->display->display_options['fields']['billing_street2']['relationship'] = 'did';
+  /* Field: Order: Billing address: City */
+  $handler->display->display_options['fields']['billing_city']['id'] = 'billing_city';
+  $handler->display->display_options['fields']['billing_city']['table'] = 'uc_orders';
+  $handler->display->display_options['fields']['billing_city']['field'] = 'billing_city';
+  $handler->display->display_options['fields']['billing_city']['relationship'] = 'did';
+  /* Field: Order: Billing address: Country */
+  $handler->display->display_options['fields']['country_name']['id'] = 'country_name';
+  $handler->display->display_options['fields']['country_name']['table'] = 'billing_countries';
+  $handler->display->display_options['fields']['country_name']['field'] = 'country_name';
+  $handler->display->display_options['fields']['country_name']['relationship'] = 'did';
+  /* Field: Order: Billing address: State/Province */
+  $handler->display->display_options['fields']['zone_name']['id'] = 'zone_name';
+  $handler->display->display_options['fields']['zone_name']['table'] = 'billing_zones';
+  $handler->display->display_options['fields']['zone_name']['field'] = 'zone_name';
+  $handler->display->display_options['fields']['zone_name']['relationship'] = 'did';
+  /* Field: Order: Billing address: State/Province code */
+  $handler->display->display_options['fields']['zone_code']['id'] = 'zone_code';
+  $handler->display->display_options['fields']['zone_code']['table'] = 'billing_zones';
+  $handler->display->display_options['fields']['zone_code']['field'] = 'zone_code';
+  $handler->display->display_options['fields']['zone_code']['relationship'] = 'did';
+  /* Field: Fundraiser donations: Transaction ID */
+  $handler->display->display_options['fields']['txn_id']['id'] = 'txn_id';
+  $handler->display->display_options['fields']['txn_id']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['fields']['txn_id']['field'] = 'txn_id';
+  /* Field: Fundraiser donations: Gateway */
+  $handler->display->display_options['fields']['gateway_1']['id'] = 'gateway_1';
+  $handler->display->display_options['fields']['gateway_1']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['fields']['gateway_1']['field'] = 'gateway';
+  /* Filter criterion: Content: Title */
+  $handler->display->display_options['filters']['title']['id'] = 'title';
+  $handler->display->display_options['filters']['title']['table'] = 'node';
+  $handler->display->display_options['filters']['title']['field'] = 'title';
+  $handler->display->display_options['filters']['title']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['title']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['operator_id'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['label'] = 'Title';
+  $handler->display->display_options['filters']['title']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['operator'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['identifier'] = 'title';
+  $handler->display->display_options['filters']['title']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Content: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'node';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['type']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type']['expose']['operator_id'] = 'type_op';
+  $handler->display->display_options['filters']['type']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['type']['expose']['operator'] = 'type_op';
+  $handler->display->display_options['filters']['type']['expose']['identifier'] = 'type';
+  $handler->display->display_options['filters']['type']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['type']['expose']['multiple'] = TRUE;
+  $handler->display->display_options['filters']['type']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Fundraiser donations: Gateway */
+  $handler->display->display_options['filters']['gateway']['id'] = 'gateway';
+  $handler->display->display_options['filters']['gateway']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['filters']['gateway']['field'] = 'gateway';
+  $handler->display->display_options['filters']['gateway']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['gateway']['expose']['operator_id'] = 'gateway_op';
+  $handler->display->display_options['filters']['gateway']['expose']['label'] = 'Gateway';
+  $handler->display->display_options['filters']['gateway']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['gateway']['expose']['operator'] = 'gateway_op';
+  $handler->display->display_options['filters']['gateway']['expose']['identifier'] = 'gateway';
+  $handler->display->display_options['filters']['gateway']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['gateway']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Fundraiser donations: Transaction ID */
+  $handler->display->display_options['filters']['txn_id']['id'] = 'txn_id';
+  $handler->display->display_options['filters']['txn_id']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['filters']['txn_id']['field'] = 'txn_id';
+  $handler->display->display_options['filters']['txn_id']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['txn_id']['expose']['operator_id'] = 'txn_id_op';
+  $handler->display->display_options['filters']['txn_id']['expose']['label'] = 'Transaction ID';
+  $handler->display->display_options['filters']['txn_id']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['txn_id']['expose']['operator'] = 'txn_id_op';
+  $handler->display->display_options['filters']['txn_id']['expose']['identifier'] = 'txn_id';
+  $handler->display->display_options['filters']['txn_id']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['txn_id']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: User: Name */
+  $handler->display->display_options['filters']['uid']['id'] = 'uid';
+  $handler->display->display_options['filters']['uid']['table'] = 'users';
+  $handler->display->display_options['filters']['uid']['field'] = 'uid';
+  $handler->display->display_options['filters']['uid']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['uid']['value'] = '';
+  $handler->display->display_options['filters']['uid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['uid']['expose']['operator_id'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['label'] = 'Name';
+  $handler->display->display_options['filters']['uid']['expose']['use_operator'] = TRUE;
+  $handler->display->display_options['filters']['uid']['expose']['operator'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['identifier'] = 'uid';
+  $handler->display->display_options['filters']['uid']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['uid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['path'] = 'admin/reports/salesforce/donations';
+  $views[$view->name] = $view;
   return $views;
 }

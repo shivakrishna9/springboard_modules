@@ -70,7 +70,7 @@ function _springboard_views_invoke_all($hook) {
         if ($hook == 'views_handlers') {
           drupal_set_message('mod data: ' . print_r($module_data, TRUE)); // Coder: is ok.
         }
-        $data = array_merge($data, $module_data);
+        $data = array_merge_recursive($data, $module_data);
         if ($hook == 'views_handlers') {
           drupal_set_message('first: ' . print_r($data, TRUE)); // Coder: is ok.
         }

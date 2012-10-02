@@ -145,7 +145,12 @@ function springboard_views_fundraiser_views_data() {
    * Fundraiser_donation table metadata. Relationships to fundraiser node, and donationg user.
    */
   $data['fundraiser_donation']['table'] = array(
-    'group' => t('Fundraiser doantions'),
+    'group' => t('Fundraiser donations'),
+    'base' => array(
+      'field' => 'did',
+      'title' => t('Donations'),
+      'help' => t('Donations made.'),
+    ),
   );
   $data['fundraiser_donation']['nid'] = array(
     'title' => t('Fundraiser node'),
@@ -161,10 +166,10 @@ function springboard_views_fundraiser_views_data() {
     'title' => t('Donating user'),
     'help' => t('Donating user related to a donation.'),
     'relationship' => array(
-      'base' => 'user',
+      'base' => 'users',
       'base field' => 'uid',
       'handler' => 'views_handler_relationship',
-      'label' => t('Donating node'),
+      'label' => t('Donating user'),
     ),
   );
   /*
