@@ -10,7 +10,7 @@
  * Implements hook_gateway_manager_gateway_info().
  */
 function gm_test_gateway_gateway_manager_gateway_info() {
-  $gateways[] = array(
+  $gateways['test_gateway'] = array(
     'id' => 'test_gateway',
     'title' => t('Test Gateway'),
     'description' => t('Process credit card payments through the Test Gateway.'),

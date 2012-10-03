@@ -134,9 +134,9 @@ function _og_payment_gateway_disable_validation(&$form) {
 }
 
 /**
- * Implemenation of hook_gateway_manager_gateway_alter().
+ * Implemenation of hook_gateway_manager_load_gateway_alter().
  */
-function og_payment_gateway_gateway_manager_gateway_alter(&$gateway) {
+function og_payment_gateway_gateway_manager_load_gateway_alter(&$gateway) {
   $result = db_query("SELECT group_nid FROM {og_payment_gateway} WHERE gid = :gid", array(':gid' => $gateway->id));
   $groups = array();
   // add groups to the gateway object when it is loaded

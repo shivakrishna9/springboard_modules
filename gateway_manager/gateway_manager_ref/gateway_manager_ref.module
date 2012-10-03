@@ -80,7 +80,7 @@ function gateway_manager_ref_field($op, &$node, $field, &$items, $teaser, $page)
     // data is sanitized before being displayed.
     case 'sanitize':
       foreach ($items as $delta => $item) {
-        $gateway = gateway_manager_gateway_load($item['gateway_id']);
+        $gateway = gateway_manager_load_gateway($item['gateway_id']);
         $items[$delta]['safe'] = $gateway->name;
       }
   }
@@ -107,7 +107,7 @@ function gateway_manager_ref_content_is_empty($item, $field) {
  */
 function gateway_manager_ref_content_generate($node, $field) {
   $node_field = array();
-  $gateway_ids = array_keys(_gateway_manager_gateway_list());
+  $gateway_ids = array_keys(gateway_manager_load_gateways());
   $node_field['gateway_id'] = $gateway_ids[array_rand($gateway_ids)];
   return $node_field;
 }
@@ -260,8 +260,11 @@ function gateway_manager_ref_widget_info() {
  *   the form item for a single element for this field
  */
 function gateway_manager_ref_widget(&$form, &$form_state, $field, $items, $delta = 0) {
-  $gateways = array('' => t('-- Select One --')) + _gateway_manager_gateway_list();
-
+  $gateways = array('' => t('-- Select One --'));
+  $defined_gateways = gateway_manager_load_gateways();
+  foreach ($defined_gateways as $id => $defined_gateway) {
+    $gateways[$id] = $defined_gateway['name'];
+  }
 
   $element['gateway_id'] = array(
     '#type' => 'select',

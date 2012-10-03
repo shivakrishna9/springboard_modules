@@ -231,7 +231,7 @@ function gm_ogone_post_form($form, &$form_state, $order) {
  * Implements hook_gateway_manager_gateway_info().
  */
 function gm_ogone_gateway_manager_gateway_info() {
-  $gateways[] = array(
+  $gateways['gm_ogone_ecommerce'] = array(
     'id' => 'gm_ogone_ecommerce',
     'title' => t('Ogone e-Commerce'),
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
@@ -261,7 +261,7 @@ function gm_ogone_gateway_manager_gateway_info() {
     ),
   );
 
-  $gateways[] = array(
+  $gateways['gm_ogone_directlink'] = array(
     'id' => 'gm_ogone_directlink',
     'title' => t('Ogone DirectLink'),
     'description' => t('Process payments using Ogone\'s DirectLink payment method.'),
@@ -1274,3 +1274,27 @@ function _gm_ogone_get_config_for_order($order_or_id) {
   }
   return $config;
 }
+
+
+/**
+ * Get the payment gateway for the given order object or order ID
+ *
+ * @param $order_or_orderid
+ *   Ubercart order object, or an order ID: either will be handled
+ *
+ * @return
+ *   Array of gateway details
+ */
+function gateway_manager_gateway_for_order($order_or_orderid) {
+  if (is_object($order_or_orderid)) {
+    $order = $order_or_orderid;
+  }
+  elseif ($order_or_orderid > 0) {
+    $order = uc_order_load($order_or_orderid);
+  }
+  if ($order->data['gateway'] > 0) {
+    return gateway_manager_gateway_info($order->data['gateway']);
+  }
+  return NULL;
+}
+

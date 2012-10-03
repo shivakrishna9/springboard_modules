@@ -49,7 +49,7 @@ function gm_authorizenet_silent_post_access() { // Coder: This is ok.
  * Implements hook_gateway_manager_gateway_info().
  */
 function gm_authorizenet_gateway_manager_gateway_info() {
-  $gateways[] = array(
+  $gateways['gm_authorizenet'] = array(
     'id' => 'gm_authorizenet',
     'title' => t('Authorize.net'),
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
