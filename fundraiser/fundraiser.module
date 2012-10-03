@@ -730,12 +730,12 @@ function fundraiser_field_info() {
 function fundraiser_fundraiser_field_info() {
   // Donation amounts are handled in a special case.
   $fields['donation'] = array(
-    '#title' => 'Donation',
+    '#title' => t('Donation'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
   $fields['donation']['amount'] = array(
-    '#title' => 'Amount',
+    '#title' => t('Amount'),
     '#type' => 'textfield',
     '#required' => 1,
     '#extra' => array(
@@ -747,11 +747,11 @@ function fundraiser_fundraiser_field_info() {
     '#create_callback' => '_fundraiser_amount_field_create',
   );
   $fields['donation']['other_amount'] = array(
-    '#title' => 'Other',
+    '#title' => t('Other'),
     '#type' => 'textfield',
     '#required' => 0,
     '#extra' => array(
-      'description' => 'Minimum payment $' . variable_get('fundraiser_default_minimum', 10.00) . '.',
+      'description' => t('Minimum payment $ @min.', array('@min' => variable_get('fundraiser_default_minimum', 10.00))),
       'width' => 10,
       'field_prefix' => '$',
     ),
@@ -760,58 +760,58 @@ function fundraiser_fundraiser_field_info() {
     '#validate_callback' => '_fundraiser_other_amount_field_validate',
   );
   $fields['donor_information'] = array(
-    '#title' => 'Your Information',
+    '#title' => t('Your Information'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
   $fields['donor_information']['first_name'] = array(
-    '#title' => 'First Name',
+    '#title' => t('First Name'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['donor_information']['last_name'] = array(
-    '#title' => 'Last Name',
+    '#title' => t('Last Name'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['donor_information']['mail'] = array(
-    '#title' => 'Email',
+    '#title' => t('E-mail address'),
     '#type' => 'email',
     '#required' => 1,
     '#validate_callback' => '_fundraiser_email_field_validate',
   );
   $fields['billing_information'] = array(
-    '#title' => 'Credit Card Billing Information',
+    '#title' => t('Credit Card Billing Information'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
   $fields['billing_information']['address'] = array(
-    '#title' => 'Address',
+    '#title' => t('Address'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['billing_information']['address_line_2'] = array(
-    '#title' => 'Address Line 2',
+    '#title' => t('Address Line 2'),
     '#type' => 'textfield',
     '#required' => 0,
   );
   $fields['billing_information']['city'] = array(
-    '#title' => 'City',
+    '#title' => t('City'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['billing_information']['country'] = array(
-    '#title' => 'Country',
+    '#title' => t('Country'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['billing_information']['state'] = array(
-    '#title' => 'State/Province',
+    '#title' => t('State/Province'),
     '#type' => 'textfield',
     '#required' => 1,
   );
   $fields['billing_information']['zip'] = array(
-    '#title' => 'ZIP/Postal Code',
+    '#title' => t('ZIP/Postal Code'),
     '#type' => 'textfield',
     '#required' => 1,
     '#extra' => array(
@@ -821,12 +821,12 @@ function fundraiser_fundraiser_field_info() {
     ),
   );
   $fields['credit_card_information'] = array(
-    '#title' => 'Credit Card Information',
+    '#title' => t('Credit Card Information'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
   $fields['credit_card_information']['card_number'] = array(
-    '#title' => 'Card Number',
+    '#title' => t('Card Number'),
     '#type' => 'textfield',
     '#required' => 1,
     '#extra' => array(
@@ -847,7 +847,7 @@ function fundraiser_fundraiser_field_info() {
   $months .= "11|November\n";
   $months .= "12|December\n";
   $fields['credit_card_information']['card_expiration_month'] = array(
-    '#title' => 'Expiration Month',
+    '#title' => t('Expiration Month'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
@@ -863,7 +863,7 @@ function fundraiser_fundraiser_field_info() {
     $years .= ($this_year + $i) . "\n";
   }
   $fields['credit_card_information']['card_expiration_year'] = array(
-    '#title' => 'Expiration Year',
+    '#title' => t('Expiration Year'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
@@ -874,7 +874,7 @@ function fundraiser_fundraiser_field_info() {
     ),
   );
   $fields['credit_card_information']['card_cvv'] = array(
-    '#title' => 'Card Security Code',
+    '#title' => t('Card Security Code'),
     '#type' => 'textfield',
     '#required' => 1,
     '#extra' => array(
