@@ -776,7 +776,7 @@ function fundraiser_fundraiser_field_info() {
   );
   $fields['donor_information']['mail'] = array(
     '#title' => 'Email',
-    '#type' => 'textfield',
+    '#type' => 'email',
     '#required' => 1,
     '#validate_callback' => '_fundraiser_email_field_validate',
   );
