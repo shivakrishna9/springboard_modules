@@ -186,7 +186,7 @@ function gateway_manager_edit_form_submit($form, &$form_state) {
 /**
  * Menu callback. Payment gateway delete confirmation form.
  */
-function gateway_managed_gateway_delete_form(&$form_state, $gateway) {
+function gateway_managed_gateway_delete_form($form, &$form_state, $gateway) {
   $form['id'] = array(
     '#type' => 'hidden',
     '#value' => $gateway->id,
