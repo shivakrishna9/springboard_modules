@@ -111,7 +111,6 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
    * If no gateways are enabled, this returns an empty array.
    *
    * For the purposes of our hook we want to return:
-   * _uc_payment_gateway_list() returns in the format:
    * Array(
    *   [test_gateway] =&gt; Array(
    *     [id] =&gt; test_gateway
@@ -120,7 +119,6 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
    *     [charge_function] =&gt; charge_function
    *     [refund_function] =&gt; refund_function
    *     [gateway_details] => Array(Previous gateway details)
-   *     [enabled] =&gt; 1
    *   )
    * )
    */ 
