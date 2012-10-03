@@ -36,7 +36,7 @@ function gateway_manager_menu() {
   $items['admin/config/system/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
     'title' => 'Edit payment gateway',
     'page callback' => 'gateway_manager_gateway_edit',
-    'page arguments' => array(4),
+    'page arguments' => array(5),
     'type' => MENU_CALLBACK,
     'access callback' => 'user_access',
     'access arguments' => array('edit any payment gateway'),
@@ -45,10 +45,10 @@ function gateway_manager_menu() {
   $items['admin/config/system/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
     'title' => 'Delete payment gateway',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('gateway_managed_gateway_delete_form', 4),
+    'page arguments' => array('gateway_managed_gateway_delete_form', 5),
     'type' => MENU_CALLBACK,
     'access callback' => 'gateway_manager_is_deleteable',
-    'access arguments' => array(4),
+    'access arguments' => array(5),
     'file' => 'gateway_manager.admin.inc',
   );
   return $items;
@@ -93,7 +93,7 @@ function gateway_manager_node_insert($node) {
  * Implements hook_node_update().
  * Clear out the gateway cache when donation forms are created, updated or deleted.
  */
-function gateway_manager_node_update(&$node, $op) {
+function gateway_manager_node_update($node) {
   if (fundraiser_is_donation_type($node->type)) {
     $cid = 'gateway_manager_form_count';
     cache_clear_all($cid, 'cache');
@@ -145,7 +145,9 @@ function gateway_manager_fundraiser_gateway_info() {
     // Merge type data with the gateway.
     $gateway = array_merge($gateway, $gateway_types[ $gateway['type'] ]);
     $this_gateway['id'] = $id; // The array_merge probably overwrote the id.
-    $this_gateway['title'] = isset($gateway['title']) ? $gateway['title'] : '';
+    $this_gateway['module'] = 'gateway_manager';
+    $this_gateway['module_name'] = t('Managed Gateways');
+    $this_gateway['title'] = isset($gateway['name']) ? $gateway['name'] : $gateway['title'] . ' (Gateway managed)';
     $this_gateway['description'] = isset($gateway['description']) ? $gateway['description'] : '';
     $this_gateway['charge_function'] = isset($gateway['credit']) ? $gateway['credit'] : '';
     $this_gateway['refund_function'] = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : $this_gateway['charge_function'];
@@ -153,56 +155,6 @@ function gateway_manager_fundraiser_gateway_info() {
     $gateway_info[$id] = $this_gateway;
   }
   return $gateway_info;
-}
-
-/**
- * Adds a special submit handler to all managed payment gateway forms.
- */
-function gateway_mananger_settings_form($form) {
-  $form['buttons'] = array(
-    '#weight' => 10,
-  );
-  $form['buttons']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-  );
-  // Only show the delete button if the payment gateway isn't in use.
-  if (isset($form['id']['#value']) && gateway_manager_is_deleteable($form['id']['#value'])) {
-    $form['buttons']['delete'] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete'),
-    );
-  }
-  elseif (isset($form['id']['#value'])) {
-    $form['buttons']['delete_notice'] = array(
-      '#value' => t('* This payment gateway cannot be deleted because donation forms are assigned to it' .
-        ' or there are pending recurring donations.'),
-      '#prefix' => '<div class="description">',
-      '#suffix' => '</div>',
-    );
-  }
-  $form['#submit'][] = 'gateway_manager_settings_form_submit';
-  return $form;
-}
-
-/**
- * Submission handler for saving gateway configurations.
- */
-function gateway_manager_settings_form_submit($form, &$form_state) {
-  if ($form_state['values']['op'] == 'Delete') {
-    drupal_goto('admin/config/system/fundraiser/gateways/' . $form_state['values']['id'] . '/delete');
-  }
-  $record = $form_state['values'];
-  $exclusions = array('name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
-  $config = array();
-  // Loop over form values and only save those.
-  foreach ($form_state['values'] as $k => $v) {
-    if (!in_array($k, $exclusions)) {
-      $config[$k] = $v;
-    }
-  }
-  $record['config'] = serialize($config);
-  gateway_manager_settings_update($record);
 }
 
 /**
@@ -228,6 +180,13 @@ function gateway_manager_is_deleteable($gateway) {
 }
 
 /**
+ * Helper function, so menu object loading will work.
+ */
+function gateway_manager_gateway_load($id) {
+  return gateway_manager_load_gateway($id);
+}
+
+/**
  * Database functions.
  */
 
@@ -244,9 +203,9 @@ function gateway_manager_settings_insert($record) {
   $record['updated'] = REQUEST_TIME;
   $result = drupal_write_record('gateway_manager_gateways', $record);
   if ($result) {
-    gateway_manager_settings_save_terms($record['id'], $terms); // If successful, id will be populated by save.
-    module_invoke_all('gateway_manager_gateway_create', $record, $config);
-    drupal_set_message(t('Payment gateway @name created successfully.', array('@name' => $name)));
+    gateway_manager_settings_save_terms($record['id'], $record['terms']); // If successful, id will be populated by save.
+    module_invoke_all('gateway_manager_gateway_create', $record, $record['config']);
+    drupal_set_message(t('Payment gateway @name created successfully.', array('@name' => $record['name'])));
     drupal_goto('admin/config/system/fundraiser/gateways');
   }
 }
@@ -271,9 +230,9 @@ function gateway_manager_load_gateway($id) { // Called by gateway_manager_ref.
 /**
  * CRUD DB function. Updates an existing payment gateway record.
  */
-function gateway_manager_settings_update($id, $name, $type, $terms, $status, $config) {
+function gateway_manager_settings_update($record) {
   if (empty($record['id'])) {
-    return gateway_manager_settings_insert($name, $type, $terms, $status, $config);
+    return gateway_manager_settings_insert($record);
   }
   global $user;
   $record['uid'] = $user->uid;
@@ -281,9 +240,9 @@ function gateway_manager_settings_update($id, $name, $type, $terms, $status, $co
   $record['updated'] = REQUEST_TIME;
   $result = drupal_write_record('gateway_manager_gateways', $record, array('id'));
   if ($result) {
-    gateway_manager_settings_save_terms($id, $terms);
-    module_invoke_all('gateway_manager_gateway_update', $record, $config);
-    drupal_set_message(t('Payment gateway @name updated successfully.', array('@name' => $name)));
+    gateway_manager_settings_save_terms($record['id'], $record['terms']);
+    module_invoke_all('gateway_manager_gateway_update', $record, $record['config']);
+    drupal_set_message(t('Payment gateway @name updated successfully.', array('@name' => $record['name'])));
     drupal_goto('admin/config/system/fundraiser/gateways');
   }
 }
@@ -304,12 +263,16 @@ function gateway_manager_delete_gateway($id) {
  * DB function. Saves terms associated with a managed gateway.
  */
 function gateway_manager_settings_save_terms($id, $terms) {
-  db_delete('term_gateway')
-  ->condition('gid', $id)
-  ->execute();
-  foreach ($terms as $term) {
-    $record = array('gid' => $id, 'tid' => $term);
-    $result = drupal_write_record('term_gateway', $record);
+  if (!empty($terms)) {
+    // Delete previous terms.
+    db_delete('term_gateway')
+    ->condition('gid', $id)
+    ->execute();
+    // Add new ones.
+    foreach ($terms as $term) {
+      $record = array('gid' => $id, 'tid' => $term);
+      $result = drupal_write_record('term_gateway', $record);
+    }
   }
 }
 
