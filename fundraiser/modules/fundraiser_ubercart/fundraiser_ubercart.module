@@ -127,6 +127,8 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
   foreach ($uc_gateways as $uc_gateway) {
     if ($uc_gateway['enabled'] == 1) {
       $this_gateway['id'] = $uc_gateway['id'];
+      $this_gateway['module'] = 'fundraiser_ubercart';
+      $this_gateway['module_name'] = t('Ubercart');
       $this_gateway['title'] = $uc_gateway['title'];
       $this_gateway['description'] = $uc_gateway['description'];
       $this_gateway['charge_function'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
