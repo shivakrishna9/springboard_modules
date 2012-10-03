@@ -95,18 +95,49 @@ function fundraiser_order_actions($order) {
  * Implements hook_fundraiser_gateway_info().
  */
 function fundraiser_ubercart_fundraiser_gateway_info() {
-  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
-  // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
-  // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
-  // If no gateways are enabled, this returns an empty array.
+  /**
+   * From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
+   * Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
+   * _uc_payment_gateway_list() returns in the format:
+   * Array(
+   *   [test_gateway] =&gt; Array(
+   *     [title] =&gt; Test Gateway
+   *     [description] =&gt; Process credit card payments through the Test Gateway.
+   *     [credit] =&gt; test_gateway_charge
+   *     [id] =&gt; test_gateway
+   *     [enabled] =&gt; 1
+   *   )
+   * )
+   * If no gateways are enabled, this returns an empty array.
+   *
+   * For the purposes of our hook we want to return:
+   * _uc_payment_gateway_list() returns in the format:
+   * Array(
+   *   [test_gateway] =&gt; Array(
+   *     [id] =&gt; test_gateway
+   *     [title] =&gt; Test Gateway
+   *     [description] =&gt; Process credit card payments through the Test Gateway.
+   *     [charge_function] =&gt; charge_function
+   *     [refund_function] =&gt; refund_function
+   *     [gateway_details] => Array(Previous gateway details)
+   *     [enabled] =&gt; 1
+   *   )
+   * )
+   */ 
   $uc_gateways = _uc_payment_gateway_list('', TRUE);
-  foreach ($uc_gateways as $id => $gateway) {
-    $uc_gateways['id'] = $id;
-    $uc_gateways['charge_function'] = isset($uc_gateways['credit']) ? $uc_gateways['credit'] : '';
-    $uc_gateways['refund_function'] = isset($uc_gateways['credit_refund']) ? $uc_gateways['credit_refund'] : $uc_gateways['credit'];
-    $uc_gateways['gateway_details'] = $uc_gateways;
+  $fundraiser_gateways = array();
+  foreach ($uc_gateways as $uc_gateway) {
+    if ($uc_gateway['enabled'] == 1) {
+      $this_gateway['id'] = $uc_gateway['id'];
+      $this_gateway['title'] = $uc_gateway['title'];
+      $this_gateway['description'] = $uc_gateway['description'];
+      $this_gateway['charge_function'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
+      $this_gateway['refund_function'] = isset($uc_gateway['credit_refund']) ? $uc_gateway['credit_refund'] : $uc_gateway['credit'];
+      $this_gateway['gateway_details'] = $uc_gateway;
+      $fundraiser_gateways[] = $this_gateway;
+    }
   }
-  return $uc_gateways;
+  return $fundraiser_gateways;
 }
 
 /**
