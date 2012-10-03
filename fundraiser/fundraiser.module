@@ -559,6 +559,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
     '#default_value' =>  isset($node->gateway) ? $node->gateway : '',
     '#required' => TRUE,
+    '#prefix' => '<div id="gateway">',
+    '#suffix' => '</div>',
   );
   $form['fundraiser_settings']['amount_wrapper'] = array(
     '#type' => 'fieldset',
@@ -1242,7 +1244,7 @@ function _fundraiser_refund($form, &$form_state, $did) {
 
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
   $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation().
-  $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
+  $can_refund = isset($gateway['refund_function']) ? $gateway['refund_function'] : NULL;
   if (!$can_refund || !isset($donation->payment)) {
     // They've made a payment, but it cannot be refunded
     if (isset($donation->payment)) {
@@ -1459,7 +1461,7 @@ function fundraiser_donation_process($donation) {
   // Grab the gateway from the fundraiser configured gateway.
   // Later this will be stored with the donation (since the gateway for the fundraiser may change).
   $info = _fundraiser_gateway_info($donation->node->gateway);
-  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
+  // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
     // We can't find the gateway and we should tell someone about it.
@@ -1555,8 +1557,8 @@ function fundraiser_donation_refund($refund) {
   }
   // Grab the gateway from the fundraiser configured gateway.
   $info = _fundraiser_gateway_info($refund->node->gateway);
-  // Check for the charge function to be defined, either in 'charge_function', or 'credit'.
-  $refund_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  // Check for the charge function to be defined.
+  $refund_function = isset($info['refund_function']) ? $info['refund_function'] : '';
   if (empty($refund_function)) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
@@ -1725,16 +1727,9 @@ function _fundraiser_gateway_info($id = NULL) {
   static $gateways;
   // Cache the gateway during page execution.
   if (empty($gateways)) {
-    // TODO should this be merged so both modules present info from UC / Managed?
-    if (module_exists('gateway_manager')) {
-      // If we have the gateway manager turned on, we ask it.
-      $gateways = gateway_manager_gateway_info($id);
-    }
-    else {
-      // If not, we go asking anyone else - usually the payment glue module.
-      $gateways = module_invoke_all('fundraiser_gateway_info');
-      drupal_alter('fundraiser_gateway_info', $gateways);
-    }
+    // If not, we go asking anyone else - usually the payment glue module.
+    $gateways = module_invoke_all('fundraiser_gateway_info');
+    drupal_alter('fundraiser_gateway_info', $gateways);
   }
 
   // Look up the gateway needed.
