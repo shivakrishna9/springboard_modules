@@ -544,8 +544,11 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
   foreach ($gateways as $gateway) {
-    if (isset($gateway['id'])) {
-      $gateway_options[$gateway['id']] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
+    if (isset($gateway['module_name'])) {
+      $gateway_options[ $gateway['module_name'] ][ $gateway['id'] ] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
+    }
+    else {
+      $gateway_options[ $gateway['id'] ] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
     }
   }
   if (empty($gateway_options)) {
