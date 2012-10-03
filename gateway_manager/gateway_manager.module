@@ -342,9 +342,9 @@ function _gateway_manager_form_count($id) {
   }
   else {
     // Else, build an array of gateway stats and cache them
-    $result = db_query('SELECT gateway, COUNT(nid) as count FROM {fundraiser} GROUP BY gateway');
-    while ($data = db_fetch_object($result)) {
-      $gateway_stats[$data->gateway] = $data->count;
+    $results = db_query('SELECT gateway, COUNT(nid) as count FROM {fundraiser} GROUP BY gateway');
+    foreach ($results as $result) {
+      $gateway_stats[$result->gateway] = $result->count;
     }
     cache_set($cid, $gateway_stats, 'cache', REQUEST_TIME + (60 * 60 * 24));
   }
