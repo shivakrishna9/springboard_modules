@@ -905,7 +905,7 @@ function _webform_user_get_profile_fields() {
   $mail_field = array(
     'name' => 'mail',
     'title' => t('E-mail address'),
-    'type' => 'textfield',
+    'type' => 'email',
     'mandatory' => 1,
     'weight' => 0,
     'explanantion' => '',
