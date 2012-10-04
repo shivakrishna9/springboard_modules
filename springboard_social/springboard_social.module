@@ -89,7 +89,7 @@ function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
  */
 
 function springboard_social_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == 'donation_form_node_form' && variable_get('springboard_social_share_display', 0)) {
+  if (fundraiser_is_donation_edit_form($form_id, $form) && variable_get('springboard_social_share_display', 0)) {
     $fb_display = variable_get('springboard_social_share_display', 0);
     $gplus_display  = variable_get('springboard_social_gplus_display', 0);
     global $base_url;

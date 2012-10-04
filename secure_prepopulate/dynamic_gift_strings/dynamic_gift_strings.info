@@ -5,4 +5,4 @@ package = Jackson River Springboard - extras
 dependencies[] = fundraiser
 dependencies[] = secure_prepopulate
 
-version = 6.x-3.0-beta1
+version = 6.x-3.2

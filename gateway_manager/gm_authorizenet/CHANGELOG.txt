@@ -1,4 +1,8 @@
+2012-04-25  Sarah Hood  <sarah.hood@jacksonriver.com>
 
-gm_authorizenet 6.x-3.0, 2012-04-25
-------------------------------
-Added feature to hide donor emails from authnet transactions.
+    * Added feature to hide donor emails from authnet transactions.
+
+2012-10-02  Phillip Cave  <phillip.cave@jacksonriver.com>
+
+    * Added support for billing update operations. Add new functions for
+    updating a CIM profile stored at authorize.net.

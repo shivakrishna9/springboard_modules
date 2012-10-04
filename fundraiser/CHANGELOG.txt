@@ -54,3 +54,15 @@
 
     * fundraiser.module:  Improve validation of donation amount
     See: https://github.com/JacksonRiver/springboard_modules/pull/136
+
+2012-09-20  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.module:  Prevent anonymous user from recieving incorrect country code
+
+2012-10-02  Phillip Cave  <phillip.cave@jacksonriver.com>
+
+    * fundraiser_billing.inc: Invoke hook_fundraiser_gateway() to determine billing
+    update callback fuction.
+
+    * fundraiser.sustainer.forms.inc: Change how the function determines if the
+    billing update operation succeeded. Added logging for failed updates.

@@ -375,6 +375,7 @@ function fundraiser_schema() {
         'type' => 'varchar',
         'length' => '55',
         'not null' => FALSE,
+        'default' => '0',
       ),
     ),
     'primary key' => array('order_id'),

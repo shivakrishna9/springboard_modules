@@ -3,7 +3,7 @@ description = "Adds special functionality to the Webform A/B Test module for use
 
 ; Core version (required)
 core = 6.x
-version =  6.x-3.1
+version =  6.x-3.2
 package = Jackson River Springboard
 
 dependencies[] = webform_ab

@@ -3,4 +3,4 @@ description = Purges old donations from the system based on their age.
 core = 6.x
 package = Jackson River Springboard - extras
 dependencies[] = fundraiser
-version =  6.x-3.1
+version =  6.x-3.2

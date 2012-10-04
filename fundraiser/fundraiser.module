@@ -801,10 +801,14 @@ function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
  *
  * @param $form
  *   The form to add the fields to.
+ *
+ * @param $edit
+ * $form_state from the parent formm required to utlize posted values during ahah form rebuild.
+ *
  * @param $node
  *   The node being added/edited.
  */
-function fundraiser_node_settings(&$form, $node) {
+function fundraiser_node_settings(&$form, $edit, $node) {
   
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
@@ -975,7 +979,7 @@ function fundraiser_node_type_form_submit(&$form, &$form_state) {
     fundraiser_webform_types_primary($form_state['values']['type'], 'insert');
   }
   else {
-    fundraiser_webform_types_primary($form_state['values']['type'], 'delete'); 
+    fundraiser_webform_types_primary($form_state['values']['type'], 'delete');
   }
 }
 
@@ -992,7 +996,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
   // add fundraiser settings to node add/edit form
   if (isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type) && substr($form_id, -10) == '_node_form') {
     // add fundraiser settings to the node form
-    fundraiser_node_settings($form, $form['#node']);
+    fundraiser_node_settings($form, $form_state, $form['#node']);
   }
   			
 	if (strstr($form_id, 'webform_client_form')) {
@@ -1059,7 +1063,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // Pull the correct action out of form_state if it's there to avoid AHAH+Validation action-rewrite.
       if (isset($form_state['action'])) {
         $form['#action'] = $form_state['action'];
-      }  
+      }
 
       $base = drupal_get_path('module', 'fundraiser');
       drupal_add_js($base .'/jquery.alphanumeric.js');
@@ -1135,13 +1139,13 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       
       // add default country & state values from user profile
       $fids = _fundraiser_get_profile_location_fields();
-      if ($fids['country'] && $user->profile_country) {
+      if (user_is_logged_in() && $fids['country'] && $user->profile_country) {
         $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
       }
 
       // add a wrapper around the state field so it can be replaced via ajax
 			$state_field =& fundraiser_find_field($form, $component_hierarchy['state']);
-			if ($fids['state'] && $user->profile_state) {
+			if (user_is_logged_in() && $fids['state'] && $user->profile_state) {
 			  $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
 			}
 			$state_field['#prefix'] = '<div id="zone-select-wrapper">';
@@ -1590,6 +1594,18 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
  * Validate donation form submissions.
  */
 function fundraiser_webform_validate($form, &$form_state) {
+
+  // there are certain conditions (eg. drupal_execute()) where we want to
+  // be able to sidestep validation.
+  $validate = TRUE;
+  $validate_contrib = module_invoke_all('fundraiser_validate_webform_enabled', $form_state, $validate);
+  foreach ($validate_contrib as $value) {
+    if (!$value) {
+      // if any hook invoked returns false, turn off validation.
+      return 1;
+    }
+  }
+
 	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
 	
 	$node_id = $form_state['values']['details']['nid'];
@@ -1802,9 +1818,17 @@ function fundraiser_webform_submit($form, &$form_state) {
   );
   
   // additional data to pass to the payment gateway's charge function
- 	$data = array(
- 		'txn_type' => 'auth_capture',
- 	);
+  $data = array(
+    'txn_type' => 'auth_capture',
+  );
+
+  if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
+    $data = array(
+      'txn_type' => 'reference_txn',
+      'ref_id' => $form_state['fundraiser_reference_txn_id']
+    
+    );
+  }
  	
  	// variable to hold the name of the payment gateway charge function we need to call
  	$charge_function = NULL;
@@ -2231,6 +2255,7 @@ function fundraiser_process_recurring_donations() {
    	$charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
    	
    	if (empty($charge_function)) {
+      db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
    	  watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
    	}
    	else {
@@ -2259,7 +2284,8 @@ function fundraiser_process_recurring_donations() {
   			db_query("UPDATE {fundraiser_recurring} SET
   				gateway_resp = 'failed',
   				attempts = attempts + 1,
-  				next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge)))
+  				next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
+  				lock_id = '0'
   				WHERE order_id = %d", $order_id
   			);
   			// get the number of times this order has been attempted
@@ -2795,7 +2821,7 @@ function _fundraiser_donation_form_path($nid) {
   }
   else {
     return $base_url . '/node/' . $nid;
-  } 
+  }
 }
 
 function _fundraiser_get_cc_type($cardnumber) {
@@ -2953,6 +2979,20 @@ function _fundraiser_field_blacklist() {
 }
 
 /**
+ * Determine if this form is a donation form edit form.
+ *
+ * @param $form_id
+ *   The id of the form to check.
+ * @param $form
+ *   The actual form.
+ */
+function fundraiser_is_donation_edit_form($form_id, $form) {
+  return substr($form_id, -10) == '_node_form'
+    && isset($form['#node'])
+    && fundraiser_is_donation_type($form['#node']->type);
+}
+
+/**
  * Determine if this node type supports donation forms.
  */
 function fundraiser_is_donation_type($type) {
@@ -2981,7 +3021,7 @@ function fundraiser_get_donation_types() {
   return $fundraiser_types;
 }
 
-/** 
+/**
  * Helper function, returns an array of fundraiser types.
  */
 function fundraiser_enabled_types() {
@@ -3010,7 +3050,7 @@ function fundraiser_webform_types_primary($type, $op) {
     case 'insert':
       if (!in_array($type, $types)) {
         $types[] = $type;
-        variable_set('webform_node_types', $types);      
+        variable_set('webform_node_types', $types);
       }
       if (!in_array($type, $primary_types)) {
         $primary_types[] = $type;
