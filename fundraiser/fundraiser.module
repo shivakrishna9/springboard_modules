@@ -1616,7 +1616,7 @@ function fundraiser_webform_validate($form, &$form_state) {
 	$cc_cvv = $fundraiser_fields['card_cvv'];
 	$cc_expiration_month = $fundraiser_fields['card_expiration_month'];
 	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-	$email = $fundraiser_fields['email'];
+	$email = trim($fundraiser_fields['email']);
 
     $amount_field = 'submitted][donation][amount';
     // look for other amount
