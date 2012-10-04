@@ -618,7 +618,7 @@ function email_confirmation_mail($key, &$message, $params) {
    'X-Mailer' => 'Drupal',
   );
 
-  $default_from = $params['from_name'] . ' <' . $params['from_address'] . '>';
+  $default_from = '"' . $params['from_name'] . '" <' . $params['from_address'] . '>';
   $headers['From'] = $headers['Sender'] =  $headers['Return-Path'] = $headers['Errors-To'] = $default_from;
   
   if (!empty($params->bcc_address)) {
