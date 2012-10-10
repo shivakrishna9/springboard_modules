@@ -1474,13 +1474,10 @@ function fundraiser_donation_process($donation) {
     $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
   }
   else {
-    // Execute the charge, generally implemented under the payment glue module.
-    // Allows for multiple responses during this process.
-    $config = isset($info['config']) ? $info['config'] : array();
-    $donation->data = (array) $donation->data;
-    $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
-    $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
-    module_invoke_all('fundraiser_donation_process', $donation, $charge_function);
+    // Execute the donation charge.
+    // Since we can't be sure what the payment system looks like, we
+    // leave that entirely to the payment module to handle.
+    module_invoke_all('fundraiser_donation_process', $donation);
   }
 }
 
@@ -1570,11 +1567,7 @@ function fundraiser_donation_refund($refund) {
     $result = array('success' => FALSE);
   }
   else {
-    // Execute the charge, generally implemented under the payment glue module.
-    // Allows for multiple responses during this process.
-    $config = isset($info['config']) ? $info['config'] : array();
-    $refund->data['config'] = array_merge($refund->data['config'], $config);
-    module_invoke_all('fundraiser_donation_refund', $refund, $refund_function);
+    module_invoke_all('fundraiser_donation_refund', $refund);
   }
 }
 

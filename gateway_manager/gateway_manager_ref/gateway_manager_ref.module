@@ -263,7 +263,9 @@ function gateway_manager_ref_widget(&$form, &$form_state, $field, $items, $delta
   $gateways = array('' => t('-- Select One --'));
   $defined_gateways = gateway_manager_load_gateways();
   foreach ($defined_gateways as $id => $defined_gateway) {
-    $gateways[$id] = $defined_gateway['name'];
+    if ($defined_gateway['status'] == 1) {
+      $gateways[$id] = $defined_gateway['name'];
+    }
   }
 
   $element['gateway_id'] = array(

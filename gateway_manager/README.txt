@@ -3,6 +3,7 @@
 
 The Gateway Manager module adds support for multiple payment gateways to Ubercart's built in 
 payment gateway system. In a standard Ubarcart install you may only have one instance of a gateway. 
+The Gateway manager is only used in an Ubercart context.
 
 This is usually sufficient for online payment processing for a single site, however this can lead to
 issues when more than one organization or accounting group needs to use the same type of payment 

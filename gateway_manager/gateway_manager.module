@@ -120,9 +120,9 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
 }
 
 /**
- * Implements hook_fundraiser_gateway_info().
+ * Implements hook_fundraiser_ubercart_gateway_info().
  */
-function gateway_manager_fundraiser_gateway_info() {
+function gateway_manager_fundraiser_ubercart_gateway_info() {
   /**
    * For the purposes of our hook we want to return:
    * Array(
@@ -142,17 +142,19 @@ function gateway_manager_fundraiser_gateway_info() {
   // Grab configured gateways.
   $gateways = gateway_manager_load_gateways();
   foreach ($gateways as $id => $gateway) {
-    // Merge type data with the gateway.
-    $gateway = array_merge($gateway, $gateway_types[ $gateway['type'] ]);
-    $this_gateway['id'] = $id; // The array_merge probably overwrote the id.
-    $this_gateway['module'] = 'gateway_manager';
-    $this_gateway['module_name'] = t('Managed Gateways');
-    $this_gateway['title'] = isset($gateway['name']) ? $gateway['name'] : $gateway['title'] . ' (Gateway managed)';
-    $this_gateway['description'] = isset($gateway['description']) ? $gateway['description'] : '';
-    $this_gateway['charge_function'] = isset($gateway['credit']) ? $gateway['credit'] : '';
-    $this_gateway['refund_function'] = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : $this_gateway['charge_function'];
-    $this_gateway['gateway_details'] = isset($gateway) ? $gateway : array();
-    $gateway_info[$id] = $this_gateway;
+    if ($gateway['status'] == 1) {
+      // Merge type data with the gateway.
+      $gateway = array_merge($gateway, $gateway_types[ $gateway['type'] ]);
+      $this_gateway['id'] = $id; // The array_merge probably overwrote the id.
+      $this_gateway['module'] = 'gateway_manager';
+      $this_gateway['module_name'] = t('Managed Gateways');
+      $this_gateway['title'] = isset($gateway['name']) ? $gateway['name'] : $gateway['title'] . ' (Gateway managed)';
+      $this_gateway['description'] = isset($gateway['description']) ? $gateway['description'] : '';
+      $this_gateway['charge_function'] = isset($gateway['credit']) ? $gateway['credit'] : '';
+      $this_gateway['refund_function'] = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : $this_gateway['charge_function'];
+      $this_gateway['gateway_details'] = isset($gateway) ? $gateway : array();
+      $gateway_info[$id] = $this_gateway;
+    }
   }
   return $gateway_info;
 }
@@ -279,12 +281,10 @@ function gateway_manager_settings_save_terms($id, $terms) {
 /**
  * DB function. Builds an array of gateways that can be selected when creating a payment gateway.
  */
-function gateway_manager_load_gateways() {
+function gateway_manager_load_gateways($status = 1) {
   static $gateways;
   if (empty($gateways)) {
-    $results = db_query('SELECT g.* FROM {gateway_manager_gateways} g ' .
-      'WHERE g.status = 1 ' .
-      'ORDER BY g.name');
+    $results = db_query('SELECT g.* FROM {gateway_manager_gateways} g ORDER BY g.name');
     $gateways = array();
     foreach ($results as $result) {
       $gateways[$result->id] = (array) $result;

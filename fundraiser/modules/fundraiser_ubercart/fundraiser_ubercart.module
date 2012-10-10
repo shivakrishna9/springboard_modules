@@ -137,6 +137,10 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $fundraiser_gateways[] = $this_gateway;
     }
   }
+  // Grab additional gateways designed to go through Ubercart.
+  // See Gateway Manager.
+  $additional_gateways = module_invoke_all('fundraiser_ubercart_gateway_info');
+  $fundraiser_gateways = array_merge($fundraiser_gateways, $additional_gateways);
   return $fundraiser_gateways;
 }
 
@@ -490,7 +494,15 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 /**
  * Implements hook_fundraiser_donation_process().
  */
-function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_function) {
+function fundraiser_ubercart_fundraiser_donation_process($donation) {
+  // Grab the gateway configuration from fundriaser's data.
+  $info = _fundraiser_gateway_info($donation->node->gateway);
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  // Create the charge information.
+  $config = isset($info['config']) ? $info['config'] : array();
+  $donation->data = (array) $donation->data;
+  $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
+  $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
   // Execute the charge as per the given gateway.
   $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
   $donation->data = array_merge($data, $donation->data);
@@ -595,8 +607,8 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
 /**
  * Implements hook_fundraiser_donation_refund().
  */
-function fundraiser_ubercart_fundraiser_donation_refund($donation, $refund_function) {
-  fundraiser_ubercart_fundraiser_donation_process($donation, $refund_function);
+function fundraiser_ubercart_fundraiser_donation_refund($donation) {
+  fundraiser_ubercart_fundraiser_donation_process($donation);
 }
 
 /**
