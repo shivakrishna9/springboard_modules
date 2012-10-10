@@ -108,9 +108,11 @@ function gm_cybersource_receipt() {
  */
 function gm_cybersource_settings_form($config = array()) {
   // Check for the HOP.php for Silent Order POST.
-  if ($config['gm_cybersource_method'] == 'post' &&
+  if (isset($config['gm_cybersource_method']) && $config['gm_cybersource_method'] == 'post' &&
       !file_exists(drupal_get_path('module', 'gm_cybersource') . '/HOP.php')) {
-    drupal_set_message(t('You must download the security script from your CyberSource account (found in Tools & Settings > Hosted Order Page > Security) and place it in the springboard/gateway_manager/gm_cybersource directory to use the Silent Order POST. Remember to open it and replace instances of L( with csL(.'), 'error');
+    drupal_set_message(t('You must download the security script from your CyberSource account (found in Tools & Settings > Hosted Order Page > Security) ' .
+      'and place it in the springboard/gateway_manager/gm_cybersource directory to use the Silent Order POST. Remember to open it and replace instances ' .
+      'of L( with csL(.'), 'error');
   }
 
   $form['gm_cybersource_server'] = array(
@@ -127,7 +129,9 @@ function gm_cybersource_settings_form($config = array()) {
   $form['gm_cybersource_method'] = array(
     '#type' => 'radios',
     '#title' => t('Payment method'),
-    '#description' => t('You must ensure your CyberSource account and web server are able to use the service you select.<br />Silent Order POST requires cURL support and a modified <a href="!url">HOP.php</a>.<br />The SOAP Toolkit API requires the SOAP and DOM extensions for PHP.', array('!url' => url('http://www.ubercart.org/contrib/139', array('absolute' => TRUE)))),
+    '#description' => t('You must ensure your CyberSource account and web server are able to use the service you select.<br />Silent Order POST requires ' .
+      'cURL support and a modified <a href="!url">HOP.php</a>.<br />The SOAP Toolkit API requires the SOAP and DOM extensions for PHP.',
+      array('!url' => url('http://www.ubercart.org/contrib/139', array('absolute' => TRUE)))),
     '#options' => array(
       'post' => t('Silent Order POST'),
       // 'api' => t('Simple Order API'),
@@ -159,12 +163,12 @@ function gm_cybersource_settings_form($config = array()) {
   $form['soap']['gm_cybersource_soap_merchant_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Merchant ID'),
-    '#default_value' => $login['merchant_id'],
+    '#default_value' => isset($login['merchant_id']) ? $login['merchant_id'] : '',
   );
   $form['soap']['gm_cybersource_soap_transaction_key'] = array(
     '#type' => 'textarea',
     '#title' => t('Transaction key'),
-    '#default_value' => $login['transaction_key'],
+    '#default_value' => isset($login['transaction_key']) ? $login['transaction_key'] : '',
   );
   $form['soap']['gm_cybersource_soap_create_profile'] = array(
     '#type' => 'checkbox',
@@ -185,46 +189,46 @@ function gm_cybersource_settings_form($config = array()) {
   $form['soap']['ship_from']['cs_ship_from_first_name'] = array(
     '#type' => 'textfield',
     '#title' => t('First name'),
-    '#default_value' => $config['cs_ship_from_first_name'],
+    '#default_value' => isset($config['cs_ship_from_first_name']) ? $config['cs_ship_from_first_name'] : '',
   );
   $form['soap']['ship_from']['cs_ship_from_last_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Last name'),
-    '#default_value' => $config['cs_ship_from_last_name'],
+    '#default_value' => isset($config['cs_ship_from_last_name']) ? $config['cs_ship_from_last_name'] : '',
   );
   $form['soap']['ship_from']['cs_ship_from_street1'] = array(
     '#type' => 'textfield',
     '#title' => t('Street address'),
-    '#default_value' => $config['cs_ship_from_street1'],
+    '#default_value' => isset($config['cs_ship_from_street1']) ? $config['cs_ship_from_street1'] : '',
   );
   $form['soap']['ship_from']['cs_ship_from_city'] = array(
     '#type' => 'textfield',
     '#title' => t('City'),
-    '#default_value' => $config['cs_ship_from_city'],
+    '#default_value' => isset($config['cs_ship_from_city']) ? $config['cs_ship_from_city'] : '',
   );
   $form['soap']['ship_from']['cs_ship_from_zone'] = array(
     '#type' => 'textfield',
     '#title' => t('State/Province'),
     '#description' => t('Enter the 2 letter abbreviation of your state or province.'),
-    '#default_value' => $config['cs_ship_from_zone'],
+    '#default_value' => isset($config['cs_ship_from_zone']) ? $config['cs_ship_from_zone'] : '',
     '#maxlength' => 2,
   );
   $form['soap']['ship_from']['cs_ship_from_postal_code'] = array(
     '#type' => 'textfield',
     '#title' => t('ZIP/Postal code'),
-    '#default_value' => $config['cs_ship_from_postal_code'],
+    '#default_value' => isset($config['cs_ship_from_postal_code']) ? $config['cs_ship_from_postal_code'] : '',
   );
   $form['soap']['ship_from']['cs_ship_from_country'] = array(
     '#type' => 'textfield',
     '#title' => t('Country code'),
     '#description' => t("Enter the 2 letter ISO 3166-1 code; consult Wikipedia if you don't know yours."),
-    '#default_value' => $config['cs_ship_from_country'],
+    '#default_value' => isset($config['cs_ship_from_country']) ? $config['cs_ship_from_country'] : '',
     '#maxlength' => 2,
   );
   $form['soap']['ship_from']['cs_ship_from_email'] = array(
     '#type' => 'textfield',
     '#title' => t('E-mail address'),
-    '#default_value' => $config['cs_ship_from_email'],
+    '#default_value' => isset($config['cs_ship_from_email']) ? $config['cs_ship_from_email'] : '',
   );
 
   return $form;
@@ -1120,8 +1124,8 @@ function _gm_cybersource_soap_login_data($config) {
     return $data;
   }
 
-  $merchant_id = $config['gm_cybersource_soap_merchant_id'];
-  $transaction_key = $config['gm_cybersource_soap_transaction_key'];
+  $merchant_id = isset($config['gm_cybersource_soap_merchant_id']) ? $config['gm_cybersource_soap_merchant_id'] : '';
+  $transaction_key = isset($config['gm_cybersource_soap_transaction_key']) ? $config['gm_cybersource_soap_transaction_key'] : '';
 
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {

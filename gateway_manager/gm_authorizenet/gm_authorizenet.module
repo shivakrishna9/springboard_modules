@@ -24,14 +24,12 @@ DEFINE('AUTH_NET_ERROR_AVS_MISMATCH', 127);
  */
 function gm_authorizenet_menu() {
   $items = array();
-
   $items['authnet/silent-post'] = array(
     'page callback' => 'gm_authorizenet_silent_post',
     'access callback' => 'gm_authorizenet_silent_post_access',
     'type' => MENU_CALLBACK,
     'file' => 'gm_authorizenet.pages.inc',
   );
-
   return $items;
 }
 
@@ -58,7 +56,6 @@ function gm_authorizenet_gateway_manager_gateway_info() {
     'credit_refund' => 'gm_authorizenet_refund',
     'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
   );
-
   return $gateways;
 }
 
@@ -89,17 +86,19 @@ function gm_authorizenet_settings_form($config = array()) {
   $form['api_id_key'] = array(
     '#type' => 'fieldset',
     '#title' => t('API Login ID and Transaction Key'),
-    '#description' => t('This information is required for Ubercart to interact with your payment gateway account.  It is different from your login ID and password and may be found through your account settings page.  Do not change the gateway URLs unless you are using this module with an Authorize.net-compatible gateway that requires different URLs.'),
+    '#description' => t('This information is required for Ubercart to interact with your payment gateway account. ' .
+      'It is different from your login ID and password and may be found through your account settings page.  Do not ' .
+      'change the gateway URLs unless you are using this module with an Authorize.net-compatible gateway that requires different URLs.'),
   );
   $form['api_id_key']['gm_authnet_api_login_id'] = array(
     '#type' => 'textfield',
     '#title' => t('API Login ID'),
-    '#default_value' => $config['gm_authnet_api_login_id'],
+    '#default_value' => isset($config['gm_authnet_api_login_id']) ? $config['gm_authnet_api_login_id'] : '',
   );
   $form['api_id_key']['gm_authnet_api_transaction_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Transaction Key'),
-    '#default_value' => $config['gm_authnet_api_transaction_key'],
+    '#default_value' => isset($config['gm_authnet_api_transaction_key']) ? $config['gm_authnet_api_transaction_key'] : '',
   );
   $form['api_id_key']['gm_authnet_api_test_gateway_url'] = array(
     '#type' => 'textfield',
