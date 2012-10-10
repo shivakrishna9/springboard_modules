@@ -1,0 +1,92 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the fundraiser_multi_currency module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function fundraiser_multi_currency_schema() {
+  $schema = array();
+  $schema['fundraiser_currencies'] = array(
+    'description' => 'Default currencies to use for donation forms',
+    'fields' => array(
+      'currency_id' => array(
+        'description' => 'ID for the currency',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'symbol' => array(
+        'description' => 'Curency symbol',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'code' => array(
+        'description' => 'Currency code',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'name' => array(
+        'description' => 'Currency name',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('currency_id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function fundraiser_multi_currency_install() {
+  _fundraiser_multi_currency_insert_defaults();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function fundraiser_multi_currency_uninstall() {
+  drupal_set_message(t('Nodes that previously had a currancy field - still do. Be sure to update your donation forms.'));
+}
+
+/**
+ * Insert default available currancies.
+ */
+function _fundraiser_multi_currency_insert_defaults() {
+  $ret = array();
+  $currencies[] =  array(
+    'symbol' => '$',
+    'code' => 'USD',
+    'name' => 'US Dollars',
+  );
+  $currencies[] =  array(
+    'symbol' => '€',
+    'code' => 'EUR',
+    'name' => 'Euros',
+  );
+  $currencies[] =  array(
+    'symbol' => '£',
+    'code' => 'GBP',
+    'name' => 'UK Pounds',
+  );
+  foreach ($currencies as $record) {
+    if (!db_query('SELECT 1 FROM {fundraiser_currencies} WHERE code = :code', array(':code' => $record['code']))->fetchField()) {
+      //drupal_write_record('fundraiser_currencies', $record); Not using write record here per doc.
+      db_insert('fundraiser_currencies')->fields($record)->execute();
+    }
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ * Load defaults into the db for sites that don't already have them.
+ */
+function fundraiser_multi_currency_update_6001() {
+  _fundraiser_multi_currency_insert_defaults();
+}
