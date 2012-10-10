@@ -155,7 +155,7 @@ function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) 
   if (isset($currency_field) && !empty($currency_field)) {
     // Add js to support switching as needed.
     if ($currency_field['#type'] != 'hidden') {
-      drupal_add_js(drupal_get_path('module', 'fundraiser_multi_currency') . '/js/currency_switch.js');
+      drupal_add_js(drupal_get_path('module', 'fundraiser_multi_currency') . '/js/fundraiser_multi_currency.js');
       // Pass the default value up so our js knows where to start.
       drupal_add_js(array('fundraiser_multi_currency' => array(
           'currencies' => $currencies,
