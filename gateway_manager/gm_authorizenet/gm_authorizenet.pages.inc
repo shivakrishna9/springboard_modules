@@ -6,7 +6,6 @@
  *   specific recurring fee operation pages.
  */
 
-
 // Receives a payment notification and handles it appropriately.
 /**
  * @todo Please document this function.
@@ -56,7 +55,8 @@ function gm_authorizenet_silent_post() {
       // **** start @deprecated code ******
       if (function_exists('uc_recurring_fee_save')) {
         // Otherwise, update the recurring fee information in our database.
-        $fee = db_fetch_array(db_query("SELECT * FROM {uc_recurring_users} WHERE fee_handler = :fee_handler AND data = :data", array(':fee_handler' => 'uc_authorizenet', ':data' => $_POST['x_subscription_id'])));
+        $fee = db_fetch_array(db_query("SELECT * FROM {uc_recurring_users} WHERE fee_handler = :fee_handler AND data = :data",
+          array(':fee_handler' => 'uc_authorizenet', ':data' => $_POST['x_subscription_id'])));
 
         // Only process if the fee actually exists!
         if (!empty($fee)) {
@@ -72,7 +72,8 @@ function gm_authorizenet_silent_post() {
 
           // Log the ARB payment if enabled.
           if (variable_get('uc_authnet_report_arb_post', FALSE)) {
-            watchdog('uc_authorizenet', 'ARB payment reported for order @order_id: <pre>@post</pre>', array('@order_id' => $fee['order_id'], '@post' => print_r($_POST, TRUE)));
+            watchdog('uc_authorizenet', 'ARB payment reported for order @order_id: <pre>@post</pre>',
+              array('@order_id' => $fee['order_id'], '@post' => print_r($_POST, TRUE)));
           }
 
           // Let other modules act on the data.

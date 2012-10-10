@@ -19,7 +19,8 @@ function gm_authorizenet_requirements($phase) {
   );
   if (!$has_curl) {
     $requirements['gm_authorizenet_curl']['severity'] = REQUIREMENT_ERROR;
-    $requirements['gm_authorizenet_curl']['description'] = $t("Springboard Authorize.net requires the PHP <a href='!curl_url'>cURL</a> library.", array('!curl_url' => 'http://php.net/manual/en/curl.setup.php'));
+    $requirements['gm_authorizenet_curl']['description'] = $t("Springboard Authorize.net requires the PHP <a href='!curl_url'>cURL</a> library.",
+      array('!curl_url' => 'http://php.net/manual/en/curl.setup.php'));
   }
 
   return $requirements;
@@ -31,8 +32,6 @@ function gm_authorizenet_requirements($phase) {
  */
 function gm_authorizenet_uninstall() {
   // Delete related variables all at once.
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("DELETE FROM {variable} WHERE name LIKE 'gm_authnet_%%'") */
   db_delete('variable')
   ->condition('name', 'gm_authnet_%%', 'LIKE')
   ->execute();

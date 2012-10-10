@@ -1,6 +1,5 @@
 name = CyberSource Managed
 description = Enable to process payments using CyberSource Silent Order POST.
-dependencies[] = fundraiser
 dependencies[] = gateway_manager
 
 package = Jackson River Springboard - payment

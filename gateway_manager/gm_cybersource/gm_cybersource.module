@@ -7,7 +7,6 @@
  * Development sponsored by Acquia - http://acquia.com
  */
 
-
 /**
  * Implements hook_menu().
  */
@@ -253,7 +252,7 @@ function gm_cybersource_charge($order_id, $amount, $data) {
     'dec' => '.',
   );
 
-  $amount = uc_price($amount, $context, $options);
+  $amount = theme('uc_price', array('price' => $amount, 'suffixes' => array()));
 
   $cc_type = NULL;
   if (isset($order->payment_details['cc_type'])) {
@@ -279,7 +278,8 @@ function gm_cybersource_charge($order_id, $amount, $data) {
     $cc_type = _gm_cybersource_card_type($order->payment_details['cc_number']);
     if ($cc_type === FALSE && in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE))) {
       drupal_set_message(t('The credit card type did not pass validation.'), 'error');
-      watchdog('gm_cybersource', 'Could not figure out cc type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type']), WATCHDOG_ERROR);
+      watchdog('gm_cybersource', 'Could not figure out cc type: @number / @type',
+        array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type']), WATCHDOG_ERROR);
       return array('success' => FALSE);
     }
   }
@@ -409,8 +409,12 @@ function _gm_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
       'revision' => 'formatted-original',
       'type' => 'amount',
     );
-    $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('!type' => $data['config']['gm_cybersource_transaction_type'], '!amount' => uc_price($nvp['orderAmount'], $context), '@decision' => $nvp['decision'], '!reason' => _gm_cybersource_parse_cs_reason_code($nvp['reasonCode'])));
-    $p_comment = t('!id<br />!decision, Reason: !reason', array('!id' => $nvp['orderPage_serialNumber'], '!decision' => $nvp['decision'], '!reason' => $nvp['reasonCode']));
+    $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason',
+      array('!type' => $data['config']['gm_cybersource_transaction_type'],
+      '!amount' => theme('uc_price', array('price' => $nvp['orderAmount'], 'suffixes' => array())),
+      '@decision' => $nvp['decision'], '!reason' => _gm_cybersource_parse_cs_reason_code($nvp['reasonCode'])));
+    $p_comment = t('!id<br />!decision, Reason: !reason',
+      array('!id' => $nvp['orderPage_serialNumber'],'!decision' => $nvp['decision'], '!reason' => $nvp['reasonCode']));
     if (!empty($nvp['ccAuthReply_avsCode'])) {
       $o_comment .= t('<br /><b>AVS:</b> !avs', array('!avs' => _gm_cybersource_parse_cs_avs_code($nvp['ccAuthReply_avsCode'])));
       $p_comment .= t(', AVS: @avs', array('@avs' => $nvp['ccAuthReply_avsCode']));
@@ -641,8 +645,11 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
       'revision' => 'formatted-original',
       'type' => 'amount',
     );
-    $o_comment = t('<b>@type:</b> @amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($amount, $context), '@decision' => $reply->decision, '!reason' => _gm_cybersource_parse_cs_reason_code($reply->reasonCode)));
-    $p_comment = t('<b>@type:</b><br />@id<br />@decision, Reason: !reason', array('@type' => $types[$data['txn_type']], '@id' => $reply->requestID, '@decision' => $reply->decision, '!reason' => $reply->reasonCode));
+    $o_comment = t('<b>@type:</b> @amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason',
+      array('@type' => $types[$data['txn_type']], '@amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array())),
+      '@decision' => $reply->decision, '!reason' => _gm_cybersource_parse_cs_reason_code($reply->reasonCode)));
+    $p_comment = t('<b>@type:</b><br />@id<br />@decision, Reason: !reason',
+      array('@type' => $types[$data['txn_type']], '@id' => $reply->requestID, '@decision' => $reply->decision, '!reason' => $reply->reasonCode));
 
     if (!empty($reply->ccAuthReply->avsCode)) {
       $o_comment .= '<br />' . t('<b>AVS:</b> @avs', array('@avs' => _gm_cybersource_parse_cs_avs_code($reply->ccAuthReply->avsCode)));
@@ -663,10 +670,12 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
         // Save the subscription ID to the order's data array.
         $order->data = uc_credit_log_reference($order->order_id, $id, $order->payment_details['cc_number']);
 
-        uc_order_comment_save($order->order_id, 0, t('<b>CyberSource profile created.</b><br /><b>Subscription ID:</b> @id', array('@id' => $id)), 'admin');
+        uc_order_comment_save($order->order_id, 0, t('<b>CyberSource profile created.</b><br /><b>Subscription ID:</b> @id',
+          array('@id' => $id)), 'admin');
       }
       else {
-        uc_order_comment_save($order->order_id, 0, t('<b>Attempt to create CyberSource profile failed.</b><br /><b>Reason:</b> @code', array('@code' => $reply->paySubscriptionCreateReply->reasonCode)), 'admin');
+        uc_order_comment_save($order->order_id, 0, t('<b>Attempt to create CyberSource profile failed.</b><br /><b>Reason:</b> @code',
+          array('@code' => $reply->paySubscriptionCreateReply->reasonCode)), 'admin');
       }
     }
 
@@ -692,14 +701,13 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
         $order->data['cybersource'][$reply->requestID] = $reply->requestToken;
 
         // Save the updated data array to the database.
-        // TODO Please review the conversion of this statement to the D7 database API syntax.
         /* db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id) */
         db_update('uc_orders')
-  ->fields(array(
-    'data' => serialize($order->data),
-  ))
-  ->condition('order_id', $order->order_id)
-  ->execute();
+        ->fields(array(
+        'data' => serialize($order->data),
+        ))
+        ->condition('order_id', $order->order_id)
+        ->execute();
       }
       elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
         uc_credit_log_prior_auth_capture($order->order_id, $data['auth_id']);
@@ -714,11 +722,11 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
         // TODO Please review the conversion of this statement to the D7 database API syntax.
         /* db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id) */
         db_update('uc_orders')
-  ->fields(array(
-    'data' => serialize($order->data),
-  ))
-  ->condition('order_id', $order->order_id)
-  ->execute();
+        ->fields(array(
+        'data' => serialize($order->data),
+        ))
+        ->condition('order_id', $order->order_id)
+        ->execute();
       }
     }
     else {
@@ -858,7 +866,7 @@ function gm_cybersource_tax_test($order) {
     $context['subject'] = array(
       'tax' => $tax,
     );
-    $items[] = t('@tax: @amount', array('@tax' => $tax['name'], '@amount' => uc_price($tax['amount'], $context)));
+    $items[] = t('@tax: @amount', array('@tax' => $tax['name'], '@amount' => theme('uc_price', array('price' => $tax['amount'], 'suffixes' => array()))));
   }
 
   // Display a message if there are no taxes.
@@ -1071,7 +1079,9 @@ function gm_cybersource_calculate_tax($order) {
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
-        watchdog('gm_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_price($reply->taxReply->totalTaxAmount, $context), '@dump' => '<pre>' . print_r($result, TRUE) . '</pre>'), WATCHDOG_ERROR);
+        watchdog('gm_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump',
+          array('@total' => theme('uc_price', array('price' => $reply->taxReply->totalTaxAmount, 'suffixes' => array())),
+            '@dump' => '<pre>' . print_r($result, TRUE) . '</pre>'), WATCHDOG_ERROR);
 
         $result = array(
           array(
@@ -1083,11 +1093,13 @@ function gm_cybersource_calculate_tax($order) {
       }
     }
     else {
-      watchdog('gm_cybersource', 'Attempted to calculate taxes failed for order @order_id - reason @code', array('@order_id' => $order->order_id, '@code' => $reply->reasonCode), WATCHDOG_ERROR);
+      watchdog('gm_cybersource', 'Attempted to calculate taxes failed for order @order_id - reason @code',
+        array('@order_id' => $order->order_id, '@code' => $reply->reasonCode), WATCHDOG_ERROR);
     }
   }
   else {
-    watchdog('gm_cybersource', 'Attempted to calculate taxes failed for order @order_id. No response returned from CyberSource.', array('@order_id' => $order->order_id), WATCHDOG_ERROR);
+    watchdog('gm_cybersource', 'Attempted to calculate taxes failed for order @order_id. No response returned from CyberSource.',
+      array('@order_id' => $order->order_id), WATCHDOG_ERROR);
     $result = array();
   }
 
@@ -1186,55 +1198,73 @@ function _gm_cybersource_parse_cs_reason_code($code) {
     case '150':
       return t('<b>Error:</b> General system failure.<br /><b>Possible action:</b> Wait a few minutes and resend the request.');
     case '151':
-      return t('<b>Error:</b> The request was received, but a server time-out occurred. This error does not include time-outs between the client and the server.<br /><b>Possible action:</b> To avoid duplicating the order, do not resend the request until you have reviewed the order status in the Business Center.');
+      return t('<b>Error:</b> The request was received, but a server time-out occurred. This error does not include time-outs between the client and the ' .
+      'server.<br /><b>Possible action:</b> To avoid duplicating the order, do not resend the request until you have reviewed the order status in the ' .
+      'Business Center.');
     case '152':
-      return t('<b>Error:</b> The request was received, but a service did not finish running in time.<br /><b>Possible action:</b> To avoid duplicating the order, do not resend the request until you have reviewed the order status in the Business Center.');
+      return t('<b>Error:</b> The request was received, but a service did not finish running in time.<br /><b>Possible action:</b> To avoid duplicating the ' .
+      'order, do not resend the request until you have reviewed the order status in the Business Center.');
     case '200':
-      return t('The authorization request was approved by the issuing bank but declined by CyberSource because it did not pass the Address Verification Service (AVS) check.<br /><b>Possible action:</b> You can capture the authorization, but consider reviewing the order for the possibility of fraud.');
+      return t('The authorization request was approved by the issuing bank but declined by CyberSource because it did not pass the Address Verification ' .
+      'Service (AVS) check.<br /><b>Possible action:</b> You can capture the authorization, but consider reviewing the order for the possibility of fraud.');
     case '202':
       return t('Expired card.<br /><b>Possible action:</b> Request a different card or other form of payment.');
     case '203':
-      return t('General decline of the card. No other information provided by the issuing bank.<br /><b>Possible action:</b> Request a different card or other form of payment.');
+      return t('General decline of the card. No other information provided by the issuing bank.<br /><b>Possible action:</b> Request a different card or ' .
+      'other form of payment.');
     case '204':
       return t('Insufficient funds in the account.<br /><b>Possible action:</b> Request a different card or other form of payment.');
     case '205':
-      return t("Stolen or lost card.<br /><b>Possible action:</b> Review the customer's information and determine if you want to request a different card from the customer.");
+      return t("Stolen or lost card.<br /><b>Possible action:</b> Review the customer's information and determine if you want to request a different card ' .
+      'from the customer.");
     case '207':
       return t('Issuing bank unavailable.<br /><b>Possible action:</b> Wait a few minutes and resend the request.');
     case '208':
-      return t('Inactive card or card not authorized for card-not-present transactions.<br /><b>Possible action:</b> Request a different card or other form of payment.');
+      return t('Inactive card or card not authorized for card-not-present transactions.<br /><b>Possible action:</b> Request a different card or other form ' .
+      'of payment.');
     case '210':
       return t('The card has reached the credit limit.<br /><b>Possible action:</b> Request a different card or other form of payment.');
     case '211':
       return t('The card verification number is invalid.<br /><b>Possible action:</b> Request a different card or other form of payment.');
     case '220':
-      return t("The processor declined the request based on a general issue with the customer's account.<br /><b>Possible action:</b> Request a different form of payment.");
+      return t("The processor declined the request based on a general issue with the customer's account.<br /><b>Possible action:</b> Request a different ' .
+      'form of payment.");
     case '221':
-      return t('The customer matched an entry on the processor’s negative file.<br /><b>Possible action:</b> Review the order and contact the payment processor.');
+      return t('The customer matched an entry on the processor’s negative file.<br /><b>Possible action:</b> Review the order and contact the payment ' .
+      'processor.');
     case '222':
       return t("The customer's bank account is frozen.<br /><b>Possible action:</b> Review the order or request a different form of payment.");
     case '230':
-      return t('The authorization request was approved by the issuing bank but declined by CyberSource because it did not pass the card verification number check.<br /><b>Possible action:</b> You can capture the authorization, but consider reviewing the order for the possibility of fraud.');
+      return t('The authorization request was approved by the issuing bank but declined by CyberSource because it did not pass the card verification number ' .
+      'check.<br /><b>Possible action:</b> You can capture the authorization, but consider reviewing the order for the possibility of fraud.');
     case '231':
       return t('Invalid account number.<br /><b>Possible action:</b> Request a different card or other form of payment.');
     case '232':
-      return t('The card type is not accepted by the payment processor.<br /><b>Possible action:</b> Request a different card or other form of payment. Also, check with CyberSource Customer Support to make sure that your account is configured correctly.');
+      return t('The card type is not accepted by the payment processor.<br /><b>Possible action:</b> Request a different card or other form of payment. ' .
+      'Also, check with CyberSource Customer Support to make sure that your account is configured correctly.');
     case '233':
-      return t('The processor declined the request based on an issue with the request itself.<br /><b>Possible action:</b> Request a different form of payment.');
+      return t('The processor declined the request based on an issue with the request itself.<br /><b>Possible action:</b> Request a different form of ' .
+      'payment.');
     case '234':
-      return t('There is a problem with your CyberSource merchant configuration.<br /><b>Possible action:</b> Do not resend the request. Contact Customer Support to correct the configuration problem.');
+      return t('There is a problem with your CyberSource merchant configuration.<br /><b>Possible action:</b> Do not resend the request. Contact Customer ' .
+      'Support to correct the configuration problem.');
     case '236':
       return t('Processor failure.<br /><b>Possible action:</b> Possible action: Wait a few minutes and resend the request.');
     case '240':
-      return t('The card type sent is invalid or does not correlate with the credit card number.<br /><b>Possible action:</b> Ask your customer to verify that the card is really the type indicated in your Web store, then resend the request.');
+      return t('The card type sent is invalid or does not correlate with the credit card number.<br /><b>Possible action:</b> Ask your customer to verify ' .
+      'that the card is really the type indicated in your Web store, then resend the request.');
     case '250':
-      return t('<b>Error:</b> The request was received, but a time-out occurred with the payment processor.<br /><b>Possible action:</b> To avoid duplicating the transaction, do not resend the request until you have reviewed the transaction status in the Business Center.');
+      return t('<b>Error:</b> The request was received, but a time-out occurred with the payment processor.<br /><b>Possible action:</b> To avoid ' .
+      'duplicating the transaction, do not resend the request until you have reviewed the transaction status in the Business Center.');
     case '475':
-      return t('The customer is enrolled in payer authentication.<br /><b>Possible action:</b> Authenticate the cardholder before continuing with the transaction.');
+      return t('The customer is enrolled in payer authentication.<br /><b>Possible action:</b> Authenticate the cardholder before continuing with the ' .
+      'transaction.');
     case '476':
       return t("The customer cannot be authenticated.<br /><b>Possible action:</b> Review the customer's order.");
     case '520':
-      return t('The authorization request was approved by the issuing bank but declined by CyberSource based on your Smart Authorization settings.<br /><b>Possible action:</b> Do not capture the authorization without further review. Review the avsCode, cvResult, and factorCode fields to determine why CyberSource rejected the request.');
+      return t('The authorization request was approved by the issuing bank but declined by CyberSource based on your Smart Authorization settings.' .
+      '<br /><b>Possible action:</b> Do not capture the authorization without further review. Review the avsCode, cvResult, and factorCode fields to ' .
+      'determine why CyberSource rejected the request.');
   }
 }
 
@@ -1264,7 +1294,8 @@ function _gm_cybersource_parse_cs_avs_code($code) {
     case 'L':
       return t("Card member's name and billing postal code match, but billing address does not match. Returned only for the American Express card type");
     case 'N':
-      return t("Street address and postal code do not match. - or - Card member's name, street address and postal code do not match. Returned only for the American Express card type.");
+      return t("Street address and postal code do not match. - or - Card member's name, street address and postal code do not match. Returned only ' .
+      'for the American Express card type.");
     case 'O':
       return t("Card member's name and billing address match, but billing postal code does not match. Returned only for the American Express card type.");
     case 'P':

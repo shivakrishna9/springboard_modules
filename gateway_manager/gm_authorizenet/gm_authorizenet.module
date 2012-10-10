@@ -10,14 +10,12 @@
 define('gm_authorizenet_TEST_GATEWAY_URL', 'https://test.authorize.net/gateway/transact.dll');
 define('gm_authorizenet_LIVE_GATEWAY_URL', 'https://secure.authorize.net/gateway/transact.dll');
 
-
 // Define some error codes used to check the error type
 DEFINE('AUTH_NET_ERROR_DUPLICATE_TRANSACTION', 11);
 DEFINE('AUTH_NET_ERROR_CC_NUMBER_INVALID', 37);
 DEFINE('AUTH_NET_ERROR_INVALID_METHOD', 70);
 DEFINE('AUTH_NET_ERROR_INVALID_FORM_TYPE', 81);
 DEFINE('AUTH_NET_ERROR_AVS_MISMATCH', 127);
-
 
 /**
  * Implements hook_menu().
@@ -32,7 +30,6 @@ function gm_authorizenet_menu() {
   );
   return $items;
 }
-
 
 // Make sure Authorize.Net always has access to send Silent POSTs.
 /**
@@ -119,7 +116,8 @@ function gm_authorizenet_settings_form($config = array()) {
   $form['aim_settings']['gm_authnet_aim_txn_mode'] = array(
     '#type' => 'radios',
     '#title' => t('Transaction mode'),
-    '#description' => t('Only specify a developer test account if you login to your account through https://test.authorize.net.<br />Adjust to live transactions when you are ready to start processing real payments.'),
+    '#description' => t('Only specify a developer test account if you login to your account through https://test.authorize.net.<br />' .
+      'Adjust to live transactions when you are ready to start processing real payments.'),
     '#options' => array(
       'live' => t('Live transactions in a live account'),
       'live_test' => t('Test transactions in a live account'),
@@ -152,7 +150,8 @@ function gm_authorizenet_settings_form($config = array()) {
   $form['cim_settings']['gm_authnet_cim_mode'] = array(
     '#type' => 'radios',
     '#title' => t('Transaction mode'),
-    '#description' => t('Only specify a developer test account if you login to your account through https://test.authorize.net.<br />Adjust to live transactions when you are ready to start processing real payments.'),
+    '#description' => t('Only specify a developer test account if you login to your account through https://test.authorize.net.<br />' .
+      'Adjust to live transactions when you are ready to start processing real payments.'),
     '#options' => array(
       'production' => t('Production'),
       'developer' => t('Developer test'),
@@ -160,7 +159,6 @@ function gm_authorizenet_settings_form($config = array()) {
     ),
     '#default_value' => !empty($config['gm_authnet_cim_mode']) ? $config['gm_authnet_cim_mode'] : 'disabled',
   );
-
 
   return $form;
 }
@@ -337,7 +335,8 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
         'revision' => 'formatted-original',
         'type' => 'amount',
       );
-      $comment[] = t('<b>@type:</b> @amount', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($amount, $context)));
+      $comment[] = t('<b>@type:</b> @amount',
+        array('@type' => $types[$data['txn_type']],'@amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array()))));
 
       // Save a comment to the order.
       uc_order_comment_save($order->order_id, $user->uid, implode('<br />', $comment), 'admin');
@@ -447,7 +446,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_method' => $order->payment_method == 'credit' ? 'CC' : 'ECHECK',
     'x_method' => 'CC',
     // 'x_recurring_billing' => 'FALSE',
-    'x_amount' => uc_price($amount, $context, $options),
+    'x_amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array())),
     'x_card_num' => $order->payment_details['cc_number'],
     'x_exp_date' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'x_card_code' => $order->payment_details['cc_cvv'],
@@ -633,7 +632,8 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     'type' => 'amount',
   );
   $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
-    array('@type' => _gm_authorizenet_txn_type($response[11]), '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), '@message' => $response[3], '@amount' => uc_price($response[9], $context), '@avs' => _gm_authorizenet_avs($response[5])));
+    array('@type' => _gm_authorizenet_txn_type($response[11]), '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'),
+      '@message' => $response[3], '@amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array())), '@avs' => _gm_authorizenet_avs($response[5])));
 
   // Add the CVV response if enabled.
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
@@ -941,7 +941,6 @@ function _gm_authorizenet_login_data() {
 
   return $data;
 }
-
 
 /**
  * Issue a refund
