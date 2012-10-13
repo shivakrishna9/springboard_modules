@@ -949,6 +949,14 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
+
+	// Check for confusing selection.
+	if (!empty($submission_fields['amount']) && !empty($submission_fields['other_amount'])) {
+    return t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
+      'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
+      'the radio buttons.');
+	}
+
   $value = $submission_fields['amount'];
   // Look for other amount if set.
   if ($submission_fields['amount'] == "other") {
