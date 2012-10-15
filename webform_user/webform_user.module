@@ -745,15 +745,8 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
  */ 
 function _webform_user_save_profile_map($uid, &$map) {
 
-  if ($map) {
-    global $user;
-    
-    if ($user->uid == 0) {
-      $user_to_update = user_load($uid);
-    }
-    else {
-      $user_to_update = $user;
-    }
+  if ($map && $uid !== 0) {
+    $user_to_update = user_load($uid);
 
     if(module_exists('profile')){
       $cat_array = profile_categories();

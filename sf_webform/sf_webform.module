@@ -792,11 +792,13 @@ function _sf_webform_bulk_operations_requeue_submission($submission, $context) {
       // Put the submission data into an array keyed by the form_keys
       foreach ($map as $form_key => $profile_field) {
         $cid = _sf_webform_find_cid($node, $form_key);
-        $fields[$form_key] = $submission->data[$cid]['value'][0];
+        if ($cid) {
+          $fields[$form_key] = $submission->data[$cid]['value'][0];
+        }
       }
 
       // Map the fields to profile keys
-      $profile_map = _webform_user_get_map($nid, $fields);
+      $profile_map = _webform_user_get_map($node->nid, $fields);
       // If there is no user account then create one
       if(!$account = user_load(array('mail' => $fields['mail']))) {
         $user_fields = array(
@@ -809,12 +811,15 @@ function _sf_webform_bulk_operations_requeue_submission($submission, $context) {
         $account = user_save('', $user_fields);
         // This function will update the profile and insert this user into the queue
         _webform_user_save_profile_map($account->uid, $profile_map);
-        // Update the submission record with the id of the user
-        db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $submission->sid);
       }
       // If the user hasn't been to the site since this submission then update their profile values
       elseif ($account->access < $submission->submitted) {
         _webform_user_save_profile_map($account->uid, $profile_map);
+      }
+
+      // Update the submission record with the id of the user
+      if ($account->uid) {
+        db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $submission->sid);
       }
     }
   }
