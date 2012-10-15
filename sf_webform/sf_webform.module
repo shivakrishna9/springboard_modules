@@ -782,8 +782,66 @@ function _sf_webform_bulk_operations_submission_load($sid) {
  *  Send webform submissions to the queue for Salesforce
  */
 function _sf_webform_bulk_operations_requeue_submission($submission, $context) {
+  // If the webform_user module is setup and this node is configured to use it, these submissions need to have user accounts
+  if (module_exists('webform_user')) {
+    $node = node_load($submission->nid);
+    if ($node->is_webform_user) {
+
+      // We need to get the webform user map first to know what fields to work with
+      $map = webform_user_user_map($node->nid);
+      // Put the submission data into an array keyed by the form_keys
+      foreach ($map as $form_key => $profile_field) {
+        $cid = _sf_webform_find_cid($node, $form_key);
+        $fields[$form_key] = $submission->data[$cid]['value'][0];
+      }
+
+      // Map the fields to profile keys
+      $profile_map = _webform_user_get_map($nid, $fields);
+      // If there is no user account then create one
+      if(!$account = user_load(array('mail' => $fields['mail']))) {
+        $user_fields = array(
+          'name' => $fields['mail'],
+          'mail' => $fields['mail'],
+          'init' => $fields['mail'],
+          'pass' => user_password(8),
+          'status' => 1,
+        );
+        $account = user_save('', $user_fields);
+        // This function will update the profile and insert this user into the queue
+        _webform_user_save_profile_map($account->uid, $profile_map);
+        // Update the submission record with the id of the user
+        db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $account->uid, $submission->sid);
+      }
+      // If the user hasn't been to the site since this submission then update their profile values
+      elseif ($account->access < $submission->submitted) {
+        _webform_user_save_profile_map($account->uid, $profile_map);
+      }
+    }
+  }
+
   // if the submission has already been mapped do an update call
   $mapped = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND (drupal_type = 'webform' OR drupal_type = 'webform_user')", $submission->sid));
   $action = $mapped ? 'update' : 'upsert';
   sf_queue_insert($submission->sid, 'webform', $action);
+}
+
+/**
+ * retrieves component cid from the node webform components array.
+ *
+ * @param $node
+ * Node object
+ *
+ * @param $form_key
+ * Form key of the component we are looking for
+ *
+ * @return
+ * Returns the cid for the webform component or FALSE if no matching component was found.
+ */
+function _sf_webform_find_cid($node, $form_key) {
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['form_key'] == $form_key) {
+      return $component['cid'];
+    }
+  }
+  return FALSE;
 }
