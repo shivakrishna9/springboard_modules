@@ -355,10 +355,11 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
   global $user;
   drupal_set_message('gm_sage_vault_bankcard_request start data: ' . print_r($data, 1));
   drupal_set_message('gm_sage_vault_bankcard_request start order: ' . print_r($order, 1));
+
   // Load the billing data from the local Vault.
   $vault = db_fetch_object(db_query("SELECT * FROM {gm_sage_vault} WHERE uid = %d AND guid = '%s'", $order->uid, strtolower($data['ref_id'])));
 
-  $billing_country = uc_get_country_data(array('country_id' => $vault->billing_country));
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
 
   $context = array(
     'revision' => 'formatted-original',
@@ -372,15 +373,15 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
 
   // Build an array of data to be POSTed for the transaction.
   $post_data = array(
-    'C_NAME' => $vault->billing_name,
-    'C_ADDRESS' => $vault->billing_street1 .' '. $vault->billing_street2,
-    'C_CITY' => $vault->billing_city,
-    'C_STATE' => uc_get_zone_code($vault->billing_zone),
-    'C_ZIP' => $vault->billing_postal_code,
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
     'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
     'C_EMAIL' => $order->primary_email,
     'GUID' => strtolower($data['ref_id']),
-    'T_CUSTOMER_NUMBER' => $vault->uid,
+    'T_CUSTOMER_NUMBER' => $order->uid,
     'T_AMT' => uc_price($amount, $context, $options),
     'T_SHIPPING' => '',
     'T_TAX' => '',
@@ -394,9 +395,13 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
     'C_SHIP_ZIP' => '',
     'C_SHIP_COUNTRY' => '',
   );
+
+  drupal_set_message(print_r($post_data, true));
   $xml = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT_BANKCARD, 'VAULT_BANKCARD_SALE');
 
   $response = _gm_sage_parse_vault_bankcard_response($xml->asXML());
+
+  drupal_set_message(print_r($response, TRUE));
 
   // If the transaction was not approved...
   if ($response['approval_indicator'] != 'A') {
