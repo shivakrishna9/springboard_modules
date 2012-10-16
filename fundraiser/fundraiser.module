@@ -2253,7 +2253,7 @@ function fundraiser_process_recurring_donations() {
   	);
    	
    	$charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
-   	
+
    	if (empty($charge_function)) {
       db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
    	  watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
@@ -2876,6 +2876,13 @@ function _fundraiser_months_between_dates($exp_month, $exp_year){
  * Gets the gateway associated with a given order. First it looks to see if the gateway has been
  * stored with the individual order. If it hasn't it uses the gateway that was assigned to the
  * donation form where the order originated.
+ *
+ * @param $order_id
+ *   The id of the order being charged.
+ * @param $nid
+ *   The id of the donation form node where the order was generated.
+ * @param $data
+ *   Associative array of other information that might be needed to run a charge.
  */
 function _fundraiser_charge_function($order_id, $nid, &$data) {
   // first, see if the gateway is stored with the order
@@ -2888,6 +2895,9 @@ function _fundraiser_charge_function($order_id, $nid, &$data) {
 
   $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $gateway);
   if ($payment_gateway['charge_function']) {
+    if (!empty($payment_gateway['config'])) {
+      $data['config'] = $payment_gateway['config'];
+    }
     return $payment_gateway['charge_function'];
   }
 
