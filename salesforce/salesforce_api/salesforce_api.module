@@ -1068,6 +1068,8 @@ function salesforce_api_fieldmap_field_options($object, $type = NULL, $name = NU
  *   An object containing data ready for export to Salesforce or FALSE if
  *     the operation failed.
  */
+// NOTE watch here for how to avoid re=using redundant code.
+// This section will may need to get reworked to handle our code.
 function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $existing_sf_object = NULL) {
   // Load the fieldmap from the database.
   $map = salesforce_api_salesforce_fieldmap_load($name);
@@ -1082,6 +1084,9 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
 
   // Loop through the fields on the fieldmap.
   foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
+// TODO this whole thing will probably get gutted, it needs to be cleaned up from
+// our field map logic in D^. Make sure to try and make things reusable.
+// Keep the stuff outside of this loop.
     $value = '';
     $sf_field_definition = $sf_object_definition['fields'][$sf_fieldname];
     $updateable = $sf_field_definition['type'] & SALESFORCE_FIELD_UPDATEABLE;
@@ -1265,6 +1270,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
   }
   
   // Invoke hook_salesforce_api_fieldmap_export_create($sf_object, $fieldmap, $drupal_data, $existing_sf_object).
+// Make sure to keep this, we added it, we need it for second pass from webform
   foreach (module_implements('salesforce_api_fieldmap_export_create') as $module) {
     $function = $module . '_salesforce_api_fieldmap_export_create';
     $function($object, $map, $drupal_data, $existing_sf_object);
