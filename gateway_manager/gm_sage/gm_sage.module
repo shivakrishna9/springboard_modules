@@ -21,6 +21,7 @@ function gm_sage_payment_gateway_managed() {
     'settings' => 'gm_sage_settings_form',
     'credit' => 'gm_sage_charge',
     'credit_refund' => 'gm_sage_refund',
+    //'billing_update' => 'gm_sage_billing_update',
     'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN, UC_CREDIT_REFERENCE_REMOVE),
   );
 
@@ -106,7 +107,6 @@ function gm_sage_payment_gateway_settings_submit($form, &$form_state) {
  * Process a credit card transaction through Sage's credit card API.
  */
 function gm_sage_charge($order_id, $amount, $data) {
-  drupal_set_message('gm_sage_charge start data: ' . print_r($data, 1));
   global $user;
 
   // Bail if the site is not cURL enabled.
@@ -138,21 +138,8 @@ function gm_sage_charge($order_id, $amount, $data) {
     case UC_CREDIT_REFERENCE_TXN:
       return gm_sage_vault_bankcard_request($order, $amount, $data);
 
-    case UC_CREDIT_REFERENCE_REMOVE:
-      $vault_id = db_result(db_query("SELECT vault_id FROM {gm_sage_vault} WHERE guid = '%s'", $data['ref_id']));
-
-      if ($vault_id) {
-        $success = TRUE;
-        gm_sage_vault_delete($vault_id);
-        drupal_set_message(t('Customer card data deleted from the Sage Vault and locally.'));
-        uc_order_comment_save($order->order_id, $user->uid, t('Deleted Sage GUID: @guid', array('@guid' => $data['ref_id'])), 'admin');
-      }
-      else {
-        $success = FALSE;
-        drupal_set_message(t('An error occurred that prevented the deletion of the customer data as expected.'), 'error');
-      }
-
-      return array('success' => $success, 'log_payment' => FALSE);
+    case UC_CREDIT_CREDIT:
+      return gm_sage_https_bankcard_credit($order, $amount, $data);
 
     // Accommodate all other transaction types.
     default:
@@ -164,29 +151,120 @@ function gm_sage_charge($order_id, $amount, $data) {
  * Issue a refund
  */
 function gm_sage_refund($order_id, $amount, $data) {
+  global $user;
+
   // Make the charge amount positive
   if ($amount < 0) {
     $amount = $amount * -1;
   }
-  drupal_set_message('refund amount: ' . $amount);
+
   if ($order_id > 0) {
-    $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
-
-    // Set the transaction type to credit, and the ID of the previous charge to refund against
-    $data['txn_type'] = UC_CREDIT_CREDIT;
-    $data['auth_id'] = $payment_details->txn_id;
-
-    return gm_sage_charge($order_id, $amount, $data);
+    $order = uc_order_load($order_id);
+    $ref_id = _gm_sage_get_vault_guid($order);
+    // sage require a vault id for refunds, make sure we have one
+    if (!empty($ref_id)) {
+      $data['txn_type'] = UC_CREDIT_CREDIT;
+      $data['ref_id'] = $ref_id;
+      return gm_sage_charge($order_id, $amount, $data);  
+    }
+    else {
+      return array(
+        'success' => FALSE,
+        'message' => t('Unable to perform refund: @message', array('@message' => 'No Sage vault GUID stored with the order.')),
+        'uid' => $user->uid,
+      );
+    }
   }
 
   return array();
 }
 
 /**
+ * Process a credit transaction through the HTTPS Bankcard service.
+ */
+function gm_sage_https_bankcard_credit($order, $amount, $data) {
+  global $user;
+
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-credit',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
+  // Build an array of data to be POSTed for the transaction.
+  $post_data = array(
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
+    'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_EMAIL' => $order->primary_email,
+    'GUID' => strtolower($data['ref_id']),
+    'T_CUSTOMER_NUMBER' => $order->uid,
+    'T_AMT' => uc_price($amount, $context, $options),
+    'T_SHIPPING' => '',
+    'T_TAX' => '',
+    'T_ORDERNUM' => $order->order_id,
+    'C_TELEPHONE' => '',
+    'C_FAX' => '',
+    'C_SHIP_NAME' => '',
+    'C_SHIP_ADDRESS' => '',
+    'C_SHIP_CITY' => '',
+    'C_SHIP_STATE' => '',
+    'C_SHIP_ZIP' => '',
+    'C_SHIP_COUNTRY' => '',
+  );
+
+  $xml = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT_BANKCARD, 'VAULT_BANKCARD_CREDIT');
+
+  $response = _gm_sage_parse_vault_bankcard_response($xml->asXML());
+
+  // If the transaction was not approved...
+  if ($response['approval_indicator'] != 'A') {
+    $result = array(
+      'success' => FALSE,
+      'message' => t('Refund declined: @message', array('@message' => $response['approval_message'])),
+      'uid' => $user->uid,
+    );
+  }
+  else {
+    // Build a message for display and comments in the payments table.
+    $message = t('Type: @type<br />ID: @id', array('@type' => _gm_sage_txn_type($data['txn_type']), '@id' => $response['reference']));
+    $result = array(
+      'success' => TRUE,
+      'comment' => $message,
+      'message' => $message,
+      'data' => array('module' => 'gn_sage', 'txn_type' => $data['txn_type'], 'txn_id' => $response['reference']),
+      'uid' => $user->uid,
+    );
+  }
+
+  // Build an admin order comment.
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-credit-comment',
+  );
+  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array('@type' => _gm_sage_txn_type($data['txn_type']), '@status' => $response['approval_indicator'] == 'A' ? t('ACCEPTED') : t('REJECTED'), '@message' => $response['approval_message'], '@amount' => uc_price($amount, $context), '@avs' => _gm_sage_avs($response['avs_indicator'])));
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+  return $result;
+
+}
+
+/**
  * Process a transaction through the HTTPS Bankcard service.
  */
 function gm_sage_https_bankcard_request($order, $amount, $data) {
-  drupal_set_message('gm_sage_https_bankcard_request start data: ' . print_r($data, 1));
   global $user;
 
   // Build the initial post data array for the order.
@@ -234,7 +312,6 @@ function gm_sage_https_bankcard_request($order, $amount, $data) {
     if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE)) &&
       $data['config']['gm_sage_vault_status'] && $data['config']['gm_sage_vault_checkout'] == 'insert') {
         // Save the data if it's not duplicate.
-        drupal_set_message('gm_sage_vault_insert before insert data: ' . print_r($data, 1));
         gm_sage_vault_insert($order, $data);
     }
   }
@@ -279,7 +356,6 @@ function gm_sage_https_bankcard_request($order, $amount, $data) {
  *   An array of data parase from the API response.
  */
 function gm_sage_api_request($post_data, $data, $service = GM_SAGE_SERVICE_HTTPS_BANKCARD, $request = NULL) {
-  drupal_set_message('gm_sage_api_request start data: ' . print_r($data, 1));
   // Determine the URL for the web service.
   switch ($service) {
     case GM_SAGE_SERVICE_HTTPS_BANKCARD:
@@ -353,11 +429,6 @@ function gm_sage_api_request($post_data, $data, $service = GM_SAGE_SERVICE_HTTPS
  */
 function gm_sage_vault_bankcard_request($order, $amount, $data) {
   global $user;
-  drupal_set_message('gm_sage_vault_bankcard_request start data: ' . print_r($data, 1));
-  drupal_set_message('gm_sage_vault_bankcard_request start order: ' . print_r($order, 1));
-
-  // Load the billing data from the local Vault.
-  $vault = db_fetch_object(db_query("SELECT * FROM {gm_sage_vault} WHERE uid = %d AND guid = '%s'", $order->uid, strtolower($data['ref_id'])));
 
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
 
@@ -396,12 +467,9 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
     'C_SHIP_COUNTRY' => '',
   );
 
-  drupal_set_message(print_r($post_data, true));
   $xml = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT_BANKCARD, 'VAULT_BANKCARD_SALE');
 
   $response = _gm_sage_parse_vault_bankcard_response($xml->asXML());
-
-  drupal_set_message(print_r($response, TRUE));
 
   // If the transaction was not approved...
   if ($response['approval_indicator'] != 'A') {
@@ -454,7 +522,6 @@ function gm_sage_vault_bankcard_request($order, $amount, $data) {
  *   The GUID returned by Sage representing the customer data in the Vault.
  */
 function gm_sage_vault_insert($order, $data) {
-  drupal_set_message('gm_sage_vault_insert start data: ' . print_r($data, 1));
   $cc_number = $order->payment_details['cc_number'];
   $cc_exp_month = $order->payment_details['cc_exp_month'];
   $cc_exp_year = $order->payment_details['cc_exp_year'];
@@ -482,8 +549,8 @@ function gm_sage_vault_insert($order, $data) {
 /**
  * Update customer data in the Vault.
  *
- * @param $vault_id
- *   The vault_id representing the customer data in the local database.
+ * @param $guid
+ *   The vault guid in the sage system.
  * @param $update
  *   An associative array of Vault data to update at Sage and in the local
  *     database, including billing address and credit card information using the
@@ -493,8 +560,7 @@ function gm_sage_vault_insert($order, $data) {
  *     include cc_exp_month and cc_exp_year. When updating cc_exp_month you must
  *     also include cc_exp_year.
  */
-function gm_sage_vault_update($vault_id, $update) {
-  $guid = db_result(db_query("SELECT guid FROM {gm_sage_vault} WHERE vault_id = %d", $vault_id));
+function gm_sage_vault_update($guid, $update) {
 
   // Perform the appropriate updates in the Sage Vault.
   if (isset($update['cc_number'])) {
@@ -515,46 +581,48 @@ function gm_sage_vault_update($vault_id, $update) {
 
     $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'UPDATE_CREDIT_CARD_EXPIRATION_DATE');
   }
-
-  // Put the vault_id and updated timestamp into the update array.
-  $update += array('vault_id' => $vault_id, 'updated' => time());
-
-  drupal_write_record('gm_sage_vault', $update, 'vault_id');
 }
 
 /**
- * Totally delete customer data from the Vault.
+ * Delete data from the Sage Vault.
  *
- * @param $vault_id
- *   The vault_id representing the customer data in the local database.
+ * @param $vault_guid
  */
-function gm_sage_vault_delete($vault_id) {
-  // Build the data array used in the delete request.
-  $params = array(
-    'GUID' => db_result(db_query("SELECT guid FROM {gm_sage_vault} WHERE vault_id = %d", $vault_id)),
-  );
-
-  $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'DELETE_DATA');
-
-  // Delete the data locally.
-  db_query("DELETE FROM {gm_sage_vault} WHERE vault_id = %d", $vault_id);
-}
-
-/**
- * Delete data from the Sage Vault but retain the local record.
- *
- * @param $vault_id
- */
-function gm_sage_vault_disabled($vault_id) {
+function gm_sage_vault_disabled($vault_guid) {
   // Build the data array used in the delete request.
   $post_data = array(
-    'GUID' => db_result(db_query("SELECT guid FROM {gm_sage_vault} WHERE vault_id = %d", $vault_id)),
+    'GUID' => $valud_guid,
   );
 
   $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'DELETE_DATA');
+}
 
-  // Delete the data locally.
-  db_query("UPDATE {gm_sage_vault} SET guid = '', status = 0 WHERE vault_id = %d", $vault_id);
+function _gm_sage_post_data_from_order($order, $amount) {
+  $post_data = array(
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
+    'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_EMAIL' => $order->primary_email,
+    'GUID' => strtolower($data['ref_id']),
+    'T_CUSTOMER_NUMBER' => $order->uid,
+    'T_AMT' => uc_price($amount, $context, $options),
+    'T_SHIPPING' => '',
+    'T_TAX' => '',
+    'T_ORDERNUM' => $order->order_id,
+    'C_TELEPHONE' => '',
+    'C_FAX' => '',
+    'C_SHIP_NAME' => '',
+    'C_SHIP_ADDRESS' => '',
+    'C_SHIP_CITY' => '',
+    'C_SHIP_STATE' => '',
+    'C_SHIP_ZIP' => '',
+    'C_SHIP_COUNTRY' => '',
+  );
+
+  return $post_data;
 }
 
 // Build the basic POST data for an order for submission to Sage.
@@ -604,6 +672,16 @@ function _gm_sage_order_post_data($order, $amount, $data) {
   );
 
   return $post_data;
+}
+
+/**
+ * Gets the vault GUID for a given order.
+ *
+ * @param $order
+ *   The order to get the vault guid from.
+ */
+function _gm_sage_get_vault_guid($order) {
+  return array_shift(array_keys($order->data['cc_txns']['references']));
 }
 
 // Parse a string response from the payment gateway.
