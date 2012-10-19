@@ -1689,6 +1689,12 @@ function fundraiser_webform_validate($form, &$form_state) {
 	    fundraiser_track_local_failure();
 		watchdog('fundraiser', $message, NULL, WATCHDOG_DEBUG, NULL);
 	}
+
+  // Always rebind in case other modules (webform) fail form validation
+  $base = drupal_get_path('module', 'fundraiser');
+  drupal_add_js($base .'/jquery.alphanumeric.js');
+  drupal_add_js($base .'/fundraiser.js');
+  drupal_add_css($base . '/fundraiser-donation-form.css');
 }
 
 /**
