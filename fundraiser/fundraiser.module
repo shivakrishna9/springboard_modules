@@ -2328,6 +2328,12 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
  * Kicks of an email to a sustainer to remind them their credit card is about to expire.
  */
 function fundraiser_send_cc_notification($master_order_id, $uid) {
+
+  // Short circuit this email if the configuration for fundraiser says don't send it.
+  if (!variable_get('fundraiser_sustainers_send_email', TRUE)) {
+    return;
+  }
+
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
   $order_id = db_result(db_query("SELECT order_id FROM fundraiser_recurring WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));

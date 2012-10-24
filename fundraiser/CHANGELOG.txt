@@ -1,3 +1,9 @@
+2012-10-24  Sarah Hood  <sarah.hood@jacksonriver.com>
+
+    * fundraiser.admin.inc (fundraiser_admin_settings) - added checkbox to enable/disable expiration emails.
+    * fundraiser.install (fundraiser_uninstall) - added code to remove expiration checkbox variable.
+    * fundraiser.module (fundraiser_send_cc_notification) - added variable check, if FALSE no expiration email is sent.
+
 2012-09-03  Allen Freeman  <allen.freeman@jacksonriver.com>
 
     * fundraiser.module (fundraiser_preprocess_fundraiser_confirmation): renamed template_preprocess_fundraiser_confirmation.
