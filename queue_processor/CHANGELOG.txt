@@ -1,3 +1,9 @@
+2012-10-24  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+    *  queue_processor.admin.inc (queue_processor_admin_settings()) - added admin settings for batch log size limits (batch & error logs)
+    *  queue_processor.module - added new function queue_processor_prune_logs()
+    *  queue_processor.module (queue_processor_cron()) - added call to queue_processor_prune_logs(), truncate batch logs on cron.
+
+
 2012-09-28  Phillip Cave  <phillip.cave@jacksonriver.com>
 
     * queue_processor.module (queue_processor_standalone_cron): Add exclusive lock to the queue processor
