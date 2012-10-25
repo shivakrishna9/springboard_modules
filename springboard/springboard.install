@@ -30,6 +30,7 @@ function springboard_schema() {
         'default' => 0, 
       ),
     ),
+    'primary key' => array('delta'),
   );
   return $schema;
 }
@@ -38,8 +39,31 @@ function springboard_schema() {
  * Implements hook_install().
  */
 function springboard_install() {
-  drupal_install_schema('springboard');
-  $panes = array(
+  // Install default configurations for all admin panes
+  $panes = _springboard_default_panes_config();
+  foreach($panes as $delta => $pane) {
+    db_insert('springboard_panes')
+      ->fields(array(
+        'delta' => $delta, 
+        'description' => $pane['description'],
+        'weight' => $pane['weight'],
+        'status' => $pane['status'],
+      ))
+      ->execute();  
+  }
+
+  // Add a message about configuring Springboard
+  drupal_set_message(t('The Springboard module was successfully enabled. !link', array('!link' => l('Please configure Springboard now.', 'admin/springboard/setup'))), $type = 'status');
+}
+
+/**
+ * Helper function for setting up default pane configurations
+ * 
+ * @param $pane String
+ *    Optional value to limit the configurations to a single pane
+ */
+function _springboard_default_panes_config($pane = NULL) {
+  $configs = array(
     'springboard_sf_status' => array(
       'description' => t(''),
       'weight' => 0,
@@ -60,19 +84,19 @@ function springboard_install() {
       'weight' => 2,
       'status' => 1,
     ),
+    'springboard_admin_menu' => array(
+      'description' => t('Admin Menu'),
+      'weight' => 10,
+      'status' => 1,
+    ),
   );
-  foreach($panes as $delta => $pane) {
-    db_query("INSERT INTO {springboard_panes} (delta, description, weight, status) 
-      VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
 
+  if ($pane && isset($configs[$pane])) {
+    return $configs[$pane];
   }
-}
-
-/**
- * Implements hook_uninstall().
- */
-function springboard_uninstall() {
-  drupal_uninstall_schema('springboard');
+  else {
+    return $configs; 
+  }
 }
 
 /**
@@ -109,4 +133,19 @@ function springboard_update_6300() {
       VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
   }
   return $ret;
+}
+
+/**
+ * Install the springboard admin menu pane config
+ */
+function springboard_update_7000() {
+  $pane = _springboard_default_panes_config('springboard_admin_menu');
+  db_insert('springboard_panes')
+    ->fields(array(
+      'delta' => 'springboard_admin_menu', 
+      'description' => $pane['description'],
+      'weight' => $pane['weight'],
+      'status' => $pane['status'],
+    ))
+    ->execute();  
 }
