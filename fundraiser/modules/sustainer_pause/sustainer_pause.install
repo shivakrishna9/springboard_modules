@@ -1,0 +1,21 @@
+<?php
+
+
+/**
+ * Implementation of hook_enable().
+ */
+function sustainer_pause_enable() {
+  // Add pause to UC statuses
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state,
+            weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
+            'paused', 'Paused', 'post_checkout', -20, 1);
+}
+
+
+/**
+ * Implementation of hook_disable().
+ */
+function sustainer_pause_disable() {
+  // Remove pause from UC status
+  db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", 'paused');
+}

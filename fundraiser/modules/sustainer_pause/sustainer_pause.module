@@ -1,0 +1,204 @@
+<?php
+
+/**
+ * Implementation of hook_menu().
+ */
+function sustainer_pause_menu() {
+  $items['user/%user/recurring_overview/%/pause'] = array(
+    'title' => 'Pause My Recurring Payments',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sustainer_pause_form'),
+    'access callback' => 'sustainer_pause_user_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['user/%user/recurring_overview/%/unpause'] = array(
+    'title' => 'Unpause My Recurring Payments',
+    'page callback' => 'sustainer_pause_unpause',
+    'access callback' => 'sustainer_pause_user_access',
+    'access arguments' => array(1),
+    'page arguments' => array(1, 3, 4),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function sustainer_pause_perm() {
+  return array('pause own recurring gifts', 'pause all recurring gifts');
+}
+
+/**
+ * Function to see if the user has rights to access the pause function
+ */
+function sustainer_pause_user_access($this_user) {
+  global $user;
+  $access = FALSE;
+  // Check if this user has permission to pause their own
+  if (user_access('pause own recurring gifts') && $this_user->uid == $user->uid) {
+    $access = TRUE;
+  }
+  // Otherwise check if this user has permission to pause others
+  elseif (user_access('pause all recurring gifts')) {
+    $access = TRUE;
+  }
+
+  return $access;
+}
+
+/**
+ * Generate the recurring payment pause form
+ */
+function sustainer_pause_form($form) {
+  $form = array();
+  $form['message'] = array(
+    '#value' => variable_get('sustainer_pause_message', t("We can't thank you enough for your contributions. Please let us know how long you'd like to pause your monthly plan.")),
+    '#weight' => '-10',
+  );
+  $form['monthly_pause'] = array(
+    '#required' => '1',
+    '#weight' => '-5',
+    '#default_value' => '3',
+    '#type' => 'radios',
+    '#title' => t('Pause monthly plan for'),
+    '#options' => array(
+      '3' => t('3 months'),
+      '6' => t('6 months'),
+      '0' => t('Indefinitely'),
+    ),
+  );
+  $form['master_order_id'] = array('#type' => 'hidden', '#value' => arg(3));
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
+  return $form;
+}
+
+/**
+ * Submit function for sustainer_pause_form()
+ */
+function sustainer_pause_form_submit($form, &$form_state) {
+  global $user;
+  $master_order_id = $form_state['values']['master_order_id'];
+  $op = 'pause';
+  $months = $form_state['values']['monthly_pause'];
+  sustainer_pause_unpause($user, $master_order_id, $op, $months);
+}
+
+/**
+ * Function to actually pause or unpause the orders
+ */
+function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3) {
+  // If indefinte pause, then set months to large number (10 years)
+  if ($months == 0) {
+    $months=120;
+  }
+
+  // Pause recurring payments
+  if ($op == 'pause') {
+    // Grab the orders to be paused
+    $sql = "SELECT u.order_id
+            FROM {fundraiser_recurring} f
+            INNER JOIN {uc_orders} u ON u.order_id = f.order_id
+            WHERE f.master_order_id = %d
+            ORDER BY f.next_charge asc";
+    $result = db_query_range($sql, $master_order_id, 0, $months);
+
+    while ($data = db_fetch_array($result)) {
+      // Update the order status, add an order comment, and update the recurring payment status
+      uc_order_update_status($data['order_id'], 'paused');
+      uc_order_comment_save($data['order_id'], $user->uid, 'This future payment has been paused.', 'order', 'paused');
+      $update = "UPDATE {fundraiser_recurring}
+                SET gateway_resp = '%s'
+                WHERE order_id = %d AND master_order_id = %d";
+      db_query($update, 'paused', $data['order_id'], $master_order_id);
+    }
+    drupal_set_message(t("Thank you. Your recurring gift has been paused."));
+  }
+  // Unpause recurring payments
+  if ($op == 'unpause') {
+    // Grab the orders to be unpaused
+    $sql = "SELECT u.order_id
+            FROM {fundraiser_recurring} f
+            INNER JOIN {uc_orders} u ON u.order_id = f.order_id
+            WHERE f.master_order_id = %d
+            AND u.order_status = '%s'
+            ORDER BY f.next_charge asc";
+    $result = db_query($sql, $master_order_id, 'paused');
+
+    while ($data = db_fetch_array($result)) {
+      uc_order_update_status($data['order_id'], 'pending_future_payment');
+      uc_order_comment_save($data['order_id'], $user->uid, 'This future payment has been unpaused.', 'order', 'pending_future_payment');
+      $update = "UPDATE {fundraiser_recurring}
+                SET gateway_resp = NULL
+                WHERE order_id = %d AND master_order_id = %d";
+      db_query($update, $data['order_id'], $master_order_id);
+    }
+    drupal_set_message(t("Thank you for reactivating your recurring gift."));
+  }
+  // Redirect back to the user's recurring payments overview page
+  drupal_goto("user/$user->uid/recurring_overview/$master_order_id");
+}
+
+/**
+ * Override to the theme function to add the pause/unpause button
+ */
+function sustainer_pause_preprocess_sustainer_management_page(&$variables) {
+  // check if the user has access to pause/unpause, else do nothing
+  if (sustainer_pause_user_access($variables['user'])) {
+    $button = '';
+    $link = '/user/'. $variables['user']->uid .'/recurring_overview/'. $variables['order_id'];
+    $paused = stripos($variables['payment_schedule'], "paused");
+    // check if any upcoming payments are paused, & set unpause button
+    if ($paused) {
+      $button = '<form method="post" action="'. $link .'/unpause"><input type="submit" value="'. t('Resume recurring payments') .'"></form>';
+    }
+    // else set the pause button
+    else {
+      $button = '<form method="post" action="'. $link .'/pause"><input type="submit" value="'. t('Pause recurring payments') .'"></form>';
+    }
+    $variables['payment_schedule'] .= $button;
+  }
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter() for fundraiser_admin_settings
+ */
+function sustainer_pause_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
+  $form['sustainer_pause'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Sustainer pause settings'),
+    '#weight' => 7,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    );
+  $form['sustainer_pause']['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Sustainer pause message'),
+    '#description' => t('Set the message users will see when they go to pause a recurring gift.'),
+    '#default_value' => variable_get('sustainer_pause_message', t("We can't thank you enough for your contributions. Please let us know how long you'd like to pause your monthly plan.")),
+    '#weight' => '0',
+  );
+  $form['buttons']['#weight'] = 10;
+  $form['#submit'][] = 'sustainer_pause_admin_settings_submit';
+}
+
+/**
+ * Additional submit function for the fundraiser_admin_settings form to
+ * set the variable for the pause form message
+ */
+function sustainer_pause_admin_settings_submit($form, &$form_state) {
+  $sustainer_pause_message = $form_state['values']['message'];
+  variable_set('sustainer_pause_message', $sustainer_pause_message);
+}
+
+
+
+// TEMPORARY
+function sustainer_pause_form_alter(&$form, &$form_state, $form_id) {
+  // dpm($form_id);
+  // dpm($form);
+
+}
