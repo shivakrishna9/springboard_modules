@@ -41,6 +41,11 @@ function sustainer_upsell_menu() {
     'page arguments' => array('sustainer_upsell_admin_thank_you_settings'),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['sustainer-upsell/js'] = array(
+    'page callback' => '_sustainer_upsell_js_callback',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -51,11 +56,6 @@ function sustainer_upsell_form_access_check($node) {
   return false;
 }
 
-/*
-function sustainer_upsell_donation_form($node) {
-
-}
-*/
 
 /**
  * Implements hook_form_alter().
@@ -213,9 +213,13 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
 */
 function sustainer_upsell_theme() {
   return array(
-    'sustainer_upsell_lightbox' => array(
+    'sustainer_upsell_box_lightbox2' => array(
       'arguments' => array('message' => NULL, 'sid' => NULL, 'donor_form' => NULL),
-      'template' => 'templates/sustainer-upsell-lightbox'
+      'template' => 'templates/sustainer-upsell-lightbox2'
+    ),
+    'sustainer_upsell_box_thickbox' => array(
+      'arguments' => array('message' => NULL, 'sid' => NULL, 'donor_form' => NULL),
+      'template' => 'templates/sustainer-upsell-thickbox'
     ),
   );
 }
@@ -234,7 +238,8 @@ function sustainer_upsell_footer() {
       $message = variable_get('sustainer_upsell_default_content','');
     }
     if(($node->sustainer_upsell_enabled == 1) && (((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1))) {
-      return theme('sustainer_upsell_lightbox', $message, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
+      //return variable_get('sustainer_upsell_box_type','thickbox');
+      return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
     }
   }
 }
@@ -262,17 +267,41 @@ function _sustainer_upsell_find_suggested_amount($amt) {
   }
 }
 
-function sustainer_upsell_donation_form($form,$order,$sid) {
-  $form['amount'] = array(
+function _sustainer_upsell_js_callback() {
+  $output = "Some message wohoo!";
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+function _sustainer_upsell_ahah_submit() {
+
+}
+
+function sustainer_upsell_donation_form($form, $order, $sid) {
+  $form['sustainer-upsell'] = array(
+    '#prefix' => '<div id="sustainer-upsell-wrapper">',
+    '#suffix' => '</div>',
+  );
+  $form['sustainer-upsell']['amount'] = array(
     '#title' => t('Amount'),
     '#type' => 'textfield',
     '#size' => 5,
     '#value' => _sustainer_upsell_find_suggested_amount($order->order_total),
   );
-  $form['sid'] = array(
+  $form['sustainer-upsell']['sid'] = array(
     '#type' => 'hidden',
     '#size' => 2,
     '#value' => $sid,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Yes, Sign Me Up!'),
+    '#submit' => array('_sustainer_upsell_ahah_submit'), // If no javascript action.
+    '#ahah' => array(
+      'path' => 'sustainer-upsell/js',
+      'wrapper' => 'sustainer-upsell-wrapper',
+      'method' => 'replace',
+      'effect' => 'fade'
+    )
   );
   return $form;
 }

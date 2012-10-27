@@ -107,6 +107,25 @@ function sustainer_upsell_admin_settings_form(&$form) {
     '#type' => 'textfield',
     '#default_value' => variable_get('sustainer_upsell_rejection_lifetime',''),
   );
+  $form['sustainer_upsell_box'] = array(
+    '#title' => t('Upsell Display Settings'),
+    '#type' => 'fieldset'
+  );
+  $boxes = array();
+  if(module_exists('thickbox')) {
+    $boxes['thickbox'] = 'Thickbox';
+  }
+  if(module_exists('lightbox2')) {
+    $boxes['lightbox2'] = 'Lightbox2';
+  }
+  $form['sustainer_upsell_box']['sustainer_upsell_box_type'] = array(
+    '#title' => t('Box Module'),
+    '#type' => 'radios',
+    '#options' => $boxes,
+    '#default_value' => variable_get('sustainer_upsell_box_type',''),
+    '#required' => true,
+    '#description' => 'This module is currently compatible with Thickbox or Lightbox2'
+  );
   $form['sustainer_upsell_debug'] = array(
     '#title' => 'Debug Mode',
     '#type' => 'checkbox',
@@ -209,6 +228,7 @@ function sustainer_upsell_admin_settings_form_submit($form,&$form_state) {
   variable_set("sustainer_upsell_rejection_enabled", $vals['sustainer_upsell_rejection_enabled']);
   variable_Set("sustainer_upsell_rejection_lifetime", $vals['sustainer_upsell_rejection_lifetime']);
   variable_Set("sustainer_upsell_debug", $vals['sustainer_upsell_debug']);
+  variable_set('sustainer_upsell_box_type', $vals['sustainer_upsell_box_type']);
 }
 
 /**
