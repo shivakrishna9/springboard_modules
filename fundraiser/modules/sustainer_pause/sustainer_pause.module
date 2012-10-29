@@ -54,6 +54,16 @@ function sustainer_pause_user_access($this_user) {
  * Generate the recurring payment pause form
  */
 function sustainer_pause_form($form) {
+  // Build options list from the values chosen by the admin
+  $options = array_filter(variable_get('sustainer_pause_options', array(3,6, 120)));
+  foreach ($options as $key => $value) {
+    if ($key == 120) {
+      $options[$key] = 'Indefinitely';
+    }
+    else {
+      $options[$key] = $value. ' months';
+    }
+  }
   $form = array();
   $form['message'] = array(
     '#value' => variable_get('sustainer_pause_message', t("We can't thank you enough for your contributions. Please let us know how long you'd like to pause your monthly plan.")),
@@ -65,11 +75,7 @@ function sustainer_pause_form($form) {
     '#default_value' => '3',
     '#type' => 'radios',
     '#title' => t('Pause monthly plan for'),
-    '#options' => array(
-      '3' => t('3 months'),
-      '6' => t('6 months'),
-      '0' => t('Indefinitely'),
-    ),
+    '#options' => $options,
   );
   $form['master_order_id'] = array('#type' => 'hidden', '#value' => arg(3));
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
@@ -91,11 +97,6 @@ function sustainer_pause_form_submit($form, &$form_state) {
  * Function to actually pause or unpause the orders
  */
 function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3) {
-  // If indefinte pause, then set months to large number (10 years)
-  if ($months == 0) {
-    $months=120;
-  }
-
   // Pause recurring payments
   if ($op == 'pause') {
     // Grab the orders to be paused
@@ -129,6 +130,7 @@ function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3
     $result = db_query($sql, $master_order_id, 'paused');
 
     while ($data = db_fetch_array($result)) {
+      // Update the order status, add an order comment, and update the recurring payment status
       uc_order_update_status($data['order_id'], 'pending_future_payment');
       uc_order_comment_save($data['order_id'], $user->uid, 'This future payment has been unpaused.', 'order', 'pending_future_payment');
       $update = "UPDATE {fundraiser_recurring}
@@ -153,11 +155,11 @@ function sustainer_pause_preprocess_sustainer_management_page(&$variables) {
     $paused = stripos($variables['payment_schedule'], "paused");
     // check if any upcoming payments are paused, & set unpause button
     if ($paused) {
-      $button = '<form method="post" action="'. $link .'/unpause"><input type="submit" value="'. t('Resume recurring payments') .'"></form>';
+      $button = '<a name="pause-button"></a><form method="post" action="'. $link .'/unpause"><input type="submit" value="'. t('Resume recurring payments') .'"></form>';
     }
     // else set the pause button
     else {
-      $button = '<form method="post" action="'. $link .'/pause"><input type="submit" value="'. t('Pause recurring payments') .'"></form>';
+      $button = '<a name="pause-button"></a><form method="post" action="'. $link .'/pause"><input type="submit" value="'. t('Pause recurring payments') .'"></form>';
     }
     $variables['payment_schedule'] .= $button;
   }
@@ -174,13 +176,36 @@ function sustainer_pause_form_fundraiser_admin_settings_alter(&$form, &$form_sta
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     );
-  $form['sustainer_pause']['message'] = array(
+  $form['sustainer_pause']['pause_message'] = array(
     '#type' => 'textarea',
     '#title' => t('Sustainer pause message'),
     '#description' => t('Set the message users will see when they go to pause a recurring gift.'),
     '#default_value' => variable_get('sustainer_pause_message', t("We can't thank you enough for your contributions. Please let us know how long you'd like to pause your monthly plan.")),
     '#weight' => '0',
-  );
+    '#required' => TRUE,
+    );
+  $form['sustainer_pause']['pause_options'] = array(
+    '#type' => 'checkboxes',
+    '#title' => 'Timeframe options',
+    '#description' => 'Select the timeframes that you want available for the sustainer pause form.',
+    '#default_value' => variable_get('sustainer_pause_options', array(3,6,120)),
+    '#options' => array(
+      1 => t('1 month'),
+      2 => t('2 months'),
+      3 => t('3 months'),
+      4 => t('4 months'),
+      5 => t('5 months'),
+      6 => t('6 months'),
+      7 => t('7 months'),
+      8 => t('8 months'),
+      9 => t('9 months'),
+      10 => t('10 months'),
+      11 => t('11 months'),
+      12 => t('12 months'),
+      120 => t('Indefinitely'),
+      ),
+    '#required' => TRUE,
+    );
   $form['buttons']['#weight'] = 10;
   $form['#submit'][] = 'sustainer_pause_admin_settings_submit';
 }
@@ -190,15 +215,23 @@ function sustainer_pause_form_fundraiser_admin_settings_alter(&$form, &$form_sta
  * set the variable for the pause form message
  */
 function sustainer_pause_admin_settings_submit($form, &$form_state) {
-  $sustainer_pause_message = $form_state['values']['message'];
-  variable_set('sustainer_pause_message', $sustainer_pause_message);
+  variable_set('sustainer_pause_message', $form_state['values']['pause_message']);
+  variable_set('sustainer_pause_options', $form_state['values']['pause_options']);
 }
 
-
-
-// TEMPORARY
-function sustainer_pause_form_alter(&$form, &$form_state, $form_id) {
-  // dpm($form_id);
-  // dpm($form);
-
+/**
+ * Implementation of hook_form_FORM_ID_alter() for system_modules
+ * Disable the checkbox on the module page if there are any paused recurring payments
+ */
+function sustainer_pause_form_system_modules_alter(&$form, &$form_state) {
+  // Check if ANY recurring orders after now are paused (ignore past ones)
+  $sql = "SELECT COUNT(*) FROM {fundraiser_recurring}
+          WHERE gateway_resp='paused' AND next_charge > %d";
+  $paused_orders = db_result(db_query($sql, time()));
+  // If any paused orders, disable the checkbox for the module and tell the user why
+  if ($paused_orders) {
+    $form['description']['sustainer_pause']['#value'] .= '<br><em></em><span class="admin-missing">This module can\'t be disabled while some recurring payments are paused. Remove or unpause all recurring payments to disable.</span>';
+    $form['disabled_modules']['#value']['sustainer_pause'] = TRUE;
+    $form['status']['#disabled_modules'][] = 'sustainer_pause';
+  }
 }
