@@ -22,7 +22,7 @@
   -moz-border-radius: 3px; /* Firefox */
   -webkit-border-radius: 3px; /* Safari, Chrome */
   border-radius: 3px; /* CSS3 */
-  behavior: url(border-radius.htc);
+  behavior: url(htc/border-radius.htc);
 }
 
 body #springboard-quick-jump {

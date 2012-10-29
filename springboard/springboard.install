@@ -49,11 +49,11 @@ function springboard_install() {
         'weight' => $pane['weight'],
         'status' => $pane['status'],
       ))
-      ->execute();  
+    ->execute();  
   }
-
   // Add a message about configuring Springboard
-  drupal_set_message(t('The Springboard module was successfully enabled. !link', array('!link' => l('Please configure Springboard now.', 'admin/springboard/setup'))), $type = 'status');
+  drupal_set_message(t('The Springboard module was successfully enabled. !link',
+    array('!link' => l('Please configure Springboard now.', 'admin/springboard/setup'))), $type = 'status');
 }
 
 /**
@@ -90,7 +90,6 @@ function _springboard_default_panes_config($pane = NULL) {
       'status' => 1,
     ),
   );
-
   if ($pane && isset($configs[$pane])) {
     return $configs[$pane];
   }
