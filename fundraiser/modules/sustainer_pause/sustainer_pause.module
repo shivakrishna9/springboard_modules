@@ -55,13 +55,13 @@ function sustainer_pause_user_access($this_user) {
  */
 function sustainer_pause_form($form) {
   // Build options list from the values chosen by the admin
-  $options = array_filter(variable_get('sustainer_pause_options', array(3,6, 120)));
+  $options = array_filter(variable_get('sustainer_pause_options', array(3, 6, 120)));
   foreach ($options as $key => $value) {
     if ($key == 120) {
       $options[$key] = 'Indefinitely';
     }
     else {
-      $options[$key] = $value. ' months';
+      $options[$key] = $value .' months';
     }
   }
   $form = array();
@@ -148,20 +148,67 @@ function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3
  * Override to the theme function to add the pause/unpause button
  */
 function sustainer_pause_preprocess_sustainer_management_page(&$variables) {
-  // check if the user has access to pause/unpause, else do nothing
+  // Check if the user has access to pause/unpause, else do nothing
   if (sustainer_pause_user_access($variables['user'])) {
+
+    // Find and master order ids with paused orders
+    $query = db_query('SELECT DISTINCT master_order_id FROM  {fundraiser_recurring} WHERE gateway_resp = "paused"');
+    while ($row = db_fetch_object($query)) {
+      // Modify the recurring master order table to say they are "paused"
+      $variables['orders_input'][$row->master_order_id]['status'] = 'paused';
+    }
+
+    // Rebuild the recurring master order table
+    $profile_uid = $variables['user']->uid;
+    $header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
+    $rows = array();
+    // Build each row in the table
+    foreach ($variables['orders_input'] as $id => &$order) {
+      $edit_link = l('$' . money_format('%i', $order['amount']), 'user/' . $profile_uid . '/recurring_overview/' . $id);
+      // Change status from numeric ids to text
+      if ($order['status'] == DONATION_CANCELLED) {
+        $order['status'] = 'cancelled';
+      }
+      elseif ($order['status'] == DONATION_RECURRING) {
+        $order['status'] = 'active';
+      }
+      // Add classes for this row
+      $class = '';
+      if ($id == $variables['order_id']) {
+        $class = 'recurring-order active ' . $order['status'];
+      }
+      else {
+        $class = 'recurring-order ' . $order['status'];
+      }
+      // Build this row
+      $rows[] = array(
+        'data' => array(
+          'amount' => $edit_link,
+          'start_date' => $order['start_date'] ? date('m/d/y', $order['start_date']) : "------------",
+          'next_charge_date' => $order['next_charge_date'] ? date('m/d/y', $order['next_charge_date']) : "------------",
+          'expire_date' => $order['expire_date'] ? date('m/d/y', $order['expire_date']) : "------------",
+          'status' => $order['status'],
+        ),
+        'class' => $class,
+      );
+    }
+    // Finish rebuilding the table and override the default output
+    $variables['orders'] = theme('table', $header, $rows);
+
+    // Insert the pause/unpause button
     $button = '';
     $link = '/user/'. $variables['user']->uid .'/recurring_overview/'. $variables['order_id'];
     $paused = stripos($variables['payment_schedule'], "paused");
-    // check if any upcoming payments are paused, & set unpause button
+    // Check if any upcoming payments are paused, & set unpause button
     if ($paused) {
       $button = '<a name="pause-button"></a><form method="post" action="'. $link .'/unpause"><input type="submit" value="'. t('Resume recurring payments') .'"></form>';
     }
-    // else set the pause button
+    // Else set the pause button
     else {
       $button = '<a name="pause-button"></a><form method="post" action="'. $link .'/pause"><input type="submit" value="'. t('Pause recurring payments') .'"></form>';
     }
     $variables['payment_schedule'] .= $button;
+
   }
 }
 
@@ -188,7 +235,7 @@ function sustainer_pause_form_fundraiser_admin_settings_alter(&$form, &$form_sta
     '#type' => 'checkboxes',
     '#title' => 'Timeframe options',
     '#description' => 'Select the timeframes that you want available for the sustainer pause form.',
-    '#default_value' => variable_get('sustainer_pause_options', array(3,6,120)),
+    '#default_value' => variable_get('sustainer_pause_options', array(3, 6, 120)),
     '#options' => array(
       1 => t('1 month'),
       2 => t('2 months'),
