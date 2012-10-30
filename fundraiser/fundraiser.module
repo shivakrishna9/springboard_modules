@@ -1568,16 +1568,17 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
     $rows[] = array(
       'data' => array(
         'amount' => $edit_link,
-        'start_date' => date('m/d/y', $order['start_date']),
-        'next_charge_date' => date('m/d/y', $order['next_charge_date']),
-        'expire_date' => date('m/d/y', $order['expire_date']),
+        'start_date' => $order['start_date'] ? date('m/d/y', $order['start_date']) : '------------',
+        'next_charge_date' => $order['next_charge_date'] ? date('m/d/y', $order['next_charge_date']) : '------------',
+        'expire_date' => $order['expire_date'] ? date('m/d/y', $order['expire_date']) : '------------',
         'status' => $order['status'] == DONATION_CANCELLED ? 'cancelled' : 'active',
       ),
       'class' => $class,
     );
   }
   
-  $vars['orders_output'] = theme('table', $header, $rows);
+  $vars['orders_input'] = $vars['orders'];
+  $vars['orders'] = theme('table', $header, $rows);
   
   // format payment schedule into a data table
   $payment_schedule_header = array('Amount', 'Charge Date', 'Processed Status');
