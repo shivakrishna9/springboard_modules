@@ -5,60 +5,25 @@
  */
 
 /**
- * Springboard admin menu.
- *
- * @param $base_url
- * Menu path of parent menu item (example: 'admin/springboard')
- */
-function springboard_admin() {
-  drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
-  $content = '';
-  $main_menu = menu_get_item('admin/springboard');
-  if (variable_get('springboard_salesforce_enabled', 0)) {
-    $content .= drupal_get_form('springboard_welcome');
-  }
-  $content .= '<div class="dashboard">';
-  // Load the enabled panes for the dashboard.
-  $results = db_select('springboard_panes', 'sp')
-    ->fields('sp')
-    ->condition('status', 1, '=')
-    ->orderBy('weight')
-    ->orderBy('delta')
-    ->execute();
-  while ($pane = $results->fetchObject()) {
-    $content .= theme($pane->delta);
-  }
-  $content .= '</div>';
-  //$content .= theme('admin_block_content', $content);
-  return $content;
-}
-
-/**
  * Admin settings form.
  */
 function springboard_admin_settings() {
   // TODO: add support for pane weights.
-  $results = db_query('SELECT delta, status FROM {springboard_panes}');
-  while ($item = db_fetch_object($results)) {
-    $panes[$item->delta] = $item->delta;
-    if ($item->status) {
-      $enabled_panes[$item->delta] = $item->delta;
-    }
-    else {
-      $enabled_panes[$item->delta] = 0;
-    }
+  $panes = module_invoke_all('springboard_dashboard_panes');
+  drupal_alter('springboard_dashboard_panes', $panes);
+  foreach ($panes as $name => $info) {
+    $panes[$name] = $info['label'];
   }
   $form = array();
   $form['panes'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dashboard Panes'),
-    '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
   );
   $form['panes']['springboard_enabled_panes'] = array(
+    '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
     '#type' => 'checkboxes',
-    '#title' => t('Enabled Panes'),
     '#options' => $panes,
-    '#default_value' => $enabled_panes,
+    '#default_value' => variable_get('springboard_enabled_panes', array()),
   );
   $form['dashboard'] = array(
     '#type' => 'fieldset',
@@ -94,7 +59,6 @@ function springboard_admin_settings() {
     '#default_value' => variable_get('springboard_load_time_threshold', 500),
   );
   $form['#validate'][] = 'springboard_admin_settings_validate';
-  $form['#submit'][] = 'springboard_admin_settings_submit';
   return system_settings_form($form);
 }
 
@@ -114,23 +78,4 @@ function springboard_admin_settings_validate(&$form, $form_state) {
   if ($form_state['values']['springboard_load_time_threshold'] && !is_numeric($form_state['values']['springboard_load_time_threshold'])) {
     form_set_error('springboard_load_time_threshold', t('The load time threshold must be numeric!'));
   }
-}
-
-/**
- * Submit handler for the springboard admin settings form.
- */
-function springboard_admin_settings_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
-    if ($status) {
-      $status = 1;
-    }
-    db_query("UPDATE {springboard_panes} SET status=%d WHERE delta = '%s'", $status, $delta);
-  }
-}
-
-/**
- * Page callback for springboard help.
- */
-function springboard_help_page() {
-  return theme_springboard_help();
 }

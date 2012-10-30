@@ -5,115 +5,20 @@
  */
 
 /**
- * Implements hook_schema().
- */
-function springboard_schema() {
-  $schema['springboard_panes'] = array(
-    'description' => 'Stores data for webform submission goals.',
-    'fields' => array(
-      'delta' => array(
-        'description' => 'Parent id, nid for webforms, Salesforce campaign id for campaigns',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'description' => array(
-        'description' => 'Description for the pane',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'weight' => array(
-        'description' => 'Pane weight',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'status' => array(
-        'description' => 'Pane status',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('delta'),
-  );
-  return $schema;
-}
-
-/**
  * Implements hook_install().
  */
 function springboard_install() {
-  // Install default configurations for all admin panes
-  $panes = _springboard_default_panes_config();
-  foreach ($panes as $delta => $pane) {
-    db_insert('springboard_panes')
-      ->fields(array(
-        'delta' => $delta,
-        'description' => $pane['description'],
-        'weight' => $pane['weight'],
-        'status' => $pane['status'],
-      ))
-    ->execute();
-  }
   // Add a message about configuring Springboard
   drupal_set_message(st('The Springboard module was successfully enabled. !link', // Coder: This is ok.
     array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/setup'))), $type = 'status');
 }
 
 /**
- * Helper function for setting up default pane configurations
- *
- * @param $pane String
- *    Optional value to limit the configurations to a single pane
- */
-function _springboard_default_panes_config($pane = NULL) {
-  $configs = array(
-    'springboard_sf_status' => array(
-      'description' => t('Springboard status'),
-      'weight' => 0,
-      'status' => 1,
-    ),
-    'springboard_jump' => array(
-      'description' => t('Springboard jump menu'),
-      'weight' => 1,
-      'status' => 1,
-    ),
-    'springboard_logo' => array(
-      'description' => t('Springboard logo'),
-      'weight' => -1,
-      'status' => 1,
-    ),
-    'springboard_fundraiser_performance' => array(
-      'description' => t('Fundraiser performance'),
-      'weight' => 2,
-      'status' => 1,
-    ),
-    'springboard_admin_menu' => array(
-      'description' => t('Admin menu'),
-      'weight' => 10,
-      'status' => 1,
-    ),
-  );
-  if ($pane && isset($configs[$pane])) {
-    return $configs[$pane];
-  }
-  else {
-    return $configs;
-  }
-}
-
-/**
  * Implements hook_update_N().
- * Install the springboard admin menu pane config.
+ * Uninstall the table in favor of hook based panes.
  */
 function springboard_update_7000() {
-  $pane = _springboard_default_panes_config('springboard_admin_menu');
-  db_insert('springboard_panes')
-    ->fields(array(
-      'delta' => 'springboard_admin_menu',
-      'description' => $pane['description'],
-      'weight' => $pane['weight'],
-      'status' => $pane['status'],
-    ))
-    ->execute();
+  if (db_table_exists('springboard_sf_status')) {
+    db_drop_table('springboard_sf_status');
+  }
 }
