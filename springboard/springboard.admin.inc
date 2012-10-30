@@ -10,9 +10,11 @@
 function springboard_admin_settings() {
   // TODO: add support for pane weights.
   $panes = module_invoke_all('springboard_dashboard_panes');
+  $default_enabled_panes = array();
   drupal_alter('springboard_dashboard_panes', $panes);
   foreach ($panes as $name => $info) {
     $panes[$name] = $info['label'];
+    $default_enabled_panes[$name] = $name;
   }
   $form = array();
   $form['panes'] = array(
@@ -23,7 +25,7 @@ function springboard_admin_settings() {
     '#description' => t('Enable/disable visible panes on the Springboard Dashboard'),
     '#type' => 'checkboxes',
     '#options' => $panes,
-    '#default_value' => variable_get('springboard_enabled_panes', array()),
+    '#default_value' => variable_get('springboard_enabled_panes', $default_enabled_panes),
   );
   $form['dashboard'] = array(
     '#type' => 'fieldset',
