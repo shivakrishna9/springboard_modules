@@ -1,8 +1,12 @@
 <?php
+/**
+ * @file
+ * Provides Springboard administrative forms.
+ */
 
 /**
  * Springboard admin menu.
- * 
+ *
  * @param $base_url
  * Menu path of parent menu item (example: 'admin/springboard')
  */
@@ -116,12 +120,12 @@ function springboard_admin_settings_validate(&$form, $form_state) {
  * Submit handler for the springboard admin settings form.
  */
 function springboard_admin_settings_submit($form, $form_state) {
-  foreach($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
+  foreach ($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
     if ($status) {
       $status = 1;
     }
     db_query("UPDATE {springboard_panes} SET status=%d WHERE delta = '%s'", $status, $delta);
-  } 
+  }
 }
 
 /**

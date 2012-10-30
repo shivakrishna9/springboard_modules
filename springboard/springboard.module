@@ -36,8 +36,8 @@ function springboard_menu() {
     'file' => 'springboard.admin.inc',
   );
   $items['admin/springboard/forms'] = array(
-    'title' => t('Forms'),
-    'description' => t('Manage your donation forms and other webforms.'),
+    'title' => 'Forms',
+    'description' => 'Manage your donation forms and other webforms.',
     'weight' => -10,
     'page callback' => 'springboard_admin',
     'access arguments' => array('administer springboard'),
@@ -45,8 +45,8 @@ function springboard_menu() {
     'file' => 'springboard.admin.inc',
   );
   $items['admin/springboard/reports'] = array(
-    'title' => t('Reports'),
-    'description' => t('Access reports on donations and Salesforce activity.'),
+    'title' => 'Reports',
+    'description' => 'Access reports on donations and Salesforce activity.',
     'weight' => -9,
     'page callback' => 'springboard_admin',
     'access arguments' => array('administer springboard'),
@@ -54,8 +54,8 @@ function springboard_menu() {
     'file' => 'springboard.admin.inc',
   );
   $items['admin/springboard/settings'] = array(
-    'title' => t('Settings'),
-    'description' => t('Manage Springboard settings.'),
+    'title' => 'Settings',
+    'description' => 'Manage Springboard settings.',
     'weight' => -8,
     'page callback' => 'springboard_admin',
     'access arguments' => array('administer springboard'),
@@ -64,8 +64,8 @@ function springboard_menu() {
   );
   if (module_exists('salesforce_management_api')) {
     $items['admin/springboard/fieldmaps'] = array(
-      'title' => t('Salesforce Fieldmaps'),
-      'description' => t('Map form fields to Salesforce.'),
+      'title' => 'Salesforce Fieldmaps',
+      'description' => 'Map form fields to Salesforce.',
       'weight' => -6,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/salesforce-management/fieldmap'),
@@ -74,8 +74,7 @@ function springboard_menu() {
     );
   }
   $items['admin/springboard/fundraiser_cron'] = array(
-    'title' => t('Fundraiser cron'),
-    'description' => t(''),
+    'title' => 'Fundraiser cron',
     'page callback' => '_springboard_syncronize',
     'page arguments' => array('fundraiser'),
     'access callback' => '_springboard_cron_access',
@@ -83,8 +82,7 @@ function springboard_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/springboard/queue_processor_cron'] = array(
-    'title' => t('Salesforce cron'),
-    'description' => t(''),
+    'title' => 'Salesforce cron',
     'page callback' => '_springboard_syncronize',
     'page arguments' => array('queue_processor'),
     'access callback' => '_springboard_cron_access',
@@ -92,8 +90,8 @@ function springboard_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/springboard/help'] = array(
-    'title' => t('Help'),
-    'description' => t('Future home of Springboard help documentation.'),
+    'title' => 'Help',
+    'description' => 'Future home of Springboard help documentation.',
     'page callback' => 'springboard_help_page',
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
@@ -103,8 +101,8 @@ function springboard_menu() {
   // Forms submenu
   if (module_exists('fundraiser')) {
     $items['admin/springboard/forms/donation'] = array(
-      'title' => t('Donation forms'),
-      'description' => t('Manage your donation forms.'),
+      'title' => 'Donation forms',
+      'description' => 'Manage your donation forms.',
       'weight' => -10,
       'access arguments' => array('administer springboard'),
       'page callback' => 'drupal_goto',
@@ -112,8 +110,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/forms/donation_add'] = array(
-      'title' => t('Create donation form'),
-      'description' => t('Add a new donation form.'),
+      'title' => 'Create donation form',
+      'description' => 'Add a new donation form.',
       'weight' => -8,
       'access arguments' => array('administer springboard'),
       'page callback' => 'drupal_goto',
@@ -124,8 +122,8 @@ function springboard_menu() {
   // Webform submenu
   if (module_exists('webform')) {
     $items['admin/springboard/forms/webforms'] = array(
-      'title' => t('Webforms'),
-      'description' => t('Manage your webforms.'),
+      'title' => 'Webforms',
+      'description' => 'Manage your webforms.',
       'weight' => -9,
       'access arguments' => array('administer springboard'),
       'page callback' => 'drupal_goto',
@@ -133,8 +131,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/forms/webform_add'] = array(
-      'title' => t('Create a webform'),
-      'description' => t('Add a new webform.'),
+      'title' => 'Create a webform',
+      'description' => 'Add a new webform.',
       'weight' => -7,
       'access arguments' => array('administer springboard'),
       'page callback' => 'drupal_goto',
@@ -145,8 +143,8 @@ function springboard_menu() {
   // Reports submenu
   if (module_exists('queue_processor')) {
     $items['admin/springboard/reports/batch'] = array(
-      'title' => t('Batch History'),
-      'description' => t('View the batch history report.'),
+      'title' => 'Batch History',
+      'description' => 'View the batch history report.',
       'weight' => -10,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/reports/salesforce/batch'),
@@ -154,8 +152,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/reports/queued'] = array(
-      'title' => t('Queued Items'),
-      'description' => t('Report on items currently queued for processing.'),
+      'title' => 'Queued Items',
+      'description' => 'Report on items currently queued for processing.',
       'weight' => -9,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/reports/salesforce/current'),
@@ -163,8 +161,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/reports/retries'] = array(
-      'title' => t('Retries'),
-      'description' => t('Report on queued items that didn\'t go through the first time.'),
+      'title' => 'Retries',
+      'description' => 'Report on queued items that didn\'t go through the first time.',
       'weight' => -8,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/reports/salesforce/retries'),
@@ -172,8 +170,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/reports/failures'] = array(
-      'title' => t('Permanent Failures'),
-      'description' => t('Report on permanently failed transactions.'),
+      'title' => 'Permanent Failures',
+      'description' => 'Report on permanently failed transactions.',
       'weight' => -7,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/reports/salesforce/permanent-failures'),
@@ -183,8 +181,8 @@ function springboard_menu() {
   }
   // Settings submenu
   $items['admin/springboard/settings/dashboard_settings'] = array(
-    'title' => t('Dashboard Settings'),
-    'description' => t('Configure Springboard dashboard settings'),
+    'title' => 'Dashboard Settings',
+    'description' => 'Configure Springboard dashboard settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_admin_settings'),
     'access arguments' => array('administer springboard'),
@@ -193,8 +191,8 @@ function springboard_menu() {
   );
   if (module_exists('salesforce_management_api')) {
     $items['admin/springboard/settings/salesforce'] = array(
-      'title' => t('Salesforce API Credentials'),
-      'description' => t('Administer your Salesforce integration.'),
+      'title' => 'Salesforce API Credentials',
+      'description' => 'Administer your Salesforce integration.',
       'weight' => -10,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/salesforce-management'),
@@ -202,8 +200,8 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
     $items['admin/springboard/settings/salesforce_wsdl'] = array(
-      'title' => t('Update Salesforce WSDL'),
-      'description' => t('Update your copy of the Salesforce API WSDL.'),
+      'title' => 'Update Salesforce WSDL',
+      'description' => 'Update your copy of the Salesforce API WSDL.',
       'weight' => -6,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/salesforce-management/update-wsdl'),
@@ -213,8 +211,8 @@ function springboard_menu() {
   }
   if (module_exists('fundraiser')) {
     $items['admin/springboard/settings/fundraiser'] = array(
-      'title' => t('Fundraiser Settings'),
-      'description' => t('Manage donation settings.'),
+      'title' => 'Fundraiser Settings',
+      'description' => 'Manage donation settings.',
       'weight' => -9,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/fundraiser'),
@@ -224,8 +222,8 @@ function springboard_menu() {
   }
   if (module_exists('market_source')) {
     $items['admin/springboard/settings/marketsource'] = array(
-      'title' => t('Market Source Settings'),
-      'description' => t('Configure Market Source.'),
+      'title' => 'Market Source Settings',
+      'description' => 'Configure Market Source.',
       'weight' => -8,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/market-source'),
@@ -235,8 +233,8 @@ function springboard_menu() {
   }
   if (module_exists('sf_donation')) {
     $items['admin/springboard/settings/donation'] = array(
-      'title' => t('Donation Integration Settings'),
-      'description' => t('Administer integration between site donations and Salesforce.'),
+      'title' => 'Donation Integration Settings',
+      'description' => 'Administer integration between site donations and Salesforce.',
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/salesforce-management'),
       'access arguments' => array('administer springboard'),
@@ -245,8 +243,8 @@ function springboard_menu() {
   }
   if (module_exists('queue_processor')) {
     $items['admin/springboard/settings/queue'] = array(
-      'title' => t('Queue Processor'),
-      'description' => t('Configure the queue processor.'),
+      'title' => 'Queue Processor',
+      'description' => 'Configure the queue processor.',
       'weight' => -5,
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/salesforce-management/queue'),
@@ -256,8 +254,8 @@ function springboard_menu() {
   }
   if (module_exists('gateway_manager')) {
     $items['admin/springboard/settings/gateways'] = array(
-      'title' => t('Payment Gateways'),
-      'description' => t('Manage credit card payment gateways.'),
+      'title' => 'Payment Gateways',
+      'description' => 'Manage credit card payment gateways.',
       'weight' => -4,
       'page callback' => 'drupal_goto',
       'page arguments' => (module_exists('gateway_manager')) ? array('admin/settings/fundraiser/gateways') : array('admin/store/settings/payment/edit/gateways'),
@@ -267,8 +265,8 @@ function springboard_menu() {
   }
   if (module_exists('webform_ab')) {
     $items['admin/springboard/settings/webform_ab'] = array(
-      'title' => t('Webform A/B Settings'),
-      'description' => t('Configure A/B testing with Webform.'),
+      'title' => 'Webform A/B Settings',
+      'description' => 'Configure A/B testing with Webform.',
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/webform_ab'),
       'access arguments' => array('administer springboard'),
@@ -277,8 +275,8 @@ function springboard_menu() {
   }
   if (module_exists('secure_prepopulate')) {
     $items['admin/springboard/settings/secure-prepopulate'] = array(
-      'title' => t('Secure Prepopulate Settings'),
-      'description' => t('Configure Secure Prepopulate.'),
+      'title' => 'Secure Prepopulate Settings',
+      'description' => 'Configure Secure Prepopulate.',
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/settings/secure-prepopulate'),
       'access arguments' => array('administer springboard'),
@@ -287,14 +285,14 @@ function springboard_menu() {
   }
   // Callback for the Springboard sync button.
   $items['springboard_sync'] = array(
-    'title' => t('Syncronize'),
+    'title' => 'Syncronize',
     'page callback' => '_springboard_syncronize',
     'access arguments' => array('administer springboard'),
     'type' => MENU_CALLBACK,
   );
   // Callback for the additional details modals in the fundraiser report panel.
   $items['springboard_report_modal'] = array(
-    'title' => t('Syncronize'),
+    'title' => 'Syncronize',
       'page callback' => '_springboard_fundraiser_report',
       'access arguments' => array('administer springboard'),
       'type' => MENU_CALLBACK,
@@ -323,8 +321,8 @@ function springboard_dashboard() {
 function springboard_welcome() {
   $form = array();
 
- /* 
- if ($default_campaign) {  
+ /*
+ if ($default_campaign) {
     drupal_set_message(t('The %campaign campaign has been selected as default.'), array('%campaign' => $default_campaign));
   }
   else {
@@ -338,7 +336,7 @@ function springboard_welcome() {
   }
   if (is_object($sf)) {
     variable_del('springboard_salesforce_enabled');
- 
+
     $form['salesforce_status'] = array(
       '#type' => 'markup',
       '#prefix' => '<h3>' . t('Salesforce integration status') . '</h3><p class="springboard_status_message">',
@@ -358,7 +356,7 @@ function springboard_welcome() {
 
   // Default campaign
   $default_campaign = variable_get('sf_donation_default_campaign', '');
-  
+
   if (variable_get('springboard_salesforce_enabled', 0)) {
     $form['sf'] = array(
       '#type' => 'fieldset',
@@ -433,10 +431,10 @@ $source = 'salesforce_wsdl';
         drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
         return 0;
     }
-    
+
     // Check the file extension
     $pathParts = pathinfo($_FILES['files']['name'][$source]);
-    if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
+    if (!in_array(drupal_strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
       form_set_error($source, t('File upload error: invalid file extension. Please upload a file with an XML or WSDL  extension.'));
       return 0;
     }
@@ -452,44 +450,44 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
   variable_set('salesforce_management_api_password', $form_state['values']['salesforce_password']);
   variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
   // WSDL file handling stuffs
-  
+
  // Find the dir the file should go into
   $dir = drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient/';
-  
+
   // Upload file path
   $file = $dir . 'enterprise.wsdl.xml';
 
   // Array key for the file element
   $source = 'salesforce_wsdl';
-  
+
   // Make sure the directory is writeable
-  if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {  
+  if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
-         form_set_error($source, t('File upload error. Could not move uploaded file.'));
-         watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
-         return 0;
+      form_set_error($source, t('File upload error. Could not move uploaded file.'));
+      watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
+      return 0;
     }
     else {
-      drupal_set_message('The WSDL file has been successfully uploaded');
-      variable_set('salesforce_management_api_wsdl_updated', time());
+      drupal_set_message(t('The WSDL file has been successfully uploaded'));
+      variable_set('salesforce_management_api_wsdl_updated', REQUEST_TIME);
       // Clear the cache
       drupal_flush_all_caches();
-      
+
       // Clear WSDL files from tmp directory
       $tmpDir = file_directory_temp();
       // Make sure the tmp dir exists and isn't the root, just to be safe
-      if(is_dir($tmpDir) && $tmpDir != '/') {
+      if (is_dir($tmpDir) && $tmpDir != '/') {
         $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
         $execOutput = exec($cmd);
       }
-      
-      drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
+
+      drupal_set_message(t('Drupal cache emptied and WSDL files removed from temp directory.'));
     }
-  } 
+  }
   else {
     drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
-    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
+    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory' => $dir), WATCHDOG_ERROR);
     return 0;
   }
 }
@@ -563,40 +561,40 @@ function template_preprocess_springboard_fundraiser_performance(&$vars) {
   $query->innerJoin('fundraiser', 'f', 'f.nid = n.nid');
   $query->fields('n', array('nid'))
     ->fields('f', array('internal_name'))
-    ->range(0,10);
+    ->range(0, 10);
   $result = $query->execute();
 
   while ($donation_form = $result->fetchObject()) {
-      drupal_set_message(print_r($donation_form, 1));
+    drupal_set_message(print_r($donation_form, 1)); // Coder: This is ok.
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
-    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/images/icon-hidepane.png">',
+    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/images/icon-hidepane.png">',
      "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
       $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
-      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
+      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
       $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '</span>';
 
       $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
       $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
       $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '</span>';
-      
+
       $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
       $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
       $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '</span>';
 
       if (module_exists('statistics')) {
-        
+
         $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
-        $load_time_threshold = variable_get('springboard_load_time_threshold',0);
-        $forms[$donation_form->nid]['load_time'] = '<span class="' .  springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">' . $load_time . '</span>';
-        
+        $load_time_threshold = variable_get('springboard_load_time_threshold', 0);
+        $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">' . $load_time . '</span>';
+
       }
     }
   }
   usort($forms, "_springboard_sort_by_conversion");
-  foreach($forms as $form) {
+  foreach ($forms as $form) {
     $vars['rows'][] = array($form['internal_name'], $form['conversion'], $form['local_failure'], $form['gateway_failure'], $form['load_time']);
   }
 }
@@ -618,17 +616,17 @@ function theme_springboard_fundraiser_performance($vars) {
 function theme_springboard_sf_status() {
   if (module_exists('salesforce_management_api')) {
     $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
-    
+
     // Call on the module to get the current connection status
     $output .= salesforce_management_api_test_connection();
-    
+
     // WSDL update
-    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
+    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0);
     $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
 
     // latest batch # total items :: success :: fail
     if (module_exists('queue_api')) {
-      $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} order by id desc limit 1'));
+      $batch = db_fetch_object(db_query('SELECT * FROM {sf_batch} ORDER BY id DESC LIMIT 1'));
       if ($batch) {
         $output .= '<p>Batch # ' . $batch->id . ' - ' . $batch->record_count . '::<span class="successes">' . $batch->success_count .
           '</span>::<span class="failures">' . $batch->failure_count . '</span></p>';
@@ -655,12 +653,12 @@ function theme_springboard_sf_status() {
 function theme_springboard_logo() {
   $theme = variable_get('theme_default', '0');
   if (theme_get_setting('default_logo', $theme) == 1) {
-    $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
+    $logo = '<img src="' . base_path() . drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
   }
   else {
     $logo =  '<img src="' . base_path() . theme_get_setting('logo_path', $theme) . '" width="150" alt="Site logo" />'; // this prints out path to you uploaded logo
   }
-  
+
   $output = '<div class="springboard-pane" id="springboard-logo-pane">';
   $output .= $logo;
   $output .= '</div>';
@@ -707,7 +705,7 @@ function theme_springboard_admin_menu() {
   $tree = reset($tree);
   foreach ($tree['below'] as $key => $data) {
     if ($data['link']['mlid'] == $item['mlid']) {
-      $output .= drupal_render(menu_tree_output($data['below']));  
+      $output .= drupal_render(menu_tree_output($data['below']));
     }
   }
   return $output ? $output : t('You do not have any administrative items.') ;
@@ -720,12 +718,12 @@ function _springboard_syncronize($op = 'both') {
   if (module_exists('queue_processor') && ($op == 'queue_processor' || $op == 'both')) {
     module_load_include('module', 'queue_processor');
     queue_processor_process();
-    drupal_set_message('Salesforce queues have been processed.');
+    drupal_set_message(t('Salesforce queues have been processed.'));
   }
   if (module_exists('fundraiser') && ($op == 'fundraiser' || $op == 'both')) {
     module_load_include('module', 'fundraiser');
     fundraiser_process_recurring_donations();
-    drupal_set_message('Recurring donations have been processed.');
+    drupal_set_message(t('Recurring donations have been processed.'));
   }
   drupal_goto('admin/springboard');
 }
@@ -742,12 +740,12 @@ function _springboard_fundraiser_report() {
   ctools_include('ajax');
   ctools_include('modal');
   $title = $access_results->internal_name;
-  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
-        INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id 
+  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc
+        INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
         $nid));
   $total_donations = round($total_donations) . '.00';
-  
+
   $total_donations = $total_donations ? $total_donations : '0.00';
   $output .= '<h2>Details for ' . $access_results->internal_name;
   $output .= ' ' . l(t('view'), "node/$nid");
@@ -768,19 +766,19 @@ function _springboard_sort_by_conversion($a, $b) {
   if ($a['conversion'] == $b['conversion']) {
     return 0;
   }
-    
+
   return ($a['conversion'] > $b['conversion']) ? -1 : 1;
 }
 
 /**
  * Sets CSS class for dashboard elements based on comparison between the current value and the threshold value.
- * 
+ *
  * @param $threshold
  * Int threshold value.
- * 
+ *
  * @param $value
  * Int current value.
- * 
+ *
  * @param $op
  * Specifies which type of comparison to perform, options are 'min' or 'max', defaults to min.
  */
@@ -798,20 +796,20 @@ function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
       case 'max':
         $class = ($value <= $threshold) ? 'successes' : 'failures';
         break;
-    }        
+    }
   }
   return $class;
 }
 
 /**
  * Calculate performance percentages.
- * 
- * @param $a 
+ *
+ * @param $a
  * Int first number.
- * 
+ *
  * @param $b
  * Int second number.
- * 
+ *
  * @return
  * Returns a percentage or N/A if either number is zero.
  */
@@ -825,9 +823,9 @@ function _springboard_percentage($a, $b) {
 }
 
 /**
- * 
- **/
-function _springboard_cron_access($param) {
+ *
+ */
+function _springboard_cron_access($param) { // Coder: This is ok.
   if ($param == 'fundraiser' && variable_get('fundraiser_standalone_cron_enabled', 0)) {
     return user_access('administer springboard');
   }
