@@ -278,7 +278,7 @@ function springboard_admin() {
   drupal_alter('springboard_dashboard_panes', $panes);
   $enabled_panes = variable_get('springboard_enabled_panes', array());
   foreach ($panes as $pane_key => $pane) {
-    if ($enabled_panes[$pane_key] && !empty($pane['content'])) {
+    if (isset($enabled_panes[$pane_key]) && !empty($pane['content'])) {
       $content .= $pane['content'];
     }  
   }
