@@ -1,0 +1,195 @@
+<?php
+
+/**
+ * @file
+ *
+ * This module is used to switch donation form payment gateway assignment in bulk.
+ */
+ 
+/**
+ * Implemenation of hook_menu().
+ */
+function gateway_switcher_menu() {
+  $items['admin/settings/fundraiser/gateway-switcher'] = array(
+    'title' => t('Payment gateway switcher'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gateway_switcher_update_form'),
+    'access arguments' => array('switch gateways in bulk'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function gateway_switcher_perm() {
+  return array('switch gateways in bulk');
+}
+
+/**
+ * Gateway switcher form. 
+ *
+ * This form allows the user to choose the gateway they want to switch.
+ *
+ * @param $form_state
+ *   The state of the current form being displayed.
+ */
+function gateway_switcher_update_form($form_state) {
+  // see if this is the confirmation step, if so make them confirm the change
+  if (isset($form_state['storage']['confirm'])) {
+    
+    // get gateway names for display
+    $gateway_from = _gateway_switcher_gateway_name($form_state['values']['gateway_from']);
+    $gateway_to = _gateway_switcher_gateway_name($form_state['values']['gateway_to']);
+
+    // get the number of donation forms using the gateway
+    $form_count = _gateway_switcher_gateway_form_count($form_state['values']['gateway_from']);
+
+    // display confirmation form to verify user really wants to do this
+    return confirm_form($form, t('There are currently <strong>@form_count</strong> donation forms assigned to <strong>@gateway_from</strong>. Are you sure you want to switch these forms to <strong>@gateway_to</strong>?', array('@form_count' => $form_count, '@gateway_from' => $gateway_from, '@gateway_to' => $gateway_to)), 'admin/settings/fundraiser/gateway-switcher', t('This action will take place immediately.'), t('Switch gateways'));
+  }
+
+  // obtain list of available gateways
+  $gateways = module_invoke_all('fundraiser_gateway', 'select options', NULL);
+  $gateways_in_use = gateway_switcher_gateways_in_use($gateways);
+    $form['gateway_from'] = array(
+    '#type' => 'select',
+    '#title' => t('Replace this gateway'),
+    '#options' => $gateways_in_use,
+    '#description' => t('Choose the gateway that you want to replace globally. The number of donation forms assigned to the gateway is in parentheses.')
+  );
+
+  $form['gateway_to'] = array(
+    '#type' => 'select',
+    '#title' => t('With this gateway'),
+    '#options' => $gateways,
+    '#description' => t('This is the gateway that will be used to replace the gateway choosen above.')
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+
+/**
+ * Form validation handler for gateway_switcher_update_form.
+ */
+function gateway_switcher_update_form_validate($form, &$form_state) {
+  if (!isset($form_state['storage']['confirm'])) {
+    // switching to the same gateway is not a valid operation
+    if ($form_state['values']['gateway_from'] === $form_state['values']['gateway_to']) {
+      form_set_error('gateway_to', t('Gateways cannot be switched. The replacement gateway is the same as the original.'));
+    }
+  }
+}
+
+/**
+ * Submit handler for gateway_switcher_update_form.
+ */
+function gateway_switcher_update_form_submit($form, &$form_state) {
+  // setup for confirmation form
+  if (!isset($form_state['storage']['confirm'])) {
+    $form_state['storage']['confirm'] = TRUE;
+    $form_state['storage']['gateway_from'] = $form_state['values']['gateway_from'];
+    $form_state['storage']['gateway_to'] = $form_state['values']['gateway_to'];
+    $form_state['rebuild'] = TRUE;
+
+  }
+  else {
+    // update forms
+    $gateway_from = $form_state['storage']['gateway_from'];
+    $gateway_from_name = _gateway_switcher_gateway_name($form_state['storage']['gateway_from']);
+    $gateway_to = $form_state['storage']['gateway_to'];
+    $gateway_to_name = _gateway_switcher_gateway_name($form_state['storage']['gateway_to']);
+
+    // swap em
+    $forms_affected = gateway_switcher_swap_gateways($gateway_from, $gateway_to);
+    drupal_set_message(t('@forms_affected gateways succesfully switched from @gateway_from_name to @gateway_to_name.', array('@forms_affected' => $forms_affected, '@gateway_from_name' => $gateway_from_name, '@gateway_to_name' => $gateway_to_name)));
+    drupal_goto('admin/settings/fundraiser/gateway-switcher');
+  }
+}
+
+/**
+ * Returns an array of gateways with the number of donation forms they're
+ * currently assigned to.
+ */
+function gateway_switcher_gateways_in_use($all_gateways) {
+  $used_gateways = array();
+
+  // get gateways that are actively in use
+  $gateway_usage = _gateway_switcher_gateway_usage_count();
+
+  // look at all gateways and filter out unused gateways while adding the number of assigned forms
+  foreach ($all_gateways as $category => $gateways) {
+    foreach ($gateways as $id => $gateway) {
+      if (array_key_exists($id, $gateway_usage)) {
+        $used_gateways[$category][$id] = $gateway . ' (' . $gateway_usage[$id] . ')';
+      }
+    }
+  }
+
+  return $used_gateways;
+}
+
+/**
+ * Swaps all assigned gateways.
+ *
+ * @param $gateway_from
+ *   The gateway being swapped out.
+ * @param $gateway_to
+ *   The gateway to replace $gateway_from.
+ */
+function gateway_switcher_swap_gateways($gateway_from, $gateway_to) {
+  db_query("UPDATE {fundraiser} SET gateway = '%s' WHERE gateway = '%s'", $gateway_to, $gateway_from);
+  return db_affected_rows();
+}
+
+/**
+ * Returns the number of forms assigned to a given gateway.
+ *
+ * @param $gateway
+ *   The id of the gateway.
+ */
+function _gateway_switcher_gateway_form_count($gateway) {
+  $gateways = _gateway_switcher_gateway_usage_count();
+  return $gateways[$gateway];
+}
+
+/**
+ * Compiles donation form assignment count for each gateway.
+ */
+function _gateway_switcher_gateway_usage_count() {
+  $gateways = array();
+  $result = db_query("SELECT gateway, count(nid) AS count FROM {fundraiser} GROUP BY gateway");
+  while ($data = db_fetch_object($result)) {
+    $gateways[$data->gateway] = $data->count;
+  }
+
+  return $gateways;  
+}
+
+/**
+ * Returns the name of a gateway.
+ *
+ * @param $gateway
+ *   The system id of the gateway.
+ */
+function _gateway_switcher_gateway_name($gateway) {
+  static $gateways;
+
+  if (empty($gateways)) {
+    $all_gateways = module_invoke_all('fundraiser_gateway', 'select options', NULL);
+    foreach ($all_gateways as $category => $gateways_in_category) {
+      foreach ($gateways_in_category as $id => $gateway_in_category) {
+        $gateways[$id] = $gateway_in_category;
+      }
+    }
+  }
+
+  return $gateways[$gateway];
+}
