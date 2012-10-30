@@ -152,12 +152,12 @@ function sustainer_pause_preprocess_sustainer_management_page(&$variables) {
   if (sustainer_pause_user_access($variables['user'])) {
 
     // Find and master order ids with paused orders
-    $query = db_query('SELECT DISTINCT master_order_id FROM  {fundraiser_recurring} WHERE gateway_resp = "paused"');
+    $query = db_query('SELECT DISTINCT master_order_id FROM  {fundraiser_recurring}
+                      WHERE gateway_resp = "paused" AND next_charge > %d', time());
     while ($row = db_fetch_object($query)) {
       // Modify the recurring master order table to say they are "paused"
       $variables['orders_input'][$row->master_order_id]['status'] = 'paused';
     }
-
     // Rebuild the recurring master order table
     $profile_uid = $variables['user']->uid;
     $header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
