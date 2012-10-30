@@ -6,6 +6,4 @@ package = Jackson River Springboard
 configure = admin/springboard
 version =  7.x-3.0-dev
 dependencies[] = ctools
-dependencies[] = fundraiser
-dependencies[] = webform_user
 files[] = springboard.admin.inc

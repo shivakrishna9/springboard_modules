@@ -488,8 +488,8 @@ function _springboard_syncronize() {
  */
 function _springboard_form_report($nid = '') {
   // Short circuit if no legit data found.
-  if (empty($nid)) {
-    return '';
+  if (empty($nid) || !module_exists('fundraiser')) {
+    ctools_modal_render('', '');
   }
   ctools_include('ajax');
   ctools_include('modal');
@@ -590,7 +590,10 @@ function _springboard_sf_status() {
  */
 function _springboard_jump() {
   ctools_include('jump-menu');
-  $types = fundraiser_get_donation_types();
+  $types = array();
+  if (module_exists('fundraiser')) {
+    $types = fundraiser_get_donation_types();
+  }
   foreach ($types as $type => $enabled) {
     if ($enabled && node_access('create', $type)) {
       $targets[url('node/add/' . $type)] = 'Create ' . node_type_get_name($type);
@@ -613,43 +616,45 @@ function _springboard_form_performance() {
   $headers = array('Internal Form Name', 'Conversion %', 'Local Failure', 'Gateway Failure', 'Load Time');
   // TODO: add code to find and display form layout if/when this becomes available.
   $forms = array();
-  // Given the scattered nature of this data I predict this page is going to perform poorly.
-  $query = db_select('node', 'n');
-    $query->innerJoin('fundraiser', 'f', 'f.nid = n.nid');
-    $query->fields('n', array('nid'))
-      ->fields('f', array('internal_name'))
-      ->range(0, 10);
-  $results = $query->execute();
-  // Loop over each donation form.
-  foreach ($results as $donation_form) {
-    $forms[$donation_form->nid]['internal_name'] = ' ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/images/icon-hidepane.png">',
-    'springboard_report_modal/' . $donation_form->nid, array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
-    $forms[$donation_form->nid]['internal_name'] .= ' ' . $donation_form->internal_name;
-    $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-    $forms[$donation_form->nid]['local_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-    $forms[$donation_form->nid]['gateway_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-    $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
-    // If the fundraiser information is available for tracking data, update it.
-    if (module_exists('fundraiser')) {
-      $access_results = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $donation_form->nid))->fetchObject();
-      if ($access_results) {
-        $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
-        $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
-        $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">'
-          . $conversion . '</span>';
-        $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
-        $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
-        $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">'
-          . $local_failure . '</span>';
-        $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
-        $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
-        $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">'
-          . $gateway_failure . '</span>';
-        if (module_exists('statistics')) {
-          $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
-          $load_time_threshold = variable_get('springboard_load_time_threshold', 0);
-          $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">'
-            . $load_time . '</span>';
+  if (module_exists('fundraiser')) {
+    // Given the scattered nature of this data I predict this page is going to perform poorly.
+    $query = db_select('node', 'n');
+      $query->innerJoin('fundraiser', 'f', 'f.nid = n.nid');
+      $query->fields('n', array('nid'))
+        ->fields('f', array('internal_name'))
+        ->range(0, 10);
+    $results = $query->execute();
+    // Loop over each donation form.
+    foreach ($results as $donation_form) {
+      $forms[$donation_form->nid]['internal_name'] = ' ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/images/icon-hidepane.png">',
+      'springboard_report_modal/' . $donation_form->nid, array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
+      $forms[$donation_form->nid]['internal_name'] .= ' ' . $donation_form->internal_name;
+      $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
+      $forms[$donation_form->nid]['local_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
+      $forms[$donation_form->nid]['gateway_failure'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
+      $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class(0, 0, 'max') . '">N/A</span>';
+      // If the fundraiser information is available for tracking data, update it.
+      if (module_exists('fundraiser')) {
+        $access_results = db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = :nid', array(':nid' => $donation_form->nid))->fetchObject();
+        if ($access_results) {
+          $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
+          $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
+          $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">'
+            . $conversion . '</span>';
+          $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
+          $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
+          $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">'
+            . $local_failure . '</span>';
+          $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
+          $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
+          $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">'
+            . $gateway_failure . '</span>';
+          if (module_exists('statistics')) {
+            $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
+            $load_time_threshold = variable_get('springboard_load_time_threshold', 0);
+            $forms[$donation_form->nid]['load_time'] = '<span class="' . springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">'
+              . $load_time . '</span>';
+          }
         }
       }
     }
