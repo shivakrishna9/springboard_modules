@@ -1,5 +1,5 @@
 <div id="orders">
- <?php print $orders; ?>
+ <?php print $orders_output; ?>
 </div>
 <?php if(!$cancelled) :?>
 

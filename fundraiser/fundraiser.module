@@ -1577,7 +1577,7 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
     );
   }
   
-  $vars['orders'] = theme('table', $header, $rows);
+  $vars['orders_output'] = theme('table', $header, $rows);
   
   // format payment schedule into a data table
   $payment_schedule_header = array('Amount', 'Charge Date', 'Processed Status');
