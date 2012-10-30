@@ -914,9 +914,24 @@ function email_confirmation_template_list() {
   $rows = array();
 
   while ($data = db_fetch_object($result)) {
+    $edit_link = '';
+    $view_link = '';
     if (user_access('edit any confirmation_template content', $user) || ($data->uid == $user->uid && user_access('edit own confirmation_template content', $user))) {
       $edit_link = l('edit', 'node/' . $data->nid . '/edit');
     }
+
+    // optional OG integration
+    if (module_exists('og') && !$edit_link) {
+      $node = node_load(array('nid' => $data->nid));
+      $user_groups = array_keys($user->og_groups);
+      foreach ($user_groups as $gid) {
+        if (in_array($gid, array_keys($node->og_groups)) && $user->og_groups[$gid]['is_admin']) {
+          $edit_link = l('edit', 'node/' . $node->nid . '/edit');
+          drupal_set_message('og group admin override');
+        }
+      }
+    }
+
     $view_link = l('view', drupal_get_path_alias('node/' . $data->nid));
     
     $rows[] = array($data->title, date('m/d/Y g:i:s a', $data->changed), $edit_link, $view_link);
