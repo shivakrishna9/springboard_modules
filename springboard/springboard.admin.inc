@@ -374,6 +374,17 @@ function springboard_admin_config_donation_form_type(&$form, $form_state) {
   $status = node_type_save($type);
   node_types_rebuild();
   node_add_body_field($type);
+  // Add as a webform.
+  $webform_node_types = variable_get('webform_node_types', array('webform'));
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
+  if (!in_array($type->type, $webform_node_types)) {
+    $webform_node_types = array_merge($webform_node_types, array($type->type));
+  }
+  if (!in_array($type->type, $webform_node_types_primary)) {
+    $webform_node_types_primary = array_merge($webform_node_types_primary, array($type->type));
+  }
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
   drupal_set_message(t('The content type do<em>nation_form</em> has been added.'));
   watchdog('springboard_config', 'Added content type donation_form.');
 }

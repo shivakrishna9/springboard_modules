@@ -148,28 +148,39 @@ function springboard_menu() {
  */
 function springboard_menu_alter(&$items) {
   // Add menus under forms.
+  $types_added = array();
   if (module_exists('fundraiser')) {
-    // TODO - check if this even still exists in Fundraiser, move to here if not
-    //$items['admin/springboard/forms/donation'] = $items['admin/content/donation-forms'];
-    //$items['admin/springboard/forms/donation']['type'] = MENU_LOCAL_TASK;
-    //$items['admin/springboard/forms/donation']['access arguments'] = array('administer springboard');
-    //unset($items['admin/springboard/forms/donation']['access callback']);
-    // TODO generate a list of FR available types for adding
-    //$items['admin/springboard/forms/donation-add'] = $items['node/add/donation-form'];
-    //$items['admin/springboard/forms/donation-add']['type'] = MENU_LOCAL_TASK;
-    //$items['admin/springboard/forms/donation-add']['access arguments'] = array('administer springboard');
-    //unset($items['admin/springboard/forms/donation-add']['access callback']);
+    $types = fundraiser_get_donation_types();
+    foreach ($types as $type => $status) {
+      if (isset($status) && $status == 1) {
+        $types_added[] = $type;
+        $type = str_replace('_', '-', $type);
+        $items['admin/springboard/forms/' . $type] = $items['node/add/' . $type];
+        $items['admin/springboard/forms/' . $type]['type'] = MENU_LOCAL_TASK;
+        $items['admin/springboard/forms/' . $type]['access arguments'] = array('administer springboard');
+        $items['admin/springboard/forms/' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
+        unset($items['admin/springboard/forms/' . $type]['access callback']);
+      }
+    }
   }
   if (module_exists('webform')) {
+    $types = webform_variable_get('webform_node_types');
+    foreach ($types as $type) {
+      if (!in_array($type, $types_added)) {
+        $type = str_replace('_', '-', $type);
+        $items['admin/springboard/forms/' . $type] = $items['node/add/' . $type];
+        $items['admin/springboard/forms/' . $type]['type'] = MENU_LOCAL_TASK;
+        $items['admin/springboard/forms/' . $type]['access arguments'] = array('administer springboard');
+        $items['admin/springboard/forms/' . $type]['title'] = 'Add ' . $items['node/add/' . $type]['title'];
+        unset($items['admin/springboard/forms/' . $type]['access callback']);
+      }
+    }
     $items['admin/springboard/forms/webforms'] = $items['admin/content/webform'];
     $items['admin/springboard/forms/webforms']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/forms/webforms']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/forms/webforms']['title'] = 'View ' . $items['admin/content/webform']['title'];
+    $items['admin/springboard/forms/webforms']['weight'] = 100; 
     unset($items['admin/springboard/forms/webforms']['access callback']);
-    // TODO generate a list of WF available types for adding.
-    $items['admin/springboard/forms/webform-add'] = $items['node/add/webform'];
-    $items['admin/springboard/forms/webform-add']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/forms/webform-add']['access arguments'] = array('administer springboard');
-    unset($items['admin/springboard/forms/webform-add']['access callback']);
   }
   // Add menus under settings.
   $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
@@ -459,6 +470,15 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
  * Menu callback. Springboard help.
  */
 function springboard_help_page() {
+  $help_array = module_invoke_all('springboard_help');
+  drupal_alter('springboard_help', $help_array);
+  return theme('springboard_help', array('help_array' => $help_array));
+}
+
+/**
+ * Implements hook_springboard_help().
+ */
+function springboard_springboard_help() {
   $help_array = array();
   $help_array[t('Documentation')] = array(
     t('Springboard documentation is available on !docs.',
@@ -468,7 +488,7 @@ function springboard_help_page() {
     t('The Springboard project issue tracker is hosted on !issue_tracker',
       array('!issue_tracker' => l('drupal.org', 'http://drupal.org/project/springboard')))
   );
-  return theme('springboard_help', array('help_array' => $help_array));
+  return $help_array;
 }
 
 /**
