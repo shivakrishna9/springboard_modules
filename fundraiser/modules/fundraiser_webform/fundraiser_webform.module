@@ -31,11 +31,8 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
  */
 function fundraiser_webform_node_type_insert($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+    _fundraiser_webform_toggle_webform($info->type, TRUE);
     webform_node_type('update', $info); // From webform.module.
-    // Add as a primary type too.
-    $webform_types = webform_variable_get('webform_node_types_primary');
-    $webform_types[] = $info->type;
-    variable_set('webform_node_types_primary', $webform_types);
   }
 }
 
@@ -52,10 +49,7 @@ function fundraiser_webform_node_type_update($info) {
 function fundraiser_webform_node_type_delete($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
     webform_node_type('delete', $info); // From webform.module.
-    // Remove as a primary type too.
-    $webform_types = webform_variable_get('webform_node_types_primary');
-    unset($webform_types[ $info->type] );
-    variable_set('webform_node_types_primary', $webform_types);
+    _fundraiser_webform_toggle_webform($info->type, FALSE);
   }
 }
 
@@ -112,23 +106,28 @@ function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
  * Submit callback for fundraiser_webform_form_node_type_form_alter()
  */
 function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
-  $is_enabled = $form_state['values']['fundraiser'];
+  _fundraiser_webform_toggle_webform($form_state['values']['type'];, $form_state['values']['fundraiser']);
+}
+
+/**
+ * Helper function, enable or disable webform settings.
+ */
+function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
-  $type = $form_state['values']['type'];
   // Make sure this content type is enabled for webform if not already.
   // Add the selected node types to the webform_node_types_primary so a webform is added by default.
   if ($is_enabled) {
-    if (!in_array($type, $webform_node_types)) {
-      $webform_node_types = array_merge($webform_node_types, array($type));
-    }
-    if (!in_array($type, $webform_node_types_primary)) {
-      $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
-    }
+    $webform_node_types = array_merge($webform_node_types, array($type));
+    $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
+  }
+  else {
+    $webform_node_types = array_diff($webform_node_types, array($type));
+    $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
   }
   // Re-save the variables.
-  variable_set('webform_node_types', $webform_node_types);
-  variable_set('webform_node_types_primary', $webform_node_types_primary);
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 }
 
 /**
