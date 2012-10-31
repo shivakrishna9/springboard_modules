@@ -106,7 +106,7 @@ function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
  * Submit callback for fundraiser_webform_form_node_type_form_alter()
  */
 function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
-  _fundraiser_webform_toggle_webform($form_state['values']['type'];, $form_state['values']['fundraiser']);
+  _fundraiser_webform_toggle_webform($form_state['values']['type'], $form_state['values']['fundraiser']);
 }
 
 /**
