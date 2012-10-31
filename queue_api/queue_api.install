@@ -1,0 +1,453 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function queue_api_install() {
+	drupal_install_schema('queue_api');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function queue_api_uninstall() {
+	drupal_uninstall_schema('queue_api');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function queue_api_schema() {
+
+	$schema['sf_queue'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'sfid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'fieldmap' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	    'action' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '10',
+	      'not null' => FALSE,
+	    ),
+	    'created' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'locked' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	  'unique keys' => array(
+	    'id_UNIQUE' => array('id')
+	  ),
+	);
+	
+	$schema['sf_heap'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'sfid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'fieldmap' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	    'action' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '25',
+	      'not null' => FALSE,
+	    ),
+	    'created' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'locked' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'batch_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'is_retry' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	);
+
+	$schema['sf_batch'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'salesforce_type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '64',
+	      'not null' => FALSE,
+	    ),
+	    'fieldmap' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'action' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '25',
+	      'not null' => FALSE,
+	    ),
+	    'dedupe_key' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '64',
+	      'not null' => FALSE,
+	    ),
+	    'created' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'record_count' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'success_count' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'failure_count' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	    'start_time' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'end_time' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'processed' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	);
+
+
+	$schema['sf_batch_item'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'batch_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'sfid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '32',
+	      'not null' => FALSE,
+	    ),
+	    'dedupe_key' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'data' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'text',
+	      'not null' => FALSE,
+	    ),
+	    'success' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	    'date_processed' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'is_retry' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	  ),
+	  'indexes' => array(
+	    'fk_batch_items_batches' => array('batch_id'),
+	  ),
+	);
+	
+	$schema['sf_batch_error'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'batch_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'status_code' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'message' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '500',
+	      'not null' => FALSE,
+	    ),
+	    'fields' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '500',
+	      'not null' => FALSE,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	  'indexes' => array(
+	    'fk_sf_batch_errors_sf_batch1' => array('batch_id'),
+	  ),
+	);
+	
+	$schema['sf_retry_queue'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'sfid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'fieldmap' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	    'action' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'created' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'retry_date' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	    'attempts' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	      'default' => 0,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	);
+	
+	$schema['sf_permanent_failure'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'not null' => TRUE,
+	    ),
+	    'oid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+        'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => TRUE,
+	    ),
+	    'fieldmap' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'action' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '45',
+	      'not null' => FALSE,
+	    ),
+	    'date_added' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	    ),
+	  ),
+	  'primary key' => array('id'),
+	);
+
+		
+	return $schema;
+}
+
+/**
+ * Update 6101: Convert oid columns to strings, so they can store very large numbers and non-numeral characters.
+ */
+function queue_api_update_6101() {
+
+  $updates = array();
+
+  db_change_field($updates, 'sf_queue',             'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_heap',              'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_item',        'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_error',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_retry_queue',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_permanent_failure', 'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+
+  return $updates;
+}
+

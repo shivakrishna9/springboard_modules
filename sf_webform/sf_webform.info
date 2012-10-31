@@ -1,0 +1,10 @@
+; $Id: sf_webform.info,v 1.0.0.0 2009/08/24 06:44:28 pcave Exp $
+name = SF Webform Integration
+description = Integrates webform submissions with the Salesforce API.
+dependencies[] = salesforce_management_api
+dependencies[] = webform
+dependencies[] = queue_processor
+
+package = Jackson River Springboard
+core = 6.x
+version =  6.x-3.0-dev

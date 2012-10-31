@@ -1,0 +1,157 @@
+<?php
+
+/**
+ * @file
+ * Funtionality for processing integrating donations with the Non Profit Starter Pack Salesforce package.
+ */
+ 
+/**
+ * Implementation of hook_donation_integration().
+ */
+function sb_npsp_donation_integration() {
+  $integrators[] = array(
+    'id' => 'npsp',
+    'name' => 'Non Profit Starter Pack',
+    'donation_object' => array(
+      'type' => 'Opportunity',
+      'preprocess' => 'sb_npsp_donation_preprocess',
+      'postprocess' => 'sb_npsp_donation_postprocess',
+      'create' => 'sb_npsp_create_donation',
+      'dedupe_key' => '',
+    ),
+    'recurring_donation_object' => array(
+      'type' => 'npe03__Recurring_Donation__c',
+      'preprocess' => 'sb_npsp_recurring_donation_preprocess',
+      'postprocess' => 'sb_npsp_recurring_donation_postprocess',
+      'create' => 'sb_npsp_create_recurring_donation',
+      'dedupe_key' => '',
+    ),
+  );
+  
+  return $integrators;
+}
+
+/**
+ * Implementation of the create method for Salesforce object creation
+ */
+function sb_npsp_create_donation($order_id, $account_id, $sid) {
+  $path = drupal_get_path('module', 'sf_donation');
+  require_once($path . '/donation.php');
+  $donation = DonationFactory::Create('npsp', $order_id, $sid);
+	$object = $donation->map();
+
+	// if this donation is part of a recurring series it will have some additional information that needs to be added
+  $recurring_details = _sf_donation_get_recurring_details($order_id);
+  if (!empty($recurring_details)) {
+    $object['CloseDate'] = date('Y-m-d', $recurring_details['close_date']);
+    $object['npe03__Recurring_Donation__c'] = $recurring_details['sfid'];
+    $object['StageName'] = 'Pledged'; 
+  }
+  return $object;
+}
+
+/**
+ * Implementation of the create method for a recurring donation.
+ */
+function sb_npsp_create_recurring_donation(&$order, $user_ids, $count) {
+
+	$donation_name = t('Recurring Donation - !first !last (!date)', array('!first' => $order->billing_first_name, '!last' => $order->billing_last_name, '!date' => gmdate('Y-m-d H:i:s\Z', $order->created)));
+	
+	$donation = array(
+		'Name' => $donation_name,
+		'npe03__Amount__c' => $order->order_total,
+		'npe03__Contact__c' => $user_ids->salesforce_contact_id,
+		'npe03__Installment_Period__c' => 'Monthly',
+		'npe03__Schedule_Type__c' => 'Multiply By',
+		'npe03__Installments__c' => $count,
+	);
+	// Only add the CurrencyIsoCode if multi_currency support is enabled
+  if (module_exists('fundraiser_multi_currency')) {
+    $donation['CurrencyIsoCode'] = $order->data['currency'];
+  }
+	
+	
+	return $donation;
+
+}
+
+/**
+ * Implementation of the postprocess method for a batch of single donations.
+ */
+function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
+	for ($i = 0; $i < $item_count; $i++) {
+		if ($responses[$i]->success) {
+			$sfid = $responses[$i]->id;
+
+		  // Handle refunds
+		  if ($batch['records'][$i]->type == FUNDRAISER_DONATION_REFUND_TYPE) {
+		    $refund_id = (int)$batch['records'][$i]->oid;
+		    $order_id = db_result(db_query('SELECT order_id FROM {fundraiser_refund} WHERE refund_id = %d', array($refund_id)));
+	    }
+	    // Handle donations
+	    else {
+	      $order_id = (int)$batch['records'][$i]->oid;
+  			db_query("UPDATE {fundraiser_webform_donation} SET sfid = '%s' WHERE did = %d", $sfid, $order_id);
+	    }
+	    
+			$user_ids = _sf_donation_load_user_salesforce_ids_from_order($order_id);
+			
+			// create and save the contact roles						
+			$table = 'sf_donation_opportunity_contact_role';
+			$record = new stdClass();
+			$record->contact_id = $user_ids->salesforce_contact_id;
+			$record->opportunity_id = $sfid;
+			$record->role = 'Donor';
+			drupal_write_record($table, $record);
+		}
+	}
+	
+	// export them
+	if (variable_get('sf_donation_create_contact_roles', TRUE)) {
+    sf_donation_export_opportunity_contact_roles();
+	}
+}
+
+/**
+ * Implementation of the postprocess method for a batch of recurring donations.
+ */
+function sb_npsp_recurring_donation_postprocess(&$batch, &$responses, $item_count) {
+  $sf = salesforce_management_api_connect();
+	// only continue if we got a valid connection
+	if ($sf) {	
+		for ($i = 0; $i < $item_count; $i++) {
+			if ($responses[$i]->success) {
+				// we need to re-query salesforce and get all the opportunities that were created
+				$sfid = $responses[$i]->id;
+				$master_order_id = (int)$batch['records'][$i]->oid;
+
+				$opportunities = $sf->client->query("select Id, Name, CloseDate from Opportunity WHERE npe03__Recurring_Donation__c = '$sfid' ORDER BY CloseDate");
+				
+				// get all recurring orders in drupal
+				$result = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge", $master_order_id);
+				$recurring_orders = array();
+				
+				// add all recurring orders to an array in the same orders as the opportunities
+				while ($data = db_fetch_object($result)) {
+					$recurring_orders[] = $data;
+				}
+				
+				// loop over the donations that were created
+				for ($j = 0; $j < $opportunities->size; $j++) {
+					if ($j == 0) {
+						// first opportunity is the master. now that we have it's opportunity id, add it  
+						db_query("UPDATE {fundraiser_webform_donation} SET sfid = '%s' WHERE did = %d", $opportunities->records[$j]->Id, $master_order_id);
+						//db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $master_order_id);
+						salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $master_order_id, $opportunities->records[$j]->Id, 0);
+						sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+					}
+					else {
+						db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $recurring_orders[$j-1]->order_id);
+						salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $recurring_orders[$j-1]->order_id, $opportunities->records[$j]->Id, 0);
+						sf_queue_insert($recurring_orders[$j-1]->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+					}	
+				}
+			}
+		}
+	}	
+}

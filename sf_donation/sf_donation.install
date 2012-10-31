@@ -1,0 +1,220 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function sf_donation_install() {
+  // Set default backend.
+  variable_set('sf_donation_backend', 'npsp');
+  drupal_install_schema('sf_donation');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sf_donation_uninstall() {
+  drupal_uninstall_schema('sf_donation');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function sf_donation_enable() {
+  $types = array('donation', 'recurring_donation', 'refund');
+  foreach ($types as $type) {
+    // tell the queue processor about the type
+    queue_processor_add_type($type);
+  }
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function sf_donation_disable() {
+  $types = array('donation', 'recurring_donation', 'refund');
+  foreach ($types as $type) {
+    // remove the type from the queue processor
+    queue_processor_remove_type($type);
+  }	
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function sf_donation_schema() {
+
+	$schema['sf_donation_log'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'cron_semaphore' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'uid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'type' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '10',
+	      'not null' => FALSE,
+	    ),
+	    'number_of_donations' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => FALSE,
+	    ),
+	    'data' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'text',
+	      'not null' => FALSE,
+	    ),
+	  ),
+	);
+	
+  $schema['fundraiser_salesforce_map'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'single_recordtype_id' => array(
+        'type' => 'varchar',
+        'description' => t('Single Recordtype ID'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 18,
+      ),
+      'recurring_recordtype_id' => array(
+        'type' => 'varchar',
+        'description' => t('Recurring Recordtype ID'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 18,
+      ),
+      'fields' => array(
+        'type' => 'text',
+        'description' => t('Fields'),
+        'default' => '',
+        'not null' => FALSE,
+      ),
+      'salesforce' => array(
+        'type' => 'varchar',
+        'description' => t('Salesforce'),
+        'default' => '',
+        'not null' => FALSE,
+        'length' => 50,
+      ),
+    ),
+  );
+	
+	$schema['sf_donation_opportunity_contact_role'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'contact_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '32',
+	      'not null' => TRUE,
+	    ),
+	    'opportunity_id' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '32',
+	      'not null' => TRUE,
+	      'default' => '',
+	    ),
+	    'role' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '55',
+	      'not null' => TRUE,
+	      'default' => '',
+	    ),
+	    'exported' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+	    ),
+	  ),
+	);
+	
+	return $schema;
+}
+
+/**
+ * Update 6101: Add a table for storing opportunity contact roles
+ */
+function sf_donation_update_6101() {
+
+  $updates = array();
+  $updates[] = update_sql("
+		CREATE TABLE {sf_donation_opportunity_contact_role} (
+  	contact_id varchar(32) NOT NULL,
+  	opportunity_id varchar(32) NOT NULL default '',
+  	role varchar(55) NOT NULL default '',
+  	exported int(11) NOT NULL default '0'
+	)");
+
+  return $updates;
+}
+
+/**
+ * Update 6202: Reorganize fundraiser salesforce maps
+ */
+function sf_donation_update_6202() {
+  // first add some new fields
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN fields text");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN salesforce varchar(50)");
+  db_query("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN remove int(11)");
+  db_query("UPDATE {fundraiser_salesforce_map} SET remove = 1");
+  
+  // update existing fieldmaps to the new format
+  sf_donation_upgrade_fieldmaps();
+  
+  $updates = array();
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN remove");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN cid");
+  $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN map_id");
+  
+  return $updates;
+}
+
+function sf_donation_upgrade_fieldmaps() {
+  // get unique nids for each defined map
+  $result = db_query("SELECT DISTINCT nid FROM {fundraiser_salesforce_map}");
+  
+  while ($data = db_fetch_object($result)) {
+    // get all fields in the map
+    $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m 
+                      INNER JOIN webform_component w ON m.cid = w.cid AND m.nid = w.nid
+                      WHERE w.nid = %d", $data->nid);
+    
+    $fields = array();
+    while ($field = db_fetch_object($map)) {
+      $fields[$field->map_id] = $field->form_key;
+    }
+    
+    db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES (%d, '%s', '%s')", $data->nid, serialize($fields), 'Opportunity');
+    db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);                  
+  }
+  
+}
+
+
+/**
+ * Update 6203: Add refunds to the queue_processing_order variable
+ */
+function sf_donation_update_6203() {
+  queue_processor_add_type('refund');
+  return array();
+}
