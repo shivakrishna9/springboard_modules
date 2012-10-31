@@ -170,13 +170,14 @@ function springboard_admin_config_modules(&$form, $form_state) {
     // Variable used to indicate the Salesforce configuration form should be displayed on the Dashboard.
     variable_set('springboard_salesforce_enabled', 1);
     //TODO: add conditional logic to enable Salesforce helper modules based on form selections.
-    // Enable Salesforce module suite.   
+    // Enable Salesforce module suite.
+    // TODO confirm all these names post integration work
     $optional = array(
-      'queue_api',
-      'sb_npsp',
-      'salesforce_management_api',
-      'queue_processor',
-      'sf_node',
+      'salesforce_api',
+      //'queue_api',
+      //'sb_npsp',
+      //'queue_processor',
+      //'sf_node',
     );
     foreach ($optional as $name) {
       $exists = db_result(db_query("SELECT name FROM {system} WHERE type='module' and name='%s'", $name));
@@ -185,15 +186,15 @@ function springboard_admin_config_modules(&$form, $form_state) {
     }
     drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $optional))));
     if ($form_state['values']['sf_user']) {
-      module_enable(array('sf_user'));
+      //module_enable(array('sf_user'));
       drupal_set_message(t('Module %modules hase been enabled.', array('%modules' => 'sf_user')));
     }
     if ($form_state['values']['sf_donation']) {
-      module_enable(array('sf_donation'));
+      //module_enable(array('sf_donation'));
       drupal_set_message(t('Module %modules hase been enabled.', array('%modules' => 'sf_donation')));
     }
     if ($form_state['values']['sf_webform']) {
-      module_enable(array('sf_webform'));
+      //module_enable(array('sf_webform'));
       drupal_set_message(t('Module %modules hase been enabled.', array('%modules' => 'sf_webform')));
     }
     // Configure default donation backend
