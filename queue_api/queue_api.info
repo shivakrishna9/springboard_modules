@@ -1,7 +1,0 @@
-; $Id$
-name = Salesforce Queue API
-description = Adds batch processing capabilities to all Salesforce integration modules
-core = 6.x
-package = Jackson River Springboard
-dependencies[] = salesforce_management_api
-version =  6.x-3.0-dev
