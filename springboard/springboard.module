@@ -186,19 +186,22 @@ function springboard_menu_alter(&$items) {
   $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
   $items['admin/springboard/settings/springboard']['type'] = MENU_LOCAL_TASK;
   $items['admin/springboard/settings/springboard']['access arguments'] = array('administer springboard');
+  $items['admin/springboard/settings/springboard']['title'] = 'Springboard';
   $items['admin/springboard/settings/springboard']['weight'] = 100;
   if (module_exists('salesforce_api')) {
-    // Salesforce settings.
-    $items['admin/springboard/settings/salesforce'] = $items['admin/config/system/salesforce-management'];
+    // Salesforce settings
+    $items['admin/springboard/settings/salesforce'] = $items['admin/config/services/salesforce'];
     $items['admin/springboard/settings/salesforce']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/settings/salesforce']['access arguments'] = array('administer springboard');
     // Update WSDL.
-    $items['admin/springboard/settings/salesforce-wsdl'] = $items['admin/config/system/salesforce-management/update-wsdl'];
+    $items['admin/springboard/settings/salesforce-wsdl'] = $items['admin/config/services/salesforce/wsdl'];
     $items['admin/springboard/settings/salesforce-wsdl']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/settings/salesforce-wsdl']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/wsdl']['title'];
     $items['admin/springboard/settings/salesforce-wsdl']['access arguments'] = array('administer springboard');
     // Fieldmaps.
-    $items['admin/springboard/settings/salesforce-fieldmap'] = $items['admin/config/system/salesforce-management/fieldmap'];
+    $items['admin/springboard/settings/salesforce-fieldmap'] = $items['admin/config/services/salesforce/fieldmap'];
     $items['admin/springboard/settings/salesforce-fieldmap']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/settings/salesforce-fieldmap']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/fieldmap']['title'];
     $items['admin/springboard/settings/salesforce-fieldmap']['access arguments'] = array('administer springboard');
   }
   if (module_exists('fundraiser')) {
