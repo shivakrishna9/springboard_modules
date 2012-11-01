@@ -775,8 +775,8 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
       ),
     );
     $row['source'][$key . "_extra"] = array(
-      '#type' => 'textfield',
-      '#title' => t('Value'),
+      '#type' => 'textarea',
+      '#title' => t('Enter custom value'),
       '#default_value' => $default_value,
       '#size' => 20,
       '#maxlength' => 512,
