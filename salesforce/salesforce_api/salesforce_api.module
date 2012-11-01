@@ -1083,10 +1083,17 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
   $object = new stdClass();
 
   // Loop through the fields on the fieldmap.
-  foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
+  foreach ($map->fields as $sf_fieldname => $drupal_fieldname) { // START GIANT LOOP
 // TODO this whole thing will probably get gutted, it needs to be cleaned up from
 // our field map logic in D^. Make sure to try and make things reusable.
 // Keep the stuff outside of this loop.
+//
+// Only maps drupal value to salesforce, we need to go Both ways.
+// Check for field Existance in the existing salesforce object IF it exists
+// And then map IIF the value exists, and we want to overwrite.
+// We are given the existing_sf_object().
+// So all we need to do is add new functional information.
+//
     $value = '';
     $sf_field_definition = $sf_object_definition['fields'][$sf_fieldname];
     $updateable = $sf_field_definition['type'] & SALESFORCE_FIELD_UPDATEABLE;
@@ -1257,7 +1264,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
     if ($max_len && isset($object->$sf_fieldname) && drupal_strlen($object->$sf_fieldname) > $max_len) {
       $object->$sf_fieldname = substr($object->$sf_fieldname, 0, $max_len);
     }
-  }
+  } // END GIANT LOOP
 
   if (!empty($errors)) {
     foreach ($errors as $error) {
