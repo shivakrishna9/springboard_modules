@@ -1,20 +1,14 @@
-<a href="#TB_inline&height=210&width=500&modal=true&inlineId=sustainer-upsell-lightbox" class="thickbox" id='upsell-click' style="display: none;">Show Content</a>
-<div id='sustainer-upsell-lightbox' style="display: none;">
+<div id='sustainer-upsell-lightbox'>
   <div style="padding: 20px;">
     <h3>Become a</h3>
     <h2>MONTHLY DONOR</h2>
     <?php print $message; ?>
-    <?php print $donor_form; ?>
-    <input type='button' name='submit' value='No Thanks' id='upsell-close-btn'>
+    <?php print $content; ?>
   </div>
 </div>
 <script>
 $(function() {
-  $('#upsell-click').click();
-  //$('#upsell-signup-btn').click(function() {
-  //  $('#sustainer-upsell-donation-form').submit();
-  //});
-  $('#upsell-close-btn').click(function() {
+  $('#edit-close').click(function() {
     <?php
       if(variable_get('sustainer_upsell_rejection_enabled',0) == 1):
         ?>
@@ -22,7 +16,8 @@ $(function() {
         <?
       endif;
     ?>
-    tb_remove();
+    window.parent.tb_remove();
+    return false;
   });
 });
 </script>

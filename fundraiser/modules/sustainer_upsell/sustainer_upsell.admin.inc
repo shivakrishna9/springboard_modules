@@ -248,7 +248,7 @@ function sustainer_upsell_admin_thank_you_settings() {
     '#collapsed' => TRUE,
   );
   $form['sustainer_upsell_thank_you_content_tokens']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'order'),
+    '#value' => theme('token_help', 'upsell'),
   );
   $form['sustainer_upsell_email'] = array(
     '#title' => t('Email Defaults'),
@@ -276,7 +276,7 @@ function sustainer_upsell_admin_thank_you_settings() {
     '#collapsed' => TRUE,
   );
   $form['sustainer_upsell_thankyou_form']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'order'),
+    '#value' => theme('token_help', 'upsell'),
   );
   $form["sustainer_upsell_thank_you_email_text"] = array(
     '#title' => t('Thank You TEXT Email Content'),
@@ -290,7 +290,7 @@ function sustainer_upsell_admin_thank_you_settings() {
     '#collapsed' => TRUE,
   );
   $form['sustainer_upsell_thankyou_form_text']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'order'),
+    '#value' => theme('token_help', 'upsell'),
   );
   return system_settings_form($form);
 }

@@ -41,6 +41,13 @@ function sustainer_upsell_menu() {
     'page arguments' => array('sustainer_upsell_admin_thank_you_settings'),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['node/%node/upsell'] = array(
+    'title' => 'Upsell',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_sustainer_upsell_popup_iframe',
+    'page arguments' => array(1,3),
+    'access arguments' => array(TRUE),
+  );
   $items['sustainer-upsell/js'] = array(
     'page callback' => '_sustainer_upsell_js_callback',
     'access callback' => TRUE,
@@ -56,125 +63,49 @@ function sustainer_upsell_form_access_check($node) {
   return false;
 }
 
+function sustainer_upsell_preprocess_page(&$vars, $hook) {
+  if((is_numeric(arg(1)) && (arg(2) == 'upsell'))) {
+    //die('test');
+    $vars['template_file'] = 'page-sustainer-upsell';
+  }
+}
+
+function sustainer_upsell_theme_registry_alter(&$theme_registry) {
+  $theme_hook = 'page'; // my hook name
+  // Get the path to this module
+  $modulepath = drupal_get_path('module', 'sustainer_upsell');
+  // Add the module path on top in the array of paths
+  array_unshift($theme_registry[$theme_hook]['theme paths'], $modulepath . "/templates");
+  // dsm($theme_registry[$theme_hook]['theme paths']);
+}
+
+function _sustainer_upsell_popup_iframe($node, $sid) {
+  $order = _sustainer_uspell_get_order($sid);
+  $extra = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id));
+  if($extra > 0) {
+    $message = sustainer_upsell_confirmation_message(variable_get('sustainer_upsell_thank_you_content',''),$sid);
+    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3));
+  } else {
+    if(!empty($node->sustainer_upsell_content) ) { // see if this node has specific content
+      $message = $node->sustainer_upsell_content;
+    } else {
+      $message = variable_get('sustainer_upsell_default_content','');
+    }
+    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
+  }
+}
+
+function _sustainer_upsell_popup_iframe_thanks() {
+
+}
 
 /**
  * Implements hook_form_alter().
  */
 function sustainer_upsell_form_alter(&$form, $form_state, $form_id) {
   if (isset($form['#node']) && fundraiser_is_donation_type($form['#node']->type) && substr($form_id, -10) == '_node_form') {
-    // add sustainer settings to the node form
     sustainer_upsell_node_settings($form, $form_state, $form['#node']);
   }
-}
-
-/**
- * Implements hook_nodeapi().
- */
-function sustainer_upsell_nodeapi(&$node, $op, $teaser, $page) {
-  if (fundraiser_is_donation_type($node->type)) {
-    switch($op) {
-      case 'load':
-        sustainer_upsell_node_load($node);
-        break;
-
-      case 'insert':
-        sustainer_upsell_node_insert($node);
-        break;
-
-      case 'update':
-        sustainer_upsell_node_update($node);
-        break;
-
-      case 'delete':
-        sustainer_upsell_node_delete($node);
-        break;
-    }
-  }
-}
-
-
-/**
- * Implements the load $op in hook_nodeapi().
- *
- * @param $node
- *   The node being loaded.
- */
-function sustainer_upsell_node_load(&$node) {
-  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_thank_you_content FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
-  if(!empty($sustainer)) {
-    foreach ($sustainer as $field => $value) {
-      $node->{$field} = $value;
-    }
-  }
-}
-
-/**
- * Implements the update $op in hook_nodeapi().
- *
- * @param $node
- *   The node being updated.
- */
-function sustainer_upsell_node_update(&$node) {
-  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_thank_you_content FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
-  if(!empty($sustainer)) {
-    db_query(
-    "
-      UPDATE {sustainer_upsell_form_settings} SET 
-        sustainer_upsell_enabled = '%s',
-        sustainer_upsell_thank_you_content = '%s'
-      WHERE nid = %d
-    ",
-      $node->sustainer_upsell_enabled,
-      $node->sustainer_upsell_thank_you_content,
-      $node->nid
-    );
-  }
-  else {
-    db_query(
-    "
-      INSERT INTO {sustainer_upsell_form_settings}
-      (
-        nid,
-        sustainer_upsell_enabled,
-        sustainer_upsell_thank_you_content
-      )
-      VALUES (%d, '%s', '%s')
-    ",
-      $node->nid,
-      $node->sustainer_upsell_enabled,
-      $node->sustainer_upsell_thank_you_content
-    );
-  }
-}
-
-/**
- * Deletes a sustainer setting record when the node is deleted.
- */
-function sustainer_upsell_node_delete(&$node) {
-  db_query("DELETE FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid);
-}
-
-/**
- * Inserts data for new donation forms.
- *
- * @param $node
- *   The new donation node being inserted.
- */
-function sustainer_upsell_node_insert(&$node) {
-  db_query(
-    "
-      INSERT INTO {sustainer_upsell_form_settings}
-      (
-        nid,
-        sustainer_upsell_enabled,
-        sustainer_upsell_thank_you_content
-      )
-      VALUES (%d, '%s', '%s')
-    ",
-      $node->nid,
-      $node->sustainer_upsell_enabled,
-      $node->sustainer_upsell_thank_you_content
-  );
 }
 
 function sustainer_upsell_node_settings(&$form, $edit, $node) {
@@ -190,22 +121,12 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
     '#title' => t('Upsell Enabled'),
     '#default_value' => $node->sustainer_upsell_enabled
   );
-  $form['sustainer_upsell']['sustainer_upsell_thank_you_content'] = array(
+  $form['sustainer_upsell']['sustainer_upsell_content'] = array(
     '#title' => t('Form specific Upsell Thank You'),
     '#type' => 'textarea',
-    '#default_value' => $node->sustainer_upsell_thank_you_content,
+    '#default_value' => $node->sustainer_upsell_content,
     '#description' => t('If no content is given the default will be used.')
   );
-  $form['sustainer_upsell']['sustainer_upsell_thank_you_content_tokens']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available confirmation message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE
-  );
-  $form['sustainer_uspell']['sustainer_upsell_thank_you_content_tokens']['tokens']['help'] = array(
-    '#value' => theme('token_help', 'order'),
-  );
-
 }
 
 /**
@@ -214,11 +135,11 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
 function sustainer_upsell_theme() {
   return array(
     'sustainer_upsell_box_lightbox2' => array(
-      'arguments' => array('message' => NULL, 'sid' => NULL, 'donor_form' => NULL),
+      'arguments' => array('message' => NULL, 'sid' => NULL, 'content' => NULL, 'head' => drupal_get_html_head()),
       'template' => 'templates/sustainer-upsell-lightbox2'
     ),
     'sustainer_upsell_box_thickbox' => array(
-      'arguments' => array('message' => NULL, 'sid' => NULL, 'donor_form' => NULL),
+      'arguments' => array('message' => NULL, 'sid' => NULL, 'content' => NULL, 'head' => drupal_get_html_head()),
       'template' => 'templates/sustainer-upsell-thickbox'
     ),
   );
@@ -230,16 +151,13 @@ function sustainer_upsell_footer() {
   if((arg(0)=='node') && (arg(2) == 'confirmation')) {
     $sid = $_GET['sid'];
     $node = node_load(arg(1));
-    //$order = fundraiser_create_profile_values_map(arg(1),$sid);
     $order = _sustainer_uspell_get_order($sid);
-    if( 1==2 ) { // see if this node has specific content
-      //$message = $node->sustainer_upsell_thank_you_content;
-    } else {
-      $message = variable_get('sustainer_upsell_default_content','');
-    }
     if(($node->sustainer_upsell_enabled == 1) && (((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1))) {
-      //return variable_get('sustainer_upsell_box_type','thickbox');
-      return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
+      if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
+        return "<a href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click'>Open Thickbox</a>";
+      } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
+        return "<a href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
+      }
     }
   }
 }
@@ -272,38 +190,87 @@ function _sustainer_upsell_js_callback() {
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
 
-function _sustainer_upsell_ahah_submit() {
-
+function _sustainer_upsell_submit($form, &$form_state) {
+  $order = _sustainer_uspell_get_order($form_state['values']['sid']);
+  $sid = $form_state['values']['sid'];
+  fundraiser_create_future_orders($order->order_id,NULL,$form_state['values']['amount']);
+  $orders = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id);
+  while ($o = db_fetch_array($orders)) { 
+     db_query("INSERT INTO {sustainer_upsell_future_orders} (nid, master_order_id, order_id) VALUES (%d, %d, %d)", arg(1), $order->order_id, $o['order_id']);
+  }
 }
 
-function sustainer_upsell_donation_form($form, $order, $sid) {
-  $form['sustainer-upsell'] = array(
-    '#prefix' => '<div id="sustainer-upsell-wrapper">',
-    '#suffix' => '</div>',
-  );
-  $form['sustainer-upsell']['amount'] = array(
+function sustainer_upsell_donation_form(&$form_state, $order, $sid) {
+  $form['amount'] = array(
     '#title' => t('Amount'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#value' => _sustainer_upsell_find_suggested_amount($order->order_total),
+    '#default_value' => _sustainer_upsell_find_suggested_amount($order->order_total),
   );
-  $form['sustainer-upsell']['sid'] = array(
+  $form['sid'] = array(
     '#type' => 'hidden',
     '#size' => 2,
     '#value' => $sid,
   );
+  $form['#submit'] = array('_sustainer_upsell_submit');
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Yes, Sign Me Up!'),
-    '#submit' => array('_sustainer_upsell_ahah_submit'), // If no javascript action.
-    '#ahah' => array(
-      'path' => 'sustainer-upsell/js',
-      'wrapper' => 'sustainer-upsell-wrapper',
-      'method' => 'replace',
-      'effect' => 'fade'
-    )
+  );
+  $form['close'] = array(
+    '#type' => 'button',
+    '#value' => t('No Thanks'),
   );
   return $form;
 }
 
+function sustainer_upsell_confirmation_message($message, $sid) {
+  $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+  $order = uc_order_load($order_id);
+  $message = token_replace($message, 'upsell', $order);
+  return $message;
+}
+
+function sustainer_upsell_token_values($type, $object = NULL, $options = array()) {
+  if ($type == 'upsell') {
+    $order = $object;
+    $order_extras = _sustainer_upsell_get_order_extras($order->order_id);
+    $tokens['upsell-name']            = $order->billing_first_name . " " . $order->billing_last_name;
+    $tokens['upsell-email']           = $order->primary_email;
+    $tokens['upsell-number-payments'] = $order_extras['number-payments'];
+    $tokens['upsell-payment-amount']  = '$'.number_format($order_extras['payment-amount'],2);
+    $tokens['upsell-total-amount']    = '$'.number_format($order_extras['total-amount'],2);
+    return $tokens;
+  }
+}
+
+function _sustainer_upsell_get_order_extras($order_id) {
+  $orders = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id);
+  while($o = db_fetch_array($orders)) {
+    $os[] = $o['order_id'];
+  }
+  $order_amount = db_result(db_query("SELECT order_total FROM {uc_orders} WHERE order_id = %d", $os[0]));
+  $ph = db_placeholders($os);
+  $total_amount = db_result(db_query("SELECT SUM(order_total) FROM {uc_orders} WHERE order_id IN ($ph)",$os));
+  $order_extras = array(
+    'number-payments' => count($os),
+    'payment-amount' => $order_amount,
+    'total-amount' => $total_amount
+  );
+  return $order_extras;
+}
+
+function sustainer_upsell_token_list($type = 'all') {
+  if ($type == 'upsell') {
+    $tokens['upsell']['upsell-name']            = t("Donor's Name");
+    $tokens['upsell']['upsell-email']           = t("Donor's Email");
+    $tokens['upsell']['upsell-number-payments'] = t("Sustainer number of payments");
+    $tokens['upsell']['upsell-payment-amount']  = t("Sustainer payment amount");
+    $tokens['upsell']['upsell-total-amount']    = t("Sustainer total gift amount");
+    return $tokens;
+  }
+}
+
 require_once('sustainer_upsell.admin.inc');
+
+require_once('sustainer_upsell.nodeapi.inc');

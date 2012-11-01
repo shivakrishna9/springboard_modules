@@ -34,7 +34,7 @@ function sustainer_upsell_schema() {
         'length' => '1',
         'not null' => TRUE,
       ),
-      'sustainer_upsell_thank_you_content' => array(
+      'sustainer_upsell_content' => array(
         'description' => t('Node specific upsell content'),
         'type' => 'text',
         'not null' => FALSE,
@@ -52,20 +52,20 @@ function sustainer_upsell_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'order_id' => array(
+      'master_order_id' => array(
         'description' => t('The order id for the base submission'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'future_id' => array(
+      'order_id' => array(
         'description' => t('The recurrance order id'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('nid'),
+    'primary key' => array('order_id'),
   );
   
   return $schema;
