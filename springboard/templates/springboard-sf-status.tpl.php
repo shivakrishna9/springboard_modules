@@ -10,7 +10,7 @@
  */
 ?>
 <div class="springboard-pane" id="salesforce-status-pane">
-  <p><?php print isset($variables['status']) ? $variables['status'] : ''; ?></p>
+  <p><?php print isset($variables['status']) ? t('Salesforce Connected') : t('Salesforce not connected'); ?></p>
   <p>Last WSDL Update: <?php print isset($variables['updated_time']) ? date('Y-m-d g:i:sA', $updated_time) : t('Unknown'); ?></p>
   <p><?php print isset($variables['batch_status']) ? $variables['batch_status'] : ''; ?></p>
   <div id="springboard-sync"><span>Run Springboard Sync</span>
