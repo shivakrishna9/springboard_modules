@@ -108,6 +108,16 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
+  // Forms sub-menu
+  if (module_exists('salesforce_api')) {
+    $items['admin/springboard/salesforce'] = array(
+      'title' => 'Salesforce',
+      'description' => 'Manage Salesforce configurations.',
+      'page callback' => 'springboard_admin',
+      'access arguments' => array('administer springboard'),
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
   // Provide settings tabs for easy access to various sub modules under this tab.
   $items['admin/springboard/settings'] = array(
     'title' => 'Settings',
@@ -182,32 +192,49 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/forms/webforms']['weight'] = 100; 
     unset($items['admin/springboard/forms/webforms']['access callback']);
   }
+  // Add menus under salesforce.
+  if (module_exists('salesforce_api')) {
+    // Salesforce settings
+    $items['admin/springboard/salesforce/salesforce'] = $items['admin/config/services/salesforce'];
+    $items['admin/springboard/salesforce/salesforce']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce']['title'] = $items['admin/config/services/salesforce']['title'] . ' settings';
+    $items['admin/springboard/salesforce/salesforce']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/salesforce/salesforce']['weight'] = 100;
+    // Update WSDL.
+    $items['admin/springboard/salesforce/salesforce-wsdl'] = $items['admin/config/services/salesforce/wsdl'];
+    $items['admin/springboard/salesforce/salesforce-wsdl']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-wsdl']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/wsdl']['title'];
+    $items['admin/springboard/salesforce/salesforce-wsdl']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/salesforce/salesforce-wsdl']['weight'] = 101;
+    // Fieldmaps.
+    $items['admin/springboard/salesforce/salesforce-fieldmap'] = $items['admin/config/services/salesforce/fieldmap'];
+    $items['admin/springboard/salesforce/salesforce-fieldmap']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-fieldmap']['title'] = $items['admin/config/services/salesforce/fieldmap']['title'];
+    $items['admin/springboard/salesforce/salesforce-fieldmap']['access arguments'] = array('administer springboard');
+    // Fieldmap sub tasks, moved up to actual tasks. Add.
+    $items['admin/springboard/salesforce/salesforce-fieldmap-add'] = $items['admin/config/services/salesforce/fieldmap/add'];
+    $items['admin/springboard/salesforce/salesforce-fieldmap-add']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-fieldmap-add']['title'] = $items['admin/config/services/salesforce/fieldmap/add']['title'] . ' Fieldmaps';
+    $items['admin/springboard/salesforce/salesforce-fieldmap-add']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/salesforce/salesforce-fieldmap-add']['weight'] = 80;
+    // Fieldmap sub tasks, moved up to actual tasks. Import.
+    $items['admin/springboard/salesforce/salesforce-fieldmap-import'] = $items['admin/config/services/salesforce/fieldmap/import'];
+    $items['admin/springboard/salesforce/salesforce-fieldmap-import']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/salesforce/salesforce-fieldmap-import']['title'] = $items['admin/config/services/salesforce/fieldmap/import']['title'] . ' Fieldmaps';
+    $items['admin/springboard/salesforce/salesforce-fieldmap-import']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/salesforce/salesforce-fieldmap-import']['weight'] = 81;
+  }
   // Add menus under settings.
   $items['admin/springboard/settings/springboard'] = $items['admin/config/system/springboard'];
   $items['admin/springboard/settings/springboard']['type'] = MENU_LOCAL_TASK;
   $items['admin/springboard/settings/springboard']['access arguments'] = array('administer springboard');
   $items['admin/springboard/settings/springboard']['title'] = 'Springboard';
   $items['admin/springboard/settings/springboard']['weight'] = 100;
-  if (module_exists('salesforce_api')) {
-    // Salesforce settings
-    $items['admin/springboard/settings/salesforce'] = $items['admin/config/services/salesforce'];
-    $items['admin/springboard/settings/salesforce']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/salesforce']['access arguments'] = array('administer springboard');
-    // Update WSDL.
-    $items['admin/springboard/settings/salesforce-wsdl'] = $items['admin/config/services/salesforce/wsdl'];
-    $items['admin/springboard/settings/salesforce-wsdl']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/salesforce-wsdl']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/wsdl']['title'];
-    $items['admin/springboard/settings/salesforce-wsdl']['access arguments'] = array('administer springboard');
-    // Fieldmaps.
-    $items['admin/springboard/settings/salesforce-fieldmap'] = $items['admin/config/services/salesforce/fieldmap'];
-    $items['admin/springboard/settings/salesforce-fieldmap']['type'] = MENU_LOCAL_TASK;
-    $items['admin/springboard/settings/salesforce-fieldmap']['title'] = 'Salesforce ' . $items['admin/config/services/salesforce/fieldmap']['title'];
-    $items['admin/springboard/settings/salesforce-fieldmap']['access arguments'] = array('administer springboard');
-  }
   if (module_exists('fundraiser')) {
     $items['admin/springboard/settings/fundraiser'] = $items['admin/config/system/fundraiser'];
     $items['admin/springboard/settings/fundraiser']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/settings/fundraiser']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/fundraiser']['title'] = 'Fundraiser';
   }
   if (module_exists('market_source')) {
     $items['admin/springboard/settings/market-source'] = $items['admin/config/search/market-source'];
