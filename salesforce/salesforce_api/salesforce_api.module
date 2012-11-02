@@ -25,15 +25,23 @@ define('SALESFORCE_PATH_OBJECT', SALESFORCE_PATH_ADMIN . '/object');
 define('SALESFORCE_PATH_UPDATE_WSDL', SALESFORCE_PATH_ADMIN . '/wsdl');
 
 // Salesforce schema properties. Not all these are in use yet.
-define('SALESFORCE_FIELD_CREATEABLE',            0x01);
+// These are determined from Sales'force end. NOT the same as a rule.
+define('SALESFORCE_FIELD_CREATEABLE',            0x01);  // If the type can be created.
 define('SALESFORCE_FIELD_DEFAULTEDONCREATE',     0x02);
-define('SALESFORCE_FIELD_DEPRECATEDANDHIDDEN', 0x04);
-define('SALESFORCE_FIELD_IDLOOKUP',              0x08);
-define('SALESFORCE_FIELD_NILLABLE',              0x10);
-define('SALESFORCE_FIELD_RESTRICTEDPICKLIST',    0x20);
-define('SALESFORCE_FIELD_UNIQUE',                0x40);
-define('SALESFORCE_FIELD_UPDATEABLE',            0x80);
+define('SALESFORCE_FIELD_DEPRECATEDANDHIDDEN',   0x04);  // NOT USED
+define('SALESFORCE_FIELD_IDLOOKUP',              0x08);  // NOT USED
+define('SALESFORCE_FIELD_NILLABLE',              0x10);  // If the field is required or not.
+define('SALESFORCE_FIELD_RESTRICTEDPICKLIST',    0x20);  // NOT USED
+define('SALESFORCE_FIELD_UNIQUE',                0x40);  // NOT USED
+define('SALESFORCE_FIELD_UPDATEABLE',            0x80);  // If the type can be updated.
 define('SALESFORCE_FIELD_SOURCE_ONLY',           ~SALESFORCE_FIELD_CREATEABLE);
+
+// Salesforce mapping rules.
+define('SALESFORCE_FIELD_NO_RULE',               'no_rule');
+define('SALESFORCE_FIELD_BLANK_OVERWRITE',       'blank_overwrite');
+define('SALESFORCE_FIELD_APPEND',                'append');
+define('SALESFORCE_FIELD_ALWAYS_OVERWRITE',      'always_overwrite');
+define('SALESFORCE_FIELD_NEVER_OVERWRITE',       'never_overwrite');
 
 // Define reporting levels for watchdog messages.
 define('SALESFORCE_LOG_NONE', 0);
@@ -703,7 +711,8 @@ function salesforce_api_valid_email_address($mail) {
  *   - automatic: whether or not the sync should be automatic
  *   - description: a short title or description of the fieldmap
  *   - fields: an array that maps source fields (as keys) to their corresponding
- *       target fields (as values).
+ *       target fields (as values), with the additional rules for d-to-s or s-to-d mapping.
+ *       This array is serialized in the database.
  */
 function salesforce_api_fieldmap_save(&$map) {
   $primary_keys = array();
@@ -1068,8 +1077,6 @@ function salesforce_api_fieldmap_field_options($object, $type = NULL, $name = NU
  *   An object containing data ready for export to Salesforce or FALSE if
  *     the operation failed.
  */
-// NOTE watch here for how to avoid re=using redundant code.
-// This section will may need to get reworked to handle our code.
 function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $existing_sf_object = NULL) {
   // Load the fieldmap from the database.
   $map = salesforce_api_salesforce_fieldmap_load($name);
@@ -1083,31 +1090,24 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
   $object = new stdClass();
 
   // Loop through the fields on the fieldmap.
-  foreach ($map->fields as $sf_fieldname => $drupal_fieldname) { // START GIANT LOOP
-// TODO this whole thing will probably get gutted, it needs to be cleaned up from
-// our field map logic in D^. Make sure to try and make things reusable.
-// Keep the stuff outside of this loop.
-//
-// Only maps drupal value to salesforce, we need to go Both ways.
-// Check for field Existance in the existing salesforce object IF it exists
-// And then map IIF the value exists, and we want to overwrite.
-// We are given the existing_sf_object().
-// So all we need to do is add new functional information.
-//
+  foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
+    $drupal_fieldname = $map->fields[$sf_fieldname]['type'];
     $value = '';
     $sf_field_definition = $sf_object_definition['fields'][$sf_fieldname];
     $updateable = $sf_field_definition['type'] & SALESFORCE_FIELD_UPDATEABLE;
     $createable = $sf_field_definition['type'] & SALESFORCE_FIELD_CREATEABLE;
     $nillable = $sf_field_definition['type'] & SALESFORCE_FIELD_NILLABLE;
 
-    // Don't try to update or create fields to which those actions do not apply.
+    // Don't try to update or create fields to which those actions do not apply from Salesforce's end.
+    // These are fields salesforce has labeled in API as no-touchy.
     if ((!$updateable && !$createable)
       || (empty($drupal_data->salesforce->sfid) && !$createable)
       || (!empty($drupal_data->salesforce->sfid) && !$updateable)) {
       continue;
     }
-    // See if it's a special field
-    if (is_array($map->fields[$sf_fieldname])) {
+
+    // See if it's a special field, one of the fields that use additional value settings.
+    if (in_array($map->fields[$sf_fieldname]['type'], array('fixed', 'tokens', 'php'))) {
       switch ($map->fields[$sf_fieldname]['type']) {
         case 'fixed':
           if (isset($map->fields[$sf_fieldname]['value'])) {
@@ -1138,8 +1138,8 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
         $drupal_field_export_handler($drupal_data,
           $drupal_fieldname, $drupal_field_definition, $sf_field_definition);
     }
-    // Otherwise set the field on the export object to the value of the Drupal
-    // field if it's present on the source object.
+    // Otherwise set the field on the export object to the value of the Drupal field if it's present on the source object.
+    // Most regular fields use this.
     elseif (isset($drupal_data->$drupal_fieldname)) {
       $value = $drupal_data->$drupal_fieldname;
     }
@@ -1151,6 +1151,26 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
     elseif (!$value && $nillable && !empty($map->fields[$sf_fieldname])) {
       $fieldsToNull[] = $sf_fieldname;
       continue;
+    }
+
+    // Don't try to update or create fields we have rules in place on that say no-touchy.
+    // So if a rule is never overwrite, or blank overwrite but we have a value, then no-touchy.
+    // Here we only care about the rule from Drupal to Salesforce.
+    $rule_d_to_s = $map->fields[$sf_fieldname]['rule_d_to_s'];
+    // If our drupal to salesforce rule called for appending the value, append it.
+    if ($rule_d_to_s == SALESFORCE_FIELD_APPEND && !empty($existing_sf_object->$sf_fieldname)) {
+      $value = $existing_sf_object->$sf_fieldname . $value;
+    }
+    // If we never overwrite it, leave it alone.
+    if ($rule_d_to_s == SALESFORCE_FIELD_NEVER_OVERWRITE) {
+      if (!isset($existing_sf_object->$sf_fieldname)) {
+        continue;
+      }
+      $value = $existing_sf_object->$sf_fieldname;
+    }
+    // If our drupal to salesforce rule calls for leaving the value alone, set it to what it was.
+    if ($rule_d_to_s == SALESFORCE_FIELD_BLANK_OVERWRITE && !empty($existing_sf_object->$sf_fieldname)) {
+      $value = $existing_sf_object->$sf_fieldname;
     }
 
     // Evaluate field-type-specific syntax rules. The point here is not to
@@ -1264,7 +1284,7 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
     if ($max_len && isset($object->$sf_fieldname) && drupal_strlen($object->$sf_fieldname) > $max_len) {
       $object->$sf_fieldname = substr($object->$sf_fieldname, 0, $max_len);
     }
-  } // END GIANT LOOP
+  }
 
   if (!empty($errors)) {
     foreach ($errors as $error) {
@@ -1277,12 +1297,12 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
   }
   
   // Invoke hook_salesforce_api_fieldmap_export_create($sf_object, $fieldmap, $drupal_data, $existing_sf_object).
-// Make sure to keep this, we added it, we need it for second pass from webform
+  // Make sure to keep this, we added it, we need it for second pass from webform (do we?) // TODO
+  // TOOD why are we not useing module_invoke_all?
   foreach (module_implements('salesforce_api_fieldmap_export_create') as $module) {
     $function = $module . '_salesforce_api_fieldmap_export_create';
     $function($object, $map, $drupal_data, $existing_sf_object);
   }
-  
   return $object;
 }
 
@@ -1316,12 +1336,11 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
     );
     return FALSE;
   }
-      
   // Look for existing Salesforce object mapped to this Drupal record.
   //@todo: when salesforce_api_id_load() is refactored to accommodate multiple return values, move this to inside the fieldmap loop
   $existing = salesforce_api_id_load($drupal_id, $drupal_type, $drupal_bundle);
   $sf_function = isset($existing->sfid) ? 'update' : 'create';
-  
+
   // Was a fieldmap specified?
   if (!empty($fieldmap_name)) {
     $fieldmaps = array($fieldmap_name);
@@ -1333,19 +1352,18 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
       array(':type' => $drupal_type, ':bundle' => $drupal_bundle)
     )->fetchCol();
   }
-  
+
   // Loop over all fieldmaps
   $result = FALSE;
   foreach ($fieldmaps as $fieldmap) {
     // Load the complete fieldmap.
     $fieldmap = salesforce_api_salesforce_fieldmap_load($fieldmap);
-    
     // Skip this fieldmap if it isn't set to automatically sync on this SF function.
-    $is_automatic = (bool) $fieldmap->automatic & (
+    $is_automatic = (bool) $fieldmap->automatic && (
         ($sf_function == 'update') ? SALESFORCE_AUTO_SYNC_UPDATE : SALESFORCE_AUTO_SYNC_CREATE
     );
     if (!$is_automatic) continue;
-    
+
     // Invoke hook_salesforce_api_export().
     foreach (module_implements('salesforce_api_export') as $module) {
       $function = $module . '_salesforce_api_export';
@@ -1355,8 +1373,8 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
         continue;
       }
     }
-    
     // Attempt to connect to Salesforce (if we haven't already).
+
     if (!isset($sf)) {
       $sf = salesforce_api_connect();
       if (!isset($sf) || !is_object($sf)) {
@@ -1366,7 +1384,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
         drupal_set_message(t('Unable to connect to Salesforce using <a href="!url">current credentials</a>.', array('!url' => url(SALESFORCE_PATH_ADMIN))));
         return FALSE;
       }
-      
+          
       // Get an existing Salesforce object if possible. Fieldmap logic may use it to determine which fields to populate.
       $existing_sf_object = new stdClass();
       if ($sf_function == 'create') {
@@ -1378,6 +1396,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
         }
       }
       else {
+
         // Query Salesforce for data in the fields this fieldmap cares about.
         $fields = array_keys($fieldmap->fields);
         $sf_query = 'SELECT ' . implode(',', $fields) . ' FROM ' . $fieldmap->salesforce . 
@@ -1394,7 +1413,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
           $existing_sf_object = $result->records[0];
         }
       }
-      
+
       // Create an object for export based on the specified fieldmap.
       $sf_object = salesforce_api_fieldmap_export_create($fieldmap->name, $drupal_data, $existing_sf_object);
       if (isset($existing_sf_object->Id)) {
@@ -1414,7 +1433,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
           WATCHDOG_ERROR
         );
       }
-      
+
       // Check to see if response is an array of objects
       if (is_array($response) && count($response) > 0) {
         $response = $response[0];
@@ -1446,12 +1465,12 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
           salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, $drupal_data, $fieldmap->name);
         }
       }
-      
+
       // If the export was successful, save the Salesforce ID for the Drupal record.
       $result = (isset($response->success) && $response->success == TRUE) ? TRUE : FALSE;
       if ($result) {
-        salesforce_api_id_save($drupal_id, $response->Id, $fieldmap->name, $drupal_type, $drupal_bundle, 'export');
-        $drupal_data->salesforce->sfid = $response->Id;  //@todo: salesforce should eventually be an array keyed by fieldmap name
+        salesforce_api_id_save($drupal_id, $response->id, $fieldmap->name, $drupal_type, $drupal_bundle, 'export');
+        $drupal_data->salesforce->sfid = $response->id;  //@todo: salesforce should eventually be an array keyed by fieldmap name
       }
       else {
         // Otherwise log the error.
