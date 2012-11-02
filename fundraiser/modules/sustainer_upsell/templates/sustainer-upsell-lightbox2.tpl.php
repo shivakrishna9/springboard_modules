@@ -3,6 +3,7 @@
     <h3>Become a</h3>
     <h2>MONTHLY DONOR</h2>
     <?php print $message; ?>
+    <?php print $match; ?>
     <?php print $content; ?>
   </div>
 </div>

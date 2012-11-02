@@ -84,20 +84,19 @@ function _sustainer_upsell_popup_iframe($node, $sid) {
   $extra = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id));
   if($extra > 0) {
     $message = sustainer_upsell_confirmation_message(variable_get('sustainer_upsell_thank_you_content',''),$sid);
-    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3));
+    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, $match, arg(3));
   } else {
     if(!empty($node->sustainer_upsell_content) ) { // see if this node has specific content
       $message = $node->sustainer_upsell_content;
     } else {
       $message = variable_get('sustainer_upsell_default_content','');
     }
-    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
+    $match = module_invoke_all("upsell_match_content");
+    $match = join("\n", $match);
+    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, $match, arg(3), drupal_get_form('sustainer_upsell_donation_form', $order, $sid));
   }
 }
 
-function _sustainer_upsell_popup_iframe_thanks() {
-
-}
 
 /**
  * Implements hook_form_alter().
@@ -135,11 +134,11 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
 function sustainer_upsell_theme() {
   return array(
     'sustainer_upsell_box_lightbox2' => array(
-      'arguments' => array('message' => NULL, 'sid' => NULL, 'content' => NULL, 'head' => drupal_get_html_head()),
+      'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
       'template' => 'templates/sustainer-upsell-lightbox2'
     ),
     'sustainer_upsell_box_thickbox' => array(
-      'arguments' => array('message' => NULL, 'sid' => NULL, 'content' => NULL, 'head' => drupal_get_html_head()),
+      'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
       'template' => 'templates/sustainer-upsell-thickbox'
     ),
   );
