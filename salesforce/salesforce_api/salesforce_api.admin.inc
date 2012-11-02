@@ -626,15 +626,18 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
   // Fail with an error message if either the source or target object
   // definitions were not found.
   if (!salesforce_api_fieldmap_source_type_enabled($map)) {
-    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal type "%type" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%type' => $map->drupal_type)), 'error');
+    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal type "%type" cannot be found. ' .
+      'Please make sure you have required any modules with which this fieldmap was built.', array('%type' => $map->drupal_type)), 'error');
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
   if (!salesforce_api_fieldmap_source_bundle_enabled($map)) {
-    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal bundle "%bundle" cannot be found. Please make sure you have required any modules with which this fieldmap was built.', array('%bundle' => $map->drupal_bundle)), 'error');
+    drupal_set_message(t('This fieldmap cannot be imported, because the module which supports the Drupal bundle "%bundle" cannot be found. ' .
+      'Please make sure you have required any modules with which this fieldmap was built.', array('%bundle' => $map->drupal_bundle)), 'error');
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
   if (!salesforce_api_fieldmap_target_enabled($map)) {
-    drupal_set_message(t('This fieldmap cannot be edited because salesforce_api cannot find a definition for the Salesforce object "%sfobj". Please verify your Salesforce connection and settings.', array('%sfobj' => $map->salesforce)), 'error');
+    drupal_set_message(t('This fieldmap cannot be edited because salesforce_api cannot find a definition for the Salesforce object "%sfobj". ' .
+      'Please verify your Salesforce connection and settings.', array('%sfobj' => $map->salesforce)), 'error');
     drupal_goto(SALESFORCE_PATH_FIELDMAPS);
   }
 
@@ -671,22 +674,23 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
     'new_field' => array(
       '#type' => 'select',
       '#options' => $unmapped_fields,
-      '#multiple' => FALSE,
+      '#multiple' => TRUE,
       // Make this a list box to save on scrolling.
       '#attributes' => array('size' => 10),
     ),
     'add_button' => array(
       '#type' => 'submit',
       '#value' => t('Add'),
-    ),
+    ),  // TODO make this AJAX.
   );
 
   // Add the data to the form for the required fields table.
   $form['fields'] = array('#theme' => 'salesforce_api_fieldmap_edit_form_table');
-
   $form['fields']['header'] = array(
     array('#markup' => t('Target: @label', array('@label' => $target['label']))),
     array('#markup' => t('Source: @label', array('@label' => $source['label']))),
+    array('#markup' => t('Map rule: Drupal <--> Salesforce')),
+    array('#markup' => t('Map rule: Salesforce <--> Drupal')),
   );
 
   // Adding fixed value and evaluate PHP options
@@ -696,6 +700,14 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
   if ( user_access('use php for salesforce fixed values') ) {
     $options['Other']['php'] = t('Evaluate PHP');
   }
+
+  $rule_options = array(
+    SALESFORCE_FIELD_NO_RULE => t('No special rule'),
+    SALESFORCE_FIELD_BLANK_OVERWRITE => t('Overwrite when blank'),
+    SALESFORCE_FIELD_APPEND => t('Append'),
+    SALESFORCE_FIELD_ALWAYS_OVERWRITE => t('Always overwrite'),
+    SALESFORCE_FIELD_NEVER_OVERWRITE => t('Never overwrite'),
+  );
 
   // Loop through each of the target fields.
   $rows = array(
@@ -743,24 +755,15 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
       continue;
     }
 
-    // Create a row for this field.
+    // Create rows(s) for this field.
     $row = array(
       'target' => array('#markup' => $value['label'] . $required),
     );
 
-    if (isset($map->fields[$key]) && is_array($map->fields[$key])) {
-      $default_key = $map->fields[$key]['type'];
-      $default_value = $map->fields[$key]['value'];
-    }
-    elseif (isset($map->fields[$key])) {
-      $default_key = $map->fields[$key];
-      $default_value = NULL;
-    }
-    else {
-      $options = array('' => '') + $options;
-      $default_key = NULL;
-      $default_value = NULL;
-    }
+    $default_key = isset($map->fields[$key]['type']) ? $map->fields[$key]['type'] : '';
+    $default_value = isset($map->fields[$key]['value']) ? $map->fields[$key]['value'] : '';
+    $default_d_to_s = isset($map->fields[$key]['rule_d_to_s']) ? $map->fields[$key]['rule_d_to_s'] : '';
+    $default_s_to_d = isset($map->fields[$key]['rule_s_to_d']) ? $map->fields[$key]['rule_s_to_d'] : '';
 
     // Add the select list for the associated target field.
     $row['source'][$key] = array(
@@ -785,10 +788,32 @@ function salesforce_api_fieldmap_edit_form($form, &$form_state, $map) {
       '#description' => 'Omit &lt;?php ?&gt; tags. Return the value to set. Standard caveats apply.',
     );
 
+    // Add mapping rule options here.
+    $row['rule_d_to_s'][$key] = array(
+      '#type' => 'select',
+      '#options' => $rule_options,
+      '#default_value' => $default_d_to_s,
+      '#multiple' => FALSE,
+      '#attributes' => array(
+        'class' => array('sf_fieldmap_rule', 'sf_d_to_s_fieldmap_rule'),
+        'id' => 'sf-fieldmap-d-to-s-rule-' . $key,
+      ),
+    );
+    $row['rule_s_to_d'][$key] = array(
+      '#type' => 'select',
+      '#options' => $rule_options,
+      '#default_value' => $default_s_to_d,
+      '#multiple' => FALSE,
+      '#attributes' => array(
+        'class' => array('sf_fieldmap_rule', 'sf_s_to_d_fieldmap_rule'),
+        'id' => 'sf-fieldmap-s-to-d-rule-' . $key,
+      ),
+    );
+
     // If this field is not a required part of the fieldmap, add a remove link.
     // @todo: Make this an AJAX callback.
     if ($type != 'required') {
-      $row['remove'][$key] = array(
+      $row['operations'][$key] = array(
         '#markup' => l(t('Remove'), SALESFORCE_PATH_FIELDMAPS . '/' . $map->name . '/remove/' . $key),
       );
     }
@@ -932,17 +957,16 @@ function salesforce_api_fieldmap_edit_form_submit($form, &$form_state) {
   if(isset($rows)) {
     foreach ($rows as $row) {
       $source = key($row['source']);
-      $target = current($row['source']);
-      if (!empty($row['source'][$source . '_extra'])) {
-        $map->fields[$source] = array(
-          'type' => $target,
-          'value' => $row['source'][$source . '_extra'],
-        );
-      }
-      else {
-        // Add the association to the fieldmap's fields array.
-        $map->fields[$source] = $target;
-      }
+      $target = current($row['source']); // Either fieldname or a value.
+      $value = isset($row['source'][$source . '_extra']) ? $row['source'][$source . '_extra'] : '';
+      $rule_d_to_s = $row['rule_d_to_s'][$source];
+      $rule_s_to_d = $row['rule_s_to_d'][$source];
+      $map->fields[$source] = array(
+        'type' => $target,
+        'value' => $value,
+        'rule_d_to_s' => $rule_d_to_s,
+        'rule_s_to_d' => $rule_s_to_d,
+      );
     }
   }
 
@@ -951,10 +975,12 @@ function salesforce_api_fieldmap_edit_form_submit($form, &$form_state) {
   foreach ($form_state['values']['drupal_sfapi_automatic'] as $auto) {
     $map->automatic |= $auto;
   }
-
+  $count_fields = 0;
   if (!empty($form_state['values']['new_field'])) {
-    $field = $form_state['values']['new_field'];
-    $map->fields[$field] = '';
+    foreach ($form_state['values']['new_field'] as $field) {
+      $map->fields[$field] = '';
+      $count_fields++;
+    }
   }
 
   // Save the updated fieldmap.
@@ -964,7 +990,7 @@ function salesforce_api_fieldmap_edit_form_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
   switch ($form_state['values']['op']) {
     case $form_state['values']['add_button']:
-      drupal_set_message(t('Field added.'));
+      ($count_fields == 1) ? drupal_set_message(t('Field added.')) : drupal_set_message(t('Fields added.'));
       break;
 
     case $form_state['values']['submit']:
@@ -1053,7 +1079,16 @@ function theme_salesforce_api_fieldmap_edit_form_table($variables) {
         'class' => 'source-cell',
       ),
       array(
-       'data' => drupal_render($form['rows'][$element]['remove']),
+        'data' => drupal_render($form['rows'][$element]['rule_d_to_s']),
+        'class' => 'rule-d-to-s-cell',
+      ),
+      array(
+        'data' => drupal_render($form['rows'][$element]['rule_s_to_d']),
+        'class' => 'rule-s-to-d-cell',
+      ),
+      array(
+        'data' => drupal_render($form['rows'][$element]['operations']),
+        'class' => 'operations-cell',
       )
     );
   }
