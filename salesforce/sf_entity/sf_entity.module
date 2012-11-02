@@ -326,6 +326,7 @@ function sf_entity_fieldmap_objects($type) {
                 'type' => SALESFORCE_FIELD_SOURCE_ONLY,
                );
             break;
+            // TODO - Content fields???
           case 'user':
             $objects['user'][$bundle_name]['fields'] += array(
               'name' => array('label' => t('Username'), 'group' => 'User Fields'),
@@ -353,6 +354,7 @@ function sf_entity_fieldmap_objects($type) {
               'group' => 'User Fields',
               );
             // Gather profile fields for the user object.
+            // Since we're addressing users vs nodes specifically here, support the user fields.
             if (module_exists('profile')) {
               $profile_fields = array();
               $categories = profile_user_categories();
@@ -401,9 +403,10 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
       '#type' => 'value',
       '#value' => $entity_type,
     );
-    return confirm_form($form, 'Are you sure you want to unlink this entity from Salesforce?', entity_uri($entity_type, $entity), 'Unlinking this object will remove the connection between the Drupal object and the Salesforce record. This action will <strong>not</strong> delete the Drupal object or the Salesforce record. This cannot be undone.', 'Unlink', 'Cancel');
+    return confirm_form($form, 'Are you sure you want to unlink this entity from Salesforce?', entity_uri($entity_type, $entity), 
+      'Unlinking this object will remove the connection between the Drupal object and the Salesforce record. This action will ' .
+      '<strong>not</strong> delete the Drupal object or the Salesforce record. This cannot be undone.', 'Unlink', 'Cancel');
   }
-
 
   // Set the entity page title.
   drupal_set_title(t('@entity_name: Salesforce Export/Import', array('@entity_name' => entity_label($entity_type, $entity))));
@@ -435,7 +438,8 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
     // If $sf_data is empty, we assume the record is deleted. retrieve() does
     // not return the ENTITY_IS_DELETED error that upsert() does.
     if (!$sf_data && SALESFORCE_DELETED_POLICY_UPSERT == variable_get('salesforce_api_entity_deleted_policy', SALESFORCE_DELETED_POLICY_UPSERT)) {
-      drupal_set_message(t('Unable to retrieve Salesforce data for record !sfid. Drupal and Salesforce records have been unlinked.', array('!sfid' => $entity->salesforce->sfid)), 'warning');
+      drupal_set_message(t('Unable to retrieve Salesforce data for record !sfid. Drupal and Salesforce records have been unlinked.',
+        array('!sfid' => $entity->salesforce->sfid)), 'warning');
       // Unlink the object and reload the entity, resetting the cache
       salesforce_api_id_unlink(array('oid' => $oid, 'name' => $entity->salesforce->name));
       $entity = entity_load($entity_type, array($oid), array(), TRUE);
@@ -500,7 +504,8 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
       $form['export']['notice'] = array(
         '#type' => 'item',
         '#title' => t('No @entity fieldmaps', array('@entity' => $entity_type . ':' . $bundle)),
-        '#markup' => t('You have not created any @entity fieldmaps. Please <a href="/!url">go create a fieldmap</a> and come back.', array('@entity' => strtolower($info['label']), '!url' => SALESFORCE_PATH_FIELDMAPS)),
+        '#markup' => t('You have not created any @entity fieldmaps. Please <a href="/!url">go create a fieldmap</a> and come back.',
+          array('@entity' => strtolower($info['label']), '!url' => SALESFORCE_PATH_FIELDMAPS)),
         );
     }
   }
@@ -518,8 +523,9 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
     // Load the fieldmap data.
     $map = salesforce_api_salesforce_fieldmap_load($entity->salesforce->name);
     $sf_object_definition = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
-    $export_data = salesforce_api_fieldmap_export_create($entity->salesforce->name, $entity);
-    $header = array(t('Field name'), t('Drupal @type value', array('@type' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle))), t('Salesforce @type value', array('@type' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce))));
+    $export_data = salesforce_api_fieldmap_export_create($entity->salesforce->name, $entity, $sf_data);
+    $header = array(t('Field name'), t('Drupal @type value', array('@type' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle))),
+      t('Salesforce @type value', array('@type' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce))));
     $rows = array();
 
     foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
