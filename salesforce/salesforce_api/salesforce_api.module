@@ -1088,7 +1088,6 @@ function salesforce_api_fieldmap_export_create($name, $drupal_data = NULL, $exis
   $drupal_object_definition = salesforce_api_fieldmap_objects_load('drupal', $map->drupal_type, $map->drupal_bundle);
   $sf_object_definition = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
   $object = new stdClass();
-
   // Loop through the fields on the fieldmap.
   foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
     $drupal_fieldname = $map->fields[$sf_fieldname]['type'];
@@ -1399,6 +1398,7 @@ function salesforce_api_export($drupal_type, $drupal_bundle, $drupal_id, &$drupa
 
         // Query Salesforce for data in the fields this fieldmap cares about.
         $fields = array_keys($fieldmap->fields);
+        $fields[] = 'Id'; // Be sure to return the Id from Salesforce while we're at it.
         $sf_query = 'SELECT ' . implode(',', $fields) . ' FROM ' . $fieldmap->salesforce . 
           " WHERE Id = '" . $existing->sfid . "'"
         ;
