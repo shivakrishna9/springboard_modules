@@ -271,6 +271,7 @@ function sf_entity_fieldmap_objects($type) {
                 $export_handler = 'sf_entity_export_field_default';
                 $import_handler = 'sf_entity_import_field_default';
                 break;
+                // TODO Add entity referene support
             }
             $data = array(
               'label' => t('@label (@column)', array('@label' => $field_info['label'], '@column' => $col_name)),
@@ -351,6 +352,23 @@ function sf_entity_fieldmap_objects($type) {
               'import' => '_sf_entity_import_date',
               'group' => 'User Fields',
               );
+            // Gather profile fields for the user object.
+            if (module_exists('profile')) {
+              $profile_fields = array();
+              $categories = profile_user_categories();
+              foreach ($categories as $category) {
+                $fields = _profile_get_fields($category['name']);
+                foreach ($fields as $field) {
+                  $profile_fields[] = $field;
+                }
+              }
+              foreach ($profile_fields as $field) {
+                $objects['user'][$bundle_name]['fields'][$field->name] = array(
+                  'label' => $field->title,
+                  'group' => 'User Profile Fields',
+                  );
+              }
+            }
             break;
         }
       }
@@ -501,8 +519,7 @@ function sf_entity_salesforce_form($form, &$form_state, $entity_type, $entity) {
     $map = salesforce_api_salesforce_fieldmap_load($entity->salesforce->name);
     $sf_object_definition = salesforce_api_fieldmap_objects_load('salesforce', 'salesforce', $map->salesforce);
     $export_data = salesforce_api_fieldmap_export_create($entity->salesforce->name, $entity);
-
-    $header = array(t('Field name'), t('Drupal @type value', array('@type' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_entity, $map->drupal_bundle))), t('Salesforce @type value', array('@type' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce))));
+    $header = array(t('Field name'), t('Drupal @type value', array('@type' => salesforce_api_fieldmap_object_label('drupal', $map->drupal_type, $map->drupal_bundle))), t('Salesforce @type value', array('@type' => salesforce_api_fieldmap_object_label('salesforce', 'salesforce', $map->salesforce))));
     $rows = array();
 
     foreach ($map->fields as $sf_fieldname => $drupal_fieldname) {
@@ -610,6 +627,7 @@ function sf_entity_salesforce_form_submit($form, &$form_state) {
     // entity_load actually accepts an array of entity ids
     $entities = entity_load($form_state['values']['entity type'], array($oid));
     $entity = current($entities);
+    $entity_type = $form_state['values']['entity type'];
   }
   switch ($form_state['values']['op']) {
     // Export the entity to Salesforce.
