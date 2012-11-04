@@ -152,10 +152,15 @@ function sustainer_upsell_footer() {
     $node = node_load(arg(1));
     $order = _sustainer_uspell_get_order($sid);
     if(($node->sustainer_upsell_enabled == 1) && (((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1))) {
+      drupal_add_js("
+        $(function() {
+          $('#upsell-box-open').click();
+        })
+      ",'inline','footer');
       if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
-        return "<a href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click'>Open Thickbox</a>";
+        return "<a id='upsell-box-open' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click' style='display: none;'>Open Thickbox</a>";
       } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
-        return "<a href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
+        return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
       }
     }
   }
@@ -190,6 +195,7 @@ function _sustainer_upsell_js_callback() {
 }
 
 function _sustainer_upsell_submit($form, &$form_state) {
+  global $user;
   $order = _sustainer_uspell_get_order($form_state['values']['sid']);
   $sid = $form_state['values']['sid'];
   fundraiser_create_future_orders($order->order_id,NULL,$form_state['values']['amount']);
@@ -197,6 +203,10 @@ function _sustainer_upsell_submit($form, &$form_state) {
   while ($o = db_fetch_array($orders)) { 
      db_query("INSERT INTO {sustainer_upsell_future_orders} (nid, master_order_id, order_id) VALUES (%d, %d, %d)", arg(1), $order->order_id, $o['order_id']);
   }
+  $params['order'] = $order;
+  setcookie('sustainer_upsell_acceptance', 1, time() + 3600 * 24 * variable_get('sustainer_upsell_acceptance_lifetime',0));
+  watchdog('sustainer_upsell', t('Upsell notice sent to @mail', array('@mail' => $user->mail)), NULL, WATCHDOG_INFO);
+  drupal_mail('sustainer_upsell', 'sustainer_upsell_notification', $user->mail, user_preferred_language($user), $params);
 }
 
 function sustainer_upsell_donation_form(&$form_state, $order, $sid) {
@@ -267,6 +277,22 @@ function sustainer_upsell_token_list($type = 'all') {
     $tokens['upsell']['upsell-payment-amount']  = t("Sustainer payment amount");
     $tokens['upsell']['upsell-total-amount']    = t("Sustainer total gift amount");
     return $tokens;
+  }
+}
+
+
+/**
+ * Implemenation of hook_mail().
+ */
+function sustainer_upsell_mail($key, &$message, &$params) {
+  switch ($key) {
+    case 'sustainer_upsell_notification':
+      $order = $params['order'];
+      $body_html = token_replace(variable_get('sustainer_upsell_thank_you_email_html', ''), 'upsell', $order);
+      $body_text = token_replace(variable_get('sustainer_upsell_thank_you_email_text', ''), 'upsell', $order);      
+      $message['subject'] = variable_get('sustainer_upsell_email_subject', 'Thank You!');
+      $message['body'] = $body_text;
+      break;
   }
 }
 

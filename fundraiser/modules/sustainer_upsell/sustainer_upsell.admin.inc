@@ -264,6 +264,11 @@ function sustainer_upsell_admin_thank_you_settings() {
     '#type' => 'textfield',
     '#default_value' => variable_get('sustainer_upsell_email_bcc',''),
   );
+  $form['sustainer_upsell_email']['sustainer_upsell_email_subject'] = array(
+    '#title' => 'Email Subject',
+    '#type' => 'textfield',
+    '#default_value' => variable_get('sustainer_upsell_email_subject',''),
+  );
   $form["sustainer_upsell_thank_you_email_html"] = array(
     '#title' => t('Thank You HTML Email Content'),
     '#type' => 'textarea',
