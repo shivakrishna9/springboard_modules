@@ -2189,7 +2189,8 @@ function fundraiser_clone_order($order) {
 /**
  * Creates future order based on the the order's credit card expiration date.
  */
-function fundraiser_create_future_orders($order_id, $gateway = NULL) {
+// mscappa - added $amount field
+function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = NULL) {
 	global $user;
 	
 	// reload the original order so we get any changes that have been made by the payment gateways
@@ -2208,12 +2209,17 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
 		$next_order = clone $order;
 		$next_order->order_id = $new_id;
 		$next_order->order_status = 'pending_future_payment';
+    // use $amount of not empty, need to set this on the product because of uc_get_total
+    if (!empty($amount)) {
+      $next_order->products[0]->price = $amount;
+    }
 		
 		unset($next_order->products[0]->order_product_id);
 		uc_order_save($next_order);
 		$next_charge = strtotime("+$i months");
 		
 		// make a record of the recurring order
+    // TODO - add amount field to consider passed in amount
 		db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $order_id, $new_id, $next_charge, $gateway, $donation_form_url);
 		
 		// add a comment to the order stating when it will be charged
@@ -2315,7 +2321,7 @@ function fundraiser_process_recurring_donations() {
  * Returns the number of unprocessed payments for a recurring donation series.
  */
 function fundraiser_recurring_payments_remaining($master_order_id) {
-  return db_result(db_query("SELECT count(order_id) FROM fundraiser_recurring WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
+  return db_result(db_query("SELECT count(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
 }
 
 /**
@@ -2324,7 +2330,7 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
 function fundraiser_send_cc_notification($master_order_id, $uid) {
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
-  $order_id = db_result(db_query("SELECT order_id FROM fundraiser_recurring WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
+  $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));
   $order = uc_order_load($order_id);
   
   // set up some params that can be used in the email
