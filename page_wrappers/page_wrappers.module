@@ -642,7 +642,9 @@ function _page_wrappers_apply_wrapper(&$vars) {
       
       // add javascript if available
       if (!empty($wrapper_node->field_js_file[0]['filepath'])) {
-        $vars['scripts'] .= '<script type="text/javascript" src="/' . $wrapper_node->field_js_file[0]['filepath'] . '?z"></script> ';
+        drupal_add_js($wrapper_node->field_js_file[0]['filepath'], 'theme');
+        // rebuild scripts variable
+        $vars['scripts'] = drupal_get_js();
       }
     }
   }
