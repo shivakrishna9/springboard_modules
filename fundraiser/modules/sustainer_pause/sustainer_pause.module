@@ -55,15 +55,17 @@ function sustainer_pause_user_access($this_user) {
  */
 function sustainer_pause_form($form) {
   // Build options list from the values chosen by the admin
-  $options = array_filter(variable_get('sustainer_pause_options', array(3, 6, 120)));
+  $options = variable_get('sustainer_pause_options', array(3, 6, 120));
   foreach ($options as $key => $value) {
-    if ($key == 120) {
-      $options[$key] = 'Indefinitely';
+    unset($options[$key]);
+    if ($value == 120) {
+      $options[$value] = 'Indefinitely';
     }
     else {
-      $options[$key] = $value .' months';
+      $options[$value] = $value .' months';
     }
   }
+  
   $form = array();
   $form['message'] = array(
     '#value' => variable_get('sustainer_pause_message', t("We can't thank you enough for your contributions. Please let us know how long you'd like to pause your monthly plan.")),
@@ -77,6 +79,7 @@ function sustainer_pause_form($form) {
     '#title' => t('Pause monthly plan for'),
     '#options' => $options,
   );
+  $form['uid'] = array('#type' => 'hidden', '#value' => arg(1));
   $form['master_order_id'] = array('#type' => 'hidden', '#value' => arg(3));
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
   return $form;
@@ -86,7 +89,7 @@ function sustainer_pause_form($form) {
  * Submit function for sustainer_pause_form()
  */
 function sustainer_pause_form_submit($form, &$form_state) {
-  global $user;
+  $user = user_load($form_state['values']['uid']);
   $master_order_id = $form_state['values']['master_order_id'];
   $op = 'pause';
   $months = $form_state['values']['monthly_pause'];
@@ -104,8 +107,9 @@ function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3
             FROM {fundraiser_recurring} f
             INNER JOIN {uc_orders} u ON u.order_id = f.order_id
             WHERE f.master_order_id = %d
+            AND f.next_charge > %d
             ORDER BY f.next_charge asc";
-    $result = db_query_range($sql, $master_order_id, 0, $months);
+    $result = db_query_range($sql, $master_order_id, time(), 0, $months);
 
     while ($data = db_fetch_array($result)) {
       // Update the order status, add an order comment, and update the recurring payment status
