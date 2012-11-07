@@ -61,8 +61,11 @@ function sustainer_pause_form($form) {
     if ($value == 120) {
       $options[$value] = 'Indefinitely';
     }
+    elseif ($value == 0) {
+      // Do nothing
+    }
     else {
-      $options[$value] = $value .' months';
+      $options[$value] = $value .' months';      
     }
   }
   
