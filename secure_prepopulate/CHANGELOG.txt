@@ -1,3 +1,12 @@
+2012-11-02  Allen Freeman <allen.freeman@kjacksonriver.com>
+
+    * secure_prepopulate.module (secure_prepopulate_preprocess_secure_prepopulate_welcome_message) broke up welcome message text into separate
+      template variables.
+
+    * secure-prepopulate-welcome-message.tpl.php - refactored template to use new template variables, added code to support prefix and suffix
+      template variables that display before and after the welcome message.
+
+
 2012-05-02  Allen Freeman  <allen.freeman@jacksonriver.com>
 
     * secure_prepopulate.module (secure_prepopulate_after_build): Fixed mystery
