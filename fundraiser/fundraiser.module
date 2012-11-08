@@ -892,6 +892,8 @@ function fundraiser_fundraiser_field_info() {
 function _fundraiser_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
+    // show the minimum amount when only displaying an amount text box
+    $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
     return $field;
   }
   // Else we want a select field.
@@ -920,9 +922,6 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       'multiple' => 0,
     );
     $field['#value'] = $keys[0];
-  }
-  if ($fundraiser->show_other_amount == 1) {
-    $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
   }
   return $field;
 }
