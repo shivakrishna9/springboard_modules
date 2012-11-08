@@ -171,6 +171,15 @@ function sustainer_pause_preprocess_sustainer_management_page(&$variables) {
     $rows = array();
     // Build each row in the table
     foreach ($variables['orders_input'] as $id => &$order) {
+      // Check for empty amounts and find real one if needed
+      if (!$order['amount']) {
+        $query = db_query("SELECT u.order_total FROM {uc_orders} u 
+                           INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id 
+                           WHERE (f.gateway_resp <> 'success') 
+                           AND f.master_order_id = %d ORDER BY next_charge LIMIT 1", $id);
+        $order['amount'] = db_result($query);
+      }
+      // Build the edit link for each recurring order
       $edit_link = l('$' . money_format('%i', $order['amount']), 'user/' . $profile_uid . '/recurring_overview/' . $id);
       // Change status from numeric ids to text
       if ($order['status'] == DONATION_CANCELLED) {
