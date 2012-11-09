@@ -46,7 +46,7 @@ function sustainer_upsell_menu() {
     'type' => MENU_CALLBACK,
     'page callback' => '_sustainer_upsell_popup_iframe',
     'page arguments' => array(1,3),
-    'access arguments' => array(TRUE),
+    'access arguments' => array('access content'),
   );
   $items['sustainer-upsell/js'] = array(
     'page callback' => '_sustainer_upsell_js_callback',
@@ -121,7 +121,7 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
     '#default_value' => $node->sustainer_upsell_enabled
   );
   $form['sustainer_upsell']['sustainer_upsell_content'] = array(
-    '#title' => t('Form specific Upsell Thank You'),
+    '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
     '#default_value' => $node->sustainer_upsell_content,
     '#description' => t('If no content is given the default will be used.')
@@ -253,6 +253,15 @@ function sustainer_upsell_token_values($type, $object = NULL, $options = array()
   }
 }
 
+function sustainer_upsell_queue_batch_item_alter(&$object, $type, $action, $oid) {
+  if ($type == 'donation' && $action == 'create') {
+    $master = db_result(db_query("SELECT master_order_id FROM {sustainer_upsell_future_orders} WHERE order_id = %d", $oid));
+    if ($master > 0) {
+      $object['CampaignId'] = variable_get('sustainer_upsell_sf_campaign_id','');
+    }
+  }
+}
+
 function _sustainer_upsell_get_order_extras($order_id) {
   $orders = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id);
   while($o = db_fetch_array($orders)) {
@@ -260,7 +269,9 @@ function _sustainer_upsell_get_order_extras($order_id) {
   }
   $order_amount = db_result(db_query("SELECT order_total FROM {uc_orders} WHERE order_id = %d", $os[0]));
   $ph = db_placeholders($os);
-  $total_amount = db_result(db_query("SELECT SUM(order_total) FROM {uc_orders} WHERE order_id IN ($ph)",$os));
+  if(!empty($ph)) {
+    $total_amount = db_result(db_query("SELECT SUM(order_total) FROM {uc_orders} WHERE order_id IN ($ph)",$os));
+  }
   $order_extras = array(
     'number-payments' => count($os),
     'payment-amount' => $order_amount,
