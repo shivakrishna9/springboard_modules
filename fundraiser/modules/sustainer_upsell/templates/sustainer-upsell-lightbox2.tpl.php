@@ -13,7 +13,7 @@ $(function() {
     <?php
       if(variable_get('sustainer_upsell_rejection_enabled',0) == 1):
         ?>
-          $.cookie("sustainer_upsell_rejection", 1, { expires : <?php print variable_get('sustainer_upsell_rejection_lifetime',0) ?> });
+          $.cookie("sustainer_upsell_rejection", 1, { path : "/", expires : <?php print variable_get('sustainer_upsell_rejection_lifetime',0) ?> });
         <?
       endif;
     ?>
