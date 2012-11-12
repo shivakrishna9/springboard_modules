@@ -495,6 +495,7 @@ function springboard_admin_config_donation_form_add(&$form, $form_state) {
     'total_submit_limit' => -1,
     'total_submit_interval' => -1,
     'status' => 1,
+    'promote' => 1,
     'record_exists' => '',
     'roles' => array(
       '0' => 1,
@@ -530,6 +531,8 @@ function springboard_admin_config_donation_form_add(&$form, $form_state) {
     'show_other_amount' => 0,
     'minimum_donation_amount' => 10,
   );
+  $node->is_webform_user = 1;
+  $node->send_new_user_email = 0;
   $node->receipt_email_from = ''; 
   $node->receipt_email_address = ''; 
   $node->receipt_email_subject = ''; 
