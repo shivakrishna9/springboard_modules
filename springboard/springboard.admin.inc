@@ -139,10 +139,13 @@ function springboard_admin_config(&$form, $form_state) {
   // We dropped the profile support since it was, honestly, more hinderence than harm.
   // We would rather the Springboard suite be useful for all default profiles.
   springboard_admin_config_modules($form, $form_state);
+  // TODO set updefault gateway.
   springboard_admin_config_profile($form, $form_state);
   springboard_admin_config_ubercart($form, $form_state);
   springboard_admin_config_donation_form_type($form, $form_state);
   springboard_admin_config_donation_form_add($form, $form_state);
+  // Clear all caches to pick up themed elements.
+  drupal_flush_all_caches();
   menu_rebuild();
 }
 
@@ -220,42 +223,49 @@ function springboard_admin_config_salesforce_contacts(&$form, $form_state) {
  * Configure a default set of User profile fields.
  */
 function springboard_admin_config_profile(&$form, $form_state) {
+  // See http://drupal.org/node/874026 for discussion re: Profile in D7.
+  // By preference we use field API.
   // Add profile fields
   $profile_fields = array();
   $profile_fields[] = array(
-    'title' => st('First Name'),
-    'name' => 'profile_first_name',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('First name'),
+    'field_name' => 'profile_first_field_name',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Last Name'),
-    'name' => 'profile_last_name',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('Last name'),
+    'field_name' => 'profile_last_field_name',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Address'),
-    'name' => 'profile_address',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('Address'),
+    'field_name' => 'profile_address',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Address Line 2'),
-    'name' => 'profile_address_line_2',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('Address Line 2'),
+    'field_name' => 'profile_address_line_2',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   ); 
   $profile_fields[] = array(
-    'title' => st('City'),
-    'name' => 'profile_city',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('City'),
+    'field_name' => 'profile_city',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
   // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
@@ -266,73 +276,140 @@ function springboard_admin_config_profile(&$form, $form_state) {
   }
   $zones = implode("\n", $zones);
   $profile_fields[] = array(
-    'title' => st('State/Province'),
-    'name' => 'profile_state',
-    'category' => st('Personal Information'),
-    'type' => 'selection',
-    'visibility' => 2,
-    'options' => $zones,
+    'label' => st('State/Province'),
+    'field_name' => 'profile_state',
+    'type' => 'list_text',
+    'widget' => array(
+      'type' => 'options_select',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Postal Code'),
-    'name' => 'profile_zip',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('Postal Code'),
+    'field_name' => 'profile_zip',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Country'),
-    'name' => 'profile_country',
-    'category' => st('Personal Information'),
-    'type' => 'textfield',
-    'visibility' => 2,
+    'label' => st('Country'),
+    'field_name' => 'profile_country',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Campaign ID'),
-    'name' => 'profile_cid',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Campaign ID'),
+    'field_name' => 'profile_cid',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Market Source'),
-    'name' => 'profile_ms',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Market Source'),
+    'field_name' => 'profile_ms',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Referrer'),
-    'name' => 'profile_referrer',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Referrer'),
+    'field_name' => 'profile_referrer',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Initial Referrer'),
-    'name' => 'profile_initial_referrer',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Initial Referrer'),
+    'field_name' => 'profile_initial_referrer',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Salesforce Account Id'),
-    'name' => 'profile_salesforce_account_id',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Salesforce Account Id'),
+    'field_name' => 'profile_salesforce_account_id',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
   $profile_fields[] = array(
-    'title' => st('Salesforce Contact Id'),
-    'name' => 'profile_salesforce_contact_id',
-    'category' => st('System'),
-    'type' => 'textfield',
-    'visibility' => 4,
+    'label' => st('Salesforce Contact Id'),
+    'field_name' => 'profile_salesforce_contact_id',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'joinprofile_field' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
   );
+  // Create the field on the user for each profile.
   foreach ($profile_fields as $profile_field) {
-    drupal_write_record('profile_field', $profile_field);
-    drupal_set_message(t('Profile field %name has been added.', array('%name' => $profile_field['title'])));
+    $field = array(
+      'field_name' => $profile_field['field_name'],
+      'cardinality' => 1,
+      'type' => $profile_field['type'],
+    );
+    field_create_field($field);
+    $instance = array(
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    $instance = array_merge($profile_field, $instance);
+    field_create_instance($instance);
   }
+  // Set the default fundraiser to webform user profile handling settings.
+  variable_set('fundraiser_webform_to_user_map', array(
+    'mail' => 'mail',
+    'profile_first_field_name' => 'first_name',
+    'profile_last_field_name' => 'last_name',
+    'profile_address' => 'address',
+    'profile_address_line_2' => 'address_line_2',
+    'profile_city' => 'city',
+    'profile_state' => 'state',
+    'profile_zip' => 'zip',
+    'profile_country' => 'country')
+  );
 }
 
 /**
