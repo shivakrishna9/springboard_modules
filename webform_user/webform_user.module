@@ -748,6 +748,7 @@ function _webform_user_create_webform_components(&$node) {
       drupal_write_record('webform_user_component_map', $map);
     }
   } // End foreach field.
+  drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
 }
 
 /**
@@ -1030,6 +1031,7 @@ function webform_user_clone_component_map($node, $original_nid) {
   db_insert('webform_user_component_map')
     ->from($select)
     ->execute();
+  drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
 }
 
 /**
@@ -1065,17 +1067,4 @@ function _webform_user_profile_save_profile($updates, $uid) {
     db_query('INSERT INTO {profile_values} (fid, uid, value) VALUES (:fid, :uid, :data)',
       array(':fid' => $mapped_field['fid'], ':uid' => $uid, ':data' => $mapped_field['data']));
   }
-}
-
-/**
- * Database function, automatically maps predefined webform components to user profile fields.
- */ // TODO figure out where it's called from.
-function webform_user_user_map_create($nid, $components) {
-  foreach ($components as $cid => $component) {
-    if (array_key_exists('maps_to', $component)) {
-      db_query('INSERT INTO {webform_user_component_map} (nid, cid, map_id) VALUES (:nid, :cid, :map)',
-        array(':nid' => $nid, ':cid' => $cid, ':map' => $component['maps_to']));
-    }
-  }
-  drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
 }
