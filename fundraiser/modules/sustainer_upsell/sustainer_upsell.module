@@ -151,16 +151,18 @@ function sustainer_upsell_footer() {
     $sid = $_GET['sid'];
     $node = node_load(arg(1));
     $order = _sustainer_uspell_get_order($sid);
-    if(($node->sustainer_upsell_enabled == 1) && (((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1))) {
-      drupal_add_js("
-        $(function() {
-          $('#upsell-box-open').click();
-        })
-      ",'inline','footer');
-      if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
-        return "<a id='upsell-box-open' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click' style='display: none;'>Open Thickbox</a>";
-      } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
-        return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
+    if($node->sustainer_upsell_enabled == 1) {
+      if(((_sustainer_upsell_check_authentic_user($order)) && (($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1))) || (variable_get('sustainer_upsell_debug',0) == 1)) {
+        drupal_add_js("
+          $(function() {
+            $('#upsell-box-open').click();
+          })
+        ",'inline','footer');
+        if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
+          return "<a id='upsell-box-open' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click' style='display: none;'>Open Thickbox</a>";
+        } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
+          return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
+        }
       }
     }
   }
@@ -204,9 +206,12 @@ function _sustainer_upsell_submit($form, &$form_state) {
      db_query("INSERT INTO {sustainer_upsell_future_orders} (nid, master_order_id, order_id) VALUES (%d, %d, %d)", arg(1), $order->order_id, $o['order_id']);
   }
   $params['order'] = $order;
-  setcookie('sustainer_upsell_acceptance', 1, time() + 3600 * 24 * variable_get('sustainer_upsell_acceptance_lifetime',0));
+  setcookie('sustainer_upsell_acceptance', 1, time() + 3600 * 24 * variable_get('sustainer_upsell_acceptance_lifetime',0), "/");
   watchdog('sustainer_upsell', t('Upsell notice sent to @mail', array('@mail' => $user->mail)), NULL, WATCHDOG_INFO);
-  drupal_mail('sustainer_upsell', 'sustainer_upsell_notification', $user->mail, user_preferred_language($user), $params);
+  $params['body_html'] = token_replace(variable_get('sustainer_upsell_thank_you_email_html', ''), 'upsell', $order);
+  $params['body_text'] = token_replace(variable_get('sustainer_upsell_thank_you_email_text', ''), 'upsell', $order);
+  $params['subject'] = variable_get('sustainer_upsell_email_subject', 'Thank You!'); 
+  drupal_mail('sustainer_upsell', 'sustainer_upsell_notification', $user->mail, user_preferred_language($user), $params, variable_get('sustainer_upsell_email_from',''));
 }
 
 function sustainer_upsell_donation_form(&$form_state, $order, $sid) {
@@ -298,11 +303,33 @@ function sustainer_upsell_token_list($type = 'all') {
 function sustainer_upsell_mail($key, &$message, &$params) {
   switch ($key) {
     case 'sustainer_upsell_notification':
-      $order = $params['order'];
-      $body_html = token_replace(variable_get('sustainer_upsell_thank_you_email_html', ''), 'upsell', $order);
-      $body_text = token_replace(variable_get('sustainer_upsell_thank_you_email_text', ''), 'upsell', $order);      
-      $message['subject'] = variable_get('sustainer_upsell_email_subject', 'Thank You!');
-      $message['body'] = $body_text;
+      $order = $params['order'];     
+      $boundary = '----=_NextPart_'.md5(uniqid());
+      $body_text = $params['body_text'];
+      $body_html = $params['body_html'];
+      $message['subject'] = $params['subject'];
+      $message['headers'] = array(
+       'MIME-Version' => '1.0',
+       'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
+       'Content-Transfer-Encoding' => '8Bit',
+       'X-Mailer' => "Drupal Mailer");
+      $message['body']  = "
+
+This is a multi-part message in MIME format.
+
+--$boundary
+Content-Type: text/plain; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_text
+
+--$boundary
+Content-Type: text/html; charset=UTF-8; format=flowed; 
+Content-Transfer-Encoding: 8bit
+
+$body_html
+
+";
       break;
   }
 }
