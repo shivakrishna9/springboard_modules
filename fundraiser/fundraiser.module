@@ -270,6 +270,9 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     if (isset($data[$key])) {
       $replacements[ $token ] = $data[$key]; 
     }
+    else {
+      $replacements[ $token ] = '';
+    }
   }
   if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
     $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
