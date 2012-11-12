@@ -225,7 +225,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
  */
 function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $submission_fields, $value) {
   $valid = _uc_credit_valid_card_number($value);
-  if (!$valid || !ctype_digit($value)) {
+  if (!$valid || !ctype_digit($value) || drupal_strlen($value) < 10) {
     return t('You have entered an invalid credit card number.');
   }
 }
