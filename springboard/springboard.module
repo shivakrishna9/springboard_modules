@@ -527,15 +527,14 @@ function _springboard_sf_status() {
 function _springboard_jump() {
   if (module_exists('fundraiser')) {
     ctools_include('jump-menu');
-    $types = array();
+    $targets = array();
     $types = fundraiser_get_donation_types();
     foreach ($types as $type => $enabled) {
       if ($enabled && node_access('create', $type)) {
         $targets[url('node/add/' . $type)] = 'Create ' . node_type_get_name($type);
       }
     }
-    $options = array();
-    $menu = drupal_render(drupal_get_form('ctools_jump_menu', $targets, $options));
+    $menu = drupal_render(drupal_get_form('ctools_jump_menu', $targets, array()));
     return theme('springboard_jump', array('menu' => $menu));
   }
   return '';
