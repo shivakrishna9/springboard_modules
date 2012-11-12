@@ -176,7 +176,7 @@ function springboard_menu_alter(&$items) {
   if (module_exists('webform')) {
     $types = webform_variable_get('webform_node_types');
     foreach ($types as $type) {
-      if (!in_array($type, $types_added)) {
+      if (!in_array($type, $types_added) && isset($items['node/add/' . $type])) {
         $type = str_replace('_', '-', $type);
         $items['admin/springboard/forms/' . $type] = $items['node/add/' . $type];
         $items['admin/springboard/forms/' . $type]['type'] = MENU_LOCAL_TASK;
