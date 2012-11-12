@@ -13,7 +13,8 @@ function springboard_admin_settings() {
     $form['springboard_config'] = array(
       '#type' => 'fieldset',
       '#title' => t('Configure Springboard'),
-      '#description' => t('New to Springboard? Configure the default Springboard installation to get started quickly.'),
+      '#description' => t('New to Springboard? Configure the default Springboard installation to get started quickly. ' .
+        'Give the system some time to work, it may take a bit of time to configure everything correctly.'),
       '#weight' => -1,
     );
     $form['springboard_config']['settings'] = array(
@@ -307,7 +308,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
@@ -321,7 +322,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
@@ -335,7 +336,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
@@ -349,7 +350,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
@@ -363,7 +364,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
@@ -377,7 +378,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
     'display' => array(
-      'joinprofile_field' => array(
+      'default' => array(
         'label' => 'hidden',
         'type' => 'hidden',
       ),
