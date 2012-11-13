@@ -151,8 +151,9 @@ function sustainer_upsell_footer() {
     $sid = $_GET['sid'];
     $node = node_load(arg(1));
     $order = _sustainer_uspell_get_order($sid);
-    if($node->sustainer_upsell_enabled == 1) {
-      if(((_sustainer_upsell_check_authentic_user($order)) && (($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1))) || (variable_get('sustainer_upsell_debug',0) == 1)) {
+    $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
+    if(($node->sustainer_upsell_enabled == 1) && ($order->data['recurring_status'] != 1) && ($counter > 0)) {
+      if(((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1)) {
         drupal_add_js("
           $(function() {
             $('#upsell-box-open').click();
@@ -170,7 +171,7 @@ function sustainer_upsell_footer() {
 
 function _sustainer_upsell_check_authentic_user($order) {
   global $user;
-  if($order->uid == $user->uid) {
+  if(($order->uid == $user->uid) || ($user->uid == 0)) {
     return true;
   }
   return false;
@@ -211,7 +212,7 @@ function _sustainer_upsell_submit($form, &$form_state) {
   $params['body_html'] = token_replace(variable_get('sustainer_upsell_thank_you_email_html', ''), 'upsell', $order);
   $params['body_text'] = token_replace(variable_get('sustainer_upsell_thank_you_email_text', ''), 'upsell', $order);
   $params['subject'] = variable_get('sustainer_upsell_email_subject', 'Thank You!'); 
-  drupal_mail('sustainer_upsell', 'sustainer_upsell_notification', $user->mail, user_preferred_language($user), $params, variable_get('sustainer_upsell_email_from',''));
+  drupal_mail('sustainer_upsell', 'sustainer_upsell_notification', $order->primary_email, user_preferred_language($user), $params, variable_get('sustainer_upsell_email_from',''));
 }
 
 function sustainer_upsell_donation_form(&$form_state, $order, $sid) {

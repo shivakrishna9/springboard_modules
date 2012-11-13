@@ -130,6 +130,7 @@ function sustainer_upsell_admin_settings_form(&$form) {
     '#title' => 'Debug Mode',
     '#type' => 'checkbox',
     '#default_value' => variable_get('sustainer_upsell_debug',0),
+    '#description' => 'Debug mode will open the upsell box regardless of cookie settings'
   );
   $form['submit'] = array(
     '#type' => 'submit',
