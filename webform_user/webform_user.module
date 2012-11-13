@@ -83,7 +83,7 @@ function _webform_user_check_settings($op) {
 /**
  * Implements hook_form_alter().
  *
- * Alter content type settings to add 'Enable fundraiser?' checkbox.
+ * Alter content type settings to add 'Enable fundraiser?' checkbox on node content types.
  */
 function webform_user_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['type'])) {
@@ -147,25 +147,11 @@ function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
  */
-function webform_user_form_alter(&$form, &$form_state, $form_id) {
-
-  // Disallow users from changing the mail keyform after it's been created.
-  // It is critical that we have a matching key id for this value, and it shouldn't change.
-  if ($form_id == 'webform_component_edit_form') {
-    $node = node_load($form['nid']['#value']);
-    if (isset($node->is_webform_user) && $node->is_webform_user) {
-      if ($form['form_key']['#default_value'] == 'mail') {
-        $form['form_key']['#access'] = FALSE;
-        $form['form_key']['#value'] = $form['form_key']['#default_value'];
-      }
-    }
-  }
-
+function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
   // Modify the options on a specific instance of this node type.
-  if (strpos($form_id, '_node_form') !== FALSE
-    && _webform_user_is_webform_user_node_type(str_ireplace('_node_form', '', $form_id))) {
+  if (_webform_user_is_webform_user_node_type($form['#node']->type)) {
     $node = $form['#node'];
     $form['webform_user'] = array(
       '#title' => t('Webform user settings'),
@@ -188,6 +174,24 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'checkbox',
       '#default_value' => isset($node->send_new_user_email) ? $node->send_new_user_email : NULL,
     );
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function webform_user_form_alter(&$form, &$form_state, $form_id) {
+
+  // Disallow users from changing the mail keyform after it's been created.
+  // It is critical that we have a matching key id for this value, and it shouldn't change.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    if (isset($node->is_webform_user) && $node->is_webform_user) {
+      if ($form['form_key']['#default_value'] == 'mail') {
+        $form['form_key']['#access'] = FALSE;
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
   }
 
   // For the webform itself, we map the value of the given submission profile.

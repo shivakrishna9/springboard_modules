@@ -224,12 +224,30 @@ function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id) {
+  // On node creation forms, tweak the display iff webform user is an active module.
+  // Why here? Because order matters. The form we're merging here is added on an earlier hook.
+  if (module_exists('webform_user')) {
+    if (fundraiser_is_donation_type($form['#node']->type) && strstr($form_id, '_node_form') !== FALSE) {
+      // Merge the webform user form into fundraiser iff webform user exists.
+      $form['fundraiser_settings']['webform_user'] = $form['webform_user'];
+      unset($form['fundraiser_settings']['webform_user']['#group']);
+      unset($form['webform_user']);
+      $form['fundraiser_settings']['webform_user']['#collapsed'] = FALSE;
+      $form['fundraiser_settings']['webform_user']['is_webform_user']['#type'] = 'hidden';
+      $form['fundraiser_settings']['webform_user']['is_webform_user']['#value'] = 1;    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
- * Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
  */
 function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter the webform client form.
+  // Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
     if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') { // From fundraiser.module.
