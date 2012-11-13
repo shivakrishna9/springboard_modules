@@ -231,13 +231,16 @@ function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id)
   // Why here? Because order matters. The form we're merging here is added on an earlier hook.
   if (module_exists('webform_user')) {
     if (fundraiser_is_donation_type($form['#node']->type) && strstr($form_id, '_node_form') !== FALSE) {
-      // Merge the webform user form into fundraiser iff webform user exists.
-      $form['fundraiser_settings']['webform_user'] = $form['webform_user'];
-      unset($form['fundraiser_settings']['webform_user']['#group']);
-      unset($form['webform_user']);
-      $form['fundraiser_settings']['webform_user']['#collapsed'] = FALSE;
-      $form['fundraiser_settings']['webform_user']['is_webform_user']['#type'] = 'hidden';
-      $form['fundraiser_settings']['webform_user']['is_webform_user']['#value'] = 1;    }
+      // Merge the webform user form into fundraiser iff webform user exists and is set for this node type.
+      if (isset($form['webform_user'])) {
+        $form['fundraiser_settings']['webform_user'] = $form['webform_user'];
+        unset($form['fundraiser_settings']['webform_user']['#group']);
+        unset($form['webform_user']);
+        $form['fundraiser_settings']['webform_user']['#collapsed'] = FALSE;
+        $form['fundraiser_settings']['webform_user']['is_webform_user']['#type'] = 'hidden';
+        $form['fundraiser_settings']['webform_user']['is_webform_user']['#value'] = 1;
+      }
+    }
   }
 }
 
