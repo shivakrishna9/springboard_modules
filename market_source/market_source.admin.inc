@@ -120,6 +120,54 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Save settings'),
   );
+  if (module_exists('webform_user')) {
+    $form['webform_users'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Webform User integration'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['webform_users']['help'] = array(
+      '#markup' => '<div>' . t('Webform User creates webform components. Because Market Source also creates components for user ' .
+      'data we need to avoid doubling up on component creation. Therefore a map of market source components to user profile components ' .
+      'needs to be created. This will prevent Webform User from creating the same components that Market Source already handles. ' .
+      'For each profile field listed here set which (if any) Market Source field will handle creating a component for it instead. ' .
+      'Fields left unmapped will be created by Webform User.').'</div>',
+    );
+    // If the module exists, we can use it's functions.
+    $profile_fields = _webform_user_get_profile_fields();
+    $ms_fields = _market_source_get_nonfieldset_keys();
+    $current_map = variable_get('market_source_to_user_map', array());
+    $form['webform_users']['mapping'] = array(
+      '#prefix' => '<div id="webform-user-field-mapping">',
+      '#suffix' => '</div>',
+      '#tree' => TRUE,
+      '#theme' => 'table',
+      '#header' => array(t('Profile field'), t('Matching component will be created by this Market Source field') ),
+      '#rows' => array(),
+    );
+    $options = array('0' => t('--Not handled by Market Source--'));
+    foreach ($ms_fields as $field_key => $ms_field) {
+      $options[$field_key] = $ms_field['#title'];      
+    }
+    // Now we just need to note which of these fields map to which fundraiser fields.
+    foreach ($profile_fields as $profile_field) {
+      $name = $profile_field['name'];
+      // Mail is a special case, and should be doubled up on always.
+      // It is required by both modules, and field name has been coordinated to match.
+      $form['webform_users']['mapping'][$name] = array(
+        '#id' => 'field-' . $name,
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => isset($current_map[$name]) ? $current_map[$name] : '',
+      );
+      $form['webform_users']['mapping']['#rows'][] = array(
+        array('data' => $profile_field['title']),
+        array('data' => &$form['webform_users']['mapping'][$name]), // Pointer is important.
+      );
+    }
+    $form['#submit'][] = 'market_source_to_webform_user_map_submit';
+  }
   return $form;
 }
 
@@ -206,6 +254,13 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
   }
   // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.
   drupal_set_message(t('Market Source settings saved.'));
+}
+
+/**
+ * Submit handler for mapping fundraiser fields to webform object objects.
+ */
+function market_source_to_webform_user_map_submit($form, &$form_state) {
+  variable_set('market_source_to_user_map', $form_state['values']['mapping']);
 }
 
 /**
