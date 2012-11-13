@@ -1568,15 +1568,16 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
     $rows[] = array(
       'data' => array(
         'amount' => $edit_link,
-        'start_date' => date('m/d/y', $order['start_date']),
-        'next_charge_date' => date('m/d/y', $order['next_charge_date']),
-        'expire_date' => date('m/d/y', $order['expire_date']),
+        'start_date' => $order['start_date'] ? date('m/d/y', $order['start_date']) : '------------',
+        'next_charge_date' => $order['next_charge_date'] ? date('m/d/y', $order['next_charge_date']) : '------------',
+        'expire_date' => $order['expire_date'] ? date('m/d/y', $order['expire_date']) : '------------',
         'status' => $order['status'] == DONATION_CANCELLED ? 'cancelled' : 'active',
       ),
       'class' => $class,
     );
   }
   
+  $vars['orders_input'] = $vars['orders'];
   $vars['orders'] = theme('table', $header, $rows);
   
   // format payment schedule into a data table
@@ -1689,6 +1690,12 @@ function fundraiser_webform_validate($form, &$form_state) {
 	    fundraiser_track_local_failure();
 		watchdog('fundraiser', $message, NULL, WATCHDOG_DEBUG, NULL);
 	}
+
+  // Always rebind in case other modules (webform) fail form validation
+  $base = drupal_get_path('module', 'fundraiser');
+  drupal_add_js($base .'/jquery.alphanumeric.js');
+  drupal_add_js($base .'/fundraiser.js');
+  drupal_add_css($base . '/fundraiser-donation-form.css');
 }
 
 /**
@@ -2289,15 +2296,19 @@ function fundraiser_process_recurring_donations() {
   				WHERE order_id = %d", $order_id
   			);
   			// get the number of times this order has been attempted
+  			uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run, but failed to charge. Gateway message: !message',
+  			  array('!message' => $result['message'])), 'admin');
   			$attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
   			if ($attempt_count == 3) {
   				// final attempt. add debug alert
   				watchdog('fundraiser', t('Payment for recurring donation !id has failed 3 times. The order will not be submitted for payment again. Gateway message: !message', array('!id' => $order->order_id, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
+          uc_order_comment_save($order_id, 0, t('Payment for this recurring donation has failed 3 times. The order will not be submitted for payment again.'));
   			}
   			else {
   				// log this failure
   				watchdog('fundraiser', t('Payment for recurring donation !id has failed !attempts times. It will be processed again in 1 day. Gateway message: !message', array('!id' => $order->order_id, '!attempts' => $attempt_count, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
   			}
+
   			// fire sustainer payment failure trigger
   			module_invoke_all('fundraiser', 'sustainer_payment_declined', $order);
   		}
@@ -2322,6 +2333,12 @@ function fundraiser_recurring_payments_remaining($master_order_id) {
  * Kicks of an email to a sustainer to remind them their credit card is about to expire.
  */
 function fundraiser_send_cc_notification($master_order_id, $uid) {
+
+  // Short circuit this email if the configuration for fundraiser says don't send it.
+  if (!variable_get('fundraiser_sustainers_send_email', TRUE)) {
+    return;
+  }
+
   $user = user_load($uid);
   // load the last remaining order so we can get some info for the email
   $order_id = db_result(db_query("SELECT order_id FROM fundraiser_recurring WHERE master_order_id = %d AND gateway_resp IS NULL", $master_order_id));

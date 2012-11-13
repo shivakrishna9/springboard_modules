@@ -134,6 +134,7 @@ function queue_processor_theme() {
  * Implementation of hook_cron().
  */
 function queue_processor_cron() {
+  queue_processor_prune_logs();
   // Bail on normal cron run if standalone cron is enabled.
   if (variable_get('queue_processor_standalone_cron_enabled', FALSE)) {
     // If standalone cron is enabled, do nothing.
@@ -1310,6 +1311,24 @@ function queue_processor_remove_type($type) {
   
   // save the processing order
   variable_set('queue_processing_order', $processing_order);
+}
+
+/**
+ * Remove expired log messages.
+ */
+function queue_processor_prune_logs() {
+  // Cleanup the sf_batch table & sf_batch_item table
+  $batch_max = db_result(db_query('SELECT MAX(id) FROM {sf_batch}')) - variable_get('queue_processor_sf_batch_row_limit', 10000);
+  if ($batch_max > 0) {
+    db_query('DELETE FROM {sf_batch} WHERE id <= %d AND processed = 1', $batch_max);
+    db_query('DELETE FROM {sf_batch_item} WHERE batch_id <= %d', $batch_max);
+  }
+  
+  // Cleanup the sf_batch_error table
+  $error_max = db_result(db_query('SELECT MAX(id) FROM {sf_batch_error}')) - variable_get('queue_processor_sf_batch_error_row_limit', 10000);
+  if ($error_max > 0) {
+    db_query('DELETE FROM {sf_batch_error} WHERE id <= %d', $error_max);
+  }
 }
 
 function _queue_processor_valid_timestamp($date)  {

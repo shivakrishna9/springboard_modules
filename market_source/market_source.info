@@ -3,4 +3,3 @@ description = Provides a way to track which campaigns and market sources drive u
 package = Jackson River Springboard
 core = 6.x
 version =  6.x-3.2
-dependencies[] = fundraiser
