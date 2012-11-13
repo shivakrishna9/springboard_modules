@@ -569,7 +569,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Ask amounts'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE,
     '#prefix' => '<div class="clear-block" id="ask-wrapper">',
     '#suffix' => '</div>',
     '#tree' => TRUE, // This is important, this allows the deltas below to function as part of the array.
