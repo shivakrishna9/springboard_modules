@@ -150,10 +150,10 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
       '#collapsed' => FALSE,
     );
     $form['fundraiser_webform']['webform_users']['help'] = array(
-      '#markup' => '<div>' . t('Webform User creates webform components. Because Fundraiser also creates components for user ' .
-      'data we need to avoid doubling up on component creation. Therefore a map of Fundraiser components to user profile components ' .
-      'needs to be created. This will prevent Webform User from creating the same components that Fundraiser already handles. ' .
-      'For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
+      '#markup' => '<div>' . t('Webform User creates webform components based on User profile fields. Because Fundraiser also creates ' .
+      'components for user fields we need to avoid doubling up on component creation. Therefore a map of Fundraiser components to user ' .
+      'profile fields needs to be created. This will prevent Webform User from creating the same components that Fundraiser already ' .
+      'handles. For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
       'Fields left unmapped will be created by Webform User.').'</div>',
     );
     // If the module exists, we can use it's functions.

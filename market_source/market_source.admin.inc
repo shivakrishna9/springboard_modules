@@ -124,10 +124,10 @@ function market_source_admin_settings_form($form, &$form_state) {
       '#collapsed' => FALSE,
     );
     $form['webform_users']['help'] = array(
-      '#markup' => '<div>' . t('Webform User creates webform components. Because Market Source also creates components for user ' .
-      'data we need to avoid doubling up on component creation. Therefore a map of market source components to user profile components ' .
-      'needs to be created. This will prevent Webform User from creating the same components that Market Source already handles. ' .
-      'For each profile field listed here set which (if any) Market Source field will handle creating a component for it instead. ' .
+      '#markup' => '<div>' . t('Webform User creates webform components based on User profile fields. Because Market Source also creates ' .
+      'components for user fields we need to avoid doubling up on component creation. Therefore a map of Market Source components to user ' .
+      'profile fields needs to be created. This will prevent Webform User from creating the same components that Market Source already ' .
+      'handles. For each profile field listed here set which (if any) Market Source field will handle creating a component for it instead. ' .
       'Fields left unmapped will be created by Webform User.').'</div>',
     );
     // If the module exists, we can use it's functions.
