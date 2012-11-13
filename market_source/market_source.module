@@ -430,7 +430,7 @@ function market_source_market_source_field_info() {
       $fields[ $custom_field['key'] ] = array(
         '#title' => isset($custom_field['name']) ? $custom_field['name'] : 'Custom Field - ' . $custom_field['key'],
         '#type' => 'hidden',
-        '#value' => isset($custom_field['default']) ? $custom_field['default'] : '';
+        '#value' => isset($custom_field['default']) ? $custom_field['default'] : '',
         '#required' => 1,
         '#extra' => array(
           'description' => '',
