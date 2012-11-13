@@ -1056,19 +1056,3 @@ function webform_user_clone_node($node, $original_nid) {
     ->from($select)
     ->execute();
 }
-
-/**
- * Version of profile_save_profile that includes hidden profile fields.
- */ //TODO figure out where this is called from.
-function _webform_user_profile_save_profile($updates, $uid) {
-  for ($i = 0; $i < count($updates); $i++) {
-    $mapped_field = $updates[$i];
-    if (_profile_field_serialize($mapped_field['type'])) {
-      $mapped_field['data'] = serialize($mapped_field['data']);
-    }
-    db_query('DELETE FROM {profile_values} WHERE fid = :fid AND uid = :uid',
-      array(':fid' => $mapped_field['fid'], ':uid' => $uid));
-    db_query('INSERT INTO {profile_values} (fid, uid, value) VALUES (:fid, :uid, :data)',
-      array(':fid' => $mapped_field['fid'], ':uid' => $uid, ':data' => $mapped_field['data']));
-  }
-}
