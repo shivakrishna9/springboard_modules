@@ -54,7 +54,7 @@ function fundraiser_ubercart_install_fundraiser_statuses() {
   $fundraiser_statuses = array(
     'pending_future_payment' => array(
       'title' => 'Pending Future Payment',
-      'state' => 'post_checkout',
+      'state' => 'in_checkout',
       'locked' => 1,
       'weight' => -20,
     ),
