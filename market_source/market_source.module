@@ -378,11 +378,6 @@ function market_source_node_insert($node) {
  */
 function market_source_market_source_field_info() {
   $fields = array();
-  $fields['system'] = array(
-    '#title' => t('System'),
-    '#type' => 'fieldset',
-    '#required' => 0,
-  );
   $fields['ms'] = array(
     '#title' => t('Market Source'),
     '#type' => 'hidden',
