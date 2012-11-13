@@ -116,10 +116,6 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#description' => t('This is the domain name Market Source cookies will exist under.'),
     '#default_value' => variable_get('market_source_cookie_domain', $cookie_domain),
   );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save settings'),
-  );
   if (module_exists('webform_user')) {
     $form['webform_users'] = array(
       '#type' => 'fieldset',
@@ -168,6 +164,10 @@ function market_source_admin_settings_form($form, &$form_state) {
     }
     $form['#submit'][] = 'market_source_to_webform_user_map_submit';
   }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save settings'),
+  );
   return $form;
 }
 
@@ -287,4 +287,25 @@ function theme_market_source_admin_global_fields_table($vars) {
     );
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
+}
+
+/**
+ * Helper function, given the array from field_info - get the listed fields for NON fieldset fields, flattened.
+ * WARNING: Recursion is here to walk the field info array to gather form keys.
+ */
+function _market_source_get_nonfieldset_keys($field_info = NULL, $fields = array()) {
+  if ($field_info == NULL) {
+    $field_info = market_source_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    // If this child is a defined field, but not a fieldset, add it.
+    if (isset($field_info[$child]['#title']) && $field_info[$child]['#type'] != 'fieldset') {  
+      $fields[$child] = $field_info[$child];
+    }
+    if (is_array($field_info[$child]) && !empty($field_info[$child])) {
+      $fields = _market_source_get_nonfieldset_keys($field_info[$child], $fields);
+    }
+  }
+  return $fields;
 }
