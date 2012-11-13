@@ -1,0 +1,2 @@
+2012-10-15  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+    *  webform_user.module (_webform_user_save_profile_map()) - Removed anonymous user dependency when saving profile values
