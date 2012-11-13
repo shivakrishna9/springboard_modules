@@ -138,23 +138,23 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
   if (module_exists('webform_user')) {
     $form['fundraiser_webform'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Fundraiser webform'),
-      '#description' => t('Configure fundraiser webform settings.'),
+      '#title' => t('Fundraiser Webform'),
+      '#description' => t('Configure Fundraiser Webform settings.'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
     $form['fundraiser_webform']['webform_users'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Webform user integration'),
+      '#title' => t('Webform User integration'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
     $form['fundraiser_webform']['webform_users']['help'] = array(
-      '#markup' => '<div>' . t('Webform user creates webform components. Because Fundraiser also creates components for user ' .
-      'data we need to avoid doubling up on component creation. Therefore a map of fundraiser components to user profile components ' .
-      'needs to be created. This will prevent webform user from creating the same components that fundraiser already handles. ' .
-      'For each profile field listed here set which (if any) fundraiser field will handle creating a component for it instead. ' .
-      'Fields left unmapped will be created by webform user.').'</div>',
+      '#markup' => '<div>' . t('Webform User creates webform components. Because Fundraiser also creates components for user ' .
+      'data we need to avoid doubling up on component creation. Therefore a map of Fundraiser components to user profile components ' .
+      'needs to be created. This will prevent Webform User from creating the same components that Fundraiser already handles. ' .
+      'For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
+      'Fields left unmapped will be created by Webform User.').'</div>',
     );
     // If the module exists, we can use it's functions.
     $profile_fields = _webform_user_get_profile_fields();
