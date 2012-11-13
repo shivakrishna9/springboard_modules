@@ -140,6 +140,8 @@ function springboard_admin_config(&$form, $form_state) {
   // We dropped the profile support since it was, honestly, more hinderence than harm.
   // We would rather the Springboard suite be useful for all default profiles.
   springboard_admin_config_modules($form, $form_state);
+  // Clear all caches to pick up themed elements.
+  drupal_flush_all_caches();
   // Set up module specific things.
   springboard_admin_config_springboard($form, $form_state);
   springboard_admin_config_profile($form, $form_state);
