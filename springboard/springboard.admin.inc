@@ -411,6 +411,13 @@ function springboard_admin_config_profile(&$form, $form_state) {
     'profile_zip' => 'zip',
     'profile_country' => 'country')
   );
+  // And the same for market source
+  variable_set('market_source_to_user_map', array(
+    'profile_cid' => 'cid',
+    'profile_ms' => 'ms',
+    'profile_referrer' => 'referrer',
+    'profile_initial_referrer' => 'initial_referrer')
+  );
 }
 
 /**
