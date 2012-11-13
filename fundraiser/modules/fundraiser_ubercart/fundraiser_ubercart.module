@@ -185,7 +185,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
     }
   }
   $fields['billing_information']['country'] = array(
-    '#title' => 'Country',
+    '#title' => t('Country'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
@@ -201,7 +201,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
     $options .= $zone_id . '|' . $zone->zone_name . "\n";
   }
   $fields['billing_information']['state'] = array(
-    '#title' => 'State/Province',
+    '#title' => t('State/Province'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
