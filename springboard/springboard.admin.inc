@@ -140,7 +140,8 @@ function springboard_admin_config(&$form, $form_state) {
   // We dropped the profile support since it was, honestly, more hinderence than harm.
   // We would rather the Springboard suite be useful for all default profiles.
   springboard_admin_config_modules($form, $form_state);
-  // TODO set updefault gateway.
+  // Set up module specific things.
+  springboard_admin_config_springboard($form, $form_state);
   springboard_admin_config_profile($form, $form_state);
   springboard_admin_config_ubercart($form, $form_state);
   springboard_admin_config_donation_form_type($form, $form_state);
@@ -220,6 +221,19 @@ function springboard_admin_config_salesforce_contacts(&$form, $form_state) {
   $sql = "INSERT INTO {salesforce_management_field_map}
     VALUES (1, 'General user fieldmap', 'user', 'Contact', '', 0, '%s', '%s', '%s', 'Email', 2, '0', '%s')";
   db_query($sql, $fields, $business, $business_sd, $validation);
+}
+
+/**
+ * Configure Springboard iteself.
+ */
+function springboard_admin_config_springboard(&$form, $form_state) {
+  $default_enabled_panes = array();
+  drupal_alter('springboard_dashboard_panes', $panes);
+  foreach ($panes as $name => $info) {
+    $panes[$name] = $info['label'];
+    $default_enabled_panes[$name] = $name;
+  }
+  variable_set('springboard_enabled_panes', $default_enabled_panes);
 }
 
 /**
