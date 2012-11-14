@@ -462,18 +462,34 @@ function email_wrappers_load_settings($nid, $eid) {
 function email_wrappers_load_defaults_from_template($nid) {
 
   $node = node_load($nid);
-  $lang = $node->language;
+
+
+  // So appaently retrieving field values can't just rely on the node->lang property.
+  // When the node language is set (example: en) these fields still store values under 'und'.
+  // This leads to mass confusion if you're trying to use the node language setting to fish
+  // for field values directly in the node object. True story.
+
+  $subject = field_get_items('node', $node, 'email_wrapper_subject');
+  $from_name = field_get_items('node', $node, 'email_wrapper_from_name');
+  $from_mail = field_get_items('node', $node, 'email_wrapper_from_email');
+  $reply_to_email = field_get_items('node', $node, 'email_wrapper_reply_to_email');
+  $bcc_email = field_get_items('node', $node, 'email_wrapper_bcc_email');
+  $html_template = field_get_items('node', $node, 'email_wrapper_html_template');
+  $html_message = field_get_items('node', $node, 'email_wrapper_html_message');
+  $text_template = field_get_items('node', $node, 'email_wrapper_text_template');
+  $text_message = field_get_items('node', $node, 'email_wrapper_text_message');
+
   return array(
-    'subject' => $node->email_wrapper_subject[$lang][0]['value'],
-    'from_name' => $node->email_wrapper_from_name[$lang][0]['value'],
-    'from_mail' => $node->email_wrapper_from_email[$lang][0]['value'],
-    'reply_to_email' => $node->email_wrapper_reply_to_email[$lang][0]['value'],
-    'bcc_email' => _email_wrappers_concat_bcc($node),
-    'html_template' => $node->email_wrapper_html_template[$lang][0]['value'],
-    'html_message' => $node->email_wrapper_html_message[$lang][0]['value'],
-    'text_template' =>$node->email_wrapper_text_template[$lang][0]['value'],
-    'text_message' => $node->email_wrapper_text_message[$lang][0]['value'],
+    'subject' => $subject[0]['value'],
+    'from_name' => $from_name[0]['value'],
+    'from_mail' => $from_mail[0]['value'],
+    'reply_to_email' => $reply_to_email[0]['value'],
+    'bcc_email' => $bcc_email[0]['value'],
+    'html_template' => $html_template[0]['value'],
+    'text_template' => $text_template[0]['value'],
+    'text_message' => $text_message[0]['value'],
   );
+
 }
 
 /**
