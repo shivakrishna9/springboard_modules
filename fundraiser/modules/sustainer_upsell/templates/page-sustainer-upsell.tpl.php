@@ -9,7 +9,7 @@
   <style>#admin-menu { display: none; }</style>
 </head>
 
-<body>
+<body class='box-content'>
 <?php print $help ?>
 <?php print $messages ?>
 <?php print $content; ?>

@@ -68,6 +68,10 @@ function sustainer_upsell_preprocess_page(&$vars, $hook) {
     //die('test');
     $vars['template_file'] = 'page-sustainer-upsell';
   }
+  elseif(arg(2)=='confirmation') {
+    /* Not really sure why drupal_add_css won't work in hook_footer or here. manually adding to styles */
+    $vars['styles'] .= "<link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"/" . drupal_get_path('module', 'sustainer_upsell') .'/assets/css/box.css' . "\" />";
+  }
 }
 
 function sustainer_upsell_theme_registry_alter(&$theme_registry) {
@@ -80,6 +84,7 @@ function sustainer_upsell_theme_registry_alter(&$theme_registry) {
 }
 
 function _sustainer_upsell_popup_iframe($node, $sid) {
+  drupal_add_css(drupal_get_path('module', 'sustainer_upsell') .'/assets/css/box.css');
   $order = _sustainer_uspell_get_order($sid);
   $extra = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id));
   if($extra > 0) {
@@ -152,13 +157,14 @@ function sustainer_upsell_footer() {
     $node = node_load(arg(1));
     $order = _sustainer_uspell_get_order($sid);
     $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
-    if(($node->sustainer_upsell_enabled == 1) && ($order->data['recurring_status'] != 1) && ($counter > 0)) {
+    if((sustainer_uspell_confirmation_view_secure($sid)) && ($node->sustainer_upsell_enabled == 1) && ($order->data['recurring_status'] != 1) && ($counter > 0)) {
       if(((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1)) {
         drupal_add_js("
           $(function() {
             $('#upsell-box-open').click();
           })
         ",'inline','footer');
+        db_query("INSERT INTO {sustainer_upsell_secure} (sid) VALUES (%d)", $sid);
         if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
           return "<a id='upsell-box-open' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click' style='display: none;'>Open Thickbox</a>";
         } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
@@ -217,7 +223,7 @@ function _sustainer_upsell_submit($form, &$form_state) {
 
 function sustainer_upsell_donation_form(&$form_state, $order, $sid) {
   $form['amount'] = array(
-    '#title' => t('Amount'),
+    '#title' => t('Monthly Donation'),
     '#type' => 'textfield',
     '#size' => 5,
     '#default_value' => _sustainer_upsell_find_suggested_amount($order->order_total),
@@ -334,6 +340,23 @@ $body_html
       break;
   }
 }
+
+/**
+ * Checks if a confirmation page has been viewed. Copied from funderaiser_secure_confirmation but added a count as it will expect the count to be 1 in order to view the upsell
+ *
+ * @param $sid
+ * webform submission id
+ *
+ * @return
+ * TRUE if the confirmation page has been viewed, otherwise FALSE.
+ */
+function sustainer_uspell_confirmation_view_secure($sid) {
+  if(db_result(db_query('SELECT count(sid) FROM {sustainer_upsell_secure} WHERE sid=%d', $sid)) == 0) {
+    return true;
+  }
+  return false;
+}
+
 
 require_once('sustainer_upsell.admin.inc');
 
