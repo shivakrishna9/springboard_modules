@@ -170,17 +170,17 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
 
   $countries = fundraiser_ubercart_get_countries();
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
-  $default_available = array(840, 124);
+  $default_available = array('US', 'CA');
   $options = '';
   if ($include_all_countries) {
     foreach ($countries->countries as $country_id => $country) {
-      $options .= $country_id . '|' . $country->country_name . "\n";
+      $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
     }
   }
   else {
     foreach ($countries->countries as $country_id => $country) {
-      if (in_array($country_id, $default_available)) {
-        $options .= $country_id . '|' . $country->country_name . "\n";
+      if (in_array($country->country_iso_code_2, $default_available)) {
+        $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
       }
     }
   }
@@ -198,7 +198,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
   );
   $options = '';
   foreach ($countries->zones as $zone_id => $zone) {
-    $options .= $zone_id . '|' . $zone->zone_name . "\n";
+    $options .= $zone->zone_code . '|' . $zone->zone_name . "\n";
   }
   $fields['billing_information']['state'] = array(
     '#title' => t('State/Province'),
@@ -307,9 +307,10 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
   $available_zones = isset($countries->zones) ? $countries->zones : array();
   // Filter the available zones by the set country.
   if (array_key_exists('country', $fields)) {
+    $country_id = fundraiser_ubercart_get_country_id_by_iso2($fields['country']);
     // Filter options down to just the zones available for this country.
-    if (isset($countries->countries[ $fields['country'] ])) {
-      $available_zones = $countries->countries[ $fields['country'] ]->zones;
+    if (isset($countries->countries[ $country_id ])) {
+      $available_zones = $countries->countries[ $country_id ]->zones;
     }
   }
   else {
@@ -322,6 +323,7 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
     else {
       $default = array_shift(array_keys($country_field['#options']));
     }
+    $default = fundraiser_ubercart_get_country_id_by_iso2($default);
     if (isset($countries->countries[ $default ])) {
       $available_zones = $countries->countries[ $default ]->zones;
     }
@@ -330,7 +332,7 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
   if (!empty($available_zones)) {
     $new_zone_options = array();
     foreach ($available_zones as $zone_id => $zone) {
-      $new_zone_options[$zone_id] = $zone->zone_name;
+      $new_zone_options[ $zone->zone_code ] = $zone->zone_name;
     }
     $field['#options'] = $new_zone_options;
   }
@@ -369,6 +371,10 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
       $donation->donation[$field_name] = isset($order->$order_name) ? $order->$order_name : '';
     }
   }
+  // Override for donation billing country and zone, the correct value (cause it's not the number).
+  $donation->donation['country'] = fundraiser_ubercart_get_iso2_by_country_id($donation->donation['country']);
+  $donation->donation['state'] = fundraiser_ubercart_get_code_by_zone_id($donation->donation['state']);
+
   $donation->donation['card_number'] = $order->payment_details['cc_number'];
   $donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
   $donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
@@ -440,8 +446,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $order->billing_street1 = $donation->donation['address'];
   $order->billing_street2 = $donation->donation['address_line_2'];
   $order->billing_postal_code = $donation->donation['zip'];
-  $order->billing_zone = $donation->donation['state'];
-  $order->billing_country = $donation->donation['country'];
+  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
+  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
 
   // Card properties.
   $order->payment_method = 'credit';
@@ -533,8 +539,8 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   $order->billing_street1 = $donation->donation['address'];
   $order->billing_street2 = $donation->donation['address_line_2'];
   $order->billing_postal_code = $donation->donation['zip'];
-  $order->billing_zone = $donation->donation['state'];
-  $order->billing_country = $donation->donation['country'];
+  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
+  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
 
   // Card information.
   $order->payment_method = 'credit';
@@ -690,6 +696,34 @@ function _fundraiser_ubercart_get_zone_by_country($country_id) {
   return db_query('SELECT * FROM {uc_zones} ' .
     'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
     array(':zone_country_id' => $country_id))->fetchAll();
+}
+
+/**
+ * DB function. Translate from code to number value.
+ */
+function fundraiser_ubercart_get_country_id_by_iso2($iso2) {
+  return db_query('SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = :iso2', array(':iso2' => $iso2))->fetchField();
+}
+
+/**
+ * DB function. Translate from code to number value.
+ */
+function fundraiser_ubercart_get_zone_id_by_code($code) {
+  return db_query('SELECT zone_id FROM {uc_zones} WHERE zone_code = :code', array(':code' => $code))->fetchField();
+}
+
+/**
+ * DB function. Translate from number value to code.
+ */
+function fundraiser_ubercart_get_iso2_by_country_id($country_id) {
+  return db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id', array(':country_id' => $country_id))->fetchField();
+}
+
+/**
+ * DB function. Translate from number value to code.
+ */
+function fundraiser_ubercart_get_code_by_zone_id($zone_id) {
+  return db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id', array(':zone_id' => $zone_id))->fetchField();
 }
 
 /**
