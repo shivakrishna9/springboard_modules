@@ -151,6 +151,29 @@ function fundraiser_menu() {
     'page callback' => 'fundraiser_zones_ahah_render',
     'access callback' => TRUE,
   );
+  
+   $items['admin/settings/fundraiser/welcome'] = array(
+    'title' => 'Sustainer Welcome Mail',
+    'description' => 'sustainer welcome mail settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_mail_welcome_form'),
+    'access arguments' => array("administer fundraiser"),
+    'file' => 'fundraiser.mail.inc',
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -5,
+  );
+  
+  
+  $items['admin/settings/fundraiser/end'] = array(
+    'title' => 'Sustainer End Mail',
+    'description' => 'sustainer end mail settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_mail_end_form'),
+    'access arguments' => array("administer fundraiser"),
+    'file' => 'fundraiser.mail.inc',
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 3,
+  );
 	
 	$items['admin/fundraiser/recurring'] = array(
 		'title' => 'Current Fundraiser Recurring Payments',
@@ -3176,6 +3199,7 @@ function fundraiser_gateway_can_refund_order($order) {
  * Implementation of hook_token_list().
  */
 function fundraiser_token_list($type = 'all') {
+  $tokens = array();
   if ($type == 'order' || $type == 'all') {
     $tokens['order']['order-cc-last-four']  = t('The last four digits of the credit card used for the order.');
     $tokens['order']['order-cc-card-exp-month'] = t('The credit card expiration month.');

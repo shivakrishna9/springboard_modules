@@ -99,6 +99,10 @@ function mailtron_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'tokens' => array(
+        'description' => 'serialized array of token namespaces for fields',
+        'type' => 'text'
+      ),
     ),
     'primary key' => array('mid'),
   );

@@ -41,6 +41,18 @@ function mailtron_example_test_form() {
     'module' => 'mailtron_example',
     'recipient_callback' => 'mailtron_example_recipient_callback',
     'send_callback' => 'mailtron_example_send_callback',
+    'tokens' => array(
+      'subject' => 'global', 
+      'html_body' => 'global', 
+      'text_body' => 'global', 
+      ),
+    'default' => array (
+      'from_name' => variable_get('site_name', ''), 
+      'from_mail' => variable_get('site_mail', ''), 
+      'subject' => 'Example subject goes here',
+      'html_body' => '<p>Send your message with HTML this way</p>',
+      'text_body' => 'Send your message with text this way', 
+      ),
   );
 
   // Generate the mail configuration form.
