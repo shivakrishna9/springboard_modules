@@ -334,7 +334,7 @@ function _mailtron_concat_settings_from_submission($values) {
     'text_body' => $values['text_body'],
     'send_callback' => isset($values['send_callback']) ? $values['send_callback'] : NULL,
     'recipient_callback' => isset($values['recipient_callback']) ? $values['recipient_callback'] : NULL,
-    'tokens' => isset($values['tokens']) ? $values['tokens'] : NULL,
+    'tokens' => isset($values['tokens']) ? $values['tokens'] : '',
   );
   return (object) $settings;
 }

@@ -32,7 +32,7 @@ function fundraiser_mail_welcome_form(&$form) {
     );
   
   // Generate the mail configuration form
-  $form['welcome'] = mailtron_mail_form(array(), $params);
+  $form = mailtron_mail_form(array(), $params);
   
   return $form;
 }
@@ -65,7 +65,7 @@ function fundraiser_mail_end_form(&$form) {
   );
 
   // Generate the mail configuration form
-  $form['end'] = mailtron_mail_form(array(), $params);
+  $form = mailtron_mail_form(array(), $params);
 
   return $form;
 }

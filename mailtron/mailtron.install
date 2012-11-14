@@ -101,7 +101,9 @@ function mailtron_schema() {
       ),
       'tokens' => array(
         'description' => 'serialized array of token namespaces for fields',
-        'type' => 'text'
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => TRUE,
       ),
     ),
     'primary key' => array('mid'),

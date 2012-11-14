@@ -27,7 +27,7 @@ function sustainer_pause_mail_pause_form(&$form) {
   );
   
   // Generate the mail configuration form
-  $form['pause'] = mailtron_mail_form(array(), $params);
+  $form = mailtron_mail_form(array(), $params);
   
   return $form;
 }
@@ -60,7 +60,7 @@ function sustainer_pause_mail_restart_form(&$form) {
   );
 
   // Generate the mail configuration form
-  $form['restart'] = mailtron_mail_form(array(), $params);
+  $form = mailtron_mail_form(array(), $params);
   
   return $form;
 }
