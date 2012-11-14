@@ -142,7 +142,7 @@ Drupal.behaviors.marketSourceFormPopulate = {
         }
         // If the value is not null, set the value.
         if (value != null) {
-          var selector = 'form#' + form_id + ' #' + form_keys[key] + ':not(.marketsource-processed)';
+          var selector = 'form #' + form_id + ' #' + form_keys[key] + ':not(.marketsource-processed)';
           // Set the value.
           $(selector, context)
             .val(qs_keys[key])
