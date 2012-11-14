@@ -1,8 +1,6 @@
 Drupal.behaviors.fundraiserCheckCode = {
   attach: function(context) { (function($) {
 
-  $(document).ready(function(){
-
   // Turn autocomplete off on CC and CVV form elements.
   $('#edit-submitted-credit-card-information-card-number, #edit-submitted-credit-card-information-card-cvv').attr('autocomplete','off');
 
@@ -44,16 +42,18 @@ Drupal.behaviors.fundraiserCheckCode = {
   });
 
   // On submission hide the button and replace it with a new value.
-  $('.node .webform-client-form #edit-submit').click(function() {
-    $(this).hide();
-    $('.fundraiser_submit_message').hide();
-    $(this).after('<div class="donation-processing-wrapper">' +
-      '<p class="donation-thank-you">Thank you.</p>' +
-      '<p class="donation-processing">Your donation is being processed.</p>' +
-      '<div class="donation-processing-spinner"></div>' +
-      '</div>');
+  // Wrap the click in a once trigger to be sure that we bind it the one time.
+  $('.node .webform-client-form #edit-submit').once(function() {
+    $('.node .webform-client-form #edit-submit').click(function() {
+      $(this).hide();
+      $('.fundraiser_submit_message').hide();
+      $(this).after('<div class="donation-processing-wrapper">' +
+        '<p class="donation-thank-you">Thank you.</p>' +
+        '<p class="donation-processing">Your donation is being processed.</p>' +
+        '<div class="donation-processing-spinner"></div>' +
+        '</div>');
+    });
   });
-});
 
   })(jQuery); }
 } 
