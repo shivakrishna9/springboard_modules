@@ -169,7 +169,7 @@ function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
         'When the form is submitted, new users will be created using those form values.'),
     );
     $form['webform_user']['send_new_user_email'] = array(
-      '#title' => t('Send new users a e-mail with their account details.'),
+      '#title' => t('Send new users an email with their account details.'),
       '#description' => t('If a new user is created during the submission, an email containing their account details will be sent to them.'),
       '#type' => 'checkbox',
       '#default_value' => isset($node->send_new_user_email) ? $node->send_new_user_email : NULL,
