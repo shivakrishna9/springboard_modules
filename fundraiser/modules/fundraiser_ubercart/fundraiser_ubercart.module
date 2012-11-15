@@ -382,7 +382,11 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->donation['cc_type'] = $order->payment_details['cc_type'];
 
   // Add the order status data.
-  $donation->status = isset($order->order_status) ? $order->order_status : 'unkown';
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 
   // Time of charge.
   $donation->last_changed = $order->modified;
@@ -743,6 +747,13 @@ function fundraiser_ubercart_get_code_by_zone_id($zone_id) {
 }
 
 /**
+ * DB function. Translate status to status label.
+ */
+function _fundraiser_ubercart_get_label_by_status($status) {
+  return db_query('SELECT title FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
+}
+
+/**
  * Below here are orphan or unknown origin functions. To be reviewed later. TODO
  */
 
@@ -759,11 +770,3 @@ function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   return $cc_data;
 }
  */
-
-// Theme / formaty code, really should get refactored and moved to fundraiser. -SeH
-/**
- * Implements hook_fundraiser_format_price();
- */
-function fundraiser_ubercart_fundraiser_format_price($price) {
-  return theme('uc_price', array('price' => $price));
-}
