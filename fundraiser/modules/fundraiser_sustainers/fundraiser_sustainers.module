@@ -781,7 +781,8 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
   $form['reason'] = array(
     '#type' => 'textarea',
     '#title' => t('Reason'),
-    '#default_value' => t('Please enter a brief description of why you are cancelling. This will help us better serve you in the future.'),
+    '#default_value' => t('Please enter a brief description of why you are cancelling. ' .
+      'This will help us better serve you in the future.'),
     '#maxlength' => 500,
     '#cols' => 70,
     '#rows' => 3,
@@ -805,9 +806,9 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
     $reason = t('No reason given.');
   }
   // Cancel the donations.
-  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  foreach ($donations as $donation) {
-    $donation = fundraiser_donation_get_donation($donation);
+  $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+  foreach ($sustainer_donations as $sustainer_donation) {
+    $donation = fundraiser_donation_get_donation($sustainer_donation->did);
     fundraiser_donation_cancel($donation);
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
