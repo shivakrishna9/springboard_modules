@@ -383,9 +383,10 @@ Content-Transfer-Encoding: 8bit
 $html_raw
 
 ";
-  
+ 
+  // TODO: if we need to do token module token replacement this would probably be a good place for it. 
   // perform webform token replacement.
-  return  _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], TRUE);
+  return  _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
 }
 
 
