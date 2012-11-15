@@ -478,7 +478,7 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Check if this order is already cancelled.
   $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
-drupal_set_message('remin'.print_r($remaining_donation_count,1));
+
   // Generate forms, or error messages as needed.
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form = drupal_render( drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation));
