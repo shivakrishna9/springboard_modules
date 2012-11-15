@@ -528,11 +528,14 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   // Load the order with new data.
   $old_amount = $order->order_total;
   $order->order_total = $donation->donation['amount'];
-  $order->products[0]->price = $donation->donation['amount'];
+  // Update the existing product (by id).
+  // Do Not add a new one.
+  foreach ($order->products as $delta => $product) {
+    $order->products[ $delta ]->price = $donation->donation['amount'];
+  }
 
   // Billing information.
   $order->primary_email = $donation->donation['mail'];
-  $order->order_total = $donation->donation['amount'];
   $order->billing_first_name = $donation->donation['first_name'];
   $order->billing_last_name = $donation->donation['last_name'];
   $order->billing_city = $donation->donation['city'];
