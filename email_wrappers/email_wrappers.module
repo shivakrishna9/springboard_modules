@@ -156,8 +156,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
 
     // Throw some defaults at webform's built in templating system since it's being overridden anyway.
     if ((isset($form_state['input']['email_wrappers_email_template']) && $form_state['input']['email_wrappers_email_template']) || isset($defaults['html_message'])) {
-    $form['template']['template_option']['#access'] = FALSE;
-
+      $form['template']['template_option']['#access'] = FALSE;
      
       $form['template']['template']['#access'] = FALSE;
       // TODO: add BCC fields.
@@ -440,7 +439,6 @@ function email_wrappers_load_settings($nid, $eid) {
     $query->addField('f', 'email_wrapper_html_template_value', 'html_template');
     $query->addField('t', 'email_wrapper_text_template_value', 'text_template');
 
-
     $results = $query->execute();
 
     $settings[$nid][$eid] = $results->fetchAssoc();
@@ -486,6 +484,7 @@ function email_wrappers_load_defaults_from_template($nid) {
     'reply_to_email' => $reply_to_email[0]['value'],
     'bcc_email' => $bcc_email[0]['value'],
     'html_template' => $html_template[0]['value'],
+    'html_message' => $html_message[0]['value'], 
     'text_template' => $text_template[0]['value'],
     'text_message' => $text_message[0]['value'],
   );
