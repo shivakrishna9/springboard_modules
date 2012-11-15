@@ -478,26 +478,35 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Check if this order is already cancelled.
   $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
-
+drupal_set_message('remin'.print_r($remaining_donation_count,1));
   // Generate forms, or error messages as needed.
-  if (empty($cancelled)) {
+  if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form = drupal_render( drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation));
+  }
+  elseif ($remaining_donation_count == 0) {
+    $donation_amount_form = t('There are no further charges for this recurring donation.');
   }
   else {
     $donation_amount_form = t('This recurring donation has been cancelled.');
   }
   $donation_amount_form = '<div id="donation-amount-form"><h2>Update Donation Amount</h2>' . $donation_amount_form . '</div>';
 
-  if (empty($cancelled)) {
+  if ($remaining_donation_count > 0 && empty($cancelled)) {
     $billing_update_form = drupal_render( drupal_get_form('fundraiser_sustainers_billing_update_form', $next_donation));
+  }
+  elseif ($remaining_donation_count == 0) {
+    $billing_update_form = t('There are no further charges for this recurring donation.');
   }
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
   }
   $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Credit Card Information</h2>' . $billing_update_form . '</div>';
 
-  if (empty($cancelled)) {
+  if ($remaining_donation_count > 0 && empty($cancelled)) {
     $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $donation) );
+  }
+  elseif ($remaining_donation_count == 0) {
+    $cancel_form = t('There are no further charges for this recurring donation.');
   }
   else {
     $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
@@ -505,7 +514,7 @@ function fundraiser_sustainers_edit_form($did) {
   $cancel_form = '<div id="donation-cancel-form"><h2>Cancel Future Donations</h2>' . $cancel_form . '</div>';
 
   // Put together the output.
-  $parts = array($recurring_donations, $payment_info, $billing_info, $future_orders, $donation_amount_form, $billing_update_form, $cancel_form, $cancelled);
+  $parts = array($recurring_donations, $payment_info, $billing_info, $future_orders, $donation_amount_form, $billing_update_form, $cancel_form);
   return implode('', $parts);
 }
 
