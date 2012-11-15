@@ -686,18 +686,31 @@ function _fundraiser_ubercart_update_order_status($status, $order_id) {
  * DB function, look in country table for country info.
  */
 function _fundraiser_ubercart_get_countries() {
-  return db_query('SELECT * FROM {uc_countries}')->fetchAll();
+  return db_query('SELECT * FROM {uc_countries} ORDER BY country_name ASC')->fetchAll();
 }
 
 /**
  * DB function, look in zone table for zone info.
  */
 function _fundraiser_ubercart_get_zone_by_country($country_id) {
-  return db_query('SELECT * FROM {uc_zones} ' .
-    'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
-    array(':zone_country_id' => $country_id))->fetchAll();
+  // Some countries need an override, the zone_code is NOT the correct display for them.
+  // Most zone codes are correct by natural order - be that alphabetical or numerical. But some countries are wierd.
+  // For those, we add them to the exception list and order by zone_name.
+  $alphabetical_exception = array('840');
+  // Countries: 840 -> US
+  if (in_array($country_id, $alphabetical_exception)) {
+    return db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = :zone_country_id ORDER BY zone_name ASC',
+      array(':zone_country_id' => $country_id))->fetchAll();
+  }
+  else {
+    return db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
+      array(':zone_country_id' => $country_id))->fetchAll();
+  }
 }
 
+// TODO add caching for these.
 /**
  * DB function. Translate from code to number value.
  */
