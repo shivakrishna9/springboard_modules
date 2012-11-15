@@ -484,7 +484,7 @@ function email_wrappers_load_defaults_from_template($nid) {
     'reply_to_email' => $reply_to_email[0]['value'],
     'bcc_email' => $bcc_email[0]['value'],
     'html_template' => $html_template[0]['value'],
-    'html_message' => $html_message[0]['value'],
+    'html_message' => $html_message[0]['value'], 
     'text_template' => $text_template[0]['value'],
     'text_message' => $text_message[0]['value'],
   );
