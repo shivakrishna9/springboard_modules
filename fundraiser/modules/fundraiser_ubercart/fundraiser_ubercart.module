@@ -54,6 +54,18 @@ function fundraiser_ubercart_mail_alter(&$message) {
 }
 
 /**
+ * Implements hook_uc_order().
+ */
+function fundraiser_ubercart_uc_order($op, $order, $arg2) {
+  if ($op == 'delete') {
+    $donation = fundraiser_donation_get_donation($order->order_id); // Get the donation object.
+    if (isset($donation->nid)) { // This is a fundraiser donation order.
+      fundraiser_donation_delete($donation); // Delete it.
+    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
  */
 function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {

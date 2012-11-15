@@ -201,6 +201,16 @@ function fundraiser_sustainer_mail($key, &$message, &$params) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_sustainers_fundraiser_donation_delete($donation) {
+  if ($donation->donation['recurs_monthly'] == TRUE) {
+    // If a recurring donation has been cancelled, we should drop it out of the recurring table.
+    _fundraiser_sustainers_delete_recurring($donation->did);
+  }
+}
+
+/**
  * Helper function, kick off recurring donations for payment. Called on cron usually.
  */
 function fundraiser_sustainers_process_recurring_donations() {

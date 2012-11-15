@@ -1567,6 +1567,23 @@ function fundraiser_donation_cancel($donation) {
 }
 
 /**
+ * Donation processing, a given donation needs to be deleted.
+ * Generally, not called, but it does happen.
+ */
+function fundraiser_donation_delete($donation) {
+  // Make a log entry
+  watchdog('fundraiser', 'Donation @id was deleted.',
+    array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
+  // Show gateay message if appropriate.
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message(t('Your payment has been deleted'));
+  }
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_delete', $donation);
+}
+
+/**
  * Donation processing, a given donation needs to be refunded.
  */
 function fundraiser_donation_refund($refund) {
