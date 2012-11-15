@@ -498,9 +498,9 @@ function fundraiser_sustainers_edit_form($did) {
 
   if (empty($cancelled)) {
     $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $donation) );
-    if (empty($cancel_form)) {
-      $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
-    }
+  }
+  else (empty($cancel_form)) {
+    $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
   }
   $cancel_form = '<div id="donation-cancel-form"><h2>Cancel Future Donations</h2>' . $cancel_form . '</div>';
 
