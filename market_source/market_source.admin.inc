@@ -168,6 +168,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Save settings'),
   );
+  $form['#submit'][] = 'market_source_admin_settings_form_submit';
   return $form;
 }
 
@@ -199,9 +200,9 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][key',
         t('The field key may only contain alphanumeric characters and underscores.'));
     }
-    if (!empty($field['default']) && !preg_match('/^[a-zA-Z0-9_+-\s%\[\]]+$/', $field['default'])) {
+    if (!empty($field['default']) && !preg_match('|^[a-zA-Z0-9_+-:\\\/\s%\[\]]+$|', $field['default'])) {
       form_set_error('market_source_global_fields][custom_fields_wrapper][' . $i . '][default',
-        t('The default value may only contain alphanumeric characters, whitespace, underscores, square brackets and the percent sign.'));
+        t('The default value may only contain alphanumeric characters, whitespace, underscores, slashes, square brackets, colon and the percent sign.'));
     }
   }
   if (!(count(explode('.', $values['market_source_cookie_domain'])) > 1 && !is_numeric(str_replace('.', '', $values['market_source_cookie_domain'])))) {
@@ -214,6 +215,7 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
  * Handle admin form submission.
  */
 function market_source_admin_settings_form_submit($form, &$form_state) {
+drupal_set_message('market_source_admin_settings_form_submit');
   $values = &$form_state['values'];
   // Set the default campaign value.
   variable_set('market_source_default_campaign', $values['market_source_default_campaign']);
@@ -240,6 +242,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
       }
     }
   }
+drupal_set_message('custom_fields: '.print_r($custom_fields,1));
   variable_set('market_source_custom_fields', $custom_fields);
   variable_set('market_source_cookie_domain', '');
   $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
