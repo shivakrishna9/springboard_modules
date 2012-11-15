@@ -165,7 +165,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'textarea',
         '#title' => t('HTML message'),
         '#description' => t('This version of your message will be displayed by users who can view HTML email'),
-        '#default_value' => $defaults['html_message'],
+        '#value' => $defaults['html_message'],
         '#required' => TRUE,
       );
 
