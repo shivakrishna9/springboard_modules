@@ -524,7 +524,6 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   $form['fee_amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation Amount'),
-    '#default_value' => $next_donation->donation['amount'],
     '#size' => 10,
     '#required' => TRUE,
     '#description' => t('Your current donation amount is %amount. Minimum donation %minimum.',
