@@ -904,16 +904,6 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
 }
 
 /**
- * Implements hook_fundraiser_donation_cancel().
- */
-function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
-  if ($donation->donation['recurs_monthly'] == TRUE) {
-    // If a recurring donation has been cancelled, we should drop it out of the recurring table.
-    _fundraiser_sustainers_delete_recurring($donation->did);
-  }
-}
-
-/**
  * Helper function, loads the recurring donation processor key.
  */
 function fundraiser_sustainers_processor_key_match() {
