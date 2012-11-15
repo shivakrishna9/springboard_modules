@@ -215,7 +215,6 @@ function market_source_admin_settings_form_validate($form, &$form_state) {
  * Handle admin form submission.
  */
 function market_source_admin_settings_form_submit($form, &$form_state) {
-drupal_set_message('market_source_admin_settings_form_submit');
   $values = &$form_state['values'];
   // Set the default campaign value.
   variable_set('market_source_default_campaign', $values['market_source_default_campaign']);
@@ -242,7 +241,6 @@ drupal_set_message('market_source_admin_settings_form_submit');
       }
     }
   }
-drupal_set_message('custom_fields: '.print_r($custom_fields,1));
   variable_set('market_source_custom_fields', $custom_fields);
   variable_set('market_source_cookie_domain', '');
   $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
