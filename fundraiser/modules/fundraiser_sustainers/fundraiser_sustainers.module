@@ -176,7 +176,8 @@ function fundraiser_sustainer_standalone_cron() {
     fundraiser_sustainers_process_recurring_donations();
   }
   else {
-    drupal_set_message(t('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.'), 'warning');
+    $message = t('The fundraiser sustainer key has not been configured correctly. Recurring donations will not be processed.');
+    drupal_set_message($message, 'warning');
     watchdog('fundraiser_cron', $message, NULL, WATCHDOG_CRITICAL);
   }
 }
