@@ -44,7 +44,7 @@
     * fundraiser.module: Improved gateway management. See pull request
     https://github.com/JacksonRiver/springboard_modules/pull/121.
     
-2012-19-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
+2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
 
     * fundraiser.module: Added lock feature when processing recursing tables to avoid re-queuing donations.
     See: https://www.assembla.com/spaces/jr-springboard/tickets/347
@@ -66,3 +66,13 @@
 
     * fundraiser.sustainer.forms.inc: Change how the function determines if the
     billing update operation succeeded. Added logging for failed updates.
+
+2012-10-24  Sarah Hood  <sarah.hood@jacksonriver.com>
+
+    * fundraiser.admin.inc (fundraiser_admin_settings) - added checkbox to enable/disable expiration emails.
+    * fundraiser.install (fundraiser_uninstall) - added code to remove expiration checkbox variable.
+    * fundraiser.module (fundraiser_send_cc_notification) - added variable check, if FALSE no expiration email is sent.
+
+2012-11-05  Sarah Hood  <sarah.hood@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_process_recurring_donations) - added a uc_order comment when sustaining charges fail.

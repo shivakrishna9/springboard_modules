@@ -1,0 +1,6 @@
+; $Id$
+name = Webform Add to All
+description = Allows you to add a new form component to all webforms of a specific type.
+dependencies[] = webform
+package = Webform
+core = 6.x
