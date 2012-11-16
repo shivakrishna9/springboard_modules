@@ -251,11 +251,12 @@ function process_heap() {
 	unlock_heap_records();
 	
 	$queue_processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
-	$batch_size = variable_get('queue_batch_size', 200);
 	$batches_to_process = array(); // holds the ids of the batches to process once they have been created
 	
 	// loop over the order and create batches for each type
 	foreach($queue_processing_order as $type) {
+    // get the custom batch size for this particular type
+    $batch_size = variable_get($type . '_batch_size', 200);
 		// get the unique fieldmaps for each type
 		$result = db_query("SELECT DISTINCT fieldmap, action FROM {sf_heap} WHERE type = '%s'", $type);
 

@@ -23,7 +23,23 @@ function queue_processor_install() {
  * Implementation of hook_uninstall().
  */
 function queue_processor_uninstall() {
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  foreach($processing_order as $key => $type) {
+    variable_del($type . '_batch_size');
+  }
 	variable_del('queue_processing_order');
-	variable_del('queue_batch_size');
 	variable_del('queue_retry_max');
+}
+
+/**
+ * Remove legacy batch_size variable and add new per type setting.
+ */
+function queue_processor_update_6300() {
+  variable_del('queue_batch_size');
+  // Set initial batch size for each type to 200.
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  foreach($processing_order as $key => $type) {
+    $name = $type . '_batch_size';
+    variable_set($name, 200);
+  }
 }
