@@ -496,7 +496,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
   // Save the order.
   uc_order_save($order);
-  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $username)), 'admin');
 
   // We only need to return the did at this point.
   // When we charge later, this is the only value that the glue module will need.
@@ -598,7 +599,8 @@ function fundraiser_ubercart_fundraiser_donation_success($donation) {
     t('Payment processed by the fundraiser module.'));
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
   global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $user->title)), 'admin');
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $username)), 'admin');
 }
 
 /**
@@ -610,7 +612,8 @@ function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
   global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $user->name)), 'admin');
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $username)), 'admin');
 }
 
 /**
@@ -628,7 +631,8 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
   // Make a comment on the order.
   global $user;
-  uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $user->name)), 'admin');
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $username)), 'admin');
 }
 
 /**
