@@ -6,14 +6,14 @@
       $parent_form = $('#email-wrappers-preview').closest("form").get(0);
       $current_action = $parent_form.getAttribute("action");
 
-      if ($current_action != settings.basePath + 'email_wrappers/preview_modal/js') {
+      if ($current_action != settings.basePath + 'email_wrappers/preview_modal/js/preview') {
         $old_action = $parent_form.getAttribute('action');
       }
 
 
       // Add onmouseover and onmouseout functions to swap form action
       $('#email-wrappers-preview').mouseenter(function(){
-        $parent_form.setAttribute('action', settings.basePath + 'email_wrappers/preview_modal/js');
+        $parent_form.setAttribute('action', settings.basePath + 'email_wrappers/preview_modal/js/preview');
       });
 
       $('#email-wrappers-preview').mouseleave(function(){
