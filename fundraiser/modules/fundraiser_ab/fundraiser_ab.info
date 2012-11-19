@@ -4,3 +4,5 @@ core = 7.x
 version =  7.x-7.0-dev
 dependencies[] = webform_ab
 package = Jackson River Springboard
+
+files[] = fundraiser_ab.module

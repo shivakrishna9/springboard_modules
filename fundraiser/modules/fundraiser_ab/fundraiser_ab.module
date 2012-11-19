@@ -14,7 +14,7 @@
 
 
 /**
- * Implementation of hook_webform_ab_get_webform_types().
+ * Implements hook_webform_ab_get_webform_types().
  */
 function fundraiser_ab_webform_ab_get_webform_types() {
   return array('fundraiser' => 'Fundraiser');
@@ -22,14 +22,14 @@ function fundraiser_ab_webform_ab_get_webform_types() {
 
 
 /**
- * Implementation of hook_webform_ab_validate_conversion().
- * Only returns TRUE if the webform type is fundraiser and the donation payment 
+ * Implements hook_webform_ab_validate_conversion().
+ * Only returns TRUE if the webform type is fundraiser and the donation payment
  * was successful. This way, failed credit card payments are not counted as
  * conversions
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
   if ($webform_types == 'fundraiser') {
-    // If abort is TRUE, the payment failed. 
+    // If abort is TRUE, the payment failed.
     // Only return TRUE if the abort flag is NOT set to TRUE
     return ($form_state['values']['abort'] !== TRUE);
   }
@@ -37,7 +37,7 @@ function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node
 
 
 /**
- * Implementation of hook_webform_ab_valid_webforms().
+ * Implements hook_webform_ab_valid_webforms().
  * Return an array of donation forms that may be included in an A/B Test.
  */
 function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
