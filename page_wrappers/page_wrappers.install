@@ -13,7 +13,7 @@
 function page_wrappers_install() {
   // change the clone module's cloning method to save-edit cause that's the way we like it.
   variable_set('clone_method', 'save-edit');
-  drupal_install_schema('page_wrappers');
+  _page_wrappers_create_fields();
 }
 
 /**
@@ -66,4 +66,98 @@ function page_wrappers_schema() {
   );
 
   return $schema;
+}
+
+function _page_wrappers_create_fields() {
+  $t = get_t();
+
+  // implement node type.
+  if (!in_array('page_wrapper', node_type_get_names())) {
+    $type = array(
+      'type' => 'page_wrapper',
+      'name' => $t('Page Wrapper'),
+      'description' => $t('Allows a user to define custom page templates that can then be assigned to specific nodes.'),
+      'base' => 'node_content',
+      'custom' => 1,
+      'modified' => 1,
+      'locked' => 0,
+      'title_label' => $t('Internal Title'),
+      'body_label' => $t('Template HTML'),
+    );
+    $type = node_type_set_defaults($type);
+    node_type_save($type);
+  }
+
+  $fields = array(
+    'css_filefield' => array(
+      'field_name' => 'page_wrappers_css',
+      'type' => 'file',
+      'cardinality' => 0,
+      'settings' => array(
+        'instance_settings' => array(
+          'file_extensions' => 'css',
+          'file_directory' => 'page_wrappers/styles',
+        ),
+        'label' => $t('Upload a stylesheet'),
+        'description' => $t('If your page wrapper utilizes external stylesheets, upload them here.'),
+        'file_extensions' => 'css',
+      ),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_css',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrappers',
+        'label' => $t('Upload a stylesheet'),
+        'description' => $t('If your page wrapper ulitizes external stylesheets, upload them here.'),
+        'widget' => array(
+          'type' => 'file_generic',
+          'weight' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'file_default',
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+    'js_filefield' => array(
+      'field_name' => 'page_wrappers_js',
+      'type' => 'file',
+      'cardinality' => 0,
+      'settings' => array(
+        'instance_settings' => array(
+          'file_extensions' => 'js',
+          'file_directory' => 'page_wrappers/scripts',
+        ),
+        'label' => $t('Upload a JavaScript file'),
+        'description' => $t('If your page wrapper utilizes external JavaScript files, upload them here.'),
+        'file_extensions' => 'js',
+      ),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_js',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrappers',
+        'label' => $t('Upload a JavaScript file'),
+        'description' => $t('If your page wrapper ulitizes external JavaScript files, upload them here.'),
+        'widget' => array(
+          'type' => 'file_generic',
+          'weight' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'file_default',
+            'weight' => 0,
+          ),
+        ),
+      ),
+    ),
+  );
+  
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+
+    field_create_field($values);
+    field_create_instance($instance);
+  }
 }
