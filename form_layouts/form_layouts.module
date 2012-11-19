@@ -81,7 +81,7 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
     $form['form_layouts'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form layout settings'),
-      '#title' => t('Select the form layout for this form. Defaults to one-column layout.'),
+      '#description' => t('Select the form layout for this form. Defaults to one-column layout.'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
