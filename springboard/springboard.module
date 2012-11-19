@@ -258,7 +258,7 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/gateways']['access arguments'] = array('administer springboard');
   }
   if (module_exists('webform_ab')) {
-    $items['admin/springboard/settings/webform-ab'] = $items['admin/config/system/webform_ab'];
+    $items['admin/springboard/settings/webform-ab'] = $items['admin/config/content/webform_ab'];
     $items['admin/springboard/settings/webform-ab']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/settings/webform-ab']['access arguments'] = array('administer springboard');
   }
