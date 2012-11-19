@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /**
  * @file
  * Secure prepopulate admin functions
@@ -20,7 +18,8 @@ function secure_prepopulate_admin_settings($form, &$form_state) {
   $form['secure_prepopulate_iv'] = array(
     '#type' => 'textfield',
     '#title' => t('Initialization vector'),
-    '#description' => t('A 16 byte initialization vector. The initialization vector (IV) is a fixed-size input to a cryptographic primitive that is typically required to be random or pseudorandom.'),
+    '#description' => t('A 16 byte initialization vector. The initialization vector (IV) is a fixed-size input to a cryptographic primitive ' .
+      'that is typically required to be random or pseudorandom.'),
     '#default_value' => variable_get('secure_prepopulate_iv', ''),
   );
   $form['secure_prepopulate_precedence'] = array(

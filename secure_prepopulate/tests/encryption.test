@@ -8,7 +8,7 @@
 include_once(dirname(__FILE__) . '/secure_prepopulate.test');
 
 class EncryptionTestCase extends SecurePrepopulateTestCase {
-  
+
   public static function getInfo() {
     return array(
       'name' => 'Secure pre-populate encryption tests',
@@ -16,13 +16,12 @@ class EncryptionTestCase extends SecurePrepopulateTestCase {
       'group' => 'Springboard',
     );
   }
-  
+
   /**
    * Test the decryption of a string
    */
   function testDecrypt() {
     $decrypted = secure_prepopulate_decrypt($this->_encrypted);
-    
     $this->assertEqual($decrypted['first_name'], 'Euro', t('Make sure decrypted first_name field = Euro'));
     $this->assertEqual($decrypted['last_name'], 'Guy', t('Make sure decrypted last_name field = Guy'));
     $this->assertEqual($decrypted['uid'], '29', t('Make sure decrypted uid field = 29'));
