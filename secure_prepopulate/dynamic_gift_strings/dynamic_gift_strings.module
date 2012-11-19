@@ -33,17 +33,18 @@ function dynamic_gift_strings_init() {
 function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
   // make sure the node has a webform
   if (strstr($form_id, 'webform_client_form')) {
-    $node = $form['#parameters'][2];
+    $node = $form['#node'];
     if ($node->type == 'donation_form') {
-      if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
+      if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) 
+        && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
         $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
         // create an array of amounts to replace the defaults
         $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
         // grab the default
         $default = $gs['default'];
         // parse out the form components so we can find the 'amount' field
-        $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
-        $amount_field = & fundraiser_find_field($form, $component_hierarchy['amount']);
+        $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $node->webform['components']);
+        $amount_field =& _fundraiser_webform_find_field($form, $component_hierarchy['amount']);
         // make sure we have the field and a good array of amounts
         if ($amount_field && $amounts) {
           $amount_field['#options'] = $amounts;
@@ -101,7 +102,7 @@ function dynamic_gift_strings_settings_validate(&$form, &$form_state) {
  */
 function dynamic_gift_strings_submit(&$form, &$form_state) {
   // clear out the session
-  $node = $form['#parameters'][2];
+  $node = $form['#node'];
   dynamic_gift_strings_clear_session($node->nid);
 }
 
