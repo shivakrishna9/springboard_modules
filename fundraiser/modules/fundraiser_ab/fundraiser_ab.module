@@ -12,14 +12,12 @@
  *    Add win condition for total amount collected?
  */
 
-
 /**
  * Implements hook_webform_ab_get_webform_types().
  */
 function fundraiser_ab_webform_ab_get_webform_types() {
   return array('fundraiser' => 'Fundraiser');
 }
-
 
 /**
  * Implements hook_webform_ab_validate_conversion().
@@ -35,7 +33,6 @@ function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node
   }
 }
 
-
 /**
  * Implements hook_webform_ab_valid_webforms().
  * Return an array of donation forms that may be included in an A/B Test.
@@ -45,7 +42,7 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
     $result = db_select('node', 'n')
       ->fields('n', array('nid', 'title'))
       ->condition('status', 1)
-      ->condition('type', 'donation_form')
+      ->condition('type', fundraiser_get_donation_types(),'IN')
       ->orderBy('title')->execute();
     $forms = array();
     while ($row = $result->fetchObject()) {
@@ -54,7 +51,6 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
     return $forms;
   }
 }
-
 
 /**
  * Implements hook_webform_ab_valid_webforms_alter().
