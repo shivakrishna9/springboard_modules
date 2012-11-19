@@ -29,7 +29,8 @@ Drupal.behaviors.fundraiserCheckCode = {
   // When the radio button changes, if it was set to other and other still has a value in it.
   // Make sure the user picks one or the other.
   $('#webform-component-donation--amount input[name="submitted[donation][amount]"]').change(function() {
-    if ($(this).val() != 'other' && $('#edit-submitted-donation-other-amount').val() != '') {
+    var other_amount = $('#edit-submitted-donation-other-amount').val();
+    if ($(this).val() != 'other' && other_amount !== 'undefined' &&  other_amount.length > 0) {
       // Throw up a message.
       $(this).parents('#webform-component-donation--amount').after('<div id="fundraiser-amount-error" class="messages error">' +
         'You have entered a custom amount and selected a set amount. Please choose the "Other" button if you ' +
