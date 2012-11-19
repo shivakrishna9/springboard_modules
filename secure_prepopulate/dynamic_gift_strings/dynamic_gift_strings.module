@@ -3,7 +3,6 @@
 /**
  * @file
  * This module provides functionality for replacing the ask amounts on a donation with values from a secure query variable.
- *
  */
 
 /**
@@ -17,7 +16,7 @@ function dynamic_gift_strings_init() {
     // see if the gift string is expired
     if (!secure_prepopulate_is_expired($gs)) {
       if ($fields = secure_prepopulate_decrypt($gs)) {
-        $_SESSION['dynamic_gift_string_values'][$nid] = $fields;
+        $_SESSION['dynamic_gift_string_values'][$nid] = $fields; // Coder: This is ok.
         // see if we need to expire the query string
         $never_expire = variable_get('dynamic_gift_strings_never_expire', 1);
         if (!$never_expire) {
@@ -31,13 +30,13 @@ function dynamic_gift_strings_init() {
 /**
  * Implmentation of hook_form_alter().
  */
-function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
+function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
   // make sure the node has a webform
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
     if ($node->type == 'donation_form') {
-      if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
-        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
+      if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
+        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
         // create an array of amounts to replace the defaults
         $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
         // grab the default
@@ -53,7 +52,6 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
             $amount_field['#default_value'] = $default;
           }
         }
-
         // add a submit handler to clear out gift strings if the user donates
         $form['#submit'][] = 'dynamic_gift_strings_submit';
       }
@@ -114,7 +112,7 @@ function dynamic_gift_strings_submit(&$form, &$form_state) {
  *   The id of the donation form node.
  */
 function dynamic_gift_strings_clear_session($nid) {
-  unset($_SESSION['dynamic_gift_string_values'][$nid]);
+  unset($_SESSION['dynamic_gift_string_values'][$nid]); // Coder: This is ok.
 }
 
 /**
@@ -128,7 +126,8 @@ function dynamic_gift_strings_mail($key, &$message, $params) {
       foreach ($params['amounts'] as $amount) {
         $message['body'] .= "- " . $amount . "\n";
       }
-      $message['body'] .= "\nSince the gift amounts were not valid they could not be applied to the donation form. Please double check your configuration.";
+      $message['body'] .= "\n" . 'Since the gift amounts were not valid they could not be applied to the donation form. ' .
+        'Please double check your configuration.';
       break;
   }
 }
@@ -183,7 +182,7 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
  */
 function _dynamic_gift_strings_alert($amounts, $nid) {
   // log to watchdog for prosperity
-  watchdog('dynamic gift strings', t('Invalid gift string detected'), NULL, WATCHDOG_ALERT);
+  watchdog('dynamic gift strings', 'Invalid gift string detected', NULL, WATCHDOG_ALERT);
   // see if we need to fire off an email
   $send_alert = variable_get('dynamic_gift_strings_send_alert', 0);
   if ($send_alert) {
