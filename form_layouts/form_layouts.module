@@ -1,12 +1,12 @@
 <?php
 
 /**
- * @file form_layouts.module
+ * @file
  * Provide options for form layouts in donation forms.
  */
- 
+
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  *
  * Add a theme function for each file found in /templates.
  */
@@ -23,8 +23,7 @@ function form_layouts_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implementation of hook_theme_registry_alter().
- *
+ * Implements hook_theme_registry_alter().
  * Add in a special preprocess function for all donation forms.
  */
 function form_layouts_theme_registry_alter(&$theme_registry) {
@@ -36,10 +35,10 @@ function form_layouts_theme_registry_alter(&$theme_registry) {
 
 /**
  * Preprocess function for donation form layout themeing.
- *
  * Breaks the form into easily digestable chunks.
  */
 function form_layouts_preprocess_template(&$vars) {
+  // TODO dependant on Webform. See if can make nuetral sometime?
   $vars['donation_fieldset'] = drupal_render($vars['form']['submitted']['donation']);
   $vars['donor_information_fieldset'] = drupal_render($vars['form']['submitted']['donor_information']);
   $vars['billing_address_fieldset'] = drupal_render($vars['form']['submitted']['billing_information']);
@@ -48,7 +47,6 @@ function form_layouts_preprocess_template(&$vars) {
 
 /**
  * Preprocess function for  2 column donation form.
- *
  * Adds some css to make 2 columns.
  */
 function form_layouts_preprocess_two_column(&$vars) {
@@ -56,19 +54,21 @@ function form_layouts_preprocess_two_column(&$vars) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_FORM_ID_alter() for node forms.
  */
-function form_layouts_form_alter(&$form, $form_state, $form_id) {
-  // If this is a webform client form and donation type, then theme it.
-  if (strstr($form_id, 'webform_client_form')) {
-    $node = $form['#parameters'][2];
-    if ($node->type == 'donation_form') {
-      $theme = _form_layouts_theme_template($node->nid);
-      $form['#theme'] = array($theme . '_' . $node->nid, $theme);
-    }
+function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    $theme = _form_layouts_theme_template($form['#node']->nid);
+    $form['#theme'] = array($theme . '_' . $form['#node']>nid, $theme);
   }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
   // If this is a form to add a donation form, add a dropdown to pick the layout.
-  if ($form_id == 'donation_form_node_form') {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
     $nid = $form['#node']->nid;
     $files = _form_layouts_template_list();
     $options = array();
@@ -87,20 +87,20 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_node_load().
+ * Implements hook_node_load().
  *
  * Make sure the layout gets loaded.
  */
 function form_layouts_node_load($nodes, $types) {
   foreach ($nodes as $nid => $node) {
-    if ($node->type == 'donation_form') {
+    if (fundraiser_is_donation_type($node->type)) {
       $nodes[$nid]->layout_template = _form_layouts_theme_template($nid);
     }
   }
 }
 
 /**
- * Implementation of hook_node_insert().
+ * Implements hook_node_insert().
  *
  * Make sure the layout gets inserted.
  */
@@ -109,12 +109,12 @@ function form_layouts_node_insert($node) {
 }
 
 /**
- * Implementation of hook_node_update().
+ * Implements hook_node_update().
  *
  * Make sure the layout gets updated.
  */
-function form_layouts_nodeapi($node) {
-  if ($node->type == 'donation_form' && isset($node->layout)) {
+function form_layouts_node_update($node) {
+  if (fundraiser_is_donation_type($node->type) && isset($node->layout)) {
     $variable_name = _form_layouts_variable_name($node->nid);
     variable_set($variable_name, $node->layout);
   }
@@ -152,14 +152,14 @@ function _form_layouts_variable_name($nid) {
 function _form_layouts_template_list() {
   $path = drupal_get_path('module', 'form_layouts') . '/templates';
   // Get all .tpl.php files in the /templates directory.
-  $files = file_scan_directory($path, '.tpl.php');
+  $files = file_scan_directory($path, '/\.tpl\.php$/');
   $templates = array();
   // Loop over each file and create an array of theme registry entries.
   foreach ($files as $file) {
     $name = str_replace('.tpl', '', $file->name);
     $name_no_underscores = str_replace('-', '_', $name);
     $templates[$name] = array(
-      'name' => ucfirst(str_replace('-', ' ', $name)),
+      'name' => drupal_ucfirst(str_replace('-', ' ', $name)),
       'theme' => $name_no_underscores,
       'pattern' => $name_no_underscores . '_[0-9]+',
       'template' => 'templates/' . $name

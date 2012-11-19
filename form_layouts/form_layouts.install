@@ -6,11 +6,14 @@
  *
  */
 
+// TODO why on earth is this making a var per node? Move this to a TABLE like a sensible person.
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function form_layouts_uninstall() {
-  $result = db_query('SELECT nid FROM {node} WHERE type = :type', array(':type' => 'donation_form'));
+  $types = fundraiser_get_donation_types();
+  $types = implode(', ', $types);
+  $result = db_query('SELECT nid FROM {node} WHERE type IN :types', array(':types' => $types));
   foreach ($result as $data) {
     $var_name = 'donation_form_' . $data->nid . '_theme';
     variable_del($var_name);
