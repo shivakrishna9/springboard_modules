@@ -1,16 +1,16 @@
 <?php
-// $Id$
+
+/**
+ * @file Page wrapers core hooks and associated callback functions.
+ */
 
  
-
-// include feature
-include_once('page_wrappers.features.inc');
 
 /**
  * Implementation of hook_menu().
  */
 function page_wrappers_menu() {
-  $items['admin/settings/page-wrappers'] = array(
+  $items['admin/config/content/page_wrappers'] = array(
     'title' => t('Page wrapper settings'),
     'description' => t('Configure page wrapper settings.'),
     'page callback' => 'drupal_get_form',
@@ -24,11 +24,17 @@ function page_wrappers_menu() {
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
-function page_wrappers_perm() {
-  return array('administer page wrappers');
+function page_wrappers_permission() {
+  return array(
+    'administer page wrappers' => array(
+      'title' => t('Administer page wrappers'),
+      'description' => t('Perform administration tasks for page wrappers.'),
+    ),
+  );
 }
+
 
 /**
  * Implementation of hook_theme_registry_alter().
