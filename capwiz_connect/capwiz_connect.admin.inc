@@ -11,10 +11,25 @@ function capwiz_connect_settings($form_state) {
   $form = array();
   $form['capwiz_connect_standalone_cron_enabled'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable standalone cron.'),
+    '#title' => t('Enable standalone cron'),
     '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l('capwiz_connect_cron', 'capwiz_connect_cron'))),
     '#default_value' => variable_get('capwiz_connect_standalone_cron_enabled', 0),
   );
+  $form['capwiz_connect_user_batch_size'] = array(
+    '#type' => 'select',
+    '#options' => drupal_map_assoc(array(10,50,100,200)),
+    '#title' => t('User Batch Amount'),
+    '#description' => t('Select the amount of Capwiz users to grab during the import process.'),
+    '#default_value' => variable_get('capwiz_connect_user_batch_size', 100),
+  );
+  $form['capwiz_connect_action_batch_size'] = array(
+    '#type' => 'select',
+    '#options' => drupal_map_assoc(array(10,50,100,200,300,400,500,600,700,800,900,1000)),
+    '#title' => t('Action Batch Amount'),
+    '#description' => t('Select the amount of Capwiz actions to grab during the import process.'),
+    '#default_value' => variable_get('capwiz_connect_action_batch_size', 100),
+  );
+
   $form = system_settings_form($form);
 
   // Need to clear the menu cache after saving so that the independent cron
@@ -97,7 +112,7 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#required' => TRUE,
-    '#default_value' => isset($account_details['user_name']) ? $account_details['user_name'] : '',
+    '#default_value' => isset($account_details['user_name']) ? decrypt($account_details['user_name']) : '',
   );
   $form['user_password'] = array(
     '#type' => 'password',
@@ -116,6 +131,14 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#required' => FALSE,
     '#default_value' => $account_details['form_affiliation'],
   );
+  $form['reset_import_date'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reset the import date'),
+    '#description' => t('Enter a date, in any format, to reset the import settings to that date. Leave empty to not reset the current settings.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#required' => FALSE,
+  );
   
   $form['save'] = array(
     '#type' => 'submit',
@@ -133,14 +156,14 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
   $values = $form_state['values'];
   $record = array(
     'display_name' => $values['display_name'],
-    'user_name' => $values['user_name'],
+    'user_name' => encrypt($values['user_name']),
     'id' => $values['account_id'],
     'form_affiliation' => $values['form_affiliation'],
   );
   if (!empty($values['user_password'])) {
-    $record['user_password'] = $values['user_password'];
+    $record['user_password'] = encrypt($values['user_password']);
   }
-  
+
   // Determine if inserting or updating
   if ($values['account_id'] > 0) {
     // Nuke any previously-cached session information
@@ -148,6 +171,14 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
     $client_id_cache_id = 'capwiz_cache_id_' . $values['account_id'];
     cache_set($session_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
     cache_set($client_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
+    
+     // If a reset import date value was passed update those values
+    if ($reset = strtotime($values['reset_import_date'])) {
+      $record['user_sync_since'] = $reset;
+      $record['user_sync_offset'] = 0;
+      $record['action_sync_since'] = $reset;
+      $record['action_sync_offset'] = 0;
+    }
     
     $saved_record = drupal_write_record('capwiz_connect_accounts', $record, 'id');
     if ($saved_record) {
@@ -363,14 +394,11 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     'label' => 'Governor Email',
     'formInputType' => 'auto',
   );
-    
+  
     
   // Load an array of Drupal user fields for targets
   $drupal_user_fields = array(
     '' => '',
-    t('User account') => array(
-      'mail' => t('E-mail address'),
-    ),
   );
 
   // Add profile fields to the user object if the module is enabled.
@@ -384,6 +412,17 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     }
   }
   foreach ($user_fields as $field_key => $field) {
+    $map_default_value = '';
+    $business_default_value = '';
+      
+    if (isset($account->mapping_user['map'][$field_key])) {
+      $map_for_field = $account->mapping_user['map'][$field_key];
+      $map_default_value = $account->mapping_user['map'][$field_key];
+    }
+    
+    if (isset($account->mapping_user['business'][$field_key])) {
+      $business_default_value = $account->mapping_user['business'][$field_key];
+    }
       
     // Capwiz field
     $form['map']['user_field'][$field_key] = array(
@@ -394,12 +433,12 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     $form['map']['drupal_user_field'][$field_key] = array(
       '#type' => 'select',
       '#options' => $drupal_user_fields,
-      '#default_value' => (isset($account->mapping_user['map'][$field_key])) ? $account->mapping_user['map'][$field_key] : '',
+      '#default_value' => $map_default_value,
     );
     // Overwrite business rules
     $form['map']['business'][$field_key] = array(
       '#type' => 'select',
-      '#default_value' => (isset($account->mapping_user['business'][$field_key])) ? $account->mapping_user['business'][$field_key] : '',
+      '#default_value' => $business_default_value,
       '#options' => array(
         '' => '',
         'blank' => t('Overwrite when blank'), 
@@ -414,7 +453,6 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   // This is a little goofy:
   //   Put an item in $form['capwiz_field_map'] for the label
   //   Put an item in $form['map']['drupal_user_field'] for the Drupal user field dropdown
-    
   $form['capwiz_field_map']['form_affiliation'] = array(
     '#type' => 'item',
     '#description' => t('Form Affiliation'),
@@ -602,6 +640,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       // Field name as key, displayable label as the value
       $capwiz_fields = array(
         'alertId' => 'Alert ID',
+        'alertTitle' => 'Alert Title',
         'action_timestamp' => 'Action Timestamp',
         'emailAddress' => 'Email Address',
         'messageId' => 'Message ID',
