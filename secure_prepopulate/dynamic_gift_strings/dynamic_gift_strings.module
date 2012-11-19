@@ -3,23 +3,21 @@
 /**
  * @file
  * This module provides functionality for replacing the ask amounts on a donation with values from a secure query variable.
- * 
+ *
  */
- 
+
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function dynamic_gift_strings_init() {
   // check for the presence of the af query string parameter and we're on a node page
   if (isset($_GET['gs']) && arg(0) == 'node' && is_numeric(arg(1))) {
     $gs = $_GET['gs'];
-    $nid = arg(1) ;
-    
+    $nid = arg(1);
     // see if the gift string is expired
     if (!secure_prepopulate_is_expired($gs)) {
       if ($fields = secure_prepopulate_decrypt($gs)) {
         $_SESSION['dynamic_gift_string_values'][$nid] = $fields;
-      
         // see if we need to expire the query string
         $never_expire = variable_get('dynamic_gift_strings_never_expire', 1);
         if (!$never_expire) {
@@ -29,7 +27,7 @@ function dynamic_gift_strings_init() {
     }
   }
 }
- 
+
 /**
  * Implmentation of hook_form_alter().
  */
@@ -40,17 +38,13 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
     if ($node->type == 'donation_form') {
       if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
         $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
-        
         // create an array of amounts to replace the defaults
         $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
-        
         // grab the default
         $default = $gs['default'];
-        
         // parse out the form components so we can find the 'amount' field
         $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
-        $amount_field =& fundraiser_find_field($form, $component_hierarchy['amount']); 
-        
+        $amount_field = & fundraiser_find_field($form, $component_hierarchy['amount']);
         // make sure we have the field and a good array of amounts
         if ($amount_field && $amounts) {
           $amount_field['#options'] = $amounts;
@@ -58,14 +52,13 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
           if (is_numeric($default)) {
             $amount_field['#default_value'] = $default;
           }
-        } 
+        }
 
-        // add a submit handler to clear out gift strings if the user donates        
+        // add a submit handler to clear out gift strings if the user donates
         $form['#submit'][] = 'dynamic_gift_strings_submit';
       }
     }
   }
-  
   // add some settings to the secure prepopulate form
   if ($form_id == 'secure_prepopulate_admin_settings') {
     $form['dynamic_gift_strings'] = array(
@@ -75,27 +68,23 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    
     $form['dynamic_gift_strings']['dynamic_gift_strings_never_expire'] = array(
       '#type' => 'checkbox',
-      '#title'=> t('Gift string never expires'),
+      '#title' => t('Gift string never expires'),
       '#default_value' => variable_get('dynamic_gift_strings_never_expire', 1),
       '#description' => t('Check this setting to allow the gift string to be used on multiple site visits.'),
     );
-    
     $form['dynamic_gift_strings']['dynamic_gift_strings_send_alert'] = array(
       '#type' => 'checkbox',
-      '#title'=> t('Send email alert when a dynamic gift string cannot be applied'),
+      '#title' => t('Send email alert when a dynamic gift string cannot be applied'),
       '#default_value' => variable_get('dynamic_gift_strings_send_alert', 0),
     );
-    
     $form['dynamic_gift_strings']['dynamic_gift_strings_alert_email'] = array(
       '#type' => 'textfield',
       '#title' => t('Email address'),
       '#description' => t('The email address where the alert will be sent.'),
       '#default_value' => variable_get('dynamic_gift_strings_alert_email', ''),
     );
-    
     $form['#validate'][] = 'dynamic_gift_strings_settings_validate';
   }
 }
@@ -129,7 +118,7 @@ function dynamic_gift_strings_clear_session($nid) {
 }
 
 /**
- * Implementation of hook_mail().
+ * Implements hook_mail().
  */
 function dynamic_gift_strings_mail($key, &$message, $params) {
   switch ($key) {
@@ -137,7 +126,7 @@ function dynamic_gift_strings_mail($key, &$message, $params) {
       $message['subject'] = 'Invalid gift string detected';
       $message['body'] = "The following gift string was passed to donation form node " . $params['nid'] . ":\n\n";
       foreach ($params['amounts'] as $amount) {
-        $message['body'] .= "- " . $amount . "\n";  
+        $message['body'] .= "- " . $amount . "\n";
       }
       $message['body'] .= "\nSince the gift amounts were not valid they could not be applied to the donation form. Please double check your configuration.";
       break;
@@ -158,25 +147,23 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
   $all_valid = TRUE;
 
   // format the amounts
-  foreach($amounts as $amount) {
+  foreach ($amounts as $amount) {
     // first, check to see if the value is numeric. if not, we have some bogus data.
     if (!is_numeric($amount)) {
       $all_valid = FALSE;
     }
     // if the number has a decimal, retain it. otherwise format without decimals
-    if (is_float($amount+1)) { // implicit cast hack
+    if (is_float($amount + 1)) { // implicit cast hack
       $formatted_amounts[$amount] = '$' . number_format($amount, 2, '.', ',');
     }
-    elseif (is_integer($amount+1)) {
+    elseif (is_integer($amount + 1)) {
       $formatted_amounts[$amount] = '$' . number_format($amount, 0, '', ',');
     }
   }
-  
   // re-add 'other' if enabled
   if ($show_other) {
     $formatted_amounts['other'] = 'Other';
   }
-  
   if ($all_valid) {
     return $formatted_amounts;
   }
@@ -197,7 +184,6 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
 function _dynamic_gift_strings_alert($amounts, $nid) {
   // log to watchdog for prosperity
   watchdog('dynamic gift strings', t('Invalid gift string detected'), NULL, WATCHDOG_ALERT);
-  
   // see if we need to fire off an email
   $send_alert = variable_get('dynamic_gift_strings_send_alert', 0);
   if ($send_alert) {
@@ -206,7 +192,7 @@ function _dynamic_gift_strings_alert($amounts, $nid) {
       $params = array(
         'nid' => $nid,
         'amounts' => $amounts,
-      ); 
+      );
       drupal_mail('dynamic_gift_strings', 'dynamic_gift_strings_alert', $email, language_default(), $params);
     }
   }
