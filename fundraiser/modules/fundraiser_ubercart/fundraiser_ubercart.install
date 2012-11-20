@@ -4,6 +4,14 @@
  * Install, update and uninstall functions for the fundraiser module.
  */
 
+/** 
+ * Implements hook_install().
+ */
+function fundraiser_ubercart_install() {
+  // Set to a lower weight to allow fundraiser_webform to function properly with other modules.
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'fundraiser_ubercart' and type = 'module'");
+}
+
 /**
  * Implements hook_enable().
  */

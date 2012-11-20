@@ -1564,7 +1564,7 @@ function fundraiser_donation_cancel($donation) {
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message(t('Your payment has been canceled'));
+    drupal_set_message(t('Your payment #:did has been canceled.', array(':did' => $donation->did)));
   }
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_cancel', $donation);
@@ -1581,7 +1581,7 @@ function fundraiser_donation_delete($donation) {
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message(t('Your payment has been deleted'));
+    drupal_set_message(t('Your payment #:did has been deleted.', array(':did' => $donation->did)));
   }
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_delete', $donation);
