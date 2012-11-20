@@ -51,7 +51,10 @@ function fundraiser_ubercart_mail_alter(&$message) {
       $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
       $message['subject'] = $node->receipt_email_subject;
     }
-    // Else, this is coming from a cron job, we should intercept it entirely.
+    else {
+      // Else, this is coming from a cron job, we should intercept it entirely.
+      $message['send'] = FALSE;
+    }
   }
 }
 
