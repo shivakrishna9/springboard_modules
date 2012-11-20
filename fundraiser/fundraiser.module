@@ -1486,7 +1486,7 @@ function fundraiser_donation_update($donation) {
 function fundraiser_donation_process($donation) {
   // Grab the gateway from the fundraiser configured gateway.
   // Later this will be stored with the donation (since the gateway for the fundraiser may change).
-  $info = _fundraiser_gateway_info($donation->node->gateway);
+  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
   // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
@@ -1596,7 +1596,7 @@ function fundraiser_donation_refund($refund) {
     return; // Not a valid amount to refund.
   }
   // Grab the gateway from the fundraiser configured gateway.
-  $info = _fundraiser_gateway_info($refund->node->gateway);
+  $info = _fundraiser_gateway_info($refund->node->gateway['id']);
   // Check for the charge function to be defined.
   $refund_function = isset($info['refund_function']) ? $info['refund_function'] : '';
   if (empty($refund_function)) {
