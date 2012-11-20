@@ -141,7 +141,7 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
       '#title' => t('Fundraiser Webform'),
       '#description' => t('Configure Fundraiser Webform settings.'),
       '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#collapsed' => TRUE,
     );
     $form['fundraiser_webform']['webform_users'] = array(
       '#type' => 'fieldset',
