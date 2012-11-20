@@ -934,7 +934,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
     }
     // And update the sustainer table.
     db_query('UPDATE {fundraiser_sustainers} SET ' .
-      'gateway_resp = \'success\', attempts = attempts + 1, ' .
+      'gateway_resp = \'success\', attempts = attempts + 1 ' .
       'WHERE did = :did', array(':did' => $donation->did)
     );
   }
