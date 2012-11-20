@@ -1,0 +1,4 @@
+.webform-client-form fieldset.webform-component-fieldset{width:48%;}
+.webform-client-form fieldset.even{float:left;clear:left;}
+.webform-client-form fieldset.odd{float:right;clear:right;}
+.webform-client-form fieldset input.form-text{width:98%;}

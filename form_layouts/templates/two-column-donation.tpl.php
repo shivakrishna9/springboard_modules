@@ -3,7 +3,8 @@
  * @file
  * This renders a donation form in 2 columns.
  *
- * The entire form is available in the variable $form. This can be broken down and rendered as individual fields if needed.
+ * The entire form is available in the variable $form. This can be broken down
+ * and rendered as individual fields if needed.
  * print drupal_render($form['submitted']); - prints the entire form as-is.
  *
  * Variables

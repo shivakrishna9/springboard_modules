@@ -8,15 +8,17 @@
 /**
  * Implements hook_theme().
  *
- * Add a theme function for each file found in /templates.
+ * Add a theme function for each template found.
  */
 function form_layouts_theme($existing, $type, $theme, $path) {
   $templates = form_layouts_info();
   $theme = array();
   foreach ($templates as $template) {
+    global $base_path;
     $theme[$template['theme']] = array(
       'render element' => 'element',
       'template' => $template['template'],
+      'path' => isset($template['path']) ? $template['path'] : drupal_get_path('module', 'form_layouts') . '/templates/',
       'pattern' => $template['pattern'],
     );
   }
@@ -30,39 +32,10 @@ function form_layouts_theme($existing, $type, $theme, $path) {
 function form_layouts_theme_registry_alter(&$theme_registry) {
   $templates = form_layouts_info();
   foreach ($templates as $template) {
-    $theme_registry[$template['theme']]['preprocess functions'][] = 'form_layouts_preprocess_template';
-  }
-}
-
-/**
- * Preprocess function for donation form layout themeing.
- * Breaks the form into easily digestable chunks.
- */
-function form_layouts_preprocess_template(&$vars) {
-  // TODO:  Make this more fluid - left-right CSS for any fieldset.
-  if (isset($vars['element']['submitted']['donation'])) {
-    $vars['donation_fieldset'] =  drupal_render($vars['element']['submitted']['donation']);
-    $vars['donor_information_fieldset'] =  drupal_render($vars['element']['submitted']['donor_information']);
-    $vars['billing_address_fieldset'] =  drupal_render($vars['element']['submitted']['billing_information']);
-    $vars['credit_card_fieldset'] =   drupal_render($vars['element']['submitted']['credit_card_information']);
-  }
-}
-
-/**
- * Preprocess function for  2 column donation form.
- * Adds some css to make 2 columns.
- */
-function form_layouts_preprocess_two_column(&$vars) {
-  drupal_add_css(drupal_get_path('module', 'form_layouts') . '/css/form_layouts_two_column.css');
-}
-
-/**
- * Implements hook_form_FORM_ID_alter() for node forms.
- */
-function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
-  if (fundraiser_is_donation_type($form['#node']->type)) {
-    $theme = _form_layouts_theme_template($form['#node']->nid);
-    $form['#theme'] = array($theme . '_' . $form['#node']->nid, $theme);
+    // Add the preprocess function if there is one for the template.
+    if (isset($template['preprocess function'])) {
+      $theme_registry[$template['theme']]['preprocess function'][] = $template['preprocess function'];
+    }
   }
 }
 
@@ -77,7 +50,11 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
     foreach ($templates as $template) {
       $options[$template['theme']] = $template['name'];
     }
-    $theme = isset($form['nid']['#value']) ? _form_layouts_theme_template($form['nid']['#value']) : '';
+    $template = isset($form['nid']['#value']) ? form_layouts_get_node_template($form['nid']['#value']) : '';
+    $theme = '';
+    if (!empty($template)) {
+      $theme = $template['theme'];
+    }
     $form['form_layouts'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form layout settings'),
@@ -86,7 +63,7 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
     );
-    $form['form_layouts']['layout'] = array(
+    $form['form_layouts']['form_layouts'] = array(
       '#type' => 'select',
       '#title' => t('Form layout'),
       '#options' => $options,
@@ -104,7 +81,8 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
 function form_layouts_node_load($nodes, $types) {
   foreach ($nodes as $nid => $node) {
     if (fundraiser_is_donation_type($node->type)) {
-      $nodes[$nid]->layout_template = _form_layouts_theme_template($nid);
+      $template = form_layouts_get_node_template($nid);
+      $nodes[$nid]->layout_template = $template['theme'];
     }
   }
 }
@@ -124,40 +102,110 @@ function form_layouts_node_insert($node) {
  * Make sure the layout gets updated.
  */
 function form_layouts_node_update($node) {
-  if (fundraiser_is_donation_type($node->type) && isset($node->layout)) {
+  if (fundraiser_is_donation_type($node->type) && isset($node->form_layouts)) {
     $variable_name = _form_layouts_variable_name($node->nid);
-    variable_set($variable_name, $node->layout);
+    // TODO: Really should move the storage into a table.
+    variable_set($variable_name, $node->form_layouts);
   }
 }
 
 /**
- * Returns the variable that contains which layout the donation form uses.
+ * Implements hook_form_FORM_ID_alter() for node forms.
+ * The meat of the matter.
+ */
+function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  // TODO: Remove fundraiser limitation.
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    $template = form_layouts_get_node_template($form['#node']->nid);
+    // Add the template to the form, as pattern then base form.
+    $form['#theme'] = array($template['theme'] . '_' . $form['#node']->nid, $template['theme']);
+    $form['#attributes']['class'][] = 'form-layouts';
+    $form['#attributes']['class'][] = $template['template'];
+    // Add css and js if the template requires it.
+    if (isset($template['css']) && is_array($template['css'])) {
+      foreach ($template['css'] as $css) {
+        drupal_add_css($css);
+      }
+    }
+    if (isset($template['js']) && is_array($template['js'])) {
+      foreach ($template['js'] as $js) {
+        drupal_add_js($js);
+      }
+    }
+    // Add validation check to re-add the css or js on a failure.
+    $form['#validate'][] = 'form_layouts_form_webform_client_form_alter_validate';
+  }
+}
+
+/**
+ * Implements hook_form_layouts_info().
+ */
+function form_layouts_form_layouts_info() {
+  
+  $templates['one_column'] = array(
+    'name' => t('One column'),
+    'theme' => 'one_column',
+    'pattern' => 'one_column_\'0-9\'+',
+    'template' => 'one-column',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+  );
+  $templates['two_column_donation'] = array(
+    'name' => t('Two column: donation form'),
+    'theme' => 'two_column_donation',
+    'pattern' => 'two_column_donation_\'0-9\'+',
+    'template' => 'two-column-donation',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'css' => array(drupal_get_path('module', 'form_layouts') . '/css/two_column_donation.css'),
+    'preprocess function' =>'form_layouts_preprocess_two_column_donation',
+  );
+  $templates['two_column_left_right'] = array(
+    'name' => t('Two column: left-right fieldsets'),
+    'theme' => 'two_column_left_right',
+    'pattern' => 'two_column_left_right_\'0-9\'+',
+    'template' => 'two-column-left-right',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'css' => array(drupal_get_path('module', 'form_layouts') . '/css/two_column_left_right.css'),
+    'js' => array(drupal_get_path('module', 'form_layouts') . '/js/two_column_left_right.js'),
+  );
+  return $templates;
+}
+
+/**
+ * Validation support for affected forms, re-adds css and js on failure.
+ */
+function form_layouts_form_webform_client_form_alter_validate(&$form, &$form_state) {
+  $template = form_layouts_get_node_template($form['#node']->nid);
+  // Add css and js if the template requires it.
+  if (isset($template['css'])) {
+    foreach ($template['css'] as $css) {
+      drupal_add_css($css);
+    }
+  }
+  if (isset($template['js'])) {
+    foreach ($template['js'] as $js) {
+      drupal_add_js($js);
+    }
+  }
+}
+
+/**
+ * Helper function. Returns the variable that contains which layout the donation form uses.
  *
  * @param $nid
  *  The id of the node whose template to return.
  */
-function _form_layouts_theme_template($nid) {
+function form_layouts_get_node_template($nid) {
+  $theme = $default_theme = variable_get('fundraiser_form_layouts_default', 'one_column');
   if (!empty($nid)) {
     $variable_name = _form_layouts_variable_name($nid);
-    return variable_get($variable_name, variable_get('fundraiser_form_layouts_default', 'one_column'));
+    $theme = variable_get($variable_name, variable_get('fundraiser_form_layouts_default', 'one_column'));
   }
-  else {
-    return variable_get('fundraiser_form_layouts_default', 'one_column');
-  }
+  $templates = form_layouts_info();
+  return isset($templates[$theme]) ? $templates[$theme] : $templates[$default_theme];
 }
 
 /**
- * Builds the name of a variable that will be used to store the donation form's theme template.
- *
- * @param $nid
- *   The id of the node for which the variable name will be constructed.
- */
-function _form_layouts_variable_name($nid) {
-  return 'donation_form_' . $nid . '_theme';
-}
-
-/**
- * Returns a list of available donation form templates.
+ * Helper function. Returns a list of available donation form templates.
  */
 function form_layouts_info() {
   static $templates;
@@ -169,23 +217,24 @@ function form_layouts_info() {
 }
 
 /**
- * Implements hook_form_layouts_info().
+ * Helper function. Builds the name of a variable that will be used to store the donation form's theme template.
+ *
+ * @param $nid
+ *   The id of the node for which the variable name will be constructed.
  */
-function form_layouts_form_layouts_info() {
-  $path = drupal_get_path('module', 'form_layouts') . '/templates';
-  // Get all .tpl.php files in the /templates directory.
-  $files = file_scan_directory($path, '/\.tpl\.php$/');
-  $templates = array();
-  // Loop over each file and create an array of theme registry entries.
-  foreach ($files as $file) {
-    $name = str_replace('.tpl', '', $file->name);
-    $name_no_underscores = str_replace('-', '_', $name);
-    $templates[$name] = array(
-      'name' => drupal_ucfirst(str_replace('-', ' ', $name)),
-      'theme' => $name_no_underscores,
-      'pattern' => $name_no_underscores . '_[0-9]+',
-      'template' => 'templates/' . $name
-    );
+function _form_layouts_variable_name($nid) {
+  return 'donation_form_' . $nid . '_theme';
+}
+
+/**
+ * Preprocess function for donation form layout themeing.
+ * Breaks the form into easily digestable chunks.
+ */
+function form_layouts_preprocess_two_column_donation(&$vars) {
+  if (isset($vars['element']['submitted']['donation'])) {
+    $vars['donation_fieldset'] =  drupal_render($vars['element']['submitted']['donation']);
+    $vars['donor_information_fieldset'] =  drupal_render($vars['element']['submitted']['donor_information']);
+    $vars['billing_address_fieldset'] =  drupal_render($vars['element']['submitted']['billing_information']);
+    $vars['credit_card_fieldset'] =   drupal_render($vars['element']['submitted']['credit_card_information']);
   }
-  return $templates;
 }
