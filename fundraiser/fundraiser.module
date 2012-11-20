@@ -127,7 +127,7 @@ function fundraiser_permission() {
 function fundraiser_menu() {
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
-    'title' => 'Fundraiser settings',
+    'title' => 'Fundraiser',
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
@@ -136,7 +136,7 @@ function fundraiser_menu() {
     'file' => 'fundraiser.admin.inc',
   );
   $items['admin/config/system/fundraiser/settings'] = array(
-    'title' => 'Fundraiser settings',
+    'title' => 'Fundraiser',
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),

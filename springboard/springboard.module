@@ -28,7 +28,7 @@ function springboard_menu() {
   $items = array();
   // Admin settings for dashboard display.
   $items['admin/config/system/springboard'] = array(
-    'title' => 'Springboard settings',
+    'title' => 'Springboard',
     'description' => 'Configurations for the Springboard system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_admin_settings'),
