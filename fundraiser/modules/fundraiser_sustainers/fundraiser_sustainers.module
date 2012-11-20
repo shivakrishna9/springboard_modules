@@ -1224,12 +1224,12 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
  */
 function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
   $now = strtotime('now');
-  $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
+  $donations = db_query_range('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
     'ORDER BY r.next_charge ASC ' .
-    'LIMIT 0, :limit',
-    array(':now' => $now, ':limit' => $limit))->fetchAll();
+    'LIMIT 0, :limit', 0, $limit,
+    array(':now' => $now))->fetchAll();
   return $donations;
 }
