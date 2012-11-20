@@ -509,9 +509,14 @@ function fundraiser_sustainers_edit_form($did) {
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
       if (user_access('fastforward recurring donations')) {
-        // Add a button to fastforward this particular donation
-        $donations_row['ffwd'] = l(t('update charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
-          array('query' => drupal_get_destination()) );
+        if (in_array($this_donation->status, array('in_checkout', 'pending_future_payment'))) {
+          // Add a button to fastforward this particular donation
+          $donations_row['ffwd'] = l(t('update charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
+            array('query' => drupal_get_destination()) );
+        }
+        else {
+          $donations_row['ffwd'] = t('cannot update charge date');
+        }
       }
       $donations_rows[] = $donations_row;
     }
