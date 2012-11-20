@@ -68,6 +68,14 @@ function fundraiser_ubercart_uc_order($op, $order, $arg2) {
       fundraiser_donation_delete($donation); // Delete it.
     }
   }
+  // cc_cvv is unset on order save for PCI compliance.
+  // Since we can't rely on all UC modules to handle the empty cc_cvv index correctly (Test Gateway)
+  // We set the value if it is not already set.
+  if ($op == 'load') {
+    if (!isset($order->payment_details['cc_cvv'])) {
+      $order->payment_details['cc_cvv'] = '';
+    }
+  }
 }
 
 /**
