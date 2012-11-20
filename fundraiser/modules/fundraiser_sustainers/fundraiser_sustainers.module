@@ -515,7 +515,7 @@ function fundraiser_sustainers_edit_form($did) {
             array('query' => drupal_get_destination()) );
         }
         else {
-          $donations_row['ffwd'] = t('cannot update charge date');
+          $donations_row['ffwd'] = t('cannot update');
         }
       }
       $donations_rows[] = $donations_row;
