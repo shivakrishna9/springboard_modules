@@ -80,16 +80,15 @@ function sustainer_upsell_theme_registry_alter(&$theme_registry) {
   $modulepath = drupal_get_path('module', 'sustainer_upsell');
   // Add the module path on top in the array of paths
   array_unshift($theme_registry[$theme_hook]['theme paths'], $modulepath . "/templates");
-  // dsm($theme_registry[$theme_hook]['theme paths']);
 }
 
 function _sustainer_upsell_popup_iframe($node, $sid) {
   drupal_add_css(drupal_get_path('module', 'sustainer_upsell') .'/assets/css/box.css');
-  $order = _sustainer_uspell_get_order($sid);
+  $order = _sustainer_upsell_get_order($sid);
   $extra = db_result(db_query("SELECT COUNT(*) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id));
   if($extra > 0) {
     $message = sustainer_upsell_confirmation_message(variable_get('sustainer_upsell_thank_you_content',''),$sid);
-    return theme('sustainer_upsell_box_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, $match, arg(3));
+    return theme('sustainer_upsell_thankyou_' . variable_get('sustainer_upsell_box_type','thickbox'), $message, $match, arg(3));
   } else {
     if(!empty($node->sustainer_upsell_content) ) { // see if this node has specific content
       $message = $node->sustainer_upsell_content;
@@ -110,7 +109,7 @@ function sustainer_upsell_form_alter(&$form, $form_state, $form_id) {
   // Implement fix for older versions haveing a different function name
   if (function_exists(fundraiser_is_donation_type)) {
     // Version 3.2
-    $donation_node = fundraiser_is_donation_type($form['#node']);
+    $donation_node = fundraiser_is_donation_type($form['#node']->type);
   }
   else {
     // Older version
@@ -149,11 +148,19 @@ function sustainer_upsell_theme() {
   return array(
     'sustainer_upsell_box_lightbox2' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
-      'template' => 'templates/sustainer-upsell-lightbox2'
+      'template' => 'templates/sustainer-upsell-lightbox'
+    ),
+    'sustainer_upsell_thankyou_lightbox2' => array(
+      'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
+      'template' => 'templates/sustainer-upsell-thankyou-lightbox'
     ),
     'sustainer_upsell_box_thickbox' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
       'template' => 'templates/sustainer-upsell-thickbox'
+    ),
+    'sustainer_upsell_thankyou_thickbox' => array(
+      'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
+      'template' => 'templates/sustainer-upsell-thankyou-thickbox'
     ),
   );
 }
@@ -164,7 +171,7 @@ function sustainer_upsell_footer() {
   if((arg(0)=='node') && (arg(2) == 'confirmation')) {
     $sid = $_GET['sid'];
     $node = node_load(arg(1));
-    $order = _sustainer_uspell_get_order($sid);
+    $order = _sustainer_upsell_get_order($sid);
     $counter = min(_fundraiser_months_between_dates($order->payment_details['cc_exp_month'], $order->payment_details['cc_exp_year']), 49);
     if((sustainer_uspell_confirmation_view_secure($sid)) && ($node->sustainer_upsell_enabled == 1) && ($order->data['recurring_status'] != 1) && ($counter > 0)) {
       if(((_sustainer_upsell_check_authentic_user($order)) && ($_COOKIE['sustainer_upsell_rejection'] != 1) && ($_COOKIE['sustainer_upsell_acceptance'] != 1)) || (variable_get('sustainer_upsell_debug',0) == 1)) {
@@ -175,9 +182,9 @@ function sustainer_upsell_footer() {
         ",'inline','footer');
         db_query("INSERT INTO {sustainer_upsell_secure} (sid) VALUES (%d)", $sid);
         if(variable_get('sustainer_upsell_box_type','thickbox') == 'thickbox') {
-          return "<a id='upsell-box-open' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=180&width=500KeepThis=true' class='thickbox' id='upsell-click' style='display: none;'>Open Thickbox</a>";
+          return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "#TB_iframe&height=375&width=500KeepThis=true' class='thickbox' id='upsell-click'>Open Thickbox</a>";
         } elseif (variable_get('sustainer_upsell_box_type','thickbox') == 'lightbox2') {
-          return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|width:500px; height:210px; scrolling: auto;]'>Open Lightbox</a>";
+          return "<a id='upsell-box-open' style='display: none;' href='/node/" . $node->nid . "/upsell/" . $sid . "' rel='lightframe[|scrolling: no;]'>Open Lightbox</a>";
         }
       }
     }
@@ -192,7 +199,7 @@ function _sustainer_upsell_check_authentic_user($order) {
   return false;
 }
 
-function _sustainer_uspell_get_order($sid) {
+function _sustainer_upsell_get_order($sid) {
   $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
   $order = uc_order_load($order_id);
   return $order;
@@ -214,10 +221,24 @@ function _sustainer_upsell_js_callback() {
 
 function _sustainer_upsell_submit($form, &$form_state) {
   global $user;
-  $order = _sustainer_uspell_get_order($form_state['values']['sid']);
+  $order = _sustainer_upsell_get_order($form_state['values']['sid']);
   $sid = $form_state['values']['sid'];
   fundraiser_create_future_orders($order->order_id,NULL,$form_state['values']['amount']);
   $orders = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d", $order->order_id);
+  
+  // Check to see if the order is in the queue. If so delete it so we can put it back in as a recurring donation.
+  if (module_exists('queue_api')) {
+    if (_in_queue($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE)) {
+      sf_queue_delete($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE);
+    }
+    else {
+      // Put in queue as delete.
+      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'delete');
+    }
+    // Put in queue as recurring donation.
+    sf_queue_insert($order->order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'create');
+  }
+
   while ($o = db_fetch_array($orders)) { 
      db_query("INSERT INTO {sustainer_upsell_future_orders} (nid, master_order_id, order_id) VALUES (%d, %d, %d)", arg(1), $order->order_id, $o['order_id']);
   }
@@ -235,6 +256,8 @@ function sustainer_upsell_donation_form(&$form_state, $order, $sid) {
     '#title' => t('Monthly Donation'),
     '#type' => 'textfield',
     '#size' => 5,
+    // The description will hold the currency symbol - maybe a function later?
+    '#description' => '$',
     '#default_value' => _sustainer_upsell_find_suggested_amount($order->order_total),
   );
   $form['sid'] = array(
@@ -275,7 +298,7 @@ function sustainer_upsell_token_values($type, $object = NULL, $options = array()
 }
 
 function sustainer_upsell_queue_batch_item_alter(&$object, $type, $action, $oid) {
-  if ($type == 'donation' && $action == 'create') {
+  if ($type == 'donation' && ($action == 'create' || $action == 'update')) {
     $master = db_result(db_query("SELECT master_order_id FROM {sustainer_upsell_future_orders} WHERE order_id = %d", $oid));
     if ($master > 0) {
       $object['CampaignId'] = variable_get('sustainer_upsell_sf_campaign_id','');

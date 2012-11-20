@@ -1,4 +1,4 @@
-<div id="sustainer-upsell-thickbox" class="<?php print $classes; ?>">
+<div id="sustainer-upsell-lightbox" class="<?php print $classes; ?>">
   <div class="inner">
     <h3>Become a</h3>
     <h2>MONTHLY DONOR</h2>
@@ -18,11 +18,11 @@ $(function() {
     <?php
       if(variable_get('sustainer_upsell_rejection_enabled',0) == 1):
         ?>
-          $.cookie("sustainer_upsell_rejection", 1, { path : "/",  expires : <?php print variable_get('sustainer_upsell_rejection_lifetime',0) ?> });
+          $.cookie("sustainer_upsell_rejection", 1, { path : "/", expires : <?php print variable_get('sustainer_upsell_rejection_lifetime',0) ?> });
         <?
       endif;
     ?>
-    window.parent.tb_remove();
+    window.parent.Lightbox.end();
     return false;
   });
 });

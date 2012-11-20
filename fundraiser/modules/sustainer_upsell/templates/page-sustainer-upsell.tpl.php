@@ -10,8 +10,8 @@
 </head>
 
 <body class='box-content'>
-<?php print $help ?>
-<?php print $messages ?>
+<?php // print $help ?>
+<?php // print $messages ?>
 <?php print $content; ?>
 <?php print $closure ?>
 </body>
