@@ -39,17 +39,19 @@ function fundraiser_ubercart_mail_alter(&$message) {
   if ($message['id'] == 'uc_order_action-mail') {
     // Gather data.
     $parts = explode("/", $_GET['q']);
-    $nid = $parts[1];
-    $node = node_load($nid);
-    // Make changes.
-    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
-      ' <' . $node->receipt_email_address . '>';
-    $bcc = variable_get('fundraiser_receipt_bcc', '');
-    if (!empty($bcc)) {
-      $message['headers']['Bcc'] = $bcc;
+    if (isset($parts[1])) {
+      $node = node_load($parts[1]);
+      // Make changes.
+      $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
+        ' <' . $node->receipt_email_address . '>';
+      $bcc = variable_get('fundraiser_receipt_bcc', '');
+      if (!empty($bcc)) {
+        $message['headers']['Bcc'] = $bcc;
+      }
+      $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+      $message['subject'] = $node->receipt_email_subject;
     }
-    $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
-    $message['subject'] = $node->receipt_email_subject;
+    // Else, this is coming from a cron job, we should intercept it entirely.
   }
 }
 
@@ -535,7 +537,7 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
   $donation->data = array_merge($data, $donation->data);
   // Make the charge, the charge functions can handle looking up the order and other data.
   if (function_exists($charge_function)) {
-    $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+    $result = $charge_function($donation->did, $donation->donation['amount'], $donation->data);
   }
   else {
     watchdog('fundraiser_ubercart', 'Charge function :function does not exist.', array(':function' => $charge_function));
