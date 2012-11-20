@@ -948,12 +948,12 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       // Final attempt, add debug alert.
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed 3 times. ' .
         'The donation will not be submitted for payment again. Gateway message: @message',
-        array('@id' => $donation->did, '@message' => $result['message']), WATCHDOG_DEBUG);
+        array('@id' => $donation->did, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
     else {
       // Log this failure
       watchdog('fundraiser_sustainers', 'Payment for recurring donation @id has failed @attempts times. It will be processed again in 1 day. Gateway message: @message',
-        array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $result['message']), WATCHDOG_DEBUG);
+        array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
 }
