@@ -1657,6 +1657,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->node = node_load($donation_record->nid);
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
+  $donation->sid = $donation_record->sid;
 
   // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);
