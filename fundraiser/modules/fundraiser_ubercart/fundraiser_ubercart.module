@@ -73,7 +73,8 @@ function fundraiser_ubercart_uc_order($op, $order, $arg2) {
   // We set the value if it is not already set.
   if ($op == 'load') {
     if (!isset($order->payment_details['cc_cvv'])) {
-      $order->payment_details['cc_cvv'] = '';
+      $order->payment_details['cc_cvv'] = '111';
+      $order->data['cc_data']['cc_cvv'] = '111';
     }
   }
 }
