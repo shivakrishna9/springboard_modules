@@ -1189,14 +1189,13 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
  * DB function, get donations ready to be processed.
  */
 function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
-  $time_limit = strtotime('now');
+  $now = strtotime('now');
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now' .
     'ORDER BY r.next_charge ASC ' .
     'LIMIT 0, :limit',
-    array(':master_did' => $master_did, ':now' => $now, ':limit' => $limit))->fetchAll();
+    array(':now' => $now, ':limit' => $limit))->fetchAll();
   return $donations;
 }
