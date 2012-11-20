@@ -34,6 +34,10 @@ function fundraiser_sustainers_permission() {
       'title' => t('Administrate recurring donations'),
       'description' => t('Administrate recurring donations.'),
     ),
+    'fastforward recurring donations' => array(
+      'title' => t('Fastforward recurring donations'),
+      'description' => t('Fastforward recurring donations.'),
+    ),
   );
 }
 
@@ -63,6 +67,13 @@ function fundraiser_sustainers_menu() {
     'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
+  );
+  $items['fundraiser_sustainers/ffwd/%'] = array(
+    'title' => 'Charge recurring donation now',
+    'page callback' => 'fundraiser_sustainers_charge_now',
+    'page arguments' => array(2),
+    'access arguments' => array('fastforward recurring donations'),
+    'type' => MENU_CALLBACK,
   );
   // Admin interface.
   $items['admin/config/system/fundraiser/recurring'] = array(
@@ -180,6 +191,18 @@ function fundraiser_sustainer_standalone_cron() {
     drupal_set_message($message, 'warning');
     watchdog('fundraiser_cron', $message, NULL, WATCHDOG_CRITICAL);
   }
+}
+
+/**
+ * Menu callback to ffwd a charge (for testers).
+ */
+function fundraiser_sustainers_charge_now($did) {
+  // Given a did, update the charge date to now.
+  $donation->did = $did;
+  $donation->next_charge = strtotime('now');
+  _fundraiser_sustainers_update_recurring($donation);
+  // Afterwards return where we came from.
+  drupal_goto( drupal_get_destination() );
 }
 
 /**
@@ -471,6 +494,10 @@ function fundraiser_sustainers_edit_form($did) {
   // Format payment schedule into a data table
   $donation_set = _fundraiser_sustainers_get_donations_recurr_by_member($did);
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
+  if (user_access('fastforward recurring donations')) {
+    // Add a button to fastforward this particular donation
+    $donations_header[] = t('Set Charge to Now');
+  }
   $donations_rows = array();
   if ($donation_set) {
     foreach ($donation_set as $this_donation) {
@@ -481,6 +508,11 @@ function fundraiser_sustainers_edit_form($did) {
         $this_donation->status = 'pending';
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
+      if (user_access('fastforward recurring donations')) {
+        // Add a button to fastforward this particular donation
+        $donations_row['ffwd'] = l(t('update charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
+          array('query' => drupal_get_destination()) );
+      }
       $donations_rows[] = $donations_row;
     }
   }
@@ -1028,6 +1060,8 @@ function _fundraiser_sustainers_get_recurring_by_did($did) {
  */
 function _fundraiser_sustainers_update_recurring($donation) {
   // Cast donation just in case.
+  $donation = (array) $donation;
+  // Check old data.
   $donation_data = FALSE;
   if (isset($donation['did'])) {
     $donation_data = _fundraiser_sustainers_get_recurring_by_did($donation['did']);
