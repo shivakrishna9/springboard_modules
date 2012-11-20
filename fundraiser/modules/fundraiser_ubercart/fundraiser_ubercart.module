@@ -482,6 +482,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => '',
     'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+    // cc_cvv is unset on order save for PCI compliance.
     'cc_bank' => '',
   );
   $order->line_items = array();
@@ -586,7 +587,7 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
     'cc_exp_month' => $donation->donation['card_expiration_month'],
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
-    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
     'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
   );
 
