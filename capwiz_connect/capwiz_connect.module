@@ -12,25 +12,48 @@
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
  */
 
+ /**
+  * Implementation of hook_help().
+  */
+ function capwiz_connect_help($path, $arg) {
+   switch ($path) {
+     case 'admin/help#capwiz_connect':
+       return '<p>'. t('Integrates with the Capwiz Connect API to sync users and actions. Users are saved as Drupal users, and can then be synced to Salesforce using the SF User Integration module. Actions are saved to the DB and synced directly to Salesforce.') .'</p>';
+      
+     case 'admin/settings/capwiz_connect/accounts/%/user_mapping':
+       return '<p>' . t('Configure Capwiz-to-Drupal mapping for users. Capwiz user accounts are saved as Drupal users. To add more fields to Drupal user accounts, use the Profile module.') . '</p>';
+
+     case 'admin/settings/capwiz_connect/accounts/%/action_mapping':
+       return '<p>' . t('Configure Capwiz-to-Salesforce mapping for actions. Capwiz actions are saved to the database, then synced to Salesforce on the next cron maintenance run.') . '</p>';
+   }
+ }
+ 
+ 
+
+
 /**
  * Implements hook_menu().
  */
 function capwiz_connect_menu() {
   $items = array();
 
+  $items['capwiz_legislative_update'] = array(
+    'title' => 'Capwiz legislative update',
+    'page callback' => 'capwiz_connect_legislative_update_start',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
   $items['admin/settings/capwiz_connect'] = array(
     'title' => 'Capwiz Connect Accounts',
-    'description' => 'List of Capwiz Connect accounts',
+    'description' => 'Manage Capwiz Connect accounts',
     'file' => 'capwiz_connect.admin.inc',
     'page callback' => 'capwiz_connect_account_list',
     'access arguments' => array('administer capwiz_connect'),
-    'type' => MENU_NORMAL,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/settings/capwiz_connect/accounts'] = array(
     'title' => 'Accounts',
-    'file' => 'capwiz_connect.admin.inc',
-    'page callback' => 'capwiz_connect_account_list',
-    'access arguments' => array('administer capwiz_connect'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
@@ -172,13 +195,58 @@ function capwiz_connect_perm() {
  */
 function capwiz_connect_theme($existing, $type, $theme, $path) {
   return array(
-		'capwiz_connect_account_mapping_form' => array(
-		  'arguments' => array(),
-	  ),
+    'capwiz_connect_account_mapping_form' => array(
+      'arguments' => array(),
+    ),
+    'capwiz_connect_user_mapping_form' => array(
+      'arguments' => array(),
+    ),
   );
 }
 
-
+/**
+ * Kicks off the legislative update process in Salesforce.
+ */
+function capwiz_connect_legislative_update_start() {
+  // get a connection to salesforce
+  $sf = salesforce_management_api_connect();
+  if (is_object($sf)) {
+    // pluck the session id and server instance from the client connection
+    $server_instance = _capwiz_connect_parse_server_instance($sf->client->getLocation());
+    $session_id = $sf->client->getSessionId();
+    $url = sprintf('https://%s.salesforce.com/services/apexrest/LegislativeUpdate', $server_instance);
+    
+    // use curl to request the service endpoint 
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(sprintf('Authorization: OAuth %s', $session_id)));
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    
+    // run curl
+    try {
+      $job = json_decode(curl_exec($ch)); // successful call should return the job id of the batch as a string
+      if (!empty($job)) {
+        // if we get an array back salesforce is not happy
+        if (is_array($job)) {
+          watchdog('capwiz_connect', 'Error starting legislative update process. Error code: !code. Message: !message.', array('!code' => $job[0]->errorCode, '!message' => $job[0]->message), WATCHDOG_WARNING);
+        }
+        // job id string is the expected result
+        elseif (is_string($job)) {
+          watchdog('capwiz_connect', 'Legislative update process started. Apex JobId: !id', array('!id' => $job), WATCHDOG_INFO);
+        }
+      }
+      // unable to parse response
+      else {
+        watchdog('capwiz_connect', 'Legislative update process did not start. No JobId was returned.', NULL, WATCHDOG_INFO);
+      }
+    }
+    catch (Exeception $e) {
+      watchdog('capwiz_connect', 'An exception was thrown when requesting !url. Exception: !e', array('!url' => $url, '!e' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+    // close connection
+    curl_close($ch);
+  }
+}
 
 /**
  * Load a Capwiz Connect account. Used for placeholders in menu item URLs
@@ -186,7 +254,7 @@ function capwiz_connect_theme($existing, $type, $theme, $path) {
 function capwiz_connect_account_load($id, $refresh_cache = FALSE) {
   static $account_details = array();
   
-  if ($id > 0 && (!$account_details[$id] || $refresh_cache)) {
+  if ($id > 0 && (!isset($account_details[$id]) || $refresh_cache)) {
     $account_details[$id] = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_accounts} WHERE id=%d', $id));
     
     // Load existing mapping for users and actions for this Capwiz account
@@ -255,7 +323,7 @@ function capwiz_connect($account_id) {
   if ($account_details) {
     return CapizConnect::instance($account_details);
   }
-  return null;
+  return NULL;
 }
 
 
@@ -268,7 +336,7 @@ function capwiz_connect_cron() {
   // Bail on normal cron run if standalone cron is enabled.
   if (variable_get('capwiz_connect_standalone_cron_enabled', FALSE)) {
     // If standalone cron is enabled and cron.php is being run, do nothing.
-    if (preg_match('/cron.php$/', $_SERVER['REQUEST_URI'])) {
+    if (request_uri() == '/cron.php') {
       return 0;
     }
     else {
@@ -290,21 +358,23 @@ function capwiz_connect_cron_process() {
   foreach ($all_accounts as $account_id => $account_details) {
     // Connect to the API for this account
     $connection = capwiz_connect($account_id);
+
+    // Get the current sync type
+    $sync_type = variable_get('capwiz_connect_cron_sync_type_' . $account_id, 'users');
     
-    // Sync down a batch of users
-    watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
-    $connection->syncUsersBatch();
-    
-    // Only sync actions once all the users have been synced, since Actions
-    // cannot be synced to Salesforce before the users
-    if (!$connection->hasMoreUsers()) {
+    if ($sync_type == 'users') {
+      // Sync down a batch of users
+      watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
+      $connection->syncUsersBatch();
+      $next_sync = 'actions';
+    }
+    else {
       watchdog('capwiz_connect', t('Begin syncing a batch of actions from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
       // Sync down a batch of actions
       $connection->syncActionsBatch();
+      $next_sync = 'users';
     }
-    else {
-      watchdog('capwiz_connect', t('Skipping sync of actions from Capwiz for account %account_name: waiting until all users have been synced before syncing actions.', array('%account_name' => $account_details->display_name)));
-    }
+    variable_set('capwiz_connect_cron_sync_type_' . $account_id, $next_sync);
   }
   return '';
 }
@@ -317,65 +387,52 @@ function capwiz_connect_cron_process() {
  * Prep an object to be sent to SF. Mostly copied from sf_webform_queue_preprocess_batch_alter()
  */
 function capwiz_connect_queue_preprocess_batch_alter(&$batch) {
-  if ($batch['type'] == 'capwiz_connect_user' || $batch['type'] == 'capwiz_connect_action') {
-    // Get 'user' or 'action' by removing 'capwiz_connect_' from $batch['type']
-    $type = substr($batch['type'], 15);
-    
+  if ($batch['type'] == 'capwiz_connect_action') {
     switch ($batch['action']) {
-			case 'update':
-			case 'upsert':
-			case 'create':
-				foreach($batch['records'] as $record) {
-				  
-					$map = _capwiz_connect_sf_load_object_details($record->oid, $type);
-					if (is_array($record->object)) {
-						$record->object = array_merge($record->object, $map['fields']);	
-					}
-					else {
-						$record->object = $map['fields'];
-					}
-					// add the salesforce id to the object on updates
-				  if ($batch['action'] == 'update') {
-				    $record->object['Id'] = $record->sfid;
-				  }
-				}
-				break;
-				
-			case 'delete':
-			
-				break;
-		}
+      case 'update':
+      case 'upsert':
+      case 'create':
+        foreach ($batch['records'] as $record) {
+          $map = _capwiz_connect_sf_load_action_details($record->oid);
+          if (is_array($record->object)) {
+            $record->object = array_merge($record->object, $map['fields']);  
+          }
+          else {
+            $record->object = $map['fields'];
+          }
+          // add the salesforce id to the object on updates
+          if ($batch['action'] == 'update') {
+            $record->object['Id'] = $record->sfid;
+          }
+        }
+        break;
+        
+      case 'delete':
+      
+        break;
+    }
   }
 }
 
 /**
- * Load field mapping for an object to be passed to Salesforce queue processor. This
- * function is used for both users and actions.
+ * Load field mapping for an action object to be passed to Salesforce queue processor. 
  */
-function _capwiz_connect_sf_load_object_details($oid, $type) {
+function _capwiz_connect_sf_load_action_details($oid) {
   static $sf_field_map;
   
   // If there is an error building the mapping, or the data is incomplete, a generic
   // version of the mapping array should be returned to prevent errors higher up in
   // the stack.
   $blank_return_array = array(
-		'object' => '',
-		'fields' => array(),
+    'object' => '',
+    'fields' => array(),
     'RecordTypeId' => '',
-	);
+  );
 
-  // Load the user or action data, depending on the type
-  if ($type == 'user') {
-    $object = _capwiz_connect_load_user_from_local_id($oid);
-    if ($object) {
-      $account_id = $object->capwiz_account_id;
-    }
-  }
-  else {
-    $object = _capwiz_connect_load_action($oid);
-    if ($object) {
-      $account_id = $object->capwiz_account_id;
-    }
+  // Load the action data, depending on the type
+  $object = _capwiz_connect_load_action($oid);
+  if ($object) {
+    $account_id = $object->capwiz_account_id;
   }
   
   if (!($account_id > 0)) {
@@ -383,18 +440,18 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   }
   
   // Load the Salesforce field map for this Capwiz account, if we have not already
-  if (!$sf_field_map[$account_id][$type]) {
-    $drupal = 'capwiz_connect:' . $account_id . ':' . $type;
-  	$sql = "SELECT salesforce, recordtype_id, fields, business FROM {salesforce_management_field_map} WHERE drupal = '%s'";
-  	$data = db_fetch_object(db_query($sql, $drupal));
+  if (!$sf_field_map[$account_id]) {
+    $drupal = 'capwiz_connect:' . $account_id . ':action';
+    $sql = "SELECT salesforce, recordtype_id, fields, business FROM {salesforce_management_field_map} WHERE drupal = '%s'";
+    $data = db_fetch_object(db_query($sql, $drupal));
 
-		$sf_field_map[$account_id][$type]['map'] = unserialize($data->fields);
-		$sf_field_map[$account_id][$type]['business'] = unserialize($data->business);
-		$sf_field_map[$account_id][$type]['object'] = $data->salesforce;
-		$sf_field_map[$account_id][$type]['recordtype_id'] = $data->recordtype_id;
+    $sf_field_map[$account_id]['map'] = unserialize($data->fields);
+    $sf_field_map[$account_id]['business'] = unserialize($data->business);
+    $sf_field_map[$account_id]['object'] = $data->salesforce;
+    $sf_field_map[$account_id]['recordtype_id'] = $data->recordtype_id;
   }
   
-  $map_details = $sf_field_map[$account_id][$type];
+  $map_details = $sf_field_map[$account_id];
   
   // If no map is found for this account and type, bail out
   if (!$map_details['map']) {
@@ -402,11 +459,13 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   }
   
   // Prep map array
-	$salesforce_map = array(
-		'object' => $map_details['object'],
-		'fields' => array(),
-    'RecordTypeId' => $map_details['recordtype_id'],
-	);
+  $salesforce_map = array(
+    'object' => $map_details['object'],
+    'fields' => array(),
+  );
+  if (!empty($map_details['recordtype_id'])) {
+    $salesforce_map['fields']['RecordTypeId'] = $map_details['recordtype_id'];
+  }
   
   
   // Loop over the mapped fields, and for each that has value on this object, set
@@ -418,52 +477,20 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
   foreach ($map_details['map'] as $capwiz_field_name => $sf_field_name) {
     // Different fields have different formats
     switch ($capwiz_field_name) {
-      // Email address. On Actions and Users.
+      // Email address
       case 'emailAddress':
-        // Email address is stored on Users and Actions differently
-        if ($type == 'user') {
-          if ($object->data->emails[0]) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->emails[0]->address;
-          }
-        }
-        else { // action, not user
-          if ($object->data->emailAddress) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->emailAddress;
-          }
+        if ($object->data->emailAddress) {
+          $salesforce_map['fields'][$sf_field_name] = $object->data->emailAddress;
         }
         break;
       
-      // Salutation. Only on users.
-      case 'honorificId':
-        if ($object->data->honorific) {
-          $salesforce_map['fields'][$sf_field_name] = $object->data->honorific->name;
-        }
-        break;
-          
-      // Street address. Only on users.
-      case 'street1':
-        if ($object->data->addresses[0]) {
-          $salesforce_map['fields'][$sf_field_name] = $object->data->addresses[0]->street1;
-        }
-        break;
-          
-      // Type of address. Only on users.
-      case 'addressType':
-        $connection = capwiz_connect($account_id);
-        $address_field = $connection->getSpecificCustomUserField('addressType');
-        if ($object->data->addresses[0] && $address_field) {
-          $address_type_id = $object->data->addresses[0]->addressTypeId;
-          $salesforce_map['fields'][$sf_field_name] = $address_field->options[$address_type_id]->label;
-        }
-        break;
-        
-      // Affiliation of form. On Actions and Users.
+      // Affiliation of form
       case 'form_affiliation':
         $account = capwiz_connect_account_load($account_id);
         $salesforce_map['fields'][$sf_field_name] = $account->form_affiliation;
         break;
       
-      // Action timestamp. Only on Actions.
+      // Action timestamp
       case 'action_timestamp':
         if ($object->data->dtAction) {
           // Not sure if SF expects Unix timestamps for date time fields
@@ -473,59 +500,21 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
         
       // Capwiz User in Salesforce. Only on Actions. 
       case 'sf_userid':
-        if ($object->data->userId) {
+        if ($object->data->emailAddress) {
           // Load the Salesforce ID for the user
-          $sfid = db_result(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE drupal_type='capwiz_connect_user' AND oid=%d", $object->data->userId));
+          $sfid = db_result(db_query("SELECT om.sfid FROM {users} u LEFT JOIN {salesforce_management_object_map} om ON om.oid = u.uid AND om.drupal_type = 'user' WHERE u.mail='%s'", $object->data->emailAddress));
           if ($sfid) {
             $salesforce_map['fields'][$sf_field_name] = $sfid;
           }
         }
         break;
       
-      // Legislation district fields. Only on users. These fields are listed on
-      // every official in the user data, with the same value on each
-      case 'nationalDistrict':
-      case 'stateDistrictUpper':
-      case 'stateDistrictLower':
-        // Make sure the officials array has at least one item in it
-        if (is_array($object->data->officials) && is_object($object->data->officials[0])) {
-          // Get the requested field from the first legislator object in the array
-          if ($object->data->officials[0]->{$capwiz_field_name}) {
-            $salesforce_map['fields'][$sf_field_name] = $object->data->officials[0]->{$capwiz_field_name};
-          }
-        }
-        break;
-        
-      // Federal senators. Users only.
-      case 'fed_senator_1':
-      case 'fed_senator_2':
-        // @todo
-        break;
-      
-      // Federal senator phone numbers. Users only.
-      case 'fed_senator_1_phone':
-      case 'fed_senator_2_phone':
-        // @todo
-        break;
-        
-      // Federal rep. Users only.
-      case 'fed_rep':
-        // @todo
-        break;
-        
-      // Federal rep phone number. Users only.
-      case 'fed_rep_phone':
-        // @todo
-        break;
-        
-      
-      
       // Every other field. Just load the field from the object
       default:
         $salesforce_map['fields'][$sf_field_name] = $object->data->{$capwiz_field_name};
     }
   }
-  
+    
   return $salesforce_map;
 }
 
@@ -535,20 +524,10 @@ function _capwiz_connect_sf_load_object_details($oid, $type) {
  * Implementation of hook_queue_fieldmap_assignment_alter().
  */
 function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
-	if ($data->type == 'capwiz_connect_user' || $data->type == 'capwiz_connect_action') {
-    $type = substr($data->type, 15);
-    
-    if ($type == 'user') {
-      $object = _capwiz_connect_load_user_from_local_id($data->oid);
-      if ($object) {
-        $account_id = $object->capwiz_account_id;
-      }
-    }
-    else {
-      $object = _capwiz_connect_load_action($data->oid);
-      if ($object) {
-        $account_id = $object->capwiz_account_id;
-      }
+  if ($data->type == 'capwiz_connect_action') {
+    $object = _capwiz_connect_load_action($data->oid);
+    if ($object) {
+      $account_id = $object->capwiz_account_id;
     }
     
     if (!($account_id > 0)) {
@@ -556,47 +535,22 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     }
     
     // Load the field map for the Account the user came in from
-    $drupal = 'capwiz_connect:' . $account_id . ':' . $type;
-		$result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
+    $drupal = 'capwiz_connect:' . $account_id . ':action';
+    $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);    
     
-		$fieldmap = db_fetch_array($result);
-		$data->fieldmap = $fieldmap['fieldmap'];
-		
-		$result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = '%s'", $data->oid, $data->type));
-		// check the action. by default users go into the queue as upsert, but if the
-		// mapping has no dedupe key defined, revert to create
-		if (empty($fieldmap['dedupe_key']) && empty($result['sfid'])) {
-			$data->action = 'create';
-		}
-	}
-}
-
-
-
-/**
- * Load a single Capwiz user from the local data. Argument should be the Capwiz ID
- * for the user
- */
-function _capwiz_connect_load_user($capwiz_user_id) {
-  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE capwiz_user_id='%s'", $capwiz_user_id));
-  if ($capwiz_user) {
-    $capwiz_user->data = unserialize($capwiz_user->data);
-    return $capwiz_user;
+    $fieldmap = db_fetch_array($result);
+    $data->fieldmap = $fieldmap['fieldmap'];
+    
+    $result = db_fetch_array(db_query("SELECT sfid FROM {salesforce_management_object_map} WHERE oid = '%s' AND drupal_type = '%s'", $data->oid, $data->type));
+    // check the action. by default users go into the queue as upsert, but if the
+    // mapping has no dedupe key defined, revert to create
+    if (empty($fieldmap['dedupe_key']) && empty($result['sfid'])) {
+      $data->action = 'create';
+    }
   }
-  return NULL;
 }
-/**
- * Load a single Capwiz user from the local data, using the local auto-
- * increment ID that's used for the Salesforce processing queue
- */
-function _capwiz_connect_load_user_from_local_id($id) {
-  $capwiz_user = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_users} WHERE id=%d", $id));
-  if ($capwiz_user) {
-    $capwiz_user->data = unserialize($capwiz_user->data);
-    return $capwiz_user;
-  }
-  return NULL;
-}
+
+
 
 /**
  * Load a single Capwiz action from the locally stored data
@@ -613,4 +567,15 @@ function _capwiz_connect_load_action($local_action_id) {
     return $capwiz_action;
   }
   return NULL;
+}
+/**
+ * Takes a Salesforce url and returns the server instance.
+ *
+ * @param $url
+ *   The full url of the connected Salesforce server.
+ */
+function _capwiz_connect_parse_server_instance($url) {
+  $parsed_url = parse_url($url);
+  $host_parts = explode('.', $parsed_url['host']);
+  return str_ireplace('-api', '', $host_parts[0]); // strip -api to get real server instance
 }

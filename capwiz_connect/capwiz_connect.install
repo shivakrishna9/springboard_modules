@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @file
+ * Install and uninstall functions for Capwiz Connect
+ */
+ 
 /**
  * Implements hook_install().
  */
@@ -12,7 +16,6 @@ function capwiz_connect_install() {
  */
 function capwiz_connect_enable() {
   // Add this module's types to the SF queue processor
-  queue_processor_add_type('capwiz_connect_user');
   queue_processor_add_type('capwiz_connect_action');
 }
 
@@ -28,7 +31,7 @@ function capwiz_connect_uninstall() {
   variable_del('capwiz_connect_standalone_cron_enabled');
 
   // Remove Salesforce field mapping
-  $drupal = 'capwiz_connect:%';	
+  $drupal = 'capwiz_connect:%';  
   db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal LIKE '%s'", $drupal);  
 }
 
@@ -37,7 +40,6 @@ function capwiz_connect_uninstall() {
  */
 function capwiz_connect_disable() {
   // Remove this module's types from the SF queue processor
-  queue_processor_remove_type('capwiz_connect_user');
   queue_processor_remove_type('capwiz_connect_action');
 }
 
@@ -54,7 +56,7 @@ function capwiz_connect_schema() {
     'description' => t('Contains the Capwiz accounts that will be synced'),
     'fields' => array(
       'id' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => t('Internal ID for the action'),
         'type' => 'serial',
         'not null' => TRUE,
       ),
@@ -106,44 +108,6 @@ function capwiz_connect_schema() {
     'primary key' => array('id'),
   );
   
-  $schema['capwiz_connect_users'] = array(
-    'description' => t('Store user data from Capwiz'),
-    'fields' => array(
-      'id' => array(
-        'description' => t('Auto-increment local ID for the user'),
-        'type' => 'serial',
-        'not null' => TRUE,
-      ),
-      'capwiz_account_id' => array(
-        'description' => t('ID from capwiz_connect_accounts.id'),
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'capwiz_user_id' => array(
-        'description' => t('User ID from Capwiz'),
-        'type' => 'varchar',
-        'length' => '20',
-        'not null' => TRUE,
-      ),
-      'local_uid' => array(
-        'description' => t('Drupal user ID, if there is one'),
-        'type' => 'int',
-        'not null' => FALSE,
-      ),
-      'data' => array(
-        'description' => t('Serialized data about the user'),
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => FALSE,
-      ),
-    ),
-    'primary key' => array('id'),
-    'indexes' => array(
-      'capwiz_account_id' => array('capwiz_account_id'),
-      'capwiz_user_id' => array('capwiz_user_id'),
-    ),
-  );
-
 
   $schema['capwiz_connect_actions'] = array(
     'description' => t('Store action data from Capwiz'),

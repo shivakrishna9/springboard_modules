@@ -1,0 +1,10 @@
+name = Capwiz Connect JavaScript Integration
+description = "Sync users and actions to Salesforce by querying the Capwiz Connect API"
+core = 6.x
+
+package = Jackson River Springboard
+
+; Module dependencies
+dependencies[] = capwiz_connect
+
+version =  6.x-3.1
