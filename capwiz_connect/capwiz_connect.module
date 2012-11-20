@@ -181,14 +181,17 @@ function capwiz_connect_menu() {
   return $items;
 }
 
-
 /**
  * Implements hook_perm().
  */
-function capwiz_connect_perm() {
-  return array('administer capwiz_connect');
+function capwiz_connect_permissions() {
+  return array(
+    'administer capwiz_connect' => array(
+      'title' => t('Administer'), 
+      'description' => t('Add/edit capwiz accounts for this site. Configure sync settings.'),
+    ),
+  );
 }
-
 
 /**
  * Implements hook_theme().

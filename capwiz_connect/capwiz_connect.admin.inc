@@ -588,8 +588,8 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       '#default_value' => $account->mapping_action['sf_object'],
       '#title' => t('Salesforce Object'),
       '#description' => t('Choose the Salesforce object you want to create for each Capwiz action.'),
-      '#ahah' => array(
-        'path' => 'js/capwiz_connect/salesforce-object-fields',
+      '#ajax' => array(
+        'callback' => 'js/capwiz_connect/salesforce-object-fields',
         'wrapper' => 'map',
         'effect' => 'fade',
       ),
@@ -868,27 +868,11 @@ function theme_capwiz_connect_account_mapping_form($form) {
   }
 }
 
-
 /**
  * AHAH callback for mapping form
  * Copy of render_salesforce_object_fields() from sf_webform module
  */
-function capwiz_connect_render_salesforce_object_fields() {
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
-  $form_build_id = $_POST['form_build_id'];
-  $form = form_get_cache($form_build_id, $form_state);
-
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-
-  // HACK: Select values changing never get recognized
-  unset($form['object']['#value']);
-
-  drupal_process_form($form_id, $form, $form_state);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-
+function capwiz_connect_render_salesforce_object_fields($form, &$form_state) {
   $output = drupal_render($form['record_type']);
 
   $map = $form['map'];
@@ -940,8 +924,6 @@ function capwiz_connect_render_salesforce_object_fields() {
     $rows[] = $row;
   }
 
-
-
   // Set the headers for the table. Action mapping does NOT include business rules
   if ($form['#map_type'] == 'action') {
     $header = array(
@@ -958,12 +940,10 @@ function capwiz_connect_render_salesforce_object_fields() {
   }
 
   $output .= theme('table', $header, $rows);
-  
+
   $output .= drupal_render($form['submit']);
 
-  // Final rendering callback.
-  print drupal_json(array('status' => TRUE, 'data' => $output));
-  exit();
+  return $output;
 }
 
 

@@ -65,8 +65,17 @@ function capwiz_connect_js_menu() {
 /**
  * Implements hook_perm().
  */
-function capwiz_connect_js_perm() {
-  return array('add capwiz js alerts', 'manage capwiz js alerts');
+function capwiz_connect_js_permission() {  
+  return array(
+    'add capwiz js alerts' => array(
+      'title' => t('Add alerts'), 
+      'description' => t('Configure new Capwiz alerts.'),
+    ),
+    'manage capwiz js alerts' => array(
+      'title' => t('Manage alerts'), 
+      'description' => t('Manage existing alerts.'),
+    ),
+  );
 }
 
 /*
@@ -171,7 +180,7 @@ function capwiz_connect_js_save_action($data, $alert) {
   $record = array(
     'capwiz_api_alert_id' => $alert->capwiz_api_alert_id,
     'mail' => $mail,
-    'action_timestamp' => time(),
+    'action_timestamp' => REQUEST_TIME,
     'data' => serialize($values),
   );
 

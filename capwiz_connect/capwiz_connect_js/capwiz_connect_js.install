@@ -6,49 +6,31 @@
  */
 
 /**
- * Implements hook_install().
- */
-function capwiz_connect_js_install() {
-  drupal_install_schema('capwiz_connect_js');
-  // Set the weight 1 heavier then capwiz_connect module
-  $weight = db_result(db_query("SELECT weight FROM {system} WHERE name = 'capwiz_connect'"));
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'capwiz_connect_js'", $weight + 1);
-}
-
-/**
- * Implements hook_uninstall().
- */
-function capwiz_connect_js_uninstall() {
-  // Remove the table
-  drupal_uninstall_schema('capwiz_connect_js');
-}
-
-/**
  * Implements hook_schema().
  */
 function capwiz_connect_js_schema() {
   $schema = array();
   
   $schema['capwiz_connect_js_alerts'] = array(
-    'description' => t('Contains options for alerts handled by the Capwiz JS Solution'),
+    'description' => 'Contains options for alerts handled by the Capwiz JS Solution',
     'fields' => array(
       'capwiz_alert_id' => array(
-        'description' => t('The public Alert Id from Capwiz, too large for int field'),
+        'description' => 'The public Alert Id from Capwiz, too large for int field',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'capwiz_api_alert_id' => array(
-        'description' => t('The alert ID used by Capwiz the API.'),
+        'description' => 'The alert ID used by Capwiz the API.',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'account_id' => array(
-        'description' => t('The internal id of the capwiz account this alert is connected to.'),
+        'description' => 'The internal id of the capwiz account this alert is connected to.',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'redirect' => array(
-        'description' => t('URL for redirection of this alert after user submits'),
+        'description' => 'URL for redirection of this alert after user submits',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
@@ -58,15 +40,15 @@ function capwiz_connect_js_schema() {
   );
 
   $schema['capwiz_connect_js_actions'] = array(
-    'description' => t('Contains data for actions handled by the Capwiz JS Solution'),
+    'description' => 'Contains data for actions handled by the Capwiz JS Solution',
     'fields' => array(
       'id' => array(
-        'description' => t('Auto-increment local ID for the action'),
+        'description' => 'Auto-increment local ID for the action',
         'type' => 'serial',
         'not null' => TRUE,
       ),
       'capwiz_api_alert_id' => array(
-        'description' => t('The Alert Id from the Capwiz API, too large for int field'),
+        'description' => 'The Alert Id from the Capwiz API, too large for int field',
         'type' => 'int',
         'not null' => TRUE,
       ),
@@ -78,12 +60,12 @@ function capwiz_connect_js_schema() {
         'description' => "User's email address.",
       ),
       'action_timestamp' => array(
-        'description' => t('Timestamp when the action was taken'),
+        'description' => 'Timestamp when the action was taken',
         'type' => 'int',
         'not null' => FALSE,
       ),
       'data' => array(
-        'description' => t('Serialized data about the action'),
+        'description' => 'Serialized data about the action',
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
@@ -101,7 +83,5 @@ function capwiz_connect_js_schema() {
 
 // Set the weight 1 heavier then capwiz_connect module
 function capwiz_connect_js_update_6301(&$sandbox) {
-  $weight = db_result(db_query("SELECT weight FROM {system} WHERE name = 'capwiz_connect'")) + 1;
-  $ret[] = update_sql("UPDATE {system} SET weight = " . $weight . " WHERE name = 'capwiz_connect_js'");
-  return $ret;
+  return t('This update was removed.');
 }

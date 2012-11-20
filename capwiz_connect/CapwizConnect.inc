@@ -108,7 +108,7 @@ class CapizConnect {
           // make sure that we don't try to use a session ID after it has expired
           // (at this writing, there is a bug on their end related to this), only
           // cache the session ID for one hour.
-          $expire_at = time() + 3600;
+          $expire_at = REQUEST_TIME + 3600;
           cache_set($session_id_cache_id, $this->session_id, 'cache', $expire_at);
           cache_set($client_id_cache_id, $this->client_id, 'cache', $expire_at);
         }
@@ -369,7 +369,7 @@ class CapizConnect {
     // Note when we started this batch, to update user_sync_since if this batch
     // completes the full user sync. Subtract five minutes to ensure that no one
     // falls through the cracks between batches
-    $batch_start_time = time() - 1800;
+    $batch_start_time = REQUEST_TIME - 1800;
     
     // Query for users that have been updated since the last time
     $sync_since = $this->account_details->user_sync_since;
@@ -462,7 +462,7 @@ class CapizConnect {
     $existing_profile_values = array();
     
     if (!empty($email)) {
-      $drupal_account = user_load(array('mail' => $email));
+      $drupal_account = user_load_by_mail($email);
       if ($drupal_account) {
         $return_value = self::$STAT_UPDATE_OK;
         // Load profile values
@@ -479,7 +479,7 @@ class CapizConnect {
           'name'    => $email,
           'pass'    => md5($drupal_account_password),
           'mail'    => $email,
-          'created' => $time = time(),
+          'created' => $time = REQUEST_TIME,
           'access'  => $time,
           'login'   => 0,
           'status'  => 1,
@@ -771,7 +771,7 @@ class CapizConnect {
     // Note when we started this batch, to update action_sync_since if this
     // batch completes the full action sync. Subtract five minutes to ensure
     // that no actions falls through the cracks between batches
-    $batch_start_time = time() - 1800;
+    $batch_start_time = REQUEST_TIME - 1800;
     
     // Query for actions that have been updated since the last time
     $sync_since = $this->account_details->action_sync_since;
