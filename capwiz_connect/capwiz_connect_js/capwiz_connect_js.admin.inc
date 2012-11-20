@@ -1,5 +1,10 @@
 <?php
 
+/**
+* @file
+* Administrative functions for the Capwiz Connect JS module
+*/
+
 function capwiz_connect_js_settings_form() {
   // Create an array of accounts for the select, not in use right now, the account is hardcoded to the national one
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
@@ -58,7 +63,7 @@ function capwiz_connect_js_alert_list_form() {
       !empty($capwiz_form->alert->title) ? check_plain($capwiz_form->alert->title) : t('Alert not found'),
       check_plain($row->capwiz_alert_id),
       check_plain($row->redirect),
-      l('edit', 'admin/build/capwiz_connect_js/add_alert/' . $row->capwiz_alert_id),
+      l(t('edit'), 'admin/build/capwiz_connect_js/add_alert/' . $row->capwiz_alert_id),
     );
   }
 
@@ -175,7 +180,7 @@ function capwiz_connect_js_add_alert_form() {
     $public_alerts = NULL;
     // Loop through the public alerts
     if (count($public_rss->item)) {
-      foreach($public_rss->item as $key => $item) {
+      foreach ($public_rss->item as $key => $item) {
         $url = parse_url($item->link);
         parse_str($url['query'], $querystring);
         if ($connection) {

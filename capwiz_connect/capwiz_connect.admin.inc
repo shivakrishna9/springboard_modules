@@ -12,19 +12,19 @@ function capwiz_connect_settings($form_state) {
   $form['capwiz_connect_standalone_cron_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable standalone cron'),
-    '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l('capwiz_connect_cron', 'capwiz_connect_cron'))),
+    '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l(t('capwiz_connect_cron'), 'capwiz_connect_cron'))),
     '#default_value' => variable_get('capwiz_connect_standalone_cron_enabled', 0),
   );
   $form['capwiz_connect_user_batch_size'] = array(
     '#type' => 'select',
-    '#options' => drupal_map_assoc(array(10,50,100,200)),
+    '#options' => drupal_map_assoc(array(10, 50, 100, 200)),
     '#title' => t('User Batch Amount'),
     '#description' => t('Select the amount of Capwiz users to grab during the import process.'),
     '#default_value' => variable_get('capwiz_connect_user_batch_size', 100),
   );
   $form['capwiz_connect_action_batch_size'] = array(
     '#type' => 'select',
-    '#options' => drupal_map_assoc(array(10,50,100,200,300,400,500,600,700,800,900,1000)),
+    '#options' => drupal_map_assoc(array(10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)),
     '#title' => t('Action Batch Amount'),
     '#description' => t('Select the amount of Capwiz actions to grab during the import process.'),
     '#default_value' => variable_get('capwiz_connect_action_batch_size', 100),
@@ -58,11 +58,11 @@ function capwiz_connect_account_list() {
   while ($row = db_fetch_object($result)) {
     $accounts[] = array(
       $row->display_name,
-      l('overview', 'admin/settings/capwiz_connect/accounts/' . $row->id),
-      l('edit', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
-      l('user mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
-      l('action mapping', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
-      l('delete', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
+      l(t('overview'), 'admin/settings/capwiz_connect/accounts/' . $row->id),
+      l(t('edit'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
+      l(t('user mapping'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
+      l(t('action mapping'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
+      l(t('delete'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
     );
   }
   
@@ -310,7 +310,7 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
  */
 function capwiz_connect_account_user_mapping($form_state, $account) {
   $base = drupal_get_path('module', 'capwiz_connect');
-  drupal_add_js($base .'/capwiz_connect.js');
+  drupal_add_js($base . '/capwiz_connect.js');
 
   $form = array(
     '#tree' => TRUE,
@@ -570,7 +570,7 @@ function theme_capwiz_connect_user_mapping_form($form) {
  */
 function capwiz_connect_account_action_mapping($form_state, $account) {
   $base = drupal_get_path('module', 'capwiz_connect');
-  drupal_add_js($base .'/capwiz_connect.js');
+  drupal_add_js($base . '/capwiz_connect.js');
 
   $form = array(
     '#tree' => TRUE,
@@ -672,7 +672,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
             $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
           }
           else {
-            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
+            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field . '">Set as dedupe field</a>';
           }
         }
         else {

@@ -18,7 +18,7 @@
  function capwiz_connect_help($path, $arg) {
    switch ($path) {
      case 'admin/help#capwiz_connect':
-       return '<p>'. t('Integrates with the Capwiz Connect API to sync users and actions. Users are saved as Drupal users, and can then be synced to Salesforce using the SF User Integration module. Actions are saved to the DB and synced directly to Salesforce.') .'</p>';
+       return '<p>' . t('Integrates with the Capwiz Connect API to sync users and actions. Users are saved as Drupal users, and can then be synced to Salesforce using the SF User Integration module. Actions are saved to the DB and synced directly to Salesforce.') . '</p>';
       
      case 'admin/settings/capwiz_connect/accounts/%/user_mapping':
        return '<p>' . t('Configure Capwiz-to-Drupal mapping for users. Capwiz user accounts are saved as Drupal users. To add more fields to Drupal user accounts, use the Profile module.') . '</p>';
@@ -218,7 +218,7 @@ function capwiz_connect_legislative_update_start() {
     
     // use curl to request the service endpoint 
     $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(sprintf('Authorization: OAuth %s', $session_id)));
     curl_setopt($ch, CURLOPT_HEADER, 0);
     
@@ -340,11 +340,11 @@ function capwiz_connect_cron() {
       return 0;
     }
     else {
-      watchdog('capwiz_connect', t('Standalone cron run.'));
+      watchdog('capwiz_connect', 'Standalone cron run.');
     }
   }
   else {
-    watchdog('capwiz_connect', t('Standard cron run.'));
+    watchdog('capwiz_connect', 'Standard cron run.');
   }
   capwiz_connect_cron_process();
 }
@@ -364,12 +364,12 @@ function capwiz_connect_cron_process() {
     
     if ($sync_type == 'users') {
       // Sync down a batch of users
-      watchdog('capwiz_connect', t('Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
+      watchdog('capwiz_connect', 'Begin syncing a batch of users from Capwiz for account %account_name', array('%account_name' => $account_details->display_name));
       $connection->syncUsersBatch();
       $next_sync = 'actions';
     }
     else {
-      watchdog('capwiz_connect', t('Begin syncing a batch of actions from Capwiz for account %account_name', array('%account_name' => $account_details->display_name)));
+      watchdog('capwiz_connect', 'Begin syncing a batch of actions from Capwiz for account %account_name', array('%account_name' => $account_details->display_name));
       // Sync down a batch of actions
       $connection->syncActionsBatch();
       $next_sync = 'users';

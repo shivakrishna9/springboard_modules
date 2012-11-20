@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file 
+ * Install/uninstall/update functions for the Capwiz Connect JS module.
+ */
+
+/**
  * Implements hook_install().
  */
 function capwiz_connect_js_install() {
@@ -95,7 +100,7 @@ function capwiz_connect_js_schema() {
 }
 
 // Set the weight 1 heavier then capwiz_connect module
-function capwiz_connect_js_update_6301 (&$sandbox) {
+function capwiz_connect_js_update_6301(&$sandbox) {
   $weight = db_result(db_query("SELECT weight FROM {system} WHERE name = 'capwiz_connect'")) + 1;
   $ret[] = update_sql("UPDATE {system} SET weight = " . $weight . " WHERE name = 'capwiz_connect_js'");
   return $ret;

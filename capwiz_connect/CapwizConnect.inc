@@ -875,7 +875,7 @@ class CapizConnect {
     );
 
     // Check if this is a duplicate message. Capwiz creates an event for each message recipient selected by the user, we only need to record one of them
-    $duplicate_message = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE capwiz_alert_id='%s' AND capwiz_user_id='%s' AND action_timestamp=%d AND message_id != %d", $record['capwiz_alert_id'], $record['capwiz_user_id'], $record['action_timestamp'], $message_id));
+    $duplicate_message = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE capwiz_alert_id='%s' AND capwiz_user_id='%s' AND action_timestamp=%d AND message_id <> %d", $record['capwiz_alert_id'], $record['capwiz_user_id'], $record['action_timestamp'], $message_id));
     if ($duplicate_message > 0) {
       return self::$STAT_DUPLICATE_MESSAGE;
     }

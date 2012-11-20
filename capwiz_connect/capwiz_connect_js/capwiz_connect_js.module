@@ -90,7 +90,7 @@ function capwiz_connect_js_decrypt() {
   
     // loop over each field in the segement and extract the key/value pairs
     if (count($segments)) {
-      foreach($segments as $segment) {
+      foreach ($segments as $segment) {
         $key_value = explode('=', $segment);
         $fields[$key_value[0]] = $key_value[1];
       }
@@ -116,7 +116,7 @@ function capwiz_connect_js_decrypt() {
  *    JSON output which includes the redirect page
  */
 function capwiz_connect_js_confirmation() {
-  $data = json_decode(base64_decode($_GET['data']), true);
+  $data = json_decode(base64_decode($_GET['data']), TRUE);
   $return['redirect'] = 0;
   // Load the alert from the public alert id
   $alert = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_js_alerts} WHERE capwiz_alert_id = %d', $data['fieldValues']['MC_alertid']));
@@ -193,7 +193,7 @@ function capwiz_connect_js_capwiz_connect_save_user($user, $drupal_account) {
   $mail = strtolower($user->emails[0]->address);
 
   // Pull the latest action submitted for this email
-  $js_action = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_js_actions} WHERE mail = '%s' ORDER BY action_timestamp DESC LIMIT 1",  $mail));
+  $js_action = db_fetch_object(db_query_range("SELECT * FROM {capwiz_connect_js_actions} WHERE mail = '%s' ORDER BY action_timestamp DESC", $mail, 0, 1));
 
   // If an action is found unserialize the date values and load up the alert data
   if ($js_action) {
@@ -260,7 +260,7 @@ function capwiz_connect_js_queue_preprocess_batch_alter(&$batch) {
     // Search for a matching record in the capwiz js actions table
     $mail = strtolower($capwiz_action->data->emailAddress);
     // Pull the latest action for this mail and action id
-    $js_action = db_fetch_object(db_query("SELECT * FROM {capwiz_connect_js_actions} WHERE capwiz_api_alert_id = %d AND mail = '%s' ORDER BY action_timestamp DESC LIMIT 1", $record->object['CapWiz_Alert_ID__c'], $mail));
+    $js_action = db_fetch_object(db_query_range("SELECT * FROM {capwiz_connect_js_actions} WHERE capwiz_api_alert_id = %d AND mail = '%s' ORDER BY action_timestamp DESC", $record->object['CapWiz_Alert_ID__c'], $mail, 0, 1));
     // If a js action is found unserialize the data values, else skip to the next one
     if ($js_action) {
       $js_action->data = unserialize($js_action->data);
