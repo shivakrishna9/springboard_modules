@@ -803,7 +803,7 @@ function _fundraiser_ubercart_get_label_by_status($status) {
  *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption;
   $cc = unserialize($data);
   $cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);

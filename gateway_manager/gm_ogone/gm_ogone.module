@@ -1006,7 +1006,7 @@ function gm_ogone_order($op, &$arg1, $arg2) {
  *   The id of the order.
  */
 function _save_web_banking_data_to_order($wb_data, $order_id) {
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption;
 
   // Load up the existing data array.
   $data = db_query("SELECT data FROM {uc_orders} WHERE order_id = :order_id", array(':order_id' => $order_id))->fetchField();
@@ -1032,7 +1032,7 @@ function _save_web_banking_data_to_order($wb_data, $order_id) {
  */
 function _load_web_banking_data_to_order($wb_data = NULL, $encrypted = TRUE) {
   $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption;
 
   if ($encrypted) {
     // decrypt stored direct debit data
