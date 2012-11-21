@@ -1592,8 +1592,6 @@ function fundraiser_donation_exception($donation) {
   if ($display_message) {
     drupal_set_message($donation->result['message']);
   }
-  // Allow other modules to respond to the exception.
-  module_invoke_all('fundraiser_donation_exception', $donation);
   // Add a comment.
   global $user;
   $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1602,6 +1600,8 @@ function fundraiser_donation_exception($donation) {
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
+  // Allow other modules to respond to the exception.
+  module_invoke_all('fundraiser_donation_exception', $donation);
 }
 
 /**
@@ -1617,8 +1617,6 @@ function fundraiser_donation_cancel($donation) {
   if ($display_message) {
     drupal_set_message(t('Your payment #:did has been canceled.', array(':did' => $donation->did)));
   }
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_cancel', $donation);
   // Add a comment.
   global $user;
   $username = isset($user->name) ? $user->name : 'Anonymous';
@@ -1627,6 +1625,8 @@ function fundraiser_donation_cancel($donation) {
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_cancel', $donation);
 }
 
 /**

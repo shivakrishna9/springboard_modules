@@ -627,6 +627,11 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   // Update the card type based on given card number.
   $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
 
+  // Update the donation status.
+  if (isset($order->status) && isset($donation->status) && $order->status != $donation->status) {
+    $order->status = $donation->status;
+  }
+
   // Save the updated order.
   uc_credit_cache('save', $order->payment_details, FALSE);
   uc_order_save($order);
@@ -671,6 +676,7 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  $order = uc_order_load($donation->did);
   // Add the order status data.
   // Translate the status according to UC label.
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
@@ -685,6 +691,7 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
 function fundraiser_ubercart_fundraiser_donation_delete($donation) {
   // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  $order = uc_order_load($donation->did);
   // Add the order status data.
   // Translate the status according to UC label.
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
