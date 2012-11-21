@@ -343,7 +343,7 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#title' => t('Cron settings'),
     '#description' => t('Configure cron settings.'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE,
   );
   $form['fundraiser_sustainers']['fundraiser_cron']['fundraiser_standalone_cron_enabled'] = array(
     '#type' => 'checkbox',
@@ -357,7 +357,7 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#type' => 'fieldset',
     '#title' => t('Credit card expiration email'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE,
   );
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_sustainers_send_email'] = array(
     '#type' => 'checkbox',
