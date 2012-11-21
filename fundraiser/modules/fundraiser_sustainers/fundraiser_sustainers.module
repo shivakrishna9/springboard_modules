@@ -564,8 +564,12 @@ function fundraiser_sustainers_edit_form($did) {
   else {
     $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
   }
-  $cancel_form = '<div id="donation-cancel-form"><h2>Cancel Future Donations</h2>' . $cancel_form . '</div>';
-
+  if (user_access('cancel future donations')) {
+    $cancel_form = '<div id="donation-cancel-form"><h2>Cancel Future Donations</h2>' . $cancel_form . '</div>';
+  }
+  else {
+    $cancel_form = '';
+  }
   // Put together the output.
   $parts = array($recurring_donations, $payment_info, $billing_info, $future_orders, $donation_amount_form, $billing_update_form, $cancel_form);
   return implode('', $parts);
