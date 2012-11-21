@@ -355,6 +355,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
  * Helper for building the request for a CIM profile charge.
  */
 function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
+  // Request per: http://www.authorize.net/support/CIM_XML_guide.pdf, using createCustomerProfileTransactionRequest
   $profile = _gm_authorizenet_cim_profile_get($order, $data['ref_id'], $data['config']);
   if ($profile['resultCode'] == 'Error') {
     return $profile;
@@ -708,8 +709,31 @@ function _gm_authorizenet_array_to_xml($data) {
   // Loop through the elements in the data array.
   foreach ($data as $element => $contents) {
     if (is_array($contents)) {
-      // Render the element with its child elements.
-      $xml .= '<' . $element . '>' . _gm_authorizenet_array_to_xml($contents) . '</' . $element . '>';
+      if ($element == 'extraOptions') {
+        /* Per docs for CIM, XML, this is the odd man out. :
+            Value: Information in name/value pair format that does not exist within CIM, such as customer IP address, etc.
+            Optional Format: String
+            Notes: For a complete list of the transaction variable names available, review the AIM Implementation Guide
+            located at http://www.authorize.net/support/AIM_ guide.pdf.
+            Ex:
+            <extraOptions>
+              <![CDATA[x_customer_ip=100.0.0.1&x_authentication_indicator=5]]>
+            </ extraOptions>
+        */
+        $CDATA = array();
+        foreach ($contents as $key => $value) {
+          // extraOptions doesn't do nested, so if something has been nested - ignore it.
+          if (!is_array($value)) {
+            $CDATA[] .= trim(htmlspecialchars($key)) . '=' . trim(htmlspecialchars($value));
+          }
+        }
+        $CDATA = implode('&', $CDATA);
+        $xml .= '<extraOptions><![CDATA['. $CDATA .']]></extraOptions>';
+      }
+      else {
+        // Render the element with its child elements.
+        $xml .= '<'. $element .'>'. _gm_authorizenet_array_to_xml($contents) .'</'. $element .'>';
+      }
     }
     else {
       // Render the element with its contents.
