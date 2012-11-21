@@ -488,7 +488,7 @@ function fundraiser_sustainers_edit_form($did) {
   '</address>';
   // If the logged in viewing user is NOT the same as the donation user.
   if ($donation->user->uid != $user->uid) {
-    $billing_info .= '<div id="additioanl-billing-info">Customer Number: <a href=\'/user/' . $donation->uid . '\'>' .
+    $billing_info .= '<div id="additioanl-billing-info">Customer Account: <a href=\'/user/' . $donation->uid . '\'>' .
       $donation->user->name . '</a>' .
       '<br />Primary email: ' . $donation->user->mail . '</div>';
   }
