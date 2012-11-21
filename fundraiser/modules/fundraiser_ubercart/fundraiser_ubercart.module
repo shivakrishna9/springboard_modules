@@ -574,6 +574,12 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     // Look up the created user, and add them to the donation object.
     $donation->uid = $order->uid;
     $donation->user = user_load($order->uid);
+    // Add the order status data.
+    // Translate the status according to UC label.
+    $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+    if (!empty($order->order_status)) {
+      $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    }
   }
 }
 
@@ -625,6 +631,13 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   uc_credit_cache('save', $order->payment_details, FALSE);
   uc_order_save($order);
   uc_credit_cache('clear');
+
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 }
 
 /**
@@ -658,6 +671,12 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 }
 
 /**
@@ -666,6 +685,12 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
 function fundraiser_ubercart_fundraiser_donation_delete($donation) {
   // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 }
 
 /**
