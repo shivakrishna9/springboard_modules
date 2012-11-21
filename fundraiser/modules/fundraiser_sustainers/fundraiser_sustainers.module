@@ -486,10 +486,11 @@ function fundraiser_sustainers_edit_form($did) {
   $donation->donation['address'] . '<br />' .
   $donation->donation['city'] . ', ' . $donation->donation['state'] . ' ' . $donation->donation['zip'] .
   '</address>';
+  // If the logged in viewing user is NOT the same as the donation user.
   if ($donation->user->uid != $user->uid) {
     $billing_info .= '<div id="additioanl-billing-info">Customer Number: <a href=\'/user/' . $donation->uid . '\'>' .
-      $donation->user->name . ' (' . $donation->uid . ')</a>' .
-      '<br />Primary email: ' . $donation->user->name . '</div>';
+      $donation->user->name . '</a>' .
+      '<br />Primary email: ' . $donation->user->mail . '</div>';
   }
   $billing_info .= '</div>';
 

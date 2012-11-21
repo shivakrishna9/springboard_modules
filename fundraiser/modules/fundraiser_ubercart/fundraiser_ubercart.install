@@ -247,7 +247,7 @@ function fundraiser_ubercart_install_create_countries() {
   $country_set[] = array(520, 'Nauru', 'NR', 'NRU', 1);
   $country_set[] = array(524, 'Nepal', 'NP', 'NPL', 1);
   $country_set[] = array(528, 'Netherlands', 'NL', 'NLD', 1);
-  $country_set[] = array(530, 'Netherlands Antilles', 'AN', 'ANT', 1);
+//  $country_set[] = array(530, 'Netherlands Antilles', 'AN', 'ANT', 1);
   $country_set[] = array(540, 'New Caledonia', 'NC', 'NCL', 1);
   $country_set[] = array(554, 'New Zealand', 'NZ', 'NZL', 1);
   $country_set[] = array(558, 'Nicaragua', 'NI', 'NIC', 1);
@@ -334,7 +334,7 @@ function fundraiser_ubercart_install_create_countries() {
   $country_set[] = array(876, 'Wallis and Futuna', 'WF', 'WLF', 1);
   $country_set[] = array(732, 'Western Sahara', 'EH', 'ESH', 1);
   $country_set[] = array(887, 'Yemen', 'YE', 'YEM', 1);
-  $country_set[] = array(891, 'Yugoslavia', 'YU', 'YUG', 1);
+//  $country_set[] = array(891, 'Yugoslavia', 'YU', 'YUG', 1);
   $country_set[] = array(894, 'Zambia', 'ZM', 'ZMB', 1);
   $country_set[] = array(716, 'Zimbabwe', 'ZW', 'ZWE', 1);
   foreach ($country_set as $country) {

@@ -1466,7 +1466,7 @@ function fundraiser_donation_create($donation) {
  * Donation processing, a donation needs to be updated with new information prior to processing.
  * For example, in the course of updating a sustainers information.
  */
-function fundraiser_donation_update($donation) {
+function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
   // The additional fields $donation->additional, ready to process.
@@ -1496,10 +1496,12 @@ function fundraiser_donation_update($donation) {
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
   // Add a comment.
-  global $user;
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  fundraiser_donation_comment($donation, 'This donation was updated on @date by @username.',
-    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  if ($vocal_mode) {
+    global $user;
+    $username = isset($user->name) ? $user->name : 'Anonymous';
+    fundraiser_donation_comment($donation, 'This donation was updated on @date by @username.',
+      array('@date' => format_date(strtotime('now')), '@username' => $username));
+  }
 }
 
 /**
@@ -1523,6 +1525,9 @@ function fundraiser_donation_process($donation) {
     // leave that entirely to the payment module to handle.
     module_invoke_all('fundraiser_donation_process', $donation);
   }
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1543,6 +1548,9 @@ function fundraiser_donation_success($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was successfully completed on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1566,6 +1574,9 @@ function fundraiser_donation_decline($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was declined at the gateway on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 // TODO how does this even get called? Is this functionally different from a decline?
@@ -1588,6 +1599,9 @@ function fundraiser_donation_exception($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation encountered an exception on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1610,6 +1624,9 @@ function fundraiser_donation_cancel($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1630,6 +1647,9 @@ function fundraiser_donation_delete($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was deleted on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_delete', $donation);
 }
