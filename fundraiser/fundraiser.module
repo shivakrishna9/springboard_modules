@@ -1415,6 +1415,18 @@ function _fundraiser_refund_submit($form, &$form_state) {
  */
 
 /**
+ * Donation processing, a given donation needs to be commented on.
+ */
+function fundraiser_donation_comment($donation, $comment, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
+  // Make a log entry
+  if (variable_get('fundraiser_log_comments', 0)) {
+    watchdog('fundraiser_comment', $comment, $variables, $severity, $link);
+  }
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_comment', $donation, $comment, $variables, $severity, $link);
+}
+
+/**
  * Donation processing, a given donation failed to validate.
  */
 function fundraiser_donation_failed_validation($errors) {
@@ -1443,6 +1455,11 @@ function fundraiser_donation_create($donation) {
     'txn_id' => '',
   );
   _fundraiser_create_donation($donation_record);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was created on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
@@ -1478,6 +1495,11 @@ function fundraiser_donation_update($donation) {
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was updated on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
@@ -1516,6 +1538,11 @@ function fundraiser_donation_success($donation) {
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was successfully completed on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
@@ -1534,6 +1561,11 @@ function fundraiser_donation_decline($donation) {
   }
   // Allow other modules to respond to the decline.
   module_invoke_all('fundraiser_donation_decline', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was declined at the gateway on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 // TODO how does this even get called? Is this functionally different from a decline?
@@ -1551,6 +1583,11 @@ function fundraiser_donation_exception($donation) {
   }
   // Allow other modules to respond to the exception.
   module_invoke_all('fundraiser_donation_exception', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation encountered an exception on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
@@ -1568,6 +1605,11 @@ function fundraiser_donation_cancel($donation) {
   }
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_cancel', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
@@ -1583,6 +1625,11 @@ function fundraiser_donation_delete($donation) {
   if ($display_message) {
     drupal_set_message(t('Your payment #:did has been deleted.', array(':did' => $donation->did)));
   }
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was deleted on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_delete', $donation);
 }

@@ -624,9 +624,14 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     $donation = fundraiser_donation_get_donation($donation->did);
     $old_amount = $donation->donation['amount'];
     $donation->donation['amount'] = $amount;
+    $donation->donation['old_amount'] = $old_amount;
     fundraiser_donation_update($donation);
-    watchdog('fundraiser_sustainers', 'Donation amount changed from @old to @new for #@did.',
-      array('@did' => $donation->did, '@old' => $old_amount, '@new' => $donation->donation['amount']));
+    // Add a comment.
+    global $user;
+    $username = isset($user->name) ? $user->name : 'Anonymous';
+    fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @username.',
+      array('@old_amount' => $donation->donation['old_amount'], '@new_amount' => $donation->donation['amount'],
+        '@date' => format_date(strtotime('now')), '@username' => $username));
   }
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $amount)));
 }
@@ -753,6 +758,11 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
     $donation->donation = array_merge($donation->donation, $submitted_values);
     // Save each donation.
     fundraiser_donation_update($donation);
+    // Add a comment.
+    global $user;
+    $username = isset($user->name) ? $user->name : 'Anonymous';
+    fundraiser_donation_comment($donation, 'The card to be charged was changed on @date by @username.',
+      array('@date' => format_date(strtotime('now')), '@username' => $username));
     watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
       array('@did' => $donation->did));
   }
@@ -799,12 +809,15 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
       fundraiser_donation_create($new_donation);
+      $next_charge = strtotime('+ ' . $processed_months . ' months');
+      fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
+        array('@next_charge' => format_date($next_charge)));
       // After this, the donation did and donation data is set.
       // The new donation object, with new did, needs to be saved to recurring so we can grab it later.
       $recurring_donation = array(
         'master_did' => $donation->did,
         'did' => $new_donation->did,
-        'next_charge' => strtotime('+ ' . $processed_months . ' months'),
+        'next_charge' => $next_charge,
       );
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);

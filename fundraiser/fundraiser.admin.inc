@@ -46,5 +46,11 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_gateway_messages', 1),
     '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
   );
+  $form['fundraiser']['fundraiser_log_comments'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log comments'),
+    '#default_value' => variable_get('fundraiser_log_comments', 0),
+    '#description' => t('Log comments made on donations to watchdog.'),
+  );
   return system_settings_form($form);
 }
