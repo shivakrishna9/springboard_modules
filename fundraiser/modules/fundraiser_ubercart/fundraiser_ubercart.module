@@ -564,6 +564,17 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
   }
   // Have to pass up to the system.
   $donation->result = $result;
+  // If a success set up the order information now, so it's available on success responses.
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    // New user account is created during uc_cart_complete_sale.
+    $order = uc_order_load($donation->did);
+    uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+    uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
+      t('Payment processed by the fundraiser module.'));
+    // Look up the created user, and add them to the donation object.
+    $donation->uid = $order->uid;
+    $donation->user = user_load($order->uid);
+  }
 }
 
 /**
@@ -620,11 +631,7 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_ubercart_fundraiser_donation_success($donation) {
-  // Mark as complete. Complete the sale in Ubercart.
-  $order = uc_order_load($donation->did);
-  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
-    t('Payment processed by the fundraiser module.'));
+  // Mark as complete.
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
 }
 
