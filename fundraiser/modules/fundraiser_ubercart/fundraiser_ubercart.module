@@ -548,10 +548,10 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     return;
   }
   // Create the charge information.
-  $config = isset($info['config']) ? $info['config'] : array();
+  $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
   $donation->data = (array) $donation->data;
-  $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
-  $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
+  $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
+  $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
   // Execute the charge as per the given gateway.
   $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
   $donation->data = array_merge($data, $donation->data);

@@ -446,7 +446,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_method' => $order->payment_method == 'credit' ? 'CC' : 'ECHECK',
     'x_method' => 'CC',
     // 'x_recurring_billing' => 'FALSE',
-    'x_amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array())),
+    'x_amount' => $amount, //theme('uc_price', array('price' => $amount, 'suffixes' => array())),
     'x_card_num' => $order->payment_details['cc_number'],
     'x_exp_date' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'x_card_code' => $order->payment_details['cc_cvv'],
