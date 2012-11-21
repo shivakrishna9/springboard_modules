@@ -201,6 +201,8 @@ function fundraiser_sustainers_charge_now($did) {
   $donation->did = $did;
   $donation->next_charge = strtotime('now');
   _fundraiser_sustainers_update_recurring($donation);
+  drupal_set_message(t('The charge date for donation #@did has been advanced to @date. It will be charged on the next Fundraiser cron.',
+    array('@did' => $did, '@date' => format_date(strtotime('now')) )));
   // Afterwards return where we came from.
   drupal_goto( drupal_get_destination() );
 }
@@ -496,7 +498,7 @@ function fundraiser_sustainers_edit_form($did) {
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
-    $donations_header[] = t('Set Charge to Now');
+    $donations_header[] = t('Advanced Charge to Today');
   }
   $donations_rows = array();
   if ($donation_set) {
@@ -511,7 +513,7 @@ function fundraiser_sustainers_edit_form($did) {
       if (user_access('fastforward recurring donations')) {
         if (in_array($this_donation->status, array('in_checkout', 'pending_future_payment'))) {
           // Add a button to fastforward this particular donation
-          $donations_row['ffwd'] = l(t('update charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
+          $donations_row['ffwd'] = l(t('advance charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
             array('query' => drupal_get_destination()) );
         }
         else {
