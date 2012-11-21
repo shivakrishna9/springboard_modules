@@ -835,9 +835,9 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
   foreach ($existing_recurring as $key => $recurring) {
     $this_donation = fundraiser_donation_get_donation($recurring->did);
     // Cancel the donation with an informative message.
-    watchdog('fundraiser', 'Donation @id was canceled by @user while updating the card expiration date.',
+    watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
-    fundraiser_donation_cancel($this_donation);
+    fundraiser_donation_delete($this_donation);
   }
 }
 
