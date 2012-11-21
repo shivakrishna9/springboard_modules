@@ -657,7 +657,15 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   // Mark the sale in Ubercart as cancelled.
-  _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  _fundraiser_ubercart_update_order_status('cancelled', $donation->did);
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_ubercart_fundraiser_donation_delete($donation) {
+  // Mark the sale in Ubercart as cancelled.
+  _fundraiser_ubercart_update_order_status('cancelled', $donation->did);
 }
 
 /**
