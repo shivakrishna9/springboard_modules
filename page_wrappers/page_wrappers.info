@@ -4,7 +4,7 @@ name = "Page Wrappers"
 version =  7.x-3.0-dev
 package = "Jackson River Springboard - extras"
 
-configure = admin/config/content/page_wrappers
+configure = admin/config/content/page-wrappers
 
 files[] = page_wrappers.install
 files[] = page_wrappers.module

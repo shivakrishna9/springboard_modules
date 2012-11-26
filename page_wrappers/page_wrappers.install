@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -20,8 +19,12 @@ function page_wrappers_install() {
  * Implementation of hook_uninstall().
  */
 function page_wrappers_uninstall() {
-	drupal_uninstall_schema('page_wrappers');
-	variable_del('page_wrapper_enabled_node_types');
+  variable_del('page_wrapper_enabled_node_types');
+  _page_wrappers_delete_nodes();
+  _page_wrappers_delete_fields();
+  
+  node_type_delete('page_wrapper');
+  field_purge_batch(1000);
 }
 
 /**
@@ -68,6 +71,9 @@ function page_wrappers_schema() {
   return $schema;
 }
 
+/**
+ * Node and associated field setup for Page Wrappers content type.
+ */
 function _page_wrappers_create_fields() {
   $t = get_t();
 
@@ -82,72 +88,129 @@ function _page_wrappers_create_fields() {
       'modified' => 1,
       'locked' => 0,
       'title_label' => $t('Internal Title'),
-      'body_label' => $t('Template HTML'),
     );
     $type = node_type_set_defaults($type);
     node_type_save($type);
   }
 
   $fields = array(
+    
+    // css filefield
     'css_filefield' => array(
+      'translatable' => '1',
+      'settings' => array(
+        'display_field' => 1,
+        'display_default' => 0,
+        'uri_scheme' => 'public',
+      ),
       'field_name' => 'page_wrappers_css',
       'type' => 'file',
-      'cardinality' => 0,
-      'settings' => array(
-        'instance_settings' => array(
-          'file_extensions' => 'css',
-          'file_directory' => 'page_wrappers/styles',
-        ),
-        'label' => $t('Upload a stylesheet'),
-        'description' => $t('If your page wrapper utilizes external stylesheets, upload them here.'),
-        'file_extensions' => 'css',
-      ),
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '-1',
       '_instance' => array(
-        'field_name' => 'page_wrappers_css',
-        'entity_type' => 'node',
-        'bundle' => 'page_wrappers',
-        'label' => $t('Upload a stylesheet'),
-        'description' => $t('If your page wrapper ulitizes external stylesheets, upload them here.'),
+        'label' => st('Upload a stylesheet'),
         'widget' => array(
+          'weight' => '-4',
           'type' => 'file_generic',
-          'weight' => 0,
+          'active' => 1,
+          'settings' => array(
+            'progress_indicator' => 'throbber',
+          ),
+        ),
+        'settings' => array(
+          'file_directory' => 'page_wrappers/styles',
+          'file_extensions' => 'css',
+          'max_filesize' => '2 MB',
+          'description_field' => 0,
+          'user_register_form' => FALSE,
         ),
         'display' => array(
           'default' => array(
+            'label' => 'above',
             'type' => 'file_default',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'above',
+            'settings' => array(),
             'weight' => 0,
           ),
         ),
+        'required' => 0,
+        'description' => '',
+        'field_name' => 'page_wrappers_css',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
       ),
     ),
+    
+    // javascript filefield
     'js_filefield' => array(
       'field_name' => 'page_wrappers_js',
       'type' => 'file',
-      'cardinality' => 0,
-      'settings' => array(
-        'instance_settings' => array(
-          'file_extensions' => 'js',
-          'file_directory' => 'page_wrappers/scripts',
-        ),
-        'label' => $t('Upload a JavaScript file'),
-        'description' => $t('If your page wrapper utilizes external JavaScript files, upload them here.'),
-        'file_extensions' => 'js',
-      ),
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '-1',
       '_instance' => array(
-        'field_name' => 'page_wrappers_js',
-        'entity_type' => 'node',
-        'bundle' => 'page_wrappers',
-        'label' => $t('Upload a JavaScript file'),
-        'description' => $t('If your page wrapper ulitizes external JavaScript files, upload them here.'),
+        'label' => st('Upload a script'),
         'widget' => array(
+          'weight' => '-4',
           'type' => 'file_generic',
-          'weight' => 0,
+          'active' => 1,
+          'settings' => array(
+            'progress_indicator' => 'throbber',
+          ),
+        ),
+        'settings' => array(
+          'file_directory' => 'page_wrappers/scripts',
+          'file_extensions' => 'js',
+          'max_filesize' => '2 MB',
+          'description_field' => 0,
+          'user_register_form' => FALSE,
         ),
         'display' => array(
           'default' => array(
+            'label' => 'above',
             'type' => 'file_default',
+            'settings' => array(),
             'weight' => 0,
           ),
+          'teaser' => array(
+            'type' => 'hidden',
+            'label' => 'above',
+            'settings' => array(),
+            'weight' => 0,
+          ),
+        ),
+        'required' => 0,
+        'description' => '',
+        'field_name' => 'page_wrappers_js',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+      ),
+    ),
+    
+    // html template
+    'html_template' => array(
+      'field_name' => 'page_wrappers_html_template',
+      'type' => 'text_with_summary',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'page_wrappers_html_template',
+        'entity_type' => 'node',
+        'bundle' => 'page_wrapper',
+        'required' => TRUE,
+        'label' => st('HTML Template'),
+        'description' => st('HTML version of the email body.'),
+        'widget' => array(
+          'type' => 'text_with_summary',
+          'weight' => 6,
+          'settings' => array(),
         ),
       ),
     ),
@@ -160,4 +223,26 @@ function _page_wrappers_create_fields() {
     field_create_field($values);
     field_create_instance($instance);
   }
+}
+
+function _page_wrappers_delete_fields() {
+  $fields = array(
+    'page_wrappers_css',
+    'page_wrappers_js',
+    'page_wrappers_html_template',
+  );
+  foreach ($fields as $field_name) {
+    $field = field_info_instance('node', $field_name, 'email_wrapper');
+    field_delete_instance($field);
+    $field = field_info_field($field_name);
+    field_delete_field($field);
+  }
+  drupal_set_message('Page Wrapper fields deleted.');
+}
+
+function _page_wrappers_delete_nodes() {
+ require_once('page_wrappers.module');
+ $nids = page_wrappers_get_nodes();
+ node_delete_multiple($nids);
+ drupal_set_message('Page Wrappers have been deleted.');
 }
