@@ -99,8 +99,8 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
     ctools_modal_add_js();
     global $base_path;
 
-    $path = $base_path . drupal_get_path('module', 'email_wrappers') . '/email_wrappers.preview_modal.js';
-    $form['#attached']['js'][] = $path;
+    // $path = $base_path . drupal_get_path('module', 'email_wrappers') . '/email_wrappers.preview_modal.js';
+    // $form['#attached']['js'][] = $path;
     $defaults = array();
     // check the db for settings
     if (isset($form['eid']['#value'])) {
