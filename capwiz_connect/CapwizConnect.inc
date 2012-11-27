@@ -88,8 +88,8 @@ class CapizConnect {
     // No Session ID cached, so authenticate now
     elseif ($this->account_details->user_name && $this->account_details->user_password) {
       $query_params = array(
-        'loginName' => decrypt($this->account_details->user_name),
-        'password' => decrypt($this->account_details->user_password),
+        'loginName' => decrypt($this->account_details->user_name, array('base64' => TRUE)),
+        'password' => decrypt($this->account_details->user_password, array('base64' => TRUE)),
       );
       $url = url(self::$base_url . 'auth/v1/authenticate', array('query' => $query_params));
       

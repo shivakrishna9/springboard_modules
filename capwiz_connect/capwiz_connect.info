@@ -1,10 +1,10 @@
 name = Capwiz Connect
 description = "Sync users and actions to Salesforce by querying the Capwiz Connect API"
 core = 7.x
-package = Jackson River Springboard
+package = "Jackson River Springboard - extras"
 version =  7.x-3.0-dev
-dependencies[] = salesforce_management_api
-dependencies[] = sf_webform
-dependencies[] = queue_processor
+;dependencies[] = salesforce_management_api
+;dependencies[] = sf_webform
+;dependencies[] = queue_processor
 dependencies[] = encrypt
 files[] = CapwizConnect.inc

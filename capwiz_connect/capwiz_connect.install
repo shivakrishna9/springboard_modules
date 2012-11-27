@@ -9,7 +9,7 @@
  */
 function capwiz_connect_enable() {
   // Add this module's types to the SF queue processor
-  queue_processor_add_type('capwiz_connect_action');
+  //queue_processor_add_type('capwiz_connect_action');
 }
 
 /**
@@ -30,7 +30,7 @@ function capwiz_connect_uninstall() {
  */
 function capwiz_connect_disable() {
   // Remove this module's types from the SF queue processor
-  queue_processor_remove_type('capwiz_connect_action');
+  //queue_processor_remove_type('capwiz_connect_action');
 }
 
 /**

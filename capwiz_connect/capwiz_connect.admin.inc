@@ -7,14 +7,9 @@
 /**
  * General settings for Capwiz Connect API usage
  */
-function capwiz_connect_settings($form_state) {
+function capwiz_connect_settings($form, $form_state) {
   $form = array();
-  $form['capwiz_connect_standalone_cron_enabled'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable standalone cron'),
-    '#description' => t('If this option is enabled all Capwiz Connect related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via !link', array('!link' => l(t('capwiz_connect_cron'), 'capwiz_connect_cron'))),
-    '#default_value' => variable_get('capwiz_connect_standalone_cron_enabled', 0),
-  );
+
   $form['capwiz_connect_user_batch_size'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc(array(10, 50, 100, 200)),
@@ -22,6 +17,7 @@ function capwiz_connect_settings($form_state) {
     '#description' => t('Select the amount of Capwiz users to grab during the import process.'),
     '#default_value' => variable_get('capwiz_connect_user_batch_size', 100),
   );
+
   $form['capwiz_connect_action_batch_size'] = array(
     '#type' => 'select',
     '#options' => drupal_map_assoc(array(10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)),
@@ -31,10 +27,6 @@ function capwiz_connect_settings($form_state) {
   );
 
   $form = system_settings_form($form);
-
-  // Need to clear the menu cache after saving so that the independent cron
-  // callback will be available (or not, depending on selection)
-  $form['#submit'][] = 'menu_rebuild';
 
   return $form;
 }
@@ -53,20 +45,22 @@ function capwiz_connect_account_list() {
   );
 
   $accounts = array();
-  
-  $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
-  while ($row = db_fetch_object($result)) {
-    $accounts[] = array(
-      $row->display_name,
-      l(t('overview'), 'admin/settings/capwiz_connect/accounts/' . $row->id),
-      l(t('edit'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/edit'),
-      l(t('user mapping'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/user_mapping'),
-      l(t('action mapping'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/action_mapping'),
-      l(t('delete'), 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
-    );
+
+  $results = db_query('SELECT * FROM capwiz_connect_accounts');
+
+  if (!empty($results)) {
+    foreach ($results as $record) {
+      $accounts[] = array(
+        $record->display_name,
+        l(t('overview'), CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record->id),
+        l(t('edit'), CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record->id . '/edit'),
+        l(t('user mapping'), CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record->id . '/user_mapping'),
+        l(t('action mapping'), CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record->id . '/action_mapping'),
+        l(t('delete'), CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record->id . '/delete'),
+      );
+    }
   }
-  
-  if (empty($accounts)) {
+  else {
     $accounts[] = array(
       array(
         'data' => t('No Capwiz Connect accounts have been added.'),
@@ -74,28 +68,29 @@ function capwiz_connect_account_list() {
       ),
     );
   }
-  
-  return theme_table($table_headers, $accounts);
+
+  return theme('table', array('header' => $table_headers, 'rows' => $accounts));
 }
 
 
 /**
  * Form to add or edit a Capwiz Connect account
  */
-function capwiz_connect_account_addoredit($form_state, $account = NULL) {
+function capwiz_connect_account_addoredit($form, $form_state) {
   $form = array();
-  $form['#redirect'] = 'admin/settings/capwiz_connect';
-  if (is_object($account)) {
+
+  $account = isset($form_state['build_info']['args'][0]) ? $form_state['build_info']['args'][0] : NULL;
+
+  if ($account) {
     $form['account_id'] = array(
       '#type' => 'value',
       '#value' => $account->id,
     );
-    $account_details = (array)$account;
-    
+
     // Go to the overview page after saving
-    $form['#redirect'] = 'admin/settings/capwiz_connect/accounts/' . $account->id;
+    $form['#redirect'] = CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $account->id;
   }
-  
+
   $form['display_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Display Name'),
@@ -103,8 +98,9 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#required' => TRUE,
-    '#default_value' => $account_details['display_name'],
+    '#default_value' => isset($account->display_name) ? $account->display_name : '',
   );
+
   $form['user_name'] = array(
     '#type' => 'textfield',
     '#title' => t('User Name'),
@@ -112,16 +108,19 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#required' => TRUE,
-    '#default_value' => isset($account_details['user_name']) ? decrypt($account_details['user_name']) : '',
+    '#default_value' => isset($account->user_name) ? decrypt($account->user_name, array('base64' => TRUE)) : '',
   );
+
   $form['user_password'] = array(
     '#type' => 'password',
     '#title' => t('User Password'),
     '#description' => t('API password for the Capwiz Connect API.'),
     '#size' => 40,
     '#maxlength' => 255,
-    '#required' => !($account->id > 0),
+    '#required' => !isset($account),
+    '#default_value' => '',
   );
+
   $form['form_affiliation'] = array(
     '#type' => 'textfield',
     '#title' => t('Form Affiliation'),
@@ -129,22 +128,26 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#required' => FALSE,
-    '#default_value' => $account_details['form_affiliation'],
+    '#default_value' => isset($account->form_affiliation) ? decrypt($account->form_affiliation) : '',
   );
-  $form['reset_import_date'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Reset the import date'),
-    '#description' => t('Enter a date, in any format, to reset the import settings to that date. Leave empty to not reset the current settings.'),
-    '#size' => 40,
-    '#maxlength' => 255,
-    '#required' => FALSE,
-  );
-  
+
+  // If we're editing an account display the reset sync field
+  if (isset($account)) {
+    $form['reset_import_date'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Reset the import date'),
+      '#description' => t('Enter a date, in any format, to reset the import settings to that date. Leave empty to not reset the current settings.'),
+      '#size' => 40,
+      '#maxlength' => 255,
+      '#required' => FALSE,
+    );
+  }
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );  
-  
+
   return $form;
 }
 
@@ -156,30 +159,30 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
   $values = $form_state['values'];
   $record = array(
     'display_name' => $values['display_name'],
-    'user_name' => encrypt($values['user_name']),
-    'id' => $values['account_id'],
+    'user_name' => encrypt($values['user_name'], array('base64' => TRUE)),
     'form_affiliation' => $values['form_affiliation'],
   );
   if (!empty($values['user_password'])) {
-    $record['user_password'] = encrypt($values['user_password']);
+    $record['user_password'] = encrypt($values['user_password'], array('base64' => TRUE));
   }
 
   // Determine if inserting or updating
-  if ($values['account_id'] > 0) {
+  if (isset($values['account_id'])) {
+    $record['id'] = $values['account_id'];
     // Nuke any previously-cached session information
     $session_id_cache_id = 'capwiz_session_id_' . $values['account_id'];
     $client_id_cache_id = 'capwiz_cache_id_' . $values['account_id'];
     cache_set($session_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
     cache_set($client_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
-    
-     // If a reset import date value was passed update those values
+
+    // If a reset import date value was passed update those values
     if ($reset = strtotime($values['reset_import_date'])) {
       $record['user_sync_since'] = $reset;
       $record['user_sync_offset'] = 0;
       $record['action_sync_since'] = $reset;
       $record['action_sync_offset'] = 0;
     }
-    
+
     $saved_record = drupal_write_record('capwiz_connect_accounts', $record, 'id');
     if ($saved_record) {
       drupal_set_message(t('Account updated'));
@@ -189,10 +192,9 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
     $new_record = drupal_write_record('capwiz_connect_accounts', $record);
     if ($new_record) {
       drupal_set_message(t('New Account created'));
-      // Redirect them to the overview page
-      drupal_goto('admin/settings/capwiz_connect/accounts/' . $record['id']);
     }
   }
+  $form_state['redirect'] = array(CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $record['id']);
 }
 
 
@@ -201,52 +203,46 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
  * Show overview tab for an account
  */
 function capwiz_connect_account_overview($account) {
-  $form = array();
-  $form['display_name'] = array(
-    '#type' => 'item',
-    '#value' => $account->display_name,
-    '#title' => t('Display Name'),
+
+  $build = array();
+  $build['display_name'] = array(
+    '#type' => 'markup',
+    '#markup' => check_plain($account->display_name),
+    '#prefix' => '<h2>' . t('Display Name') . '</h2>',
     '#weight' => 0,
   );
-  
+
   $connection = capwiz_connect($account->id);
+
+  $build['creds_ok'] = array(
+    '#prefix' => '<h2>' .  t('Connection') . '</h2>',
+    '#weight' => 1,
+  );
+
   if ($connection->isConnected()) {
-    $form['creds_ok'] = array(
-      '#type' => 'item',
-      '#value' => 'Credentials OK',
-      '#title' => t('Connection'),
-      '#prefix' => '<div class="connected">',
-      '#suffix' => '</div>',
-      '#weight' => 10,
-    );
+    $build['creds_ok']['#markup'] = 'Credentials OK';
   }
   else {
     $error = $connection->getLastError();
     drupal_set_message(filter_xss($error), 'error');
-    $form['creds_ok'] = array(
-      '#type' => 'item',
-      '#value' => 'Error connecting to Capwiz',
-      '#title' => t('Connection'),
-      '#prefix' => '<div class="connection_error">',
-      '#suffix' => '</div>',
-      '#weight' => 10,
-    );
+    $build['creds_ok']['#markup'] = t('Error connecting to Capwiz:') . ' ' . filter_xss($error);
   }
-  
-  $form['user_mapping'] = array(
-    '#type' => 'item',
-    '#value' => (isset($account->mapping_user)) ? 'Set' : 'Not set',
-    '#title' => t('User Mapping'),
-    '#weight' => 20,
+
+  $build['user_mapping'] = array(
+    '#type' => 'markup',
+    '#markup' => isset($account->mapping_user) ? 'Set' : 'Not set',
+    '#prefix' => '<h2>' . t('User Mapping') . '</h2>',
+    '#weight' => 2,
   );
-  $form['action_mapping'] = array(
-    '#type' => 'item',
-    '#value' => (isset($account->mapping_action)) ? 'Set' : 'Not set',
-    '#title' => t('Action Mapping'),
-    '#weight' => 20,
+
+  $build['action_mapping'] = array(
+    '#type' => 'markup',
+    '#markup' => (isset($account->mapping_action)) ? 'Set' : 'Not set',
+    '#prefix' => '<h2>' . t('Action Mapping') . '</h2>',
+    '#weight' => 3,
   );
-  
-  return drupal_render($form);
+
+  return $build;
 }
 
 
@@ -254,14 +250,14 @@ function capwiz_connect_account_overview($account) {
 /**
  * Confirm account delete
  */
-function capwiz_connect_account_delete($form_state, $account) {
-  if ($account->id > 0) {
+function capwiz_connect_account_delete($form, &$form_state, $account) {
+  if (isset($account)) {
     $form = array(
       '#account_id' => $account->id,
     );
-    
-    $cancel_path = 'admin/settings/capwiz_connect/accounts/' . $account->id;
-    
+
+    $cancel_path = CAPWIZ_CONNECT_ADMIN_URL . '/accounts/' . $account->id;
+
     return confirm_form(
       $form,
       t('Are you sure you want to delete the account %display_name?', array('%display_name' => $account->display_name)),
@@ -273,7 +269,7 @@ function capwiz_connect_account_delete($form_state, $account) {
   }
   else {
     drupal_set_message(t('That account does not exist.'), 'error');
-    drupal_goto($cancel_path);
+    drupal_goto(CAPWIZ_CONNECT_ADMIN_URL);
   }
 }
 
@@ -283,16 +279,21 @@ function capwiz_connect_account_delete($form_state, $account) {
  */
 function capwiz_connect_account_delete_submit($form, &$form_state) {
   $account_id = $form['#account_id'];
-  
+
   // Delete the account record
-  db_query('DELETE FROM {capwiz_connect_accounts} WHERE id = %d', $account_id);
-  
+  db_delete('capwiz_connect_accounts')
+    ->condition('id', $account_id)
+    ->execute();
+
   // Delete any field mappings
   $drupal = 'capwiz_connect:' . $account_id . ':%';
-  db_query("DELETE FROM {salesforce_management_field_map} where drupal LIKE '%s'", $drupal);
-  
+
+  db_delete('salesforce_management_field_map')
+    ->condition('drupal', $drupal, 'LIKE')
+    ->execute();
+
   drupal_set_message(t('The account has been deleted.'));
-  $form_state['redirect'] = 'admin/settings/capwiz_connect/accounts';
+  $form_state['redirect'] = CAPWIZ_CONNECT_ADMIN_URL . '/accounts';
 }
 
 

@@ -1,7 +1,7 @@
 name = Capwiz Connect JavaScript Integration
 description = "Add-on module to Capwiz Connect. Enables passing data from the Capwiz form to website."
 core = 7.x
-package = Jackson River Springboard
+package = "Jackson River Springboard - extras"
 dependencies[] = capwiz_connect
 version =  7.x-3.0-dev
-configure = admin/config/capwiz_connect/capwiz
+configure = admin/springboard/capwiz-connect/
