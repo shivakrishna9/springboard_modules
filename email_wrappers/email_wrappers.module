@@ -192,7 +192,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
     $form['template']['preview'] = array(
       '#type' => 'button',
       '#id' => 'email-wrappers-preview',
-      '#value' => t('Preview form raw'),
+      '#value' => t('Preview E-Mail'),
       '#attributes' => array('class' => array('ctools-use-modal')),
       '#weight' => 20,
     );
