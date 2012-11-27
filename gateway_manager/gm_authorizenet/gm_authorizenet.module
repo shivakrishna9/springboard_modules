@@ -181,7 +181,7 @@ function gm_authorizenet_payment_gateway_settings_submit($form, &$form_state) {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
     // Setup our encryption object.
-    $crypt = new uc_encryption_class;
+    $crypt = new UbercartEncryption;
 
     // Encrypt the Login ID, Transaction key, and MD5 Hash.
     if (!empty($form_state['values']['uc_authnet_md5_hash'])) {
@@ -355,6 +355,7 @@ function _gm_authorizenet_cim_profile_charge($order, $amount, $data) {
  * Helper for building the request for a CIM profile charge.
  */
 function _gm_authorizenet_cim_profile_charge_request($order, $amount, $data) {
+  // Request per: http://www.authorize.net/support/CIM_XML_guide.pdf, using createCustomerProfileTransactionRequest
   $profile = _gm_authorizenet_cim_profile_get($order, $data['ref_id'], $data['config']);
   if ($profile['resultCode'] == 'Error') {
     return $profile;
@@ -446,7 +447,7 @@ function _gm_authorizenet_charge($order, $amount, $data) {
     // 'x_method' => $order->payment_method == 'credit' ? 'CC' : 'ECHECK',
     'x_method' => 'CC',
     // 'x_recurring_billing' => 'FALSE',
-    'x_amount' => theme('uc_price', array('price' => $amount, 'suffixes' => array())),
+    'x_amount' => $amount, //theme('uc_price', array('price' => $amount, 'suffixes' => array())),
     'x_card_num' => $order->payment_details['cc_number'],
     'x_exp_date' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'x_card_code' => $order->payment_details['cc_cvv'],
@@ -708,8 +709,31 @@ function _gm_authorizenet_array_to_xml($data) {
   // Loop through the elements in the data array.
   foreach ($data as $element => $contents) {
     if (is_array($contents)) {
-      // Render the element with its child elements.
-      $xml .= '<' . $element . '>' . _gm_authorizenet_array_to_xml($contents) . '</' . $element . '>';
+      if ($element == 'extraOptions') {
+        /* Per docs for CIM, XML, this is the odd man out. :
+            Value: Information in name/value pair format that does not exist within CIM, such as customer IP address, etc.
+            Optional Format: String
+            Notes: For a complete list of the transaction variable names available, review the AIM Implementation Guide
+            located at http://www.authorize.net/support/AIM_ guide.pdf.
+            Ex:
+            <extraOptions>
+              <![CDATA[x_customer_ip=100.0.0.1&x_authentication_indicator=5]]>
+            </ extraOptions>
+        */
+        $CDATA = array();
+        foreach ($contents as $key => $value) {
+          // extraOptions doesn't do nested, so if something has been nested - ignore it.
+          if (!is_array($value)) {
+            $CDATA[] .= trim(htmlspecialchars($key)) . '=' . trim(htmlspecialchars($value));
+          }
+        }
+        $CDATA = implode('&', $CDATA);
+        $xml .= '<extraOptions><![CDATA['. $CDATA .']]></extraOptions>';
+      }
+      else {
+        // Render the element with its child elements.
+        $xml .= '<'. $element .'>'. _gm_authorizenet_array_to_xml($contents) .'</'. $element .'>';
+      }
     }
     else {
       // Render the element with its contents.
@@ -924,7 +948,7 @@ function _gm_authorizenet_login_data() {
   // If CC encryption has been configured properly.
   if ($key = uc_credit_encryption_key()) {
     // Setup our encryption object.
-    $crypt = new uc_encryption_class;
+    $crypt = new UbercartEncryption;
 
     // Decrypt the MD5 Hash.
     if (!empty($md5_hash)) {

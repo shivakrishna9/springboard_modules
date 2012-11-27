@@ -127,7 +127,7 @@ function fundraiser_permission() {
 function fundraiser_menu() {
   // Admin paths.
   $items['admin/config/system/fundraiser'] = array(
-    'title' => 'Fundraiser settings',
+    'title' => 'Fundraiser',
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
@@ -136,7 +136,7 @@ function fundraiser_menu() {
     'file' => 'fundraiser.admin.inc',
   );
   $items['admin/config/system/fundraiser/settings'] = array(
-    'title' => 'Fundraiser settings',
+    'title' => 'Fundraiser',
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
@@ -1415,6 +1415,18 @@ function _fundraiser_refund_submit($form, &$form_state) {
  */
 
 /**
+ * Donation processing, a given donation needs to be commented on.
+ */
+function fundraiser_donation_comment($donation, $comment, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
+  // Make a log entry
+  if (variable_get('fundraiser_log_comments', 0)) {
+    watchdog('fundraiser_comment', $comment, $variables, $severity, $link);
+  }
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_comment', $donation, $comment, $variables, $severity, $link);
+}
+
+/**
  * Donation processing, a given donation failed to validate.
  */
 function fundraiser_donation_failed_validation($errors) {
@@ -1443,13 +1455,18 @@ function fundraiser_donation_create($donation) {
     'txn_id' => '',
   );
   _fundraiser_create_donation($donation_record);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was created on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
 }
 
 /**
  * Donation processing, a donation needs to be updated with new information prior to processing.
  * For example, in the course of updating a sustainers information.
  */
-function fundraiser_donation_update($donation) {
+function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   module_invoke_all('fundraiser_donation_update', $donation);
   // The additional fields $donation->additional, ready to process.
@@ -1478,6 +1495,13 @@ function fundraiser_donation_update($donation) {
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
+  // Add a comment.
+  if ($vocal_mode) {
+    global $user;
+    $username = isset($user->name) ? $user->name : 'Anonymous';
+    fundraiser_donation_comment($donation, 'This donation was updated on @date by @username.',
+      array('@date' => format_date(strtotime('now')), '@username' => $username));
+  }
 }
 
 /**
@@ -1486,7 +1510,7 @@ function fundraiser_donation_update($donation) {
 function fundraiser_donation_process($donation) {
   // Grab the gateway from the fundraiser configured gateway.
   // Later this will be stored with the donation (since the gateway for the fundraiser may change).
-  $info = _fundraiser_gateway_info($donation->node->gateway);
+  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
   // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
@@ -1501,6 +1525,9 @@ function fundraiser_donation_process($donation) {
     // leave that entirely to the payment module to handle.
     module_invoke_all('fundraiser_donation_process', $donation);
   }
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1516,6 +1543,14 @@ function fundraiser_donation_success($donation) {
   }
   // Allow other modules to respond to the success.
   module_invoke_all('fundraiser_donation_success', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was successfully completed on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -1534,6 +1569,14 @@ function fundraiser_donation_decline($donation) {
   }
   // Allow other modules to respond to the decline.
   module_invoke_all('fundraiser_donation_decline', $donation);
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was declined at the gateway on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
 }
 
 // TODO how does this even get called? Is this functionally different from a decline?
@@ -1549,6 +1592,14 @@ function fundraiser_donation_exception($donation) {
   if ($display_message) {
     drupal_set_message($donation->result['message']);
   }
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation encountered an exception on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
   // Allow other modules to respond to the exception.
   module_invoke_all('fundraiser_donation_exception', $donation);
 }
@@ -1564,8 +1615,16 @@ function fundraiser_donation_cancel($donation) {
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message(t('Your payment has been canceled'));
+    drupal_set_message(t('Your payment #:did has been canceled.', array(':did' => $donation->did)));
   }
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_cancel', $donation);
 }
@@ -1581,8 +1640,16 @@ function fundraiser_donation_delete($donation) {
   // Show gateay message if appropriate.
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-    drupal_set_message(t('Your payment has been deleted'));
+    drupal_set_message(t('Your payment #:did has been deleted.', array(':did' => $donation->did)));
   }
+  // Add a comment.
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  fundraiser_donation_comment($donation, 'This donation was deleted on @date by @username.',
+    array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // And save the donation as it is at this stage since it was created.
+  // This makes sure that any changes made stay in place.
+  fundraiser_donation_update($donation, FALSE);
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_delete', $donation);
 }
@@ -1596,7 +1663,7 @@ function fundraiser_donation_refund($refund) {
     return; // Not a valid amount to refund.
   }
   // Grab the gateway from the fundraiser configured gateway.
-  $info = _fundraiser_gateway_info($refund->node->gateway);
+  $info = _fundraiser_gateway_info($refund->node->gateway['id']);
   // Check for the charge function to be defined.
   $refund_function = isset($info['refund_function']) ? $info['refund_function'] : '';
   if (empty($refund_function)) {
@@ -1657,6 +1724,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->node = node_load($donation_record->nid);
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
+  $donation->sid = $donation_record->sid;
 
   // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);

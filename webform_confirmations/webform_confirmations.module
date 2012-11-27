@@ -92,7 +92,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   $form['submission']['help']['tokens'] = array(
     '#type' => 'item',
     '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set)),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
   $form['submission']['help']['webform_tokens'] = array(
     '#type' => 'item',

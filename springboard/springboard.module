@@ -28,7 +28,7 @@ function springboard_menu() {
   $items = array();
   // Admin settings for dashboard display.
   $items['admin/config/system/springboard'] = array(
-    'title' => 'Springboard settings',
+    'title' => 'Springboard',
     'description' => 'Configurations for the Springboard system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_admin_settings'),
@@ -252,10 +252,13 @@ function springboard_menu_alter(&$items) {
     $items['admin/springboard/settings/salesforce-queue']['access arguments'] = array('administer springboard');
   }
   if (module_exists('gateway_manager')) {
-    $path = module_exists('gateway_manager') ? 'admin/config/system/fundraiser/gateways' : 'admin/store/settings/payment/edit/gateways';
-    $items['admin/springboard/settings/gateways'] = $items[$path];
+    $items['admin/springboard/settings/gateways'] = $items['admin/config/system/fundraiser/gateways'];
     $items['admin/springboard/settings/gateways']['type'] = MENU_LOCAL_TASK;
     $items['admin/springboard/settings/gateways']['access arguments'] = array('administer springboard');
+    $items['admin/springboard/settings/gateways-add'] = $items['admin/config/system/fundraiser/gateways/add'];
+    $items['admin/springboard/settings/gateways-add']['title'] = t('Add gateway');
+    $items['admin/springboard/settings/gateways-add']['type'] = MENU_LOCAL_TASK;
+    $items['admin/springboard/settings/gateways-add']['access arguments'] = array('administer springboard');
   }
   if (module_exists('webform_ab')) {
     $items['admin/springboard/settings/webform-ab'] = $items['admin/config/content/webform_ab'];

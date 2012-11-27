@@ -236,5 +236,9 @@ function form_layouts_preprocess_two_column_donation(&$vars) {
     $vars['donor_information_fieldset'] =  drupal_render($vars['element']['submitted']['donor_information']);
     $vars['billing_address_fieldset'] =  drupal_render($vars['element']['submitted']['billing_information']);
     $vars['credit_card_fieldset'] =   drupal_render($vars['element']['submitted']['credit_card_information']);
+    // Do Not Loop This Process. We don't want to keep trying to render this theme.
+    unset($vars['element']['#theme']);
+    // Place in a location the end template can pick up.
+    $vars['form'] = $vars['element'];
   }
 }

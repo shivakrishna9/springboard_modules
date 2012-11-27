@@ -231,11 +231,13 @@ function springboard_admin_config_salesforce_contacts(&$form, $form_state) {
 function springboard_admin_config_springboard(&$form, $form_state) {
   $default_enabled_panes = array();
   drupal_alter('springboard_dashboard_panes', $panes);
-  foreach ($panes as $name => $info) {
-    $panes[$name] = $info['label'];
-    $default_enabled_panes[$name] = $name;
+  if (is_array($panes)) {
+    foreach ($panes as $name => $info) {
+      $panes[$name] = $info['label'];
+      $default_enabled_panes[$name] = $name;
+    }
+    variable_set('springboard_enabled_panes', $default_enabled_panes);
   }
-  variable_set('springboard_enabled_panes', $default_enabled_panes);
 }
 
 /**

@@ -39,17 +39,22 @@ function fundraiser_ubercart_mail_alter(&$message) {
   if ($message['id'] == 'uc_order_action-mail') {
     // Gather data.
     $parts = explode("/", $_GET['q']);
-    $nid = $parts[1];
-    $node = node_load($nid);
-    // Make changes.
-    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
-      ' <' . $node->receipt_email_address . '>';
-    $bcc = variable_get('fundraiser_receipt_bcc', '');
-    if (!empty($bcc)) {
-      $message['headers']['Bcc'] = $bcc;
+    if (isset($parts[1])) {
+      $node = node_load($parts[1]);
+      // Make changes.
+      $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
+        ' <' . $node->receipt_email_address . '>';
+      $bcc = variable_get('fundraiser_receipt_bcc', '');
+      if (!empty($bcc)) {
+        $message['headers']['Bcc'] = $bcc;
+      }
+      $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+      $message['subject'] = $node->receipt_email_subject;
     }
-    $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
-    $message['subject'] = $node->receipt_email_subject;
+    else {
+      // Else, this is coming from a cron job, we should intercept it entirely.
+      $message['send'] = FALSE;
+    }
   }
 }
 
@@ -61,6 +66,14 @@ function fundraiser_ubercart_uc_order($op, $order, $arg2) {
     $donation = fundraiser_donation_get_donation($order->order_id); // Get the donation object.
     if (isset($donation->nid)) { // This is a fundraiser donation order.
       fundraiser_donation_delete($donation); // Delete it.
+    }
+  }
+  // cc_cvv is unset on order save for PCI compliance.
+  // Since we can't rely on all UC modules to handle the empty cc_cvv index correctly (Test Gateway)
+  // We set the value if it is not already set.
+  if ($op == 'load') {
+    if (!isset($order->payment_details['cc_cvv'])) {
+      $order->payment_details['cc_cvv'] = '';
     }
   }
 }
@@ -354,6 +367,16 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_comment().
+ */
+function fundraiser_ubercart_fundraiser_donation_comment($donation, $comment, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
+  // Given a donation, comment, etc - make a UC comment.
+  global $user;
+  $status = isset($donation->status) ? $donation->status : 'pending';
+  uc_order_comment_save($donation->did, $user->uid, t($comment, $variables), 'admin', $status, FALSE);
+}
+
+/**
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
@@ -476,7 +499,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     'cc_exp_month' => $donation->donation['card_expiration_month'],
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => '',
-    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+    // cc_cvv is unset on order save for PCI compliance.
     'cc_bank' => '',
   );
   $order->line_items = array();
@@ -496,8 +520,6 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
   // Save the order.
   uc_order_save($order);
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $username)), 'admin');
 
   // We only need to return the did at this point.
   // When we charge later, this is the only value that the glue module will need.
@@ -519,20 +541,46 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
  */
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundriaser's data.
-  $info = _fundraiser_gateway_info($donation->node->gateway);
+  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
+    return;
+  }
   // Create the charge information.
-  $config = isset($info['config']) ? $info['config'] : array();
+  $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
   $donation->data = (array) $donation->data;
-  $donation_confg = isset($donation->data['config']) ? $donation->data['config'] : array();
-  $donation->data['config'] = array_merge((array) $donation_confg, (array) $config);
+  $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
+  $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
   // Execute the charge as per the given gateway.
   $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
   $donation->data = array_merge($data, $donation->data);
   // Make the charge, the charge functions can handle looking up the order and other data.
-  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+  if (function_exists($charge_function)) {
+    $result = $charge_function($donation->did, $donation->donation['amount'], $donation->data);
+  }
+  else {
+    watchdog('fundraiser_ubercart', 'Charge function :function does not exist.', array(':function' => $charge_function));
+  }
   // Have to pass up to the system.
   $donation->result = $result;
+  // If a success set up the order information now, so it's available on success responses.
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    // New user account is created during uc_cart_complete_sale.
+    $order = uc_order_load($donation->did);
+    uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+    uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
+      t('Payment processed by the fundraiser module.'));
+    // Look up the created user, and add them to the donation object.
+    $donation->uid = $order->uid;
+    $donation->user = user_load($order->uid);
+    // Add the order status data.
+    // Translate the status according to UC label.
+    $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+    if (!empty($order->order_status)) {
+      $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    }
+  }
 }
 
 /**
@@ -572,35 +620,37 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
     'cc_exp_month' => $donation->donation['card_expiration_month'],
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
-    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
     'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
   );
 
   // Update the card type based on given card number.
   $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
 
+  // Update the donation status.
+  if (isset($order->status) && isset($donation->status) && $order->status != $donation->status) {
+    $order->status = $donation->status;
+  }
+
   // Save the updated order.
   uc_credit_cache('save', $order->payment_details, FALSE);
   uc_order_save($order);
   uc_credit_cache('clear');
-  global $user;
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  uc_order_comment_save($donation->did, $user->uid, t('Donation updated by :user.', array(':user' => $username)), 'admin');
+
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 }
 
 /**
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_ubercart_fundraiser_donation_success($donation) {
-  // Mark as complete. Complete the sale in Ubercart.
-  $order = uc_order_load($donation->did);
-  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
-    t('Payment processed by the fundraiser module.'));
+  // Mark as complete.
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
-  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $username)), 'admin');
 }
 
 /**
@@ -611,9 +661,6 @@ function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   _fundraiser_ubercart_update_order_status('failed', $donation->did);
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
-  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $username)), 'admin');
 }
 
 /**
@@ -627,12 +674,30 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
  * Implements hook_fundraiser_donation_cancel().
  */
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
-  // Mark the sale in Ubercart as cancelled.
+  // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
-  // Make a comment on the order.
-  global $user;
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $username)), 'admin');
+  $order = uc_order_load($donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_ubercart_fundraiser_donation_delete($donation) {
+  // Mark the sale in Ubercart as canceled.
+  _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  $order = uc_order_load($donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+  }
 }
 
 /**
@@ -780,7 +845,7 @@ function _fundraiser_ubercart_get_label_by_status($status) {
  *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption;
   $cc = unserialize($data);
   $cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);

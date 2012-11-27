@@ -1,17 +1,12 @@
-core = "6.x"
-dependencies[] = "clone"
-dependencies[] = "features"
-dependencies[] = "fieldgroup"
-dependencies[] = "filefield"
-dependencies[] = "views"
+core = "7.x"
 description = "Allows users to create page templates that can then be assigned to nodes."
-features[content][] = "page_wrapper-field_css_file"
-features[content][] = "page_wrapper-field_js_file"
-features[fieldgroup][] = "page_wrapper-group_files"
-features[node][] = "page_wrapper"
-features[views][] = "page_wrappers"
-features[views_api][] = "api:2"
 name = "Page Wrappers"
-package = "Features"
-project = "page_wrappers"
-version =  6.x-3.0-dev
+version =  7.x-3.0-dev
+package = "Jackson River Springboard - extras"
+
+configure = admin/config/content/page-wrappers
+
+files[] = page_wrappers.install
+files[] = page_wrappers.module
+files[] = page_wrappers.admin.inc
+
