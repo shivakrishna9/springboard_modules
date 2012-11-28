@@ -95,11 +95,11 @@ function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implements hook_order_actions() from Ubercart.
+ * Implements hook_uc_order_actions() from Ubercart.
  * Add a refund option to the Order list.
- * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_actions/7
  */
-function fundraiser_order_actions($order) {
+function fundraiser_uc_order_actions($order) {
   $gateway = _fundraiser_get_donation_gateway($order->order_id);
   $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (user_access('edit orders') &&
@@ -114,6 +114,37 @@ function fundraiser_order_actions($order) {
     );
     return $actions;
   }
+}
+
+/**
+ * Implements hook_uc_order_pane() from Ubercart.
+ * Add a display of donation information to the order display.
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_pane/7
+ */
+function fundraiser_ubercart_uc_order_pane() {
+  // Wrap pane interface around drupal information output.
+  $panes['fundraiser'] = array(
+    'callback' => 'fundraiser_ubercart_donation_pane', 
+    'title' => t('Fundraiser information'), 
+    'desc' => t('View Fundraiser information given a specific order.'), 
+    'class' => 'abs-left',
+    'weight' => 10,
+    'show' => array('view', 'edit'),
+  );
+  return $panes;
+}
+
+/**
+ * Callback for donation pane display.
+ */
+function fundraiser_ubercart_donation_pane($op, $order, &$form = NULL, &$form_state = NULL) {
+  $table = fundraiser_donation_information_table($order->order_id);
+  if ($op == 'view') {
+    return array(
+      '#markup' => $table,
+    );
+  }
+  return $table;
 }
 
 /**
