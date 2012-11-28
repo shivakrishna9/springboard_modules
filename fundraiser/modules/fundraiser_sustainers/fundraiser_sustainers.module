@@ -208,20 +208,13 @@ function fundraiser_sustainers_charge_now($did) {
 }
 
 /**
- * Implemenation of hook_mail(). // TODO shouldn't this move to sustainers?
+ * Implemenation of hook_mail().
  */
 function fundraiser_sustainer_mail($key, &$message, &$params) {
   switch ($key) {
     case 'fundraiser_cc_notification':
-      $body = variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].');
-      // Do some token replacements.
-      $tokens = array('[exp_month]', '[exp_year]', '[cc_type]', '[cc_last_4]', '[amount]');
-      $replaces = array($params['exp_month'], $params['exp_year'], $params['cc_type'], $params['cc_last_4'], $params['amount']);
-      $body = str_replace($tokens, $replaces, $body);
-      // Replace any user tokens via the token module.
-      $body = token_replace($body, 'user', $params['user']);
       $message['subject'] = variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire');
-      $message['body'] = $body;
+      $message['body'] = $params['fundraiser_sustainers_body'];
       break;
   }
 }
@@ -373,15 +366,22 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Email body'),
-    '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
+    '#default_value' => variable_get('fundraiser_cc_exp_body',
+      'Your card ending in [donation:card_number] is about to expire on [donation:card_expiration_month]/[donation:card_expiration_year].'),
     '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
   );
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Donor replacement tokens'),
-    '#description' => t('The following tokens are available for donor'),
+    '#description' => t('The following tokens are available for sustainer emails.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+  );
+  $token_set = array('donation', 'user', 'node');
+  $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens']['token_help'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
   $form['#submit'][] = 'fundraiser_update_cron_settings';
 }
@@ -1039,16 +1039,14 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
     array(':master_did' => $master_did))->fetchColumn();
   $donation = fundraiser_donation_get_donation($did);
 
-  // Set up some params that can be used in the email.
-  $params['exp_month'] = $donation->donation['card_expiration_month'];
-  $params['exp_year'] = $donation->donation['card_expiration_year'];
-  $params['cc_last_4'] = drupal_substr($donation->donation['card_number'], -4); // Scrub the result so we don't transmit in the clear.
-  $params['cc_type'] = $donation->donation['cc_type'];
-  $params['amount'] = $donation->donation['amount'];
-  $params['did'] = $did;
-  $params['user'] = $user;
-  $params['master_did'] = $master_did;
-
+  // Do token replacement on body.
+  $body = variable_get('fundraiser_cc_exp_body',
+    'Your card ending in [donation:card_number] is about to expire on [donation:card_expiration_month]/[donation:card_expiration_year].');
+  $token_set = array('node' => $donation->node, 'donation' => $donation, 'user' => $user);
+  $body = token_replace($body, $token_set);
+  // Pass tokens as param so hook_mail has access.
+  $params['fundraiser_sustainers_token_set'] = $token_set;
+  $params['fundraiser_sustainers_body'] = $body;
   watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
   drupal_mail('fundraiser', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
 }
