@@ -280,8 +280,39 @@ function fundraiser_sustainers_user_overview($user) {
     drupal_goto('user/' . $user->uid);
   }
   else {
-    // Forward user to the first listed donation.
-    drupal_goto('user/' . $user->uid . '/recurring_overview/' . $donations[0]->master_did);
+    if (count($donations) == 1) {
+      // Forward user to the donation IFF the user only has one.
+      drupal_goto('user/' . $user->uid . '/recurring_overview/' . $donations[0]->master_did);
+    }
+    else {
+      // Else display the list.
+      // Get the whole set of user donations (in case there's more than just this one). IIF the user owns this one.
+      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
+      $donations_rows = array();
+      foreach ($donations as $master_donation) {
+        $this_donation = fundraiser_donation_get_donation($master_donation->master_did);
+        // Grab the next to be charged for misc info.
+        $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->master_did);
+        $this_next_donation = $this_donation;
+        if ($remaining) {
+          $this_next_donation = fundraiser_donation_get_donation($remaining[0]->did);
+        }
+        $edit_link = l('$' . money_format('%i', $this_next_donation->donation['amount']),
+          'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+        $donations_rows[] = array(
+          'data' => array(
+            'amount' => $edit_link,
+            'start_date' => date('m/d/y', $master_donation->start_date),
+            'next_charge' => !empty($master_donation->next_charge) ? date('m/d/y', $master_donation->next_charge) : '--/--/--',
+            'expire_date' => date('m/d/y', $master_donation->expire_date),
+            'status' => $master_donation->status,
+          ),
+          'class' => array('recurring-order'),
+        );
+      }
+      $recurring_donations = theme('table', array('header' => $donations_header, 'rows' => $donations_rows));
+      return $recurring_donations;
+    }
   }
 }
 
@@ -436,42 +467,6 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  // Get the whole set of user donations (in case there's more than just this one). IIF the user owns this one.
-  $recurring_donations = '';
-  if ($donation->user->uid == $user->uid) {
-    $donations = _fundraiser_sustainers_get_donation_sets_recurr_by_uid($donation->user->uid);
-    $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
-    $donations_rows = array();
-    if ($donations) {
-      foreach ($donations as $master_donation) {
-        $this_donation = fundraiser_donation_get_donation($master_donation->master_did);
-        // Grab the next to be charged for misc info.
-        $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($master_donation->master_did);
-        $this_next_donation = $this_donation;
-        if ($remaining) {
-          $this_next_donation = fundraiser_donation_get_donation($remaining[0]->did);
-        }
-        $edit_link = l('$' . money_format('%i', $this_next_donation->donation['amount']),
-          'user/' . $donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
-        $class = 'recurring-order';
-        if ($master_donation->master_did == $did) {
-          $class = 'recurring-order active';
-        }
-        $donations_rows[] = array(
-          'data' => array(
-            'amount' => $edit_link,
-            'start_date' => date('m/d/y', $master_donation->start_date),
-            'next_charge' => !empty($master_donation->next_charge) ? date('m/d/y', $master_donation->next_charge) : '--/--/--',
-            'expire_date' => date('m/d/y', $master_donation->expire_date),
-            'status' => $master_donation->status,
-          ),
-          'class' => array($class),
-        );
-      }
-    }
-    $recurring_donations = theme('table', array('header' => $donations_header, 'rows' => $donations_rows));
-  }
-
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   $payment_info = '<div id="payment-info">' .
@@ -578,7 +573,8 @@ function fundraiser_sustainers_edit_form($did) {
     $cancel_form = '';
   }
   // Put together the output.
-  $parts = array($recurring_donations, $payment_info, $billing_info, $future_orders, $donation_amount_form, $billing_update_form, $cancel_form);
+  drupal_set_title(t('Recurring donation #@did', array('@did' => $did)));
+  $parts = array($payment_info, $billing_info, $future_orders, $donation_amount_form, $billing_update_form, $cancel_form);
   return implode('', $parts);
 }
 
