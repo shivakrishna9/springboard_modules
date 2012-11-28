@@ -104,7 +104,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '(See tokens below).');
   $form['submission']['redirection']['#description'] = t('Choose where to redirect the user upon successful submission. The Custom URL ' .
     'option supports Webform token replacements. (See tokens below).');
-  // Shuffle things later into the form.
+  // Shuffle things to display later in the form, there may be a better way to reorg the array. Check later.
   $total_submit_limit = $form['submission']['total_submit_limit'];
   $submit_limit = $form['submission']['submit_limit'];
   $status = $form['submission']['status'];
