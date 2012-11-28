@@ -4,3 +4,9 @@
   
     - Add a reset button to all exposed filter forms.
     - Organize the fields on the filter forms.
+
+2012-10-08  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+  * springboard_views.module - Added sf_queue info to VBO hooks to enable the delete action
+  * springboard_views.views_default.inc - Updated the sf_queue view default code view to have the VBO action enabled
+
