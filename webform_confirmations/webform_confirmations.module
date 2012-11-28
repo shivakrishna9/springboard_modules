@@ -87,7 +87,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '#collapsed' => TRUE,
   );
   $token_set = array('node');
-  // Then add any other token set as needed.
+  // Then add any other token set as needed. (Here is where donation, donation user etc get put in.)
   drupal_alter('webform_confirmations_token_info', $token_set, $node);
   $form['submission']['help']['tokens'] = array(
     '#type' => 'item',
