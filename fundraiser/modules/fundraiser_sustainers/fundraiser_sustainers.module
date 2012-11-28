@@ -114,7 +114,7 @@ function fundraiser_sustainers_menu() {
   // If Ubercart exists. Show these as a tab there as well.
   if (module_exists('uc_order')) {
     $items['admin/store/orders/%/recurring'] = array(
-      'title' => 'Recurring donations',
+      'title' => 'Recurring donation set',
       'page callback' => 'fundraiser_sustainers_admin_view',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',
@@ -123,7 +123,7 @@ function fundraiser_sustainers_menu() {
       'file' => 'fundraiser_sustainers.admin.inc',
     );
     $items['admin/store/orders/%/recurring/recurring'] = array(
-      'title' => 'View donation',
+      'title' => 'View donation set',
       'page callback' => 'fundraiser_sustainers_admin_view',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',
@@ -132,7 +132,7 @@ function fundraiser_sustainers_menu() {
       'file' => 'fundraiser_sustainers.admin.inc',
     );
     $items['admin/store/orders/%/recurring/edit'] = array(
-      'title' => 'Edit donation',
+      'title' => 'Edit donation set',
       'page callback' => 'fundraiser_sustainers_admin_edit',
       'page arguments' => array(3),
       'access callback' => 'fundraiser_sustainers_check_access',
