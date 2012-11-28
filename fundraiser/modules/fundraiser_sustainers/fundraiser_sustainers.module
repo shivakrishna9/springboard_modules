@@ -324,7 +324,7 @@ function fundraiser_sustainers_user_overview($user) {
 function fundraiser_sustainers_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'delete':
-      $donation = fundraiser_donation_get_donation($arg1->order_id); //Allowed use of order_id, ubercart is passing in an actual order.
+      $donation = fundraiser_donation_get_donation($arg1->order_id); // Allowed use of order_id, ubercart is passing in an actual order.
       if ($donation) {
         fundraiser_donation_cancel($donation);
       }
@@ -509,11 +509,11 @@ function fundraiser_sustainers_edit_form($did) {
       $donations_row['amount'] = '$' . money_format('%i', $this_donation->donation['amount']);
       $donations_row['charge_date'] = date('m/d/y', $this_donation->recurring->next_charge);
       if (empty($this_donation->status)) {
-        $this_donation->status = 'pending';
+        $this_donation->status = t('Pending');
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
       if (user_access('fastforward recurring donations')) {
-        if (in_array($this_donation->status, array('in_checkout', 'pending_future_payment'))) {
+        if (!empty($this_donation->status_charged) && $this_donation->status_charged == FALSE) {
           // Add a button to fastforward this particular donation
           $donations_row['ffwd'] = l(t('advance charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
             array('query' => drupal_get_destination()) );
@@ -887,7 +887,8 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   global $user;
   $master_did = $form_state['values']['master_did'];
   $reason = $form_state['values']['reason'];
-  if (empty($reason)) {
+  if (empty($reason) || $reason == t('Please enter a brief description of why you are cancelling. ' .
+      'This will help us better serve you in the future.')) {
     $reason = t('No reason given.');
   }
   // Cancel the donations.
@@ -1139,11 +1140,11 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
-      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? t('Cancelled') : t('Active');
     }
     else {
       $donation_sets[$index]->next_charge = '';
-      $donation_sets[$index]->status = 'no next charge';
+      $donation_sets[$index]->status = t('No next charge');
     }
   }
   return $donation_sets;
