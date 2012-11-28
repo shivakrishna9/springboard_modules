@@ -140,6 +140,13 @@ function springboard_views_date_api_fields($field) {
  */
 function springboard_views_views_bulk_operations_object_info() {
   $object_info = array(
+    'sf_queue' => array(
+      'type' => 'sf_queue',
+      'base_table' => 'sf_queue',
+      'load' => '_springboard_views_sf_queue_load',
+      'oid' => 'id',
+      'title' => 'oid',
+    ),
     'sf_permanent_failure' => array(
       'type' => 'sf_permanent_failure',
       'base_table' => 'sf_permanent_failure',
@@ -163,6 +170,14 @@ function springboard_views_views_bulk_operations_object_info() {
  */
 function springboard_views_action_info() {
   return array(
+    'springboard_views_sf_queue_delete_action' => array(
+      'description' => t('Delete'),
+      'type' => 'sf_queue',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'sf_queue' => array('delete'),
+      ),
+    ),
     'springboard_views_sf_permanent_failure_retry_action' => array(
       'description' => t('Retry'),
       'type' => 'sf_permanent_failure',
@@ -199,6 +214,13 @@ function springboard_views_action_info() {
 }
 
 /**
+ * Load object from the sf_queue table
+ */
+function _springboard_views_sf_queue_load($id) {
+  return db_fetch_object(db_query("SELECT * FROM {sf_queue} WHERE id = %d", $id));
+}
+
+/**
  * Load object from the sf_permanent_failure table
  */
 function _springboard_views_sf_permanent_failure_load($id) {
@@ -210,6 +232,13 @@ function _springboard_views_sf_permanent_failure_load($id) {
  */
 function _springboard_views_sf_retry_queue_load($id) {
   return db_fetch_object(db_query("SELECT * FROM {sf_retry_queue} WHERE id = %d", $id));
+}
+
+/**
+ * Action to delete an item from the sf_permanent_failure table
+ */
+function springboard_views_sf_queue_delete_action($object, $context) {
+  db_query('DELETE FROM {sf_queue} WHERE id = %d', $context['row']->id);
 }
 
 /**

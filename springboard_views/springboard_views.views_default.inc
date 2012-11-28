@@ -11,9 +11,10 @@ function springboard_views_views_default_views() {
   $view->name = 'sbv_batch';
   $view->description = 'List of items in the batch';
   $view->tag = 'springboard_views';
+  $view->view_php = '';
   $view->base_table = 'sf_batch';
-  $view->core = 6;
-  $view->api_version = '2';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
@@ -315,10 +316,7 @@ function springboard_views_views_default_views() {
     ),
     'type' => array(
       'operator' => 'in',
-      'value' => array(
-        'user' => 'user',
-        'webform' => 'webform',
-      ),
+      'value' => array(),
       'group' => '0',
       'exposed' => TRUE,
       'expose' => array(
@@ -335,23 +333,26 @@ function springboard_views_views_default_views() {
       'table' => 'sf_batch',
       'field' => 'type',
       'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
     ),
     'date_filter_3' => array(
       'operator' => '>',
       'value' => array(
-        'value' => NULL,
         'min' => NULL,
         'max' => NULL,
+        'value' => NULL,
         'default_date' => '',
         'default_to_date' => '',
       ),
       'group' => '0',
       'exposed' => TRUE,
       'expose' => array(
-        'use_operator' => 1,
         'operator' => 'date_filter_3_op',
-        'identifier' => 'date_filter_3',
         'label' => 'Dates',
+        'use_operator' => 1,
+        'identifier' => 'date_filter_3',
         'optional' => 1,
         'remember' => 0,
       ),
@@ -362,7 +363,7 @@ function springboard_views_views_default_views() {
       ),
       'date_method' => 'OR',
       'granularity' => 'minute',
-      'form_type' => 'date_select',
+      'form_type' => 'date_popup',
       'default_date' => '',
       'default_to_date' => '',
       'year_range' => '-3:+3',
@@ -473,9 +474,10 @@ function springboard_views_views_default_views() {
   $view->name = 'sbv_permanent_failure';
   $view->description = 'Permanent failures';
   $view->tag = 'springboard_views';
+  $view->view_php = '';
   $view->base_table = 'sf_permanent_failure';
-  $view->core = 6;
-  $view->api_version = '2';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
@@ -694,19 +696,19 @@ function springboard_views_views_default_views() {
     'date_filter' => array(
       'operator' => '>',
       'value' => array(
-        'value' => '2012-01-01 00:00:00',
         'min' => '2012-01-01 00:00:00',
         'max' => '2012-01-01 00:00:00',
+        'value' => '2012-01-01 00:00:00',
         'default_date' => '',
         'default_to_date' => '',
       ),
       'group' => '0',
       'exposed' => TRUE,
       'expose' => array(
-        'use_operator' => 0,
         'operator' => 'date_filter_op',
-        'identifier' => 'date_filter',
         'label' => 'Date added',
+        'use_operator' => 0,
+        'identifier' => 'date_filter',
         'optional' => 1,
         'remember' => 0,
       ),
@@ -715,7 +717,7 @@ function springboard_views_views_default_views() {
       ),
       'date_method' => 'OR',
       'granularity' => 'day',
-      'form_type' => 'date_select',
+      'form_type' => 'date_popup',
       'default_date' => '',
       'default_to_date' => '',
       'year_range' => '-3:+3',
@@ -749,7 +751,6 @@ function springboard_views_views_default_views() {
     'override' => 1,
     'sticky' => 0,
     'order' => 'asc',
-    'summary' => '',
     'columns' => array(
       'oid' => 'oid',
       'type' => 'type',
@@ -777,53 +778,21 @@ function springboard_views_views_default_views() {
     ),
     'default' => '-1',
     'execution_type' => '1',
-    'max_performance' => 0,
     'display_type' => '0',
-    'hide_selector' => 0,
-    'preserve_selection' => 1,
+    'hide_select_all' => 0,
+    'skip_confirmation' => 0,
     'display_result' => 1,
     'merge_single_action' => 1,
-    'operations' => array(
-      'springboard_views_sf_permanent_failure_delete_action' => array(
-        'selected' => 1,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_message_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_script_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_argument_selector_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_goto_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'springboard_views_sf_permanent_failure_retry_action' => array(
-        'selected' => 1,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_send_email_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
+    'selected_operations' => array(
+      'springboard_views_sf_permanent_failure_delete_action' => 'springboard_views_sf_permanent_failure_delete_action',
+      'springboard_views_sf_permanent_failure_retry_action' => 'springboard_views_sf_permanent_failure_retry_action',
+      'system_message_action' => 0,
+      'views_bulk_operations_action' => 0,
+      'views_bulk_operations_script_action' => 0,
+      'views_bulk_operations_argument_selector_action' => 0,
+      'system_goto_action' => 0,
+      'system_send_email_action' => 0,
+      'system_send_email_action:68e4fd0e5f886de1450df9e90743a3bd' => 0,
     ),
   ));
   $handler = $view->new_display('page', 'Page', 'page_1');
@@ -851,9 +820,10 @@ function springboard_views_views_default_views() {
   $view->name = 'sbv_queue';
   $view->description = 'Currently queued items';
   $view->tag = 'springboard_views';
+  $view->view_php = '';
   $view->base_table = 'sf_queue';
-  $view->core = 6;
-  $view->api_version = '2';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
@@ -1079,19 +1049,19 @@ function springboard_views_views_default_views() {
     'date_filter' => array(
       'operator' => '>',
       'value' => array(
-        'value' => NULL,
         'min' => NULL,
         'max' => NULL,
+        'value' => NULL,
         'default_date' => '',
         'default_to_date' => '',
       ),
       'group' => '0',
       'exposed' => TRUE,
       'expose' => array(
-        'use_operator' => 1,
         'operator' => 'date_filter_op',
-        'identifier' => 'date_filter',
         'label' => 'Date added',
+        'use_operator' => 1,
+        'identifier' => 'date_filter',
         'optional' => 1,
         'remember' => 0,
       ),
@@ -1100,7 +1070,7 @@ function springboard_views_views_default_views() {
       ),
       'date_method' => 'OR',
       'granularity' => 'minute',
-      'form_type' => 'date_select',
+      'form_type' => 'date_popup',
       'default_date' => '',
       'default_to_date' => '',
       'year_range' => '-3:+3',
@@ -1128,13 +1098,12 @@ function springboard_views_views_default_views() {
   $handler->override_option('empty_format', '1');
   $handler->override_option('items_per_page', 25);
   $handler->override_option('use_pager', '1');
-  $handler->override_option('style_plugin', 'table');
+  $handler->override_option('style_plugin', 'bulk');
   $handler->override_option('style_options', array(
     'grouping' => '',
     'override' => 1,
     'sticky' => 0,
     'order' => 'asc',
-    'summary' => '',
     'columns' => array(
       'oid' => 'oid',
       'sfid' => 'sfid',
@@ -1156,11 +1125,27 @@ function springboard_views_views_default_views() {
         'separator' => '',
       ),
       'created' => array(
-        'sortable' => 1,
+        'sortable' => 0,
         'separator' => '',
       ),
     ),
     'default' => '-1',
+    'execution_type' => '1',
+    'display_type' => '0',
+    'hide_select_all' => 0,
+    'skip_confirmation' => 0,
+    'display_result' => 1,
+    'merge_single_action' => 1,
+    'selected_operations' => array(
+      'springboard_views_sf_queue_delete_action' => 'springboard_views_sf_queue_delete_action',
+      'system_message_action' => 0,
+      'views_bulk_operations_action' => 0,
+      'views_bulk_operations_script_action' => 0,
+      'views_bulk_operations_argument_selector_action' => 0,
+      'system_goto_action' => 0,
+      'system_send_email_action' => 0,
+      'system_send_email_action:68e4fd0e5f886de1450df9e90743a3bd' => 0,
+    ),
   ));
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->override_option('path', 'admin/reports/salesforce/current');
@@ -1187,9 +1172,10 @@ function springboard_views_views_default_views() {
   $view->name = 'sbv_retry_queue';
   $view->description = 'Retry queue';
   $view->tag = 'springboard_views';
+  $view->view_php = '';
   $view->base_table = 'sf_retry_queue';
-  $view->core = 6;
-  $view->api_version = '2';
+  $view->is_cacheable = FALSE;
+  $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
@@ -1480,19 +1466,19 @@ function springboard_views_views_default_views() {
     'date_filter' => array(
       'operator' => '>',
       'value' => array(
-        'value' => NULL,
         'min' => NULL,
         'max' => NULL,
+        'value' => NULL,
         'default_date' => '',
         'default_to_date' => '',
       ),
       'group' => '0',
       'exposed' => TRUE,
       'expose' => array(
-        'use_operator' => 1,
         'operator' => 'date_filter_op',
-        'identifier' => 'date_filter',
         'label' => 'Dates',
+        'use_operator' => 1,
+        'identifier' => 'date_filter',
         'optional' => 1,
         'remember' => 0,
       ),
@@ -1502,7 +1488,7 @@ function springboard_views_views_default_views() {
       ),
       'date_method' => 'OR',
       'granularity' => 'minute',
-      'form_type' => 'date_select',
+      'form_type' => 'date_popup',
       'default_date' => '',
       'default_to_date' => '',
       'year_range' => '-3:+3',
@@ -1533,14 +1519,13 @@ function springboard_views_views_default_views() {
     'override' => 1,
     'sticky' => 0,
     'order' => 'asc',
-    'summary' => '',
     'columns' => array(
       'oid' => 'oid',
       'sfid' => 'sfid',
       'type' => 'type',
       'fieldmap' => 'fieldmap',
-      'retry_date' => 'retry_date',
       'action' => 'action',
+      'retry_date' => 'retry_date',
       'attempts' => 'attempts',
     ),
     'info' => array(
@@ -1556,11 +1541,11 @@ function springboard_views_views_default_views() {
       'fieldmap' => array(
         'separator' => '',
       ),
-      'retry_date' => array(
-        'sortable' => 0,
+      'action' => array(
         'separator' => '',
       ),
-      'action' => array(
+      'retry_date' => array(
+        'sortable' => 0,
         'separator' => '',
       ),
       'attempts' => array(
@@ -1569,53 +1554,21 @@ function springboard_views_views_default_views() {
     ),
     'default' => '-1',
     'execution_type' => '1',
-    'max_performance' => 0,
     'display_type' => '0',
-    'hide_selector' => 0,
-    'preserve_selection' => 1,
+    'hide_select_all' => 0,
+    'skip_confirmation' => 0,
     'display_result' => 1,
     'merge_single_action' => 1,
-    'operations' => array(
-      'springboard_views_sf_retry_queue_delete_action' => array(
-        'selected' => 1,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_message_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_script_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'views_bulk_operations_argument_selector_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_goto_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'springboard_views_sf_retry_queue_retry_action' => array(
-        'selected' => 1,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
-      'system_send_email_action' => array(
-        'selected' => 0,
-        'skip_confirmation' => 0,
-        'label' => '',
-      ),
+    'selected_operations' => array(
+      'springboard_views_sf_retry_queue_delete_action' => 'springboard_views_sf_retry_queue_delete_action',
+      'springboard_views_sf_retry_queue_retry_action' => 'springboard_views_sf_retry_queue_retry_action',
+      'system_message_action' => 0,
+      'views_bulk_operations_action' => 0,
+      'views_bulk_operations_script_action' => 0,
+      'views_bulk_operations_argument_selector_action' => 0,
+      'system_goto_action' => 0,
+      'system_send_email_action' => 0,
+      'system_send_email_action:68e4fd0e5f886de1450df9e90743a3bd' => 0,
     ),
   ));
   $handler = $view->new_display('page', 'Page', 'page_1');
