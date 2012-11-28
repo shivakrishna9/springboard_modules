@@ -1,0 +1,7 @@
+2012-11-19  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * capwiz_connect.admin.inc:  Added sync date reset & batch size field to admin settings; encrypting Capwiz API user name and password 
+    * capwiz_connect.module: Setup alternating sync for cron job pulling users and actions
+    * CapwizConnect.inc: Added sanity checking of incoming data; queries to export alerts & alert data
+    * CapwizConnect.info: Added dependency on ecrypt module
+    * capwiz_connect_js: Adding sub-module that enables passing of data from the Capwiz form to the Drupal and Salesforce.

@@ -94,7 +94,7 @@ $schema['email_wrappers_webform'] = array(
 function email_wrappers_update_7001() {
   require_once(DRUPAL_ROOT . "/sites/all/modules/webform/includes/webform.emails.inc");
   if (!function_exists('webform_email_insert')) {
-    $ret[] = 'wtf just happened';
+    $ret[] = 'Unable to locate webform module';
     return $ret;
   }
   $ret = array();

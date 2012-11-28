@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file 
+ * Install/uninstall/update functions for the Capwiz Connect JS module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function capwiz_connect_js_schema() {
+  $schema = array();
+  
+  $schema['capwiz_connect_js_alerts'] = array(
+    'description' => 'Contains options for alerts handled by the Capwiz JS Solution',
+    'fields' => array(
+      'capwiz_alert_id' => array(
+        'description' => 'The public Alert Id from Capwiz, too large for int field',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'capwiz_api_alert_id' => array(
+        'description' => 'The alert ID used by Capwiz the API.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'account_id' => array(
+        'description' => 'The internal id of the capwiz account this alert is connected to.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'redirect' => array(
+        'description' => 'URL for redirection of this alert after user submits',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('capwiz_alert_id'),
+  );
+
+  $schema['capwiz_connect_js_actions'] = array(
+    'description' => 'Contains data for actions handled by the Capwiz JS Solution',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Auto-increment local ID for the action',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'capwiz_api_alert_id' => array(
+        'description' => 'The Alert Id from the Capwiz API, too large for int field',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'mail' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => "User's email address.",
+      ),
+      'action_timestamp' => array(
+        'description' => 'Timestamp when the action was taken',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'data' => array(
+        'description' => 'Serialized data about the action',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'capwiz_api_alert_id' => array('capwiz_api_alert_id'),
+      'action_timestamp' => array('action_timestamp'),
+    ),
+  );
+
+  return $schema;
+}
+
+// Set the weight 1 heavier then capwiz_connect module
+function capwiz_connect_js_update_6301(&$sandbox) {
+  return t('This update was removed.');
+}

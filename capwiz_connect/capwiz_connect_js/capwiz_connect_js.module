@@ -1,0 +1,334 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function capwiz_connect_js_menu() {
+  $items = array();
+
+  $items['capwiz_connect_js/decrypt.json'] = array(
+    'page callback' => 'capwiz_connect_js_decrypt',
+    'access callback' => TRUE,
+    'file' => 'capwiz_connect_js.json.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['capwiz_connect_js/confirmation.json'] = array(
+    'page callback' => 'capwiz_connect_js_confirmation',
+    'access callback' => TRUE,
+    'file' => 'capwiz_connect_js.json.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items[CAPWIZ_CONNECT_ADMIN_URL . '/alerts'] = array(
+    'title' => 'Alerts',
+    'description' => 'Manage Alerts for the Capwiz Connect Javascript System',
+    'file' => 'capwiz_connect_js.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_js_alert_list_form'),
+    'access arguments' => array('manage capwiz js alerts'),
+    'weight' => 1,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items[CAPWIZ_CONNECT_ADMIN_URL . '/alerts/add'] = array(
+    'title' => 'Add an Alert',
+    'description' => 'Add an alert for tracking and redirect settings.',
+    'file' => 'capwiz_connect_js.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_js_alert_addoredit_form', 4),
+    'access arguments' => array('add capwiz js alerts'),
+    'type' => MENU_CALLBACK,
+    'weight' => 1,
+  );
+  
+  $items[CAPWIZ_CONNECT_ADMIN_URL . '/alerts/%/edit'] = array(
+    'title' => 'Edit Alert',
+    'description' => 'Edit an alert for tracking and redirect settings.',
+    'file' => 'capwiz_connect_js.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('capwiz_connect_js_alert_addoredit_form', 5, 4),
+    'access arguments' => array('manage capwiz js alerts'),
+    'type' => MENU_CALLBACK,
+    'weight' => 1,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function capwiz_connect_js_permission() {  
+  return array(
+    'add capwiz js alerts' => array(
+      'title' => t('Add alerts'), 
+      'description' => t('Configure new Capwiz alerts.'),
+    ),
+    'manage capwiz js alerts' => array(
+      'title' => t('Manage alerts'), 
+      'description' => t('Manage existing alerts.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_hook_info_alter()
+ * 
+ * Ensures the capwiz_connect_js.admin.inc file will get loaded for form alter functionaliy
+ */
+function capwiz_connect_js_hook_info_alter(&$hooks) {
+  $hooks['form_alter']['group'] = 'admin';
+}
+
+
+/**
+ * Save the capwiz data to a capwiz connect action
+ */
+function capwiz_connect_js_save_action($data, $alert) {
+  if (!$alert) {
+    return;
+  }
+
+  $values['alert'] = _capwiz_connect_js_field_maps('action', $data);
+  //$values['user'] = _capwiz_connect_js_field_maps('user', $data);
+
+  // If no email then bail
+  if (!$values['alert']->mail) {
+    return;
+  }
+
+  $mail = strtolower($values['alert']->mail);
+
+  // Save the market source values to the data column
+  if (module_exists('market_source')) {
+    parse_str($data['queryString'], $query_values);
+    $qs_keys = _market_source_build_qs_keys();
+    foreach (array_keys($qs_keys) as $key) {
+      // If there is a value for the ms key then add it to the array
+      if (!empty($query_values[$key])) {
+        $values['market_source'][$key] = $query_values[$key];
+      }
+    }
+  }
+
+  $record = array(
+    'capwiz_api_alert_id' => $alert->capwiz_api_alert_id,
+    'mail' => $mail,
+    'action_timestamp' => REQUEST_TIME,
+    'data' => serialize($values),
+  );
+
+  // Get the timestamp for the start of the day
+  $today = strtotime("00:00");
+
+  // Check if an action has already been saved for today
+  $existing_record_id = (bool) db_query_range('SELECT id FROM {capwiz_connect_js_actions} WHERE capwiz_api_alert_id = :id AND mail = :mail AND action_timestamp > :time', 0, 1, array(':id' => $alert->capwiz_api_alert_id, ':mail' => $mail, ':time' => $today))->fetchField();
+  if (!$existing_record_id) {
+    drupal_write_record('capwiz_connect_js_actions', $record);
+  }
+}
+
+/**
+ * Implements hook_capwiz_connect_save_user
+ */
+function capwiz_connect_js_capwiz_connect_save_user($user, $drupal_account) {
+  // Search for a matching record in the capwiz js actions table by email and date
+  $mail = strtolower($user->emails[0]->address);
+
+  // Pull the latest action submitted for this email
+  $js_action = db_fetch_object(db_query_range("SELECT * FROM {capwiz_connect_js_actions} WHERE mail = '%s' ORDER BY action_timestamp DESC", $mail, 0, 1));
+
+  // If an action is found unserialize the date values and load up the alert data
+  if ($js_action) {
+    $js_action->data = unserialize($js_action->data);
+    // Load up the action
+    $alert = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_js_alerts} WHERE capwiz_api_alert_id = %d', $js_action->capwiz_api_alert_id));
+  }
+
+  // If there's no js action or alert do nothing
+  if (!js_action || !$alert) {
+    return;
+  }
+
+  // Load up the capwiz account
+  $account_details = capwiz_connect_account_load($alert->account_id);
+
+  $market_source = $js_action->data['market_source'];
+
+  // Save the market source values to the user profile
+  if (module_exists('market_source') && count($market_source)) {
+    $qs_keys = _market_source_build_qs_keys();
+    foreach ($market_source as $field_key => $value) {
+      $target_field = $account_details->mapping_user['map'][$field_key];
+      $business_rule = $account_details->mapping_user['business'][$field_key];
+
+      // Always overwrite, or overwrite when blank
+      if (empty($business_rule) || $business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
+        db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
+      }
+      // Append
+      elseif ($business_rule == 'append') {
+        if ($existing_profile_values[$target_field]) {
+          $value = $existing_profile_values[$target_field] . ' ' . $value;
+        }
+        db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_queue_preprocess_batch_alter().
+ * 
+ * Add data captured by the 
+ */
+function capwiz_connect_js_queue_preprocess_batch_alter(&$batch) {
+  static $map = array();
+
+  if ($batch['type'] != 'capwiz_connect_action') {
+    return;   
+  }
+
+  foreach ($batch['records'] as $record) {
+    // Load up the action
+    $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_connect_actions} WHERE message_id = %d', $record->object['CapWiz_Event_ID__c']));
+    // If an action is found unserialize the data values, else skip to the next one
+    if ($capwiz_action) {
+      $capwiz_action->data = unserialize($capwiz_action->data);
+    }
+    else {
+      continue;
+    }
+
+    // Search for a matching record in the capwiz js actions table
+    $mail = strtolower($capwiz_action->data->emailAddress);
+    // Pull the latest action for this mail and action id
+    $js_action = db_fetch_object(db_query_range("SELECT * FROM {capwiz_connect_js_actions} WHERE capwiz_api_alert_id = %d AND mail = '%s' ORDER BY action_timestamp DESC", $record->object['CapWiz_Alert_ID__c'], $mail, 0, 1));
+    // If a js action is found unserialize the data values, else skip to the next one
+    if ($js_action) {
+      $js_action->data = unserialize($js_action->data);
+    }
+    else {
+      continue;
+    }
+
+    // Load the Salesforce field map for this Capwiz account, if we have not already
+    if (!count($map)) {
+      $account_id = $capwiz_action->capwiz_account_id;
+      $drupal = 'capwiz_connect:' . $account_id . ':action';
+      $sql = "SELECT fields FROM {salesforce_management_field_map} WHERE drupal = '%s'";
+      $data = db_fetch_object(db_query($sql, $drupal));
+      $map = unserialize($data->fields);
+    }
+
+    $qs_keys = array_keys(_market_source_build_qs_keys());
+    if (count($js_action->data['market_source'])) {
+      // Loop over the market source data and for each that has value on this object, set it in the mapped fields.
+      foreach ($js_action->data['market_source'] as $key => $value) {
+        // Ensure this is a valid market source value and SF field
+        if (in_array($key, $qs_keys) && isset($map[$key])) {
+          $record->object[$map[$key]] = $value;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Map the values that come from the capwiz form to values for the action or user
+ * 
+ * @param String
+ *    The capwiz object to work with, either an action or a user
+ * @param Array
+ *    The full array of data returned from the capwiz form
+ * @return Object
+ *    An object of values depending on the type 
+ */
+function _capwiz_connect_js_field_maps($type, $data) {
+  // An array of field names from the capwiz form mapped to the type of data used for actions or users.
+  $maps = array(
+    'MC_message_id' => array(),
+    'MC_address' => array(
+      'user' => 'address'
+    ),
+    'MC_alert_type' => array(),
+    'MC_alertid' => array(
+      'action' => 'alert_id'
+    ),
+    'MC_bill_id' => array(),
+    'MC_content_dir' => array(),
+    'MC_district' => array(),
+    'MC_facebook' => array(),
+    'MC_layout' => array(),
+    'MC_messages_sent' => array(),
+    'MC_plugin' => array(),
+    'MC_readonly' => array(),
+    'MC_state' => array(),
+    'MC_targets' => array(),
+    'MC_tstatus' => array(),
+    'MC_type' => array(),
+    'MC_user_email' => array(),
+    'MC_vote_id' => array(),
+    'MC_wide' => array(),
+    'AM_checked' => array(),
+    'AM_comment' => array(),
+    'AM_image_id' => array(),
+    'MC_all_recipients' => array(),
+    'MC_boosted' => array(),
+    'MC_cc_extra' => array(),
+    'MC_cc_org' => array(),
+    'MC_cc_self' => array(),
+    'MC_closing' => array(),
+    'MC_delivery_CU_%int' => array(),
+    'MC_delivery_method' => array(),
+    'MC_issues' => array(),
+    'MC_letterissues' => array(),
+    'MC_megavote' => array(),
+    'MC_message_' => array(),
+    'MC_message_%int' => array(),
+    'MC_message_body' => array(),
+    'MC_recipient_CU_%int' => array(),
+    'MC_remember_me' => array(),
+    'MC_saveletter' => array(),
+    'MC_signature' => array(),
+    'MC_subject' => array(
+      'action' => 'title'
+    ),
+    'MC_video_url' => array(),
+    'TAF_email' => array(
+      'user' => 'mail',
+      'action' => 'mail'
+    ),
+    'TAF_name' => array(
+      'user' => 'name'
+    ),
+    'code' => array(),
+    'cookie_name' => array(),
+    'maillist' => array(),
+    'subscription' => array(),
+    'AM_comment_url' => array(),
+  );
+
+  // Loop through the maps and create an array of values
+  foreach ($maps as $field => $map) {
+    if (!empty($map[$type])) {
+      // Check if this field name contains an integer, if so we need to search the array keys with a special function
+      if (strpos($field, '%int')) {
+        $key = _capwiz_connect_js_preg_array_keys($field, $data['fieldValues']);
+      }
+      else {
+        $key = $field;
+      }
+      $values->{$map[$type]} = trim($data['fieldValues'][$key]);
+    }
+  }
+  return $values;
+}
+
+function _capwiz_connect_js_preg_array_keys($field, $array) {
+  $pattern = '/' . str_replace('%int', '[0-9]+', $field) . '/';
+  $keys = array_keys($array);    
+  $matches = preg_grep($pattern, $keys);
+  return reset($matches);
+}
