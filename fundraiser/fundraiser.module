@@ -1524,23 +1524,8 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {
-  // Grab the gateway from the fundraiser configured gateway.
-  // Later this will be stored with the donation (since the gateway for the fundraiser may change).
-  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
-  // Check for the charge function to be defined.
-  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
-  if (empty($charge_function)) {
-    // We can't find the gateway and we should tell someone about it.
-    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
-      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
-    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
-  }
-  else {
-    // Execute the donation charge.
-    // Since we can't be sure what the payment system looks like, we
-    // leave that entirely to the payment module to handle.
-    module_invoke_all('fundraiser_donation_process', $donation);
-  }
+  // Pass this down to the processing module.
+  module_invoke_all('fundraiser_donation_process', $donation);
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);

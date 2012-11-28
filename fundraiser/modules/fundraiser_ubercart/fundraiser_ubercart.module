@@ -573,11 +573,18 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundriaser's data.
   $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
     watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
-    return;
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
+    return; // Return the failure.
   }
+  // Found it, let's try it.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   // Create the charge information.
   $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
   $donation->data = (array) $donation->data;
