@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Manages webform to Salesforce mappings.
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_webform_entity_info() {
+  return array(
+    'salesforce_webform_mapping' => array(
+      'label' => t('Salesforce Webform Mapping'),
+      'base table' => 'salesforce_webform_mapping',
+      'controller class' => 'EntityAPIControllerExportable',
+      'entity class' => 'SalesforceWebformMapping',
+      'entity keys' => array(
+        'id' => 'salesforce_webform_mapping_id',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+      'module' => 'salesforce_webform_mapping',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_webform_menu() {
+  $items['node/%webform_menu/webform/salesforce-mapping'] = array(
+    'title' => 'Salesforce map',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_webform_mapping_form', 1),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_webform.mapping.inc',
+  );
+
+  return $items;
+}
