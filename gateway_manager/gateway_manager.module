@@ -110,6 +110,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
   switch ($op) {
     case 'select options':
       return array('Gateway Manager' => _gateway_manager_gateway_list());
+
     case 'charge function':
       if (is_numeric($arg)) {
         $info = gateway_manager_gateway_info($arg);
@@ -118,6 +119,8 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $gateway['id'] = $arg;
         return $gateway;
       }
+      break;
+
     case 'refund function':
       if (is_numeric($arg)) {
         $info = gateway_manager_gateway_info($arg);
@@ -126,6 +129,8 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $gateway['id'] = $arg;
         return $gateway;
       }
+      break;
+
     case 'billing update':
       if (is_numeric($arg)) {
         $info = gateway_manager_gateway_info($arg);
@@ -134,6 +139,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
         $gateway['id'] = $arg;
         return $gateway;
       }
+      break;
   }
 }
 
@@ -141,7 +147,7 @@ function gateway_manager_fundraiser_gateway($op, $arg) {
  * Returns the charge function for the given gateway.
  */
 function gateway_manager_gateway_info($id) {
-  $gateway_types = _managed_gateway_list();
+  $gateway_types = _gateway_manager_list();
   $gateway = gateway_manager_gateway_load($id);
   $gateway_info = array();
 
@@ -187,14 +193,14 @@ function gateway_manager_perm() {
 /**
  * Build a list of payment gateway types defined in the enabled modules.
  */
-function _managed_gateway_list() {
+function _gateway_manager_list() {
   return module_invoke_all('payment_gateway_managed');
 }
 
 /**
  * Adds a special submit handler to all managed payment gateway forms.
  */
-function gateway_mananger_settings_form($form) {
+function gateway_manager_settings_form($form) {
   $form['buttons'] = array(
     '#weight' => 10,
   );
