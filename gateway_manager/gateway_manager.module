@@ -2,11 +2,15 @@
 
 /**
  * @file
- * This module provides functionality for creating multiple versions of the same payment gateway with different settings. 
+ * Payment gateway manager
+ *
+ * This module provides functionality for creating multiple versions of the
+ * same payment gateway with different settings.
  */
 
+
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function gateway_manager_menu() {
   $items['admin/settings/fundraiser/gateways'] = array(
@@ -23,7 +27,7 @@ function gateway_manager_menu() {
     'access arguments' => array('view payment gateway list'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
-  );  
+  );
   $items['admin/settings/fundraiser/gateways/add'] = array(
     'title' => t('Add payment gateway'),
     'page callback' => 'gateway_manager_gateway_add',
@@ -56,7 +60,7 @@ function gateway_manager_menu() {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_edit_form($form_id, $form)) {
@@ -64,7 +68,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
     $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
     $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
   }
-  
+
   // If the payment gateway for the donation form does not include credit card fields (such
   // as Ogone), remove them from the donation form
   if (strpos($form_id, 'webform_client_form_') === 0) {
@@ -83,7 +87,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implemenation of hook_nodeapi().
+ * Implements hook_nodeapi().
  */
 function gateway_manager_nodeapi(&$node, $op) {
   // clear out the gateway cache when donation forms
@@ -100,7 +104,7 @@ function gateway_manager_nodeapi(&$node, $op) {
 }
 
 /**
- * Implementation of hook_fundraiser_gateway
+ * Implements hook_fundraiser_gateway().
  */
 function gateway_manager_fundraiser_gateway($op, $arg) {
   switch ($op) {
@@ -140,10 +144,10 @@ function gateway_manager_gateway_info($id) {
   $gateway_types = _managed_gateway_list();
   $gateway = gateway_manager_gateway_load($id);
   $gateway_info = array();
-  
+
   $gateway_info['config'] = unserialize($gateway->config);
   $gateway_info['type'] = $gateway->type;
-  
+
   foreach($gateway_types as $options) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
@@ -152,7 +156,7 @@ function gateway_manager_gateway_info($id) {
       $gateway_info['gateway_details'] = $options;
     }
   }
-  
+
   return $gateway_info;
 }
 
@@ -174,7 +178,7 @@ function gateway_manager_gateway_load($id) {
 }
 
 /**
- * Implemenation of hook_perm().
+ * Implements hook_perm().
  */
 function gateway_manager_perm() {
   return array('view payment gateway list', 'create payment gateway', 'edit any payment gateway', 'delete any payment gateway');
@@ -252,7 +256,7 @@ function gateway_manager_settings_insert($name, $type, $terms, $status, $config)
   $record->updated = time();
   $record->config = serialize($config);
   $record->status = $status;
-  
+
   $result = drupal_write_record('gateway_manager_gateways', $record);
   if ($result) {
     gateway_manager_settings_save_terms($record->id, $terms);
@@ -351,26 +355,26 @@ function _gateway_manager_gateway_list() {
 function _gateway_manager_form_count($id) {
   $cid = 'gateway_manager_form_count';
   $gateway_stats = array();
-  
+
   // if the stats are cached, pull them from there
   if ($cached = cache_get($cid, 'cache')) {
     $gateway_stats = $cached->data;
   }
   else { // otherwise, build an array of gateway stats and cache them
     $result = db_query("SELECT gateway, count(nid) as count FROM {fundraiser} GROUP BY gateway");
-    
+
     while ($data = db_fetch_object($result)) {
       $gateway_stats[$data->gateway] = $data->count;
     }
-    
+
     cache_set($cid, $gateway_stats, 'cache', time() + (60 * 60 * 24));
   }
-  
+
   if (array_key_exists($id, $gateway_stats)) {
     return $gateway_stats[$id];
   }
-  
-  return 0;  
+
+  return 0;
 }
 
 /**
@@ -385,7 +389,7 @@ function _gateway_manager_gateway_in_use($id) {
   if ($form_count > 0 || $donation_count > 0) {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -402,7 +406,7 @@ function _gateway_manager_clear_cache() {
 }
 
 /**
- * Implemenation of donation_transaction_details().
+ * Implements of donation_transaction_details().
  */
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // look up the name of the gateway
@@ -413,10 +417,10 @@ function gateway_manager_donation_transaction_details_alter(&$details) {
 
 /**
  * Get the payment gateway for the given order object or order ID
- * 
+ *
  * @param $order_or_orderid
  *   Ubercart order object, or an order ID: either will be handled
- * 
+ *
  * @return
  *   Array of gateway details
  */
