@@ -1855,11 +1855,16 @@ function fundraiser_webform_submit($form, &$form_state) {
   );
 
   if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
+
     $data = array(
       'txn_type' => 'reference_txn',
-      'ref_id' => $form_state['fundraiser_reference_txn_id']
+      'ref_id' => $form_state['fundraiser_reference_txn_id'],
     
     );
+    $method_txn_id = $form_state['fundraiser_reference_txn_id'];
+  }
+  else {
+    $method_txn_id = FALSE;
   }
  	
  	// variable to hold the name of the payment gateway charge function we need to call
@@ -1970,11 +1975,10 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
  *   The id of the order.
  * @param $message
  *   Any message that was returned by the gateway.
+ * @param $txn_id
+ *   Payment method reference id (if reference transaction)
  */
-function fundraiser_order_decline($order_id, $message) {
-  
-  module_invoke_all('fundraiser_order_failure', $order_id);
-
+function fundraiser_order_decline($order_id, $message, $ref_id = FALSE) {
   
   // make the order as failed
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
@@ -1993,6 +1997,7 @@ function fundraiser_order_decline($order_id, $message) {
   if ($display_message) {
     drupal_set_message($message);
   }
+  module_invoke_all('fundraiser_order_failure', $order_id, $message, $ref_id);
 }
 
 /**

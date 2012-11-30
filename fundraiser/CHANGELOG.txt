@@ -96,3 +96,7 @@
 2012-11-05  Sarah Hood  <sarah.hood@jacksonriver.com>
 
     * fundraiser.module (fundraiser_process_recurring_donations) - added a uc_order comment when sustaining charges fail.
+
+2012-11-30 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_order_decline) - moved hook invocation to tail end of function, added variable for reference id.
