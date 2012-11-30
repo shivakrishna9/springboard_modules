@@ -1,0 +1,6 @@
+name = Gateway Switcher
+description = Utility for switching donation form payment gateway assignments in bulk.
+core = 6.x
+package = Jackson River Springboard - payment
+dependencies[] = fundraiser
+version =  6.x-3.2

@@ -1,3 +1,9 @@
+2012-09-10 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_update_node): added code to prevent arbitrary node properties from being overwritten
+      when node_save() is invoked and the property is unset(). This is in response to a bug wherein confirmation page format
+      reverts to "filtered HTML" if the node form is edited.
+
 2012-09-03  Allen Freeman  <allen.freeman@jacksonriver.com>
 
     * fundraiser.module (fundraiser_preprocess_fundraiser_confirmation): renamed template_preprocess_fundraiser_confirmation.
@@ -43,6 +49,11 @@
 
     * fundraiser.module: Improved gateway management. See pull request
     https://github.com/JacksonRiver/springboard_modules/pull/121.
+
+2012-08-20  Sarah H.  <sarah.hood@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_get_country_zones): ordering zones from UC by zone code instead of name.
+      Supports non-roman alphabetical orders in cases such as Japanese, Russian, Chinese or Korean.
     
 2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
 
@@ -59,6 +70,11 @@
 
     * fundraiser.module:  Prevent anonymous user from recieving incorrect country code
 
+2012-09-30 Sarah Hood <sarah.hood@jacksonriver.com>
+	
+    * fundraiser_form.js: Make sure if there is already a value in the internal title it doesn't get overwritten 
+      when the title is changed. Backported feature from the D7 port.
+
 2012-10-02  Phillip Cave  <phillip.cave@jacksonriver.com>
 
     * fundraiser_billing.inc: Invoke hook_fundraiser_gateway() to determine billing
@@ -66,6 +82,10 @@
 
     * fundraiser.sustainer.forms.inc: Change how the function determines if the
     billing update operation succeeded. Added logging for failed updates.
+
+2012-10-03  Sarah Hood  <sarah.hood@jacksonriver.com>
+	
+    * fundraiser.js: Disable auto complete on CC and CVV fields for fundraiser forms.
 
 2012-10-24  Sarah Hood  <sarah.hood@jacksonriver.com>
 
@@ -76,3 +96,13 @@
 2012-11-05  Sarah Hood  <sarah.hood@jacksonriver.com>
 
     * fundraiser.module (fundraiser_process_recurring_donations) - added a uc_order comment when sustaining charges fail.
+
+2012-11-30 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_order_decline) - moved hook invocation
+      to tail end of function, added variable for reference id.
+
+2012-11-30  Sarah Hood <sarah.hood@jacksonriver.com>
+
+    * fundraiser.js ($('#edit-submitted-donation-other-amount').change() - added error event & message handling
+

@@ -591,6 +591,19 @@ function fundraiser_node_insert(&$node) {
  * Implemenation of hook_update().
  */
 function fundraiser_node_update(&$node) {
+
+  // node_save() protection for various fields. Note ask amounts are complex and handled as
+  // a unique case.
+  $old_node = (array) node_load(array('nid' => $node->nid));
+
+  // if any other node properties are misbehaving on node_save(), add them here.
+  $settings = array('confirmation_page_format');
+  foreach ($old_node as $key => $value) {
+    if (in_array($key, $settings) && !isset($node->$key)) {
+      $node->$key = $value;
+    }
+  }
+
   //drupal_set_message('<pre>' . print_r($node, true) . '</pre>');
   module_load_include('inc', 'fundraiser', 'fundraiser.fields');
   db_query(
@@ -1491,12 +1504,20 @@ function fundraiser_recurring_check_access() {
  * Returns an array of available zone id's associated with the country id.
  */
 function fundraiser_get_country_zones($country_id) {
-	$zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $country_id, 'name', uc_address_field_required('zone'));
-	$zone_array = array();
-	foreach ($zones['#options'] as $key => $value) {
-		$zone_array[$key] = $value;
-	}
-	return $zone_array;
+  static $zone_array;
+
+  if (isset($zone_array[$country_id])) {
+    return $zone_array[$country_id];
+  }
+
+  $results = db_query("SELECT * FROM {uc_zones} WHERE zone_country_id = %d ORDER BY zone_code", $country_id);
+  $zone_array[$country_id] = array();
+  while ($zone = db_fetch_object($results)) {
+    $zone_array[$country_id][$zone->zone_id] = $zone->zone_name;
+  }
+
+  return $zone_array[$country_id];
+
 }
 
 /**
@@ -1523,8 +1544,8 @@ function template_preprocess_fundraiser_confirmation(&$vars) {
   $sid = $vars['sid'];
   if ($sid) {
     // load up the id of the order
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
-    $order = uc_order_load($order_id);
+    $order_details = db_fetch_object(db_query("SELECT order_id, recurring_status FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order = uc_order_load($order_details->order_id);
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $sid);
     $message = $vars['node']->confirmation_page_body;
@@ -1536,6 +1557,10 @@ function template_preprocess_fundraiser_confirmation(&$vars) {
     
     // set a variable that can be used in the template
     $vars['confirmation_message'] = $message;
+
+    // set some useful variables that can be used in the template itself
+    $vars['order'] = $order;
+    $vars['recurring_donation'] = $order_details->recurring_status == DONATION_RECURRING ? TRUE : FALSE;
     
     // Flag sid as viewed
     fundraiser_secure_confirmation_flag($sid);
@@ -1607,19 +1632,28 @@ function fundraiser_webform_validate($form, &$form_state) {
     }
   }
 
-	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
-	
-	$node_id = $form_state['values']['details']['nid'];
-	$errors = false;
-	// collect all of our donation fields
-	$donation_amount = $fundraiser_fields['amount'];
-	$cc_number = $fundraiser_fields['card_number'];
-	$cc_cvv = $fundraiser_fields['card_cvv'];
-	$cc_expiration_month = $fundraiser_fields['card_expiration_month'];
-	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-	$email = $fundraiser_fields['email'];
+  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
 
-    $amount_field = 'submitted][donation][amount';
+  $node_id = $form_state['values']['details']['nid'];
+  $errors = false;
+  // collect all of our donation fields
+  $donation_amount = $fundraiser_fields['amount'];
+  $cc_number = $fundraiser_fields['card_number'];
+  $cc_cvv = $fundraiser_fields['card_cvv'];
+  $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
+  $cc_expiration_year = $fundraiser_fields['card_expiration_year'];
+  $email = trim($fundraiser_fields['email']);
+
+  // Check for confusing selection.	
+  if (!empty($fundraiser_fields['other_amount']) && $donation_amount != 'other') {
+
+    form_set_error('other_amount', 'You have entered a custom amount and selected a set amount. Please clarify which amount you intend to give, if you want ' .
+      'to give the amount that appears in the other box, please select Other from the radio buttons.');
+    $errors = true;
+
+  }
+
+  $amount_field = 'submitted][donation][amount';
     // look for other amount
     if ($donation_amount == "other") {
       $donation_amount = $fundraiser_fields['other_amount'];
@@ -1830,11 +1864,16 @@ function fundraiser_webform_submit($form, &$form_state) {
   );
 
   if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
+
     $data = array(
       'txn_type' => 'reference_txn',
-      'ref_id' => $form_state['fundraiser_reference_txn_id']
+      'ref_id' => $form_state['fundraiser_reference_txn_id'],
     
     );
+    $method_txn_id = $form_state['fundraiser_reference_txn_id'];
+  }
+  else {
+    $method_txn_id = FALSE;
   }
  	
  	// variable to hold the name of the payment gateway charge function we need to call
@@ -1945,11 +1984,10 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
  *   The id of the order.
  * @param $message
  *   Any message that was returned by the gateway.
+ * @param $txn_id
+ *   Payment method reference id (if reference transaction)
  */
-function fundraiser_order_decline($order_id, $message) {
-  
-  module_invoke_all('fundraiser_order_failure', $order_id);
-
+function fundraiser_order_decline($order_id, $message, $ref_id = FALSE) {
   
   // make the order as failed
   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
@@ -1968,6 +2006,7 @@ function fundraiser_order_decline($order_id, $message) {
   if ($display_message) {
     drupal_set_message($message);
   }
+  module_invoke_all('fundraiser_order_failure', $order_id, $message, $ref_id);
 }
 
 /**
@@ -2260,7 +2299,7 @@ function fundraiser_process_recurring_donations() {
   	);
    	
    	$charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
-
+   	
    	if (empty($charge_function)) {
       db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
    	  watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
