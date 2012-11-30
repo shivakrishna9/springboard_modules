@@ -927,7 +927,6 @@ function email_confirmation_template_list() {
       foreach ($user_groups as $gid) {
         if (in_array($gid, array_keys($node->og_groups)) && $user->og_groups[$gid]['is_admin']) {
           $edit_link = l('edit', 'node/' . $node->nid . '/edit');
-          drupal_set_message('og group admin override');
         }
       }
     }

@@ -1,3 +1,7 @@
+2012-10-30   Allen Freeman  <allen.freeman@jacksonriver.com>
+
+ * email_confirmation.module, email_confirmation_template_list(): added optional og permissions checking. If a user doesn't otherwise have permission, but has it via OG they get the template.
+
 2012-08-10   Allen Freeman  <allen.freeman@jacksonriver.com>
 
     * email_confirmation.module, email_confirmation_token_values(): removed naive dependency on arg() to provide node API on webform submissions.
