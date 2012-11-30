@@ -183,7 +183,13 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
   
   $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
   $form['taxononmy']['terms']['#weight'] = 3;
-  
+
+  // Add the full config to the form values
+  $form['config'] = array(
+    '#type' => 'value', 
+    '#value' => $config,
+  );
+
   // if type has been selected, get the settings form for that type 
   if (isset($type)) {
     $title = _gateway_manager_get_gateway_title($gateways, $type);

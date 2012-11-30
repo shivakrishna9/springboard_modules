@@ -308,7 +308,7 @@ function gateway_manager_settings_save_terms($gid, $terms) {
  * Extracts a payment gateways configuration variables from a settings form.
  */
 function gateway_manager_extract_config(&$form_state) {
-  $exclusions = array('name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
+  $exclusions = array('config', 'name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
   $config = array();
   // loop over form values and only save those
   foreach($form_state['values'] as $k => $v) {

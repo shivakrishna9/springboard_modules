@@ -1,0 +1,843 @@
+<?php
+
+/**
+ * @file
+ * Integration with Sage Payments for credit card transaction processing.
+ */
+
+// Define constants for the payment web services.
+define('GM_SAGE_SERVICE_HTTPS_BANKCARD', 'nvp_bankcard');
+define('GM_SAGE_SERVICE_VAULT', 'vault');
+define('GM_SAGE_SERVICE_VAULT_BANKCARD', 'vault_bankcard');
+
+/**
+ * Implementation of hook_payment_gateway_managed().
+ */
+function gm_sage_payment_gateway_managed() {
+  $gateways[] = array(
+    'id' => 'gm_sage',
+    'title' => t('Sage'),
+    'description' => t('Process credit card payments using Sage.'),
+    'settings' => 'gm_sage_settings_form',
+    'credit' => 'gm_sage_charge',
+    'credit_refund' => 'gm_sage_refund',
+    //'billing_update' => 'gm_sage_billing_update',
+    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN, UC_CREDIT_REFERENCE_REMOVE),
+  );
+
+  return $gateways;
+}
+
+// Build the settings form for the payment gateway.
+function gm_sage_settings_form($config = array()) {
+  $form = array();
+
+  if (!function_exists('curl_init')) {
+    $form['#description'] = '<b>'. t('Sage Payment Solutions requires cURL support for credit card processing. Please contact your system administrator to get this configured.') .'</b>';
+  }
+
+  $form['gm_sage_merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#default_value' => $config['gm_sage_merchant_id'],
+    '#required' => TRUE,
+  );
+
+  $form['gm_sage_merchant_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant Key'),
+    '#description' => t('Locate this in your account under the Help menu in Advanced Integration. Leave empty to not change.'),
+  );
+
+  $form['vault'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Vault Web Service'),
+    '#description' => t('You should ensure your virtual terminal account is setup to use the Vault Web Service before enabling these options.'),
+  );
+
+  $form['vault']['gm_sage_vault_status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Sage Vault customer data storage and transactions.'),
+    '#default_value' => $config['gm_sage_vault_status'],
+  );
+
+  $form['vault']['gm_sage_vault_checkout'] = array(
+    '#type' => 'radios',
+    '#title' => t('Vault action on checkout'),
+    '#options' => array(
+      'none' => t('Perform no Vault action on checkout.'),
+      'insert' => t("Store the customer's card data in the Vault for later use."),
+    ),
+    '#default_value' => $config['gm_sage_vault_checkout'],
+  );
+
+  $form['gm_sage_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug mode'),
+    '#description' => t('Enable to have information about this Sage payment gatway displayed in messages.'),
+    '#return_value' => 1,
+    '#default_value' => $config['gm_sage_debug'],
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_form_form_id_alter().
+ */
+function gm_sage_form_gateway_manager_edit_form_alter(&$form, $form_state) {
+  if ($form['#parameters'][2]->type == 'gm_sage') {
+    // make sure our submit handler runs first so we can encrypt sensitive data before saving
+    array_unshift($form['#submit'], 'gm_sage_payment_gateway_settings_submit');
+  }
+}
+
+// Submit handler for payment gateway settings form to encrypt fields.
+function gm_sage_payment_gateway_settings_submit($form, &$form_state) {
+  // Encrypt the Merchant Key
+  if (!empty($form_state['values']['gm_sage_merchant_key'])) {
+    $form_state['values']['gm_sage_merchant_key'] = _gm_sage_encrypt($form_state['values']['gm_sage_merchant_key']);
+  }
+  else {
+    $form_state['values']['gm_sage_merchant_key'] = $form['config']['#value']['gm_sage_merchant_key'];
+  }
+}
+
+/**
+ * Process a credit card transaction through Sage's credit card API.
+ */
+function gm_sage_charge($order_id, $amount, $data) {
+  global $user;
+
+  // Bail if the site is not cURL enabled.
+  if (!function_exists('curl_init')) {
+    drupal_set_message(t('Sage Payment Solutions requires cURL support for credit card processing. Please contact your system administrator to get this configured.'), 'error');
+    return array('success' => FALSE);
+  }
+
+  $order = uc_order_load($order_id);
+
+  // If in debug mode display data
+  if (_gm_sage_debug_mode_check($data)) {
+    drupal_set_message('Order: ' . print_r($order, 1));
+  }
+
+  // Perform the appropriate API request based on the transaction type.
+  switch ($data['txn_type']) {
+    case UC_CREDIT_REFERENCE_SET:
+      $vault = gm_sage_vault_insert($order, $data);
+
+      // Return the error message if this failed.
+      if ($vault['success'] == FALSE) {
+        return array('success' => FALSE, 'message' => $vault['message'], 'log_payment' => FALSE);
+      }
+      else {
+        return array('success' => TRUE, 'message' => $vault['message'], 'log_payment' => FALSE);
+      }
+
+    case UC_CREDIT_REFERENCE_TXN:
+      return gm_sage_vault_bankcard_request($order, $amount, $data);
+
+    case UC_CREDIT_CREDIT:
+      return gm_sage_https_bankcard_credit($order, $amount, $data);
+
+    // Accommodate all other transaction types.
+    default:
+      return gm_sage_https_bankcard_request($order, $amount, $data);
+  }
+}
+
+/**
+ * Issue a refund
+ */
+function gm_sage_refund($order_id, $amount, $data) {
+  global $user;
+
+  // Make the charge amount positive
+  if ($amount < 0) {
+    $amount = $amount * -1;
+  }
+
+  if ($order_id > 0) {
+    $order = uc_order_load($order_id);
+    $ref_id = _gm_sage_get_vault_guid($order);
+    // sage require a vault id for refunds, make sure we have one
+    if (!empty($ref_id)) {
+      $data['txn_type'] = UC_CREDIT_CREDIT;
+      $data['ref_id'] = $ref_id;
+      return gm_sage_charge($order_id, $amount, $data);  
+    }
+    else {
+      return array(
+        'success' => FALSE,
+        'message' => t('Unable to perform refund: @message', array('@message' => 'No Sage vault GUID stored with the order.')),
+        'uid' => $user->uid,
+      );
+    }
+  }
+
+  return array();
+}
+
+/**
+ * Process a credit transaction through the HTTPS Bankcard service.
+ */
+function gm_sage_https_bankcard_credit($order, $amount, $data) {
+  global $user;
+
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-credit',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
+  // Build an array of data to be POSTed for the transaction.
+  $post_data = array(
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
+    'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_EMAIL' => $order->primary_email,
+    'GUID' => strtolower($data['ref_id']),
+    'T_CUSTOMER_NUMBER' => $order->uid,
+    'T_AMT' => uc_price($amount, $context, $options),
+    'T_SHIPPING' => '',
+    'T_TAX' => '',
+    'T_ORDERNUM' => $order->order_id,
+    'C_TELEPHONE' => '',
+    'C_FAX' => '',
+    'C_SHIP_NAME' => '',
+    'C_SHIP_ADDRESS' => '',
+    'C_SHIP_CITY' => '',
+    'C_SHIP_STATE' => '',
+    'C_SHIP_ZIP' => '',
+    'C_SHIP_COUNTRY' => '',
+  );
+
+  $xml = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT_BANKCARD, 'VAULT_BANKCARD_CREDIT');
+
+  $response = _gm_sage_parse_vault_bankcard_response($xml->asXML());
+
+  // If the transaction was not approved...
+  if ($response['approval_indicator'] != 'A') {
+    $result = array(
+      'success' => FALSE,
+      'message' => t('Refund declined: @message', array('@message' => $response['approval_message'])),
+      'uid' => $user->uid,
+    );
+  }
+  else {
+    // Build a message for display and comments in the payments table.
+    $message = t('Type: @type<br />ID: @id', array('@type' => _gm_sage_txn_type($data['txn_type']), '@id' => $response['reference']));
+    $result = array(
+      'success' => TRUE,
+      'comment' => $message,
+      'message' => $message,
+      'data' => array('module' => 'gn_sage', 'txn_type' => $data['txn_type'], 'txn_id' => $response['reference']),
+      'uid' => $user->uid,
+    );
+  }
+
+  // Build an admin order comment.
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-credit-comment',
+  );
+  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array('@type' => _gm_sage_txn_type($data['txn_type']), '@status' => $response['approval_indicator'] == 'A' ? t('ACCEPTED') : t('REJECTED'), '@message' => $response['approval_message'], '@amount' => uc_price($amount, $context), '@avs' => _gm_sage_avs($response['avs_indicator'])));
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+  return $result;
+
+}
+
+/**
+ * Process a transaction through the HTTPS Bankcard service.
+ */
+function gm_sage_https_bankcard_request($order, $amount, $data) {
+  global $user;
+
+  // Build the initial post data array for the order.
+  $post_data = _gm_sage_order_post_data($order, $amount, $data);
+
+  if (in_array($data['txn_type'], array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_CREDIT))) {
+    $post_data['T_reference'] = $data['auth_id'];
+  }
+
+  if ($data['txn_type'] == UC_CREDIT_CREDIT) {
+    $post_data['T_auth'] = $data['auth_id'];
+  }
+
+  $response = gm_sage_api_request($post_data, $data);
+
+  // If the transaction was not approved...
+  if ($response['approval_indicator'] != 'A') {
+    $result = array(
+      'success' => FALSE,
+      'message' => t('Credit card payment declined: @message', array('@message' => $response['approval_message'])),
+      'uid' => $user->uid,
+    );
+  }
+  else {
+    // Build a message for display and comments in the payments table.
+    $message = t('Type: @type<br />ID: @id', array('@type' => _gm_sage_txn_type($data['txn_type']), '@id' => $response['reference']));
+    $result = array(
+      'success' => TRUE,
+      'comment' => $message,
+      'message' => $message,
+      'data' => array('module' => 'gm_sage', 'txn_type' => $data['txn_type'], 'txn_id' => $response['reference']),
+      'uid' => $user->uid,
+    );
+
+    // If this was an authorization only transaction...
+    if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
+      // Log the authorization to the order.
+      uc_credit_log_authorization($order->order_id, $response['reference'], $amount);
+    }
+    elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+      uc_credit_log_prior_auth_capture($order->order_id, $response['reference']);
+    }
+
+    // Store the data in the Vault if specified.
+    if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE)) &&
+      $data['config']['gm_sage_vault_status'] && $data['config']['gm_sage_vault_checkout'] == 'insert') {
+        // Save the data if it's not duplicate.
+        gm_sage_vault_insert($order, $data);
+    }
+  }
+
+  // Don't log this as a payment money wasn't actually captured.
+  if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY))) {
+    $result['log_payment'] = FALSE;
+  }
+
+  // Build an admin order comment.
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-charge-comment',
+  );
+  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array('@type' => _gm_sage_txn_type($data['txn_type']), '@status' => $response['approval_indicator'] == 'A' ? t('ACCEPTED') : t('REJECTED'), '@message' => $response['approval_message'], '@amount' => uc_price($amount, $context), '@avs' => _gm_sage_avs($response['avs_indicator'])));
+
+  // Add the CVV response if enabled.
+  if (variable_get('uc_credit_cvv_enabled', TRUE)) {
+    $comment .= '<br />'. t('CVV match: @cvv', array('@cvv' => _gm_sage_cvv($response['cvs_indicator'])));
+  }
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+  return $result;
+}
+
+/**
+ * Submit an API request to Sage and return the parsed response.
+ *
+ * @param $post_data
+ *   An associative array of name-value-pairs for the API request parameters.
+ * @param $data
+ *   Information about this payment, including the gateway config
+ * @param $service
+ *   The service to which the API request should be submitted.
+ * @param $request
+ *   When included represents the Vault request being performed; determines the
+ *     to which data will be posted and assumes an XML response.
+ *  * @return
+ *   An array of data parase from the API response.
+ */
+function gm_sage_api_request($post_data, $data, $service = GM_SAGE_SERVICE_HTTPS_BANKCARD, $request = NULL) {
+  // Determine the URL for the web service.
+  switch ($service) {
+    case GM_SAGE_SERVICE_HTTPS_BANKCARD:
+      $post_url = 'https://www.sagepayments.net/cgi-bin/eftBankcard.dll?transaction';
+      break;
+    case GM_SAGE_SERVICE_VAULT:
+      $post_url = 'https://www.sagepayments.net/web_services/wsVault/wsVault.asmx/'. $request;
+      break;
+    case GM_SAGE_SERVICE_VAULT_BANKCARD:
+      $post_url = 'https://www.sagepayments.net/web_services/wsVault/wsVaultBankcard.asmx/'. $request;
+      break;
+  }
+
+  // Sage merchant account credentials.
+  $post_data['M_id'] = $data['config']['gm_sage_merchant_id'];
+  $post_data['M_key'] = _gm_sage_encrypt($data['config']['gm_sage_merchant_key'], 'decrypt');
+
+  // Translate the data array into a string we can POST.
+  $post_fields = array();
+  foreach ($post_data as $key => $value) {
+    $post_fields[] = $key .'='. urlencode($value);
+  }
+
+  // Setup the cURL request.
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $post_url);
+  curl_setopt($ch, CURLOPT_VERBOSE, 0);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post_fields));
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_setopt($ch, CURLOPT_NOPROGRESS, 1);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
+  $result = curl_exec($ch);
+
+  // Log any errors to the watchdog.
+  if ($error = curl_error($ch)) {
+    watchdog('gm_sage', 'cURL error: @error', array('@error' => $error), WATCHDOG_ERROR);
+    return array('success' => FALSE);
+  }
+  curl_close($ch);
+
+  // Return the parsed data from the response string based on the service.
+  switch ($service) {
+    case GM_SAGE_SERVICE_HTTPS_BANKCARD:
+      $response = _gm_sage_parse_response($result);
+      break;
+    case GM_SAGE_SERVICE_VAULT:
+      // Create the XML object for return.
+      $response = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><response>'. substr($result, strpos($result, "\r\n") + 2) .'</response>');
+      break;
+    case GM_SAGE_SERVICE_VAULT_BANKCARD:
+      // Create the XML object for return.
+      $response = new SimpleXMLElement($result);
+      break;
+  }
+
+  // If in debug mode display data
+  if (_gm_sage_debug_mode_check($data)) {
+    drupal_set_message('URL: ' . $post_url . '?' . implode('&', $post_fields));
+    drupal_set_message('Post data: ' . print_r($post_data, 1));
+    drupal_set_message('Raw API result: ' . check_plain($result));
+    drupal_set_message('Parsed API Response: ' . print_r($response, 1));
+  }
+
+  return $response;
+}
+
+/**
+ * Process a transaction through the Sage Vault.
+ */
+function gm_sage_vault_bankcard_request($order, $amount, $data) {
+  global $user;
+
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-charge',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
+  // Build an array of data to be POSTed for the transaction.
+  $post_data = array(
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
+    'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_EMAIL' => $order->primary_email,
+    'GUID' => strtolower($data['ref_id']),
+    'T_CUSTOMER_NUMBER' => $order->uid,
+    'T_AMT' => uc_price($amount, $context, $options),
+    'T_SHIPPING' => '',
+    'T_TAX' => '',
+    'T_ORDERNUM' => $order->order_id,
+    'C_TELEPHONE' => '',
+    'C_FAX' => '',
+    'C_SHIP_NAME' => '',
+    'C_SHIP_ADDRESS' => '',
+    'C_SHIP_CITY' => '',
+    'C_SHIP_STATE' => '',
+    'C_SHIP_ZIP' => '',
+    'C_SHIP_COUNTRY' => '',
+  );
+
+  $xml = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT_BANKCARD, 'VAULT_BANKCARD_SALE');
+
+  $response = _gm_sage_parse_vault_bankcard_response($xml->asXML());
+
+  // If the transaction was not approved...
+  if ($response['approval_indicator'] != 'A') {
+    $result = array(
+      'success' => FALSE,
+      'message' => t('Stored credit card payment declined: @message', array('@message' => $response['approval_message'])),
+      'uid' => $user->uid,
+    );
+  }
+  else {
+    // Build a message for display and comments in the payments table.
+    $message = t('Type: @type<br />ID: @id', array('@type' => _gm_sage_txn_type($data['txn_type']), '@id' => $response['reference']));
+    $result = array(
+      'success' => TRUE,
+      'comment' => $message,
+      'message' => $message,
+      'data' => array('module' => 'gn_sage', 'txn_type' => $data['txn_type'], 'txn_id' => $response['reference']),
+      'uid' => $user->uid,
+    );
+  }
+
+  // Build an admin order comment.
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-charge-comment',
+  );
+  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array('@type' => _gm_sage_txn_type($data['txn_type']), '@status' => $response['approval_indicator'] == 'A' ? t('ACCEPTED') : t('REJECTED'), '@message' => $response['approval_message'], '@amount' => uc_price($amount, $context), '@avs' => _gm_sage_avs($response['avs_indicator'])));
+
+  // Add the CVV response if enabled.
+  if (variable_get('uc_credit_cvv_enabled', TRUE)) {
+    $comment .= '<br />'. t('CVV match: @cvv', array('@cvv' => _gm_sage_cvv($response['cvs_indicator'])));
+  }
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+  return $result;
+}
+
+/**
+ * Insert customer data into the Vault.
+ *
+ * @param $order
+ *   An order object containing a uid and relevant billing address info for the
+ *     credit card being stored.
+ * @param $data
+ *   Data about the order from the gateway manager
+ * @return
+ *   The GUID returned by Sage representing the customer data in the Vault.
+ */
+function gm_sage_vault_insert($order, $data) {
+  $cc_number = $order->payment_details['cc_number'];
+  $cc_exp_month = $order->payment_details['cc_exp_month'];
+  $cc_exp_year = $order->payment_details['cc_exp_year'];
+
+  // Build the API parameters for the INSERT_DATA request.
+  $params = array(
+    'CARDNUMBER' => $cc_number,
+    'EXPIRATION_DATE' => sprintf("%02d", intval($cc_exp_month)) . substr($cc_exp_year, -2),
+  );
+
+  $response = gm_sage_api_request($params, $data, GM_SAGE_SERVICE_VAULT, 'INSERT_CREDIT_CARD_DATA');
+
+  if (!$response) {
+    uc_order_comment_save($order->order_id, 0, t('Sage: Vault record failed.<br />@error - @text', array('@error' => $response['code'], '@text' => $response['text'])), 'admin');
+    return array('success' => FALSE, 'message' => t('An error occurred that prevented the storage of the customer data in the Sage Vault.'));
+  }
+  else {
+    $guid = substr($response->DataSet->asXML(), strpos($response->DataSet->asXML(), '<GUID>') + 6, 32);
+    uc_credit_log_reference($order->order_id, $guid, $order->payment_details['cc_number']);
+    uc_order_comment_save($order->order_id, 0, t('Sage: Vault record created - @id', array('@id' => substr($response->DataSet->asXML(), strpos($response->DataSet->asXML(), '<GUID>') + 6, 32))));
+    return array('success' => TRUE, 'message' => t('Customer data stored in the Sage Vault for future transactions.'));
+  }
+}
+
+/**
+ * Update customer data in the Vault.
+ *
+ * @param $guid
+ *   The vault guid in the sage system.
+ * @param $update
+ *   An associative array of Vault data to update at Sage and in the local
+ *     database, including billing address and credit card information using the
+ *     keys: uid, billing_name, billing_street1, billing_street2, billing_city,
+ *     billing_zone, billing_postal_code, billing_country, cc_number,
+ *     cc_exp_month, cc_exp_year.  When updating a cc_number, you must also
+ *     include cc_exp_month and cc_exp_year. When updating cc_exp_month you must
+ *     also include cc_exp_year.
+ */
+function gm_sage_vault_update($guid, $update) {
+
+  // Perform the appropriate updates in the Sage Vault.
+  if (isset($update['cc_number'])) {
+    $post_data = array(
+      'GUID' => $guid,
+      'CARDNUMBER' => $update['cc_number'],
+      'EXPIRATION_DATE' => sprintf("%02d", intval($update['cc_exp_month'])) . substr($update['cc_exp_year'], -2),
+    );
+
+    $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'UPDATE_CREDIT_CARD_DATA');
+  }
+  elseif (isset($update['cc_exp_month'])) {
+    $post_data = array(
+      'GUID' => $guid,
+      'CARDNUMBER' => $update['cc_number'],
+      'EXPIRATION_DATE' => sprintf("%02d", intval($update['cc_exp_month'])) . substr($update['cc_exp_year'], -2),
+    );
+
+    $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'UPDATE_CREDIT_CARD_EXPIRATION_DATE');
+  }
+}
+
+/**
+ * Delete data from the Sage Vault.
+ *
+ * @param $vault_guid
+ */
+function gm_sage_vault_disabled($vault_guid) {
+  // Build the data array used in the delete request.
+  $post_data = array(
+    'GUID' => $valud_guid,
+  );
+
+  $response = gm_sage_api_request($post_data, $data, GM_SAGE_SERVICE_VAULT, 'DELETE_DATA');
+}
+
+function _gm_sage_post_data_from_order($order, $amount) {
+  $post_data = array(
+    'C_NAME' => $order->billing_first_name . ' ' . $order->billing_last_name,
+    'C_ADDRESS' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_CITY' => $order->billing_city,
+    'C_STATE' => uc_get_zone_code($order->billing_zone),
+    'C_ZIP' => $order->billing_postal_code,
+    'C_COUNTRY' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_EMAIL' => $order->primary_email,
+    'GUID' => strtolower($data['ref_id']),
+    'T_CUSTOMER_NUMBER' => $order->uid,
+    'T_AMT' => uc_price($amount, $context, $options),
+    'T_SHIPPING' => '',
+    'T_TAX' => '',
+    'T_ORDERNUM' => $order->order_id,
+    'C_TELEPHONE' => '',
+    'C_FAX' => '',
+    'C_SHIP_NAME' => '',
+    'C_SHIP_ADDRESS' => '',
+    'C_SHIP_CITY' => '',
+    'C_SHIP_STATE' => '',
+    'C_SHIP_ZIP' => '',
+    'C_SHIP_COUNTRY' => '',
+  );
+
+  return $post_data;
+}
+
+// Build the basic POST data for an order for submission to Sage.
+function _gm_sage_order_post_data($order, $amount, $data) {
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+  $shipping_country = uc_get_country_data(array('country_id' => $order->shipping_country));
+  
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'sage-charge',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
+  // Build the POST data for the transaction.
+  $post_data = array(
+    // Transaction information.
+    'T_amt' => uc_price($amount, $context, $options),
+    'T_code' => _gm_sage_txn_type_code_map($data['txn_type']),
+    'T_ordernum' => $order->order_id,
+
+    // Card data.
+    'C_cardnumber' => $data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE ? '' : $order->payment_details['cc_number'],
+    'C_exp' => $data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE ? '' : sprintf('%02d', $order->payment_details['cc_exp_month']) . substr($order->payment_details['cc_exp_year'], -2),
+    'C_cvv' => $data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE ? '' : $order->payment_details['cc_cvv'],
+
+    // Customer billing address.
+    'C_name' => $order->billing_first_name .' '. $order->billing_last_name,
+    'C_address' => $order->billing_street1 .' '. $order->billing_street2,
+    'C_city' => $order->billing_city,
+    'C_state' => uc_get_zone_code($order->billing_zone),
+    'C_zip' => $order->billing_postal_code,
+    'C_country' => !$billing_country ? '' : $billing_country[0]['country_name'],
+    'C_email' => $order->primary_email,
+    'C_telephone' => $order->billing_phone,
+
+    // Customer shipping address.
+    'C_ship_name' => $order->shipping_first_name .' '. $order->shipping_last_name,
+    'C_ship_address' => $order->shipping_street1 .' '. $order->shipping_street2,
+    'C_ship_city' => $order->shipping_city,
+    'C_ship_state' => uc_get_zone_code($order->shipping_zone),
+    'C_ship_zip' => $order->shipping_postal_code,
+    'C_ship_country' => !$shipping_country ? '' : $shipping_country[0]['country_name'],
+  );
+
+  return $post_data;
+}
+
+/**
+ * Gets the vault GUID for a given order.
+ *
+ * @param $order
+ *   The order to get the vault guid from.
+ */
+function _gm_sage_get_vault_guid($order) {
+  return array_shift(array_keys($order->data['cc_txns']['references']));
+}
+
+// Parse a string response from the payment gateway.
+function _gm_sage_parse_response($data) {
+  $response = array(
+    'approval_indicator' => substr($data, 1, 1),
+    'approval_code' => substr($data, 2, 6),
+    'approval_message' => substr($data, 8, 32),
+    'cvv_indicator' => substr($data, 42, 1),
+    'avs_indicator' => substr($data, 43, 1),
+    'risk_indicator' => substr($data, 44, 2),
+    'reference' => substr($data, 46, 10),
+  );
+
+  $bits = explode(chr(28), substr($data, 57));
+  $response['order_id'] = $bits[0];
+  $response['recurring_indicator'] = $bits[1];
+
+  return $response;
+}
+
+// Parse an XML response from the payment gateway.
+function _gm_sage_parse_vault_bankcard_response($xml) {
+  $response = array(
+    'approval_indicator' => substr($xml, strpos($xml, '<APPROVAL_INDICATOR>') + 20, 1),
+    'approval_code' => substr($xml, strpos($xml, '<CODE>') + 6, 6),
+    'approval_message' => substr($xml, strpos($xml, '<MESSAGE>') + 9, 32),
+    'front_end_indicator' => substr($xml, strpos($xml, '<FRONT_END_INDICATOR>') + 21, 2),
+    'cvv_indicator' => substr($xml, strpos($xml, '<CVV_INDICATOR>') + 15, 1),
+    'avs_indicator' => substr($xml, strpos($xml, '<AVS_INDICATOR>') + 15, 1),
+    'risk_indicator' => substr($xml, strpos($xml, '<RISK_INDICATOR>') + 16, 2),
+    'reference' => substr($xml, strpos($xml, '<REFERENCE>') + 11, 10),
+    'order_id' => substr($xml, strpos($xml, '<ORDER_NUMBER>') + 14, strpos($xml, '</ORDER_NUMBER>') - strpos($xml, '<ORDER_NUMBER>') + 14),
+  );
+
+  return $response;
+}
+
+// Map Ubercart CC transaction types to Sage processing codes.
+function _gm_sage_txn_type_code_map($txn_type) {
+  switch ($txn_type) {
+    case UC_CREDIT_AUTH_ONLY:
+      return '02';
+    case UC_CREDIT_PRIOR_AUTH_CAPTURE:
+      return '11';
+    case UC_CREDIT_AUTH_CAPTURE:
+      return '01';
+    case UC_CREDIT_CREDIT:
+      return '06';
+    case UC_CREDIT_VOID:
+      return '04';
+  }
+}
+
+// Returns the title of the transaction type.
+function _gm_sage_txn_type($txn_type) {
+  switch ($txn_type) {
+    case UC_CREDIT_AUTH_CAPTURE:
+      return t('Authorization and capture');
+    case UC_CREDIT_AUTH_ONLY:
+      return t('Authorization only');
+    case UC_CREDIT_PRIOR_AUTH_CAPTURE:
+      return t('Prior authorization capture');
+    case UC_CREDIT_REFERENCE_TXN:
+      return t('Stored credit card capture');
+    case UC_CREDIT_CREDIT:
+      return t('Credit');
+    case UC_CREDIT_VOID:
+      return t('Void');
+  }
+}
+
+// Returns the message text for an AVS response code.
+function _gm_sage_avs($code) {
+  $text = $code .' - ';
+
+  switch ($code) {
+    case 'X':
+      $text .= t('Exact match');
+      break;
+    case 'Y':
+      $text .= t('Address and 5 digit Zip code match');
+      break;
+    case 'A':
+      $text .= t('Address matches, Zip does not');
+      break;
+    case 'W':
+      $text .= t('9 digit Zip matches, address does not');
+      break;
+    case 'Z':
+      $text .= t('5 digit Zip matches, address does not');
+      break;
+    case 'N':
+      $text .= t('Neither Zip nor address match');
+      break;
+    case 'U':
+      $text .= t('Unavailable');
+      break;
+    case 'E':
+      $text .= t('Error');
+      break;
+    case 'S':
+      $text .= t('Service not supported');
+      break;
+  }
+
+  return $text;
+}
+
+// Returns the message text for a CVV match.
+function _gm_sage_cvv($code) {
+  $text = $code .' - ';
+
+  switch ($code) {
+    case 'M':
+      $text .= t('Match');
+      break;
+    case 'N':
+      $text .= t('No Match');
+      break;
+    case 'P':
+      $text .= t('Not Processed');
+      break;
+    case 'S':
+      $text .= t('Should have been present');
+      break;
+    case 'U':
+      $text .= t('Issuer unable to process request');
+      break;
+  }
+  return $text;
+}
+
+function _gm_sage_debug_mode_check($data) {
+  // Allow debug mode if its enabled
+  if ($data['config']['gm_sage_debug'] == 1) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Wrapper for the encryption function
+ */
+function _gm_sage_encrypt($data, $mode = 'encrypt') {
+  $value = NULL;
+  // If CC encryption has been configured properly.
+  if (!empty($data) && $key = uc_credit_encryption_key()) {
+    // Setup our encryption object.
+    $crypt = new uc_encryption_class;
+
+    $value = $crypt->{$mode}($key, $data);
+
+    // Store any errors.
+    uc_store_encryption_errors($crypt, 'gm_sage');
+  }
+
+  return $value;
+}

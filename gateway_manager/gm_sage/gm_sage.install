@@ -1,0 +1,19 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Installation of tables required for the Sage Payment Solutions.
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function gm_sage_uninstall() {
+  db_query("DELETE FROM {gateway_manager_gateways} WHERE type = 'gm_sage'");
+  variable_del('gm_sage_merchant_id');
+  variable_del('gm_sage_merchant_key');
+  variable_del('gm_sage_vault_status');
+  variable_del('gm_sage_vault_checkout');
+}
+
