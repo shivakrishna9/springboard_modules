@@ -1632,19 +1632,28 @@ function fundraiser_webform_validate($form, &$form_state) {
     }
   }
 
-	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
-	
-	$node_id = $form_state['values']['details']['nid'];
-	$errors = false;
-	// collect all of our donation fields
-	$donation_amount = $fundraiser_fields['amount'];
-	$cc_number = $fundraiser_fields['card_number'];
-	$cc_cvv = $fundraiser_fields['card_cvv'];
-	$cc_expiration_month = $fundraiser_fields['card_expiration_month'];
-	$cc_expiration_year = $fundraiser_fields['card_expiration_year'];
-	$email = trim($fundraiser_fields['email']);
+  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted']);
 
-    $amount_field = 'submitted][donation][amount';
+  $node_id = $form_state['values']['details']['nid'];
+  $errors = false;
+  // collect all of our donation fields
+  $donation_amount = $fundraiser_fields['amount'];
+  $cc_number = $fundraiser_fields['card_number'];
+  $cc_cvv = $fundraiser_fields['card_cvv'];
+  $cc_expiration_month = $fundraiser_fields['card_expiration_month'];
+  $cc_expiration_year = $fundraiser_fields['card_expiration_year'];
+  $email = trim($fundraiser_fields['email']);
+
+  // Check for confusing selection.	
+  if (!empty($fundraiser_fields['other_amount']) && $donation_amount != 'other') {
+
+    form_set_error('other_amount', 'You have entered a custom amount and selected a set amount. Please clarify which amount you intend to give, if you want ' .
+      'to give the amount that appears in the other box, please select Other from the radio buttons.');
+    $errors = true;
+
+  }
+
+  $amount_field = 'submitted][donation][amount';
     // look for other amount
     if ($donation_amount == "other") {
       $donation_amount = $fundraiser_fields['other_amount'];

@@ -99,4 +99,10 @@
 
 2012-11-30 Allen Freeman <allen.freeman@jacksonriver.com>
 
-    * fundraiser.module (fundraiser_order_decline) - moved hook invocation to tail end of function, added variable for reference id.
+    * fundraiser.module (fundraiser_order_decline) - moved hook invocation
+      to tail end of function, added variable for reference id.
+
+2012-11-30  Sarah Hood <sarah.hood@jacksonriver.com>
+
+    * fundraiser.js ($('#edit-submitted-donation-other-amount').change() - added error event & message handling
+
