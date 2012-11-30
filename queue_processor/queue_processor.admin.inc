@@ -80,14 +80,6 @@ function queue_processor_admin_settings() {
     '#size' => 6,
   );
 
-  $form['queue_batch_size'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Batch size'),
-    '#default_value' => variable_get('queue_batch_size', 200),
-    '#description' => t('The number of records to include in each batch.'),
-    '#size' => 4,
-  );
-
   $form['queue_retry_max'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum retry attempts'),
@@ -132,6 +124,22 @@ function queue_processor_admin_settings() {
       '#type' => 'weight',
       '#delta' => count($processing_order),
       '#default_value' => $key,
+    );
+  }
+
+  $form['batch_sizes'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Batch sizes',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  foreach($processing_order as $key => $type) {
+    $form['batch_sizes'][$type . '_batch_size'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Batch size for ' . $type,
+      '#default_value' => variable_get($type . '_batch_size', 200),
+      '#size' => 10,
     );
   }
 
@@ -210,13 +218,24 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
 		form_set_error('queue_max_to_process', t('Maximum number to process must be numeric.'));
 	}
 	
-	if (!is_numeric($form_state['values']['queue_batch_size'])) {
-		form_set_error('queue_batch_size', t('Queue batch size must be numeric.'));
-	}
-	
 	if (!is_numeric($form_state['values']['queue_retry_max'])) {
 		form_set_error('queue_retry_max', t('Queue retry max must be numeric.'));
 	}
+
+  // check batch size for each type
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  foreach($processing_order as $key => $type) {
+    $size = $form_state['values'][$type . '_batch_size'];
+    // make sure the value is numeric
+    if (!is_numeric($size)) {
+      form_set_error('batch_sizes][' . $type . '_batch_size', t(ucfirst($type) . ' batch size must be numeric.'));
+    }
+    // make sure size is 1 - 200 (Salesforce doesn't allow batch size > 200)
+    if ($size < 1 || $size > 200) {
+      form_set_error('batch_sizes][' . $type . '_batch_size', t(ucfirst($type) . ' batch size must be between 1 and 200.'));  
+    }
+
+  }
 }
 
 /**
@@ -235,7 +254,6 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
   
   variable_set('queue_max_to_process', $form_state['values']['queue_max_to_process']);
   variable_set('queue_processing_order', array_keys($ordered_types));
-  variable_set('queue_batch_size', $form_state['values']['queue_batch_size']);
   variable_set('queue_retry_max', $form_state['values']['queue_retry_max']);
   variable_set('queue_summary_email', $form_state['values']['queue_summary_email']);
   variable_set('queue_heap_destination', $form_state['values']['queue_heap_destination']);
@@ -244,6 +262,14 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
   variable_set('queue_processor_sf_batch_row_limit', $form_state['values']['queue_processor_sf_batch_row_limit']);
   variable_set('queue_processor_sf_batch_error_row_limit', $form_state['values']['queue_processor_sf_batch_error_row_limit']);
   
+  // save batch sizes per type
+  $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
+  foreach($processing_order as $key => $type) {
+    $name = $type . '_batch_size';
+    $value = $form_state['values'][$name];
+    variable_set($name, $value);
+  }
+
   drupal_set_message(t('Settings have been saved.'));
 }
 
@@ -252,7 +278,6 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
  */
 function queue_processor_admin_settings_reset($form, &$form_state) {
   variable_set('queue_processing_order', array('user', 'donation', 'webform', 'node'));
-  variable_set('queue_batch_size', 200);
   variable_set('queue_retry_max', 3);
   variable_set('queue_summary_email', NULL);
   variable_set('queue_heap_destination', 'queue');
