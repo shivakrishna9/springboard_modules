@@ -79,7 +79,8 @@ class NPSPDonation extends Donation
       'ms' => 'Market_Source__c',
       'payment_gateway' => 'Payment_Gateway__c',
       'payment_transaction_id' => 'Gateway_Reference__c',
-      
+      'created_by' => 'Donation_Created_By__c',
+      'offline' => 'Offline_Donation__c',
     );
   }
 }
