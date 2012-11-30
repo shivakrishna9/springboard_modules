@@ -1,0 +1,3 @@
+2012-10-04  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+    * salesforce_management_api.module (drush integration) - removed legacy Drush integration.
