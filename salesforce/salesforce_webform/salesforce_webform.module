@@ -12,15 +12,15 @@ function salesforce_webform_entity_info() {
   return array(
     'salesforce_webform_mapping' => array(
       'label' => t('Salesforce Webform Mapping'),
-      'base table' => 'salesforce_webform_mapping',
+      'entity class' => 'Entity',
       'controller class' => 'EntityAPIControllerExportable',
-      'entity class' => 'SalesforceWebformMapping',
+      'base table' => 'salesforce_webform_mapping',
       'entity keys' => array(
         'id' => 'salesforce_webform_mapping_id',
       ),
       'fieldable' => FALSE,
       'exportable' => TRUE,
-      'module' => 'salesforce_webform_mapping',
+      'module' => 'salesforce_webform',
     ),
   );
 }
