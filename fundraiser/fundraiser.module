@@ -1523,8 +1523,8 @@ function template_preprocess_fundraiser_confirmation(&$vars) {
   $sid = $vars['sid'];
   if ($sid) {
     // load up the id of the order
-    $order_id = db_result(db_query("SELECT order_id FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
-    $order = uc_order_load($order_id);
+    $order_details = db_fetch_object(db_query("SELECT order_id, recurring_status FROM {fundraiser_webform_order} WHERE sid = %d", $sid));
+    $order = uc_order_load($order_details->order_id);
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($vars['node']->nid, $sid);
     $message = $vars['node']->confirmation_page_body;
@@ -1536,6 +1536,10 @@ function template_preprocess_fundraiser_confirmation(&$vars) {
     
     // set a variable that can be used in the template
     $vars['confirmation_message'] = $message;
+
+    // set some useful variables that can be used in the template itself
+    $vars['order'] = $order;
+    $vars['recurring_donation'] = $order_details->recurring_status == DONATION_RECURRING ? TRUE : FALSE;
     
     // Flag sid as viewed
     fundraiser_secure_confirmation_flag($sid);
@@ -2260,7 +2264,7 @@ function fundraiser_process_recurring_donations() {
   	);
    	
    	$charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
-
+   	
    	if (empty($charge_function)) {
       db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
    	  watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
