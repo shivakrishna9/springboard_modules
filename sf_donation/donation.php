@@ -142,6 +142,8 @@ class Donation
   public $stage;
   public $payment_gateway;
   public $payment_transaction_id;
+  public $created_by;
+  public $offline;
   public $payment_authorization_code;
   
   function __construct($order_id, $sid) {
@@ -182,6 +184,8 @@ class Donation
     $this->billing_country = $this->_convert_country($order->billing_country);
     $this->billing_postal_code = $order->billing_postal_code;
     $this->stage = $stages['payment_pending'];
+    $this->created_by = $order->data['created_by'];
+    $this->offline = $order->data['offline'];
     
     // Only set these fields if it's paid
     if ($order->order_status == 'payment_received') {
@@ -353,6 +357,8 @@ class Donation
       'stage' => 'Stage',
       'payment_gateway' => 'Payment Gateway',
       'payment_transaction_id' => 'Payment Transaction ID',
+      'created_by' => 'Donation Created By',
+      'offline' => 'Offline Donation',
       'payment_authorization_code' => 'Payment Authorization Code',
     );
   }
