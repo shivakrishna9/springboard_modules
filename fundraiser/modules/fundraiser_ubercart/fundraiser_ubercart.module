@@ -95,11 +95,11 @@ function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implements hook_order_actions() from Ubercart.
+ * Implements hook_uc_order_actions() from Ubercart.
  * Add a refund option to the Order list.
- * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_actions/7
  */
-function fundraiser_order_actions($order) {
+function fundraiser_uc_order_actions($order) {
   $gateway = _fundraiser_get_donation_gateway($order->order_id);
   $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (user_access('edit orders') &&
@@ -114,6 +114,37 @@ function fundraiser_order_actions($order) {
     );
     return $actions;
   }
+}
+
+/**
+ * Implements hook_uc_order_pane() from Ubercart.
+ * Add a display of donation information to the order display.
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_pane/7
+ */
+function fundraiser_ubercart_uc_order_pane() {
+  // Wrap pane interface around drupal information output.
+  $panes['fundraiser'] = array(
+    'callback' => 'fundraiser_ubercart_donation_pane', 
+    'title' => t('Fundraiser information'), 
+    'desc' => t('View Fundraiser information given a specific order.'), 
+    'class' => 'abs-left',
+    'weight' => 10,
+    'show' => array('view', 'edit'),
+  );
+  return $panes;
+}
+
+/**
+ * Callback for donation pane display.
+ */
+function fundraiser_ubercart_donation_pane($op, $order, &$form = NULL, &$form_state = NULL) {
+  $table = fundraiser_donation_information_table($order->order_id);
+  if ($op == 'view') {
+    return array(
+      '#markup' => $table,
+    );
+  }
+  return $table;
 }
 
 /**
@@ -421,6 +452,7 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
   }
 
   // Time of charge.
@@ -542,11 +574,18 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundriaser's data.
   $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
     watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
-    return;
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
+    return; // Return the failure.
   }
+  // Found it, let's try it.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   // Create the charge information.
   $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
   $donation->data = (array) $donation->data;
@@ -579,6 +618,7 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
     if (!empty($order->order_status)) {
       $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+      $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
     }
   }
 }
@@ -642,6 +682,7 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
   }
 }
 
@@ -682,6 +723,7 @@ function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
   }
 }
 
@@ -697,6 +739,7 @@ function fundraiser_ubercart_fundraiser_donation_delete($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
   }
 }
 
@@ -836,9 +879,20 @@ function _fundraiser_ubercart_get_label_by_status($status) {
 }
 
 /**
+ * DB function, determine if given this status the donation has been charged already.
+ */
+function _fundraiser_ubercart_get_charged_by_status($status) {
+  $chargable_states = array('in_checkout', 'post_checkout'); // These are hard set from Ubercart.
+  $state = db_query('SELECT state FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
+  if (in_array($state, $chargable_states)) {
+    return FALSE; // If the donation is still able to be charged, say it hasn't been.
+  }
+  return TRUE;
+}
+
+/**
  * Below here are orphan or unknown origin functions. To be reviewed later. TODO
  */
-
 
 /**
  * Implements hook_fundraiser_decrypt_credit(). //where is this called?.
