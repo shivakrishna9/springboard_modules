@@ -16,7 +16,7 @@ function gateway_manager_install() {
  * Implementation of hook_uninstall().
  */
 function gateway_manager_uninstall() {
-	drupal_uninstall_schema('gateway_manager');
+  drupal_uninstall_schema('gateway_manager');
   $vid = variable_get('gateway_manager_vocabulary', '');
   taxonomy_del_vocabulary($vid);
 }
@@ -96,7 +96,60 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('id'),
   );
-  
+
+  $schema['gateway_manager_node'] = array(
+    'description' => t('Table of gateway settings for nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Primary Key: The {node}.nid of the node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'method' => array(
+        'description' => t('Payment method.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'gateway_instance' => array(
+        'description' => t('The ID of the configured gateway.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'label' => array(
+        'description' => t('Optional label to override the default label.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'weight' => array(
+        'description' => 'The weight of this term in relation to other terms.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      ),
+      'default' => array(
+        'description' => 'Boolean indicating if this payment type is the defaut selected on the form.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether this configuration is active on the form.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
   $schema['term_gateway'] = array(
     'description' => t('Table to store gateway related terms.'),
     'fields' => array(
@@ -131,5 +184,15 @@ function gateway_manager_update_6301() {
         'not null' => FALSE,
       ));
   db_query('UPDATE {gateway_manager_gateways} SET status = 1');
+  return $ret;
+}
+
+/**
+ * Add this gateway_manager_node table
+ */
+function gateway_manager_update_6302() {
+  $ret = array();
+  $schema = gateway_manager_schema();
+  db_create_table($ret, 'gateway_manager_node', $schema['gateway_manager_node']);
   return $ret;
 }
