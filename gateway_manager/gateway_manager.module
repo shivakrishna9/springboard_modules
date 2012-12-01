@@ -60,8 +60,8 @@ function gateway_manager_gateway_load_fields($payment_method, $gateway_instance)
       $fields += array(
         'file' => $gateway_types[$gateway_type]['file'],
       );
-      if (!empty($fields['file']) && !empty($fields['module'])) {
-        require_once(drupal_get_path('module', $fields['module']) . '/' . $fields['file']);
+      if (!empty($fields['file']) && !empty($gateway_types[$gateway_type]['module'])) {
+        require_once(drupal_get_path('module', $gateway_types[$gateway_type]['module']) . '/' . $fields['file']);
       }
       return $fields;
     }
