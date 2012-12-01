@@ -14,9 +14,8 @@
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
   if (fundraiser_is_donation_edit_form($form_id, $form)) {
-    // Add a wrapper around the payment gateway field
-    $form['fundraiser_settings']['gateway']['#prefix'] = '<div id="gateway">';
-    $form['fundraiser_settings']['gateway']['#suffix'] = '</div>';
+    module_load_include('inc', 'gateway_manager', 'gateway_manager.admin');
+    gateway_manager_donation_node_form($form, $form_state);
   }
 
   // If the payment gateway for the donation form does not include credit card fields (such
@@ -37,16 +36,82 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function gateway_manager_theme() {
+  return array(
+    'gateway_manager_node_form_payment_methods' => array(
+      'arguments' => array('fieldset' => NULL),
+      'file' => 'gateway_manager.admin.inc',
+    ),
+  );
+}
+
+/**
+ *
+ */
+function gateway_manager_gateway_load_fields($payment_method, $gateway_type) {
+  $gateway_types = gateway_manager_gateway_types();
+  if (isset($gateway_types[$gateway_type])) {
+    if (isset($gateway_types[$gateway_type]['payment_methods'][$payment_method])) {
+      $fields = $gateway_types[$gateway_type]['payment_methods'][$payment_method];
+      $fields += array('file' => $gateway_types[$gateway_type]['file']);
+      return $fields;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Returns all available payment methods.
+ */
+function gateway_manager_all_payment_methods() {
+  $gateway_types = gateway_manager_gateway_types();
+  $gateways = gateway_manager_gateway_load_all();
+
+  // Iterate through the available gateways, find their gateway_type
+  // definitions, and build the list of available payment methods.
+  $payment_methods = array();
+  foreach ($gateways as $gateway_name => $gateway) {
+    if ($gateway->disabled || !isset($gateway_types[$gateway->gateway_type]) || !is_array($gateway_types[$gateway->gateway_type]['payment_methods'])) {
+      // Skip disabled and unsupported gateway types.
+      continue;
+    }
+
+    // Shortcut to the gateway type.
+    $gateway_type = $gateway_types[$gateway->gateway_type];
+
+    // Loop on all payment methods in the gateway.
+    foreach ($gateway_type['payment_methods'] as $method_key => $method) {
+      // Remove the payment methods.
+      if (empty($method['file'])) {
+        $method['file'] = $gateway_type['file'];
+      }
+      if (empty($payment_methods[$method_key]['#label'])) {
+        $payment_methods[$method_key]['#label'] = isset($method['label']) ? $method['label'] : $method_key;
+      }
+      $payment_methods[$method_key][$gateway_name] = (array) $gateway + $method;
+    }
+  }
+  return $payment_methods;
+}
+
+/**
  * Implements hook_nodeapi().
  */
 function gateway_manager_nodeapi(&$node, $op) {
-  // clear out the gateway cache when donation forms
-  // are created, updated or deleted
   if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
+      case 'prepare':
+        module_load_include('inc', 'gateway_manager', 'gateway_manager.admin');
+        gateway_manager_donation_node_prepare($node);
+        break;
+
       case 'insert':
-      case 'delete':
       case 'update':
+      case 'delete':
+        module_load_include('inc', 'gateway_manager', 'gateway_manager.admin');
+        gateway_manager_donation_node_save($node, $op);
         _gateway_manager_clear_cache();
         break;
     }
@@ -121,11 +186,8 @@ function gateway_manager_gateway_info($name) {
  */
 function gateway_manager_gateway_load($name) {
   static $gateways = array();
-  if (empty($gateways)) {
-    ctools_include('export');
-    $gateways = ctools_export_crud_load_all('gateway_manager_gateways');
-  }
-  if (isset($gatways[$name]) && !isset($gateways[$name]->_alter)) {
+  $gateways = gateway_manager_gateway_load_all();
+  if (isset($gateways[$name]) && !$gateways[$name]->_alter) {
     // Run the alter hook *one* time per gateway.
     drupal_alter('gateway_manager_gateway', $gateways[$name]);
     $gateways[$name]->_alter = TRUE;
@@ -134,16 +196,26 @@ function gateway_manager_gateway_load($name) {
 }
 
 /**
- * Builds an array of configured gateways that can be used in a #options array.
+ * Loads all payment gateways, keyed by machine name.
  */
-function _gateway_manager_gateway_list($show_disabled = FALSE) {
+function gateway_manager_gateway_load_all() {
   static $gateways = array();
   if (empty($gateways)) {
     ctools_include('export');
-    foreach (ctools_export_crud_load_all('gateway_manager_gateways') as $name => $gateway) {
-      if ($show_disabled || !$gateway->disabled) {
-        $gateways[$name] = $gateway->admin_title;
-      }
+    $gateways = ctools_export_crud_load_all('gateway_manager_gateways');
+    drupal_alter('gateway_manager_gateways', $gateways);
+  }
+  return $gateways;
+}
+
+/**
+ * Builds an array of configured gateways that can be used in a #options array.
+ */
+function _gateway_manager_gateway_list($show_disabled = FALSE) {
+  $gateways = array();
+  foreach (gateway_manager_gateway_load_all() as $name => $gateway) {
+    if ($show_disabled || !$gateway->disabled) {
+      $gateways[$name] = $gateway->admin_title;
     }
   }
   return $gateways;
@@ -240,7 +312,7 @@ function _gateway_manager_clear_cache() {
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // Add the human-readable gateway title to the $details.
   $gateway = gateway_manager_gateway_load($details['gateway']);
-  $details['gateway'] = $gatway->admin_title;
+  $details['gateway'] = $gateway->admin_title;
 }
 
 /**
