@@ -67,7 +67,7 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
 
     // Serialize everything else.
     $config = array_diff_key($form_state['values'], (array) $item);
-    $config = array_diff_key($config, array_flip(array('op', 'submit', 'delete', 'form_build_id', 'form_token', 'form_id')));
+    $config = array_diff_key($config, array_flip(array('created', 'updated', 'op', 'submit', 'delete', 'form_build_id', 'form_token', 'form_id')));
     $form_state['values']['config'] = $config;
 
     parent::edit_form_submit($form, $form_state);
@@ -80,6 +80,7 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
       array('data' => t('Created by')),
       array('data' => t('Created')),
       array('data' => t('Updated')),
+      array('data' => t('Storage')),
       array('data' => t('Operations')),
     );
   }
@@ -119,8 +120,9 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
         array('data' => check_plain($item->admin_title)),
         array('data' => check_plain(isset($gateways[$item->gateway_type]) ? $gateways[$item->gateway_type]['title'] : $item->gateway_type)),
         array('data' => check_plain($author->name)),
-        array('data' => format_date($item->created)),
-        array('data' => format_date($item->updated)),
+        array('data' => !empty($item->created) ? format_date($item->created) : ''),
+        array('data' => !empty($item->updated) ? format_date($item->updated) : ''),
+        array('data' => check_plain($item->type)),
         array('data' => theme('links', $operations)),
       ),
       'title' => check_plain($item->admin_title),

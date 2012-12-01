@@ -71,12 +71,14 @@ function gateway_manager_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
+        'no export' => TRUE,
       ),
       'updated' => array(
         'description' => t('Timestamp of when the gateway was last updated.'),
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
+        'no export' => TRUE,
       ),
       'config' => array(
         'description' => t('Serialized configuration data for the gateway.'),
