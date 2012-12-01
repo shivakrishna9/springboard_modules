@@ -53,9 +53,10 @@ function gateway_manager_theme() {
 function gateway_manager_gateway_load_fields($payment_method, $gateway_instance) {
   $gateway_types = gateway_manager_gateway_types();
   if ($gateway = gateway_manager_gateway_load($gateway_instance)) {
-    if (isset($gateway_types[$gateway_instance]['payment_methods'][$payment_method])) {
-      $fields = $gateway_types[$gateway_instance]['payment_methods'][$payment_method];
-      $fields += array('file' => $gateway_types[$gateway_instance]['file']);
+    $gateway_type = $gateway->gateway_type;
+    if (isset($gateway_types[$gateway_type]['payment_methods'][$payment_method])) {
+      $fields = $gateway_types[$gateway_type]['payment_methods'][$payment_method];
+      $fields += array('file' => $gateway_types[$gateway_type]['file']);
       return $fields;
     }
   }
