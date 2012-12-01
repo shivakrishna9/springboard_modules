@@ -1510,14 +1510,24 @@ function fundraiser_get_country_zones($country_id) {
     return $zone_array[$country_id];
   }
 
-  $results = db_query("SELECT * FROM {uc_zones} WHERE zone_country_id = %d ORDER BY zone_code", $country_id);
+  // Some countries need an override, the zone_code is NOT the correct display for them.
+  // Most zone codes are correct by natural order - be that alphabetical or numerical. But some countries are wierd.
+  // For those, we add them to the exception list and order by zone_name.
+  $alphabetical_exception = array('840', '124');
+  // Countries: 840 -> US
+  if (in_array($country_id, $alphabetical_exception)) {
+    $results = db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = %d ORDER BY zone_name ASC', $country_id);
+  }
+  else {
+    $results = db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = %x ORDER BY zone_code ASC', $country_id);
+  }
   $zone_array[$country_id] = array();
   while ($zone = db_fetch_object($results)) {
     $zone_array[$country_id][$zone->zone_id] = $zone->zone_name;
   }
-
   return $zone_array[$country_id];
-
 }
 
 /**
