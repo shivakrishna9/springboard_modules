@@ -11,10 +11,11 @@
  * Implements hook_payment_gateway_managed().
  */
 function gm_test_gateway_payment_gateway_managed() {
-  $gateways[] = array(
+  $gateways['test_gateway'] = array(
     'id' => 'test_gateway',
     'title' => t('Test Gateway'),
     'description' => t('Process credit card payments through the Test Gateway.'),
+    'settings' => NULL,
     'file' => 'gm_test_gateway.gm.inc',
     'payment_methods' => array(
       'credit' => array(

@@ -14,18 +14,10 @@ $plugin = array(
     'menu description' => 'Administer the available payment gateways.',
   ),
 
-  'title singular' => t('Payment gateway'),
-  'title plural' => t('Payment gateways'),
+  'title singular' => t('payment gateway'),
+  'title plural' => t('payment gateways'),
   'title singular proper' => t('Gateway Manager payment gateway'),
   'title plural proper' => t('Gateway Manager payment gateway'),
-
-  /*
-  'form' => array(
-    'settings' => 'multi_smtp_server_ui_edit_settings_form',
-    'validate' => 'multi_smtp_server_ui_edit_settings_form_validate',
-    'submit' => 'multi_smtp_server_ui_edit_settings_form_submit',
-  ),
-  */
 
   'handler' => array(
     'class' => 'gateway_manager_gateway_ui',

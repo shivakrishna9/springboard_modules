@@ -10,58 +10,6 @@
 
 
 /**
- * Implements hook_menu().
- */
-function gateway_manager_menu() {
-  $items = array();
-  /*
-  $items['admin/settings/fundraiser/gateways'] = array(
-    'title' => t('Payment gateways'),
-    'page callback' => 'gateway_manager_list',
-    'access callback' => 'user_access',
-    'access arguments' => array('view payment gateway list'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'gateway_manager.admin.inc',
-  );
-  $items['admin/settings/fundraiser/gateways/list'] = array(
-    'title' => t('List'),
-    'access callback' => 'user_access',
-    'access arguments' => array('view payment gateway list'),
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 0,
-  );
-  $items['admin/settings/fundraiser/gateways/add'] = array(
-    'title' => t('Add payment gateway'),
-    'page callback' => 'gateway_manager_gateway_add',
-    'access callback' => 'user_access',
-    'access arguments' => array('create payment gateway'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'gateway_manager.admin.inc',
-    'weight' => 1,
-  );
-  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/edit'] = array(
-    'title' => t('Edit payment gateway'),
-    'page callback' => 'gateway_manager_gateway_edit',
-    'page arguments' => array(4),
-    'type' => MENU_CALLBACK,
-    'access callback' => 'user_access',
-    'access arguments' => array('edit any payment gateway'),
-    'file' => 'gateway_manager.admin.inc',
-  );
-  $items['admin/settings/fundraiser/gateways/%gateway_manager_gateway/delete'] = array(
-    'title' => t('Delete payment gateway'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('gateway_managed_gateway_delete_form', 4),
-    'type' => MENU_CALLBACK,
-    'access callback' => 'gateway_manager_gateway_can_be_deleted',
-    'access arguments' => array(4),
-    'file' => 'gateway_manager.admin.inc',
-  );
-  */
-  return $items;
-}
-
-/**
  * Implements hook_form_alter().
  */
 function gateway_manager_form_alter(&$form, &$form_state, $form_id) {

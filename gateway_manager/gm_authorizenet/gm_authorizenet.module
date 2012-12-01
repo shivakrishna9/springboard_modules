@@ -41,7 +41,7 @@ function gm_authorizenet_silent_post_access() {
  * Implementation of hook_payment_gateway_managed().
  */
 function gm_authorizenet_payment_gateway_managed() {
-  $gateways[] = array(
+  $gateways['gm_authorizenet'] = array(
     'id' => 'gm_authorizenet',
     'title' => t('Authorize.net'),
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
@@ -249,9 +249,9 @@ function gm_authorizenet_billing_update($profile_id, $billing_info, $data) {
       $result['data'] = array('profile_id' => $profile_id, 'payment_profile_id' => $payment_profile_id,
         'billing_info' => $billing_info);
     }
-    
+
   }
-  
+
   // return the result
   return $result;
 }
@@ -305,7 +305,7 @@ function gm_authorizenet_cim_profile_get($profile_id, $data) {
  *      ),
  *      'card_cvv' => 122,
  *    );
- *      
+ *
  */
 function gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id, $billing_info, $data) {
   $server = $data['config']['gm_authnet_cim_mode'];
@@ -351,7 +351,7 @@ function gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id
       'customerPaymentProfileId' => $payment_profile_id,
     ),
   );
-  
+
   $xml = _gm_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',  _gm_authorizenet_array_to_xml($request), $data['config']);
   $response = gm_authorizenet_xml_api($server, $xml);
   $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
@@ -1177,14 +1177,14 @@ function gm_authorizenet_refund($order_id, $amount, $data) {
   if ($amount > 0) {
     $amount = $amount * -1;
   }
-  
+
   if ($order_id > 0) {
     $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d', array($order_id)));
-    
+
     // Set the transaction type to credit, and the ID of the previous charge to refund against
     $data['txn_type'] = UC_CREDIT_CREDIT;
     $data['auth_id'] = $payment_details->txn_id;
-    
+
     return gm_authorizenet_charge($order_id, $amount, $data);
   }
   return array();
