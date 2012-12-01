@@ -121,11 +121,8 @@ function gateway_manager_gateway_info($name) {
  */
 function gateway_manager_gateway_load($name) {
   static $gateways = array();
-  if (empty($gateways)) {
-    ctools_include('export');
-    $gateways = ctools_export_crud_load_all('gateway_manager_gateways');
-  }
-  if (isset($gatways[$name]) && !isset($gateways[$name]->_alter)) {
+  $gateways = gateway_manager_gateway_load_all();
+  if (isset($gateways[$name]) && !$gateways[$name]->_alter) {
     // Run the alter hook *one* time per gateway.
     drupal_alter('gateway_manager_gateway', $gateways[$name]);
     $gateways[$name]->_alter = TRUE;
@@ -134,16 +131,26 @@ function gateway_manager_gateway_load($name) {
 }
 
 /**
- * Builds an array of configured gateways that can be used in a #options array.
+ * Loads all payment gateways, keyed by machine name.
  */
-function _gateway_manager_gateway_list($show_disabled = FALSE) {
+function gateway_manager_gateway_load_all() {
   static $gateways = array();
   if (empty($gateways)) {
     ctools_include('export');
-    foreach (ctools_export_crud_load_all('gateway_manager_gateways') as $name => $gateway) {
-      if ($show_disabled || !$gateway->disabled) {
-        $gateways[$name] = $gateway->admin_title;
-      }
+    $gateways = ctools_export_crud_load_all('gateway_manager_gateways');
+    drupal_alter('gateway_manager_gateways', $gateways);
+  }
+  return $gateways;
+}
+
+/**
+ * Builds an array of configured gateways that can be used in a #options array.
+ */
+function _gateway_manager_gateway_list($show_disabled = FALSE) {
+  $gateways = array();
+  foreach (gateway_manager_gateway_load_all() as $name => $gateway) {
+    if ($show_disabled || !$gateway->disabled) {
+      $gateways[$name] = $gateway->admin_title;
     }
   }
   return $gateways;
@@ -240,7 +247,7 @@ function _gateway_manager_clear_cache() {
 function gateway_manager_donation_transaction_details_alter(&$details) {
   // Add the human-readable gateway title to the $details.
   $gateway = gateway_manager_gateway_load($details['gateway']);
-  $details['gateway'] = $gatway->admin_title;
+  $details['gateway'] = $gateway->admin_title;
 }
 
 /**
