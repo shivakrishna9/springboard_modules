@@ -41,6 +41,7 @@ function gateway_manager_schema() {
       'id' => array(
         'description' => t('Unique payment gateway id.'),
         'type' => 'serial',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'no export' => TRUE,
       ),
@@ -48,36 +49,38 @@ function gateway_manager_schema() {
         'description' => t('The machine name of the payment gateway.'),
         'type' => 'varchar',
         'length' => '255',
+        'not null' => TRUE,
       ),
       'admin_title' => array(
         'description' => t('The recognizable name of the payment gateway.'),
         'type' => 'varchar',
         'length' => '255',
+        'not null' => TRUE,
       ),
       'uid' => array(
         'description' => t('UID of the user that created the payment gateway.'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
       ),
       'gateway_type' => array(
         'description' => t('The type of payment gateway (authorizenet, cybersource, etc.).'),
         'type' => 'varchar',
         'length' => '255',
+        'not null' => TRUE,
       ),
       'created' => array(
         'description' => t('Timestamp of when the payment gateway was created.'),
         'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
         'no export' => TRUE,
       ),
       'updated' => array(
         'description' => t('Timestamp of when the gateway was last updated.'),
         'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => 0,
         'no export' => TRUE,
       ),
       'config' => array(
@@ -168,5 +171,86 @@ function gateway_manager_update_6302() {
   $ret = array();
   $schema = gateway_manager_schema();
   db_create_table($ret, 'gateway_manager_node', $schema['gateway_manager_node']);
+  return $ret;
+}
+
+/**
+ * Update the gateway_manager_gateways schema to work with CTools.
+ */
+function gateway_manager_update_6303() {
+  $ret = array();
+
+  // Add 'admin_title' column.
+  db_add_field($ret, 'gateway_manager_gateways', 'admin_title', array(
+    'description' => t('The recognizable name of the payment gateway.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => TRUE,
+  ));
+
+  // Move 'name' into 'admin_title', and make unique machine name.
+  $result = db_query("SELECT * FROM {gateway_manager_gateways}");
+  while ($row = db_fetch_object($result)) {
+    // 'name' is now 'admin_title'.
+    $row->admin_title = $row->name;
+    // Make a new unique machine name.
+    $row->name = preg_replace('/([^a-z0-9_]+)/i', '_', strtolower($row->name)) . '_' . $row->id;
+    // Update the admin_title and name.
+    db_query("UPDATE {gateway_manager_gateways} SET admin_title = '%s', name = '%s' WHERE id = %d",
+      array($row->admin_title, $row->name, $row->id));
+  }
+
+  // Alter other columns to match schema.
+
+  db_change_field($ret, 'gateway_manager_gateways', 'id', 'id', array(
+    'description' => t('Unique payment gateway id.'),
+    'type' => 'serial',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ));
+
+  db_change_field($ret, 'gateway_manager_gateways', 'name', 'name', array(
+    'description' => t('The machine name of the payment gateway.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => TRUE,
+  ));
+
+  db_change_field($ret, 'gateway_manager_gateways', 'uid', 'uid', array(
+    'description' => t('UID of the user that created the payment gateway.'),
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ));
+
+  // Renaming 'type' to 'gateway_type' to avoid conflict in ctools.
+  db_change_field($ret, 'gateway_manager_gateways', 'type', 'gateway_type', array(
+    'description' => t('The type of payment gateway (authorizenet, cybersource, etc.).'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => TRUE,
+  ));
+
+  db_change_field($ret, 'gateway_manager_gateways', 'created', 'created', array(
+    'description' => t('Timestamp of when the payment gateway was created.'),
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ));
+
+  db_change_field($ret, 'gateway_manager_gateways', 'updated', 'updated', array(
+    'description' => t('Timestamp of when the gateway was last updated.'),
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ));
+
+  db_change_field($ret, 'gateway_manager_gateways', 'config', 'config', array(
+    'description' => t('Serialized configuration data for the gateway.'),
+    'type' => 'text',
+    'size' => 'big',
+    'not null' => FALSE,
+  ));
+
   return $ret;
 }
