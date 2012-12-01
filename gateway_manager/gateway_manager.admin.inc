@@ -12,8 +12,6 @@
 function gateway_manager_donation_node_form(&$form, &$form_state) {
   $node = $form['#node'];
 
-  gateway_manager_gateway_load_fields('credit', 'test_gateway');
-
   $fieldset = array(
     '#type' => 'fieldset',
     '#title' => t('Payment methods'),
