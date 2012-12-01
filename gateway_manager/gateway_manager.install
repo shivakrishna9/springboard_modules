@@ -1,8 +1,8 @@
 <?php
 /**
  * @file
- * Install file for the gateway manager module. 
- * 
+ * Install file for the gateway manager module.
+ *
  */
 
 /**
@@ -49,6 +49,17 @@ function gateway_manager_enable() {
 function gateway_manager_schema() {
   $schema['gateway_manager_gateways'] = array(
     'description' => t('Table that contains configured payment gateways.'),
+    'export' => array(
+      'key' => 'id',
+      'identifier' => 'gateway_manager_gateway',
+      'default hook' => 'default_gateway_manager_gateways',  // Function hook name.
+      'api' => array(
+        'owner' => 'gateway_manager',
+        'api' => 'default_gateway_manager_gateways',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'id' => array(
         'description' => t('Unique payment gateway id.'),
@@ -168,7 +179,7 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('gid', 'tid'),
   );
-  
+
   return $schema;
 }
 

@@ -2,7 +2,9 @@ name = Payment Gateway Manager
 description = Allows a user to configure multiple versions of the same payment gateway with different settings.
 core = 6.x
 package = Jackson River Springboard - payment
+
+dependencies[] = ctools
 dependencies[] = fundraiser
 dependencies[] = uc_credit
-dependencies[] = taxonomy
-version =  6.x-3.2
+
+version =  6.x-3.3

@@ -13,6 +13,8 @@
  * Implements hook_menu().
  */
 function gateway_manager_menu() {
+  $items = array();
+  /*
   $items['admin/settings/fundraiser/gateways'] = array(
     'title' => t('Payment gateways'),
     'page callback' => 'gateway_manager_list',
@@ -55,7 +57,7 @@ function gateway_manager_menu() {
     'access arguments' => array(4),
     'file' => 'gateway_manager.admin.inc',
   );
-
+  */
   return $items;
 }
 
@@ -442,4 +444,22 @@ function gateway_manager_gateway_for_order($order_or_orderid) {
     return gateway_manager_gateway_info($order->data['gateway']);
   }
   return null;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function gateway_manager_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'export_ui') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function gateway_manager_ctools_plugin_api($owner, $api) {
+  if ($owner == 'gateway_manager' && $api == 'default_gateway_manager_gateways') {
+    return array('version' => 1);
+  }
 }
