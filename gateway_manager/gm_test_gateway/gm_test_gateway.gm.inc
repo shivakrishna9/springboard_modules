@@ -50,12 +50,18 @@ function gm_test_gateway_credit_charge($order_id, $amount, $data) {
  * Webform render callback for credit cards on the test gateway.
  */
 function gm_test_gateway_credit_webform_render($form, &$form_state) {
+  // Include generic credit card functionality
+  module_load_include('inc', 'gateway_manager', 'includes/gateway_manager.credit');
+  return gateway_manager_credit_form_render($form, $form_state);
 }
 
 /**
  * Payment details callback for credit cards on the test gateway.
  */
 function gm_test_gateway_credit_payment_details(&$order, $submitted) {
+  // Include generic credit card functionality.
+  module_load_include('inc', 'gateway_manager', 'includes/gateway_manager.credit');
+  return gateway_manager_credit_payment_details($order, $submitted);
 }
 
 /**

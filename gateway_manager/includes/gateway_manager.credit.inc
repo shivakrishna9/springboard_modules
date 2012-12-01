@@ -10,13 +10,13 @@
 /** 
  * Generic callback function for the render_callback of the credit payment method. 
  */
-function gateway_manager_credit_form_render($node) {
+function gateway_manager_credit_form_render($form, &$form_state) {
   // Get the generic form for credit card transactions
   $credit_form = gateway_manager_credit_form();
-  // Allow other modules to alter the form via hook_gateway_manager_credit_form_alter().
-  drupal_alter('gateway_manager_credit_form', $credit_form, $node);
-
-  return drupal_render($credit_form);
+  // Allow other modules to alter the form via hook_gateway_manager_credit_form_alter()
+  drupal_alter('gateway_manager_credit_form', $credit_form, $form, $form_state);
+  // Return the rendered form
+  return $credit_form;
 }
 
 /**
@@ -30,19 +30,19 @@ function gateway_manager_credit_form_render($node) {
  * @return
  *   The payment details array in ubercart format.
  */
-function gateway_manager_credit_payment_details($order, $submission) {
+function gateway_manager_credit_payment_details($order, $submitted) {
 
   // Extract the payment details from the submission array.
   $payment_details = array(
-    'cc_type' => _fundraiser_get_cc_type($submission['card_number']),
+    'cc_type' => _fundraiser_get_cc_type($submitted['card_number']),
     'cc_owner' => '',
-    'cc_number' => $submission['card_number'],
+    'cc_number' => $submitted['card_number'],
     'cc_start_month' => '',
     'cc_start_year' => '',
-    'cc_exp_month' => $submission['card_expiration_month'],
-    'cc_exp_year' => $submission['card_expiration_year'],
+    'cc_exp_month' => $submitted['card_expiration_month'],
+    'cc_exp_year' => $submitted['card_expiration_year'],
     'cc_issue' => '',
-    'cc_cvv' => $submission['card_cvv'],
+    'cc_cvv' => $submitted['card_cvv'],
     'cc_bank' => '',
   );
   
