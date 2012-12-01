@@ -10,9 +10,11 @@
 /** 
  * Generic callback function for the render_callback of the credit payment method. 
  */
-function gateway_manager_credit_form_render($form, &$form_state) {
+function gateway_manager_credit_form_render(&$form, &$form_state) {
   // Get the generic form for credit card transactions
   $credit_form = gateway_manager_credit_form();
+  // Assign a validation handler (TODO: is there a better place to assign this? feels ugly.)
+  $form['#validate'][] = 'gateway_manager_credit_form_validate';
   // Allow other modules to alter the form via hook_credit_payment_form_alter()
   drupal_alter('credit_payment_form', $credit_form, $form, $form_state);
   // Return the rendered form
@@ -80,20 +82,19 @@ function gateway_manager_credit_form() {
     '#weight' => 2,
   );
 
-  // Add a validation handler to the form
-  $form['#validate'][] = 'gateway_manager_credit_form_validate';
-
   return $form;
 }
 
 /**
  * Validation handler for gateway_manager_credit_form.
+ *
+ * TODO: Figure out the correct paths to use in form_set_error.
  */
 function gateway_manager_credit_form_validate($form, &$form_state) {
-  $card_number = $form_state['submitted']['payment_fields']['card_number'];
-  $card_expiration_month = $form_state['submitted']['payment_fields']['expiration_date']['card_expiration_month'];
-  $card_expiration_year = $form_state['submitted']['payment_fields']['expiration_date']['card_expiration_year'];
-  $card_cvv = $form_state['submitted']['payment_fields']['card_cvv'];
+  $card_number = $form_state['values']['card_number'];
+  $card_expiration_month = $form_state['values']['expiration_date']['card_expiration_month'];
+  $card_expiration_year = $form_state['values']['expiration_date']['card_expiration_year'];
+  $card_cvv = $form_state['values']['card_cvv'];
 
   // Validate credit card number
   if (!empty($card_number) && ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($card_number)) || !ctype_digit($card_number))) {
