@@ -86,23 +86,6 @@ function gateway_manager_donation_node_form(&$form, &$form_state) {
 }
 
 /**
- * Load all rows in {gateway_manager_node} for this node.
- */
-function gateway_manager_donation_node_prepare(&$node) {
-  if (!isset($node->gateway_manager)) {
-    $node->gateway_manager = array();
-
-    $sql = "SELECT * FROM {gateway_manager_node} WHERE nid = %d ORDER BY weight ASC";
-    $result = db_query($sql, $node->nid);
-
-    $node->gateway_manager['payment_methods'] = array();
-    while ($record = db_fetch_object($result)) {
-      $node->gateway_manager['payment_methods'][$record->method] = $record;
-    }
-  }
-}
-
-/**
  * Save changes to the gateway_manager_node schema on a node save.
  */
 function gateway_manager_donation_node_save(&$node, $op) {

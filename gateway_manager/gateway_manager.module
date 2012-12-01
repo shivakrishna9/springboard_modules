@@ -102,9 +102,12 @@ function gateway_manager_all_payment_methods() {
 function gateway_manager_nodeapi(&$node, $op) {
   if (fundraiser_is_donation_type($node->type)) {
     switch ($op) {
+      case 'load':
+        gateway_manager_donation_node_load($node, TRUE);
+        break;
+
       case 'prepare':
-        module_load_include('inc', 'gateway_manager', 'gateway_manager.admin');
-        gateway_manager_donation_node_prepare($node);
+        gateway_manager_donation_node_load($node, FALSE);
         break;
 
       case 'insert':
@@ -115,6 +118,25 @@ function gateway_manager_nodeapi(&$node, $op) {
         _gateway_manager_clear_cache();
         break;
     }
+  }
+}
+
+/**
+ * Load all rows in {gateway_manager_node} for this node.
+ */
+function gateway_manager_donation_node_load(&$node, $only_enabled = TRUE) {
+  $node->gateway_manager = array();
+
+  $sql = "SELECT * FROM {gateway_manager_node} WHERE nid = %d";
+  if ($only_enabled) {
+    $sql .= " AND status <> 0";
+  }
+  $sql .= ' ORDER BY weight ASC';
+  $result = db_query($sql, $node->nid);
+
+  $node->gateway_manager['payment_methods'] = array();
+  while ($record = db_fetch_object($result)) {
+    $node->gateway_manager['payment_methods'][$record->method] = $record;
   }
 }
 
