@@ -9,10 +9,10 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
     $form['info']['name']['#title'] = t('Machine name');
     $form['info']['admin_title']['#required'] = TRUE;
 
-    $gateways = _gateway_manager_list();
-    $gateway_types = array(NULL => '- ' . t('select') . ' -');
-    foreach ($gateways as $gateway_name => $gateway) {
-      $gateway_types[$gateway_name] = $gateway['title'];
+    $gateway_types = gateway_manager_gateway_types();
+    $gateway_type_options = array(NULL => '- ' . t('select') . ' -');
+    foreach ($gateway_types as $gateway_type_name => $gateway_type) {
+      $gateway_type_options[$gateway_type_name] = $gateway_type['title'];
     }
     $form['gateway_type'] = array(
       '#type' => 'select',
@@ -26,8 +26,8 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
 
     // If type has been selected, get the settings form for that type.
     if (!empty($item->gateway_type)) {
-      $title = isset($gateways[$item->gateway_type]) ?
-        $gateways[$item->gateway_type]['title'] : t('Unknown');
+      $title = isset($gateway_types[$item->gateway_type]) ?
+        $gateway_types[$item->gateway_type]['title'] : t('Unknown');
 
       $form['config'] = array(
         '#type' => 'fieldset',
@@ -111,14 +111,14 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
     $author = isset($item->uid) ? user_load($item->uid) : new stdClass();
     $author->uid = $item->uid;
 
-    // Load the gateways.
-    $gateways = _gateway_manager_list();
+    // Load the gateway types.
+    $gateway_types = gateway_manager_gateway_types();
 
     // Add a row.
     $this->rows[$item->name] = array(
       'data' => array(
         array('data' => check_plain($item->admin_title)),
-        array('data' => check_plain(isset($gateways[$item->gateway_type]) ? $gateways[$item->gateway_type]['title'] : $item->gateway_type)),
+        array('data' => check_plain(isset($gateway_types[$item->gateway_type]) ? $gateway_types[$item->gateway_type]['title'] : $item->gateway_type)),
         array('data' => check_plain($author->name)),
         array('data' => !empty($item->created) ? format_date($item->created) : ''),
         array('data' => !empty($item->updated) ? format_date($item->updated) : ''),
