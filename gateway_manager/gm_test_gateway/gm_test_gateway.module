@@ -6,7 +6,7 @@
  *
  */
 
-
+module_load_include('inc', 'gateway_manager', 'includes/gateway_manager.credit');
 /**
  * Implements hook_payment_gateway_managed().
  */
@@ -22,12 +22,18 @@ function gm_test_gateway_payment_gateway_managed() {
         'payment_callback' => 'gm_test_gateway_credit_charge',
         'render_callback' => 'gm_test_gateway_credit_webform_render',
         'payment_details_callback' => 'gm_test_gateway_credit_payment_details',
-        'recurring' => FALSE,
+        'recurring' => TRUE,
       ),
       'paypal' => array(
         'payment_callback' => 'gm_test_gateway_paypal_charge',
         'render_callback' => 'gm_test_gateway_paypal_webform_render',
         'payment_details_callback' => 'gm_test_gateway_paypal_payment_details',
+        'recurring' => FALSE,
+      ),
+      'direct_debit' => array(
+        'payment_callback' => 'gm_test_gateway_direct_debit',
+        'render_callback' => 'gm_test_gateway_direct_debit_render',
+        'payment_details_callback' => 'gm_test_gateway_direct_debit_payment_details',
         'recurring' => FALSE,
       ),
     ),
