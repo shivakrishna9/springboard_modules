@@ -87,8 +87,8 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
 
   function list_sort_options() {
     return array(
-      'disabled' => t('Name'),
-      'admin_title' => t('Admin title'),
+      'disabled' => t('Admin title'),
+      'created' => t('Created'),
       'storage' => t('Storage'),
     );
   }
@@ -97,10 +97,10 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
     // Set up sorting.
     switch ($form_state['values']['order']) {
       case 'disabled':
-        $this->sorts[$item->name] = $item->name;
-        break;
-      case 'admin_title':
         $this->sorts[$item->name] = $item->admin_title;
+        break;
+      case 'created':
+        $this->sorts[$item->name] = $item->created;
         break;
       case 'storage':
         $this->sorts[$item->name] = $item->type . $item->name;
