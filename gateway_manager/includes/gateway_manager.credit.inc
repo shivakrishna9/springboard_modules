@@ -80,7 +80,36 @@ function gateway_manager_credit_form() {
     '#weight' => 2,
   );
 
+  // Add a validation handler to the form
+  $form['#validate'][] = 'gateway_manager_credit_form_validate';
+
   return $form;
+}
+
+/**
+ * Validation handler for gateway_manager_credit_form.
+ */
+function gateway_manager_credit_form_validate($form, &$form_state) {
+  $card_number = $form_state['submitted']['payment_fields']['card_number'];
+  $card_expiration_month = $form_state['submitted']['payment_fields']['expiration_date']['card_expiration_month'];
+  $card_expiration_year = $form_state['submitted']['payment_fields']['expiration_date']['card_expiration_year'];
+  $card_cvv = $form_state['submitted']['payment_fields']['card_cvv'];
+
+  // Validate credit card number
+  if (!empty($card_number) && ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($card_number)) || !ctype_digit($card_number))) {
+    form_set_error('submitted][payment_fields][card_number', t('You have entered an invalid credit card number.'));
+  }
+    
+  // Validate the card expiration date
+  if (!empty($card_expiration_month) && !empty($card_expiration_month) && !_valid_card_expiration($card_expiration_month, $card_expiration_year)) {
+    form_set_error('submitted][payment_fields][expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
+    form_set_error('submitted][payment_fields][expiration_date][card_expiration_year', ' ');
+  }
+
+  // Validate the CVV number
+  if (!empty($card_cvv) && variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($card_cvv)) {
+    form_set_error('submitted][payment_fields][card_cvv',t('You have entered an invalid CVV number.'));
+  }
 }
 
 /**
