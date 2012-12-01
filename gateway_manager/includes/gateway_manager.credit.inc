@@ -13,8 +13,8 @@
 function gateway_manager_credit_form_render($form, &$form_state) {
   // Get the generic form for credit card transactions
   $credit_form = gateway_manager_credit_form();
-  // Allow other modules to alter the form via hook_gateway_manager_credit_form_alter()
-  drupal_alter('gateway_manager_credit_form', $credit_form, $form, $form_state);
+  // Allow other modules to alter the form via hook_credit_payment_form_alter()
+  drupal_alter('credit_payment_form', $credit_form, $form, $form_state);
   // Return the rendered form
   return $credit_form;
 }
@@ -46,6 +46,8 @@ function gateway_manager_credit_payment_details($order, $submitted) {
     'cc_bank' => '',
   );
   
+  // Allow other modules to alter the payment details via hook_payment_details_alter()
+  drupal_alter('payment_details', $payment_details, 'credit', $order);
   return $payment_details;
 }
 
