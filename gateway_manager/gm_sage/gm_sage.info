@@ -1,8 +1,7 @@
 name = Sage Managed Payment Gateway
 description = Process payments using Sage.
-dependencies[] = fundraiser
-dependencies[] = gateway_manager
-
 package = Jackson River Springboard - payment
 core = 6.x
-version =  6.x-3.0-dev
+version = 6.x-3.3
+dependencies[] = fundraiser
+dependencies[] = gateway_manager

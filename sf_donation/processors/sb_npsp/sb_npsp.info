@@ -1,7 +1,5 @@
 name = Non Profit Starter Pack Integration
 description = Processes donations using the NPSP Package
-core = 6.x
 package = Jackson River Springboard
-
-
-version = 6.x-3.2
+core = 6.x
+version = 6.x-3.3

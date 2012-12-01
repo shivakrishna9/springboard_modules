@@ -1,10 +1,13 @@
+name = "Email Confirmation"
+description = "Replace UberCart's default confirmation emails with custom templates you control."
+package = "Features"
 core = "6.x"
+version = 6.x-3.3
 dependencies[] = "fundraiser"
 dependencies[] = "email"
 dependencies[] = "features"
 dependencies[] = "text"
 dependencies[] = "ca"
-description = "Replace UberCart's default confirmation emails with custom templates you control."
 features[content][] = "confirmation_template-field_confirmation_bcc"
 features[content][] = "confirmation_template-field_confirmation_from_email"
 features[content][] = "confirmation_template-field_confirmation_from_name"
@@ -12,6 +15,4 @@ features[content][] = "confirmation_template-field_confirmation_reply_email"
 features[content][] = "confirmation_template-field_confirmation_subject"
 features[content][] = "confirmation_template-field_confirmation_text"
 features[node][] = "confirmation_template"
-name = "Email Confirmation"
-version =  6.x-3.2
-package = "Features"
+

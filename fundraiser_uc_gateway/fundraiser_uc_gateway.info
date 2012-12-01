@@ -1,7 +1,7 @@
 name = Fundraiser UC Gateway
 description = Allows Fundraiser to use Ubercart Gateways
-core = 6.x
 package = Jackson River Springboard - payment
+core = 6.x
+version = 6.x-3.3
 dependencies[] = fundraiser
 dependencies[] = uc_payment
-version =  6.x-3.2
