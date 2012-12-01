@@ -172,7 +172,7 @@ function fundraiser_offline_fundraiser_create_webform_components($nid) {
  */
 function fundraiser_offline_form_node_form_alter(&$form, &$form_state, $form_id) {
   // If this isn't a fundraiser type, ignore it.
-  if (_fundraiser_is_donation_type($form['#node']->type)) {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
     $form['fundraiser_settings']['fundraiser_offline'] = array(
       '#type' => 'checkbox',
       '#title' => t('Available offline?'),
@@ -207,7 +207,7 @@ function fundraiser_offline_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  */
 function fundraiser_offline_node_delete(&$node) {
   // If this isn't a fundraiser type, ignore it.
-  if (_fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_offline_delete_offline($node->nid);
     _fundraiser_offline_delete_offline_donation_by_nid($node->nid);
   }
@@ -218,7 +218,7 @@ function fundraiser_offline_node_delete(&$node) {
  */
 function fundraiser_offline_node_insert(&$node) {
   // If this isn't a fundraiser type, ignore it.
-  if (_fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_is_donation_type($node->type)) {
     fundraiser_offline_node_update($node);
   }
 }
@@ -228,7 +228,7 @@ function fundraiser_offline_node_insert(&$node) {
  */
 function fundraiser_offline_node_load(&$node) {
   // If this isn't a fundraiser type, ignore it.
-  if (_fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_is_donation_type($node->type)) {
     // Get the fundraiser information.
     $value = _fundraiser_offline_get_offline_by_nid($node->nid);
     $node->fundraiser_offline = (isset($value->status) && $value->status == 1) ? TRUE : FALSE;
@@ -240,7 +240,7 @@ function fundraiser_offline_node_load(&$node) {
  */
 function fundraiser_offline_node_update(&$node) {
   // If this isn't a fundraiser type, ignore it.
-  if (_fundraiser_is_donation_type($node->type)) {
+  if (fundraiser_is_donation_type($node->type)) {
     $fundraiser['nid'] = $node->nid;
     $fundraiser['status'] = (isset($node->fundraiser_offline) && $node->fundraiser_offline == TRUE) ? 1 : 0;
     _fundraiser_offline_update_offline($fundraiser);
