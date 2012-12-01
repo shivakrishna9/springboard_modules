@@ -139,6 +139,12 @@ function fundraiser_menu() {
 	    'type' => MENU_CALLBACK,
 	    'access arguments' => array("access content"),
 	);
+    
+  $items['js/fundraiser_webform_payment_fields'] = array(
+    'page callback' => 'fundraiser_webform_payment_fields_ahah',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 	
   $items['fundraiser_cron'] = array(
     'page callback' => 'fundraiser_standalone_cron',
@@ -2686,6 +2692,12 @@ function fundraiser_theme() {
       'arguments' => array('tokens' => NULL),
       'template' => 'templates/fundraiser-token-list',
     ),
+    'fundraiser_component_payment_select' => array(
+      'arguments' => array('element' => NULL, 'value' => NULL),
+    ),
+    'fundraiser_component_payment_fields' => array(
+      'arguments' => array('element' => NULL, 'value' => NULL),
+    ),
   );
 }
 
@@ -2846,6 +2858,35 @@ function _fundraiser_amount_ahah_submit(&$form, &$form_state) {
   form_execute_handlers('submit', $form, $form_state);
   $values = $form_state['values'];
   $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Callback handler for the fundraiser webform payment fields.
+ */
+function fundraiser_webform_payment_fields_ahah() {
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+  
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+
+  // Disable validation
+  $form['#validate'] = NULL;
+  $form_state['validate_handlers'] = NULL;
+  fundraiser_ahah_helper_disable_validation($form);
+  
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  watchdog('ahah', print_r($form['submitted']['payment_fields'], TRUE));
+
+  $output = theme('status_messages') . drupal_render($form['submitted']['payment_fields']);
+
+  $form_state = array('submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  drupal_json(array('status' => TRUE, 'data' => $output));
 }
 
 /**
@@ -3273,4 +3314,36 @@ function fundraiser_secure_confirmation_flag($sid) {
   if(!db_result(db_query('SELECT count(sid) FROM {fundraiser_secure} WHERE sid=%d', $sid))) {
     db_query('INSERT INTO {fundraiser_secure} (sid) VALUES (%s)', $sid);
   }
+}
+
+/**
+ * Implements hook_webform_component_info
+ */
+function fundraiser_webform_component_info() {
+  $components = array();
+
+  $components['payment_select'] = array(
+    'label' => t('Payment Gateway Select'),
+    'description' => t('Select for choosing a payment type.'),
+    'features' => array(
+      'required' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/payment_select.inc'
+  );
+
+  $components['payment_fields'] = array(
+    'label' => t('Payment Gateway Fields'),
+    'description' => t('Container for the display of the payment gateway fields.'),
+    'features' => array(
+      'required' => FALSE,
+      'csv' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/payment_fields.inc'
+  );
+
+  return $components;
 }

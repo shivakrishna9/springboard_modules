@@ -55,5 +55,22 @@ Drupal.behaviors.fundraiser = function(context) {
     '<p class="donation-thank-you">Thank you.</p><p class="donation-processing">Your donation is being processed.</p>'+
     '<div class="donation-processing-spinner"></div></div>');
   });
+}
 
+/**
+ * Add a listener to our payment type field
+ */
+Drupal.fundraiserPaymentSelect = function() {
+  $("input[name='submitted[payment_type]']").change(function() {
+    this.loadPaymentFields();
+  }); 
+}
+
+/**
+ * Load up the payment fields by the selected type
+ */
+// Iterate over each field in the settings and add listener
+Drupal.fundraiserPaymentSelect.prototype.loadPaymentFields = function() {
+  var type = $(this).val();
+  alert(type);
 }
