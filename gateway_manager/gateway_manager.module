@@ -56,7 +56,14 @@ function gateway_manager_gateway_load_fields($payment_method, $gateway_instance)
     $gateway_type = $gateway->gateway_type;
     if (isset($gateway_types[$gateway_type]['payment_methods'][$payment_method])) {
       $fields = $gateway_types[$gateway_type]['payment_methods'][$payment_method];
-      $fields += array('file' => $gateway_types[$gateway_type]['file']);
+      // Load the file.
+      $fields += array(
+        'module' => 'gateway_manager',
+        'file' => $gateway_types[$gateway_type]['file'],
+      );
+      if (!empty($fields['file']) && !empty($fields['module'])) {
+        require_once(drupal_get_path('module', $fields['module']) . '/' . $fields['file']);
+      }
       return $fields;
     }
   }
