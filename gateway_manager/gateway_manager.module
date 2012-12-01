@@ -58,7 +58,6 @@ function gateway_manager_gateway_load_fields($payment_method, $gateway_instance)
       $fields = $gateway_types[$gateway_type]['payment_methods'][$payment_method];
       // Load the file.
       $fields += array(
-        'module' => 'gateway_manager',
         'file' => $gateway_types[$gateway_type]['file'],
       );
       if (!empty($fields['file']) && !empty($fields['module'])) {
