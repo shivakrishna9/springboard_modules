@@ -131,8 +131,8 @@ function gateway_manager_schema() {
         'default' => 0,
         'size' => 'tiny',
       ),
-      'default' => array(
-        'description' => 'Boolean indicating if this payment type is the defaut selected on the form.',
+      'is_default' => array(
+        'description' => 'Boolean indicating if this payment type is the default selected on the form.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -144,6 +144,7 @@ function gateway_manager_schema() {
         'default' => 1,
       ),
     ),
+    'primary key' => array('nid', 'method'),
   );
 
   return $schema;
@@ -251,6 +252,33 @@ function gateway_manager_update_6303() {
     'size' => 'big',
     'not null' => FALSE,
   ));
+
+  return $ret;
+}
+
+/**
+ * Rename the 'default' field in {gateway_manager_node} to 'is_default' to avoid MySQL errors.
+ */
+function gateway_manager_update_6304() {
+  $ret = array();
+
+  db_change_field($ret, 'gateway_manager_node', 'default', 'is_default', array(
+    'description' => 'Boolean indicating if this payment type is the default selected on the form.',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+  ));
+
+  return $ret;
+}
+
+/**
+ * Add a primary key to {gateway_manager_node}.
+ */
+function gateway_manager_update_6305() {
+  $ret = array();
+
+  db_add_primary_key($ret, 'gateway_manager_node', array('nid', 'method'));
 
   return $ret;
 }

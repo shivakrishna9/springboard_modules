@@ -2,251 +2,127 @@
 
 /**
  * @file
- * Admin functionality for the gateway manager module.
- *
+ * Admin functionality for gateway_manager module.
  */
+
 
 /**
- * Displays a list of all configured payment gateways.
+ * Alter the gateway form elements on the donation node form.
  */
-function gateway_manager_list() {
-  $filter = gateway_manager_filter_query();
-  $pager_num = 0;
-  $count = 20;
+function gateway_manager_donation_node_form(&$form, &$form_state) {
+  $node = $form['#node'];
 
-  // get all the gateways so we can swap in a nice title
-  $gateways = _gateway_manager_list();
+  gateway_manager_gateway_load_fields('credit', 'test_gateway');
 
-  $result = pager_query(db_rewrite_sql("SELECT g.id, g.name, g.type, u.name as user, from_unixtime(g.created) as created, from_unixtime(g.updated) as updated, g.status FROM {gateway_manager_gateways} g ".
-    "LEFT OUTER JOIN users u on u.uid = g.uid " . $filter['where'], 'g', 'id'), $count, $pager_num, NULL, $filter['args']);
-  $data = array();
-
-  while ($row = db_fetch_array($result)) {
-    $gateway = array();
-    $gateway['name'] = l($row['name'], 'admin/settings/fundraiser/gateways/' . $row['id'] . '/edit');
-    $gateway['type'] = _gateway_manager_get_gateway_title($gateways, $row['type']);;
-    $gateway['form_count'] = _gateway_manager_form_count($row['id']);
-    $gateway['user'] = $row['user'];
-    $gateway['created'] = $row['created'];
-    $gateway['updated'] = $row['updated'];
-    $gateway['status'] = $row['status'] == 1 ? t('Active') : t('Inactive');
-    $data[] = $gateway;
-  }
-  $output = drupal_get_form('gateway_manager_list_filter_form');
-  $output .= theme('table', array('Name', 'Provider', '# of Forms', 'User', 'Created', 'Updated', 'Status'), $data);
-  $output .= theme('pager', NULL, $count , $pager_num);
-  return $output;
-}
-
-/**
- * Returns the friendly title of a specified gateway type.
- */
-function _gateway_manager_get_gateway_title($gateways, $type) {
-  foreach ($gateways as $gateway) {
-    if ($gateway['id'] == $type) {
-      return $gateway['title'];
-    }
-  }
-  return t('Unknown');
-}
-
-/**
- * Creates a form used to filter the master payment gateway list by provider.
- */
-function gateway_manager_list_filter_form() {
-  $gateways = _gateway_manager_list();
-  $options = array(t('-- Select --'));
-  foreach ($gateways as $gateway) {
-    $options[$gateway['id']] = $gateway['title'];
-  }
-  $form['filter'] = array(
-    '#type' => 'select',
-    '#title' => t('Filter by gateway provider'),
-    '#options' => $options,
-    '#default_value' => $_SESSION['gateway_manager_filter'],
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Filter'),
-  );
-  $form['clear'] = array(
-    '#type' => 'submit',
-    '#value' => t('Clear'),
-  );
-  return $form;
-}
-
-/**
- * Saves the selected gateway filter when the form is submitted.
- */
-function gateway_manager_list_filter_form_submit($form, &$form_state) {
-  if ($form_state['values']['op'] == 'Filter' && !empty($form_state['values']['filter'])) {
-    $_SESSION['gateway_manager_filter'] = $form_state['values']['filter'];
-  }
-  else {
-    unset($_SESSION['gateway_manager_filter']);
-  }
-}
-
-/**
- * Returns a filter and related args to be applied to the payment gateway list page.
- */
-function gateway_manager_filter_query() {
-  $where = $args = array();
-  if (isset($_SESSION['gateway_manager_filter'])) {
-    $where[] = "g.type = '%s'";
-    $args[] = $_SESSION['gateway_manager_filter'];
-  }
-  $where = count($where) ? 'WHERE '. implode(' AND ', $where) : '';
-  return array('where' => $where, 'args' => $args);
-}
-
-/**
- * Displays the gateway settings form when editing an existing gateway.
- */
-function gateway_manager_gateway_edit($gateway) {
-  return drupal_get_form('gateway_manager_edit_form', $gateway);
-}
-
-/**
- * Displays the gateway settings form when adding a new gateway.
- */
-function gateway_manager_gateway_add() {
-  return drupal_get_form('gateway_manager_edit_form', NULL);
-}
-
-/**
- * Form for editing payment gateways.
- */
-function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
-
-  $type = isset($form_state['values']) ? $form_state['storage']['type'] : $gateway->type;
-  $name = isset($form_state['values']) ? $form_state['storage']['name'] : $gateway->name;
-  $terms = isset($form_state['values']) ? $form_state['storage']['terms'] : $gateway->terms;
-  $status = isset($form_state['values']) ? $form_state['storage']['status'] : $gateway->status;
-
-  $config = array();
-  if (isset($gateway)) {
-    $form['id'] = array(
-      '#type' => 'hidden',
-      '#value' => $gateway->id,
-    );
-    $config = unserialize($gateway->config);
-  }
-
-  $disabled = FALSE;
-  if (isset($gateway)) {
-    $disabled = TRUE;
-  }
-
-  $gateways = _gateway_manager_list();
-
-  $gateway_types = array('' => '--select--');
-  foreach ($gateways as $gateway) {
-    $gateway_types[$gateway['id']] = $gateway['title'];
-  }
-
-  $form['name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Name'),
-    '#required' => TRUE,
-    '#weight' => 1,
-    '#default_value' => $name,
-    '#description' => t('The recognizable name of the payment gateway.'),
-  );
-  $form['status'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Active'),
-    '#weight' => 2,
-    '#default_value' => $status,
-    '#return_value' => 1,
-    '#description' => t('If this gateway is an active option for fundraiser donation forms.'),
-  );
-  $form['type'] = array(
-    '#type' => 'select',
-    '#title' => t('Gateway type'),
-    '#required' => TRUE,
-    '#options' => $gateway_types,
-    '#weight' => 3,
-    '#default_value' => $type,
-    '#disabled' => $disabled,
-    '#description' => t('Select the type of gateway to create.'),
-  );
-
-  $vid = _gateway_manager_get_vid();
-  $form['taxononmy'] = array(
+  $fieldset = array(
     '#type' => 'fieldset',
-    '#title' => t('Taxonomy'),
+    '#title' => t('Payment methods'),
+    '#description' => t('Enable donation form payment methods and their corresponding gateways.'),
     '#collapsible' => TRUE,
-    '#weight' => 4,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+    '#theme' => 'gateway_manager_node_form_payment_methods',
   );
 
-  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
-  $form['taxononmy']['terms']['#weight'] = 3;
+  // Get all available payment methods.
+  foreach (gateway_manager_all_payment_methods() as $method_key => $method) {
+    $node_method_settings = isset($node->gateway_manager['payment_methods'][$method_key]) ?
+      $node->gateway_manager['payment_methods'][$method_key] : new stdClass();
 
-  // Add the full config to the form values
-  $form['config'] = array(
-    '#type' => 'value',
-    '#value' => $config,
-  );
-
-  // if type has been selected, get the settings form for that type
-  if (isset($type)) {
-    $title = _gateway_manager_get_gateway_title($gateways, $type);
-    $settings_function = _gateway_manager_get_settings_function($gateways, $type);
-    if (function_exists($settings_function)) {
-      $gateway_settings = $settings_function($config);
-      if (is_array($gateway_settings)) {
-        $form['settings'] = array(
-          '#type' => 'fieldset',
-          '#title' => t($title . ' settings'),
-          '#weight' => 5,
-          '#collapsible' => TRUE,
-        );
-        $form['settings'][] = $gateway_settings;
-      }
+    // Build the #options array for gateways supporting this payment method.
+    $gateway_options = array(NULL => '- ' . t('select') . ' -');
+    foreach (element_children($method) as $gateway_key) {
+      $gateway_options[$gateway_key] = $method[$gateway_key]['admin_title'];
     }
-    // return the form wrapped in a function that will save the configuration.
-    return gateway_manager_settings_form($form);
+
+    $fieldset[$method_key] = array('#tree' => TRUE);
+    $fieldset[$method_key]['status'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => isset($node_method_settings->status) ? $node_method_settings->status : 0,
+    );
+    $fieldset[$method_key]['_status'] = array(
+      '#type' => 'item',
+      '#title' => t('Method'),
+      '#value' => $method['#label'],
+    );
+    $fieldset[$method_key]['method'] = array(
+      '#type' => 'value',
+      '#value' => $method_key,
+    );
+    $fieldset[$method_key]['gateway_instance'] = array(
+      '#type' => 'select',
+      '#title' => t('Gateway'),
+      '#options' => $gateway_options,
+      '#default_value' => isset($node_method_settings->gateway_instance) ? $node_method_settings->gateway_instance : NULL,
+    );
+    $fieldset[$method_key]['label'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Label'),
+      '#size' => 20,
+      '#default_value' => isset($node_method_settings->label) ? $node_method_settings->label : NULL,
+
+    );
+    $fieldset[$method_key]['is_default'] = array(
+      '#type' => 'radio',
+      '#title' => t('Default'),
+      '#name' => 'gateway_manager[_default]',
+      '#return_value' => $method_key,
+      '#default_value' => isset($node_method_settings->is_default) ? $node_method_settings->is_default : NULL,
+    );
+    $fieldset[$method_key]['weight'] = array(
+      '#type' => 'weight',
+      '#delta' => 25,
+      '#default_value' => isset($node_method_settings->weight) ? $node_method_settings->weight : 0,
+    );
+  }
+
+  $form['fundraiser_settings']['gateway_manager'] = $fieldset;
+  unset($form['fundraiser_settings']['gateway']);
+
+  // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+  $form['fundraiser_settings']['#collapsed'] = FALSE;
+  $form['fundraiser_settings']['gateway_manager']['#collapsed'] = FALSE;
+  // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+}
+
+/**
+ * Load all rows in {gateway_manager_node} for this node.
+ */
+function gateway_manager_donation_node_prepare(&$node) {
+  if (!isset($node->gateway_manager)) {
+    $node->gateway_manager = array();
+
+    $sql = "SELECT * FROM {gateway_manager_node} WHERE nid = %d ORDER BY weight ASC";
+    $result = db_query($sql, $node->nid);
+
+    $node->gateway_manager['payment_methods'] = array();
+    while ($record = db_fetch_object($result)) {
+      $node->gateway_manager['payment_methods'][$record->method] = $record;
+    }
+  }
+}
+
+/**
+ * Save changes to the gateway_manager_node schema on a node save.
+ */
+function gateway_manager_donation_node_save(&$node, $op) {
+  if (!isset($node->gateway_manager)) {
+    return;
+  }
+
+  // For simplicity's sake, delete everything, and re-add.
+  db_query("DELETE FROM {gateway_manager_node} WHERE nid = %d", $node->nid);
+
+  if ($op == 'delete') {
+    // Exit now, since we just deleted everything.
+    return;
   }
   else {
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#weight' => 6,
-      '#value' => 'Continue',
-    );
-    return $form;
-  }
-}
-
-/**
- * Submit handler for gateway_manager_edit_form. Store name and type for next step.
- */
-function gateway_manager_edit_form_submit($form, &$form_state) {
-  // Simply stick the choosen values into storage so that when the
-  // for reloads it will pull up the correct gateway config form
-  $form_state['storage']['type'] = $form_state['values']['type'];
-  $form_state['storage']['name'] = $form_state['values']['name'];
-  $form_state['storage']['terms'] = $form_state['values']['terms'];
-  $form_state['storage']['status'] = $form_state['values']['status'];
-  return;
-}
-
-/**
- * Payment gateway delete confirmation form.
- */
-function gateway_managed_gateway_delete_form(&$form_state, $gateway) {
-  $form['id'] = array(
-    '#type' => 'hidden',
-    '#value' => $gateway->id,
-  );
-  return confirm_form($form, t('Are you sure you want to delete the payment gateway %name?', array('%name' => $gateway->name)), 'admin/settings/fundraiser/gateways', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
-}
-
-function gateway_managed_gateway_delete_form_submit($form, &$form_state) {
-  $gid = $form_state['values']['id'];
-  if ($form_state['values']['confirm']) {
-    gateway_manager_delete_gateway($gid);
+    // Write a record for each defined payment method.
+    foreach ($node->gateway_manager as $payment_method => $record) {
+      $record['nid'] = $node->nid;
+      drupal_write_record('gateway_manager_node', $record);
+    }
   }
 }
 
@@ -262,27 +138,28 @@ function _gateway_manager_get_settings_function($gateways, $type) {
 }
 
 /**
- * Returns the vocabulary id of the taxonomy in charge of handling payment gateway terms.
- * Creates the vocabulary if it doesn't already exist.
+ * Theme function for the payment methods table on the node form.
  */
-function _gateway_manager_get_vid() {
-  $vid = variable_get('gateway_manager_vocabulary', '');
-  if (empty($vid) || is_null(taxonomy_vocabulary_load($vid))) {
-    $vid = db_result(db_query("SELECT vid FROM {vocabulary} WHERE module = 'gateway_manager'"));
-    if (!$vid) {
-      $vocabulary = array(
-        'name' => t('Payment Gateway Terms'),
-        'multiple' => '1',
-        'required' => '0',
-        'hierarchy' => '0',
-        'relations' => '0',
-        'module' => 'gateway_manager',
-      );
-      taxonomy_save_vocabulary($vocabulary);
-      $vid = $vocabulary['vid'];
+function theme_gateway_manager_node_form_payment_methods($fieldset) {
+  $header = array();
+  $rows = array();
+
+  foreach (element_children($fieldset) as $i) {
+    $row = array();
+
+    foreach (element_children($fieldset[$i]) as $field) {
+      $this_element = $fieldset[$i][$field];
+      if (!isset($header[$field])) {
+        $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
+      }
+      unset($this_element['#title']);
+      $row[$field] = drupal_render($this_element);
     }
-    variable_set('gateway_manager_vocabulary', $vid);
+
+    $rows[] = array(
+      'data' => $row,
+    );
   }
 
-  return $vid;
+  return theme('table', $header, $rows);
 }
