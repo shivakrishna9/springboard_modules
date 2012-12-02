@@ -253,5 +253,8 @@ function gateway_manager_update_6303() {
     'not null' => FALSE,
   ));
 
+  // Trigger a menu rebuild for the new ctools router items.
+  menu_rebuild();
+
   return $ret;
 }
