@@ -1083,36 +1083,59 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       drupal_add_js($base .'/fundraiser.js');
       drupal_add_css($base . '/fundraiser-donation-form.css');
 
-			$components = $node->webform['components'];
+      $components = $node->webform['components'];
       // create an data structure that will tell us exactly where each webform component lives in the FAPI array
       $component_hierarchy = fundraiser_parse_components($node->nid, $components);
-			
-			// preload any fields if the user is logged in
+
+      // alter country drop down to populate zone drop down via ahah
+      $fids = _fundraiser_get_profile_location_fields();
+      
+      $country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
+      $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
+
+      // add a wrapper around the state field so it can be replaced via ajax
+      $state_field =& fundraiser_find_field($form, $component_hierarchy['state']);
+      $state_field['#prefix'] = '<div id="zone-select-wrapper">';
+      $state_field['#suffix'] = '</div>';
+
+      // preload any fields if the user is logged in
       if (user_is_logged_in()) {
-				// load up map
-				$map = fundraiser_user_map($node->nid);
-				// load up any mapped profile fields
-				foreach($map as $field_key => $profile_key) {
-				  $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
-				  if (empty($field['#default_value'])) {
-				    if (property_exists($user, $profile_key)) {
-				      switch ($field['#type']) {
-				        case 'checkboxes':
-				          $field['#default_value'] = array($user->$profile_key);
-				          break;
-				        
-				        default:
-				          $field['#default_value'] = $user->$profile_key;
-				      }
-				    }
-				  }
-				}
-			}
+
+        // add default country & state values from user profile
+        if ($fids['country'] && $user->profile_country) {
+          $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
+        }
+
+        if ($fids['state'] && $user->profile_state) {
+          $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
+        }
+        
+        // load up map
+        $map = fundraiser_user_map($node->nid);
+
+        // load up any mapped profile fields
+        foreach($map as $field_key => $profile_key) {
+          $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]);
+
+          if (empty($field['#default_value'])) {
+            if (property_exists($user, $profile_key)) {
+              switch ($field['#type']) {
+                case 'checkboxes':
+                  $field['#default_value'] = array($user->$profile_key);
+                  break;
+
+                default:
+                  $field['#default_value'] = $user->$profile_key;
+              }
+            }
+          }
+        }
+      }
 			
-			// combine expiration month and year into a single component
-			$cc_exp_month_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_month']);
-			$cc_exp_year_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_year']);
-			$cc_info_field =& fundraiser_find_field($form, $component_hierarchy['credit_card_information']);
+      // combine expiration month and year into a single component
+      $cc_exp_month_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_month']);
+      $cc_exp_year_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_year']);
+      $cc_info_field =& fundraiser_find_field($form, $component_hierarchy['credit_card_information']);
 
       $cc_exp_month_field['#default_value'] = date('n');
       $cc_exp_year_field['#default_value'] = date('Y');
@@ -1142,46 +1165,30 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
         $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
       }
-			// remove old fields after moving them
-			$cc_exp_month_field = NULL;
-			$cc_exp_year_field = NULL;
-			
-			// alter country drop down to populate zone drop down via ahah
-			$country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
-      $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
+      // remove old fields after moving them
+      $cc_exp_month_field = NULL;
+      $cc_exp_year_field = NULL;
       
-      // add default country & state values from user profile
-      $fids = _fundraiser_get_profile_location_fields();
-      if (user_is_logged_in() && $fids['country'] && $user->profile_country) {
-        $country_field['#default_value'] = db_result(db_query('SELECT uc.country_id FROM {uc_countries} uc INNER JOIN {profile_values} pv ON pv.value = uc.country_iso_code_2 AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['country']));
+      // Country/state field AHAH handling
+      // flatten form state array so that it is easier to work with
+      $fields = _fundraiser_array_flatten($form_state);
+ 
+      // country/state dependant drop down code
+      if (array_key_exists('country', $fields)) {
+        $country_field['#default_value'] = $fields['country']; // user selected country
+        // populate via Ahah!
+        $state_field['#options'] = fundraiser_get_country_zones($fields['country']);
+      }
+      else {
+        $state_field['#options'] = fundraiser_get_country_zones($country_field['#default_value']); // default country as defined in the component definition
       }
 
-      // add a wrapper around the state field so it can be replaced via ajax
-			$state_field =& fundraiser_find_field($form, $component_hierarchy['state']);
-			if (user_is_logged_in() && $fids['state'] && $user->profile_state) {
-			  $state_field['#default_value'] = db_result(db_query('SELECT uz.zone_id FROM {uc_zones} uz INNER JOIN {profile_values} pv ON pv.value = uz.zone_code AND pv.uid = %d AND pv.fid = %d', $user->uid, $fids['state']));
-			}
-			$state_field['#prefix'] = '<div id="zone-select-wrapper">';
-			$state_field['#suffix'] = '</div>';
-      
-      // flatten form state array so that it is easier to work with
-			$fields = _fundraiser_array_flatten($form_state);
-			// country/state dependant drop down code
-			if (array_key_exists('country', $fields)) {
-				$country_field['#default_value'] = $fields['country']; // user selected country
-				// populate via Ahah!
-				$state_field['#options'] = fundraiser_get_country_zones($fields['country']);
-			}
-			else {
-        $state_field['#options'] = fundraiser_get_country_zones($country_field['#default_value']); // default country as defined in the component definition
-			}
-
-			// add a validation handler and two additional submit handlers
-			$form['#validate'][] = 'fundraiser_webform_validate';
-			$form['#submit'][] = 'fundraiser_webform_submit';
-			$form['#submit'][] = 'fundraiser_confirmation';
+      // add a validation handler and two additional submit handler
+      $form['#validate'][] = 'fundraiser_webform_validate';
+      $form['#submit'][] = 'fundraiser_webform_submit';
+      $form['#submit'][] = 'fundraiser_confirmation';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
-		}
+    }
   }
 
   // Alter the form on the webform's Form Settings tab

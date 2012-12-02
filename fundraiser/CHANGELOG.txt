@@ -106,3 +106,10 @@
 
     * fundraiser.js ($('#edit-submitted-donation-other-amount').change() - added error event & message handling
 
+08-10-2012 Allen Freeman <allen.freeman@jacksonriver.com>
+---------------------------------------------------------
+  * fundraiser.module, fundraiser_form_alter(): added tests to prevent country/state default values from being manipulated when the current user
+    is not authenticated (uid 0).
+
+  * fundraiser.module, fundraiser_form_alter(): reordered country/state default handling code to only set defaults from the user profile
+    if the current user is authenticated. 
