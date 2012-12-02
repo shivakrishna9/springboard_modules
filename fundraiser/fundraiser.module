@@ -1152,7 +1152,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $payment_fields_field =& fundraiser_find_field($form, $component_hierarchy['payment_fields']);
       $payment_select_field =& fundraiser_find_field($form, $component_hierarchy['payment_method']);
       $payment_fields = array();
-
+      $delta = 1;
       // Loop through the node gateway manager array to build our payment select items
       if (is_array($payment_fields_field) && !empty($node->gateway_manager['payment_methods'])) {
         foreach ($node->gateway_manager['payment_methods'] as $gateway_method) {
@@ -1162,13 +1162,21 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
           if (function_exists($gateway_instance['render_callback'])) {
             $payment_fields_field[$gateway_method->method] = array(
               '#type' => 'fieldset',
+              '#attributes' => array(
+                'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $gateway_method->method),
+                'class' => 'fundraiser-payment-method'
+              ),
             );
             $payment_method_fields = $gateway_instance['render_callback']($form, $form_state);
             // allow other modules to alter the fields before adding to form
             drupal_alter('payment_method_fields', $payment_method_fields, $gateway_method->method);
             $payment_fields_field[$gateway_method->method] += $payment_method_fields;
+            // Add the active methods to js settings
+            $js_settings[$delta] = str_replace('_', '-', $gateway_method->method);
+            $delta++;
           }
         }
+        drupal_add_js(array('fundraiser' => array('paymentMethods' => $js_settings)), 'setting');
       }
     }
   }

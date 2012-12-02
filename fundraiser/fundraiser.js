@@ -55,15 +55,26 @@ Drupal.behaviors.fundraiser = function(context) {
     '<p class="donation-thank-you">Thank you.</p><p class="donation-processing">Your donation is being processed.</p>'+
     '<div class="donation-processing-spinner"></div></div>');
   });
+
+  if (Drupal.settings.fundraiser.webformComponents) {
+    new Drupal.fundraiserPaymentSelect();
+  }
 }
 
 /**
  * Add a listener to our payment type field
  */
 Drupal.fundraiserPaymentSelect = function() {
-  $("input[name='submitted[payment_type]']").change(function() {
-    this.loadPaymentFields();
-  }); 
+  var selectElement = Drupal.settings.fundraiser.webformComponents.paymentSelect.id,
+    fieldsElement = Drupal.settings.fundraiser.webformComponents.paymentFields.id;
+
+  $('#' + fieldsElement + ' fieldset.fundraiser-payment-method:not(:first)').hide();
+  $.each(Drupal.settings.fundraiser.paymentMethods, function(key, field) {
+    $('#' + selectElement + '-' + key).change(function() {
+      $('#' + fieldsElement + ' fieldset.fundraiser-payment-method').hide();
+      $('#' + fieldsElement + ' fieldset#fundraiser-payment-method-' + field).show();
+    });
+  });
 }
 
 /**
@@ -71,6 +82,7 @@ Drupal.fundraiserPaymentSelect = function() {
  */
 // Iterate over each field in the settings and add listener
 Drupal.fundraiserPaymentSelect.prototype.loadPaymentFields = function() {
+  alert('alert');
   var type = $(this).val();
   alert(type);
 }
