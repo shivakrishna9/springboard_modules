@@ -1160,14 +1160,11 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
           $payment_select_field['#options'][$gateway_method->method] = !empty($gateway_method->label) ? $gateway_method->label : $gateway_method->method;
           $gateway_instance = gateway_manager_method_load($gateway_method->method, $gateway_method->gateway_instance);
           if (function_exists($gateway_instance['render_callback'])) {
-            $payment_fields[$gateway_method->method] = array(
+            $payment_fields_field[$gateway_method->method] = array(
               '#type' => 'fieldset',
             );
-            $payment_fields[$gateway_method->method] = $gateway_instance['render_callback']($form, $form_state);
+            $payment_fields_field[$gateway_method->method] += $gateway_instance['render_callback']($form, $form_state);
           }
-        }
-        if (!empty($payment_fields)) {
-          $payment_fields_field += $payment_fields;
         }
       }
     }

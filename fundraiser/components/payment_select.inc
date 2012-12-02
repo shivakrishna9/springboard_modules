@@ -107,7 +107,7 @@ function fundraiser_component_payment_select($component) {
  * Pre-render function to add our id to the js settings
  */
 function fundraiser_component_payment_select_post_render($content, $element) {
-  drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentSelect' => array('id' => $elements['#id'])))), 'setting');
+  drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentSelect' => array('id' => $element['#id'])))), 'setting');
   return $content;
 }
 
