@@ -11,6 +11,7 @@
  */
 function gateway_manager_donation_node_form(&$form, &$form_state) {
   $node = $form['#node'];
+  $form['#validate'][] = 'gateway_manager_donation_node_form_validate';
 
   $fieldset = array(
     '#type' => 'fieldset',
@@ -60,18 +61,23 @@ function gateway_manager_donation_node_form(&$form, &$form_state) {
       '#default_value' => isset($node_method_settings->label) ? $node_method_settings->label : NULL,
 
     );
-    $fieldset[$method_key]['is_default'] = array(
-      '#type' => 'radio',
-      '#title' => t('Default'),
-      '#name' => 'gateway_manager[_default]',
-      '#return_value' => $method_key,
-      '#default_value' => isset($node_method_settings->is_default) ? $node_method_settings->is_default : NULL,
-    );
     $fieldset[$method_key]['weight'] = array(
       '#type' => 'weight',
+      '#title' => t('Weight'),
       '#delta' => 25,
       '#default_value' => isset($node_method_settings->weight) ? $node_method_settings->weight : 0,
     );
+    if (!isset($fieldset['_default_method'])) {
+      $fieldset['_default_method'] = array(
+        '#type' => 'radios',
+        '#title' => t('Default'),
+        '#options' => array(),
+      );
+    }
+    $fieldset['_default_method']['#options'][$method_key] = '';
+    if ($node_method_settings->is_default) {
+      $fieldset['_default_method']['#default_value'] = $method_key;
+    }
   }
 
   $form['fundraiser_settings']['gateway_manager'] = $fieldset;
@@ -99,9 +105,15 @@ function gateway_manager_donation_node_save(&$node, $op) {
     return;
   }
   else {
+    // Capture the default method.
+    if (isset($node->gateway_manager['_default_method'])) {
+      $default_method = $node->gateway_manager['_default_method'];
+      unset($node->gateway_manager['_default_method']);
+    }
     // Write a record for each defined payment method.
     foreach ($node->gateway_manager as $payment_method => $record) {
       $record['nid'] = $node->nid;
+      $record['is_default'] = ($default_method == $payment_method);
       drupal_write_record('gateway_manager_node', $record);
     }
   }
@@ -125,6 +137,9 @@ function theme_gateway_manager_node_form_payment_methods($fieldset) {
   $header = array();
   $rows = array();
 
+  $default_method = $fieldset['_default_method'];
+  unset($fieldset['_default_method']);
+
   foreach (element_children($fieldset) as $i) {
     $row = array();
 
@@ -136,6 +151,11 @@ function theme_gateway_manager_node_form_payment_methods($fieldset) {
       unset($this_element['#title']);
       $row[$field] = drupal_render($this_element);
     }
+
+    if (!isset($header['_default_method'])) {
+      $header['_default_method'] = isset($default_method['#title']) ? $default_method['#title'] : '';
+    }
+    $row['_default_method'] = drupal_render($default_method[$i]);
 
     $rows[] = array(
       'data' => $row,

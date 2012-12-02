@@ -67,8 +67,8 @@ function gm_test_gateway_credit_payment_details(&$order, $submitted) {
 /**
  * Validate callback for credit cards on the test gateway.
  */
-function gm_test_gateway_credit_webform_validate($form, &$form_state, $values, $payment_method_element, $payment_fields_element, $method) {
-  // TODO
+function gm_test_gateway_credit_webform_validate($form, &$form_state, $values, $method_info) {
+  form_set_error('submitted][payment_fields][credit][card_number', t('Test validation error on card number.'));
 }
 
 /**

@@ -24,19 +24,63 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Validate callback for the donation node edit/add form.
+ */
+function gateway_manager_donation_node_form_validate($form, &$form_state) {
+  $values = $form_state['values']['gateway_manager'];
+
+  // Capture the default method and remove it from the array.
+  $default_method = $values['_default_method'];
+  unset($values['_default_method']);
+
+  // Filter the values array to just enabled methods.
+  $enabled_methods = array_filter($values, 'gateway_manager_donation_node_form_validate_filter_enabled');
+
+  // Check that there is at least one method/gateway enabled.
+  if (empty($enabled_methods)) {
+    form_set_error('gateway_manager', t('At least one payment method and gateway must be enabled.'));
+  }
+  else {
+    // Check whether the default method is one of the enabled methods.
+    if (!isset($enabled_methods[$default_method])) {
+      form_set_error('gateway_manager][_default_method', t('Default method must be one of the enabled methods.'));
+    }
+
+    // Validate that each enabled method has a corresponding gateway.
+    $all_methods = gateway_manager_all_payment_methods();
+    foreach ($enabled_methods as $method => $method_settings) {
+      if (empty($method_settings['gateway_instance'])) {
+        // Get the method label for the error message.
+        $method_label = isset($all_methods[$method]['#label']) ? $all_methods[$method]['#label'] : $method;
+        // Set the error on this method.
+        form_set_error('gateway_manager][' . $method . '][gateway_instance',
+          t('Gateway is missing or invalid for %method_label.', array('%method_label' => $method_label)));
+      }
+    }
+  }
+}
+
+/**
+ * Array_filter callback for filtering by method status.
+ */
+function gateway_manager_donation_node_form_validate_filter_enabled($method_settings) {
+  return !empty($method_settings['status']);
+}
+
+/**
  * Validate callback for donation forms.
  *
  * This function will act as a conduit for calling the validate_callback for
  * the selected payment method and gateway.
  */
 function gateway_manager_donation_form_validate($form, &$form_state) {
-  // Load all gateway types.
-  //$gateway_types = gateway_manager_gateway_types();
   // Shortcut to the node.
   $node = $form['#node'];
+
   // Create an data structure that will tell us exactly where each webform
   // component lives in the FAPI array.
   $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
+
   // Flatten the submitted values.
   $values = _fundraiser_array_flatten($form_state['values']['submitted']);
 
@@ -44,19 +88,11 @@ function gateway_manager_donation_form_validate($form, &$form_state) {
     $payment_method = $values['payment_method'];
     if (isset($node->gateway_manager['payment_methods'][$payment_method])) {
       $gateway_instance = $node->gateway_manager['payment_methods'][$payment_method]->gateway_instance;
-      $method = gateway_manager_method_load($payment_method, $gateway_instance);
+      // Load the method info array.
+      $method_info = gateway_manager_method_load($payment_method, $gateway_instance);
       if (function_exists($method['validate_callback'])) {
-        // Load the gateway instance object.
-        $gateway = gateway_manager_gateway_load($gateway_instance);
-
-        // Find the payment_method & payment_fields components on the $form.
-        $payment_method_component = &fundraiser_find_field($form, $component_hierarchy['payment_method']);
-        $payment_fields_component = &fundraiser_find_field($form, $component_hierarchy['payment_fields']);
-
         // Call the gateway's validate callback for this payment method.
-        if (function_exists($method['validate_callback'])) {
-          $method['validate_callback']($form, $form_state, $values, $payment_method_component, $payment_fields_component, $method);
-        }
+        $method['validate_callback']($form, $form_state, $values, $method_info);
       }
     }
   }
@@ -174,10 +210,6 @@ function gateway_manager_donation_node_load(&$node, $only_enabled = TRUE) {
 
   $node->gateway_manager['payment_methods'] = array();
   while ($record = db_fetch_object($result)) {
-    if (empty($record->label)) {
-      $method = gateway_manager_method_load($record->method, $record->gateway_instance);
-      $record->label = $method['label'];
-    }
     $node->gateway_manager['payment_methods'][$record->method] = $record;
   }
 }
