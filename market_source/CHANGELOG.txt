@@ -4,4 +4,5 @@
 
 2012-08-20  Sarah Hood  <sarah.hood@jacksonriver.com>
 		
-	* market_source.admin.inc (market_source_admin_settings_form_validate): Emilyslist #467 - Adding special characters allowed for webform default values to support defaults as described here: http://drupal.org/node/296453
+= Update 6001 =
+Webform has altered how hidden components are rendered. Existing Market Source components need their configuration updated so they are rendered as hidden form components instead of Form API values. See Assembla #453 (ACLU space) for more details.
