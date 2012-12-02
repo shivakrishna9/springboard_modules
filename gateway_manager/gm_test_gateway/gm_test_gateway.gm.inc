@@ -67,8 +67,8 @@ function gm_test_gateway_credit_payment_details(&$order, $submitted) {
 /**
  * Validate callback for credit cards on the test gateway.
  */
-function gm_test_gateway_credit_webform_validate($form, &$form_state) {
-  dpm('yup');
+function gm_test_gateway_credit_webform_validate($form, &$form_state, $values, $payment_method_element, $payment_fields_element, $method) {
+  // TODO
 }
 
 /**
