@@ -1018,13 +1018,10 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
     fundraiser_node_settings($form, $form_state, $form['#node']);
   }
   			
-	if (strstr($form_id, 'webform_client_form')) {
+  if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#parameters'][2];
-		global $user;
+    global $user;
     profile_load_profile($user); /* explicitly load profile as of Drupal 6.19 */
-
-    // get fundraiser info
-    $node = $form['#parameters'][2];
 
     // handle donation form submissions
     if (fundraiser_is_donation_type($node->type) && arg(2) == 'submission') {
@@ -1089,11 +1086,11 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       drupal_add_js($base .'/fundraiser.js');
       drupal_add_css($base . '/fundraiser-donation-form.css');
 
-			$components = $node->webform['components'];
+	  $components = $node->webform['components'];
       // create an data structure that will tell us exactly where each webform component lives in the FAPI array
       $component_hierarchy = fundraiser_parse_components($node->nid, $components);
-			
-			// preload any fields if the user is logged in
+
+      // preload any fields if the user is logged in
       if (user_is_logged_in()) {
 				// load up map
 				$map = fundraiser_user_map($node->nid);
@@ -1152,8 +1149,8 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			$cc_exp_month_field = NULL;
 			$cc_exp_year_field = NULL;
 			
-			// alter country drop down to populate zone drop down via ahah
-			$country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
+      // alter country drop down to populate zone drop down via ahah
+      $country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
       $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
       
       // add default country & state values from user profile
@@ -1187,7 +1184,24 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 			$form['#submit'][] = 'fundraiser_webform_submit';
 			$form['#submit'][] = 'fundraiser_confirmation';
       $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' . theme('image', drupal_get_path('module', 'fundraiser') . '/padlock.gif') . t('By clicking SUBMIT DONATION your credit card will be securely processed.') . '</div>';
-		}
+      
+      // Populate the fields for the payment method
+      $payment_fields_field =& fundraiser_find_field($form, $component_hierarchy['payment_fields']);
+      $payment_select_field =& fundraiser_find_field($form, $component_hierarchy['payment_type']);
+      //drupal_set_message(print_r($payment_fields_field, TRUE));
+
+      if (!empty($node->gateway_manager['payment_methods'])) {
+        foreach ($node->gateway_manager['payment_methods'] as $gateway_method) {
+          //foreach to go through node payment gateways and grab the default/selected one
+        }
+        $credit = $node->gateway_manager['payment_methods']['credit']; // For testing
+        $credit_fields = gateway_manager_gateway_load_fields($credit->method, $credit->gateway_instance);
+        if (function_exists($credit_fields['render_callback'])) {
+          $payment_fields_field += $credit_fields['render_callback']($form, $form_state);  
+        }
+      }
+      //drupal_set_message(print_r($payment_fields_field, TRUE));
+    }
   }
 
   // Alter the form on the webform's Form Settings tab
@@ -3341,6 +3355,7 @@ function fundraiser_webform_component_info() {
       'csv' => FALSE,
       'description' => FALSE,
       'default_value' => FALSE,
+      'group' => TRUE,
     ),
     'file' => 'components/payment_fields.inc'
   );
