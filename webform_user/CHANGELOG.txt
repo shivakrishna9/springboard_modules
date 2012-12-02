@@ -1,5 +1,12 @@
 CHANGELOG
 ---------
+2012-12-01  Allen Freeman  <allen.freeman@jacksonriver.com>
+
+  * webform_user.module (hook_menu) - changed access callback for user mapping form.
+  * webform_user.module () - added access callback function.
+  * webform_user.module (hook_nodeapi) - added code to update op that prevents duplicate component creation bug triggered by
+    workflow under certain conditions.  
+
 
  2012-10-15  Jeremy Isett  <jeremy.isett@jacksonriver.com>
     *  webform_user.module (_webform_user_save_profile_map()) - Removed anonymous user dependency when saving profile values

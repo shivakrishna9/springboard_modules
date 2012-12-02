@@ -23,7 +23,7 @@ function webform_user_menu() {
     'title' => 'User map',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_user_mapping_form', 1),
-    'access callback' => 'webform_user_access',
+    'access callback' => '_webform_user_mapping_form_access',
     'access arguments' => array(1),
     'weight' => 30,
     'type' => MENU_LOCAL_TASK,
@@ -143,6 +143,10 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         if ($node->is_webform_user) {
           _webform_user_set_values($node);
           if (!$node->is_being_cloned) {
+            // HACK: Workflow module workaround. Check to see if the form has a map, if it does then update ran first. In this case we don't want
+            // to create another set of form components.
+            $map = webform_user_user_map($node->nid);
+            if (empty($map)) {
           	_webform_user_create_webform_components($node);
           }
           
@@ -385,6 +389,12 @@ function webform_user_user_map_create($nid, $components) {
   drupal_set_message(t('User profile fields have been mapped. Use the User Map tab to edit the map.'));
 }
 
+/**
+ * Provides access to the mapping tabs if node has webform_user enabled form.
+ */
+function _webform_user_mapping_form_access($node) {
+	return $node->is_webform_user;
+}
 
 /**
  * Theme function for mapping form
