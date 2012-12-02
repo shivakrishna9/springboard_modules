@@ -16,7 +16,6 @@ function gm_test_gateway_payment_gateway_managed() {
     'title' => t('Test Gateway'),
     'description' => t('Process credit card payments through the Test Gateway.'),
     'settings' => NULL,
-    'module' => 'gm_test_gateway',
     'file' => 'gm_test_gateway.gm.inc',
     'payment_methods' => array(
       'credit' => array(

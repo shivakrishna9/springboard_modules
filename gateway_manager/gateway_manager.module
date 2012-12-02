@@ -59,9 +59,13 @@ function gateway_manager_gateway_load_fields($payment_method, $gateway_instance)
       // Load the file.
       $fields += array(
         'file' => $gateway_types[$gateway_type]['file'],
+        'module' => $gateway_types[$gateway_type]['module'],
       );
-      if (!empty($fields['file']) && !empty($gateway_types[$gateway_type]['module'])) {
-        require_once(drupal_get_path('module', $gateway_types[$gateway_type]['module']) . '/' . $fields['file']);
+      if (!empty($fields['file']) && !empty($fields['module'])) {
+        $include_file = drupal_get_path('module', $gateway_types[$gateway_type]['module']) . '/' . $fields['file'];
+        if (is_file($include_file)) {
+          require_once($include_file);
+        }
       }
       return $fields;
     }
@@ -253,8 +257,26 @@ function _gateway_manager_gateway_list($show_disabled = FALSE) {
 /**
  * Build a list of payment gateway types defined in the enabled modules.
  */
-function gateway_manager_gateway_types() {
-  return module_invoke_all('payment_gateway_managed');
+function gateway_manager_gateway_types($reset = FALSE) {
+  static $gateway_types = array();
+  if (empty($gateway_types) || $reset) {
+    // We need to manually call each module so that we can know which module
+    // a given item came from.
+    $gateway_types = array();
+    foreach (module_implements('payment_gateway_managed') as $module) {
+      $gateway_info = call_user_func($module . '_payment_gateway_managed');
+      // Add the module name unless it's been explicitly provided.
+      if (isset($gateway_info) && is_array($gateway_info)) {
+        foreach (array_keys($gateway_info) as $gateway_type) {
+          if (!isset($gateway_info[$gateway_type]['module'])) {
+            $gateway_info[$gateway_type]['module'] = $module;
+          }
+        }
+      }
+      $gateway_types = array_merge($gateway_types, $gateway_info);
+    }
+  }
+  return $gateway_types;
 }
 
 /**
