@@ -1197,7 +1197,13 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         $credit = $node->gateway_manager['payment_methods']['credit']; // For testing
         $credit_fields = gateway_manager_gateway_load_fields($credit->method, $credit->gateway_instance);
         if (function_exists($credit_fields['render_callback'])) {
-          $payment_fields_field += $credit_fields['render_callback']($form, $form_state);  
+          $credit_fields_return = $credit_fields['render_callback']($form, $form_state);
+          if (is_array($credit_fields_return)) {
+            $payment_fields_field += $credit_fields_return;
+          }
+          else {
+            drupal_set_message(t('Missing payment_fields component on webform.'), 'error');
+          }
         }
       }
       //drupal_set_message(print_r($payment_fields_field, TRUE));
