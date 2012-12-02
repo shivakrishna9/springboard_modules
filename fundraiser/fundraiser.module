@@ -1163,7 +1163,10 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
             $payment_fields_field[$gateway_method->method] = array(
               '#type' => 'fieldset',
             );
-            $payment_fields_field[$gateway_method->method] += $gateway_instance['render_callback']($form, $form_state);
+            $payment_method_fields = $gateway_instance['render_callback']($form, $form_state);
+            // allow other modules to alter the fields before adding to form
+            drupal_alter('payment_method_fields', $payment_method_fields, $gateway_method->method);
+            $payment_fields_field[$gateway_method->method] += $payment_method_fields;
           }
         }
       }
