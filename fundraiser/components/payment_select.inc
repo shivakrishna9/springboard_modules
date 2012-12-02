@@ -87,13 +87,6 @@ function _webform_render_payment_select($component, $value = NULL, $filter = TRU
   // Add custom post render function before the final form render
   $element['#post_render'] = array_merge(array('fundraiser_component_payment_select_post_render'), $element['#post_render']);
 
-  $element['#ahah'] = array(
-    'path' => 'js/fundraiser_webform_payment_fields',
-    'wrapper' => 'fundraiser-component-payment-fields',
-    'method' => 'replace',
-    'effect' => 'fade',
-  );
-
   return $element;
 }
 
@@ -115,29 +108,6 @@ function fundraiser_component_payment_select($component) {
  */
 function fundraiser_component_payment_select_post_render($content, $element) {
   drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentSelect' => array('id' => $elements['#id'])))), 'setting');
-
-  $id = $element['#id'] = str_replace('_', '-', _webform_safe_name(strip_tags($element['#id'])));
-  $delta = 0;
-  $settings = array();
-  foreach (element_children($element) as $key) {
-    $delta++;
-    // Convert the #id for each child to a safe name, regardless of key.
-    $key = $id . '-' . $delta;
-
-    $settings = array(
-      'url' => '/js/fundraiser_webform_payment_fields',
-      'event' => 'change',
-      'keypress' => '',
-      'wrapper' => 'fundraiser-component-payment-fields',
-      'selector' => '#' . $key,
-      'effect' => 'fade',
-      'method' => 'replace',
-      'progress' => array('type' => 'throbber'),
-      'button' => '',
-    );
-    drupal_add_js(array('ahah' => array($key => $settings)), 'setting');
-  }
-  drupal_set_message(print_r(drupal_add_js(), TRUE));
   return $content;
 }
 

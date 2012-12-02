@@ -37,13 +37,14 @@ function _webform_edit_payment_fields($component) {
  */
 function _webform_render_payment_fields($component, $value = NULL, $filter = TRUE) {
   $element = array(
-    '#type' => 'item',
+    '#type' => 'fieldset',
+    '#title' => t('Payment'),
     '#weight' => $component['weight'],
     '#description' => $filter ? _webform_filter_descriptions($component['extra']['description']) : $component['extra']['description'],
     '#attributes' => array('class' => 'fundraiser-payment-fields'),
     '#pre_render' => array('_fundraiser_component_payment_fields_pre_render', 'webform_element_title_display'),
     '#webform_component' => $component,
-    '#theme' => 'fundraiser_component_payment_fields'
+    //'#theme' => 'fundraiser_component_payment_fields'
   );
 
   // Hide the event_table title if #title_display is 'none'.
