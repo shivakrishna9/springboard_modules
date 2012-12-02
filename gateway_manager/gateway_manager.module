@@ -114,6 +114,9 @@ function gateway_manager_donation_form_validate($form, &$form_state) {
   // Flatten the submitted values.
   $values = _fundraiser_array_flatten($form_state['values']['submitted']);
 
+  // Check for #gateway_manager_required flag.
+  _gateway_manager_donation_form_validate_required($form, $form_state);
+
   if (isset($values['payment_method']) && isset($node->gateway_manager)) {
     $payment_method = $values['payment_method'];
     if (isset($node->gateway_manager['payment_methods'][$payment_method])) {
@@ -129,6 +132,35 @@ function gateway_manager_donation_form_validate($form, &$form_state) {
 }
 
 /**
+ * Validate callback for #gateway_manager_required flag. Copied nearly verbatim
+ * from _form_validate().
+ */
+function _gateway_manager_donation_form_validate_required($elements, &$form_state) {
+  // Also used in the installer, pre-database setup.
+  $t = get_t();
+
+  // Recurse through all children.
+  foreach (element_children($elements) as $key) {
+    if (isset($elements[$key]) && $elements[$key]) {
+      _gateway_manager_donation_form_validate_required($elements[$key], $form_state);
+    }
+  }
+
+  // Validate the current input.
+  if (!isset($elements['#validated']) || !$elements['#validated']) {
+    if (isset($elements['#needs_validation'])) {
+      // Make sure a value is passed when the field is required.
+      // A simple call to empty() will not cut it here as some fields, like
+      // checkboxes, can return a valid value of '0'. Instead, check the
+      // length if it's a string, and the item count if it's an array.
+      if ($elements['#gateway_manager_required'] && (!count($elements['#value']) || (is_string($elements['#value']) && strlen(trim($elements['#value'])) == 0))) {
+        form_error($elements, $t('!name field is required.', array('!name' => $elements['#title'])));
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function gateway_manager_theme() {
@@ -138,6 +170,25 @@ function gateway_manager_theme() {
       'file' => 'gateway_manager.admin.inc',
     ),
   );
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function gateway_manager_theme_registry_alter(&$theme_registry) {
+  if (isset($theme_registry['form_element'])) {
+    $theme_registry['form_element']['function'] = 'theme_gateway_manager_form_element_wrapper';
+  }
+}
+
+/**
+ * Theme function wrapper for gateway_manager form elements.
+ */
+function theme_gateway_manager_form_element_wrapper($element, $value) {
+  if ($element['#gateway_manager_required']) {
+    $element['#required'] = TRUE;
+  }
+  return theme_form_element($element, $value);
 }
 
 /**
