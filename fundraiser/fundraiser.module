@@ -1112,43 +1112,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
 				}
 			}
 			
-			// combine expiration month and year into a single component
-			$cc_exp_month_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_month']);
-			$cc_exp_year_field =& fundraiser_find_field($form, $component_hierarchy['card_expiration_year']);
-			$cc_info_field =& fundraiser_find_field($form, $component_hierarchy['credit_card_information']);
-
-      $cc_exp_month_field['#default_value'] = date('n');
-      $cc_exp_year_field['#default_value'] = date('Y');
-      
-      // make sure the year field always has a good range of years
-    	$this_year = date('Y');
-    	$years = array($this_year => $this_year);
-    	$cc_exp_year_range = variable_get('fundraiser_cc_exp_year_range', 10);
-    	for ($i = 0; $i <= $cc_exp_year_range; $i++) {
-        $years[$this_year + $i] = $this_year + $i;
-      }
-      $cc_exp_year_field['#options'] = $years;
-      
-      // check to see if the credit card information fieldset still exists because it may have been removed
-      if (is_array($cc_info_field)) {
-        $cc_info_field['expiration_date'] = array();
-        $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-        $cc_info_field['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-        $cc_info_field['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
-        $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-      }
-      else {
-        // add the new expiration_date directly to the form with the same weight as the cc_exp_month field
-        $form['expiration_date'] = array();
-        $form['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-        $form['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-        $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
-        $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-      }
-			// remove old fields after moving them
-			$cc_exp_month_field = NULL;
-			$cc_exp_year_field = NULL;
-			
       // alter country drop down to populate zone drop down via ahah
       $country_field =& fundraiser_find_field($form, $component_hierarchy['country']);
       $country_field['#ahah'] = array('path' => 'fundraiser/js/state', 'wrapper' => 'zone-select-wrapper');
@@ -1188,14 +1151,15 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // Populate the fields for the payment method
       $payment_fields_field =& fundraiser_find_field($form, $component_hierarchy['payment_fields']);
       $payment_select_field =& fundraiser_find_field($form, $component_hierarchy['payment_method']);
-      //drupal_set_message(print_r($payment_fields_field, TRUE));
+      drupal_set_message(print_r($payment_select_field, TRUE));
 
       if (is_array($payment_fields_field) && !empty($node->gateway_manager['payment_methods'])) {
         foreach ($node->gateway_manager['payment_methods'] as $gateway_method) {
-          //foreach to go through node payment gateways and grab the default/selected one
+          dpm($gateway_method);
+          $payment_select_field['#options'][$gateway_method->method] = $gateway_method->label ? $gateway_method->label : $gateway_method->method;
         }
         $credit = $node->gateway_manager['payment_methods']['credit']; // For testing
-        $credit_fields = gateway_manager_gateway_load_fields($credit->method, $credit->gateway_instance);
+        $credit_fields = gateway_manager_method_load($credit->method, $credit->gateway_instance);
         if (function_exists($credit_fields['render_callback'])) {
           $credit_fields_return = $credit_fields['render_callback']($form, $form_state);
           if (is_array($credit_fields_return)) {
@@ -1760,11 +1724,17 @@ function fundraiser_webform_validate($form, &$form_state) {
  */
 function fundraiser_webform_submit($form, &$form_state) {
   global $user;
-  
+  dpm($form_state, 'webform submit');
   $node = $form['#parameters'][2];
-	$fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']);
-	$node_id = $form_state['values']['details']['nid'];
-	
+  $fundraiser_fields = _fundraiser_array_flatten($form_state['values']['submitted_tree']);
+  dpm($fundraiser_fields, 'ff fields');
+
+  // Load up the gateway for processing the payment
+  $gateway_instance = $node->gateway_manager['payment_methods'][$fundraiser_fields['payment_method']]->gateway_instance;
+  $payment_gateway = gateway_manager_method_load($fundraiser_fields['payment_method'], $gateway_instance);
+  dpm($payment_gateway, 'gateway');
+  $node_id = $form_state['values']['details']['nid'];
+
 	// pick out the values we need to generate an order
 	$donation_amount = $fundraiser_fields['amount'];
 	$cc_number = $fundraiser_fields['card_number'];
@@ -1833,18 +1803,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	$order->billing_zone = $billing_state;
  	$order->billing_country = $billing_country;
  	$order->payment_method = 'credit';
- 	$order->payment_details = array(
- 		'cc_type' => _fundraiser_get_cc_type($cc_number),
- 		'cc_owner' => '',
- 		'cc_number' => $cc_number,
- 		'cc_start_month' => '',
- 		'cc_start_year' => '',
- 		'cc_exp_month' => $cc_expiration_month,
- 		'cc_exp_year' => $cc_expiration_year,
- 		'cc_issue' => '',
- 		'cc_cvv' => $cc_cvv,
- 		'cc_bank' => '',
- 	);
+ 	$order->payment_details = $payment_gateway['payment_details_callback']($order, $fundraiser_fields);
 
  	$order->line_items = array();
 
@@ -1857,10 +1816,11 @@ function fundraiser_webform_submit($form, &$form_state) {
     $order->data[$field] = $value;
   }
   
-  // Store the gateway that was used to make the payment
-  $order->data['gateway'] = $node->gateway;
+  // Store the gateway instance and payment method that was used to make the payment
+  $order->data['gateway_instance'] = $payment_gateway['name'];
+  $order->data['payment_method'] = $fundraiser_fields['payment_method'];
   
- 	// cache the cc details stored by the handler.
+  // cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
  	
  	// allow other modules to alter the order before it is save
@@ -1880,10 +1840,11 @@ function fundraiser_webform_submit($form, &$form_state) {
     $node->nid, $order->order_id, $form_state['values']['details']['sid'],
     $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url
   );
-  
+
   // additional data to pass to the payment gateway's charge function
   $data = array(
     'txn_type' => 'auth_capture',
+    'config' => $payment_gateway['config'],
   );
 
   if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
@@ -1891,7 +1852,7 @@ function fundraiser_webform_submit($form, &$form_state) {
     $data = array(
       'txn_type' => 'reference_txn',
       'ref_id' => $form_state['fundraiser_reference_txn_id'],
-    
+      'config' => $payment_gateway['config'],
     );
     $method_txn_id = $form_state['fundraiser_reference_txn_id'];
   }
@@ -1899,19 +1860,10 @@ function fundraiser_webform_submit($form, &$form_state) {
     $method_txn_id = FALSE;
   }
  	
- 	// variable to hold the name of the payment gateway charge function we need to call
- 	$charge_function = NULL;
-    $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $node->gateway);
-    $charge_function = $payment_gateway['charge_function'];
-    // If additional config options were passed include them
-    if (!empty($payment_gateway['config'])) {
-      $data['config'] = $payment_gateway['config'];
-    }
-
-    if ($charge_function) {
-      // call the charge function and store the result
-      $result = $charge_function($order->order_id, $donation_amount, $data);
-    }
+  if (function_exists($payment_gateway['payment_callback'])) {
+    // call the charge function and store the result
+    $result = $payment_gateway['payment_callback']($order->order_id, $donation_amount, $data);
+  }
 
  	if ($result['success']) {
  	  fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
