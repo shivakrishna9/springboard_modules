@@ -1178,3 +1178,33 @@ function fundraiser_update_6317(&$sandbox) {
   db_add_field($ret, 'fundraiser_recurring', 'lock_id', $lock_id);
   return $ret;
 }
+
+/**
+ * Changes required for new multi-payment method system.
+ */
+function fundraiser_update_6318() {
+  $ret = array();
+  $payment_method = array(
+    'description' => t('The payment method that was used to process the donation.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => TRUE,
+    'default' => 'credit',
+  );
+
+  $gateway_instance = array(
+    'description' => t('The configured instance of a payment gateway that was used to process the donation.'),
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+    'default' => '',
+  );
+
+  // add payment method field to fundraiser_webform_order and fundraiser_recurring
+  db_add_field($ret, 'fundraiser_webform_order', 'payment_method', $payment_method);
+  db_add_field($ret, 'fundraiser_webform_order', 'gateway_instance', $gateway_instance);
+  db_add_field($ret, 'fundraiser_recurring', 'payment_method', $payment_method);
+  db_add_field($ret, 'fundraiser_recurring', 'gateway_instance', $gateway_instance);
+
+  return $ret;
+}
