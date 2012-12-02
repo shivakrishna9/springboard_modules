@@ -21,6 +21,7 @@ function gm_test_gateway_payment_gateway_managed() {
       'credit' => array(
         'payment_callback' => 'gm_test_gateway_credit_charge',
         'render_callback' => 'gm_test_gateway_credit_webform_render',
+        'validate_callback' => 'gm_test_gateway_credit_webform_validate',
         'payment_details_callback' => 'gm_test_gateway_credit_payment_details',
         'recurring' => TRUE,
       ),
