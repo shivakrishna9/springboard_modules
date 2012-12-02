@@ -82,8 +82,8 @@ function _webform_render_payment_select($component, $value = NULL, $filter = TRU
   // Use the default select list function to build the element
   $element = _webform_render_select($component, $value, $filter);
 
-  // Populate our options
-  $element['#options'] = fundraiser_component_payment_select($component);
+  // Populate our options, moved to fundraiser_form_alter
+  //$element['#options'] = fundraiser_component_payment_select($component);
   // Add custom post render function before the final form render
   $element['#post_render'] = array_merge(array('fundraiser_component_payment_select_post_render'), $element['#post_render']);
 
@@ -107,7 +107,7 @@ function fundraiser_component_payment_select($component) {
  * Pre-render function to add our id to the js settings
  */
 function fundraiser_component_payment_select_post_render($content, $element) {
-  drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentSelect' => array('id' => $elements['#id'])))), 'setting');
+  drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentSelect' => array('id' => $element['#id'])))), 'setting');
   return $content;
 }
 

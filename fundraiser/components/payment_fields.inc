@@ -59,16 +59,8 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
  * Pre-render function to add our id to the js settings
  */
 function _fundraiser_component_payment_fields_pre_render($element) {
-  $id = 'fundraiser-component-payment-fields';
+  $id = 'webform-component-payment-fields';
   $element['#attributes']['id'] = $id;
   drupal_add_js(array('fundraiser' => array('webformComponents' => array('paymentFields' => array('id' => $id)))), 'setting');
   return $element;
-}
-
-/**
- * Theme the form elements into a table
- */
-function theme_fundraiser_component_payment_fields($element) {
-  $output .= '<div' . drupal_attributes($element['#attributes']) . '>' . rand(10, 100) . '</div>';
-  return $output;
 }
