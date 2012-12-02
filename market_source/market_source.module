@@ -237,16 +237,28 @@ function _market_source_build_qs_keys() {
   if (empty($qs_keys)) {
     // Initial keys.
     $qs_keys = array(
-      'initial_referrer' => NULL,
-      'referrer' => NULL,
-      'ms' => NULL,
-      'cid' => NULL,
+      'initial_referrer' => array('value' => NULL),
+      'referrer' => array('value' => NULL),
+      'ms' => array('value' => NULL),
+      'cid' => array('value' => NULL),
     );
+    
+    //remove keys for fields not set to persist
+    $default_field_settings = variable_get('market_source_default_fields', array());
+    $default_field_settings['ms'] = isset($default_field_settings['market_source']) ? $default_field_settings['market_source'] : array();
+    $default_field_settings['cid'] = isset($default_field_settings['campaign']) ? $default_field_settings['campaign'] : array();
+    foreach($qs_keys as $key => $values) {
+      $qs_keys[$key]['persistence'] = isset($default_field_settings[$key]['persistence']) ? $default_field_settings[$key]['persistence'] : TRUE;
+    }
+    
     // Add any custom fields.
     $custom_fields = variable_get('market_source_custom_fields', array());
     if (is_array($custom_fields)) {
       foreach ($custom_fields as $field) {
-        $qs_keys[$field['key']] = NULL;
+          $qs_keys[$field['key']] = array(
+            'value' => NULL,
+            'persistence' => isset($field['persistence']) ? $field['persistence'] : TRUE,
+          );
       }
     }
   }
