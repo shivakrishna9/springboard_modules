@@ -68,6 +68,36 @@ function gateway_manager_donation_node_form_validate_filter_enabled($method_sett
 }
 
 /**
+ * Implements hook_payment_fields_alter().
+ */
+function gateway_manager_payment_method_fields_alter(&$fields, $payment_method) {
+  foreach ($fields as &$field) {
+    gateway_manager_required_field_replace($field);
+  }
+}
+
+/**
+ * Converts required form elements to non-required. Adds an additional
+ * attribute that will be used to add custom required validation.
+ *
+ * @param $field
+ *   The field to convert.
+ */
+function gateway_manager_required_field_replace(&$field) {
+  if ($field['#required']) {
+    $field['#required'] = FALSE;
+    $field['#gateway_manager_required'] = TRUE;
+  }
+
+  $child_fields = element_children($field);
+  if (is_array($child_fields) && count($child_fields) > 0) {
+    foreach ($child_fields as $child_field) {
+      gateway_manager_required_field_replace($field[$child_field]);
+    }
+  }
+}
+
+/**
  * Validate callback for donation forms.
  *
  * This function will act as a conduit for calling the validate_callback for
