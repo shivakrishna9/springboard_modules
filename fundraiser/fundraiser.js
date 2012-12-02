@@ -65,16 +65,18 @@ Drupal.behaviors.fundraiser = function(context) {
  * Add a listener to our payment type field
  */
 Drupal.fundraiserPaymentSelect = function() {
-  var selectElement = Drupal.settings.fundraiser.webformComponents.paymentSelect.id,
-    fieldsElement = Drupal.settings.fundraiser.webformComponents.paymentFields.id;
-
-  $('#' + fieldsElement + ' fieldset.fundraiser-payment-method:not(:first)').hide();
-  $.each(Drupal.settings.fundraiser.paymentMethods, function(key, field) {
-    $('#' + selectElement + '-' + key).change(function() {
-      $('#' + fieldsElement + ' fieldset.fundraiser-payment-method').hide();
-      $('#' + fieldsElement + ' fieldset#fundraiser-payment-method-' + field).show();
+  if (Drupal.settings.fundraiser.webformComponents && Drupal.settings.fundraiser.webformComponents.paymentSelect) {
+    var selectElement = Drupal.settings.fundraiser.webformComponents.paymentSelect.id,
+      fieldsElement = Drupal.settings.fundraiser.webformComponents.paymentFields.id;
+      
+    $('#' + fieldsElement + ' fieldset.fundraiser-payment-method:not(:first)').hide();
+    $.each(Drupal.settings.fundraiser.paymentMethods, function(key, field) {
+      $('#' + selectElement + '-' + key).change(function() {
+        $('#' + fieldsElement + ' fieldset.fundraiser-payment-method').hide();
+        $('#' + fieldsElement + ' fieldset#fundraiser-payment-method-' + field).show();
+      });
     });
-  });
+  }
 }
 
 /**
