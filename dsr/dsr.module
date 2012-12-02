@@ -8,20 +8,10 @@ define('DSR_RECONCILIATION_PATH', 'admin/reports/dsr');
  -----------------------------------------
 */
 
-// Selects (Salesforce)
-define('DSR_POSTED_SELECT_S', "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Order_ID__c != NULL");
-define('DSR_REFUNDED_SELECT_S', "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded'");
-define('DSR_PARTIALLY_REFUNDED_SELECT_S', "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded'");
-
 // Selects (Drupal)
 define('DSR_POSTED_SELECT_D', "SELECT o.order_id, o.order_total FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'payment_received' AND pr.comment = 'Payment processed by the fundraiser module.'");
 define('DSR_REFUNDED_SELECT_D', "SELECT o.order_id, o.order_total FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'refunded' AND pr.comment = 'Refund processed by the fundraiser module.'");
 define('DSR_PARTIALLY_REFUNDED_SELECT_D', "SELECT o.order_id, o.order_total FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'partially_refunded' AND pr.comment = 'Refund processed by the fundraiser module.'");
-
-// Aggregates (Salesforce)
-define('DSR_POSTED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name");
-define('DSR_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name");
-define('DSR_PARTIALLY_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name");
 
 // Aggregates (Drupal)
 define('DSR_POSTED_AGGREGATE_D', "SELECT COALESCE(SUM(pr.amount), 0) as total_amount, COUNT(pr.amount) as total_count FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'payment_received' AND pr.comment = 'Payment processed by the fundraiser module.'");
@@ -299,7 +289,7 @@ function dsr_orders_partially_refunded_by_date_range($start_date, $end_date) {
  *   The end date of the range.
  */
 function dsr_donations_posted_by_date_range($start_date, $end_date) {
-  $soql = sprintf(DSR_POSTED_AGGREGATE_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_posted_aggregate_s', ''), $start_date, $end_date);
   $results = _dsr_run_soql_aggregate($soql);
   return $results;
 }
@@ -313,7 +303,7 @@ function dsr_donations_posted_by_date_range($start_date, $end_date) {
  *   The end date of the range.
  */
 function dsr_donations_refunded_by_date_range($start_date, $end_date) {
-  $soql = sprintf(DSR_REFUNDED_AGGREGATE_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_refunded_aggregate_s', ''), $start_date, $end_date);
   return _dsr_run_soql_aggregate($soql);
 }
 
@@ -326,7 +316,7 @@ function dsr_donations_refunded_by_date_range($start_date, $end_date) {
  *   The end date of the range.
  */
 function dsr_donations_partially_refunded_by_date_range($start_date, $end_date) {
-  $soql = sprintf(DSR_PARTIALLY_REFUNDED_AGGREGATE_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_partially_refunded_aggregate_s', ''), $start_date, $end_date);
   return _dsr_run_soql_aggregate($soql);
 }
 
@@ -339,7 +329,7 @@ function dsr_donations_partially_refunded_by_date_range($start_date, $end_date) 
  *   The end date of the range.
  */
 function dsr_get_refunded_donations($start_date, $end_date) {
-  $soql = sprintf(DSR_REFUNDED_SELECT_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_refunded_select_s', ''), $start_date, $end_date);
   return _dsr_run_soql_opportunity_select($soql);
 }
 
@@ -352,7 +342,7 @@ function dsr_get_refunded_donations($start_date, $end_date) {
  *   The end date of the range.
  */
 function dsr_get_partially_refunded_donations($start_date, $end_date) {
-  $soql = sprintf(DSR_PARTIALLY_REFUNDED_SELECT_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_partially_refunded_select_s', ''), $start_date, $end_date);
   return _dsr_run_soql_opportunity_select($soql);
 }
 
@@ -365,7 +355,7 @@ function dsr_get_partially_refunded_donations($start_date, $end_date) {
  *   The end date of the range.
  */
 function dsr_get_posted_donations($start_date, $end_date) {
-  $soql = sprintf(DSR_POSTED_SELECT_S, $start_date, $end_date);
+  $soql = sprintf(variable_get('dsr_posted_select_s', ''), $start_date, $end_date);
   return _dsr_run_soql_opportunity_select($soql);
 }
 

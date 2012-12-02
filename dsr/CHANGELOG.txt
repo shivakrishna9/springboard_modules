@@ -1,3 +1,22 @@
+2012-09-18 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * dsr.install Added installation file, implemented hook_install, hook_uninstall and hook_update_n.
+    * dsr.module Removed definitions for the following constants:
+      DSR_POSTED_SELECT_S
+      DSR_REFUNDED_SELECT_S
+      DSR_PARTIALLY_REFUNDED_SELECT_S
+      DSR_POSTED_AGGREGATE_S
+      DSR_REFUNDED_AGGREGATE_S
+      DSR_PARTIALLY_REFUNDED_AGGREGATE_S
+    * dsr.module (dsr_donations_posted_by_date_range()) - replaced constant DSR_POSTED_AGGREGATE_S with variable_get().
+    * dsr.module (dsr_donations_refunded_by_date_range()) - replaced constant DSR_REFUNDED_AGGREGATE_S with variable_get().
+    * dsr.module (dsr_donations_partially_refunded_by_date_range()) - replaced constant DSR_PARTIALLY_REFUNDED_AGGREGATE_S with variable_get().
+    * dsr.module (dsr_get_refunded_donations()) - replaced constant DSR_REFUNDED_SELECT_S with variable_get().
+    * dsr.module (dsr_get_partially_refunded_donations()) - replaced constant DSR_PARTIALLY_REFUNDED_SELECT_S with variable_get().
+    * dsr.module (dsr_get_posted_donations()) - replaced constant DSR_POSTED_SELECT_S with variable_get().
+    * dsr.admin.inc (dsr_settings()) - added fieldsets and textareas for SOQL select and aggregate queries. Initial default values defined
+      in dsr_install() and dsr_update_6001().
+
 2012-08-30 Allen Freeman <allen.freeman@jacksonriver.com>
 
     * dsr.module (_dsr_parse_aggregate_result) : format SF aggregate results with number_format()

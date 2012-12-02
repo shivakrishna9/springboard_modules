@@ -5,15 +5,20 @@ to Salesforce and reports and discrepancies.
 
 
 -- REQUIREMENTS --
-
+Drupal 6.x, Salesforce Management API
 
 
 -- INSTALLATION --
-
+Standard
 
 
 -- CONFIGURATION --
 
+The DSR module can optionally email reports. Recipient email addresses can be configured on the admin page:
+admin/settings/dsr
+
+For added flexibility the Salesforce SOQL queries used to generate report data from Salesforce are also configurable
+via the admin page.
 
 
 -- TROUBLESHOOTING --
