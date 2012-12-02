@@ -82,8 +82,9 @@ function gateway_manager_method_load($payment_method, $gateway_instance) {
       $method = $gateway_types[$gateway->gateway_type]['payment_methods'][$payment_method];
 
       // Load the file.
-      $module = isset($method['module']) ? $method['module'] : $gateway_types[$gateway_type]['module'];
-      $file = isset($method['file']) ? $method['file'] : $gateway_types[$gateway_type]['file'];
+      $module = isset($method['module']) ? $method['module'] : $gateway_types[$gateway->gateway_type]['module'];
+      $file = isset($method['file']) ? $method['file'] : $gateway_types[$gateway->gateway_type]['file'];
+
       if (!empty($module) && !empty($file)) {
         $include_file = drupal_get_path('module', $module) . '/' . $file;
         if (is_file($include_file)) {
