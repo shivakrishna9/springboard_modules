@@ -19,6 +19,7 @@ function gm_test_gateway_payment_gateway_managed() {
     'file' => 'gm_test_gateway.gm.inc',
     'payment_methods' => array(
       'credit' => array(
+        'label' => t('Credit'),
         'payment_callback' => 'gm_test_gateway_credit_charge',
         'render_callback' => 'gm_test_gateway_credit_webform_render',
         'validate_callback' => 'gm_test_gateway_credit_webform_validate',
@@ -26,12 +27,14 @@ function gm_test_gateway_payment_gateway_managed() {
         'recurring' => TRUE,
       ),
       'paypal' => array(
+        'label' => t('PayPal'),
         'payment_callback' => 'gm_test_gateway_paypal_charge',
         'render_callback' => 'gm_test_gateway_paypal_webform_render',
         'payment_details_callback' => 'gm_test_gateway_paypal_payment_details',
         'recurring' => FALSE,
       ),
       'direct_debit' => array(
+        'label' => t('Direct Debit'),
         'payment_callback' => 'gm_test_gateway_direct_debit',
         'render_callback' => 'gm_test_gateway_direct_debit_render',
         'payment_details_callback' => 'gm_test_gateway_direct_debit_payment_details',
