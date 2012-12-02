@@ -1187,7 +1187,7 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       
       // Populate the fields for the payment method
       $payment_fields_field =& fundraiser_find_field($form, $component_hierarchy['payment_fields']);
-      $payment_select_field =& fundraiser_find_field($form, $component_hierarchy['payment_type']);
+      $payment_select_field =& fundraiser_find_field($form, $component_hierarchy['payment_method']);
       //drupal_set_message(print_r($payment_fields_field, TRUE));
 
       if (is_array($payment_fields_field) && !empty($node->gateway_manager['payment_methods'])) {
