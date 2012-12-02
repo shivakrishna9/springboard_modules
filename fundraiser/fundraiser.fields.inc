@@ -309,72 +309,37 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	
 	$id = webform_component_insert($billing_zipcode);
 	$components[$id] = $billing_zipcode;
-	
-	// credit card information
-	$credit_card_information = array();
-	$credit_card_information['nid'] = $nid;
-	$credit_card_information['pid'] = 0;
-	$credit_card_information['form_key'] = 'credit_card_information';
-	$credit_card_information['name'] = 'Credit Card Information';
-	$credit_card_information['type'] = 'fieldset';
-	$credit_card_information['extra'] = array(
-		'description' => '',
-	);
-	$credit_card_information['mandatory'] = 0;
-	$credit_card_information['weight'] = 5;
-	$credit_card_information['email'] = 0;
-	
-	$pid = webform_component_insert($credit_card_information);
-	$components[$pid] = $credit_card_information;
 
-	// credit card number
-	$card_number = array();
-	$card_number['nid'] = $nid;
-	$card_number['pid'] = $pid;
-	$card_number['form_key'] = 'card_number';
-	$card_number['name'] = 'Card Number';
-	$card_number['type'] = 'textfield';
-	$card_number['extra'] = array(
-		'description' => '',
-		'width' => 20,
-	);
-	$card_number['mandatory'] = 1;
-	$card_number['weight'] = 0;
-	$card_number['email'] = 0;
+	// payment select
+	$payment_select = array();
+	$payment_select['nid'] = $nid;
+	$payment_select['pid'] = 0;
+	$payment_select['form_key'] = 'payment_method';
+	$payment_select['name'] = 'Payment Method';
+	$payment_select['type'] = 'payment_select';
+	$payment_select['mandatory'] = 1;
+	$payment_select['weight'] = 9;
+	$payment_select['email'] = 0;
 	
-	$id = webform_component_insert($card_number);
-	$components[$id] = $card_number;
+	$id = webform_component_insert($payment_select);
+	$components[$id] = $payment_select;
 	
-	// expiration month
-	$expiration_month = fundraiser_create_month_field($nid, $pid);
-	$id = webform_component_insert($expiration_month);
-	$components[$id] = $expiration_month;
+	//payment_fields
+	$payment_fields = array();
+	$payment_fields['nid'] = $nid;
+	$payment_fields['pid'] = 0;
+	$payment_fields['form_key'] = 'payment_fields';
+	$payment_fields['name'] = 'Payment';
+	$payment_fields['type'] = 'payment_fields';
+	$payment_fields['mandatory'] = 1;
+	$payment_fields['weight'] = 10;
+	$payment_fields['email'] = 0;
 	
-	// expiration year
-	$expiration_year = fundraiser_create_year_field($nid, $pid);
-	$id = webform_component_insert($expiration_year);
-	$components[$id] = $expiration_year;
-
-	// cvv
-	$card_cvv = array();
-	$card_cvv['nid'] = $nid;
-	$card_cvv['pid']= $pid;
-	$card_cvv['form_key'] = 'card_cvv';
-	$card_cvv['name'] = 'Card Security Code';
-	$card_cvv['type'] = 'textfield';
-	$card_cvv['extra'] = array(
-		'description' => '',
-		'maxlength' => 4,
-		'width' => 5,
-	);
-	$card_cvv['mandatory'] = 1;
-	$card_cvv['weight'] = 3;
-	$card_cvv['email'] = 0;
-	
-	$id = webform_component_insert($card_cvv);
-	$components[$id] = $card_cvv;
+	$id = webform_component_insert($payment_fields);
+	$components[$id] = $payment_fields;
 
 	// recurring donation
+	/* TODO: figure out where these go
 	$recurs = array();
 	$recurs['nid'] = $nid;
 	$recurs['pid']= $pid;
@@ -392,7 +357,8 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 	
 	$id = webform_component_insert($recurs);
 	$components[$id] = $recurs;
-	
+	*/
+
 	// Invoke hook_fundraiser_create_webform_components
 	//
 	$contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
