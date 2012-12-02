@@ -54,7 +54,9 @@ function gateway_manager_donation_form_validate($form, &$form_state) {
         $payment_fields_component = &fundraiser_find_field($form, $component_hierarchy['payment_fields']);
 
         // Call the gateway's validate callback for this payment method.
-        $config['validate_callback']($form, $form_state, $values, $payment_method_component, $payment_fields_component, $method);
+        if (function_exists($method)) {
+          $method['validate_callback']($form, $form_state, $values, $payment_method_component, $payment_fields_component, $method);
+        }
       }
     }
   }
