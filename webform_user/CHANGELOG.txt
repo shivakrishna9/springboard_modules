@@ -1,10 +1,13 @@
 CHANGELOG
 ---------
 
+ 2012-10-15  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+    *  webform_user.module (_webform_user_save_profile_map()) - Removed anonymous user dependency when saving profile values
+
 2012-09-01 Sarah Hood <sarah.hood@jacksonriver.com>
 
     * webform_user.module (webform_user_form_alter): When creating webform
     user content types, allowing for profile fields to be picked for defaults
     * webform_user.module (_webform_user_create_webform_components): When
     creating webforms, use the defaults to select which profiles to create
-    Also a new hook: hook_webform_user_get_profile_fields 
+    Also a new hook: hook_webform_user_get_profile_fields
