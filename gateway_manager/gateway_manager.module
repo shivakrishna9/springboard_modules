@@ -17,19 +17,44 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
     module_load_include('inc', 'gateway_manager', 'gateway_manager.admin');
     gateway_manager_donation_node_form($form, $form_state);
   }
+  elseif ((strpos($form_id, 'webform_client_form_') === 0) && fundraiser_is_donation_type($form['#node']->type)) {
+    // Add the validate callback to the donation form.
+    $form['#validate'][] = 'gateway_manager_donation_form_validate';
+  }
+}
 
-  // If the payment gateway for the donation form does not include credit card fields (such
-  // as Ogone), remove them from the donation form
-  if (strpos($form_id, 'webform_client_form_') === 0) {
-    if (fundraiser_is_donation_type($form['#node']->type) && $form['#node']->gateway > 0) {
-      $gateway = gateway_manager_gateway_info($form['#node']->gateway);
-      if ($gateway['gateway_details']['hide_cc_fields']) {
-        foreach (element_children($form['submitted']['credit_card_information']) as $field_name) {
-          // Keep the recurring donation option, but hide everything else
-          if ($field_name != 'recurs_monthly') {
-            $form['submitted']['credit_card_information'][$field_name]['#access'] = FALSE;
-          }
-        }
+/**
+ * Validate callback for donation forms.
+ *
+ * This function will act as a conduit for calling the validate_callback for
+ * the selected payment method and gateway.
+ */
+function gateway_manager_donation_form_validate($form, &$form_state) {
+  // Load all gateway types.
+  //$gateway_types = gateway_manager_gateway_types();
+  // Shortcut to the node.
+  $node = $form['#node'];
+  // Create an data structure that will tell us exactly where each webform
+  // component lives in the FAPI array.
+  $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
+  // Flatten the submitted values.
+  $values = _fundraiser_array_flatten($form_state['values']['submitted']);
+
+  if (isset($values['payment_method']) && isset($node->gateway_manager)) {
+    $payment_method = $values['payment_method'];
+    if (isset($node->gateway_manager['payment_methods'][$payment_method])) {
+      $gateway_instance = $node->gateway_manager['payment_methods'][$payment_method]->gateway_instance;
+      $method = gateway_manager_method_load($payment_method, $gateway_instance);
+      if (function_exists($method['validate_callback'])) {
+        // Load the gateway instance object.
+        $gateway = gateway_manager_gateway_load($gateway_instance);
+
+        // Find the payment_method & payment_fields components on the $form.
+        $payment_method_component = &fundraiser_find_field($form, $component_hierarchy['payment_method']);
+        $payment_fields_component = &fundraiser_find_field($form, $component_hierarchy['payment_fields']);
+
+        // Call the gateway's validate callback for this payment method.
+        $config['validate_callback']($form, $form_state, $values, $payment_method_component, $payment_fields_component, $method);
       }
     }
   }
@@ -48,26 +73,25 @@ function gateway_manager_theme() {
 }
 
 /**
- * Load the payment_method info for a specific gateway instance.
+ * Load the payment method info for a specific gateway instance.
  */
-function gateway_manager_gateway_load_fields($payment_method, $gateway_instance) {
+function gateway_manager_method_load($payment_method, $gateway_instance) {
   $gateway_types = gateway_manager_gateway_types();
   if ($gateway = gateway_manager_gateway_load($gateway_instance)) {
-    $gateway_type = $gateway->gateway_type;
-    if (isset($gateway_types[$gateway_type]['payment_methods'][$payment_method])) {
-      $fields = $gateway_types[$gateway_type]['payment_methods'][$payment_method];
+    if (isset($gateway_types[$gateway->gateway_type]['payment_methods'][$payment_method])) {
+      $method = $gateway_types[$gateway->gateway_type]['payment_methods'][$payment_method];
+
       // Load the file.
-      $fields += array(
-        'file' => $gateway_types[$gateway_type]['file'],
-        'module' => $gateway_types[$gateway_type]['module'],
-      );
-      if (!empty($fields['file']) && !empty($fields['module'])) {
-        $include_file = drupal_get_path('module', $gateway_types[$gateway_type]['module']) . '/' . $fields['file'];
+      $module = isset($method['module']) ? $method['module'] : $gateway_types[$gateway_type]['module'];
+      $file = isset($method['file']) ? $method['file'] : $gateway_types[$gateway_type]['file'];
+      if (!empty($module) && !empty($file)) {
+        $include_file = drupal_get_path('module', $module) . '/' . $file;
         if (is_file($include_file)) {
           require_once($include_file);
         }
       }
-      return $fields;
+
+      return array_merge((array) $gateway, $method);
     }
   }
   return FALSE;
@@ -236,6 +260,12 @@ function gateway_manager_gateway_load_all() {
   if (empty($gateways)) {
     ctools_include('export');
     $gateways = ctools_export_crud_load_all('gateway_manager_gateways');
+    $gateway_types = gateway_manager_gateway_types();
+    foreach ($gateways as &$gateway) {
+      if (isset($gateway_types[$gateway->gateway_type])) {
+        $gateway->gateway_type_info = $gateway_types[$gateway->gateway_type];
+      }
+    }
     drupal_alter('gateway_manager_gateways', $gateways);
   }
   return $gateways;

@@ -65,6 +65,13 @@ function gm_test_gateway_credit_payment_details(&$order, $submitted) {
 }
 
 /**
+ * Validate callback for credit cards on the test gateway.
+ */
+function gm_test_gateway_credit_webform_validate($form, &$form_state, $values, $payment_method_element, $payment_fields_element, $method) {
+  // TODO
+}
+
+/**
  * Payment callback for PayPal on the test gateway.
  */
 function gm_test_gateway_paypal_charge($order_id, $amount, $data) {
@@ -77,7 +84,7 @@ function gm_test_gateway_paypal_charge($order_id, $amount, $data) {
  */
 function gm_test_gateway_paypal_webform_render($form, &$form_state) {
   $paypal_form['message'] = array(
-    '#value' => '<p>After clicking submit you will be redirected to paypal to complete your tranasaction.</p><img src="https://www.paypalobjects.com/webstatic/mktg/logo/AM_mc_vs_dc_ae.jpg" border="0" alt="PayPal Acceptance Mark">', 
+    '#value' => '<p>After clicking submit you will be redirected to paypal to complete your tranasaction.</p><img src="https://www.paypalobjects.com/webstatic/mktg/logo/AM_mc_vs_dc_ae.jpg" border="0" alt="PayPal Acceptance Mark">',
   );
 
   // Allow other modules to alter the form via hook_paypal_payment_form_alter()
@@ -193,7 +200,7 @@ function gm_test_gateway_direct_debit_render($form, &$form_state) {
 
   // Allow other modules to alter the form via hook_direct_debit_payment_form_alter()
   drupal_alter('direct_debit_payment_form', $direct_debit_form, $form, $form_state);
-  return $direct_debit_form; 
+  return $direct_debit_form;
 }
 
 /**
@@ -210,7 +217,7 @@ function gm_test_gateway_direct_debit_payment_details(&$order, $submitted) {
     'dd_bank_city' => $submitted['direct_debit_bank_city'],
     'dd_bank_postcode' => $submitted['direct_debit_bank_postal_code'],
   );
-  
+
   // Allow other modules to alter the payment details via hook_payment_details_alter()
   drupal_alter('payment_details', $payment_details, 'direct_debit', $order);
   return $payment_details;
