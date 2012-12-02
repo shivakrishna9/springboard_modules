@@ -46,10 +46,17 @@ function gm_authorizenet_payment_gateway_managed() {
     'title' => t('Authorize.net'),
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
     'settings' => 'gm_authorizenet_settings_form',
-    'credit' => 'gm_authorizenet_charge',
-    'credit_refund' => 'gm_authorizenet_refund',
-    'billing_update' => 'gm_authorizenet_billing_update',
-    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
+    'payment_methods' => array(
+      'credit' => array(
+        'label' => t('Credit'),
+        'payment_callback' => 'gm_authorizenet_charge',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
+        'refund_callback' => 'gm_authorizenet_refund',
+        'billing_update_callback' => 'gm_authorizenet_billing_update',
+        'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
+      ),
+    ),
   );
   return $gateways;
 }

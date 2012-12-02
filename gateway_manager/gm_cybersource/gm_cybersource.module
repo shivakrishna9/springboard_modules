@@ -71,16 +71,22 @@ function gm_cybersource_payment_gateway_settings_submit($form, &$form_state) {
  * Implementation of hook_payment_gateway_managed().
  */
 function gm_cybersource_payment_gateway_managed() {
-  $gateways[] = array(
+  $gateways['cybersource'] = array(
     'id' => 'cybersource',
     'title' => t('CyberSource'),
     'description' => t('Process credit card payments using the Silent Order POST service of CyberSource.'),
     'settings' => 'gm_cybersource_settings_form',
-    'credit' => 'gm_cybersource_charge',
-    'credit_refund' => 'gm_cybersource_refund',
-    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN, UC_CREDIT_CREDIT),
+    'payment_methods' => array(
+      'credit' => array(
+        'label' => t('Credit'),
+        'payment_callback' => 'gm_cybersource_charge',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
+        'refund_callback' => 'gm_cybersource_refund',
+        'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN, UC_CREDIT_CREDIT),
+      ),
+    ),
   );
-
   return $gateways;
 }
 

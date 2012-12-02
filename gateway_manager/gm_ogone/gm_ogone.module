@@ -230,46 +230,58 @@ function gm_ogone_post_form(&$form_state, $order) {
  * Implementation of hook_payment_gateway_managed().
  */
 function gm_ogone_payment_gateway_managed() {
-  $gateways[] = array(
+  $gateways['gm_ogone_ecommerce'] = array(
     'id' => 'gm_ogone_ecommerce',
     'title' => t('Ogone e-Commerce'),
     'description' => t('Process payments using Ogone\'s e-commerce payment method.'),
     'settings' => 'gm_ogone_ecommerce_settings_form',
     'payment_methods' => array(
       'credit' => array(
-        'payment' => 'gm_ogone_charge_ecommerce',
-        'refund' => 'gm_ogone_refund',
-        'billing_update' => 'gm_ogone_billing_update',
+        'label' => t('Credit'),
+        'payment_callback' => 'gm_ogone_charge_ecommerce',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
+        'refund_callback' => 'gm_ogone_refund',
+        'billing_update_callback' => 'gm_ogone_billing_update',
         'show_payment_fields' => FALSE,
         'payment_fields_message' => t('After submitting the form you will be taken to Ogone to enter your payment details.'),
         'txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
       ),
       'paypal' => array(
-        'payment' => 'gm_ogone_charge_ecommerce',
-        'refund' => 'gm_ogone_refund',
+        'label' => t('PayPal'),
+        'payment_callback' => 'gm_ogone_charge_ecommerce',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
+        'refund_callback' => 'gm_ogone_refund',
         'show_payment_fields' => FALSE,
         'recurring' => FALSE,
         'payment_fields_message' => t('After submitting the form you will be taken to Ogone to enter PayPal payment details.'),
       ),
       'web_banking' => array(
-        'payment' => 'gm_ogone_charge_ecommerce',
+        'label' => t('Web Banking'),
+        'payment_callback' => 'gm_ogone_charge_ecommerce',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
         'show_payment_fields' => FALSE,
         'recurring' => FALSE,
         'payment_fields_message' => t('After submitting the form you will be taken to Ogone to select your preferred web banking method.'),
       ),
     ),
   );
-  
-  $gateways[] = array(
+
+  $gateways['gm_ogone_directlink'] = array(
     'id' => 'gm_ogone_directlink',
     'title' => t('Ogone DirectLink'),
     'description' => t('Process payments using Ogone\'s DirectLink payment method.'),
     'settings' => 'gm_ogone_directlink_settings_form',
     'payment_methods' => array(
       'credit' => array(
-        'payment' => 'gm_ogone_charge_directlink',
-        'refund' => 'gm_ogone_refund',
-        'billing_update' => 'gm_ogone_billing_update',
+        'label' => t('Credit'),
+        'payment_callback' => 'gm_ogone_charge_directlink',
+        'render_callback' => NULL, // TODO!
+        'validate_callback' => NULL, // TODO!
+        'refund_callback' => 'gm_ogone_refund',
+        'billing_update_callback' => 'gm_ogone_billing_update',
         'show_payment_fields' => TRUE,
         'recurring' => TRUE,
         'txn_types' => array(UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_TXN),
