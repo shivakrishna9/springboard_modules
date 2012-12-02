@@ -19,7 +19,7 @@ class gateway_manager_gateway_ui extends ctools_export_ui {
       '#title' => t('Gateway type'),
       '#description' => t('Select the gateway type for this payment gateway. !locked',
         array('!locked' => !empty($item->gateway_type) ? t('Gateway type cannot be changed.') : '')),
-      '#options' => $gateway_types,
+      '#options' => $gateway_type_options,
       '#default_value' => $item->gateway_type,
       '#disabled' => !empty($item->gateway_type),
     );
