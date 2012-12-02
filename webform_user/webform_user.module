@@ -147,7 +147,8 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
             // to create another set of form components.
             $map = webform_user_user_map($node->nid);
             if (empty($map)) {
-          	_webform_user_create_webform_components($node);
+          	  _webform_user_create_webform_components($node);
+          	}
           }
           
         }
