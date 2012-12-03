@@ -5,29 +5,34 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function webform_dupe_cop_menu() {
-	$items['admin/settings/webform/webform-dupe-cop'] = array(
-    'title' => t('Webform dupe prevention settings'),
+  $items['admin/config/webform/webform-dupe-cop'] = array(
+    'title' => 'Webform dupe prevention settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_dupe_cop_settings_form'),
-		'access arguments' => array('manage webform duplicate submission prevention'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'webform_dupe_cop.admin.inc',
-	);
-	return $items;
+    'access arguments' => array('manage webform duplicate submission prevention'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_dupe_cop.admin.inc',
+  );
+  return $items;
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
-function webform_dupe_cop_perm() {
-  return array('manage webform duplicate submission prevention');
+function webform_dupe_cop_permission() {
+  return array(
+    'manage webform duplicate submission prevention' => array(
+      'title' => t('manage webform duplicate submission prevention'),
+      'description' => t('Manage Webform dupe cop settings.'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  */
 function webform_dupe_cop_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'webform_client_form_') === 0) {
@@ -37,11 +42,13 @@ function webform_dupe_cop_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_webform_submission_delete().
+ * Implements hook_webform_submission_delete().
  */
 function webform_dupe_cop_webform_submission_delete($node, $submission) {
   if ($sid = $submission->sid) {
-    db_query('DELETE FROM {webform_dupe_cop} WHERE sid = %d', $sid);
+    db_delete('webform_dupe_cop')
+      ->condition('sid', $sid)
+      ->execute();
   }
 }
 
@@ -59,37 +66,50 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
   $nid = $form_state['values']['details']['nid'];
   $timespan = trim(variable_get('webform_dupe_cop_timespan', '1 hour'));
   $minimum_timestamp = ($timespan_hours != '0') ? (strtotime($timespan . ' ago')) : 0;
-  $submitted = db_result(db_query(
-    "SELECT submitted
-      FROM {webform_dupe_cop} wdc
-        INNER JOIN {webform_submissions} ws ON ws.sid=wdc.sid
-      WHERE wdc.submission_hash='%s' AND ws.nid=%d AND ws.submitted > %d",
-    $hash, $nid, $minimum_timestamp
-  ));
+  $submitted = db_query("SELECT submitted FROM {webform_dupe_cop} wdc
+      INNER JOIN {webform_submissions} ws ON ws.sid=wdc.sid
+      WHERE wdc.submission_hash = :wdc.submission_hash
+        AND ws.nid = :ws.nid
+        AND ws.submitted > :ws.submitted",
+    array(':wdc.submission_hash' => $hash, ':ws.nid' => $nid, ':ws.submitted' => $minimum_timestamp)
+    )->fetchField();
   // If this form has been submitted before.
   if ($submitted) {
     // Gather additional data for the submission.
     global $user;
-    $date = format_date(strtotime('now'), 'custom',  'm/d/y');
+    $date = format_date(strtotime('now'), 'custom', 'm/d/y');
     $time = format_date(strtotime('now'), 'custom', 'H:i:s');
     $webform_id = $nid;
     $user_id = $user->uid;
-    $prev_date = format_date($submitted, 'custom',  'm/d/y');
+    $prev_date = format_date($submitted, 'custom', 'm/d/y');
     $prev_time = format_date($submitted, 'custom', 'H:i:s');
     // If we're set to intercept the form, do so.
     if (variable_get('webform_dupe_cop_toggle', 'TRUE')) {
       $message = variable_get('webform_dupe_cop_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
         'a submission submitted at %prev_date %prev_time.');
-      $message = t($message, array('%date' => $date, '%time' => $time, '%webform_id' => $webform_id, '%user_id' => $user_id,
-         '%prev_date' => $prev_date, '%prev_time' => $prev_time));
+      $message = t($message, array(
+        '%date' => $date,
+        '%time' => $time,
+        '%webform_id' => $webform_id,
+        '%user_id' => $user_id,
+        '%prev_date' => $prev_date,
+        '%prev_time' => $prev_time,
+      ));
       form_set_error('submitted', $message);
     }
     // Log the error to watchdog.
     $headers = webform_dupe_cop_fetch_headers();
     $log_message = '%date %time - Dupe detected at %webform_id by %user_id matches a submission submitted at %prev_date %prev_time. ' .
       'Headers: %headers'; // Standard message, no override.
-    watchdog('webform_dupe_cop', $log_message, array('%date' => $date, '%time' => $time, '%webform_id' => $webform_id,
-      '%user_id' => $user_id, '%prev_date' => $prev_date, '%prev_time' => $prev_time, '%headers' => $headers), WATCHDOG_ALERT);
+    watchdog('webform_dupe_cop', $log_message, array(
+      '%date' => $date,
+      '%time' => $time,
+      '%webform_id' => $webform_id,
+      '%user_id' => $user_id,
+      '%prev_date' => $prev_date,
+      '%prev_time' => $prev_time,
+      '%headers' => $headers,
+    ), WATCHDOG_ALERT);
   }
 }
 
@@ -100,7 +120,10 @@ function webform_dupe_cop_client_form_submit($form, &$form_state) {
   // After a successful submission, record the hash and sid for future use.
   $submission_hash = $form_state['webform_dupe_cop'];
   $sid = $form_state['values']['details']['sid'];
-  $record = array('sid' => $sid, 'submission_hash' => $submission_hash);
+  $record = array(
+    'sid' => $sid,
+    'submission_hash' => $submission_hash,
+  );
   drupal_write_record('webform_dupe_cop', $record);
 }
 
