@@ -1,6 +1,7 @@
 name = Webform Add to All
 description = Allows you to add a new form component to all webforms of a specific type.
-package = Webform
-core = 6.x
-version = 6.x-3.3
+package = Webform Extra
+core = 7.x
+version = 7.x-3.3
 dependencies[] = webform
+files[] = webform_addtoall.module
