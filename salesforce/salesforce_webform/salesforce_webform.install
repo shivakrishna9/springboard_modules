@@ -4,11 +4,11 @@
  * Implements hook_schema().
  */
 function salesforce_webform_schema() {
-  $schema['salesforce_webform_mapping'] = array(
+  $schema['salesforce_webform_map'] = array(
     'description' => 'Webform to Salesforce mappings',
     'fields' => array(
-      'salesforce_webform_mapping_id' => array(
-        'description' => 'Primary Key: Unique salesforce_webform_mapping entity ID.',
+      'salesforce_webform_map_id' => array(
+        'description' => 'Primary Key: Unique salesforce_webform_map entity ID.',
         'type' => 'serial',
         'not null' => TRUE,
       ),
@@ -18,7 +18,7 @@ function salesforce_webform_schema() {
         'not null' => TRUE,
       ),
       'name' => array(
-        'description' => 'The machine-readable name of this salesforce_mapping type.',
+        'description' => 'The machine-readable name of this salesforce_map type.',
         'type' => 'varchar',
         'length' => '32',
         'not null' => TRUE,
@@ -37,7 +37,7 @@ function salesforce_webform_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'field_mappings' => array(
+      'field_map' => array(
         'description' => 'A serialized object that stores the field mappings.',
         'type' => 'text',
         'size' => 'big',
@@ -45,13 +45,13 @@ function salesforce_webform_schema() {
         'serialize' => TRUE,
       ),
       'created' => array(
-        'description' => 'The Unix timestamp when the salesforce_mapping was created.',
+        'description' => 'The Unix timestamp when the salesforce_map was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'updated' => array(
-        'description' => 'The Unix timestamp when the salesforce_mapping was most recently saved.',
+        'description' => 'The Unix timestamp when the salesforce_map was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -77,7 +77,7 @@ function salesforce_webform_schema() {
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('salesforce_webform_mapping_id'),
+    'primary key' => array('salesforce_webform_map_id'),
     'unique keys' => array(
       'name' => array('name'),
       'webform_nid' => array('nid', 'salesforce_object_type')

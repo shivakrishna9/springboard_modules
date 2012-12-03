@@ -10,13 +10,13 @@
  */
 function salesforce_webform_entity_info() {
   return array(
-    'salesforce_webform_mapping' => array(
-      'label' => t('Salesforce Webform Mapping'),
+    'salesforce_webform_map' => array(
+      'label' => t('Salesforce Webform Map'),
       'entity class' => 'Entity',
       'controller class' => 'EntityAPIControllerExportable',
-      'base table' => 'salesforce_webform_mapping',
+      'base table' => 'salesforce_webform_map',
       'entity keys' => array(
-        'id' => 'salesforce_webform_mapping_id',
+        'id' => 'salesforce_webform_map_id',
       ),
       'fieldable' => FALSE,
       'exportable' => TRUE,
@@ -29,13 +29,13 @@ function salesforce_webform_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_webform_menu() {
-  $items['node/%webform_menu/webform/salesforce-mapping'] = array(
+  $items['node/%webform_menu/webform/salesforce-map'] = array(
     'title' => 'Salesforce map',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_webform_mapping_form', 1),
+    'page arguments' => array('salesforce_webform_map_form', 1),
     'access callback' => TRUE,
     'type' => MENU_LOCAL_TASK,
-    'file' => 'includes/salesforce_webform.mapping.inc',
+    'file' => 'includes/salesforce_webform.map.inc',
   );
 
   return $items;

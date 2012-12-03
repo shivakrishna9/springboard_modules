@@ -4,7 +4,7 @@
  * Saleforce webform mapping form and functions.
  */
 
-function salesforce_webform_mapping_form() {
+function salesforce_webform_map_form() {
 
   // Get list of available SObjects for mapping.
   $sfobjects = salesforce_get_sobjects();
@@ -18,11 +18,11 @@ function salesforce_webform_mapping_form() {
     '#title' => t('Salesforce object'),
     '#type' => 'select',
     '#description' => t('Select a Salesforce object to map.'),
-    //'#default_value' => isset($mapping) ? $mapping->salesforce_object_type : 0,
+    //'#default_value' => isset($map) ? $map->salesforce_object_type : 0,
     '#options' => $sfobject_options,
     '#ajax' => array(
-      'callback' => 'salesforce_mapping_form_callback',
-      'wrapper' => 'salesforce_mapping_form'
+      'callback' => 'salesforce_map_form_callback',
+      'wrapper' => 'salesforce_map_form'
     ),
     '#required' => TRUE
   );
