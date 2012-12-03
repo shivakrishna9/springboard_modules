@@ -67,11 +67,11 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
 
     // Save the entity to the database
     entity_save('salesforce_webform_map', $test_map);
-    $test_map_db = entity_load('salesforce_webform_map', array(1));
-    $this->assertEqual('foo', $test_map_db[1]->name, 'Newly created entity has the correct name.');
+    $test_map_db = entity_load('salesforce_webform_map', array(3));
+    $this->assertEqual('foo', $test_map_db[3]->name, 'Newly created entity has the correct name.');
 
     // Delete the entity from the database
-    entity_delete('salesforce_webform_map', 1);
+    entity_delete('salesforce_webform_map', 3);
     $all_entities = entity_load('salesforce_webform_map');
     $this->assertTrue(empty($all_entities));
   }

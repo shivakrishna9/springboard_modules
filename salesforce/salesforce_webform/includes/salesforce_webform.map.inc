@@ -107,28 +107,28 @@ function salesforce_webform_save_map($map) {
 /**
  * Retreives a Salesforce+Webform map
  *
- * @param $id
- *   The unique id of the map, in our case it's salesforce_webform_map_id
+ * @param $nid
+ *   The nid of the webform of whose map we want to load
  *
  * @return
  *   The entity object you requested
  */
-function salesforce_webform_load_map($id) {
-  $entities = entity_load('salesforce_webform_map', array($id));
-  return $entities[$id];
+function salesforce_webform_load_map($nid) {
+  $entities = entity_load('salesforce_webform_map', array($nid));
+  return $entities[$nid];
 }
 
 /**
  * Deletes a Salesforce+Webform map
  *
- * @param $id
- *   The unique id of the map, in our case it's salesforce_webform_map_id
+ * @param $nid
+ *   The nid of the webform of whose map we're deleting
  *
  * @return
  *   FALSE if the delete could be performed
  */
-function salesforce_webform_delete_map($id) {
-  return entity_delete('salesforce_webform_map', $id);
+function salesforce_webform_delete_map($nid) {
+  return entity_delete('salesforce_webform_map', $nid);
 }
 
 /**

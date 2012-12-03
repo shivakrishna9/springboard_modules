@@ -21,7 +21,7 @@ function salesforce_webform_entity_info() {
       'controller class' => 'EntityAPIControllerExportable',
       'base table' => 'salesforce_webform_map',
       'entity keys' => array(
-        'id' => 'salesforce_webform_map_id',
+        'id' => 'nid',
       ),
       'fieldable' => FALSE,
       'exportable' => TRUE,
