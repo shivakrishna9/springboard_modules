@@ -114,8 +114,8 @@ function springboard_version_update_status_alter(&$projects) {
       $projects[$module_name]['reason'] = t('Not compatible with current version of Springboard. Please upgrade to at least @update.',
         array('@update' => $module_info['springboard_version']));
       $projects[$module_name]['extra'][] = array(
-        'class' => 'release-not-supported', 
-        'label' => t('Incompatible with Springboard'), 
+        'class' => 'release-not-supported',
+        'label' => t('Incompatible with Springboard'),
         'data' => $projects[$module_name]['reason'],
       );
     }
@@ -246,7 +246,7 @@ function _springboard_version_hash_module($module) {
  * Helper function, recursive MD5 generation.
  */
 function _springboard_version_hash_path($path) {
-  if (is_dir($path)) { 
+  if (is_dir($path)) {
     $file_hashes = array();
     $dir = opendir($path);
     while (($entry = readdir($dir)) !== false) {

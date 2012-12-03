@@ -4,12 +4,12 @@
  */
 function queue_processor_install() {
   $types = array('user', 'donation', 'webform', 'node');
-  
+
   // Make sure queue_processor.module is included so that queue_processor_add_type()
   // is available
   drupal_load('module', 'queue_processor');
-  
-  
+
+
   foreach ($types as $type) {
     // tell the queue processor about the type
     queue_processor_add_type($type);

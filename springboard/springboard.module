@@ -110,7 +110,7 @@ function springboard_menu() {
       'type' => MENU_NORMAL_ITEM,
     );
   }
-  
+
   if (module_exists('webform')) {
     $items['admin/springboard/forms/webforms'] = array(
       'title' => t('Webforms'),
@@ -315,8 +315,8 @@ function springboard_dashboard() {
 function springboard_welcome() {
   $form = array();
 
- /* 
- if ($default_campaign) {  
+ /*
+ if ($default_campaign) {
     drupal_set_message(t('The %campaign campaign has been selected as default.'), array('%campaign' => $default_campaign));
   }
   else {
@@ -330,7 +330,7 @@ function springboard_welcome() {
   }
   if (is_object($sf)) {
     variable_del('springboard_salesforce_enabled');
- 
+
     $form['salesforce_status'] = array(
       '#type' => 'markup',
       '#prefix' => '<h3>' . t('Salesforce integration status') . '</h3><p class="springboard_status_message">',
@@ -349,7 +349,7 @@ function springboard_welcome() {
 
   // Default campaign
   $default_campaign = variable_get('sf_donation_default_campaign', '');
-  
+
   if (variable_get('springboard_salesforce_enabled', 0)) {
     $form['sf'] = array(
       '#type' => 'fieldset',
@@ -402,7 +402,7 @@ function springboard_welcome_salesforce_validate(&$form, $form_state) {
   $form_state['values']['salesforce_username'] = encrypt($form_state['values']['salesforce_username']);
   $form_state['values']['salesforce_password'] = encrypt($form_state['values']['salesforce_password']);
   $form_state['values']['salesforce_token'] = encrypt($form_state['values']['salesforce_token']);
-  
+
   $source = 'salesforce_wsdl';
   if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
     // Check for file upload errors and return FALSE if a
@@ -427,7 +427,7 @@ function springboard_welcome_salesforce_validate(&$form, $form_state) {
         drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
         return 0;
     }
-    
+
     // Check the file extension
     $pathParts = pathinfo($_FILES['files']['name'][$source]);
     if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
@@ -446,18 +446,18 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
   variable_set('salesforce_management_api_password', $form_state['values']['salesforce_password']);
   variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
   // WSDL file handling stuffs
-  
+
  // Find the dir the file should go into
   $dir = drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient/';
-  
+
   // Upload file path
   $file = $dir . 'enterprise.wsdl.xml';
 
   // Array key for the file element
   $source = 'salesforce_wsdl';
-  
+
   // Make sure the directory is writeable
-  if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {  
+  if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
          form_set_error($source, t('File upload error. Could not move uploaded file.'));
@@ -469,7 +469,7 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
       variable_set('salesforce_management_api_wsdl_updated', time());
       // Clear the cache
       drupal_flush_all_caches();
-      
+
       // Clear WSDL files from tmp directory
       $tmpDir = file_directory_temp();
       // Make sure the tmp dir exists and isn't the root, just to be safe
@@ -477,10 +477,10 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
         $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
         $execOutput = exec($cmd);
       }
-      
+
       drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
     }
-  } 
+  }
   else {
     drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
     watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
@@ -548,30 +548,30 @@ function theme_springboard_fundraiser_performance() {
   $results = db_query('SELECT n.nid, f.internal_name FROM {node} n INNER JOIN {fundraiser} f ON f.nid = n.nid');
 
   while ($donation_form = db_fetch_object($results)) {
-    
+
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
     $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
       $conversion = _springboard_percentage($access_results->conversions, $access_results->pageviews);
-      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);   
+      $conversion_threshold =  variable_get('springboard_conversion_threshold', 0);
       $forms[$donation_form->nid]['conversion'] = '<span class="' . springboard_set_dashboard_class($conversion_threshold, $conversion, 'min') . '">' . $conversion . '</span>';
 
       $local_failure = _springboard_percentage($access_results->local_failures, $access_results->pageviews);
       $local_failure_threshold = variable_get('springboard_local_failure_threshold', 0);
       $forms[$donation_form->nid]['local_failure'] =  '<span class="' . springboard_set_dashboard_class($local_failure_threshold, $local_failure, 'max') . '">' . $local_failure . '</span>';
-      
+
       $gateway_failure = _springboard_percentage($access_results->gateway_failures, $access_results->pageviews);
       $gateway_failure_threshold = variable_get('springboard_gateway_failure_threshold', 0);
       $forms[$donation_form->nid]['gateway_failure'] =  '<span class="' . springboard_set_dashboard_class($gateway_failure_threshold, $gateway_failure, 'max') . '">' . $gateway_failure . '</span>';
 
       if (module_exists('statistics')) {
-        
+
         $load_time = db_result(db_query('SELECT timer FROM {accesslog} WHERE path = CONCAT("node/", %d) ORDER BY aid desc', $donation_form->nid)) . 'ms';
         $load_time_threshold = variable_get('springboard_load_time_threshold',0);
         $forms[$donation_form->nid]['load_time'] = '<span class="' .  springboard_set_dashboard_class($load_time_threshold, $load_time, 'max') . '">' . $load_time . '</span>';
-        
+
       }
     }
   }
@@ -592,12 +592,12 @@ function theme_springboard_fundraiser_performance() {
 function theme_springboard_sf_status() {
   if (module_exists('salesforce_management_api')) {
     $output = '<div class= "springboard-pane" id="salesforce-status-pane">';
-    
+
     // Call on the module to get the current connection status
     $output .= salesforce_management_api_test_connection();
-    
+
     // WSDL update
-    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0); 
+    $updated_time = variable_get('salesforce_management_api_wsdl_updated', 0);
     $output .= '<p>Last WSDL Update: ' . ($updated_time ? date('Y-m-d g:i:sA', variable_get('salesforce_management_api_wsdl_updated', 0)) : Unknown) . '</p>';
 
     // latest batch # total items :: success :: fail
@@ -627,14 +627,14 @@ function theme_springboard_sf_status() {
 function theme_springboard_logo() {
   $theme = variable_get('theme_default', 'garland');
   $settings = theme_get_settings($theme);
- 
+
   if (!$settings['default_logo'] = 0) {
     $logo = '<img src="' .  base_path()  .  drupal_get_path('theme', $theme) . '/logo.png" width="150" alt="Site logo" />';
   }
   else {
     $logo =  '<img src="' . base_path() . $settings['logo_path'] . '" width="150" alt="Site logo" />'; // this prints out path to you uploaded logo
   }
-  
+
   $output = '<div class="springboard-pane" id="springboard-logo-pane">';
   $output .= $logo;
   $output .= '</div>';
@@ -716,12 +716,12 @@ function _springboard_fundraiser_report() {
   ctools_include('ajax');
   ctools_include('modal');
   $title = $access_results->internal_name;
-  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc 
-        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id 
+  $total_donations = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc
+        INNER JOIN {fundraiser_webform_order} f ON f.order_id = uc.order_id
         WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
         $nid));
   $total_donations = round($total_donations) . '.00';
-  
+
   $total_donations = $total_donations ? $total_donations : '0.00';
   $output .= '<h2>Details for ' . $access_results->internal_name;
   $output .= ' ' . l(t('view'), "node/$nid");
@@ -742,19 +742,19 @@ function _springboard_sort_by_conversion($a, $b) {
   if ($a['conversion'] == $b['conversion']) {
     return 0;
   }
-    
+
   return ($a['conversion'] > $b['conversion']) ? -1 : 1;
 }
 
 /**
  * Sets CSS class for dashboard elements based on comparison between the current value and the threshold value.
- * 
+ *
  * @param $threshold
  * Int threshold value.
- * 
+ *
  * @param $value
  * Int current value.
- * 
+ *
  * @param $op
  * Specifies which type of comparison to perform, options are 'min' or 'max', defaults to min.
  */
@@ -772,20 +772,20 @@ function springboard_set_dashboard_class($threshold, $value, $op = 'min') {
       case 'max':
         $class = ($value <= $threshold) ? 'successes' : 'failures';
         break;
-    }        
+    }
   }
   return $class;
 }
 
 /**
  * Calculate performance percentages.
- * 
- * @param $a 
+ *
+ * @param $a
  * Int first number.
- * 
+ *
  * @param $b
  * Int second number.
- * 
+ *
  * @return
  * Returns a percentage or N/A if either number is zero.
  */
@@ -800,7 +800,7 @@ function _springboard_percentage($a, $b) {
 }
 
 /**
- * 
+ *
  **/
 function _springboard_cron_access($param) {
   if ($param == 'fundraiser' && variable_get('fundraiser_standalone_cron_enabled', 0)) {

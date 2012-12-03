@@ -28,7 +28,7 @@ function capwiz_settings_form(&$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Capwiz API account'),
     '#access' => user_access('administer capwiz credentials'),
-    '#collapsible' => !$account_not_setup, 
+    '#collapsible' => !$account_not_setup,
     '#collapsed' => !$account_not_setup,
     'client_id' => array(
       '#type' => 'textfield',
@@ -101,7 +101,7 @@ T;
   $form['capwiz_email'] = array(
     '#type' => 'fieldset',
     '#title' => t('Email notifications'),
-    '#collapsible' => !$account_not_setup, 
+    '#collapsible' => !$account_not_setup,
     '#collapsed' => !$account_not_setup,
     'email_message' => array(
       '#type' => 'select',
@@ -115,7 +115,7 @@ T;
     '#type' => 'fieldset',
     '#title' => t('Syncing'),
     '#access' => user_access('administer capwiz advanced settings'),
-    '#collapsible' => TRUE, 
+    '#collapsible' => TRUE,
     '#collapsed' => !$account_not_setup,
     'drupal_cron' => array(
       '#type' => 'checkbox',

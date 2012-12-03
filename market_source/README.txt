@@ -19,7 +19,7 @@ None.
 
 -- CONTACT --
 Current maintainers:
-* Ben Clark (benclark) - http://drupal.org/user/115444 
+* Ben Clark (benclark) - http://drupal.org/user/115444
 * Allen Freeman (afreeman) - http://http://drupal.org/user/450370
 * Sarah Hood (Bastlynn) - http://drupal.org/user/275249
 

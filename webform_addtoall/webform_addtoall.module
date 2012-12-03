@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -21,18 +20,18 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
     $node_names = node_get_types('names');
     $webform_types = array_flip(variable_get('webform_node_types', array('webform')));
     $webform_names = array_intersect_key($node_names, $webform_types);
-    
+
     $form['addtoall'] = array(
-      '#type' => 'fieldset', 
-      '#title' => t('Add to all'), 
-      '#weight' => 10, 
-      '#collapsible' => TRUE, 
+      '#type' => 'fieldset',
+      '#title' => t('Add to all'),
+      '#weight' => 10,
+      '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#description' => 'Check the boxes below to add this webform component to all of the webforms of that type.',
     );
     $form['addtoall']['webform_types'] = array(
-      '#type' => 'checkboxes', 
-      '#title' => t('Webform content types'), 
+      '#type' => 'checkboxes',
+      '#title' => t('Webform content types'),
       '#options' => $webform_names,
       '#description' => t(''),
     );
@@ -58,7 +57,7 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
     }
   }
  }
- 
+
  /**
   * Clones the component to mulitple nodes after checking for duplicate component.
   *
@@ -67,7 +66,7 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
   * @param $form_values
   *       An array of form values from $form_state['values']
   */
-function webform_addtoall_component_clone($nids, $form_values) {  
+function webform_addtoall_component_clone($nids, $form_values) {
   // Set source component info
   $source_node = node_load($form_values['nid'], NULL, TRUE);
   $source_form_key = $form_values['form_key'];
@@ -78,18 +77,18 @@ function webform_addtoall_component_clone($nids, $form_values) {
     // Don't do anything if this is the source node
     if ($nid != $source_node->nid) {
       // Basic cleanup and prep of the $form_values
-      $form_values = webform_addtoall_component_cleanup($form_values, $nid); 
+      $form_values = webform_addtoall_component_cleanup($form_values, $nid);
       // Make sure destination node is a proper webform, or don't clone into it.
       $node = node_load($nid, NULL, TRUE);
       if (!webform_ensure_record($node)) {
         $form_values['clone'] = FALSE;
-      }         
+      }
       // Check each component  on the destination node for parent and source form_keys
       foreach ($node->webform['components'] as $pid => $component) {
         if ($component['form_key'] == $source_pid_form_key) {
-          $form_values['pid'] = $pid;   
+          $form_values['pid'] = $pid;
           $form_values['weight'] = $source_weight;
-        } 
+        }
         elseif ($component['form_key'] == $source_form_key) {
           $form_values['clone'] = FALSE;
         }
@@ -98,10 +97,10 @@ function webform_addtoall_component_clone($nids, $form_values) {
       if ($form_values['clone']) {
         webform_component_insert($form_values);
         $message_link = l($node->title, 'node/'. $nid);
-        drupal_set_message( t('Component %name cloned to !link of type %type.', array('%name' => $form_values['name'], '!link' => $message_link, '%type' => $node->type)) );      
-      } 
+        drupal_set_message( t('Component %name cloned to !link of type %type.', array('%name' => $form_values['name'], '!link' => $message_link, '%type' => $node->type)) );
+      }
     }
-  } 
+  }
 }
 
 /**
@@ -117,11 +116,11 @@ function webform_addtoall_component_clone($nids, $form_values) {
 function webform_addtoall_component_cleanup($form_values, $nid) {
   // Change component data to reflect the node we are cloing to.
   $form_values['nid'] = $nid;
-  // Set default values for a fresh component   
+  // Set default values for a fresh component
   $form_values['cid'] = NULL;
   $form_values['clone'] = TRUE;
   $form_values['pid'] = 0;
-  $form_values['weight'] = 100;        
+  $form_values['weight'] = 100;
   // Remove empty extra values.
   if (isset($form_values['extra'])) {
     foreach ($form_values['extra'] as $key => $value) {

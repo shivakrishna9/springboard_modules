@@ -445,7 +445,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   else {
     $currency = !empty($data['config']['gm_cybersource_currency']) ? $data['config']['gm_cybersource_currency'] : 'usd';
   }
-  
+
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
 
@@ -597,7 +597,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     $business = new stdClass();
     $business->ignoreAVSResult = $data['config']['gm_cybersource_avs'] == 'true' ? 'false' : 'true';
     $request->businessRules = $business;
-    
+
     // Send the request to CyberSource and get the reply.
     $reply = $soapClient->runTransaction($request);
   }
@@ -675,7 +675,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
           'requestToken' => $reply->requestToken,
         );
         // Save the updated data array to the database.
-        db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);   
+        db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);
       }
     }
     else {
@@ -707,7 +707,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
  */
 function gm_cybersource_refund($order_id, $amount, $data) {
   global $user;
-  
+
   require_once(drupal_get_path('module', 'gm_cybersource') .'/gm_cybersource.soap.inc');
 
   // Set the URL for the CyberSource SOAP Toolkit API WSDL.
@@ -717,15 +717,15 @@ function gm_cybersource_refund($order_id, $amount, $data) {
   else {
     $url = 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.38.wsdl';
   }
-  
+
   // Get some original order's requestId and requestToken
   $credit = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
   $credit = unserialize($credit);
-  
+
   // Get the requestId and token from the order
   $requestId = $credit['cybersource']['credit']['requestId'];
   $requestToken = $credit['cybersource']['credit']['requestToken'];
-  
+
   // Determine this order's currency
   if (!empty($data['currency'])) {
     $currency = strtolower($data['currency']);
@@ -733,12 +733,12 @@ function gm_cybersource_refund($order_id, $amount, $data) {
   else {
     $currency = !empty($data['config']['gm_cybersource_currency']) ? $data['config']['gm_cybersource_currency'] : 'usd';
   }
-  
+
   // Only continue if we have both pieces of information
   if (!empty($requestId) && !empty($requestToken)) {
     $login = _gm_cybersource_soap_login_data($data['config']);
     $soapClient = new CyberSourceSoapClient($url, array('merchant_id' => $login['merchant_id'], 'transaction_key' => $login['transaction_key']));
-    
+
     // Create the request with some meta data.
     $request = new stdClass();
     $request->merchantID = $login['merchant_id'];
@@ -748,7 +748,7 @@ function gm_cybersource_refund($order_id, $amount, $data) {
     $ccCreditService->run = 'true';
     $ccCreditService->captureRequestID = $requestId;
     $request->ccCreditService = $ccCreditService;
-    
+
     // Add the order total information.
     $purchaseTotals = new stdClass();
     $purchaseTotals->currency = $currency;
@@ -768,27 +768,27 @@ function gm_cybersource_refund($order_id, $amount, $data) {
           'data' => array('module' => 'gm_cybersource', 'txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $reply->ccCreditReply->reconciliationID),
           'uid' => $user->uid,
         );
-        
+
         return $result;
       }
       elseif (isset($reply) && $reply->decision == 'REJECT') {
         $result = array(
           'message' => t('The refund was rejected by Cybersource. Reason code: @code.', array('@code' => $reply->reasonCode)),
         );
-        
+
         return $result;
       }
-    } 
-    catch (SoapFault $exception) { 
+    }
+    catch (SoapFault $exception) {
       $result = array(
         'message' => t('A SOAP FAULT occurred while attempting to refund the order. Details: @details', array('@details' => $exception->getMessage())),
       );
-      
+
       return $result;
     }
   }
-  
-  return FALSE; 
+
+  return FALSE;
 }
 
 // Displays the taxes for an order.

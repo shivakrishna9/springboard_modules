@@ -1,8 +1,8 @@
 <?php
 /**
  * @file
- * Install file for the gateway manager module. 
- * 
+ * Install file for the gateway manager module.
+ *
  */
 
 /**
@@ -96,7 +96,7 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('id'),
   );
-  
+
   $schema['term_gateway'] = array(
     'description' => t('Table to store gateway related terms.'),
     'fields' => array(
@@ -115,7 +115,7 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('gid', 'tid'),
   );
-  
+
   return $schema;
 }
 

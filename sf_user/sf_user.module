@@ -26,7 +26,7 @@ function sf_user_menu() {
     'file' => 'sf_user_report.inc',
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   $items['admin/reports/salesforce/users-no-last-names'] = array(
     'title' => 'Users with no last name',
     'page callback' => 'sf_user_no_last_name_report',
@@ -43,7 +43,7 @@ function sf_user_menu() {
  */
 function sf_user_queue_report_item_title_alter(&$row) {
   if ($row['type'] == 'user') {
-    $title = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", (int)$row['oid']));  
+    $title = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", (int)$row['oid']));
     $row['title'] = $title;
   }
 }
@@ -53,9 +53,9 @@ function sf_user_queue_report_item_title_alter(&$row) {
  */
 function sf_user_queue_preprocess_batch_alter(&$batch) {
   if ($batch['type'] == 'user') {
-    
+
     switch ($batch['action']) {
-      
+
       case 'upsert':
       case 'update':
         // get any objects that have already been exported to salesforce. these will be used when generating the
@@ -66,17 +66,17 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
           // create our own user object for performance reasons
           $user = db_fetch_object(db_query("SELECT uid, name, mail, created, access, login, status FROM {users} WHERE uid = %d", $record->oid));
           profile_load_profile($user);
-          
+
           // determine which users have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
           $object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $user, $record->sfid, $objects);
-          
+
           // add the object to the batch record
           $record->object = $object;
         }
         break;
-        
+
       case 'delete':
-      
+
         break;
     }
   }
@@ -88,7 +88,7 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
 function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
   if ($batch['type'] == 'user') {
     switch ($batch['action']) {
-      
+
       case 'upsert':
       case 'update':
         // create an array of ids for the newly exported users
@@ -106,13 +106,13 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
         }
 
         watchdog('salesforce user', t('Importing !count user records', array('!count' => count($sfids))), NULL, WATCHDOG_INFO);
-        
+
         // import the users
         import_user_updates($sfids, $batch['fieldmap']);
         break;
-        
+
       case 'delete':
-      
+
         break;
     }
   }
@@ -122,7 +122,7 @@ function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
  * Implemenation of sf_import_updated_objects().
  */
 function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_new_objects) {
-  
+
   if ($type == 'user') {
     // load the fieldmap data.
     $map = salesforce_management_api_fieldmap_load($fieldmap);
@@ -130,7 +130,7 @@ function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
     $drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
     // load salesforce object definition
     $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-    
+
     foreach($objects->records as $object) {
       // look up the user's id
       $uid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = 'user'", $object->Id));
@@ -142,12 +142,12 @@ function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
       else {
         if ($import_new_objects) {
           // TODO: Handle new object imports in the future
-          
+
         }
       }
     }
   }
-  
+
 }
 
 /**
@@ -156,13 +156,13 @@ function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
  * @param $sfids
  *   The ids of the salesforce objects to import
  * @param $fieldmap
- *    The fieldmap used to limit the fields in the objects  
+ *    The fieldmap used to limit the fields in the objects
  */
 function import_user_updates($sfids, $fieldmap) {
   if (!empty($sfids)) {
-    
+
     $extra_fields = array('AccountId'); // make sure we get account id for every user even if it isn't mapped
-    
+
     $sf = salesforce_management_api_connect();
     if ($sf) {
       try {
@@ -170,7 +170,7 @@ function import_user_updates($sfids, $fieldmap) {
       }
       catch (Exception $e) {
         watchdog('salesforce user', t('Failed to retrieve objects from Salesforce. Drupal users will not be updated.'), NULL, WATCHDOG_CRITICAL);
-      }  
+      }
       // load the fieldmap data.
       $map = salesforce_management_api_fieldmap_load($fieldmap);
       // load drupal object definition
@@ -182,13 +182,13 @@ function import_user_updates($sfids, $fieldmap) {
       foreach($objects as $object) {
         // load the user
         $user = user_load(array('uid' => $sfids[$object->Id]));
-        
-        // add salesforce ids to the user object 
+
+        // add salesforce ids to the user object
         $extra_data = array(
           'salesforce_account_id' => $object->AccountId,
           'salesforce_contact_id' => $object->Id,
         );
-        
+
         update_user_values($user, $object, $extra_data, $map, $drupal, $salesforce);
       }
     }
@@ -268,7 +268,7 @@ function _sf_user_profile_save_profile($user, &$map) {
         // get the id of the profile field and it's type
         $fid = $profile_fields[$key]['fid'];
         $type = $profile_fields[$key]['type'];
-        
+
         // make sure the field has a value
         if (!empty($value)) {
           // serialize if required
@@ -279,7 +279,7 @@ function _sf_user_profile_save_profile($user, &$map) {
           db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $fid, $user->uid);
           db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $fid, $user->uid, $value);
           unset($map[$key]); // prevent from saving to user
-        }      
+        }
       }
     }
   }
@@ -296,7 +296,7 @@ function _sf_user_profile_get_fields() {
       'fid' => $data->fid,
       'type' => $data->type,
       'title' => $data->title,
-    );  
+    );
   }
   return $fields;
 }
@@ -339,10 +339,10 @@ function sf_user_get_role_ids($uid) {
   $result = db_query('SELECT r.rid FROM {role} r INNER JOIN {users_roles} ur ON ur.rid = r.rid WHERE ur.uid = %d', $uid);
   while ($role = db_fetch_object($result)) {
     array_push($rids, $role->rid);
-   }  
-   
+   }
+
    return $rids;
-   
+
 }
 
 
@@ -356,7 +356,7 @@ function sf_user_user_operations() {
       'callback' => 'sf_user_wipe_user',
     ),
   );
-  
+
   return $operations;
 }
 
@@ -365,15 +365,15 @@ function sf_user_user_operations() {
  */
 function sf_user_wipe_user($accounts) {
   $fields = array(
-    'last_sf_export' => NULL, 
-    'last_updated' => NULL, 
-    'profile_contact_id' => NULL, 
-    'profile_salesforce_account_id' => NULL, 
+    'last_sf_export' => NULL,
+    'last_updated' => NULL,
+    'profile_contact_id' => NULL,
+    'profile_salesforce_account_id' => NULL,
     'last_sf_import' => NULL,
     'salesforce_account_id' => NULL,
     'salesforce_contact_id' => NULL,
   );
-  
+
   foreach ($accounts as $account) {
     $user = user_load(array('uid' => $account));
     user_save($user, $fields);
@@ -433,8 +433,8 @@ function sf_user_form_alter(&$form, $form_state, $form_id) {
  * Implementation of hook_user().
  */
 function sf_user_user($op, &$edit, &$account, $category = NULL) {
-  switch ($op) {    
-    
+  switch ($op) {
+
     // submit
     case 'submit':
       $action = 'update';
@@ -443,23 +443,23 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
       }
       sf_queue_insert($account->uid, 'user', $action);
       break;
-      
+
     // insert
     case 'insert':
       sf_queue_insert($account->uid, 'user', 'upsert');
       break;
-    
+
     // load
      case 'load':
       $account->salesforce = salesforce_management_api_id_load('user', $account->uid);
-            
+
       // do some cleanup to make values salesforce compatible
       clean_checkbox_values($account);
       clean_selection_values($account);
-          
-      break; 
-    
-    // delete  
+
+      break;
+
+    // delete
     case 'delete':
       // remove from queue
       $salesforce = salesforce_management_api_id_load('user', $account->uid);
@@ -468,9 +468,9 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
         sf_queue_insert($account->uid, 'user', 'delete');
       }
       else {
-        sf_queue_delete($account->uid, 'user'); 
+        sf_queue_delete($account->uid, 'user');
       }
-      break;          
+      break;
   }
 }
 
@@ -481,12 +481,12 @@ function clean_checkbox_values(&$account) {
 
   // get all checkboxes and populate them if empty for salesforce integration
   $results = db_query("select f.name from {profile_fields} f inner join {profile_values} v on v.fid = f.fid where type = 'checkbox' and v.uid = %d", $account->uid);
-  
+
   while ($data = db_fetch_object($results)) {
     if (empty($account->{$data->name})) {
       $account->{$data->name} = 0;
     }
-  }    
+  }
 
 }
 
@@ -502,8 +502,8 @@ function clean_selection_values(&$account) {
     if (empty($account->{$data->name})) {
       $account->{$data->name} = null;
     }
-  }    
-  
+  }
+
 }
 
 /**
@@ -545,12 +545,12 @@ function sf_user_fieldmap_objects($type) {
   return $objects;
 }
 
-/** 
+/**
  * Displays the Salesforce synchronization form.
  */
 function sf_user_salesforce_management_form(&$form_state, $uid) {
   $account = user_load(array('uid' => $uid));
-  
+
   // Fail out if the user didn't exist!
   if (!$account->uid) {
     drupal_not_found();
@@ -583,7 +583,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
       // Display a message appropriate to the user's permissions.
       if (user_access('administer salesforce')) {
         $form['export']['#description'] = t('To export this user you must first <a href="!url">add a fieldmap</a> and then set <a href="!dedupeurl">dedupe key</a> that exports users.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS .'/add'), '!dedupeurl' => url(SALESFORCE_PATH_FIELDMAPS .'')));
-      
+
       }
       else {
         $form['export']['#description'] = t('Please contact a site administrator to add a fieldmap that exports users.');
@@ -620,22 +620,22 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
     $form['default_map_record'] = array(
       '#value' => "Could not connect to Salesforce. Please doublecheck your API credentials.",
     );
-    
+
     return $form;
     }
     else {
     $data = $sf->retrieve(array($account->salesforce['sfid']), $account->salesforce['fieldmap']);
-    
-    
+
+
     // Load the fieldmap data.
     $map = salesforce_management_api_fieldmap_load($account->salesforce['fieldmap']);
-    
+
     // Load the object definitions.
     $drupal_object = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
     $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-    
-    
-    
+
+
+
     $header = array(t('Field name'), t('Drupal user value'), t('Salesforce @type value', array('@type' => salesforce_management_api_fieldmap_object_label('salesforce', $map['salesforce']))));
     $rows = array();
 
@@ -643,7 +643,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
       //echo $key."--".$value."<br />";
       if (isset($drupal_object['fields'][$value]['export'])) {
         $drupal_value = $drupal_object['fields'][$value]['export']($account, $value);
-  
+
       }
       elseif (isset($account->$value)) {
         $drupal_value = $account->$value;
@@ -656,8 +656,8 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
         $object['fields'][$key]['label'],
         $drupal_value,
         $data->$key,
-  
-  
+
+
       );
     }
 
@@ -682,7 +682,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
         );
       }
     }
-    
+
     if (count($rows) > 0) {
       $form['unmapped'] = array(
         '#type' => 'fieldset',
@@ -703,7 +703,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
       );
     }
 
-    
+
     $form['system'] = array(
       '#type' => 'fieldset',
       '#title' => t('System fields'),
@@ -733,7 +733,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
     '#description' => t('Dates and times of previous Salesforce imports and exports.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-  );  
+  );
 
   // TODO: REPLACE WITH BATCH INFORMATION
 
@@ -748,7 +748,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
     '#value' => empty($account->last_sf_export) ? 'Unknown' : date('m/d/Y g:i:s a', $account->last_sf_export),
     '#suffix' => '</div>',
   );
-  
+
   $form['history']['last_import'] = array(
     '#prefix' => '<div>Last Import Date: ',
     '#value' => empty($account->last_sf_import) ? 'Unknown' : date('m/d/Y g:i:s a', $account->last_sf_import),
@@ -763,9 +763,9 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
  */
 function salesforce_management_api_import_fieldmap_control_user(&$user, $rule, $field_key, $salesforce_value = NULL) {
   switch ($rule) {
-    
+
     case 'blank':
-      // if Drupal object value s null then overwrite 
+      // if Drupal object value s null then overwrite
       if ($user->$field_key == '') {
         return $salesforce_value;
       }
@@ -773,17 +773,17 @@ function salesforce_management_api_import_fieldmap_control_user(&$user, $rule, $
         return $user->$field_key;
       }
       break;
-      
+
     case 'append':
       // append with the Drupal object value
       return $user->$field_key . ' ' . $salesforce_value;
       break;
-      
+
     case 'always':
       // always overwrite with the Drupal value
       return $salesforce_value;
       break;
-    
+
     case 'never':
       // never overwrite with the Drupal value
       return $user->$field_key;

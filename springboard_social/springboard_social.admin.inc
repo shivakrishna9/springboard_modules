@@ -1,7 +1,7 @@
 <?php
- 
+
 /**
- * @file 
+ * @file
  * Include file for the admin configuration UI
  */
 
@@ -22,11 +22,11 @@ function springboard_social_admin_settings() {
     '#options' => array(
       '0' => t('Disable Facebook share links'),
       '1' => t('Enable on all donation forms'),
-      '2' => t('Enable on a per form basis'),    
+      '2' => t('Enable on a per form basis'),
     ),
     '#default_value' => variable_get('springboard_social_share_display', 0),
   );
-  
+
   $form['facebook_settings']['springboard_social_app_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook App ID'),
@@ -51,32 +51,32 @@ function springboard_social_admin_settings() {
     '#description' => t(''),
     '#default_value' => variable_get('springboard_social_description', ''),
   );
-  
+
   $form['google_plus_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Google Plus Settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['google_plus_settings']['springboard_social_gplus_display'] = array(
     '#type' => 'select',
     '#title' => t('Google Plus links'),
     '#options' => array(
       '0' => t('Disable Google+ links'),
       '1' => t('Enable on all donation forms'),
-      '2' => t('Enable on a per form basis'),    
+      '2' => t('Enable on a per form basis'),
     ),
     '#default_value' => variable_get('springboard_social_gplus_display', 0),
   );
-  
+
   $button_sizes = array(
     'small' => t('Small'),
     'medium' => t('Medium'),
     'standard' => t('Standard'),
     'tall' => t('Tall'),
   );
-  
+
   $form['google_plus_settings']['springboard_social_gplus_button_size'] = array(
     '#type' => 'select',
     '#title' => t('Plus button size'),

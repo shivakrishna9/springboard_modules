@@ -32,19 +32,19 @@
 2012-08-10  Allen Freeman <allen.freeman@jacksonriver.com>
 
     * fundraiser.install, fundraiser_schema(): added definition for {fundraiser_secure} table.
-    
+
     * fundraiser.install, fundraiser_schema(): added update hook to add {fundraiser_secure} table.
-    
+
     * fundraiser.module, fundraiser_menu(): changed access callback for confirmations page, removed access arguments.
-    
+
     * fundraiser.module, fundraiser_preprocess_fundraiser_confirmation(): added function call to flag sid as viewed.
-  
+
     * fundraiser.module, fundraiser_access_confirmation(): added function.
-  
+
     * fundraiser.module, fundraiser_secure_confirmation(): added function.
-  
+
     * fundraiser.module, fundraiser_secure_confirmation_flag(): added function.
-    
+
 2012-08-20  Jeremy Isett  <jeremy.isett@jacksonriver.com>
 
     * fundraiser.module: Improved gateway management. See pull request
@@ -54,8 +54,8 @@
 
     * fundraiser.module (fundraiser_get_country_zones): ordering zones from UC by zone code instead of name.
       Supports non-roman alphabetical orders in cases such as Japanese, Russian, Chinese or Korean.
-    
-2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
+
+2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com>
 
     * fundraiser.module: Added lock feature when processing recursing tables to avoid re-queuing donations.
     See: https://www.assembla.com/spaces/jr-springboard/tickets/347
@@ -71,8 +71,8 @@
     * fundraiser.module:  Prevent anonymous user from recieving incorrect country code
 
 2012-09-30 Sarah Hood <sarah.hood@jacksonriver.com>
-  
-    * fundraiser_form.js: Make sure if there is already a value in the internal title it doesn't get overwritten 
+
+    * fundraiser_form.js: Make sure if there is already a value in the internal title it doesn't get overwritten
       when the title is changed. Backported feature from the D7 port.
 
 2012-10-02  Phillip Cave  <phillip.cave@jacksonriver.com>
@@ -84,7 +84,7 @@
     billing update operation succeeded. Added logging for failed updates.
 
 2012-10-03  Sarah Hood  <sarah.hood@jacksonriver.com>
-  
+
     * fundraiser.js: Disable auto complete on CC and CVV fields for fundraiser forms.
 
 2012-10-24  Sarah Hood  <sarah.hood@jacksonriver.com>
@@ -112,4 +112,4 @@
     is not authenticated (uid 0).
 
   * fundraiser.module, fundraiser_form_alter(): reordered country/state default handling code to only set defaults from the user profile
-    if the current user is authenticated. 
+    if the current user is authenticated.

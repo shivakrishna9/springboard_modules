@@ -150,7 +150,7 @@ function salesforce_management_api_schema() {
     ),
     'primary key' => array('fieldmap'),
   );
-  
+
    $schema['salesforce_management_api_error'] = array(
     'description' => t('Drupal to Salesforce error reporting table'),
     'fields' => array(

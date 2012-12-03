@@ -3,7 +3,7 @@
 /**
  * @file
  * This module provides functionality for pre-popluating forms from an ecrypted query string parameter.
- * 
+ *
  */
 
 /**
@@ -18,7 +18,7 @@ function secure_prepopulate_menu() {
     'access arguments' => array('administer secure pre-populate'),
     'file' => 'secure_prepopulate.admin.inc',
   );
-  
+
   $items['secure-prepopulate/not-me/%'] = array(
     'title' => t('Not me'),
     'page callback' => 'secure_prepopulate_clear',
@@ -26,7 +26,7 @@ function secure_prepopulate_menu() {
     'type' => MENU_CALLBACK,
     'access callback' => TRUE,
   );
-  
+
   return $items;
 }
 
@@ -39,19 +39,19 @@ function secure_prepopulate_menu() {
 function secure_prepopulate_clear($nid) {
   global $user;
   secure_prepopulate_clear_session($nid);
-  
+
   if (user_is_logged_in()) {
     session_destroy();
     $null = NULL;
     user_module_invoke('logout', $null, $user);
     $user = drupal_anonymous_user();
   }
-  
+
   drupal_goto('node/' . $nid);
 }
 
 /**
- * Implementation of hook_theme(). 
+ * Implementation of hook_theme().
  */
 function secure_prepopulate_theme() {
   // register a theme function for rendering the 'not me' message
@@ -71,8 +71,8 @@ function secure_prepopulate_preprocess_secure_prepopulate_welcome_message($vars)
 }
 
 /**
- * Implemenation of hook_node_api(). 
- * 
+ * Implemenation of hook_node_api().
+ *
  * Adds a welcome_back key to the node for themeing and output.
  */
 function secure_prepopulate_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
@@ -128,21 +128,21 @@ function secure_prepopulate_init() {
 function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
   // make sure the node has a webform
   if (strstr($form_id, 'webform_client_form')) {
-  
+
     $node = $form['#parameters'][2];
 
     // see if the user has any pre-popluate data for this node in their session
     $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : NULL;
     $precedence = variable_get('secure_prepopulate_precedence', 'url');
-    
+
     // if we have some data to pre-populate add a function to call on after_build so we can be sure that we're the last ones to alter the form
     if (!empty($prepopulate_data)) {
       // if a user is logged in, the precedence must be set to url
       if (!user_is_logged_in() || (user_is_logged_in() && $precedence == 'url')) {
-        $form['#after_build'][] = 'secure_prepopulate_after_build';       
-        $form['#submit'][] = 'secure_prepopulate_submit'; // submit handler to clear out session values  
+        $form['#after_build'][] = 'secure_prepopulate_after_build';
+        $form['#submit'][] = 'secure_prepopulate_submit'; // submit handler to clear out session values
       }
-    }        
+    }
   }
 }
 
@@ -151,7 +151,7 @@ function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
  */
 function secure_prepopulate_after_build($form, &$form_state) {
   $node = $form['#parameters'][2];
-  
+
   // see if the user has any pre-populate data for this node in their session
   $prepopulate_data = isset($_SESSION['secure_prepopulate_values'][$node->nid]) ? $_SESSION['secure_prepopulate_values'][$node->nid] : array();
 
@@ -173,7 +173,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
         case 'radios':
           // radios will have individual radio form fields inside them
           if (array_key_exists($value, $field)) {
-            $field[$value]['#value'] = $value; 
+            $field[$value]['#value'] = $value;
           }
           break;
         case 'checkboxes':
@@ -191,7 +191,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
           $field['day']['#value'] = $value['day'];
           break;
       }
-      $field['#value'] = $value;  
+      $field['#value'] = $value;
       $field['#default_value'] = $value;
     }
   }
@@ -216,17 +216,17 @@ function secure_prepopulate_after_build($form, &$form_state) {
                 'day' => NULL,
                 'month' => NULL,
                 'year' => NULL,
-              );              
+              );
             }
             $field['month']['#value'] = $default_values['month'];
             $field['day']['#value'] = $default_values['day'];
             $field['year']['#value'] = $default_values['year'];
             break;
-          
+
           case 'checkboxes':
             $field[$field['#webform_component']['value']]['#default_value'] = $field['#webform_component']['value'];
-            break;  
-            
+            break;
+
           default:
             if (strpos($field['#webform_component']['value'], '%get[') !== FALSE) {
               // If the default value is %get[something], set the field to nothing.
@@ -242,7 +242,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
       }
     }
   }
-    
+
   return $form;
 }
 
@@ -262,21 +262,21 @@ function secure_prepopulate_submit(&$form, &$form_state) {
  * AES Key and IV that have been preconfigued.
  *
  * @param $cipher
- *   The cipher text to decrypt. 
+ *   The cipher text to decrypt.
  */
 function secure_prepopulate_decrypt($cipher) {
   $key = decrypt(variable_get('secure_prepopulate_key', NULL));
   $iv = decrypt(variable_get('secure_prepopulate_iv', NULL));
-  
+
   if (!$key || !$iv) {
     // log error and exit because we can't continue without a key
     watchdog('Secure pre-populate', t('Cannot perform decryption because AES Key and IV have not been configured correct.'), NULL, WATCHDOG_CRITICAL);
     return;
   }
-  
+
   // decrypt the string
   $raw_qs = _secure_prepopulate_decrypt($cipher, $key, $iv);
-  
+
   // after decryption, parse the values and return them
   return secure_prepopulate_parse_qs($raw_qs);
 }
@@ -296,7 +296,7 @@ function secure_prepopulate_login_user($uid) {
     }
     return FALSE;
   }
-  
+
   // already logged in, return TRUE
   return TRUE;
 }
@@ -310,13 +310,13 @@ function secure_prepopulate_login_user($uid) {
 function secure_prepopulate_parse_qs($qs) {
   $result = array();
   $segments = explode('&', $qs);
-  
+
   // loop over each field in the segement and extract the key/value pairs
   if (count($segments)) {
     foreach($segments as $segment) {
       $key_value = explode('=', $segment);
       $result[$key_value[0]] = $key_value[1];
-    }   
+    }
   }
 
   // we need to do some special conversions here because ubercart uses numeric ids for state/country
@@ -335,7 +335,7 @@ function secure_prepopulate_parse_qs($qs) {
       $result['state'] = _secure_prepopulate_convert_state($result['state']);
     }
   }
-  
+
   // return an array of key/value pairs or an empty array
   return $result;
 }
@@ -354,7 +354,7 @@ function secure_prepopulate_is_expired($qs) {
   if ($result == 0) {
     return FALSE;
   }
-  
+
   watchdog('Secure pre-populate', t('Attempted use of encrypted query string @q', array('@q' => $qs_hashed), NULL, WATCHDOG_NOTICE));
   return TRUE;
 }
@@ -410,7 +410,7 @@ function _secure_prepopulate_convert_country($country) {
  *   The state abbreviation to convert.
  */
 function _secure_prepopulate_convert_state($state) {
-  $code = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $state));  
+  $code = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $state));
   if (!empty($code)) {
     return $code;
   }
@@ -421,9 +421,9 @@ function _secure_prepopulate_convert_state($state) {
 /****************************************************************
  * Utility functions for parsing through webforms
  ***************************************************************/
- 
+
 /**
- * Creates a nested array of where components exist in the FAPI array for all components in a webform. 
+ * Creates a nested array of where components exist in the FAPI array for all components in a webform.
  *
  * @param $nid
  *   The nid of the node that contains the webform.
@@ -464,7 +464,7 @@ function _secure_prepopulate_walk_component_hierarchy($nid, $cid, &$path = array
 
 /**
  * Returns a reference to an element of a FAPI array based on a known path.
- * 
+ *
  * @param $form
  *   The form array that contains the field to find.
  * @param $path
@@ -502,27 +502,27 @@ function _secure_prepopulate_encrypt($input, $key, $iv)
   $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
   // account for some PHP AES shortcomings
   $input = pkcs5_pad($input, $size);
-  
+
   // open our encryption algorithm resource, in this case 128 bit AES
   $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
-  
+
   // get buffers ready
-  mcrypt_generic_init($descriptor, $key, $iv);    
-  
+  mcrypt_generic_init($descriptor, $key, $iv);
+
   // encrypt the data
   $cipher = mcrypt_generic($descriptor, $input);
-  
+
   // release resources
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
-  
+
   // get the encrypted string ready for web use
   $cipher = base64_encode($cipher);
   $cipher = urlencode($cipher);
-  
+
   return $cipher;
 }
- 
+
 /**
  * Decrypts AES encrypted data.
  *
@@ -532,7 +532,7 @@ function _secure_prepopulate_encrypt($input, $key, $iv)
  *   The 128 bit key to use to decrypt the string.
  * @iv
  *   The initialization vector to use to decrypt the string.
- */ 
+ */
 function _secure_prepopulate_decrypt($cipher, $key, $iv)
 {
   // do some decoding
@@ -543,18 +543,18 @@ function _secure_prepopulate_decrypt($cipher, $key, $iv)
 
   // get buffers ready
   mcrypt_generic_init($descriptor, $key, $iv);
-  
+
   // decrypt the data
   $decrypted_data = mdecrypt_generic($descriptor, $cipher);
-  
+
   // release resources
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
-  
+
   // account for some PHP AES shortcomings
   $decrypted_data = pkcs5_unpad($decrypted_data);
   $decrypted_data = rtrim($decrypted_data);
-  
+
   return $decrypted_data;
 }
 
@@ -565,7 +565,7 @@ function _secure_prepopulate_decrypt($cipher, $key, $iv)
  *   The text to pad.
  * @param $blocksize
  *   The size of the PKCS5 blocksize to use.
- */ 
+ */
 function pkcs5_pad($text, $blocksize)
 {
    $pad = $blocksize - (strlen($text) % $blocksize);
@@ -577,7 +577,7 @@ function pkcs5_pad($text, $blocksize)
  *
  * @param $text
  *   The text to unpad.
- */ 
+ */
 function pkcs5_unpad($text)
 {
    $pad = ord($text{strlen($text)-1});

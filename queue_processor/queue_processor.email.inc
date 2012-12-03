@@ -4,11 +4,11 @@
  * Creates email messages for the queue processor module.
  */
 
-/** 
+/**
  * Generates the object error email.
  */
 function object_error_email(&$object, &$errors) {
-  
+
   $data = unserialize($object->data);
 
   $message = t("The following API errors were returned from Salesforce.\n\r");
@@ -18,7 +18,7 @@ function object_error_email(&$object, &$errors) {
     $message .= "Message: " . $error->message . "\n\r";
     $message .= "Fields: " . $error->fields . "\n\r\n\r";
   }
-    
+
   $message .= format_object_details($data);
   $message .= "\n\r\n\r";
   $message .= 'To edit the object, go to ' . created_edit_link($object->oid, $object->type);
@@ -29,13 +29,13 @@ function object_error_email(&$object, &$errors) {
  * Generates the retry queue email.
  */
 function moved_to_retry_queue_email(&$object) {
-  
+
   $data = unserialize($object->data);
   $retry_details = get_retry_queue_details($object->oid, $object->type);
-  
-  $message = t("This item has been placed in the retry queue and will be exported again on !date. If you do not fix the error before then, the object will fail again. This object has !retries retries remaining.\n\r\n\r", 
+
+  $message = t("This item has been placed in the retry queue and will be exported again on !date. If you do not fix the error before then, the object will fail again. This object has !retries retries remaining.\n\r\n\r",
     array('!date' => date('l, F j Y', $retry_details['retry_date']), '!retries' => $retry_details['attempts_remaining']));
-  
+
   $message .= format_object_details($data);
   $message .= "\n\r\n\r";
   $message .= 'To edit the object, go to ' . created_edit_link($object->oid, $object->type);
@@ -49,7 +49,7 @@ function permanent_failure_email(&$object) {
 
   $data = unserialize($object->data);
   $message = t("This item has been marked as a permanent failure. It will be excluded from future exports until it has been edited.\n\r\n\r");
-  
+
   $message .= format_object_details($data);
   $message .= "\n\r\n\r";
   $message .= 'To edit the object, go to ' . created_edit_link($object->oid, $object->type);
@@ -60,7 +60,7 @@ function permanent_failure_email(&$object) {
  * Generates SOAP fault email.
  */
 function soap_fault_email() {
-  
+
   $message = t("A fatal soap fault has occurred when attempting to connect to Salesforce.");
   return $message;
 }
@@ -69,14 +69,14 @@ function soap_fault_email() {
  * Generates connection error email.
  */
 function connection_error_email() {
-  
+
   global $base_url;
   $sf_settings = $base_url . '/admin/settings/salesforce-management/settings';
-  
+
   $message = t("A connection with Salesforce could not be established. Typical reasons include Salesforce being down for maintenance or incorrect credentials have been provided for login.\n\r\n\r");
   $message .= t("If Salesforce is not down for maintenance, please double check the credentials at !url.\n\r\n\r", array('!url' => $sf_settings));
   $message .= t("All items will remain in the export queue until the next cron run.\n\r\n\r");
-    
+
   return $message;
 }
 
@@ -85,7 +85,7 @@ function connection_error_email() {
  */
 function queue_summary_email(&$batches) {
   $message = t("!num batches were processed during the run\n\r\n\r", array('!num' => count($batches)));
-  
+
   // summary
   foreach($batches as $batch) {
     $message .= "******************************************************\n\r";
@@ -97,7 +97,7 @@ function queue_summary_email(&$batches) {
     $message .= t("Number of items: !count\n\r", array('!count' => count($batch['records'])));
     $message .= t("Success count: !success_count\n\r", array('!success_count' => $batch['success_count']));
     $message .= t("Failure count: !failure_count\n\r", array('!failure_count' => $batch['failure_count']));
-    
+
     // add failures (if any)
     if ($batch['failure_count'] > 0) {
       $message .= "\n\rFailures\n\r";
@@ -122,10 +122,10 @@ function queue_summary_email(&$batches) {
 function format_object_details(&$data) {
   $message = "Object Details\n\r";
   $message .= "---------------------------------------------------------\n\r\n\r";
-  
+
   foreach($data as $field => $value) {
     $message .= $field . ": " . $value . "\n\r";
   }
-  
+
   return $message;
 }

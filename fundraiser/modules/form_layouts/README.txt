@@ -1,6 +1,6 @@
 
 -- SUMMARY --
-The Form Layouts module provides configurable layouts (one column, two column, etc) for Fundraiser donation forms. 
+The Form Layouts module provides configurable layouts (one column, two column, etc) for Fundraiser donation forms.
 
 
 -- REQUIREMENTS --
@@ -17,7 +17,7 @@ The Form Layouts module provides configurable layouts (one column, two column, e
 
 * The module adds a field to the donation form edit screen to select the desired layout.
 
-* New layouts can be added by copying and modifying one or more template files in the templates directory. 
+* New layouts can be added by copying and modifying one or more template files in the templates directory.
 
 
 -- TROUBLESHOOTING --

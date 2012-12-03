@@ -8,7 +8,7 @@
   $goal->default_message - additional text to display if no progress has been made toward this goal.
   $goal->goal_progress - unformatted integer, progress towards goal
   $goal->goal_percentage - rounded percentage of current goal reached
-  
+
   $goal object also contains full node properties for the webform node
 
   */
@@ -20,5 +20,5 @@
    &nbsp;
   </div>
 </div>
-<span class="goal-label"> <?php print $goal->fundraiser_goal_target ?></span> 
+<span class="goal-label"> <?php print $goal->fundraiser_goal_target ?></span>
 </div>

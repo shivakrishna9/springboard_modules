@@ -65,11 +65,11 @@ function sf_node_form_alter(&$form, $form_state, $form_id) {
  * Implementation of hook_nodeapi().
  */
 function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  
+
   switch ($op) {
     case 'load':
       $node->salesforce = salesforce_management_api_id_load('node_' . $node->type, $node->nid);
-      
+
       // add the author's salesforce ids to the node so they can be sync'd
       if (salesforce_manangement_api_fieldmap_exists('node_' . $node->type)) {
         $ids = _sf_node_load_user_salesforce_ids($node->uid);
@@ -79,13 +79,13 @@ function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         }
       }
       break;
-    
+
     case 'insert':
       if (salesforce_manangement_api_fieldmap_exists('node_' . $node->type) && !$node->updated_by_salesforce) {
         sf_queue_insert($node->nid, 'node_' . $node->type, 'upsert');
       }
       break;
-    
+
     case 'update':
       if (salesforce_manangement_api_fieldmap_exists('node_' . $node->type)) {
         $action = 'upsert';
@@ -93,7 +93,7 @@ function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         // if the node has already been exported, put back into queue as update
         if ($salesforce['fieldmap'] && $salesforce['sfid']) {
           $action = 'update';
-        } 
+        }
         // don't put into queue if salesforce did the updating
         if (!$node->updated_by_salesforce) {
           sf_queue_insert($node->nid, 'node_' . $node->type, $action);
@@ -131,7 +131,7 @@ function sf_node_salesforce_management_field_map($op, $drupal, $salesforce) {
         // add the node type the queue processing order array
         queue_processor_add_type($drupal);
         break;
-   
+
       case 'delete':
         // remove the node type from the queue processing order array
         queue_processor_remove_type($drupal);
@@ -146,7 +146,7 @@ function sf_node_salesforce_management_field_map($op, $drupal, $salesforce) {
 function sf_node_queue_fieldmap_assignment_alter(&$data) {
   $pos = strpos($data->type, 'node_');
   // account for node_ being at the start of the string
-  if (!($pos === FALSE)) { 
+  if (!($pos === FALSE)) {
     $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $data->type);
     $fieldmap = db_fetch_array($result);
     $data->fieldmap = $fieldmap['fieldmap'];
@@ -158,8 +158,8 @@ function sf_node_queue_fieldmap_assignment_alter(&$data) {
  */
 function sf_node_queue_preprocess_batch_alter(&$batch) {
   $pos = strpos($batch['type'], 'node_');
-  if (!($pos === FALSE)) { 
-    
+  if (!($pos === FALSE)) {
+
     switch ($batch['action']) {
       case 'upsert':
       case 'update':
@@ -173,9 +173,9 @@ function sf_node_queue_preprocess_batch_alter(&$batch) {
           $record->object = $object;
         }
         break;
-        
+
       case 'delete':
-      
+
         break;
     }
   }
@@ -186,7 +186,7 @@ function sf_node_queue_preprocess_batch_alter(&$batch) {
  */
 function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
   $pos = strpos($batch['type'], 'node_');
-  if (!($pos === FALSE)) { 
+  if (!($pos === FALSE)) {
     switch ($batch['action']) {
       case 'upsert':
       case 'update':
@@ -200,13 +200,13 @@ function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
         }
 
         watchdog('salesforce node', t('Importing !count node records', array('!count' => count($sfids))), NULL, WATCHDOG_INFO);
-        
+
         // import the nodes
         import_node_updates($sfids, $batch['fieldmap']);
         break;
-        
+
       case 'delete':
-      
+
         break;
     }
   }
@@ -218,7 +218,7 @@ function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
 function sf_node_queue_report_item_title_alter(&$row) {
   $pos = strpos($row['type'], 'node_');
   if (!($pos === FALSE)) {
-    $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));  
+    $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));
     $row['title'] = $title;
   }
 }
@@ -285,11 +285,11 @@ function sf_node_fieldmap_objects($type) {
             case 'nodereference':
               $export_handler = '_sf_node_export_cck_nodereference';
               $import_handler = '_sf_node_import_cck_nodereference';
-              break;  
+              break;
             case 'userreference':
               $export_handler = '_sf_node_export_cck_userreference';
               $import_handler = '_sf_node_import_cck_userreference';
-              break;  
+              break;
             case 'link':
               $export_handler = '_sf_node_export_cck_link';
               $import_handler = '_sf_node_import_cck_link';
@@ -325,7 +325,7 @@ function sf_node_fieldmap_objects($type) {
 
 function _sf_node_export_cck_nodereference($source, $field) {
   $data = $source->$field;
-  
+
   // look up SF object id for the referenced node
   $nid = $data[0]['nid'];
   $sfid = NULL;
@@ -356,7 +356,7 @@ function _sf_node_import_cck_nodereference(&$node, $key, $value) {
 
 function _sf_node_export_cck_userreference($source, $field) {
   $data = $source->$field;
-  
+
   // look up SF object id for the referenced user
   $uid = $data[0]['uid'];
   $sfid = NULL;
@@ -398,9 +398,9 @@ function _sf_node_export_cck_default($source, $field) {
 // Returns the basic value of a CCK field from $array[0]['value'].
 function _sf_node_import_cck_default(&$node, $key, $value) {
   $data = $node->$key;
-  
+
   $data[0]['value'] = $value;
-  
+
   $node->$key = $data;
 }
 
@@ -416,7 +416,7 @@ function _sf_node_export_cck_link($source, $field) {
 // Sets the url and title values of a CCK link.
 function _sf_node_import_cck_link(&$node, $key, $value) {
   $data = $node->$key;
-  
+
   $data[0]['title'] = $data[0]['url'] = $value;
 
   $node->$key = $data;
@@ -472,7 +472,7 @@ function _sf_node_import_cck_file(&$node, $key, $value) {
   }
 }
 
-/** 
+/**
  * Imports data from Salesforce back into nodes.
  *
  * @param $sfids
@@ -483,7 +483,7 @@ function _sf_node_import_cck_file(&$node, $key, $value) {
  */
 function import_node_updates($sfids, $fieldmap) {
   if (!empty($sfids)) {
-    
+
     $sf = salesforce_management_api_connect();
     if ($sf) {
       try {
@@ -491,8 +491,8 @@ function import_node_updates($sfids, $fieldmap) {
       }
       catch (Exception $e) {
         watchdog('salesforce user', t('Failed to retrieve objects from Salesforce. Drupal nodes will not be updated.'), NULL, WATCHDOG_CRITICAL);
-      }  
-      
+      }
+
       // load the fieldmap data.
       $map = salesforce_management_api_fieldmap_load($fieldmap);
       // load drupal object definition
@@ -540,13 +540,13 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
     // Otherwise set the field on the export object to the value of the source field if it's present on the source object.
     $sf_value = $object->$value;
     $rule = $map['businessSD'][$value];
-    
+
     // Pull the current Drupal value of the field
     $drupal_value = $drupal['fields'][$key]['export'] ? $drupal['fields'][$key]['export']($node, $key, $object, $value) : $node->$key;
-    
+
     // Pick which value to apply
     $map_value = salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value, $node, $drupal_value);
-    
+
     // Let the import handler do it's work
     if (isset($drupal['fields'][$key]['import'])) {
       $drupal['fields'][$key]['import']($node, $key, $map_value);
@@ -563,7 +563,7 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
   }
   // add something to the node we can check on nodeapi so that we don't put it back into the queue
   $node->updated_by_salesforce = TRUE;
-  
+
   node_save($node);
   return $node->nid;
 }
@@ -580,11 +580,11 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
     $drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
     // load salesforce object definition
     $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-    
+
     foreach($objects->records as $object) {
       // look up the node id
       $nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
-      
+
       if ($nid) {
         $node = node_load($nid);
         update_node_values($node, $object, $map, $drupal, $salesforce);
@@ -597,15 +597,15 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
         node_object_prepare($node);
         update_node_values($node, $object, $map, $drupal, $salesforce);
         module_invoke_all('sf_node_node_imported', $node, $object);
-        
+
         salesforce_management_api_id_save($type, $node->nid, $object->Id, $fieldmap);
-        
+
         // stick the node back in the queue so that it can be exported to SF with any additional drupal values
         sf_queue_insert($node->nid, $type, 'update');
       }
     }
   }
-  
+
 }
 
 /**
@@ -614,20 +614,20 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
 function _sf_node_load_user_salesforce_ids($uid) {
 
   $result = db_query("SELECT
-    CASE 
-      WHEN 
-        instr(u.data, 'salesforce_account_id') THEN substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18) 
-      ELSE 
+    CASE
+      WHEN
+        instr(u.data, 'salesforce_account_id') THEN substring(u.data, instr(u.data, 'salesforce_account_id')+29, 18)
+      ELSE
         NULL
       END AS salesforce_account_id,
-    CASE 
+    CASE
       WHEN instr(u.data, 'salesforce_contact_id') THEN substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18)
-      ELSE 
+      ELSE
         NULL
     END  AS salesforce_contact_id
-    FROM {users} u 
+    FROM {users} u
     WHERE u.uid = %d", $uid);
-  
+
   return db_fetch_object($result);
 
 }
@@ -638,8 +638,8 @@ function _sf_node_load_user_salesforce_ids($uid) {
 function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value = NULL, &$node, $drupal_value = null) {
   switch ($rule) {
     case 'blank':
-      // if Drupal object value is null then overwrite 
-      return ($drupal_value == '' ? $sf_value : $drupal_value);   
+      // if Drupal object value is null then overwrite
+      return ($drupal_value == '' ? $sf_value : $drupal_value);
 
     case 'append':
       // append with the Drupal object value
@@ -653,5 +653,5 @@ function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_valu
       // never overwrite with the Drupal value
       return $drupal_value;
   }
-  
+
 }

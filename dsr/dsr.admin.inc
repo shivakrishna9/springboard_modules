@@ -3,7 +3,7 @@
  * @file
  * Admin functions for the DSR module.
  */
- 
+
 /**
  * DSR settings form.
  */
@@ -21,14 +21,14 @@ function dsr_settings() {
     '#weight' => -3,
     '#maxlength' => 256,
   );
-  
+
   // Starting default values for SOQL queries are defined in dsr_install() and dsr_update_6001()
   $form['soql_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Report SOQL settings'),
     '#collapsible' => TRUE,
   );
-  
+
   // Selects
   $form['soql_settings']['selects'] = array(
     '#type' => 'fieldset',
@@ -72,7 +72,7 @@ function dsr_settings() {
     '#title' => t('Partially refunded aggregate'),
     '#default_value' => variable_get('dsr_partially_refunded_aggregate_s', ''),
   );
-  
+
   /*
   define('DSR_POSTED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name");
 define('DSR_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name");

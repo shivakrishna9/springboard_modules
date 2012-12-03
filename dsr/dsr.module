@@ -30,14 +30,14 @@ function dsr_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'dsr.admin.inc',
   );
-  
+
   $items['admin/reports/dsr'] = array(
     'title' => t('DSR'),
     'page callback' => 'dsr_page',
       'access arguments' => array('view dsr reports'),
     'type' => MENU_NORMAL_ITEM
   );
-  
+
   $items['admin/reports/dsr/%dsr_start_date/%dsr_end_date'] = array(
     'title' => t('DSR'),
     'page callback' => 'dsr_collect_stats',
@@ -45,7 +45,7 @@ function dsr_menu() {
     'access arguments' => array('view dsr reports'),
     'type' => MENU_NORMAL_ITEM
   );
-  
+
   $items['admin/reports/dsr/report/%/%/%'] = array(
     'title' => t('DSR discrepancy report'),
     'page callback' => 'dsr_discrepancy_report',
@@ -67,7 +67,7 @@ function dsr_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
- 
+
   return $items;
 }
 
@@ -157,7 +157,7 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
   else {
     $title = date('F d, Y', strtotime($start_date)) . ' - ' . date('F d, Y', strtotime($end_date));
   }
-  
+
   // get the stats for the given dates
   $stats = _dsr_collect_stats($start_date, $end_date);
 
@@ -167,14 +167,14 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
   }
   // variable to keep flag any discrepancies
   $discrepancies = array();
-  
+
   // output results in a table
   $rows = array();
 
   $output .= theme('dsr_report_table', 'Posted Transactions', $stats['salesforce_posted'], $stats['drupal_posted']);
   $output .= theme('dsr_report_table', 'Refunded Transactions', $stats['salesforce_refunded'], $stats['drupal_refunded']);
   $output .= theme('dsr_report_table', 'Partially Refunded Transactions', $stats['salesforce_partially_refunded'], $stats['drupal_partially_refunded']);
-  
+
   // create an array of possible discrepancies
   $reports = array(
     'posted' => 'Posted Transactions',
@@ -188,13 +188,13 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
       $discrepancy = TRUE;
     }
   }
-  
+
  // $output .= '<h2>' . $title . '</h2>';
  // $output .= theme_table(array('', t('Drupal'), t('Salesforce')), $rows, array('class' => 'system-status-report '));
-  
+
   $discrepancy_report_links = _dsr_discrepancy_links($discrepancies, $start_date, $end_date);
   $output .= theme_item_list($discrepancy_report_links);
-  
+
   return $output;
 }
 
@@ -219,21 +219,21 @@ function _dsr_discrepancy_links($discrepancies, $start_date, $end_date) {
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/posted/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
     $links[] = l($link_text, $link_path);
   }
-  
+
   //refunded
   if ($discrepancies['Refunded Transactions']['count'] || $discrepancies['Refunded Transactions']['amount']) {
     $link_text = 'View discrepancy report for refunded donations';
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
     $links[] = l($link_text, $link_path);
   }
-  
+
   // partially refunded
   if ($discrepancies['Partially Refunded Transactions']['count'] || $discrepancies['Partially Refunded Transactions']['amount']) {
     $link_text = 'View discrepancy report for partially refunded donations';
     $link_path = url(DSR_RECONCILIATION_PATH . '/report/partially_refunded/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)), $options);
     $links[] = l($link_text, $link_path);
   }
-  
+
   return $links;
 }
 
@@ -427,17 +427,17 @@ function dsr_filter_form() {
     '#type' => 'date',
     '#title' => t('Start date'),
   );
-  
+
   $form['end_date'] = array(
     '#type' => 'date',
     '#title' => t('End date'),
   );
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Go'),
   );
-  
+
   return $form;
 }
 
@@ -484,7 +484,7 @@ function dsr_is_date($date) {
   if (!is_numeric($timestamp)) {
     return FALSE;
   }
-  
+
   $month = date('m', $timestamp);
   $day = date('d', $timestamp);
   $year = date('Y', $timestamp);
@@ -492,7 +492,7 @@ function dsr_is_date($date) {
   if (checkdate($month, $day, $year)) {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -504,12 +504,12 @@ function dsr_is_date($date) {
  */
 function _dsr_run_sql_order_select($sql) {
   $orders = array();
-  
+
   $result = db_query($sql);
   while ($data = db_fetch_object($result)) {
     $orders[$data->order_id] = $data->order_total;
   }
-  
+
   return $orders;
 }
 
@@ -523,7 +523,7 @@ function _dsr_run_soql_opportunity_select($soql) {
   $donations = array();
   $continue = TRUE;
   $sf = salesforce_management_api_connect();
-  
+
   // make sure we've got a good connection
   if (is_object($sf)) {
     $query = $sf->client->query($soql);
@@ -539,7 +539,7 @@ function _dsr_run_soql_opportunity_select($soql) {
       }
     }
   }
-  
+
   return $donations;
 }
 
@@ -554,9 +554,9 @@ function _dsr_run_soql_opportunity_select($soql) {
 function dsr_soql_select($soql, $key_field = NULL) {
   $records = array();
   $continue = TRUE;
-  
+
   $sf = salesforce_management_api_connect();
-  
+
   // make sure we've got a good connection
   if (is_object($sf)) {
     $query = $sf->client->query($soql);
@@ -579,7 +579,7 @@ function dsr_soql_select($soql, $key_field = NULL) {
     }
     return $records;
   }
-  
+
   // return false if we couldn't connect
   return FALSE;
 }
@@ -593,7 +593,7 @@ function dsr_soql_select($soql, $key_field = NULL) {
 function _dsr_run_soql_aggregate($soql) {
 
   $sf = salesforce_management_api_connect();
-  
+
   // make sure we've got a good connection
   if (is_object($sf)) {
     $response = $sf->client->query($soql);
@@ -605,7 +605,7 @@ function _dsr_run_soql_aggregate($soql) {
 }
 
 function _dsr_run_order_aggregate($range) {
-  
+
 }
 
 /**
@@ -629,7 +629,7 @@ function _dsr_parse_aggregate_result($response) {
       if (is_numeric($keys[0])) {
         $use_indices = TRUE;
       }
-      
+
       $type = $use_indices ? strip_tags($record->any[2]) : strip_tags($record->any[0]);
       $results['types'][$type] = array(
         'total_amount' => $use_indices ? $record->any[0] : $record->any['total_amount'],
@@ -673,21 +673,21 @@ function _dsr_days_between_dates($start_date, $end_date) {
 function _dsr_create_date_range_from_literal($literal) {
   $date1 = NULL;
   $date2 = NULL;
-  
+
   switch ($literal) {
     case TODAY:
       $date1 = date('Y-m-d 00:00:00');
       $date2 = date('Y-m-d 23:59:59');
       break;
       //return _dsr_format_date_range($date1, $date2);
-      
+
     case YESTERDAY:
       $date1 = date('Y-m-d 00:00:00', strtotime('-1 day'));
       $date2 = date('Y-m-d 23:59:59', strtotime('-1 day'));
       break;
       //return _dsr_format_date_range($date1, $date2);
   }
-  
+
   // the dates
   return _dsr_compile_dates($date1, $date2);
 }
@@ -750,15 +750,15 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
     // TODO: Return a message
     return;
   }
-  
+
   // format dates to their respective platform
   $drupal_dates = _dsr_drupal_date_format($start_date, $end_date);
   $sf_dates = _dsr_sf_date_format($start_date, $end_date);
-  
+
   $posted_discrepancy = FALSE;
   $refunded_discrepancy = FALSE;
   $partially_refunded_discrepancy = FALSE;
-  
+
   // get all stats and return a reasonable data structure to represent it.
   $donations_posted = dsr_donations_posted_by_date_range($sf_dates['start'], $sf_dates['end']);
   $donations_refunded = dsr_donations_refunded_by_date_range($sf_dates['start'], $sf_dates['end']);
@@ -767,23 +767,23 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
   $orders_posted = dsr_orders_posted_by_date_range($drupal_dates['start'], $drupal_dates['end']);
   $orders_refunded = dsr_orders_refunded_by_date_range($drupal_dates['start'], $drupal_dates['end']);
   $orders_partially_refunded = dsr_orders_partially_refunded_by_date_range($drupal_dates['start'], $drupal_dates['end']);
-  
-  
+
+
   if ($donations_posted['total_amount'] != $orders_posted['total_amount'] ||
     $donations_posted['total_count'] != $orders_posted['total_count']) {
       $posted_discrepancy = TRUE;
   }
-  
+
   if ($donations_refunded['total_amount'] != $orders_refunded['total_amount'] ||
     $donations_refunded['total_count'] != $orders_refunded['total_count']) {
       $refunded_discrepancy = TRUE;
   }
-  
+
   if ($donations_partially_refunded['total_amount'] != $orders_partially_refunded['total_amount'] ||
     $donations_partially_refunded['total_count'] != $orders_partially_refunded['total_count']) {
       $partially_refunded_discrepancy = TRUE;
   }
-  
+
   $stats = array(
     'start_date' => $start_date,
     'end_date' => $end_date,
@@ -815,11 +815,11 @@ function dsr_mail_reconciliation_summary($start_date, $end_date, $stats) {
   $params['start_date'] = $start_date;
   $params['end_date'] = $end_date;
   $params['stats'] = $stats;
-  
+
   $email = variable_get('dsr_reconciliation_summary_email', '');
 
   if (!empty($email)) {
-    
+
     drupal_mail('dsr', 'dsr_reconciliation_summary', $email, language_default(), $params, $from = NULL);
   }
 }
@@ -855,7 +855,7 @@ function _dsr_format_date_for_email($start_date, $end_date) {
   if ($start_date == $end_date) {
     return date('M, d Y', strtotime($start_date));
   }
-  
+
   return date('M, d Y', strtotime($start_date)) . ' - ' . date('M, d Y', strtotime($end_date));
 }
 

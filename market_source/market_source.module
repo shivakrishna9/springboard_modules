@@ -242,7 +242,7 @@ function _market_source_build_qs_keys() {
       'ms' => array('value' => NULL),
       'cid' => array('value' => NULL),
     );
-    
+
     //remove keys for fields not set to persist
     $default_field_settings = variable_get('market_source_default_fields', array());
     $default_field_settings['ms'] = isset($default_field_settings['market_source']) ? $default_field_settings['market_source'] : array();
@@ -250,7 +250,7 @@ function _market_source_build_qs_keys() {
     foreach($qs_keys as $key => $values) {
       $qs_keys[$key]['persistence'] = isset($default_field_settings[$key]['persistence']) ? $default_field_settings[$key]['persistence'] : TRUE;
     }
-    
+
     // Add any custom fields.
     $custom_fields = variable_get('market_source_custom_fields', array());
     if (is_array($custom_fields)) {
@@ -405,7 +405,7 @@ function market_source_user($op, &$edit, &$account, $category = NULL) {
  */
 function market_source_create_standard_components($nid, $default_campaign = NULL) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-  
+
   // array to hold all the components that need to be created.
   $components = array();
 
@@ -443,7 +443,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_cid',
   );
-  
+
   // referrer
   $components['referrer'] = array(
     'nid' => $nid,
@@ -461,7 +461,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_referrer',
   );
-  
+
   // initial referrer
   $components['initial_referrer'] = array(
     'nid' => $nid,
@@ -501,7 +501,7 @@ function market_source_fundraiser_create_webform_components($nid) {
   if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
     $default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
   }
-  
+
   // create the standard components
   return market_source_create_standard_components($nid, $default_campaign);
 }

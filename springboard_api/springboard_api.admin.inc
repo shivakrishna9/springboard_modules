@@ -24,7 +24,7 @@ function springboard_api_admin() {
     $row[] = _springboard_api_links($keyset->kid);
     $rows[] = $row;
   }
-  
+
   $form['api_keysets'] = array(
     '#type' => 'fieldset',
     '#title' => t('API key sets'),
@@ -48,7 +48,7 @@ function springboard_api_admin() {
   $form['new']['user'] = array(
     '#type' => 'textfield',
     '#title' => t('User'),
-    '#autocomplete_path' => 'user/autocomplete', 
+    '#autocomplete_path' => 'user/autocomplete',
     '#description' => t('Select a user account to associate with this app. Service calls made by this app will use the permissionsa assigned to this account for purposes of access checking.'),
   );
   $form['new']['submit'] = array(
@@ -137,7 +137,7 @@ function springboard_api_delete_keyset($form, $edit) {
 }
 
 /**
- * 
+ *
  */
 function springboard_api_delete_submit($form, $form_state) {
   global $user;
@@ -149,7 +149,7 @@ function springboard_api_delete_submit($form, $form_state) {
 }
 
 /**
- * 
+ *
  */
 function springboard_api_test_client($form = array()) {
   $results = db_query('SELECT kid, name FROM {springboard_api}');
@@ -223,7 +223,7 @@ function _springboard_api_get_users($string = '') {
   $users['anonymous'] = 'Anonymous';
 
   if ($string) {
-    
+
     $results = db_query_range("SELECT uid, name FROM {users} WHERE uid > 1 AND LOWER(name) LIKE LOWER('%s%%')", $string, 0, 10);
 
     while ($user = db_fetch_object($results)) {

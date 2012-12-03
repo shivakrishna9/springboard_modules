@@ -7,13 +7,13 @@
  * @author Phillip Cave <phillip.cave@jacksonriver.com>
  */
 
-class DonationFactory 
+class DonationFactory
 {
   public static function Create($id, $order_id, $sid) {
     switch ($id) {
       case 'npsp':
         return new NPSPDonation($order_id, $sid);
-        
+
       case 'common_ground':
         return new CommonGroundDonation($order_id, $sid);
     }
@@ -29,11 +29,11 @@ class DonationMapper
     switch ($id) {
       case 'npsp':
         return NPSPDonation::default_map();
-        
+
       case 'common_ground':
         return CommonGroundDonation::default_map();
     }
-  }  
+  }
 }
 
 /**
@@ -50,7 +50,7 @@ class NPSPDonation extends Donation
       'refunded' => 'Refunded',
     );
   }
-  
+
   static function default_map() {
     return array(
       'donor_salesforce_account_id' => 'AccountId',
@@ -98,7 +98,7 @@ class CommonGroundDonation extends Donation
       'pending_future_payment' => 'Not Received',
     );
   }
-  
+
   static function default_map() {
     return array();
   }
@@ -111,7 +111,7 @@ class Donation
 {
   private $_stage_posted = 'Posted';
   private $_stage_pledged = 'Pledged';
-  
+
   public $donor_uid;
   public $donor_email;
   public $donor_name;
@@ -146,21 +146,21 @@ class Donation
   public $created_by;
   public $offline;
   public $payment_authorization_code;
-  
+
   function __construct($order_id, $sid) {
-  
+
     global $base_url;
-    
+
     // set the order id
     $this->order_id = $order_id;
-    
+
     $stages = $this->_get_stages();
-    
+
     // load items required to populate the object
     $order = uc_order_load($this->order_id);
     $payments = uc_payment_load_payments($this->order_id);
     $user = user_load($order->uid);
-    
+
     // set properties
     $this->donor_uid = $order->uid;
     $this->donor_email = $user->mail;
@@ -187,7 +187,7 @@ class Donation
     $this->stage = $stages['payment_pending'];
     $this->created_by = $order->data['created_by'];
     $this->offline = $order->data['offline'];
-    
+
     // Only set these fields if it's paid
     if ($order->order_status == 'payment_received') {
       // deal with sf date handling
@@ -196,34 +196,34 @@ class Donation
       $this->transaction_date_gm = gmdate('c', $this->transaction_date);
       $this->probability = 100.00;
     }
-    
+
     // Set close date to the original date for refunds otherwise SF will default to current date
     if ($order->order_status == 'refunded' || $order->order_status == 'partially_refunded') {
       $this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
       $this->close_date = date('Y-m-d', $this->transaction_date);
     }
-    
+
     $this->stage = $stages[$order->order_status];
-        
+
     uc_credit_cache('clear');
-    
+
     // add gateway and transaction id
     $txn_details = $this->_load_transaction_details($this->order_id);
     $this->payment_gateway = $txn_details['gateway'];
     $this->payment_transaction_id = $txn_details['txn_id'];
     $this->payment_authorization_code = $txn_details['auth_code'];
     $this->donation_form_url = $txn_details['form_url'];
-    
-    // if this is a recurring donation, make sure we get the right close date    
+
+    // if this is a recurring donation, make sure we get the right close date
     $close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
     if ($close_date) {
       $this->close_date = date('Y-m-d', $close_date);
     }
-    
+
     $this->_load_webform_values($this->donation_form_nid, $sid);
 
   }
-  
+
   /**
    *
    * Retrieves the fieldmap for a specific donation form.
@@ -232,7 +232,7 @@ class Donation
   private function _get_donation_map($nid) {
     $sql = "SELECT f.single_recordtype_id, f.recurring_recordtype_id, f.fields, f.salesforce FROM {fundraiser_salesforce_map} f WHERE f.nid = %d";
     $result = db_query($sql, $nid);
-    
+
     $data = db_fetch_object($result);
     return array(
       'single_recordtype_id' => $data->single_recordtype_id,
@@ -240,7 +240,7 @@ class Donation
       'fields' => unserialize($data->fields),
     );
   }
-  
+
   /**
    *
    * Transforms a donation into a Salesforce object using it's assigned map
@@ -250,24 +250,24 @@ class Donation
   public function map($type = 'single') {
     $map = $this->_get_donation_map($this->donation_form_nid);
     $object = array();
-    
+
     foreach($map['fields'] as $salesforce => $drupal) {
       $object[$salesforce] = $this->{$drupal};
     }
-    
+
     // add single recordtype id if available
     if ($type == 'single' && !empty($map['single_recordtype_id'])) {
       $object['RecordTypeId'] = $map['single_recordtype_id'];
     }
-    
+
     // add recurring recordtype id if available
     if ($type == 'recurring' && !empty($map['recurring_recordtype_id'])) {
       $object['RecordTypeId'] = $map['recurring_recordtype_id'];
     }
-    
+
     return $object;
   }
-  
+
   /**
    *
    * Loads webform submitted data as properties of the object. This will only load unique properites that haven't
@@ -288,9 +288,9 @@ class Donation
       if (!in_array($data->form_key, $exclude)) {
         $this->{$data->form_key} = $data->data;
       }
-    }  
+    }
   }
-  
+
   /**
    * Gets the transaction details for a specific order.
    */
@@ -299,7 +299,7 @@ class Donation
     $result = db_query(
       "
         SELECT order_id, gateway, txn_id, auth_code, form_url
-        FROM {fundraiser_webform_order} 
+        FROM {fundraiser_webform_order}
         WHERE order_id = %d
         UNION
         SELECT order_id, gateway, txn_id, auth_code, form_url
@@ -308,23 +308,23 @@ class Donation
       ",
       $order_id, $order_id
     );
-        
+
     while ($data = db_fetch_object($result)) {
       $details['gateway'] = $data->gateway;
       $details['txn_id'] = $data->txn_id;
       $details['auth_code'] = $data->auth_code;
       $details['form_url'] = $data->form_url;
     }
-    
+
     // allow other modules to alter the details
     drupal_alter('donation_transaction_details', $details);
     return $details;
   }
-  
+
   private function _convert_country($id) {
     return db_result(db_query("SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d", $id));
   }
-  
+
   static function get_mappable_properties() {
     return array(
       'donor_uid' => 'Donor\'s User Id',
@@ -343,7 +343,7 @@ class Donation
       'donation_form_nid' => 'Donation Form Node Id',
       'donation_form_url' => 'Donation Form Url',
       'order_id' => 'Order ID',
-      'order_status' => 'Order Status', 
+      'order_status' => 'Order Status',
       'billing_first_name' => 'Billing First Name',
       'billing_last_name' => 'Billing Last Name',
       'billing_street1' => 'Billing Street',
@@ -363,17 +363,17 @@ class Donation
       'payment_authorization_code' => 'Payment Authorization Code',
     );
   }
-  
+
   static function get_fundraiser_fields() {
     return array(
-      'other_amount', 
-      'amount', 
-      'first_name', 
-      'last_name', 
-      'email', 
-      'billing_address', 
-      'billing_address_2', 
-      'billing_city', 
+      'other_amount',
+      'amount',
+      'first_name',
+      'last_name',
+      'email',
+      'billing_address',
+      'billing_address_2',
+      'billing_city',
       'billing_country',
       'billing_state',
       'billing_zipcode',
@@ -383,7 +383,7 @@ class Donation
       'recurs_monthly',
     );
   }
-  
+
   public function _get_stages() {
     return array(
       'payment_received' => 'Posted',
@@ -393,5 +393,5 @@ class Donation
       'refunded' => 'Refunded',
     );
   }
-  
+
 }

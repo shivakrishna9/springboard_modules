@@ -15,7 +15,7 @@ function webform_token_selector_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  
+
   return $items;
 }
 
@@ -67,7 +67,7 @@ function webform_token_selector_wysiwyg_plugin($editor, $version) {
           'load' => TRUE,
         ),
       );
-      break;   
+      break;
   }
 }
 
@@ -94,11 +94,11 @@ function webform_token_selector_token_list($nid) {
   */
   $node = node_load($nid);
   $webform_tokens = array();
- 
+
   // make sure we have a node
   if ($node) {
     $all_tokens['webform'] = array();
- 
+
     foreach($node->webform['components'] as $component) {
       if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
         $parents = webform_component_parent_keys($node, $component);
@@ -109,11 +109,11 @@ function webform_token_selector_token_list($nid) {
       }
     }
   }
- 
+
   // allow other modules to add more tokens
   $module_tokens = module_invoke_all('confirmation_page_tokens', $node->type);
   $tokens = array_merge($webform_tokens, $module_tokens);
- 
+
   // theme the output
   $output = theme(array('confirmation_tokens'), $tokens);
   return $output;

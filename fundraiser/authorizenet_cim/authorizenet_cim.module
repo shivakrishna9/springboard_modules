@@ -2,8 +2,8 @@
 
 /**
  * @file
- * Methods for updating authorize.net CIM profiles. 
- * 
+ * Methods for updating authorize.net CIM profiles.
+ *
  */
 
 /**
@@ -59,9 +59,9 @@ function authorizenet_cim_update($profile_id, $billing_info) {
       $result['data'] = array('profile_id' => $profile_id, 'payment_profile_id' => $payment_profile_id,
         'billing_info' => $billing_info);
     }
-    
+
   }
-  
+
   // return the result
   return $result;
 }
@@ -115,7 +115,7 @@ function authorizenet_cim_profile_get($profile_id) {
  *      ),
  *      'card_cvv' => 122,
  *    );
- *      
+ *
  */
 function authorizenet_cim_update_payment_profile($profile_id, $payment_profile_id, $billing_info) {
   $server = variable_get('uc_authnet_cim_mode', 'disabled');
@@ -161,7 +161,7 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile_i
       'customerPaymentProfileId' => $payment_profile_id,
     ),
   );
-  
+
   $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',  _uc_authorizenet_array_to_xml($request));
   $response = uc_authorizenet_xml_api($server, $xml);
   //$response = _authorizenet_cim_strip_namespace($response);

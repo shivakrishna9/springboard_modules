@@ -112,7 +112,7 @@ class SforceBaseClient {
       $proxySettings = array();
       $proxySettings['proxy_host'] = $proxy->host;
       $proxySettings['proxy_port'] = $proxy->port; // Use an integer, not a string
-      $proxySettings['proxy_login'] = $proxy->login; 
+      $proxySettings['proxy_login'] = $proxy->login;
       $proxySettings['proxy_password'] = $proxy->password;
 
       $soapClientArray = array_merge($soapClientArray, $proxySettings);
@@ -168,7 +168,7 @@ class SforceBaseClient {
     $arg = new stdClass;
     return $this->sforce->logout();
   }
- 
+
    /**
    *invalidate Sessions from the salseforce system`
    *
@@ -179,8 +179,8 @@ class SforceBaseClient {
     $arg = new stdClass;
   $this->logout();
     return $this->sforce->invalidateSessions();
-  } 
- 
+  }
+
   /**
    * Specifies the session ID returned from the login server after a successful
    * login.
@@ -447,8 +447,8 @@ class SforceBaseClient {
       $backtrace = debug_backtrace();
       die('Please pass in array to this function:  '.$backtrace[0]['function']);
     }
-  }  
-  
+  }
+
   protected function _sendEmail($arg) {
     $this->setHeaders();
     return $this->sforce->sendEmail($arg)->result;

@@ -39,7 +39,7 @@ require_once ('SforceBaseClient.php');
  */
 class SforcePartnerClient extends SforceBaseClient {
   const PARTNER_NAMESPACE = 'urn:partner.soap.sforce.com';
-  
+
   function SforcePartnerClient() {
     $this->namespace = self::PARTNER_NAMESPACE;
   }
@@ -150,17 +150,17 @@ class SforcePartnerClient extends SforceBaseClient {
     $arg->sObjects = $sObjects;
     return parent::_upsert($arg);
   }
-  
+
   public function query($query) {
     return new QueryResult(parent::query($query));
-    
+
   }
   public function queryMore($queryLocator) {
     return new QueryResult(parent::queryMore($queryLocator));
   }
   public function retrieve($fieldList, $sObjectType, $ids) {
     return $this->_retrieveResult(parent::retrieve($fieldList, $sObjectType, $ids));
-  }  
+  }
 
   private function _retrieveResult($response) {
     $arr = array();
@@ -175,7 +175,7 @@ class SforcePartnerClient extends SforceBaseClient {
     }
     return $arr;
   }
-  
+
 }
 
 
@@ -186,14 +186,14 @@ class QueryResult {
   public $size;
 
   public function __construct($response) {
-     
+
     $this->queryLocator = $response->queryLocator;
     $this->done = $response->done;
-    $this->size = $response->size;  
+    $this->size = $response->size;
 
-    
+
     if($response instanceof QueryResult) {
-      $this->records = $response->records;     
+      $this->records = $response->records;
     }
     else {
       $this->records = array();
@@ -253,7 +253,7 @@ class SObject {
                 if ($item instanceof stdClass) {
                   if ($this->isSObject($item)) {
                     $sobject = new SObject($item);
-    
+
     // make an associative array instead of a numeric one
                     $anArray[$k] = $sobject;
                   } else {
@@ -273,7 +273,7 @@ class SObject {
                   }
                 }
                 if (isset($fieldsToConvert)) {
-    
+
     // If this line is commented, then the fields becomes a stdclass object and does not have the name variable
     // In this case the foreach loop on line 252 runs successfuly
                   $this->fields = $this->convertFields($fieldsToConvert);
@@ -286,7 +286,7 @@ class SObject {
       $this->fields->$k = $children_sobject;
 
     }
-    
+
     //array_push($this->fields, $anArray);
     // Uncommented on 28th April since all the sobjects have now been moved to the fields
                 //$this->sobjects = $anArray;
@@ -344,7 +344,7 @@ class SObject {
     $xml->$k = $v;
   }
 
-  
+
     //$new_string = '<Object xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$new_string.'</Object>';
      //$new_string = $new_string;
    //$xml = simplexml_load_string($new_string);
@@ -437,7 +437,7 @@ function xml2array($contents, $get_attributes=1) {
     }
 
     return($xml_array);
-} 
+}
 
   /*
    * If the stdClass has a done, we know it is a QueryResult

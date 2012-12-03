@@ -7,7 +7,7 @@ function springboard_social_install() {
   drupal_install_schema('springboard_social');
 }
 
- 
+
 /**
  * Implements hook_uninstall().
  */
@@ -61,7 +61,7 @@ function springboard_social_schema() {
       ),
       'message' => array(
         'description' => t('Message to insert into the users status field, FB max is something like 441 characters.'),
-        'type' => 'text', 
+        'type' => 'text',
       ),
     ),
     'primary_key' => array('nid'),
@@ -102,7 +102,7 @@ function springboard_social_schema() {
 
 /**
  * Implements hook_update().
- * 
+ *
  * Add database storage for Google+ data.
  */
 function springboard_social_update_6001() {

@@ -91,19 +91,19 @@ function fundraiser_goals_schema() {
 
 /**
  * Implements hook_update().
- * 
+ *
  * Removes "custom" goal type.
- * 
- * Convert custom goals to # of submissions, update total donation goals type to 
+ *
+ * Convert custom goals to # of submissions, update total donation goals type to
  * reflect the new type number (was 3, now 2).
  */
 function fundraiser_goals_update_6001() {
   $ret = array();
-  
+
   // Update goal types to reflect change.
   $ret[] = update_sql('UPDATE {fundraiser_goals} SET type = 1 WHERE type = 2');
   $ret[] = update_sql('UPDATE {fundraiser_goals} SET type = 2 WHERE type = 3');
-  
+
   // Remove target_cid column.
   $ret[] = update_sql('ALTER TABLE {fundraiser_goals} DROP target_cid');
   return $ret;

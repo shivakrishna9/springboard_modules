@@ -2,8 +2,8 @@
 
 /**
  * @file
- * This module allows payment gateways to be assigned to organic groups. 
- * 
+ * This module allows payment gateways to be assigned to organic groups.
+ *
  */
 
 /**
@@ -16,7 +16,7 @@ function og_payment_gateway_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  
+
   return $items;
 }
 
@@ -32,7 +32,7 @@ function og_payment_gateway_init() {
  */
 function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
   global $user;
-  
+
   switch ($form_id) {
     case 'gateway_manager_edit_form':
       $id = $form['id']['#value'];
@@ -57,9 +57,9 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
         '#type' => 'fieldset',
         '#title' => t('Access control'),
         '#collapsible' => TRUE,
-        '#weight' => 3.5, 
+        '#weight' => 3.5,
       );
-      
+
       $form['og_nodeapi']['#weight'] = 3.5;
       $form['og_nodeapi']['visible']['og_groups']['#title'] = t('Groups');
       $form['og_nodeapi']['visible']['og_groups']['#description'] = t('Select the groups that can utilize this payment gateway.');
@@ -73,9 +73,9 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
     $form['og_nodeapi']['gateway'] = $form['fundraiser_settings']['gateway'];
     $form['og_nodeapi']['gateway']['#weight'] = 1;
     $form['og_nodeapi']['visible']['og_groups']['#ahah'] = array(
-      'path' => 'og-payment-gateway/filter/ahah',  
+      'path' => 'og-payment-gateway/filter/ahah',
       'wrapper' => 'gateway',
-      'event' => 'change',  
+      'event' => 'change',
     );
     unset($form['fundraiser_settings']['gateway']);
   }
@@ -87,7 +87,7 @@ function og_payment_gateway_form_alter(&$form, &$form_state, $form_id) {
 function og_payment_gateway_filter_ahah() {
   include_once 'modules/node/node.pages.inc';
   $form_state = array('storage' => NULL, 'rebuild' => TRUE);
-  
+
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -98,7 +98,7 @@ function og_payment_gateway_filter_ahah() {
   $form['#validate'] = NULL;
   $form_state['validate_handlers'] = NULL;
   _og_payment_gateway_disable_validation($form);
-  
+
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
@@ -110,7 +110,7 @@ function og_payment_gateway_filter_ahah() {
   $output = drupal_render($changed_elements);
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
-  exit(); 
+  exit();
 }
 
 /**

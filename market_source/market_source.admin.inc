@@ -62,7 +62,7 @@ function market_source_admin_settings_form(&$form_state) {
     '#suffix' => '</div>',
     '#theme' => 'market_source_admin_global_fields_table',
   );
-  
+
   // Get current settings for these fields.
   if (!isset($form_state['values']['market_source_default_fields']['default_fields_wrapper'])) {
     $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
@@ -71,7 +71,7 @@ function market_source_admin_settings_form(&$form_state) {
   $default_fields_list = array('market_source' => 'Market Source', 'campaign' => 'Campaign ID', 'referrer' => 'Referrer', 'initial_referrer' => 'Initial Referrer');
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
-  
+
   foreach($default_fields_list as $key=>$field_name) {
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
        'persistence' => array(
@@ -92,8 +92,8 @@ function market_source_admin_settings_form(&$form_state) {
          '#value' => $key,
        ),
     );
-  } 
-  
+  }
+
   // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
@@ -262,7 +262,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
     $val = trim($val);
   }
   variable_set('market_source_additional_forms', array_filter($additional_forms));
-  
+
   //Save default field settings.
   $default_fields = array();
   if (!empty($values['market_source_default_fields']['default_fields_wrapper'])) {
@@ -273,7 +273,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
     }
   }
   variable_set('market_source_default_fields', $default_fields);
-  
+
   // Save all the custom fields.
   $custom_fields = array();
   if (!empty($values['market_source_global_fields']['custom_fields_wrapper'])) {
@@ -290,7 +290,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
   }
   variable_set('market_source_custom_fields', $custom_fields);
 
-  variable_set('market_source_cookie_domain', ''); 
+  variable_set('market_source_cookie_domain', '');
   $market_source_cookie_domain = $form_state['values']['market_source_cookie_domain'];
   // Per RFC 2109, cookie domains must contain at least one dot other than the
   // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.

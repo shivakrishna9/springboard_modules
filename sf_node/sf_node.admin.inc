@@ -7,7 +7,7 @@
 // Displays the Salesforce synchronization form.
 function sf_node_salesforce_management_form(&$form_state, $nid) {
   $node = node_load($nid);
-  
+
   // Fail out if the node didn't exist!
   if (!$node->nid) {
     drupal_not_found();
@@ -68,12 +68,12 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
       '#type' => 'value',
       '#value' => $node->salesforce['fieldmap'],
     );
-   
-    
+
+
   // Retrieve the object from Salesforce.
     $sf = salesforce_management_api_connect();
     $data = $sf->retrieve(array($node->salesforce['sfid']), $node->salesforce['fieldmap']);
-  
+
    // Load the fieldmap data.
     $map = salesforce_management_api_fieldmap_load($node->salesforce['fieldmap']);
 

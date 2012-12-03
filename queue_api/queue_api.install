@@ -73,7 +73,7 @@ function queue_api_schema() {
       'id_UNIQUE' => array('id')
     ),
   );
-  
+
   $schema['sf_heap'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -279,7 +279,7 @@ function queue_api_schema() {
       'fk_batch_items_batches' => array('batch_id'),
     ),
   );
-  
+
   $schema['sf_batch_error'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -329,7 +329,7 @@ function queue_api_schema() {
       'fk_sf_batch_errors_sf_batch1' => array('batch_id'),
     ),
   );
-  
+
   $schema['sf_retry_queue'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -387,7 +387,7 @@ function queue_api_schema() {
     ),
     'primary key' => array('id'),
   );
-  
+
   $schema['sf_permanent_failure'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -428,7 +428,7 @@ function queue_api_schema() {
     'primary key' => array('id'),
   );
 
-    
+
   return $schema;
 }
 

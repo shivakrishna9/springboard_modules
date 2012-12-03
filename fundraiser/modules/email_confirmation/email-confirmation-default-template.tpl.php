@@ -8,7 +8,7 @@
              <table style="font-family: verdana,arial,helvetica; font-size: small;" width="100%">
                <tbody><tr>
                  <td>
-                   <img>    
+                   <img>
               </td>
                  <td width="98%">
 
@@ -31,8 +31,8 @@
 
                <p><b>Want to manage your order online?</b><br>
 
-               If you need to check the status of your order, please visit our  
-home page at <a hre<?php print $site_url?>" target="_blank"><?php print $site_name?></a> and click on "My  
+               If you need to check the status of your order, please visit our
+home page at <a hre<?php print $site_url?>" target="_blank"><?php print $site_name?></a> and click on "My
 account" in the menu or login with the following link:              <br><br><a href="<?php print $site_url?>/user" target="_blank"><?php print $site_url?></a></p>
 
              <table style="font-family: verdana,arial,helvetica; font-size: small;" border="0" cellpadding="4" cellspacing="0" width="100%">
@@ -59,9 +59,9 @@ account" in the menu or login with the following link:              <br><br><a h
                          <b>Billing Address:</b><br>
                          <?php print $order->billing_first_name . ' ' . $order->billing_last_name?><br>
                          <?php print $order->billing_street1?><br>
-                         <?php 
+                         <?php
                          if ($order->billing_street2) {
-                           print $order->billing_street2 . '<br>';  
+                           print $order->billing_street2 . '<br>';
                          }
                          ?>
                          <?php print $order->billing_city .  ', ' . $order->billing_zone . ' ' . $order->billing_postal_code?><br>
@@ -108,7 +108,7 @@ account" in the menu or login with the following link:              <br><br><a h
                          <b>Order #:</b>
                        </td>
                        <td width="98%">
-                         <a href="<?php print $site_url ."/user/" . $order->uid . "/order/" . $order->order_id; ?>" target="_blank"><?php print $order->order_id?></a>     
+                         <a href="<?php print $site_url ."/user/" . $order->uid . "/order/" . $order->order_id; ?>" target="_blank"><?php print $order->order_id?></a>
                    </td>
 
                      </tr>
@@ -179,11 +179,11 @@ account" in the menu or login with the following link:              <br><br><a h
 
                    <hr noshade="noshade" size="1"><br>
 
-                                     <p><b>Where can I get help with reviewing  
+                                     <p><b>Where can I get help with reviewing
 my order?</b><br>
                    To learn more about managing your orders on <a href="<?php print $site_url?>" target="_blank"><?php print $site_name?></a>, please visit our <a href="<?php print $site_url?>" target="_blank">help page</a>.                  <br></p>
 
-                                     <p>Please note: This e-mail message is an  
+                                     <p>Please note: This e-mail message is an
 automated notification. Please do not reply to this message.</p>
 
                    <p>Thanks again for shopping with us.</p>

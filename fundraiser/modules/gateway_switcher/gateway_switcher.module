@@ -5,7 +5,7 @@
  *
  * This module is used to switch donation form payment gateway assignment in bulk.
  */
- 
+
 /**
  * Implemenation of hook_menu().
  */
@@ -17,7 +17,7 @@ function gateway_switcher_menu() {
     'access arguments' => array('switch gateways in bulk'),
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   return $items;
 }
 
@@ -29,7 +29,7 @@ function gateway_switcher_perm() {
 }
 
 /**
- * Gateway switcher form. 
+ * Gateway switcher form.
  *
  * This form allows the user to choose the gateway they want to switch.
  *
@@ -39,7 +39,7 @@ function gateway_switcher_perm() {
 function gateway_switcher_update_form($form_state) {
   // see if this is the confirmation step, if so make them confirm the change
   if (isset($form_state['storage']['confirm'])) {
-    
+
     // get gateway names for display
     $gateway_from = _gateway_switcher_gateway_name($form_state['values']['gateway_from']);
     $gateway_to = _gateway_switcher_gateway_name($form_state['values']['gateway_to']);
@@ -170,7 +170,7 @@ function _gateway_switcher_gateway_usage_count() {
     $gateways[$data->gateway] = $data->count;
   }
 
-  return $gateways;  
+  return $gateways;
 }
 
 /**

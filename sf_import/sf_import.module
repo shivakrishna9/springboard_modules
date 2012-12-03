@@ -27,7 +27,7 @@ function sf_import_menu() {
     'file' => 'sf_import.admin.inc',
     'type' => MENU_CALLBACK,
   );
- 
+
   return $items;
 }
 
@@ -46,7 +46,7 @@ function fieldmap_import_load($fieldmap) {
 
 }
 
-/** 
+/**
  * Implemenation of hook_cron().
  */
 function sf_import_cron() {
@@ -56,10 +56,10 @@ function sf_import_cron() {
 
     $queue_processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
     $results = db_query(
-      'SELECT f.fieldmap, f.drupal, f.salesforce, f.fields, f.businessSD, s.frequency, s.frequency_type, 
+      'SELECT f.fieldmap, f.drupal, f.salesforce, f.fields, f.businessSD, s.frequency, s.frequency_type,
          s.last_import, s.filters, s.updated_objects_only, s.import_new_objects
        FROM {sf_import_schedule} s
-       INNER JOIN {salesforce_management_field_map} f ON f.fieldmap = s.fieldmap 
+       INNER JOIN {salesforce_management_field_map} f ON f.fieldmap = s.fieldmap
        WHERE s.next_import < unix_timestamp()
        ORDER BY FIELD(f.drupal, ' . db_placeholders($queue_processing_order, 'varchar') . ');',
       $queue_processing_order
@@ -83,10 +83,10 @@ function sf_import_cron() {
       $query = 'select ' . implode(', ', $sf_fields) . ' from ' . $data->salesforce;
 
       if ($updated_objects_only) {
-        $query .= ' where LastModifiedDate > ' . gmdate('c', $last_import); 
+        $query .= ' where LastModifiedDate > ' . gmdate('c', $last_import);
       }
 
-      if (strlen($filters) > 0) { 
+      if (strlen($filters) > 0) {
         if (!$updated_objects_only) {
           $query .= ' where ' . $filters;
         }
@@ -99,7 +99,7 @@ function sf_import_cron() {
         $function($query, $data);
       }
 
-      // query salesforce 
+      // query salesforce
       $objects = $sf->client->query($query);
       watchdog('salesforce import', t('Retrieved !num !type objects from Salesforce using query [!query]', array('!num' => $objects->size, '!type' => $data->salesforce, '!query' => $query)));
 

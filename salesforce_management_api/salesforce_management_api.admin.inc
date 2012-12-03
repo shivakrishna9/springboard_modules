@@ -130,7 +130,7 @@ function salesforce_management_api_fieldmap_admin() {
 function salesforce_management_api_fieldmap_add_form(&$form_state) {
   $form = array();
   $form['#cache'] = TRUE;
-  
+
   // Build an options array out of the Drupal objects.
   $options = array();
 
@@ -203,19 +203,19 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
     ),
   );
 
-  
+
   $form['salesforce_recordtype_wrapper'] = array(
     '#prefix' => '<div id="recordtype">',
     '#suffix' => '</div>',
   );
-  
+
   if (!empty($form_state['values']['salesforce_management_object'])) {
     $recordtypes = salesforce_management_api_get_object_recordtypes($form_state['values']['salesforce_management_object']);
   }
   else {
     $recordtypes = salesforce_management_api_get_object_recordtypes(array_shift($options));
   }
-  
+
   $form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
     '#type' => 'select',
     '#title' => 'Salesforce record type',
@@ -368,7 +368,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
     '#default_value' => $map['automatic'],
     '#description' => t('Automatically create and link new salesforce objects when Drupal objects are created?'),
   );
-  
+
   // Add the index to the form array.
   $form['fieldmap_index'] = array(
     '#type' => 'value',
@@ -382,14 +382,14 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
 
   $source = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
   $target = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-  
+
 
  foreach($target['fields'] as $key => $value){
   $fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
-  
+
   }
  asort($fieldmapsort);
-  
+
   // Fail with an error message if either the source or target object
   // definitions were not found.
   if (empty($source) || empty($target)) {
@@ -417,7 +417,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
     /*if ($value['type'] == SALESFORCE_FIELD_SOURCE_ONLY || $value['label'] == 'Owner ID') {
       continue;
     }*/
-    
+
     /*echo "<pre>";
     print_r($value);
     echo "</pre>";*/
@@ -446,24 +446,24 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
       '#required' => $type == 'required',
     );
     $row['business'][$key.'_r'] = array(
-      '#type' => 'select', 
+      '#type' => 'select',
       '#title' => t('Default options'),
     '#default_value' => $map['business'][$key],
     '#options' => array(
-    'null' => t(''), 
-    'blank' => t('Overwrite when blank'), 
+    'null' => t(''),
+    'blank' => t('Overwrite when blank'),
     'append' => t('Append'),
     'always' => t('Always overwrite'),
     'never' => t('Never overwrite'),
       ),
   );
   $row['businessSD'][$key.'_l'] = array(
-      '#type' => 'select', 
+      '#type' => 'select',
       '#title' => t('Default options'),
     '#default_value' => $map['businessSD'][$key],
     '#options' => array(
-    'null' => t(''), 
-    'blank' => t('Overwrite when blank'), 
+    'null' => t(''),
+    'blank' => t('Overwrite when blank'),
     'append' => t('Append'),
     'always' => t('Always overwrite'),
     'never' => t('Never overwrite'),
@@ -489,7 +489,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
 function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state) {
   // Load the fieldmap from the database.
   $map = salesforce_management_api_fieldmap_load($form_state['values']['fieldmap_index']);
-  
+
   // Update name, record type, etc.
   $map['name'] = $form_state['values']['name'];
   $map['recordtype_id'] = $form_state['values']['salesforce_recordtype'];
@@ -554,7 +554,7 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
   foreach (element_children($form['header']) as $element) {
     $header[] = drupal_render($form['header'][$element]);
   }
-  
+
 
   // Build the rows array.
   $rows = array();
@@ -563,21 +563,21 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
     $rows[] = array(
       drupal_render($form['rows'][$element]['target']),
       array(
-        'data' => drupal_render($form['rows'][$element]['source']), 
+        'data' => drupal_render($form['rows'][$element]['source']),
         'class' => 'source-cell'
       ),
       array(
-        'data' => drupal_render($form['rows'][$element]['business']), 
+        'data' => drupal_render($form['rows'][$element]['business']),
         'class' => 'source-cell'
       ),
     array(
-        'data' => drupal_render($form['rows'][$element]['businessSD']), 
+        'data' => drupal_render($form['rows'][$element]['businessSD']),
         'class' => 'source-cell'
       ),
     );
-    
+
  }
-  
+
   // Add a message if no rows were found.
   if (empty($rows)) {
     $rows[] = array(
@@ -587,7 +587,7 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
 
   // Build the attributes array.
   $attributes = array();
-  
+
 
   // Build the caption.
   $caption = NULL;
@@ -622,13 +622,13 @@ function salesforce_management_api_fieldmap_dedupe_form(&$form_state, $fieldmap)
         /*echo  "<pre>";
         print_r($value);
         echo "</pre>";*/
-        
+
   $field[$key] = $value['label'];
   }
   asort($field);
   $form['fieldmap_options'] = array(
-    '#type' => 'select', 
-    '#title' => t('Dedupe key for mapping'), 
+    '#type' => 'select',
+    '#title' => t('Dedupe key for mapping'),
     '#default_value' =>  isset($map['dedupe_key']) ? $map['dedupe_key'] : '',
     '#options' => $field,
     '#description' => t('Fieldmap maps Salesforce objects to Drupal objects.'),
@@ -653,7 +653,7 @@ function salesforce_management_api_fieldmap_dedupe_form_submit($form, &$form_sta
  */
 function salesforce_management_api_update_wsdl_form() {
   $form = array();
-  
+
   // Need to set the form type so file upload will work
   $form['#attributes']['enctype'] = 'multipart/form-data';
   $form['salesforce_management_api_wsdl_file_path'] = array(
@@ -672,7 +672,7 @@ function salesforce_management_api_update_wsdl_form() {
     '#type' => 'submit',
     '#value' => t('Upload WSDL'),
   );
-  
+
   return $form;
 }
 
@@ -706,7 +706,7 @@ function salesforce_management_api_update_wsdl_form_validate($form, &$form_state
         drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $source)), 'error');
         return 0;
     }
-    
+
     // Check the file extension
     $pathParts = pathinfo($_FILES['files']['name'][$source]);
     if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
@@ -718,9 +718,9 @@ function salesforce_management_api_update_wsdl_form_validate($form, &$form_state
 
 /**
  * Process form when an admin uploads a WSDL file.
- * This function SHOULD use file_save_upload(), but unfortunately, that function calls 
- * file_create_path() which calls file_check_location() - which fails on any destination 
- * dir that isn't in the default file upload dir. And since the enterprise.wsdl.xml file 
+ * This function SHOULD use file_save_upload(), but unfortunately, that function calls
+ * file_create_path() which calls file_check_location() - which fails on any destination
+ * dir that isn't in the default file upload dir. And since the enterprise.wsdl.xml file
  * needs to go into a sub-dir in the module directory, that won't do.
  */
 function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) {
@@ -734,9 +734,9 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
 
   // Array key for the file element
   $source = 'salesforce_management_api_wsdl_file';
-  
+
   // Make sure the directory is writeable
-  if( file_check_directory( $dir ) ) {  
+  if( file_check_directory( $dir ) ) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
          form_set_error($source, t('File upload error. Could not move uploaded file.'));
@@ -748,7 +748,7 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
       variable_set('salesforce_management_api_wsdl_updated', time());
       // Clear the cache
       drupal_flush_all_caches();
-      
+
       // Clear WSDL files from tmp directory
       $tmpDir = file_directory_temp();
       // Make sure the tmp dir exists and isn't the root, just to be safe
@@ -756,10 +756,10 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
         $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
         $execOutput = exec($cmd);
       }
-      
+
       drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
     }
-  } 
+  }
   else {
     drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
     watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
@@ -783,11 +783,11 @@ function salesforce_management_api_drupal_object_select() {
 
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  
+
   $role_field = $form['role_wrapper'];
   unset($role_field['#prefix'], $role_field['#suffix']); // Prevent duplicate wrappers.
   $output = drupal_render($role_field);
-  
+
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
   exit();
@@ -805,12 +805,12 @@ function salesforce_management_api_salesforce_object_select() {
 
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  
+
   $recordtype_field = $form['salesforce_recordtype_wrapper'];
   unset($recordtype_field['#prefix'], $recordtype_field['#suffix']); // Prevent duplicate wrappers.
   $output = drupal_render($recordtype_field);
-  
+
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
-  exit();  
+  exit();
 }

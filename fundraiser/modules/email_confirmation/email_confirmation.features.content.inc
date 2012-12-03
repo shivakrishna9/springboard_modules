@@ -362,7 +362,7 @@ function email_confirmation_content_default_fields() {
       'module' => 'text',
     ),
   );
- 
+
   // Exported field: field_confirmation_text
   $fields['confirmation_template-field_confirmation_text'] = array(
     'field_name' => 'field_confirmation_text',

@@ -1,8 +1,8 @@
 <?php
 /**
  * @file
- * Install file for the og payment gateway module. 
- * 
+ * Install file for the og payment gateway module.
+ *
  */
 
 /**
@@ -41,6 +41,6 @@ function og_payment_gateway_schema() {
     ),
     'primary key' => array('gid', 'group_nid'),
   );
-  
+
   return $schema;
 }

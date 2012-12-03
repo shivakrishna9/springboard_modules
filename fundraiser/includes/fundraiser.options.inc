@@ -18,7 +18,7 @@ function _fundraiser_webform_select_options_info() {
     'options callback' => 'fundraiser_options_uc_states',
     'file' => 'includes/fundraiser.options.inc',
   );
-  
+
   $items['uc_countries'] = array(
     'title' => t('Ubercart defined countries'),
     'options callback' => 'fundraiser_options_uc_countries',

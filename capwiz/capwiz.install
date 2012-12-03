@@ -61,7 +61,7 @@ function capwiz_uninstall() {
 }
 
 
-/** 
+/**
  * Implement hook_enable().
  */
 function capwiz_enable() {

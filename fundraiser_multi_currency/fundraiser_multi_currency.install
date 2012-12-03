@@ -5,7 +5,7 @@
  */
 function fundraiser_multi_currency_schema() {
   $schema = array();
-  
+
   $schema['fundraiser_currencies'] = array(
     'description' => 'Default currencies to use for donation forms',
     'fields' => array(
@@ -54,7 +54,7 @@ function fundraiser_multi_currency_uninstall() {
 }
 
 /**
- * 
+ *
  */
 function _fundraiser_multi_currency_insert_defaults() {
   $ret = array();

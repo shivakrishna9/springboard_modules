@@ -14,27 +14,27 @@ function fundraiser_mapping_form($form_state, $node) {
     '#node' => $node,
     'mapping' => array(),
   );
-  
+
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
   );
-  
+
   $form['info'] = array(
     '#value' => 'This form allows you to map the submitted form values to Drupal user and profile fields. When the donation form is submitted, the user\'s profile will be updated with the values from the form.',
-    '#weight' => 0, 
+    '#weight' => 0,
   );
 
   foreach ($node->webform['components']  as $cid =>$component){
     if($component['type'] != 'fieldset'){
-    
+
       $form['mapping']['cid'][$cid] = array(
       '#type' => 'item',
       '#description' => t($component['name']." - (".$component['type'].")"),
       );
-      
+
       $options = array(''=>'--Select One--');
-      
+
       if(module_exists('profile')){
         $cat_array = profile_categories();
         foreach ($cat_array as $cat){
@@ -42,23 +42,23 @@ function fundraiser_mapping_form($form_state, $node) {
           for($i=0;$row = db_fetch_array($result); $i++){
             $options['Drupal Profile Fields'][$row['name']] = $row['title'];
           }
-        }        
+        }
       }
-      
+
       $options['User Fields'] = array(
         'mail' => t("Email Address"),
       );
-      
+
       $form['mapping']['type'][$cid] = array(
       '#type' => 'select',
       '#options' => $options,
       '#default_value' => $node->map[$cid],
       );
-      
+
       $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
-          
+
     }
-     
+
   }
 
   return $form;
@@ -70,32 +70,32 @@ function fundraiser_mapping_form_submit($form, &$form_state){
 
   foreach($form_state['values']['mapping']['type'] as $key => $value) {
     if(!empty($value)){
-      
+
       $sql = "insert into fundraiser_component_map set nid=".$form['#node']->nid.", cid=$key,map_id='$value'";
       db_query($sql);
     }
   }
-  
+
    drupal_set_message(t('Profile mapping has been saved'));
 }
 
 function fundraiser_recurring_admin(){
-  
+
   $resouce = db_query("
-          SELECT 
+          SELECT
             fr.*,
-            u.name 
+            u.name
     FROM {fundraiser_recurring} fr
     INNER JOIN {uc_orders} uo
             ON fr.order_id = uo.order_id
     INNER JOIN {users} u
-            ON o.uid = u.uid 
+            ON o.uid = u.uid
     WHERE fr.order_id='%s'
     ORDER BY uo.created desc", arg(3));
-  
+
   $output = "<h3><a href='/admin/fundraiser/recurring/logs'>View Logs</a></h3><table border=1>
   <tr>
-  
+
   <th>OrderID</th>
   <th>User Name</th>
   <th>Amount</th>
@@ -103,21 +103,21 @@ function fundraiser_recurring_admin(){
   <th>Last Charged</th>
   </tr>
   ";
-  
+
   for($i=1;$row = db_fetch_array($resource);$i++){
     $row['fee_amount'] = number_format($row['fee_amount'],2,'.','');
     $last_charge = date("Y-m-d H:i:s",strtotime('-'. '1 months', $row['next_charge']));
     $output.= "<tr>
-    
+
     <td>$row[order_id]</td>
     <td>$row[name]</td>
     <td>$row[fee_amount]</td>
     <td>$last_charge</td>
     </tr>";
   }
-  
+
   $output .= "</table>";
-  
+
   return $output;
 
 }
@@ -128,7 +128,7 @@ function fundraiser_recurring_master_order_overview(){
     SELECT
       fr.*,
       u.name
-    FROM {fundraiser_recurring} fr  
+    FROM {fundraiser_recurring} fr
     INNER JOIN {uc_orders} uo
       ON fr.order_id = uo.order_id
     INNER JOIN {users} u
@@ -146,9 +146,9 @@ function fundraiser_recurring_master_order_overview(){
     <th>Charge Date</th>
     </tr></thead>
   ";
-  
 
-  
+
+
   if(empty($rows[1])){
     //we're actually looking at the order id and not the master_order_id
     $resource = db_query('
@@ -168,7 +168,7 @@ function fundraiser_recurring_master_order_overview(){
       ;
     }
   }
-  
+
   for($i=1;$i<count($rows);$i++){
     if (($i % 2) == 0) {
       $class = 'even';
@@ -199,7 +199,7 @@ function fundraiser_recurring_master_order_overview(){
 function fundraiser_recurring_user_overview(){
 
   $resource = db_query('
-    SELECT 
+    SELECT
       fr.master_order_id,
       fr.order_id,
       uo.order_total,
@@ -227,7 +227,7 @@ function fundraiser_recurring_user_overview(){
   for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
     ;
   }
-  
+
   for($i=1;$i<count($rows);$i++) {
     if (($i % 2) == 0) {
       $class = 'even';
@@ -269,8 +269,8 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
   $form['uid'] = array(
      '#type' => 'hidden',
      '#value' => $order->uid,
-  );  
-   
+  );
+
   $form['master_order_id'] = array(
     '#type' => 'hidden',
     '#value' => $master_order_id,
@@ -284,7 +284,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
      '#collapsed' => TRUE,
      '#weight' => -5,
    );
-   
+
    $form['billing_info']['first_name'] = array(
      '#type' => 'textfield',
      '#title' => "First Name",
@@ -294,10 +294,10 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
    $form['billing_info']['last_name'] = array(
      '#type' => 'textfield',
      '#title' => "Last Name",
-    '#required' => TRUE,  
+    '#required' => TRUE,
      '#default_value' => $order->billing_last_name,
    );
-   
+
     $form['billing_info']['email'] = array(
       '#type' => 'textfield',
       '#title' => t('Email Address'),
@@ -312,14 +312,14 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
     '#required' => TRUE,
      '#default_value' => $order->billing_street1,
    );
-   
+
    $form['billing_info']['address_2'] = array(
      '#type' => 'textfield',
      '#title' => 'Address Line 2',
      '#size' => 30,
      '#default_value' => $order->billing_street2,
    );
-   
+
    $form['billing_info']['city'] = array(
      '#type' => 'textfield',
      '#title' => 'City',
@@ -333,33 +333,33 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
      '#type' => 'select',
      '#title' => 'Country',
     '#options' => $countries['#options'],
-    '#required' => TRUE,  
+    '#required' => TRUE,
      '#default_value' => $order->billing_country,
-   );  
+   );
 
    $zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, 840, 'name', uc_address_field_required('zone'));
    $form['billing_info']['state'] = array(
      '#type' => 'select',
      '#title' => 'State',
     '#options' => $zones['#options'],
-    '#required' => TRUE,  
+    '#required' => TRUE,
      '#default_value' => $order->billing_zone,
    );
-   
+
    $form['billing_info']['zipcode'] = array(
      '#type' => 'textfield',
      '#title' => 'Postal Code',
      '#size' => 5,
      '#maxlength' => 11,
-    '#required' => TRUE,  
+    '#required' => TRUE,
      '#default_value' => $order->billing_postal_code,
    );
-   
+
    $form['billing_info']['cc_info'] = array(
      '#type' => 'fieldset',
      '#title' => 'Credit Card Information',
    );
-   
+
    $form['billing_info']['cc_info']['card_num'] = array(
      '#type' => 'textfield',
      '#title' => 'Card Number',
@@ -367,14 +367,14 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
      '#required' => TRUE,
      '#maxlength' => 20,
    );
-   
+
    $form['billing_info']['cc_info']['card_exp_date'] = array(
      '#type' => 'date',
      '#required' => TRUE,
      '#title' => 'Expiration Date',
-     
+
    );
-   
+
    $form['billing_info']['cc_info']['card_cvv'] = array(
      '#type' => 'textfield',
      '#title' => 'Security Code',
@@ -382,12 +382,12 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
      '#size' => 5,
      '#maxlength' => 5,
    );
-   
+
    $form['billing_info']['submit'] = array(
      '#type' =>'submit',
      "#value" => t('Save changes'),
    );
-   
+
    return $form;
 }
 
@@ -417,19 +417,19 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
 
 function fundraiser_billing_update_form_submit($form, &$form_state) {
   global $user;
-  
+
   $master_order_id = $form_state['values']['master_order_id'];
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
   $vault_guid = '';
-  
+
   while($row = db_fetch_object($orders)) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
 
     $vault_guid = $order->data['ref_id'];
     $orders_changed[] = $order->order_id;
-    
+
     $order->primary_email = $form_state['values']['billing_info']['email'];
       $order->billing_first_name =  $form_state['values']['billing_info']['first_name'];
       $order->billing_last_name = $form_state['values']['billing_info']['last_name'];
@@ -454,9 +454,9 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
       );
 
     uc_order_save($order);
-    uc_order_comment_save($order->order_id, $user->uid, "Billing information updated."); 
+    uc_order_comment_save($order->order_id, $user->uid, "Billing information updated.");
   }
-  
+
   // if the order contains a vault_guid. update the vault
   if (!empty($vault_guid)) {
     $vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $vault_guid));
@@ -475,27 +475,27 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
     );
 
     uc_sage_vault_update($vault_id, $data);
-  }  
+  }
 
   // Check for Salesforce Fundraiser module and update billing information
   if (module_exists('sf_donation')) {
     sf_donation_update_donation_billing($orders_changed);
   }
-  
+
   drupal_set_message('Billing information for all pending orders has been updated.');
 }
 
 function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
   // get the amount of a pending donation because the older ones may be out of date
-  $donation_amount = db_result(db_query("select order_total from {uc_orders} 
+  $donation_amount = db_result(db_query("select order_total from {uc_orders}
     where order_id = %d", $master_order_id));
-  
+
   $form = array(
     '#tree' => TRUE,
       '#node' => $node,
       'fundraiser_recurring' => array(),
   );
-  
+
    $form['amount'] = array(
      '#type' => "fieldset",
      '#title' => "Donation Amount",
@@ -504,17 +504,17 @@ function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
      '#collapsed' => TRUE,
      '#weight' => -5,
    );
-  
+
   $form['amount']['master_order_id'] = array(
     '#type' => 'hidden',
     '#value' => $master_order_id,
   );
-  
+
   $form['amount']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $nid,
   );
-  
+
   $amount = money_format('%i', $donation_amount);
   $form['amount']['fee_amount'] = array(
     '#type' => 'textfield',
@@ -525,12 +525,12 @@ function fundraiser_donation_amount_form(&$form_state, $master_order_id, $nid) {
     '#description' => "Your current donation amount is $$amount",
     '#field_prefix' => '$',
   );
-   
+
   $form['amount']['submit'] = array(
     '#type' => 'submit',
      '#value' => t('Update donation amount'),
   );
-  
+
   return $form;
 }
 
@@ -538,7 +538,7 @@ function fundraiser_donation_amount_form_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['amount']['fee_amount'])) {
     form_set_error('amount', t('Donation amount must be a valid number.'));
   }
-  
+
   // get minimum amount
   $minimum = db_result(db_query("select minimum_donation_amount from {fundraiser} where nid = %d", $form_state['values']['amount']['nid']));
   if ($form_state['values']['amount']['fee_amount'] <= $minimum) {
@@ -551,31 +551,31 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   global $user;
   $amount = $form_state['values']['amount']['fee_amount'];
   $master_order_id = $form_state['values']['amount']['master_order_id'];
-  
+
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
-  
+
   while($row = db_fetch_object($orders)) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
     $old_amount = $order->order_total;
     $orders_changed[] = $row->order_id;
-    
+
     // update the order total
     $order->order_total = $amount;
     // update the product price
     $order->products[0]->price = $amount;
     // save the order
     uc_order_save($order);
-    uc_order_comment_save($order->order_id, $user->uid, "Donation amount changed from 
+    uc_order_comment_save($order->order_id, $user->uid, "Donation amount changed from
       $old_amount to $amount by an administrator.", 'admin');
   }
-  
+
   // call out to saleforce module if installed
   if (module_exists('sf_donation')) {
     sf_donation_update_donation_amount($orders_changed, $amount);
   }
-  
+
   drupal_set_message("The amount of all future donations has been updated to $amount.");
 }
 
@@ -585,7 +585,7 @@ function fundraiser_cancel_form(&$form_state, $master_order_id) {
       '#node' => $node,
       'fundraiser_recurring' => array(),
   );
-  
+
   $form['cancel'] = array(
      '#type' => 'fieldset',
      '#title' => 'Cancel Future Donations',
@@ -594,7 +594,7 @@ function fundraiser_cancel_form(&$form_state, $master_order_id) {
      '#collapsed' => TRUE,
      '#weight' => -5,
    );
-  
+
   $form['cancel']['reason'] = array(
     '#type' => 'textarea',
     '#title' => t('Reason'),
@@ -604,7 +604,7 @@ function fundraiser_cancel_form(&$form_state, $master_order_id) {
     '#rows' => 3,
     '#resizable' => FALSE,
   );
-   
+
   $form['cancel']['master_order_id'] = array(
     '#type' => 'hidden',
     '#value' => $master_order_id,
@@ -613,42 +613,42 @@ function fundraiser_cancel_form(&$form_state, $master_order_id) {
     '#type' => 'submit',
     '#value' => t('Cancel all future payments'),
   );
-  
+
   return $form;
 }
 
 function fundraiser_cancel_form_submit($form, &$form_state) {
   global $user;
-  
+
   $master_order_id = $form_state['values']['cancel']['master_order_id'];
   $reason = $form_state['values']['cancel']['reason'];
-  
+
   // get the ids of the child orders
   $result = _get_pending_recurring_orders($master_order_id);
-  
+
   // cancel all child orders that are still pen
-  $sql = "UPDATE {uc_orders} u inner join {fundraiser_recurring} f on f.order_id = u.order_id 
+  $sql = "UPDATE {uc_orders} u inner join {fundraiser_recurring} f on f.order_id = u.order_id
   SET u.order_status = 'canceled' where f.master_order_id = %d and u.order_status = 'pending_future_payment'";
    db_query($sql, $master_order_id);
 
   // delete recurring information
   $sql = "update {fundraiser_recurring} set gateway_resp = 'canceled', cancellation_reason = '%s' where master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')";
   db_query($sql, $reason, $master_order_id);
-  
+
   $order_ids = array();
   // add a comment to the canceled orders
   while ($data = db_fetch_object($result)) {
     $order_ids[] = $data->order_id;
     uc_order_comment_save($data->order_id, $user->uid, 'Order canceled by an administrator. Reason: ' . $reason, 'order', 'canceled', FALSE);
   }
-  
+
   // call out to saleforce module if installed
   if (module_exists('sf_donation')) {
     sf_donation_canel_recurring_donations($master_order_id);
   }
-  
+
   drupal_set_message("All future payments cancelled.");
-  
+
   //drupal_goto("user/$user->uid/recurring_overview");
 }
 
@@ -668,21 +668,21 @@ function fundraiser_recurring_user_edit_forms() {
 
 function _recurring_donation_edit_forms($master_order_id) {
   // we need an unprocessed child order for billing information
-  $child_order_id = db_result(db_query("select order_id from {fundraiser_recurring} 
+  $child_order_id = db_result(db_query("select order_id from {fundraiser_recurring}
     where master_order_id = %d and gateway_resp is null limit 1", $master_order_id));
   $order = uc_order_load($child_order_id);
   $nid = $order->products[0]->nid;
-  
+
   $output = '<div>' . _get_billing_information($master_order_id, $order) . '</div>';
   // render 3 forms
   $output .= drupal_get_form('fundraiser_donation_amount_form', $master_order_id, $nid);
-  
+
   // 4/5/2010 - commented out for time being because authorize.net does not support updating
   //             CIM profiles at this time
   // $output .= drupal_get_form('fundraiser_billing_update_form', $master_order_id, $order);
-  
+
   $output .= drupal_get_form('fundraiser_cancel_form', $master_order_id);
-  
+
   return $output;
 }
 
@@ -691,7 +691,7 @@ function _get_billing_information($master_order_id, $order) {
   $orders_remaining = _remaining_recurring_charge_count($master_order_id);
   $orders_processed = _processed_recurring_charge_count($master_order_id);
   $donation_amount = '$' . money_format('%i', $order->order_total);
-  
+
   $billing_str = "";
   $billing_str .= "<div class='order-pane pos-left'>";
   $billing_str .= "<div class='order-pane-title'>Bill to:</div>";
@@ -716,9 +716,9 @@ function _get_billing_information($master_order_id, $order) {
 
 function _get_pending_recurring_orders($order_id) {
   // get the ids of the child orders
-  $sql = "SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND 
+  $sql = "SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND
     (gateway_resp IS NULL OR gateway_resp = 'failed')";
-    
+
    return db_query($sql, $order_id);
 }
 

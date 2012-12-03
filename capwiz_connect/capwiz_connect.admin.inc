@@ -38,7 +38,7 @@ function capwiz_connect_account_list() {
   );
 
   $accounts = array();
-  
+
   $result = db_query('SELECT * FROM {capwiz_connect_accounts} ORDER BY display_name');
   while ($row = db_fetch_object($result)) {
     $accounts[] = array(
@@ -50,7 +50,7 @@ function capwiz_connect_account_list() {
       l('delete', 'admin/settings/capwiz_connect/accounts/' . $row->id . '/delete'),
     );
   }
-  
+
   if (empty($accounts)) {
     $accounts[] = array(
       array(
@@ -59,7 +59,7 @@ function capwiz_connect_account_list() {
       ),
     );
   }
-  
+
   return theme_table($table_headers, $accounts);
 }
 
@@ -76,11 +76,11 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
       '#value' => $account->id,
     );
     $account_details = (array)$account;
-    
+
     // Go to the overview page after saving
     $form['#redirect'] = 'admin/settings/capwiz_connect/accounts/' . $account->id;
   }
-  
+
   $form['display_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Display Name'),
@@ -116,12 +116,12 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
     '#required' => FALSE,
     '#default_value' => $account_details['form_affiliation'],
   );
-  
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
-  );  
-  
+  );
+
   return $form;
 }
 
@@ -140,7 +140,7 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
   if (!empty($values['user_password'])) {
     $record['user_password'] = $values['user_password'];
   }
-  
+
   // Determine if inserting or updating
   if ($values['account_id'] > 0) {
     // Nuke any previously-cached session information
@@ -148,7 +148,7 @@ function capwiz_connect_account_addoredit_submit($form, &$form_state) {
     $client_id_cache_id = 'capwiz_cache_id_' . $values['account_id'];
     cache_set($session_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
     cache_set($client_id_cache_id, FALSE, 'cache', CACHE_TEMPORARY);
-    
+
     $saved_record = drupal_write_record('capwiz_connect_accounts', $record, 'id');
     if ($saved_record) {
       drupal_set_message(t('Account updated'));
@@ -177,7 +177,7 @@ function capwiz_connect_account_overview($account) {
     '#title' => t('Display Name'),
     '#weight' => 0,
   );
-  
+
   $connection = capwiz_connect($account->id);
   if ($connection->isConnected()) {
     $form['creds_ok'] = array(
@@ -201,7 +201,7 @@ function capwiz_connect_account_overview($account) {
       '#weight' => 10,
     );
   }
-  
+
   $form['user_mapping'] = array(
     '#type' => 'item',
     '#value' => (isset($account->mapping_user)) ? 'Set' : 'Not set',
@@ -214,7 +214,7 @@ function capwiz_connect_account_overview($account) {
     '#title' => t('Action Mapping'),
     '#weight' => 20,
   );
-  
+
   return drupal_render($form);
 }
 
@@ -228,9 +228,9 @@ function capwiz_connect_account_delete($form_state, $account) {
     $form = array(
       '#account_id' => $account->id,
     );
-    
+
     $cancel_path = 'admin/settings/capwiz_connect/accounts/' . $account->id;
-    
+
     return confirm_form(
       $form,
       t('Are you sure you want to delete the account %display_name?', array('%display_name' => $account->display_name)),
@@ -252,14 +252,14 @@ function capwiz_connect_account_delete($form_state, $account) {
  */
 function capwiz_connect_account_delete_submit($form, &$form_state) {
   $account_id = $form['#account_id'];
-  
+
   // Delete the account record
   db_query('DELETE FROM {capwiz_connect_accounts} WHERE id = %d', $account_id);
-  
+
   // Delete any field mappings
   $drupal = 'capwiz_connect:' . $account_id . ':%';
   db_query("DELETE FROM {salesforce_management_field_map} where drupal LIKE '%s'", $drupal);
-  
+
   drupal_set_message(t('The account has been deleted.'));
   $form_state['redirect'] = 'admin/settings/capwiz_connect/accounts';
 }
@@ -272,7 +272,7 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
 /**
  * User mapping form functions
  */
- 
+
 /**
  * User field mapping for Capwiz Connect account
  * Based on sf_webform_mapping_form()
@@ -291,7 +291,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
 
   // Get the custom fields for users from Capwiz
   $connection = capwiz_connect($account->id);
-  
+
   $user_fields['capwiz_user_id'] = (object)array(
     'label' => 'Capwiz User ID',
     'formInputType' => 'auto',
@@ -301,7 +301,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   if (is_array($custom_user_fields)) {
     $user_fields += $custom_user_fields;
   }
-    
+
   // Add fields for the legislator fields
   $user_fields['fed_senator_1'] = (object)array(
     'label' => 'Federal Senator 1',
@@ -363,8 +363,8 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     'label' => 'Governor Email',
     'formInputType' => 'auto',
   );
-    
-    
+
+
   // Load an array of Drupal user fields for targets
   $drupal_user_fields = array(
     '' => '',
@@ -384,7 +384,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     }
   }
   foreach ($user_fields as $field_key => $field) {
-      
+
     // Capwiz field
     $form['map']['user_field'][$field_key] = array(
       '#type' => 'item',
@@ -402,19 +402,19 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
       '#default_value' => (isset($account->mapping_user['business'][$field_key])) ? $account->mapping_user['business'][$field_key] : '',
       '#options' => array(
         '' => '',
-        'blank' => t('Overwrite when blank'), 
+        'blank' => t('Overwrite when blank'),
         'append' => t('Append'),
         'always' => t('Always overwrite'),
         'never' => t('Never overwrite'),
       ),
     );
   }
-    
+
   // Fields specific to this account that can be mapped to Drupal user fields
   // This is a little goofy:
   //   Put an item in $form['capwiz_field_map'] for the label
   //   Put an item in $form['map']['drupal_user_field'] for the Drupal user field dropdown
-    
+
   $form['capwiz_field_map']['form_affiliation'] = array(
     '#type' => 'item',
     '#description' => t('Form Affiliation'),
@@ -429,8 +429,8 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
     '#type' => 'select',
     '#default_value' => (isset($account->mapping_user['business']['form_affiliation'])) ? $account->mapping_user['business']['form_affiliation'] : '',
     '#options' => array(
-      '' => '', 
-      'blank' => t('Overwrite when blank'), 
+      '' => '',
+      'blank' => t('Overwrite when blank'),
       'append' => t('Append'),
       'always' => t('Always overwrite'),
       'never' => t('Never overwrite'),
@@ -461,10 +461,10 @@ function capwiz_connect_account_user_mapping_submit($form, &$form_state) {
 /**
  * Theme the user mapping form. Based on theme_sf_webform_mapping_form()
  */
-function theme_capwiz_connect_user_mapping_form($form) {  
+function theme_capwiz_connect_user_mapping_form($form) {
   if ($form['map']['user_field']) {
     $map = $form['map'];
-    
+
 
     $capwiz_fields = element_children($map['user_field']);
     foreach ($capwiz_fields as $field_key) {
@@ -474,14 +474,14 @@ function theme_capwiz_connect_user_mapping_form($form) {
       $row[] = drupal_render($map['business'][$field_key]);
       $rows[] = $row;
     }
-    
+
     // Set the headers for the table. Action mapping does NOT include business rules
     $header = array(
       "Capwiz User Field",
       "Drupal User Field",
       "Business rules Capwiz to Drupal",
     );
-    
+
     $output = theme('table', $header, $rows, array('id' => 'capwiz_connect_user_mapping_form'));
 
     // Additional hard-coded fields that can be mapped
@@ -501,13 +501,13 @@ function theme_capwiz_connect_user_mapping_form($form) {
       "Drupal User Field",
       "Business rules Capwiz to Drupal",
     );
-    
-    $output .= theme('table', $header, $rows);    
+
+    $output .= theme('table', $header, $rows);
 
     // Remove map so it's not rendered twice
     unset($form['map']);
     unset($form['capwiz_field_map']);
-    
+
     $output .= drupal_render($form['submit']);
     $output .= drupal_render($form);
     return $output;
@@ -571,12 +571,12 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
     '#suffix' => '</div>',
     '#value' => '&nbsp;',
   );
-  
+
   // Only build the field mapping form if a Salesforce object type has been
   // selected to map to
   if ($form_state['values']['object'] || !empty($account->mapping_action['sf_object'])) {
     $object = !empty($account->mapping_action['sf_object']) ? $account->mapping_action['sf_object'] : $form_state['values']['object'];
-    
+
     // Get the fields available on this type of Salesforce object
     $object_details = _capwiz_connect_get_sf_object_details($object);
     if (!empty($object_details)) {
@@ -587,9 +587,9 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       foreach ($fields as $key => $value) {
         $options[$key] = $value['label'];
       }
-    
+
       $disabled = !empty($account->mapping_action['sf_object']) ? FALSE : TRUE;
-    
+
       $form['record_type'] = array(
         '#type' => 'select',
         '#title' => t('Record Type'),
@@ -597,7 +597,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
         '#options' => $record_types,
         '#default_value' => $account->mapping_action['recordtype_id'],
       );
-    
+
       // Define the Capwiz fiels that can be defined to SF fields
       // Field name as key, displayable label as the value
       $capwiz_fields = array(
@@ -607,15 +607,15 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
         'messageId' => 'Message ID',
         'userId' => 'Capwiz User ID',
       );
-    
+
       // Only allow mapping to the Contact in SF if the SF User Integration module is available
       if (module_exists('sf_user')) {
         $capwiz_fields['sf_userid'] = 'Salesforce User Record';
       }
-    
+
       foreach ($capwiz_fields as $field_key => $field_label) {
         $map_for_field = $account->mapping_action['map'][$field_key];
-      
+
         // Capwiz field
         $form['map']['user_field'][$field_key] = array(
           '#type' => 'item',
@@ -626,8 +626,8 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
           '#type' => 'select',
           '#options' => $options,
           '#default_value' => $account->mapping_action['map'][$field_key],
-        );      
-      
+        );
+
         if ($map_for_field && ($fields[$map_for_field]['idLookup'] || $fields[$map_for_field]['externalId'])) {
           if ($account->mapping_action['dedupe_key'] == $map_for_field) {
             $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
@@ -643,7 +643,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
           '#value' => $value,
         );
       }
-    
+
       // Fields specific to this account that can be mapped to SF
       // This is a little goofy:
       //   Put an item in $form['capwiz_field_map'] for the label
@@ -664,7 +664,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
       '#value' => t('Remove Map'),
       '#submit' => array('capwiz_connect_remove_mapping'),
     );
-    
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => 'Submit',
@@ -679,7 +679,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
 function capwiz_connect_account_action_mapping_submit($form, &$form_state) {
   return _capwiz_connect_save_field_mapping_save($form, $form_state);
 }
-  
+
 
 
 
@@ -732,10 +732,10 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state, $show_save
       }
     }
     $map['business'] = serialize($business);
-    
+
 
     salesforce_management_api_fieldmap_save($map);
-    
+
     if ($show_saved_message) {
       drupal_set_message(t('Salesforce mapping has been saved. Please select a dedupe field if you want to prevent duplicate objects from being created in Salesforce.'));
     }
@@ -750,7 +750,7 @@ function _capwiz_connect_save_field_mapping_save($form, &$form_state, $show_save
  * capwiz_connect_render_salesforce_object_fields(), since both render the form
  * in different situations.
  */
-function theme_capwiz_connect_account_mapping_form($form) {  
+function theme_capwiz_connect_account_mapping_form($form) {
   if ($form['map']['user_field']) {
     $output = drupal_render($form['object']);
     $output .= drupal_render($form['record_type']);
@@ -767,7 +767,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $row[] = drupal_render($map['dedupe'][$field_key]);
       $rows[] = $row;
     }
-    
+
     // Set the headers for the table. Action mapping does NOT include business rules
     if ($form['#map_type'] == 'action') {
       $header = array(
@@ -784,7 +784,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
         "Dedupe Field"
       );
     }
-    
+
     $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
 
     // Additional hard-coded fields that can be mapped
@@ -816,12 +816,12 @@ function theme_capwiz_connect_account_mapping_form($form) {
       );
     }
 
-    $output .= theme('table', $header, $rows);    
+    $output .= theme('table', $header, $rows);
 
     // Remove map so it's not rendered twice
     unset($form['map']);
     unset($form['capwiz_field_map']);
-    
+
     $output .= drupal_render($form['submit']);
     $output .= drupal_render($form['remove']);
     $output .= drupal_render($form);
@@ -853,7 +853,7 @@ function capwiz_connect_render_salesforce_object_fields() {
   $output = drupal_render($form['record_type']);
 
   $map = $form['map'];
-  
+
   // Add all the mappable fields as elements in an array to be passed into the
   // theme function
   $rows = array();
@@ -885,9 +885,9 @@ function capwiz_connect_render_salesforce_object_fields() {
       "Dedupe Field"
     );
   }
-  
+
   $output .= theme('table', $header, $rows, array('id' => 'capwiz_connect_account_mapping_form'));
-  
+
   // Additional hard-coded fields that can be mapped
   $rows = array();
   $capwiz_fields = element_children($form['capwiz_field_map']);
@@ -919,7 +919,7 @@ function capwiz_connect_render_salesforce_object_fields() {
   }
 
   $output .= theme('table', $header, $rows);
-  
+
   $output .= drupal_render($form['submit']);
 
   // Final rendering callback.
@@ -932,15 +932,15 @@ function capwiz_connect_render_salesforce_object_fields() {
  * Submit handler to delete the salesforce map from a user
  */
 function capwiz_connect_remove_mapping($form, &$form_state) {
-  $drupal = 'capwiz_connect:' . $form['#account']->id . ':' . $form['#map_type'];  
-  db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);  
+  $drupal = 'capwiz_connect:' . $form['#account']->id . ':' . $form['#map_type'];
+  db_query("DELETE FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal);
   drupal_set_message(t('Salesforce mapping has been removed'));
 }
 
 
 /**
  * Callback for AJAX function to set the dedupe field on a mapping
- * 
+ *
  * @param $acount
  *   Account object
  * @param $map_type
@@ -957,7 +957,7 @@ function capwiz_connect_add_dedupe_field($account, $map_type, $field_name) {
 
 /**
  * Callback for AJAX function to remove the dedupe field on a mapping
- * 
+ *
  * @param $acount
  *   Account object
  * @param $map_type
@@ -1014,17 +1014,17 @@ function _capwiz_connect_get_sf_object_details($object_name) {
         $record_types[$record_type->recordTypeId] = $record_type->name;
       }
     }
-    
+
     $object_fields[] = '--Select One--';
     $record_types[] = '--Select One--';
-    
+
     asort($object_fields);
     asort($record_types);
-    
+
     return array(
       'fields' => $object_fields,
       'record_types' => $record_types,
     );
-  }  
+  }
   return array();
 }

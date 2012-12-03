@@ -3,7 +3,7 @@
  * @file
  * The Springboard Social module provides a level of integration with Facebook for donation forms.
  */
- 
+
 /**
  * Implements hook_init().
  */
@@ -60,7 +60,7 @@ function springboard_social_theme() {
 
 /**
  * Implements hook_preprocess_fundraiser_confirmation().
- * 
+ *
  * Adds social networking variables to the confirmation template.
  */
 function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
@@ -68,19 +68,19 @@ function springboard_social_preprocess_fundraiser_confirmation(&$vars) {
   $node = node_load(arg(1));
   $vars['springboard_social_share'] = theme('springboard_social_fb_share_link',
           $app_id,
-          $node->fb_share_link, 
+          $node->fb_share_link,
           $node->fb_share_name,
           $node->fb_share_picture,
           $node->fb_share_description,
           $node->fb_share_message);
-          
+
   $vars['springboard_social_share'] .= theme('springboard_social_gplus_share_link',
           variable_get('springboard_social_gplus_button_size', 'small'),
           variable_get('springboard_social_gplus_annotation', 'none'),
           $node->gplus_href,
           $node->gplus_image_url,
           $node->gplus_description);
-          
+
   //drupal_set_message('vars:' . print_r($vars['springboard_social_gplus_button, TRUE));
 }
 
@@ -189,10 +189,10 @@ function springboard_social_form_validate(&$form, $form_state) {
 
 /**
  * Loads share settings for a particular node.
- * 
+ *
  * @param $nid
  * Int Node ID
- * 
+ *
  * @return
  * Returns an object containing the fb share link configuation.
  */
@@ -200,10 +200,10 @@ function springboard_social_load_share(&$node) {
   global $base_url;
   $share_status = variable_get('springboard_social_share_display', 0);
   $gplus_status = variable_get('springboard_social_gplus_display', 0);
-  
+
   $share_settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_share} WHERE nid = %d', $node->nid));
   $gplus_settings = db_fetch_array(db_query('SELECT * FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
- 
+
   if ($share_settings['nid']) {
     $node->fb_share_status = $share_settings['status'];
     $node->fb_share_name = $share_settings['name'];
@@ -221,7 +221,7 @@ function springboard_social_load_share(&$node) {
     $node->fb_share_description = variable_get('springboard_social_message', '');
     $node->fb_share_message = variable_get('springboard_social_description', '');
   }
-  
+
   if ($gplus_settings['nid']) {
     $node->gplus_share_status = $gplus_settings['status'];
     $node->gplus_href = $gplus_settings['href'];
@@ -234,7 +234,7 @@ function springboard_social_load_share(&$node) {
     $node->gplus_href = $base_url . "/node/" . $node->nid;
     $node->gplus_image_url = '';
     $node->gplus_description = '';
-  } 
+  }
 }
 
 /**
@@ -250,7 +250,7 @@ function springboard_social_nodeapi(&$node, $op) {
   switch ($op) {
     case 'load':
       springboard_social_load_share($node);
-      
+
       break;
     case 'insert':
 
@@ -259,7 +259,7 @@ function springboard_social_nodeapi(&$node, $op) {
         $node->nid,
         $node->fb_share_status,
         $node->fb_share_name,
-        $node->fb_share_link, 
+        $node->fb_share_link,
         $node->fb_share_picture,
         $node->fb_share_description,
         $node->fb_share_message
@@ -279,12 +279,12 @@ function springboard_social_nodeapi(&$node, $op) {
       $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_share} WHERE nid = %d', $node->nid));
       if ($entry_exists) {
 
-        db_query("UPDATE {springboard_social_share} 
-          SET status = %d, name = '%s', link = '%s', picture = '%s', description = '%s', message = '%s' 
-          WHERE nid = %d", 
-          $node->fb_share_status, 
-          $node->fb_share_name, 
-          $node->fb_share_link, 
+        db_query("UPDATE {springboard_social_share}
+          SET status = %d, name = '%s', link = '%s', picture = '%s', description = '%s', message = '%s'
+          WHERE nid = %d",
+          $node->fb_share_status,
+          $node->fb_share_name,
+          $node->fb_share_link,
           $node->fb_share_picture,
           $node->fb_share_description,
           $node->fb_share_message,
@@ -292,25 +292,25 @@ function springboard_social_nodeapi(&$node, $op) {
         );
       }
       else {
-        
+
         db_query("INSERT INTO {springboard_social_share} (nid, status, name, link, picture, description, message)
           VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s')",
           $node->nid,
           $node->fb_share_status,
           $node->fb_share_name,
-          $node->fb_share_link, 
+          $node->fb_share_link,
           $node->fb_share_picture,
           $node->fb_share_description,
           $node->fb_share_message
         );
       }
-      
+
   $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
       if ($entry_exists) {
 
-        db_query("UPDATE {springboard_social_gplus} 
-          SET status = %d, href = '%s', image_url = '%s', description = '%s' 
-          WHERE nid = %d", 
+        db_query("UPDATE {springboard_social_gplus}
+          SET status = %d, href = '%s', image_url = '%s', description = '%s'
+          WHERE nid = %d",
           $node->gplus_share_status,
           $node->gplus_href,
           $node->gplus_image_url,
@@ -319,7 +319,7 @@ function springboard_social_nodeapi(&$node, $op) {
         );
       }
       else {
-        
+
         db_query("INSERT INTO {springboard_social_gplus} (nid, status, href, image_url, description)
         VALUES (%d, %d, '%s', '%s', '%s')",
         $node->nid,

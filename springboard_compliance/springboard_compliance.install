@@ -2,7 +2,7 @@
 
 /**
  * @file installation file for Springboard Compliance module
- */ 
+ */
 function springboard_compliance_install() {
   variable_set('uc_credit_debug', FALSE);
 }

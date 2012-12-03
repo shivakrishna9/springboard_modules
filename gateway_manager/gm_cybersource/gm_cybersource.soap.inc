@@ -10,7 +10,7 @@
 class CyberSourceSoapClient extends SoapClient {
   private $_merchant_id;
   private $_transaction_key;
-  
+
   function __construct($wsdl, $options = NULL) {
     $this->_merchant_id = $options['merchant_id'];
     $this->_transaction_key = $options['transaction_key'];

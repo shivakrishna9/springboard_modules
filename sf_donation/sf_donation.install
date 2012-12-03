@@ -34,7 +34,7 @@ function sf_donation_disable() {
   foreach ($types as $type) {
     // remove the type from the queue processor
     queue_processor_remove_type($type);
-  }  
+  }
 }
 
 /**
@@ -73,7 +73,7 @@ function sf_donation_schema() {
       ),
     ),
   );
-  
+
   $schema['fundraiser_salesforce_map'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -111,7 +111,7 @@ function sf_donation_schema() {
       ),
     ),
   );
-  
+
   $schema['sf_donation_opportunity_contact_role'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -143,7 +143,7 @@ function sf_donation_schema() {
       ),
     ),
   );
-  
+
   return $schema;
 }
 
@@ -170,10 +170,10 @@ function sf_donation_update_6101() {
 function sf_donation_update_6202() {
   // set the default backend
   variable_set('sf_donation_backend', 'npsp');
-  
+
   // store our updates
   $updates = array();
-  
+
   // first add some new fields
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN single_recordtype_id varchar(18)");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN recurring_recordtype_id varchar(18)");
@@ -181,14 +181,14 @@ function sf_donation_update_6202() {
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN salesforce varchar(50)");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} ADD COLUMN remove int(11)");
   $updates[] = update_sql("UPDATE {fundraiser_salesforce_map} SET remove = 1");
-  
+
   // update existing fieldmaps to the new format
   sf_donation_upgrade_fieldmaps();
-  
+
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN remove");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN cid");
   $updates[] = update_sql("ALTER TABLE {fundraiser_salesforce_map} DROP COLUMN map_id");
-  
+
   return $updates;
 }
 
@@ -200,28 +200,28 @@ function sf_donation_upgrade_fieldmaps() {
   if (is_array($default_map)) {
     $default_map = array_flip(DonationMapper::GetDefaultMap($integrator['id']));
   }
-    
+
   // get unique nids for each defined map
   $result = db_query("SELECT DISTINCT nid FROM {fundraiser_salesforce_map}");
-  
+
   while ($data = db_fetch_object($result)) {
     $this_map = $default_map;
-    
+
     // get all fields in the map
-    $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m 
+    $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m
                       INNER JOIN webform_component w ON m.cid = w.cid AND m.nid = w.nid
                       WHERE w.nid = %d", $data->nid);
-    
+
     while ($field = db_fetch_object($map)) {
       if (!array_key_exists($field->map_id, $this_map)) {
-        $this_map[$field->map_id] = $field->form_key; 
+        $this_map[$field->map_id] = $field->form_key;
       }
     }
-    
+
     db_query("INSERT INTO {fundraiser_salesforce_map} (nid, fields, salesforce) VALUES (%d, '%s', '%s')", $data->nid, serialize($this_map), 'Opportunity');
-    db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);                  
+    db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d AND remove = 1", $data->nid);
   }
-  
+
 }
 
 /**

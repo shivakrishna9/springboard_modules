@@ -70,7 +70,7 @@ class DrupalSalesforce {
     }
     catch (Exception $e) {
       // Log the error message.
-      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') . 
+      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .
         '<br>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br>' .
         'Error: <pre>'. check_plain($e->faultstring) .'</pre>', WATCHDOG_ERROR);
 
@@ -136,7 +136,7 @@ class DrupalSalesforce {
     $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
     $fields = array_keys($object['fields']);
-    
+
     // apend extra fields if available
     if (!empty($extra_fields)) {
       foreach($extra_fields as $field) {

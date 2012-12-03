@@ -20,7 +20,7 @@ function fundraiser_ab_uninstall() {
  */
 function fundraiser_ab_schema() {
   $schema = array();
-  
+
   $schema['fundraiser_ab_stats'] = array(
     'description' => t('Store totaled information about '),
     'fields' => array(
@@ -68,8 +68,8 @@ function fundraiser_ab_schema() {
       'test_nid' => array('test_nid'),
       'webform_nid' => array('webform_nid'),
     ),
-  );  
-  
+  );
+
   return $schema;
 }
 
@@ -126,7 +126,7 @@ function fundraiser_ab_update_6200() {
       'webform_nid' => array('webform_nid'),
     ),
   );
-  
+
   db_create_table($ret, 'fundraiser_ab_stats', $schema);
   return $ret;
 }

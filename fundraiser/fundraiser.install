@@ -30,7 +30,7 @@ function fundraiser_uninstall() {
 
   drupal_uninstall_schema('fundraiser');
   db_query("DROP VIEW {fundraiser_webform_data}");
-  db_query("DROP VIEW {fundraiser_webform_recurring_order}");  
+  db_query("DROP VIEW {fundraiser_webform_recurring_order}");
 }
 
 /**
@@ -39,7 +39,7 @@ function fundraiser_uninstall() {
 function fundraiser_enable() {
   configure_ubercart_settings();
   create_countries();
-  
+
   /**
    *  Add the donation_form node type to the array of node types handled
    * by the webform module.
@@ -53,7 +53,7 @@ function fundraiser_enable() {
   $result = variable_get('webform_node_types', array('webform'));
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
-  
+
   // New for webform 3.9. Let webform know the primary purpose of this node type is for webforms
   $result = variable_get('webform_node_types_primary', array('webform'));
   if (!in_array('donation_form', $result)) {
@@ -71,7 +71,7 @@ function fundraiser_enable() {
 function fundraiser_disable() {
   remove_ubercart_settings();
   remove_countries();
-  
+
   // Remove donation_form from the list of webform_node_types.
   // Not really necessary, but still good to clean up after ourselves
   $result = variable_get('webform_node_types', array('webform'));
@@ -243,7 +243,7 @@ function fundraiser_schema() {
     ),
     'primary key' => array('webform_nid', 'order_id'),
   );
-  
+
   $schema['fundraiser_refund'] = array(
     'description' => t('Stores information about refunds made on donations'),
     'fields' => array(
@@ -283,7 +283,7 @@ function fundraiser_schema() {
     'primary key' => array('refund_id'),
     'indexes' => array('refund_order_id' => array('order_id')),
   );
-  
+
   $schema['fundraiser_recurring'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -382,7 +382,7 @@ function fundraiser_schema() {
     'primary key' => array('order_id'),
     'indexes' => array('master_order_id' => array('master_order_id')),
   );
-  
+
   $schema['fundraiser_component_map'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -407,7 +407,7 @@ function fundraiser_schema() {
     ),
     'primary key' => array('nid', 'cid'),
   );
-  
+
   $schema['fundraiser_tracking'] = array(
     'description' => t('Store conversion & pageview information for donation forms.'),
     'fields' => array(
@@ -465,22 +465,22 @@ function fundraiser_schema() {
 
 // Adds fundraiser specific ubercart settings
 function configure_ubercart_settings() {
-  
+
   $statuses = _fundraiser_statuses();
-  
+
   // create each ubercart status
   foreach ($statuses as $status_id => $status) {
     db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, "
       ."weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
       $status_id, $status['title'], $status['state'], $status['weight'], $status['locked']);
   }
-  
+
 }
 
 // Removes fundraiser specific ubercart settings
 function remove_ubercart_settings() {
   $statuses = _fundraiser_statuses();
-  
+
   // remove each ubercart status
   foreach ($statuses as $status_id => $status) {
     db_query("DELETE FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status_id);
@@ -515,7 +515,7 @@ function _fundraiser_statuses() {
       'weight' => -21,
     ),
   );
-  
+
   return $fundraiser_statuses;
 }
 
@@ -803,11 +803,11 @@ function fundraiser_update_2() {
     FROM {webform_submitted_data} sd
     INNER JOIN {webform_component} wc on wc.cid = sd.cid
     GROUP BY sd.sid, sd.nid");
-    
+
   $items[] = update_sql("CREATE VIEW {fundraiser_webform_recurring_order} AS
     SELECT f.sid, f.webform_nid AS nid, r.order_id, r.sf_opportunity_id AS sfid FROM {fundraiser_webform_order} f
     INNER JOIN {fundraiser_recurring} r ON r.master_order_id = f.order_id");
-    
+
   return $items;
 }
 
@@ -819,7 +819,7 @@ function fundraiser_update_6210() {
   db_query("ALTER TABLE {fundraiser_webform_order} ADD recurring_status int(11) DEFAULT 0");
   db_query("ALTER TABLE {fundraiser_recurring} ADD gateway varchar(100)");
   db_query("ALTER TABLE {fundraiser_recurring} ADD txn_id varchar(55)");
- 
+
   db_query("UPDATE {fundraiser_webform_order} SET recurring_status = 1 WHERE order_id IN (SELECT master_order_id FROM {fundraiser_recurring})");
 }
 
@@ -851,7 +851,7 @@ function fundraiser_update_6300() {
   $ret[] = update_sql("UPDATE fundraiser_component_map set map_id = 'profile_zip' WHERE map_id = 'profile_postal_code'");
   //update the zip code profile field name
   $ret[] = update_sql("UPDATE profile_fields set name = 'profile_zip' WHERE name = 'profile_postal_code'");
-  
+
   //Update the webform recurs_monthly field select values
   $result = db_query("SELECT * FROM {webform_component} WHERE form_key = 'recurs_monthly'");
   while ($data = db_fetch_array($result)) {
@@ -859,7 +859,7 @@ function fundraiser_update_6300() {
     // If this is the standard setup then the first option will have the 1 value
     if (strpos($extra['items'], '1|') === 0) {
       $extra['items'] = str_replace("1|", "recurs|", $extra['items']);
-      $extra = serialize($extra);      
+      $extra = serialize($extra);
       db_query("UPDATE {webform_component} SET extra = '%s' WHERE cid = %d and nid = %d", $extra, $data['cid'], $data['nid']);
     }
   }
@@ -899,7 +899,7 @@ function fundraiser_update_6301() {
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
   $ret[] = array('success' => TRUE, 'query' => 'Added donation form to webform types variable.');
-  
+
   // make a copy of all items in fundraiser_gateway
   $ret[] = update_sql(
     "
@@ -909,7 +909,7 @@ function fundraiser_update_6301() {
       nid, gateway, confirmation_email_from_name, confirmation_email_from_email, confirmation_email_subject, confirmation_email_message, donation_amounts, show_other_amount, minimum_donation_amount, internal_name from {fundraiser_gateway}
     "
   );
-  
+
   // change all donation form webforms to the new donation_form content type
   $ret[] = update_sql("UPDATE {node} SET type = 'donation_form' WHERE nid IN (SELECT nid FROM {fundraiser_gateway} WHERE is_donation_form = 1)");
   $ret[] = update_sql("DROP TABLE {fundraiser_gateway}");
@@ -950,7 +950,7 @@ function fundraiser_update_6304() {
   db_add_field($updates, 'fundraiser', 'confirmation_page_title', array('type' => 'varchar', 'length' => 255));
   db_add_field($updates, 'fundraiser', 'confirmation_page_body', array('type' => 'text'));
   db_add_field($updates, 'fundraiser', 'redirect_url', array('type' => 'varchar', 'length' => 255));
-  
+
   // update existing donation forms
   $result = db_query(
     "
@@ -959,13 +959,13 @@ function fundraiser_update_6304() {
       INNER JOIN {node} n on n.nid = w.nid
     "
   );
-  
+
   // update each donation form with values from the webform
   while ($data = db_fetch_object($result)) {
     db_query("UPDATE {fundraiser} SET confirmation_page_title = '%s', confirmation_page_body = '%s', redirect_url = '%s' WHERE nid = %d",
       $data->title, $data->confirmation, $data->redirect_url, $data->nid);
   }
-  
+
   return $updates;
 }
 
@@ -995,9 +995,9 @@ function fundraiser_update_6306() {
     'billing_country' => 'country',
     'billing_zipcode' => 'zip',
   );
-  
+
   $result = db_query("SELECT nid FROM {node} WHERE type = 'donation_form'");
-  
+
   // loop over every donation form and change the field key for each component
   while ($data = db_fetch_object($result)) {
     foreach($changes as $old_key => $new_key) {
@@ -1068,7 +1068,7 @@ function fundraiser_update_6311() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_webform_order', 'auth_code', $field);
-  
+
   $recurring_field = array(
     'description' => t('Payment gateway authorization code'),
     'type' => 'varchar',
@@ -1077,7 +1077,7 @@ function fundraiser_update_6311() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_recurring', 'auth_code', $recurring_field);
-  
+
   return $ret;
 }
 
@@ -1086,9 +1086,9 @@ function fundraiser_update_6311() {
  */
 function fundraiser_update_6312() {
   $ret = array();
-  
+
   db_add_index($ret, 'fundraiser_recurring', 'master_order_id', array('master_order_id'));
-  
+
   return $ret;
 }
 
@@ -1129,7 +1129,7 @@ function fundraiser_update_6315() {
  */
 function fundraiser_update_6316() {
   global $base_url;
-  
+
   $ret = array();
   $field =  array(
     'description' => t('The full url of the donation form that the order was created from.'),
@@ -1139,7 +1139,7 @@ function fundraiser_update_6316() {
     'default' => '',
   );
   db_add_field($ret, 'fundraiser_webform_order', 'form_url', $field);
-  
+
   $recurring_field = array(
     'description' => t('The full url of the donation form that the order was created from.'),
     'type' => 'varchar',
@@ -1148,9 +1148,9 @@ function fundraiser_update_6316() {
     'defautl' => '',
   );
   db_add_field($ret, 'fundraiser_recurring', 'form_url', $recurring_field);
-  
+
   $form_path = $base_url . '/node/';
-  
+
   // update existing records to old default
   db_query("UPDATE {fundraiser_webform_order} SET form_url = concat('%s', webform_nid)", $form_path);
   db_query("
@@ -1159,8 +1159,8 @@ function fundraiser_update_6316() {
     ON f.order_id = r.master_order_id
     SET r.form_url = concat('%s', f.webform_nid)", $form_path
   );
-  
-  return $ret;  
+
+  return $ret;
 }
 
 /**

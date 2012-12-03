@@ -9,7 +9,7 @@
  * Implementation of hook_rules_event_info().
  */
 function queue_processor_rules_event_info() {
-  
+
   $arguments = array(
     'type' => array(
       'type' => 'value',
@@ -32,7 +32,7 @@ function queue_processor_rules_event_info() {
       'label' => t('The error that caused the object to fail'),
     ),
   );
-  
+
   return array(
     'queue_processor_export_error' => array(
       'label' => t('An object fails to export to Salesforce'),
@@ -61,11 +61,11 @@ function queue_processor_rules_condition_info() {
       'label' => t('Check the status code an error'),
       'arguments' => array(
         'error' => array(
-          'type' => 'value', 
+          'type' => 'value',
           'label' => t('The status code of the returned error'),
         ),
         'status_code' => array(
-          'type' => 'string', 
+          'type' => 'string',
           'label' => t('The Salesforce error status code'),
         ),
       ),
@@ -75,7 +75,7 @@ function queue_processor_rules_condition_info() {
       'label' => t('Check the name of a field'),
       'arguments' => array(
         'error' => array(
-          'type' => 'value', 
+          'type' => 'value',
           'label' => t('The error that was returned from Salesforce'),
         ),
         'field' => array(
@@ -111,7 +111,7 @@ function queue_processor_rules_action_info() {
         ),
       ),
     ),
-  );  
+  );
 }
 
 /**
@@ -124,7 +124,7 @@ function queue_processor_condition_drupal_type_form($settings, &$form) {
   foreach($processing_order as $type) {
     $options[$type] = $type;
   }
-  
+
   $form['settings']['drupal_type'] = array(
     '#type' => 'select',
     '#title' => t('Drupal type'),
@@ -179,7 +179,7 @@ function queue_processor_condition_object_field($error, $field) {
   if (stristr($error->fields, $field)) {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -192,12 +192,12 @@ function queue_processor_condition_object_field($error, $field) {
 function _queue_processor_error_event_variables() {
   return array(
     'status_code' => array(
-      'type' => 'string', 
+      'type' => 'string',
       'label' => t('The Salesforce error status code returned from the API')
     ),
     'field' => array(
       'type' => 'string',
-      'label' => 
+      'label' =>
       t('The field in the Salesforce object that caused the error')
     ),
   );

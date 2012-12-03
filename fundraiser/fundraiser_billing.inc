@@ -9,7 +9,7 @@
  * The individual billing update function should return a boolean indicating success or failure
  */
 
-/** 
+/**
  * Generic function that is called by the fundraiser module.
  */
 function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_info) {
@@ -30,7 +30,7 @@ function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_inf
 
 }
 
-/** 
+/**
  * Sage billing information update function.
  */
 function sage_update_billing_information($reference_id, $billing_info) {
@@ -77,23 +77,23 @@ function fundraiser_refund(&$form_state, $order) {
   // Determine how much has been paid, less previous refunds
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
   $total_paid = db_result(db_query($sql, array($order->order_id)));
-  
+
   $context = array(
     'revision' => 'formatted-original',
     'type' => 'amount',
   );
-  
+
   // Get payment info
   $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_webform_order} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));
 
   // If not payment info was found, check if it was a recurring order
   if (!$payment_info) {
-    $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));  
+    $payment_info = db_fetch_array(db_query('SELECT u.receipt_id, u.amount, u.received, f.txn_id FROM {uc_payment_receipts} u LEFT JOIN {fundraiser_recurring} f ON u.order_id = f.order_id WHERE u.amount > 0 AND u.order_id=%d', $order->order_id));
   }
-  
+
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d AND amount < 0';
   $previous_refunds = db_result(db_query($sql, array($order->order_id)));
-  
+
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
     '#title' => t('Payment Summary'),
@@ -107,7 +107,7 @@ function fundraiser_refund(&$form_state, $order) {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
     );
-    
+
   }
   else {
     $form['payment_summary']['payment_number'] = array(
@@ -130,11 +130,11 @@ function fundraiser_refund(&$form_state, $order) {
         '#type' => 'item',
         '#title' => t('Total Previously Refunded'),
         '#value' => uc_price($previous_refunds, $context),
-      );    
+      );
     }
   }
-  
-  
+
+
   $form['refund_options'] = array(
     '#type' => 'fieldset',
     '#title' => t('Refund Options'),
@@ -142,7 +142,7 @@ function fundraiser_refund(&$form_state, $order) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
-  
+
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
   $can_refund = fundraiser_gateway_can_refund_order($order);
   if (!$can_refund || !$payment_info) {
@@ -178,7 +178,7 @@ function fundraiser_refund(&$form_state, $order) {
       '#return_value' => 'partial',
       '#parents' => array('refund_type'),
     );
-  
+
     $form['refund_options']['amount'] = array(
       '#type' => 'textfield',
       '#title' => t('Amount to Refund'),
@@ -198,13 +198,13 @@ function fundraiser_refund(&$form_state, $order) {
       '#value' => t('Issue Refund'),
       '#required' => TRUE,
     );
-  
+
     $form['total_paid'] = array(
       '#type' => 'hidden',
       '#value' => number_format($total_paid, 2),
     );
   }
-  
+
   return $form;
 }
 
@@ -237,8 +237,8 @@ function fundraiser_refund_validate($form, &$form_state) {
         form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no more than that can be refunded.', array('@paid' => uc_price($total_paid, $context))));
       }
     }
-    
-    
+
+
   }
 }
 
@@ -248,15 +248,15 @@ function fundraiser_refund_validate($form, &$form_state) {
  */
 function fundraiser_refund_submit($form, &$form_state) {
   global $user;
-  
+
   $order_id = $form['#order_id'];
   $order = uc_order_load($order_id);
-  
+
   // Determine how much has been paid, less previous refunds
   $sql = 'SELECT SUM(amount) FROM {uc_payment_receipts} WHERE order_id = %d';
   $total_paid = db_result(db_query($sql, array($order_id)));
-  
-  
+
+
   // Partial refund
   if ($form_state['values']['refund_type'] != 'full') {
     $new_order_status = 'partially_refunded';
@@ -280,7 +280,7 @@ function fundraiser_refund_submit($form, &$form_state) {
 
   // Get details on the original payment so we can load the payment gateway details
   $payment_details = db_fetch_object(db_query('SELECT gateway, txn_id FROM {fundraiser_webform_order} WHERE order_id = %d UNION SELECT gateway, txn_id FROM {fundraiser_recurring} WHERE order_id = %d', $order_id, $order_id));
-  
+
   $payment_gateway = module_invoke_all('fundraiser_gateway', 'refund function', $payment_details->gateway);
   $refund_function = $payment_gateway['refund_function'];
   // If additional config options were passed include them
@@ -292,17 +292,17 @@ function fundraiser_refund_submit($form, &$form_state) {
     // call the refund function and store the result
     $result = $refund_function($order->order_id, $amount, $data);
   }
-  
+
   if ($result['success']) {
     // enter the payment
     uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
-    
+
     // Add the comment
     $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
     );
-    
+
     // Make the charge amount positive again, for nice display in the admin comment
     $amount = abs($amount);
 
@@ -310,7 +310,7 @@ function fundraiser_refund_submit($form, &$form_state) {
 
     $amount_formatted = uc_price($amount, $context);
     uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
-    
+
     // get the receipt_id that belongs to this refund
     $receipt_id = NULL;
     $payments = uc_payment_load_payments($order_id);
@@ -320,7 +320,7 @@ function fundraiser_refund_submit($form, &$form_state) {
         $receipt_id = $payment->receipt_id;
       }
     }
-    
+
     // Save refund data
     $refund = new stdClass();
     $refund->order_id = $order_id;
@@ -329,10 +329,10 @@ function fundraiser_refund_submit($form, &$form_state) {
     $refund->txn_id = $result['data']['txn_id'];
     $refund->reason = $reason;
     drupal_write_record('fundraiser_refund', $refund);
-  
+
     // Set order status to Refunded or Partially Refunded
     db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
-    
+
      // If using the Salesforce queue, queue up the updates
      if (module_exists('queue_api')) {
        // Update the original order
@@ -340,11 +340,11 @@ function fundraiser_refund_submit($form, &$form_state) {
        // Create the refund
        sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
      }
-     
+
      drupal_set_message(t('Refund has been issued.'),'status');
      drupal_goto('admin/store/orders/' . $order_id);
    }
-   else { 
+   else {
     // failed to process credit cart
     $log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
     watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);

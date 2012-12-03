@@ -13,7 +13,7 @@ None.
 
 
 -- CONFIGURATION --
-None. 
+None.
 
 
 

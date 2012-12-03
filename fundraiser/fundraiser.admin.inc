@@ -12,7 +12,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#type' => 'value',
     '#value' => $node->nid,
   );
-  
+
   /* Start edit form */
   $form['confirmation_page'] = array(
     '#type' => 'fieldset',
@@ -31,7 +31,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   );
   $body_format = $node->confirmation_page_format ? $node->confirmation_page_format : FILTER_FORMAT_DEFAULT;
   $form['confirmation_page']['format'] = filter_form($body_format, NULL, array('confirmation_page_format'));
-  
+
   $form['confirmation_page']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available confirmation message tokens'),
@@ -41,7 +41,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   $form['confirmation_page']['tokens']['help'] = array(
     '#value' => theme('token_help', 'order') . theme('webform_token_help', $node),
   );
-  
+
   // Redirection settings.
   if (strpos($node->redirect_url, '<') === 0) {
     $redirect = trim($node->redirect_url, '<>');
@@ -79,7 +79,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#default_value' => $redirect_url,
     '#maxlength' => 255,
   );
-  
+
   $form['email'] = array(
     '#type' => 'fieldset',
     '#title' => t('Confirmation email settings'),
@@ -121,7 +121,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#value' => t('Save configuration'),
     '#weight' => 300,
   );
-  
+
   return $form;
 }
 
@@ -196,7 +196,7 @@ function fundraiser_clone_donation_form($nid) {
       $node->title = t('Clone of !title', array('!title' => $node->title));
       $node->internal_name = 'Clone of ' . $original_node->internal_name;
       $node->is_being_cloned = true;
-      
+
       if (variable_get('clone_reset_'. $node->type, FALSE)) {
         $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
         // Fill in the default values.
@@ -226,13 +226,13 @@ function fundraiser_clone_donation_form($nid) {
           db_query("INSERT INTO {fundraiser_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $new_nid, $cid, $data->map_id);
         }
       }
-  
+
       if (module_exists('sf_donation')) {
         sf_donation_clone_map($nid, $new_nid);
        }
 
        module_invoke_all('fundraiser_clone_donation_form', $original_node->nid, $node->nid);
-       
+
        drupal_set_message("Donation form [$original_node->title] has been cloned succesfully.");
        drupal_goto('node/'. $new_nid .'/edit');
     }
@@ -245,28 +245,28 @@ function fundraiser_clone_donation_form($nid) {
  *
  */
 function fundraiser_admin_settings() {
-  
+
   $description = 'Use this option if you want donations to be exported to Salesforce.';
   $attributes = array();
   if (!module_exists('sf_donation')) {
     $description .= ' <span class="admin-disabled">The Salesforce Management Donations module must be enabled in order to use this option.</span>';
     $attributes['disabled'] = 'disabled';
   }
-  
+
   $form['fundraiser_development_mode'] = array(
    '#type' => 'checkbox',
    '#title' => t('Development mode'),
    '#default_value' => variable_get('fundraiser_development_mode', 0),
    '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
-  
+
   $form['fundraiser_default_minimum'] = array(
    '#type' => 'textfield',
    '#title' => t('Default minimum donation amount'),
    '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
    '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
   );
-    
+
   $form['fundraiser_salesforce_integration'] = array(
     '#type' => 'checkbox',
     '#title' => t('Integrate with Salesforce'),
@@ -274,7 +274,7 @@ function fundraiser_admin_settings() {
     '#description' => t($description),
     '#attributes' => $attributes,
   );
-  
+
   $form['fundraiser_all_countries'] = array(
     '#type' => 'checkbox',
     '#title' => t('Insert full list of countries into new donation forms'),
@@ -292,7 +292,7 @@ function fundraiser_admin_settings() {
              '124' => t('Canada'),
           );
         }
-      
+
         $form['fundraiser_default_country'] = array(
           '#type' => 'select',
           '#title' => t('Default country'),
@@ -300,14 +300,14 @@ function fundraiser_admin_settings() {
           '#options' => $country_options,
           '#default_value' => variable_get('fundraiser_default_country', ''),
         );
-  
+
   $form['fundraiser_gateway_messages'] = array(
    '#type' => 'checkbox',
    '#title' => t('Display gateway messages'),
    '#default_value' => variable_get('fundraiser_gateway_messages', 1),
    '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
   );
-  
+
   $form['fundraiser_receipt_bcc'] = array(
    '#type' => 'textfield',
    '#title' => t('Donation receipt bcc email address'),
@@ -326,7 +326,7 @@ function fundraiser_admin_settings() {
     '#type' => 'checkbox',
     '#title' => t('Send expiration email'),
     '#description' => t('If this option is enabled then emails will be sent when a card is about to expire.'),
-    '#default_value' => variable_get('fundraiser_sustainers_send_email', TRUE),   
+    '#default_value' => variable_get('fundraiser_sustainers_send_email', TRUE),
   );
 
   $form['fundraiser_cc_expiration_message'] = array(
@@ -334,20 +334,20 @@ function fundraiser_admin_settings() {
    '#title' => t('Credit card expiration email'),
    '#collapsible' => TRUE,
   );
-  
+
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
    '#type' => 'textfield',
    '#title' => t('Email subject'),
    '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
   );
-  
+
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
    '#type' => 'textarea',
    '#title' => t('Email body'),
    '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
    '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
   );
-  
+
   $form['fundraiser_cc_expiration_message']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Donor replacement tokens'),
@@ -395,7 +395,7 @@ function fundraiser_admin_settings() {
       '#default_value' => variable_get('fundraiser_form_layouts_default', 'one_column'),
       '#options' => $form_layouts,
     );
-    
+
 
   }
 
@@ -418,7 +418,7 @@ An administrator has been notified and will correct the issue as soon as possibl
 
 Thanks for your understanding.")),
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -515,7 +515,7 @@ function fundraiser_monthly_report() {
               where u.order_status = 'payment_received' and r.next_charge between %d and %d order by order_id";
     $result = db_query($sql, $start_date, $end_date, $start_date, $end_date);
   }
-  
+
   $header = array('Order Id', 'Opportunity Id', 'Uid', 'First Name', 'Last Name', 'Email', 'Address', 'Address 2', 'City', 'Country', 'State/Province', 'Postal Code', 'Payment Date', 'Amount', 'Donation Form', 'URL', 'Market Source', 'Campaign ID', 'CC Last Four', 'CC Type', 'CC Exp Month', 'CC Exp Year');
   $columns = array('order_id', 'sfid', 'billing_first_name', 'billing_last_name', 'primary_email', 'billing_street1', 'billing_street2', 'billing_city', 'country_iso_code_2', 'zone_code', 'received', 'order_total', 'title', 'nid');
 
@@ -547,10 +547,10 @@ function fundraiser_monthly_report() {
       $cc_data['cc_exp_year'],
     );
   }
-  
+
   if ($_SESSION['fundraiser_report_filters']['export']) {
     $_SESSION['fundraiser_report_filters']['export'] = 0;
-    
+
     foreach ($header as $i => $value) {
       $out .= '"' . $value . '",';
     }
@@ -584,16 +584,16 @@ function fundraiser_monthly_report() {
 }
 
 function fundraiser_report_form() {
-  
+
   $from_date_default = $_SESSION['fundraiser_report_filters']['from_date'] ? $_SESSION['fundraiser_report_filters']['from_date'] : time();
   $to_date_default = $_SESSION['fundraiser_report_filters']['to_date'] ? $_SESSION['fundraiser_report_filters']['to_date'] : time();
-   
+
   $form['filters'] = array(
     '#type' => 'fieldset',
     '#title' => t('Filter'),
     '#collapsible' => TRUE,
   );
-  
+
   $form['filters']['from_date'] = array(
     '#title' => t('From'),
     '#type' => 'date',
@@ -605,7 +605,7 @@ function fundraiser_report_form() {
       'year' => date('Y', $from_date_default),
     ),
   );
-  
+
   $form['filters']['to_date'] = array(
     '#title' => t('To'),
     '#type' => 'date',
@@ -617,38 +617,38 @@ function fundraiser_report_form() {
       'year' => date('Y', $to_date_default),
     ),
   );
-  
+
   $form['filters']['export'] = array(
     '#type' => 'checkboxes',
     '#options' => array(1 => 'Export to .csv file.'),
     '#weight' => 3,
   );
-  
+
   $form['filters']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
     '#weight' => 4,
   );
-  
+
   return $form;
 }
 
 function fundraiser_report_form_submit($form, &$form_state) {
-  
+
   $export = array_shift($form_state['values']['export']);
-  
+
   $from_year = $form_state['values']['from_date']['year'];
   $to_year = $form_state['values']['to_date']['year'];
-  
+
   $from_month = $form_state['values']['from_date']['month'];
   $to_month = $form_state['values']['to_date']['month'];
-    
+
   $from_day = $form_state['values']['from_date']['day'];
   $to_day = $form_state['values']['to_date']['day'];
 
   $from_date = mktime(0, 0, 0, $from_month, $from_day, $from_year);
   $to_date = mktime(23, 59, 59, $to_month, $to_day, $to_year);
-  
+
   $_SESSION['fundraiser_report_filters'] = array(
     'from_date' => $from_date,
     'to_date' => $to_date,

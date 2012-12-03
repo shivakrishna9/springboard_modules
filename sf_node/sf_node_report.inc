@@ -14,10 +14,10 @@ function sf_node_results_download_form(&$form_state, $node) {
     '#type' => 'select',
     '#title' => t('Delimited text format'),
     '#description' => t('This is the delimiter used in the CSV/TSV file when downloading Salesforce Errors. Using tabs in the export is the most reliable method for preserving non-latin characters. You may want to change this to another character depending on the program with which you anticipate importing results.'),
-   
+
     '#options' => array(
       ','  => t('CSV'),
-      
+
     ),
   );
 
@@ -38,15 +38,15 @@ function sf_node_results_download($node, $options = array()) {
 
   // Put the name of all fields
   $csv_output = array('Timestamp','Drupal Type','Error','Fieldmap');
-  
+
   $columns = array('error_time','drupal_type','error','fieldmap');
- 
+
     foreach ($csv_output as $i => $value) {
     $out .= '"'.$value.'",';
     }
     $out .="\n";
-  $result = db_query("select * from salesforce_management_api_error where did = %d",$node); 
- 
+  $result = db_query("select * from salesforce_management_api_error where did = %d",$node);
+
     // Add all values in the table
     while ($l = db_fetch_array($result)) {
     foreach ($columns as $j => $value) {

@@ -1,7 +1,7 @@
 
 -- SUMMARY --
 
-Provides a partial REST API for interacting with webforms via 3rd party code. 
+Provides a partial REST API for interacting with webforms via 3rd party code.
 
 
 -- REQUIREMENTS --

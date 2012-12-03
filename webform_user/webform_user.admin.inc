@@ -3,7 +3,7 @@
  * @file
  * Administration page callbacks for the webform_user module.
  */
- 
+
 /**
  * Clones a user webform
  */
@@ -47,12 +47,12 @@ function webform_user_clone($node) {
 
     $fieldmap = db_fetch_object(db_query("SELECT * FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal));
     $webform_user = db_fetch_object(db_query("SELECT * FROM {webform_user} WHERE nid = %d", $nid));
-  
+
     db_query("INSERT INTO {webform_user_component_map} (nid, cid, map_id) SELECT %d, cid, map_id FROM {webform_user_component_map} WHERE nid = %d", $node->nid, $nid);
-  
+
     // make sure cloned node has a fieldmap
     if ($fieldmap) {
-      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id, dedupe_key) 
+      db_query("INSERT INTO {salesforce_management_field_map} (name, drupal, salesforce, fields, recordtype_id, dedupe_key)
         VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $node->title . ' (webform map)', $new_drupal, $fieldmap->salesforce, $fieldmap->fields, $fieldmap->recordtype_id, $fieldmap->dedupe_key);
     }
 
@@ -66,7 +66,7 @@ function webform_user_clone($node) {
 /**
  * Settings form for webform_user
  */
-function webform_user_settings_form() {  
+function webform_user_settings_form() {
   // get a list of all webform enabled node types
   $webform_enabled_types = variable_get('webform_node_types', array('webform'));
   $node_types = node_get_types();
@@ -83,10 +83,10 @@ function webform_user_settings_form() {
     '#options' => $options,
     '#default_value' => variable_get('webform_user_node_types', array('webform')),
   );
-  
+
   // add our own submit handler
   $form['#submit'][] = 'webform_user_settings_form_submit';
-  
+
   return system_settings_form($form);
 }
 
@@ -110,12 +110,12 @@ function webform_user_settings_form_submit($form, &$form_state) {
 
 /**
  * Form builder. Select the salesforce object relationship field.
- */ 
+ */
 function webform_user_field_selection_form(&$form_state = NULL, $node) {
   // only show the related field drop down if the webform has been related to a salesforce object
   if (!empty($node->sf_webform_object) && $node->is_webform_user) {
     $form['webform_user_related_field'] = array(
-      '#prefix' => t("<div>This webform is currently mapped to the <strong>$node->sf_webform_object</strong> object. Please select the field in this object that references the <strong>$node->related_object</strong> object.</div>"), 
+      '#prefix' => t("<div>This webform is currently mapped to the <strong>$node->sf_webform_object</strong> object. Please select the field in this object that references the <strong>$node->related_object</strong> object.</div>"),
       '#type' => 'select',
       '#options' => _get_object_relation_fields($node->sf_webform_object),
       '#title' => t('Lookup field'),
@@ -123,17 +123,17 @@ function webform_user_field_selection_form(&$form_state = NULL, $node) {
       '#default_value' => $node->foreign_key_field,
       '#description' => t("The field in the $node->sf_webform_object object that references the $node->related_object."),
     );
-    
+
     $form['nid'] = array(
       '#type' => 'hidden',
       '#value' => $node->nid,
     );
-    
+
     $form['vid'] = array(
       '#type' => 'hidden',
       '#value' => $node->vid,
     );
-    
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => 'Save',
@@ -153,7 +153,7 @@ function webform_user_field_selection_form(&$form_state = NULL, $node) {
 function webform_user_field_selection_form_submit($form, &$form_state) {
   $foreign_key_field = $form_state['values']['webform_user_related_field'];
   $nid = $form_state['values']['nid'];
-  
+
   db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $foreign_key_field, $nid);
   drupal_set_message(t('Relationship field successfully set to !field', array('!field' => $foreign_key_field)));
 }

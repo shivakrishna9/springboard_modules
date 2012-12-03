@@ -21,7 +21,7 @@ function webform_dupe_cop_settings_form() {
     '#title' => t('Intercept submission'),
     '#default_value' => variable_get('webform_dupe_cop_toggle', 'TRUE'),
     '#description' => t('Toggle interception of duplicated forms. Uncheck this to just log the incident.'),
-  );  
+  );
   $form['webform_dupe_cop_message'] = array(
     '#type' => 'textarea',
     '#rows' => 3,

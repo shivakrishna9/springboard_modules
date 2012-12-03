@@ -4,42 +4,42 @@
  * Administration page callbacks for the queue processor module.
  */
 
-/** 
+/**
  * Allows a user to add all objects of a given type to the queue
  */
 function queue_processor_mass_add() {
-  
+
   $types = array();
   if (module_exists('sf_user')) {
     $types['user'] = 'Users';
   }
-  
+
   /* TODO: Future enhancement
   if (module_exists('sf_webform')) {
     $types['webform'] = 'Webform submissions';
   }
   */
-  
+
   $form['warning'] = array(
     '#value' => t('Please be sure all required <strong>fieldmaps</strong> are configured correctly before using this utility'),
   );
-  
+
   $form['objects_to_add'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Types to bulk insert'),
     '#description' => t('Choose the types of objects you want to add to the queue. Only those objects that have not yet been exported will be added.'),
     '#options' => $types,
   );
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Add objects to queue',
   );
-  
+
   return $form;
 }
 
-/** 
+/**
  * Submission functions for mass add
  */
 function queue_processor_mass_add_submit($form, &$form_state) {
@@ -49,13 +49,13 @@ function queue_processor_mass_add_submit($form, &$form_state) {
       switch ($type) {
         case 'user' :
           db_query("INSERT INTO {sf_queue} (oid, sfid, type, fieldmap, action, created, locked)
-                    SELECT uid, NULL, 'user', 0, 'upsert', unix_timestamp(), 0 
-                    FROM {users} 
+                    SELECT uid, NULL, 'user', 0, 'upsert', unix_timestamp(), 0
+                    FROM {users}
                     WHERE uid NOT IN (SELECT oid FROM {salesforce_management_object_map} WHERE drupal_type = 'user') AND uid != 0
                     AND uid NOT IN (SELECT oid FROM {sf_queue} WHERE TYPE = 'user')");
           drupal_set_message('All users that haven\'t been exported to Salesforce have been added to the queue');
           break;
-          
+
         case 'webform' :
           print 'mass add webforms<br>';
           break;
@@ -156,28 +156,28 @@ function queue_processor_admin_settings() {
     '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/queue_processor_cron'),
     '#default_value' => variable_get('queue_processor_standalone_cron_enabled', 0),
   );
-  
+
   $form['queue_processor_validation'] = array(
     '#type' => 'fieldset',
     '#title' => t('Validation settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['queue_processor_validation']['queue_processor_valid_booleans'] = array(
     '#type' => 'textfield',
     '#title' => t('Mapped values to be considered true'),
     '#description' => t('Enter a comma delimited list of values that will be converted to a true boolean value when exported to Salesforce.'),
     '#default_value' => variable_get('queue_processor_valid_booleans', 'true,yes,y,1'),
   );
-  
+
   $form['queue_processor_batch_limits'] = array(
     '#type' => 'fieldset',
     '#title' => t('Log limits'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['queue_processor_batch_limits']['queue_processor_sf_batch_row_limit'] = array(
     '#type' => 'select',
     '#title' => t('Discard batch entries above the following row limit'),
@@ -217,7 +217,7 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['queue_max_to_process'])) {
     form_set_error('queue_max_to_process', t('Maximum number to process must be numeric.'));
   }
-  
+
   if (!is_numeric($form_state['values']['queue_retry_max'])) {
     form_set_error('queue_retry_max', t('Queue retry max must be numeric.'));
   }
@@ -232,7 +232,7 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
     }
     // make sure size is 1 - 200 (Salesforce doesn't allow batch size > 200)
     if ($size < 1 || $size > 200) {
-      form_set_error('batch_sizes][' . $type . '_batch_size', t(ucfirst($type) . ' batch size must be between 1 and 200.'));  
+      form_set_error('batch_sizes][' . $type . '_batch_size', t(ucfirst($type) . ' batch size must be between 1 and 200.'));
     }
 
   }
@@ -245,13 +245,13 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
     $cron_enabled = variable_get('queue_processor_standalone_cron_enabled', 0);
     if ($form_state['values']['queue_processor_standalone_cron_enabled'] != $cron_enabled) {
       variable_set('queue_processor_standalone_cron_enabled', $form_state['values']['queue_processor_standalone_cron_enabled']);
-      menu_rebuild(); 
+      menu_rebuild();
     }
   $ordered_types = $form_state['values']['type_processing_order'];
-  
+
   // sort the types based on weights
   uasort($ordered_types, "sort_weights");
-  
+
   variable_set('queue_max_to_process', $form_state['values']['queue_max_to_process']);
   variable_set('queue_processing_order', array_keys($ordered_types));
   variable_set('queue_retry_max', $form_state['values']['queue_retry_max']);
@@ -261,7 +261,7 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
   variable_set('queue_processor_valid_booleans', $form_state['values']['queue_processor_valid_booleans']);
   variable_set('queue_processor_sf_batch_row_limit', $form_state['values']['queue_processor_sf_batch_row_limit']);
   variable_set('queue_processor_sf_batch_error_row_limit', $form_state['values']['queue_processor_sf_batch_error_row_limit']);
-  
+
   // save batch sizes per type
   $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
   foreach($processing_order as $key => $type) {
@@ -282,10 +282,10 @@ function queue_processor_admin_settings_reset($form, &$form_state) {
   variable_set('queue_summary_email', NULL);
   variable_set('queue_heap_destination', 'queue');
   variable_set('queue_retry_delay', 24);
-  variable_set('queue_processor_valid_booleans', 'true,yes,y,1');  
+  variable_set('queue_processor_valid_booleans', 'true,yes,y,1');
   variable_set('queue_processor_sf_batch_row_limit', 10000);
   variable_set('queue_processor_sf_batch_error_row_limit', 10000);
-  
+
   drupal_set_message(t('Settings have been reset.'));
 }
 
@@ -301,23 +301,23 @@ function sort_weights($a, $b) {
  */
 function theme_queue_processor_admin_settings($form) {
   drupal_add_tabledrag('processing-order', 'order', 'sibling', 'processing-element');
-  
+
   // Header
   $header = array(
     t('Processing Order'),
     t('Weight'),
   );
-    
+
   // Rows for the tabledrag
   $rows = array();
-  
+
   $tree = &$form['type_processing_order'];
   foreach (element_children($tree) as $key) {
     $tree[$key]['weight']['#attributes']['class'] = 'processing-element';
     $row = array();
     $row[] = drupal_render($tree[$key]['title']);
     $row[] = drupal_render($tree[$key]['weight']);
-    
+
     $rows[] = array('data' => $row, 'class' => 'draggable');
   }
 

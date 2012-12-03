@@ -19,11 +19,11 @@ function fundraiser_multi_currency_list() {
       $links,
     );
   }
-  
+
   if (empty($table_rows)) {
     $table_rows[] = array(array('data' => t('No currencies have been created. Click the Add link above to add your first.'), 'colspan' => count($table_columns)));
   }
-  
+
   return theme('table', $table_columns, $table_rows);
 }
 
@@ -43,7 +43,7 @@ function fundraiser_multi_currency_edit($form_state, $currency_id) {
   if (empty($form_state['values']) && $currency_id > 0) {
     $form_state['values'] = db_fetch_array(db_query('SELECT * FROM {fundraiser_currencies} WHERE currency_id = %d', $currency_id));
   }
-  
+
   return fundraiser_multi_currency_currency_form($form_state['values']);
 }
 
@@ -75,14 +75,14 @@ function fundraiser_multi_currency_edit_submit($form, &$form_state) {
  */
 function fundraiser_multi_currency_currency_form($values) {
   $form = array();
-  
+
   if ($values['currency_id'] > 0) {
     $form['currency_id'] = array(
       '#type' => 'value',
       '#value' => $values['currency_id']
     );
   }
-  
+
   $form['symbol'] = array(
     '#type' => 'textfield',
     '#title' => t('Symbol'),
@@ -91,7 +91,7 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['symbol'],
   );
-  
+
   $form['code'] = array(
     '#type' => 'textfield',
     '#title' => t('Code'),
@@ -100,7 +100,7 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['code'],
   );
-  
+
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
@@ -109,12 +109,12 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['name'],
   );
-  
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
-    
+
   return $form;
 }
 
@@ -129,7 +129,7 @@ function _fundraiser_multi_currency_save($values) {
   else {
     return drupal_write_record('fundraiser_currencies', $record);
   }
-  
+
 }
 
 

@@ -12,7 +12,7 @@ class GmAuthorizeNetUnitTestCase extends DrupalUnitTestCase {
 
   function testCIMCreation() {
     $this->assertTrue(TRUE, 'TODO: Add real unit tests.');
-  } 
+  }
 
   /**
    * Simulated gateway config.

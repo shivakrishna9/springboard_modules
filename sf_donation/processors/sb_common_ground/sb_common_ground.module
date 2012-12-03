@@ -4,7 +4,7 @@
  * @file
  * Funtionality for processing integrating donations with the Common Ground Salesforce package.
  */
- 
+
 /**
  * Implementation of hook_donation_integration().
  */
@@ -27,7 +27,7 @@ function sb_common_ground_donation_integration() {
       'dedupe_key' => '',
     ),
   );
-  
+
   return $integrators;
 }
 
@@ -38,21 +38,21 @@ function sb_common_ground_create_donation($order_id, $account_id, $sid) {
   $path = drupal_get_path('module', 'sf_donation');
   require_once($path . '/donation.php');
   $donation = DonationFactory::Create('common_ground', $order_id, $sid);
-  
+
   // if this donation was part of a recurring series, look up the recurring gift id
   $recurring_gift_sfid = db_result(db_query(
-    "SELECT o.sfid 
-    FROM salesforce_management_object_map o 
-    INNER JOIN fundraiser_recurring f ON f.master_order_id = o.oid 
+    "SELECT o.sfid
+    FROM salesforce_management_object_map o
+    INNER JOIN fundraiser_recurring f ON f.master_order_id = o.oid
     WHERE o.drupal_type = 'recurring_donation' and f.order_id = %d
     UNION
-    SELECT o.sfid 
+    SELECT o.sfid
     FROM salesforce_management_object_map o
     WHERE o.oid = %d and o.drupal_type = 'recurring_donation'
-  ", 
+  ",
   $order_id, $order_id
   ));
-  
+
   if (!empty($recurring_gift_sfid)) {
     $mapped_donation = $donation->map('recurring');
     $mapped_donation['cv__Recurring_Gift__c'] = $recurring_gift_sfid;
@@ -60,7 +60,7 @@ function sb_common_ground_create_donation($order_id, $account_id, $sid) {
   else {
     $mapped_donation = $donation->map();
   }
-  
+
   return $mapped_donation;
 }
 
@@ -71,9 +71,9 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
 {
   // The common ground recurring gift object requires a campaign. Attempt to look it up here.
   $campaign_id = _sb_common_ground_get_campaign($order->order_id);
-  
+
   $donation_name = t('Recurring Donation - !first !last (!date)', array('!first' => $order->billing_first_name, '!last' => $order->billing_last_name, '!date' => gmdate('Y-m-d H:i:s\Z', $order->created)));
-  
+
   $donation = array(
     'Name' => $donation_name,
     'cv__Account__c' => $user_ids->salesforce_account_id,
@@ -95,8 +95,8 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
   if (module_exists('fundraiser_multi_currency')) {
     $donation['CurrencyIsoCode'] = $order->data['currency'];
   }
-  
-  
+
+
   return $donation;
 }
 
@@ -105,7 +105,7 @@ function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
  */
 function sb_common_ground_donation_postprocess(&$batch, &$responses, $item_count) {
   for ($i = 0; $i < $item_count; $i++) {
-    if ($responses[$i]->success) {  
+    if ($responses[$i]->success) {
       $sfid = $responses[$i]->id;
       db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
       // in case this order was part of a recurring donation
@@ -120,13 +120,13 @@ function sb_common_ground_donation_postprocess(&$batch, &$responses, $item_count
 function sb_common_ground_recurring_donation_postprocess(&$batch, &$responses, $item_count) {
   $sf = salesforce_management_api_connect();
   // only continue if we got a valid connection
-  if ($sf) {  
+  if ($sf) {
     for ($i = 0; $i < $item_count; $i++) {
       if ($responses[$i]->success) {
         $sfid = $responses[$i]->id;
         $master_order_id = (int)$batch['records'][$i]->oid;
         sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-        
+
         // get all the orders in the series because we need to create them
         $result = db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d ORDER BY next_charge", $master_order_id);
         while ($data = db_fetch_object($result)) {
@@ -143,8 +143,8 @@ function sb_common_ground_recurring_donation_postprocess(&$batch, &$responses, $
 function _sb_common_ground_get_campaign($order_id) {
   return db_result(db_query(
     "
-      SELECT w.data 
-      FROM webform_submitted_data w 
+      SELECT w.data
+      FROM webform_submitted_data w
       INNER JOIN fundraiser_webform_order f ON f.webform_nid = w.nid AND f.sid = w.sid
       INNER JOIN webform_component c ON c.cid = w.cid AND f.webform_nid = c.nid
       WHERE f.order_id = %d AND c.form_key = 'cid'

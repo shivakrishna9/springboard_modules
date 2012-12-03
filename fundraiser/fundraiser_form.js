@@ -22,7 +22,7 @@ Drupal.behaviors.fundraiserBehavior = function() {
   });
 
   $("#ask-amounts .amount_field").focus(function() {
-    
+
     $amount = $(this).attr('value');
     $id = $(this).attr('id');
     window.fundraiser_amount = {

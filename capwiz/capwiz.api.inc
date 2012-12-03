@@ -143,7 +143,7 @@ class CapwizApi
 
   /**
    * Helper method: Fetch a Capwiz object.
-   * 
+   *
    * @param StdClass $response
    *   The response of a Capwiz API call
    * @param string $parent
@@ -160,7 +160,7 @@ class CapwizApi
     if (!empty($response) && is_object($response) && property_exists($response, $parent)) {
 
       $objects = is_object($response->$parent) && property_exists($response->$parent, $child) ? $response->$parent->$child : array();
-      
+
       if (is_object($objects)) {
         $objects = array($objects);
       }

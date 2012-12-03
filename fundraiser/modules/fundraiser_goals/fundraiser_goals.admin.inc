@@ -11,11 +11,11 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
   $form['user_vis_settings']['custom']['#default_value'] = $edit['values']['custom'];
   $form['page_vis_settings'] = $block_form['page_vis_settings'];
   $form['page_vis_settings']['pages']['#default_value'] = $edit['values']['pages'];
-  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility']; 
+  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility'];
   $form['role_vis_settings'] = $block_form['role_vis_settings'];
 
   unset($block_form);
-  
+
   $form['configure'] = array(
     '#type' => 'value',
     '#value' => $configure,
@@ -35,7 +35,7 @@ function fundraiser_goals_block_admin($edit = array(), $configure = FALSE) {
      '#type' => 'textfield',
      '#title' => t('Machine Name'),
      '#required' => TRUE,
-     '#default_value' => $edit['values']['fundraiser_goal_delta'],  
+     '#default_value' => $edit['values']['fundraiser_goal_delta'],
   );
   $form['submissions_wrapper'] = array(
     '#prefix' => '<div id="goal-submission-settings">',
@@ -189,7 +189,7 @@ function fundraiser_goals_admin_validate(&$form, &$form_state) {
  * Admin submit callback.
  */
 function fundraiser_goals_admin_submit($form, &$form_state) {
- 
+
    $object = (object) $form_state['values'];
    if (!$form_state['values']['configure']) {
      $object->pid = $object->fundraiser_goal_parent_item;
@@ -264,7 +264,7 @@ function fundraiser_goals_admin_ahah() {
   $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
-  
+
   $args = $form['#parameters'];
   $form_id = array_shift($args);
   $form_state['post'] = $form['#post'] = $_POST;
@@ -274,12 +274,12 @@ function fundraiser_goals_admin_ahah() {
   $form['#validate'] = NULL;
   $form_state['validate_handlers'] = NULL;
   fundraiser_ahah_helper_disable_validation($form);
-  
+
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
   $goal_form = $form['submissions_wrapper'];
   unset($goal_form['#prefix'], $amount_form['#suffix']);
- 
+
   $output = theme('status_messages') . drupal_render($goal_form);
 
   $form_state = array('submitted' => FALSE);

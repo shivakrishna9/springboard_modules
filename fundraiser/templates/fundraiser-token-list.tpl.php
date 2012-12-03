@@ -14,15 +14,15 @@
     margin: 20px;
     padding: 10px;
   }
-  
+
   #fundraiser-confirmation-tokens select {
     width: 350px;
   }
-  
+
   #fundraiser-confirmation-tokens h2 {
     margin-top: 10px;
   }
-  
+
   #fundraiser-confirmation-tokens em {
     font-size: .8em;
   }
@@ -31,12 +31,12 @@
 <script type="text/javascript">
   $(document).ready(function(){
     $('#webform-tokens').change(function(e) {
-      window.returnValue = $(this).val(); 
+      window.returnValue = $(this).val();
       window.close();
     });
-    
+
     $('#order-tokens').change(function(e) {
-      window.returnValue = $(this).val(); 
+      window.returnValue = $(this).val();
       window.close();
     });
   });
@@ -51,7 +51,7 @@
       <option value="<?php print $k;?>"><?php print $v;?></option>
     <?php } ?>
   </select>
-  
+
   <h2>Order tokens</h2>
   <select id="order-tokens">
     <?php foreach($tokens['order'] as $k => $v) { ?>

@@ -13,7 +13,7 @@ class Email {
   public function setEmailPriority($priority) {
     $this->emailPriority = $priority;
   }
-   
+
   public function setSubject($subject) {
     $this->subject = $subject;
   }
@@ -29,7 +29,7 @@ class Email {
   public function setUseSignature($useSignature) {
     $this->useSignature = $useSignature;
   }
-  
+
   public function setSenderDisplayName($name) {
     $this->senderDisplayName = $name;
   }

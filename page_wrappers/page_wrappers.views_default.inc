@@ -4,7 +4,7 @@
  * Implementation of hook_views_default_views().
  */
 function page_wrappers_views_default_views() {
- 
+
   $views = array();
   // Exported view: page_wrappers
   $view = new view;

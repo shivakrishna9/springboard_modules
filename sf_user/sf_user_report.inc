@@ -5,10 +5,10 @@
  */
 function sf_user_no_last_name_report() {
   $result = db_query("SELECT uid FROM {users}");
-  
+
   $headers = array('UID', 'Email', 'First Name', 'Last Name', 'Account ID', 'Contact ID');
   $rows = array();
-  
+
   while ($data = db_fetch_object($result)) {
     $user = user_load($data->uid);
     if (empty($user->profile_lastname)) {
@@ -19,7 +19,7 @@ function sf_user_no_last_name_report() {
         $user->profile_lastname,
         $user->profile_salesforce_account_id,
         $user->profile_contact_id,
-      );  
+      );
     }
   }
   return theme_table($headers, $rows);
@@ -40,10 +40,10 @@ function sf_user_results_download_form(&$form_state, $user) {
     '#type' => 'select',
     '#title' => t('Delimited text format'),
     '#description' => t('This is the delimiter used in the CSV/TSV file when downloading Salesforce Errors. Using tabs in the export is the most reliable method for preserving non-latin characters. You may want to change this to another character depending on the program with which you anticipate importing results.'),
-   
+
     '#options' => array(
       ','  => t('CSV'),
-      
+
     ),
   );
 
@@ -65,15 +65,15 @@ function sf_user_results_download($user, $options = array()) {
 
   // Put the name of all fields
   $csv_output = array('Timestamp','Drupal Type','Error','Fieldmap');
-  
+
   $columns = array('error_time','drupal_type','error','fieldmap');
- 
+
     foreach ($csv_output as $i => $value) {
     $out .= '"'.$value.'",';
     }
     $out .="\n";
-  $result = db_query("select * from salesforce_management_api_error where did = %d",$user); 
- 
+  $result = db_query("select * from salesforce_management_api_error where did = %d",$user);
+
     // Add all values in the table
     while ($l = db_fetch_array($result)) {
     foreach ($columns as $j => $value) {

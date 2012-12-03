@@ -415,7 +415,7 @@ function capwiz_get_profile_fields($get_titles = FALSE) {
 
 /**
  * Get new user email message options.
- * 
+ *
  * @param string $key_field
  * @param string $value_field
  *   Legal values for $key_field and $value_field:
@@ -572,7 +572,7 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
 
 /**
  * Implementation of queue_batch_item_alter().
- * 
+ *
  * @todo Make CapWiz ID not the assumed Salesforce property.
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
@@ -596,7 +596,7 @@ function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
         $sf_info_sql = <<< SQL
 SELECT
   CASE
-    WHEN INSTR(u.data, 'salesforce_contact_id') THEN 
+    WHEN INSTR(u.data, 'salesforce_contact_id') THEN
       SUBSTRING(
         u.data,
         INSTR(u.data, 'salesforce_contact_id') + 29,
@@ -620,7 +620,7 @@ SQL;
     }
   }
   elseif ($type == 'user' && in_array($action, array('create', 'update', 'upsert'))) {
-    
+
     $sf_info_sql = 'SELECT data FROM {users} WHERE uid = %d';
     $data = unserialize(db_result(db_query($sf_info_sql, $oid)));
 

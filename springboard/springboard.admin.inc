@@ -2,13 +2,13 @@
 
 /**
  * Springboard admin menu.
- * 
+ *
  * @param $base_url
  * Menu path of parent menu item (example: 'admin/springboard')
  */
 function springboard_admin() {
   drupal_add_css(drupal_get_path('module', 'springboard') . '/css/springboard.css', 'module');
-  
+
   $main_menu = menu_get_item('admin/springboard');
   if (variable_get('springboard_salesforce_enabled', 0)) {
     $content = drupal_get_form('springboard_welcome');
@@ -23,7 +23,7 @@ function springboard_admin() {
   }
   $content .= '</div>';
 
-  
+
   //$content .= theme('admin_block_content', $content);
   return $content;
 }
@@ -34,7 +34,7 @@ function springboard_admin() {
  */
 function springboard_admin_settings() {
   // TODO: add support for pane weights.
- 
+
   $results = db_query('SELECT delta, status FROM {springboard_panes}');
   while ($item = db_fetch_object($results)) {
     $panes[$item->delta] = $item->delta;
@@ -45,7 +45,7 @@ function springboard_admin_settings() {
     else {
       $enabled_panes[$item->delta] = 0;
     }
-    
+
 
   }
 
@@ -91,7 +91,7 @@ function springboard_admin_settings() {
     '#description' => t('Set the maximum acceptable time (in ms) to render a donation form. Any forms taking longer than this to load will be flagged.'),
     '#default_value' => variable_get('springboard_load_time_threshold', 500),
   );
-  
+
   $form['#validate'] = array('springboard_admin_settings_validate');
   $form['#submit'][] = 'springboard_admin_settings_submit';
   return system_settings_form($form);
@@ -123,7 +123,7 @@ function springboard_admin_settings_submit($form, $form_state) {
       $status = 1;
     }
     db_query("UPDATE {springboard_panes} SET status=%d WHERE delta = '%s'", $status, $delta);
-  } 
+  }
 }
 
 /**

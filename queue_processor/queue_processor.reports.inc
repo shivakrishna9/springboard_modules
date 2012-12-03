@@ -9,10 +9,10 @@
  */
 function current_queue_report() {
   $pager_num = 0;
-  
+
   $result = pager_query("SELECT oid, 'Unknown' as title, sfid, type, action, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p') FROM {sf_queue} ORDER BY created desc", 20, $pager_num);
   $rows = array();
-  
+
   // loop over each item in queue and allow individual modules a chance to add the title
   while ($row = db_fetch_array($result)) {
     drupal_alter('queue_report_item_title', $row);
@@ -20,7 +20,7 @@ function current_queue_report() {
   }
 
   $header = array('Drupal Id', 'Title', 'SFID', 'Type', 'Action', 'Date Added');
-  
+
   $output = 'These items are currently queued up and will be exported to Salesforce during the next cron run.';
    $output .= theme('table', $header, $rows, array('id' => 'current-queue'));
    $output .= theme('pager', NULL, 20, $pager_num);
@@ -32,11 +32,11 @@ function current_queue_report() {
  */
 function batch_history_report() {
   $pager_num = 0;
-  
+
   $result = pager_query("SELECT id, type, from_unixtime(created, '%m/%e/%Y %h:%i:%S %p'), record_count, success_count, failure_count,
      from_unixtime(start_time, '%m/%e/%Y %h:%i:%S %p'), from_unixtime(end_time, '%m/%e/%Y %h:%i:%S %p') FROM {sf_batch} ORDER BY created desc", 20, $pager_num);
   $rows = array();
-  
+
   while($row = db_fetch_array($result)) {
     $row['id'] = l($row['id'], 'admin/reports/salesforce/batch/' . $row['id']);
     $rows[] = $row;
@@ -60,7 +60,7 @@ function batch_detail($id) {
 
   //$output = 'Batch detail ' . $id . '<pre>';
   $batch = load_batch($id);
-  
+
   //$output .= '</pre>';
   $output = '<div id="batch-details">';
   $output .= '<h2>Batch ' . $batch['id'] . '</h2>';
@@ -71,8 +71,8 @@ function batch_detail($id) {
   $output .= '</div>';
 
   //$output .= '<pre>' . print_r($batch, true) . '</pre>';
-  
-  
+
+
   foreach($batch['records'] as $item) {
     $rows = array();
     $object = unserialize($item->data);
@@ -82,9 +82,9 @@ function batch_detail($id) {
           'field' => $field,
           'value' => $value,
         );
-      }  
-    }  
-    
+      }
+    }
+
     asort($rows);
     $retry = ($item->is_retry == 1) ? 'Yes' : 'No';
     $success = ($item->success == 1) ? 'Yes' : 'No';
@@ -92,7 +92,7 @@ function batch_detail($id) {
     $output .= '<h5>' . ucfirst($batch['type']) . ' ' . $item->oid . '</h5>';
     $output .= '<div class="batch-item">';
     $output .= '<span>Success:</span>' . $success . '<br/>';
-    
+
     if (!$item->success) {
       $error = load_batch_error($batch['id'], $item->oid, $batch['type']);
       $output .= '<div class="item-error">';
@@ -104,7 +104,7 @@ function batch_detail($id) {
       }
       $output .= '</div>';
     }
-    
+
     $output .= '<span>Processed:</span>' . date('n/j/Y g:i:s a', $item->date_processed) . '<br/>';
     $output .= '<span>Was retry:</span>' . $retry . '<br/>';
     $output .= '<a href="#" class="object-details">Click for object details</a><br />';
@@ -115,7 +115,7 @@ function batch_detail($id) {
     $output .= '</div>';
     //$output .= '</div>';
   }
-  
+
   return $output;
 }
 
@@ -133,10 +133,10 @@ function saleforce_integration_reports() {
 function retry_queue_report() {
   $output = 'The following items are currently in the retry queue. If not edited beforehand, the next export attempt will be performed on the items\'s retry date.';
   $pager_num = 0;
-  
+
   $rows = array();
   $result = pager_query("SELECT id, oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC", 20, $pager_num);
-  
+
   while ($row = db_fetch_array($result)) {
       $row['retry_link'] = l('Retry', 'admin/sf-queue-processor/' . $row['id'] . '/retry');
       unset($row['id']);
@@ -155,7 +155,7 @@ function permanent_failures_report($edit = array()) {
   if (isset($edit['post']['op']) && $edit['post']['op'] == t('Retry All')) {
     _queue_processor_retry_all_perm_failures();
   }
-  
+
   $form['overview'] = array('#value' => t('The following items have been marked as permanent failures. No more attempts to export them will be made until they have been edited.'));
   $pager_num = 0;
 
@@ -227,7 +227,7 @@ function queue_processor_submit_retry($form, $form_state) {
       $result = db_fetch_object(db_query("SELECT * FROM {sf_permanent_failure} WHERE id = %d", $value));
       sf_queue_insert($result->oid, $result->type, $result->action);
       db_query("DELETE FROM {sf_permanent_failure} WHERE id = %d", $value);
-  
+
       drupal_set_message(ucfirst($result->type) . ' ' . $result->oid . ' has been successfully moved to the export queue.');
       watchdog('queue_processor', t('Moved item %oid from the permanent failures queue to the export queue.', array('%oid' => $id)));
 
@@ -237,11 +237,11 @@ function queue_processor_submit_retry($form, $form_state) {
 }
 
 /**
- * Move all items from the failure queue to the queue 
+ * Move all items from the failure queue to the queue
  */
 function _queue_processor_retry_all_perm_failures() {
   $item_count = db_result(db_query('SELECT count(id) FROM {sf_permanent_failure}'));
-  db_query('INSERT INTO {sf_queue} (oid, type, sfid, fieldmap, action, created) SELECT f.oid, f.type, o.sfid, f.fieldmap, f.action, unix_timestamp() FROM sf_permanent_failure f LEFT JOIN salesforce_management_object_map o ON o.oid = f.oid AND o.drupal_type = f.type');  
+  db_query('INSERT INTO {sf_queue} (oid, type, sfid, fieldmap, action, created) SELECT f.oid, f.type, o.sfid, f.fieldmap, f.action, unix_timestamp() FROM sf_permanent_failure f LEFT JOIN salesforce_management_object_map o ON o.oid = f.oid AND o.drupal_type = f.type');
   db_query('DELETE FROM {sf_permanent_failure}');
   drupal_set_message(t('%items items where moved to the export queue.', array('%items' => $item_count)));
 }
