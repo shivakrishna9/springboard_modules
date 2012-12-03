@@ -66,90 +66,90 @@ function salesforce_management_api_schema() {
     'primary key' => array('drupal_type', 'oid'),
   );
   $schema['salesforce_management_field_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'fieldmap' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'serial',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'name' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'drupal' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'salesforce' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'action' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'automatic' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'fields' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'business' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'businessSD' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'dedupe_key' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '64',
-	      'not null' => FALSE,
-	      'default' => '',
-	    ),
-	    'rid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'recordtype_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => FALSE,
-	    ),
-	    'validation' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => FALSE,
-	    ),
-	  ),
-	  'primary key' => array('fieldmap'),
-	);
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'fieldmap' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'drupal' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'salesforce' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'action' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'automatic' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'fields' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'business' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'businessSD' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'dedupe_key' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'rid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'recordtype_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+      ),
+      'validation' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('fieldmap'),
+  );
   
    $schema['salesforce_management_api_error'] = array(
     'description' => t('Drupal to Salesforce error reporting table'),
@@ -180,7 +180,7 @@ function salesforce_management_api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-	  'error_time' => array(
+    'error_time' => array(
           'type' => 'datetime',
           'not null' => true,
        ),

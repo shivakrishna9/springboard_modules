@@ -4,25 +4,25 @@
  * Displays a list of users with no last name
  */
 function sf_user_no_last_name_report() {
-	$result = db_query("SELECT uid FROM {users}");
-	
-	$headers = array('UID', 'Email', 'First Name', 'Last Name', 'Account ID', 'Contact ID');
-	$rows = array();
-	
-	while ($data = db_fetch_object($result)) {
-		$user = user_load($data->uid);
-		if (empty($user->profile_lastname)) {
-			$rows[] = array(
-				$user->uid,
-				$user->mail,
-				$user->profile_firstname,
-				$user->profile_lastname,
-				$user->profile_salesforce_account_id,
-				$user->profile_contact_id,
-			);	
-		}
-	}
-	return theme_table($headers, $rows);
+  $result = db_query("SELECT uid FROM {users}");
+  
+  $headers = array('UID', 'Email', 'First Name', 'Last Name', 'Account ID', 'Contact ID');
+  $rows = array();
+  
+  while ($data = db_fetch_object($result)) {
+    $user = user_load($data->uid);
+    if (empty($user->profile_lastname)) {
+      $rows[] = array(
+        $user->uid,
+        $user->mail,
+        $user->profile_firstname,
+        $user->profile_lastname,
+        $user->profile_salesforce_account_id,
+        $user->profile_contact_id,
+      );  
+    }
+  }
+  return theme_table($headers, $rows);
 }
 
 /**
@@ -68,23 +68,23 @@ function sf_user_results_download($user, $options = array()) {
   
   $columns = array('error_time','drupal_type','error','fieldmap');
  
-  	foreach ($csv_output as $i => $value) {
-  	$out .= '"'.$value.'",';
-  	}
-  	$out .="\n";
-	$result = db_query("select * from salesforce_management_api_error where did = %d",$user); 
+    foreach ($csv_output as $i => $value) {
+    $out .= '"'.$value.'",';
+    }
+    $out .="\n";
+  $result = db_query("select * from salesforce_management_api_error where did = %d",$user); 
  
-  	// Add all values in the table
-  	while ($l = db_fetch_array($result)) {
-  	foreach ($columns as $j => $value) {
-  	$out .='"'.$l["$value"].'",';
-  	}
-  	$out .="\n";
-  	}
-  	// Output to browser with appropriate mime type, you choose ;)
-  	header("Content-type: text/x-csv");
-  	header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
-  	echo $out;
-  	exit;
+    // Add all values in the table
+    while ($l = db_fetch_array($result)) {
+    foreach ($columns as $j => $value) {
+    $out .='"'.$l["$value"].'",';
+    }
+    $out .="\n";
+    }
+    // Output to browser with appropriate mime type, you choose ;)
+    header("Content-type: text/x-csv");
+    header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
+    echo $out;
+    exit;
 
 }

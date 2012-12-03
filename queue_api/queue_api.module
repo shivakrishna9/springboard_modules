@@ -112,17 +112,17 @@ function _sf_queue_insert($oid, $type, $action) {
  * Removes an item from the queue.
  */
 function sf_queue_delete($oid, $type) {
-	db_query("DELETE FROM {sf_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+  db_query("DELETE FROM {sf_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
 }
 
 /**
  * Removes an item from the retry queue
  */
 function sf_retry_queue_delete($oid, $type) {
-	if (_in_retry_queue($oid, $type)) {
-		db_query("DELETE FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
-		watchdog('salesforce queue api', t('!type !oid removed from retry queue because it has been inserted into the normal queue', array('!type' => ucfirst($type), '!oid' => $oid)), NULL, WATCHDOG_INFO);
-	}
+  if (_in_retry_queue($oid, $type)) {
+    db_query("DELETE FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+    watchdog('salesforce queue api', t('!type !oid removed from retry queue because it has been inserted into the normal queue', array('!type' => ucfirst($type), '!oid' => $oid)), NULL, WATCHDOG_INFO);
+  }
 }
 
 /**
@@ -141,29 +141,29 @@ function _in_queue($oid, $type) {
  * Determines whether or not an object is already in the retry queue.
  */
 function _in_retry_queue($oid, $type) {
-	$result = db_query("SELECT id FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
-	if (!$data = db_fetch_array($result)) {
-		return false;
-	}
-	
-	return true;
+  $result = db_query("SELECT id FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+  if (!$data = db_fetch_array($result)) {
+    return false;
+  }
+  
+  return true;
 }
 
 /**
  * Determines whether or not an object is already on the heap. Prevents multiple records.
  */
 function _in_heap($oid, $type) {
-	$result = db_query("SELECT id FROM {sf_heap} WHERE oid = '%s' AND type = '%s'", $oid, $type);
-	if (!$data = db_fetch_array($result)) {
-		return false;
-	}
-	
-	return true;
+  $result = db_query("SELECT id FROM {sf_heap} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+  if (!$data = db_fetch_array($result)) {
+    return false;
+  }
+  
+  return true;
 }
 
 /**
  * Deletes and object from permanent failure
  */
 function delete_from_permanent_failures($oid, $type) {
-	db_query("DELETE FROM {sf_permanent_failure} WHERE oid = '%s' AND type = '%s'", $oid, $type);
+  db_query("DELETE FROM {sf_permanent_failure} WHERE oid = '%s' AND type = '%s'", $oid, $type);
 }

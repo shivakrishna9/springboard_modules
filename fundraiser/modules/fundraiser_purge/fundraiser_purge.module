@@ -11,13 +11,13 @@
  */
 function fundraiser_purge_menu() {
   $items['admin/settings/fundraiser/purge'] = array(
-		'title' => t('Purge settings'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('fundraiser_purge_settings_form'),
-		'access arguments' => array('configure fundraiser purge'),
-		'file' => 'fundraiser_purge.admin.inc',
-		'type' => MENU_NORMAL_ITEM,
-	);
+    'title' => t('Purge settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_purge_settings_form'),
+    'access arguments' => array('configure fundraiser purge'),
+    'file' => 'fundraiser_purge.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
   
   return $items;
 }

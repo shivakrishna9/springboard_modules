@@ -22,12 +22,12 @@ function market_source_admin_settings_form(&$form_state) {
   );
 
   if (module_exists('salesforce_management_api')) {
-  	$form['market_source_validate_sf_campaigns'] = array(
-  		'#title' => t('Validate Salesforce Campaigns'),
-  		'#type' => 'checkbox',
-  		'#description' => t('When enabled, campaigns will be validated against a list of Salesforce campaigns before being saved.'),
-  		'#default_value' => variable_get('market_source_validate_sf_campaigns', 0),
-  	);
+    $form['market_source_validate_sf_campaigns'] = array(
+      '#title' => t('Validate Salesforce Campaigns'),
+      '#type' => 'checkbox',
+      '#description' => t('When enabled, campaigns will be validated against a list of Salesforce campaigns before being saved.'),
+      '#default_value' => variable_get('market_source_validate_sf_campaigns', 0),
+    );
   }
 
   $form['advanced'] = array(

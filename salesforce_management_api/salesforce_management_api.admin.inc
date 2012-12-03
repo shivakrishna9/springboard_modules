@@ -106,13 +106,13 @@ function salesforce_management_api_fieldmap_admin() {
     // Add the row to the table with the basic operations.
     $rows[] = array(
       $map['fieldmap'],
-			$map['name'],
+      $map['name'],
       salesforce_management_api_fieldmap_object_label('drupal', $map['drupal']),
       salesforce_management_api_fieldmap_object_label('salesforce', $map['salesforce']),
       l(t('edit'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/edit'),
       l(t('delete'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/delete'),
-	  	l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/dedupe'),
-	  	l(t('import'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/import'),
+      l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/dedupe'),
+      l(t('import'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/import'),
     );
   }
 
@@ -129,8 +129,8 @@ function salesforce_management_api_fieldmap_admin() {
 // Displays the form to add a fieldmap.
 function salesforce_management_api_fieldmap_add_form(&$form_state) {
   $form = array();
-	$form['#cache'] = TRUE;
-	
+  $form['#cache'] = TRUE;
+  
   // Build an options array out of the Drupal objects.
   $options = array();
 
@@ -138,14 +138,14 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
     $options[$key] = $value['label'];
   }
 
-	array_unshift($options, '-- Select --');
+  array_unshift($options, '-- Select --');
 
-	$form['name'] = array(
-		'#type' => 'textfield',
-		'#title' => t('Name'),
-		'#description' => t('Enter a recognizable name for the fieldmap.'),
-		'#required' => TRUE,
-	);
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#description' => t('Enter a recognizable name for the fieldmap.'),
+    '#required' => TRUE,
+  );
 
   $form['drupal_object'] = array(
     '#type' => 'select',
@@ -153,34 +153,34 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
     '#options' => count($options) > 0 ? $options : array(t('None available')),
     '#disabled' => count($options) == 0,
     '#required' => TRUE,
-		'#ahah' => array(
-		  'path' => 'js/select-drupal-object',
+    '#ahah' => array(
+      'path' => 'js/select-drupal-object',
       'wrapper' => 'shizzle',
       'effect' => 'fade',
-			'method' => 'replace',
+      'method' => 'replace',
     ),
   );
 
-	// Container for just the poll choices.
+  // Container for just the poll choices.
   $form['role_wrapper'] = array(
     '#prefix' => '<div id="shizzle">',
     '#suffix' => '</div>',
   );
 
-	if ($form_state['values']['drupal_object'] == 'user') {
-		$drupal_roles = user_roles(TRUE);
-		$form['role_wrapper']['user_role'] = array(
-			'#type' => 'select',
-			'#title' => 'User role',
-			'#options' => $drupal_roles,
-			'#description' => t('This fieldmap will be assigned to users in the selected role.'),
-		);
-	}
-	else {
-		$form['role_wrapper']['user_role'] = array(
-			'#type' => 'hidden',
-		);
-	}
+  if ($form_state['values']['drupal_object'] == 'user') {
+    $drupal_roles = user_roles(TRUE);
+    $form['role_wrapper']['user_role'] = array(
+      '#type' => 'select',
+      '#title' => 'User role',
+      '#options' => $drupal_roles,
+      '#description' => t('This fieldmap will be assigned to users in the selected role.'),
+    );
+  }
+  else {
+    $form['role_wrapper']['user_role'] = array(
+      '#type' => 'hidden',
+    );
+  }
 
   // Build an options array out of the Salesforce objects.
   $options = array();
@@ -195,33 +195,33 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
     '#options' => count($options) > 0 ? $options : array(t('None available')),
     '#disabled' => count($options) == 0,
     '#required' => TRUE,
-		'#ahah' => array(
-		  'path' => 'js/select-salesforce-object',
+    '#ahah' => array(
+      'path' => 'js/select-salesforce-object',
       'wrapper' => 'recordtype',
       'effect' => 'fade',
-			'method' => 'replace',
+      'method' => 'replace',
     ),
   );
 
-	
-	$form['salesforce_recordtype_wrapper'] = array(
-		'#prefix' => '<div id="recordtype">',
-		'#suffix' => '</div>',
-	);
-	
-	if (!empty($form_state['values']['salesforce_management_object'])) {
-		$recordtypes = salesforce_management_api_get_object_recordtypes($form_state['values']['salesforce_management_object']);
-	}
-	else {
-		$recordtypes = salesforce_management_api_get_object_recordtypes(array_shift($options));
-	}
-	
-	$form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
-		'#type' => 'select',
-		'#title' => 'Salesforce record type',
-		'#options' => count($recordtypes) > 1 ? $recordtypes : array(t('None available')),
-		'#description' => t('Objects using this fieldmap will be assigned to the selected record type.'),
-	);
+  
+  $form['salesforce_recordtype_wrapper'] = array(
+    '#prefix' => '<div id="recordtype">',
+    '#suffix' => '</div>',
+  );
+  
+  if (!empty($form_state['values']['salesforce_management_object'])) {
+    $recordtypes = salesforce_management_api_get_object_recordtypes($form_state['values']['salesforce_management_object']);
+  }
+  else {
+    $recordtypes = salesforce_management_api_get_object_recordtypes(array_shift($options));
+  }
+  
+  $form['salesforce_recordtype_wrapper']['salesforce_recordtype'] = array(
+    '#type' => 'select',
+    '#title' => 'Salesforce record type',
+    '#options' => count($recordtypes) > 1 ? $recordtypes : array(t('None available')),
+    '#description' => t('Objects using this fieldmap will be assigned to the selected record type.'),
+  );
 
   $form['automatic'] = array(
     '#type' => 'checkbox',
@@ -232,7 +232,7 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
   );
 
   $form['submit'] = array(
-		'#submit' => array('salesforce_management_fieldmap_submit'),
+    '#submit' => array('salesforce_management_fieldmap_submit'),
     '#type' => 'submit',
     '#value' => t('Map object fields'),
     '#suffix' => l(t('Cancel'), SALESFORCE_PATH_FIELDMAPS),
@@ -244,9 +244,9 @@ function salesforce_management_api_fieldmap_add_form(&$form_state) {
 // Submit handler for a new fieldmap
 function salesforce_management_fieldmap_submit($form, &$form_state) {
   // Create the new fieldmap.
-	$name = $form_state['values']['name'];
-	$rid = $form_state['values']['user_role'];
-	$recordtype_id = $form_state['values']['salesforce_recordtype'];
+  $name = $form_state['values']['name'];
+  $rid = $form_state['values']['user_role'];
+  $recordtype_id = $form_state['values']['salesforce_recordtype'];
 
   $index = salesforce_management_api_fieldmap_create($form_state['values']['drupal_object'], $form_state['values']['salesforce_management_object'], $form_state['values']['automatic'], $name, $rid, $recordtype_id);
 
@@ -272,9 +272,9 @@ function salesforce_management_api_fieldmap_create($drupal, $salesforce, $automa
     'salesforce' => $salesforce,
     'automatic' => $automatic,
     'fields' => array(),
-		'name' => $name,
-		'rid' => $rid,
-		'recordtype_id' => $recordtype_id,
+    'name' => $name,
+    'rid' => $rid,
+    'recordtype_id' => $recordtype_id,
   );
 
   // Save the new fieldmap.
@@ -385,8 +385,8 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   
 
  foreach($target['fields'] as $key => $value){
-	$fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
-	
+  $fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
+  
   }
  asort($fieldmapsort);
   
@@ -406,8 +406,8 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   $form['fields']['header'] = array(
     array('#value' => t('Target: @label (@type)', array('@label' => $target['label'], '@type' => $map['action'] == 'import' ? t('Drupal') : t('Salesforce')))),
     array('#value' => t('Source: @label (@type)', array('@label' => $source['label'], '@type' => $map['action'] == 'import' ? t('Salesforce') : t('Drupal')))),
-	array('#value' => t('Business rules Drupal to SF')),
-	array('#value' => t('Business rules SF to Drupal')),
+  array('#value' => t('Business rules Drupal to SF')),
+  array('#value' => t('Business rules SF to Drupal')),
   );
 
   // Loop through each of the target fields.
@@ -448,27 +448,27 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
     $row['business'][$key.'_r'] = array(
       '#type' => 'select', 
       '#title' => t('Default options'),
-	  '#default_value' => $map['business'][$key],
-	  '#options' => array(
-		'null' => t(''), 
-		'blank' => t('Overwrite when blank'), 
-		'append' => t('Append'),
-		'always' => t('Always overwrite'),
-		'never' => t('Never overwrite'),
+    '#default_value' => $map['business'][$key],
+    '#options' => array(
+    'null' => t(''), 
+    'blank' => t('Overwrite when blank'), 
+    'append' => t('Append'),
+    'always' => t('Always overwrite'),
+    'never' => t('Never overwrite'),
       ),
-	);
-	$row['businessSD'][$key.'_l'] = array(
+  );
+  $row['businessSD'][$key.'_l'] = array(
       '#type' => 'select', 
       '#title' => t('Default options'),
-	  '#default_value' => $map['businessSD'][$key],
-	  '#options' => array(
-		'null' => t(''), 
-		'blank' => t('Overwrite when blank'), 
-		'append' => t('Append'),
-		'always' => t('Always overwrite'),
-		'never' => t('Never overwrite'),
+    '#default_value' => $map['businessSD'][$key],
+    '#options' => array(
+    'null' => t(''), 
+    'blank' => t('Overwrite when blank'), 
+    'append' => t('Append'),
+    'always' => t('Always overwrite'),
+    'never' => t('Never overwrite'),
       ),
-	);
+  );
 
     // Add the row to the correct rows array.
     $rows[$type][] = $row;
@@ -510,15 +510,15 @@ function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state
     // If a field has been mapped to this field on the form...
     if (!empty($form_state['values'][$field])) {
       // Add the association to the fieldmap's fields array.
-			$map['fields'][$field] = $form_state['values'][$field];
-	 		$map['business'][$field] = $form_state['values'][$field.'_r'];
-	 		$map['businessSD'][$field] = $form_state['values'][$field.'_l'];
-			$map['validation'][$field] = array(
-				'field_type' => $object['fields'][$field]['field_type'],
-				'nillable' => $object['fields'][$field]['nillable'],
-				'length' => $object['fields'][$field]['length'],
-			);
-	 	}
+      $map['fields'][$field] = $form_state['values'][$field];
+       $map['business'][$field] = $form_state['values'][$field.'_r'];
+       $map['businessSD'][$field] = $form_state['values'][$field.'_l'];
+      $map['validation'][$field] = array(
+        'field_type' => $object['fields'][$field]['field_type'],
+        'nillable' => $object['fields'][$field]['nillable'],
+        'length' => $object['fields'][$field]['length'],
+      );
+     }
   }
 
   // Save the updated fieldmap.
@@ -531,19 +531,19 @@ function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state
 }
 
 function theme_salesforce_management_api_map_user_role_form($form) {
-	$header = array('Drupal Role', 'Fieldmap');
-	foreach ($form['fieldmap']['rid'] as $key=>$rid) {
-		if (is_numeric($key)) {
-			$row = array();
-			$row[] = drupal_render($form['fieldmap']['rid'][$key]);
-			$row[] = drupal_render($form['fieldmap']['map'][$key]);
-			$rows[] = $row;
-		}
-	}
+  $header = array('Drupal Role', 'Fieldmap');
+  foreach ($form['fieldmap']['rid'] as $key=>$rid) {
+    if (is_numeric($key)) {
+      $row = array();
+      $row[] = drupal_render($form['fieldmap']['rid'][$key]);
+      $row[] = drupal_render($form['fieldmap']['map'][$key]);
+      $rows[] = $row;
+    }
+  }
 
-	$output .= theme('table', $header, $rows, array('id' => 'salesforce_management_api_map_user_role_form'));
-	$output .= drupal_render($form);
-	return $output;
+  $output .= theme('table', $header, $rows, array('id' => 'salesforce_management_api_map_user_role_form'));
+  $output .= drupal_render($form);
+  return $output;
 }
 
 // Themes the field associations on a fieldmap edit form into a table.
@@ -570,14 +570,14 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
         'data' => drupal_render($form['rows'][$element]['business']), 
         'class' => 'source-cell'
       ),
-	  array(
+    array(
         'data' => drupal_render($form['rows'][$element]['businessSD']), 
         'class' => 'source-cell'
       ),
     );
     
  }
-	
+  
   // Add a message if no rows were found.
   if (empty($rows)) {
     $rows[] = array(
@@ -623,15 +623,15 @@ function salesforce_management_api_fieldmap_dedupe_form(&$form_state, $fieldmap)
         print_r($value);
         echo "</pre>";*/
         
-	$field[$key] = $value['label'];
+  $field[$key] = $value['label'];
   }
   asort($field);
   $form['fieldmap_options'] = array(
-	  '#type' => 'select', 
-	  '#title' => t('Dedupe key for mapping'), 
-	  '#default_value' =>  isset($map['dedupe_key']) ? $map['dedupe_key'] : '',
-	  '#options' => $field,
-	  '#description' => t('Fieldmap maps Salesforce objects to Drupal objects.'),
+    '#type' => 'select', 
+    '#title' => t('Dedupe key for mapping'), 
+    '#default_value' =>  isset($map['dedupe_key']) ? $map['dedupe_key'] : '',
+    '#options' => $field,
+    '#description' => t('Fieldmap maps Salesforce objects to Drupal objects.'),
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -772,7 +772,7 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
  * AHAH FUNCTIONS
  ******************************************************************************/
 function salesforce_management_api_drupal_object_select() {
-	$form_state = array('storage' => NULL, 'submitted' => TRUE);
+  $form_state = array('storage' => NULL, 'submitted' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -783,18 +783,18 @@ function salesforce_management_api_drupal_object_select() {
 
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-	
-	$role_field = $form['role_wrapper'];
+  
+  $role_field = $form['role_wrapper'];
   unset($role_field['#prefix'], $role_field['#suffix']); // Prevent duplicate wrappers.
-	$output = drupal_render($role_field);
-	
+  $output = drupal_render($role_field);
+  
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
   exit();
 }
 
 function salesforce_management_api_salesforce_object_select() {
-	$form_state = array('storage' => NULL, 'submitted' => TRUE);
+  $form_state = array('storage' => NULL, 'submitted' => TRUE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -805,12 +805,12 @@ function salesforce_management_api_salesforce_object_select() {
 
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-	
-	$recordtype_field = $form['salesforce_recordtype_wrapper'];
+  
+  $recordtype_field = $form['salesforce_recordtype_wrapper'];
   unset($recordtype_field['#prefix'], $recordtype_field['#suffix']); // Prevent duplicate wrappers.
-	$output = drupal_render($recordtype_field);
-	
+  $output = drupal_render($recordtype_field);
+  
   // Final rendering callback.
   print drupal_json(array('status' => TRUE, 'data' => $output));
-  exit();	
+  exit();  
 }

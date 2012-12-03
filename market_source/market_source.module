@@ -461,7 +461,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_referrer',
   );
-	
+  
   // initial referrer
   $components['initial_referrer'] = array(
     'nid' => $nid,
@@ -497,13 +497,13 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
  */
 function market_source_fundraiser_create_webform_components($nid) {
   // if the sf_donation is installed, try to get the default campaign
-	$default_campaign = '';
-	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
-	
-	// create the standard components
-	return market_source_create_standard_components($nid, $default_campaign);
+  $default_campaign = '';
+  if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
+    $default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
+  }
+  
+  // create the standard components
+  return market_source_create_standard_components($nid, $default_campaign);
 }
 
 /**
@@ -522,19 +522,19 @@ function market_source_fundraiser_create_webform_components($nid) {
 function market_source_create_webform_component($custom_field, $nid) {
   $component = array(
     'nid' => $nid,
-  	'pid' => 0,
-  	'value' => $custom_field['default'],
-  	'form_key' => $custom_field['key'],
-  	'name' => $custom_field['name'],
-  	'type' => 'hidden',
-  	'extra' => array(
+    'pid' => 0,
+    'value' => $custom_field['default'],
+    'form_key' => $custom_field['key'],
+    'name' => $custom_field['name'],
+    'type' => 'hidden',
+    'extra' => array(
       'description' => '',
       'hidden_type' => 'hidden',
     ),
-  	'mandatory' => 0,
-  	'weight' => 23,
-  	'email' => 1,
-  	'maps_to' => '',
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'maps_to' => '',
   );
   return $component;
 }

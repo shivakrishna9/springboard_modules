@@ -147,10 +147,10 @@ function sf_node_queue_fieldmap_assignment_alter(&$data) {
   $pos = strpos($data->type, 'node_');
   // account for node_ being at the start of the string
   if (!($pos === FALSE)) { 
-		$result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $data->type);
-		$fieldmap = db_fetch_array($result);
-		$data->fieldmap = $fieldmap['fieldmap'];
-	}
+    $result = db_query("SELECT fieldmap, dedupe_key FROM {salesforce_management_field_map} WHERE drupal = '%s'", $data->type);
+    $fieldmap = db_fetch_array($result);
+    $data->fieldmap = $fieldmap['fieldmap'];
+  }
 }
 
 /**
@@ -158,58 +158,58 @@ function sf_node_queue_fieldmap_assignment_alter(&$data) {
  */
 function sf_node_queue_preprocess_batch_alter(&$batch) {
   $pos = strpos($batch['type'], 'node_');
-	if (!($pos === FALSE)) { 
-		
-		switch ($batch['action']) {
-			case 'upsert':
-			case 'update':
-				// get any objects that have already been exported to salesforce. these will be used when generating the export objects and cut down on api calls
-				$objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
-				foreach($batch['records'] as $record) {
-					$node = node_load((int)$record->oid, NULL, TRUE);
-					// determine which nodes have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
-				  $object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $node, $record->sfid, $objects);
-					// add the object to the batch record
-					$record->object = $object;
-				}
-				break;
-				
-			case 'delete':
-			
-				break;
-		}
-	}
+  if (!($pos === FALSE)) { 
+    
+    switch ($batch['action']) {
+      case 'upsert':
+      case 'update':
+        // get any objects that have already been exported to salesforce. these will be used when generating the export objects and cut down on api calls
+        $objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
+        foreach($batch['records'] as $record) {
+          $node = node_load((int)$record->oid, NULL, TRUE);
+          // determine which nodes have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
+          $object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $node, $record->sfid, $objects);
+          // add the object to the batch record
+          $record->object = $object;
+        }
+        break;
+        
+      case 'delete':
+      
+        break;
+    }
+  }
 }
 
 /**
  * Implemenation of hook_queue_postprocess_batch().
  */
 function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
-	$pos = strpos($batch['type'], 'node_');
-	if (!($pos === FALSE)) { 
-		switch ($batch['action']) {
-			case 'upsert':
-			case 'update':
-				// create an array of ids for the newly exported nodes
-				$sfids = array();
+  $pos = strpos($batch['type'], 'node_');
+  if (!($pos === FALSE)) { 
+    switch ($batch['action']) {
+      case 'upsert':
+      case 'update':
+        // create an array of ids for the newly exported nodes
+        $sfids = array();
 
-				for ($i = 0; $i < $item_count; $i++) {
-					if ($responses[$i]->success) {
-						$sfids[$responses[$i]->id] = $batch['records'][$i]->oid;
-					}
-				}
+        for ($i = 0; $i < $item_count; $i++) {
+          if ($responses[$i]->success) {
+            $sfids[$responses[$i]->id] = $batch['records'][$i]->oid;
+          }
+        }
 
-				watchdog('salesforce node', t('Importing !count node records', array('!count' => count($sfids))), NULL, WATCHDOG_INFO);
-				
-				// import the nodes
-				import_node_updates($sfids, $batch['fieldmap']);
-				break;
-				
-			case 'delete':
-			
-				break;
-		}
-	}
+        watchdog('salesforce node', t('Importing !count node records', array('!count' => count($sfids))), NULL, WATCHDOG_INFO);
+        
+        // import the nodes
+        import_node_updates($sfids, $batch['fieldmap']);
+        break;
+        
+      case 'delete':
+      
+        break;
+    }
+  }
 }
 
 /**
@@ -217,10 +217,10 @@ function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
  */
 function sf_node_queue_report_item_title_alter(&$row) {
   $pos = strpos($row['type'], 'node_');
-	if (!($pos === FALSE)) {
-		$title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));	
+  if (!($pos === FALSE)) {
+    $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));  
     $row['title'] = $title;
-	}
+  }
 }
 
 /**
@@ -291,9 +291,9 @@ function sf_node_fieldmap_objects($type) {
               $import_handler = '_sf_node_import_cck_userreference';
               break;  
             case 'link':
-            	$export_handler = '_sf_node_export_cck_link';
-            	$import_handler = '_sf_node_import_cck_link';
-            	break;
+              $export_handler = '_sf_node_export_cck_link';
+              $import_handler = '_sf_node_import_cck_link';
+              break;
             default:
               $export_handler = '_sf_node_export_cck_default';
               $import_handler = '_sf_node_import_cck_default';
@@ -482,38 +482,38 @@ function _sf_node_import_cck_file(&$node, $key, $value) {
  *
  */
 function import_node_updates($sfids, $fieldmap) {
-	if (!empty($sfids)) {
-		
-		$sf = salesforce_management_api_connect();
-		if ($sf) {
-			try {
-				$objects = _normalize_salesforce_response($sf->retrieve(array_keys($sfids), $fieldmap)); // grab all salesforce objects in the batch
-			}
-			catch (Exception $e) {
-				watchdog('salesforce user', t('Failed to retrieve objects from Salesforce. Drupal nodes will not be updated.'), NULL, WATCHDOG_CRITICAL);
-			}	
-			
-			// load the fieldmap data.
-			$map = salesforce_management_api_fieldmap_load($fieldmap);
-			// load drupal object definition
-			$drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
-			// load salesforce object definition
-			$salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
+  if (!empty($sfids)) {
+    
+    $sf = salesforce_management_api_connect();
+    if ($sf) {
+      try {
+        $objects = _normalize_salesforce_response($sf->retrieve(array_keys($sfids), $fieldmap)); // grab all salesforce objects in the batch
+      }
+      catch (Exception $e) {
+        watchdog('salesforce user', t('Failed to retrieve objects from Salesforce. Drupal nodes will not be updated.'), NULL, WATCHDOG_CRITICAL);
+      }  
+      
+      // load the fieldmap data.
+      $map = salesforce_management_api_fieldmap_load($fieldmap);
+      // load drupal object definition
+      $drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
+      // load salesforce object definition
+      $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
-			// process each node
-			foreach($objects as $object) {
-				// load the node
+      // process each node
+      foreach($objects as $object) {
+        // load the node
         $node = node_load($sfids[$object->Id]);
         if ($nid = update_node_values($node, $object, $map, $drupal, $salesforce)) {
-        	module_invoke_all('sf_node_node_updated', $node, $object);
+          module_invoke_all('sf_node_node_updated', $node, $object);
         }
-			}
-		}
-		else {
-			watchdog('salesforce user', t('Failed to connect to Salesforce. Drupal nodes will not be updated.'), NULL, WATCHDOG_CRITICAL);
-			// TODO: MOVE RECORDS TO A PLACE WHERE THEY CAN BE IMPORTED LATER
-		}
-	}
+      }
+    }
+    else {
+      watchdog('salesforce user', t('Failed to connect to Salesforce. Drupal nodes will not be updated.'), NULL, WATCHDOG_CRITICAL);
+      // TODO: MOVE RECORDS TO A PLACE WHERE THEY CAN BE IMPORTED LATER
+    }
+  }
 }
 
 /**
@@ -549,10 +549,10 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
     
     // Let the import handler do it's work
     if (isset($drupal['fields'][$key]['import'])) {
-    	$drupal['fields'][$key]['import']($node, $key, $map_value);
+      $drupal['fields'][$key]['import']($node, $key, $map_value);
     }
     else {
-  	  $node->$key = $map_value;
+      $node->$key = $map_value;
     }
 
     // call hook_sf_node_update_node_value() to allow custom value alterations
@@ -573,39 +573,39 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
  */
 function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_new_objects) {
   $pos = strpos($type, 'node_');
-	if (!($pos === FALSE)) {
-		// load the fieldmap data.
-		$map = salesforce_management_api_fieldmap_load($fieldmap);
-		// load drupal object definition
-		$drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
-		// load salesforce object definition
-		$salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
-		
-		foreach($objects->records as $object) {
-			// look up the node id
-			$nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
-			
-			if ($nid) {
-				$node = node_load($nid);
-				update_node_values($node, $object, $map, $drupal, $salesforce);
-				module_invoke_all('sf_node_node_updated', $node, $object);
-			}
-			else if ($import_new_objects) {
-				module_load_include('inc', 'node', 'node.pages');
-				$node = new stdClass();
-				$node->type = str_replace('node_', '', $type);
-				node_object_prepare($node);
-				update_node_values($node, $object, $map, $drupal, $salesforce);
-				module_invoke_all('sf_node_node_imported', $node, $object);
-				
-				salesforce_management_api_id_save($type, $node->nid, $object->Id, $fieldmap);
-				
-				// stick the node back in the queue so that it can be exported to SF with any additional drupal values
-				sf_queue_insert($node->nid, $type, 'update');
-			}
-		}
-	}
-	
+  if (!($pos === FALSE)) {
+    // load the fieldmap data.
+    $map = salesforce_management_api_fieldmap_load($fieldmap);
+    // load drupal object definition
+    $drupal = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
+    // load salesforce object definition
+    $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
+    
+    foreach($objects->records as $object) {
+      // look up the node id
+      $nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
+      
+      if ($nid) {
+        $node = node_load($nid);
+        update_node_values($node, $object, $map, $drupal, $salesforce);
+        module_invoke_all('sf_node_node_updated', $node, $object);
+      }
+      else if ($import_new_objects) {
+        module_load_include('inc', 'node', 'node.pages');
+        $node = new stdClass();
+        $node->type = str_replace('node_', '', $type);
+        node_object_prepare($node);
+        update_node_values($node, $object, $map, $drupal, $salesforce);
+        module_invoke_all('sf_node_node_imported', $node, $object);
+        
+        salesforce_management_api_id_save($type, $node->nid, $object->Id, $fieldmap);
+        
+        // stick the node back in the queue so that it can be exported to SF with any additional drupal values
+        sf_queue_insert($node->nid, $type, 'update');
+      }
+    }
+  }
+  
 }
 
 /**
@@ -624,7 +624,7 @@ function _sf_node_load_user_salesforce_ids($uid) {
       WHEN instr(u.data, 'salesforce_contact_id') THEN substring(u.data, instr(u.data, 'salesforce_contact_id')+29, 18)
       ELSE 
         NULL
-    END	AS salesforce_contact_id
+    END  AS salesforce_contact_id
     FROM {users} u 
     WHERE u.uid = %d", $uid);
   

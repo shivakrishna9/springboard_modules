@@ -28,7 +28,7 @@ Drupal.behaviors.fundraiser = function(context) {
     // And the alert is visible, remove it.
 
     $('#fundraiser-amount-error').remove();
-  });	
+  });  
 
   // When the radio button changes, if it was set to other and other still has a value in it.
   // Make sure the user picks one or the other.

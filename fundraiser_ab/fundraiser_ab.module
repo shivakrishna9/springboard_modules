@@ -127,11 +127,11 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         $recurs = ($fundraiser_fields['recurs'] == 'recurs');
       }
       elseif (!empty($fundraiser_fields['recurs_monthly'])) {
-    		$recurs = $fundraiser_fields['recurs_monthly'];
-    	}
+        $recurs = $fundraiser_fields['recurs_monthly'];
+      }
       // Lets jump through some hoops to see if this was a recurring donation
       // (Fundraiser 3.x)
-    	else {
+      else {
         $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $webform_node->nid));
         if (!empty($recurs_cid)) {
           $value = $form_state_values['submitted'][$recurs_cid];

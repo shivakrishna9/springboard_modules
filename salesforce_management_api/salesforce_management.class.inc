@@ -123,8 +123,8 @@ class DrupalSalesforce {
    *   An array of Salesforce IDs for the objects to retrieve.
    * @param $fieldmap
    *   The fieldmap through which to filter the data.
-	 * @param $extra_fields
-	 *	 An array of extra fields to retreive that are not part of the fieldmap
+   * @param $extra_fields
+   *   An array of extra fields to retreive that are not part of the fieldmap
    * @return
    *   The single matching Salesforce objects or an array of all the objects
    *     if more than one are returned.
@@ -136,15 +136,15 @@ class DrupalSalesforce {
     $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
     $fields = array_keys($object['fields']);
-		
-		// apend extra fields if available
-		if (!empty($extra_fields)) {
-			foreach($extra_fields as $field) {
-				if (!in_array($field, $fields)) {
-					$fields[] = $field;
-				}
-			}
-		}
+    
+    // apend extra fields if available
+    if (!empty($extra_fields)) {
+      foreach($extra_fields as $field) {
+        if (!in_array($field, $fields)) {
+          $fields[] = $field;
+        }
+      }
+    }
 
     return $this->client->retrieve(implode(', ', $fields), $map['salesforce'], $ids);
   }

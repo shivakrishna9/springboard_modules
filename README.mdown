@@ -2,7 +2,7 @@ About
 -----
 This project contains **only** the Springboard-specific modules: it is not a ready-to use Springboard package.
 
-You should only download or checkout this project if you have an existing Drupal site where you'd like to install Springboard functionality.	If that is the case, see the documentation on GoSpringboard.com for instructions: [Installing In An Existing Drupal Site](http://www.gospringboard.com/documentation/installing-springboard/installing-existing-drupal-site)
+You should only download or checkout this project if you have an existing Drupal site where you'd like to install Springboard functionality.  If that is the case, see the documentation on GoSpringboard.com for instructions: [Installing In An Existing Drupal Site](http://www.gospringboard.com/documentation/installing-springboard/installing-existing-drupal-site)
 
 If you are creating a new site from scratch, you have two options:
 

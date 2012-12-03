@@ -10,7 +10,7 @@
  * Implemenation of hook_menu().
  */
 function sf_import_menu() {
-	$items['admin/settings/salesforce-management/fieldmap/%fieldmap_import/import'] = array(
+  $items['admin/settings/salesforce-management/fieldmap/%fieldmap_import/import'] = array(
     'title' => 'Import settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sf_import_settings_form', 4),

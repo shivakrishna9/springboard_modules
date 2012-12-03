@@ -35,18 +35,18 @@ function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_inf
  */
 function sage_update_billing_information($reference_id, $billing_info) {
   $vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $reference_id));
-	$data = array(
-		'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
-		'billing_street1' => $billing_info['address_1'],
-		'billing_street2' => $billing_info['address_2'],
-		'billing_city' => $billing_info['city'],
-		'billing_zone' => $billing_info['state'],
-		'billing_postal_code' => $billing_info['zipcode'],
-		'billing_country' => $billing_info['country'],
-		'cc_number' => $billing_info['card_num'],
-		'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
-		'cc_exp_year' => $billing_info['card_exp_date']['year'],
-	);
+  $data = array(
+    'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
+    'billing_street1' => $billing_info['address_1'],
+    'billing_street2' => $billing_info['address_2'],
+    'billing_city' => $billing_info['city'],
+    'billing_zone' => $billing_info['state'],
+    'billing_postal_code' => $billing_info['zipcode'],
+    'billing_country' => $billing_info['country'],
+    'cc_number' => $billing_info['card_num'],
+    'cc_exp_month' => sprintf("%02d", $billing_info['card_exp_date']['month']),
+    'cc_exp_year' => $billing_info['card_exp_date']['year'],
+  );
 
   $response = uc_sage_vault_update($vault_id, $data);
   // TODO: Need to add some better returns to the uc_sage module
@@ -294,11 +294,11 @@ function fundraiser_refund_submit($form, &$form_state) {
   }
   
   if ($result['success']) {
-		// enter the payment
-		uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
-		
-		// Add the comment
-	  $context = array(
+    // enter the payment
+    uc_payment_enter($order->order_id, 'fundraiser', $amount, 0, array('txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $result['data']['txn_id']), 'Refund processed by the fundraiser module.');
+    
+    // Add the comment
+    $context = array(
       'revision' => 'formatted-original',
       'type' => 'amount',
     );
@@ -308,48 +308,48 @@ function fundraiser_refund_submit($form, &$form_state) {
 
     $reason = check_plain($form_state['values']['refund_notes']);
 
-  	$amount_formatted = uc_price($amount, $context);
-		uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
-		
-		// get the receipt_id that belongs to this refund
-		$receipt_id = NULL;
-		$payments = uc_payment_load_payments($order_id);
-		foreach ($payments as $payment) {
-		  $data = unserialize($payment->data);
-		  if ($data['txn_id'] == $result['data']['txn_id']) {
-		    $receipt_id = $payment->receipt_id;
-		  }
-		}
-		
-		// Save refund data
-		$refund = new stdClass();
-		$refund->order_id = $order_id;
-		$refund->receipt_id = $receipt_id;
-		$refund->amount = $amount;
-		$refund->txn_id = $result['data']['txn_id'];
-		$refund->reason = $reason;
-		drupal_write_record('fundraiser_refund', $refund);
-	
-		// Set order status to Refunded or Partially Refunded
-		db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
+    $amount_formatted = uc_price($amount, $context);
+    uc_order_comment_save($order_id, $user->uid, t('%amount refund issued by %user. Refund notes: %reason', array('%amount' => $amount_formatted, '%user' => $user->name, '%reason' => $reason)), 'admin');
     
- 		// If using the Salesforce queue, queue up the updates
- 		if (module_exists('queue_api')) {
- 		  // Update the original order
- 		  sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
- 		  // Create the refund
- 		  sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
- 		}
- 		
- 		drupal_set_message(t('Refund has been issued.'),'status');
- 		drupal_goto('admin/store/orders/' . $order_id);
- 	}
- 	else { 
-		// failed to process credit cart
-		$log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
-		watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
-		drupal_set_message($result['message']);
-		$form_state['rebuild'] = TRUE;
-		$form_state['values']['abort'] = TRUE;
- 	}
+    // get the receipt_id that belongs to this refund
+    $receipt_id = NULL;
+    $payments = uc_payment_load_payments($order_id);
+    foreach ($payments as $payment) {
+      $data = unserialize($payment->data);
+      if ($data['txn_id'] == $result['data']['txn_id']) {
+        $receipt_id = $payment->receipt_id;
+      }
+    }
+    
+    // Save refund data
+    $refund = new stdClass();
+    $refund->order_id = $order_id;
+    $refund->receipt_id = $receipt_id;
+    $refund->amount = $amount;
+    $refund->txn_id = $result['data']['txn_id'];
+    $refund->reason = $reason;
+    drupal_write_record('fundraiser_refund', $refund);
+  
+    // Set order status to Refunded or Partially Refunded
+    db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
+    
+     // If using the Salesforce queue, queue up the updates
+     if (module_exists('queue_api')) {
+       // Update the original order
+       sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+       // Create the refund
+       sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
+     }
+     
+     drupal_set_message(t('Refund has been issued.'),'status');
+     drupal_goto('admin/store/orders/' . $order_id);
+   }
+   else { 
+    // failed to process credit cart
+    $log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
+    watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
+    drupal_set_message($result['message']);
+    $form_state['rebuild'] = TRUE;
+    $form_state['values']['abort'] = TRUE;
+   }
 }

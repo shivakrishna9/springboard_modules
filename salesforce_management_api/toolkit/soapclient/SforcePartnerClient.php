@@ -39,7 +39,7 @@ require_once ('SforceBaseClient.php');
  */
 class SforcePartnerClient extends SforceBaseClient {
   const PARTNER_NAMESPACE = 'urn:partner.soap.sforce.com';
-	
+  
   function SforcePartnerClient() {
     $this->namespace = self::PARTNER_NAMESPACE;
   }
@@ -139,7 +139,7 @@ class SforcePartnerClient extends SforceBaseClient {
    * @return UpsertResult
    */
   public function upsert($ext_Id, $sObjects) {
-    //		$this->_setSessionHeader();
+    //    $this->_setSessionHeader();
     $arg = new stdClass;
     $arg->externalIDFieldName = new SoapVar($ext_Id, XSD_STRING, 'string', 'http://www.w3.org/2001/XMLSchema');
     foreach ($sObjects as $sObject) {
@@ -152,28 +152,28 @@ class SforcePartnerClient extends SforceBaseClient {
   }
   
   public function query($query) {
-  	return new QueryResult(parent::query($query));
-  	
+    return new QueryResult(parent::query($query));
+    
   }
   public function queryMore($queryLocator) {
-  	return new QueryResult(parent::queryMore($queryLocator));
+    return new QueryResult(parent::queryMore($queryLocator));
   }
   public function retrieve($fieldList, $sObjectType, $ids) {
-  	return $this->_retrieveResult(parent::retrieve($fieldList, $sObjectType, $ids));
+    return $this->_retrieveResult(parent::retrieve($fieldList, $sObjectType, $ids));
   }  
 
   private function _retrieveResult($response) {
-  	$arr = array();
-  	if(is_array($response)) {
-  		foreach($response as $r) {
-  			$sobject = new SObject($r);
-  			array_push($arr,$sobject);
-  		};
-  	}else {
-  		$sobject = new SObject($response);
+    $arr = array();
+    if(is_array($response)) {
+      foreach($response as $r) {
+        $sobject = new SObject($r);
+        array_push($arr,$sobject);
+      };
+    }else {
+      $sobject = new SObject($response);
         array_push($arr, $sobject);
-  	}
-  	return $arr;
+    }
+    return $arr;
   }
   
 }
@@ -186,30 +186,30 @@ class QueryResult {
   public $size;
 
   public function __construct($response) {
-   	
-  	$this->queryLocator = $response->queryLocator;
+     
+    $this->queryLocator = $response->queryLocator;
     $this->done = $response->done;
-    $this->size = $response->size;	
+    $this->size = $response->size;  
 
     
     if($response instanceof QueryResult) {
-	    $this->records = $response->records; 		
-  	}
-  	else {
-	    $this->records = array();
+      $this->records = $response->records;     
+    }
+    else {
+      $this->records = array();
 
-	    if (isset($response->records)) {
-	      if (is_array($response->records)) {
-	        foreach ($response->records as $record) {
-	          $sobject = new SObject($record);
-	          array_push($this->records, $sobject);
-	        };
-	      } else {
-	        $sobject = new SObject($response->records);
-	        array_push($this->records, $sobject);
-	      }
-	    }
-  	}
+      if (isset($response->records)) {
+        if (is_array($response->records)) {
+          foreach ($response->records as $record) {
+            $sobject = new SObject($record);
+            array_push($this->records, $sobject);
+          };
+        } else {
+          $sobject = new SObject($response->records);
+          array_push($this->records, $sobject);
+        }
+      }
+    }
   }
 }
 /**
@@ -247,14 +247,14 @@ class SObject {
               // Loop through each and perform some action.
               $anArray = array();
 
-		// Modify the foreach to have $key=>$value
-		// Added on 28th April 2008
+    // Modify the foreach to have $key=>$value
+    // Added on 28th April 2008
               foreach ($response->any as $k=>$item) {
                 if ($item instanceof stdClass) {
                   if ($this->isSObject($item)) {
                     $sobject = new SObject($item);
-		
-		// make an associative array instead of a numeric one
+    
+    // make an associative array instead of a numeric one
                     $anArray[$k] = $sobject;
                   } else {
                     // this is for parent to child relationships
@@ -273,22 +273,22 @@ class SObject {
                   }
                 }
                 if (isset($fieldsToConvert)) {
-		
-		// If this line is commented, then the fields becomes a stdclass object and does not have the name variable
-		// In this case the foreach loop on line 252 runs successfuly
+    
+    // If this line is commented, then the fields becomes a stdclass object and does not have the name variable
+    // In this case the foreach loop on line 252 runs successfuly
                   $this->fields = $this->convertFields($fieldsToConvert);
                 }
               }
               if (sizeof($anArray) > 0) {
 
-		// To add more variables to the the top level sobject
-		foreach ($anArray as $k=>$children_sobject) {
-			$this->fields->$k = $children_sobject;
+    // To add more variables to the the top level sobject
+    foreach ($anArray as $k=>$children_sobject) {
+      $this->fields->$k = $children_sobject;
 
-		}
-		
-		//array_push($this->fields, $anArray);
-		// Uncommented on 28th April since all the sobjects have now been moved to the fields
+    }
+    
+    //array_push($this->fields, $anArray);
+    // Uncommented on 28th April since all the sobjects have now been moved to the fields
                 //$this->sobjects = $anArray;
               }
 
@@ -332,19 +332,19 @@ class SObject {
    * simplexml_load_string and return an array that can be traversed.
    */
   function convertFields($any) {
-	$str = ereg_replace('sf:', '', $any);
+  $str = ereg_replace('sf:', '', $any);
 
-	$array = $this->xml2array('<Object xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$str.'</Object>',0);
+  $array = $this->xml2array('<Object xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$str.'</Object>',0);
 
-	$xml = new stdClass;
+  $xml = new stdClass;
         if (!count($array['Object']))
           return $xml;
 
-	foreach ($array['Object'] as $k=>$v) {
-	  $xml->$k = $v;
-	}
+  foreach ($array['Object'] as $k=>$v) {
+    $xml->$k = $v;
+  }
 
-	
+  
     //$new_string = '<Object xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$new_string.'</Object>';
      //$new_string = $new_string;
    //$xml = simplexml_load_string($new_string);

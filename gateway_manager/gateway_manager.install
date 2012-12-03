@@ -9,14 +9,14 @@
  * Implementation of hook_install().
  */
 function gateway_manager_install() {
-	drupal_install_schema('gateway_manager');
+  drupal_install_schema('gateway_manager');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function gateway_manager_uninstall() {
-	drupal_uninstall_schema('gateway_manager');
+  drupal_uninstall_schema('gateway_manager');
   $vid = variable_get('gateway_manager_vocabulary', '');
   taxonomy_del_vocabulary($vid);
 }

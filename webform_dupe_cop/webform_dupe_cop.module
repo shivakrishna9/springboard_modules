@@ -8,15 +8,15 @@
  * Implementation of hook_menu().
  */
 function webform_dupe_cop_menu() {
-	$items['admin/settings/webform/webform-dupe-cop'] = array(
+  $items['admin/settings/webform/webform-dupe-cop'] = array(
     'title' => t('Webform dupe prevention settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('webform_dupe_cop_settings_form'),
-		'access arguments' => array('manage webform duplicate submission prevention'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'webform_dupe_cop.admin.inc',
-	);
-	return $items;
+    'access arguments' => array('manage webform duplicate submission prevention'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_dupe_cop.admin.inc',
+  );
+  return $items;
 }
 
 /**

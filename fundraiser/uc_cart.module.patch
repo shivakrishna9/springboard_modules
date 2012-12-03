@@ -1,11 +1,11 @@
---- uc_cart.module_old	2009-07-21 14:14:50.000000000 -0700
-+++ uc_cart.module	2009-07-20 13:04:30.000000000 -0700
+--- uc_cart.module_old  2009-07-21 14:14:50.000000000 -0700
++++ uc_cart.module  2009-07-20 13:04:30.000000000 -0700
 @@ -1123,7 +1123,7 @@
      $result = db_query("SELECT uid FROM {users} WHERE mail = '%s'", $order->primary_email);
  
      // If it was found, update the order.
 -    if ($account = db_fetch_object($result)) {
 +    if ($account = db_fetch_object($result) && $account->uid != 0) {
-     	
+       
        $order->uid = $account->uid;
        db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);

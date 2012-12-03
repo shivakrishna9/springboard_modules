@@ -43,8 +43,8 @@ function fundraiser_goals_menu() {
   // #ahah callbacks
   $items['fundraiser_goals/js'] = array(
     'page callback' => 'fundraiser_goals_ahah',
-	'access callback' => TRUE,
-	'type' => MENU_CALLBACK,
+  'access callback' => TRUE,
+  'type' => MENU_CALLBACK,
   );
   $items['fundraiser_goals_admin/js'] = array(
     'page callback' => 'fundraiser_goals_admin_ahah',

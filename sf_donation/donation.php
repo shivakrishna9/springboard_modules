@@ -190,21 +190,21 @@ class Donation
     
     // Only set these fields if it's paid
     if ($order->order_status == 'payment_received') {
-  		// deal with sf date handling
-  		$this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
+      // deal with sf date handling
+      $this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
       $this->close_date = date('Y-m-d', $this->transaction_date);
       $this->transaction_date_gm = gmdate('c', $this->transaction_date);
       $this->probability = 100.00;
-  	}
-  	
-  	// Set close date to the original date for refunds otherwise SF will default to current date
-  	if ($order->order_status == 'refunded' || $order->order_status == 'partially_refunded') {
+    }
+    
+    // Set close date to the original date for refunds otherwise SF will default to current date
+    if ($order->order_status == 'refunded' || $order->order_status == 'partially_refunded') {
       $this->transaction_date = strtotime(date('H:i:s d-M-Y T', $payments[0]->received));
       $this->close_date = date('Y-m-d', $this->transaction_date);
-  	}
-  	
-	  $this->stage = $stages[$order->order_status];
-  	    
+    }
+    
+    $this->stage = $stages[$order->order_status];
+        
     uc_credit_cache('clear');
     
     // add gateway and transaction id
@@ -214,13 +214,13 @@ class Donation
     $this->payment_authorization_code = $txn_details['auth_code'];
     $this->donation_form_url = $txn_details['form_url'];
     
-    // if this is a recurring donation, make sure we get the right close date  	
-  	$close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
-  	if ($close_date) {
-  		$this->close_date = date('Y-m-d', $close_date);
-  	}
-  	
-  	$this->_load_webform_values($this->donation_form_nid, $sid);
+    // if this is a recurring donation, make sure we get the right close date    
+    $close_date = db_result(db_query("SELECT next_charge FROM {fundraiser_recurring} WHERE order_id = %d", $this->order_id));
+    if ($close_date) {
+      $this->close_date = date('Y-m-d', $close_date);
+    }
+    
+    $this->_load_webform_values($this->donation_form_nid, $sid);
 
   }
   
@@ -288,7 +288,7 @@ class Donation
       if (!in_array($data->form_key, $exclude)) {
         $this->{$data->form_key} = $data->data;
       }
-    }	
+    }  
   }
   
   /**

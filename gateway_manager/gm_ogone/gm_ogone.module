@@ -1052,12 +1052,12 @@ function gm_ogone_feedback_accepted() {
       $order->payment_details['cc_number'] = $payment_values['CARDNO'];
     }
     if ($payment_values['ED']) {
-   		// ED is month and year combines, like 0612 for June 2012, so it needs to be split
+       // ED is month and year combines, like 0612 for June 2012, so it needs to be split
       $order->payment_details['cc_exp_month'] = substr($payment_values['ED'], 0, 2);
       $order->payment_details['cc_exp_year'] = '20' . substr($payment_values['ED'], 2, 2);
     }
-   	
-   	
+     
+     
     // If an alias ID is returned from Ogone, save it
     if (!empty($payment_values['ALIAS'])) {
       $order->data = uc_credit_log_reference($order_id, $payment_values['ALIAS'], $payment_values['CARDNO']);

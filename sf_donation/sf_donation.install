@@ -34,7 +34,7 @@ function sf_donation_disable() {
   foreach ($types as $type) {
     // remove the type from the queue processor
     queue_processor_remove_type($type);
-  }	
+  }  
 }
 
 /**
@@ -42,38 +42,38 @@ function sf_donation_disable() {
  */
 function sf_donation_schema() {
 
-	$schema['sf_donation_log'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'cron_semaphore' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'uid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'type' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '10',
-	      'not null' => FALSE,
-	    ),
-	    'number_of_donations' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'data' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => FALSE,
-	    ),
-	  ),
-	);
-	
+  $schema['sf_donation_log'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'cron_semaphore' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'uid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'type' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => FALSE,
+      ),
+      'number_of_donations' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'data' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+  );
+  
   $schema['fundraiser_salesforce_map'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -111,40 +111,40 @@ function sf_donation_schema() {
       ),
     ),
   );
-	
-	$schema['sf_donation_opportunity_contact_role'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'contact_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	    ),
-	    'opportunity_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'role' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '55',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'exported' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	  ),
-	);
-	
-	return $schema;
+  
+  $schema['sf_donation_opportunity_contact_role'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'contact_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'opportunity_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'role' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'exported' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
+  
+  return $schema;
 }
 
 /**
@@ -154,12 +154,12 @@ function sf_donation_update_6101() {
 
   $updates = array();
   $updates[] = update_sql("
-		CREATE TABLE {sf_donation_opportunity_contact_role} (
-  	contact_id varchar(32) NOT NULL,
-  	opportunity_id varchar(32) NOT NULL default '',
-  	role varchar(55) NOT NULL default '',
-  	exported int(11) NOT NULL default '0'
-	)");
+    CREATE TABLE {sf_donation_opportunity_contact_role} (
+    contact_id varchar(32) NOT NULL,
+    opportunity_id varchar(32) NOT NULL default '',
+    role varchar(55) NOT NULL default '',
+    exported int(11) NOT NULL default '0'
+  )");
 
   return $updates;
 }

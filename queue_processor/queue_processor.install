@@ -15,8 +15,8 @@ function queue_processor_install() {
     queue_processor_add_type($type);
   }
 
-	variable_set('queue_batch_size', 200);
-	variable_set('queue_retry_max', 3);
+  variable_set('queue_batch_size', 200);
+  variable_set('queue_retry_max', 3);
 }
 
 /**
@@ -27,8 +27,8 @@ function queue_processor_uninstall() {
   foreach($processing_order as $key => $type) {
     variable_del($type . '_batch_size');
   }
-	variable_del('queue_processing_order');
-	variable_del('queue_retry_max');
+  variable_del('queue_processing_order');
+  variable_del('queue_retry_max');
 }
 
 /**

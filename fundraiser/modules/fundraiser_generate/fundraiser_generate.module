@@ -11,12 +11,12 @@
  */
 function fundraiser_generate_menu() {
   $items['admin/settings/fundraiser/generate'] = array(
-		'title' => t('Generate donations'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('fundraiser_generate_donations_form'),
-		'access arguments' => array('create test donations'),
-		'type' => MENU_NORMAL_ITEM,
-	);
+    'title' => t('Generate donations'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_generate_donations_form'),
+    'access arguments' => array('create test donations'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   
   return $items;
 }

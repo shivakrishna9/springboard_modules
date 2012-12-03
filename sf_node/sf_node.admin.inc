@@ -68,13 +68,13 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
       '#type' => 'value',
       '#value' => $node->salesforce['fieldmap'],
     );
- 	
+   
     
-	// Retrieve the object from Salesforce.
+  // Retrieve the object from Salesforce.
     $sf = salesforce_management_api_connect();
     $data = $sf->retrieve(array($node->salesforce['sfid']), $node->salesforce['fieldmap']);
-	
-	 // Load the fieldmap data.
+  
+   // Load the fieldmap data.
     $map = salesforce_management_api_fieldmap_load($node->salesforce['fieldmap']);
 
     // Load the object definitions.

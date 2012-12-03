@@ -117,38 +117,38 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
  * Counts the number of processed recurring orders.
  */
 function _fundraiser_processed_recurring_charge_count($order_id) {
-	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-		and gateway_resp = 'success'", $order_id));
+  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
+    and gateway_resp = 'success'", $order_id));
 }
 
 /**
  * Counts the number of unprocessed orders remaining.
  */
 function _fundraiser_remaining_recurring_charge_count($order_id) {
-	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-		and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
+  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
+    and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
 }
 
 /**
  * Returns the entire payment schedule for a recurring donation series.
  */
 function _fundraiser_recurring_payment_schedule($master_order_id) {
-	$orders = array();
-	
+  $orders = array();
+  
   $result = db_query(
   "
     SELECT u.order_total as amount, f.next_charge as charge_date, f.gateway_resp as status
-		FROM {fundraiser_recurring} f
-		INNER JOIN {uc_orders} u ON u.order_id = f.order_id
-		WHERE f.master_order_id = %d
-		ORDER BY f.next_charge asc
+    FROM {fundraiser_recurring} f
+    INNER JOIN {uc_orders} u ON u.order_id = f.order_id
+    WHERE f.master_order_id = %d
+    ORDER BY f.next_charge asc
   ",
-	$master_order_id
-	);
-	
-	while ($data = db_fetch_array($result)) {
+  $master_order_id
+  );
+  
+  while ($data = db_fetch_array($result)) {
     $orders[] = $data;
-	}
+  }
   return $orders;
 }
 

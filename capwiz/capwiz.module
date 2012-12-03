@@ -577,9 +577,9 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
  */
 function capwiz_queue_batch_item_alter(&$object, $type, $action, $oid) {
 
-	if ($type == 'capwiz_action' && $action == 'create') {
+  if ($type == 'capwiz_action' && $action == 'create') {
 
-	  // Set the Salesforce object's Contact ID to the real one.
+    // Set the Salesforce object's Contact ID to the real one.
     // It is currently the Drupal user's ID, because
     // hook_queue_preprocess_batch_alter() runs before the users
     // are saved in Salesforce and brought back down with their
@@ -614,10 +614,10 @@ SQL;
 
         $object->$field = db_result(db_query($sf_info_sql, $object->$field));
       }
-  	}
-  	else {
-  	  watchdog('capwiz', 'Could not load the Salesforce fieldmap');
-  	}
+    }
+    else {
+      watchdog('capwiz', 'Could not load the Salesforce fieldmap');
+    }
   }
   elseif ($type == 'user' && in_array($action, array('create', 'update', 'upsert'))) {
     

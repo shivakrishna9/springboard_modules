@@ -9,23 +9,23 @@ function webform_dupe_cop_uninstall() {
 
 function webform_dupe_cop_schema() {
   $schema['webform_dupe_cop'] = array(
-	  'description' => t('A register of MD5 hashes for Webform submissions'),
-	  'fields' => array(
-	    'sid' => array(
-	      'description' => t('Submission ID from {webform_submissions}'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
+    'description' => t('A register of MD5 hashes for Webform submissions'),
+    'fields' => array(
+      'sid' => array(
+        'description' => t('Submission ID from {webform_submissions}'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'submission_hash' => array(
         'description' => t('MD5 hash of all submission data'),
         'type' => 'char',
         'length' => 32,
         'not null' => FALSE,
       ),
-	  ),
-	  'primary key' => array('sid'),
-	);
+    ),
+    'primary key' => array('sid'),
+  );
   return $schema;
 }

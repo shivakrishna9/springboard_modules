@@ -10,13 +10,13 @@
  * Implementation of hook_uninstall().
  */
 function form_layouts_uninstall() {
-	// delete all form layout variables
-	$donation_types = fundraiser_enabled_types();
-	if (count($donation_types)) {
-		$result = db_query("SELECT nid FROM {node} WHERE type IN (" . db_placeholders($donation_types, 'text') . ")", $donation_types);
-		while ($data = db_fetch_object($result)) {
-	    	$var_name = _form_layouts_variable_name($data->nid);
-	    	variable_del($var_name);
-		}
-	}
+  // delete all form layout variables
+  $donation_types = fundraiser_enabled_types();
+  if (count($donation_types)) {
+    $result = db_query("SELECT nid FROM {node} WHERE type IN (" . db_placeholders($donation_types, 'text') . ")", $donation_types);
+    while ($data = db_fetch_object($result)) {
+        $var_name = _form_layouts_variable_name($data->nid);
+        variable_del($var_name);
+    }
+  }
 }

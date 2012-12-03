@@ -31,8 +31,8 @@ function webform_dupe_cop_settings_form() {
     '#description' => t('Optional. Message  to display on dupe submission. You can use %date, %time, %webform_id, %user_id to substitute ' .
       'the date and time of the original submission.'),
   );
-	$form['#validate'][] = 'webform_dupe_cop_settings_form_validate';
-	return system_settings_form($form);
+  $form['#validate'][] = 'webform_dupe_cop_settings_form_validate';
+  return system_settings_form($form);
 }
 
 /**

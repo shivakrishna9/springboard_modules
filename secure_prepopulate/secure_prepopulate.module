@@ -142,7 +142,7 @@ function secure_prepopulate_form_alter(&$form, $form_state, $form_id) {
         $form['#after_build'][] = 'secure_prepopulate_after_build';       
         $form['#submit'][] = 'secure_prepopulate_submit'; // submit handler to clear out session values  
       }
-    }			  
+    }        
   }
 }
 
@@ -536,26 +536,26 @@ function _secure_prepopulate_encrypt($input, $key, $iv)
 function _secure_prepopulate_decrypt($cipher, $key, $iv)
 {
   // do some decoding
-	$cipher = base64_decode($cipher);
+  $cipher = base64_decode($cipher);
 
   // open our encryption algorithm resource, in this case 128 bit AES
-	$descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+  $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
 
   // get buffers ready
-	mcrypt_generic_init($descriptor, $key, $iv);
-	
-	// decrypt the data
-	$decrypted_data = mdecrypt_generic($descriptor, $cipher);
-	
-	// release resources
-	mcrypt_generic_deinit($descriptor);
-	mcrypt_module_close($descriptor);
-	
-	// account for some PHP AES shortcomings
-	$decrypted_data = pkcs5_unpad($decrypted_data);
-	$decrypted_data = rtrim($decrypted_data);
-	
-	return $decrypted_data;
+  mcrypt_generic_init($descriptor, $key, $iv);
+  
+  // decrypt the data
+  $decrypted_data = mdecrypt_generic($descriptor, $cipher);
+  
+  // release resources
+  mcrypt_generic_deinit($descriptor);
+  mcrypt_module_close($descriptor);
+  
+  // account for some PHP AES shortcomings
+  $decrypted_data = pkcs5_unpad($decrypted_data);
+  $decrypted_data = rtrim($decrypted_data);
+  
+  return $decrypted_data;
 }
 
 /**

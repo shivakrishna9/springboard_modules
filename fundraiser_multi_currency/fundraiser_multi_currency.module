@@ -172,7 +172,7 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
   $currency['email'] = 1;
   $currency['maps_to'] = '';
   $currency['extra'] = array(
-  	'description' => '',
+    'description' => '',
   );
   
   // If they chose to allow users to pick their currency, add a dropdown for currencies
@@ -185,10 +185,10 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
     }
     $default_currencies = trim($default_currencies);
     
-  	$currency['type'] = 'select';  
-  	$currency['extra']['items'] = $default_currencies;
-  	$currency['extra']['multiple'] = 0;
-  	$currency['extra']['aslist'] = 'Y';
+    $currency['type'] = 'select';  
+    $currency['extra']['items'] = $default_currencies;
+    $currency['extra']['multiple'] = 0;
+    $currency['extra']['aslist'] = 'Y';
   }
   // Otherwise, hide the currency
   else {

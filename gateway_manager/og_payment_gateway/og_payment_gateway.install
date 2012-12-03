@@ -9,14 +9,14 @@
  * Implementation of hook_install().
  */
 function og_payment_gateway_install() {
-	drupal_install_schema('og_payment_gateway');
+  drupal_install_schema('og_payment_gateway');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function og_payment_gateway_uninstall() {
-	drupal_uninstall_schema('og_payment_gateway');
+  drupal_uninstall_schema('og_payment_gateway');
 }
 
 /**

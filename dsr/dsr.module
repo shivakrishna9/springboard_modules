@@ -26,26 +26,26 @@ function dsr_menu() {
     'title' => t('DSR settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('dsr_settings'),
-		'access arguments' => array('administer dsr'),
-		'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer dsr'),
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'dsr.admin.inc',
   );
   
   $items['admin/reports/dsr'] = array(
-		'title' => t('DSR'),
-		'page callback' => 'dsr_page',
+    'title' => t('DSR'),
+    'page callback' => 'dsr_page',
       'access arguments' => array('view dsr reports'),
-		'type' => MENU_NORMAL_ITEM
-	);
-	
+    'type' => MENU_NORMAL_ITEM
+  );
+  
   $items['admin/reports/dsr/%dsr_start_date/%dsr_end_date'] = array(
-		'title' => t('DSR'),
-		'page callback' => 'dsr_collect_stats',
+    'title' => t('DSR'),
+    'page callback' => 'dsr_collect_stats',
     'page arguments' => array(3, 4),
     'access arguments' => array('view dsr reports'),
-		'type' => MENU_NORMAL_ITEM
-	);
-	
+    'type' => MENU_NORMAL_ITEM
+  );
+  
   $items['admin/reports/dsr/report/%/%/%'] = array(
     'title' => t('DSR discrepancy report'),
     'page callback' => 'dsr_discrepancy_report',

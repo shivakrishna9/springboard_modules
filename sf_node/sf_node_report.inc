@@ -41,23 +41,23 @@ function sf_node_results_download($node, $options = array()) {
   
   $columns = array('error_time','drupal_type','error','fieldmap');
  
-  	foreach ($csv_output as $i => $value) {
-  	$out .= '"'.$value.'",';
-  	}
-  	$out .="\n";
-	$result = db_query("select * from salesforce_management_api_error where did = %d",$node); 
+    foreach ($csv_output as $i => $value) {
+    $out .= '"'.$value.'",';
+    }
+    $out .="\n";
+  $result = db_query("select * from salesforce_management_api_error where did = %d",$node); 
  
-  	// Add all values in the table
-  	while ($l = db_fetch_array($result)) {
-  	foreach ($columns as $j => $value) {
-  	$out .='"'.$l["$value"].'",';
-  	}
-  	$out .="\n";
-  	}
-  	// Output to browser with appropriate mime type, you choose ;)
-  	header("Content-type: text/x-csv");
-  	header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
-  	echo $out;
-  	exit;
+    // Add all values in the table
+    while ($l = db_fetch_array($result)) {
+    foreach ($columns as $j => $value) {
+    $out .='"'.$l["$value"].'",';
+    }
+    $out .="\n";
+    }
+    // Output to browser with appropriate mime type, you choose ;)
+    header("Content-type: text/x-csv");
+    header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
+    echo $out;
+    exit;
 
 }
