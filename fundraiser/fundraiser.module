@@ -1157,7 +1157,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // Loop through the node gateway manager array to build our payment select items
       if (is_array($payment_fields_field) && !empty($node->gateway_manager['payment_methods'])) {
         // Hide the payment method field when only one method is enabled
-        dpm($node->gateway_manager['payment_methods']);
         if (count($node->gateway_manager['payment_methods']) == 1) {
           $payment_select_field['#type'] = 'value';
           $method = array_keys($node->gateway_manager['payment_methods']);
@@ -1167,7 +1166,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         foreach ($node->gateway_manager['payment_methods'] as $gateway_method) {
           // Add this method to the options
           $gateway_instance = gateway_manager_method_load($gateway_method->method, $gateway_method->gateway_instance);
-          dpm($gateway_instance);
           if (function_exists($gateway_instance['render_callback'])) {
             $payment_fields_field[$gateway_method->method] = array(
               '#type' => 'fieldset',
