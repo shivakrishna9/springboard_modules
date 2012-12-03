@@ -42,6 +42,7 @@ function salesforce_webform_schema() {
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
+        'serialize' => TRUE,
       ),
       'created' => array(
         'description' => 'The Unix timestamp when the salesforce_mapping was created.',
