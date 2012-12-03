@@ -3,8 +3,6 @@ description = Map and push webform submissions to Salesforce.
 package = Salesforce
 core = 7.x
 
-files[] = includes/salesforce_webform.entity.inc
-
 dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = webform
