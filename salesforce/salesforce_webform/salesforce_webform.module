@@ -6,6 +6,11 @@
  */
 
 /**
+ * @defgroup core_drupal_hooks
+ * @{
+ */
+
+/**
  * Implements hook_entity_info().
  */
 function salesforce_webform_entity_info() {
@@ -29,6 +34,7 @@ function salesforce_webform_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_webform_menu() {
+  // %webform_menu returns $node if $node is a webform
   $items['node/%webform_menu/webform/salesforce-map'] = array(
     'title' => 'Salesforce map',
     'page callback' => 'drupal_get_form',
@@ -40,3 +46,7 @@ function salesforce_webform_menu() {
 
   return $items;
 }
+
+/**
+ * @} core_drupal_hooks
+ */

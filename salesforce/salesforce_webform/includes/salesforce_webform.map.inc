@@ -1,9 +1,21 @@
 <?php
+
 /**
  * @file
- * Saleforce webform mapping form and functions.
+ * Configures the mapping of Salesforce objects to webforms
  */
 
+
+/**
+ * @defgroup salesforce_webform_map_form
+ * @{
+ */
+
+/**
+ * Form to do the actual mapping configuration processes
+ *
+ * @D6TOD7: Previously was sf_webform_map_form()
+ */
 function salesforce_webform_map_form() {
 
   // Get list of available SObjects for mapping.
@@ -38,3 +50,7 @@ function salesforce_webform_map_form() {
 
   return $form;
 }
+
+/**
+ * @} salesforce_webform_map_form
+ */
