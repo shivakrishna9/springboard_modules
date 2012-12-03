@@ -5,6 +5,8 @@ core = 7.x
 
 files[] = includes/salesforce_webform.map.inc
 
+files[] = tests/salesforce_webform.test
+
 dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = webform
