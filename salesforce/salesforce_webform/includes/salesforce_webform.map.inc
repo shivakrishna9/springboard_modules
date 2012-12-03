@@ -54,3 +54,64 @@ function salesforce_webform_map_form() {
 /**
  * @} salesforce_webform_map_form
  */
+
+
+/**
+ * @defgroup salesforce_webform_map_crud Made easier with Entity API
+ * @{
+ *
+ * @D6TOD7: This was done manually each time it was needed
+ */
+
+/**
+ * Creates and saves a Salesforce+Webform map
+ *
+ * @param $map
+ *   Can be an array of values or a salesforce_webform_map entity object
+ *
+ * @return
+ *   The new version of the object (such as if you had passed in an array) and
+ *   FALSE if what you passed through was incompatible with the save process.
+ */
+function salesforce_webform_save_map($map) {
+  if (is_array($map)) {
+    // Creates an entity object, but does not add it to the database
+    $map = entity_create('salesforce_webform_map', $map);
+  }
+  if ($map->entityType() == 'salesforce_webform_map') {
+    // Adds the data to the database
+    return entity_save('salesforce_webform_map', $map);
+  }
+  return FALSE;
+}
+
+/**
+ * Retreives a Salesforce+Webform map
+ *
+ * @param $id
+ *   The unique id of the map, in our case it's salesforce_webform_map_id
+ *
+ * @return
+ *   The entity object you requested
+ */
+function salesforce_webform_load_map($id) {
+  $entities = entity_load('salesforce_webform_map', array($id));
+  return $entities[$id];
+}
+
+/**
+ * Deletes a Salesforce+Webform map
+ *
+ * @param $id
+ *   The unique id of the map, in our case it's salesforce_webform_map_id
+ *
+ * @return
+ *   FALSE if the delete could be performed
+ */
+function salesforce_webform_delete_map($id) {
+  return entity_delete('salesforce_webform_map', $id);
+}
+
+/**
+ * @} salesforce_webform_map_crud
+ */
