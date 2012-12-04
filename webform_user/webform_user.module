@@ -283,11 +283,11 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'radios',
         '#options' => array(
           'none' => t('None'),
-      'account' => t('Account'),
-      'contact' => t('Contact'),
-    ),
-    '#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
-    '#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
+          'account' => t('Account'),
+          'contact' => t('Contact'),
+        ),
+        '#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
+        '#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
       );
     }
 
@@ -315,7 +315,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
 
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
-          $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          $form_field = & webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (empty($form_field['#default_value']) && isset($user->$profile_field)) {
             switch ($form_field['#type']) {
               case 'date':
@@ -447,12 +447,12 @@ function webform_user_mapping_form($form_state, $node) {
     '#weight' => 0,
   );
 
-  foreach ($node->webform['components']  as $cid => $component) {
+  foreach ($node->webform['components']   as $cid => $component) {
     if ($component['type'] != 'fieldset') {
 
       $form['mapping']['cid'][$cid] = array(
-      '#type' => 'item',
-      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
+        '#type' => 'item',
+        '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
 
       $options = array('' => '--Select One--');
@@ -461,7 +461,7 @@ function webform_user_mapping_form($form_state, $node) {
         $cat_array = profile_categories();
         foreach ($cat_array as $cat) {
           $result = _profile_get_fields($cat['name']);
-          for ($i = 0;$row = db_fetch_array($result); $i++) {
+          for ($i = 0; $row = db_fetch_array($result); $i++) {
             $options['Drupal Profile Fields'][$row['name']] = $row['title'];
           }
         }
@@ -477,7 +477,10 @@ function webform_user_mapping_form($form_state, $node) {
         '#default_value' => $node->map[$cid],
       );
 
-      $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+      $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
+      );
 
     }
 
@@ -497,7 +500,7 @@ function webform_user_mapping_form_submit($form, &$form_state) {
     }
   }
 
-   drupal_set_message(t('Profile mapping has been saved'));
+  drupal_set_message(t('Profile mapping has been saved'));
 }
 
 /**
@@ -523,17 +526,17 @@ function _webform_user_profile_get_fields($category) {
  */
 function _webform_user_profile_save_profile($updates, $uid) {
 
-   for ($i = 0; $i < count($updates); $i++) {
-     $mapped_field = $updates[$i];
-     if (_profile_field_serialize($mapped_field['type'])) {
-       $mapped_field['data'] = serialize($mapped_field['data']);
-     }
+  for ($i = 0; $i < count($updates); $i++) {
+    $mapped_field = $updates[$i];
+    if (_profile_field_serialize($mapped_field['type'])) {
+      $mapped_field['data'] = serialize($mapped_field['data']);
+    }
 
-     db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $mapped_field['fid'], $uid);
-     db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $mapped_field['fid'], $uid, $mapped_field['data']);
+    db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $mapped_field['fid'], $uid);
+    db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, '%s')", $mapped_field['fid'], $uid, $mapped_field['data']);
 
 
-   }
+  }
 }
 
 /**
@@ -728,7 +731,7 @@ function webform_user_webform_submission_presave($node, &$submission) {
  *   Returns TRUE if the e-mail address is valid; FALSE otherwise.
  */
 function _webform_user_validate_email($mail) {
-  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
+  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,   FILTER_VALIDATE_EMAIL));
 }
 
 /**
@@ -807,8 +810,8 @@ function _webform_user_save_profile_map($uid, &$map) {
                   'name' => $row['name'],
                   'type' => $row['type'],
                   'data' => array(
-                    'month' => (int)$date_parts[1],
-                    'day' => (int)$date_parts[2],
+                    'month' => (int) $date_parts[1],
+                    'day' => (int) $date_parts[2],
                     'year' => $date_parts[0],
                   ),
                 );
@@ -1055,13 +1058,13 @@ function _webform_user_create_webform_components(&$node) {
 
   $cid = webform_component_insert($mail_field);
 
-    // Add the component mapping record
-    $map = array(
-      'nid' => $node->nid,
-      'cid' => $cid,
-      'map_id' => 'mail',
-    );
-    drupal_write_record('webform_user_component_map', $map);
+  // Add the component mapping record
+  $map = array(
+    'nid' => $node->nid,
+    'cid' => $cid,
+    'map_id' => 'mail',
+  );
+  drupal_write_record('webform_user_component_map', $map);
 
   // Process fieldset results.
   foreach ($fieldsets as $fieldset) {
@@ -1095,13 +1098,13 @@ function _webform_user_create_webform_components(&$node) {
       $fieldset_id = 0;
       // Avoid creating fieldsets we don't need.
       // Get the fieldset ID if it's already been created.
-      if (isset($fieldset_created[ $field['category_normalized'] ])) {
-        $fieldset_id = $fieldset_created[ $field['category_normalized'] ];
+      if (isset($fieldset_created[$field['category_normalized']])) {
+        $fieldset_id = $fieldset_created[$field['category_normalized']];
       }
       else {
-        $item = $fieldset_lookup[ $field['category_normalized'] ];
-        $fieldset_created[ $field['category_normalized'] ] = webform_component_insert($item);
-        $fieldset_id = $fieldset_created[ $field['category_normalized'] ];
+        $item = $fieldset_lookup[$field['category_normalized']];
+        $fieldset_created[$field['category_normalized']] = webform_component_insert($item);
+        $fieldset_id = $fieldset_created[$field['category_normalized']];
       }
 
       // Create a Webform component array for the field.
@@ -1205,7 +1208,7 @@ function _webform_user_create_webform_components(&$node) {
   );
   drupal_write_record('webform_user_component_map', $map);
 
-    // referrer
+  // referrer
   $referrer = array(
     'nid' => $node->nid,
     'pid' => 0,
@@ -1332,7 +1335,7 @@ function webform_user_queue_api_insert_alter(&$record) {
   if ($record->type == 'webform') {
     // check to see if it is a webform user
     $is_webform_user = db_result(db_query("SELECT w.is_webform_user FROM {webform_user} w
-      INNER JOIN {webform_submissions} s ON s.nid = w.nid WHERE s.sid = %d", (int)$record->oid));
+      INNER JOIN {webform_submissions} s ON s.nid = w.nid WHERE s.sid = %d", (int) $record->oid));
 
     if ($is_webform_user) {
       $salesforce = salesforce_management_api_id_load('webform_user', $record->oid);

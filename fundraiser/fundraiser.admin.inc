@@ -64,7 +64,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
     '#theme' => 'webform_advanced_redirection_form',
     '#description' => t('Choose where to redirect the user upon successful submission.'),
   );
-  $form['confirmation_page']['redirection']['redirect']= array(
+  $form['confirmation_page']['redirection']['redirect'] = array(
     '#type' => 'radios',
     '#default_value' => $redirect,
     '#options' => array(
@@ -180,7 +180,7 @@ function fundraiser_clone_donation_form($nid) {
   if (is_numeric($nid)) {
     global $user;
     $node = node_load($nid);
-   // drupal_set_message('node to clone:' . print_r($node, TRUE));
+    // drupal_set_message('node to clone:' . print_r($node, TRUE));
     if (isset($node->nid)) {
       $original_node = drupal_clone($node);
 
@@ -197,8 +197,8 @@ function fundraiser_clone_donation_form($nid) {
       $node->internal_name = 'Clone of ' . $original_node->internal_name;
       $node->is_being_cloned = TRUE;
 
-      if (variable_get('clone_reset_'. $node->type, FALSE)) {
-        $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
+      if (variable_get('clone_reset_' . $node->type, FALSE)) {
+        $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
         // Fill in the default values.
         foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
           $node->$key = in_array($key, $node_options);
@@ -229,12 +229,12 @@ function fundraiser_clone_donation_form($nid) {
 
       if (module_exists('sf_donation')) {
         sf_donation_clone_map($nid, $new_nid);
-       }
+      }
 
-       module_invoke_all('fundraiser_clone_donation_form', $original_node->nid, $node->nid);
+      module_invoke_all('fundraiser_clone_donation_form', $original_node->nid, $node->nid);
 
-       drupal_set_message("Donation form [$original_node->title] has been cloned succesfully.");
-       drupal_goto('node/'. $new_nid .'/edit');
+      drupal_set_message("Donation form [$original_node->title] has been cloned succesfully.");
+      drupal_goto('node/' . $new_nid . '/edit');
     }
   }
 }
@@ -254,17 +254,17 @@ function fundraiser_admin_settings() {
   }
 
   $form['fundraiser_development_mode'] = array(
-   '#type' => 'checkbox',
-   '#title' => t('Development mode'),
-   '#default_value' => variable_get('fundraiser_development_mode', 0),
-   '#description' => t('Development mode allows you to access donation forms over HTTP.'),
+    '#type' => 'checkbox',
+    '#title' => t('Development mode'),
+    '#default_value' => variable_get('fundraiser_development_mode', 0),
+    '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
 
   $form['fundraiser_default_minimum'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Default minimum donation amount'),
-   '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
-   '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
+    '#type' => 'textfield',
+    '#title' => t('Default minimum donation amount'),
+    '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
+    '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
   );
 
   $form['fundraiser_salesforce_integration'] = array(
@@ -281,38 +281,38 @@ function fundraiser_admin_settings() {
     '#default_value' => variable_get('fundraiser_all_countries', 0),
     '#description' => t('When checked, all countries will be inserted into the billing country field on new donations forms. When unchecked, on U.S and Canda will be inserted.'),
   );
-        if (variable_get('fundraiser_all_countries', 0)) {
+  if (variable_get('fundraiser_all_countries', 0)) {
     $countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
-          $country_options = array_merge(array('0' => t('- select country -')), $countries['#options']);
-        }
-        else {
-          $country_options = array(
-             '0' => t('- select country -'),
-             '840' => t('United States'),
-             '124' => t('Canada'),
-          );
-        }
+    $country_options = array_merge(array('0' => t('- select country -')), $countries['#options']);
+  }
+  else {
+    $country_options = array(
+      '0' => t('- select country -'),
+      '840' => t('United States'),
+      '124' => t('Canada'),
+    );
+  }
 
-        $form['fundraiser_default_country'] = array(
-          '#type' => 'select',
-          '#title' => t('Default country'),
-          '#description' => t('Select the default value for the billing country field on new donation forms.'),
-          '#options' => $country_options,
-          '#default_value' => variable_get('fundraiser_default_country', ''),
-        );
+  $form['fundraiser_default_country'] = array(
+    '#type' => 'select',
+    '#title' => t('Default country'),
+    '#description' => t('Select the default value for the billing country field on new donation forms.'),
+    '#options' => $country_options,
+    '#default_value' => variable_get('fundraiser_default_country', ''),
+  );
 
   $form['fundraiser_gateway_messages'] = array(
-   '#type' => 'checkbox',
-   '#title' => t('Display gateway messages'),
-   '#default_value' => variable_get('fundraiser_gateway_messages', 1),
-   '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
+    '#type' => 'checkbox',
+    '#title' => t('Display gateway messages'),
+    '#default_value' => variable_get('fundraiser_gateway_messages', 1),
+    '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
   );
 
   $form['fundraiser_receipt_bcc'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Donation receipt bcc email address'),
-   '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
-   '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
+    '#type' => 'textfield',
+    '#title' => t('Donation receipt bcc email address'),
+    '#default_value' => variable_get('fundraiser_receipt_bcc', ''),
+    '#description' => t('The email address of the user that will receive a bcc copy of all donation receipt emails.'),
   );
 
   $form['fundraiser_cc_exp_year_range'] = array(
@@ -330,22 +330,22 @@ function fundraiser_admin_settings() {
   );
 
   $form['fundraiser_cc_expiration_message'] = array(
-   '#type' => 'fieldset',
-   '#title' => t('Credit card expiration email'),
-   '#collapsible' => TRUE,
+    '#type' => 'fieldset',
+    '#title' => t('Credit card expiration email'),
+    '#collapsible' => TRUE,
   );
 
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject'] = array(
-   '#type' => 'textfield',
-   '#title' => t('Email subject'),
-   '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
+    '#type' => 'textfield',
+    '#title' => t('Email subject'),
+    '#default_value' => variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire'),
   );
 
   $form['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body'] = array(
-   '#type' => 'textarea',
-   '#title' => t('Email body'),
-   '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
-   '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
+    '#type' => 'textarea',
+    '#title' => t('Email body'),
+    '#default_value' => variable_get('fundraiser_cc_exp_body', 'Your card ending in [cc_last_4] is about to expire on [exp_month]/[exp_year].'),
+    '#description' => t('The body of the email. Available tokens: [exp_month], [exp_year], [order_total], [cc_last_4], [cc_type], [amount]'),
   );
 
   $form['fundraiser_cc_expiration_message']['tokens'] = array(
@@ -374,7 +374,7 @@ function fundraiser_admin_settings() {
     '#description' => t('If this option is enabled all fundraiser related cron tasks will be removed from the standard cron run. These tasks will need to be cronned separately via sitename/fundraiser_cron'),
     '#default_value' => variable_get('fundraiser_standalone_cron_enabled', 0),
   );
-     $form['#submit'] =  array('fundraiser_update_cron_settings');
+  $form['#submit'] =  array('fundraiser_update_cron_settings');
 
   if (module_exists('form_layouts')) {
     $form['fundraiser_form_layouts'] = array(
@@ -555,20 +555,20 @@ function fundraiser_monthly_report() {
       $out .= '"' . $value . '",';
     }
 
-    $out .="\n";
+    $out .= "\n";
 
     // Add all values in the table
-     foreach ($rows as $row) {
-       foreach ($row as $i => $value) {
-           $out .= '"' . $value . '",';
-         }
-       $out .= "\n";
-     }
-     // Output to browser with appropriate mime type, you choose ;)
-     header("Content-type: text/x-csv");
-     header("Content-Disposition: attachment;filename=orders.csv");
-     echo $out;
-     exit;
+    foreach ($rows as $row) {
+      foreach ($row as $i => $value) {
+        $out .= '"' . $value . '",';
+      }
+      $out .= "\n";
+    }
+    // Output to browser with appropriate mime type, you choose ;)
+    header("Content-type: text/x-csv");
+    header("Content-Disposition: attachment;filename=orders.csv");
+    echo $out;
+    exit;
   }
   else {
     $output = drupal_get_form('fundraiser_report_form');

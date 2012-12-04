@@ -64,16 +64,16 @@ function _fundraiser_cron_process() {
  */
 function fundraiser_perm() {
   return array(
-    'administer fundraiser',  
-    'create donation form',  
-    'edit own donation form',  
-    'edit any donation form',  
-    'delete own donation form',  
-    'delete any donation form',  
-    'clone donation form',  
-    'cancel future donations',  
-    'edit donation form user mapping',  
-    'manage own recurring donations',  
+    'administer fundraiser',
+    'create donation form',
+    'edit own donation form',
+    'edit any donation form',
+    'delete own donation form',
+    'delete any donation form',
+    'clone donation form',
+    'cancel future donations',
+    'edit donation form user mapping',
+    'manage own recurring donations',
   );
 }
 
@@ -83,193 +83,193 @@ function fundraiser_perm() {
 function fundraiser_menu() {
 
   $items['admin/settings/fundraiser'] = array(
-    'title' => 'Fundraiser settings',  
-    'page callback' => 'drupal_get_form',  
-    'page arguments' => array('fundraiser_admin_settings'),  
-    'access arguments' => array("administer fundraiser"),  
-    'type' => MENU_NORMAL_ITEM,  
-    'file' => 'fundraiser.admin.inc',  
+    'title' => 'Fundraiser settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_admin_settings'),
+    'access arguments' => array("administer fundraiser"),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'fundraiser.admin.inc',
   );
 
   $items['admin/store/reports/fundraiser'] = array(
-    'title' => t('Donation report'),  
-    'page callback' => 'fundraiser_monthly_report',  
-    'access arguments' => array('view store reports'),  
-    'type' => MENU_NORMAL_ITEM,  
-    'file' => 'fundraiser.admin.inc',  
+    'title' => t('Donation report'),
+    'page callback' => 'fundraiser_monthly_report',
+    'access arguments' => array('view store reports'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'fundraiser.admin.inc',
   );
 
   $items['node/%webform_menu/webform/mapping'] = array(
-      'title' => t('User map'),  
-      'page callback' => 'drupal_get_form',  
-      'page arguments' => array('fundraiser_mapping_form', 1),  
-      'access callback' => 'fundraiser_mapping_form_access',  
-      'access arguments' => array(1),  
-      'file' => 'fundraiser_components.inc',  
-      'weight' => 30,  
-      'type' => MENU_LOCAL_TASK,  
+      'title' => t('User map'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('fundraiser_mapping_form', 1),
+      'access callback' => 'fundraiser_mapping_form_access',
+      'access arguments' => array(1),
+      'file' => 'fundraiser_components.inc',
+      'weight' => 30,
+      'type' => MENU_LOCAL_TASK,
   );
 
   $items['node/%webform_menu/webform/confirmations'] = array(
-   'title' => t('Confirmations'),  
-   'page callback' => 'drupal_get_form',  
-   'page arguments' => array('fundraiser_confirmation_settings_form', 1),  
-   'access callback' => 'fundraiser_confirmations_perm',  
-   'access arguments' => array('update', 1),  
-   'file' => 'fundraiser.admin.inc',  
-   'type' => MENU_LOCAL_TASK,  
-   'weight' => 1,  
+   'title' => t('Confirmations'),
+   'page callback' => 'drupal_get_form',
+   'page arguments' => array('fundraiser_confirmation_settings_form', 1),
+   'access callback' => 'fundraiser_confirmations_perm',
+   'access arguments' => array('update', 1),
+   'file' => 'fundraiser.admin.inc',
+   'type' => MENU_LOCAL_TASK,
+   'weight' => 1,
   );
 
   $items['fundraiser/js/%fundraiser_ahah_field'] = array(
-    'page callback'    => '_fundraiser_ahah_helper_render',  
-    'page arguments'   => array(2),  
-    'access callback'  => TRUE,  
-    'type'             => MENU_CALLBACK,  
+    'page callback'    => '_fundraiser_ahah_helper_render',
+    'page arguments'   => array(2),
+    'access callback'  => TRUE,
+    'type'             => MENU_CALLBACK,
   );
 
   $items['fundraiser_ask/js'] = array(
-    'page callback' => '_fundraiser_ask_ahah',  
-    'access callback' => TRUE,  
-    'type' => MENU_CALLBACK,  
+    'page callback' => '_fundraiser_ask_ahah',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
 
   $items['fundraiser_changestate/js'] = array(
-    'page callback' => 'fundraiser_changestate',  
-      'type' => MENU_CALLBACK,  
-      'access arguments' => array("access content"),  
+    'page callback' => 'fundraiser_changestate',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array("access content"),
   );
 
   $items['fundraiser_cron'] = array(
-    'page callback' => 'fundraiser_standalone_cron',  
-    'access callback' => 'fundraiser_standalone_cron_access',  
-    'type' => MENU_CALLBACK,  
+    'page callback' => 'fundraiser_standalone_cron',
+    'access callback' => 'fundraiser_standalone_cron_access',
+    'type' => MENU_CALLBACK,
   );
 
   $items['zones/js'] = array(
-    'type' => MENU_CALLBACK,  
-    'page callback' => 'fundraiser_zones_ahah_render',  
-    'access callback' => TRUE,  
+    'type' => MENU_CALLBACK,
+    'page callback' => 'fundraiser_zones_ahah_render',
+    'access callback' => TRUE,
   );
 
   $items['admin/fundraiser/recurring'] = array(
-    'title' => 'Current Fundraiser Recurring Payments',  
-      'page callback' => 'fundraiser_recurring_admin',  
-      'access callback' => 'node_access',  
-      'access arguments' => array('update', 1),  
-      'file' => 'fundraiser_components.inc',  
-      'weight' => 2,  
-      'type' => MENU_CALLBACK,  
+    'title' => 'Current Fundraiser Recurring Payments',
+      'page callback' => 'fundraiser_recurring_admin',
+      'access callback' => 'node_access',
+      'access arguments' => array('update', 1),
+      'file' => 'fundraiser_components.inc',
+      'weight' => 2,
+      'type' => MENU_CALLBACK,
   );
 
   $items['admin/fundraiser/recurring/test'] = array(
-    'title' => 'Fundraiser Recurring Payment Tester',  
-      'page callback' => 'fundraiser_recurring_test',  
-      'access callback' => 'node_access',  
-      'access arguments' => array('update', 1),  
-      'file' => 'fundraiser_components.inc',  
-      'weight' => 2,  
-      'type' => MENU_CALLBACK,  
+    'title' => 'Fundraiser Recurring Payment Tester',
+      'page callback' => 'fundraiser_recurring_test',
+      'access callback' => 'node_access',
+      'access arguments' => array('update', 1),
+      'file' => 'fundraiser_components.inc',
+      'weight' => 2,
+      'type' => MENU_CALLBACK,
     );
 
   $items['admin/store/orders/%uc_order/recurring/edit'] = array(
-    'title' => 'Edit Recurring Donations',  
-    'page callback' => 'fundraiser_recurring_edit_forms',  
-    'access callback' => 'node_access',  
-    'access arguments' => array('update', 1),  
-    'file' => 'fundraiser_components.inc',  
-    'weight' => 2,  
-    'type' => MENU_NORMAL_ITEM,  
+    'title' => 'Edit Recurring Donations',
+    'page callback' => 'fundraiser_recurring_edit_forms',
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'file' => 'fundraiser_components.inc',
+    'weight' => 2,
+    'type' => MENU_NORMAL_ITEM,
   );
 
   $items['admin/store/orders/%uc_order/refund'] = array(
-    'title' => 'Refund',  
-    'page callback' => 'fundraiser_show_refund_form',  
-    'page arguments' => array(3),  
-    'access arguments' => array('edit orders'),  
-    'file' => 'fundraiser_billing.inc',  
-    'weight' => 3,  
-    'type' => MENU_LOCAL_TASK,  
+    'title' => 'Refund',
+    'page callback' => 'fundraiser_show_refund_form',
+    'page arguments' => array(3),
+    'access arguments' => array('edit orders'),
+    'file' => 'fundraiser_billing.inc',
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
   );
 
   /*
   $items['user/%user/recurring/edit/%uc_order'] = array(
-    'title' => 'My Recurring Payments',  
-    'page callback' => 'fundraiser_recurring_user_edit_forms',  
-    'access callback' => user_access('edit own recurring payments'),  
-    'file' => 'fundraiser_sustainer.inc',  
-    'page arguments' => array(arg(1), 'shithead'),  
-    'weight' => 2,  
-    'type' => MENU_CALLBACK,  
+    'title' => 'My Recurring Payments',
+    'page callback' => 'fundraiser_recurring_user_edit_forms',
+    'access callback' => user_access('edit own recurring payments'),
+    'file' => 'fundraiser_sustainer.inc',
+    'page arguments' => array(arg(1), 'shithead'),
+    'weight' => 2,
+    'type' => MENU_CALLBACK,
   );
   */
   $items['user/%user/recurring_overview'] = array(
-    'title' => 'My Recurring Payments',  
-    'page callback' => 'fundraiser_recurring_user_overview',  
-    'access callback' => 'fundraiser_user_has_recurring_orders',  
-    'access arguments' => array(1),  
-    'page arguments' => array(1),  
-    'file' => 'fundraiser.sustainer.inc',  
-    'weight' => 2,  
-    'type' => MENU_LOCAL_TASK,  
+    'title' => 'My Recurring Payments',
+    'page callback' => 'fundraiser_recurring_user_overview',
+    'access callback' => 'fundraiser_user_has_recurring_orders',
+    'access arguments' => array(1),
+    'page arguments' => array(1),
+    'file' => 'fundraiser.sustainer.inc',
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
   );
 
   $items['user/%user/recurring_overview/%'] = array(
-    'title' => 'My Recurring Payments',  
-    'page callback' => 'fundraiser_recurring_user_edit_forms',  
-    'access callback' => 'fundraiser_user_has_recurring_orders',  
-    'access arguments' => array(1),  
-    'page arguments' => array(1, 3),  
-    'file' => 'fundraiser.sustainer.inc',  
-    'weight' => 2,  
-    'type' => MENU_LOCAL_TASK,  
+    'title' => 'My Recurring Payments',
+    'page callback' => 'fundraiser_recurring_user_edit_forms',
+    'access callback' => 'fundraiser_user_has_recurring_orders',
+    'access arguments' => array(1),
+    'page arguments' => array(1, 3),
+    'file' => 'fundraiser.sustainer.inc',
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
   );
 
   $items['admin/store/orders/%uc_order/recurring/overview'] = array(
-    'title' => 'Recurring Info',  
-    'page callback' => 'fundraiser_recurring_master_order_overview',  
-    'access arguments' => array('view all orders'),  
-    'access callback' => 'fundraiser_recurring_check_access',  
-    'type' => MENU_LOCAL_TASK,  
-    'weight' => 11,  
-    'file' => 'fundraiser_components.inc',  
+    'title' => 'Recurring Info',
+    'page callback' => 'fundraiser_recurring_master_order_overview',
+    'access arguments' => array('view all orders'),
+    'access callback' => 'fundraiser_recurring_check_access',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 11,
+    'file' => 'fundraiser_components.inc',
   );
 
   $items['admin/content/donation-forms'] = array(
-    'title' => 'Donation Forms',  
-    'page callback' => 'fundraiser_donation_form_list',  
-    'access arguments' => array('create donation form'),  
-    'type' => MENU_NORMAL_ITEM,  
-    'weight' => 20,  
-    'file' => 'fundraiser.admin.inc',  
+    'title' => 'Donation Forms',
+    'page callback' => 'fundraiser_donation_form_list',
+    'access arguments' => array('create donation form'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 20,
+    'file' => 'fundraiser.admin.inc',
   );
 
   $items['admin/content/clone-form/%'] = array(
-    'title' => 'Clone donation form',  
-    'page callback' => 'fundraiser_clone_donation_form',  
-    'page arguments' => array(3),  
-    'access arguments' => array('create donation forms'),  
-    'type' => MENU_CALLBACK,  
-    'file' => 'fundraiser.admin.inc',  
+    'title' => 'Clone donation form',
+    'page callback' => 'fundraiser_clone_donation_form',
+    'page arguments' => array(3),
+    'access arguments' => array('create donation forms'),
+    'type' => MENU_CALLBACK,
+    'file' => 'fundraiser.admin.inc',
   );
 
   $items['node/%webform_menu/confirmation'] = array(
-    'title' => 'Webform submission',  
-    'load arguments' => array(1),  
-    'page callback' => 'fundraiser_donation_confirmation',  
-    'page arguments' => array(1),  
-    'access callback' => 'fundraiser_access_confirmation',  
-    'type' => MENU_CALLBACK,  
+    'title' => 'Webform submission',
+    'load arguments' => array(1),
+    'page callback' => 'fundraiser_donation_confirmation',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_access_confirmation',
+    'type' => MENU_CALLBACK,
   );
 
   $items['node/%node/clone_form'] = array(
-    'title' => 'Clone',  
-    'description' => 'Create a new donation form that inherits settings from this form.',  
-    'access callback' => 'fundraiser_access_clone',  
-    'page callback' => 'fundraiser_clone_donation_form',  
-    'page arguments' => array(1),  
-    'type' => MENU_LOCAL_TASK,  
-    'file' => 'fundraiser.admin.inc',  
+    'title' => 'Clone',
+    'description' => 'Create a new donation form that inherits settings from this form.',
+    'access callback' => 'fundraiser_access_clone',
+    'page callback' => 'fundraiser_clone_donation_form',
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fundraiser.admin.inc',
   );
 
   return $items;
@@ -402,15 +402,15 @@ function fundraiser_ahah_field_load($field) {
 function fundraiser_node_info() {
   return array(
     'donation_form' => array(
-      'name' => t('Donation Form'),  
-      'module' => 'fundraiser',  
-      'description' => t('Create a flexible form that users can use to donate to noble causes.'),  
-      'has_title' => TRUE,  
-      'title_label' => t('Title'),  
-      'has_body' => TRUE,  
-      'body_label' => t('Body'),  
-      'locked' => TRUE,  
-    ),  
+      'name' => t('Donation Form'),
+      'module' => 'fundraiser',
+      'description' => t('Create a flexible form that users can use to donate to noble causes.'),
+      'has_title' => TRUE,
+      'title_label' => t('Title'),
+      'has_body' => TRUE,
+      'body_label' => t('Body'),
+      'locked' => TRUE,
+    ),
   );
 }
 
@@ -440,28 +440,27 @@ function fundraiser_form($node, $edit = NULL) {
   $type = node_get_types('type', $node);
 
   $form['title'] = array(
-    '#type' => 'textfield',  
-    '#title' => check_plain($type->title_label),  
-    '#required' => TRUE,  
-    '#default_value' => $node->title,  
-    '#weight' => -5,  
-    '#maxlength' => 255,  
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+    '#weight' => -5,
+    '#maxlength' => 255,
   );
 
   $form['body_filter']['#weight'] = -4.97;
   $form['body_filter']['body'] = array(
-    '#type' => 'textarea',  
-    '#title' => check_plain($type->body_label),  
-    '#default_value' => $node->body,  
-    '#rows' => 7,  
-    '#weight' => -4.98,  
-    '#required' => FALSE,  
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#rows' => 7,
+    '#weight' => -4.98,
+    '#required' => FALSE,
   );
   $form['body_filter']['filter'] = filter_form($node->format);
 
   return $form;
 }
-
 
 /**
  * Validation handler for donation form settings.
@@ -530,36 +529,36 @@ function fundraiser_node_insert(&$node) {
     "
       INSERT INTO {fundraiser}
       (
-        nid,  
-        gateway,  
-        donation_amounts,  
-        show_other_amount,  
-        internal_name,  
-        minimum_donation_amount,  
-        receipt_email_from,  
-        receipt_email_address,  
-        receipt_email_subject,  
-        receipt_email_message,  
-        confirmation_page_title,  
-        confirmation_page_body,  
-        confirmation_page_format,  
+        nid,
+        gateway,
+        donation_amounts,
+        show_other_amount,
+        internal_name,
+        minimum_donation_amount,
+        receipt_email_from,
+        receipt_email_address,
+        receipt_email_subject,
+        receipt_email_message,
+        confirmation_page_title,
+        confirmation_page_body,
+        confirmation_page_format,
         redirect_url
       )
       VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
-    ",  
-        $node->nid,  
-        $node->gateway,  
-        $node->donation_amounts,  
-        $node->show_other_amount,  
-        $node->internal_name,  
-        $node->minimum_donation_amount,  
-        $node->receipt_email_from,  
-        $node->receipt_email_address,  
-        $node->receipt_email_subject,  
-        $node->receipt_email_message,  
-        $node->confirmation_page_title,  
-        $node->confirmation_page_body,  
-        $node->confirmation_page_format,  
+    ",
+        $node->nid,
+        $node->gateway,
+        $node->donation_amounts,
+        $node->show_other_amount,
+        $node->internal_name,
+        $node->minimum_donation_amount,
+        $node->receipt_email_from,
+        $node->receipt_email_address,
+        $node->receipt_email_subject,
+        $node->receipt_email_message,
+        $node->confirmation_page_title,
+        $node->confirmation_page_body,
+        $node->confirmation_page_format,
         $node->redirect_url
   );
 
@@ -588,7 +587,7 @@ function fundraiser_node_insert(&$node) {
 }
 
 /**
- * Implemenation of hook_update().
+ * Implementation of hook_update().
  */
 function fundraiser_node_update(&$node) {
 
@@ -608,32 +607,32 @@ function fundraiser_node_update(&$node) {
   db_query(
     "
       UPDATE {fundraiser} SET
-      internal_name = '%s',  
-      show_other_amount = %d,  
-      minimum_donation_amount = '%s',  
-      gateway = '%s',  
-      receipt_email_from = '%s',  
-      receipt_email_address = '%s',  
-      receipt_email_subject = '%s',  
-      receipt_email_message = '%s',  
-      confirmation_page_title = '%s',  
-      confirmation_page_body = '%s',  
-      confirmation_page_format = '%s',  
+      internal_name = '%s',
+      show_other_amount = %d,
+      minimum_donation_amount = '%s',
+      gateway = '%s',
+      receipt_email_from = '%s',
+      receipt_email_address = '%s',
+      receipt_email_subject = '%s',
+      receipt_email_message = '%s',
+      confirmation_page_title = '%s',
+      confirmation_page_body = '%s',
+      confirmation_page_format = '%s',
       redirect_url = '%s'
       WHERE nid = %d
-    ",  
-    $node->internal_name,  
-    $node->show_other_amount,  
-    $node->minimum_donation_amount,  
-    $node->gateway,  
-    $node->receipt_email_from,  
-    $node->receipt_email_address,  
-    $node->receipt_email_subject,  
-    $node->receipt_email_message,  
-    $node->confirmation_page_title,  
-    $node->confirmation_page_body,  
-    $node->confirmation_page_format,  
-    $node->redirect_url,  
+    ",
+    $node->internal_name,
+    $node->show_other_amount,
+    $node->minimum_donation_amount,
+    $node->gateway,
+    $node->receipt_email_from,
+    $node->receipt_email_address,
+    $node->receipt_email_subject,
+    $node->receipt_email_message,
+    $node->confirmation_page_title,
+    $node->confirmation_page_body,
+    $node->confirmation_page_format,
+    $node->redirect_url,
     $node->nid
   );
 
@@ -793,17 +792,17 @@ function fundraiser_clone_form($form, &$form_state) {
 function fundraiser_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['#node_type'])) {
     $form['fundraiser_type'] = array(
-      '#type' => 'fieldset',  
-      '#title' => t('Fundraiser settings'),  
-      '#collapsible' => TRUE,  
-      '#collapsed' => TRUE,  
-      '#group' => 'additional_settings',  
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
     );
     $form['fundraiser_type']['fundraiser'] = array(
-      '#type' => 'checkbox',  
-      '#title' => t('Enable fundraiser?'),  
-      '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),  
-      '#description' => t('Enable this checkbox if this content type should provide a donation field.'),  
+      '#type' => 'checkbox',
+      '#title' => t('Enable fundraiser?'),
+      '#default_value' => variable_get('fundraiser_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide a donation field.'),
     );
   }
 }
@@ -834,37 +833,37 @@ function fundraiser_node_settings(&$form, $edit, $node) {
   }
 
   $form['fundraiser_settings'] = array(
-    '#type' => 'fieldset',  
-    '#title' => t('Fundraiser settings'),  
-    '#weight' => -4.96,  
-    '#collapsible' => TRUE,  
-    '#collapsed' => TRUE,  
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
 
   $form['fundraiser_settings']['internal_name'] = array(
-    '#type' => 'textfield',  
-    '#title' => t('Internal Name'),  
-    '#required' => TRUE,  
-    '#default_value' => $node->internal_name,  
-    '#weight' => -5,  
-    '#maxlength' => 255,  
+    '#type' => 'textfield',
+    '#title' => t('Internal Name'),
+    '#required' => TRUE,
+    '#default_value' => $node->internal_name,
+    '#weight' => -5,
+    '#maxlength' => 255,
   );
 
   /* add amount #aha */
   $form['fundraiser_settings']['amount_wrapper'] = array(
-    '#type' => 'fieldset',  
-    '#title' => t('Ask amounts'),  
-    '#collapsible' => TRUE,  
-    '#collapsed' => TRUE,  
-    '#weight' => -3,  
-    '#prefix' => '<div class="clear-block" id="ask-wrapper">',  
-    '#suffix' => '</div>',  
+    '#type' => 'fieldset',
+    '#title' => t('Ask amounts'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -3,
+    '#prefix' => '<div class="clear-block" id="ask-wrapper">',
+    '#suffix' => '</div>',
   );
 
   $form['fundraiser_settings']['amount_wrapper']['amounts'] = array(
-    '#prefix' => '<div id="ask-amounts">',  
-    '#suffix' => '</div>',  
-    '#theme' => 'fundraiser_ask_amounts',  
+    '#prefix' => '<div id="ask-amounts">',
+    '#suffix' => '</div>',
+    '#theme' => 'fundraiser_ask_amounts',
   );
 
   // Retrieve saved values if available
@@ -877,7 +876,7 @@ function fundraiser_node_settings(&$form, $edit, $node) {
 
  // If we're editing an existing donation form that's had new fields added we use the current delta (updated by the more button) to tell the form
  // how many field sets to build.
- if ($edit['values']['amount_delta']) {
+  if ($edit['values']['amount_delta']) {
     $delta = $edit['values']['amount_delta'];
   }
   // Otherwise we start by generating enough fields to house the data currently in the database.
@@ -890,8 +889,8 @@ function fundraiser_node_settings(&$form, $edit, $node) {
   }
 
   $form['fundraiser_settings']['amount_wrapper']['amounts']['amount_delta'] = array(
-    '#type' => 'value',  
-    '#value' => $delta,  
+    '#type' => 'value',
+    '#value' => $delta,
   );
 
   for ($i = 0; $i < $delta; ++$i ) {
@@ -899,82 +898,82 @@ function fundraiser_node_settings(&$form, $edit, $node) {
   }
 
   $form['fundraiser_settings']['amount_wrapper']['help'] = array(
-    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',  
+    '#value' => '<p>' . t('If you want the user to choose from a predetermined list donation amounts, enter them here. If no amounts are entered, a textbox will be displayed for the user to enter a custom amount.') . '</p>',
   );
 
   $form['fundraiser_settings']['amount_wrapper']['amount_more'] = array(
-    '#type' => 'submit',  
-    '#value' => t('Add another'),  
-    '#description' => t("Click here to add more choices."),  
+    '#type' => 'submit',
+    '#value' => t('Add another'),
+    '#description' => t("Click here to add more choices."),
     '#submit' => array('_fundraiser_amount_ahah_submit'), // If no javascript action.
     '#ahah' => array(
-      'path' => 'fundraiser_ask/js',  
-      'wrapper' => 'ask-amounts',  
-      'method' => 'replace',  
-      'effect' => 'fade',  
-    ),  
+      'path' => 'fundraiser_ask/js',
+      'wrapper' => 'ask-amounts',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
   );
 
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
-    '#type' => 'checkbox',  
-    '#title' => t('Show other amount option'),  
-    '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),  
-    '#default_value' => $node->show_other_amount,  
+    '#type' => 'checkbox',
+    '#title' => t('Show other amount option'),
+    '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list of Donation Amounts.'),
+    '#default_value' => $node->show_other_amount,
   );
 
   $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
-    '#type' => 'textfield',  
-    '#title' => t('Minimum donation amount'),  
-    '#description' => t('The minimum acceptable donation amount.'),  
-    '#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),  
+    '#type' => 'textfield',
+    '#title' => t('Minimum donation amount'),
+    '#description' => t('The minimum acceptable donation amount.'),
+    '#default_value' => $node->minimum_donation_amount ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
 
   $form['fundraiser_settings']['gateway'] = array(
-    '#type' => 'select',  
-    '#title' => t('Payment Gateway'),  
-    '#options' => $gateway_options,  
-    '#weight' => -4,  
-    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),  
-    '#default_value' => $node->gateway,  
-    '#required' => TRUE,  
+    '#type' => 'select',
+    '#title' => t('Payment Gateway'),
+    '#options' => $gateway_options,
+    '#weight' => -4,
+    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
+    '#default_value' => $node->gateway,
+    '#required' => TRUE,
   );
 
   /* hidden fields */
   $form['confirmation_page_title'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->confirmation_page_title,  
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_title,
   );
   $form['confirmation_page_body'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->confirmation_page_body,  
+    '#type' => 'hidden',
+    '#value' => $node->confirmation_page_body,
   );
   $form['receipt_email_from'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->receipt_email_from,  
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_from,
   );
   $form['receipt_email_address'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->receipt_email_address,  
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_address,
   );
   $form['receipt_email_subject'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->receipt_email_subject,  
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_subject,
   );
   $form['receipt_email_message'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->receipt_email_message,  
+    '#type' => 'hidden',
+    '#value' => $node->receipt_email_message,
   );
   $form['redirect_url'] = array(
-    '#type' => 'hidden',  
-    '#value' => $node->redirect_url,  
+    '#type' => 'hidden',
+    '#value' => $node->redirect_url,
   );
 
   // TODO: write submit handler, check permissions before displaying button
   $form['buttons']['clone'] = array(
-    '#type' => 'submit',  
-    '#value' => 'Clone',  
-    '#submit' => array('fundraiser_clone_form'),  
-    '#weight' => 100,  
+    '#type' => 'submit',
+    '#value' => 'Clone',
+    '#submit' => array('fundraiser_clone_form'),
+    '#weight' => 100,
   );
 
   $form['#validate'][] = 'fundraiser_node_settings_validate';
@@ -1024,16 +1023,16 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       // Set up a view only display of the donation amount
       $amount = ('other' != $form['submitted']['donation']['amount']['#default_value']) ? $form['submitted']['donation']['amount']['#default_value'] : $form['submitted']['donation']['other_amount']['#default_value'];
       $form['submitted']['donation']['display_amount'] = array(
-        '#type' => 'markup',  
-        '#value' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . '$' . number_format($amount, 2) . '</div>',  
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . '$' . number_format($amount, 2) . '</div>',
       );
 
       // Show whether or not it's a recurring donation
       if (isset($form['submitted']['credit_card_information']['recurs_monthly'])) {
         $recurs = $form['submitted']['credit_card_information']['recurs_monthly']['#default_value'][0] == 'recurs' ? t('Yes') : t('No');
         $form['submitted']['donation']['recurring'] = array(
-          '#type' => 'markup',  
-          '#value' => '<div class="form-item"><label>' . t('Recurring Donation?') . ':</label>' . $recurs . '</div>',  
+          '#type' => 'markup',
+          '#value' => '<div class="form-item"><label>' . t('Recurring Donation?') . ':</label>' . $recurs . '</div>',
         );
       }
       unset($form['submitted']['donation']['amount']);
@@ -1044,16 +1043,16 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
       $form['submitted']['donor_information']['#title'] = t('Donor Information');
 
       $form['submitted']['donor_information']['first_name_readonly'] = array(
-        '#type' => 'markup',  
-        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' . $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',  
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('First Name') . ':</label>' . $form['submitted']['donor_information']['first_name']['#default_value'] . '</div>',
       );
       $form['submitted']['donor_information']['last_name_readonly'] = array(
-        '#type' => 'markup',  
-        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' . $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',  
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' . $form['submitted']['donor_information']['last_name']['#default_value'] . '</div>',
       );
       $form['submitted']['donor_information']['email_readonly'] = array(
-        '#type' => 'markup',  
-        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',  
+        '#type' => 'markup',
+        '#value' => '<div class="form-item"><label>' . t('Email') . ':</label>' . $form['submitted']['donor_information']['email']['#default_value'] . '</div>',
       );
 
       $form['submitted']['donor_information']['first_name']['#prefix'] =
@@ -1198,8 +1197,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
   }
 }
 
-
-
 /**
  * Creates an array to map webform component fields to user profile fields.
  */
@@ -1212,7 +1209,7 @@ function fundraiser_user_map($nid) {
       INNER JOIN {fundraiser_component_map} f ON f.cid = w.cid AND f.nid = w.nid
       WHERE f.nid = %d
       ORDER BY f.cid
-    ",  
+    ",
     $nid
   );
 
@@ -1362,9 +1359,9 @@ function _fundraiser_ahah_helper_render($field = NULL) {
   $settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
 
   drupal_json(array(
-    'status'   => TRUE,  
-    'data'     => theme('status_messages') . drupal_render($form_item),  
-    'settings' => array('ahah' => $settings['ahah']),  
+    'status'   => TRUE,
+    'data'     => theme('status_messages') . drupal_render($form_item),
+    'settings' => array('ahah' => $settings['ahah']),
   ));
 }
 
@@ -1389,7 +1386,7 @@ function fundraiser_disable_elements(&$form) {
 }
 
 /**
- * Implementation of hook_webform_submission_update()
+ * Implementation of hook_webform_submission_update().
  */
 function fundraiser_webform_submission_update($node, $submission) {
   if (fundraiser_is_donation_type($node->type)) {
@@ -1422,9 +1419,6 @@ function fundraiser_webform_submission_presave($node, &$submission) {
   }
 }
 
-
-
-
 /**
  * Permission check for webform form settings tab.
  */
@@ -1450,7 +1444,7 @@ function fundraiser_user_has_recurring_orders($account) {
       SELECT count(u.order_id) FROM uc_orders u
       INNER JOIN fundraiser_recurring f on f.master_order_id = u.order_id
       WHERE u.uid = %d
-    ",  
+    ",
     $account->uid
   ));
 
@@ -1608,13 +1602,13 @@ function fundraiser_preprocess_sustainer_management_page(&$vars) {
     }
     $rows[] = array(
       'data' => array(
-        'amount' => $edit_link,  
-        'start_date' => $order['start_date'] ? date('m/d/y', $order['start_date']) : '------------',  
-        'next_charge_date' => $order['next_charge_date'] ? date('m/d/y', $order['next_charge_date']) : '------------',  
-        'expire_date' => $order['expire_date'] ? date('m/d/y', $order['expire_date']) : '------------',  
-        'status' => $order['status'] == DONATION_CANCELLED ? 'cancelled' : 'active',  
-      ),  
-      'class' => $class,  
+        'amount' => $edit_link,
+        'start_date' => $order['start_date'] ? date('m/d/y', $order['start_date']) : '------------',
+        'next_charge_date' => $order['next_charge_date'] ? date('m/d/y', $order['next_charge_date']) : '------------',
+        'expire_date' => $order['expire_date'] ? date('m/d/y', $order['expire_date']) : '------------',
+        'status' => $order['status'] == DONATION_CANCELLED ? 'cancelled' : 'active',
+      ),
+      'class' => $class,
     );
   }
 
@@ -1692,12 +1686,12 @@ function fundraiser_webform_validate($form, &$form_state) {
 
   //validate cc number
   if (!empty($cc_number) && ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number))
-     || !ctype_digit($cc_number))) {
-     form_set_error('submitted][credit_card_information][card_number',  "You have entered an invalid credit card number.");
+    || !ctype_digit($cc_number))) {
+    form_set_error('submitted][credit_card_information][card_number',  "You have entered an invalid credit card number.");
     $errors = TRUE;
-   }
+  }
 
-   // Validate the card expiration date.
+  // Validate the card expiration date.
   if (!empty($cc_expiration_month) && !empty($cc_expiration_year) && !_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
     form_set_error('submitted][credit_card_information][expiration_date][card_expiration_month', t('The credit card you entered has expired.'));
     form_set_error('submitted][credit_card_information][expiration_date][card_expiration_year', ' ');
@@ -1796,17 +1790,17 @@ function fundraiser_webform_submit($form, &$form_state) {
   }
 
   // create a new order
-   $order = uc_order_new($user->uid);
-   $order->products[0] = uc_product_load($node);
-   $order->products[0]->price = $donation_amount;
-   $order->products[0]->qty = empty($quantity) ? 1 : $quantity;
-   $order->products[0]->title = $node->title;
+  $order = uc_order_new($user->uid);
+  $order->products[0] = uc_product_load($node);
+  $order->products[0]->price = $donation_amount;
+  $order->products[0]->qty = empty($quantity) ? 1 : $quantity;
+  $order->products[0]->title = $node->title;
   $order->products[0]->nid = $node_id;
   $order->products[0]->data = array(
-    'shippable' => $order->products[0]->shippable,  
-    'model' =>  $order->products[0]->model,  
-    'varprice' => $donation_amount,  
-    'module' => 'uc_product',  
+    'shippable' => $order->products[0]->shippable,
+    'model' =>  $order->products[0]->model,
+    'varprice' => $donation_amount,
+    'module' => 'uc_product',
   );
 
   // multiple amount by quantity if available
@@ -1815,36 +1809,35 @@ function fundraiser_webform_submit($form, &$form_state) {
   }
 
   // set order properties
-   $order->primary_email = $email;
-   $order->order_total = $donation_amount;
-   $order->billing_first_name = $first_name;
-   $order->billing_last_name = $last_name;
-   $order->billing_city = $billing_city;
-   $order->billing_street1 = $billing_address;
-   $order->billing_street2 = $billing_address_2;
-   $order->billing_postal_code = $billing_zipcode;
-   $order->billing_zone = $billing_state;
-   $order->billing_country = $billing_country;
-   $order->payment_method = 'credit';
-   $order->payment_details = array(
-     'cc_type' => _fundraiser_get_cc_type($cc_number),  
-     'cc_owner' => '',  
-     'cc_number' => $cc_number,  
-     'cc_start_month' => '',  
-     'cc_start_year' => '',  
-     'cc_exp_month' => $cc_expiration_month,  
-     'cc_exp_year' => $cc_expiration_year,  
-     'cc_issue' => '',  
-     'cc_cvv' => $cc_cvv,  
-     'cc_bank' => '',  
-   );
+  $order->primary_email = $email;
+  $order->order_total = $donation_amount;
+  $order->billing_first_name = $first_name;
+  $order->billing_last_name = $last_name;
+  $order->billing_city = $billing_city;
+  $order->billing_street1 = $billing_address;
+  $order->billing_street2 = $billing_address_2;
+  $order->billing_postal_code = $billing_zipcode;
+  $order->billing_zone = $billing_state;
+  $order->billing_country = $billing_country;
+  $order->payment_method = 'credit';
+  $order->payment_details = array(
+    'cc_type' => _fundraiser_get_cc_type($cc_number),
+    'cc_owner' => '',
+    'cc_number' => $cc_number,
+    'cc_start_month' => '',
+    'cc_start_year' => '',
+    'cc_exp_month' => $cc_expiration_month,
+    'cc_exp_year' => $cc_expiration_year,
+    'cc_issue' => '',
+    'cc_cvv' => $cc_cvv,
+    'cc_bank' => '',
+  );
 
-   $order->line_items = array();
-
+  $order->line_items = array();
 
   $order->data['recurring_status'] = $recurs ? DONATION_RECURRING : DONATION_NON_RECURRING;
 
-   // Allow other modules to add additional fields to the order before processing the payment
+  // Allow other modules to add additional fields to the order before processing the payment
   $additional_order_fields = module_invoke_all('fundraiser_add_order_fields', $fundraiser_fields);
   foreach ($additional_order_fields as $field => $value) {
     $order->data[$field] = $value;
@@ -1853,14 +1846,14 @@ function fundraiser_webform_submit($form, &$form_state) {
   // Store the gateway that was used to make the payment
   $order->data['gateway'] = $node->gateway;
 
-   // cache the cc details stored by the handler.
+  // cache the cc details stored by the handler.
   uc_credit_cache('save', $order->payment_details, FALSE);
 
-   // allow other modules to alter the order before it is save
+  // allow other modules to alter the order before it is save
   module_invoke_all('fundraiser_order_created', $order, $fundraiser_fields, $form_state['values']['details']['sid']);
 
-   // save the order
-   uc_order_save($order);
+  // save the order
+  uc_order_save($order);
 
   // grab the donation form url
   $donation_form_url = _fundraiser_donation_form_path($node->nid);
@@ -1869,22 +1862,20 @@ function fundraiser_webform_submit($form, &$form_state) {
   db_query(
     "INSERT INTO {fundraiser_webform_order}
       (webform_nid, order_id, sid, recurring_status, user_agent, form_url) VALUES (%d, %d, %d, %d, '%s', '%s')
-    ;",  
-    $node->nid, $order->order_id, $form_state['values']['details']['sid'],  
+    ;",
+    $node->nid, $order->order_id, $form_state['values']['details']['sid'],
     $order->data['recurring_status'], $_SERVER['HTTP_USER_AGENT'], $donation_form_url
   );
 
   // additional data to pass to the payment gateway's charge function
   $data = array(
-    'txn_type' => 'auth_capture',  
+    'txn_type' => 'auth_capture',
   );
 
   if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
-
     $data = array(
-      'txn_type' => 'reference_txn',  
-      'ref_id' => $form_state['fundraiser_reference_txn_id'],  
-
+      'txn_type' => 'reference_txn',
+      'ref_id' => $form_state['fundraiser_reference_txn_id'],
     );
     $method_txn_id = $form_state['fundraiser_reference_txn_id'];
   }
@@ -1892,26 +1883,26 @@ function fundraiser_webform_submit($form, &$form_state) {
     $method_txn_id = FALSE;
   }
 
-   // variable to hold the name of the payment gateway charge function we need to call
-   $charge_function = NULL;
-    $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $node->gateway);
-    $charge_function = $payment_gateway['charge_function'];
-    // If additional config options were passed include them
-    if (!empty($payment_gateway['config'])) {
-      $data['config'] = $payment_gateway['config'];
-    }
+  // variable to hold the name of the payment gateway charge function we need to call
+  $charge_function = NULL;
+  $payment_gateway = module_invoke_all('fundraiser_gateway', 'charge function', $node->gateway);
+  $charge_function = $payment_gateway['charge_function'];
+  // If additional config options were passed include them
+  if (!empty($payment_gateway['config'])) {
+    $data['config'] = $payment_gateway['config'];
+  }
 
-    if ($charge_function) {
-      // call the charge function and store the result
-      $result = $charge_function($order->order_id, $donation_amount, $data);
-    }
+  if ($charge_function) {
+    // call the charge function and store the result
+    $result = $charge_function($order->order_id, $donation_amount, $data);
+  }
 
-   if ($result['success']) {
-     fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
-     $node = node_load(array('nid' => $node_id));
-     module_invoke_all('fundraiser_webform_submit', $order, $node, $form_state);
-   }
-   else {
+  if ($result['success']) {
+    fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
+    $node = node_load(array('nid' => $node_id));
+    module_invoke_all('fundraiser_webform_submit', $order, $node, $form_state);
+  }
+  else {
     // failed to process credit cart
     fundraiser_order_decline($order->order_id, $result['message']);
     fundraiser_track_gateway_failure();
@@ -1920,7 +1911,7 @@ function fundraiser_webform_submit($form, &$form_state) {
     form_set_error('credit_card_information][card_number', $result['message']);
     $form_state['values']['details']['finished'] = 0;
     $form_state['rebuild'] = TRUE;
-   }
+  }
 }
 
 /**
@@ -1960,11 +1951,11 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
   // update the order/webform relationship
   db_query("UPDATE {fundraiser_webform_order}
     SET
-      gateway = '%s',  
-      txn_id = '%s',  
+      gateway = '%s',
+      txn_id = '%s',
       auth_code = '%s'
     WHERE
-      order_id = %d",  
+      order_id = %d",
     $node->gateway, $transaction_id, $auth_code, $order_id);
 
   // update the uid on the webform submission
@@ -1989,7 +1980,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
   // show gateay message if appropriate
   $display_message = variable_get('fundraiser_gateway_messages', 1);
   if ($display_message) {
-     drupal_set_message($message);
+    drupal_set_message($message);
   }
 }
 
@@ -2035,9 +2026,9 @@ function fundraiser_order_decline($order_id, $message, $ref_id = FALSE) {
  */
 function fundraiser_order_exception($order_id, $message) {
   // make the order as failed
-   db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
-   // make a log entry
-   watchdog('fundraiser', t('An error occurred while processing order !id. Error: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_ERROR, NULL);
+  db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order_id);
+  // make a log entry
+  watchdog('fundraiser', t('An error occurred while processing order !id. Error: @message', array('!id' => $order_id, '@message' => $message)), NULL, WATCHDOG_ERROR, NULL);
 
   // show gateay message if appropriate
   $display_message = variable_get('fundraiser_gateway_messages', 1);
@@ -2056,7 +2047,7 @@ function fundraiser_order_exception($order_id, $message) {
  */
 function fundraiser_order_cancel($order_id) {
   // make the order as canceled
-   db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = %d", $order_id);
+  db_query("UPDATE {uc_orders} SET order_status = 'canceled' WHERE order_id = %d", $order_id);
   // make a comment on the order
   uc_order_comment_save($order_id, 0, t('Payment was canceled during checkout by the user.'));
   // make a log entry
@@ -2088,7 +2079,6 @@ function fundraiser_add_to_queue($order) {
     }
   }
 }
-
 
 /**
  * Handles the final destination redirect (even after webform).
@@ -2305,22 +2295,22 @@ function fundraiser_process_recurring_donations() {
     $total = $order->order_total;
 
     // varaible to hold the name of the payment gateway charge function we need to call
-     $charge_function = NULL;
+    $charge_function = NULL;
 
      // get the id of the reference to the customers cc data
     $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
     $data = array(
-      'txn_type' => 'reference_txn',  
-      'ref_id' => $ref_id,  
+      'txn_type' => 'reference_txn',
+      'ref_id' => $ref_id,
     );
 
-     $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
+    $charge_function = _fundraiser_charge_function($order_id, $order->products[0]->nid, $data);
 
-     if (empty($charge_function)) {
+    if (empty($charge_function)) {
       db_query("UPDATE {fundraiser_recurring} SET lock_id = '0' WHERE order_id = %d", $order_id); // Reset lock back to 0 for retry.
-       watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
-     }
-     else {
+      watchdog('fundraiser', t('Cannot determine the payment gateway for order !id. Node id of donation form is !nid', array('!id' => $order->order_id, '!nid' => $order->products[0]->nid)), NULL, WATCHDOG_CRITICAL);
+    }
+    else {
       // process the order
       $result = $charge_function($order_id, $total, $data);
       if ($result['success']) {
@@ -2344,14 +2334,14 @@ function fundraiser_process_recurring_donations() {
         $fails++;
         db_query("UPDATE {uc_orders} SET order_status = 'failed' WHERE order_id = %d", $order->order_id);
         db_query("UPDATE {fundraiser_recurring} SET
-          gateway_resp = 'failed',  
-          attempts = attempts + 1,  
-          next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),  
+          gateway_resp = 'failed',
+          attempts = attempts + 1,
+          next_charge = unix_timestamp(timestampadd(DAY, 1, from_unixtime(next_charge))),
           lock_id = '0'
           WHERE order_id = %d", $order_id
         );
         // get the number of times this order has been attempted
-        uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run, but failed to charge. Gateway message: !message',  
+        uc_order_comment_save($order_id, 0, t('Submitted for payment via cron run, but failed to charge. Gateway message: !message',
           array('!message' => $result['message'])), 'admin');
         $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
         if ($attempt_count == 3) {
@@ -2414,7 +2404,7 @@ function fundraiser_send_cc_notification($master_order_id, $uid) {
 }
 
 /**
- * Implemenation of hook_mail().
+ * Implementation of hook_mail().
  */
 function fundraiser_mail($key, &$message, &$params) {
   switch ($key) {
@@ -2450,13 +2440,13 @@ function fundraiser_order($op, &$arg1, $arg2) {
  */
 function fundraiser_order_pane() {
   $panes[] = array(
-    'id' => 'fundraiser',  
-    'callback' => 'fundraiser_order_pane_fundraiser',  
-    'title' => t('Fundraiser'),  
-    'desc' => t('Additional data for donation orders.'),  
-    'class' => 'abs-left',  
-    'weight' => 7,  
-    'show' => array('view', 'edit'),  
+    'id' => 'fundraiser',
+    'callback' => 'fundraiser_order_pane_fundraiser',
+    'title' => t('Fundraiser'),
+    'desc' => t('Additional data for donation orders.'),
+    'class' => 'abs-left',
+    'weight' => 7,
+    'show' => array('view', 'edit'),
   );
   return $panes;
 }
@@ -2475,28 +2465,28 @@ function fundraiser_order_pane_fundraiser($op, $arg1) {
           FROM {fundraiser_webform_order} wo
             LEFT JOIN {fundraiser_recurring} r ON r.master_order_id = wo.order_id
           WHERE %d IN (wo.order_id, r.order_id)
-        ;",  
+        ;",
         $order_id
       ));
       if ($submission) {
         $output['webform-submission'] = array(
           '#value' => l(
-            t('Donation form submission'),  
+            t('Donation form submission'),
             "node/$submission->webform_nid/submission/$submission->sid"
-          ),  
-          '#prefix' => '<p>',  
-          '#suffix' => '</p>',  
+          ),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
           '#weight' => 1
         );
         if ($submission->master_order_id) {
           $output['master-order'] = array(
             '#value' => l(
-              t('Master order for recurring donations'),  
+              t('Master order for recurring donations'),
               "admin/store/orders/$submission->master_order_id"
-            ),  
-            '#prefix' => '<p>',  
-            '#suffix' => '</p>',  
-            '#weight' => 2,  
+            ),
+            '#prefix' => '<p>',
+            '#suffix' => '</p>',
+            '#weight' => 2,
           );
         }
       }
@@ -2505,7 +2495,7 @@ function fundraiser_order_pane_fundraiser($op, $arg1) {
 }
 
 /**
- * Implemenation of hook_mail_alter().
+ * Implementation of hook_mail_alter().
  *
  * Change the from address and subject for donation receipt emails.
  */
@@ -2574,10 +2564,10 @@ function fundraiser_hook_info() {
     'fundraiser' => array(
       'fundraiser' => array(
         'sustainer_payment_declined' => array(
-          'runs when' => t('A sustainer\'s credit card payment is declined'),  
-        ),  
-      ),  
-    ),  
+          'runs when' => t('A sustainer\'s credit card payment is declined'),
+        ),
+      ),
+    ),
   );
 }
 
@@ -2588,9 +2578,9 @@ function fundraiser_fundraiser($op, $order) {
   if (module_exists('trigger')) {
     $aids = _trigger_get_hook_aids('fundraiser', $op);
     $context = array(
-      'hook' => 'fundraiser',  
-      'op' => $op,  
-      'order' => $order,  
+      'hook' => 'fundraiser',
+      'op' => $op,
+      'order' => $order,
     );
     $dummy = new stdClass();
     actions_do(array_keys($aids), $dummy, $context);
@@ -2654,7 +2644,6 @@ function fundraiser_processor_key_match() {
   return TRUE;
 }
 
-
 /**
  * Implementation of hook_order_actions().
  * Add a refund action to the Order list
@@ -2664,10 +2653,10 @@ function fundraiser_order_actions($order) {
     $module_path = base_path() . drupal_get_path('module', 'fundraiser');
     $title = t('Issue refund on order !order_id.', array('!order_id' => $order->order_id));
     $actions[] = array(
-      'name' => t('Refund'),  
-      'url' => 'admin/store/orders/'. $order->order_id .'/refund',  
-      'icon' => '<img src="'. $module_path .'/images/refund.gif" alt="'. $title .'" />',  
-      'title' => $title,  
+      'name' => t('Refund'),
+      'url' => 'admin/store/orders/'. $order->order_id .'/refund',
+      'icon' => '<img src="'. $module_path .'/images/refund.gif" alt="'. $title .'" />',
+      'title' => $title,
     );
     return $actions;
   }
@@ -2679,24 +2668,24 @@ function fundraiser_order_actions($order) {
 function fundraiser_theme() {
   return array(
     'fundraiser_mapping_form' => array(
-    'arguments' => array(),  
-    ),  
+    'arguments' => array(),
+    ),
     'sustainer_management_page' => array(
-      'template' => 'sustainer-management-page',  
-      'arguments' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),  
-    ),  
+      'template' => 'sustainer-management-page',
+      'arguments' => array('order_id' => NULL, 'orders' => NULL, 'payment_info' => NULL, 'billing_info' => NULL, 'amount_form' => NULL, 'billing_form' => NULL, 'cancel_form' => NULL, 'payment_schedule' => NULL, 'cancelled' => FALSE),
+    ),
     'fundraiser_credit_card_expiration_date' => array(
-      'arguments' => array(),  
-    ),  
+      'arguments' => array(),
+    ),
     'fundraiser_confirmation' => array(
-      'arguments' => array('node' => NULL, 'sid' => NULL),  
-      'template' => 'templates/fundraiser-confirmation',  
-      'pattern' => 'fundraiser_confirmation_[0-9]+',  
-    ),  
+      'arguments' => array('node' => NULL, 'sid' => NULL),
+      'template' => 'templates/fundraiser-confirmation',
+      'pattern' => 'fundraiser_confirmation_[0-9]+',
+    ),
     'fundraiser_confirmation_tokens' => array(
-      'arguments' => array('tokens' => NULL),  
-      'template' => 'templates/fundraiser-token-list',  
-    ),  
+      'arguments' => array('tokens' => NULL),
+      'template' => 'templates/fundraiser-token-list',
+    ),
   );
 }
 
@@ -2801,19 +2790,19 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
 
   $form = array();
   $fields = array(
-    'amount_' => array('label' => 'Ask amount', 'size' => 10, 'class' => 'amount_field'),  
-    'label_' => array('label' => 'Label', 'size' => 30, 'class' => 'label_field'),  
+    'amount_' => array('label' => 'Ask amount', 'size' => 10, 'class' => 'amount_field'),
+    'label_' => array('label' => 'Label', 'size' => 30, 'class' => 'label_field'),
   );
   $weight = 0;
 
   foreach ($fields as $key => $value) {
 
     $form[$key . $delta] = array(
-      '#type' => 'textfield',  
-      '#title' => t($value['label']),  
-      '#size' => $value['size'],  
-      '#weight' => $weight,  
-      '#attributes' => array('class' => $value['class']),  
+      '#type' => 'textfield',
+      '#title' => t($value['label']),
+      '#size' => $value['size'],
+      '#weight' => $weight,
+      '#attributes' => array('class' => $value['class']),
     );
 
     // Post values take precedence as they're fresh from the form. We defer to values retrieved from the DB only during
@@ -2833,10 +2822,10 @@ function _fundraiser_ask_form($delta, $edit, $amount_values = array()) {
   }
 
   $form['remove_' . $delta] = array(
-    '#type' => 'button',  
-    '#value' => t('remove'),  
-    '#weight' => 2,  
-    '#suffix' => '<div class="clear-block"></div>',  
+    '#type' => 'button',
+    '#value' => t('remove'),
+    '#weight' => 2,
+    '#suffix' => '<div class="clear-block"></div>',
   );
   return $form;
 }
@@ -2981,7 +2970,6 @@ function _fundraiser_charge_function($order_id, $nid, &$data) {
   return FALSE;
 }
 
-
 /**
  * Creates a webform specific string of donations amount to be used in the amount component
  *
@@ -3054,14 +3042,13 @@ function fundraiser_validate_email($mail) {
   return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,  6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
 }
 
-
 function _fundraiser_field_blacklist() {
   return array(
-    'card_number',  
-    'card_cvv',  
-    'recurs_monthly',  
-    'card_expiration_month',  
-    'card_expiration_year',  
+    'card_number',
+    'card_cvv',
+    'recurs_monthly',
+    'card_expiration_month',
+    'card_expiration_year',
   );
 }
 
@@ -3192,8 +3179,8 @@ function fundraiser_track_pageview() {
 }
 
 function fundraiser_track_gateway_failure() {
-   $form_nid = arg(1);
-   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+  $form_nid = arg(1);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
     db_query('UPDATE {fundraiser_tracking} SET gateway_failures = gateway_failures + 1 WHERE nid = %d', $form_nid);
   }
   else {
@@ -3201,12 +3188,11 @@ function fundraiser_track_gateway_failure() {
     db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
       VALUES (%d, 1, 0, 0, 1)', $form_nid);
   }
-
 }
 
 function fundraiser_track_conversion() {
-   $form_nid = arg(1);
-   if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
+  $form_nid = arg(1);
+  if (db_result(db_query('SELECT 1 FROM {fundraiser_tracking} WHERE nid = %d', $form_nid))) {
     db_query('UPDATE {fundraiser_tracking} SET conversions = conversions + 1 WHERE nid = %d', $form_nid);
   }
   else {
@@ -3214,7 +3200,6 @@ function fundraiser_track_conversion() {
     db_query('INSERT INTO {fundraiser_tracking} (nid, pageviews, conversions, local_failures, gateway_failures)
       VALUES (%d, 1, 1, 0, 0)', $form_nid);
   }
-
 }
 
 /**
@@ -3222,12 +3207,10 @@ function fundraiser_track_conversion() {
  * see: http://drupal.org/node/645880
  */
 function _fundraiser_validation_includes($element, $form_state) {
-   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
-   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
-   return $element;
+  drupal_add_css(drupal_get_path('module', 'fundraiser') . '/fundraiser.css', 'module', 'all');
+  drupal_add_js(drupal_get_path('module', 'fundraiser') . '/fundraiser_form.js', 'module', 'header', FALSE, FALSE, FALSE);
+  return $element;
 }
-
-
 
 /**
  * Check if the given order was made on a payment gateway that supports refunds

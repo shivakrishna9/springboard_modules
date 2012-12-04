@@ -14,8 +14,8 @@
  * Drupal ones. Each individual profile field has a certain
  * "permission level."
  */
-define('CAPWIZ_OVERWRITE_NEVER',  'never'); // Only set the value when adding a new account; never overwrite it
-define('CAPWIZ_OVERWRITE_BLANK',  'blank'); // Overwrite only if blank
+define('CAPWIZ_OVERWRITE_NEVER', 'never'); // Only set the value when adding a new account; never overwrite it
+define('CAPWIZ_OVERWRITE_BLANK', 'blank'); // Overwrite only if blank
 define('CAPWIZ_OVERWRITE_ALWAYS', 'always');
 
 /**
@@ -57,7 +57,7 @@ function capwiz_theme() {
   );
 }
 
-if ((bool)variable_get('capwiz_cron', 1)) {
+if ((bool) variable_get('capwiz_cron', 1)) {
 
   /**
    * Implement hook_cron().
@@ -86,7 +86,7 @@ function capwiz_merge_accounts($fetch_all_accounts = FALSE) {
 
   require_once 'capwiz.api.inc';
 
-  CapwizApi::fetchAccounts((bool)$fetch_all_accounts);
+  CapwizApi::fetchAccounts((bool) $fetch_all_accounts);
   $capwiz_accounts = &CapwizApi::$accounts;
 
   if (!empty($capwiz_accounts) && is_array($capwiz_accounts)) {
@@ -137,19 +137,19 @@ function capwiz_add_account($capwiz_account) {
 
     $drupal_account_password = user_password();
     $drupal_account = array(
-      'name'    => $capwiz_account->email_address,
-      'pass'    => md5($drupal_account_password),
-      'mail'    => $capwiz_account->email_address,
+      'name' => $capwiz_account->email_address,
+      'pass' => md5($drupal_account_password),
+      'mail' => $capwiz_account->email_address,
       'created' => $time = time(),
-      'access'  => $time,
-      'login'   => 0,
-      'status'  => 1,
+      'access' => $time,
+      'login' => 0,
+      'status' => 1,
     );
 
     db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status, data) VALUES ("%s", "%s", "%s", %d, %d, %d, %d, "%s")',
       $drupal_account + array('data' => serialize(array('capwiz_id' => $capwiz_account->capwiz_id))));
 
-    $drupal_account = (object)$drupal_account;
+    $drupal_account = (object) $drupal_account;
     $drupal_account->uid  = db_last_insert_id('users', 'uid');
     $drupal_account->password = $drupal_account_password; // Provide the value for the !password token in emails.
     $drupal_account->language = 'en'; // Needed to send the English version of email messages
@@ -160,7 +160,7 @@ function capwiz_add_account($capwiz_account) {
       $email_message_op = variable_get('capwiz_email_message', NULL);
 
       if (empty($email_message_op)) {
-        $email_message_op_code = (int)variable_get('user_register', 1);
+        $email_message_op_code = (int) variable_get('user_register', 1);
         $email_message_options = capwiz_get_email_message_options();
         $email_message_op      = $email_message_options[$email_message_op_code];
       }
@@ -203,7 +203,7 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
   if (!empty($drupal_account->uid) && !empty($capwiz_account->capwiz_id)) {
 
     // Make sure the Capwiz ID is correct.
-    $drupal_account_data = (array)unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $drupal_account->uid)));
+    $drupal_account_data = (array) unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $drupal_account->uid)));
     $drupal_account_data['capwiz_id'] = $capwiz_account->capwiz_id;
     db_query('UPDATE {users} SET data = "%s" WHERE uid = %d', serialize($drupal_account_data), $drupal_account->uid);
 
@@ -299,13 +299,13 @@ function capwiz_save_actions($capwiz_actions_all = NULL) {
         // (Just in case) If we get a user who has not been added yet,
         // go ahead and add them even though they have no profile data.
         if (empty($uid)) {
-          $drupal_account = capwiz_add_account((object)array('capwiz_id' => $capwiz_action->capwiz_id, 'email_address' => $capwiz_action->email_address));
+          $drupal_account = capwiz_add_account((object) array('capwiz_id' => $capwiz_action->capwiz_id, 'email_address' => $capwiz_action->email_address));
           $uid = $drupal_account->uid;
         }
       }
 
       module_load_include('inc', 'capwiz', 'capwiz.api');
-      $db_query_arguments = array('uid' => $uid) + array_intersect_key((array)$capwiz_action, array_flip(CapwizApi::getActionFields()));
+      $db_query_arguments = array('uid' => $uid) + array_intersect_key((array) $capwiz_action, array_flip(CapwizApi::getActionFields()));
       $db_query_fields = implode(', ', array_keys($db_query_arguments));
       $db_query_tokens = '%d' . str_repeat(', "%s"', count($db_query_arguments) - 1);
       db_query("REPLACE INTO {capwiz_actions} ($db_query_fields) VALUES ($db_query_tokens)", $db_query_arguments);
@@ -363,7 +363,7 @@ function capwiz_get_profile_fields($get_titles = FALSE) {
   static $profile_fields = array();
 
   // Get an integer version of $get_titles, so it can be an array key.
-  $get_titles = (int)(bool)$get_titles;
+  $get_titles = (int) (bool) $get_titles;
 
   if (empty($profile_fields[$get_titles])) {
     $profile_fields[$get_titles] = array();
@@ -437,7 +437,6 @@ function capwiz_fieldmap_objects($type) {
     $objects['capwiz_action'] = array(
       'label' => t('Capwiz action'),
       'fields' => array(
-
         // Capwiz Action database fields
         'uid' => array('label' => t('User ID')),
         'event_id' => array('label' => t('Event ID')),
@@ -449,7 +448,6 @@ function capwiz_fieldmap_objects($type) {
         'intended_delivery_method' => array('label' => t('Intended Delivery Method')),
         'actual_delivery_method' => array('label' => t('Actual Delivery Method')),
         'delivery_status' => array('label' => t('Delivery Status')),
-
         // Salesforce fields
         'ContactId' => array('label' => t('Contact ID')),
       ),

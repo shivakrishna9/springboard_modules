@@ -22,8 +22,8 @@ function current_queue_report() {
   $header = array('Drupal Id', 'Title', 'SFID', 'Type', 'Action', 'Date Added');
 
   $output = 'These items are currently queued up and will be exported to Salesforce during the next cron run.';
-   $output .= theme('table', $header, $rows, array('id' => 'current-queue'));
-   $output .= theme('pager', NULL, 20, $pager_num);
+  $output .= theme('table', $header, $rows, array('id' => 'current-queue'));
+  $output .= theme('pager', NULL, 20, $pager_num);
   return $output;
 }
 
@@ -55,8 +55,8 @@ function batch_history_report() {
 function batch_detail($id) {
 
   $base = drupal_get_path('module', 'queue_processor');
-  drupal_add_js($base .'/queue_processor.js');
-  drupal_add_css($base .'/queue_processor.css');
+  drupal_add_js($base . '/queue_processor.js');
+  drupal_add_css($base . '/queue_processor.css');
 
   //$output = 'Batch detail ' . $id . '<pre>';
   $batch = load_batch($id);
@@ -100,7 +100,7 @@ function batch_detail($id) {
       $output .= '<span>Status code:</span>' . $error->status_code . '<br/>';
       $output .= '<span>Fields:</span>' . $error->fields . '<br/>';
       if ($url = created_edit_link($item->oid, $item->type, 'admin/reports/salesforce/batch/' . $batch['id'])) {
-         $output .= l(t('Click to edit object'), $url);
+        $output .= l(t('Click to edit object'), $url);
       }
       $output .= '</div>';
     }
@@ -138,8 +138,8 @@ function retry_queue_report() {
   $result = pager_query("SELECT id, oid, sfid, type, fieldmap, action, from_unixtime(retry_date, '%m/%e/%Y %h:%i:%S %p'), attempts FROM {sf_retry_queue} ORDER BY retry_date ASC", 20, $pager_num);
 
   while ($row = db_fetch_array($result)) {
-      $row['retry_link'] = l('Retry', 'admin/sf-queue-processor/' . $row['id'] . '/retry');
-      unset($row['id']);
+    $row['retry_link'] = l('Retry', 'admin/sf-queue-processor/' . $row['id'] . '/retry');
+    unset($row['id']);
     $rows[] = $row;
   }
   $header = array('Drupal Id', 'SFID', 'Type', 'Fieldmap', 'Action', 'Retry Date', 'Attempts', 'Retry Now');
@@ -168,7 +168,7 @@ function permanent_failures_report($edit = array()) {
     $form['fieldmap'][$row['id']] = array('#value' => $row['fieldmap']);
     $form['action'][$row['id']] = array('#value' => $row['action']);
     $form['date_added'][$row['id']] = array('#value' => $row['date_added']);
-  $ids[$row['id']] = '';
+    $ids[$row['id']] = '';
   }
   $ids['all'] = '';
 
@@ -193,7 +193,7 @@ function permanent_failures_report($edit = array()) {
 }
 
 function theme_queue_processor_perm_failures($form = array()) {
-  drupal_add_js(drupal_get_path('module', 'queue_processor') .'/queue_processor.js');
+  drupal_add_js(drupal_get_path('module', 'queue_processor') . '/queue_processor.js');
   $pager_num = 0;
   $check_all = drupal_render($form['select']['all']);
   $header = array($check_all, 'Drupal Id', 'Type', 'Fieldmap', 'Action', 'Date Added');

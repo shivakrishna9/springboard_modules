@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 /*--------------------------------------------------------\
 |  Assigned your USER ID & PASSWORD with TOKEN
 |  This file is included in each of the SAMPLE Example

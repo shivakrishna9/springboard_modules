@@ -133,12 +133,12 @@ function page_wrappers_nodeapi($node, $op, $teaser = FALSE, $page = FALSE) {
         }
         break;
 
-      // delete
+        // delete
       case 'delete':
         db_query("DELETE FROM {node_page_wrappers} WHERE nid = %d", $node->nid);
         break;
 
-      // load
+        // load
       case 'load':
         $wrapper = db_result(db_query("SELECT wrapper_nid FROM {node_page_wrappers} WHERE nid = %d", $node->nid));
         if (!empty($wrapper)) {
@@ -625,13 +625,13 @@ function _page_wrappers_apply_wrapper(&$vars) {
       if (!empty($wrapper_node->field_css_file[0]['filepath'])) {
         $stylesheets = drupal_add_css();
         // remove module stylesheets
-        unset($stylesheets['all']['module'] ['modules/aggregator/aggregator.css']);
-        unset($stylesheets['all']['module'] ['modules/node/node.css']);
-        unset($stylesheets['all']['module'] ['modules/system/defaults.css']);
-        unset($stylesheets['all']['module'] ['modules/system/system.css']);
-        unset($stylesheets['all']['module'] ['modules/system/system-menus.css']);
-        unset($stylesheets['all']['module'] ['modules/taxonomy/taxonomy.css']);
-        unset($stylesheets['all']['module'] ['modules/user/user.css']);
+        unset($stylesheets['all']['module']['modules/aggregator/aggregator.css']);
+        unset($stylesheets['all']['module']['modules/node/node.css']);
+        unset($stylesheets['all']['module']['modules/system/defaults.css']);
+        unset($stylesheets['all']['module']['modules/system/system.css']);
+        unset($stylesheets['all']['module']['modules/system/system-menus.css']);
+        unset($stylesheets['all']['module']['modules/taxonomy/taxonomy.css']);
+        unset($stylesheets['all']['module']['modules/user/user.css']);
         // remove the theme stylesheet
         unset($stylesheets['all']['theme']);
         // add the new theme stylesheet

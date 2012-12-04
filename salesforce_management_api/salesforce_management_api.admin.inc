@@ -97,7 +97,10 @@ function salesforce_management_api_settings_form_submit($form, &$form_state) {
 // Displays an admin table for fieldmaps.
 function salesforce_management_api_fieldmap_admin() {
   // Define the header for the admin table.
-  $header = array(t('Index'), t('Name'), t('Drupal object'), t('Salesforce object'), array('data' => t('Operations'), 'colspan' => 4));
+  $header = array(t('Index'), t('Name'), t('Drupal object'), t('Salesforce object'), array(
+      'data' => t('Operations'),
+      'colspan' => 4,
+    ));
   $rows = array();
 
   // Loop through all the indexed field maps.
@@ -109,17 +112,20 @@ function salesforce_management_api_fieldmap_admin() {
       $map['name'],
       salesforce_management_api_fieldmap_object_label('drupal', $map['drupal']),
       salesforce_management_api_fieldmap_object_label('salesforce', $map['salesforce']),
-      l(t('edit'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/edit'),
-      l(t('delete'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/delete'),
-      l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/dedupe'),
-      l(t('import'), SALESFORCE_PATH_FIELDMAPS .'/'. $map['fieldmap'] .'/import'),
+      l(t('edit'), SALESFORCE_PATH_FIELDMAPS . '/' . $map['fieldmap'] . '/edit'),
+      l(t('delete'), SALESFORCE_PATH_FIELDMAPS . '/' . $map['fieldmap'] . '/delete'),
+      l(t('dedupe'), SALESFORCE_PATH_FIELDMAPS . '/' . $map['fieldmap'] . '/dedupe'),
+      l(t('import'), SALESFORCE_PATH_FIELDMAPS . '/' . $map['fieldmap'] . '/import'),
     );
   }
 
   // Add a message if no objects have been mapped.
   if (count($rows) == 0) {
     $rows[] = array(
-      array('data' => t('You have not yet defined any fieldmaps.'), 'colspan' => 8),
+      array(
+        'data' => t('You have not yet defined any fieldmaps.'),
+        'colspan' => 8,
+      ),
     );
   }
 
@@ -251,7 +257,7 @@ function salesforce_management_fieldmap_submit($form, &$form_state) {
   $index = salesforce_management_api_fieldmap_create($form_state['values']['drupal_object'], $form_state['values']['salesforce_management_object'], $form_state['values']['automatic'], $name, $rid, $recordtype_id);
 
   // Redirect to its edit form.
-  $form_state['redirect'] = SALESFORCE_PATH_FIELDMAPS .'/'. $index .'/edit';
+  $form_state['redirect'] = SALESFORCE_PATH_FIELDMAPS . '/' . $index . '/edit';
 
 }
 
@@ -334,7 +340,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   }
 
   // Include the CSS file for the form.
-  drupal_add_css(drupal_get_path('module', 'salesforce_management_api') .'/salesforce_management_api.admin.css');
+  drupal_add_css(drupal_get_path('module', 'salesforce_management_api') . '/salesforce_management_api.admin.css');
 
   $form = array();
 
@@ -377,18 +383,21 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
 
   // Add a description of the source fieldmap to the form array.
   $form['fieldmap_desc'] = array(
-    '#value' => '<p>'. salesforce_management_api_fieldmap_description($map) .'</p>',
+    '#value' => '<p>' . salesforce_management_api_fieldmap_description($map) . '</p>',
   );
 
   $source = salesforce_management_api_fieldmap_objects_load('drupal', $map['drupal']);
   $target = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
 
- foreach ($target['fields'] as $key => $value) {
-  $fieldmapsort[$key] = array('label' => $value['label'], 'type' => $value['type']);
+  foreach ($target['fields'] as $key => $value) {
+    $fieldmapsort[$key] = array(
+      'label' => $value['label'],
+      'type' => $value['type'],
+    );
 
   }
- asort($fieldmapsort);
+  asort($fieldmapsort);
 
   // Fail with an error message if either the source or target object
   // definitions were not found.
@@ -406,26 +415,29 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   $form['fields']['header'] = array(
     array('#value' => t('Target: @label (@type)', array('@label' => $target['label'], '@type' => $map['action'] == 'import' ? t('Drupal') : t('Salesforce')))),
     array('#value' => t('Source: @label (@type)', array('@label' => $source['label'], '@type' => $map['action'] == 'import' ? t('Salesforce') : t('Drupal')))),
-  array('#value' => t('Business rules Drupal to SF')),
-  array('#value' => t('Business rules SF to Drupal')),
+    array('#value' => t('Business rules Drupal to SF')),
+    array('#value' => t('Business rules SF to Drupal')),
   );
 
   // Loop through each of the target fields.
-  $rows = array('required' => array(), 'optional' => array());
+  $rows = array(
+    'required' => array(),
+    'optional' => array(),
+  );
   foreach ($fieldmapsort as $key => $value) {
     // Skip fields that are automatically assigned upon create for now.
-    /*if ($value['type'] == SALESFORCE_FIELD_SOURCE_ONLY || $value['label'] == 'Owner ID') {
-      continue;
-    }*/
+    /* if ($value['type'] == SALESFORCE_FIELD_SOURCE_ONLY || $value['label'] == 'Owner ID') {
+     continue;
+     }*/
 
-    /*echo "<pre>";
-    print_r($value);
-    echo "</pre>";*/
+    /* echo "<pre>";
+     print_r($value);
+     echo "</pre>";*/
 
     // Determine to which table this field should belong.
     if ($value['type'] == SALESFORCE_FIELD_REQUIRED) {
       $type = 'required';
-      $required = ' <span class="form-required" title="'. t('This field is required.') .'">*</span>';
+      $required = ' <span class="form-required" title="' . t('This field is required.') . '">*</span>';
     }
     else {
       $type = 'optional';
@@ -448,27 +460,27 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
     $row['business'][$key . '_r'] = array(
       '#type' => 'select',
       '#title' => t('Default options'),
-    '#default_value' => $map['business'][$key],
-    '#options' => array(
-    'null' => t(''),
-    'blank' => t('Overwrite when blank'),
-    'append' => t('Append'),
-    'always' => t('Always overwrite'),
-    'never' => t('Never overwrite'),
+      '#default_value' => $map['business'][$key],
+      '#options' => array(
+        'null' => t(''),
+        'blank' => t('Overwrite when blank'),
+        'append' => t('Append'),
+        'always' => t('Always overwrite'),
+        'never' => t('Never overwrite'),
       ),
-  );
-  $row['businessSD'][$key . '_l'] = array(
+    );
+    $row['businessSD'][$key . '_l'] = array(
       '#type' => 'select',
       '#title' => t('Default options'),
-    '#default_value' => $map['businessSD'][$key],
-    '#options' => array(
-    'null' => t(''),
-    'blank' => t('Overwrite when blank'),
-    'append' => t('Append'),
-    'always' => t('Always overwrite'),
-    'never' => t('Never overwrite'),
+      '#default_value' => $map['businessSD'][$key],
+      '#options' => array(
+        'null' => t(''),
+        'blank' => t('Overwrite when blank'),
+        'append' => t('Append'),
+        'always' => t('Always overwrite'),
+        'never' => t('Never overwrite'),
       ),
-  );
+    );
 
     // Add the row to the correct rows array.
     $rows[$type][] = $row;
@@ -511,14 +523,14 @@ function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state
     if (!empty($form_state['values'][$field])) {
       // Add the association to the fieldmap's fields array.
       $map['fields'][$field] = $form_state['values'][$field];
-       $map['business'][$field] = $form_state['values'][$field . '_r'];
-       $map['businessSD'][$field] = $form_state['values'][$field . '_l'];
+      $map['business'][$field] = $form_state['values'][$field . '_r'];
+      $map['businessSD'][$field] = $form_state['values'][$field . '_l'];
       $map['validation'][$field] = array(
         'field_type' => $object['fields'][$field]['field_type'],
         'nillable' => $object['fields'][$field]['nillable'],
         'length' => $object['fields'][$field]['length'],
       );
-     }
+    }
   }
 
   // Save the updated fieldmap.
@@ -564,24 +576,27 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
       drupal_render($form['rows'][$element]['target']),
       array(
         'data' => drupal_render($form['rows'][$element]['source']),
-        'class' => 'source-cell'
+        'class' => 'source-cell',
       ),
       array(
         'data' => drupal_render($form['rows'][$element]['business']),
-        'class' => 'source-cell'
+        'class' => 'source-cell',
       ),
-    array(
+      array(
         'data' => drupal_render($form['rows'][$element]['businessSD']),
-        'class' => 'source-cell'
+        'class' => 'source-cell',
       ),
     );
 
- }
+  }
 
   // Add a message if no rows were found.
   if (empty($rows)) {
     $rows[] = array(
-      array('data' => t('There are no fields of this type to set.'), 'colspan' => 4),
+      array(
+        'data' => t('There are no fields of this type to set.'),
+        'colspan' => 4,
+      ),
     );
   }
 
@@ -601,7 +616,7 @@ function theme_salesforce_management_api_fieldmap_edit_form_table($form) {
 
 //Ability to set dedupe key for a mapping of users to a fieldmap.
 function salesforce_management_api_fieldmap_dedupe_form(&$form_state, $fieldmap) {
-   // Load the fieldmap from the database.
+  // Load the fieldmap from the database.
   $map = salesforce_management_api_fieldmap_load($fieldmap);
   $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
@@ -619,17 +634,17 @@ function salesforce_management_api_fieldmap_dedupe_form(&$form_state, $fieldmap)
   // Loop through each of the target fields.
   $field = array();
   foreach ($object['fields'] as $key => $value) {
-        /*echo  "<pre>";
-        print_r($value);
-        echo "</pre>";*/
+    /* echo  "<pre>";
+     print_r($value);
+     echo "</pre>";*/
 
-  $field[$key] = $value['label'];
+    $field[$key] = $value['label'];
   }
   asort($field);
   $form['fieldmap_options'] = array(
     '#type' => 'select',
     '#title' => t('Dedupe key for mapping'),
-    '#default_value' =>  isset($map['dedupe_key']) ? $map['dedupe_key'] : '',
+    '#default_value' => isset($map['dedupe_key']) ? $map['dedupe_key'] : '',
     '#options' => $field,
     '#description' => t('Fieldmap maps Salesforce objects to Drupal objects.'),
   );
@@ -739,9 +754,9 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
   if (file_check_directory($dir)) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
-         form_set_error($source, t('File upload error. Could not move uploaded file.'));
-         watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
-         return 0;
+      form_set_error($source, t('File upload error. Could not move uploaded file.'));
+      watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
+      return 0;
     }
     else {
       drupal_set_message('The WSDL file has been successfully uploaded');
@@ -768,7 +783,10 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
 }
 
 function salesforce_management_api_drupal_object_select() {
-  $form_state = array('storage' => NULL, 'submitted' => TRUE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => TRUE,
+  );
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -790,7 +808,10 @@ function salesforce_management_api_drupal_object_select() {
 }
 
 function salesforce_management_api_salesforce_object_select() {
-  $form_state = array('storage' => NULL, 'submitted' => TRUE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => TRUE,
+  );
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 

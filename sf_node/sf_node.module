@@ -11,26 +11,26 @@
  */
 function sf_node_menu() {
   /*
-  $items['node/%/salesforce-management'] = array(
-    'title' => 'Salesforce Management',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('sf_node_salesforce_management_form', 1),
-    'access arguments' => array('sync nodes with salesforce'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'sf_node.admin.inc',
-  );
-  $items['node/%/download'] = array(
-    'title' => 'Export Errors',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('sf_node_results_download_form', 1),
-    'access arguments' => array('sync nodes with salesforce'),
-    'file' => 'sf_node_report.inc',
-    'weight' => 7,
-    'type' => MENU_LOCAL_TASK,
-  );
+   $items['node/%/salesforce-management'] = array(
+   'title' => 'Salesforce Management',
+   'page callback' => 'drupal_get_form',
+   'page arguments' => array('sf_node_salesforce_management_form', 1),
+   'access arguments' => array('sync nodes with salesforce'),
+   'type' => MENU_LOCAL_TASK,
+   'file' => 'sf_node.admin.inc',
+   );
+   $items['node/%/download'] = array(
+   'title' => 'Export Errors',
+   'page callback' => 'drupal_get_form',
+   'page arguments' => array('sf_node_results_download_form', 1),
+   'access arguments' => array('sync nodes with salesforce'),
+   'file' => 'sf_node_report.inc',
+   'weight' => 7,
+   'type' => MENU_LOCAL_TASK,
+   );
 
-  return $items;
-  */
+   return $items;
+   */
 }
 
 /**
@@ -166,7 +166,7 @@ function sf_node_queue_preprocess_batch_alter(&$batch) {
         // get any objects that have already been exported to salesforce. these will be used when generating the export objects and cut down on api calls
         $objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
         foreach ($batch['records'] as $record) {
-          $node = node_load((int)$record->oid, NULL, TRUE);
+          $node = node_load((int) $record->oid, NULL, TRUE);
           // determine which nodes have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
           $object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $node, $record->sfid, $objects);
           // add the object to the batch record
@@ -218,7 +218,7 @@ function sf_node_queue_postprocess_batch($batch, $responses, $item_count) {
 function sf_node_queue_report_item_title_alter(&$row) {
   $pos = strpos($row['type'], 'node_');
   if (!($pos === FALSE)) {
-    $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int)$row['oid']));
+    $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", (int) $row['oid']));
     $row['title'] = $title;
   }
 }
@@ -234,25 +234,31 @@ function sf_node_fieldmap_objects($type) {
     // Add a definition for each node type.
     foreach (node_get_types() as $type) {
       // Define the node type object with the node ID field.
-      $objects['node_'. $type->type] = array(
+      $objects['node_' . $type->type] = array(
         'label' => t('@name node', array('@name' => $type->name)),
         'fields' => array(
-          'nid' => array('label' => t('Node ID'), 'type' => SALESFORCE_FIELD_SOURCE_ONLY),
+          'nid' => array(
+            'label' => t('Node ID'),
+            'type' => SALESFORCE_FIELD_SOURCE_ONLY,
+          ),
         ),
       );
 
       // Add a title field if the node type has one.
       if ($type->has_title) {
-        $objects['node_'. $type->type]['fields']['title'] = array('label' => check_plain($type->title_label), 'type' => SALESFORCE_FIELD_REQUIRED);
+        $objects['node_' . $type->type]['fields']['title'] = array(
+          'label' => check_plain($type->title_label),
+          'type' => SALESFORCE_FIELD_REQUIRED,
+        );
       }
 
       // Add a body field if the node type has one.
       if ($type->has_body) {
-        $objects['node_'. $type->type]['fields']['body'] = array('label' => check_plain($type->body_label));
+        $objects['node_' . $type->type]['fields']['body'] = array('label' => check_plain($type->body_label));
       }
 
       // Add the rest of the core fields.
-      $objects['node_'. $type->type]['fields'] += array(
+      $objects['node_' . $type->type]['fields'] += array(
         'type' => array('label' => t('Node type')),
         'status' => array('label' => t('Is the node published?')),
         'promote' => array('label' => t('Is the node promoted?')),
@@ -276,8 +282,8 @@ function sf_node_fieldmap_objects($type) {
           switch ($field['type']) {
             // TODO: Decide if we want to make more specific handlers...
             // case 'text':
-              // For example, I might set a handler for text fields that takes
-              // the selected input format into account.
+            // For example, I might set a handler for text fields that takes
+            // the selected input format into account.
             case 'filefield':
               $export_handler = '_sf_node_export_cck_file';
               $import_handler = '_sf_node_import_cck_file';
@@ -299,7 +305,7 @@ function sf_node_fieldmap_objects($type) {
               $import_handler = '_sf_node_import_cck_default';
           }
 
-          $objects['node_'. $type['type']]['fields'][$field['field_name']] = array(
+          $objects['node_' . $type['type']]['fields'][$field['field_name']] = array(
             'label' => check_plain($field['widget']['label']),
             'group' => t('CCK fields'),
             'export' => $export_handler,
@@ -308,7 +314,7 @@ function sf_node_fieldmap_objects($type) {
 
           // If the field was a date field, add the "To" date if enabled.
           if ($field['type'] == 'date' && !empty($field['todate'])) {
-            $objects['node_'. $type['type']]['fields'][$field['field_name'] .'_todate'] = array(
+            $objects['node_' . $type['type']]['fields'][$field['field_name'] . '_todate'] = array(
               'label' => t('@label (to date)', array('@label' => $field['widget']['label'])),
               'group' => t('CCK fields'),
               'export' => '_sf_node_export_cck_todate',
@@ -449,7 +455,7 @@ function _sf_node_import_cck_todate(&$node, $key, $value) {
 
 // Returns the url of a CCK file field.
 function _sf_node_export_cck_file($source, $field) {
-  GLOBAL $base_url;
+  global $base_url;
   // Get the data array for the field.
   $data = $source->$field;
 
@@ -463,11 +469,11 @@ function _sf_node_export_cck_file($source, $field) {
 function _sf_node_import_cck_file(&$node, $key, $value) {
   $data = $node->$key;
   if (!empty($value)) {
-    GLOBAL $base_url;
+    global $base_url;
     // drupal_* string functions are not necessary since these are machine names.
     $key = substr($key, 0, strlen($key) - 7);
     $data = $node->$key;
-    $data[0]['filepath'] = str_replace($base_url .'/', '', $value); // strip the base url if found
+    $data[0]['filepath'] = str_replace($base_url . '/', '', $value); // strip the base url if found
     $node->$key = $data;
   }
 }
@@ -557,7 +563,7 @@ function update_node_values(&$node, &$object, $map, $drupal, $salesforce) {
 
     // call hook_sf_node_update_node_value() to allow custom value alterations
     foreach (module_implements('sf_node_update_node_value') as $module) {
-      $function = $module .'_sf_node_update_node_value';
+      $function = $module . '_sf_node_update_node_value';
       $function($value, $key, $node, $object, $sf_value, $drupal_value, $rule, $drupal['fields'][$key]);
     }
   }

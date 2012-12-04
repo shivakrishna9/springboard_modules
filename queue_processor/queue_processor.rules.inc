@@ -193,12 +193,11 @@ function _queue_processor_error_event_variables() {
   return array(
     'status_code' => array(
       'type' => 'string',
-      'label' => t('The Salesforce error status code returned from the API')
+      'label' => t('The Salesforce error status code returned from the API'),
     ),
     'field' => array(
       'type' => 'string',
-      'label' =>
-      t('The field in the Salesforce object that caused the error')
+      'label' => t('The field in the Salesforce object that caused the error'),
     ),
   );
 }

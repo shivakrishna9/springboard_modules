@@ -13,20 +13,20 @@ function mailtron_perm() {
  * Implements hook_menu().
  */
 /* function mailtron_menu() {
-  $items = array();
-  $items['admin/build/mailtron'] = array(
-    'title' => '',
-    'description' => '',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => 'mailtron_admin',
-    'access arguments' => array('administer site configuration'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'mailtron.admin.inc',
-  );
-  // TODO: ahah callback for template selection.
-  // TODO: modal callback for preview window.
-  return $items;
-}*/
+ $items = array();
+ $items['admin/build/mailtron'] = array(
+ 'title' => '',
+ 'description' => '',
+ 'page callback' => 'drupal_get_form',
+ 'page arguments' => 'mailtron_admin',
+ 'access arguments' => array('administer site configuration'),
+ 'type' => MENU_NORMAL_ITEM,
+ 'file' => 'mailtron.admin.inc',
+ );
+ // TODO: ahah callback for template selection.
+ // TODO: modal callback for preview window.
+ return $items;
+ }*/
 
 
 /**

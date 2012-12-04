@@ -16,7 +16,7 @@ function sf_webform_rules_action_info() {
       'arguments' => array(
         'oid' => array(
           'type' => 'value',
-          'label' => t('The id of the webform submission to update')
+          'label' => t('The id of the webform submission to update'),
         ),
       ),
       'eval input' => array('component', 'value'),
@@ -28,7 +28,10 @@ function sf_webform_rules_action_info() {
  * Settings form for choosing which webform component to update.
  */
 function sf_webform_update_component_value_action_form($settings, &$form) {
-  $settings += array('component' => '', 'value' => '');
+  $settings += array(
+    'component' => '',
+    'value' => '',
+  );
 
   // get a list of all webform components
   $components = _sf_webform_get_components();
@@ -61,11 +64,11 @@ function sf_webform_update_component_value_action($oid, $settings) {
   $component = $settings['component'];
   $value = $settings['value'];
 
-  $nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", (int)$oid));
+  $nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", (int) $oid));
   $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = '%s'", $nid, $component));
 
   // update the submitted value
-  db_query("UPDATE {webform_submitted_data} SET data = '%s' WHERE nid = %d AND sid = %d and cid = %d", $value, $nid, (int)$oid, $cid);
+  db_query("UPDATE {webform_submitted_data} SET data = '%s' WHERE nid = %d AND sid = %d and cid = %d", $value, $nid, (int) $oid, $cid);
 }
 
 /**

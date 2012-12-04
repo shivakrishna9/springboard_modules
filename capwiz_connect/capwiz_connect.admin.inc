@@ -75,7 +75,7 @@ function capwiz_connect_account_addoredit($form_state, $account = NULL) {
       '#type' => 'value',
       '#value' => $account->id,
     );
-    $account_details = (array)$account;
+    $account_details = (array) $account;
 
     // Go to the overview page after saving
     $form['#redirect'] = 'admin/settings/capwiz_connect/accounts/' . $account->id;
@@ -279,7 +279,7 @@ function capwiz_connect_account_delete_submit($form, &$form_state) {
  */
 function capwiz_connect_account_user_mapping($form_state, $account) {
   $base = drupal_get_path('module', 'capwiz_connect');
-  drupal_add_js($base .'/capwiz_connect.js');
+  drupal_add_js($base . '/capwiz_connect.js');
 
   $form = array(
     '#tree' => TRUE,
@@ -292,7 +292,7 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   // Get the custom fields for users from Capwiz
   $connection = capwiz_connect($account->id);
 
-  $user_fields['capwiz_user_id'] = (object)array(
+  $user_fields['capwiz_user_id'] = (object) array(
     'label' => 'Capwiz User ID',
     'formInputType' => 'auto',
   );
@@ -303,63 +303,63 @@ function capwiz_connect_account_user_mapping($form_state, $account) {
   }
 
   // Add fields for the legislator fields
-  $user_fields['fed_senator_1'] = (object)array(
+  $user_fields['fed_senator_1'] = (object) array(
     'label' => 'Federal Senator 1',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_senator_1_phone'] = (object)array(
+  $user_fields['fed_senator_1_phone'] = (object) array(
     'label' => 'Federal Senator 1 Phone',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_senator_1_email'] = (object)array(
+  $user_fields['fed_senator_1_email'] = (object) array(
     'label' => 'Federal Senator 1 Email',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_senator_2'] = (object)array(
+  $user_fields['fed_senator_2'] = (object) array(
     'label' => 'Federal Senator 2',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_senator_2_phone'] = (object)array(
+  $user_fields['fed_senator_2_phone'] = (object) array(
     'label' => 'Federal Senator 2 Phone',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_senator_2_email'] = (object)array(
+  $user_fields['fed_senator_2_email'] = (object) array(
     'label' => 'Federal Senator 2 Email',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_rep'] = (object)array(
+  $user_fields['fed_rep'] = (object) array(
     'label' => 'Federal Representative',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_rep_phone'] = (object)array(
+  $user_fields['fed_rep_phone'] = (object) array(
     'label' => 'Federal Representative Phone',
     'formInputType' => 'auto',
   );
-  $user_fields['fed_rep_email'] = (object)array(
+  $user_fields['fed_rep_email'] = (object) array(
     'label' => 'Federal Representative Email',
     'formInputType' => 'auto',
   );
-  $user_fields['nationalDistrict'] = (object)array(
+  $user_fields['nationalDistrict'] = (object) array(
     'label' => 'National District',
     'formInputType' => 'auto',
   );
-  $user_fields['stateDistrictUpper'] = (object)array(
+  $user_fields['stateDistrictUpper'] = (object) array(
     'label' => 'State Upper',
     'formInputType' => 'auto',
   );
-  $user_fields['stateDistrictLower'] = (object)array(
+  $user_fields['stateDistrictLower'] = (object) array(
     'label' => 'State Lower',
     'formInputType' => 'auto',
   );
-  $user_fields['governor'] = (object)array(
+  $user_fields['governor'] = (object) array(
     'label' => 'Governor',
     'formInputType' => 'auto',
   );
-  $user_fields['governor_phone'] = (object)array(
+  $user_fields['governor_phone'] = (object) array(
     'label' => 'Governor Phone',
     'formInputType' => 'auto',
   );
-  $user_fields['governor_email'] = (object)array(
+  $user_fields['governor_email'] = (object) array(
     'label' => 'Governor Email',
     'formInputType' => 'auto',
   );
@@ -469,7 +469,10 @@ function theme_capwiz_connect_user_mapping_form($form) {
     $capwiz_fields = element_children($map['user_field']);
     foreach ($capwiz_fields as $field_key) {
       $row = array();
-      $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($map['user_field'][$field_key]),
+        'width' => '300',
+      );
       $row[] = drupal_render($map['drupal_user_field'][$field_key]);
       $row[] = drupal_render($map['business'][$field_key]);
       $rows[] = $row;
@@ -489,7 +492,10 @@ function theme_capwiz_connect_user_mapping_form($form) {
     $capwiz_fields = element_children($form['capwiz_field_map']);
     foreach ($capwiz_fields as $field_key) {
       $row = array();
-      $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($form['capwiz_field_map'][$field_key]),
+        'width' => '300',
+      );
       $row[] = drupal_render($map['drupal_user_field'][$field_key]);
       $row[] = drupal_render($map['business'][$field_key]);
       $rows[] = $row;
@@ -532,7 +538,7 @@ function theme_capwiz_connect_user_mapping_form($form) {
  */
 function capwiz_connect_account_action_mapping($form_state, $account) {
   $base = drupal_get_path('module', 'capwiz_connect');
-  drupal_add_js($base .'/capwiz_connect.js');
+  drupal_add_js($base . '/capwiz_connect.js');
 
   $form = array(
     '#tree' => TRUE,
@@ -633,7 +639,7 @@ function capwiz_connect_account_action_mapping($form_state, $account) {
             $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/remove-dedupe-field/action">Remove dedupe field</a>';
           }
           else {
-            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field .'">Set as dedupe field</a>';
+            $value = '<a class="dedupe-link" href="/js/capwiz_connect/' . $account->id . '/set-dedupe-field/action/' . $map_for_field . '">Set as dedupe field</a>';
           }
         }
         else {
@@ -759,7 +765,10 @@ function theme_capwiz_connect_account_mapping_form($form) {
     $capwiz_fields = element_children($map['user_field']);
     foreach ($capwiz_fields as $field_key) {
       $row = array();
-      $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($map['user_field'][$field_key]),
+        'width' => '300',
+      );
       $row[] = drupal_render($map['salesforce'][$field_key]);
       if ($form['#map_type'] != 'action') {
         $row[] = drupal_render($map['business'][$field_key]);
@@ -773,7 +782,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $header = array(
         "Capwiz Field",
         "Salesforce Field",
-        "Dedupe Field"
+        "Dedupe Field",
       );
     }
     else {
@@ -781,7 +790,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
         "Capwiz Field",
         "Salesforce Field",
         "Business rules Drupal to SF",
-        "Dedupe Field"
+        "Dedupe Field",
       );
     }
 
@@ -792,7 +801,10 @@ function theme_capwiz_connect_account_mapping_form($form) {
     $capwiz_fields = element_children($form['capwiz_field_map']);
     foreach ($capwiz_fields as $field_key) {
       $row = array();
-      $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($form['capwiz_field_map'][$field_key]),
+        'width' => '300',
+      );
       $row[] = drupal_render($map['salesforce'][$field_key]);
       if ($form['#map_type'] != 'action') {
         $row[] = drupal_render($map['business'][$field_key]);
@@ -812,7 +824,7 @@ function theme_capwiz_connect_account_mapping_form($form) {
       $header = array(
         "Capwiz Account Field",
         "Salesforce Field",
-        "Business rules Drupal to SF"
+        "Business rules Drupal to SF",
       );
     }
 
@@ -835,7 +847,10 @@ function theme_capwiz_connect_account_mapping_form($form) {
  * Copy of render_salesforce_object_fields() from sf_webform module
  */
 function capwiz_connect_render_salesforce_object_fields() {
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -860,7 +875,10 @@ function capwiz_connect_render_salesforce_object_fields() {
   $capwiz_fields = element_children($map['user_field']);
   foreach ($capwiz_fields as $field_key) {
     $row = array();
-    $row[] = array('data' => drupal_render($map['user_field'][$field_key]), 'width' => '300');
+    $row[] = array(
+      'data' => drupal_render($map['user_field'][$field_key]),
+      'width' => '300',
+    );
     $row[] = drupal_render($map['salesforce'][$field_key]);
     if ($form['#map_type'] != 'action') {
       $row[] = drupal_render($map['business'][$field_key]);
@@ -874,7 +892,7 @@ function capwiz_connect_render_salesforce_object_fields() {
     $header = array(
       "Capwiz Field",
       "Salesforce Field",
-      "Dedupe Field"
+      "Dedupe Field",
     );
   }
   else {
@@ -882,7 +900,7 @@ function capwiz_connect_render_salesforce_object_fields() {
       "Capwiz Field",
       "Salesforce Field",
       "Business rules Drupal to SF",
-      "Dedupe Field"
+      "Dedupe Field",
     );
   }
 
@@ -893,7 +911,10 @@ function capwiz_connect_render_salesforce_object_fields() {
   $capwiz_fields = element_children($form['capwiz_field_map']);
   foreach ($capwiz_fields as $field_key) {
     $row = array();
-    $row[] = array('data' => drupal_render($form['capwiz_field_map'][$field_key]), 'width' => '300');
+    $row[] = array(
+      'data' => drupal_render($form['capwiz_field_map'][$field_key]),
+      'width' => '300',
+    );
     $row[] = drupal_render($map['salesforce'][$field_key]);
     if ($form['#map_type'] != 'action') {
       $row[] = drupal_render($map['business'][$field_key]);
@@ -914,7 +935,7 @@ function capwiz_connect_render_salesforce_object_fields() {
     $header = array(
       "Capwiz Account Field",
       "Salesforce Field",
-      "Business rules Drupal to SF"
+      "Business rules Drupal to SF",
     );
   }
 

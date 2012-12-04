@@ -106,9 +106,9 @@ function sb_common_ground_donation_postprocess(&$batch, &$responses, $item_count
   for ($i = 0; $i < $item_count; $i++) {
     if ($responses[$i]->success) {
       $sfid = $responses[$i]->id;
-      db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
+      db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, (int) $batch['records'][$i]->oid);
       // in case this order was part of a recurring donation
-      db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $sfid, (int)$batch['records'][$i]->oid);
+      db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $sfid, (int) $batch['records'][$i]->oid);
     }
   }
 }
@@ -123,7 +123,7 @@ function sb_common_ground_recurring_donation_postprocess(&$batch, &$responses, $
     for ($i = 0; $i < $item_count; $i++) {
       if ($responses[$i]->success) {
         $sfid = $responses[$i]->id;
-        $master_order_id = (int)$batch['records'][$i]->oid;
+        $master_order_id = (int) $batch['records'][$i]->oid;
         sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
 
         // get all the orders in the series because we need to create them

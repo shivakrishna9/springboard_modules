@@ -70,26 +70,39 @@ function webform_dupe_cop_client_form_validate($form, &$form_state) {
   if ($submitted) {
     // Gather additional data for the submission.
     global $user;
-    $date = format_date(strtotime('now'), 'custom',  'm/d/y');
+    $date = format_date(strtotime('now'), 'custom',   'm/d/y');
     $time = format_date(strtotime('now'), 'custom', 'H:i:s');
     $webform_id = $nid;
     $user_id = $user->uid;
-    $prev_date = format_date($submitted, 'custom',  'm/d/y');
+    $prev_date = format_date($submitted, 'custom',   'm/d/y');
     $prev_time = format_date($submitted, 'custom', 'H:i:s');
     // If we're set to intercept the form, do so.
     if (variable_get('webform_dupe_cop_toggle', 'TRUE')) {
       $message = variable_get('webform_dupe_cop_message', '%date %time - Dupe detected at %webform_id by %user_id matches ' .
         'a submission submitted at %prev_date %prev_time.');
-      $message = t($message, array('%date' => $date, '%time' => $time, '%webform_id' => $webform_id, '%user_id' => $user_id,
-         '%prev_date' => $prev_date, '%prev_time' => $prev_time));
+      $message = t($message, array(
+        '%date' => $date,
+        '%time' => $time,
+        '%webform_id' => $webform_id,
+        '%user_id' => $user_id,
+        '%prev_date' => $prev_date,
+        '%prev_time' => $prev_time,
+      ));
       form_set_error('submitted', $message);
     }
     // Log the error to watchdog.
     $headers = webform_dupe_cop_fetch_headers();
     $log_message = '%date %time - Dupe detected at %webform_id by %user_id matches a submission submitted at %prev_date %prev_time. ' .
       'Headers: %headers'; // Standard message, no override.
-    watchdog('webform_dupe_cop', $log_message, array('%date' => $date, '%time' => $time, '%webform_id' => $webform_id,
-      '%user_id' => $user_id, '%prev_date' => $prev_date, '%prev_time' => $prev_time, '%headers' => $headers), WATCHDOG_ALERT);
+    watchdog('webform_dupe_cop', $log_message, array(
+      '%date' => $date,
+      '%time' => $time,
+      '%webform_id' => $webform_id,
+      '%user_id' => $user_id,
+      '%prev_date' => $prev_date,
+      '%prev_time' => $prev_time,
+      '%headers' => $headers,
+    ), WATCHDOG_ALERT);
   }
 }
 
@@ -100,7 +113,10 @@ function webform_dupe_cop_client_form_submit($form, &$form_state) {
   // After a successful submission, record the hash and sid for future use.
   $submission_hash = $form_state['webform_dupe_cop'];
   $sid = $form_state['values']['details']['sid'];
-  $record = array('sid' => $sid, 'submission_hash' => $submission_hash);
+  $record = array(
+    'sid' => $sid,
+    'submission_hash' => $submission_hash,
+  );
   drupal_write_record('webform_dupe_cop', $record);
 }
 

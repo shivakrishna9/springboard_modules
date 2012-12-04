@@ -33,7 +33,11 @@ function fundraiser_generate_perm() {
  */
 function fundraiser_generate_donations_form() {
   $options = _fundraiser_generate_get_forms();
-  $types = array('single' => 'Single', 'recurring' => 'Recurring', 'random' => 'Random');
+  $types = array(
+    'single' => 'Single',
+    'recurring' => 'Recurring',
+    'random' => 'Random',
+  );
 
   $form['nid'] = array(
     '#type' => 'select',
@@ -80,7 +84,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
     $recurs = TRUE;
   }
   else {
-    $recurs = (bool)rand(0, 1);
+    $recurs = (bool) rand(0, 1);
   }
 
   // load up the donation form node
@@ -92,7 +96,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
     $url = parse_url($GLOBALS['base_url']);
     $first_name = devel_generate_word(mt_rand(4, 10));
     $last_name = devel_generate_word(mt_rand(3, 11));
-    $email =  $first_name . '.' . $last_name . '@'. $url['host'];
+    $email =  $first_name . '.' . $last_name . '@' . $url['host'];
     $year = date('Y');
 
     // build up a bogus form_state to submit
@@ -106,7 +110,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
       'values' => array(
         'op' => t('Submit'),
         'submit' => t('Submit'),
-        'form_id' => 'webform_client_form_'. $nid,
+        'form_id' => 'webform_client_form_' . $nid,
         'details' => array(
           'nid' => $nid,
           'sid' => '',
@@ -154,7 +158,7 @@ function fundraiser_generate_donations_form_submit($form, &$form_state) {
     );
 
     // submit it
-    drupal_execute('webform_client_form_'. $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
+    drupal_execute('webform_client_form_' . $nid, $state, $donation_form_node, NULL, TRUE, FALSE);
 
   }
 }

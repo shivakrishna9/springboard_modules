@@ -18,7 +18,11 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
     $results = db_query($sql);
 
     while ($result = db_fetch_object($results)) {
-      $webforms[] = array('nid' => $result->nid, 'type' => $result->type, 'title' => $result->title);
+      $webforms[] = array(
+        'nid' => $result->nid,
+        'type' => $result->type,
+        'title' => $result->title,
+      );
     }
     return $webforms;
   }
@@ -138,14 +142,14 @@ function springboard_api_submit_webform($submission) {
       $submission[$field->form_key] = trim($submission[$field->form_key]);
 
       if ($field->parent_key == NULL) {
-          $save = &$form_state['values']['submitted'];
+        $save = &$form_state['values']['submitted'];
       }
       else {
         $save = &$form_state['values']['submitted'][$field->parent_key];
       }
 
       switch ($field->type) {
-        case 'fieldset';
+        case 'fieldset':
           $form_state['values']['submitted'][$field->form_key] = array();
           break;
         case 'hidden':
@@ -162,7 +166,7 @@ function springboard_api_submit_webform($submission) {
           // FIXME: hack workaround for the recurring payment field
           if ($field->form_key === 'recurs_monthly' && isset($submission['recurs_monthly'])) {
 
-           if ($submission['recurs_monthly'] == 'recurs') {
+            if ($submission['recurs_monthly'] == 'recurs') {
               $save['recurs_monthly'] = 'recurs';
             }
             break;
@@ -235,9 +239,12 @@ function springboard_api_submit_webform($submission) {
     else {
       $formatted_errors = array();
       foreach ($errors as $key => $message) {
-        $item = array('field_key' => '', 'message' => $message);
+        $item = array(
+          'field_key' => '',
+          'message' => $message,
+        );
         $key = explode('][', $key);
-        $item['field_key'] =$key[count($key) -1];
+        $item['field_key'] = $key[count($key) -1];
         $formatted_errors['errors'][] = $item;
         watchdog('springboard_api', t('Error: !error', array('!error' => $message)), array(), WATCHDOG_ERROR);
       }
@@ -260,8 +267,8 @@ function springboard_api_submit_webform($submission) {
  *
  */
 function springboard_api_validate_donation($donation = array(), $error_code) {
-   unset($_SESSION['messages']);
-   $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
+  unset($_SESSION['messages']);
+  $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
 
   // TODO: replace this with a function call that ascertains required fields for this webform.
   $results = db_query('SELECT form_key FROM {webform_component} WHERE nid=%d AND mandatory = 1', $donation['webform_id']);
@@ -333,7 +340,10 @@ function _springboard_api_get_webform_components($nid) {
       $items_raw = explode("\n", $field['details']['items']);
       foreach ($items_raw as $item) {
         $item = explode('|', $item);
-        $items[] = array('key' => $item[0], 'value' => $item[1]);
+        $items[] = array(
+          'key' => $item[0],
+          'value' => $item[1],
+        );
       }
       $field['details']['items'] = $items;
     }

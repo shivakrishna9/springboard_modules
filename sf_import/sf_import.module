@@ -20,7 +20,7 @@ function sf_import_menu() {
     'file' => 'sf_import.admin.inc',
   );
 
-   $items['js/sf-import-filter'] = array(
+  $items['js/sf-import-filter'] = array(
     'page callback' => 'sf_import_add_filter',
     'access callback' => 'user_access',
     'access arguments' => array('administer salesforce management'),
@@ -109,7 +109,7 @@ function sf_import_cron() {
       }
 
       // update next import
-      $next_import = strtotime('+'. $data->frequency . ' ' . $data->frequency_type);
+      $next_import = strtotime('+' . $data->frequency . ' ' . $data->frequency_type);
       db_query("UPDATE {sf_import_schedule} SET last_import = %d, next_import = %d", time(), $next_import);
     }
   }

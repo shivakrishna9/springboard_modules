@@ -1,6 +1,6 @@
 <?php
 /**
- *@file
+ * @file
  */
 
 /**
@@ -39,10 +39,10 @@ function market_source_update_6001() {
   $extra = serialize($extra);
 
   $fields = array(
-   'ms',
-   'cid',
-   'referrer',
-   'initial_referrer',
+    'ms',
+    'cid',
+    'referrer',
+    'initial_referrer',
   );
   $custom_fields = variable_get('market_source_custom_fields', array());
   foreach ($custom_fields as $field) {
@@ -55,7 +55,8 @@ function market_source_update_6001() {
     $ret[] = array(
       'query' => $sql,
       'success' => $result ? TRUE : FALSE,
-    );sql;
+    );
+    sql;
   }
   return $ret;
 }

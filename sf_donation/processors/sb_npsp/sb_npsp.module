@@ -85,12 +85,12 @@ function sb_npsp_donation_postprocess(&$batch, &$responses, $item_count) {
 
       // Handle refunds
       if ($batch['records'][$i]->type == FUNDRAISER_DONATION_REFUND_TYPE) {
-        $refund_id = (int)$batch['records'][$i]->oid;
+        $refund_id = (int) $batch['records'][$i]->oid;
         $order_id = db_result(db_query('SELECT order_id FROM {fundraiser_refund} WHERE refund_id = %d', array($refund_id)));
       }
       // Handle donations
       else {
-        $order_id = (int)$batch['records'][$i]->oid;
+        $order_id = (int) $batch['records'][$i]->oid;
         $offline_settings = db_fetch_object(db_query("SELECT temporary_user FROM {fundraiser_offline_donation} WHERE did = %d", $order_id));
         db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, $order_id);
         // delete any temporary offline users
@@ -133,7 +133,7 @@ function sb_npsp_recurring_donation_postprocess(&$batch, &$responses, $item_coun
       if ($responses[$i]->success) {
         // we need to re-query salesforce and get all the opportunities that were created
         $sfid = $responses[$i]->id;
-        $master_order_id = (int)$batch['records'][$i]->oid;
+        $master_order_id = (int) $batch['records'][$i]->oid;
 
         $opportunities = $sf->client->query("select Id, Name, CloseDate from Opportunity WHERE npe03__Recurring_Donation__c = '$sfid' ORDER BY CloseDate");
 
@@ -156,9 +156,9 @@ function sb_npsp_recurring_donation_postprocess(&$batch, &$responses, $item_coun
             sf_queue_insert($master_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
           }
           else {
-            db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $recurring_orders[$j-1]->order_id);
-            salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $recurring_orders[$j-1]->order_id, $opportunities->records[$j]->Id, 0);
-            sf_queue_insert($recurring_orders[$j-1]->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+            db_query("UPDATE {fundraiser_recurring} SET sf_opportunity_id = '%s' WHERE order_id = %d", $opportunities->records[$j]->Id, $recurring_orders[$j -1]->order_id);
+            salesforce_management_api_id_save(FUNDRAISER_SINGLE_DONATION_TYPE, $recurring_orders[$j -1]->order_id, $opportunities->records[$j]->Id, 0);
+            sf_queue_insert($recurring_orders[$j -1]->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
           }
         }
       }

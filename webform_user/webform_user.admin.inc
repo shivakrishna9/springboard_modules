@@ -25,8 +25,8 @@ function webform_user_clone($node) {
     $node->title = t('Clone of !title', array('!title' => $node->title));
     $node->is_being_cloned = TRUE;
 
-    if (variable_get('clone_reset_'. $node->type, FALSE)) {
-      $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
+    if (variable_get('clone_reset_' . $node->type, FALSE)) {
+      $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
       // Fill in the default values.
       foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
         $node->$key = in_array($key, $node_options);
@@ -59,7 +59,7 @@ function webform_user_clone($node) {
     db_query("UPDATE {webform_user} SET foreign_key_field = '%s' WHERE nid = %d", $webform_user->foreign_key_field, $node->nid);
 
     drupal_set_message("User webform [$original_node->title] has been cloned successfully.");
-    drupal_goto('node/'. $node->nid .'/edit');
+    drupal_goto('node/' . $node->nid . '/edit');
   }
 }
 

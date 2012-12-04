@@ -166,7 +166,7 @@ function gm_ogone_post_form(&$form_state, $order) {
         $arguments['BRAND'] = 'PAYPAL';
         break;
 
-      // If web banking, check if the brand and Issuer ID can be passed
+        // If web banking, check if the brand and Issuer ID can be passed
       case 'web_banking':
         // Get the web banking brand from the order, if available
         // Strip out any tags put in by the WYSIWYG, trim it, and uppercase it
@@ -203,11 +203,11 @@ function gm_ogone_post_form(&$form_state, $order) {
     $param_value = trim($param_value);
     $param_name = strtoupper($param_name);
     if (strlen($param_value) > 0) {
-        $sha1_signature .= $param_name . '=' . $param_value . $gateway_config['sha_in'];
-        $form[$param_name] = array(
-          '#type' => 'hidden',
-          '#value' => $param_value,
-        );
+      $sha1_signature .= $param_name . '=' . $param_value . $gateway_config['sha_in'];
+      $form[$param_name] = array(
+        '#type' => 'hidden',
+        '#value' => $param_value,
+      );
     }
   }
   $form['SHASIGN'] = array(
@@ -292,7 +292,7 @@ function gm_ogone_charge_directlink($order_id, $amount, $data) {
       return _gm_ogone_charge_by_alias($order, $amount, $data);
       break;
 
-    // Regular, first-time charge
+      // Regular, first-time charge
     default:
       return _gm_ogone_charge_credit_card($order, $amount, $data);
       break;
@@ -314,7 +314,7 @@ function gm_ogone_charge_ecommerce($order_id, $amount, $data) {
       return _gm_ogone_charge_by_alias($order, $amount, $data);
       break;
 
-    // Redirect to Ogone so the user can enter their payment info there
+      // Redirect to Ogone so the user can enter their payment info there
     default:
       drupal_goto('ogone/post/' . $order_id);
       break;
@@ -370,7 +370,7 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
     'ORDERID' => $order->order_id,
     'AMOUNT' => $amount,
     'CARDNO' => $order->payment_details['cc_number'],
-    'ED' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
+    'ED' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'CVC' => $order->payment_details['cc_cvv'],
     'EMAIL' => $order->primary_email,
     'OWNERADDRESS' => $order->billing_street1 . ' ' . $order->billing_street2,
@@ -406,7 +406,10 @@ function _gm_ogone_charge_credit_card($order, $amount, $data) {
     'comment' => $message,
     'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed: %error.', array('%error' => $charge_result['NCERRORPLUS'])),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
+    'data' => array(
+      'module' => 'gm_ogone',
+      'txn_id' => $charge_result['PAYID'],
+    ),
   );
 
   // If an alias ID is returned from Ogone, save it
@@ -464,7 +467,7 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     'CN' => substr($order->billing_first_name . ' ' . $order->billing_last_name, 0, 35),
     'ORDERID' => $order->order_id,
     'AMOUNT' => $amount,
-    'ED' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
+    'ED' => $order->payment_details['cc_exp_month'] . '/' . $order->payment_details['cc_exp_year'],
     'ALIAS' => $alias_id,
     // ECI = 9 means the original payment was made over e-Commerce or DirectLink
     'ECI' => '9',
@@ -496,7 +499,10 @@ function _gm_ogone_charge_by_alias($order, $amount, $data) {
     'comment' => $message,
     'message' => $charge_result['SUCCESS'] ? t('Credit card payment processed successfully.') : t('Credit card charge failed: %error.', array('%error' => $charge_result['NCERRORPLUS'])),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone', 'txn_id' => $charge_result['PAYID']),
+    'data' => array(
+      'module' => 'gm_ogone',
+      'txn_id' => $charge_result['PAYID'],
+    ),
   );
 
   // If an alias ID is returned from Ogone, save it
@@ -530,8 +536,8 @@ function gm_ogone_refund($order_id, $amount, $data) {
   // originally handled the charge, so it can be necessary to load the details
   // for a different gateway if an admin has changed the gateway used for the
   // donation form in question.
-  $charged_gateway = (int)$order->data['gateway'];
-  $current_gateway = (int)$data['id'];
+  $charged_gateway = (int) $order->data['gateway'];
+  $current_gateway = (int) $data['id'];
   if ($charged_gateway != $current_gateway) {
     // Hang on to the original $data array just in case
     $current_gateway_data = $data;
@@ -558,7 +564,7 @@ function gm_ogone_refund($order_id, $amount, $data) {
 
   // Build array of charge details. Amount needs to be positive, so run it through abs()
   $charge_details = array(
-    'CURRENCY' => 'USD',    // Default currency to US dollars. This is overwritten below if needed
+    'CURRENCY' => 'USD', // Default currency to US dollars. This is overwritten below if needed
     'ORDERID' => $order->order_id,
     'AMOUNT' => abs($amount),
   );
@@ -598,7 +604,10 @@ function gm_ogone_refund($order_id, $amount, $data) {
     'comment' => $message,
     'message' => $refund_result['SUCCESS'] ? t('Credit card refund processed successfully.') : t('Credit card refund failed: %error.', array('%error' => $refund_result['NCERRORPLUS'])),
     'uid' => $user->uid,
-    'data' => array('module' => 'gm_ogone', 'txn_id' => $refund_result['PAYID']),
+    'data' => array(
+      'module' => 'gm_ogone',
+      'txn_id' => $refund_result['PAYID'],
+    ),
   );
 
   return $result;
@@ -662,7 +671,7 @@ function gm_ogone_billing_update($alias_id, $billing_info, $data) {
   $next_order = uc_order_load($next_order_id);
 
   $references = array_keys($next_order->data['cc_txns']['references']);
-  $alias_id = (int)array_shift($references);
+  $alias_id = (int) array_shift($references);
 
 
   // Build array of charge details
@@ -675,7 +684,7 @@ function gm_ogone_billing_update($alias_id, $billing_info, $data) {
     'ORDERID' => $next_order_id,
     'AMOUNT' => $amount * 100,
     'CARDNO' => $billing_info['card_num'],
-    'ED' => $billing_info['card_exp_date']['month'] .'/'. $billing_info['card_exp_date']['year'],
+    'ED' => $billing_info['card_exp_date']['month'] . '/' . $billing_info['card_exp_date']['year'],
     'CVC' => $billing_info['card_cvv'],
     'OWNERADDRESS' => $billing_info['address_1'] . ' ' . $billing_info['address_2'],
     'OWNERCTY' => $billing_country,
@@ -708,10 +717,10 @@ function gm_ogone_fundraiser_billing_update_alter(&$order, $billing_update_resul
   if ($gateway_details['billing_update'] == 'gm_ogone_billing_update') {
     // Find the current alias
     $references = array_keys($order->data['cc_txns']['references']);
-    $old_alias_id = (int)array_shift($references);
+    $old_alias_id = (int) array_shift($references);
 
     // Get the new alias from the billing update feedback
-    $new_alias_id = (int)$billing_update_result['ALIAS'];
+    $new_alias_id = (int) $billing_update_result['ALIAS'];
 
     // If the alias has changed, update the order
     if ($new_alias_id != $old_alias_id) {
@@ -1045,7 +1054,7 @@ function gm_ogone_feedback_accepted() {
       $order->payment_details['cc_number'] = $payment_values['CARDNO'];
     }
     if ($payment_values['ED']) {
-       // ED is month and year combines, like 0612 for June 2012, so it needs to be split
+      // ED is month and year combines, like 0612 for June 2012, so it needs to be split
       $order->payment_details['cc_exp_month'] = substr($payment_values['ED'], 0, 2);
       $order->payment_details['cc_exp_year'] = '20' . substr($payment_values['ED'], 2, 2);
     }
@@ -1059,7 +1068,7 @@ function gm_ogone_feedback_accepted() {
 
     if ($order->data['recurring_status'] == DONATION_RECURRING && empty($payment_values['ALIAS'])) {
       $order->data['recurring_status'] = DONATION_NON_RECURRING;
-    uc_order_save($order);
+      uc_order_save($order);
     }
 
     fundraiser_order_accept($order_id, $transaction_id);

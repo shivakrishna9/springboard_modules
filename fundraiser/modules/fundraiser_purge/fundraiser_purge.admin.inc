@@ -29,7 +29,7 @@ function fundraiser_purge_settings_form() {
 function fundraiser_purge_settings_form_validate($form, &$form_state) {
   $purge_age = $form_state['values']['fundraiser_purge_age'];
 
-  if (!is_numeric($purge_age) || !((int)($purge_age) == $purge_age) || (int)$purge_age < 0) {
+  if (!is_numeric($purge_age) || !((int) ($purge_age) == $purge_age) || (int) $purge_age < 0) {
     form_set_error('fundraiser_purge_age', 'Purge age must be a positive integer');
   }
 }

@@ -49,7 +49,7 @@ function webform_addtoall_form_submit($form, &$form_state) {
       // Build a list of nids for each form type.
       $result = db_query("SELECT nid FROM {node} WHERE type = '%s' ", $type);
       $nids = array();
-      while ($obj = db_fetch_object ($result)) {
+      while ($obj = db_fetch_object($result)) {
         $nids[] = $obj->nid;
       }
       // Clone the component to these nodes.
@@ -58,14 +58,14 @@ function webform_addtoall_form_submit($form, &$form_state) {
   }
 }
 
- /**
-  * Clones the component to mulitple nodes after checking for duplicate component.
-  *
-  * @param $nids
-  *       An array of node ids.
-  * @param $form_values
-  *       An array of form values from $form_state['values']
-  */
+/**
+ * Clones the component to mulitple nodes after checking for duplicate component.
+ *
+ * @param $nids
+ *       An array of node ids.
+ * @param $form_values
+ *       An array of form values from $form_state['values']
+ */
 function webform_addtoall_component_clone($nids, $form_values) {
   // Set source component info
   $source_node = node_load($form_values['nid'], NULL, TRUE);
@@ -96,7 +96,7 @@ function webform_addtoall_component_clone($nids, $form_values) {
       // Unless otherwise noted, clone the component
       if ($form_values['clone']) {
         webform_component_insert($form_values);
-        $message_link = l($node->title, 'node/'. $nid);
+        $message_link = l($node->title, 'node/' . $nid);
         drupal_set_message( t('Component %name cloned to !link of type %type.', array('%name' => $form_values['name'], '!link' => $message_link, '%type' => $node->type)) );
       }
     }

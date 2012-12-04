@@ -76,7 +76,7 @@ function fundraiser_mapping_form_submit($form, &$form_state) {
     }
   }
 
-   drupal_set_message(t('Profile mapping has been saved'));
+  drupal_set_message(t('Profile mapping has been saved'));
 }
 
 function fundraiser_recurring_admin() {
@@ -146,8 +146,6 @@ function fundraiser_recurring_master_order_overview() {
     <th>Charge Date</th>
     </tr></thead>
   ";
-
-
 
   if (empty($rows[1])) {
     //we're actually looking at the order id and not the master_order_id
@@ -261,134 +259,133 @@ function _remaining_recurring_charge_count($order_id) {
 
 function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order) {
   $form = array(
-    '#tree' => TRUE,
-      '#node' => $node,
-      'fundraiser_recurring' => array(),
+  '#tree' => TRUE,
+  '#node' => $node,
+  'fundraiser_recurring' => array(),
   );
 
   $form['uid'] = array(
-     '#type' => 'hidden',
-     '#value' => $order->uid,
+  '#type' => 'hidden',
+  '#value' => $order->uid,
   );
 
   $form['master_order_id'] = array(
-    '#type' => 'hidden',
-    '#value' => $master_order_id,
+  '#type' => 'hidden',
+  '#value' => $master_order_id,
   );
 
-   $form['billing_info'] = array(
-     '#type' => "fieldset",
-     '#title' => "Billing Information",
-     '#description' => t('Use this form to update your billing information. Changes will apply to all future payments from today\'s date.'),
-     '#collapsible' => TRUE,
-     '#collapsed' => TRUE,
-     '#weight' => -5,
-   );
+  $form['billing_info'] = array(
+  '#type' => "fieldset",
+  '#title' => "Billing Information",
+  '#description' => t('Use this form to update your billing information. Changes will apply to all future payments from today\'s date.'),
+  '#collapsible' => TRUE,
+  '#collapsed' => TRUE,
+  '#weight' => -5,
+  );
 
-   $form['billing_info']['first_name'] = array(
-     '#type' => 'textfield',
-     '#title' => "First Name",
-    '#required' => TRUE,
-     '#default_value' => $order->billing_first_name,
-   );
-   $form['billing_info']['last_name'] = array(
-     '#type' => 'textfield',
-     '#title' => "Last Name",
-    '#required' => TRUE,
-     '#default_value' => $order->billing_last_name,
-   );
+  $form['billing_info']['first_name'] = array(
+  '#type' => 'textfield',
+  '#title' => "First Name",
+  '#required' => TRUE,
+  '#default_value' => $order->billing_first_name,
+  );
+  $form['billing_info']['last_name'] = array(
+  '#type' => 'textfield',
+  '#title' => "Last Name",
+  '#required' => TRUE,
+  '#default_value' => $order->billing_last_name,
+  );
 
-    $form['billing_info']['email'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Email Address'),
-      '#required' => TRUE,
-      '#default_value' => $order->primary_email,
-    );
+  $form['billing_info']['email'] = array(
+  '#type' => 'textfield',
+  '#title' => t('Email Address'),
+  '#required' => TRUE,
+  '#default_value' => $order->primary_email,
+  );
 
-   $form['billing_info']['address_1'] = array(
-     '#type' => 'textfield',
-     '#title' => 'Address Line 1',
-     '#size' => 30,
-    '#required' => TRUE,
-     '#default_value' => $order->billing_street1,
-   );
+  $form['billing_info']['address_1'] = array(
+  '#type' => 'textfield',
+  '#title' => 'Address Line 1',
+  '#size' => 30,
+  '#required' => TRUE,
+  '#default_value' => $order->billing_street1,
+  );
 
-   $form['billing_info']['address_2'] = array(
-     '#type' => 'textfield',
-     '#title' => 'Address Line 2',
-     '#size' => 30,
-     '#default_value' => $order->billing_street2,
-   );
+  $form['billing_info']['address_2'] = array(
+  '#type' => 'textfield',
+  '#title' => 'Address Line 2',
+  '#size' => 30,
+  '#default_value' => $order->billing_street2,
+  );
 
-   $form['billing_info']['city'] = array(
-     '#type' => 'textfield',
-     '#title' => 'City',
-     '#size' => 30,
-    '#required' => TRUE,
-     '#default_value' => $order->billing_city,
-   );
+  $form['billing_info']['city'] = array(
+  '#type' => 'textfield',
+  '#title' => 'City',
+  '#size' => 30,
+  '#required' => TRUE,
+  '#default_value' => $order->billing_city,
+  );
 
   $countries = uc_country_select(uc_get_field_name('country'), 840, NULL, 'name', uc_address_field_required('country'));
   $form['billing_info']['country'] = array(
-     '#type' => 'select',
-     '#title' => 'Country',
-    '#options' => $countries['#options'],
-    '#required' => TRUE,
-     '#default_value' => $order->billing_country,
-   );
+  '#type' => 'select',
+  '#title' => 'Country',
+  '#options' => $countries['#options'],
+  '#required' => TRUE,
+  '#default_value' => $order->billing_country,
+  );
 
-   $zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, 840, 'name', uc_address_field_required('zone'));
-   $form['billing_info']['state'] = array(
-     '#type' => 'select',
-     '#title' => 'State',
-    '#options' => $zones['#options'],
-    '#required' => TRUE,
-     '#default_value' => $order->billing_zone,
-   );
+  $zones = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, 840, 'name', uc_address_field_required('zone'));
+  $form['billing_info']['state'] = array(
+  '#type' => 'select',
+  '#title' => 'State',
+  '#options' => $zones['#options'],
+  '#required' => TRUE,
+  '#default_value' => $order->billing_zone,
+  );
 
-   $form['billing_info']['zipcode'] = array(
-     '#type' => 'textfield',
-     '#title' => 'Postal Code',
-     '#size' => 5,
-     '#maxlength' => 11,
-    '#required' => TRUE,
-     '#default_value' => $order->billing_postal_code,
-   );
+  $form['billing_info']['zipcode'] = array(
+  '#type' => 'textfield',
+  '#title' => 'Postal Code',
+  '#size' => 5,
+  '#maxlength' => 11,
+  '#required' => TRUE,
+  '#default_value' => $order->billing_postal_code,
+  );
 
-   $form['billing_info']['cc_info'] = array(
-     '#type' => 'fieldset',
-     '#title' => 'Credit Card Information',
-   );
+  $form['billing_info']['cc_info'] = array(
+  '#type' => 'fieldset',
+  '#title' => 'Credit Card Information',
+  );
 
-   $form['billing_info']['cc_info']['card_num'] = array(
-     '#type' => 'textfield',
-     '#title' => 'Card Number',
-     '#size' => 20,
-     '#required' => TRUE,
-     '#maxlength' => 20,
-   );
+  $form['billing_info']['cc_info']['card_num'] = array(
+  '#type' => 'textfield',
+  '#title' => 'Card Number',
+  '#size' => 20,
+  '#required' => TRUE,
+  '#maxlength' => 20,
+  );
 
-   $form['billing_info']['cc_info']['card_exp_date'] = array(
-     '#type' => 'date',
-     '#required' => TRUE,
-     '#title' => 'Expiration Date',
+  $form['billing_info']['cc_info']['card_exp_date'] = array(
+  '#type' => 'date',
+  '#required' => TRUE,
+  '#title' => 'Expiration Date',
 
-   );
+  );
 
-   $form['billing_info']['cc_info']['card_cvv'] = array(
-     '#type' => 'textfield',
-     '#title' => 'Security Code',
-     '#required' => TRUE,
-     '#size' => 5,
-     '#maxlength' => 5,
-   );
+  $form['billing_info']['cc_info']['card_cvv'] = array(
+  '#type' => 'textfield',
+  '#title' => 'Security Code',
+  '#required' => TRUE, '#size' => 5,
+  '#maxlength' => 5,
+  );
 
-   $form['billing_info']['submit'] = array(
-     '#type' => 'submit',
-     "#value" => t('Save changes'),
-   );
+  $form['billing_info']['submit'] = array(
+  '#type' => 'submit',
+  "#value" => t('Save changes'),
+  );
 
-   return $form;
+  return $form;
 }
 
 function fundraiser_billing_update_form_validate($form, &$form_state) {

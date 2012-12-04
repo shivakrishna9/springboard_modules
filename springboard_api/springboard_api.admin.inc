@@ -109,7 +109,7 @@ function springboard_api_edit_keyset($form, $edit) {
 }
 
 function springboard_api_edit_submit($form, $form_state) {
-   $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
+  $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
   db_query("UPDATE {springboard_api} SET uid = %d, name = '%s' WHERE kid = %d", $uid, $form_state['values']['name'], $form_state['values']['kid']);
   drupal_set_message('Settings saved.');
   drupal_goto('admin/settings/springboard_api');
@@ -167,7 +167,11 @@ function springboard_api_test_client($form = array()) {
   $form['resource'] = array(
     '#type' => 'select',
     '#title' => t('Service resource'),
-    '#options' => array('index' => 'index', 'retrieve' => 'retrieve', 'submit' => 'submit'),
+    '#options' => array(
+      'index' => 'index',
+      'retrieve' => 'retrieve',
+      'submit' => 'submit',
+    ),
   );
   $form['keyset'] = array(
     '#type' => 'select',

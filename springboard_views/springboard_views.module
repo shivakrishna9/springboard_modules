@@ -14,11 +14,16 @@ function springboard_views_views_api() {
  */
 function springboard_views_views_pre_render(&$view) {
   // An array of view names and a pretty name for the status of the items
-  $sbv_views = array('sbv_batch' => 'Batched', 'sbv_queue' => 'Queued', 'sbv_retry_queue' => 'Retry', 'sbv_permanent_failure' => 'Failed');
+  $sbv_views = array(
+    'sbv_batch' => 'Batched',
+    'sbv_queue' => 'Queued',
+    'sbv_retry_queue' => 'Retry',
+    'sbv_permanent_failure' => 'Failed',
+  );
   if (!array_key_exists($view->name, $sbv_views)) {
     return;
   }
-  $view->attachment_before .= t('!status Items: !count items' , array('!status' => $sbv_views[$view->name],  '!count' => $view->total_rows));
+  $view->attachment_before .= t('!status Items: !count items', array('!status' => $sbv_views[$view->name], '!count' => $view->total_rows));
 }
 
 /**

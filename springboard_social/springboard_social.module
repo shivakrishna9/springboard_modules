@@ -113,13 +113,13 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'checkbox',
         '#title' => t('Display Facebook Share button on the thank you page.'),
         '#description' => t(''),
-        '#default_value' =>  $form['#node']->fb_share_status,
+        '#default_value' => $form['#node']->fb_share_status,
       );
     }
     else {
       $form['fb_share']['fb_share_status'] = array(
-         '#type' => 'value',
-         '#value' => variable_get('springboard_social_share_display', 0),
+        '#type' => 'value',
+        '#value' => variable_get('springboard_social_share_display', 0),
       );
     }
     $form['fb_share']['fb_share_link'] = array(
@@ -151,27 +151,27 @@ function springboard_social_form_alter(&$form, $form_state, $form_id) {
         '#type' => 'checkbox',
         '#title' => t('Display Google +1 button on the thank you page.'),
         '#description' => t(''),
-        '#default_value' =>  $form['#node']->gplus_share_status,
+        '#default_value' => $form['#node']->gplus_share_status,
       );
     }
-   $form['gplus_share']['gplus_href'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Target URL'),
-     '#description' => t(''),
-     '#default_value' => $form['#node']->gplus_href ? $form['#node']->gplus_href : $_SERVER['REQUEST_URI'],
-   );
-   $form['gplus_share']['gplus_image_url'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Image URL'),
-     '#description' => t(''),
-     '#default_value' => $form['#node']->gplus_image_url ? $form['#node']->gplus_image_url : variable_get('springboard_social_gplus_image_url', ''),
-   );
-   $form['gplus_share']['gplus_description'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Description'),
-     '#description' => t(''),
-     '#default_value' => $form['#node']->gplus_description ? $form['#node']->gplus_description : variable_get('springboard_social_gplus_description', ''),
-   );
+    $form['gplus_share']['gplus_href'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Target URL'),
+      '#description' => t(''),
+      '#default_value' => $form['#node']->gplus_href ? $form['#node']->gplus_href : $_SERVER['REQUEST_URI'],
+    );
+    $form['gplus_share']['gplus_image_url'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Image URL'),
+      '#description' => t(''),
+      '#default_value' => $form['#node']->gplus_image_url ? $form['#node']->gplus_image_url : variable_get('springboard_social_gplus_image_url', ''),
+    );
+    $form['gplus_share']['gplus_description'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Description'),
+      '#description' => t(''),
+      '#default_value' => $form['#node']->gplus_description ? $form['#node']->gplus_description : variable_get('springboard_social_gplus_description', ''),
+    );
   }
   $form['#validate'][] = 'springboard_social_form_validate';
 }
@@ -305,7 +305,7 @@ function springboard_social_nodeapi(&$node, $op) {
         );
       }
 
-  $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
+      $entry_exists = db_result(db_query('SELECT 1 FROM {springboard_social_gplus} WHERE nid = %d', $node->nid));
       if ($entry_exists) {
 
         db_query("UPDATE {springboard_social_gplus}

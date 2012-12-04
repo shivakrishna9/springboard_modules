@@ -46,10 +46,10 @@ function springboard_version_report() {
     $row = array(
       t('<strong>@name</strong> (@package) </br> %description',
         array(
-          '@name' => $module_info['name'],
-          '@package' => $module_info['package'],
-          '%description' => $module_info['description']
-        )
+        '@name' => $module_info['name'],
+        '@package' => $module_info['package'],
+        '%description' => $module_info['description'],
+      )
       ),
       $module_info['version'],
       $module_info['springboard_version'],
@@ -63,7 +63,10 @@ function springboard_version_report() {
     if (!_springboard_version_ok_hash($module_info['springboard_hash'], $module_info['hash'])) {
       $class = 'error';
     }
-    $rows[] = array('data' => $row, 'class' => $class);
+    $rows[] = array(
+      'data' => $row,
+      'class' => $class,
+    );
   }
   return theme('table', $headers, $rows);
 }
@@ -164,10 +167,10 @@ function springboard_version_info() {
   }
   // Loop over all of the modules and make sure we have set values where needed.
   foreach ($modules as $module => $values) {
-    $modules[$module]['springboard_version'] = !empty($values['springboard_version']) ? $values['springboard_version']: '';
-    $modules[$module]['version'] = !empty($values['version']) ? $values['version']: '';
-    $modules[$module]['springboard_hash'] = !empty($values['springboard_hash']) ? $values['springboard_hash']: '';
-    $modules[$module]['hash'] = !empty($values['hash']) ? $values['hash']: '';
+    $modules[$module]['springboard_version'] = !empty($values['springboard_version']) ? $values['springboard_version'] : '';
+    $modules[$module]['version'] = !empty($values['version']) ? $values['version'] : '';
+    $modules[$module]['springboard_hash'] = !empty($values['springboard_hash']) ? $values['springboard_hash'] : '';
+    $modules[$module]['hash'] = !empty($values['hash']) ? $values['hash'] : '';
   }
   return $modules;
 }
@@ -251,7 +254,7 @@ function _springboard_version_hash_path($path) {
     $dir = opendir($path);
     while (($entry = readdir($dir)) !== FALSE) {
       // Ignore the hash record.
-      if ($entry != '.' && $entry != '..'  && $entry != '.DS_Store' && $entry != 'springboard_version.hashes') {
+      if ($entry != '.' && $entry != '..'   && $entry != '.DS_Store' && $entry != 'springboard_version.hashes') {
         if (is_dir($path . '/' . $entry)) {
           $filemd5s[] = _springboard_version_hash_path($path . '/' . $entry);
         }

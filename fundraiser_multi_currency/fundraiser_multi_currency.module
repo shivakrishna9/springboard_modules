@@ -83,7 +83,7 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
         '#description' => t('Should this form support multiple currencies?'),
         '#options' => array(
           'hide' => t('Hide currency from user and always use the default.'),
-          'show' => t('Allow the user to choose their currency from a dropdown.')
+          'show' => t('Allow the user to choose their currency from a dropdown.'),
         ),
         '#default_value' => 'hide',
         '#weight' => -4.65,
@@ -251,7 +251,7 @@ function &_fundraiser_multi_currency_find_webform_component(&$component, $name_t
     // Only look in the child component if it's a tree or fieldset
     if ($component[$child_element_name]['#tree'] || $component[$child_element_name]['#type'] == 'fieldset') {
       // If the component is found, return it
-      if ($found_component = &_fundraiser_multi_currency_find_webform_component($component[$child_element_name], $name_to_find)) {
+      if ($found_component = & _fundraiser_multi_currency_find_webform_component($component[$child_element_name], $name_to_find)) {
         return $found_component;
       }
     }

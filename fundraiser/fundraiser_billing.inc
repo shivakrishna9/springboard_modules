@@ -331,25 +331,24 @@ function fundraiser_refund_submit($form, &$form_state) {
     drupal_write_record('fundraiser_refund', $refund);
 
     // Set order status to Refunded or Partially Refunded
-    db_query("update {uc_orders} set order_status='%s' where order_id = %d", $new_order_status, $order_id);
+    db_query("UPDATE {uc_orders} SET order_status='%s' WHERE order_id = %d", $new_order_status, $order_id);
 
-     // If using the Salesforce queue, queue up the updates
-     if (module_exists('queue_api')) {
-       // Update the original order
-       sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-       // Create the refund
-       sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
-     }
-
-     drupal_set_message(t('Refund has been issued.'), 'status');
-     drupal_goto('admin/store/orders/' . $order_id);
-   }
-   else {
+    // If using the Salesforce queue, queue up the updates
+    if (module_exists('queue_api')) {
+      // Update the original order
+      sf_queue_insert($order->order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+      // Create the refund
+      sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
+    }
+    drupal_set_message(t('Refund has been issued.'), 'status');
+    drupal_goto('admin/store/orders/' . $order_id);
+  }
+  else {
     // failed to process credit cart
     $log_error = 'Refund on order ' . $order->order_id . ' failed gateway validation. Reason: ' . $result['message'];
     watchdog('fundraiser', $log_error, NULL, WATCHDOG_DEBUG, NULL);
     drupal_set_message($result['message']);
     $form_state['rebuild'] = TRUE;
     $form_state['values']['abort'] = TRUE;
-   }
+  }
 }

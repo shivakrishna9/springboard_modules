@@ -140,17 +140,17 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     $form['#validate'] = array('email_confirmation_confirmation_form_validate');
 
     // #AHAH bugfix
-   /* $form['#cache'] = TRUE;
+    /* $form['#cache'] = TRUE;
 
-    if ($form['nid']['#value'] > 0) {
-      $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
-    }
-    else {
-      $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
-    }
-    if ($form['#action'] != $edit_path) {
-      $form['#action'] = $edit_path;
-    }*/
+     if ($form['nid']['#value'] > 0) {
+     $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
+     }
+     else {
+     $edit_path = url('node/add/donation-form', array('absolute' => TRUE));
+     }
+     if ($form['#action'] != $edit_path) {
+     $form['#action'] = $edit_path;
+     }*/
 
     // Ctools modals setup for preview button
     module_load_include('inc', 'ctools', 'includes/ajax');
@@ -192,7 +192,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
       }
 
     }
-     /* email template configuration, see #133*/
+    /* email template configuration, see #133*/
 
     $form['confirmation_template'] = array(
       '#type' => 'fieldset',
@@ -319,7 +319,7 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     );
 
     $form['confirmation_template']['template_wrapper']['preview'] = array(
-     '#type' => 'button',
+      '#type' => 'button',
       '#value' => t('Preview'),
       '#attributes' => array('class' => 'ctools-use-modal'),
       '#weight' => 20,
@@ -334,14 +334,14 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     $form['#after_build'][] = 'email_confirmation_after_build';
     $form['#validate'][] = 'email_confirmation_template_validate';
     $form['#submit'][] = 'email_confirmation_template_submit';
-   /**
-    * TODO: tl;dr - confirmation page field items need refactoring to work on webforms.
-    *
-    *  We need to back out the confirmation page form components on non-donation forms.
-    *  These fields are tied in with fundraiser.module's implementation of hook_nodeapi and as
-    *  such would require a nontrivial refactoring of fundraiser and email confirmations to
-    *  get working for all webform content types.
-    */
+    /**
+     * TODO: tl;dr - confirmation page field items need refactoring to work on webforms.
+     *
+     *  We need to back out the confirmation page form components on non-donation forms.
+     *  These fields are tied in with fundraiser.module's implementation of hook_nodeapi and as
+     *  such would require a nontrivial refactoring of fundraiser and email confirmations to
+     *  get working for all webform content types.
+     */
     if (!fundraiser_is_donation_type($form['#parameters'][2]->type)) {
       unset($form['confirmation_page']);
       $form['confirmation_template']['#collapsed'] = FALSE;
@@ -482,7 +482,10 @@ function email_confirmation_list_templates() {
  */
 function _email_confirmation_template_ahah() {
   module_load_include('inc', 'fundraiser', 'fundraiser.admin');
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
   $form_build_id = $_POST['form_build_id'];
 
   $form = form_get_cache($form_build_id, $form_state);
@@ -525,7 +528,7 @@ function email_confirmation_fundraiser_order_success($order) {
   // is required to permit conditional templating on $order values.
   $_SESSION['donation_order'] = $order;
   $settings = db_fetch_object(db_query(
-    'SELECT * FROM {fundraiser_confirmations} '.
+    'SELECT * FROM {fundraiser_confirmations} ' .
     'WHERE nid = %d',
     $order->products[0]->nid));
   // If sending mail is enabled on this donation form, continue.
@@ -535,21 +538,21 @@ function email_confirmation_fundraiser_order_success($order) {
     if ($settings->tid) {
       $node = node_load($order->products[0]->nid);
       $sid = db_result(db_query(
-        'SELECT sid FROM {fundraiser_webform_order} '.
+        'SELECT sid FROM {fundraiser_webform_order} ' .
         'WHERE order_id = %d',
         $order->order_id));
       $submission = webform_get_submission($node->nid, $sid);
       $result = db_fetch_object(db_query(
-        'SELECT body, format FROM {node_revisions} nr '.
-        'INNER JOIN {node} n '.
+        'SELECT body, format FROM {node_revisions} nr ' .
+        'INNER JOIN {node} n ' .
         'WHERE n.vid = nr.vid AND nr.nid = %d',
         $settings->tid));
       $template_html = check_markup($result->body, $result->format, FALSE);
 
       // TODO: convert field to accept input filters.
       $template_text = db_result(db_query(
-        'SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t '.
-        'INNER JOIN {node} n ON n.vid = t.vid '.
+        'SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t ' .
+        'INNER JOIN {node} n ON n.vid = t.vid ' .
         'WHERE t.nid=%d',
         $settings->tid));
 
@@ -582,18 +585,18 @@ function email_confirmation_fundraiser_order_success($order) {
       // Hack! Do a last minute string replace to sidestep around issues with ubercart adding the wrong currency symbol.
       // This is hopefully a temporary workaround until I can figure out how to tap into uc_price().
       if (module_exists('fundraiser_multi_currency') && isset($order->data['currency'])) {
-          $currencies = fundraiser_multi_currency_get_default_currencies();
-          $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
+        $currencies = fundraiser_multi_currency_get_default_currencies();
+        $symbol = isset($currencies[$order->data['currency']]) ? $currencies[$order->data['currency']]['symbol'] : $order->data['currency'];
 
-          $message['text_body'] = str_replace('$', $symbol, $message['text_body']);
-          $message['html_body'] = str_replace('$', $symbol, $message['html_body']);
+        $message['text_body'] = str_replace('$', $symbol, $message['text_body']);
+        $message['html_body'] = str_replace('$', $symbol, $message['html_body']);
       }
       $sent = drupal_mail('email_confirmation', 'confirmation', $order->primary_email, language_default(), $message);
     }
     // If no settings are present use the default email template.
     else {
       $order->form_title = db_result(db_query(
-        'SELECT title FROM {node} '.
+        'SELECT title FROM {node} ' .
         'WHERE nid=%d',
         $order->products[0]->nid));
       $site_name = variable_get('site_name', '');
@@ -617,10 +620,10 @@ function email_confirmation_mail($key, &$message, $params) {
   $boundary = '----=_NextPart_' . md5(uniqid());
 
   $headers = array(
-   'MIME-Version' => '1.0',
-   'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
-   'Content-Transfer-Encoding' => '8Bit',
-   'X-Mailer' => 'Drupal',
+    'MIME-Version' => '1.0',
+    'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
+    'Content-Transfer-Encoding' => '8Bit',
+    'X-Mailer' => 'Drupal',
   );
 
   $default_from = '"' . $params['from_name'] . '" <' . $params['from_address'] . '>';
@@ -720,37 +723,37 @@ function email_confirmation_admin() {
  *
  */
 function email_confirmation_modal_preview() {
- module_load_include('inc', 'ctools', 'includes/modal');
- $title = 'Template Preview';
- $values = $_POST['template_wrapper'];
+  module_load_include('inc', 'ctools', 'includes/modal');
+  $title = 'Template Preview';
+  $values = $_POST['template_wrapper'];
 
- $output = array();
- $output['subject'] = $values['confirmation_subject'];
- $output['email'] = array(
-   'from' => '&lt;' . $values['confirmation_from_name'] . '&gt;' . $values['confirmation_reply_email'],
-   'bcc' => $values['confirmation_bcc_email'],
- );
- $output['HTML'] = _email_confirmation_preview('html', $values['confirmation_html_email_message'], $values['email_template']);
- $output['text'] = _email_confirmation_preview('text', $values['confirmation_text_email_message'], $values['email_template']);
- $keys = array_keys($output);
- foreach ($keys as $key) {
-   if (is_array($output[$key])) {
+  $output = array();
+  $output['subject'] = $values['confirmation_subject'];
+  $output['email'] = array(
+    'from' => '&lt;' . $values['confirmation_from_name'] . '&gt;' . $values['confirmation_reply_email'],
+    'bcc' => $values['confirmation_bcc_email'],
+  );
+  $output['HTML'] = _email_confirmation_preview('html', $values['confirmation_html_email_message'], $values['email_template']);
+  $output['text'] = _email_confirmation_preview('text', $values['confirmation_text_email_message'], $values['email_template']);
+  $keys = array_keys($output);
+  foreach ($keys as $key) {
+    if (is_array($output[$key])) {
 
-     $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
-     $subkeys = array_keys($output[$key]);
-     foreach ($subkeys as $subkey) {
-       $preview .= '<p>' . ucfirst($subkey) . ':&nbsp; ' . $output[$key][$subkey] . '</p>';
-     }
-     $preview .= '</fieldset>';
-   }
+      $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+      $subkeys = array_keys($output[$key]);
+      foreach ($subkeys as $subkey) {
+        $preview .= '<p>' . ucfirst($subkey) . ':&nbsp; ' . $output[$key][$subkey] . '</p>';
+      }
+      $preview .= '</fieldset>';
+    }
     else {
-     $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
-     $preview .= '<div>' . $output[$key] . '</div>';
-     $preview .= '</fieldset>';
-   }
- }
+      $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
+      $preview .= '<div>' . $output[$key] . '</div>';
+      $preview .= '</fieldset>';
+    }
+  }
 
- ctools_modal_render($title, $preview);
+  ctools_modal_render($title, $preview);
 }
 
 /**
@@ -899,7 +902,7 @@ function email_confirmation_confirmation_form_validate(&$form, &$form_state) {
  * Implements hook_theme().
  */
 function email_confirmation_theme() {
-return array(
+  return array(
     'default_confirmation_template' => array(
       'arguments' => array('order' => NULL, 'site_url' => NULL, 'site_name' => NULL),
       'template' => 'email-confirmation-default-template',

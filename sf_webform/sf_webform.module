@@ -60,14 +60,14 @@ function sf_webform_perm() {
 }
 
 /**
-* Implementation of hook_theme().
-*/
+ * Implementation of hook_theme().
+ */
 
 function sf_webform_theme() {
   return array(
     'sf_webform_mapping_form' => array(
-    'arguments' => array(),
-  )
+      'arguments' => array(),
+    ),
   );
 }
 
@@ -80,7 +80,7 @@ function sf_webform_theme() {
  */
 function sf_webform_mapping_form(&$form_state = NULL, $node) {
   $base = drupal_get_path('module', 'sf_webform');
-  drupal_add_js($base .'/sf_webform.js');
+  drupal_add_js($base . '/sf_webform.js');
 
   $form = array(
     '#tree' => TRUE,
@@ -145,8 +145,8 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
       if ($component['type'] != 'fieldset') {
         // component
         $form['map']['cid'][$cid] = array(
-        '#type' => 'item',
-        '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
+          '#type' => 'item',
+          '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
         );
         // salesforce field
         $form['map']['salesforce'][$cid] = array(
@@ -157,10 +157,10 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
 
         if ($node->sf_webform_map[$cid] && ($fields[$node->sf_webform_map[$cid]]['idLookup'] || $fields[$node->sf_webform_map[$cid]]['externalId'])) {
           if ($node->sf_dedupe_key == $node->sf_webform_map[$cid]) {
-            $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] .'">Remove dedupe field</a>';
+            $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map[$cid] . '">Remove dedupe field</a>';
           }
           else {
-            $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] .'">Set as dedupe field</a>';
+            $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map[$cid] . '">Set as dedupe field</a>';
           }
         }
         else {
@@ -206,10 +206,10 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
     );
     if ($node->sf_webform_map['sid'] && ($fields[$node->sf_webform_map['sid']]['idLookup'] || $fields[$node->sf_webform_map['sid']]['externalId'])) {
       if ($node->sf_dedupe_key == $node->sf_webform_map['sid']) {
-        $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map['sid'] .'">Remove dedupe field</a>';
+        $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/remove-dedupe-field/' . $node->sf_webform_map['sid'] . '">Remove dedupe field</a>';
       }
       else {
-        $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map['sid'] .'">Set as dedupe field</a>';
+        $value = '<a class="webform-dedupe" href="/js/' . $node->nid . '/set-dedupe-field/' . $node->sf_webform_map['sid'] . '">Set as dedupe field</a>';
       }
     }
     else {
@@ -248,7 +248,10 @@ function sf_webform_mapping_form(&$form_state = NULL, $node) {
  * AHAH callback for mapping form
  */
 function render_salesforce_object_fields() {
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_state = array(
+    'storage' => NULL,
+    'submitted' => FALSE,
+  );
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
 
@@ -270,7 +273,10 @@ function render_salesforce_object_fields() {
   foreach ($map['cid'] as $key => $cid) {
     if (is_numeric($key)) {
       $row = array();
-      $row[] = array('data' => drupal_render($map['cid'][$key]), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($map['cid'][$key]),
+        'width' => '300',
+      );
       $row[] = drupal_render($map['salesforce'][$key]);
       $row[] = drupal_render($map['dedupe'][$key]);
       $rows[] = $row;
@@ -284,7 +290,10 @@ function render_salesforce_object_fields() {
   foreach ($form['node_map'] as $key => $field) {
     if (substr($key, 0, 1) != '#') {
       $node_row = array();
-      $node_row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+      $node_row[] = array(
+        'data' => drupal_render($field['label']),
+        'width' => '300',
+      );
       $node_row[] = drupal_render($field['value']);
       $node_rows[] = $node_row;
     }
@@ -295,7 +304,10 @@ function render_salesforce_object_fields() {
   foreach ($form['submission_map'] as $key => $field) {
     if (substr($key, 0, 1) != '#') {
       $row = array();
-      $row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+      $row[] = array(
+        'data' => drupal_render($field['label']),
+        'width' => '300',
+      );
       $row[] = drupal_render($field['value']);
       $submission_rows[] = $row;
     }
@@ -480,7 +492,10 @@ function theme_sf_webform_mapping_form($form) {
     foreach ($map['cid'] as $key => $cid) {
       if (is_numeric($key)) {
         $row = array();
-        $row[] = array('data' => drupal_render($map['cid'][$key]), 'width' => '300');
+        $row[] = array(
+          'data' => drupal_render($map['cid'][$key]),
+          'width' => '300',
+        );
         $row[] = drupal_render($map['salesforce'][$key]);
         $row[] = drupal_render($map['dedupe'][$key]);
         $rows[] = $row;
@@ -495,7 +510,10 @@ function theme_sf_webform_mapping_form($form) {
     foreach ($form['node_map'] as $key => $field) {
       if (substr($key, 0, 1) != '#') {
         $node_row = array();
-        $node_row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+        $node_row[] = array(
+          'data' => drupal_render($field['label']),
+          'width' => '300',
+        );
         $node_row[] = drupal_render($field['value']);
         $node_rows[] = $node_row;
       }
@@ -506,7 +524,10 @@ function theme_sf_webform_mapping_form($form) {
     foreach ($form['submission_map'] as $key => $field) {
       if (substr($key, 0, 1) != '#') {
         $row = array();
-        $row[] = array('data' => drupal_render($field['label']), 'width' => '300');
+        $row[] = array(
+          'data' => drupal_render($field['label']),
+          'width' => '300',
+        );
         $row[] = drupal_render($field['value']);
         $row[] = drupal_render($map['dedupe'][$key]);
         $submission_rows[] = $row;
@@ -644,7 +665,7 @@ function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
       if (array_key_exists($map[$data->cid], $salesforce_map['fields'])) {
         // append
         if ($data->type == 'date') {
-          $salesforce_map['fields'][$map[$data->cid]] .= '/'. $data->data;
+          $salesforce_map['fields'][$map[$data->cid]] .= '/' . $data->data;
           // see if we have the full date
           if (count(explode('/', $salesforce_map['fields'][$map[$data->cid]])) == 3) {
             $date = date('c', strtotime($salesforce_map['fields'][$map[$data->cid]]));
@@ -652,7 +673,7 @@ function _sf_webform_load_salesforce_map($sid, $sfid = NULL) {
           }
         }
         else {
-          $salesforce_map['fields'][$map[$data->cid]] .= ';'. $data->data;
+          $salesforce_map['fields'][$map[$data->cid]] .= ';' . $data->data;
         }
       }
       else {

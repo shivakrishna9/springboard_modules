@@ -7,21 +7,21 @@
  */
 function sf_user_install() {
   /*
-  $title = "Salesforce Contact ID";
-  $name = "profile_contact_id";
-  $category = "System";
-  $type = "textfield";
-  $weight = 0;
-  $required = 0;
-  $register = 0;
-  $visibilty = 4;
-  $autocomplete = 0;
-  $options = '';
-  $page = '';
+   $title = "Salesforce Contact ID";
+   $name = "profile_contact_id";
+   $category = "System";
+   $type = "textfield";
+   $weight = 0;
+   $required = 0;
+   $register = 0;
+   $visibilty = 4;
+   $autocomplete = 0;
+   $options = '';
+   $page = '';
 
-  // add profile fields for salesforce integration
-  db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')", $form_state['values']['title'], $form_state['values']['name'], $form_state['values']['explanation'], $form_state['values']['category'], $form_state['values']['type'], $form_state['values']['weight'], $form_state['values']['required'], $form_state['values']['register'], $form_state['values']['visibility'], $form_state['values']['autocomplete'], $form_state['values']['options'], $form_state['values']['page']);
-  */
+   // add profile fields for salesforce integration
+   db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')", $form_state['values']['title'], $form_state['values']['name'], $form_state['values']['explanation'], $form_state['values']['category'], $form_state['values']['type'], $form_state['values']['weight'], $form_state['values']['required'], $form_state['values']['register'], $form_state['values']['visibility'], $form_state['values']['autocomplete'], $form_state['values']['options'], $form_state['values']['page']);
+   */
 }
 
 /**

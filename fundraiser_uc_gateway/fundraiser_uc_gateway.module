@@ -54,7 +54,7 @@ function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
  */
 function _fundraiser_uc_gateway_payment_gateway_list() {
   $uc_gateways = _payment_gateway_list('', TRUE);
-   // Allow other modules to alter the payment gateways.
+  // Allow other modules to alter the payment gateways.
   drupal_alter('uc_payment_gateway', $uc_gateways);
   return $uc_gateways;
 }

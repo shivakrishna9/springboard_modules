@@ -76,10 +76,10 @@ function webform_token_selector_wysiwyg_plugin($editor, $version) {
  */
 function webform_token_selector_ckeditor_plugin() {
   return array('webform_token_selector' => array(
-    'name' => 'webform-tokens',
-    'desc' => t('Webform Token Select'),
-    'path' => drupal_get_path('module', 'webform_token_selector') .'/ckeditor/'
-  ));
+      'name' => 'webform-tokens',
+      'desc' => t('Webform Token Select'),
+      'path' => drupal_get_path('module', 'webform_token_selector') . '/ckeditor/',
+    ));
 }
 
 /**
@@ -90,8 +90,8 @@ function webform_token_selector_ckeditor_plugin() {
  */
 function webform_token_selector_token_list($nid) {
   /*
-  just a hook for other modules to add tokens...
-  */
+   just a hook for other modules to add tokens...
+   */
   $node = node_load($nid);
   $webform_tokens = array();
 

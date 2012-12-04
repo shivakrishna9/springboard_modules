@@ -6,7 +6,7 @@
  */
 
 // Include the Salesforce Enterprise Client included in the PHP Toolkit.
-require(SALESFORCE_DIR_SOAPCLIENT .'/SforceEnterpriseClient.php');
+require(SALESFORCE_DIR_SOAPCLIENT . '/SforceEnterpriseClient.php');
 
 /**
  * Defines the DrupalSalesforce class used to interact with the server.
@@ -50,11 +50,11 @@ class DrupalSalesforce {
    */
   function login() {
     // Default to the WSDL downloaded from the user account if available.
-    $wsdl = SALESFORCE_DIR_WSDL .'/enterprise.wsdl.xml';
+    $wsdl = SALESFORCE_DIR_WSDL . '/enterprise.wsdl.xml';
 
     // Otherwise fall back to the one included with the Toolkit.
     if (!file_exists($wsdl)) {
-      $wsdl = SALESFORCE_DIR_SOAPCLIENT .'/enterprise.wsdl.xml';
+      $wsdl = SALESFORCE_DIR_SOAPCLIENT . '/enterprise.wsdl.xml';
     }
 
     // Connect to the server and login, logging any failures to the watchdog.
@@ -71,8 +71,8 @@ class DrupalSalesforce {
     catch (Exception $e) {
       // Log the error message.
       $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .
-        '<br/>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br/>' .
-        'Error: <pre>'. check_plain($e->faultstring) .'</pre>', WATCHDOG_ERROR);
+        '<br/>Request: <pre>' . check_plain($this->client->getLastRequest()) . '</pre><br/>' .
+        'Error: <pre>' . check_plain($e->faultstring) . '</pre>', WATCHDOG_ERROR);
 
       // Indicate the failed login.
       return $e->getMessage();

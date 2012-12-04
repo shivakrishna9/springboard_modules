@@ -161,7 +161,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -323,7 +323,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -337,7 +337,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -484,7 +484,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -538,7 +538,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -591,7 +591,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -605,7 +605,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),

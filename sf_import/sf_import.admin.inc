@@ -72,7 +72,11 @@ function sf_import_settings_form($form_state, $settings) {
 
     $form['frequency']['interval_type'] = array(
       '#type' => 'radios',
-      '#options' => array('minutes' => 'minutes', 'hours' => 'hours', 'days' => 'days'),
+      '#options' => array(
+        'minutes' => 'minutes',
+        'hours' => 'hours',
+        'days' => 'days',
+      ),
       '#default_value' => !empty($frequency_type) ? $frequency_type : 'days',
     );
 

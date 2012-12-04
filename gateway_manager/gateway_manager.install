@@ -124,11 +124,11 @@ function gateway_manager_schema() {
 function gateway_manager_update_6301() {
   $ret = array();
   db_add_field($ret, 'gateway_manager_gateways', 'status', array(
-        'description' => t('Active or inactive toggle for this gateway.'),
-        'type' => 'int',
-        'default' => 1,
-        'not null' => FALSE,
-      ));
+    'description' => t('Active or inactive toggle for this gateway.'),
+    'type' => 'int',
+    'default' => 1,
+    'not null' => FALSE,
+  ));
   db_query('UPDATE {gateway_manager_gateways} SET status = 1');
   return $ret;
 }

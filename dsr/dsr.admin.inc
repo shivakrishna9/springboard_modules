@@ -74,9 +74,9 @@ function dsr_settings() {
   );
 
   /*
-  define('DSR_POSTED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name");
-define('DSR_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name");
-define('DSR_PARTIALLY_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name");
-  */
+   define('DSR_POSTED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name");
+   define('DSR_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name");
+   define('DSR_PARTIALLY_REFUNDED_AGGREGATE_S', "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name");
+   */
   return system_settings_form($form);
 }

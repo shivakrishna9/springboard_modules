@@ -65,7 +65,7 @@ function fundraiser_ab_schema() {
       ),
     ),
     'unique keys' => array(
-      'test_nid_webform_nid' => array('test_nid', 'webform_nid')
+      'test_nid_webform_nid' => array('test_nid', 'webform_nid'),
     ),
     'indexes' => array(
       'test_nid' => array('test_nid'),
@@ -122,7 +122,7 @@ function fundraiser_ab_update_6200() {
       ),
     ),
     'unique keys' => array(
-      'test_nid_webform_nid' => array('test_nid', 'webform_nid')
+      'test_nid_webform_nid' => array('test_nid', 'webform_nid'),
     ),
     'indexes' => array(
       'test_nid' => array('test_nid'),

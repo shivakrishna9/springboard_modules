@@ -44,7 +44,7 @@ function queue_processor_menu() {
       'access arguments' => array('view salesforce reports'),
       'type' => MENU_NORMAL_ITEM,
       'file' => 'queue_processor.reports.inc',
-  );
+    );
 
     $items['admin/reports/salesforce/batch'] = array(
       'title' => 'Batch history',
@@ -160,10 +160,10 @@ function queue_processor_standalone_cron() {
       queue_processor_process();
       watchdog('queue_processor_cron', 'Queue processor cron run completed.', array(), WATCHDOG_NOTICE);
       lock_release('queue_processor_standalone_cron');
-  }
-  else {
-    watchdog('queue_processor_cron', 'Attempting to re-run queue processor cron while it is already running.', array(), WATCHDOG_WARNING);
-  }
+    }
+    else {
+      watchdog('queue_processor_cron', 'Attempting to re-run queue processor cron while it is already running.', array(), WATCHDOG_WARNING);
+    }
   }
 }
 
@@ -832,7 +832,7 @@ function queue_processor_clean_heap() {
         _queue_clear_all_from_heap();
         break;
 
-      // move to retry queue
+        // move to retry queue
       case 'retry queue':
         _queue_move_heap_to_retry_queue($retry_delay);
         _queue_clear_all_from_heap();
@@ -998,7 +998,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
           }
           else {
             if ($nillable) {
-               if (is_array($object)) {
+              if (is_array($object)) {
                 unset($object[$field]); // remove date completely
               }
               else {
@@ -1055,7 +1055,7 @@ function queue_processor_get_objects_in_batch($sfids, $fieldmap) {
       try {
         $objects = _normalize_salesforce_response($sf->retrieve($sfids, $fieldmap));
       }
-      catch  (Exception $e) {
+      catch (Exception $e) {
         // TODO: LOG ERROR
       }
     }
@@ -1094,17 +1094,17 @@ function queue_processor_hook_info() {
 }
 
 /*
-* Implementation of hook_action_info().
-*/
+ * Implementation of hook_action_info().
+ */
 function queue_processor_action_info() {
   return array(
     'queue_processor_send_email' => array(
       'description' => t('Send queue processor email'),
-       'type' => 'queue_processor',
-       'configurable' => TRUE,
-       'hooks' => array(
+      'type' => 'queue_processor',
+      'configurable' => TRUE,
+      'hooks' => array(
         'queue_processor' => array('connection_error', 'object_error', 'moved_to_retry_queue', 'permanent_failure', 'soap_fault'),
-       ),
+      ),
     ),
   );
 }
@@ -1116,27 +1116,27 @@ function queue_processor_action_info() {
  * Sends a notification email
  */
 function queue_processor_send_email(&$object, $context) {
-    switch ($context['op']) {
-      case 'connection_error':
-        drupal_mail('queue_processor', 'connection_error', $context['to'], language_default(), $context);
-        break;
+  switch ($context['op']) {
+    case 'connection_error':
+      drupal_mail('queue_processor', 'connection_error', $context['to'], language_default(), $context);
+      break;
 
-      case 'object_error':
-        drupal_mail('queue_processor', 'object_error', $context['to'], language_default(), $context);
-        break;
+    case 'object_error':
+      drupal_mail('queue_processor', 'object_error', $context['to'], language_default(), $context);
+      break;
 
-      case 'moved_to_retry_queue':
-        drupal_mail('queue_processor', 'moved_to_retry_queue', $context['to'], language_default(), $context);
-        break;
+    case 'moved_to_retry_queue':
+      drupal_mail('queue_processor', 'moved_to_retry_queue', $context['to'], language_default(), $context);
+      break;
 
-      case 'permanent_failure':
-        drupal_mail('queue_processor', 'permanent_failure', $context['to'], language_default(), $context);
-        break;
+    case 'permanent_failure':
+      drupal_mail('queue_processor', 'permanent_failure', $context['to'], language_default(), $context);
+      break;
 
-      case 'soap_fault':
-        drupal_mail('queue_processor', 'soap_fault', $context['to'], language_default(), $context);
-        break;
-    }
+    case 'soap_fault':
+      drupal_mail('queue_processor', 'soap_fault', $context['to'], language_default(), $context);
+      break;
+  }
 }
 
 /**
@@ -1230,13 +1230,13 @@ function created_edit_link($oid, $type, $return_url = NULL) {
       break;
     case 'webform':
       $nid = db_result(db_query("SELECT nid FROM {webform_submissions} WHERE sid = %d", $oid));
-      $url = $base_url .'/node/' . $nid . '/submission/' . $oid . '/edit';
+      $url = $base_url . '/node/' . $nid . '/submission/' . $oid . '/edit';
       break;
     case FUNDRAISER_SINGLE_DONATION_TYPE:
     case FUNDRAISER_RECURRING_DONATION_TYPE:
       if ($result = db_query("SELECT webform_nid, sid FROM {fundraiser_webform_order} WHERE order_id = %d", $oid)) {
         $data = db_fetch_array($result);
-        $url = $base_url .'/node/' . $data['webform_nid'] . '/submission/' . $data['sid'] . '/edit';
+        $url = $base_url . '/node/' . $data['webform_nid'] . '/submission/' . $data['sid'] . '/edit';
       }
       break;
     case 'node':
@@ -1322,7 +1322,7 @@ function queue_processor_prune_logs() {
   }
 }
 
-function _queue_processor_valid_timestamp($date)  {
+function _queue_processor_valid_timestamp($date) {
   for ($i = 0; $i < 5; $i++) {
     if (!is_numeric(substr($date, $i, 1))) {
       return FALSE;

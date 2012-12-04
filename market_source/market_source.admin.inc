@@ -68,29 +68,34 @@ function market_source_admin_settings_form(&$form_state) {
     $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
   }
   //set up fields to loop through
-  $default_fields_list = array('market_source' => 'Market Source', 'campaign' => 'Campaign ID', 'referrer' => 'Referrer', 'initial_referrer' => 'Initial Referrer');
+  $default_fields_list = array(
+    'market_source' => 'Market Source',
+    'campaign' => 'Campaign ID',
+    'referrer' => 'Referrer',
+    'initial_referrer' => 'Initial Referrer',
+  );
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
   foreach ($default_fields_list as $key => $field_name) {
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
-       'persistence' => array(
-         '#type' => 'checkbox',
-         '#title' => t('Persistent'),
-         '#description' => t('Enables caching of field value per user session.'),
-         '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : TRUE,
-         '#size' => 20,
-       ),
-       'name' => array(
-         '#type' => 'item',
-         '#title' => t('Human-readable field name'),
-         '#value' => $field_name,
-       ),
-       'key' => array(
-         '#type' => 'item',
-         '#title' => t('Unique field key'),
-         '#value' => $key,
-       ),
+      'persistence' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Persistent'),
+        '#description' => t('Enables caching of field value per user session.'),
+        '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : TRUE,
+        '#size' => 20,
+      ),
+      'name' => array(
+        '#type' => 'item',
+        '#title' => t('Human-readable field name'),
+        '#value' => $field_name,
+      ),
+      'key' => array(
+        '#type' => 'item',
+        '#title' => t('Unique field key'),
+        '#value' => $key,
+      ),
     );
   }
 
@@ -298,7 +303,7 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
     variable_set('market_source_cookie_domain', $market_source_cookie_domain);
   }
   elseif (!empty($market_source_cookie_domain)) {
-    drupal_set_message(t('Your cookie settings will not work. Either you do not have enough of a domain path to be used '.
+    drupal_set_message(t('Your cookie settings will not work. Either you do not have enough of a domain path to be used ' .
       'or you have used an IP address as the domain. The full site domain will be used.'), 'error');
   }
   // Empty can be left alone, empty is ok. The cookie will fall back to the full domain.

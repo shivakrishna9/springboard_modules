@@ -105,13 +105,13 @@ function springboard_admin_settings() {
  * Validation handler for the springboard admin settings form.
  */
 function springboard_admin_settings_validate(&$form, $form_state) {
-if ($form_state['values']['springboard_conversion_threshold'] && !is_numeric($form_state['values']['springboard_conversion_threshold'])) {
+  if ($form_state['values']['springboard_conversion_threshold'] && !is_numeric($form_state['values']['springboard_conversion_threshold'])) {
     form_set_error('springboard_conversion_threshold', t('The conversion threshold must be numeric!'));
   }
-if ($form_state['values']['springboard_local_failure_threshold'] && !is_numeric($form_state['values']['springboard_local_failure_threshold'])) {
+  if ($form_state['values']['springboard_local_failure_threshold'] && !is_numeric($form_state['values']['springboard_local_failure_threshold'])) {
     form_set_error('springboard_local_failure_threshold', t('The local failure threshold must be numeric!'));
   }
-if ($form_state['values']['springboard_gateway_failure_threshold'] && !is_numeric($form_state['values']['springboard_gateway_failure_threshold'])) {
+  if ($form_state['values']['springboard_gateway_failure_threshold'] && !is_numeric($form_state['values']['springboard_gateway_failure_threshold'])) {
     form_set_error('springboard_gateway_failure_threshold', t('The gateway failure threshold must be numeric!'));
   }
   if ($form_state['values']['springboard_load_time_threshold'] && !is_numeric($form_state['values']['springboard_load_time_threshold'])) {

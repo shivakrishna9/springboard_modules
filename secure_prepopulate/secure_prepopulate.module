@@ -106,7 +106,7 @@ function secure_prepopulate_init() {
     $qs = !empty($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : 'q=node/' . $nid . '&af=' . $af;
     // first, check to see if the query string has already been used
     if (!secure_prepopulate_is_expired($qs)) {
-    // run af param through decryption routine
+      // run af param through decryption routine
       if ($fields = secure_prepopulate_decrypt($af)) {
         // Provide an alter hook for changing the $fields array. Putting it
         // here so we have access to $nid.
@@ -168,7 +168,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
 
   // try to prepopulate any fields found in the prepopulate_data array
   foreach ($prepopulate_data as $form_key => $value) {
-    if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
+    if ($field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
       switch ($field['#type']) {
         case 'radios':
           // radios will have individual radio form fields inside them
@@ -199,7 +199,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
   // Clear out any other form fields that might be populated by another module
   foreach ($component_hierarchy as $form_key => $value) {
     if (!array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
-      if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
+      if ($field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
         // set back to original default value by using the webform component definition
         switch ($field['#type']) {
           case 'hidden':
@@ -468,14 +468,14 @@ function _secure_prepopulate_walk_component_hierarchy($nid, $cid, &$path = array
  */
 function &_secure_prepopulate_find_field(&$form, $path) {
   if (is_array($path)) {
-  foreach (array_keys($path) as $v) {
-    if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
-      return _secure_prepopulate_find_field($form[$v], $path[$v]);
+    foreach (array_keys($path) as $v) {
+      if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
+        return _secure_prepopulate_find_field($form[$v], $path[$v]);
+      }
+      else {
+        return $form[$v];
+      }
     }
-    else {
-      return $form[$v];
-    }
-  }
   }
 }
 
@@ -557,8 +557,8 @@ function _secure_prepopulate_decrypt($cipher, $key, $iv) {
  *   The size of the PKCS5 blocksize to use.
  */
 function pkcs5_pad($text, $blocksize) {
-   $pad = $blocksize - (strlen($text) % $blocksize);
-   return $text . str_repeat(chr($pad), $pad);
+  $pad = $blocksize - (strlen($text) % $blocksize);
+  return $text . str_repeat(chr($pad), $pad);
 }
 
 /**
@@ -568,7 +568,9 @@ function pkcs5_pad($text, $blocksize) {
  *   The text to unpad.
  */
 function pkcs5_unpad($text) {
-   $pad = ord($text{strlen($text)-1});
-   if ($pad > strlen($text)) return FALSE;
-   return substr($text, 0, -1 * $pad);
+  $pad = ord($text{strlen($text) -1});
+  if ($pad > strlen($text)) {
+    return FALSE;
+  }
+  return substr($text, 0, -1 * $pad);
 }

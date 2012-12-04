@@ -475,7 +475,7 @@ function configure_ubercart_settings() {
   // create each ubercart status
   foreach ($statuses as $status_id => $status) {
     db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, "
-      ."weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
+      . "weight, locked) VALUES ('%s', '%s', '%s', %d, %d)",
       $status_id, $status['title'], $status['state'], $status['weight'], $status['locked']);
   }
 
@@ -785,9 +785,6 @@ function create_default_countries() {
   db_query("INSERT INTO {uc_countries} VALUES (840,'United States','US','USA',1)");
 }
 
-/**********************************************************************************
- * UPDATES
- **********************************************************************************/
 function fundraiser_update_1() {
   $items = array();
   $items[] = update_sql("ALTER TABLE {fundraiser_gateway} ADD internal_name varchar(255)");
@@ -902,7 +899,10 @@ function fundraiser_update_6301() {
   $result = variable_get('webform_node_types', array());
   $result[] = 'donation_form';
   variable_set('webform_node_types', $result);
-  $ret[] = array('success' => TRUE, 'query' => 'Added donation form to webform types variable.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'Added donation form to webform types variable.',
+  );
 
   // make a copy of all items in fundraiser_gateway
   $ret[] = update_sql(
@@ -983,7 +983,10 @@ function fundraiser_update_6305() {
     $result[] = 'donation_form';
     variable_set('webform_node_types_primary', $result);
   }
-  $ret[] = array('success' => TRUE, 'query' => 'Added donation form to webform primary types variable.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'Added donation form to webform primary types variable.',
+  );
   return $ret;
 }
 
@@ -1008,7 +1011,10 @@ function fundraiser_update_6306() {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
     }
   }
-  $ret[] = array('success' => TRUE, 'query' => 'Renamed webform compenent form keys.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'Renamed webform compenent form keys.',
+  );
   return $ret;
 }
 
@@ -1029,7 +1035,10 @@ function fundraiser_update_6308() {
   $ret = array();
   if (module_exists('fundraiser_tokens')) {
     module_disable(array('fundraiser_tokens'));
-    $ret[] = array('success' => TRUE, 'query' => 'Disabled the fundraiser tokens module.');
+    $ret[] = array(
+      'success' => TRUE,
+      'query' => 'Disabled the fundraiser tokens module.',
+    );
   }
   return $ret;
 }
@@ -1113,7 +1122,10 @@ function fundraiser_update_6313() {
 function fundraiser_update_6314() {
   $ret = array();
   module_enable(array('fundraiser_uc_gateway'));
-  $ret[] = array('success' => TRUE, 'query' => 'Enabled the Fundraiser UC Gateway module.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'Enabled the Fundraiser UC Gateway module.',
+  );
   return $ret;
 }
 
@@ -1124,7 +1136,10 @@ function fundraiser_update_6315() {
   $ret = array();
   // make donation_form node type a donation type
   variable_set('fundraiser_donation_form', TRUE);
-  $ret[] = array('success' => TRUE, 'query' => 'Donation form enabled the donation_form content type.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'Donation form enabled the donation_form content type.',
+  );
   return $ret;
 }
 

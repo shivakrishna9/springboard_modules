@@ -65,9 +65,9 @@ account" in the menu or login with the following link:              <br/><br/><a
                          <?php print $order->billing_first_name . ' ' . $order->billing_last_name?><br/>
                          <?php print $order->billing_street1?><br/>
                          <?php
-                         if ($order->billing_street2) {
-                           print $order->billing_street2 . '<br/>';
-                         }
+                          if ($order->billing_street2) {
+                            print $order->billing_street2 . '<br/>';
+                          }
                          ?>
                          <?php print $order->billing_city .  ', ' . $order->billing_zone . ' ' . $order->billing_postal_code?><br/>
 

@@ -49,15 +49,21 @@ function authorizenet_cim_update($profile_id, $billing_info) {
       $result['message'] = t('Billing information successfully updated for profile id @profile_id', array('@profile_id' => $profile_id));
       // Make sensitive data before returning it
       $billing_info['card_num'] = str_pad(substr($billing_info['card_num'], -4), strlen($billing_info['card_num']), '*', STR_PAD_LEFT);
-      $result['data'] = array('profile_id' => $profile_id, 'payment_profile_id' => $payment_profile_id,
-        'billing_info' => $billing_info);
+      $result['data'] = array(
+        'profile_id' => $profile_id,
+        'payment_profile_id' => $payment_profile_id,
+        'billing_info' => $billing_info,
+      );
     }
     else {
       // Update failed for some reason
       $result['success'] = FALSE;
       $result['message'] = $response['text'];
-      $result['data'] = array('profile_id' => $profile_id, 'payment_profile_id' => $payment_profile_id,
-        'billing_info' => $billing_info);
+      $result['data'] = array(
+        'profile_id' => $profile_id,
+        'payment_profile_id' => $payment_profile_id,
+        'billing_info' => $billing_info,
+      );
     }
 
   }
@@ -162,7 +168,7 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile_i
     ),
   );
 
-  $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',  _uc_authorizenet_array_to_xml($request));
+  $xml = _uc_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',   _uc_authorizenet_array_to_xml($request));
   $response = uc_authorizenet_xml_api($server, $xml);
   //$response = _authorizenet_cim_strip_namespace($response);
   $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');

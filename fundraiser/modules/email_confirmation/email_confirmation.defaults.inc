@@ -233,6 +233,6 @@ function email_confirmation_default_html_template() {
 
   ';
 
-return $template;
+  return $template;
 
 }

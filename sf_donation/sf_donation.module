@@ -119,7 +119,7 @@ function sf_donation_export_confirm_form() {
     '#type' => 'hidden',
     '#value' => $order_id,
   );
-  return confirm_form($form, "Are you sure you want to re-export order $order_id to Salesforce?", 'admin/store/orders/'. $order_id, $output . "<p>Any values that have been changed in Salesforce will be overwritten.</p>", $yes = "Export", $no = "Cancel", $name = 'confirm');
+  return confirm_form($form, "Are you sure you want to re-export order $order_id to Salesforce?", 'admin/store/orders/' . $order_id, $output . "<p>Any values that have been changed in Salesforce will be overwritten.</p>", $yes = "Export", $no = "Cancel", $name = 'confirm');
 }
 
 /**
@@ -233,8 +233,8 @@ function sf_donation_get_orders_for_export($order_id) {
 function sf_donation_theme() {
   return array(
     'sf_donation_mapping_form' => array(
-    'arguments' => array(),
-  )
+      'arguments' => array(),
+    ),
   );
 }
 
@@ -310,7 +310,7 @@ function sf_donation_mapping_form($form_state, $node) {
 
   // Build a simple array of the fields available in the SF object
   $donation_fields = array('' => '--Select One--');
-    if (is_array($donation->fields)) {
+  if (is_array($donation->fields)) {
     foreach ($donation->fields as $field) {
       $donation_fields[$field->name] = $field->label;
     }
@@ -349,8 +349,8 @@ function sf_donation_mapping_form($form_state, $node) {
     if ($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
       // Webform component
       $form['mapping']['component'][$component['form_key']] = array(
-      '#type' => 'item',
-      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
+        '#type' => 'item',
+        '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
       // SF object field
       $form['mapping']['salesforce'][$component['form_key']] = array(
@@ -361,7 +361,10 @@ function sf_donation_mapping_form($form_state, $node) {
     }
   }
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
 
   return $form;
 }
@@ -430,29 +433,29 @@ function sf_donation_clone_map($nid, $new_nid) {
 }
 
 /**
- * Implementaion of hook_nodeapi().
+ * Implementation of hook_nodeapi().
  */
 function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
   if (fundraiser_is_donation_type($node->type)) {
-  switch ($op) {
-    case 'load':
-      $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-      while ($row = db_fetch_object($result)) {
-        $fields = unserialize($row->fields);
-        if (is_array($fields)) {
-          foreach ($fields as $k => $v) {
-            $map['salesforce_map'][$v] = $k;
+    switch ($op) {
+      case 'load':
+        $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
+        while ($row = db_fetch_object($result)) {
+          $fields = unserialize($row->fields);
+          if (is_array($fields)) {
+            foreach ($fields as $k => $v) {
+              $map['salesforce_map'][$v] = $k;
+            }
           }
+          $map['single_recordtype_id'] = $row->single_recordtype_id;
+          $map['recurring_recordtype_id'] = $row->recurring_recordtype_id;
         }
-        $map['single_recordtype_id'] = $row->single_recordtype_id;
-        $map['recurring_recordtype_id'] = $row->recurring_recordtype_id;
-      }
-    return $map;
-      break;
+        return $map;
+        break;
 
-    case 'delete':
-       db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-      break;
+      case 'delete':
+        db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
+        break;
     }
   }
 }
@@ -492,7 +495,7 @@ function sf_donation_form_alter(&$form, $form_state, $form_id) {
         // get campaigns from salesforce
         $campaigns = salesforce_management_api_get_campaigns();
         if (!empty($campaigns)) {
-          $campaigns = array('' => '-- Select --')+$campaigns;
+          $campaigns = array('' => '-- Select --') + $campaigns;
           $form['value']['#type'] = 'select';
           $form['value']['#options'] = $campaigns;
         }
@@ -601,7 +604,7 @@ function sf_donation_hook_info() {
 }
 
 /**
- * Implemenation of hook_queue_salesforce_info().
+ * Implementation of hook_queue_salesforce_info().
  */
 function sf_donation_queue_salesforce_info($type, $action) {
 
@@ -719,7 +722,7 @@ function sf_donation_queue_preprocess_batch_alter(&$batch) {
 }
 
 /**
- * Implemenation of hook_queue_postprocess_batch().
+ * Implementation of hook_queue_postprocess_batch().
  */
 function sf_donation_queue_postprocess_batch($batch, $responses, $item_count) {
 
@@ -909,7 +912,7 @@ function sf_donation_update_donation_status($order_id) {
  */
 function sf_donation_update_donation_amount($order_ids, $amount) {
   // get all of the recurring donations that have not been processed
-  $sql = "select sf_opportunity_id from {fundraiser_recurring} where order_id in (%s)";
+  $sql = "SELECT sf_opportunity_id FROM {fundraiser_recurring} WHERE order_id in (%s)";
   $results = db_query($sql, implode(",", $order_ids));
 
   $donations = array();
@@ -927,7 +930,7 @@ function sf_donation_update_donation_amount($order_ids, $amount) {
 
   // process results
   $count = count($donations);
-  for ($i=0; $i < $count; $i++) {
+  for ($i = 0; $i < $count; $i++) {
     // salesforce does not return an array if only one object is created
     if ($count == 1) {
       $success = $results->success;
@@ -972,7 +975,7 @@ function sf_donation_canel_recurring_donations($order_id) {
 
   // process results
   $count = count($donations);
-  for ($i=0; $i < $count; $i++) {
+  for ($i = 0; $i < $count; $i++) {
     // salesforce does not return an array if only one object is created
     if ($count == 1) {
       $success = $results->success;
@@ -1000,16 +1003,14 @@ function sf_donation_canel_recurring_donations($order_id) {
 function _sf_donation_load_salesforce_map($sid) {
   $map = array();
 
-  $results = db_query(
-   "
-     SELECT f.map_id, c.form_key, s.data
-     FROM {fundraiser_salesforce_map} f
-     INNER JOIN {webform_component} c ON c.cid = f.cid AND c.nid = f.nid
-     INNER JOIN {webform_submitted_data} s ON s.cid = c.cid AND s.nid = c.nid
-     WHERE s.sid = %d
-   ",
-   $sid
-   );
+  $results = db_query("
+    SELECT f.map_id, c.form_key, s.data
+    FROM {fundraiser_salesforce_map} f
+    INNER JOIN {webform_component} c ON c.cid = f.cid AND c.nid = f.nid
+    INNER JOIN {webform_submitted_data} s ON s.cid = c.cid AND s.nid = c.nid
+    WHERE s.sid = %d",
+    $sid
+  );
 
   while ($data = db_fetch_object($results)) {
     $map[$data->map_id] = $data->data;
@@ -1022,7 +1023,7 @@ function _sf_donation_load_salesforce_map($sid) {
  * Gets the number of times a given donation recurs
  */
 function _sf_donation_recurring_donation_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d", $order_id));
+  return db_result(db_query("SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d", $order_id));
 }
 
 /*
@@ -1030,7 +1031,7 @@ function _sf_donation_recurring_donation_count($order_id) {
  * TODO: is this function still in use?
  */
 function _sf_donation_update_webform_order($order_id, $sfid) {
-  db_query("update {fundraiser_webform_order} set sfid = '%s' where order_id = %d", $sfid, $order_id);
+  db_query("UPDATE {fundraiser_webform_order} SET sfid = '%s' WHERE order_id = %d", $sfid, $order_id);
 }
 
 /**
@@ -1190,8 +1191,8 @@ function _sf_donation_array_split($array, $pieces = 2) {
     return array($array);
   }
 
-  $newCount = ceil(count($array)/$pieces);
+  $newCount = ceil(count($array) / $pieces);
   $a = array_slice($array, 0, $newCount);
-  $b = _sf_donation_array_split(array_slice($array, $newCount), $pieces-1);
+  $b = _sf_donation_array_split(array_slice($array, $newCount), $pieces -1);
   return array_merge(array($a), $b);
 }

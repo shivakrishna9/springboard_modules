@@ -53,10 +53,10 @@ function market_source_init() {
   }
   // Add other variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'qs_keys' => _market_source_build_qs_keys(),
-    'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
-    'cookie_domain' => $market_source_cookie_domain,
-  )), 'setting');
+      'qs_keys' => _market_source_build_qs_keys(),
+      'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
+      'cookie_domain' => $market_source_cookie_domain,
+    )), 'setting');
 }
 
 /**
@@ -107,10 +107,10 @@ function market_source_user_register_after_build($form, &$form_state) {
 
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'form_keys' => array(
-      $form['#id'] => $form_keys,
-    ),
-  )), 'setting');
+      'form_keys' => array(
+        $form['#id'] => $form_keys,
+      ),
+    )), 'setting');
 
   // Mandatory return value for #after_build callbacks.
   return $form;
@@ -255,10 +255,10 @@ function _market_source_build_qs_keys() {
     $custom_fields = variable_get('market_source_custom_fields', array());
     if (is_array($custom_fields)) {
       foreach ($custom_fields as $field) {
-          $qs_keys[$field['key']] = array(
-            'value' => NULL,
-            'persistence' => isset($field['persistence']) ? $field['persistence'] : TRUE,
-          );
+        $qs_keys[$field['key']] = array(
+          'value' => NULL,
+          'persistence' => isset($field['persistence']) ? $field['persistence'] : TRUE,
+        );
       }
     }
   }
@@ -373,8 +373,8 @@ function market_source_nodeapi(&$node, $op) {
             }
           }
         }
-     }
-     break;
+      }
+      break;
   }
 }
 
@@ -447,7 +447,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
   // referrer
   $components['referrer'] = array(
     'nid' => $nid,
-    'pid' => 0 ,
+    'pid' => 0,
     'value' => '',
     'form_key' => 'referrer',
     'name' => t('Referrer'),

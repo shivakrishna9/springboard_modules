@@ -83,7 +83,7 @@ function gateway_manager_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implemenation of hook_nodeapi().
+ * Implementation of hook_nodeapi().
  */
 function gateway_manager_nodeapi(&$node, $op) {
   // clear out the gateway cache when donation forms

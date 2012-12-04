@@ -42,10 +42,8 @@ function sf_user_results_download_form(&$form_state, $user) {
     '#type' => 'select',
     '#title' => t('Delimited text format'),
     '#description' => t('This is the delimiter used in the CSV/TSV file when downloading Salesforce Errors. Using tabs in the export is the most reliable method for preserving non-latin characters. You may want to change this to another character depending on the program with which you anticipate importing results.'),
-
     '#options' => array(
-      ','  => t('CSV'),
-
+      ',' => t('CSV'),
     ),
   );
 
@@ -70,23 +68,23 @@ function sf_user_results_download($user, $options = array()) {
 
   $columns = array('error_time', 'drupal_type', 'error', 'fieldmap');
 
-    foreach ($csv_output as $i => $value) {
+  foreach ($csv_output as $i => $value) {
     $out .= '"' . $value . '",';
-    }
-    $out .="\n";
+  }
+  $out .= "\n";
   $result = db_query("SELECT * FROM {salesforce_management_api_error} WHERE did = %d", $user);
 
-    // Add all values in the table
-    while ($l = db_fetch_array($result)) {
+  // Add all values in the table
+  while ($l = db_fetch_array($result)) {
     foreach ($columns as $j => $value) {
-    $out .= '"' . $l["$value"] . '",';
+      $out .= '"' . $l["$value"] . '",';
     }
     $out .= "\n";
-    }
-    // Output to browser with appropriate mime type, you choose ;)
-    header("Content-type: text/x-csv");
-    header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
-    echo $out;
-    exit;
+  }
+  // Output to browser with appropriate mime type, you choose ;)
+  header("Content-type: text/x-csv");
+  header("Content-Disposition: attachment;filename=SF-Error-Report(" . date("Y-m-d") . ").csv");
+  echo $out;
+  exit;
 
 }

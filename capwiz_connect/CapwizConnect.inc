@@ -183,7 +183,7 @@ class CapizConnect {
 
     // If requesting a second (or third or fourth or...) batch of users, start at
     // some point in the result set.
-    $query_params['start'] = (int)$start;
+    $query_params['start'] = (int) $start;
     // If a batch size is given, only get that many items
     if ($batch_size > 0) {
       $query_params['end'] = $query_params['start'] + $batch_size;
@@ -467,17 +467,17 @@ class CapizConnect {
       else {
         $drupal_account_password = user_password();
         $drupal_account = array(
-          'name'    => $email,
-          'pass'    => md5($drupal_account_password),
-          'mail'    => $email,
+          'name' => $email,
+          'pass' => md5($drupal_account_password),
+          'mail' => $email,
           'created' => $time = time(),
-          'access'  => $time,
-          'login'   => 0,
-          'status'  => 1,
+          'access' => $time,
+          'login' => 0,
+          'status' => 1,
         );
 
         db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status) VALUES ("%s", "%s", "%s", %d, %d, %d, %d)', $drupal_account);
-        $drupal_account = (object)$drupal_account;
+        $drupal_account = (object) $drupal_account;
         $drupal_account->uid  = db_last_insert_id('users', 'uid');
         $return_value = self::$STAT_CREATE_OK;
       }
@@ -515,7 +515,7 @@ class CapizConnect {
           $value = $capwiz_user_id;
           break;
 
-        // Email address. On Actions and Users.
+          // Email address. On Actions and Users.
         case 'emailAddress':
           // Email address
           if ($user->emails[0]) {
@@ -523,14 +523,14 @@ class CapizConnect {
           }
           break;
 
-        // Salutation
+          // Salutation
         case 'honorificId':
           if ($user->honorific) {
             $value = $user->honorific->name;
           }
           break;
 
-        // Street address
+          // Street address
         case 'street1':
         case 'street2':
         case 'city':
@@ -543,7 +543,7 @@ class CapizConnect {
           }
           break;
 
-        // Type of address
+          // Type of address
         case 'addressType':
           $address_field = $this->getSpecificCustomUserField('addressType');
           if ($user->addresses[0] && $address_field) {
@@ -552,17 +552,17 @@ class CapizConnect {
           }
           break;
 
-        // Affiliation of form
+          // Affiliation of form
         case 'form_affiliation':
           $value = $this->account_details->form_affiliation;
           break;
 
-        // National District
+          // National District
         case 'nationalDistrict':
           $value = $user->districtInfo->national;
           break;
 
-        // State districts
+          // State districts
         case 'stateDistrictUpper':
           if (is_array($user->districtInfo->stateUpper)) {
             $value = implode(',', $user->districtInfo->stateUpper);
@@ -574,7 +574,7 @@ class CapizConnect {
           }
           break;
 
-        // Federal senators
+          // Federal senators
         case 'fed_senator_1':
           $value = $legislators['National']['Senate'][0]['name'];
           break;
@@ -582,7 +582,7 @@ class CapizConnect {
           $value = $legislators['National']['Senate'][1]['name'];
           break;
 
-        // Federal senator phone numbers
+          // Federal senator phone numbers
         case 'fed_senator_1_phone':
           $value = $legislators['National']['Senate'][0]['phone'];
           break;
@@ -590,7 +590,7 @@ class CapizConnect {
           $value = $legislators['National']['Senate'][1]['phone'];
           break;
 
-        // Federal senator email
+          // Federal senator email
         case 'fed_senator_1_email':
           $value = $legislators['National']['Senate'][0]['email'];
           break;
@@ -598,20 +598,20 @@ class CapizConnect {
           $value = $legislators['National']['Senate'][1]['email'];
           break;
 
-        // Federal rep
+          // Federal rep
         case 'fed_rep':
           $value = $legislators['National']['House'][0]['name'];
           break;
-        // Federal rep phone number
+          // Federal rep phone number
         case 'fed_rep_phone':
           $value = $legislators['National']['House'][0]['phone'];
           break;
-        // Federal rep email
+          // Federal rep email
         case 'fed_rep_email':
           $value = $legislators['National']['House'][0]['email'];
           break;
 
-        // Governor fields
+          // Governor fields
         case 'governor':
           $value = $legislators['State']['Governor'][0]['name'];
           break;
@@ -623,7 +623,7 @@ class CapizConnect {
           break;
 
 
-        // Every other field. Just load the field from the object
+          // Every other field. Just load the field from the object
         default:
           if ($user->{$field_key}) {
             $value = $user->{$field_key};
@@ -632,7 +632,7 @@ class CapizConnect {
 
       // Save the value
       // If it's a profile field
-      if ((int)$target_field > 0) {
+      if ((int) $target_field > 0) {
         // Always overwrite, or overwrite when blank
         if (empty($business_rule) || $business_rule == 'always' || ($business_rule == 'blank' && empty($existing_profile_values[$target_field]))) {
           db_query('INSERT INTO {profile_values} (uid, fid, value) VALUES (%d, %d, "%s") ON DUPLICATE KEY UPDATE value = "%s"', $drupal_account->uid, $target_field, $value, $value);
@@ -682,7 +682,7 @@ class CapizConnect {
 
     // If requesting a second (or third or fourth or...) batch of actions,
     // start at some point in the result set.
-    $query_params['start'] = (int)$start;
+    $query_params['start'] = (int) $start;
     // If a batch size is given, only get that many items
     if ($batch_size > 0) {
       $query_params['end'] = $query_params['start'] + $batch_size;

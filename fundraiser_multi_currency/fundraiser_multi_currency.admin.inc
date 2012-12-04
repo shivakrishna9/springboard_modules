@@ -23,7 +23,10 @@ function fundraiser_multi_currency_list() {
   }
 
   if (empty($table_rows)) {
-    $table_rows[] = array(array('data' => t('No currencies have been created. Click the Add link above to add your first.'), 'colspan' => count($table_columns)));
+    $table_rows[] = array(array(
+        'data' => t('No currencies have been created. Click the Add link above to add your first.'),
+        'colspan' => count($table_columns),
+      ));
   }
 
   return theme('table', $table_columns, $table_rows);
@@ -81,7 +84,7 @@ function fundraiser_multi_currency_currency_form($values) {
   if ($values['currency_id'] > 0) {
     $form['currency_id'] = array(
       '#type' => 'value',
-      '#value' => $values['currency_id']
+      '#value' => $values['currency_id'],
     );
   }
 
@@ -124,7 +127,7 @@ function fundraiser_multi_currency_currency_form($values) {
  * Save a new or updated currency
  */
 function _fundraiser_multi_currency_save($values) {
-  $record = (object)$values;
+  $record = (object) $values;
   if ($record->currency_id > 0) {
     return drupal_write_record('fundraiser_currencies', $record, array('currency_id'));
   }

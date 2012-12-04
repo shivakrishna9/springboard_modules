@@ -35,19 +35,22 @@ function capwiz_settings_form(&$form_state) {
       '#title' => t('Capwiz ID'),
       '#default_value' => $client_id,
       '#required' => TRUE,
-      '#description' => t('http://www.capwiz.com/<strong>capwizid</strong>/home')),
+      '#description' => t('http://www.capwiz.com/<strong>capwizid</strong>/home'),
+    ),
     'authuser' => array(
       '#type' => 'textfield',
       '#title' => t('Username'),
       '#default_value' => $authuser,
       '#required' => TRUE,
-      '#description' => $credentials_helptext = t('For your API account (not your admin account)')),
+      '#description' => $credentials_helptext = t('For your API account (not your admin account)'),
+    ),
     'authpass' => array(
       '#type' => 'textfield',
       '#title' => t('Password'),
       '#default_value' => $authpass,
       '#required' => TRUE,
-      '#description' => $credentials_helptext),
+      '#description' => $credentials_helptext,
+    ),
   );
 
   // Field mapping
@@ -63,25 +66,26 @@ function capwiz_settings_form(&$form_state) {
   module_load_include('inc', 'capwiz', 'capwiz.api');
   foreach (array_merge(CapwizApi::getAccountFields(), $custom_fields) as $capwiz_field) {
     $form['mapping'][$capwiz_field] = array(
-
       "~$capwiz_field~label" => array(
-        '#value' => t(ucfirst(str_replace('_', ' ', $capwiz_field)))),
-
+        '#value' => t(ucfirst(str_replace('_', ' ', $capwiz_field))),
+      ),
       "~$capwiz_field~profile_fid" => array(
         '#type' => 'select',
         '#title' => '',
         '#default_value' => $mapping[$capwiz_field]['profile_fid'],
-        '#options' => array('' => '') + capwiz_get_profile_fields(TRUE)),
-
+        '#options' => array('' => '') + capwiz_get_profile_fields(TRUE),
+      ),
       "~$capwiz_field~overwrite_rule" => array(
         '#type' => 'select',
         '#title' => '',
         '#default_value' => $mapping[$capwiz_field]['overwrite_rule'],
         '#options' => array(
-          ''                      => '',
-          CAPWIZ_OVERWRITE_NEVER  => t('Never overwrite'),
-          CAPWIZ_OVERWRITE_BLANK  => t('Overwrite when blank'),
-          CAPWIZ_OVERWRITE_ALWAYS => t('Always overwrite'))),
+          '' => '',
+          CAPWIZ_OVERWRITE_NEVER => t('Never overwrite'),
+          CAPWIZ_OVERWRITE_BLANK => t('Overwrite when blank'),
+          CAPWIZ_OVERWRITE_ALWAYS => t('Always overwrite'),
+        ),
+      ),
     );
   }
 
@@ -105,7 +109,8 @@ function capwiz_settings_form(&$form_state) {
       '#title' => t('Email message for newly created Drupal users'),
       '#default_value' => variable_get('capwiz_email_message', 'register_none'), // Default to sending no email.
       '#description' => $email_message_description,
-      '#options' => array('' => t('[ System default ]')) + capwiz_get_email_message_options('name', 'title')),
+      '#options' => array('' => t('[ System default ]')) + capwiz_get_email_message_options('name', 'title'),
+    ),
   );
 
   $form['capwiz_syncing'] = array(
@@ -124,16 +129,19 @@ function capwiz_settings_form(&$form_state) {
         'pointless. Choose one method or the other.', array('!file' => '<em>' . drupal_get_path('module', 'capwiz') . '/</em>' .
         '<strong>capwiz.cron.php</strong>', '!symlink' => l('symlink', 'http://en.wikipedia.org/wiki/Symbolic_link',
         array('attributes' => array('target' => '_blank'))), '!crontab' => l('crontab', 'http://drupal.org/cron',
-        array('attributes' => array('target' => '_blank')))))),
+        array('attributes' => array('target' => '_blank'))))),
+    ),
     'custom_fields' => array(
       '#type' => 'textarea',
       '#title' => t('Custom fields'),
       '#default_value' => implode("\n", $custom_fields),
-      '#description' => t('Write one custom field name per line. Custom field names must be exact or they will not be able to sync up.')),
+      '#description' => t('Write one custom field name per line. Custom field names must be exact or they will not be able to sync up.'),
+    ),
     'reset_api_timestamp' => array(
       '#type' => 'submit',
       '#value' => t('Reset Capwiz API'),
-      '#suffix' => '<span class="description">&nbsp;&nbsp;' . t('Use when first syncing to pull all data from Capwiz.') . '</span>'),
+      '#suffix' => '<span class="description">&nbsp;&nbsp;' . t('Use when first syncing to pull all data from Capwiz.') . '</span>',
+    ),
   );
 
   $form['buttons']['submit'] = array(
@@ -154,8 +162,8 @@ function capwiz_settings_form_submit($form, &$form_state) {
 
   // Capwiz API account
   variable_set('capwiz_client_id', $form_values['client_id']);
-  variable_set('capwiz_authuser',  $form_values['authuser']);
-  variable_set('capwiz_authpass',  $form_values['authpass']);
+  variable_set('capwiz_authuser',   $form_values['authuser']);
+  variable_set('capwiz_authpass',   $form_values['authpass']);
 
   // Field mapping
   $mapping = array();

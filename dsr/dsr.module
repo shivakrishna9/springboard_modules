@@ -32,8 +32,8 @@ function dsr_menu() {
   $items['admin/reports/dsr'] = array(
     'title' => t('DSR'),
     'page callback' => 'dsr_page',
-      'access arguments' => array('view dsr reports'),
-    'type' => MENU_NORMAL_ITEM
+    'access arguments' => array('view dsr reports'),
+    'type' => MENU_NORMAL_ITEM,
   );
 
   $items['admin/reports/dsr/%dsr_start_date/%dsr_end_date'] = array(
@@ -41,7 +41,7 @@ function dsr_menu() {
     'page callback' => 'dsr_collect_stats',
     'page arguments' => array(3, 4),
     'access arguments' => array('view dsr reports'),
-    'type' => MENU_NORMAL_ITEM
+    'type' => MENU_NORMAL_ITEM,
   );
 
   $items['admin/reports/dsr/report/%/%/%'] = array(
@@ -59,7 +59,7 @@ function dsr_menu() {
   );
   // Page to send dsr email
   $items['dsr/reconciliation-summary/%dsr_start_date/%dsr_end_date'] = array(
-    'title'  => t('DSR reconciliation summary'),
+    'title' => t('DSR reconciliation summary'),
     'page callback' => 'dsr_reconciliation_summary',
     'page arguments' => array(2, 3),
     'access callback' => TRUE,
@@ -106,7 +106,7 @@ function dsr_theme() {
 function dsr_page() {
   $start_date = date('Y-m-d', strtotime('-1 day'));
   $end_date = date('Y-m-d', strtotime('-1 day'));
-  menu_set_active_item('admin/reports/dsr/'. $start_date . '/' . $end_date);
+  menu_set_active_item('admin/reports/dsr/' . $start_date . '/' . $end_date);
   return menu_execute_active_handler();
 }
 
@@ -116,7 +116,7 @@ function dsr_page() {
 function dsr_reconciliation_summary_page() {
   $start_date = date('Y-m-d', strtotime('-1 day'));
   $end_date = date('Y-m-d', strtotime('-1 day'));
-  menu_set_active_item('dsr/reconciliation-summary/'. $start_date . '/' . $end_date);
+  menu_set_active_item('dsr/reconciliation-summary/' . $start_date . '/' . $end_date);
   return menu_execute_active_handler();
 }
 
@@ -143,7 +143,7 @@ function dsr_reconciliation_summary($start_date, $end_date) {
  *   The ending date of the range.
  */
 function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
-  drupal_add_css(drupal_get_path('module', 'dsr') .'/dsr.css');
+  drupal_add_css(drupal_get_path('module', 'dsr') . '/dsr.css');
   $title = NULL;
   $posted_discrepancy = FALSE;
   $refuned_discrepancy = FALSE;
@@ -187,8 +187,8 @@ function dsr_collect_stats($start_date, $end_date, $show_form = TRUE) {
     }
   }
 
- // $output .= '<h2>' . $title . '</h2>';
- // $output .= theme_table(array('', t('Drupal'), t('Salesforce')), $rows, array('class' => 'system-status-report '));
+  // $output .= '<h2>' . $title . '</h2>';
+  // $output .= theme_table(array('', t('Drupal'), t('Salesforce')), $rows, array('class' => 'system-status-report '));
 
   $discrepancy_report_links = _dsr_discrepancy_links($discrepancies, $start_date, $end_date);
   $output .= theme_item_list($discrepancy_report_links);
@@ -461,11 +461,11 @@ function dsr_filter_form_submit($form, &$form_state) {
 
   // if a range is used, pass that. otherwise use a date range
   if ($range) {
-    $path = DSR_RECONCILIATION_PATH . '/'. $range;
+    $path = DSR_RECONCILIATION_PATH . '/' . $range;
     drupal_goto($path);
   }
   else {
-    $path = DSR_RECONCILIATION_PATH . '/'. $start_date . '/' . $end_date;
+    $path = DSR_RECONCILIATION_PATH . '/' . $start_date . '/' . $end_date;
     drupal_goto($path);
   }
 }
@@ -769,17 +769,17 @@ function _dsr_collect_stats($start_date = NULL, $end_date = NULL) {
 
   if ($donations_posted['total_amount'] != $orders_posted['total_amount'] ||
     $donations_posted['total_count'] != $orders_posted['total_count']) {
-      $posted_discrepancy = TRUE;
+    $posted_discrepancy = TRUE;
   }
 
   if ($donations_refunded['total_amount'] != $orders_refunded['total_amount'] ||
     $donations_refunded['total_count'] != $orders_refunded['total_count']) {
-      $refunded_discrepancy = TRUE;
+    $refunded_discrepancy = TRUE;
   }
 
   if ($donations_partially_refunded['total_amount'] != $orders_partially_refunded['total_amount'] ||
     $donations_partially_refunded['total_count'] != $orders_partially_refunded['total_count']) {
-      $partially_refunded_discrepancy = TRUE;
+    $partially_refunded_discrepancy = TRUE;
   }
 
   $stats = array(

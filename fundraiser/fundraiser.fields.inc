@@ -47,7 +47,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
     if ($show_other_amount) {
       // other amount
-        $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
+      $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
       $components[$component['id']] = $component['other_amount'];
     }
 
@@ -229,13 +229,13 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   $options = '';
   if ($include_all_countries) {
     foreach ($countries['#options'] as $key => $value) {
-      $options .= $key .'|'. $value . "\n";
+      $options .= $key . '|' . $value . "\n";
     }
   }
   else {
     foreach ($countries['#options'] as $key => $value) {
       if ($key == $us || $key == $ca) {
-        $options .= $key .'|'. $value . "\n";
+        $options .= $key . '|' . $value . "\n";
       }
     }
   }
@@ -252,7 +252,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
     'multiple' => 0,
     'aslist' => 'Y',
   );
-        $billing_country['value'] = variable_get('fundraiser_default_country', '');
+  $billing_country['value'] = variable_get('fundraiser_default_country', '');
   $billing_country['mandatory'] = 1;
   $billing_country['weight'] = 6;
   $billing_country['email'] = 1;
@@ -267,7 +267,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // build option string for states
   $options = '';
   foreach ($zones['#options'] as $key => $value) {
-    $options .= $key .'|'. $value . "\n";
+    $options .= $key . '|' . $value . "\n";
   }
 
   $billing_state = array();
@@ -293,7 +293,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // zip code
   $billing_zipcode = array();
   $billing_zipcode['nid'] = $nid;
-  $billing_zipcode['pid']= $pid;
+  $billing_zipcode['pid'] = $pid;
   $billing_zipcode['form_key'] = 'zip';
   $billing_zipcode['name'] = 'ZIP/Postal Code';
   $billing_zipcode['type'] = 'textfield';
@@ -358,7 +358,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // cvv
   $card_cvv = array();
   $card_cvv['nid'] = $nid;
-  $card_cvv['pid']= $pid;
+  $card_cvv['pid'] = $pid;
   $card_cvv['form_key'] = 'card_cvv';
   $card_cvv['name'] = 'Card Security Code';
   $card_cvv['type'] = 'textfield';
@@ -377,7 +377,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // recurring donation
   $recurs = array();
   $recurs['nid'] = $nid;
-  $recurs['pid']= $pid;
+  $recurs['pid'] = $pid;
   $recurs['form_key'] = 'recurs_monthly';
   $recurs['name'] = 'Recurring Payment';
   $recurs['type'] = 'select';

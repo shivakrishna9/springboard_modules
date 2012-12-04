@@ -29,7 +29,10 @@ function secure_prepopulate_admin_settings(&$form_state) {
     '#type' => 'radios',
     '#title' => t('Pre-populate precedence'),
     '#description' => t('Determines which set of values take precedence when the user is already logged in.'),
-    '#options' => array('url' => 'Encrypted URL values', 'drupal' => 'Drupal values'),
+    '#options' => array(
+      'url' => 'Encrypted URL values',
+      'drupal' => 'Drupal values',
+    ),
     '#default_value' => variable_get('secure_prepopulate_precedence', 'url'),
   );
 

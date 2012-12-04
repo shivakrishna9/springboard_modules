@@ -285,9 +285,9 @@ function springboard_menu() {
   // Callback for the additional details modals in the fundraiser report panel.
   $items['springboard_report_modal'] = array(
     'title' => t('Syncronize'),
-      'page callback' => '_springboard_fundraiser_report',
-      'access arguments' => array('administer springboard'),
-      'type' => MENU_CALLBACK,
+    'page callback' => '_springboard_fundraiser_report',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -315,13 +315,13 @@ function springboard_dashboard() {
 function springboard_welcome() {
   $form = array();
 
- /*
- if ($default_campaign) {
-    drupal_set_message(t('The %campaign campaign has been selected as default.'), array('%campaign' => $default_campaign));
-  }
-  else {
-    drupal_set_message(t('Springboard needs to know which Salesforce campaign to use as a default.'), array(), 'error') ;
-  }*/
+  /*
+   if ($default_campaign) {
+   drupal_set_message(t('The %campaign campaign has been selected as default.'), array('%campaign' => $default_campaign));
+   }
+   else {
+   drupal_set_message(t('Springboard needs to know which Salesforce campaign to use as a default.'), array(), 'error') ;
+   }*/
 
   // If the Salesforce Management API can connect to Salesforce we no longer need the salesforce configuration form.
   // TODO: clean this up. We shouldn't have to check SF connectivity every time this page is viewed.
@@ -382,7 +382,6 @@ function springboard_welcome() {
       '#type' => 'file',
       '#title' => t('WSDL File'),
       '#description' => t('The WSDL file tells your site what kinds of information are available in Salesforce. Insert instructions on obtaining a copy of your org WSDL here.'),
-
     );
     $form['submit'] = array(
       '#type' => 'submit',
@@ -447,7 +446,7 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
   variable_set('salesforce_management_api_token', $form_state['values']['salesforce_token']);
   // WSDL file handling stuffs
 
- // Find the dir the file should go into
+  // Find the dir the file should go into
   $dir = drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient/';
 
   // Upload file path
@@ -460,9 +459,9 @@ function springboard_welcome_salesforce_submit($form, $form_state) {
   if (file_check_directory($dir, NULL, 'salesforce_wsdl')) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
-         form_set_error($source, t('File upload error. Could not move uploaded file.'));
-         watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
-         return 0;
+      form_set_error($source, t('File upload error. Could not move uploaded file.'));
+      watchdog('file', 'Upload error. Could not move uploaded file to destination %destination.', array('%destination' => $dir));
+      return 0;
     }
     else {
       drupal_set_message('The WSDL file has been successfully uploaded');
@@ -550,7 +549,7 @@ function theme_springboard_fundraiser_performance() {
   while ($donation_form = db_fetch_object($results)) {
 
     $forms[$donation_form->nid]['internal_name'] = $donation_form->internal_name;
-    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') .'/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
+    $forms[$donation_form->nid]['internal_name'] .= ' ' . l('<img src="' . base_path() .  drupal_get_path('module', 'springboard') . '/icon-hidepane.png">', "springboard_report_modal/$donation_form->nid", array('attributes' => array('class' => 'ctools-use-modal'), 'html' => TRUE));
     if (module_exists('fundraiser')) {
       $access_results = db_fetch_object(db_query('SELECT * FROM {fundraiser_tracking} WHERE nid = %d', $donation_form->nid));
 
@@ -613,9 +612,9 @@ function theme_springboard_sf_status() {
     else {
       $output .= '<p>' . t('Batch info unavailable, please install Queue API.') . '</p>';
     }
-      // sync button
+    // sync button
 
-    $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>';//'<a href='" . $sync_path . "'></a></div>";
+    $output .= '<div id="springboard-sync"><span>Run Springboard Sync</span> ' . l('<img src="' . base_path() . drupal_get_path('module', 'springboard') . '/sync.png">', 'springboard_sync', array('attributes' => array('class' => 'anchor-class'), 'html' => TRUE)) . '</div>'; //'<a href='" . $sync_path . "'></a></div>";
     $output .= '</div>';
     return $output;
   }
@@ -706,7 +705,7 @@ function _springboard_syncronize($op = 'both') {
 }
 
 function _springboard_fundraiser_report() {
-// TODO: get a spec for how this is supposed to look and ditch this <br> nonsense. \
+  // TODO: get a spec for how this is supposed to look and ditch this <br> nonsense. \
   // Also, I think this entire approach is probably bogus and should be replaced with a .tpl
   // to preserve themer sanity.
   $nid = arg(1);

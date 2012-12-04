@@ -347,12 +347,12 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   $result = _get_pending_recurring_orders($master_order_id);
 
   // cancel all child orders that are still pen
-  $sql = "UPDATE {uc_orders} u inner join {fundraiser_recurring} f on f.order_id = u.order_id
-  SET u.order_status = 'canceled' where f.master_order_id = %d and u.order_status = 'pending_future_payment'";
-   db_query($sql, $master_order_id);
+  $sql = "UPDATE {uc_orders} u INNER JOIN {fundraiser_recurring} f ON f.order_id = u.order_id
+  SET u.order_status = 'canceled' WHERE f.master_order_id = %d AND u.order_status = 'pending_future_payment'";
+  db_query($sql, $master_order_id);
 
   // delete recurring information
-  $sql = "update {fundraiser_recurring} set gateway_resp = 'canceled', cancellation_reason = '%s' where master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')";
+  $sql = "UPDATE {fundraiser_recurring} SET gateway_resp = 'canceled', cancellation_reason = '%s' WHERE master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')";
   db_query($sql, $reason, $master_order_id);
 
   $order_ids = array();
@@ -457,5 +457,5 @@ function _fundraiser_get_payment_details($order_id) {
  */
 function _get_pending_recurring_orders($order_id) {
   // get the ids of the child orders
-   return db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')", $order_id);
+  return db_query("SELECT order_id FROM {fundraiser_recurring} WHERE master_order_id = %d AND (gateway_resp IS NULL OR gateway_resp = 'failed')", $order_id);
 }

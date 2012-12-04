@@ -136,7 +136,7 @@ function email_confirmation_schema() {
  * We want to be certain ca's default confirmation email is disabled on existing sites().
  */
 function email_confirmation_update_6001() {
-if (module_exists('ca')) {
+  if (module_exists('ca')) {
     $pid = db_result(db_query('SELECT 1 FROM {ca_predicates} WHERE pid = "uc_checkout_customer_notification"'));
     if ($pid) {
       db_query('UPDATE {ca_predicates} SET status = 0 WHERE pid = "uc_checkout_customer_notification"');

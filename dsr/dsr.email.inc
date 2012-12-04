@@ -16,10 +16,10 @@ function dsr_create_multipart_email($params) {
   $boundary = '----=_NextPart_' . md5(uniqid());
 
   $headers = array(
-   'MIME-Version' => '1.0',
-   'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
-   'Content-Transfer-Encoding' => '8Bit',
-   'X-Mailer' => 'Drupal',
+    'MIME-Version' => '1.0',
+    'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
+    'Content-Transfer-Encoding' => '8Bit',
+    'X-Mailer' => 'Drupal',
   );
 
   if (!empty($params['bcc_address'])) {

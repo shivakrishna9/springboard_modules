@@ -15,10 +15,10 @@ function queue_processor_mass_add() {
   }
 
   /* TODO: Future enhancement
-  if (module_exists('sf_webform')) {
-    $types['webform'] = 'Webform submissions';
-  }
-  */
+   if (module_exists('sf_webform')) {
+   $types['webform'] = 'Webform submissions';
+   }
+   */
 
   $form['warning'] = array(
     '#value' => t('Please be sure all required <strong>fieldmaps</strong> are configured correctly before using this utility'),
@@ -47,7 +47,7 @@ function queue_processor_mass_add_submit($form, &$form_state) {
   foreach ($form_state['values']['objects_to_add'] as $type) {
     if ($type) {
       switch ($type) {
-        case 'user' :
+        case 'user':
           db_query("INSERT INTO {sf_queue} (oid, sfid, type, fieldmap, action, created, locked)
                     SELECT uid, NULL, 'user', 0, 'upsert', unix_timestamp(), 0
                     FROM {users}
@@ -56,7 +56,7 @@ function queue_processor_mass_add_submit($form, &$form_state) {
           drupal_set_message('All users that haven\'t been exported to Salesforce have been added to the queue');
           break;
 
-        case 'webform' :
+        case 'webform':
           print 'mass add webforms<br/>';
           break;
       }
@@ -92,7 +92,10 @@ function queue_processor_admin_settings() {
     '#type' => 'select',
     '#title' => t('Unrecoverable error destination'),
     '#description' => t('Where items get moved to in the event of an unrecoverable error.'),
-    '#options' => array('queue' => 'Queue', 'retry queue' => 'Retry queue'),
+    '#options' => array(
+      'queue' => 'Queue',
+      'retry queue' => 'Retry queue',
+    ),
     '#default_value' => variable_get('queue_heap_destination', 'queue'),
   );
 
@@ -100,7 +103,12 @@ function queue_processor_admin_settings() {
     '#type' => 'select',
     '#title' => t('Retry queue delay'),
     '#description' => t('The number of hours to wait before an item is processed again.'),
-    '#options' => array(2 => '2 hours', 6 => '6 hours', 12 => '12 hours', 24 => '24 hours'),
+    '#options' => array(
+      2 => '2 hours',
+      6 => '6 hours',
+      12 => '12 hours',
+      24 => '24 hours',
+    ),
     '#default_value' => variable_get('queue_retry_delay', 24),
   );
 
@@ -183,7 +191,7 @@ function queue_processor_admin_settings() {
     '#title' => t('Discard batch entries above the following row limit'),
     '#default_value' => variable_get('queue_processor_sf_batch_row_limit', 10000),
     '#options' => drupal_map_assoc(array(5000, 10000, 25000, 50000, 75000, 100000)),
-    '#description' => t('The maximum number of rows to keep in the batch log.')
+    '#description' => t('The maximum number of rows to keep in the batch log.'),
   );
 
   $form['queue_processor_batch_limits']['queue_processor_sf_batch_error_row_limit'] = array(
@@ -191,19 +199,19 @@ function queue_processor_admin_settings() {
     '#title' => t('Discard batch error entries above the following row limit'),
     '#default_value' => variable_get('queue_processor_sf_batch_error_row_limit', 10000),
     '#options' => drupal_map_assoc(array(5000, 10000, 25000, 50000, 75000, 100000)),
-    '#description' => t('The maximum number of rows to keep in the batch error log.')
+    '#description' => t('The maximum number of rows to keep in the batch error log.'),
   );
 
   // Actions
   $form['submit'] = array(
-    '#type'   => 'submit',
-    '#value'  => 'Save configuration',
+    '#type' => 'submit',
+    '#value' => 'Save configuration',
     '#submit' => array('queue_processor_admin_settings_submit'),
   );
 
   $form['rest'] = array(
-    '#type'   => 'submit',
-    '#value'  => 'Reset to defaults',
+    '#type' => 'submit',
+    '#value' => 'Reset to defaults',
     '#submit' => array('queue_processor_admin_settings_reset'),
   );
 
@@ -242,11 +250,11 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
  * Submit action for settings page
  */
 function queue_processor_admin_settings_submit($form, &$form_state) {
-    $cron_enabled = variable_get('queue_processor_standalone_cron_enabled', 0);
-    if ($form_state['values']['queue_processor_standalone_cron_enabled'] != $cron_enabled) {
-      variable_set('queue_processor_standalone_cron_enabled', $form_state['values']['queue_processor_standalone_cron_enabled']);
-      menu_rebuild();
-    }
+  $cron_enabled = variable_get('queue_processor_standalone_cron_enabled', 0);
+  if ($form_state['values']['queue_processor_standalone_cron_enabled'] != $cron_enabled) {
+    variable_set('queue_processor_standalone_cron_enabled', $form_state['values']['queue_processor_standalone_cron_enabled']);
+    menu_rebuild();
+  }
   $ordered_types = $form_state['values']['type_processing_order'];
 
   // sort the types based on weights
@@ -318,7 +326,10 @@ function theme_queue_processor_admin_settings($form) {
     $row[] = drupal_render($tree[$key]['title']);
     $row[] = drupal_render($tree[$key]['weight']);
 
-    $rows[] = array('data' => $row, 'class' => 'draggable');
+    $rows[] = array(
+      'data' => $row,
+      'class' => 'draggable',
+    );
   }
 
   // Build the output

@@ -54,18 +54,18 @@ function gateway_switcher_update_form($form_state) {
   // obtain list of available gateways
   $gateways = module_invoke_all('fundraiser_gateway', 'select options', NULL);
   $gateways_in_use = gateway_switcher_gateways_in_use($gateways);
-    $form['gateway_from'] = array(
+  $form['gateway_from'] = array(
     '#type' => 'select',
     '#title' => t('Replace this gateway'),
     '#options' => $gateways_in_use,
-    '#description' => t('Choose the gateway that you want to replace globally. The number of donation forms assigned to the gateway is in parentheses.')
+    '#description' => t('Choose the gateway that you want to replace globally. The number of donation forms assigned to the gateway is in parentheses.'),
   );
 
   $form['gateway_to'] = array(
     '#type' => 'select',
     '#title' => t('With this gateway'),
     '#options' => $gateways,
-    '#description' => t('This is the gateway that will be used to replace the gateway choosen above.')
+    '#description' => t('This is the gateway that will be used to replace the gateway choosen above.'),
   );
 
   $form['submit'] = array(

@@ -63,14 +63,14 @@ function mailtron_mail_form($edit, $params = array()) {
     '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
     '#required' => TRUE,
   );
-   $form['headers']['from_mail'] = array(
+  $form['headers']['from_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('From mail'),
     '#description' => t(''),
     '#default_value' => isset($settings->from_mail) ? $settings->from_mail : '',
     '#required' => TRUE,
   );
-   $form['headers']['recipients'] = array(
+  $form['headers']['recipients'] = array(
     '#type' => 'textfield',
     '#title' => t('Recipient email address'),
     '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
@@ -140,7 +140,7 @@ function mailtron_mail_form_validate(&$form, $form_state) {
   if ($form_state['values']['recipients']) {
     $recipients = explode(',', $form_state['values']['recipients']);
     if (!count($recipients)) {
-     $recipients = array($recipients);
+      $recipients = array($recipients);
     }
     foreach ($recipients as $recipient) {
       if (!mailtron_validate_mail_input($recipient)) {
@@ -234,17 +234,17 @@ function mailtron_mail_load($params = array()) {
  */
 function mailtron_send_mail($mail, $params = array()) {
   // package settings for consumption by mimemail,
-    module_load_include('module', 'mimemail');
-    module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
-    if (isset($mail->recipient_callback) && $mail->recipient_callback) {
-      $function = $mail->recipient_callback;
-      $mail->recipients = $function($mail, $params);
-    }
+  module_load_include('module', 'mimemail');
+  module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
+  if (isset($mail->recipient_callback) && $mail->recipient_callback) {
+    $function = $mail->recipient_callback;
+    $mail->recipients = $function($mail, $params);
+  }
 
-    module_invoke_all('mimemail_send_mail_alter', $mail);
+  module_invoke_all('mimemail_send_mail_alter', $mail);
 
-    $settings = mailtron_convert_settings($mail);
-    mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
+  $settings = mailtron_convert_settings($mail);
+  mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
 
   // optionally call callback provided in $mail
   if (isset($mail->send_callback) && $mail->send_callback) {

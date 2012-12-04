@@ -423,26 +423,26 @@ function ogone_directlink_api_sha1_out_parameters() {
 function ogone_directlink_api_feedback_status($status) {
   switch ($status) {
     /** SUCCESS **/
-    case 4:  // Order stored
+    case 4: // Order stored
       $msg = t('Order stored');
       break;
-    case 5:  // Authorized
+    case 5: // Authorized
       $msg = t('Authorized');
       break;
-    case 8:  // Refund
+    case 8: // Refund
       $msg = t('Refund');
       break;
-    case 85:  // Refund processed by merchant
+    case 85: // Refund processed by merchant
       $msg = t('Refund processed by merchant');
       break;
-    case 9:  // Payment requested
+    case 9: // Payment requested
       $msg = t('Payment requested');
       break;
-    case 95:  // Payment processed by merchant
+    case 95: // Payment processed by merchant
       $msg = t('Payment processed by merchant');
       break;
 
-    /** PENDING **/
+      /** PENDING **/
     case 40: // Stored waiting external result
       $msg = t('Stored waiting external result');
       break;
@@ -480,14 +480,14 @@ function ogone_directlink_api_feedback_status($status) {
       $msg = t('Being processed');
       break;
 
-    /** FAILURE **/
-    case 0:  // Incomplete or invalid
+      /** FAILURE **/
+    case 0: // Incomplete or invalid
       $msg = t('Incomplete or invalid');
       break;
-    case 1:  // Cancelled by client
+    case 1: // Cancelled by client
       $msg = t('Cancelled by client');
       break;
-    case 2:  // Authorization refused
+    case 2: // Authorization refused
       $msg = t('Authorization refused');
       break;
     case 52: // Authorization not known
@@ -496,7 +496,7 @@ function ogone_directlink_api_feedback_status($status) {
     case 57: // Error in scheduled payments
       $msg = t('Error in scheduled payments');
       break;
-    case 6:  // Authorized and cancelled
+    case 6: // Authorized and cancelled
       $msg = t('Authorized and cancelled');
       break;
     case 61: // Author. deletion waiting
@@ -511,34 +511,34 @@ function ogone_directlink_api_feedback_status($status) {
     case 64: // Authorized and cancelled
       $msg = t('Authorized and cancelled');
       break;
-    case 7:  // Payment deleted
+    case 7: // Payment deleted
       $msg = t('Payment deleted');
       break;
-    case 71:  // Payment deletion pending
+    case 71: // Payment deletion pending
       $msg = t('Payment deletion pending');
       break;
-    case 72:  // Payment deletion uncertain
+    case 72: // Payment deletion uncertain
       $msg = t('Payment deletion uncertain');
       break;
-    case 73:  // Payment deletion refused
+    case 73: // Payment deletion refused
       $msg = t('Payment deletion refused');
       break;
-    case 74:  // Payment deleted
+    case 74: // Payment deleted
       $msg = t('Payment deleted');
       break;
-    case 75:  // Deletion processed by merchant
+    case 75: // Deletion processed by merchant
       $msg = t('Deletion processed by merchant');
       break;
-    case 83:  // Refund refused
+    case 83: // Refund refused
       $msg = t('Refund refused');
       break;
-    case 84:  // Payment declined by the acquirer
+    case 84: // Payment declined by the acquirer
       $msg = t('Payment declined by the acquirer');
       break;
-    case 93:  // Payment refused
+    case 93: // Payment refused
       $msg = t('Payment refused');
       break;
-    case 94:  // Refund declined by the acquirer
+    case 94: // Refund declined by the acquirer
       $msg = t('Refund declined by the acquirer');
       break;
   }

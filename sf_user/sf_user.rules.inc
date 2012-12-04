@@ -16,7 +16,7 @@ function sf_user_rules_action_info() {
       'arguments' => array(
         'oid' => array(
           'type' => 'value',
-          'label' => t('The id of the user to update')
+          'label' => t('The id of the user to update'),
         ),
       ),
       'eval input' => array('field', 'value'),
@@ -28,7 +28,10 @@ function sf_user_rules_action_info() {
  * Settings form for choosing which profile field to update.
  */
 function sf_user_update_profile_field_action_form($settings, &$form) {
-  $settings += array('field' => '', 'value' => '');
+  $settings += array(
+    'field' => '',
+    'value' => '',
+  );
 
   // get a list of all configured profile fields
   $profile_fields = _sf_user_profile_get_fields();

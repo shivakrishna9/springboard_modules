@@ -24,8 +24,8 @@ function fundraiser_goals_uninstall() {
  */
 function fundraiser_goals_schema() {
 
-   $schema = array();
-   $schema['fundraiser_goals'] = array(
+  $schema = array();
+  $schema['fundraiser_goals'] = array(
     'description' => t('Stores data for webform submission goals.'),
     'fields' => array(
       'pid' => array(

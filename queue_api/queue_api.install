@@ -74,7 +74,7 @@ function queue_api_schema() {
     ),
     'primary key' => array('id'),
     'unique keys' => array(
-      'id_UNIQUE' => array('id')
+      'id_UNIQUE' => array('id'),
     ),
   );
 
@@ -443,11 +443,11 @@ function queue_api_update_6101() {
 
   $updates = array();
 
-  db_change_field($updates, 'sf_queue',             'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
-  db_change_field($updates, 'sf_heap',              'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
-  db_change_field($updates, 'sf_batch_item',        'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
-  db_change_field($updates, 'sf_batch_error',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
-  db_change_field($updates, 'sf_retry_queue',       'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_queue',              'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_heap',               'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_item',         'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_batch_error',        'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_change_field($updates, 'sf_retry_queue',        'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
   db_change_field($updates, 'sf_permanent_failure', 'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
 
   return $updates;

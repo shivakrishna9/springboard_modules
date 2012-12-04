@@ -63,7 +63,7 @@ function sf_search_perm() {
  * @param $query
  *   The value to search for.
  */
-function sf_search_sosl($nid, $query) {   // get a data structure that maps Salesforce contact properties to form field keys
+function sf_search_sosl($nid, $query) { // get a data structure that maps Salesforce contact properties to form field keys
   if ($map = sf_search_create_form_map($nid)) {
     $donor_id_field = variable_get('sf_search_donor_id_field', NULL);
     $sosl = _sf_search_create_search_query($query, $map);
@@ -329,7 +329,7 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
      * display_columns: the columns that should display in search results
      * donor_id_field: the field that represents the unique id of the donor
      * nid: the node of the form we're altering
-    */
+     */
     $component_hierarchy = array();
     foreach ($form['#node']->webform['components'] as $cid => $component) {
       $component_path_array = fundraiser_walk_component_hierarchy($form['#node']->nid, $cid);
@@ -371,7 +371,10 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
     );
     $form['sf_search']['sf_search_type'] = array(
       '#type' => 'radios',
-      '#options' => array('lookup' => 'Donor Id', 'search' => 'Search'),
+      '#options' => array(
+        'lookup' => 'Donor Id',
+        'search' => 'Search',
+      ),
       '#default_value' => 'lookup',
     );
     $form['sf_search']['sf_search_query'] = array(

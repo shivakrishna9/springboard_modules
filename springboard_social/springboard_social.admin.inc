@@ -88,20 +88,23 @@ function springboard_social_admin_settings() {
     '#type' => 'radios',
     '#title' => t('Annotation'),
     '#description' => t('If annotation is enabled, all +1 buttons will also display the number of times this page has been shared.'),
-    '#options' => array('none' => t('None'), 'bubble' => t('Bubble')),
+    '#options' => array(
+      'none' => t('None'),
+      'bubble' => t('Bubble'),
+    ),
     '#default_value' => variable_get('springboard_social_gplus_annotation', 'none'),
   );
   $form['google_plus_settings']['springboard_social_gplus_image_url'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Image URL'),
-     '#description' => t(''),
-     '#default_value' => variable_get('springboard_social_gplus_image_url', ''),
-   );
-   $form['google_plus_settings']['springboard_social_gplus_description'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Description'),
-     '#description' => t(''),
-     '#default_value' => variable_get('springboard_social_gplus_description'),
-   );
+    '#type' => 'textfield',
+    '#title' => t('Image URL'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_social_gplus_image_url', ''),
+  );
+  $form['google_plus_settings']['springboard_social_gplus_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Description'),
+    '#description' => t(''),
+    '#default_value' => variable_get('springboard_social_gplus_description'),
+  );
   return system_settings_form($form);
 }

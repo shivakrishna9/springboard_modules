@@ -19,7 +19,7 @@ class CapwizApi {
 
   private static $_uninitialized = TRUE;
 
-  private function __construct() {}
+  private function __construct() { }
 
   /**
    * Initialize the SoapClient and caching mechanism.
@@ -35,8 +35,8 @@ class CapwizApi {
 
         self::$_authenticationArguments = array(
           'client_id' => variable_get('capwiz_client_id', ''),
-          'authuser'  => variable_get('capwiz_authuser',  ''),
-          'authpass'  => variable_get('capwiz_authpass',  ''),
+          'authuser' => variable_get('capwiz_authuser', ''),
+          'authpass' => variable_get('capwiz_authpass', ''),
         );
 
         $cache  = cache_get('capwiz');
@@ -111,9 +111,9 @@ class CapwizApi {
           $function_arguments += array('throttle' => 'true');
         }
 
-        $function_arguments += (array)$arguments;
+        $function_arguments += (array) $arguments;
 
-        $response = self::$_soapClient->$function((object)$function_arguments);
+        $response = self::$_soapClient->$function((object) $function_arguments);
 
         if (!empty($response)) {
           self::_logCapwizMessage($response);
@@ -205,7 +205,7 @@ class CapwizApi {
    */
   public static function fetchAccounts($get_all_accounts = FALSE) {
 
-    if ((bool)$get_all_accounts) {
+    if ((bool) $get_all_accounts) {
       self::resetApiTimestamp();
     }
 

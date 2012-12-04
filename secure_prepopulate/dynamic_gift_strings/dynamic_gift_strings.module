@@ -13,7 +13,7 @@ function dynamic_gift_strings_init() {
   // check for the presence of the af query string parameter and we're on a node page
   if (isset($_GET['gs']) && arg(0) == 'node' && is_numeric(arg(1))) {
     $gs = $_GET['gs'];
-    $nid = arg(1) ;
+    $nid = arg(1);
 
     // see if the gift string is expired
     if (!secure_prepopulate_is_expired($gs)) {
@@ -49,7 +49,7 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
 
         // parse out the form components so we can find the 'amount' field
         $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
-        $amount_field =& fundraiser_find_field($form, $component_hierarchy['amount']);
+        $amount_field = & fundraiser_find_field($form, $component_hierarchy['amount']);
 
         // make sure we have the field and a good array of amounts
         if ($amount_field && $amounts) {
@@ -164,10 +164,10 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
       $all_valid = FALSE;
     }
     // if the number has a decimal, retain it. otherwise format without decimals
-    if (is_float($amount+1)) { // implicit cast hack
+    if (is_float($amount + 1)) { // implicit cast hack
       $formatted_amounts[$amount] = '$' . number_format($amount, 2, '.', ',');
     }
-    elseif (is_integer($amount+1)) {
+    elseif (is_integer($amount + 1)) {
       $formatted_amounts[$amount] = '$' . number_format($amount, 0, '', ',');
     }
   }
