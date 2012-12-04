@@ -267,7 +267,7 @@ function _sf_search_get_user_fieldmap() {
 function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
 
   // operate in offline mode only and with salesforce working only.
-  if (module_exists('salesforce_management_api') && variable_get('salesforce_management_api_wsdl_updated', '')) {
+  if (module_exists('salesforce_management_api')) {
     $sf = salesforce_management_api_connect();
   }
   if (is_object($sf)) {
