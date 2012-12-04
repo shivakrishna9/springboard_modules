@@ -1083,6 +1083,7 @@ function salesforce_management_api_get_campaigns() {
       }
     }
     // We like to keep the campaign names alphabetical for all those juicy select boxes that use this data.
+    $temp_campaigns = array();
     foreach ($campaigns as $campaign_id => $campaign_name) {
       $temp_campaigns[$campaign_id] = strtolower($campaign_name);
     }
