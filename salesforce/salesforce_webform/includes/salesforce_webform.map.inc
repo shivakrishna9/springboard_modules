@@ -36,6 +36,30 @@ function salesforce_webform_map_page($node) {
  * @D6TOD7: Previously was sf_webform_map_form()
  */
 function salesforce_webform_map_form($form, &$form_state, $node) {
+  // Fail if there are no components attached to the webform
+  if (empty($node->webform['components'])) {
+    return array(
+      'no_components' => array(
+        '#markup' => t('You must first add components to your webform before proceeding with mapping to Salesforce objects.'),
+        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-components"><p>',
+        '#suffix' => '</p></div>',
+      ),
+    );
+  }
+
+  // Fail if we can't connect to Salesforce
+  $sfapi = salesforce_get_api();
+  if (!$sfapi->isAuthorized()) {
+    return array(
+      'no_sfapi' => array(
+        '#markup' => t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))),
+        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-salesforce"><p>',
+        '#suffix' => '</p></div>',
+      ),
+    );
+  }
+
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
