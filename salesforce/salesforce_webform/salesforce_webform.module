@@ -37,9 +37,10 @@ function salesforce_webform_menu() {
   // %webform_menu returns $node if $node is a webform
   $items['node/%webform_menu/webform/salesforce-map'] = array(
     'title' => 'Salesforce map',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_webform_map_form', 1),
-    'access callback' => TRUE,
+    'page callback' => 'salesforce_webform_map_page',
+    'page arguments' => array(1),
+    'access callback' => 'salesforce_webform_map_page_access',
+    'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_webform.map.inc',
   );
@@ -48,5 +49,39 @@ function salesforce_webform_menu() {
 }
 
 /**
+ * Implements hook_permission().
+ */
+function salesforce_webform_permission() {
+  return array(
+    'map salesforce to webform' => array(
+      'title' => t('Map Salesforce objects to webforms'),
+      'description' => t('Configure the mapping of Salesforce objects with
+        webforms so submissions can sync with Salesforce.'),
+    ),
+  );
+}
+
+/**
  * @} core_drupal_hooks
  */
+
+
+/**
+ * Access callback to reach the mapping page
+ *
+ * All by its little old self because menu doesn't load the include file until
+ * after the access check.
+ *
+ * @D6TOD7: Previoiusly was sf_webform_map_access()
+ */
+function salesforce_webform_map_page_access($node) {
+  if (
+       $node !== FALSE // %webform_menu returns FALSE if not valid
+       // @TODO: Ensure that 'donation_form' is still accurate in the D6TOD7 port
+       && $node->type != 'dontation_form'
+       && user_access('map salesforce to webform')
+     ) {
+    return TRUE;
+   }
+  return FALSE;
+}

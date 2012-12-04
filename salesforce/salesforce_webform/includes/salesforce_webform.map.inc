@@ -5,6 +5,25 @@
  * Configures the mapping of Salesforce objects to webforms
  */
 
+/**
+ * Page callback to render the mapping page
+ *
+ * @D6TOD7: This step was skipped previously
+ */
+function salesforce_webform_map_page($node) {
+  $build = array();
+  $build['content'] = array(
+    'page_description' => array(
+      '#type' => 'markup',
+      '#markup' => t('When users submit this webform, map which values of the webform\'s componants should be sent to your Salesforce organization.'),
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+    ),
+    'salesforce_webform_map_form' => drupal_get_form('salesforce_webform_map_form', $node),
+  );
+  return $build;
+}
+
 
 /**
  * @defgroup salesforce_webform_map_form
