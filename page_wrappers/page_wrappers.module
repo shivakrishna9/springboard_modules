@@ -335,6 +335,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
         '#title' => t('Page wrapper settings'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
+        "#group" => 'additional_settings',
       );
 
       $form['wrapper']['wrapper'] = array(
