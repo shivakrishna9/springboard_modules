@@ -1166,7 +1166,6 @@ function fundraiser_form_alter(&$form, $form_state, $form_id) {
         foreach ($node->gateway_manager['payment_methods'] as $payment_method) {
           // Add this method to the options
           $gateway_instance = gateway_manager_method_load($payment_method->method, $payment_method->gateway_instance);
-          dpm($payment_method);
           if (function_exists($gateway_instance['render_callback'])) {
             $payment_fields_field[$payment_method->method] = array(
               '#type' => 'fieldset',
