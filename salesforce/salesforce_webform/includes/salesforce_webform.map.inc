@@ -15,7 +15,7 @@ function salesforce_webform_map_page($node) {
   $build['content'] = array(
     'page_description' => array(
       '#type' => 'markup',
-      '#markup' => t('When users submit this webform, map which values of the webform\'s componants should be sent to your Salesforce organization.'),
+      '#markup' => t('When users submit this webform, map which values of the webform\'s components should be sent to your Salesforce organization.'),
       '#prefix' => '<p>',
       '#suffix' => '</p>',
     ),
