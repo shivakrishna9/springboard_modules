@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_perm()
+ * Implementation of hook_perm().
  */
 function webform_addtoall_perm() {
   return array('add components to any webform type');
@@ -42,7 +42,7 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Submit handler added by webform_addtoall_form_alter().
  */
- function webform_addtoall_form_submit($form, &$form_state) {
+function webform_addtoall_form_submit($form, &$form_state) {
   // Grab the selected types to clone to and process each one.
   foreach ($form_state['values']['addtoall']['webform_types'] as $type) {
     if ($type) {
@@ -56,7 +56,7 @@ function webform_addtoall_form_alter(&$form, &$form_state, $form_id) {
       webform_addtoall_component_clone($nids, $form_state['values']);
     }
   }
- }
+}
 
  /**
   * Clones the component to mulitple nodes after checking for duplicate component.

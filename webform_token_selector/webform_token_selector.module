@@ -99,7 +99,7 @@ function webform_token_selector_token_list($nid) {
   if ($node) {
     $all_tokens['webform'] = array();
 
-    foreach($node->webform['components'] as $component) {
+    foreach ($node->webform['components'] as $component) {
       if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
         $parents = webform_component_parent_keys($node, $component);
         if ($component['name'] == 'Please select your tax-deductible gift amount below') {

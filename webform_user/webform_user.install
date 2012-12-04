@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ */
+
 function webform_user_install() {
   drupal_install_schema('webform_user');
 }
@@ -186,7 +190,7 @@ function webform_user_update_6102() {
 function webform_user_update_6103() {
   $updates = array();
 
-  $sql = "update webform_component SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
+  $sql = "UPDATE {webform_component} SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
   $updates[] = update_sql($sql);
 
   return $updates;

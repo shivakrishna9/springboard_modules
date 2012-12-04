@@ -2,11 +2,9 @@
 
 define('DSR_RECONCILIATION_PATH', 'admin/reports/dsr');
 
-/*
- -----------------------------------------
- Query constants (select & aggregate)
- -----------------------------------------
-*/
+/**
+ * Query constants (select & aggregate)
+ */
 
 // Selects (Drupal)
 define('DSR_POSTED_SELECT_D', "SELECT o.order_id, o.order_total FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'payment_received' AND pr.comment = 'Payment processed by the fundraiser module.'");
@@ -19,7 +17,7 @@ define('DSR_REFUNDED_AGGREGATE_D', "SELECT COALESCE(SUM(pr.amount), 0) as total_
 define('DSR_PARTIALLY_REFUNDED_AGGREGATE_D', "SELECT COALESCE(SUM(pr.amount), 0) as total_amount, COUNT(pr.amount) as total_count FROM {uc_orders} o INNER JOIN {uc_payment_receipts} pr ON pr.order_id = o.order_id WHERE from_unixtime(pr.received) between '%s' and '%s' AND o.order_status = 'partially_refunded' AND pr.comment = 'Refund processed by the fundraiser module.'");
 
 /**
- * Implmentation of hook_menu().
+ * Implementation of hook_menu().
  */
 function dsr_menu() {
   $items['admin/settings/dsr'] = array(
@@ -92,7 +90,7 @@ function dsr_perm() {
 function dsr_theme() {
   return array(
     'dsr_discrepancy_report' => array(
-      'arguments' => array('orders' => null, 'status' => 'posted', 'start_date' => NULL, 'end_date' => NULL),
+      'arguments' => array('orders' => NULL, 'status' => 'posted', 'start_date' => NULL, 'end_date' => NULL),
       'file' => 'dsr.reports.inc',
     ),
     'dsr_report_table' => array(
@@ -125,7 +123,7 @@ function dsr_reconciliation_summary_page() {
 /**
  * Generates the reconciliation summary report for mailing.
  *
-* @param $start_date
+ * @param $start_date
  *   The starting date of the range.
  * @param $end_date
  *   The ending date of the range.

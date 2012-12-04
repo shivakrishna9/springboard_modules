@@ -23,7 +23,7 @@ function webform_user_clone($node) {
     $node->path = NULL;
     $node->files = array();
     $node->title = t('Clone of !title', array('!title' => $node->title));
-    $node->is_being_cloned = true;
+    $node->is_being_cloned = TRUE;
 
     if (variable_get('clone_reset_'. $node->type, FALSE)) {
       $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
@@ -73,7 +73,7 @@ function webform_user_settings_form() {
 
   // make a friendly list of options
   $options = array();
-  foreach($webform_enabled_types as $type) {
+  foreach ($webform_enabled_types as $type) {
     $options[$type] = $node_types[$type]->name;
   }
 
@@ -98,7 +98,7 @@ function webform_user_settings_form_submit($form, &$form_state) {
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   $webform_user_node_types = $form_state['values']['webform_user_node_types'];
 
-  foreach($webform_user_node_types as $type => $enabled) {
+  foreach ($webform_user_node_types as $type => $enabled) {
     if ($enabled && !in_array($type, $webform_node_types_primary)) {
       $webform_node_types_primary[] = $type;
     }

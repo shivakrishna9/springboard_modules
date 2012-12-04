@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
  /*
   Relevant available properties:
   $goal->pid - parent id (typically node id) of the goal parent.

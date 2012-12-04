@@ -1,7 +1,12 @@
+<?php
+/**
+ * @file
+ */
+?>
 <div id="orders">
  <?php print $orders; ?>
 </div>
-<?php if(!$cancelled) :?>
+<?php if (!$cancelled) :?>
 
 <div id="payment-info">
   <h2>Recurring Payment Info</h2>
@@ -45,3 +50,4 @@
 <div>The selected has been cancelled.</div>
 
 <?php endif; ?>
+ 

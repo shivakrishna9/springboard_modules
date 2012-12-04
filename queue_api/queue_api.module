@@ -19,13 +19,13 @@ function sf_queue_insert($oid, $type, $action) {
   /**
    * @var array
    * $queue_rules[existing][new] = decision
-   * null means keep neither request in queue
+   * NULL means keep neither request in queue
    */
   $queue_rules = array(
     'create' => array(
       'update' => 'create',
       'upsert' => 'upsert',
-      'delete' => null,
+      'delete' => NULL,
     ),
     'update' => array(
       'create' => 'update',
@@ -35,7 +35,7 @@ function sf_queue_insert($oid, $type, $action) {
     'upsert' => array(
       'create' => 'upsert',
       'update' => 'upsert',
-      'delete' => null,
+      'delete' => NULL,
     ),
     'delete' => array(
       'create' => 'delete',
@@ -44,7 +44,7 @@ function sf_queue_insert($oid, $type, $action) {
     ),
   );
 
-  $valid = true;
+  $valid = TRUE;
 
   // make sure object is not already in the queue
   if ($pending = _in_queue($oid, $type)) {
@@ -52,21 +52,21 @@ function sf_queue_insert($oid, $type, $action) {
 
     // ignore duplicate actions
     if ($pending == $action) {
-      $valid = false;
+      $valid = FALSE;
       watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring duplicate request'), $watchdog, WATCHDOG_INFO);
     }
     else {
       if ($queue_rules[$pending][$action] == $pending) {
-        $valid = false;
+        $valid = FALSE;
         watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, ignoring new !action'), $watchdog, WATCHDOG_INFO);
       }
       elseif ($queue_rules[$pending][$action] == $action) {
         sf_queue_delete($oid, $type);
         watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, replacing existing !pending'), $watchdog, WATCHDOG_INFO);
       }
-      elseif ($queue_rules[$pending][$action] == null) {
+      elseif ($queue_rules[$pending][$action] == NULL) {
         sf_queue_delete($oid, $type);
-        $valid = false;
+        $valid = FALSE;
         watchdog('salesforce queue api', t('!action requested for !type #!oid pending !pending, removing from queue'), $watchdog, WATCHDOG_INFO);
       }
     }
@@ -131,7 +131,7 @@ function sf_retry_queue_delete($oid, $type) {
 function _in_queue($oid, $type) {
   $result = db_query("SELECT action FROM {sf_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
   if (!$data = db_fetch_array($result)) {
-    return false;
+    return FALSE;
   }
 
   return $data['action'];
@@ -143,10 +143,10 @@ function _in_queue($oid, $type) {
 function _in_retry_queue($oid, $type) {
   $result = db_query("SELECT id FROM {sf_retry_queue} WHERE oid = '%s' AND type = '%s'", $oid, $type);
   if (!$data = db_fetch_array($result)) {
-    return false;
+    return FALSE;
   }
 
-  return true;
+  return TRUE;
 }
 
 /**
@@ -155,10 +155,10 @@ function _in_retry_queue($oid, $type) {
 function _in_heap($oid, $type) {
   $result = db_query("SELECT id FROM {sf_heap} WHERE oid = '%s' AND type = '%s'", $oid, $type);
   if (!$data = db_fetch_array($result)) {
-    return false;
+    return FALSE;
   }
 
-  return true;
+  return TRUE;
 }
 
 /**

@@ -17,7 +17,7 @@ function springboard_api_help($section) {
  */
 function springboard_api_perm() {
   return array(
-    'administer springboard api','view webform index', 'retrieve webform', 'retrieve submission', 'create submission'
+    'administer springboard api', 'view webform index', 'retrieve webform', 'retrieve submission', 'create submission'
   );
 }
 

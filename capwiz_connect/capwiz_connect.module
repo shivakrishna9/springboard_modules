@@ -12,24 +12,23 @@
  * - Method to clear out old user and action data from local storage, to save space. Haven't discussed the details around this yet
  */
 
- /**
-  * Implementation of hook_help().
-  */
- function capwiz_connect_help($path, $arg) {
-   switch ($path) {
-     case 'admin/help#capwiz_connect':
-       return '<p>'. t('Integrates with the Capwiz Connect API to sync users and actions. Users are saved as Drupal users, and can then be synced to Salesforce using the SF User Integration module. Actions are saved to the DB and synced directly to Salesforce.') .'</p>';
-
-     case 'admin/settings/capwiz_connect/accounts/%/user_mapping':
-       return '<p>' . t('Configure Capwiz-to-Drupal mapping for users. Capwiz user accounts are saved as Drupal users. To add more fields to Drupal user accounts, use the Profile module.') . '</p>';
-
-     case 'admin/settings/capwiz_connect/accounts/%/action_mapping':
-       return '<p>' . t('Configure Capwiz-to-Salesforce mapping for actions. Capwiz actions are saved to the database, then synced to Salesforce on the next cron maintenance run.') . '</p>';
-   }
- }
-
-
-
+/**
+ * Implementation of hook_help().
+ */
+function capwiz_connect_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#capwiz_connect':
+      return '<p>'. t('Integrates with the Capwiz Connect API to sync users and actions. ' .
+      'Users are saved as Drupal users, and can then be synced to Salesforce using the SF User ' .
+      'Integration module. Actions are saved to the DB and synced directly to Salesforce.') .'</p>';
+    case 'admin/settings/capwiz_connect/accounts/%/user_mapping':
+      return '<p>' . t('Configure Capwiz-to-Drupal mapping for users. Capwiz user accounts are ' .
+      'saved as Drupal users. To add more fields to Drupal user accounts, use the Profile module.') . '</p>';
+    case 'admin/settings/capwiz_connect/accounts/%/action_mapping':
+      return '<p>' . t('Configure Capwiz-to-Salesforce mapping for actions. Capwiz actions are ' .
+      'saved to the database, then synced to Salesforce on the next cron maintenance run.') . '</p>';
+  }
+}
 
 /**
  * Implements hook_menu().
@@ -80,7 +79,6 @@ function capwiz_connect_menu() {
     'weight' => 2,
   );
 
-
   $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account'] = array(
     'title callback' => '_capwiz_connect_overview_title',
     'title arguments' => array(4),
@@ -96,7 +94,6 @@ function capwiz_connect_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-
 
   $items['admin/settings/capwiz_connect/accounts/%capwiz_connect_account/edit'] = array(
     'title' => 'Edit',
@@ -143,7 +140,6 @@ function capwiz_connect_menu() {
     'weight' => 5,
   );
 
-
   // Expose a callback for the cron run if it's standalone
   if (variable_get('capwiz_connect_standalone_cron_enabled', FALSE)) {
     $items['capwiz_connect_cron'] = array(
@@ -152,7 +148,6 @@ function capwiz_connect_menu() {
       'type' => MENU_CALLBACK,
     );
   }
-
 
   // AJAX callback to change the SF object type on user or account mapping
   $items['js/capwiz_connect/salesforce-object-fields'] = array(
@@ -181,14 +176,12 @@ function capwiz_connect_menu() {
   return $items;
 }
 
-
 /**
  * Implements hook_perm().
  */
 function capwiz_connect_perm() {
   return array('administer capwiz_connect');
 }
-
 
 /**
  * Implements hook_theme().
@@ -218,7 +211,7 @@ function capwiz_connect_legislative_update_start() {
 
     // use curl to request the service endpoint
     $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(sprintf('Authorization: OAuth %s', $session_id)));
     curl_setopt($ch, CURLOPT_HEADER, 0);
 
@@ -260,7 +253,7 @@ function capwiz_connect_account_load($id, $refresh_cache = FALSE) {
     // Load existing mapping for users and actions for this Capwiz account
     foreach (array('user', 'action') as $mapping_type) {
       $drupal = 'capwiz_connect:' . $id . ':' . $mapping_type;
-      $mapping_detail = db_fetch_object(db_query("select salesforce, fields, business, dedupe_key, recordtype_id from {salesforce_management_field_map} where drupal = '%s'", $drupal));
+      $mapping_detail = db_fetch_object(db_query("SELECT salesforce, fields, business, dedupe_key, recordtype_id FROM {salesforce_management_field_map} WHERE drupal = '%s'", $drupal));
       if ($mapping_detail) {
         // Save details in $account_detail->mapping_user or $account_detail->mapping_action
         $field = 'mapping_' . $mapping_type;
@@ -300,14 +293,12 @@ function capwiz_connect_all_accounts($refresh_cache = FALSE) {
   return $all_accounts;
 }
 
-
 /**
  * Title for overview tab when viewing an account
  */
 function _capwiz_connect_overview_title($account) {
   return $account->display_name;
 }
-
 
 /**
  * Get an instance of CapizConnect
@@ -325,9 +316,6 @@ function capwiz_connect($account_id) {
   }
   return NULL;
 }
-
-
-
 
 /**
  * Implementation of hook_cron().
@@ -348,7 +336,6 @@ function capwiz_connect_cron() {
   }
   capwiz_connect_cron_process();
 }
-
 
 /**
  * Do the actual cron run
@@ -376,9 +363,6 @@ function capwiz_connect_cron_process() {
   }
   return '';
 }
-
-
-
 
 /**
  * Implementation of hook_queue_preprocess_batch_alter().
@@ -465,7 +449,6 @@ function _capwiz_connect_sf_load_action_details($oid) {
     $salesforce_map['fields']['RecordTypeId'] = $map_details['recordtype_id'];
   }
 
-
   // Loop over the mapped fields, and for each that has value on this object, set
   // it in the mapped fields. For any fields that have multiple values, they
   // should be separated with semi-colons (though this is not in use here yet).
@@ -516,8 +499,6 @@ function _capwiz_connect_sf_load_action_details($oid) {
   return $salesforce_map;
 }
 
-
-
 /**
  * Implementation of hook_queue_fieldmap_assignment_alter().
  */
@@ -547,8 +528,6 @@ function capwiz_connect_queue_fieldmap_assignment_alter(&$data) {
     }
   }
 }
-
-
 
 /**
  * Load a single Capwiz action from the locally stored data

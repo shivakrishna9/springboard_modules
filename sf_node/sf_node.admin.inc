@@ -38,7 +38,7 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
     if (count($options) == 0) {
       // Display a message appropriate to the user's permissions.
       if (user_access('administer salesforce management')) {
-        $form['export']['#description'] = t('To export this node you must first <a href="!url">add a fieldmap</a> and then set <a href="!dedupeurl">dedupe key</a> that exports @type nodes.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS .'/add'), '@type' => $node->type,'!dedupeurl' => url(SALESFORCE_PATH_FIELDMAPS .'')));
+        $form['export']['#description'] = t('To export this node you must first <a href="!url">add a fieldmap</a> and then set <a href="!dedupeurl">dedupe key</a> that exports @type nodes.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS .'/add'), '@type' => $node->type, '!dedupeurl' => url(SALESFORCE_PATH_FIELDMAPS .'')));
       }
       else {
         $form['export']['#description'] = t('Please contact a site administrator to add a fieldmap that exports @type nodes.', array('@type' => $node->type));

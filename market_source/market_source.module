@@ -247,7 +247,7 @@ function _market_source_build_qs_keys() {
     $default_field_settings = variable_get('market_source_default_fields', array());
     $default_field_settings['ms'] = isset($default_field_settings['market_source']) ? $default_field_settings['market_source'] : array();
     $default_field_settings['cid'] = isset($default_field_settings['campaign']) ? $default_field_settings['campaign'] : array();
-    foreach($qs_keys as $key => $values) {
+    foreach ($qs_keys as $key => $values) {
       $qs_keys[$key]['persistence'] = isset($default_field_settings[$key]['persistence']) ? $default_field_settings[$key]['persistence'] : TRUE;
     }
 

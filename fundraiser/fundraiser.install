@@ -1,5 +1,9 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implementation of hook_install().
  */
 function fundraiser_install() {
@@ -383,7 +387,7 @@ function fundraiser_schema() {
     'indexes' => array('master_order_id' => array('master_order_id')),
   );
 
-  $schema['fundraiser_component_map'] = array(
+  $schema['{fundraiser_component_map}'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
       'nid' => array(
@@ -846,11 +850,11 @@ function fundraiser_update_6300() {
   }
 
   //update the mail map
-  $ret[] = update_sql("UPDATE fundraiser_component_map set map_id = 'mail' WHERE map_id = 'email'");
+  $ret[] = update_sql("UPDATE {fundraiser_component_map} set map_id = 'mail' WHERE map_id = 'email'");
   //update the zip code map
-  $ret[] = update_sql("UPDATE fundraiser_component_map set map_id = 'profile_zip' WHERE map_id = 'profile_postal_code'");
+  $ret[] = update_sql("UPDATE {fundraiser_component_map} set map_id = 'profile_zip' WHERE map_id = 'profile_postal_code'");
   //update the zip code profile field name
-  $ret[] = update_sql("UPDATE profile_fields set name = 'profile_zip' WHERE name = 'profile_postal_code'");
+  $ret[] = update_sql("UPDATE {profile_fields} set name = 'profile_zip' WHERE name = 'profile_postal_code'");
 
   //Update the webform recurs_monthly field select values
   $result = db_query("SELECT * FROM {webform_component} WHERE form_key = 'recurs_monthly'");
@@ -1000,7 +1004,7 @@ function fundraiser_update_6306() {
 
   // loop over every donation form and change the field key for each component
   while ($data = db_fetch_object($result)) {
-    foreach($changes as $old_key => $new_key) {
+    foreach ($changes as $old_key => $new_key) {
       db_query("UPDATE {webform_component} SET form_key = '%s' WHERE form_key = '%s' AND nid = %d", $new_key, $old_key, $data->nid);
     }
   }

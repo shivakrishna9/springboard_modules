@@ -1,12 +1,11 @@
 <?php
 
 /**
- * @file capwiz.module
+ * @file
  * Integrate with Capwiz service.
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
  */
-
 
 /**
  * Define overwrite rules.
@@ -19,20 +18,12 @@ define('CAPWIZ_OVERWRITE_NEVER',  'never'); // Only set the value when adding a 
 define('CAPWIZ_OVERWRITE_BLANK',  'blank'); // Overwrite only if blank
 define('CAPWIZ_OVERWRITE_ALWAYS', 'always');
 
-
-/*********\
-** Hooks **
-\*********/
-
-
 /**
  * Implement hook_perm().
  */
 function capwiz_perm() {
-
   return array('administer capwiz', 'administer capwiz credentials', 'administer capwiz advanced settings');
 }
-
 
 /**
  * Implement hook_menu().
@@ -53,7 +44,6 @@ function capwiz_menu() {
   return $items;
 }
 
-
 /**
  * Implement hook_theme().
  */
@@ -67,7 +57,6 @@ function capwiz_theme() {
   );
 }
 
-
 if ((bool)variable_get('capwiz_cron', 1)) {
 
   /**
@@ -79,12 +68,6 @@ if ((bool)variable_get('capwiz_cron', 1)) {
   }
 
 }
-
-
-/**************************\
-** User-related functions **
-\**************************/
-
 
 /**
  * Merge Capwiz accounts into Drupal.
@@ -129,7 +112,6 @@ function capwiz_merge_accounts($fetch_all_accounts = FALSE) {
     }
   }
 }
-
 
 /**
  * Add a new account.
@@ -205,7 +187,6 @@ function capwiz_add_account($capwiz_account) {
   }
 }
 
-
 /**
  * Update an existing account.
  *
@@ -247,7 +228,6 @@ function capwiz_update_account($capwiz_account, $drupal_account = NULL) {
   }
 }
 
-
 /**
  * Helper function: Get the value of a Capwiz personObject property.
  *
@@ -273,12 +253,6 @@ function _capwiz_get_value($capwiz_account, $capwiz_field) {
 
   return $value;
 }
-
-
-/***************************************\
-** (Advocacy) action-related functions **
-\***************************************/
-
 
 /**
  * Save Capwiz advocacy actions.
@@ -346,12 +320,6 @@ function capwiz_save_actions($capwiz_actions_all = NULL) {
   }
 }
 
-
-/*********************\
-** Utility functions **
-\*********************/
-
-
 /**
  * Get the profile field mapping.
  *
@@ -379,7 +347,6 @@ function capwiz_get_mapping() {
   return $mapping;
 }
 
-
 /**
  * Get all profile fields.
  *
@@ -399,11 +366,9 @@ function capwiz_get_profile_fields($get_titles = FALSE) {
   $get_titles = (int)(bool)$get_titles;
 
   if (empty($profile_fields[$get_titles])) {
-
     $profile_fields[$get_titles] = array();
     $value_field = $get_titles ? 'title' : 'name';
-
-    $result = db_query("SELECT fid, $value_field FROM {profile_fields} ORDER BY $value_field");
+    $result = db_query('SELECT fid, ' . $value_field . ' FROM {profile_fields} ORDER BY ' . $value_field);
     while ($data = db_fetch_object($result)) {
       $profile_fields[$get_titles][$data->fid] = $data->$value_field;
     }
@@ -411,7 +376,6 @@ function capwiz_get_profile_fields($get_titles = FALSE) {
 
   return $profile_fields[$get_titles];
 }
-
 
 /**
  * Get new user email message options.
@@ -454,12 +418,6 @@ function capwiz_get_email_message_options($key_field = 'id', $value_field = 'nam
   return FALSE;
 }
 
-
-/**************************\
-** Salesforce integration **
-\**************************/
-
-
 /**
  * Implement hook_fieldmap_objects().
  *
@@ -501,7 +459,6 @@ function capwiz_fieldmap_objects($type) {
   return $objects;
 }
 
-
 /**
  * Implement hook_fieldmap_assignment().
  *
@@ -516,7 +473,6 @@ function capwiz_queue_fieldmap_assignment_alter(&$data) {
   }
 }
 
-
 /**
  * Implement hook_queue_preprocess_batch().
  *
@@ -528,7 +484,7 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
 
   if ($batch['type'] == 'capwiz_action' && $batch['action'] == 'create') {
 
-    foreach($batch['records'] as &$record) {
+    foreach ($batch['records'] as &$record) {
 
       $sf_fieldmap = _capwiz_sf_fieldmap($batch['fieldmap']);
       if (!empty($sf_fieldmap)) {
@@ -536,7 +492,7 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
         $capwiz_action = db_fetch_object(db_query('SELECT * FROM {capwiz_actions} WHERE event_id = %d', $record->oid));
         if (!empty($capwiz_action)) {
 
-          $sf_object = new StdClass();
+          $sf_object = new stdClass();
           foreach ($sf_fieldmap as $sf_field => $drupal_field) {
 
             switch ($drupal_field) {
@@ -568,7 +524,6 @@ function capwiz_queue_preprocess_batch_alter(&$batch) {
     }
   }
 }
-
 
 /**
  * Implementation of queue_batch_item_alter().
@@ -629,7 +584,6 @@ SQL;
     }
   }
 }
-
 
 /**
  * Helper function: Get the Capwiz fieldmap for Salesforce.

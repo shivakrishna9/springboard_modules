@@ -1,4 +1,4 @@
-  <?php
+<?php
 
 /**
  * @file
@@ -76,7 +76,7 @@ function theme_dsr_discrepancy_report($orders, $status, $start_date, $end_date) 
       $output .= t('This order may have been deleted in Salesforce! We have it associated with ' . $sf['sfid']);
     }
 
-    foreach($export_status as $status => $value) {
+    foreach ($export_status as $status => $value) {
       $statues[] = ucfirst($status) . ' - ' . $value;
     }
 
@@ -90,7 +90,7 @@ function theme_dsr_discrepancy_report($orders, $status, $start_date, $end_date) 
       $batch_markup[] = _dsr_create_batch_info($batch_id, $order_id, $batch);
     }
 
-    foreach($batch_markup as $markup) {
+    foreach ($batch_markup as $markup) {
       $output .= $markup;
     }
     $output .= '</div>';
@@ -208,7 +208,7 @@ function _dsr_create_batch_info($batch_id, $order_id, $batch) {
   $markup .= 'Date processed: ' . date('m/d/Y g:i:s a', $batch['date_processed']) . '<br/>';
 
   if (!empty($batch['object'])) {
-    foreach($batch['object'] as $field => $value) {
+    foreach ($batch['object'] as $field => $value) {
       $rows[] = array(
         'data' => array($field, $value),
         'class' => $batch['error_fields'] == $field ? 'error' : 'valid',

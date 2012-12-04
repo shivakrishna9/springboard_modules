@@ -1,5 +1,9 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implementation of hook_content_default_fields().
  */
 function email_confirmation_content_default_fields() {

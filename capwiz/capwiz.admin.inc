@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file capwiz.admin.inc
+ * @file
  * Capwiz administration pages
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
@@ -88,14 +88,11 @@ function capwiz_settings_form(&$form_state) {
   // Email notifications
   $email_message_options_id_title = capwiz_get_email_message_options('id', 'title');
 
-  // Because this message has ' and ", use heredoc so there
-  // are no escape characters in the translation string.
-  $email_message_description = <<< T
-The system's default new user email message is "<em>!message</em>."
-T;
+  $email_message_description = 'The system\'s default new user email message is "<em>!message</em>."';
   $email_message_description = t($email_message_description, array('!message' => $email_message_options_id_title[variable_get('user_register', 1)]));
   if (user_access('administer users')) {
-    $email_message_description .= ' ' . t('To review or edit the new user email messages, go to !link.', array('!link' => l('User settings', 'admin/user/settings', array('attributes' => array('target' => '_blank')))));
+    $email_message_description .= ' ' . t('To review or edit the new user email messages, go to !link.',
+      array('!link' => l('User settings', 'admin/user/settings', array('attributes' => array('target' => '_blank')))));
   }
 
   $form['capwiz_email'] = array(
@@ -121,7 +118,13 @@ T;
       '#type' => 'checkbox',
       '#title' => t('Let Drupal do the syncing'),
       '#default_value' => variable_get('capwiz_cron', 1),
-      '#description' => t('If this setting is off, you must create a !symlink in the Drupal root directory that points to !file. Then you must set up a !crontab to hit that file as often as you need Drupal to sync with Capwiz. If syncing is setup to run both by Drupal and an independent crontab, it will not break since they both run the same code, but it would be pretty pointless. Choose one method or the other.', array('!file' => '<em>' . drupal_get_path('module', 'capwiz') . '/</em><strong>capwiz.cron.php</strong>', '!symlink' => l('symlink', 'http://en.wikipedia.org/wiki/Symbolic_link', array('attributes' => array('target' => '_blank'))), '!crontab' => l('crontab', 'http://drupal.org/cron', array('attributes' => array('target' => '_blank')))))),
+      '#description' => t('If this setting is off, you must create a !symlink in the Drupal root directory that points to !file. ' .
+        'Then you must set up a !crontab to hit that file as often as you need Drupal to sync with Capwiz. If syncing is setup to ' .
+        'run both by Drupal and an independent crontab, it will not break since they both run the same code, but it would be pretty ' .
+        'pointless. Choose one method or the other.', array('!file' => '<em>' . drupal_get_path('module', 'capwiz') . '/</em>' .
+        '<strong>capwiz.cron.php</strong>', '!symlink' => l('symlink', 'http://en.wikipedia.org/wiki/Symbolic_link',
+        array('attributes' => array('target' => '_blank'))), '!crontab' => l('crontab', 'http://drupal.org/cron',
+        array('attributes' => array('target' => '_blank')))))),
     'custom_fields' => array(
       '#type' => 'textarea',
       '#title' => t('Custom fields'),

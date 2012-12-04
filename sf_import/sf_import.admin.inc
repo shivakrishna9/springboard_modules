@@ -7,8 +7,8 @@
 
 function sf_import_settings_form($form_state, $settings) {
   // get the drupal object for this fieldmap
-  $results = db_query("select salesforce, drupal from {salesforce_management_field_map} where fieldmap = %d", $settings['fieldmap']);
-  while($data = db_fetch_object($results)) {
+  $results = db_query("SELECT salesforce, drupal FROM {salesforce_management_field_map} WHERE fieldmap = %d", $settings['fieldmap']);
+  while ($data = db_fetch_object($results)) {
     $salesforce_object = $data->salesforce;
     $drupal_content_type = $data->drupal;
   }
@@ -19,7 +19,7 @@ function sf_import_settings_form($form_state, $settings) {
   $sf = salesforce_management_api_connect();
   if ($sf) {
     $object = $sf->client->describeSObject($salesforce_object);
-    foreach($object->fields as $field) {
+    foreach ($object->fields as $field) {
       $fields[$field->name] = $field->label . ' (' . $field->name . ')';
     }
 
@@ -54,7 +54,7 @@ function sf_import_settings_form($form_state, $settings) {
     $form['info'] = array(
       '#prefix' => '<h4>',
       '#value' => $salesforce_object . ' to ' . $drupal_content_type,
-      '#suffix' =>'</h4>',
+      '#suffix' => '</h4>',
     );
 
     $form['frequency'] = array(
@@ -109,7 +109,7 @@ function sf_import_settings_form($form_state, $settings) {
     );
 
 
-    foreach($fields as $name => $label) {
+    foreach ($fields as $name => $label) {
       $field_list .= '<li>' . $label . '</li>';
     }
 
@@ -146,7 +146,7 @@ function sf_import_settings_form($form_state, $settings) {
  */
 function sf_import_settings_delete($form, &$form_state) {
 
-  db_query("delete from {sf_import_schedule} where fieldmap = %d", arg(4));
+  db_query("DELETE FROM {sf_import_schedule} WHERE fieldmap = %d", arg(4));
   drupal_set_message(t('Import settings for fieldmap %fieldmap deleted.', array('%fieldmap' => arg(4))));
   drupal_goto(SALESFORCE_PATH_FIELDMAPS);
 

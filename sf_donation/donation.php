@@ -1,14 +1,13 @@
 <?php
 
 /**
- * @file donation.php
+ * @file
  * Classes to represent a Springboard donation
  *
  * @author Phillip Cave <phillip.cave@jacksonriver.com>
  */
 
-class DonationFactory
-{
+class DonationFactory {
   public static function Create($id, $order_id, $sid) {
     switch ($id) {
       case 'npsp':
@@ -23,8 +22,7 @@ class DonationFactory
 /**
  * Class to define maps for the different donation types
  */
-class DonationMapper
-{
+class DonationMapper {
   public static function GetDefaultMap($id) {
     switch ($id) {
       case 'npsp':
@@ -39,8 +37,7 @@ class DonationMapper
 /**
  *  Represents a Non Profit Starter Pack specfic donation
  */
-class NPSPDonation extends Donation
-{
+class NPSPDonation extends Donation {
   public function _get_stages() {
     return array(
       'payment_received' => 'Posted',
@@ -89,8 +86,7 @@ class NPSPDonation extends Donation
 /**
  * Represents a Common Ground donation
  */
-class CommonGroundDonation extends Donation
-{
+class CommonGroundDonation extends Donation {
   public function _get_stages() {
     return array(
       'payment_received' => 'Received',
@@ -107,8 +103,7 @@ class CommonGroundDonation extends Donation
 /**
  * Generic donation class
  */
-class Donation
-{
+class Donation {
   private $_stage_posted = 'Posted';
   private $_stage_pledged = 'Pledged';
 
@@ -136,9 +131,9 @@ class Donation
   public $billing_zone;
   public $billing_postal_code;
   public $billing_country;
-  public $transaction_date = null;
-  public $close_date = null;
-  public $transaction_date_gm = null;
+  public $transaction_date = NULL;
+  public $close_date = NULL;
+  public $transaction_date_gm = NULL;
   public $probability = 50.00;
   public $stage;
   public $payment_gateway;
@@ -251,7 +246,7 @@ class Donation
     $map = $this->_get_donation_map($this->donation_form_nid);
     $object = array();
 
-    foreach($map['fields'] as $salesforce => $drupal) {
+    foreach ($map['fields'] as $salesforce => $drupal) {
       $object[$salesforce] = $this->{$drupal};
     }
 
@@ -276,7 +271,7 @@ class Donation
    * @param     $nid The id of the donation form node
    * @param     $sid The id of the webform submission
    *
-   * @return    null
+   * @return    NULL
    */
   private function _load_webform_values($nid, $sid) {
     $sql = "SELECT c.form_key, s.data FROM {webform_submitted_data} s INNER JOIN {webform_component} c on c.cid = s.cid and c.nid = s.nid WHERE s.sid = %d";

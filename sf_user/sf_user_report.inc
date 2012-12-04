@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Displays a list of users with no last name
  */
@@ -64,22 +66,22 @@ function sf_user_results_download_form_submit(&$form, &$form_state) {
 function sf_user_results_download($user, $options = array()) {
 
   // Put the name of all fields
-  $csv_output = array('Timestamp','Drupal Type','Error','Fieldmap');
+  $csv_output = array('Timestamp', 'Drupal Type', 'Error', 'Fieldmap');
 
-  $columns = array('error_time','drupal_type','error','fieldmap');
+  $columns = array('error_time', 'drupal_type', 'error', 'fieldmap');
 
     foreach ($csv_output as $i => $value) {
-    $out .= '"'.$value.'",';
+    $out .= '"' . $value . '",';
     }
     $out .="\n";
-  $result = db_query("select * from salesforce_management_api_error where did = %d",$user);
+  $result = db_query("SELECT * FROM {salesforce_management_api_error} WHERE did = %d", $user);
 
     // Add all values in the table
     while ($l = db_fetch_array($result)) {
     foreach ($columns as $j => $value) {
-    $out .='"'.$l["$value"].'",';
+    $out .= '"' . $l["$value"] . '",';
     }
-    $out .="\n";
+    $out .= "\n";
     }
     // Output to browser with appropriate mime type, you choose ;)
     header("Content-type: text/x-csv");

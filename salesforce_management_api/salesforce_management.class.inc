@@ -71,7 +71,7 @@ class DrupalSalesforce {
     catch (Exception $e) {
       // Log the error message.
       $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .
-        '<br>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br>' .
+        '<br/>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br/>' .
         'Error: <pre>'. check_plain($e->faultstring) .'</pre>', WATCHDOG_ERROR);
 
       // Indicate the failed login.
@@ -139,7 +139,7 @@ class DrupalSalesforce {
 
     // apend extra fields if available
     if (!empty($extra_fields)) {
-      foreach($extra_fields as $field) {
+      foreach ($extra_fields as $field) {
         if (!in_array($field, $fields)) {
           $fields[] = $field;
         }

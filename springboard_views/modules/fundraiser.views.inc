@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ */
+/**
  * Implementation of hook_views_data().
  */
 function springboard_views_fundraiser_views_data() {

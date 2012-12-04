@@ -87,7 +87,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   );
   $form['email']['receipt_email_address'] = array(
     '#type' => 'textfield',
-    '#title'=> t('Receipt Email Address'),
+    '#title' => t('Receipt Email Address'),
     '#description' => t('The email address that the receipt email will come from.'),
     '#weight' => -4.6,
     '#maxlength' => 255,
@@ -96,7 +96,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   );
   $form['email']['receipt_email_from'] = array(
     '#type' => 'textfield',
-    '#title'=> t('Receipt Email From'),
+    '#title' => t('Receipt Email From'),
     '#description' => t('The name that is associated with the receipt email address.'),
     '#weight' => -4.5,
     '#default_value' => $node->receipt_email_from,
@@ -104,7 +104,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   );
   $form['email']['receipt_email_subject'] = array(
     '#type' => 'textfield',
-    '#title'=> t('Receipt Email Subject'),
+    '#title' => t('Receipt Email Subject'),
     '#description' => t('The subject of the donation receipt email.'),
     '#weight' => -4.4,
     '#default_value' => $node->receipt_email_subject,
@@ -112,7 +112,7 @@ function fundraiser_confirmation_settings_form(&$form_state, $node) {
   );
   $form['email']['receipt_email_message'] = array(
     '#type' => 'textarea',
-    '#title'=> t('Confirmation Email Message'),
+    '#title' => t('Confirmation Email Message'),
     '#weight' => -4.3,
     '#default_value' => $node->receipt_email_message,
   );
@@ -195,7 +195,7 @@ function fundraiser_clone_donation_form($nid) {
       $node->files = array();
       $node->title = t('Clone of !title', array('!title' => $node->title));
       $node->internal_name = 'Clone of ' . $original_node->internal_name;
-      $node->is_being_cloned = true;
+      $node->is_being_cloned = TRUE;
 
       if (variable_get('clone_reset_'. $node->type, FALSE)) {
         $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
@@ -283,7 +283,7 @@ function fundraiser_admin_settings() {
   );
         if (variable_get('fundraiser_all_countries', 0)) {
     $countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
-          $country_options = array_merge(array('0' => t('- select country -')),$countries['#options']);
+          $country_options = array_merge(array('0' => t('- select country -')), $countries['#options']);
         }
         else {
           $country_options = array(
@@ -536,7 +536,7 @@ function fundraiser_monthly_report() {
       $data->zone_code,
       $data->billing_postal_code,
       date('m/d/Y g:i:s a', $data->received),
-      '$'.number_format($data->order_total, 2),
+      '$' . number_format($data->order_total, 2),
       $data->title,
       $base_url . '/node/' . $data->nid,
       $data->market_source,
@@ -562,7 +562,7 @@ function fundraiser_monthly_report() {
        foreach ($row as $i => $value) {
            $out .= '"' . $value . '",';
          }
-       $out .="\n";
+       $out .= "\n";
      }
      // Output to browser with appropriate mime type, you choose ;)
      header("Content-type: text/x-csv");

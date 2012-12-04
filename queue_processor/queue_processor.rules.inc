@@ -89,7 +89,7 @@ function queue_processor_rules_condition_info() {
 }
 
 /**
- * Implementation of hook_rules_action_info()
+ * Implementation of hook_rules_action_info().
  */
 function queue_processor_rules_action_info() {
   return array(
@@ -121,7 +121,7 @@ function queue_processor_condition_drupal_type_form($settings, &$form) {
   $settings += array('drupal_type' => '');
   $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
   $options = array();
-  foreach($processing_order as $type) {
+  foreach ($processing_order as $type) {
     $options[$type] = $type;
   }
 

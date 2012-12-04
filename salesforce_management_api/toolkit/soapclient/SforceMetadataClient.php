@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 require_once ('SforceMetaObject.php');
 
 class SforceMetadataClient {

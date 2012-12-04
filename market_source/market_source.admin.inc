@@ -72,7 +72,7 @@ function market_source_admin_settings_form(&$form_state) {
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
-  foreach($default_fields_list as $key=>$field_name) {
+  foreach ($default_fields_list as $key => $field_name) {
     $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
        'persistence' => array(
          '#type' => 'checkbox',

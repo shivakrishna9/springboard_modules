@@ -8,11 +8,9 @@
  * @ingroup fundraiser
  */
 
-/*----------------------------------------------------------------------------------
- *
+/**
  * Fundraiser billing update form
- *
- *--------------------------------------------------------------------------------*/
+ */
 
 /**
  * Form to update billing address for a recurring donation series.
@@ -136,11 +134,10 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, $order) 
   );
 
   $form['submit'] = array(
-    '#type' =>'submit',
+    '#type' => 'submit',
     '#value' => t('Save changes'),
   );
-
-   return $form;
+  return $form;
 }
 
 /**
@@ -156,17 +153,17 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
   //validate cc number
   if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number))
     || !ctype_digit($cc_number)) {
-      form_set_error('cc_info][card_num',"You have entered an invalid credit card number.");
+      form_set_error('cc_info][card_num', "You have entered an invalid credit card number.");
   }
 
   // Validate the card expiration date.
   if (!_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
-    form_set_error('cc_info][card_exp_date',t('The credit card you entered has expired.'));
+    form_set_error('cc_info][card_exp_date', t('The credit card you entered has expired.'));
   }
 
   // Validate the CVV Number
   if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
-    form_set_error('cc_info][card_cvv',t('You have entered an invalid CVV number.'));
+    form_set_error('cc_info][card_cvv', t('You have entered an invalid CVV number.'));
   }
 }
 
@@ -189,7 +186,7 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
     if ($result['success']) {
       watchdog('fundraiser', t('Billing information was updated for profile @profile', array('@profile' => $payment_details['reference_id']), NULL, WATCHDOG_INFO));
       $orders = _get_pending_recurring_orders($master_order_id);
-      while($row = db_fetch_object($orders)) {
+      while ($row = db_fetch_object($orders)) {
         $order = _update_order_billing_info($row->order_id, $form_state);
         // put order back in queue
         if (module_exists('sf_donation') && module_exists('queue_api')) {
@@ -211,12 +208,9 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
   }
 }
 
-
-/*----------------------------------------------------------------------------------
- *
+/*
  * Fundraiser donation amount update form
- *
- *--------------------------------------------------------------------------------*/
+ */
 
 /**
  * Creates a form for updating donation amount
@@ -280,7 +274,7 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
 
-  while($row = db_fetch_object($orders)) {
+  while ($row = db_fetch_object($orders)) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
     $old_amount = $order->order_total;
@@ -304,11 +298,9 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   drupal_set_message("The amount of all future donations has been updated to $amount.");
 }
 
-/*----------------------------------------------------------------------------------
- *
+/*
  * Recurring donation cancellation form
- *
- *--------------------------------------------------------------------------------*/
+ */
 
 /**
  * Form for cancelling all pending donations.
@@ -384,11 +376,9 @@ function fundraiser_cancel_form_submit($form, &$form_state) {
   drupal_set_message("All future payments cancelled.");
 }
 
-/*----------------------------------------------------------------------------------
- *
+/**
  * Helper functions
- *
- *--------------------------------------------------------------------------------*/
+ */
 
 /**
  * Gets the minimum donation amount for a given donation form

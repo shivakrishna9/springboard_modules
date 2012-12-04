@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 define ("EMAIL_PRIORITY_HIGHEST", 'Highest');
 define ("EMAIL_PRIORITY_HIGH", 'High');
 define ("EMAIL_PRIORITY_NORMAL", 'Normal');

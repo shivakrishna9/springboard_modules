@@ -62,7 +62,7 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
         // export objects and cut down on api calls
         $objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
 
-        foreach($batch['records'] as $record) {
+        foreach ($batch['records'] as $record) {
           // create our own user object for performance reasons
           $user = db_fetch_object(db_query("SELECT uid, name, mail, created, access, login, status FROM {users} WHERE uid = %d", $record->oid));
           profile_load_profile($user);
@@ -83,7 +83,7 @@ function sf_user_queue_preprocess_batch_alter(&$batch) {
 }
 
 /**
- * Implemenation of hook_queue_postprocess_batch().
+ * Implementation of hook_queue_postprocess_batch().
  */
 function sf_user_queue_postprocess_batch($batch, $responses, $item_count) {
   if ($batch['type'] == 'user') {
@@ -131,7 +131,7 @@ function sf_user_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
     // load salesforce object definition
     $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
-    foreach($objects->records as $object) {
+    foreach ($objects->records as $object) {
       // look up the user's id
       $uid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = 'user'", $object->Id));
       if ($uid) {
@@ -179,7 +179,7 @@ function import_user_updates($sfids, $fieldmap) {
       $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
       // process each user
-      foreach($objects as $object) {
+      foreach ($objects as $object) {
         // load the user
         $user = user_load(array('uid' => $sfids[$object->Id]));
 
@@ -232,7 +232,7 @@ function update_user_values(&$user, &$object, &$extra_data, $map, $drupal, $sale
           $rule = $map['businessSD'][$value];
           $field_key = $key;
           $map_value = salesforce_management_api_import_fieldmap_control_user($user, $rule , $field_key, $salesforce_value);
-           $extra_data[$key] = $map_value;
+          $extra_data[$key] = $map_value;
         }
       }
     }
@@ -263,7 +263,7 @@ function update_user_values(&$user, &$object, &$extra_data, $map, $drupal, $sale
 function _sf_user_profile_save_profile($user, &$map) {
   if (module_exists('profile')) {
     $profile_fields = _sf_user_profile_get_fields();
-    foreach($map as $key => $value) {
+    foreach ($map as $key => $value) {
       if (array_key_exists($key, $profile_fields)) {
         // get the id of the profile field and it's type
         $fid = $profile_fields[$key]['fid'];
@@ -480,7 +480,7 @@ function sf_user_user($op, &$edit, &$account, $category = NULL) {
 function clean_checkbox_values(&$account) {
 
   // get all checkboxes and populate them if empty for salesforce integration
-  $results = db_query("select f.name from {profile_fields} f inner join {profile_values} v on v.fid = f.fid where type = 'checkbox' and v.uid = %d", $account->uid);
+  $results = db_query("SELECT f.name FROM {profile_fields} f INNER JOIN {profile_values} v ON v.fid = f.fid WHERE type = 'checkbox' AND v.uid = %d", $account->uid);
 
   while ($data = db_fetch_object($results)) {
     if (empty($account->{$data->name})) {
@@ -496,11 +496,11 @@ function clean_checkbox_values(&$account) {
 function clean_selection_values(&$account) {
 
   // get all checkboxes and populate them if empty for salesforce integration
-  $results = db_query("select f.name from {profile_fields} f inner join {profile_values} v on v.fid = f.fid where type = 'selection' and v.uid = %d", $account->uid);
+  $results = db_query("SELECT f.name FROM {profile_fields} f INNER JOIN {profile_values} v ON v.fid = f.fid WHERE type = 'selection' AND v.uid = %d", $account->uid);
 
   while ($data = db_fetch_object($results)) {
     if (empty($account->{$data->name})) {
-      $account->{$data->name} = null;
+      $account->{$data->name} = NULL;
     }
   }
 
@@ -616,7 +616,7 @@ function sf_user_salesforce_management_form(&$form_state, $uid) {
 
     // Retrieve the object from Salesforce.
     $sf = salesforce_management_api_connect();
-    if(!$sf){
+    if (!$sf) {
     $form['default_map_record'] = array(
       '#value' => "Could not connect to Salesforce. Please doublecheck your API credentials.",
     );

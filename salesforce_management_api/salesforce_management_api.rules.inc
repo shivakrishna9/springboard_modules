@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_rules_action_info()
+ * Implementation of hook_rules_action_info().
  */
 function salesforce_management_api_rules_action_info() {
   return array(

@@ -8,10 +8,10 @@ function springboard_views_views_api() {
 }
 
 /**
-* Implementation of hook_views_pre_render().
-*
-* When rendering one of our own views, insert a count into the header.
-*/
+ * Implementation of hook_views_pre_render().
+ *
+ * When rendering one of our own views, insert a count into the header.
+ */
 function springboard_views_views_pre_render(&$view) {
   // An array of view names and a pretty name for the status of the items
   $sbv_views = array('sbv_batch' => 'Batched', 'sbv_queue' => 'Queued', 'sbv_retry_queue' => 'Retry', 'sbv_permanent_failure' => 'Failed');
@@ -47,7 +47,7 @@ function springboard_views_gateway_response_options() {
 }
 
 /**
- * Implementation of hook_date_api_tables()
+ * Implementation of hook_date_api_tables().
  *
  * Tell Date which tables to look for date fields in.
  */
@@ -56,7 +56,7 @@ function springboard_views_date_api_tables() {
 }
 
 /*
- * Implementation of hook_date_api_fields()
+ * Implementation of hook_date_api_fields().
  *
  * Tell Date about our date fields
  */
@@ -105,7 +105,7 @@ function springboard_views_date_api_fields($field) {
   );
 
   // END FIELD : just tell Date how to read from db, and how to handle TZ
-  $sf_batch_end_time = array (
+  $sf_batch_end_time = array(
     'sql_type' => DATE_UNIX,
     'tz_handling' => 'site',
   );

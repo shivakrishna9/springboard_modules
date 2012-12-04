@@ -44,7 +44,7 @@ function og_page_wrappers_perm() {
 function og_available_page_wrappers_alter(&$wrappers) {
   global $user;
 
-  foreach($wrappers as $nid => $title) {
+  foreach ($wrappers as $nid => $title) {
     if ($nid) {
       $groups = _og_page_wrappers_groups($nid);
       if (count($groups)) {
@@ -79,7 +79,7 @@ function _og_page_wrappers_groups($nid) {
 
 
 /**
- * Implmentation of hook_form_alter().
+ * Implementation of hook_form_alter().
  */
 function og_page_wrappers_form_alter(&$form, &$form_state, $form_id) {
   global $user;

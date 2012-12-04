@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Springboard admin menu.
@@ -118,7 +121,7 @@ if ($form_state['values']['springboard_gateway_failure_threshold'] && !is_numeri
 
 function springboard_admin_settings_submit($form, $form_state) {
 
-  foreach($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
+  foreach ($form_state['values']['springboard_enabled_panes'] as $delta => $status) {
     if ($status) {
       $status = 1;
     }

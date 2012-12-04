@@ -156,7 +156,7 @@ function gm_ogone_post_form(&$form_state, $order) {
 
   // Set the payment method if we know what it is
   if ($order->payment_method) {
-    switch($order->payment_method) {
+    switch ($order->payment_method) {
       case 'credit':
         $arguments['PM'] = 'CreditCard';
         break;
@@ -178,7 +178,7 @@ function gm_ogone_post_form(&$form_state, $order) {
           $arguments['BRAND'] = 'iDEAL';
         }
         // Sofort Uberweisung
-        else if ($wb_brand == 'SOFORT UBERWEISUNG') {
+        elseif ($wb_brand == 'SOFORT UBERWEISUNG') {
           $arguments['PM'] = 'DirectEBankingDE';
           $arguments['BRAND'] = 'DirectEbankingDE';
         }
@@ -223,9 +223,6 @@ function gm_ogone_post_form(&$form_state, $order) {
 }
 
 
-/*******************************************************************************
- * Hook Functions (Ubercart)
- ******************************************************************************/
 /**
  * Implementation of hook_payment_gateway_managed().
  */
@@ -1028,10 +1025,6 @@ function _load_web_banking_data_to_order($wb_data = NULL, $encrypted = TRUE) {
   return $data;
 }
 
-
-/*******************************************************************************
- * Ogone Feedback Functions
- ******************************************************************************/
 /**
  * Menu callback: successful payment
  */
@@ -1155,10 +1148,10 @@ function _gm_ogone_check_feedback_sha() {
 
   $sha1_signature = strtoupper(sha1($sha1_signature));
   if ($sha1_signature == $return_values['SHASIGN']) {
-    return true;
+    return TRUE;
   }
   else {
-    return false;
+    return FALSE;
   }
 }
 
@@ -1177,7 +1170,7 @@ function _gm_ogone_get_returned_values_no_clean() {
       'AMOUNT' => $_GET['amount'],
       'BRAND' => $_GET['BRAND'],
       'CARDNO' => $_GET['CARDNO'],
-      'CCCTY'=> $_GET['CCCTY'],
+      'CCCTY' => $_GET['CCCTY'],
       'CN' => $_GET['CN'],
       'CURRENCY' => $_GET['currency'],
       'CVCCHECK' => $_GET['CVCCheck'],

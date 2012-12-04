@@ -79,7 +79,7 @@ function fundraiser_goals_form_alter(&$form, &$form_state, $form_id) {
 
   // add goal form elements to webform nodes
   $types = variable_get('webform_node_types', array());
-  foreach($types as $type) {
+  foreach ($types as $type) {
     if (!strcmp($type . '_node_form', $form_id)) {
       // #AHAH bugfix
       $form['#cache'] = TRUE;
@@ -540,7 +540,7 @@ function _fundraiser_goals_save_goal($object) {
 
     // One more run at the db to stash the role visibility settings.
     if (is_array($objects->roles)) {
-      foreach($object->roles as $key => $value) {
+      foreach ($object->roles as $key => $value) {
         if ($value) {
           db_query("INSERT INTO {blocks_roles} VALUES ('fundraiser_goals', '%s', %d)", $object->fundraiser_goal_delta, $value);
         }

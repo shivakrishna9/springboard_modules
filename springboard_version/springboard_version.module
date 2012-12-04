@@ -249,7 +249,7 @@ function _springboard_version_hash_path($path) {
   if (is_dir($path)) {
     $file_hashes = array();
     $dir = opendir($path);
-    while (($entry = readdir($dir)) !== false) {
+    while (($entry = readdir($dir)) !== FALSE) {
       // Ignore the hash record.
       if ($entry != '.' && $entry != '..'  && $entry != '.DS_Store' && $entry != 'springboard_version.hashes') {
         if (is_dir($path . '/' . $entry)) {

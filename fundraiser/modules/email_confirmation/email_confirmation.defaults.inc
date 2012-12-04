@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Returns default starter text message.
@@ -113,7 +116,7 @@ function email_confirmation_default_html_template() {
        <tbody><tr>
         <td style="width: 50%; padding: 0in;" valign="top" width="50%">
         <p class="MsoNormal"><b><span>Billing
-        Address:</span></b><span><br>
+        Address:</span></b><span><br/>
         [order-billing-address]
         </span></p>
 
@@ -207,13 +210,13 @@ function email_confirmation_default_html_template() {
       <div>
       <div>
       <div>
-      <p style="text-align: center;" align="center"><b><span style="font-size: 13.5pt;">Your organization name here <br>
-      Organization address line 1<br>
+      <p style="text-align: center;" align="center"><b><span style="font-size: 13.5pt;">Your organization name here <br/>
+      Organization address line 1<br/>
 
-      Oranization address line 2<br>
-      City, State, Postal Code<br>
-      Tel: Organization telephone number<br>
-      Fax: Organization fax number<br>
+      Oranization address line 2<br/>
+      City, State, Postal Code<br/>
+      Tel: Organization telephone number<br/>
+      Fax: Organization fax number<br/>
       E-mail: <a href="mailto:">Your organization email</a></span></b></p>
 
       </div>

@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @file
+ */
 class GmAuthorizeNetUnitTestCase extends DrupalUnitTestCase {
 
   public static function getInfo() {

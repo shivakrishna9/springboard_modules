@@ -2,7 +2,6 @@
 /**
  * @file
  * Install file for the gateway manager module.
- *
  */
 
 /**
@@ -22,7 +21,7 @@ function gateway_manager_uninstall() {
 }
 
 /**
- * Implemenation of hook_enable().
+ * Implementation of hook_enable().
  */
 function gateway_manager_enable() {
   $vid = variable_get('gateway_manager_vocabulary', '');

@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Index callback for springboard service.
@@ -60,8 +63,8 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
     }
 
     if (!node_access('view', $node)) {
-      watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), array(), WATCHDOG_ERROR);
-      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), $error_code, t('Your API account does not have access to retrieve the requested webform.'));
+      watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user' => $user->name)), array(), WATCHDOG_ERROR);
+      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user' => $user->name)), $error_code, t('Your API account does not have access to retrieve the requested webform.'));
     }
 
     $webform['nid'] = $node->nid;
@@ -165,7 +168,7 @@ function springboard_api_submit_webform($submission) {
             break;
           }
           $extra = unserialize($field->extra);
-          if (!strcmp($extra['multiple'],'Y')) {
+          if (!strcmp($extra['multiple'], 'Y')) {
             $extra['multiple'] = 1;
           }
           if (!isset($extra['multiple']) || $extra['multiple'] == 0) {
@@ -231,7 +234,7 @@ function springboard_api_submit_webform($submission) {
     }
     else {
       $formatted_errors = array();
-      foreach($errors as $key => $message) {
+      foreach ($errors as $key => $message) {
         $item = array('field_key' => '', 'message' => $message);
         $key = explode('][', $key);
         $item['field_key'] =$key[count($key) -1];
@@ -265,14 +268,14 @@ function springboard_api_validate_donation($donation = array(), $error_code) {
   $donation_keys = array_keys($donation);
   while ($form_key = db_result($results)) {
 
-    if(!in_array($form_key, $donation_keys)) {
+    if (!in_array($form_key, $donation_keys)) {
 
       $missing_fields[] = $form_key;
     }
   }
   unset($form_key);
 
-  if(count($missing_fields)) {
+  if (count($missing_fields)) {
     drupal_set_message(t('The following required fields where missing values: !values', array('!values' => implode(', ', $missing_fields))));
   }
 

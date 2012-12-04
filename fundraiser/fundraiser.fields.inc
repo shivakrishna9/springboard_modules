@@ -228,12 +228,12 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   // build option string for countries
   $options = '';
   if ($include_all_countries) {
-    foreach($countries['#options'] as $key => $value) {
+    foreach ($countries['#options'] as $key => $value) {
       $options .= $key .'|'. $value . "\n";
     }
   }
   else {
-    foreach($countries['#options'] as $key => $value) {
+    foreach ($countries['#options'] as $key => $value) {
       if ($key == $us || $key == $ca) {
         $options .= $key .'|'. $value . "\n";
       }
@@ -266,7 +266,7 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 
   // build option string for states
   $options = '';
-  foreach($zones['#options'] as $key => $value) {
+  foreach ($zones['#options'] as $key => $value) {
     $options .= $key .'|'. $value . "\n";
   }
 

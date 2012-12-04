@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Implements hook_schema().
  */
@@ -75,7 +77,7 @@ function _fundraiser_multi_currency_insert_defaults() {
     );
 
 
-  foreach($currencies as $values) {
+  foreach ($currencies as $values) {
     if (!db_result(db_query("SELECT 1 FROM {fundraiser_currencies} WHERE code='%s'", $values['code']))) {
       $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",  $values['symbol'], $values['code'], $values['name']);
       $ret[] = update_sql($sql);

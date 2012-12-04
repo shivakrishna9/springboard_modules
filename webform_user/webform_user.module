@@ -59,7 +59,7 @@ function webform_user_access($node) {
 }
 
 /**
- * Implemenation of hook_clone_access_alter().
+ * Implementation of hook_clone_access_alter().
  */
 function webform_user_clone_access_alter(&$access, $node) {
   // remove access to node clone feature if it's a webform user node
@@ -69,8 +69,8 @@ function webform_user_clone_access_alter(&$access, $node) {
 }
 
 /**
-* Implementation of hook_theme().
-*/
+ * Implementation of hook_theme().
+ */
 function webform_user_theme() {
   return array(
     'webform_user_mapping_form' => array(
@@ -112,10 +112,10 @@ function _webform_user_check_settings($op) {
   if ($op == 'Map webform submissions to Salesforce objects') {
     $node = node_load(arg(1));
     if ($node->is_webform_user && !empty($node->sf_webform_object)) {
-      return true;
+      return TRUE;
     }
   }
-  return false;
+  return FALSE;
 }
 
 /**
@@ -183,7 +183,7 @@ function webform_user_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
           $node->confirmation_page_title = $webform_user['confirmation_page_title'];
 
           $result = db_query("SELECT cid, map_id FROM {webform_user_component_map} WHERE nid = %d", $node->nid);
-          while($row = db_fetch_array($result)){
+          while ($row = db_fetch_array($result)) {
             $map[$row['cid']] = $row['map_id'];
           }
           $node->map = $map;
@@ -217,7 +217,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
 
   if ($form_id == 'webform_configure_form' && isset($form['nid']['#value'])) {
     $node = node_load($form['nid']['#value']);
-    if($node->is_webform_user) {
+    if ($node->is_webform_user) {
       $webform_user = _webform_user_load_webform_user($form['nid']['#value']);
       $form['submission']['confirmation_wrapper']['page_title'] = array(
         '#type' => 'textfield',
@@ -288,7 +288,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
     ),
     '#default_value' => !empty($node->related_object) ? $node->related_object : 'none',
     '#description' => t('If the Salesforce webform integration module is enabled, the submission will be related back to the contact or account in Salesforce depending on what you select here.'),
-       );
+      );
     }
 
     $form['webform_user']['send_new_user_email'] = array(
@@ -313,7 +313,7 @@ function webform_user_form_alter(&$form, $form_state, $form_id) {
 
       $map = webform_user_user_map($nid);
 
-      foreach($map as $webform_field => $profile_field) {
+      foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
           $form_field =& webform_user_find_field($form, $component_hierarchy[$webform_field]);
           if (empty($form_field['#default_value']) && isset($user->$profile_field)) {
@@ -369,7 +369,7 @@ function _webform_user_get_map($nid, $fields) {
   $map = webform_user_user_map($nid);
 
   if ($map) {
-    foreach($map as $key=>$value){
+    foreach ($map as $key => $value) {
       $map2[$value] = $fields[$key];
     }
 
@@ -382,7 +382,7 @@ function _webform_user_get_map($nid, $fields) {
  * Automatically maps predefined webform components to user profile fields.
  */
 function webform_user_user_map_create($nid, $components) {
-  foreach($components as $cid => $component) {
+  foreach ($components as $cid => $component) {
     if (array_key_exists('maps_to', $component)) {
       db_query("INSERT INTO {webform_user_component_map} (nid, cid, map_id) VALUES (%d, %d, '%s')", $nid, $cid, $component['maps_to']);
     }
@@ -402,7 +402,7 @@ function _webform_user_mapping_form_access($node) {
  */
 function theme_webform_user_mapping_form($form) {
   if ($form['mapping']['cid']) {
-    foreach ($form['mapping']['cid'] as $key=>$cid) {
+    foreach ($form['mapping']['cid'] as $key => $cid) {
       if (is_numeric($key)) {
         $row = array();
         $row[] = drupal_render($form['mapping']['cid'][$key]);
@@ -415,7 +415,7 @@ function theme_webform_user_mapping_form($form) {
     $row[] = '&nbsp;';
     $rows[] = $row;
 
-    $header = array("Webform Component","Profile Field");
+    $header = array("Webform Component", "Profile Field");
     $output = drupal_render($form['info']);
     $output .= theme('table', $header, $rows, array('id' => 'fundraiser_mapping_form'));
     $output .= drupal_render($form);
@@ -447,21 +447,21 @@ function webform_user_mapping_form($form_state, $node) {
     '#weight' => 0,
   );
 
-  foreach ($node->webform['components']  as $cid =>$component){
-    if($component['type'] != 'fieldset'){
+  foreach ($node->webform['components']  as $cid => $component) {
+    if ($component['type'] != 'fieldset') {
 
       $form['mapping']['cid'][$cid] = array(
       '#type' => 'item',
-      '#description' => t($component['name']." - (".$component['type'].")"),
+      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
 
-      $options = array(''=>'--Select One--');
+      $options = array('' => '--Select One--');
 
-      if(module_exists('profile')){
+      if (module_exists('profile')) {
         $cat_array = profile_categories();
-        foreach ($cat_array as $cat){
+        foreach ($cat_array as $cat) {
           $result = _profile_get_fields($cat['name']);
-          for($i=0;$row = db_fetch_array($result); $i++){
+          for ($i = 0;$row = db_fetch_array($result); $i++) {
             $options['Drupal Profile Fields'][$row['name']] = $row['title'];
           }
         }
@@ -486,14 +486,13 @@ function webform_user_mapping_form($form_state, $node) {
   return $form;
 }
 
-function webform_user_mapping_form_submit($form, &$form_state){
-  $sql = "delete from {webform_user_component_map} where nid=".$form['#node']->nid;
+function webform_user_mapping_form_submit($form, &$form_state) {
+  $sql = "DELETE FROM {webform_user_component_map} WHERE nid=" . $form['#node']->nid;
   db_query($sql);
 
-  foreach($form_state['values']['mapping']['type'] as $key => $value) {
-    if(!empty($value)){
-
-      $sql = "insert into {webform_user_component_map} set nid=".$form['#node']->nid.", cid=$key,map_id='$value'";
+  foreach ($form_state['values']['mapping']['type'] as $key => $value) {
+    if (!empty($value)) {
+      $sql = "INSERT INTO {webform_user_component_map} SET nid=" . $form['#node']->nid . ", cid=$key,map_id='$value'";
       db_query($sql);
     }
   }
@@ -541,7 +540,7 @@ function _webform_user_profile_save_profile($updates, $uid) {
  * Returns a reference to an element of a FAPI array based on a known path.
  */
 function &webform_user_find_field(&$form, $path) {
-  foreach(array_keys($path) as $v) {
+  foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return webform_user_find_field($form[$v], $path[$v]);
     }
@@ -558,7 +557,7 @@ function &webform_user_find_field(&$form, $path) {
  */
 function webform_user_parse_components($nid, $components) {
   $component_hierarchy = array();
-  foreach($components as $cid => $component) {
+  foreach ($components as $cid => $component) {
     $component_path = 'submitted[' . implode('][', webform_user_walk_component_hierarchy($nid, $cid)) . ']';
     parse_str($component_path, $output); // convert string to a nested array
     $component_hierarchy[$component['form_key']] = $output;
@@ -758,7 +757,7 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
       }
       elseif ($type == 'select') {
         $values = array();
-        foreach($val as $k => $v) {
+        foreach ($val as $k => $v) {
           $values[] = $v;
         }
         if (count($values) == 1) { // single item select (aka checkbox)
@@ -791,7 +790,7 @@ function _webform_user_save_profile_map($uid, &$map) {
   if ($map && $uid !== 0) {
     $user_to_update = user_load($uid);
 
-    if(module_exists('profile')){
+    if (module_exists('profile')) {
       $cat_array = profile_categories();
 
       foreach ($cat_array as $cat) {
@@ -799,7 +798,7 @@ function _webform_user_save_profile_map($uid, &$map) {
         $result = _webform_user_profile_get_fields($cat['name']);
         while ($row = db_fetch_array($result)) {
           if (array_key_exists($row['name'], $map)) {
-            switch($row['type']) {
+            switch ($row['type']) {
               case 'date':
                 // massage webform date format into profile form
                 $date_parts = explode('-', $map[$row['name']]);
@@ -1314,7 +1313,7 @@ function _get_object_relation_fields($object_name) {
   $sf = salesforce_management_api_connect();
   if ($sf) {
     $object = $sf->client->describeSObject($object_name);
-    foreach($object->fields as $field) {
+    foreach ($object->fields as $field) {
       if ($field->type == 'reference') {
         $object_fields[$field->name] = $field->label;
       }

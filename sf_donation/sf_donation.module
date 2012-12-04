@@ -50,7 +50,7 @@ function sf_donation_mapping_form_access($node) {
 
 
 /**
- * Implmentation of hook_fundraiser_form_insert().
+ * Implementation of hook_fundraiser_form_insert().
  */
 function sf_donation_fundraiser_form_insert($node, $components) {
   require_once 'donation.php';
@@ -156,7 +156,7 @@ function sf_donation_export_confirm_form_submit($form, &$form_state) {
 
   for ($i = 0; $i < $count; $i++) {
     if (!$results[$i]->success) {
-      watchdog('salesforce', t('Order !order_id failed to update in Salesforce. Error: !error', array('!order_id' => $donations[$i]['order_id'], '!error' => print_r($results[$i]->error, true))), NULL, WATCHDOG_ERROR);
+      watchdog('salesforce', t('Order !order_id failed to update in Salesforce. Error: !error', array('!order_id' => $donations[$i]['order_id'], '!error' => print_r($results[$i]->error, TRUE))), NULL, WATCHDOG_ERROR);
       $failure_count++;
     }
     else {
@@ -214,7 +214,7 @@ function sf_donation_get_orders_for_export($order_id) {
   if ($sid) {
     // load the user
     $user = user_load($uid);
-    foreach($order_ids_to_export as $key => $value) {
+    foreach ($order_ids_to_export as $key => $value) {
       $donation = _sf_donation_create_single_donation($value['order_id'], $user, $sid);
       // remove the name because we don't want to overwrite what was set orginally
       unset($donation['fields']['Name']);
@@ -277,7 +277,7 @@ function sf_donation_mapping_form($form_state, $node) {
     // Build an array of record types, with the format typeID => typeName
     // The recordTypeInfos array will include things like Donation, Grant, Major
     // Gift, Matching Donation
-    foreach($donation->recordTypeInfos as $record_type) {
+    foreach ($donation->recordTypeInfos as $record_type) {
       if ($record_type->available && $record_type->name != 'Master') {
         $record_types[$record_type->recordTypeId] = $record_type->name;
       }
@@ -311,7 +311,7 @@ function sf_donation_mapping_form($form_state, $node) {
   // Build a simple array of the fields available in the SF object
   $donation_fields = array('' => '--Select One--');
     if (is_array($donation->fields)) {
-    foreach($donation->fields as $field) {
+    foreach ($donation->fields as $field) {
       $donation_fields[$field->name] = $field->label;
     }
   }
@@ -328,7 +328,7 @@ function sf_donation_mapping_form($form_state, $node) {
   asort($properties);
 
   // For each Donation form field, show a dropdown of all SF fields
-  foreach($properties as $key => $value) {
+  foreach ($properties as $key => $value) {
     $form['mapping']['donation'][$key] = array(
       '#type' => 'item',
       '#description' => $value,
@@ -345,12 +345,12 @@ function sf_donation_mapping_form($form_state, $node) {
 
   // Add mapping dropdowns for the 'special' donation form fields, like Market
   // Source, Campaign ID, and Referrers
-  foreach($node->webform['components'] as $cid => $component) {
-    if($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['type'] != 'fieldset' && !array_key_exists($component['form_key'], $mapping_config['predefined'])) {
       // Webform component
       $form['mapping']['component'][$component['form_key']] = array(
       '#type' => 'item',
-      '#description' => t($component['name']." - (".$component['type'].")"),
+      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
       // SF object field
       $form['mapping']['salesforce'][$component['form_key']] = array(
@@ -381,7 +381,7 @@ function sf_donation_mapping_form_submit($form, &$form_state) {
   db_query("DELETE FROM {fundraiser_salesforce_map} WHERE nid = %d", $nid);
 
   // Re-create mappings
-  foreach($form_state['values']['mapping']['salesforce'] as $key => $value) {
+  foreach ($form_state['values']['mapping']['salesforce'] as $key => $value) {
     if (!empty($value)) {
       $map[$value] = $key;
     }
@@ -437,10 +437,10 @@ function sf_donation_nodeapi(&$node, $op, $teaser, $page) {
   switch ($op) {
     case 'load':
       $result = db_query("SELECT single_recordtype_id, recurring_recordtype_id, fields FROM {fundraiser_salesforce_map} WHERE nid = %d", $node->nid);
-      while($row = db_fetch_object($result)) {
+      while ($row = db_fetch_object($result)) {
         $fields = unserialize($row->fields);
         if (is_array($fields)) {
-          foreach($fields as $k => $v) {
+          foreach ($fields as $k => $v) {
             $map['salesforce_map'][$v] = $k;
           }
         }
@@ -485,7 +485,7 @@ function sf_donation_menu_alter(&$items) {
  * Implementation of hook_form_alter().
  */
 function sf_donation_form_alter(&$form, $form_state, $form_id) {
-  switch($form_id) {
+  switch ($form_id) {
     case 'webform_component_edit_form':
       if ($form['form_key']['#default_value'] == 'cid') {
         // turn it into a select field
@@ -771,7 +771,7 @@ function sf_donation_export_opportunity_contact_roles() {
     $pieces = ceil(count($contact_roles) / 200);
     $batches = _sf_donation_array_split($contact_roles, $pieces);
 
-    foreach($batches as $batch) {
+    foreach ($batches as $batch) {
       $response = _normalize_salesforce_response($sf->client->create($batch, 'OpportunityContactRole'));
 
       // Process responses
@@ -894,12 +894,12 @@ function sf_donation_update_donation_status($order_id) {
       $params = array(
         'order_id' => $order_id,
         'errors' => $results->errors,
-        'donation' => print_r($opportunity, true),
+        'donation' => print_r($opportunity, TRUE),
       );
       drupal_mail('sf_donation', 'recurring_donation_payment_failure', 'phillip.cave@jacksonriver.com,tom.williamson@jacksonriver.com,tj.griffin@jacksonriver.com', language_default(), $params);
     }
     else {
-      watchdog('salesforce', t('Opportunity !sfid updated to stage Posted at !time. Order Id is !order_id', array('!sfid'=>$sfid, '!time'=>gmdate('c', $transaction_date), '!order_id'=>$order_id)), NULL, WATCHDOG_INFO);
+      watchdog('salesforce', t('Opportunity !sfid updated to stage Posted at !time. Order Id is !order_id', array('!sfid' => $sfid, '!time' => gmdate('c', $transaction_date), '!order_id' => $order_id)), NULL, WATCHDOG_INFO);
     }
   }
 }
@@ -1045,7 +1045,7 @@ function theme_sf_donation_mapping_form($form) {
   $row[] = 'Donation Properties';
   $row[] = '&nbsp;';
   $rows[] = $row;
-  foreach ($form['mapping']['donation'] as $property=>$value) {
+  foreach ($form['mapping']['donation'] as $property => $value) {
     if (strpos($property, '#') === FALSE) {
       $row = array();
       $row[] = drupal_render($form['mapping']['donation'][$property]);
@@ -1083,7 +1083,7 @@ function theme_sf_donation_mapping_form($form) {
  * Mail handling function
  */
 function sf_donation_mail($key, &$message, $params) {
-  switch($key) {
+  switch ($key) {
     case 'single_donation_failure':
       $message['subject'] = t("Single donation export failure");
       break;
@@ -1185,8 +1185,7 @@ function _sf_donation_get_recurring_details($order_id) {
 /**
  * Splits an array into a specified number of new arrays
  */
-function _sf_donation_array_split($array, $pieces = 2)
-{
+function _sf_donation_array_split($array, $pieces = 2) {
   if ($pieces < 2) {
     return array($array);
   }
@@ -1194,5 +1193,5 @@ function _sf_donation_array_split($array, $pieces = 2)
   $newCount = ceil(count($array)/$pieces);
   $a = array_slice($array, 0, $newCount);
   $b = _sf_donation_array_split(array_slice($array, $newCount), $pieces-1);
-  return array_merge(array($a),$b);
+  return array_merge(array($a), $b);
 }

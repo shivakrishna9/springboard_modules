@@ -1,5 +1,9 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implementation of hook_install().
  */
 function sf_donation_install() {
@@ -208,7 +212,7 @@ function sf_donation_upgrade_fieldmaps() {
     $this_map = $default_map;
 
     // get all fields in the map
-    $map = db_query("SELECT m.map_id, w.form_key FROM fundraiser_salesforce_map m
+    $map = db_query("SELECT m.map_id, w.form_key FROM {fundraiser_salesforce_map} m
                       INNER JOIN webform_component w ON m.cid = w.cid AND m.nid = w.nid
                       WHERE w.nid = %d", $data->nid);
 

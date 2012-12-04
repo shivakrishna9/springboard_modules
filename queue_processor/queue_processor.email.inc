@@ -13,7 +13,7 @@ function object_error_email(&$object, &$errors) {
 
   $message = t("The following API errors were returned from Salesforce.\n\r");
   $message .= "---------------------------------------------------------\n\r\n\r";
-  foreach($errors as $error) {
+  foreach ($errors as $error) {
     $message .= "Status Code: " . $error->statusCode . "\n\r";
     $message .= "Message: " . $error->message . "\n\r";
     $message .= "Fields: " . $error->fields . "\n\r\n\r";
@@ -87,7 +87,7 @@ function queue_summary_email(&$batches) {
   $message = t("!num batches were processed during the run\n\r\n\r", array('!num' => count($batches)));
 
   // summary
-  foreach($batches as $batch) {
+  foreach ($batches as $batch) {
     $message .= "******************************************************\n\r";
     $message .= t("BATCH !id\n\r", array('!id' => $batch['id']));
     $message .= "******************************************************\n\r";
@@ -103,7 +103,7 @@ function queue_summary_email(&$batches) {
       $message .= "\n\rFailures\n\r";
       $message .= "----------------------------------------------------\n\r";
       $errors = load_batch_errors($batch['id']);
-      foreach($errors as $error) {
+      foreach ($errors as $error) {
         $message .= t("ID: !oid\n\r", array('!oid' => $error->oid));
         $message .= t("Status Code: !status_code\n\r", array('!status_code' => $error->status_code));
         $message .= t("Message: !message\n\r", array('!message' => $error->message));
@@ -123,7 +123,7 @@ function format_object_details(&$data) {
   $message = "Object Details\n\r";
   $message .= "---------------------------------------------------------\n\r\n\r";
 
-  foreach($data as $field => $value) {
+  foreach ($data as $field => $value) {
     $message .= $field . ": " . $value . "\n\r";
   }
 

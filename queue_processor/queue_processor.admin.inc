@@ -44,7 +44,7 @@ function queue_processor_mass_add() {
  */
 function queue_processor_mass_add_submit($form, &$form_state) {
 
-  foreach($form_state['values']['objects_to_add'] as $type) {
+  foreach ($form_state['values']['objects_to_add'] as $type) {
     if ($type) {
       switch ($type) {
         case 'user' :
@@ -57,7 +57,7 @@ function queue_processor_mass_add_submit($form, &$form_state) {
           break;
 
         case 'webform' :
-          print 'mass add webforms<br>';
+          print 'mass add webforms<br/>';
           break;
       }
     }
@@ -116,7 +116,7 @@ function queue_processor_admin_settings() {
   $form['type_processing_order']['#tree'] = TRUE;
   $tree = &$form['type_processing_order'];
 
-  foreach($processing_order as $key => $type) {
+  foreach ($processing_order as $key => $type) {
     $tree[$type]['title'] = array(
       '#value' => ucfirst($type),
     );
@@ -134,7 +134,7 @@ function queue_processor_admin_settings() {
     '#collapsed' => TRUE,
   );
 
-  foreach($processing_order as $key => $type) {
+  foreach ($processing_order as $key => $type) {
     $form['batch_sizes'][$type . '_batch_size'] = array(
       '#type' => 'textfield',
       '#title' => 'Batch size for ' . $type,
@@ -224,7 +224,7 @@ function queue_processor_admin_settings_validate($form, &$form_state) {
 
   // check batch size for each type
   $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
-  foreach($processing_order as $key => $type) {
+  foreach ($processing_order as $key => $type) {
     $size = $form_state['values'][$type . '_batch_size'];
     // make sure the value is numeric
     if (!is_numeric($size)) {
@@ -264,7 +264,7 @@ function queue_processor_admin_settings_submit($form, &$form_state) {
 
   // save batch sizes per type
   $processing_order = variable_get('queue_processing_order', array('user', 'donation', 'webform', 'node'));
-  foreach($processing_order as $key => $type) {
+  foreach ($processing_order as $key => $type) {
     $name = $type . '_batch_size';
     $value = $form_state['values'][$name];
     variable_set($name, $value);

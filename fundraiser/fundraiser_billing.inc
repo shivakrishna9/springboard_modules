@@ -34,7 +34,7 @@ function fundraiser_update_billing_info($gateway_id, $reference_id, $billing_inf
  * Sage billing information update function.
  */
 function sage_update_billing_information($reference_id, $billing_info) {
-  $vault_id = db_result(db_query("select vault_id from {uc_sage_vault} where guid = '%s'", $reference_id));
+  $vault_id = db_result(db_query("SELECT vault_id FROM {uc_sage_vault} WHERE guid = '%s'", $reference_id));
   $data = array(
     'billing_name' => $billing_info['first_name'] . ' ' . $billing_info['last_name'],
     'billing_street1' => $billing_info['address_1'],
@@ -50,7 +50,7 @@ function sage_update_billing_information($reference_id, $billing_info) {
 
   $response = uc_sage_vault_update($vault_id, $data);
   // TODO: Need to add some better returns to the uc_sage module
-  return true;
+  return TRUE;
 }
 
 
@@ -341,7 +341,7 @@ function fundraiser_refund_submit($form, &$form_state) {
        sf_queue_insert($refund->refund_id, FUNDRAISER_DONATION_REFUND_TYPE, 'create');
      }
 
-     drupal_set_message(t('Refund has been issued.'),'status');
+     drupal_set_message(t('Refund has been issued.'), 'status');
      drupal_goto('admin/store/orders/' . $order_id);
    }
    else {

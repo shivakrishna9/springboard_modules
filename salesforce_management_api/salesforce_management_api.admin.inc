@@ -265,7 +265,7 @@ function salesforce_management_fieldmap_submit($form, &$form_state) {
  * @return
  *   The numeric index of the new fieldmap.
  */
-function salesforce_management_api_fieldmap_create($drupal, $salesforce, $automatic, $name, $rid = null, $recordtype_id = null) {
+function salesforce_management_api_fieldmap_create($drupal, $salesforce, $automatic, $name, $rid = NULL, $recordtype_id = NULL) {
   // Create the fieldmap array.
   $map = array(
     'drupal' => $drupal,
@@ -384,8 +384,8 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
   $target = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
 
- foreach($target['fields'] as $key => $value){
-  $fieldmapsort[$key] = array('label'=>$value['label'], 'type'=>$value['type']);
+ foreach ($target['fields'] as $key => $value) {
+  $fieldmapsort[$key] = array('label' => $value['label'], 'type' => $value['type']);
 
   }
  asort($fieldmapsort);
@@ -445,7 +445,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
       '#default_value' => $map['fields'][$key],
       '#required' => $type == 'required',
     );
-    $row['business'][$key.'_r'] = array(
+    $row['business'][$key . '_r'] = array(
       '#type' => 'select',
       '#title' => t('Default options'),
     '#default_value' => $map['business'][$key],
@@ -457,7 +457,7 @@ function salesforce_management_api_fieldmap_edit_form(&$form_state, $fieldmap) {
     'never' => t('Never overwrite'),
       ),
   );
-  $row['businessSD'][$key.'_l'] = array(
+  $row['businessSD'][$key . '_l'] = array(
       '#type' => 'select',
       '#title' => t('Default options'),
     '#default_value' => $map['businessSD'][$key],
@@ -511,8 +511,8 @@ function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state
     if (!empty($form_state['values'][$field])) {
       // Add the association to the fieldmap's fields array.
       $map['fields'][$field] = $form_state['values'][$field];
-       $map['business'][$field] = $form_state['values'][$field.'_r'];
-       $map['businessSD'][$field] = $form_state['values'][$field.'_l'];
+       $map['business'][$field] = $form_state['values'][$field . '_r'];
+       $map['businessSD'][$field] = $form_state['values'][$field . '_l'];
       $map['validation'][$field] = array(
         'field_type' => $object['fields'][$field]['field_type'],
         'nillable' => $object['fields'][$field]['nillable'],
@@ -532,7 +532,7 @@ function salesforce_management_api_fieldmap_edit_form_submit($form, &$form_state
 
 function theme_salesforce_management_api_map_user_role_form($form) {
   $header = array('Drupal Role', 'Fieldmap');
-  foreach ($form['fieldmap']['rid'] as $key=>$rid) {
+  foreach ($form['fieldmap']['rid'] as $key => $rid) {
     if (is_numeric($key)) {
       $row = array();
       $row[] = drupal_render($form['fieldmap']['rid'][$key]);
@@ -708,8 +708,8 @@ function salesforce_management_api_update_wsdl_form_validate($form, &$form_state
     }
 
     // Check the file extension
-    $pathParts = pathinfo($_FILES['files']['name'][$source]);
-    if(!in_array(strtolower($pathParts['extension']), array('xml', 'wsdl'))) {
+    $path_parts = pathinfo($_FILES['files']['name'][$source]);
+    if (!in_array(strtolower($path_parts['extension']), array('xml', 'wsdl'))) {
       form_set_error($source, t('File upload error: invalid file extension. Please upload a file with an XML or WSDL  extension.'));
       return 0;
     }
@@ -736,7 +736,7 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
   $source = 'salesforce_management_api_wsdl_file';
 
   // Make sure the directory is writeable
-  if( file_check_directory( $dir ) ) {
+  if (file_check_directory($dir)) {
     // Try to move the uploaded file into the right place
     if (!move_uploaded_file($_FILES['files']['tmp_name'][$source], $file)) {
          form_set_error($source, t('File upload error. Could not move uploaded file.'));
@@ -750,11 +750,11 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
       drupal_flush_all_caches();
 
       // Clear WSDL files from tmp directory
-      $tmpDir = file_directory_temp();
+      $tmp_dir = file_directory_temp();
       // Make sure the tmp dir exists and isn't the root, just to be safe
-      if(is_dir($tmpDir) && $tmpDir != '/') {
-        $cmd = 'rm -f ' . $tmpDir . '/*.wsdl.*';
-        $execOutput = exec($cmd);
+      if (is_dir($tmp_dir) && $tmp_dir != '/') {
+        $cmd = 'rm -f ' . $tmp_dir . '/*.wsdl.*';
+        $exec_output = exec($cmd);
       }
 
       drupal_set_message('Drupal cache emptied and WSDL files removed from temp directory.');
@@ -762,15 +762,11 @@ function salesforce_management_api_update_wsdl_form_submit($form, &$form_state) 
   }
   else {
     drupal_set_message( t('WARNING: server directory is not writeable. Please contact a site admin to correct this.'), 'error' );
-    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory'=>$dir), WATCHDOG_ERROR);
+    watchdog('salesforce_management_api', 'WSDL file upload failed because directory is not writeable: %directory', array('%directory' => $dir), WATCHDOG_ERROR);
     return 0;
   }
 }
 
-
-/******************************************************************************
- * AHAH FUNCTIONS
- ******************************************************************************/
 function salesforce_management_api_drupal_object_select() {
   $form_state = array('storage' => NULL, 'submitted' => TRUE);
   $form_build_id = $_POST['form_build_id'];

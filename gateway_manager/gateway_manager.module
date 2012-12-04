@@ -100,7 +100,7 @@ function gateway_manager_nodeapi(&$node, $op) {
 }
 
 /**
- * Implementation of hook_fundraiser_gateway
+ * Implementation of hook_fundraiser_gateway().
  */
 function gateway_manager_fundraiser_gateway($op, $arg) {
   switch ($op) {
@@ -144,7 +144,7 @@ function gateway_manager_gateway_info($id) {
   $gateway_info['config'] = unserialize($gateway->config);
   $gateway_info['type'] = $gateway->type;
 
-  foreach($gateway_types as $options) {
+  foreach ($gateway_types as $options) {
     if ($options['id'] == $gateway->type) {
       $gateway_info['charge_function'] = $options['credit'];
       $gateway_info['refund_function'] = $options['credit_refund'];
@@ -174,7 +174,7 @@ function gateway_manager_gateway_load($id) {
 }
 
 /**
- * Implemenation of hook_perm().
+ * Implementation of hook_perm().
  */
 function gateway_manager_perm() {
   return array('view payment gateway list', 'create payment gateway', 'edit any payment gateway', 'delete any payment gateway');
@@ -299,7 +299,7 @@ function gateway_manager_delete_gateway($id) {
  */
 function gateway_manager_settings_save_terms($gid, $terms) {
   db_query("DELETE FROM {term_gateway} WHERE gid = %d", $gid);
-  foreach($terms as $term) {
+  foreach ($terms as $term) {
     db_query("INSERT INTO {term_gateway} (gid, tid) VALUES (%d, %d)", $gid, $term);
   }
 }
@@ -311,7 +311,7 @@ function gateway_manager_extract_config(&$form_state) {
   $exclusions = array('config', 'name', 'type', 'op', 'submit', 'terms', 'delete', 'form_build_id', 'form_token', 'form_id');
   $config = array();
   // loop over form values and only save those
-  foreach($form_state['values'] as $k => $v) {
+  foreach ($form_state['values'] as $k => $v) {
     if (!in_array($k, $exclusions)) {
       $config[$k] = $v;
     }
@@ -431,5 +431,5 @@ function gateway_manager_gateway_for_order($order_or_orderid) {
   if ($order->data['gateway'] > 0) {
     return gateway_manager_gateway_info($order->data['gateway']);
   }
-  return null;
+  return NULL;
 }

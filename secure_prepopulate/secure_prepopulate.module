@@ -7,7 +7,7 @@
  */
 
 /**
- * Implmentation of hook_menu().
+ * Implementation of hook_menu().
  */
 function secure_prepopulate_menu() {
   $items['admin/settings/secure-prepopulate'] = array(
@@ -57,7 +57,7 @@ function secure_prepopulate_theme() {
   // register a theme function for rendering the 'not me' message
   return array(
     'secure_prepopulate_welcome_message' => array(
-      'arguments' => array('values' => null, 'nid' => null),
+      'arguments' => array('values' => NULL, 'nid' => NULL),
       'template' => 'templates/secure-prepopulate-welcome-message',
       'pattern' => 'secure_prepopulate_welcome_message_[0-9]+',
     ),
@@ -71,7 +71,7 @@ function secure_prepopulate_preprocess_secure_prepopulate_welcome_message($vars)
 }
 
 /**
- * Implemenation of hook_node_api().
+ * Implementation of hook_node_api().
  *
  * Adds a welcome_back key to the node for themeing and output.
  */
@@ -197,7 +197,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
   }
 
   // Clear out any other form fields that might be populated by another module
-  foreach($component_hierarchy as $form_key => $value) {
+  foreach ($component_hierarchy as $form_key => $value) {
     if (!array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
       if ($field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
         // set back to original default value by using the webform component definition
@@ -313,7 +313,7 @@ function secure_prepopulate_parse_qs($qs) {
 
   // loop over each field in the segement and extract the key/value pairs
   if (count($segments)) {
-    foreach($segments as $segment) {
+    foreach ($segments as $segment) {
       $key_value = explode('=', $segment);
       $result[$key_value[0]] = $key_value[1];
     }
@@ -418,10 +418,6 @@ function _secure_prepopulate_convert_state($state) {
   return $state;
 }
 
-/****************************************************************
- * Utility functions for parsing through webforms
- ***************************************************************/
-
 /**
  * Creates a nested array of where components exist in the FAPI array for all components in a webform.
  *
@@ -432,7 +428,7 @@ function _secure_prepopulate_convert_state($state) {
  */
 function _secure_prepopulate_parse_form($nid, $components) {
   $component_hierarchy = array();
-  foreach($components as $cid => $component) {
+  foreach ($components as $cid => $component) {
     $component_path = 'submitted[' . implode('][', _secure_prepopulate_walk_component_hierarchy($nid, $cid)) . ']';
     parse_str($component_path, $output); // convert string to a nested array
     $component_hierarchy[$component['form_key']] = $output;
@@ -472,7 +468,7 @@ function _secure_prepopulate_walk_component_hierarchy($nid, $cid, &$path = array
  */
 function &_secure_prepopulate_find_field(&$form, $path) {
   if (is_array($path)) {
-  foreach(array_keys($path) as $v) {
+  foreach (array_keys($path) as $v) {
     if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
       return _secure_prepopulate_find_field($form[$v], $path[$v]);
     }
@@ -482,10 +478,6 @@ function &_secure_prepopulate_find_field(&$form, $path) {
   }
   }
 }
-
-/****************************************************************
- * Encryption functions
- ***************************************************************/
 
 /**
  * Encrypt an input string (128 bit AES) using the specified key and initialization vector.
@@ -497,8 +489,7 @@ function &_secure_prepopulate_find_field(&$form, $path) {
  * @iv
  *   The initialization vector to use to encrypt the string.
  */
-function _secure_prepopulate_encrypt($input, $key, $iv)
-{
+function _secure_prepopulate_encrypt($input, $key, $iv) {
   $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
   // account for some PHP AES shortcomings
   $input = pkcs5_pad($input, $size);
@@ -533,8 +524,7 @@ function _secure_prepopulate_encrypt($input, $key, $iv)
  * @iv
  *   The initialization vector to use to decrypt the string.
  */
-function _secure_prepopulate_decrypt($cipher, $key, $iv)
-{
+function _secure_prepopulate_decrypt($cipher, $key, $iv) {
   // do some decoding
   $cipher = base64_decode($cipher);
 
@@ -566,8 +556,7 @@ function _secure_prepopulate_decrypt($cipher, $key, $iv)
  * @param $blocksize
  *   The size of the PKCS5 blocksize to use.
  */
-function pkcs5_pad($text, $blocksize)
-{
+function pkcs5_pad($text, $blocksize) {
    $pad = $blocksize - (strlen($text) % $blocksize);
    return $text . str_repeat(chr($pad), $pad);
 }
@@ -578,9 +567,8 @@ function pkcs5_pad($text, $blocksize)
  * @param $text
  *   The text to unpad.
  */
-function pkcs5_unpad($text)
-{
+function pkcs5_unpad($text) {
    $pad = ord($text{strlen($text)-1});
-   if ($pad > strlen($text)) return false;
+   if ($pad > strlen($text)) return FALSE;
    return substr($text, 0, -1 * $pad);
 }

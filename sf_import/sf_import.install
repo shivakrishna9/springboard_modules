@@ -1,5 +1,9 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implementation of hook_install().
  */
 function sf_import_install() {

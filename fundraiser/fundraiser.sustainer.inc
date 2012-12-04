@@ -55,7 +55,7 @@ function fundraiser_recurring_user_edit_forms($uid, $order_id) {
  */
 function _fundraiser_get_recurring_orders(&$user) {
   $orders = array();
-  $result = db_query("SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id  WHERE recurring_status != %d AND u.uid = %d", DONATION_NON_RECURRING, $user->uid);
+  $result = db_query("SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id  WHERE recurring_status <> %d AND u.uid = %d", DONATION_NON_RECURRING, $user->uid);
   while ($data = db_fetch_object($result)) {
     $created = _fundraiser_get_start_date($data->order_id);
     $next_charge = _fundraiser_get_next_charge_date($data->order_id);
@@ -117,16 +117,16 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
  * Counts the number of processed recurring orders.
  */
 function _fundraiser_processed_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and gateway_resp = 'success'", $order_id));
+  return db_result(db_query("SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d
+    AND gateway_resp = 'success'", $order_id));
 }
 
 /**
  * Counts the number of unprocessed orders remaining.
  */
 function _fundraiser_remaining_recurring_charge_count($order_id) {
-  return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-    and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
+  return db_result(db_query("SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d
+    AND (gateway_resp IS NULL OR gateway_resp = 'failed')", $order_id));
 }
 
 /**

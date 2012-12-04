@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 function webform_dupe_cop_install() {
   drupal_install_schema('webform_dupe_cop');
 }

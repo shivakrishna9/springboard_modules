@@ -125,7 +125,7 @@ function sf_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  */
 function sf_node_salesforce_management_field_map($op, $drupal, $salesforce) {
   // the queue needs to be aware of any node types that are set to export
-  if (substr($drupal, 0, 5) == 'node_') { #301 - only respond to node fieldmaps
+  if (substr($drupal, 0, 5) == 'node_') { //#301 - only respond to node fieldmaps
     switch ($op) {
       case 'insert':
         // add the node type the queue processing order array
@@ -165,7 +165,7 @@ function sf_node_queue_preprocess_batch_alter(&$batch) {
       case 'update':
         // get any objects that have already been exported to salesforce. these will be used when generating the export objects and cut down on api calls
         $objects = queue_processor_get_objects_in_batch($batch['sfids'], $batch['fieldmap']);
-        foreach($batch['records'] as $record) {
+        foreach ($batch['records'] as $record) {
           $node = node_load((int)$record->oid, NULL, TRUE);
           // determine which nodes have already been exported. use their sfids to create an array of salesforce objects to pass to the object creation function
           $object = salesforce_management_api_fieldmap_export_create($batch['fieldmap'], $node, $record->sfid, $objects);
@@ -501,7 +501,7 @@ function import_node_updates($sfids, $fieldmap) {
       $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
       // process each node
-      foreach($objects as $object) {
+      foreach ($objects as $object) {
         // load the node
         $node = node_load($sfids[$object->Id]);
         if ($nid = update_node_values($node, $object, $map, $drupal, $salesforce)) {
@@ -581,7 +581,7 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
     // load salesforce object definition
     $salesforce = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
-    foreach($objects->records as $object) {
+    foreach ($objects->records as $object) {
       // look up the node id
       $nid = db_result(db_query("SELECT oid FROM {salesforce_management_object_map} WHERE sfid = '%s' and drupal_type = '%s'", $object->Id, $type));
 
@@ -590,7 +590,7 @@ function sf_node_sf_import_updated_objects($objects, $type, $fieldmap, $import_n
         update_node_values($node, $object, $map, $drupal, $salesforce);
         module_invoke_all('sf_node_node_updated', $node, $object);
       }
-      else if ($import_new_objects) {
+      elseif ($import_new_objects) {
         module_load_include('inc', 'node', 'node.pages');
         $node = new stdClass();
         $node->type = str_replace('node_', '', $type);
@@ -635,7 +635,7 @@ function _sf_node_load_user_salesforce_ids($uid) {
 /**
  * Set business rule to map SF values with Drupal object and fieldmap.
  */
-function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value = NULL, &$node, $drupal_value = null) {
+function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_value = NULL, &$node, $drupal_value = NULL) {
   switch ($rule) {
     case 'blank':
       // if Drupal object value is null then overwrite
@@ -643,7 +643,7 @@ function salesforce_management_api_import_fieldmap_control($rule, $key, $sf_valu
 
     case 'append':
       // append with the Drupal object value
-      return $drupal_value.' '.$sf_value;
+      return $drupal_value . ' ' . $sf_value;
 
     case 'always':
       // always overwrite with the Drupal value

@@ -7,7 +7,7 @@
 
 
 /**
- * Implemenation of hook_menu().
+ * Implementation of hook_menu().
  */
 function sf_import_menu() {
   $items['admin/settings/salesforce-management/fieldmap/%fieldmap_import/import'] = array(
@@ -47,7 +47,7 @@ function fieldmap_import_load($fieldmap) {
 }
 
 /**
- * Implemenation of hook_cron().
+ * Implementation of hook_cron().
  */
 function sf_import_cron() {
 
@@ -110,7 +110,7 @@ function sf_import_cron() {
 
       // update next import
       $next_import = strtotime('+'. $data->frequency . ' ' . $data->frequency_type);
-      db_query("update {sf_import_schedule} set last_import = %d, next_import = %d", time(), $next_import);
+      db_query("UPDATE {sf_import_schedule} SET last_import = %d, next_import = %d", time(), $next_import);
     }
   }
   return "done";
@@ -120,7 +120,7 @@ function sf_import_cron() {
 // TODO: is this function still in use?
 function _sf_import_bool_string($value) {
   if (strtolower($value) == 'true' || strtolower($value) == 'false') {
-    return true;
+    return TRUE;
   }
-  return false;
+  return FALSE;
 }

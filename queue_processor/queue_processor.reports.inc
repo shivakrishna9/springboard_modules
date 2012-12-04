@@ -37,7 +37,7 @@ function batch_history_report() {
      from_unixtime(start_time, '%m/%e/%Y %h:%i:%S %p'), from_unixtime(end_time, '%m/%e/%Y %h:%i:%S %p') FROM {sf_batch} ORDER BY created desc", 20, $pager_num);
   $rows = array();
 
-  while($row = db_fetch_array($result)) {
+  while ($row = db_fetch_array($result)) {
     $row['id'] = l($row['id'], 'admin/reports/salesforce/batch/' . $row['id']);
     $rows[] = $row;
   }
@@ -73,11 +73,11 @@ function batch_detail($id) {
   //$output .= '<pre>' . print_r($batch, true) . '</pre>';
 
 
-  foreach($batch['records'] as $item) {
+  foreach ($batch['records'] as $item) {
     $rows = array();
     $object = unserialize($item->data);
     if ($batch['action'] != 'delete') {
-      foreach($object as $field => $value) {
+      foreach ($object as $field => $value) {
         $rows[] = array(
           'field' => $field,
           'value' => $value,

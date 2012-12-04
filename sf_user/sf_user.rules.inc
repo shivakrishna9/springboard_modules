@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_rules_action_info()
+ * Implementation of hook_rules_action_info().
  */
 function sf_user_rules_action_info() {
   return array(
@@ -37,7 +37,7 @@ function sf_user_update_profile_field_action_form($settings, &$form) {
 
   // create an array to hold the select options
   $options = array();
-  foreach($profile_fields as $name => $field) {
+  foreach ($profile_fields as $name => $field) {
     $options[$field['fid']] = $field['title'];
   }
 

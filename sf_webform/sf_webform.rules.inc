@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_rules_action_info()
+ * Implementation of hook_rules_action_info().
  */
 function sf_webform_rules_action_info() {
   return array(
@@ -75,7 +75,7 @@ function _sf_webform_get_components() {
   $result = db_query("SELECT distinct form_key, name FROM {webform_component} WHERE type != 'fieldset' ORDER BY name");
   $components = array();
 
-  while($data = db_fetch_object($result)) {
+  while ($data = db_fetch_object($result)) {
     $components[$data->form_key] = $data->name;
   }
 

@@ -55,7 +55,7 @@ function ogone_directlink_api_authorize_credit($acct_info, $charge_details) {
  */
 function ogone_directlink_api_charge_direct_debit($acct_info, $charge_details) {
   // Not implemented yet
-  return false;
+  return FALSE;
 }
 
 
@@ -125,13 +125,13 @@ function _ogone_directlink_api_make_post_request($acct_info, $request_details, $
   }
 
   $fields = array();
-  foreach($acct_info as $field => $value) {
+  foreach ($acct_info as $field => $value) {
     // Only include the value if it's not empty, and don't send the SHA IN passphrase
     if (!empty($value) && $field != 'SHA1IN') {
       $fields[$field] = $value;
     }
   }
-  foreach($request_details as $field => $value) {
+  foreach ($request_details as $field => $value) {
     // Only include the value if it's not empty
     if (!empty($value)) {
       $fields[$field] = $value;
@@ -254,7 +254,7 @@ function _ogone_directlink_api_order_status($acct_info, $order_id) {
   $fields = array(
     'ORDERID' => $order_id,
   );
-  foreach($acct_info as $field => $value) {
+  foreach ($acct_info as $field => $value) {
     // Only include the value if it's not empty, and don't send the SHA IN passphrase
     if (!empty($value) && $field != 'SHA1IN') {
       $fields[$field] = $value;

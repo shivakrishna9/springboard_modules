@@ -25,21 +25,21 @@ function fundraiser_mapping_form($form_state, $node) {
     '#weight' => 0,
   );
 
-  foreach ($node->webform['components']  as $cid =>$component){
-    if($component['type'] != 'fieldset'){
+  foreach ($node->webform['components'] as $cid =>$component) {
+    if ($component['type'] != 'fieldset') {
 
       $form['mapping']['cid'][$cid] = array(
       '#type' => 'item',
-      '#description' => t($component['name']." - (".$component['type'].")"),
+      '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
 
-      $options = array(''=>'--Select One--');
+      $options = array('' => '--Select One--');
 
-      if(module_exists('profile')){
+      if (module_exists('profile')) {
         $cat_array = profile_categories();
-        foreach ($cat_array as $cat){
+        foreach ($cat_array as $cat) {
           $result = _profile_get_fields($cat['name']);
-          for($i=0;$row = db_fetch_array($result); $i++){
+          for ($i=0;$row = db_fetch_array($result); $i++) {
             $options['Drupal Profile Fields'][$row['name']] = $row['title'];
           }
         }
@@ -64,14 +64,14 @@ function fundraiser_mapping_form($form_state, $node) {
   return $form;
 }
 
-function fundraiser_mapping_form_submit($form, &$form_state){
-  $sql = "delete from fundraiser_component_map where nid=".$form['#node']->nid;
+function fundraiser_mapping_form_submit($form, &$form_state) {
+  $sql = "DELETE FROM {fundraiser_component_map} WHERE nid=" . $form['#node']->nid;
   db_query($sql);
 
-  foreach($form_state['values']['mapping']['type'] as $key => $value) {
-    if(!empty($value)){
+  foreach ($form_state['values']['mapping']['type'] as $key => $value) {
+    if (!empty($value)) {
 
-      $sql = "insert into fundraiser_component_map set nid=".$form['#node']->nid.", cid=$key,map_id='$value'";
+      $sql = "INSERT INTO {fundraiser_component_map} SET nid=" . $form['#node']->nid.", cid=$key,map_id='$value'";
       db_query($sql);
     }
   }
@@ -79,7 +79,7 @@ function fundraiser_mapping_form_submit($form, &$form_state){
    drupal_set_message(t('Profile mapping has been saved'));
 }
 
-function fundraiser_recurring_admin(){
+function fundraiser_recurring_admin() {
 
   $resouce = db_query("
           SELECT
@@ -104,10 +104,10 @@ function fundraiser_recurring_admin(){
   </tr>
   ";
 
-  for($i=1;$row = db_fetch_array($resource);$i++){
-    $row['fee_amount'] = number_format($row['fee_amount'],2,'.','');
-    $last_charge = date("Y-m-d H:i:s",strtotime('-'. '1 months', $row['next_charge']));
-    $output.= "<tr>
+  for ($i = 1; $row = db_fetch_array($resource); $i++) {
+    $row['fee_amount'] = number_format($row['fee_amount'], 2, '.', '');
+    $last_charge = date("Y-m-d H:i:s", strtotime('-' . '1 months', $row['next_charge']));
+    $output .= "<tr>
 
     <td>$row[order_id]</td>
     <td>$row[name]</td>
@@ -122,7 +122,7 @@ function fundraiser_recurring_admin(){
 
 }
 
-function fundraiser_recurring_master_order_overview(){
+function fundraiser_recurring_master_order_overview() {
 
   $resource = db_query('
     SELECT
@@ -149,7 +149,7 @@ function fundraiser_recurring_master_order_overview(){
 
 
 
-  if(empty($rows[1])){
+  if (empty($rows[1])) {
     //we're actually looking at the order id and not the master_order_id
     $resource = db_query('
       SELECT
@@ -164,39 +164,39 @@ function fundraiser_recurring_master_order_overview(){
       WHERE fr.master_order_id = (SELECT master_order_id FROM {fundraiser_recurring} WHERE order_id=%d)
       ORDER BY fr.order_id asc', arg(3));
     unset($rows);
-    for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
+    for ($i=1;$rows[$i] = db_fetch_array($resource);$i++) {
       ;
     }
   }
 
-  for($i=1;$i<count($rows);$i++){
+  for ($i=1;$i<count($rows);$i++) {
     if (($i % 2) == 0) {
       $class = 'even';
     }
     else {
       $class = 'odd';
     }
-    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'],2,'.','');
+    $rows[$i]['fee_amount'] = number_format($rows[$i]['order_total'], 2, '.', '');
     if ($rows[$i]['gateway_resp'] == 'canceled') {
       $next_charge = 'Canceled';
     }
     else {
-      $next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
+      $next_charge = date("Y-m-d H:i:s", $rows[$i]['next_charge']);
     }
-    $output.= "
+    $output .= "
       <tr class='$class'>
-      <td><a href='/admin/store/orders/".$rows[$i][master_order_id]."/recurring/edit'>".$rows[$i][master_order_id]."</a></td>
-      <td>".$rows[$i][order_id]."</td>
-      <td>".$rows[$i][name]."</td>
-      <td>".$rows[$i][fee_amount]."</td>
-      <td>$next_charge</td>
+      <td><a href='/admin/store/orders/" . $rows[$i][master_order_id] . "/recurring/edit'>" . $rows[$i][master_order_id] . "</a></td>
+      <td>" . $rows[$i][order_id] . "</td>
+      <td>" . $rows[$i][name] . "</td>
+      <td>" . $rows[$i][fee_amount] . "</td>
+      <td>" . $next_charge . "</td>
      </tr>";
   }
   $output .= "</table>";
   return $output;
 }
 
-function fundraiser_recurring_user_overview(){
+function fundraiser_recurring_user_overview() {
 
   $resource = db_query('
     SELECT
@@ -210,7 +210,7 @@ function fundraiser_recurring_user_overview(){
   INNER JOIN {uc_orders}
     ON uo.order_id = fr.order_id
   WHERE uo.uid=%d
-  ORDER BY fr.master_order_id DESC, fr.order_id asc',arg(1));
+  ORDER BY fr.master_order_id DESC, fr.order_id asc', arg(1));
 
   $output = "<h2>Recurring Payment Schedule</h2>";
   $output .= "<table>
@@ -224,11 +224,11 @@ function fundraiser_recurring_user_overview(){
     </tr>
     </thead>";
 
-  for($i=1;$rows[$i] = db_fetch_array($resource);$i++){
+  for ($i=1;$rows[$i] = db_fetch_array($resource);$i++) {
     ;
   }
 
-  for($i=1;$i<count($rows);$i++) {
+  for ($i=1;$i<count($rows);$i++) {
     if (($i % 2) == 0) {
       $class = 'even';
     }
@@ -236,13 +236,13 @@ function fundraiser_recurring_user_overview(){
       $class = 'odd';
     }
 
-    $next_charge = date("Y-m-d H:i:s",$rows[$i]['next_charge']);
+    $next_charge = date("Y-m-d H:i:s", $rows[$i]['next_charge']);
     $processed = $rows[$i]['gateway_resp'] == "success" ? "Yes" : "No";
-    $output.= "<tr class='$class'><td>" . $rows[$i][order_id]."</td>
-    <td>".number_format($rows[$i][order_total], 2, '.', '')."</td>
+    $output.= "<tr class='$class'><td>" . $rows[$i][order_id] . "</td>
+    <td>" . number_format($rows[$i][order_total], 2, '.', '') . "</td>
     <td>$next_charge</td>
     <td>$processed</td>
-    <td><a href='/user/".$rows[$i]['uid']."/recurring/edit/".$rows[$i][master_order_id]."'>Edit Payment Info</a></td>
+    <td><a href='/user/" . $rows[$i]['uid'] . "/recurring/edit/" . $rows[$i][master_order_id] . "'>Edit Payment Info</a></td>
     </tr>";
   }
 
@@ -384,7 +384,7 @@ function fundraiser_billing_update_form(&$form_state, $master_order_id, &$order)
    );
 
    $form['billing_info']['submit'] = array(
-     '#type' =>'submit',
+     '#type' => 'submit',
      "#value" => t('Save changes'),
    );
 
@@ -401,17 +401,17 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
   //validate cc number
   if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_number))
     || !ctype_digit($cc_number)) {
-      form_set_error('billing_info][cc_info][card_num',"You have entered an invalid credit card number.");
+      form_set_error('billing_info][cc_info][card_num', "You have entered an invalid credit card number.");
   }
 
   // Validate the card expiration date.
   if (!_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
-    form_set_error('billing_info][cc_info][card_exp_date',t('The credit card you entered has expired.'));
+    form_set_error('billing_info][cc_info][card_exp_date', t('The credit card you entered has expired.'));
   }
 
   // Validate the CVV Number
   if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
-    form_set_error('billing_info][cc_info][card_cvv',t('You have entered an invalid CVV number.'));
+    form_set_error('billing_info][cc_info][card_cvv', t('You have entered an invalid CVV number.'));
   }
 }
 
@@ -423,7 +423,7 @@ function fundraiser_billing_update_form_submit($form, &$form_state) {
   $orders_changed = array();
   $vault_guid = '';
 
-  while($row = db_fetch_object($orders)) {
+  while ($row = db_fetch_object($orders)) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
 
@@ -555,7 +555,7 @@ function fundraiser_donation_amount_form_submit($form, &$form_state) {
   $orders = _get_pending_recurring_orders($master_order_id);
   $orders_changed = array();
 
-  while($row = db_fetch_object($orders)) {
+  while ($row = db_fetch_object($orders)) {
     // update ubercart orders first
     $order = uc_order_load($row->order_id);
     $old_amount = $order->order_total;

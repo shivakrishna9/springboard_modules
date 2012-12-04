@@ -112,7 +112,6 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     $form['body_field']['field_confirmation_html_message']['#weight'] = 10;
     unset($form['field_confirmation_html_message']);
 
-
     $form['body_field']['message_tokens'] = array(
       '#type' => 'fieldset',
       '#title' => t('Available confirmation message tokens'),
@@ -157,7 +156,6 @@ function email_confirmation_form_alter(&$form, &$form_state, $form_id) {
     module_load_include('inc', 'ctools', 'includes/ajax');
     ctools_include('modal');
     ctools_modal_add_js();
-
 
     $bcc = array();
 
@@ -384,7 +382,6 @@ function email_confirmation_template_validate(&$form, $form_state) {
  */
 function email_confirmation_template_submit(&$form, $form_state) {
 
-
   // If no mail template is selected there's no point in saving settings.
   if (!$form_state['values']['template_wrapper']) {
     return 0;
@@ -420,7 +417,6 @@ function email_confirmation_template_submit(&$form, $form_state) {
       VALUES (%d, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)", $nid, $tid, $subject, $from_name, $reply_to_email, $bcc_email, $html_body, $html_body_format, $text_body, $text_body_format, $is_webform, $send_mail);
   }
 }
-
 
 /**
  * Implements hook_nodeapi().
@@ -467,7 +463,8 @@ function email_confirmation_list_templates() {
       $group_nids[] = $nid;
     }
     //pull list of template nodes assigned to these groups
-    $results = db_query("SELECT n.nid, n.title FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid = oa.nid  WHERE oa.group_nid IN ('%s') AND n.type = 'confirmation_template'", implode(',', $group_nids));
+    $results = db_query("SELECT n.nid, n.title FROM {node} n INNER JOIN {og_ancestry} oa ON n.nid = oa.nid " .
+      "WHERE oa.group_nid IN ('%s') AND n.type = 'confirmation_template'", implode(',', $group_nids));
 
   }
   else {
@@ -479,7 +476,6 @@ function email_confirmation_list_templates() {
   // check any additional perms and build list of additional templates if warranted.
   return $templates;
 }
-
 
 /**
  * #AHAH callback for email template selection form element.
@@ -575,7 +571,6 @@ function email_confirmation_fundraiser_order_success($order) {
       // final pass attempts to replace webform token values
       $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, FALSE);
 
-
       // Same as above, with check_plain() included to insure final output is plain text.
       $message['text_body'] = token_replace($template_text, 'order', $order);
       $message['text_body'] = token_replace($message['text_body'], 'order', $order);
@@ -598,7 +593,7 @@ function email_confirmation_fundraiser_order_success($order) {
     // If no settings are present use the default email template.
     else {
       $order->form_title = db_result(db_query(
-        'SELECT title FROM node '.
+        'SELECT title FROM {node} '.
         'WHERE nid=%d',
         $order->products[0]->nid));
       $site_name = variable_get('site_name', '');
@@ -619,11 +614,11 @@ function email_confirmation_fundraiser_order_success($order) {
 function email_confirmation_mail($key, &$message, $params) {
 
   // To make the HTML email work, implement all our own headers
-  $boundary = '----=_NextPart_'.md5(uniqid());
+  $boundary = '----=_NextPart_' . md5(uniqid());
 
   $headers = array(
    'MIME-Version' => '1.0',
-   'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
+   'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
    'Content-Transfer-Encoding' => '8Bit',
    'X-Mailer' => 'Drupal',
   );
@@ -738,7 +733,7 @@ function email_confirmation_modal_preview() {
  $output['HTML'] = _email_confirmation_preview('html', $values['confirmation_html_email_message'], $values['email_template']);
  $output['text'] = _email_confirmation_preview('text', $values['confirmation_text_email_message'], $values['email_template']);
  $keys = array_keys($output);
- foreach($keys as $key) {
+ foreach ($keys as $key) {
    if (is_array($output[$key])) {
 
      $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
@@ -912,7 +907,6 @@ return array(
   );
 }
 
-
 /**
  *
  */
@@ -971,16 +965,15 @@ function email_confirmation_load_template($nid) {
   return $template;
 }
 
-
 function email_confirmation_fundraiser_confirmations_perm($perm, $node) {
   $webform_node_types = variable_get('webform_node_types', '');
   if (in_array($node->type, $webform_node_types) && node_access($perm, $node)) {
     $is_webform_user = db_result(db_query('SELECT 1 FROM {webform_user} WHERE is_webform_user = 1 AND nid = %d ', $node->nid));
     if (fundraiser_is_donation_type($node->type) || $is_webform_user) {
-      return true;
+      return TRUE;
     }
   }
-  return false;
+  return FALSE;
 }
 
 /**
@@ -1008,7 +1001,6 @@ function email_confirmation_webform_send_mail($form, $form_state) {
 
     $template_text = db_result(db_query('SELECT field_confirmation_text_message_value FROM {content_type_confirmation_template} t INNER JOIN {node} n ON n.vid = t.vid WHERE t.nid=%d', $settings->tid));
 
-
     $message = array();
     $message['from_name'] = $settings->from_name;
     $message['from_address'] = $settings->reply_to_email;
@@ -1017,7 +1009,6 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     // Perform token replacements for "order" tokens and "all" tokens.
     $message['html_body'] = token_replace($template_html, 'order', $node);
     $message['html_body'] = token_replace($message['html_body'], 'order', $node);
-
 
     // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'all', $node);

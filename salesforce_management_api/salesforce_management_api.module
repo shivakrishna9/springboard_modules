@@ -268,7 +268,7 @@ function salesforce_management_api_test_connection() {
 
   // Connection info (status, last date/time)
   if ($last_connect['time']) {
-    $output .= '<p><span class"' . $last_connect['status'] . '">' .$last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
+    $output .= '<p><span class"' . $last_connect['status'] . '">' . $last_connect['status'] . '</span> to SF: ' . date('Y-m-d g:i:sA', $last_connect['time']) . '</p>';
   }
   else {
     $output .= '<p><span class"' . $last_connect['status'] . '">Last connected to SF: never</span>';
@@ -291,9 +291,9 @@ function salesforce_management_api_fieldmap_objects($type) {
     if ($cache->data == '') {
       $sf_objects = array();
       $sf = salesforce_management_api_connect();
-      if($sf){
+      if ($sf) {
         $all_objects = $sf->client->describeGlobal();
-        foreach($all_objects->sobjects as $object) {
+        foreach ($all_objects->sobjects as $object) {
           if ($object->createable) {
             $sf_objects[] = $object->name;
           }
@@ -302,7 +302,7 @@ function salesforce_management_api_fieldmap_objects($type) {
         // We need to limit this to 100 objects at a time
         $chunked_objects = array_chunk($sf_objects, 100);
         $result = array();
-        foreach($chunked_objects as $object_set) {
+        foreach ($chunked_objects as $object_set) {
           $tmp = $sf->client->describeSObjects($object_set);
           $result = array_merge($result, $tmp);
         }
@@ -697,7 +697,7 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
    }
    else {
     // pcave: load the object up once here instead of on each iteration of loop. so this will still get called once for
-    $salesforce_object = null;
+    $salesforce_object = NULL;
     // see if our object is in the passed in object array
     // TODO: REMOVE THIS TEST. THE OBJECT SHOULD BE IN THE ARRAY!!!
     if (!empty($objects)) {
@@ -709,7 +709,7 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
     else {
       $sf = salesforce_management_api_connect();
       if ($sf) {
-        $salesforce_object = $sf->retrieve(array($sfid),$fieldmap);
+        $salesforce_object = $sf->retrieve(array($sfid), $fieldmap);
       }
     }
 
@@ -757,7 +757,7 @@ function salesforce_management_api_fieldmap_export_create($fieldmap, $source = N
 /**
  * Set bussiness rule to map drupal values with SF
  *   object and fieldmap.
-*/
+ */
 
 function salesforce_management_api_fieldmap_control($rule, $fieldKey, $drupal = NULL, $data = NULL, $fieldmap = NULL, $validation = NULL) {
 
@@ -767,7 +767,7 @@ function salesforce_management_api_fieldmap_control($rule, $fieldKey, $drupal = 
   }
 
   // inspect the rule
-  switch($rule) {
+  switch ($rule) {
     case 'blank':
       // if SF object value is null then overwrite
       if ($data->$fieldKey == '') {
@@ -827,7 +827,7 @@ function salesforce_management_api_fieldmap_rid_load($rid) {
   $result = db_query("SELECT fieldmap FROM {salesforce_management_field_map} WHERE rid = %d", $rid);
 
   if (!$data = db_fetch_array($result)) {
-    return null;
+    return NULL;
   }
 
   return $data['fieldmap'];
@@ -886,7 +886,7 @@ function salesforce_management_api_theme($existing, $type, $theme, $path) {
  *   The index of the fieldmap used to generate the export.
  */
 function salesforce_management_error_save($drupal_type, $did, $message, $fieldmap)  {
- $error_message = str_replace("<br>", "" , $message);
+ $error_message = str_replace("<br/>", "" , $message);
  db_query("INSERT INTO {salesforce_management_api_error} (drupal_type, did, error, fieldmap, error_time) VALUES ('$drupal_type', $did, '$error_message', '$fieldmap' ,NOW())");
 }
 
@@ -896,18 +896,18 @@ function salesforce_management_api_map_user_role_form() {
   $drupal_roles = user_roles(TRUE);
 
   $fieldmaps = array('0' => '-- Please select --');
-  $results = db_query("select fieldmap, drupal, salesforce from {salesforce_management_field_map} where drupal = 'user'");
+  $results = db_query("SELECT fieldmap, drupal, salesforce FROM {salesforce_management_field_map} WHERE drupal = 'user'");
   while ($data = db_fetch_object($results)) {
     $fieldmaps[$data->fieldmap] = $data->fieldmap . ': ' . $data->drupal . ' to ' . $data->salesforce;
   }
 
   $mapped_roles = array();
-  $results = db_query("select fieldmap, rid from {salesforce_management_role_field_map}");
-  while($data = db_fetch_object($results)) {
+  $results = db_query("SELECT fieldmap, rid FROM {salesforce_management_role_field_map}");
+  while ($data = db_fetch_object($results)) {
     $mapped_roles[$data->rid] = $data->fieldmap;
   }
 
-  foreach($drupal_roles as $role_id => $role) {
+  foreach ($drupal_roles as $role_id => $role) {
     $form['fieldmap']['rid'][$role_id] = array(
     '#value' => t($role),
     );
@@ -928,17 +928,17 @@ function salesforce_management_api_map_user_role_form() {
 
 function salesforce_management_api_map_user_role_form_submit($form, &$form_state) {
   // remove existing mappings
-  db_query("delete from {salesforce_management_role_field_map}");
-  foreach($form_state['values']['fieldmap']['map'] as $key => $value) {
+  db_query("DELETE FROM {salesforce_management_role_field_map}");
+  foreach ($form_state['values']['fieldmap']['map'] as $key => $value) {
     if ($value > 0) {
-      $sql = "insert into {salesforce_management_role_field_map} set fieldmap = %d, rid = %d";
+      $sql = "INSERT INTO {salesforce_management_role_field_map} SET fieldmap = %d, rid = %d";
       db_query($sql, $value, $key);
     }
   }
   drupal_set_message(t('Role fieldmaps have been saved'));
 }
 
-function salesforce_management_api_map_role_form(){
+function salesforce_management_api_map_role_form() {
   $form = array();
 
   $header = array(t('Salesforce Role'), t('Drupal Role'));
@@ -953,15 +953,15 @@ function salesforce_management_api_map_role_form(){
   }
 
   else {
-    $response_role = $sf->client->query(('select id,Name from UserRole'));
+    $response_role = $sf->client->query(('SELECT id, Name FROM UserRole'));
     $drupal_roles = user_roles();
 
-    $sf_variable = unserialize(variable_get("sf_drupal_role_map",''));
-    foreach($response_role->records as $sroles) {
-      $drupal_value = '<select name="'.$sroles->Id.'"><option value="">Select Drupal Role</option>';
-      foreach($drupal_roles as $did=>$dval){
-        $d_role_sel = $sf_variable[$sroles->Id]==$did?'selected':'';
-        $drupal_value.= '<option value="'.$did.'" '.$d_role_sel.'>'.$dval.'</option>';
+    $sf_variable = unserialize(variable_get("sf_drupal_role_map", ''));
+    foreach ($response_role->records as $sroles) {
+      $drupal_value = '<select name="' . $sroles->Id . '"><option value="">Select Drupal Role</option>';
+      foreach ($drupal_roles as $did => $dval) {
+        $d_role_sel = $sf_variable[$sroles->Id] == $did ? 'selected' : '';
+        $drupal_value .= '<option value="' . $did . '" ' . $d_role_sel . '>' . $dval . '</option>';
       }
       $rows[] = array(
         $sroles->Name,
@@ -984,7 +984,7 @@ function salesforce_management_api_map_role_form_submit($form, &$form_state) {
   $sf = salesforce_management_api_connect();
   $response_role = $sf->client->query(('select id,Name from UserRole'));
   $submitted = array();
-  foreach($response_role->records as $sroles) {
+  foreach ($response_role->records as $sroles) {
     $test = $form_state['clicked_button']['#post'][$sroles->Id];
     $submitted[$sroles->Id] = $test;
   }
@@ -993,7 +993,7 @@ function salesforce_management_api_map_role_form_submit($form, &$form_state) {
 }
 
 
-function salesforce_management_api_map_record_form(){
+function salesforce_management_api_map_record_form() {
   $form = array();
   $header = array(t('Drupal Role'), t('Salesforce Record type'));
   $rows = array();
@@ -1007,23 +1007,23 @@ function salesforce_management_api_map_record_form(){
   else {
     $response_account = $sf->client->query(('SELECT id, Name ,SobjectType FROM RecordType'));
     $drupal_roles = user_roles();
-    $sf_variable = unserialize(variable_get("sf_drupal_record_map",''));
+    $sf_variable = unserialize(variable_get("sf_drupal_record_map", ''));
     foreach ($response_account->records as $srecords) {
          $SobjectTypeName[] = $srecords->SobjectType;
     }
 
-    foreach ($drupal_roles as $did=>$dval){
-     $drupal_value = '<select name="'.$did.'"><option value=""></option>';
-      foreach (array_unique($SobjectTypeName) as $key=>$SobjectType){
-        $drupal_value.= '<optgroup label="'.$SobjectType.'">';
+    foreach ($drupal_roles as $did => $dval) {
+     $drupal_value = '<select name="' . $did . '"><option value=""></option>';
+      foreach (array_unique($SobjectTypeName) as $key => $SobjectType) {
+        $drupal_value .= '<optgroup label="' . $SobjectType . '">';
         foreach ($response_account->records as $srecords) {
          $records_sel = $sf_variable[$did]==$srecords->Id?'selected':'';
-           if ($srecords->SobjectType == $SobjectType){
-            $drupal_value.= '<option value="'.$srecords->Id.'" '.$records_sel.'>'.$srecords->Name.'</option>';
+           if ($srecords->SobjectType == $SobjectType) {
+            $drupal_value .= '<option value="' . $srecords->Id . '" ' . $records_sel . '>' . $srecords->Name . '</option>';
           }
         }
       }
-      $drupal_value.= '</select>';
+      $drupal_value .= '</select>';
       $rows[] = array(
         $dval,
         $drupal_value,
@@ -1050,7 +1050,7 @@ function salesforce_management_api_get_object_recordtypes($object) {
   if (is_object($sf)) {
     $result = $sf->client->describeSObjects(array($object));
     if (count($result->recordTypeInfos)) {
-      foreach($result->recordTypeInfos as $recordtype) {
+      foreach ($result->recordTypeInfos as $recordtype) {
         $types[$recordtype->recordTypeId] = $recordtype->name;
       }
     }
@@ -1078,7 +1078,7 @@ function salesforce_management_api_get_campaigns() {
     if ($sf) {
       $results = $sf->client->query("select Id, Name from Campaign Order By Name");
       if (count($results->records)) {
-        foreach($results->records as $campaign) {
+        foreach ($results->records as $campaign) {
           $campaigns[$campaign->Id] = $campaign->Name;
         }
       }
@@ -1103,7 +1103,7 @@ function salesforce_management_api_get_campaigns() {
 function salesforce_management_api_map_record_form_submit($form, &$form_state) {
   $drupal_roles = user_roles();
   $record_type = array();
-  foreach($drupal_roles as $did=>$dval){
+  foreach ($drupal_roles as $did => $dval) {
     $record = $form_state['clicked_button']['#post'][$did];
     $record_type[$did] = $record;
   }
@@ -1111,20 +1111,17 @@ function salesforce_management_api_map_record_form_submit($form, &$form_state) {
   drupal_set_message(t('Your Record Type Mapping has been set successfully.'));
 }
 
-function search_object_array($needle_key, $needle_val, $haystack)
-{
+function search_object_array($needle_key, $needle_val, $haystack) {
   // iterate through our haystack
-  for ( $i = 0; $i < count($haystack); $i++ )
-  {
+  for ( $i = 0; $i < count($haystack); $i++) {
     // ensure this array element is an object and has a key that matches our needle's key
-    if ( is_object($haystack[$i]) and property_exists($haystack[$i], $needle_key) )
-    {
+    if ( is_object($haystack[$i]) and property_exists($haystack[$i], $needle_key) ) {
       // determine if comparison is case sensitive
       if ( strtolower($needle_val) == strtolower($haystack[$i]->$needle_key) ) return $i;
     }
   }
   // no match found
-  return false;
+  return FALSE;
 }
 
 /**
@@ -1138,13 +1135,12 @@ function salesforce_manangement_api_fieldmap_exists($drupal_type) {
   return FALSE;
 }
 
-
 /**
  * Utility function to produce an 18-character (case-insensitive) sfid from the 15-character version
  * Thanks to http://astadiaemea.wordpress.com/2010/06/21/15-or-18-character-ids-in-salesforce-com-%E2%80%93-do-you-know-how-useful-unique-ids-are-to-your-development-effort/
  */
 function salesforce_management_api_get_sfid18($sfid15) {
-  if ($sfid15 == null || strlen($sfid15) != 15) {
+  if ($sfid15 == NULL || strlen($sfid15) != 15) {
     return '';
   }
   $checksum = '';

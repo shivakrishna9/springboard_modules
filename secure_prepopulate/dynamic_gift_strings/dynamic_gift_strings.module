@@ -31,7 +31,7 @@ function dynamic_gift_strings_init() {
 }
 
 /**
- * Implmentation of hook_form_alter().
+ * Implementation of hook_form_alter().
  */
 function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
   // make sure the node has a webform
@@ -78,14 +78,14 @@ function dynamic_gift_strings_form_alter(&$form, $form_state, $form_id) {
 
     $form['dynamic_gift_strings']['dynamic_gift_strings_never_expire'] = array(
       '#type' => 'checkbox',
-      '#title'=> t('Gift string never expires'),
+      '#title' => t('Gift string never expires'),
       '#default_value' => variable_get('dynamic_gift_strings_never_expire', 1),
       '#description' => t('Check this setting to allow the gift string to be used on multiple site visits.'),
     );
 
     $form['dynamic_gift_strings']['dynamic_gift_strings_send_alert'] = array(
       '#type' => 'checkbox',
-      '#title'=> t('Send email alert when a dynamic gift string cannot be applied'),
+      '#title' => t('Send email alert when a dynamic gift string cannot be applied'),
       '#default_value' => variable_get('dynamic_gift_strings_send_alert', 0),
     );
 
@@ -158,7 +158,7 @@ function _dynamic_gift_strings_parse_amounts($amounts, $show_other, $nid) {
   $all_valid = TRUE;
 
   // format the amounts
-  foreach($amounts as $amount) {
+  foreach ($amounts as $amount) {
     // first, check to see if the value is numeric. if not, we have some bogus data.
     if (!is_numeric($amount)) {
       $all_valid = FALSE;

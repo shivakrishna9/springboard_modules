@@ -48,7 +48,7 @@ function sf_search_menu() {
 }
 
 /**
- * Implmentation of hook_perm().
+ * Implementation of hook_perm().
  */
 function sf_search_perm() {
   return array(
@@ -331,14 +331,14 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
      * nid: the node of the form we're altering
     */
     $component_hierarchy = array();
-    foreach($form['#node']->webform['components'] as $cid => $component) {
+    foreach ($form['#node']->webform['components'] as $cid => $component) {
       $component_path_array = fundraiser_walk_component_hierarchy($form['#node']->nid, $cid);
       $field_id = str_ireplace('_', '-', implode('-', $component_path_array));
       $component_hierarchy[$component['form_key']]['field_id'] = 'edit-submitted-' . $field_id;
     }
     $form['#component_hierarchy'] = $component_hierarchy;
 
-    foreach($form_map as $key => $field) {
+    foreach ($form_map as $key => $field) {
       if (array_key_exists($field, $form['#component_hierarchy'])) {
         $component_path_array = fundraiser_walk_component_hierarchy($nid, $field);
         $field_id = str_ireplace('_', '-', implode('-', $component_path_array));
@@ -346,7 +346,7 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
       }
     }
 
-    foreach($display_fields as $key => $field) {
+    foreach ($display_fields as $key => $field) {
       if (array_key_exists($key, $saleforce_metadata['fields'])) {
         if (array_key_exists($key, $display_fields) && $display_fields[$key]) {
           $sf_search_settings['sf_search']['display_columns'][$key] = $saleforce_metadata['fields'][$key]['label'];

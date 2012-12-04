@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 function fundraiser_multi_currency_list() {
   $table_columns = array(
     t('Symbol'),
@@ -53,7 +55,7 @@ function fundraiser_multi_currency_edit($form_state, $currency_id) {
  * Calls _fundraiser_multi_currency_save()
  */
 function fundraiser_multi_currency_add_submit($form, &$form_state) {
-  if(_fundraiser_multi_currency_save($form_state['values'])) {
+  if (_fundraiser_multi_currency_save($form_state['values'])) {
     drupal_set_message(t('New currency added.'));
     $form_state['redirect'] = 'admin/settings/currencies';
   }
@@ -64,7 +66,7 @@ function fundraiser_multi_currency_add_submit($form, &$form_state) {
  * Calls _fundraiser_multi_currency_save()
  */
 function fundraiser_multi_currency_edit_submit($form, &$form_state) {
-  if(_fundraiser_multi_currency_save($form_state['values'])) {
+  if (_fundraiser_multi_currency_save($form_state['values'])) {
     drupal_set_message(t('Currency updated.'));
     $form_state['redirect'] = 'admin/settings/currencies';
   }

@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_mail().
  */
 function dsr_create_multipart_email($params) {
@@ -9,11 +13,11 @@ function dsr_create_multipart_email($params) {
   $end_date = $params['end_date'];
 
   // To make the HTML email work, implement all our own headers
-  $boundary = '----=_NextPart_'.md5(uniqid());
+  $boundary = '----=_NextPart_' . md5(uniqid());
 
   $headers = array(
    'MIME-Version' => '1.0',
-   'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
+   'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
    'Content-Transfer-Encoding' => '8Bit',
    'X-Mailer' => 'Drupal',
   );

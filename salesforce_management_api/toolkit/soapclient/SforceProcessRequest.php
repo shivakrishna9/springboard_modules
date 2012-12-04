@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 abstract class ProcessRequest {
   public $comments;
   public $nextApproverIds;

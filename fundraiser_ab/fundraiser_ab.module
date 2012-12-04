@@ -107,7 +107,7 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$indexed_forms, $webform
  * Save updated stats for this donation form/test node combo.
  */
 function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
-  if($webform_node = node_load($form_state_values['webform_nid'])) {
+  if ($webform_node = node_load($form_state_values['webform_nid'])) {
     // Only update on donation form submissions
     // 3.x use donation_form node type
     // 2.x use is_donation_form flag on webform node

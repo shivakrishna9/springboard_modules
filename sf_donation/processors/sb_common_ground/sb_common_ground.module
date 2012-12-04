@@ -67,8 +67,7 @@ function sb_common_ground_create_donation($order_id, $account_id, $sid) {
 /**
  * Implementation of recurring donation create.
  */
-function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count)
-{
+function sb_common_ground_create_recurring_donation(&$order, $user_ids, $count) {
   // The common ground recurring gift object requires a campaign. Attempt to look it up here.
   $campaign_id = _sb_common_ground_get_campaign($order->order_id);
 

@@ -12,7 +12,7 @@ function mailtron_perm() {
 /**
  * Implements hook_menu().
  */
-/*function mailtron_menu() {
+/* function mailtron_menu() {
   $items = array();
   $items['admin/build/mailtron'] = array(
     'title' => '',

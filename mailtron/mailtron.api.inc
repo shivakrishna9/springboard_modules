@@ -3,7 +3,8 @@
 require_once('mailtron.module');
 
 /**
- * @file Mailtron helper functions for 3rd party module development.
+ * @file
+ * Mailtron helper functions for 3rd party module development.
  */
 
 /**

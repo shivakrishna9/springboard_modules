@@ -1,5 +1,8 @@
 <?php
 /**
+ * @file
+ */
+/**
  * Form to configure the download of CSV files.
  */
 function sf_node_results_download_form(&$form_state, $node) {
@@ -37,20 +40,20 @@ function sf_node_results_download_form_submit(&$form, &$form_state) {
 function sf_node_results_download($node, $options = array()) {
 
   // Put the name of all fields
-  $csv_output = array('Timestamp','Drupal Type','Error','Fieldmap');
+  $csv_output = array('Timestamp', 'Drupal Type', 'Error', 'Fieldmap');
 
-  $columns = array('error_time','drupal_type','error','fieldmap');
+  $columns = array('error_time', 'drupal_type', 'error', 'fieldmap');
 
     foreach ($csv_output as $i => $value) {
-    $out .= '"'.$value.'",';
+      $out .= '"' . $value . '",';
     }
     $out .="\n";
-  $result = db_query("select * from salesforce_management_api_error where did = %d",$node);
+  $result = db_query("SELECT * FROM {salesforce_management_api_error} WHERE did = %d", $node);
 
     // Add all values in the table
     while ($l = db_fetch_array($result)) {
     foreach ($columns as $j => $value) {
-    $out .='"'.$l["$value"].'",';
+      $out .= '"' . $l["$value"] . '",';
     }
     $out .="\n";
     }

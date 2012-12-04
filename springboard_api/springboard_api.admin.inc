@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Page callback for admin/settings/springboard_api.
@@ -190,7 +193,7 @@ function springboard_api_test_client_submit(&$form, $form_state) {
     $url = $form_state['values']['url'];
     $data = _springboard_api_pack_test_data($keyset->pubkey, $keyset->privkey, $form_state['values']['data'], $form_state['values']['resource']);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     if ($form_state['values']['resource'] == 'submit') {
       curl_setopt($ch, CURLOPT_POST, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -198,9 +201,9 @@ function springboard_api_test_client_submit(&$form, $form_state) {
     else {
       $url .= '&key=' . $data['pubkey'] . '&time=' . $data['timestamp'] . '&checksum=' . $data['checksum'];
     }
-    curl_setopt($ch, CURLOPT_URL,$url);
-    $result['contents']=curl_exec($ch);
-    $result['info']=curl_getinfo($ch);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    $result['contents'] = curl_exec($ch);
+    $result['info'] = curl_getinfo($ch);
     drupal_set_message('result:' . print_r($result, TRUE));
     curl_close($ch);
   }

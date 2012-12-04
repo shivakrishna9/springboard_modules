@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file capwiz.install
+ * @file
  * Install the Capwiz module.
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>

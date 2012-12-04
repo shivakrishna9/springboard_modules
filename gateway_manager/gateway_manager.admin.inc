@@ -181,7 +181,7 @@ function gateway_manager_edit_form(&$form_state = NULL, $gateway) {
     '#weight' => 4,
   );
 
-  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, null);
+  $form['taxononmy']['terms'] = _taxonomy_term_select(t('Terms'), '', $terms, $vid, t('Categorize this payment gateway by selecting applicable terms.'), 1, NULL);
   $form['taxononmy']['terms']['#weight'] = 3;
 
   // Add the full config to the form values
@@ -254,7 +254,7 @@ function gateway_managed_gateway_delete_form_submit($form, &$form_state) {
  * Pulls the settings function out of an array of payment gateways.
  */
 function _gateway_manager_get_settings_function($gateways, $type) {
-  foreach($gateways as $gateway) {
+  foreach ($gateways as $gateway) {
     if ($gateway['id'] == $type) {
       return $gateway['settings'];
     }

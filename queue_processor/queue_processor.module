@@ -7,7 +7,7 @@
  */
 
 /**
- * Implemenation of hook_menu().
+ * Implementation of hook_menu().
  */
 function queue_processor_menu() {
   $items['admin/settings/salesforce-management/queue'] = array(
@@ -100,7 +100,7 @@ function queue_processor_menu() {
 }
 
 /**
- * Implemenation of hook_menu_alter().
+ * Implementation of hook_menu_alter().
  */
 function queue_processor_menu_alter(&$items) {
   $items['admin/build/trigger/queue_processor']['access callback'] = 'user_access';
@@ -195,7 +195,7 @@ function queue_processor_process() {
     db_query("UPDATE {sf_queue} SET locked = 1 ORDER BY created ASC LIMIT %d", $max_to_process);
     $result = db_query("SELECT * FROM {sf_queue} WHERE locked = 1");
 
-    while($data = db_fetch_object($result)) {
+    while ($data = db_fetch_object($result)) {
       // if the record does not have a fieldmap expose a hook for other modules to respond to
       if (empty($data->fieldmap)) {
         drupal_alter('queue_fieldmap_assignment', $data);
@@ -229,7 +229,7 @@ function queue_processor_process() {
 }
 
 /**
- * Implemenation of hook_trigger_name().
+ * Implementation of hook_trigger_name().
  */
 function queue_processor_queue_processor($op, $object = NULL, $response = NULL) {
   $aids = _trigger_get_hook_aids('queue_processor', $op);
@@ -254,7 +254,7 @@ function process_heap() {
   $batches_to_process = array(); // holds the ids of the batches to process once they have been created
 
   // loop over the order and create batches for each type
-  foreach($queue_processing_order as $type) {
+  foreach ($queue_processing_order as $type) {
     // get the custom batch size for this particular type
     $batch_size = variable_get($type . '_batch_size', 200);
     // get the unique fieldmaps for each type
@@ -294,7 +294,7 @@ function process_batches($ids) {
   // keep all processed batches for reporting. that way we don't have to reload them
   $batches_processed = array();
 
-  foreach($ids as $id) {
+  foreach ($ids as $id) {
 
     watchdog('salesforce queue processor', t('Batch !id processing started', array('!id' => $id)), NULL, WATCHDOG_INFO);
     $batch = load_batch($id);
@@ -309,7 +309,7 @@ function process_batches($ids) {
 
     // get all the objects out of the batch
 
-    foreach($batch['records'] as $item) {
+    foreach ($batch['records'] as $item) {
       // Skip if no object is present. This prevents errors when Sync is run with nothing
       // pending in the queue.
       if (isset($item->object)) {
@@ -326,7 +326,7 @@ function process_batches($ids) {
     }
 
     // log the object being sent. do this after validation because validation may change a value
-    foreach($batch['records'] as $item) {
+    foreach ($batch['records'] as $item) {
       if (isset($item->object)) {
         $object = $item->object;
         // update the data field so we have an exact copy of what was sent
@@ -374,7 +374,7 @@ function process_batches($ids) {
         }
       }
       catch (Exception $e) {
-        watchdog('salesforce queue processor', t('An error occured while connecting to Salesforce during batch !id. Exception: !e', array('!id' => $id, '!e' => print_r($e, true))), NULL, WATCHDOG_CRITICAL);
+        watchdog('salesforce queue processor', t('An error occured while connecting to Salesforce during batch !id. Exception: !e', array('!id' => $id, '!e' => print_r($e, TRUE))), NULL, WATCHDOG_CRITICAL);
         process_batch_failure($batch, $e); // TODO: Complete this function
         module_invoke_all('queue_processor', 'soap_fault');
       }
@@ -541,7 +541,7 @@ function process_batch_failure(&$batch, $exception) {
 function save_batch_items($batch) {
   $oids = array();
 
-  foreach($batch['records'] as $record) {
+  foreach ($batch['records'] as $record) {
     db_query("INSERT INTO {sf_batch_item} (batch_id, oid, type, sfid, dedupe_key, data, is_retry) VALUES (%d, '%s', '%s', '%s', '%s', '%s', %d)",
       $batch['id'], $record->oid, $record->type, $record->sfid, $batch['dedupe_key'], serialize($record->object), $record->is_retry);
     $oids[] = $record->oid;
@@ -551,7 +551,7 @@ function save_batch_items($batch) {
   // add the batch id to records in the heap
   $args = array();
   $args[] = $batch['id'];
-  foreach($oids as $oid) {
+  foreach ($oids as $oid) {
     $args[] = $oid;
   }
   $args[] = $record->type;
@@ -667,7 +667,7 @@ function _queue_clear_all_from_heap() {
  * Deletes a set of batches
  */
 function delete_batches($ids) {
-  foreach($ids as $id) {
+  foreach ($ids as $id) {
     delete_batch($id);
     unlock_heap($id);
   }
@@ -710,7 +710,7 @@ function load_batch($id) {
     $data['records'] = load_batch_items($id);
     // separate out the sfids
     $sfids = array();
-    foreach($data['records'] as $item) {
+    foreach ($data['records'] as $item) {
       if (!empty($item->sfid)) {
         $sfids[] = $item->sfid;
       }
@@ -750,7 +750,7 @@ function load_unprocessed_batches() {
 function save_batch_errors($batch_id, $oid, $type, $errors) {
   $errors = _normalize_salesforce_response($errors);
 
-  foreach($errors as $error) {
+  foreach ($errors as $error) {
     $fields = NULL;
     if (!empty($error->fields)) {
       $fields = _normalize_salesforce_response($error->fields);
@@ -971,9 +971,9 @@ function queue_validate_batch(&$objects, $salesforce_type) {
   $object_definition = salesforce_management_api_fieldmap_objects_load('salesforce', $salesforce_type);
 
   // loop over each object
-  foreach($objects as &$object) {
+  foreach ($objects as &$object) {
     // loop over each field
-    foreach($object as $field => &$value) {
+    foreach ($object as $field => &$value) {
       $field_type = $object_definition['fields'][$field]['field_type'];
       $length = $object_definition['fields'][$field]['length'];
       $nillable = $object_definition['fields'][$field]['nillable'];
@@ -993,7 +993,7 @@ function queue_validate_batch(&$objects, $salesforce_type) {
           if (_queue_processor_valid_timestamp($value)) {
             $value = date('c', $value);
           }
-          else if (_queue_processor_valid_ISO_date($value)) {
+          elseif (_queue_processor_valid_ISO_date($value)) {
             $value = $value;
           }
           else {
@@ -1013,20 +1013,20 @@ function queue_validate_batch(&$objects, $salesforce_type) {
 
         case 'boolean':
           if (is_string($value)) {
-            // get the list of string values that are considered true
-            $valid_booleans = explode(',', variable_get('queue_processor_valid_booleans', 'true,yes,y,1'));
-            // if the value is in the array set value as a SF friendly boolean true (1)
+            // get the list of string values that are considered TRUE
+            $valid_booleans = explode(',', variable_get('queue_processor_valid_booleans', 'TRUE,yes,y,1'));
+            // if the value is in the array set value as a SF friendly boolean TRUE (1)
             if (in_array(strtolower(trim($value)), $valid_booleans)) {
               $value = 1;
             }
             else {
-              $value = 0; // default to false
+              $value = 0; // default to FALSE
             }
           }
           else {
-            $value = !empty($value) ? $value : 0; // default to false
+            $value = !empty($value) ? $value : 0; // default to FALSE
           }
-          // convert any non-bool values back to true
+          // convert any non-bool values back to TRUE
           if ($value && !is_bool($value)) {
             $value = 1;
           }
@@ -1066,10 +1066,6 @@ function queue_processor_get_objects_in_batch($sfids, $fieldmap) {
   return $objects;
 }
 
-/******************************************************************************
- * TRIGGERS
- *****************************************************************************/
-
 /**
  * Implementation of hook_hook_info().
  */
@@ -1097,9 +1093,6 @@ function queue_processor_hook_info() {
   );
 }
 
-/***************************************
- * CUSTOM ACTIONS
- **************************************/
 /*
 * Implementation of hook_action_info().
 */
@@ -1108,7 +1101,7 @@ function queue_processor_action_info() {
     'queue_processor_send_email' => array(
       'description' => t('Send queue processor email'),
        'type' => 'queue_processor',
-       'configurable' => true,
+       'configurable' => TRUE,
        'hooks' => array(
         'queue_processor' => array('connection_error', 'object_error', 'moved_to_retry_queue', 'permanent_failure', 'soap_fault'),
        ),
@@ -1117,15 +1110,12 @@ function queue_processor_action_info() {
 }
 
 
-/********************************************************************************
- * ACTION CALLBACKS
- *******************************************************************************/
+
 
 /**
  * Sends a notification email
  */
-function queue_processor_send_email(&$object, $context)
-{
+function queue_processor_send_email(&$object, $context) {
     switch ($context['op']) {
       case 'connection_error':
         drupal_mail('queue_processor', 'connection_error', $context['to'], language_default(), $context);
@@ -1230,9 +1220,9 @@ function create_summary_email(&$batches_processed) {
   }
 }
 
-function created_edit_link($oid, $type, $return_url = null) {
+function created_edit_link($oid, $type, $return_url = NULL) {
   global $base_url;
-  $url = null;
+  $url = NULL;
 
   switch ($type) {
     case 'user':
@@ -1254,7 +1244,7 @@ function created_edit_link($oid, $type, $return_url = null) {
       break;
   }
 
-  if ((null !== $return_url) && (null !== $url)) {
+  if ((NULL !== $return_url) && (NULL !== $url)) {
     $url .= '?destination=' . $return_url;
   }
 
@@ -1335,11 +1325,11 @@ function queue_processor_prune_logs() {
 function _queue_processor_valid_timestamp($date)  {
   for ($i = 0; $i < 5; $i++) {
     if (!is_numeric(substr($date, $i, 1))) {
-      return false;
+      return FALSE;
     }
   }
 
-  return true;
+  return TRUE;
 }
 
 function _queue_processor_valid_ISO_date($date) {

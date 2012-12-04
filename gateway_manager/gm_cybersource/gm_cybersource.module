@@ -63,10 +63,6 @@ function gm_cybersource_payment_gateway_settings_submit($form, &$form_state) {
   }
 }
 
-/*******************************************************************************
- * Hook Functions (Ubercart)
- ******************************************************************************/
-
 /**
  * Implementation of hook_payment_gateway_managed().
  */
