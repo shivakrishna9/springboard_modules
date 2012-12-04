@@ -198,14 +198,7 @@ function page_wrappers_node_view($node, $view_mode) {
   return $node;
 }
 
-/**
- * Implements hook_node_presave().
- */
-function page_wrappers_node_presave($node) {
-  if ($node->type == 'page_wrapper') {
-    page_wrappers_clean_markup($node);
-  }
-}
+
 
 /**
  * Implements hook_node_update().
@@ -541,46 +534,6 @@ function _page_wrappers_create_template($node) {
   
 }
 
-/**
- * Cleans up unwanted user created markup in the node body.
- *
- * @param $node
- *   The page wrapper node to clean up.
- */
-function page_wrappers_clean_markup(&$node) {
-  $node->teaser = '';
-
-  if (_page_wrappers_htmlpurifier_load()) {
-  
-    //turn off htmlpurifiers cache
-    $config = HTMLPurifier_Config::createDefault();
-    $config->set('Cache.DefinitionImpl', NULL);
-
-    $purifier = new HTMLPurifier($config);
-
-    $ret = $purifier->purify($node->body['und'][0]['value']);
-
-    $node->body['und'][0]['value'] = $ret;
-    
-  }
-
-}
-
-/**
- * Loads the HTML Purifier library
- */
-function _page_wrappers_htmlpurifier_load() {
-  static $done = FALSE;
-  if ($done) {
-    return TRUE;
-  }
-  $done = TRUE;
-  if (function_exists('libraries_get_path') && $library_path = libraries_get_path('htmlpurifier')) {
-    require_once "$library_path/library/HTMLPurifier.auto.php";
-    return TRUE;
-  }
-  return FALSE;
-}
 
 /**
  * Replaces tokens in the template content.
