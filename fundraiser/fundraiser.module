@@ -152,27 +152,33 @@ function fundraiser_menu() {
     'access callback' => TRUE,
   );
   
-   $items['admin/settings/fundraiser/welcome'] = array(
-    'title' => 'Sustainer Welcome Mail',
-    'description' => 'sustainer welcome mail settings',
+   $items['admin/settings/fundraiser/mail'] = array(
+    'title' => 'Email settings',
+    'description' => 'fundraiser system email configuration',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_mail_welcome_form'),
     'access arguments' => array("administer fundraiser"),
     'file' => 'fundraiser.mail.inc',
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => -5,
+  );
+  
+  $items['admin/settings/fundraiser/mail/welcome'] = array (
+    'title' => 'Sustainer Welcome Mail',
+    'description' => 'sustainer welcome mail settings',
+    'access arguments' => array("administer fundraiser"),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
   );
   
   
-  $items['admin/settings/fundraiser/end'] = array(
+  $items['admin/settings/fundraiser/mail/end'] = array(
     'title' => 'Sustainer End Mail',
     'description' => 'sustainer end mail settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_mail_end_form'),
     'access arguments' => array("administer fundraiser"),
     'file' => 'fundraiser.mail.inc',
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
   );
 	
 	$items['admin/fundraiser/recurring'] = array(

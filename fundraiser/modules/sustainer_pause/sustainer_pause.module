@@ -5,25 +5,25 @@
  */
 function sustainer_pause_menu() {
   
-   $items['admin/settings/fundraiser/pause'] = array(
+   $items['admin/settings/fundraiser/mail/pause'] = array(
     'title' => 'Sustainer Pause Mail',
     'description' => 'sustainer pause mail settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sustainer_pause_mail_pause_form'),
     'access arguments' => array("administer fundraiser"),
     'file' => 'sustainer_pause.mail.inc',
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'weight' => -1,
   );
   
-  $items['admin/settings/fundraiser/restart'] = array(
+  $items['admin/settings/fundraiser/mail/restart'] = array(
     'title' => 'Sustainer Restart Mail',
     'description' => 'sustainer restart mail settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sustainer_pause_mail_restart_form'),
     'access arguments' => array("administer fundraiser"),
     'file' => 'sustainer_pause.mail.inc',
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'weight' => 0,
   );
   

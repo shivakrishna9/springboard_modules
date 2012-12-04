@@ -28,8 +28,10 @@ function mailtron_mail_form($edit, $params = array()) {
   // Load the settings for this from from the database if it exists.
   $settings = mailtron_mail_load($params);
   // Set the default values to blank if they don't exist
-  $blank_values = array ('from_name' => '', 'from_mail' => '', 'recipients' => '', 'cc' => '', 'bcc' => '', 'subject' => '', 'html_body' => '', 'text_body' => '');
-  if(!isset($params['default'])) { $params['default'] = array(); }
+  $blank_values = array('from_name' => '', 'from_mail' => '', 'recipients' => '', 'cc' => '', 'bcc' => '', 'subject' => '', 'html_body' => '', 'text_body' => '');
+  if (!isset($params['default'])) {
+     $params['default'] = array(); 
+  }
   $default = array_merge($blank_values, $params['default']);
   // Build the form
   $form['mid'] = array(
@@ -69,6 +71,7 @@ function mailtron_mail_form($edit, $params = array()) {
     '#title' => t('Mail headers'),
     '#description' => t(''),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $form['headers']['from_name'] = array(
     '#type' => 'textfield',
@@ -77,20 +80,23 @@ function mailtron_mail_form($edit, $params = array()) {
     '#default_value' => isset($settings->from_name) ? $settings->from_name : $default['from_name'],
     '#required' => TRUE,
   );
-   $form['headers']['from_mail'] = array(
+  $form['headers']['from_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('From mail'),
     '#description' => t(''),
     '#default_value' => isset($settings->from_mail) ? $settings->from_mail : $default['from_mail'],
     '#required' => TRUE,
   );
-   $form['headers']['recipients'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Recipient email address'),
-    '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
-    '#default_value' => isset($settings->recipients) ? $settings->recipients : $default['recipients'],
-    '#required' => TRUE,
-  );
+  // Only show a recipient field if there isn't a recipient callback
+  if (!isset($params['recipient_callback'])) {
+    $form['headers']['recipients'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Recipient email address'),
+      '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
+      '#default_value' => isset($settings->recipients) ? $settings->recipients : $default['recipients'],
+      '#required' => TRUE,
+    );
+  }
   $form['headers']['cc'] = array(
     '#type' => 'textfield',
     '#title' => t('CC email address'),
