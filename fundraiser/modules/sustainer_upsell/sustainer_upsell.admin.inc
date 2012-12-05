@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Admin configuration form.
  */
@@ -31,24 +33,24 @@ function sustainer_upsell_admin_settings_form(&$form) {
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => $brackets[$i]['low'],
-      '#prefix' => '<div style="float: left; clear: left; margin-right: 3em;">',
-      '#suffix' => "</div>"
+      '#prefix' => '<div class="upsell_low" style="float: left; clear: left; margin-right: 3em;">',
+      '#suffix' => "</div>",
     );
     $form['sustainer_upsell_brackets']['brackets']['sustainer_upsell_brackets_high_'.$i] = array(
       '#title' => t('High Value'),
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => $brackets[$i]['high'],
-      '#prefix' => '<div style="float: left; margin-right: 3em;">',
-      '#suffix' => "</div>"
+      '#prefix' => '<div class="upsell_high" style="float: left; margin-right: 3em;">',
+      '#suffix' => "</div>",
     );
     $form['sustainer_upsell_brackets']['brackets']['sustainer_upsell_brackets_upsell_'.$i] = array(
       '#title' => t('Upsell Value'),
       '#type' => 'textfield',
       '#size' => 15,
       '#default_value' => $brackets[$i]['upsell'],
-      '#prefix' => '<div style="float: left; margin-right: 3em;">',
-      '#suffix' => "</div>"
+      '#prefix' => '<div class="upsell_value" style="float: left; margin-right: 3em;">',
+      '#suffix' => "</div>",
     );
   }
   $form['sustainer_upsell_brackets']['brackets']['brackets_delta'] = array(
@@ -67,7 +69,7 @@ function sustainer_upsell_admin_settings_form(&$form) {
       'effect' => 'fade',
     ),
     '#prefix' => '<div style="float: left; clear: both; padding-top: 1em">',
-    '#suffix' => "</div>"
+    '#suffix' => "</div>",
   );
   $form['sustainer_upsell_default_content'] = array(
     '#title' => t('Default content for Upsell'),
@@ -81,35 +83,35 @@ function sustainer_upsell_admin_settings_form(&$form) {
   );
   $form['sustainer_upsell_acceptance'] = array(
     '#title' => t('Acceptance Cookie'),
-    '#type' => 'fieldset'
+    '#type' => 'fieldset',
   );
   $form['sustainer_upsell_acceptance']['sustainer_upsell_acceptance_enabled'] = array(
-    '#title' => 'Enabled',
+    '#title' => t('Enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('sustainer_upsell_acceptance_enabled',0),
   );
   $form['sustainer_upsell_acceptance']['sustainer_upsell_acceptance_lifetime'] = array(
-    '#title' => 'Cookie lifetype in days',
+    '#title' => t('Cookie lifetype in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('sustainer_upsell_acceptance_lifetime',''),
   );
   $form['sustainer_upsell_rejection'] = array(
     '#title' => t('Rejection Cookie'),
-    '#type' => 'fieldset'
+    '#type' => 'fieldset',
   );
   $form['sustainer_upsell_rejection']['sustainer_upsell_rejection_enabled'] = array(
-    '#title' => 'Enabled',
+    '#title' => t('Enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('sustainer_upsell_rejection_enabled',0),
   );
   $form['sustainer_upsell_rejection']['sustainer_upsell_rejection_lifetime'] = array(
-    '#title' => 'Cookie lifetype in days',
+    '#title' => t('Cookie lifetype in days'),
     '#type' => 'textfield',
     '#default_value' => variable_get('sustainer_upsell_rejection_lifetime',''),
   );
   $form['sustainer_upsell_box'] = array(
     '#title' => t('Upsell Display Settings'),
-    '#type' => 'fieldset'
+    '#type' => 'fieldset',
   );
   $boxes = array();
   if(module_exists('thickbox')) {
@@ -124,17 +126,17 @@ function sustainer_upsell_admin_settings_form(&$form) {
     '#options' => $boxes,
     '#default_value' => variable_get('sustainer_upsell_box_type',''),
     '#required' => true,
-    '#description' => 'This module is currently compatible with Thickbox or Lightbox2'
+    '#description' => t('This module is currently compatible with Thickbox or Lightbox2.'),
   );
   $form['sustainer_upsell_debug'] = array(
-    '#title' => 'Debug Mode',
+    '#title' => t('Debug Mode'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('sustainer_upsell_debug',0),
-    '#description' => 'Debug mode will open the upsell box regardless of cookie settings'
+    '#description' => t('Debug mode will open the upsell box regardless of cookie settings,'),
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Save Configuration Settings',
+    '#value' => t('Save Configuration Settings'),
   );
   // TODO - allow WYSIWYG format selection
   //$form['sustainer_upsell_default_content']['format'] = filter_form($myfield1['format'], NULL, array('field1_format'));
@@ -195,10 +197,10 @@ function _sustainer_upsell_admin_settings_ahah() {
 function sustainer_upsell_admin_settings_form_validate($form,&$form_state) {
   $vals = $form_state['values'];
   if(($vals['sustainer_upsell_acceptance_enabled'] == 1) && (!is_numeric($vals['sustainer_upsell_acceptance_lifetime']))) {
-    form_set_error('upsell', t('Acceptance cookie lifetime must be a number greater than 0'));
+    form_set_error('upsell', t('Acceptance cookie lifetime must be a number greater than 0.'));
   }
   if(($vals['sustainer_upsell_rejection_enabled'] == 1) && (!is_numeric($vals['sustainer_upsell_rejection_lifetime']))) {
-    form_set_error('upsell', t('Rejection cookie lifetime must be a number greater than 0'));
+    form_set_error('upsell', t('Rejection cookie lifetime must be a number greater than 0.'));
   }
 }
 
@@ -254,7 +256,7 @@ function sustainer_upsell_admin_thank_you_settings() {
   );
   $form['sustainer_upsell_email'] = array(
     '#title' => t('Email Defaults'),
-    '#type' => 'fieldset'
+    '#type' => 'fieldset',
   );
   $form['sustainer_upsell_email']["sustainer_upsell_email_from"] = array(
     '#title' => t('From Address'),

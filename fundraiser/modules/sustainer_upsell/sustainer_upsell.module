@@ -57,7 +57,7 @@ function sustainer_upsell_menu() {
 }
 
 function sustainer_upsell_form_access_check($node) {
-  if($node->type == 'donation_form') {
+  if(fundraiser_is_donation_type($node->type)) {
     return true;
   }
   return false;
@@ -65,7 +65,6 @@ function sustainer_upsell_form_access_check($node) {
 
 function sustainer_upsell_preprocess_page(&$vars, $hook) {
   if((is_numeric(arg(1)) && (arg(2) == 'upsell'))) {
-    //die('test');
     $vars['template_file'] = 'page-sustainer-upsell';
   }
   elseif(arg(2)=='confirmation') {
@@ -75,7 +74,7 @@ function sustainer_upsell_preprocess_page(&$vars, $hook) {
 }
 
 function sustainer_upsell_theme_registry_alter(&$theme_registry) {
-  $theme_hook = 'page'; // my hook name
+  $theme_hook = 'page';
   // Get the path to this module
   $modulepath = drupal_get_path('module', 'sustainer_upsell');
   // Add the module path on top in the array of paths
@@ -108,15 +107,7 @@ function _sustainer_upsell_popup_iframe($node, $sid) {
  * Implements hook_form_alter().
  */
 function sustainer_upsell_form_alter(&$form, $form_state, $form_id) {
-  // Implement fix for older versions haveing a different function name
-  if (function_exists(fundraiser_is_donation_type)) {
-    // Version 3.2
-    $donation_node = fundraiser_is_donation_type($form['#node']->type);
-  }
-  else {
-    // Older version
-    $donation_node = _fundraiser_is_donation_type($form['#node']);
-  }
+  $donation_node = fundraiser_is_donation_type($form['#node']->type);
   if (isset($form['#node']) && $donation_node && substr($form_id, -10) == '_node_form') {
     sustainer_upsell_node_settings($form, $form_state, $form['#node']);
   }
@@ -133,13 +124,13 @@ function sustainer_upsell_node_settings(&$form, $edit, $node) {
   $form['sustainer_upsell']['sustainer_upsell_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Upsell Enabled'),
-    '#default_value' => $node->sustainer_upsell_enabled
+    '#default_value' => $node->sustainer_upsell_enabled,
   );
   $form['sustainer_upsell']['sustainer_upsell_content'] = array(
     '#title' => t('Form specific Upsell Content'),
     '#type' => 'textarea',
     '#default_value' => $node->sustainer_upsell_content,
-    '#description' => t('If no content is given the default will be used.')
+    '#description' => t('If no content is given the default will be used.'),
   );
 }
 
@@ -150,19 +141,19 @@ function sustainer_upsell_theme() {
   return array(
     'sustainer_upsell_box_lightbox2' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
-      'template' => 'templates/sustainer-upsell-lightbox'
+      'template' => 'templates/sustainer-upsell-lightbox',
     ),
     'sustainer_upsell_thankyou_lightbox2' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL, 'recurring_amount' => NULL, 'master_order' => NULL),
-      'template' => 'templates/sustainer-upsell-thankyou-lightbox'
+      'template' => 'templates/sustainer-upsell-thankyou-lightbox',
     ),
     'sustainer_upsell_box_thickbox' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL),
-      'template' => 'templates/sustainer-upsell-thickbox'
+      'template' => 'templates/sustainer-upsell-thickbox',
     ),
     'sustainer_upsell_thankyou_thickbox' => array(
       'arguments' => array('message' => NULL, 'match' => NULL, 'sid' => NULL, 'content' => NULL, 'recurring_amount' => NULL, 'master_order' => NULL),
-      'template' => 'templates/sustainer-upsell-thankyou-thickbox'
+      'template' => 'templates/sustainer-upsell-thankyou-thickbox',
     ),
   );
 }

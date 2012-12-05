@@ -1,17 +1,13 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implements hook_nodeapi().
  */
 function sustainer_upsell_nodeapi(&$node, $op, $teaser, $page) {
-  // Implement fix for older versions haveing a different function name
-  if (function_exists(fundraiser_is_donation_type)) {
-    // Version 3.2
-    $donation_node = fundraiser_is_donation_type($node->type);
-  }
-  else {
-    // Older version
-    $donation_node = _fundraiser_is_donation_type($node);
-  }
+  $donation_node = fundraiser_is_donation_type($node->type);
   if ($donation_node) {
     switch($op) {
       case 'load':
