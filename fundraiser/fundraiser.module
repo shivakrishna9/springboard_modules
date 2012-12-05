@@ -2241,7 +2241,7 @@ function fundraiser_clone_order($order) {
 /**
  * Creates future order based on the the order's credit card expiration date.
  */
-function fundraiser_create_future_orders($order_id, $gateway = NULL) {
+function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = NULL) {
   global $user;
 
   // reload the original order so we get any changes that have been made by the payment gateways
@@ -2260,6 +2260,10 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
     $next_order = clone $order;
     $next_order->order_id = $new_id;
     $next_order->order_status = 'pending_future_payment';
+    // use $amount of not empty, need to set this on the product because of uc_get_total
+    if (!empty($amount)) {
+      $next_order->products[0]->price = $amount;
+    }
 
     unset($next_order->products[0]->order_product_id);
     uc_order_save($next_order);
