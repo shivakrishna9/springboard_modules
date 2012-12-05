@@ -65,7 +65,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-wrapper">',
+    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-object-wrapper">',
     '#sufix' => '</div>',
   );
 
@@ -86,8 +86,8 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#options' => $sf_objects,
     '#required' => TRUE,
     '#ajax' => array(
-      'callback' => 'salesforce_webform_map_form_ajax_callback',
-      'wrapper' => 'salesforce-webform-map-ajax-wrapper',
+      'callback' => 'salesforce_webform_map_form_ajax_sf_object',
+      'wrapper' => 'salesforce-webform-map-ajax-sf-object-wrapper',
       'method' => 'replace',
       'effect' => 'fade',
       // @TODO: Warn user that changing this value will erase their map work
@@ -132,11 +132,15 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#theme' => 'table',
     '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
     '#row_storage' => array(),
+    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe-wrapper">',
+    '#suffix' => '</div>',
   );
   $wf_components = $node->webform['components'];
   array_unshift($sf_fields, '-');
   foreach ($wf_components as $cid => $component) {
     $sf_field = _sfw_default_value('salesforce_webform_map_cid_'. $cid, $form_state);
+    $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
+    $sf_field_unique = _sfw_salesforce_field_is_unique($sfapi, $sf_object, $sf_field);
     $row = array(
       'webform_component' => array(
         '#id' => 'map-label-webform-cid-'. $cid,
@@ -149,15 +153,34 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#type' => 'select',
         '#default_value' => $sf_field,
         '#options' => $sf_fields,
+        '#ajax' => array(
+          'callback' => 'salesforce_webform_map_form_ajax_sf_dedupe',
+          'wrapper' => 'salesforce-webform-map-ajax-sf-dedupe-wrapper',
+          'method' => 'replace',
+          'effect' => 'fade',
+        ),
       ),
-      'salesforce_webform_map_dedupe_'. $cid => array(
+    );
+    if ($sf_field_unique) {
+      $row['salesforce_webform_map_cid_'. $cid]['#description'] = t('The values of this field must be unique in Salesforce.');
+    }
+
+    if (empty($sf_field) || $sf_field_dedupe == FALSE) {
+      $row['salesforce_webform_map_dedupe_'. $cid] = array(
+        '#id' => 'salesforce-field-dedupe-cid-'. $cid,
+        '#type' => 'hidden',
+        '#value' => NULL,
+      );
+    }
+    else {
+      $row['salesforce_webform_map_dedupe_'. $cid] = array(
         '#id' => 'salesforce-field-dedupe-cid-'. $cid,
         '#type' => 'radio',
         '#return_value' => 'salesforce_dedupe_'. $sf_field,
         '#attributes' => array('name' => 'salesforce_dedupe'),
         '#value' => _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state),
-      )
-    );
+      );
+    }
 
     $form['field_map']['salesforce_webform_map']['#row_storage'][] = $row;
   }
@@ -275,10 +298,17 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
 }
 
 /**
- * AJAX callback so the mapping form will be all dynamic-like
+ * AJAX callback to populate the form for the chosen Salesforce object
  */
-function salesforce_webform_map_form_ajax_callback($form) {
+function salesforce_webform_map_form_ajax_sf_object($form) {
   return $form;
+}
+
+/**
+ * AJAX callback to set a field row's dedupe cell
+ */
+function salesforce_webform_map_form_ajax_sf_dedupe($form) {
+  return $form['field_map']['salesforce_webform_map'];
 }
 
 /**
@@ -564,6 +594,58 @@ function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
     }
   }
   return $field_list;
+}
+
+/**
+ * Find out the idLookup value for a given Salesforce field
+ *
+ * @param Salesforce $sfapi
+ *   A Salesforce API object
+ * @param String $sf_object
+ *   The type of Salesforce object that has the field
+ * @param String $sf_field
+ *   The field you're looking for information about
+ *
+ * @return Bool
+ *   The value of idLookup as provided by Salesforce
+ */
+function _sfw_salesforce_field_can_dedupe(Salesforce $sfapi, $sf_object, $sf_field) {
+  if (empty($sf_object) || empty($sf_field)) {
+    return FALSE;
+  }
+  $object_info = $sfapi->objectDescribe($sf_object);
+  // Find the field
+  foreach ($object_info['fields'] as $field) {
+    if ($field['name'] == $sf_field) {
+      return $field['idLookup'];
+    }
+  }
+}
+
+/**
+ * Find out if the field's value must be unique in the Salesforce database
+ *
+ * @param Salesforce $sfapi
+ *   A Salesforce API object
+ * @param String $sf_object
+ *   The type of Salesforce object that has the field
+ * @param String $sf_field
+ *   The field you're looking for information about
+ *
+ * @return Bool
+ *   The value of as provided by Salesforce
+ */
+function _sfw_salesforce_field_is_unique(Salesforce $sfapi, $sf_object, $sf_field) {
+  if (empty($sf_object) || empty($sf_field)) {
+    return FALSE;
+  }
+  $object_info = $sfapi->objectDescribe($sf_object);
+  // Find the field
+  foreach ($object_info['fields'] as $field) {
+    if ($field['name'] == $sf_field) {
+      return $field['unique'];
+    }
+  }
 }
 
 /**
