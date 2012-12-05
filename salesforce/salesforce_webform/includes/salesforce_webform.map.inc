@@ -150,12 +150,39 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#default_value' => $sf_field,
         '#options' => $sf_fields,
       ),
-       'dedupe_field' => array(
-        // @TODO
-        '#markup' => '',
-      ),
+      'salesforce_webform_map_dedupe_'. $cid => array(
+        '#id' => 'salesforce-field-dedupe-cid-'. $cid,
+        '#type' => 'radio',
+        '#return_value' => 'salesforce_dedupe_'. $sf_field,
+        '#attributes' => array('name' => 'salesforce_dedupe'),
+        '#value' => _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state),
+      )
     );
   }
+  // Add some help text
+  $form['field_map']['salesforce_webform_map']['#row'][] = array(
+    'column_0' => array(
+      '#markup' => '',
+    ),
+    'column_1' => array(
+      '#id' => 'salesforce-webform-map-helptext-field-map',
+      '#markup' => '<p>'. t('<strong>Dedupe Field:</strong> Minimizes duplicate
+        records and allows updating existing records. Selecting a dedupe field
+        chooses which field is the unique identifier for this form.  A dedupe
+        option only appears if the selected field can be used as a unique
+        identifier. Select \'None\' to not use this feature.') .'</p>',
+      '#prefix' => '<div class="salesforce-webform-map-helptext">',
+      '#suffix' => '</div>',
+    ),
+    'salesforce_webform_map_dedupe_none' => array(
+      '#id' => 'salesforce-field-no-dedupe',
+      '#title' => t('None'),
+      '#type' => 'radio',
+      '#return_value' => 'salesforce_dedupe_none',
+      '#attributes' => array('name' => 'salesforce_dedupe'),
+      '#value' => _sfw_default_value('salesforce_webform_map_dedupe_none', $form_state),
+    )
+  );
   _sfw_generate_form_table($form['field_map']['salesforce_webform_map']);
 
   // Add the map from node properties to Salesforce fields
@@ -359,6 +386,10 @@ function _sfw_default_value($field, $form_state) {
   if (empty($form_state['input'])) {
     // Check against the node at $form_state['build_info']['args'][0]
     switch ($field) {
+      case 'salesforce_webform_map_dedupe_none':
+        // if not configured in node
+          return TRUE;
+        // else return node's value
     }
   }
   else {
@@ -377,6 +408,17 @@ function _sfw_default_value($field, $form_state) {
         // Otherwise use the user's configured record type
         return $form_state['input']['salesforce_object_fieldset']['salesforce_record_type'];
 
+      case 'salesforce_webform_map_dedupe_none':
+        if (
+             !isset($form_state['input']['salesforce_dedupe'])
+             || empty($form_state['input']['salesforce_dedupe'])
+             || $form_state['input']['salesforce_dedupe'] == 'salesforce_dedupe_none'
+           ) {
+          return TRUE;
+        }
+        return FALSE;
+
+      // The remaining fields are all in the field_map
       default:
         // Find the group the field resides within
         foreach ($form_state['input']['field_map'] as $group_name => $rows) {
