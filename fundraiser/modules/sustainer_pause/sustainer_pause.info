@@ -1,0 +1,7 @@
+name = Sustainer Pause
+description = Adds the ability for users to pause/unpause recurring contributions
+core = 6.x
+package = Jackson River Springboard - extras
+dependencies[] = fundraiser
+version =  6.x-1.0-beta1
+
