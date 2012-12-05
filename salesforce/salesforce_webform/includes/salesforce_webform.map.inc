@@ -65,6 +65,8 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
+    '#prefix' => '<div id="salesforce-webform-map-ajax-wrapper">',
+    '#sufix' => '</div>',
   );
 
   $form['salesforce_object_fieldset'] = array(
@@ -83,8 +85,21 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#default_value' => $sf_object,
     '#options' => $sf_objects,
     '#required' => TRUE,
+    '#ajax' => array(
+      'callback' => 'salesforce_webform_map_form_ajax_callback',
+      'wrapper' => 'salesforce-webform-map-ajax-wrapper',
+      'method' => 'replace',
+      'effect' => 'fade',
+      // @TODO: Warn user that changing this value will erase their map work
+    ),
     // @TODO: Disable field once mapping has been saved
   );
+
+  if (empty($sf_object)) {
+    // Since the user has not selected a Salesforce object yet, we should not
+    // display the remainder of the form.  Stop here.
+    return $form;
+  }
 
   // @TODO: Add unmap button if mapping has been saved
 
@@ -221,6 +236,13 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#value' => 'Submit',
   );
 
+  return $form;
+}
+
+/**
+ * AJAX callback so the mapping form will be all dynamic-like
+ */
+function salesforce_webform_map_form_ajax_callback($form) {
   return $form;
 }
 
