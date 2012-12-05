@@ -14,6 +14,7 @@ function salesforce_webform_map_page($node) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
+      '#id' => 'salesforce-webform-map-helptext',
       '#type' => 'markup',
       '#markup' => t('When users submit this webform, map which values of the webform\'s components should be sent to your Salesforce organization.'),
       '#prefix' => '<p>',
@@ -60,24 +61,167 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     );
   }
 
+  // Time to build up the form
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
-    'map' => array(),
   );
 
+  $form['salesforce_object_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Salesforce Object Mapping',
+  );
+
+  // The type of Salesforce Object
+  // @TODO
   // If webform is not mapped to salesforce object
-
     // Give option to map to a salesforce object
-    // and lots more
-
   // else
-
     // Give option to unmap
-    // All kinds of other options
-    // Deduping, and removing deduping
-
   // end
+
+  $sf_objects = _sfw_salesforce_object_list($sfapi);
+  $form['salesforce_object_fieldset']['salesforce_object_type'] = array(
+    '#id' => 'salesforce-object-type',
+    '#title' => t('Salesforce object'),
+    '#type' => 'select',
+    '#description' => t('Select a Salesforce object to map to this webform.'),
+    '#options' => $sf_objects,
+    '#required' => TRUE,
+  );
+
+  $sf_object = 'Opportunity'; // @TODO: Get the actual object from the form
+
+  // The type of record of the chosen Salesforce Object
+  // @TODO: Defaults to Salesforce's default record type
+  $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
+  $form['salesforce_object_fieldset']['salesforce_record_type'] = array(
+    '#id' => 'salesforce-record-type',
+    '#title' => t('Object Record Type'),
+    '#type' => 'select',
+    '#description' => t('Select a record type.'),
+    '#options' => $sf_records,
+    '#required' => TRUE,
+  );
+
+  // Add the mapping functionality to the form
+  $sf_fields = _sfw_salesforce_field_list($sfapi, $sf_object);
+  $map_row_class_name = 'salesforce-webform-map-field';
+  $form['field_map'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Field Mapping',
+  );
+
+  // Add the map from webform components to Salesforce fields
+  $form['field_map']['salesforce_webform_map'] = array(
+    '#id' => 'salesforce-webform-map',
+    '#tree' => TRUE,
+    '#theme' => 'table',
+    '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
+    '#rows' => array(),
+  );
+  $wf_components = $node->webform['components'];
+  array_unshift($sf_fields, '-');
+  foreach ($wf_components as $cid => $component) {
+    $form['field_map']['salesforce_webform_map']['#rows'][] = array(
+      'webform_component' => array(
+        '#id' => 'map-label-webform-cid-'. $cid,
+        '#markup' => $component['name'] .' ('. $component['type'] .')',
+        '#prefix' => '<label class="'. $map_row_class_name .'">',
+        '#suffix' => '</label>',
+      ),
+      'salesforce_webform_map_cid'. $cid => array(
+        '#id' => 'salesforce-field-map-webform-cid-'. $cid,
+        '#type' => 'select',
+        '#options' => $sf_fields,
+      ),
+       'dedupe_field' => array(
+        // @TODO
+        '#markup' => '',
+      ),
+    );
+  }
+  _sfw_generate_form_table($form['field_map']['salesforce_webform_map']);
+
+  // Add the map from node properties to Salesforce fields
+  $form['field_map']['salesforce_node_map'] = array(
+    '#id' => 'salesforce-node-map',
+    '#tree' => TRUE,
+    '#theme' => 'table',
+    '#header' => array(t('Node Property'), t('Salesforce Field')),
+    '#rows' => array(
+      array(
+        'node_id' => array(
+          '#id' => 'map-label-nid',
+          '#markup' => t('Node ID'),
+          '#prefix' => '<label class="'. $map_row_class_name .'">',
+          '#suffix' => '</label>',
+        ),
+        'salesforce_node_map_id' => array(
+          '#id' => 'salesforce-field-map-nid',
+          '#type' => 'select',
+          '#options' => $sf_fields,
+        ),
+      ),
+      array(
+        'node_title' => array(
+          '#id' => 'map-label-node-title',
+          '#markup' => t('Node Title'),
+          '#prefix' => '<label class="'. $map_row_class_name .'">',
+          '#suffix' => '</label>',
+        ),
+        'salesforce_node_map_title' => array(
+          '#id' => 'salesforce-field-map-node-title',
+          '#type' => 'select',
+          '#options' => $sf_fields,
+        ),
+      )
+    ),
+  );
+  _sfw_generate_form_table($form['field_map']['salesforce_node_map']);
+
+  // Add the map from submission properties to Salesforce fields
+  $form['field_map']['salesforce_submission_map'] = array(
+    '#id' => 'salesforce-submission-map',
+    '#tree' => TRUE,
+    '#theme' => 'table',
+    '#header' => array(t('Submission Property'), t('Salesforce Field')),
+    '#rows' => array(
+      array(
+        'submission_id' => array(
+          '#id' => 'map-label-submission-id',
+          '#markup' => t('Submission ID'),
+          '#prefix' => '<label class="'. $map_row_class_name .'">',
+          '#suffix' => '</label>',
+        ),
+        'salesforce_submission_map_id' => array(
+          '#id' => 'salesforce-field-map-submission-id',
+          '#type' => 'select',
+          '#options' => $sf_fields,
+        ),
+      ),
+      array(
+        'submission_date' => array(
+          '#id' => 'map-label-submission-date',
+          '#markup' => t('Submission Date'),
+          '#prefix' => '<label class="'. $map_row_class_name .'">',
+          '#suffix' => '</label>',
+        ),
+        'salesforce_submission_map_date' => array(
+          '#id' => 'salesforce-field-map-submission-date',
+          '#type' => 'select',
+          '#options' => $sf_fields,
+        ),
+      )
+    ),
+  );
+  _sfw_generate_form_table($form['field_map']['salesforce_submission_map']);
+
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
 
   return $form;
 }
@@ -88,7 +232,8 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
  * @D6TOD7: Did not exist in prior version
  */
 function salesforce_webform_map_form_validate($form, &$form_state) {
-  // @TODO: What would I be validating...?
+  // @TODO
+  //   - Using the same Salesforce field twice
 }
 
 /**
@@ -163,4 +308,114 @@ function salesforce_webform_delete_map($nid) {
 
 /**
  * @} salesforce_webform_map_crud
+ */
+
+
+/**
+ * @defgroup form_helper Misc tools to help streamline form building
+ * @{
+ */
+
+/**
+ * Helper function for the annoying case of setting a table in a form
+ */
+function _sfw_generate_form_table(&$form) {
+  $rows = $form['#rows'];
+  $form['#rows'] = array();
+  foreach ($rows as $row) {
+    $form[] = $row;
+    $columns = array();
+    foreach ($row as $column) {
+      $columns[] = array('data' => $column);
+    }
+    $form['#rows'][] = $columns;
+  }
+}
+
+/**
+ * Gather a simple list of Salesforce objects
+ *
+ * @param Salesforce $sfapi
+ *   A Salesforce API object
+ *
+ * @return Array
+ *   Array of Salesforce objects keyed by the object's name and the label as the
+ *   value
+ */
+function _sfw_salesforce_object_list(Salesforce $sfapi) {
+  // Salesforce module v4 filters down to updatable and triggerable so it is
+  // easier to visually consume the list.
+  $objects_info = $sfapi->objects(array('updateable' => TRUE, 'triggerable' => TRUE));
+
+  $objects_list = array();
+  $dupes = array();
+  foreach ($objects_info as $object) {
+    // Some objects have the same label, which just makes things confusing
+    // I could make only subsequent duplicates unique, but I figure that users
+    // may wonder what the first instance is referencing
+    if (in_array($object['label'], $objects_list)) {
+      $dupes[] = $object['label'];
+    }
+
+    $objects_list[$object['name']] = $object['label'];
+  }
+
+  // Now make duplicate labels be unique
+  if (!empty($dupes)) {
+    foreach ($objects_list as $object_name => $object_label) {
+      if (in_array($object_label, $dupes)) {
+        $objects_list[$object_name] = $object_label .' ('. $object_name .')';
+      }
+    }
+  }
+
+  return $objects_list;
+}
+
+/**
+ * Gather a simple list of record types for a given Salesforce object
+ *
+ * @param Salesforce $sfapi
+ *   A Salesforce API object
+ * @param String $sf_object
+ *   The type of Salesforce object you are querying
+ *
+ * @return Array
+ *   Array of record types of the given Salesforce object
+ */
+function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object) {
+  $object_info = $sfapi->objectDescribe($sf_object);
+  $record_type_list = array();
+  foreach ($object_info['recordTypeInfos'] as $record_type) {
+    if ($record_type['name'] != 'Master' && $record_type['available'] == TRUE) {
+      $record_type_list[$record_type['recordTypeId']] = $record_type['name'];
+    }
+  }
+  return $record_type_list;
+}
+
+/**
+ * Gather a simple list of fields for the given Salesforce object
+ *
+ * @param Salesforce $sfapi
+ *   A Salesforce API object
+ * @param String $sf_object
+ *   The type of Salesforce object you are querying
+ *
+ * @return Array
+ *   Array of fields on the given Salesforce object
+ */
+function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
+  $object_info = $sfapi->objectDescribe($sf_object);
+  $field_list = array();
+  foreach ($object_info['fields'] as $field) {
+    if ($field['updateable']) { // Filter out fields that can't be altered
+      $field_list[$field['name']] = $field['label'];
+    }
+  }
+  return $field_list;
+}
+
+/**
+ * @} form_helper
  */
