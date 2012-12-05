@@ -3,13 +3,12 @@
 require_once('mailtron.module');
 
 /**
- * @file
- * Mailtron helper functions for 3rd party module development.
+ * @file Mailtron helper functions for 3rd party module development.
  */
 
 /**
  * Drop this into your code to add/edit/delete mailtron mail settings.
- *
+ * 
  * Be sure to provide module and name (unique per module, much like block deltas) to ensure mailtron can load your module-specific settings.
  *
  * @param $edit
@@ -22,9 +21,19 @@ require_once('mailtron.module');
  * - send_callback (optional): callback function to invoke after a mail is sent.
  * - recipient_callback (optional): callback function to invoke to get mail recipient address. This is required if you aren't hardcoding the recipient in
  *   the mail configuration.
+ * - tokens (optional) : array of key/value token namespaces for field replacement for subject, html_body, text_body
+ * - default (optional) : array of field_name/value for default values for this implementation of the form
  */
 function mailtron_mail_form($edit, $params = array()) {
+  // Load the settings for this from from the database if it exists.
   $settings = mailtron_mail_load($params);
+  // Set the default values to blank if they don't exist
+  $blank_values = array('from_name' => '', 'from_mail' => '', 'recipients' => '', 'cc' => '', 'bcc' => '', 'subject' => '', 'html_body' => '', 'text_body' => '');
+  if (!isset($params['default'])) {
+     $params['default'] = array(); 
+  }
+  $default = array_merge($blank_values, $params['default']);
+  // Build the form
   $form['mid'] = array(
     '#type' => 'value',
     '#value' => isset($settings->mid) ? $settings->mid : '',
@@ -36,7 +45,12 @@ function mailtron_mail_form($edit, $params = array()) {
   $form['name'] = array(
     '#type' => 'value',
     '#value' => isset($settings->name) ? $settings->name : $params['name'],
+  ); 
+  $form['tokens'] = array(
+    '#type' => 'value',
+    '#value' => isset($params['tokens']) ? serialize($params['tokens']) : '',
   );
+  
   // currently unused but potentially useful if we integrate with Email Confirmations confirmation template nodes.
   $form['tid'] = array(
     '#type' => 'value',
@@ -50,50 +64,56 @@ function mailtron_mail_form($edit, $params = array()) {
     '#type' => 'value',
     '#value' => isset($params['send_callback']) ? $params['send_callback'] : '',
   );
+  
+  // Headers portion of the form
   $form['headers'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail headers'),
+    '#title' => t('Mail headers'),
     '#description' => t(''),
     '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
   $form['headers']['from_name'] = array(
     '#type' => 'textfield',
-    '#title' => t('from name'),
+    '#title' => t('From name'),
     '#description' => t(''),
-    '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
+    '#default_value' => isset($settings->from_name) ? $settings->from_name : $default['from_name'],
     '#required' => TRUE,
   );
   $form['headers']['from_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('From mail'),
     '#description' => t(''),
-    '#default_value' => isset($settings->from_mail) ? $settings->from_mail : '',
+    '#default_value' => isset($settings->from_mail) ? $settings->from_mail : $default['from_mail'],
     '#required' => TRUE,
   );
-  $form['headers']['recipients'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Recipient email address'),
-    '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
-    '#default_value' => isset($settings->recipients) ? $settings->recipients : '',
-    '#required' => TRUE,
-  );
+  // Only show a recipient field if there isn't a recipient callback
+  if (!isset($params['recipient_callback'])) {
+    $form['headers']['recipients'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Recipient email address'),
+      '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
+      '#default_value' => isset($settings->recipients) ? $settings->recipients : $default['recipients'],
+      '#required' => TRUE,
+    );
+  }
   $form['headers']['cc'] = array(
     '#type' => 'textfield',
     '#title' => t('CC email address'),
     '#description' => t('Email addresses to CC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test3@example.com,test4@example.com'),
-    '#default_value' => isset($settings->cc) ? $settings->cc : '',
+    '#default_value' => isset($settings->cc) ? $settings->cc : $default['cc'],
   );
   $form['headers']['bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('BCC email address'),
     '#description' => t('Email addresses to BCC when sending this mail. For more than one address, addresses should be separated by a comma. Example: test5@example.com,test6@example.com'),
-    '#default_value' => isset($settings->bcc) ? $settings->bcc : '',
+    '#default_value' => isset($settings->bcc) ? $settings->bcc : $default['bcc'],
   );
 
-
+  // Message portion of the form
   $form['message'] = array(
     '#type' => 'fieldset',
-    '#title' => t('mail body'),
+    '#title' => t('Mail body'),
     '#description' => t(''),
     '#collapsible' => TRUE,
   );
@@ -101,51 +121,69 @@ function mailtron_mail_form($edit, $params = array()) {
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#description' => t(''),
-    '#default_value' => isset($settings->subject) ? $settings->subject : '',
+    '#default_value' => isset($settings->subject) ? $settings->subject : $default['subject'],
     '#required' => TRUE,
-  );
+  );  
+  // If tokens are activated for this field then insert the helper
+  if (isset($params['tokens']['subject'])) {
+    $form['message'] = array_merge($form['message'], _mailtron_token_list('subject', $params['tokens']['subject']));
+  }
   $form['message']['html_body'] = array(
     '#type' => 'textarea',
     '#title' => t('HTML message version'),
     '#description' => t('If you wish to send HTML or multipart HTML/text email enter the HTML version of the message body here.'),
-    '#default_value' => isset($settings->html_body) ? $settings->html_body : '',
+    '#default_value' => isset($settings->html_body) ? $settings->html_body : $default['html_body'],
   );
   // TODO: replace with input format UI
   $form['message']['html_body_format'] = array(
-    '#type' => '',
+    '#type' => 'markup',
     '#title' => t(''),
     '#description' => t(''),
     '#default_value' => isset($settings->html_body_format) ? $settings->html_body_format : '',
-  );
+  ); 
+  // If tokens are activated for this field then insert the helper
+  if (isset($params['tokens']['html_body'])) {
+    $form['message'] = array_merge($form['message'], _mailtron_token_list('html_body', $params['tokens']['html_body']));
+  }
   $form['message']['text_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Text message version'),
     '#description' => t('If you wish to send plaintext or multipart HTML/text email enter the text-only version of the message body here.'),
-    '#default_value' => isset($settings->text_body) ? $settings->text_body : '',
+    '#default_value' => isset($settings->text_body) ? $settings->text_body : $default['text_body'],
   );
+   
+  // If tokens are activated for this field then insert the helper
+  if (isset($params['tokens']['text_body'])) {
+    $form['message'] = array_merge($form['message'], _mailtron_token_list('text_body', $params['tokens']['text_body']));
+  }
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
+  
   $form['#validate'][] = 'mailtron_mail_form_validate';
   $form['#submit'][] = 'mailtron_mail_form_submit';
+    
   return $form;
 }
 
+/**
+ * Validate function for the mailtron mail form
+ */
 function mailtron_mail_form_validate(&$form, $form_state) {
   if (!mailtron_validate_mail_input($form_state['values']['from_mail'])) {
     form_set_error('from_mail', t('You have entered an invalid email address in the "from mail" field: %mail', array('%mail' => $form_state['values']['from_mail'])));
   }
-
+  
   if ($form_state['values']['recipients']) {
     $recipients = explode(',', $form_state['values']['recipients']);
     if (!count($recipients)) {
-      $recipients = array($recipients);
+     $recipients = array($recipients);
     }
     foreach ($recipients as $recipient) {
       if (!mailtron_validate_mail_input($recipient)) {
         form_set_error('recipients', t('You have entered an invalid email address in the "recipients" field: %mail', array('%mail' => $recipient)));
-      }
+      } 
     }
   }
 
@@ -178,6 +216,9 @@ function mailtron_mail_form_validate(&$form, $form_state) {
   }
 }
 
+/**
+ * Submit function for the mailtron form
+ */
 function mailtron_mail_form_submit($form, $form_state) {
   $settings = _mailtron_concat_settings_from_submission($form_state['values']);
   if (!$settings->mid) {
@@ -189,7 +230,7 @@ function mailtron_mail_form_submit($form, $form_state) {
 }
 
 /**
- *
+ * Validate email addresses
  */
 function mailtron_validate_mail_input($mail) {
   return filter_var($mail, FILTER_VALIDATE_EMAIL);
@@ -215,7 +256,7 @@ function mailtron_mail_load($params = array()) {
 
     if (isset($mail->mid)) {
       $mid = $mail->mid;
-      $settings[$mid] = $mail;
+      $settings[$mid] = $mail; 
     }
   }
 
@@ -234,18 +275,18 @@ function mailtron_mail_load($params = array()) {
  */
 function mailtron_send_mail($mail, $params = array()) {
   // package settings for consumption by mimemail,
-  module_load_include('module', 'mimemail');
-  module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
-  if (isset($mail->recipient_callback) && $mail->recipient_callback) {
-    $function = $mail->recipient_callback;
-    $mail->recipients = $function($mail, $params);
-  }
+    module_load_include('module', 'mimemail');
+    module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
+    if (isset($mail->recipient_callback) && $mail->recipient_callback) { 
+      $function = $mail->recipient_callback;
+      $mail->recipients = $function($mail, $params);
+    }
+    
+    module_invoke_all('mimemail_send_mail_alter', $mail);
 
-  module_invoke_all('mimemail_send_mail_alter', $mail);
-
-  $settings = mailtron_convert_settings($mail);
-  mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
-
+    $settings = mailtron_convert_settings($mail);
+    mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
+ 
   // optionally call callback provided in $mail
   if (isset($mail->send_callback) && $mail->send_callback) {
     $function = $mail->send_callback;
@@ -299,6 +340,28 @@ function _mailtron_concat_settings_from_submission($values) {
     'text_body' => $values['text_body'],
     'send_callback' => isset($values['send_callback']) ? $values['send_callback'] : NULL,
     'recipient_callback' => isset($values['recipient_callback']) ? $values['recipient_callback'] : NULL,
+    'tokens' => isset($values['tokens']) ? $values['tokens'] : '',
   );
   return (object) $settings;
+}
+
+/**
+ * Generate the token list for the form
+ */
+function _mailtron_token_list($fieldname, $token_name) {
+  if (module_exists('token')) {
+    $form[$fieldname . '_token_help'] = array(
+      '#title' => t('Replacement patterns'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+//      '#description' => t('Prefer raw-text replacements for text to avoid problems with HTML entities!'),
+      );
+
+    $form[$fieldname . '_token_help']['help'] = array(
+      '#type' => 'markup',
+      '#value' => theme('token_help', $token_name),
+      );
+  }
+  return $form;
 }

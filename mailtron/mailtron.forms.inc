@@ -1,8 +1,7 @@
 <?php
 
 /**
- * @file
- * non-admin forms and associated functions.
+ * @file non-admin forms and associated functions.
  */
 
 /**

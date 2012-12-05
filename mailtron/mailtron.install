@@ -1,8 +1,7 @@
 <?php
 
 /**
- * @file
- * database schema and install/uninstall functions.
+ * @file database schema and install/uninstall functions.
  */
 
 /**
@@ -30,7 +29,7 @@ function mailtron_schema() {
       'mid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+        'not null' => TRUE,  
       ),
       'tid' => array(
         'type' => 'int',
@@ -77,13 +76,13 @@ function mailtron_schema() {
       'html_body' => array(
         'type' => 'text',
         'not null' => TRUE,
-      ),
+      ), 
       'html_body_format' => array(
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ),
+      ), 
       'text_body' => array(
         'type' => 'text',
         'not null' => TRUE,
@@ -98,6 +97,12 @@ function mailtron_schema() {
         'description' => 'optional callback function called to retrieve recipient.',
         'type' => 'varchar',
         'length' => 255,
+        'not null' => TRUE,
+      ),
+      'tokens' => array(
+        'description' => 'serialized array of token namespaces for fields',
+        'type' => 'text',
+        'serialize' => TRUE,
         'not null' => TRUE,
       ),
     ),

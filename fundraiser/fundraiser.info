@@ -1,10 +1,11 @@
 name = Fundraiser
 description = Fundraising Module
-package = Jackson River Springboard
 core = 6.x
-version = 6.x-3.3
-dependencies[] = webform
+package = Jackson River Springboard
+dependencies[] = mailtron
+dependencies[] = profile
 dependencies[] = uc_product
 dependencies[] = uc_payment
-dependencies[] = profile
 dependencies[] = uc_cart
+dependencies[] = webform
+version =  6.x-3.2
