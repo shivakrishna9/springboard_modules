@@ -1,0 +1,88 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_entity_info().
+ * Donation entity definition.
+ */
+function sf_donation_entity_info() {
+  $return = array(
+    'donation' => array(
+      'module' => 'sf_donation',
+      'label' => t('Donation'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      //'controller class' => 'DrupalDefaultEntityController.', 
+      'base table' => 'fundraiser_donation',
+      //'load hook' => '_fundraiser_get_donation_by_did',
+      //'save callback' => '',
+      //'deletion callback' => '',
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+    ),
+  );
+//hook_entity_info_alter() for use by FR_UC, FR_WF etc.
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ * Donation entity definition.
+ */
+function sf_donation_entity_property_info() {
+  $return = array(
+    'donation' => array(
+      'properties' => array(
+        'did' => array(
+          'label' => t('Donation ID'), 
+          'type' => 'integer', // OR uc_order
+          'description' => t('The unique donation ID.'),
+          'schema field' => 'did',
+        ),
+        'nid' => array(
+          'label' => t('Fundraiser ID'), 
+          'type' => 'node', 
+          'description' => t('The unique content ID of the fundraiser node.'),
+          'schema field' => 'nid',
+        ),
+        'uid' => array(
+          'label' => t('User ID'), 
+          'type' => 'user', 
+          'description' => t('The unique user ID of the donating user.'),
+          'schema field' => 'uid',
+        ),
+        'sid' => array(
+          'label' => t('Submission ID'),
+          'type' => 'integer', 
+          'description' => t('The unique submission ID.'),
+          'schema field' => 'sid',
+        ),
+        'gateway' => array(
+          'label' => t('Gateway'), 
+          'type' => 'text', 
+          'description' => t('The gateway name for this doantion.'),
+          'schema field' => 'gateway',
+        ),
+        'txn_id' => array(
+          'label' => t('Transaction ID'), 
+          'type' => 'text', 
+          'description' => t('The unique transaction ID from the gateway.'),
+          'schema field' => 'txn_id',
+        ),
+      ),
+    ),
+  );
+  return $return;
+}
+
+function sf_donation_donation_uri($donation) {
+  return array(
+    'path' => 'donation/' . $donation->did,
+  );
+}
+
+function sf_donation_form_system_performance_settings_alter($form, $form_state, $form_id) {
+//drupal_set_message('ents: '. print_r( entity_get_info(),1) );
+}
