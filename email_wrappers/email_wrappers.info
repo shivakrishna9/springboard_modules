@@ -8,6 +8,7 @@ configure = admin/config/content/email_wrappers
 
 dependencies[] = webform
 dependencies[] = ctools
+dependencies[] = system (>=7.17)
 
 files[] = email_wrappers.install
 files[] = email_wrappers.module

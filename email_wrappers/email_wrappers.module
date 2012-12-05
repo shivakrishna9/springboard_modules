@@ -217,6 +217,10 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
 function email_wrappers_email_submit_callback($form, $form_state) {
 
   $values = $form_state['values'];
+
+  // If any information has been added to "extra" by other modules, it is saved at this time. This approach
+  // allows other modules to append useful configuration information to the email without having to
+  // join across a bunch of lookup tables to get all the settings for a given mail.
   if (is_numeric($values['email_wrappers_email_template']) && $values['email_wrappers_email_template'] > 0) {
     $settings = array(
       'tid' => $values['email_wrappers_email_template'],
@@ -336,7 +340,6 @@ function email_wrappers_mail($key, &$message, $params) {
 function email_wrappers_mail_alter(&$message) {
   global $user;
   $account = $user;
-
   if ($message['id'] == 'webform_submission' && $message['module'] == 'webform') {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
@@ -349,11 +352,22 @@ function email_wrappers_mail_alter(&$message) {
   }
 
   if ($settings) {
-      $extra = unserialize($settings['extra']);
+      $extra = $settings['extra'];
       $params = $message['params'];
       $params['settings'] = $settings;
       $params['message'] = $message;
-      if (isset($extra['send_on_submission']) && $extra['send_on_submission']) {
+
+      // If email is not set send on submission we stash parameters required to send in a static setting on the assumption
+      // that some other code will pick up where we left off. Passing the templated message into a static array lets
+      // other modules send the email at any point during page execution. This drives conditional sending when
+      // an email needs to be sent in response to a webform submission, but only if certain conditions are met.
+      //
+      // Example: Webform Confirmations uses this strategy to send confirmation emails conditionally when a
+      // donation is successful or if it fails.
+      //
+      // Note: other modules may set extra['send_on_submission'] to FALSE to defer sending an email.
+
+      if (isset($extra['send_on_submission']) && $extra['send_on_submission'] === TRUE) {
         drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
       }
       else {
@@ -466,14 +480,20 @@ function email_wrappers_load_settings($nid, $eid) {
     $query->addField('t', 'email_wrapper_text_template_value', 'text_template');
     $results = $query->execute();
     $data = $results->fetchAssoc();
+    $data['extra'] = unserialize($data['extra']);
     return $data;
   }
   else {
+    $data = array();
     $query = db_select('email_wrappers_webform', 'e');
     $query->fields('e', array('nid', 'eid', 'tid', 'html_message', 'text_message', 'bcc_email', 'extra'))
       ->condition('e.nid', $nid);
     $results = $query->execute();
-    return $results;
+    while ($result = $results->fetchAssoc()) {
+      $result['extra'] = unserialize($result['extra']);
+      $data[] = $result;
+    }
+    return count($data) ? $data : FALSE;
   }
 }
 
