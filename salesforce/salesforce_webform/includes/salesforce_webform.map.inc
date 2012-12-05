@@ -141,7 +141,6 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   foreach ($wf_components as $cid => $component) {
     $sf_field = _sfw_default_value('salesforce_webform_map_cid_'. $cid, $form_state);
     $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
-    $sf_field_unique = _sfw_salesforce_field_is_unique($sfapi, $sf_object, $sf_field);
     $row = array(
       'webform_component' => array(
         '#id' => 'map-label-webform-cid-'. $cid,
@@ -156,34 +155,33 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#options' => $sf_fields,
         '#ajax' => array(
           'callback' => 'salesforce_webform_map_form_ajax_sf_dedupe',
-          'wrapper' => 'salesforce-webform-map-ajax-sf-dedupe-wrapper',
+          'wrapper' => 'salesforce-webform-map-ajax-dedupe-'. $cid,
           'method' => 'replace',
           'effect' => 'fade',
+
+          // These are referred to in the AJAX callback
+          '#cid' => $cid,
+          '#dedupe_field' => 'salesforce_webform_map_dedupe_'. $cid,
         ),
       ),
-    );
-    if ($sf_field_unique) {
-      $row['salesforce_webform_map_cid_'. $cid]['#description'] = t('The values of this field must be unique in Salesforce.');
-    }
-
-    if (empty($sf_field) || $sf_field_dedupe == FALSE) {
-      $row['salesforce_webform_map_dedupe_'. $cid] = array(
+      'salesforce_webform_map_dedupe_'. $cid => array(
         '#id' => 'salesforce-field-dedupe-cid-'. $cid,
         '#type' => 'hidden',
         '#value' => NULL,
-      );
-    }
-    else {
-      $row['salesforce_webform_map_dedupe_'. $cid] = array(
-        '#id' => 'salesforce-field-dedupe-cid-'. $cid,
-        '#type' => 'radio',
-        '#return_value' => 'salesforce_dedupe_'. $sf_field,
-        '#attributes' => array('name' => 'salesforce_dedupe'),
-        '#value' => _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state),
-      );
+        '#prefix' => '<div id="salesforce-webform-map-ajax-dedupe-'. $cid .'">',
+        '#suffix' => '</div>',
+      ),
+    );
+
+    if (!empty($sf_field) && $sf_field_dedupe) {
+      $dedupe_field = &$row['salesforce_webform_map_dedupe_'. $cid];
+      $dedupe_field['#type'] = 'radio';
+      $dedupe_field['#return_value'] = 'salesforce_dedupe_'. $sf_field;
+      $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe');
+      $dedupe_field['#value'] = _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state);
     }
 
-    $form['field_map']['salesforce_webform_map']['#row_storage'][] = $row;
+    $form['field_map']['salesforce_webform_map']['#row_storage'][$cid] = $row;
   }
   // Add some help text
   $form['field_map']['salesforce_webform_map']['#row_storage'][] = array(
@@ -308,8 +306,10 @@ function salesforce_webform_map_form_ajax_sf_object($form) {
 /**
  * AJAX callback to set a field row's dedupe cell
  */
-function salesforce_webform_map_form_ajax_sf_dedupe($form) {
-  return $form['field_map']['salesforce_webform_map'];
+function salesforce_webform_map_form_ajax_sf_dedupe($form, &$form_state) {
+  $cid = $form_state['triggering_element']['#ajax']['#cid'];
+  $field = $form_state['triggering_element']['#ajax']['#dedupe_field'];
+  return $form['field_map']['salesforce_webform_map'][$cid][$field];
 }
 
 /**
@@ -476,18 +476,14 @@ function _sfw_default_value($field, $form_state) {
  * Helper function for the annoying case of setting a table in a form
  */
 function _sfw_generate_form_table(&$form) {
-  $i = 0;
-  foreach ($form['#row_storage'] as $row) {
+  foreach ($form['#row_storage'] as $row_num => $row) {
     // In order for the fields to render, they need to be in the root
-    $form[$i] = $row;
-    $c = 0;
-    foreach ($form[$i] as $key => $value) {
+    $form[$row_num] = $row;
+    foreach ($form[$row_num] as $column => $cell) {
       // The magic is right here.  You need to pass the field data by reference
       // to the table rendering in order for the fields to function properly
-      $form['#rows'][$i][$c]['data'] = &$form[$i][$key];
-      $c++;
+      $form['#rows'][$row_num][$column]['data'] = &$form[$row_num][$column];
     }
-    $i++;
   }
   unset($form['#row_storage']);
 }
