@@ -3039,7 +3039,7 @@ function _fundraiser_array_smart_merge($array, $override) {
  * TRUE if the address passes all validation, FALSE otherwise.
  */
 function fundraiser_validate_email($mail) {
-  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,  6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
+  return (eregi("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$", $mail) && filter_var($mail,  FILTER_VALIDATE_EMAIL));
 }
 
 function _fundraiser_field_blacklist() {
