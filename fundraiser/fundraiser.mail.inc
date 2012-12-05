@@ -11,7 +11,6 @@ function fundraiser_mail_welcome_form(&$form) {
     'name' => 'fundraiser_mail_welcome',
     'module' => 'fundraiser',
     'recipient_callback' => 'fundraiser_mail_recipient_callback',
-    'send_callback' => 'fundraiser_mail_send_callback',
     'default' => array (
       'from_name' => variable_get('site_name', ''), 
       'from_mail' => variable_get('site_mail', ''), 
@@ -55,7 +54,6 @@ function fundraiser_mail_end_form(&$form) {
     'name' => 'fundraiser_mail_end',
     'module' => 'fundraiser',
     'recipient_callback' => 'fundraiser_mail_recipient_callback',
-    'send_callback' => 'fundraiser_mail_send_callback',
     'tokens' => array(
       'subject' => 'order', 
       'html_body' => 'order', 
@@ -80,6 +78,26 @@ function fundraiser_mail_end_form(&$form) {
   return $form;
 }
 
-//TODO: recipient callbacks
 
-//TODO: mail send callbacks
+/**
+ * Fundraiser welcome/end email
+ */
+function fundraiser_mail_send($form_id, $user) {
+  module_load_include('inc', 'mailtron', 'mailtron.api');
+  $params = array(
+    'name' => $form_id,
+    'module' => 'fundraiser',
+  );
+  $mail = mailtron_mail_load($params);
+  $mail->recipients = $user->mail;
+  mailtron_send_mail($mail);
+}
+
+/**
+ * Mailtron recipient callback
+ */
+function fundraiser_mail_recipient_callback($mail, $params) {
+  // We are manually setting the email in the send function & just passing it through,
+  // but we keep this here so the recipient field is hidden on the admin forms.
+  return $mail->recipients;
+}

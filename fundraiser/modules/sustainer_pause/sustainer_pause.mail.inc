@@ -11,7 +11,6 @@ function sustainer_pause_mail_pause_form(&$form) {
     'name' => 'sustainer_pause_mail_pause',
     'module' => 'sustainer_pause',
     'recipient_callback' => 'sustainer_pause_mail_recipient_callback',
-    'send_callback' => 'sustainer_pause_mail_send_callback',
     'tokens' => array(
       'subject' => 'user', 
       'html_body' => 'user', 
@@ -48,7 +47,6 @@ function sustainer_pause_mail_restart_form(&$form) {
     'name' => 'sustainer_pause_mail_restart',
     'module' => 'sustainer_pause',
     'recipient_callback' => 'sustainer_pause_mail_recipient_callback',
-    'send_callback' => 'sustainer_pause_mail_send_callback',
     'tokens' => array(
       'subject' => 'order', 
       'html_body' => 'order', 
@@ -73,6 +71,25 @@ function sustainer_pause_mail_restart_form(&$form) {
   return $form;
 }
 
-//TODO: recipient callbacks
+/**
+ * Sustainer pause/unpause email
+ */
+function sustainer_pause_mail_send($form_id, $user) {
+  module_load_include('inc', 'mailtron', 'mailtron.api');
+  $params = array(
+    'name' => $form_id,
+    'module' => 'sustainer_pause',
+  );
+  $mail = mailtron_mail_load($params);
+  $mail->recipients = $user->mail;
+  mailtron_send_mail($mail);
+}
 
-//TODO: mail send callbacks
+/**
+ * Mailtron recipient callback
+ */
+function sustainer_pause_mail_recipient_callback($mail, $params) {
+  // We are manually setting the email in the send function & just passing it through,
+  // but we keep this here so the recipient field is hidden on the admin forms.
+  return $mail->recipients;
+}

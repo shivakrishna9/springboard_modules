@@ -9,6 +9,7 @@ define('DONATION_NON_RECURRING', 0);
 define('DONATION_RECURRING', 1);
 define('DONATION_CANCELLED', 2);
 require_once('fundraiser.fields.inc');
+require_once('fundraiser.mail.inc');
 
 /**
  * Implementation of hook_cron().
@@ -221,17 +222,6 @@ function fundraiser_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  /*
-  $items['user/%user/recurring/edit/%uc_order'] = array(
-    'title' => 'My Recurring Payments',
-    'page callback' => 'fundraiser_recurring_user_edit_forms',
-    'access callback' => user_access('edit own recurring payments'),
-    'file' => 'fundraiser_sustainer.inc',
-    'page arguments' => array(arg(1), 'shithead'),
-    'weight' => 2,
-    'type' => MENU_CALLBACK,
-  );
-  */
   $items['user/%user/recurring_overview'] = array(
     'title' => 'My Recurring Payments',
     'page callback' => 'fundraiser_recurring_user_overview',

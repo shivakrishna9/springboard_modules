@@ -1,5 +1,7 @@
 <?php
 
+require_once('sustainer_pause.mail.inc');
+
 /**
  * Implementation of hook_menu().
  */
@@ -146,6 +148,8 @@ function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3
                 WHERE order_id = %d AND master_order_id = %d";
       db_query($update, 'paused', $data['order_id'], $master_order_id);
     }
+    // Send email
+    sustainer_pause_mail_send('sustainer_pause_mail_pause', $user);
     drupal_set_message(t("Thank you. Your recurring gift has been paused."));
   }
   // Unpause recurring payments
@@ -168,6 +172,8 @@ function sustainer_pause_unpause($user, $master_order_id, $op='pause', $months=3
                 WHERE order_id = %d AND master_order_id = %d";
       db_query($update, $data['order_id'], $master_order_id);
     }
+    // Send email
+    sustainer_pause_mail_send('sustainer_pause_mail_restart', $user);
     drupal_set_message(t("Thank you for reactivating your recurring gift."));
   }
   // Redirect back to the user's recurring payments overview page
