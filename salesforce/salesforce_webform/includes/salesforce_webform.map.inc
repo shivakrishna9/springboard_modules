@@ -73,36 +73,34 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   );
 
   // The type of Salesforce Object
-  // @TODO
-  // If webform is not mapped to salesforce object
-    // Give option to map to a salesforce object
-  // else
-    // Give option to unmap
-  // end
-
   $sf_objects = _sfw_salesforce_object_list($sfapi);
+  $sf_object = _sfw_default_value('salesforce_object_type', $form_state);
   $form['salesforce_object_fieldset']['salesforce_object_type'] = array(
     '#id' => 'salesforce-object-type',
     '#title' => t('Salesforce object'),
     '#type' => 'select',
     '#description' => t('Select a Salesforce object to map to this webform.'),
+    '#default_value' => $sf_object,
     '#options' => $sf_objects,
     '#required' => TRUE,
+    // @TODO: Disable field once mapping has been saved
   );
 
-  $sf_object = 'Opportunity'; // @TODO: Get the actual object from the form
+  // @TODO: Add unmap button if mapping has been saved
 
   // The type of record of the chosen Salesforce Object
-  // @TODO: Defaults to Salesforce's default record type
   $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
-  $form['salesforce_object_fieldset']['salesforce_record_type'] = array(
-    '#id' => 'salesforce-record-type',
-    '#title' => t('Object Record Type'),
-    '#type' => 'select',
-    '#description' => t('Select a record type.'),
-    '#options' => $sf_records,
-    '#required' => TRUE,
-  );
+  if (!empty($sf_records)) {
+    $form['salesforce_object_fieldset']['salesforce_record_type'] = array(
+      '#id' => 'salesforce-record-type',
+      '#title' => t('Object Record Type'),
+      '#type' => 'select',
+      '#description' => t('Select a record type.'),
+      '#default_value' => _sfw_default_value('salesforce_record_type', $form_state),
+      '#options' => $sf_records,
+      '#required' => TRUE,
+    );
+  }
 
   // Add the mapping functionality to the form
   $sf_fields = _sfw_salesforce_field_list($sfapi, $sf_object);
@@ -317,6 +315,51 @@ function salesforce_webform_delete_map($nid) {
  */
 
 /**
+ * Helper function for the tedious case of finding the default value of a field
+ *
+ * @param String $field
+ *   The name of the field to find the default value of
+ * @param Array $form_state
+ *   The current $form_state as given to you by the system
+ *
+ * @return
+ *   The value of the field you requested
+ */
+function _sfw_default_value($field, $form_state) {
+  if (empty($form_state['input'])) {
+    // Check against the node at $form_state['build_info']['args'][0]
+    switch ($field) {
+      // @TODO: Requires adding map entity on node load
+    }
+  }
+  else {
+    switch ($field) {
+      case 'salesforce_object_type':
+        return $form_state['input']['salesforce_object_fieldset']['salesforce_object_type'];
+      case 'salesforce_record_type':
+        if (empty($form_state['input']['salesforce_object_fieldset']['salesforce_record_type'])) {
+          $sf_object = _sfw_default_value('salesforce_object_type', $form_state);
+          return _sfw_salesforce_default_record_type($sf_object);
+        }
+        return $form_state['input']['salesforce_object_fieldset']['salesforce_record_type'];
+      default:
+        // Find the prefix of the field name
+        $field_name_parts = explode('_', $field);
+        array_pop($field_name_parts);
+        $field_prefix = implode('_', $field_name_parts);
+
+        // The field could be anywhere in the list, so we have to search for it
+        foreach ($form_state['input']['field_map'][$field_prefix] as $field_name => $field_value) {
+          if ($field_name == $field) {
+            return $field_value;
+          }
+        }
+    }
+  }
+  return NULL;
+}
+
+/**
  * Helper function for the annoying case of setting a table in a form
  */
 function _sfw_generate_form_table(&$form) {
@@ -392,6 +435,27 @@ function _sfw_salesforce_record_type_list(Salesforce $sfapi, $sf_object) {
     }
   }
   return $record_type_list;
+}
+
+/**
+ * Find the default record type for the given Salesforce object
+ *
+ * @param String $sf_object
+ *   The type of Salesforce object you are querying
+ *
+ * @return String
+ *   The default record type of the given Salesforce object, or NULL if there is
+ *   not a default type
+ */
+function _sfw_salesforce_default_record_type($sf_object) {
+  $sfapi = salesforce_get_api();
+  $object_info = $sfapi->objectDescribe($sf_object);
+  foreach ($object_info['recordTypeInfos'] as $record_type) {
+    if ($record_type['defaultRecordTypeMapping'] == TRUE) {
+      return $record_type['name'];
+    }
+  }
+  return NULL;
 }
 
 /**
