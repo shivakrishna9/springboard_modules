@@ -14,11 +14,11 @@ function salesforce_webform_map_page($node) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-webform-map-helptext',
+      '#id' => 'salesforce-webform-map-helptext-page',
       '#type' => 'markup',
-      '#markup' => t('When users submit this webform, map which values of the webform\'s components should be sent to your Salesforce organization.'),
-      '#prefix' => '<p>',
-      '#suffix' => '</p>',
+      '#markup' => '<p>'. t('When users submit this webform, map which values of the webform\'s components should be sent to your Salesforce organization.') .'</p>',
+      '#prefix' => '<div class="salesforce-webform-map-helptext">',
+      '#suffix' => '</div>',
     ),
     'salesforce_webform_map_form' => drupal_get_form('salesforce_webform_map_form', $node),
   );
@@ -41,9 +41,9 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   if (empty($node->webform['components'])) {
     return array(
       'no_components' => array(
-        '#markup' => t('You must first add components to your webform before proceeding with mapping to Salesforce objects.'),
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-components"><p>',
-        '#suffix' => '</p></div>',
+        '#markup' => '<p>'. t('You must first add components to your webform before proceeding with mapping to Salesforce objects.') .'</p>',
+        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-components">',
+        '#suffix' => '</div>',
       ),
     );
   }
@@ -53,10 +53,10 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   if (!$sfapi->isAuthorized()) {
     return array(
       'no_sfapi' => array(
-        '#markup' => t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
-                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))),
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-salesforce"><p>',
-        '#suffix' => '</p></div>',
+        '#markup' => '<p>'. t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) .'</p>',
+        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-salesforce">',
+        '#suffix' => '</div>',
       ),
     );
   }
