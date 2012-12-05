@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Implementation of hook_menu().
@@ -59,7 +62,7 @@ function sustainer_pause_form($form) {
   foreach ($options as $key => $value) {
     unset($options[$key]);
     if ($value == 120) {
-      $options[$value] = 'Indefinitely';
+      $options[$value] = t('Indefinitely');
     }
     elseif ($value == 0) {
       // Do nothing
@@ -249,8 +252,8 @@ function sustainer_pause_form_fundraiser_admin_settings_alter(&$form, &$form_sta
     );
   $form['sustainer_pause']['pause_options'] = array(
     '#type' => 'checkboxes',
-    '#title' => 'Timeframe options',
-    '#description' => 'Select the timeframes that you want available for the sustainer pause form.',
+    '#title' => t('Timeframe options'),
+    '#description' => t('Select the timeframes that you want available for the sustainer pause form.'),
     '#default_value' => variable_get('sustainer_pause_options', array(3, 6, 120)),
     '#options' => array(
       1 => t('1 month'),
