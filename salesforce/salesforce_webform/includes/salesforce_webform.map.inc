@@ -131,13 +131,13 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#tree' => TRUE,
     '#theme' => 'table',
     '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
-    '#rows' => array(),
+    '#row_storage' => array(),
   );
   $wf_components = $node->webform['components'];
   array_unshift($sf_fields, '-');
   foreach ($wf_components as $cid => $component) {
     $sf_field = _sfw_default_value('salesforce_webform_map_cid_'. $cid, $form_state);
-    $form['field_map']['salesforce_webform_map']['#rows'][] = array(
+    $row = array(
       'webform_component' => array(
         '#id' => 'map-label-webform-cid-'. $cid,
         '#markup' => $component['name'] .' ('. $component['type'] .')',
@@ -158,9 +158,11 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#value' => _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state),
       )
     );
+
+    $form['field_map']['salesforce_webform_map']['#row_storage'][] = $row;
   }
   // Add some help text
-  $form['field_map']['salesforce_webform_map']['#row'][] = array(
+  $form['field_map']['salesforce_webform_map']['#row_storage'][] = array(
     'column_0' => array(
       '#markup' => '',
     ),
@@ -191,7 +193,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#tree' => TRUE,
     '#theme' => 'table',
     '#header' => array(t('Node Property'), t('Salesforce Field')),
-    '#rows' => array(
+    '#row_storage' => array(
       array(
         'node_id' => array(
           '#id' => 'map-label-nid',
@@ -230,7 +232,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#tree' => TRUE,
     '#theme' => 'table',
     '#header' => array(t('Submission Property'), t('Salesforce Field')),
-    '#rows' => array(
+    '#row_storage' => array(
       array(
         'submission_id' => array(
           '#id' => 'map-label-submission-id',
@@ -443,16 +445,20 @@ function _sfw_default_value($field, $form_state) {
  * Helper function for the annoying case of setting a table in a form
  */
 function _sfw_generate_form_table(&$form) {
-  $rows = $form['#rows'];
-  $form['#rows'] = array();
-  foreach ($rows as $row) {
-    $form[] = $row;
-    $columns = array();
-    foreach ($row as $column) {
-      $columns[] = array('data' => $column);
+  $i = 0;
+  foreach ($form['#row_storage'] as $row) {
+    // In order for the fields to render, they need to be in the root
+    $form[$i] = $row;
+    $c = 0;
+    foreach ($form[$i] as $key => $value) {
+      // The magic is right here.  You need to pass the field data by reference
+      // to the table rendering in order for the fields to function properly
+      $form['#rows'][$i][$c]['data'] = &$form[$i][$key];
+      $c++;
     }
-    $form['#rows'][] = $columns;
+    $i++;
   }
+  unset($form['#row_storage']);
 }
 
 /**
