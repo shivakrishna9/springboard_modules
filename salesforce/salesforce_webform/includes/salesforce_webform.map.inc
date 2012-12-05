@@ -136,6 +136,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   $wf_components = $node->webform['components'];
   array_unshift($sf_fields, '-');
   foreach ($wf_components as $cid => $component) {
+    $sf_field = _sfw_default_value('salesforce_webform_map_cid_'. $cid, $form_state);
     $form['field_map']['salesforce_webform_map']['#rows'][] = array(
       'webform_component' => array(
         '#id' => 'map-label-webform-cid-'. $cid,
@@ -143,9 +144,10 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#prefix' => '<label class="'. $map_row_class_name .'">',
         '#suffix' => '</label>',
       ),
-      'salesforce_webform_map_cid'. $cid => array(
+      'salesforce_webform_map_cid_'. $cid => array(
         '#id' => 'salesforce-field-map-webform-cid-'. $cid,
         '#type' => 'select',
+        '#default_value' => $sf_field,
         '#options' => $sf_fields,
       ),
        'dedupe_field' => array(
@@ -173,6 +175,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         'salesforce_node_map_id' => array(
           '#id' => 'salesforce-field-map-nid',
           '#type' => 'select',
+          '#default_value' => _sfw_default_value('salesforce_node_map_id', $form_state),
           '#options' => $sf_fields,
         ),
       ),
@@ -186,6 +189,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         'salesforce_node_map_title' => array(
           '#id' => 'salesforce-field-map-node-title',
           '#type' => 'select',
+          '#default_value' => _sfw_default_value('salesforce_node_map_title', $form_state),
           '#options' => $sf_fields,
         ),
       )
@@ -210,6 +214,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         'salesforce_submission_map_id' => array(
           '#id' => 'salesforce-field-map-submission-id',
           '#type' => 'select',
+          '#default_value' => _sfw_default_value('salesforce_submission_map_id', $form_state),
           '#options' => $sf_fields,
         ),
       ),
@@ -223,6 +228,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         'salesforce_submission_map_date' => array(
           '#id' => 'salesforce-field-map-submission-date',
           '#type' => 'select',
+          '#default_value' => _sfw_default_value('salesforce_submission_map_date', $form_state),
           '#options' => $sf_fields,
         ),
       )
@@ -348,32 +354,42 @@ function salesforce_webform_delete_map($nid) {
  *   The value of the field you requested
  */
 function _sfw_default_value($field, $form_state) {
+  // If there isn't any user contributed data yet, check against the node
+  // @TODO: Requires adding map entity on node load
   if (empty($form_state['input'])) {
     // Check against the node at $form_state['build_info']['args'][0]
     switch ($field) {
-      // @TODO: Requires adding map entity on node load
     }
   }
   else {
+    // Check against the user contributed data
     switch ($field) {
       case 'salesforce_object_type':
         return $form_state['input']['salesforce_object_fieldset']['salesforce_object_type'];
+
       case 'salesforce_record_type':
+        // If there is not a set record type yet, use the default record type for the object
         if (empty($form_state['input']['salesforce_object_fieldset']['salesforce_record_type'])) {
           $sf_object = _sfw_default_value('salesforce_object_type', $form_state);
           return _sfw_salesforce_default_record_type($sf_object);
         }
+
+        // Otherwise use the user's configured record type
         return $form_state['input']['salesforce_object_fieldset']['salesforce_record_type'];
+
       default:
-        // Find the prefix of the field name
-        $field_name_parts = explode('_', $field);
-        array_pop($field_name_parts);
-        $field_prefix = implode('_', $field_name_parts);
+        // Find the group the field resides within
+        foreach ($form_state['input']['field_map'] as $group_name => $rows) {
+          if (strpos($field, $group_name) !== FALSE) {
+            $group = $group_name;
+            break;
+          }
+        }
 
         // The field could be anywhere in the list, so we have to search for it
-        foreach ($form_state['input']['field_map'][$field_prefix] as $field_name => $field_value) {
-          if ($field_name == $field) {
-            return $field_value;
+        foreach ($form_state['input']['field_map'][$group] as $row) {
+          if (isset($row[$field])) {
+            return $row[$field];
           }
         }
     }
