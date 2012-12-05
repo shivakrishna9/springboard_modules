@@ -65,11 +65,11 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-object-wrapper">',
+    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-object">',
     '#sufix' => '</div>',
   );
 
-  $form['salesforce_object_fieldset'] = array(
+  $form['salesforce_object_info'] = array(
     '#type' => 'fieldset',
     '#title' => 'Salesforce Object Mapping',
   );
@@ -77,7 +77,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   // The type of Salesforce Object
   $sf_objects = _sfw_salesforce_object_list($sfapi);
   $sf_object = _sfw_default_value('salesforce_object_type', $form_state);
-  $form['salesforce_object_fieldset']['salesforce_object_type'] = array(
+  $form['salesforce_object_info']['salesforce_object_type'] = array(
     '#id' => 'salesforce-object-type',
     '#title' => t('Salesforce object'),
     '#type' => 'select',
@@ -87,7 +87,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#required' => TRUE,
     '#ajax' => array(
       'callback' => 'salesforce_webform_map_form_ajax_sf_object',
-      'wrapper' => 'salesforce-webform-map-ajax-sf-object-wrapper',
+      'wrapper' => 'salesforce-webform-map-ajax-sf-object',
       'method' => 'replace',
       'effect' => 'fade',
       // @TODO: Warn user that changing this value will erase their map work
@@ -106,7 +106,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   // The type of record of the chosen Salesforce Object
   $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
   if (!empty($sf_records)) {
-    $form['salesforce_object_fieldset']['salesforce_record_type'] = array(
+    $form['salesforce_object_info']['salesforce_record_type'] = array(
       '#id' => 'salesforce-record-type',
       '#title' => t('Object Record Type'),
       '#type' => 'select',
@@ -133,13 +133,13 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
     '#row_storage' => array(),
     '#sticky' => FALSE,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe-wrapper">',
+    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe">',
     '#suffix' => '</div>',
   );
   $wf_components = $node->webform['components'];
   array_unshift($sf_fields, '-');
   foreach ($wf_components as $cid => $component) {
-    $sf_field = _sfw_default_value('salesforce_webform_map_cid_'. $cid, $form_state);
+    $sf_field = _sfw_default_value('cid_'. $cid, $form_state);
     $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
     $row = array(
       'webform_component' => array(
@@ -148,47 +148,47 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
         '#prefix' => '<label class="'. $map_row_class_name .'">',
         '#suffix' => '</label>',
       ),
-      'salesforce_webform_map_cid_'. $cid => array(
+      'cid_'. $cid => array(
         '#id' => 'salesforce-field-map-webform-cid-'. $cid,
         '#type' => 'select',
         '#default_value' => $sf_field,
         '#options' => $sf_fields,
         '#ajax' => array(
           'callback' => 'salesforce_webform_map_form_ajax_sf_dedupe',
-          'wrapper' => 'salesforce-webform-map-ajax-dedupe-'. $cid,
+          'wrapper' => 'salesforce-ajax-dedupe-'. $cid,
           'method' => 'replace',
           'effect' => 'fade',
 
           // These are referred to in the AJAX callback
           '#cid' => $cid,
-          '#dedupe_field' => 'salesforce_webform_map_dedupe_'. $cid,
+          '#dedupe_field' => 'salesforce_dedupe_'. $cid,
         ),
       ),
-      'salesforce_webform_map_dedupe_'. $cid => array(
+      'salesforce_dedupe_'. $cid => array(
         '#id' => 'salesforce-field-dedupe-cid-'. $cid,
         '#type' => 'hidden',
         '#value' => NULL,
-        '#prefix' => '<div id="salesforce-webform-map-ajax-dedupe-'. $cid .'">',
+        '#prefix' => '<div id="salesforce-ajax-dedupe-'. $cid .'">',
         '#suffix' => '</div>',
       ),
     );
 
     if (!empty($sf_field) && $sf_field_dedupe) {
-      $dedupe_field = &$row['salesforce_webform_map_dedupe_'. $cid];
+      $dedupe_field = &$row['salesforce_dedupe_'. $cid];
       $dedupe_field['#type'] = 'radio';
-      $dedupe_field['#return_value'] = 'salesforce_dedupe_'. $sf_field;
+      $dedupe_field['#return_value'] = $sf_field;
       $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe');
-      $dedupe_field['#value'] = _sfw_default_value('salesforce_webform_map_dedupe_'. $cid, $form_state);
+      $dedupe_field['#value'] = _sfw_default_value('salesforce_dedupe_'. $cid, $form_state);
     }
 
     $form['field_map']['salesforce_webform_map']['#row_storage'][$cid] = $row;
   }
   // Add some help text
   $form['field_map']['salesforce_webform_map']['#row_storage'][] = array(
-    'column_0' => array(
+    'empty' => array(
       '#markup' => '',
     ),
-    'column_1' => array(
+    'helptext' => array(
       '#id' => 'salesforce-webform-map-helptext-field-map',
       '#markup' => '<p>'. t('<strong>Dedupe Field:</strong> Minimizes duplicate
         records and allows updating existing records. Selecting a dedupe field
@@ -198,13 +198,13 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
       '#prefix' => '<div class="salesforce-webform-map-helptext">',
       '#suffix' => '</div>',
     ),
-    'salesforce_webform_map_dedupe_none' => array(
+    'salesforce_dedupe_none' => array(
       '#id' => 'salesforce-field-no-dedupe',
       '#title' => t('None'),
       '#type' => 'radio',
       '#return_value' => 'salesforce_dedupe_none',
       '#attributes' => array('name' => 'salesforce_dedupe'),
-      '#value' => _sfw_default_value('salesforce_webform_map_dedupe_none', $form_state),
+      '#value' => _sfw_default_value('salesforce_dedupe_none', $form_state),
     )
   );
   _sfw_generate_form_table($form['field_map']['salesforce_webform_map']);
@@ -216,31 +216,31 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#theme' => 'table',
     '#header' => array(t('Node Property'), t('Salesforce Field')),
     '#row_storage' => array(
-      array(
-        'node_id' => array(
+      0 => array(
+        'node_id_label' => array(
           '#id' => 'map-label-nid',
           '#markup' => t('Node ID'),
           '#prefix' => '<label class="'. $map_row_class_name .'">',
           '#suffix' => '</label>',
         ),
-        'salesforce_node_map_id' => array(
+        'node_id' => array(
           '#id' => 'salesforce-field-map-nid',
           '#type' => 'select',
-          '#default_value' => _sfw_default_value('salesforce_node_map_id', $form_state),
+          '#default_value' => _sfw_default_value('node_id', $form_state),
           '#options' => $sf_fields,
         ),
       ),
-      array(
-        'node_title' => array(
+      1 => array(
+        'node_title_label' => array(
           '#id' => 'map-label-node-title',
           '#markup' => t('Node Title'),
           '#prefix' => '<label class="'. $map_row_class_name .'">',
           '#suffix' => '</label>',
         ),
-        'salesforce_node_map_title' => array(
+        'node_title' => array(
           '#id' => 'salesforce-field-map-node-title',
           '#type' => 'select',
-          '#default_value' => _sfw_default_value('salesforce_node_map_title', $form_state),
+          '#default_value' => _sfw_default_value('node_title', $form_state),
           '#options' => $sf_fields,
         ),
       )
@@ -255,31 +255,31 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#theme' => 'table',
     '#header' => array(t('Submission Property'), t('Salesforce Field')),
     '#row_storage' => array(
-      array(
-        'submission_id' => array(
+      0 => array(
+        'submission_id_label' => array(
           '#id' => 'map-label-submission-id',
           '#markup' => t('Submission ID'),
           '#prefix' => '<label class="'. $map_row_class_name .'">',
           '#suffix' => '</label>',
         ),
-        'salesforce_submission_map_id' => array(
+        'submission_id' => array(
           '#id' => 'salesforce-field-map-submission-id',
           '#type' => 'select',
-          '#default_value' => _sfw_default_value('salesforce_submission_map_id', $form_state),
+          '#default_value' => _sfw_default_value('submission_id', $form_state),
           '#options' => $sf_fields,
         ),
       ),
-      array(
-        'submission_date' => array(
+      1 => array(
+        'submission_date_label' => array(
           '#id' => 'map-label-submission-date',
           '#markup' => t('Submission Date'),
           '#prefix' => '<label class="'. $map_row_class_name .'">',
           '#suffix' => '</label>',
         ),
-        'salesforce_submission_map_date' => array(
+        'submission_date' => array(
           '#id' => 'salesforce-field-map-submission-date',
           '#type' => 'select',
-          '#default_value' => _sfw_default_value('salesforce_submission_map_date', $form_state),
+          '#default_value' => _sfw_default_value('submission_date', $form_state),
           '#options' => $sf_fields,
         ),
       )
@@ -419,7 +419,7 @@ function _sfw_default_value($field, $form_state) {
   if (empty($form_state['input'])) {
     // Check against the node at $form_state['build_info']['args'][0]
     switch ($field) {
-      case 'salesforce_webform_map_dedupe_none':
+      case 'salesforce_dedupe_none':
         // if not configured in node
           return TRUE;
         // else return node's value
@@ -429,19 +429,19 @@ function _sfw_default_value($field, $form_state) {
     // Check against the user contributed data
     switch ($field) {
       case 'salesforce_object_type':
-        return $form_state['input']['salesforce_object_fieldset']['salesforce_object_type'];
+        return $form_state['input']['salesforce_object_info']['salesforce_object_type'];
 
       case 'salesforce_record_type':
         // If there is not a set record type yet, use the default record type for the object
-        if (empty($form_state['input']['salesforce_object_fieldset']['salesforce_record_type'])) {
+        if (empty($form_state['input']['salesforce_object_info']['salesforce_record_type'])) {
           $sf_object = _sfw_default_value('salesforce_object_type', $form_state);
           return _sfw_salesforce_default_record_type($sf_object);
         }
 
         // Otherwise use the user's configured record type
-        return $form_state['input']['salesforce_object_fieldset']['salesforce_record_type'];
+        return $form_state['input']['salesforce_object_info']['salesforce_record_type'];
 
-      case 'salesforce_webform_map_dedupe_none':
+      case 'salesforce_dedupe_none':
         if (
              !isset($form_state['input']['salesforce_dedupe'])
              || empty($form_state['input']['salesforce_dedupe'])
@@ -451,22 +451,48 @@ function _sfw_default_value($field, $form_state) {
         }
         return FALSE;
 
-      // The remaining fields are all in the field_map
+      case 'node_id':
+        $i = 0;
+      case 'node_title':
+        if (isset($form_state['input']['field_map'])) {
+          $i = isset($i) ? $i : 1;
+          return $form_state['input']['field_map']['salesforce_node_map'][$i][$field];
+        }
+        return NULL;
+
+      case 'submission_id':
+        $i = 0;
+      case 'submission_title':
+        if (isset($form_state['input']['field_map'])) {
+          $i = isset($i) ? $i : 1;
+          return $form_state['input']['field_map']['salesforce_submission_map'][$i][$field];
+        }
+        return NULL;
+
+
       default:
-        // Find the group the field resides within
-        foreach ($form_state['input']['field_map'] as $group_name => $rows) {
-          if (strpos($field, $group_name) !== FALSE) {
-            $group = $group_name;
-            break;
+        // Get the CID
+        $field_parts = explode('_', $field);
+        $cid = array_pop($field_parts);
+
+        if (strpos($field, 'dedupe') === FALSE && isset($form_state['input']['field_map'])) {
+          // These guys are all salesforce_webform_map fields
+          return $form_state['input']['field_map']['salesforce_webform_map'][$cid][$field];
+        }
+        else if (isset($form_state['input']['salesforce_dedupe']) && $form_state['input']['salesforce_dedupe'] != 'salesforce_dedupe_none') {
+          // And these guys are all dedupe fields which actually need to check
+          // against the salesforce_dedupe value
+
+          // Get the mapped field for this componant
+          $sf_field = _sfw_default_value('cid_'. $cid, $form_state);
+
+          // See if this is the currently configured dedupe field
+          if ($form_state['input']['salesforce_dedupe'] == $sf_field) {
+            return TRUE;
           }
         }
 
-        // The field could be anywhere in the list, so we have to search for it
-        foreach ($form_state['input']['field_map'][$group] as $row) {
-          if (isset($row[$field])) {
-            return $row[$field];
-          }
-        }
+
     }
   }
   return NULL;
