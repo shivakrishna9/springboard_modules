@@ -132,6 +132,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#theme' => 'table',
     '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
     '#row_storage' => array(),
+    '#sticky' => FALSE,
     '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe-wrapper">',
     '#suffix' => '</div>',
   );
