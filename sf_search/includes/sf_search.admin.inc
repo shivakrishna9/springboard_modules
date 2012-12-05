@@ -5,9 +5,9 @@
  *
  * Admin functions for Salesforce search module.
  */
- 
+
 function sf_search_display_fields_form($object) {
-  
+
 }
 
 /**
@@ -15,7 +15,7 @@ function sf_search_display_fields_form($object) {
  */
 function sf_search_settings_form() {
   $contact_fields = _sf_search_contact_lookup_fields();
-  
+
   $form['sf_search_donor_id_field'] = array(
     '#type' => 'select',
     '#title' => t('Donor ID field'),
@@ -23,13 +23,13 @@ function sf_search_settings_form() {
     '#options' => $contact_fields,
     '#default_value' => variable_get('sf_search_donor_id_field', ''),
   );
-  
+
   $form['sf_search_result'] = array(
     '#type' => 'fieldset',
     '#title' => t('Search result display fields'),
     '#collapsible' => TRUE,
   );
-  
+
   $form['sf_search_result']['sf_search_result_display_fields'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Fields to display'),
@@ -37,9 +37,9 @@ function sf_search_settings_form() {
     '#default_value' => variable_get('sf_search_result_display_fields', array()),
   );
 
-  // add a validation handler so we can lookup the data type of the choosen field  
+  // add a validation handler so we can lookup the data type of the choosen field
   $form['#validate'][] = 'sf_search_settings_form_validate';
-  
+
   return system_settings_form($form);
 }
 
@@ -48,7 +48,7 @@ function sf_search_settings_form() {
  */
 function sf_search_settings_form_validate(&$form, $form_state) {
   $lookup_field = $form_state['values']['sf_search_donor_id_field'];
-  
+
   // save data type so we can correctly construct soql query later
   if ($type = _sf_search_lookup_field_type($lookup_field)) {
     variable_set('sf_search_donor_id_field_type', $type);
@@ -68,9 +68,9 @@ function _sf_search_filter_mapped_fields() {
       $fields[$key] = $field['label'];
     }
   }
- 
+
   asort($fields);
-  return $fields; 
+  return $fields;
 }
 
 /**
@@ -81,8 +81,8 @@ function _sf_search_contact_fields() {
   $objects = salesforce_management_api_fieldmap_objects('salesforce');
   if (!empty($objects) && array_key_exists('Contact', $objects)) {
     return $objects['Contact']['fields'];
-  }  
-  
+  }
+
   return FALSE;
 }
 
@@ -97,9 +97,9 @@ function _sf_search_contact_lookup_fields() {
   foreach ($contact_fields as $key => $field) {
     if ($field['unique'] || $field['idLookup']) {
       $fields[$key] = $field['label'];
-    }    
+    }
   }
-  
+
   return $fields;
 }
 
@@ -114,8 +114,8 @@ function _sf_search_lookup_field_type($field_id) {
   foreach ($fields as $key => $field) {
     if ($key == $field_id) {
       return $field['field_type'];
-    }    
+    }
   }
-  
+
   return FALSE;
 }

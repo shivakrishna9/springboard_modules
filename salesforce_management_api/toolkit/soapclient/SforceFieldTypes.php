@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 define ("DEPLOYMENT_STATUS_INDEVELOPMENT", 'InDevelopment');
 define ("DEPLOYMENT_STATUS_DEPLOYED", 'Deployed');
 

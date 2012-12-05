@@ -1,5 +1,9 @@
 <?php
 /**
+ * @file
+ */
+
+/**
  * Implementation of hook_content_default_fields().
  */
 function email_confirmation_content_default_fields() {
@@ -54,56 +58,56 @@ function email_confirmation_content_default_fields() {
   );
 
   // Exported field: field_confirmation_default
- /* $fields['confirmation_template-field_confirmation_default'] = array(
-    'field_name' => 'field_confirmation_default',
-    'type_name' => 'confirmation_template',
-    'display_settings' => array(
-      'label' => array(
-        'format' => 'above',
-        'exclude' => 0,
-      ),
-      'teaser' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      'full' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      '4' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      'token' => array(
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-    ),
-    'widget_active' => '1',
-    'type' => 'text',
-    'required' => '0',
-    'multiple' => '0',
-    'module' => 'text',
-    'active' => '1',
-    'text_processing' => '0',
-    'max_length' => '',
-    'allowed_values' => '0
-1|Make this the default template for my group.',
-    'allowed_values_php' => '',
-    'widget' => array(
-      'default_value' => array(
-        '0' => array(
-          'value' => NULL,
-        ),
-      ),
-      'default_value_php' => NULL,
-      'label' => 'Default',
-      'weight' => '-4',
-      'description' => '',
-      'type' => 'optionwidgets_onoff',
-      'module' => 'optionwidgets',
-    ),
-  );*/
+  /* $fields['confirmation_template-field_confirmation_default'] = array(
+   'field_name' => 'field_confirmation_default',
+   'type_name' => 'confirmation_template',
+   'display_settings' => array(
+   'label' => array(
+   'format' => 'above',
+   'exclude' => 0,
+   ),
+   'teaser' => array(
+   'format' => 'default',
+   'exclude' => 0,
+   ),
+   'full' => array(
+   'format' => 'default',
+   'exclude' => 0,
+   ),
+   '4' => array(
+   'format' => 'default',
+   'exclude' => 0,
+   ),
+   'token' => array(
+   'format' => 'default',
+   'exclude' => 0,
+   ),
+   ),
+   'widget_active' => '1',
+   'type' => 'text',
+   'required' => '0',
+   'multiple' => '0',
+   'module' => 'text',
+   'active' => '1',
+   'text_processing' => '0',
+   'max_length' => '',
+   'allowed_values' => '0
+   1|Make this the default template for my group.',
+   'allowed_values_php' => '',
+   'widget' => array(
+   'default_value' => array(
+   '0' => array(
+   'value' => NULL,
+   ),
+   ),
+   'default_value_php' => NULL,
+   'label' => 'Default',
+   'weight' => '-4',
+   'description' => '',
+   'type' => 'optionwidgets_onoff',
+   'module' => 'optionwidgets',
+   ),
+   );*/
 
   // Exported field: field_confirmation_from_email
   $fields['confirmation_template-field_confirmation_from_email'] = array(
@@ -362,7 +366,7 @@ function email_confirmation_content_default_fields() {
       'module' => 'text',
     ),
   );
- 
+
   // Exported field: field_confirmation_text
   $fields['confirmation_template-field_confirmation_text'] = array(
     'field_name' => 'field_confirmation_text',

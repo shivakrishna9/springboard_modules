@@ -1,7 +1,7 @@
 
 -- SUMMARY --
 
-This module adds support for multiple currencies to donation forms. 
+This module adds support for multiple currencies to donation forms.
 
 
 -- REQUIREMENTS --
@@ -29,7 +29,7 @@ This module adds support for multiple currencies to donation forms.
 -- CONTACT --
 Current maintainers:
 * Phillip Cave (pcave) - http://drupal.org/user/379888
-* Ben Clark (benclark) - http://drupal.org/user/115444 
+* Ben Clark (benclark) - http://drupal.org/user/115444
 
 
 This project has been sponsored by:

@@ -15,7 +15,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'group' => 'Springboard',
     );
   }
-  
+
   /**
    * Implemenation of setUp().
    */
@@ -36,13 +36,13 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'fundraiser_uc_gateway',
       'market_source'
     );
-    
+
     // Install any additional modules specified by helper modules
     $modules = func_get_args();
     foreach ($modules as $module) {
       drupal_install_modules(array($module));
     }
-    
+
     $permissions = array(
       'administer blocks',
       'access content',
@@ -54,16 +54,16 @@ class FundraiserTestCase extends DrupalWebTestCase {
       'delete all webform submissions',
       'create donation form',
     );
-    
+
     // Create and log in our privileged user.
     $this->_user =  $this->drupalCreateUser($permissions);
-    
+
     // Create ubercart settings
     $this->setupPayment();
     $this->setupProfileFields();
     $this->setProfileFields();
   }
-  
+
   /**
    * Implementation of tearDown().
    */
@@ -76,7 +76,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
 
     parent::tearDown();
   }
-  
+
   /**
    * Performs the installation and configuration of payment methods
    */
@@ -87,7 +87,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     variable_set('uc_credit_debug', 1);
     variable_set('fundraiser_development_mode', 1);
   }
-  
+
   /**
    * Creates the stanard profile fields used by the fundraiser module.
    */
@@ -107,7 +107,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Account Id', 'profile_salesforce_account_id', 'System', 'textfield', 4)");
     db_query("INSERT INTO {profile_fields} (title, name, category, type, visibility) VALUES ('Salesforce Contact Id', 'profile_salesforce_contact_id', 'System', 'textfield', 4)");
   }
-  
+
   function setProfileFields() {
     $personal = array();
     $personal['profile_first_name'] = 'John';
@@ -124,14 +124,14 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $system['profile_ms'] = 'market-source';
     $system['profile_referrer'] = '';
   }
-  
+
   /**
    *
    */
   function fundraiserReset() {
     $this->_fundraiser_node = NULL;
   }
-  
+
   function testFundraiserDonationAmounts() {
     $node = $this->testFundraiserForm();
     foreach ($node->webform['components'] as $cid => $component) {
@@ -139,25 +139,25 @@ class FundraiserTestCase extends DrupalWebTestCase {
         $amounts = explode("\n", $component['extra']['items']);
         $items = count($amounts); // there should be 5 (4 amounts and other)
         $this->assertEqual($items, 5, t('Verify the donation form has 4 donation amounts'));
-        
+
         $amount = explode('|', $amounts[0]);
         $this->assertEqual($amount[0], 10, t('Verify the first donation amount is 10'));
-        
+
         $amount = explode('|', $amounts[1]);
         $this->assertEqual($amount[0], 20, t('Verify the second donation amount is 20'));
-        
+
         $amount = explode('|', $amounts[2]);
         $this->assertEqual($amount[0], 50, t('Verify the third donation amount is 50'));
-        
+
         $amount = explode('|', $amounts[3]);
         $this->assertEqual($amount[0], 100, t('Verify the third donation amount is 100'));
-        
+
         $amount = explode('|', $amounts[4]);
         $this->assertEqual($amount[0], 'other', t('Verify the last donation amount is other'));
       }
     }
   }
-  
+
   function testFundraiserFields() {
     $node = $this->testFundraiserForm();
      // loop over and create an array of form keys
@@ -166,68 +166,68 @@ class FundraiserTestCase extends DrupalWebTestCase {
       $keys[] = $component['form_key'];
     }
     //$this->pass(var_export($node, TRUE));
-    
+
     // make sure all the required fields have been added to the form
     $valid = in_array('ms', $keys);
     $this->assertTrue($valid, t('Verify the market source component is added to the donation form'));
-    
+
     $valid = in_array('cid', $keys);
     $this->assertTrue($valid, t('Verify the campaign id component is added to the donation form'));
-    
+
     $valid = in_array('referrer', $keys);
     $this->assertTrue($valid, t('Verify the referrer component is added to the donation form'));
-    
+
     $valid = in_array('initial_referrer', $keys);
     $this->assertTrue($valid, t('Verify the initial referrer component is added to the donation form'));
-    
+
     $valid = in_array('amount', $keys);
     $this->assertTrue($valid, t('Verify the amount component is added to the donation form'));
-    
+
     $valid = in_array('other_amount', $keys);
     $this->assertTrue($valid, t('Verify the other amount component is added to the donation form'));
-    
+
     $valid = in_array('first_name', $keys);
     $this->assertTrue($valid, t('Verify the first name component is added to the donation form'));
-    
+
     $valid = in_array('last_name', $keys);
     $this->assertTrue($valid, t('Verify the last name component is added to the donation form'));
-    
+
     $valid = in_array('email', $keys);
     $this->assertTrue($valid, t('Verify the email component is added to the donation form'));
-    
+
     $valid = in_array('address', $keys);
     $this->assertTrue($valid, t('Verify the billing address component is added to the donation form'));
-    
+
     $valid = in_array('address_line_2', $keys);
     $this->assertTrue($valid, t('Verify the billing address 2 component is added to the donation form'));
-    
+
     $valid = in_array('city', $keys);
     $this->assertTrue($valid, t('Verify the billing city component is added to the donation form'));
-    
+
     $valid = in_array('country', $keys);
     $this->assertTrue($valid, t('Verify the billing country component is added to the donation form'));
-    
+
     $valid = in_array('state', $keys);
     $this->assertTrue($valid, t('Verify the billing state component is added to the donation form'));
-    
+
     $valid = in_array('zip', $keys);
     $this->assertTrue($valid, t('Verify the billing zipcode component is added to the donation form'));
-    
+
     $valid = in_array('card_number', $keys);
     $this->assertTrue($valid, t('Verify the credit card number component is added to the donation form'));
-    
+
     $valid = in_array('card_expiration_month', $keys);
     $this->assertTrue($valid, t('Verify the credit card expiration month component is added to the donation form'));
-    
+
     $valid = in_array('card_expiration_year', $keys);
     $this->assertTrue($valid, t('Verify the credit card expiration year component is added to the donation form'));
-    
+
     $valid = in_array('card_cvv', $keys);
     $this->assertTrue($valid, t('Verify the credit card cvv component is added to the donation form'));
-    
+
     $valid = in_array('recurs_monthly', $keys);
     $this->assertTrue($valid, t('Verify the recurs monthly component is added to the donation form'));
-    
+
   }
 
   /*
@@ -236,11 +236,11 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $this->fundraiserReset();
 
      $node = $this->testFundraiserForm('event');
-      
+
     $keys = array();
     foreach ($node->webform['components'] as $cid => $component) {
       $keys[] = $component['form_key'];
-    }   
+    }
 
     $valid = in_array('first_name', $keys);
     $this->assertTrue($valid, t('Verify the first name component is added to the donation form'));
@@ -254,7 +254,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $content_type->orig_type = '';
     $content_type->old_type = '';
     $content_type->description = '';
-    $content_type->help = ''; 
+    $content_type->help = '';
     $content_type->min_word_count = 0;
     $content_type->title_label = 'Title';
     $content_type->body_label = 'Body';
@@ -274,7 +274,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     $primary_types[] = $type;
     variable_set('webform_node_types_primary', $primary_types);
     $types[] = $type;
-    variable_set('webform_node_types', $types);  
+    variable_set('webform_node_types', $types);
     variable_set('fundraiser_' . $type, TRUE);
   }
 
@@ -283,7 +283,7 @@ class FundraiserTestCase extends DrupalWebTestCase {
     if (isset($this->_fundraiser_node)) {
       return $this->_fundraiser_node;
     }
-    
+
     $settings = array(
      'type' => $type,
      'language' => '',
@@ -336,14 +336,14 @@ class FundraiserTestCase extends DrupalWebTestCase {
         'emails' => array(),
       ),
     );
-    
+
     if (isset($args[0]['settings'])) {
       $settings = array_merge($settings, $args[0]['settings']);
     }
-    
+
     $node = $this->drupalCreateNode($settings);
     $node = node_load($node->nid, TRUE);
-    
+
     $this->_fundraiser_node = $node;
 
     return $this->_fundraiser_node;

@@ -1,6 +1,6 @@
 2012-07-24  Phillip Cave  <phillip.cave@jacksonriver.com>
-  
+
   * Initial release. Noted the following todos:
-  
+
     - Add a reset button to all exposed filter forms.
     - Organize the fields on the filter forms.

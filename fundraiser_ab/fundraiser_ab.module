@@ -17,13 +17,13 @@ function fundraiser_ab_webform_ab_get_webform_types() {
 
 /**
  * Implementation of hook_webform_ab_validate_conversion().
- * Only returns TRUE if the webform type is fundraiser and the donation payment 
+ * Only returns TRUE if the webform type is fundraiser and the donation payment
  * was successful. This way, failed credit card payments are not counted as
  * conversions
  */
 function fundraiser_ab_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
   if ($webform_types == 'fundraiser') {
-    // If abort is TRUE, the payment failed. 
+    // If abort is TRUE, the payment failed.
     // Only return TRUE if the abort flag is NOT set to TRUE
     return ($form_state['values']['abort'] !== TRUE);
   }
@@ -51,11 +51,11 @@ function fundraiser_ab_webform_ab_valid_webforms($webform_types) {
     // Fundraiser for Webform 3.x and above stores donation forms in a node type
     // of their own
     else {
-      $donation_types = fundraiser_enabled_types();  
-      $result = db_query("SELECT n.nid, n.title, f.internal_name 
+      $donation_types = fundraiser_enabled_types();
+      $result = db_query("SELECT n.nid, n.title, f.internal_name
           FROM {node} n
           LEFT JOIN {fundraiser} f ON f.nid=n.nid
-          WHERE n.status > 0 AND n.type IN (" . db_placeholders($donation_types, 'text') . ") 
+          WHERE n.status > 0 AND n.type IN (" . db_placeholders($donation_types, 'text') . ")
           ORDER BY title",
         $donation_types);
     }
@@ -107,7 +107,7 @@ function fundraiser_ab_webform_ab_valid_webforms_alter(&$indexed_forms, $webform
  * Save updated stats for this donation form/test node combo.
  */
 function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
-  if($webform_node = node_load($form_state_values['webform_nid'])) {
+  if ($webform_node = node_load($form_state_values['webform_nid'])) {
     // Only update on donation form submissions
     // 3.x use donation_form node type
     // 2.x use is_donation_form flag on webform node
@@ -127,11 +127,11 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         $recurs = ($fundraiser_fields['recurs'] == 'recurs');
       }
       elseif (!empty($fundraiser_fields['recurs_monthly'])) {
-    		$recurs = $fundraiser_fields['recurs_monthly'];
-    	}
+        $recurs = $fundraiser_fields['recurs_monthly'];
+      }
       // Lets jump through some hoops to see if this was a recurring donation
       // (Fundraiser 3.x)
-    	else {
+      else {
         $recurs_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'recurs_monthly' AND nid = %d", $webform_node->nid));
         if (!empty($recurs_cid)) {
           $value = $form_state_values['submitted'][$recurs_cid];
@@ -164,7 +164,7 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
         );
 
         // Start query
-        $sql = 'UPDATE {fundraiser_ab_stats} SET 
+        $sql = 'UPDATE {fundraiser_ab_stats} SET
           donation_count = donation_count + 1,
           total_donations = total_donations + %f';
 

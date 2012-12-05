@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file capwiz.install
+ * @file
  * Install the Capwiz module.
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
@@ -61,7 +61,7 @@ function capwiz_uninstall() {
 }
 
 
-/** 
+/**
  * Implement hook_enable().
  */
 function capwiz_enable() {
@@ -180,7 +180,8 @@ function capwiz_update_6101() {
   db_add_primary_key($updates, 'capwiz_actions', array('uid', 'alert_id'));
 
   // Add Message ID field.
-  db_add_field   ($updates, 'capwiz_actions', 'message_id',           array('type' => 'varchar', 'length' => '16', 'not null' => FALSE));
+  db_add_field($updates, 'capwiz_actions', 'message_id',
+    array('type' => 'varchar', 'length' => '16', 'not null' => FALSE));
 
   return $updates;
 }

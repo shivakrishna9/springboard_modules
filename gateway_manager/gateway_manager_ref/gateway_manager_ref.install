@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ */
+/**
  * Implements hook_install().
  */
 function gateway_manager_ref_install() {

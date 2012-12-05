@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 require_once('SforceFieldTypes.php');
 
 class SforceCustomObject {

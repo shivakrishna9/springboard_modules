@@ -61,7 +61,7 @@ function gm_authorizenet_silent_post() {
           $fee['charged_intervals'] += 1;
 
           // Set the next expected charge time.
-          $fee['next_charge'] = strtotime('+'. $fee['regular_interval'], $fee['next_charge']);
+          $fee['next_charge'] = strtotime('+' . $fee['regular_interval'], $fee['next_charge']);
 
           // Save the new values.
           uc_recurring_fee_save('user', $fee);
@@ -100,7 +100,7 @@ function gm_authorizenet_arb_user_update_form($form_state, $user, $rfid) {
     '#value' => $rfid,
   );
   $form['description'] = array(
-    '#value' => '<div>'. t('Recurring fee order ID: @order_id', array('@order_id' => $fee['order_id'])) .'</div>',
+    '#value' => '<div>' . t('Recurring fee order ID: @order_id', array('@order_id' => $fee['order_id'])) . '</div>',
   );
 
   $form['cc_data'] = array(
@@ -115,7 +115,7 @@ function gm_authorizenet_arb_user_update_form($form_state, $user, $rfid) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Update'),
-    '#suffix' => l(t('Cancel'), 'user/'. $user->uid),
+    '#suffix' => l(t('Cancel'), 'user/' . $user->uid),
   );
 
   return $form;
@@ -128,7 +128,7 @@ function gm_authorizenet_arb_user_update_form_submit($form, &$form_state) {
     'payment' => array(
       'creditCard' => array(
         'cardNumber' => $form_state['values']['cc_data']['cc_number'],
-        'expirationDate' => $form_state['values']['cc_data']['cc_exp_year'] .'-'. $form_state['values']['cc_data']['cc_exp_month'],
+        'expirationDate' => $form_state['values']['cc_data']['cc_exp_year'] . '-' . $form_state['values']['cc_data']['cc_exp_month'],
       ),
     ),
   );
@@ -143,7 +143,7 @@ function gm_authorizenet_arb_user_update_form_submit($form, &$form_state) {
     drupal_set_message(t('An error has occurred while updating your payment details. Please try again and contact us if you are unable to perform the update.'), 'error');
   }
 
-  $form_state['redirect'] = 'user/'. $form_state['values']['uid'];
+  $form_state['redirect'] = 'user/' . $form_state['values']['uid'];
 }
 
 // Displays a confirm form for customers to cancel their fees.
@@ -157,7 +157,7 @@ function gm_authorizenet_arb_user_cancel_form($form_state, $user, $rfid) {
     '#value' => $rfid,
   );
 
-  return confirm_form($form, t('Are you sure you wish to cancel this fee?'), 'user/'. $user->uid,  // Coder: This is ok.
+  return confirm_form($form, t('Are you sure you wish to cancel this fee?'), 'user/' . $user->uid,   // Coder: This is ok.
     t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
 }
 
@@ -177,5 +177,5 @@ function gm_authorizenet_arb_user_cancel_form_submit($form, &$form_state) {
     drupal_set_message(t('An error has occurred. Please try again and contact us if the problem persists.'), 'error');
   }
 
-  $form_state['redirect'] = 'user/'. $form_state['values']['uid'];
+  $form_state['redirect'] = 'user/' . $form_state['values']['uid'];
 }

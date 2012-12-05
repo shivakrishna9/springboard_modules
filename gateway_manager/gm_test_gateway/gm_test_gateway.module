@@ -6,10 +6,6 @@
  *
  */
 
-/*******************************************************************************
- * Hook Functions (Ubercart)
- ******************************************************************************/
-
 function gm_test_gateway_payment_gateway_managed() {
   $gateways[] = array(
     'id' => 'test_gateway',
@@ -21,10 +17,6 @@ function gm_test_gateway_payment_gateway_managed() {
   return $gateways;
 }
 
-
-/*******************************************************************************
- * Module and Helper Functions
- ******************************************************************************/
 
 function gm_test_gateway_charge($order_id, $amount, $data) {
   global $user;

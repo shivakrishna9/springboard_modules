@@ -1,11 +1,13 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Implements hook_schema().
  */
 function fundraiser_multi_currency_schema() {
   $schema = array();
-  
+
   $schema['fundraiser_currencies'] = array(
     'description' => 'Default currencies to use for donation forms',
     'fields' => array(
@@ -54,30 +56,30 @@ function fundraiser_multi_currency_uninstall() {
 }
 
 /**
- * 
+ *
  */
 function _fundraiser_multi_currency_insert_defaults() {
   $ret = array();
   $currencies[] =  array(
-      'symbol' => '$',
-      'code' => 'USD',
-      'name' => 'US Dollars',
-    );
-    $currencies[] =  array(
-      'symbol' => '€',
-      'code' => 'EUR',
-      'name' => 'Euros',
-    );
-    $currencies[] =  array(
-      'symbol' => '£',
-      'code' => 'GBP',
-      'name' => 'UK Pounds',
-    );
+    'symbol' => '$',
+    'code' => 'USD',
+    'name' => 'US Dollars',
+  );
+  $currencies[] =  array(
+    'symbol' => '€',
+    'code' => 'EUR',
+    'name' => 'Euros',
+  );
+  $currencies[] =  array(
+    'symbol' => '£',
+    'code' => 'GBP',
+    'name' => 'UK Pounds',
+  );
 
 
-  foreach($currencies as $values) {
+  foreach ($currencies as $values) {
     if (!db_result(db_query("SELECT 1 FROM {fundraiser_currencies} WHERE code='%s'", $values['code']))) {
-      $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",  $values['symbol'], $values['code'], $values['name']);
+      $sql = sprintf("INSERT INTO {fundraiser_currencies} (currency_id, symbol, code, name) VALUES ('', '%s', '%s', '%s')",   $values['symbol'], $values['code'], $values['name']);
       $ret[] = update_sql($sql);
     }
   }

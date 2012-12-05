@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Implements hook_views_handlers().
  */
@@ -67,18 +69,18 @@ function _springboard_views_invoke_all($hook) {
     if (function_exists($function)) {
       $module_data = $function();
       if (!empty($module_data) && is_array($module_data)) {
-  if ($hook == 'views_handlers') {
-    drupal_set_message('mod data: ' . print_r($module_data, true));
-  }
+        if ($hook == 'views_handlers') {
+          drupal_set_message('mod data: ' . print_r($module_data, TRUE));
+        }
         $data = array_merge($data, $module_data);
-  if ($hook == 'views_handlers') {
-    drupal_set_message('first: ' . print_r($data, true));
-  }
+        if ($hook == 'views_handlers') {
+          drupal_set_message('first: ' . print_r($data, TRUE));
+        }
       }
     }
   }
   if ($hook == 'views_handlers') {
-    drupal_set_message(print_r($data, true));
+    drupal_set_message(print_r($data, TRUE));
   }
   return $data;
 }
@@ -180,7 +182,7 @@ class springboard_views_join extends views_join {
           }
         }
       }
-      else if ($this->extra && is_string($this->extra)) {
+      elseif ($this->extra && is_string($this->extra)) {
         $output .= " AND ($this->extra)";
       }
     }

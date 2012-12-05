@@ -15,6 +15,6 @@
     <?php print $styles; ?>
   </head>
   <body>
-    <?php print $content;?>  
+    <?php print $content;?>
   </body>
 </html>

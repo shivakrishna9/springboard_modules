@@ -51,7 +51,7 @@ function fundraiser_multi_currency_menu() {
     'access arguments' => array('manage currencies'),
   );
 
-  
+
 
 
   return $items;
@@ -83,7 +83,7 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
         '#description' => t('Should this form support multiple currencies?'),
         '#options' => array(
           'hide' => t('Hide currency from user and always use the default.'),
-          'show' => t('Allow the user to choose their currency from a dropdown.')
+          'show' => t('Allow the user to choose their currency from a dropdown.'),
         ),
         '#default_value' => 'hide',
         '#weight' => -4.65,
@@ -101,15 +101,15 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
     }
   }
   // On donation forms, load the available currencies and put them in the JS object
-  else if (strstr($form_id, 'webform_client_form') && is_object($form['#node'])) {
+  elseif (strstr($form_id, 'webform_client_form') && is_object($form['#node'])) {
     if (fundraiser_is_donation_type($form['#node']->type)) {
       // Find reference to the currency and amount form fields
       $currency_component = &_fundraiser_multi_currency_find_webform_component($form['submitted'], 'currency');
       $amount_component = &_fundraiser_multi_currency_find_webform_component($form['submitted'], 'amount');
-      
+
       // Check if there's an Other amount field in play
       $other_amount_component = &_fundraiser_multi_currency_find_webform_component($form['submitted'], 'other_amount');
-      
+
       // Get the list of currencies in use
       $currencies = fundraiser_multi_currency_get_default_currencies();
       // Save them to the JS object
@@ -128,11 +128,11 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
               $other_amount_component['#description'] = str_replace('Minimum payment $', 'Minimum payment ' . $currencies[$selected_currency]['symbol'], $other_amount_component['#description']);
             }
           }
-          
+
           // Also update the prefix on ask amounts, if there are any
           if ($amount_component['#options']) {
             $replace_val = $currencies[$selected_currency]['symbol'];
-            foreach($amount_component['#options'] as $val => $label) {
+            foreach ($amount_component['#options'] as $val => $label) {
               $amount_component['#options'][$val] = str_replace('$', $replace_val, $label);
             }
           }
@@ -155,11 +155,11 @@ function fundraiser_multi_currency_form_alter(&$form, &$form_state, $form_id) {
 
 
 /**
- * Implmentation of hook_fundraiser_form_insert().
+ * Implementation of hook_fundraiser_form_insert().
  */
 function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-  
+
   // Start creating a currency component for the webform
   $currency = array();
   $currency['nid'] = $node->nid;
@@ -172,9 +172,9 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
   $currency['email'] = 1;
   $currency['maps_to'] = '';
   $currency['extra'] = array(
-  	'description' => '',
+    'description' => '',
   );
-  
+
   // If they chose to allow users to pick their currency, add a dropdown for currencies
   if ($node->multiple_currency_support == 'show') {
     // Get a list of currencies to use as defaults
@@ -184,25 +184,25 @@ function fundraiser_multi_currency_fundraiser_form_insert($node, $components) {
       $default_currencies .= $code . '|' . $row['name'] . "\n";
     }
     $default_currencies = trim($default_currencies);
-    
-  	$currency['type'] = 'select';  
-  	$currency['extra']['items'] = $default_currencies;
-  	$currency['extra']['multiple'] = 0;
-  	$currency['extra']['aslist'] = 'Y';
+
+    $currency['type'] = 'select';
+    $currency['extra']['items'] = $default_currencies;
+    $currency['extra']['multiple'] = 0;
+    $currency['extra']['aslist'] = 'Y';
   }
   // Otherwise, hide the currency
   else {
-    $currency['type'] = 'hidden';  
+    $currency['type'] = 'hidden';
   }
-  
+
   webform_component_insert($currency);
 }
 
 /**
  * Implementation of hook_fundraiser_add_order_fields().
- * 
+ *
  * Add the currency to the $order->data array
- * 
+ *
  * @return
  *   Array of fields to set in $order->data array
  */
@@ -218,7 +218,7 @@ function fundraiser_multi_currency_fundraiser_add_order_fields($fundraiser_field
 function fundraiser_multi_currency_get_default_currencies() {
   // Cache the currency list locally
   static $currencies = array();
-  
+
   // If there are no currencies loaded already...
   if (empty($currencies)) {
     // Pull currencies that have been added by admins
@@ -227,7 +227,7 @@ function fundraiser_multi_currency_get_default_currencies() {
       $currencies[$row['code']] = $row;
     }
   }
-  
+
   return $currencies;
 }
 
@@ -245,13 +245,13 @@ function &_fundraiser_multi_currency_find_webform_component(&$component, $name_t
       return $component[$child_element_name];
     }
   }
-  
+
   // Target not found yet: check all child elements
   foreach ($kids as $child_element_name) {
     // Only look in the child component if it's a tree or fieldset
     if ($component[$child_element_name]['#tree'] || $component[$child_element_name]['#type'] == 'fieldset') {
       // If the component is found, return it
-      if ($found_component = &_fundraiser_multi_currency_find_webform_component($component[$child_element_name], $name_to_find)) {
+      if ($found_component = & _fundraiser_multi_currency_find_webform_component($component[$child_element_name], $name_to_find)) {
         return $found_component;
       }
     }

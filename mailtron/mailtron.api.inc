@@ -3,12 +3,13 @@
 require_once('mailtron.module');
 
 /**
- * @file Mailtron helper functions for 3rd party module development.
+ * @file
+ * Mailtron helper functions for 3rd party module development.
  */
 
 /**
  * Drop this into your code to add/edit/delete mailtron mail settings.
- * 
+ *
  * Be sure to provide module and name (unique per module, much like block deltas) to ensure mailtron can load your module-specific settings.
  *
  * @param $edit
@@ -35,7 +36,7 @@ function mailtron_mail_form($edit, $params = array()) {
   $form['name'] = array(
     '#type' => 'value',
     '#value' => isset($settings->name) ? $settings->name : $params['name'],
-  ); 
+  );
   // currently unused but potentially useful if we integrate with Email Confirmations confirmation template nodes.
   $form['tid'] = array(
     '#type' => 'value',
@@ -62,14 +63,14 @@ function mailtron_mail_form($edit, $params = array()) {
     '#default_value' => isset($settings->from_name) ? $settings->from_name : '',
     '#required' => TRUE,
   );
-   $form['headers']['from_mail'] = array(
+  $form['headers']['from_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('From mail'),
     '#description' => t(''),
     '#default_value' => isset($settings->from_mail) ? $settings->from_mail : '',
     '#required' => TRUE,
   );
-   $form['headers']['recipients'] = array(
+  $form['headers']['recipients'] = array(
     '#type' => 'textfield',
     '#title' => t('Recipient email address'),
     '#description' => t('The primary recipient email address(es). For more than one address, addresses should be separated by a comma. Example: test1@example.com,test2@example.com'),
@@ -135,16 +136,16 @@ function mailtron_mail_form_validate(&$form, $form_state) {
   if (!mailtron_validate_mail_input($form_state['values']['from_mail'])) {
     form_set_error('from_mail', t('You have entered an invalid email address in the "from mail" field: %mail', array('%mail' => $form_state['values']['from_mail'])));
   }
-  
+
   if ($form_state['values']['recipients']) {
     $recipients = explode(',', $form_state['values']['recipients']);
     if (!count($recipients)) {
-     $recipients = array($recipients);
+      $recipients = array($recipients);
     }
     foreach ($recipients as $recipient) {
       if (!mailtron_validate_mail_input($recipient)) {
         form_set_error('recipients', t('You have entered an invalid email address in the "recipients" field: %mail', array('%mail' => $recipient)));
-      } 
+      }
     }
   }
 
@@ -188,7 +189,7 @@ function mailtron_mail_form_submit($form, $form_state) {
 }
 
 /**
- * 
+ *
  */
 function mailtron_validate_mail_input($mail) {
   return filter_var($mail, FILTER_VALIDATE_EMAIL);
@@ -214,7 +215,7 @@ function mailtron_mail_load($params = array()) {
 
     if (isset($mail->mid)) {
       $mid = $mail->mid;
-      $settings[$mid] = $mail; 
+      $settings[$mid] = $mail;
     }
   }
 
@@ -233,18 +234,18 @@ function mailtron_mail_load($params = array()) {
  */
 function mailtron_send_mail($mail, $params = array()) {
   // package settings for consumption by mimemail,
-    module_load_include('module', 'mimemail');
-    module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
-    if (isset($mail->recipient_callback) && $mail->recipient_callback) { 
-      $function = $mail->recipient_callback;
-      $mail->recipients = $function($mail, $params);
-    }
-    
-    module_invoke_all('mimemail_send_mail_alter', $mail);
+  module_load_include('module', 'mimemail');
+  module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
+  if (isset($mail->recipient_callback) && $mail->recipient_callback) {
+    $function = $mail->recipient_callback;
+    $mail->recipients = $function($mail, $params);
+  }
 
-    $settings = mailtron_convert_settings($mail);
-    mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
- 
+  module_invoke_all('mimemail_send_mail_alter', $mail);
+
+  $settings = mailtron_convert_settings($mail);
+  mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
+
   // optionally call callback provided in $mail
   if (isset($mail->send_callback) && $mail->send_callback) {
     $function = $mail->send_callback;

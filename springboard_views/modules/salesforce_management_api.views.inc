@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ */
+/**
  * Implementation of hook_views_data().
  */
 function springboard_views_salesforce_management_api_views_data() {

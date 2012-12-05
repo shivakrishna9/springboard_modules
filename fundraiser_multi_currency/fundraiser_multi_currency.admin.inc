@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 function fundraiser_multi_currency_list() {
   $table_columns = array(
     t('Symbol'),
@@ -19,11 +21,14 @@ function fundraiser_multi_currency_list() {
       $links,
     );
   }
-  
+
   if (empty($table_rows)) {
-    $table_rows[] = array(array('data' => t('No currencies have been created. Click the Add link above to add your first.'), 'colspan' => count($table_columns)));
+    $table_rows[] = array(array(
+        'data' => t('No currencies have been created. Click the Add link above to add your first.'),
+        'colspan' => count($table_columns),
+      ));
   }
-  
+
   return theme('table', $table_columns, $table_rows);
 }
 
@@ -43,7 +48,7 @@ function fundraiser_multi_currency_edit($form_state, $currency_id) {
   if (empty($form_state['values']) && $currency_id > 0) {
     $form_state['values'] = db_fetch_array(db_query('SELECT * FROM {fundraiser_currencies} WHERE currency_id = %d', $currency_id));
   }
-  
+
   return fundraiser_multi_currency_currency_form($form_state['values']);
 }
 
@@ -53,7 +58,7 @@ function fundraiser_multi_currency_edit($form_state, $currency_id) {
  * Calls _fundraiser_multi_currency_save()
  */
 function fundraiser_multi_currency_add_submit($form, &$form_state) {
-  if(_fundraiser_multi_currency_save($form_state['values'])) {
+  if (_fundraiser_multi_currency_save($form_state['values'])) {
     drupal_set_message(t('New currency added.'));
     $form_state['redirect'] = 'admin/settings/currencies';
   }
@@ -64,7 +69,7 @@ function fundraiser_multi_currency_add_submit($form, &$form_state) {
  * Calls _fundraiser_multi_currency_save()
  */
 function fundraiser_multi_currency_edit_submit($form, &$form_state) {
-  if(_fundraiser_multi_currency_save($form_state['values'])) {
+  if (_fundraiser_multi_currency_save($form_state['values'])) {
     drupal_set_message(t('Currency updated.'));
     $form_state['redirect'] = 'admin/settings/currencies';
   }
@@ -75,14 +80,14 @@ function fundraiser_multi_currency_edit_submit($form, &$form_state) {
  */
 function fundraiser_multi_currency_currency_form($values) {
   $form = array();
-  
+
   if ($values['currency_id'] > 0) {
     $form['currency_id'] = array(
       '#type' => 'value',
-      '#value' => $values['currency_id']
+      '#value' => $values['currency_id'],
     );
   }
-  
+
   $form['symbol'] = array(
     '#type' => 'textfield',
     '#title' => t('Symbol'),
@@ -91,7 +96,7 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['symbol'],
   );
-  
+
   $form['code'] = array(
     '#type' => 'textfield',
     '#title' => t('Code'),
@@ -100,7 +105,7 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['code'],
   );
-  
+
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
@@ -109,12 +114,12 @@ function fundraiser_multi_currency_currency_form($values) {
     '#maxlength' => 255,
     '#default_value' => $values['name'],
   );
-  
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
-    
+
   return $form;
 }
 
@@ -122,14 +127,14 @@ function fundraiser_multi_currency_currency_form($values) {
  * Save a new or updated currency
  */
 function _fundraiser_multi_currency_save($values) {
-  $record = (object)$values;
+  $record = (object) $values;
   if ($record->currency_id > 0) {
     return drupal_write_record('fundraiser_currencies', $record, array('currency_id'));
   }
   else {
     return drupal_write_record('fundraiser_currencies', $record);
   }
-  
+
 }
 
 

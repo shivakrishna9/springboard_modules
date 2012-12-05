@@ -28,7 +28,7 @@ function fundraiser_ab_donations_highest_gross_config_summary($config) {
  * Check if the given Webform A/B Test node has a winner
  * Checks the total donation amount for every donation form included in the
  * A/B test, and checks if the one being checked has the highest
- * 
+ *
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
  *   checked for a win. In this case, the array will be empty.

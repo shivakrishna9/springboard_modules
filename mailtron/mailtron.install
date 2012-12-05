@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file database schema and install/uninstall functions.
+ * @file
+ * database schema and install/uninstall functions.
  */
 
 /**
@@ -29,7 +30,7 @@ function mailtron_schema() {
       'mid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
-        'not null' => TRUE,  
+        'not null' => TRUE,
       ),
       'tid' => array(
         'type' => 'int',
@@ -76,13 +77,13 @@ function mailtron_schema() {
       'html_body' => array(
         'type' => 'text',
         'not null' => TRUE,
-      ), 
+      ),
       'html_body_format' => array(
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ), 
+      ),
       'text_body' => array(
         'type' => 'text',
         'not null' => TRUE,

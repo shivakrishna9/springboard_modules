@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Index callback for springboard service.
@@ -8,14 +11,18 @@ function springboard_api_list_webforms($pubkey, $timestamp, $checksum, $page, $p
   $data = array();
   $error_code = (isset($override_400) && $override_400) ? 200 : 400;
   $valid = _springboard_api_validate_transaction('index', $timestamp, $pubkey, $checksum);
-  
+
   if ($valid) {
     $webform_node_types = implode("','", variable_get('webform_node_types', ''));
     $sql = sprintf("SELECT nid, title, type FROM {node} WHERE type IN ('%s') LIMIT %d, %d", $webform_node_types, $page, $pagesize);
     $results = db_query($sql);
 
     while ($result = db_fetch_object($results)) {
-      $webforms[] = array('nid' => $result->nid, 'type' => $result->type, 'title' => $result->title);
+      $webforms[] = array(
+        'nid' => $result->nid,
+        'type' => $result->type,
+        'title' => $result->title,
+      );
     }
     return $webforms;
   }
@@ -48,7 +55,7 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
     $webform_node_types = variable_get('webform_node_types', '');
     $node = node_load(array('nid' => $nid));
 
-    
+
     if (!is_numeric($nid) || $nid == 0) {
       watchdog('springboard_api', t('Error: nid missing or invalid'), array(), WATCHDOG_ERROR);
       services_error('Error: webform id missing or invalid', $error_code, t('The webform id is either missing or invalid (not an integer).'));
@@ -60,15 +67,15 @@ function springboard_api_get_webform($pubkey, $timestamp, $checksum, $nid, $over
     }
 
     if (!node_access('view', $node)) {
-      watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), array(), WATCHDOG_ERROR);
-      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user'=> $user->name)), $error_code, t('Your API account does not have access to retrieve the requested webform.'));
+      watchdog('springboard_api', t('Access denied to @node for @user.', array('@node' => $node->title, '@user' => $user->name)), array(), WATCHDOG_ERROR);
+      services_error(t('Error:Access denied to @node for @user.', array('@node' => $node->title, '@user' => $user->name)), $error_code, t('Your API account does not have access to retrieve the requested webform.'));
     }
 
     $webform['nid'] = $node->nid;
     $webform['type'] = $node->type;
     $webform['title'] = $node->title;
-    
-  
+
+
     $webform['components'] = _springboard_api_get_webform_components($node->nid);
     $user = $cache_user;
     return $webform;
@@ -133,16 +140,16 @@ function springboard_api_submit_webform($submission) {
     // Note $save is a temporary variable used to proxy portions of $form_state during the build process.
     while ($field = db_fetch_object($results)) {
       $submission[$field->form_key] = trim($submission[$field->form_key]);
-      
+
       if ($field->parent_key == NULL) {
-          $save = &$form_state['values']['submitted'];
+        $save = &$form_state['values']['submitted'];
       }
       else {
         $save = &$form_state['values']['submitted'][$field->parent_key];
       }
 
       switch ($field->type) {
-        case 'fieldset';
+        case 'fieldset':
           $form_state['values']['submitted'][$field->form_key] = array();
           break;
         case 'hidden':
@@ -159,13 +166,13 @@ function springboard_api_submit_webform($submission) {
           // FIXME: hack workaround for the recurring payment field
           if ($field->form_key === 'recurs_monthly' && isset($submission['recurs_monthly'])) {
 
-           if ($submission['recurs_monthly'] == 'recurs') {
+            if ($submission['recurs_monthly'] == 'recurs') {
               $save['recurs_monthly'] = 'recurs';
             }
             break;
           }
           $extra = unserialize($field->extra);
-          if (!strcmp($extra['multiple'],'Y')) {
+          if (!strcmp($extra['multiple'], 'Y')) {
             $extra['multiple'] = 1;
           }
           if (!isset($extra['multiple']) || $extra['multiple'] == 0) {
@@ -176,9 +183,9 @@ function springboard_api_submit_webform($submission) {
             $save[$field->form_key] = $submission[$field->form_key];
           }
           else {
-    
+
             $save[$field->form_key] = array();
-            if (strpos($submission[$field->form_key], ',')) { 
+            if (strpos($submission[$field->form_key], ',')) {
               $submission[$field->form_key] = explode(',', trim($submission[$field->form_key]));
             }
             else {
@@ -198,7 +205,7 @@ function springboard_api_submit_webform($submission) {
                 $save[$field->form_key][$item] = $item;
               }
             }
-          
+
             foreach ($submission[$field->form_key] as $item) {
               $item = trim($item);
               if (is_numeric($item)) {
@@ -221,7 +228,7 @@ function springboard_api_submit_webform($submission) {
 
 
     $form_state['clicked_button']['#post']['submitted'] = $form_state['values']['submitted'];
-    $submission = (object) $submission;  
+    $submission = (object) $submission;
     drupal_execute('webform_client_form_' . $submission->webform_nid, $form_state, $node, $submission, FALSE, FALSE);
     $errors = form_get_errors();
     if (!$errors) {
@@ -231,10 +238,13 @@ function springboard_api_submit_webform($submission) {
     }
     else {
       $formatted_errors = array();
-      foreach($errors as $key => $message) {
-        $item = array('field_key' => '', 'message' => $message);
+      foreach ($errors as $key => $message) {
+        $item = array(
+          'field_key' => '',
+          'message' => $message,
+        );
         $key = explode('][', $key);
-        $item['field_key'] =$key[count($key) -1];
+        $item['field_key'] = $key[count($key) -1];
         $formatted_errors['errors'][] = $item;
         watchdog('springboard_api', t('Error: !error', array('!error' => $message)), array(), WATCHDOG_ERROR);
       }
@@ -257,25 +267,25 @@ function springboard_api_submit_webform($submission) {
  *
  */
 function springboard_api_validate_donation($donation = array(), $error_code) {
-   unset($_SESSION['messages']);
-   $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
-   
+  unset($_SESSION['messages']);
+  $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = %d', $donation['webform_id']));
+
   // TODO: replace this with a function call that ascertains required fields for this webform.
   $results = db_query('SELECT form_key FROM {webform_component} WHERE nid=%d AND mandatory = 1', $donation['webform_id']);
   $donation_keys = array_keys($donation);
   while ($form_key = db_result($results)) {
 
-    if(!in_array($form_key, $donation_keys)) {
-   
+    if (!in_array($form_key, $donation_keys)) {
+
       $missing_fields[] = $form_key;
     }
   }
   unset($form_key);
-  
-  if(count($missing_fields)) {
+
+  if (count($missing_fields)) {
     drupal_set_message(t('The following required fields where missing values: !values', array('!values' => implode(', ', $missing_fields))));
   }
-  
+
   $results = db_query('SELECT form_key FROM {webform_component} WHERE type = "date" AND nid=%d', $donation['webform_id']);
   while ($form_key = db_result($results)) {
     $date = explode('/', $donation[$form_key]);
@@ -324,13 +334,16 @@ function _springboard_api_get_webform_components($nid) {
   while ($field = db_fetch_array($results)) {
 
     $field['details'] = unserialize($field['details']);
-    
+
     if ($field['type'] == 'select') {
       $items = array();
       $items_raw = explode("\n", $field['details']['items']);
       foreach ($items_raw as $item) {
         $item = explode('|', $item);
-        $items[] = array('key' => $item[0], 'value' => $item[1]);
+        $items[] = array(
+          'key' => $item[0],
+          'value' => $item[1],
+        );
       }
       $field['details']['items'] = $items;
     }

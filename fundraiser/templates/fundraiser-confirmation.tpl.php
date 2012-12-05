@@ -34,7 +34,9 @@
 </div>
 <?php endif; ?>
 <div class="share">
-  <?php if ($springboard_social_share) { print $springboard_social_share; } ?>
+  <?php if ($springboard_social_share) {
+      print $springboard_social_share;
+    } ?>
 </div>
 <div class="links">
   <a href="<?php print url('node/'. $node->nid) ?>"><?php print t('Go back to the form') ?></a>

@@ -6,7 +6,7 @@ Drupal.behaviors.currencySwitcher = function(context) {
   // Since the ID of the element will change if it's moved in the structure of
   // the webform, use the "attribute ends with" selector to find it
   var currency_component = $('div[id$="-currency"]', context);
-  
+
   // Check the current currency code to save for later
   if (!Drupal.previousCurencyCode) {
     // If currency selection is radio buttons, find the one that's checked
@@ -17,12 +17,12 @@ Drupal.behaviors.currencySwitcher = function(context) {
     else {
       var previous_currency_code = $(':input', currency_component).val();
     }
-    
+
     if (Drupal.settings.currencies[previous_currency_code]) {
       Drupal.previousCurencyCode = previous_currency_code;
     }
   }
-  
+
   // On change of the input (whether dropdown or radio button)
   $(':input', currency_component).change(function() {
     // Check what was selected
@@ -32,10 +32,10 @@ Drupal.behaviors.currencySwitcher = function(context) {
     if (Drupal.settings.currencies[currency_code]) {
       // Load the symbol for the currency type
       var currency_detail = Drupal.settings.currencies[currency_code];
-      
+
       var oldSymbol = Drupal.settings.currencies[Drupal.previousCurencyCode].symbol;
       var newSymbol = currency_detail.symbol
-      
+
 
       // Find the Other amount field
       // Since the ID of the element will change if it's moved in the structure of
@@ -49,29 +49,29 @@ Drupal.behaviors.currencySwitcher = function(context) {
         var $this = $(this);
         $this.html($this.html().replace(oldSymbol, newSymbol));
       });
-      
-      
+
+
       // Find the ask amounts
       // If at top level, id is webform-component-amount
       // If within fieldset, id will end with --amount
       var ask_amount_container = $('div[id$="--amount"], #webform-component-amount', context);
       var amount_field_prefixes = ask_amount_container.find('.form-radios label');
-      
+
       // Replace the previous currency symbol of each row with the new one
       // Check which was checked so it can be re-checked after the text replace
       var selectedRadio = ask_amount_container.find(':radio:checked', context).val();
-      
+
       // Loop over each ask amount and update the symbol
       amount_field_prefixes.each(function() {
         var $this = $(this);
         $this.html($this.html().replace(oldSymbol, newSymbol));
       });
-      
+
       // Reset the checked radio button
       ask_amount_container.find(':radio[value=' + selectedRadio + ']').attr('checked', 'checked');
-      
+
       // Update the previous currency val so we know what to replace next time
       Drupal.previousCurencyCode = currency_code;
-    }    
+    }
   });
 };

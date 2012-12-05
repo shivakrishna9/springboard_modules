@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 class ProxySettings {
   public $host;
   public $port;

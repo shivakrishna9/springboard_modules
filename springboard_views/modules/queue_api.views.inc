@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ */
+/**
  * Implementation of hook_views_data().
  */
 function springboard_views_queue_api_views_data() {
@@ -158,7 +161,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -320,7 +323,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -334,7 +337,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -361,12 +364,12 @@ function springboard_views_queue_api_views_data() {
   $data['sf_permanent_failure']['table'] = array(
     'group' => t('Salesforce permanent failures'),
     'base' => array(
-      'field' => 'id', 
+      'field' => 'id',
       'title' => t('Salesforce permanent failures'),
       'help' => t('Items in the retry queue to be synced to Salesforce.'),
     ),
   );
-  
+
   // SF permanent failures fields
   $data['sf_permanent_failure']['id'] = array(
     'title' => t('Primary key: ID'),
@@ -481,7 +484,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -489,7 +492,7 @@ function springboard_views_queue_api_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
   );
-  
+
   // SF queue table metadata
   $data['sf_batch']['table'] = array(
     'group' => t('Salesforce batch'),
@@ -535,7 +538,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -588,7 +591,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),
@@ -602,7 +605,7 @@ function springboard_views_queue_api_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),

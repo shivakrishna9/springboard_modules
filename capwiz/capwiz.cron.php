@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file capwiz.cron.php
+ * @file
  * Commands to execute with cron
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
@@ -45,7 +45,7 @@ if (!function_exists('variable_get')) {
   //       can think of so far.
   $module_list = array();
   $modules_to_load_if_enabled = "'user', 'profile', 'dblog', 'syslog', 'capwiz'"; // We need user because watchdog needs it.
-  $result = db_query("SELECT name, filename FROM {system} WHERE type = 'module' AND name IN ($modules_to_load_if_enabled) AND status = 1");
+  $result = db_query("SELECT name, filename FROM {system} WHERE type = 'module' AND name IN (" . $modules_to_load_if_enabled . ") AND status = 1");
   while ($module = db_fetch_array($result)) {
     require_once './' . $module['filename'];
     $module_list[$module['name']] = $module;

@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Implementation of hook_node_info().

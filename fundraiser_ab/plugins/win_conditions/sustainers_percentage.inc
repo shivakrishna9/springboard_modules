@@ -19,7 +19,7 @@ $plugin = array(
 
 /**
  * Return the config options form for this win condition
- * 
+ *
  * @param $current_config
  *   Array containing current config options (if set). Default values for form
  *   elements should come from here.
@@ -89,7 +89,7 @@ function fundraiser_ab_sustainers_percentage_prep_save(&$config) {
 
 /**
  * Check if the given Webform A/B Test node has a winner
- * 
+ *
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
  *   checked for a win. In this case, the array will contain 'percentage'

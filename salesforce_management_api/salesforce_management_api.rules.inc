@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_rules_action_info()
+ * Implementation of hook_rules_action_info().
  */
 function salesforce_management_api_rules_action_info() {
   return array(
@@ -15,7 +15,7 @@ function salesforce_management_api_rules_action_info() {
       'module' => 'Salesforce',
       'arguments' => array(
         'type' => array(
-          'type' => 'value', 
+          'type' => 'value',
           'label' => t('The type of Drupal object to clear'),
         ),
         'oid' => array(

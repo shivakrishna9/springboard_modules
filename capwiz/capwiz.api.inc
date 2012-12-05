@@ -1,16 +1,13 @@
 <?php
 
 /**
- * @file capwiz.api.inc
+ * @file
  * Communicate with Capwiz service.
  *
  * @author Derek Dunagan <derek.dunagan@jacksonriver.com>
  */
 
-
-class CapwizApi
-{
-
+class CapwizApi {
 
   private static $_soapClient;
   private static $_soapClientFunctions;
@@ -22,9 +19,7 @@ class CapwizApi
 
   private static $_uninitialized = TRUE;
 
-
-  private function __construct() {}
-
+  private function __construct() { }
 
   /**
    * Initialize the SoapClient and caching mechanism.
@@ -40,8 +35,8 @@ class CapwizApi
 
         self::$_authenticationArguments = array(
           'client_id' => variable_get('capwiz_client_id', ''),
-          'authuser'  => variable_get('capwiz_authuser',  ''),
-          'authpass'  => variable_get('capwiz_authpass',  ''),
+          'authuser' => variable_get('capwiz_authuser', ''),
+          'authpass' => variable_get('capwiz_authpass', ''),
         );
 
         $cache  = cache_get('capwiz');
@@ -66,7 +61,6 @@ class CapwizApi
 
     }
   }
-
 
   /**
    * Call a Capwiz API function.
@@ -117,9 +111,9 @@ class CapwizApi
           $function_arguments += array('throttle' => 'true');
         }
 
-        $function_arguments += (array)$arguments;
+        $function_arguments += (array) $arguments;
 
-        $response = self::$_soapClient->$function((object)$function_arguments);
+        $response = self::$_soapClient->$function((object) $function_arguments);
 
         if (!empty($response)) {
           self::_logCapwizMessage($response);
@@ -140,10 +134,9 @@ class CapwizApi
     return FALSE;
   }
 
-
   /**
    * Helper method: Fetch a Capwiz object.
-   * 
+   *
    * @param StdClass $response
    *   The response of a Capwiz API call
    * @param string $parent
@@ -160,7 +153,7 @@ class CapwizApi
     if (!empty($response) && is_object($response) && property_exists($response, $parent)) {
 
       $objects = is_object($response->$parent) && property_exists($response->$parent, $child) ? $response->$parent->$child : array();
-      
+
       if (is_object($objects)) {
         $objects = array($objects);
       }
@@ -177,13 +170,6 @@ class CapwizApi
     return FALSE;
   }
 
-
-
-  /*********************\
-  ** Public-facing API **
-  \*********************/
-
-
   /**
    * Reset the "date from" for getting Capwiz accounts.
    *
@@ -199,7 +185,6 @@ class CapwizApi
     $arguments = array('reset_date' => NULL);
     self::_callFunction('reset_sync_window', $arguments, TRUE);
   }
-
 
   /**
    * Get Capwiz user accounts and cache them.
@@ -220,7 +205,7 @@ class CapwizApi
    */
   public static function fetchAccounts($get_all_accounts = FALSE) {
 
-    if ((bool)$get_all_accounts) {
+    if ((bool) $get_all_accounts) {
       self::resetApiTimestamp();
     }
 
@@ -228,7 +213,6 @@ class CapwizApi
 
     return self::_fetchObjects($response, 'people', 'person', 'accounts');
   }
-
 
   /**
    * Get Capwiz advocacy actions and cache them.
@@ -250,7 +234,6 @@ class CapwizApi
 
     return self::_fetchObjects($response, 'actions', 'action', 'actions');
   }
-
 
   /**
    * Get the fields of a Capwiz personObject as an array.
@@ -287,7 +270,6 @@ class CapwizApi
     );
   }
 
-
   /**
    * Get the fields of a Capwiz action as an array.
    *
@@ -316,7 +298,6 @@ class CapwizApi
     );
   }
 
-
   /**
    * Cache any unsaved data.
    *
@@ -344,12 +325,6 @@ class CapwizApi
     }
   }
 
-
-  /*******************\
-  ** Message logging **
-  \*******************/
-
-
   /**
    * Log a Capwiz message.
    *
@@ -361,7 +336,6 @@ class CapwizApi
     watchdog('capwiz', '(@id) @status (transaction time: @time)', array('@id' => $soap_response->transaction_id, '@status' => $soap_response->status_msg, '@time' => $soap_response->transaction_time));
   }
 
-
   /**
    * Log a Capwiz message.
    *
@@ -372,7 +346,6 @@ class CapwizApi
 
     watchdog('capwiz', '!number !thing were not saved. They will be saved on the next cron run.', array('!number' => $number, '!thing' => $thing));
   }
-
 
   /**
    * Log a message when Capwiz does not respond.
@@ -386,7 +359,6 @@ class CapwizApi
     watchdog('capwiz', 'The Capwiz service did not respond when calling the @function API function.', array('@function' => "$function()"), WATCHDOG_ALERT);
   }
 
-
   /**
    * Log a SoapFault exception.
    *
@@ -398,7 +370,6 @@ class CapwizApi
     watchdog('capwiz', '(@faultcode) @faultstring @detail', array('@faultcode' => $e->faultcode, '@faultstring' => $e->faultstring, '@detail' => $e->detail), WATCHDOG_ERROR);
   }
 
-
   /**
    * Log an Exception.
    *
@@ -409,7 +380,6 @@ class CapwizApi
 
     watchdog('capwiz', '(@code) @message (@filename: @line) !filepath', array('@code' => $e->getCode(), '@message' => $e->getMessage(), '@filename' => basename($e->getFile()), '@line' => $e->getLine(), '!filepath' => '<br /><em>' . check_plain($e->getFile()) . '</em>'), WATCHDOG_ERROR);
   }
-
 
 }
 

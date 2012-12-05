@@ -23,7 +23,7 @@ Implements a number of Views used by Springboard.
 
 -- CONTACT --
 Current maintainers:
-* Ben Clark (benclark) - http://drupal.org/user/115444 
+* Ben Clark (benclark) - http://drupal.org/user/115444
 
 
 This project has been sponsored by:

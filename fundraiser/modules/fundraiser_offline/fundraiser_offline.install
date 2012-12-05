@@ -46,7 +46,7 @@ function fundraiser_offline_schema() {
       ),
       'uid' => array(
         'description' => 'The offline fundraiser creating user.',
-         // Offline users are not always the same as the donating user account.
+        // Offline users are not always the same as the donating user account.
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,

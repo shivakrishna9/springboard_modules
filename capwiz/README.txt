@@ -1,6 +1,6 @@
 
 -- SUMMARY --
-Integrates with the Capwiz service to import Capwiz user records into Drupal. 
+Integrates with the Capwiz service to import Capwiz user records into Drupal.
 
 
 
@@ -17,7 +17,7 @@ None.
 
 * Configure your Capwiz API credentials here: admin/user/capwiz
 
-* You may also need to configure user permissions. 
+* You may also need to configure user permissions.
 
 
 -- TROUBLESHOOTING --
@@ -27,7 +27,7 @@ None.
 -- CONTACT --
 Current maintainers:
 * Phillip Cave (pcave) - http://drupal.org/user/379888
-* Joel Rothschild (biwashingtonial) - http://drupal.org/user/442196 
+* Joel Rothschild (biwashingtonial) - http://drupal.org/user/442196
 
 
 This project has been sponsored by:

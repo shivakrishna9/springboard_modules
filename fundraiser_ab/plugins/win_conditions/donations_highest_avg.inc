@@ -28,7 +28,7 @@ function fundraiser_ab_donations_highest_avg_config_summary($config) {
  * Check if the given Webform A/B Test node has a winner
  * Checks the average donation amount for every donation form included in the
  * A/B test, and checks if the one being checked has the highest average
- * 
+ *
  * @param $config
  *   Array of config options for this plugin for the Webform A/B test being
  *   checked for a win. In this case, the array will be empty.
@@ -46,7 +46,7 @@ function fundraiser_ab_donations_highest_avg_check_win($config, $webform_details
     if (is_array($details['fundraiser']) && $details['fundraiser']['donation_count'] > 0) {
       // Determine the average donation amount for this donation form
       $avg = $details['fundraiser']['total_donations'] / $details['fundraiser']['donation_count'];
-      
+
       // If this average is higher than the last highest, save it
       if ($avg > $highest_avg) {
         $highest_avg = $avg;

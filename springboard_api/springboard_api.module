@@ -5,10 +5,10 @@
  */
 function springboard_api_help($section) {
   switch ($section) {
-  case 'admin/help#springboard_api':
-    return t('Provides Fundraiser, Webform and Webform User methods to Services applications.');
-  case 'admin/modules#description':
-    return t('Provides Fundraiser, Webform and Webform User methods to Services applications. Requires services.module, fundraiser.module and webform.module');
+    case 'admin/help#springboard_api':
+      return t('Provides Fundraiser, Webform and Webform User methods to Services applications.');
+    case 'admin/modules#description':
+      return t('Provides Fundraiser, Webform and Webform User methods to Services applications. Requires services.module, fundraiser.module and webform.module');
   }
 }
 
@@ -17,7 +17,11 @@ function springboard_api_help($section) {
  */
 function springboard_api_perm() {
   return array(
-    'administer springboard api','view webform index', 'retrieve webform', 'retrieve submission', 'create submission'
+    'administer springboard api',
+    'view webform index',
+    'retrieve webform',
+    'retrieve submission',
+    'create submission',
   );
 }
 
@@ -101,21 +105,21 @@ function springboard_api_services_resources() {
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'key'),
-            'type' => 'string'
+            'type' => 'string',
           ),
           array(
             'name' => 'timestamp',
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'time'),
-            'type' => 'int'
+            'type' => 'int',
           ),
           array(
             'name' => 'checksum',
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'checksum'),
-            'type' => 'string'
+            'type' => 'string',
           ),
           array(
             'name' => 'page',
@@ -145,7 +149,11 @@ function springboard_api_services_resources() {
       ),
       'retrieve' => array(
         'help' => 'Retrieves a list of available webforms',
-        'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'springboard_api'),
+        'file' => array(
+          'type' => 'inc',
+          'module' => 'springboard_api',
+          'name' => 'springboard_api',
+        ),
         'callback' => 'springboard_api_get_webform',
         'access callback' => '_springboard_api_access',
         'access arguments' => array('retrieve webform'),
@@ -155,21 +163,21 @@ function springboard_api_services_resources() {
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'key'),
-            'type' => 'string'
+            'type' => 'string',
           ),
           array(
             'name' => 'timestamp',
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'time'),
-            'type' => 'int'
+            'type' => 'int',
           ),
           array(
             'name' => 'checksum',
             'optional' => FALSE,
             'description' => 'Transaction data.',
             'source' => array('param' => 'checksum'),
-            'type' => 'string'
+            'type' => 'string',
           ),
           array(
             'name' => 'nid',
@@ -193,7 +201,11 @@ function springboard_api_services_resources() {
           'help' => 'Submit webform fields',
           'callback' => 'springboard_api_submit_webform',
           'access callback' => '_springboard_api_access',
-          'file' => array('type' => 'inc', 'module' => 'springboard_api', 'name' => 'springboard_api'),
+          'file' => array(
+            'type' => 'inc',
+            'module' => 'springboard_api',
+            'name' => 'springboard_api',
+          ),
           'args' => array(
             array(
               'name' => 'submission',
@@ -223,7 +235,7 @@ function springboard_api_load($kid) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_access($perm) {
   global $user;
@@ -232,10 +244,10 @@ function _springboard_api_access($perm) {
 
 /**
  * Format admin UI links for api keysets.
- * 
+ *
  * @param $kid
  * Int, keyset id.
- * 
+ *
  * @return
  * Returns preformatted edit/delete links.
  */
@@ -249,11 +261,11 @@ function _springboard_api_links($kid) {
 
 /**
  * Title callback for keyset edit/delete forms
- * 
+ *
  * @param $kid
  * Int, keyset it.
- * 
- * @return 
+ *
+ * @return
  * Returns translated app name for current keyset.
  */
 function _springboard_api_keyset_title($kid) {
@@ -261,17 +273,17 @@ function _springboard_api_keyset_title($kid) {
 }
 
 /**
- * 
+ *
  */
 function _springboard_api_validate_transaction($resource, $timestamp, $pubkey, $checksum) {
-$data = array();
+  $data = array();
   $data['resource'] = $resource;
   $data['timestamp'] = (int) trim($timestamp);
   $data['pubkey'] = trim($pubkey);
   $data['privkey'] = trim(db_result(db_query("SELECT privkey FROM {springboard_api} WHERE pubkey = '%s'", trim($pubkey))));
   $gen_checksum = sha1(json_encode($data));
-//  drupal_set_message('data:' . print_r($data, TRUE));
-//  drupal_set_message('checksum:' . $gen_checksum);
+  //  drupal_set_message('data:' . print_r($data, TRUE));
+  //  drupal_set_message('checksum:' . $gen_checksum);
   if (trim($checksum) === $gen_checksum) {
     return TRUE;
   }

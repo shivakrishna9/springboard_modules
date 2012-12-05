@@ -1,6 +1,7 @@
 <?php
-// $Id$
-
+/**
+ * @file
+ */
 /**
  * @file
  * Installation of tables required for the Sage Payment Solutions.

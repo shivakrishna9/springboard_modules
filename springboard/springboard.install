@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file
+ */
 /**
  * Implements hook_schema().
  */
@@ -27,7 +29,7 @@ function springboard_schema() {
         'description' => t(''),
         'type' => 'int',
         'not null' => TRUE,
-        'default' => 0, 
+        'default' => 0,
       ),
     ),
   );
@@ -61,8 +63,8 @@ function springboard_install() {
       'status' => 1,
     ),
   );
-  foreach($panes as $delta => $pane) {
-    db_query("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+  foreach ($panes as $delta => $pane) {
+    db_query("INSERT INTO {springboard_panes} (delta, description, weight, status)
       VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
 
   }
@@ -76,7 +78,7 @@ function springboard_uninstall() {
 }
 
 /**
- * 
+ *
  */
 function springboard_update_6300() {
   $ret = array();
@@ -104,8 +106,8 @@ function springboard_update_6300() {
       'status' => 1,
     ),
   );
-  foreach($panes as $delta => $pane) {
-    $ret[] = update_sql("INSERT INTO {springboard_panes} (delta, description, weight, status) 
+  foreach ($panes as $delta => $pane) {
+    $ret[] = update_sql("INSERT INTO {springboard_panes} (delta, description, weight, status)
       VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
   }
   return $ret;
