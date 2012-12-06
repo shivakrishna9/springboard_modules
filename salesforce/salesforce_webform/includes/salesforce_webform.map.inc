@@ -92,7 +92,6 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
       'effect' => 'fade',
       // @TODO: Warn user that changing this value will erase their map work
     ),
-    // @TODO: Disable field once mapping has been saved
   );
 
   if (empty($sf_object)) {
@@ -100,8 +99,6 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     // display the remainder of the form.  Stop here.
     return $form;
   }
-
-  // @TODO: Add unmap button if mapping has been saved
 
   // The type of record of the chosen Salesforce Object
   $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
@@ -287,10 +284,21 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   _sfw_generate_form_table($form['field_map']['salesforce_submission_map']);
 
 
+  // Buttons buttons buttons
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
   );
+  if (isset($node->salesforce_webform_map)) {
+    $form['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => 'Cancel',
+    );
+    $form['unmap'] = array(
+      '#type' => 'submit',
+      '#value' => 'Unmap',
+    );
+  }
 
   return $form;
 }
@@ -328,13 +336,37 @@ function salesforce_webform_map_form_validate($form, &$form_state) {
  */
 function salesforce_webform_map_form_submit($form, &$form_state) {
   $node = $form_state['build_info']['args'][0];
+
+  // Delete the map
+  if ($form_state['clicked_button']['#value'] == 'Unmap') {
+    $result = salesforce_webform_delete_map($node->nid);
+    if ($result === FALSE) {
+      drupal_set_message(t('The Salesforce to webform map could not be deleted.'), 'error');
+    }
+    else {
+      drupal_set_message(t('The Salesforce to webform map has been removed.'));
+    }
+    return;
+  }
+
+  // Cancel and do  nothing
+  else if ($form_state['clicked_button']['#value'] == 'Cancel') {
+    drupal_set_message(t('The Salesforce webform map has been reset to the original values.'));
+    return;
+  }
+
+  else if (!$form_state['clicked_button']['#value'] == 'Save') {
+    drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
+    return;
+  }
+
+  // Save the contributed values
   $salesforce_object_type = $form_state['input']['salesforce_object_info']['salesforce_object_type'];
   $salesforce_record_type = '';
   if (isset($form_state['input']['salesforce_object_info']['salesforce_record_type'])) {
     $salesforce_record_type = $form_state['input']['salesforce_object_info']['salesforce_record_type'];
   }
   $dedupe_field = $form_state['input']['salesforce_dedupe'];
-
   $field_map = array();
   foreach ($form_state['input']['field_map'] as $group => $rows) {
     foreach ($rows as $row) {
@@ -345,6 +377,7 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
   }
 
   if (isset($node->salesforce_webform_map)) {
+    // Original entity
     $map = $node->salesforce_webform_map;
     $map->salesforce_object_type = $salesforce_object_type;
     $map->salesforce_record_type = $salesforce_record_type;
@@ -353,6 +386,7 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
     $map->updated = time();
   }
   else {
+    // New entity
     $map = array(
       'nid' => $node->nid,
       'salesforce_object_type' => $salesforce_object_type,
