@@ -71,8 +71,6 @@ function salesforce_webform_permission() {
  *
  * All by its little old self because menu doesn't load the include file until
  * after the access check.
- *
- * @D6TOD7: Previoiusly was sf_webform_map_access()
  */
 function salesforce_webform_map_page_access($node) {
   if (
@@ -103,8 +101,6 @@ function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
 
 /**
  * A submit handler added to webforms that have Salesforce mappings
- *
- * @D6TOD7: Previously was sf_webform_submit()
  */
 function salesforce_webform_client_form_submit() {
   // Queue up the new submissions
@@ -141,8 +137,6 @@ function salesforce_webform_node_delete($node) {
 /**
  * @defgroup salesforce_webform_map_crud Made easier with Entity API
  * @{
- *
- * @D6TOD7: This was done manually each time it was needed
  */
 
 /**

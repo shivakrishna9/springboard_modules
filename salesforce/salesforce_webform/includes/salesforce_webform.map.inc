@@ -7,8 +7,6 @@
 
 /**
  * Page callback to render the mapping page
- *
- * @D6TOD7: This step was skipped previously
  */
 function salesforce_webform_map_page($node) {
   $build = array();
@@ -33,8 +31,6 @@ function salesforce_webform_map_page($node) {
 
 /**
  * Form to do the actual mapping configuration processes
- *
- * @D6TOD7: Previously was sf_webform_map_form()
  */
 function salesforce_webform_map_form($form, &$form_state, $node) {
   // Fail if there are no components attached to the webform
@@ -321,8 +317,6 @@ function salesforce_webform_map_form_ajax_sf_dedupe($form, &$form_state) {
 
 /**
  * Validate the mapping form
- *
- * @D6TOD7: Did not exist in prior version
  */
 function salesforce_webform_map_form_validate($form, &$form_state) {
   // @TODO
@@ -331,8 +325,6 @@ function salesforce_webform_map_form_validate($form, &$form_state) {
 
 /**
  * Submit callback for the mapping form
- *
- * @D6TOD7: Previously was sf_webform_map_form_submit()
  */
 function salesforce_webform_map_form_submit($form, &$form_state) {
   $node = $form_state['build_info']['args'][0];
