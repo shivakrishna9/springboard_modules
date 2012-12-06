@@ -12,6 +12,9 @@ function fundraiser_admin_settings($form, &$form_state) {
   $form['fundraiser'] = array(
     '#type' => 'fieldset',
     '#title' => t('Fundraiser general settings'),
+    '#description' => t('Configure fundraiser settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
   $form['fundraiser']['fundraiser_development_mode'] = array(
     '#type' => 'checkbox',
@@ -25,6 +28,12 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_default_minimum', 10.00),
     '#description' => t('Enter the default minimum donation amount that will be used on new donation forms.'),
   );
+  $form['fundraiser']['fundraiser_default_amounts'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Default amounts'),
+    '#default_value' => variable_get('fundraiser_default_amounts', '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100'),
+    '#description' => t('Enter the default donation amounts that will be used on new donation forms.'),
+  );
   $form['fundraiser']['fundraiser_receipt_bcc'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation receipt bcc email address'),
@@ -36,6 +45,12 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#title' => t('Display gateway messages'),
     '#default_value' => variable_get('fundraiser_gateway_messages', 1),
     '#description' => t('When checked, the message that is returned from the payment gateway will be displayed in the Drupal status message area of the theme.'),
+  );
+  $form['fundraiser']['fundraiser_log_comments'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log comments'),
+    '#default_value' => variable_get('fundraiser_log_comments', 0),
+    '#description' => t('Log comments made on donations to watchdog.'),
   );
   return system_settings_form($form);
 }

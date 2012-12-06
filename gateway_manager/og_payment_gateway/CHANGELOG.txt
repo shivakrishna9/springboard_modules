@@ -1,0 +1,4 @@
+2012-09-21  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * Support multiple node types in form_id check
+    See: https://www.assembla.com/spaces/jr-springboard/tickets/350

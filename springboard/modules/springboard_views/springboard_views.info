@@ -1,0 +1,10 @@
+core = 7.x
+description = "Adds views integration for Springboard."
+name = "Springboard Views"
+package = "Jackson River Springboard"
+dependencies[] = "views"
+dependencies[] = "date_api"
+dependencies[] = "views_bulk_operations"
+files[] = springboard_views.views.inc
+files[] = handlers/fundraiser_handler_field_donation_amounts.inc
+files[] = handlers/queue_api_handler_field_batch_id.inc

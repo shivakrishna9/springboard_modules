@@ -22,6 +22,8 @@ function fundraiser_webform_install() {
       variable_det('fundraiser_port_webform_done');
     }
   }
+  // Set to a lower weight to allow fundraiser_webform to function properly with other modules.
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'fundraiser_webform' and type = 'module'");
 }
 
 /**

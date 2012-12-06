@@ -81,6 +81,10 @@ $schema['email_wrappers_webform'] = array(
         'description' => t('BCC addresses'),
         'type' => 'text',
       ),
+      'extra' => array(
+        'description' => t('Extra settings defined by other modules.'),
+        'type' => 'text',
+      ),
     ),
     'primary key' => array('nid', 'eid'),
   );
@@ -94,7 +98,7 @@ $schema['email_wrappers_webform'] = array(
 function email_wrappers_update_7001() {
   require_once(DRUPAL_ROOT . "/sites/all/modules/webform/includes/webform.emails.inc");
   if (!function_exists('webform_email_insert')) {
-    $ret[] = 'wtf just happened';
+    $ret[] = 'Unable to locate webform module';
     return $ret;
   }
   $ret = array();
@@ -343,7 +347,7 @@ function _email_wrappers_create_fields() {
         'bundle' => 'email_wrapper',
         'required' => TRUE,
         'label' => st('HTML Template'),
-        'description' => st('HTML version of the email body.'),
+        'description' => st('This field is meant to contain structural markup or boilerplate code common to all mails using this template. The HTML message body is inserted into this template wherever you use the following token:<em>%html_message</em>'),
         'widget' => array(
           'type' => 'text_with_summary',
           'weight' => 6,
@@ -363,7 +367,7 @@ function _email_wrappers_create_fields() {
         'bundle' => 'email_wrapper',
         'required' => TRUE,
         'label' => st('HTML Message'),
-        'description' => st('HTML version of the email message.'),
+        'description' => st('The default message contents for the HTML version of this template. This field can be customized or overridden for each mail that uses this template.'),
         'widget' => array(
           'type' => 'text_with_summary',
           'weight' => 7,
@@ -383,7 +387,7 @@ function _email_wrappers_create_fields() {
         'bundle' => 'email_wrapper',
         'required' => TRUE,
         'label' => st('Text Template'),
-        'description' => st('Text version of the email body.'),
+        'description' => st('This field is meant to contain any boilerplate text that is common to all mails using this template. The text message body is inserted into this template wherever you use the following token:<em>%text_message</em>'),
         'widget' => array(
           'type' => 'text_textarea',
           'weight' => 8,
@@ -424,6 +428,7 @@ function _email_wrappers_create_fields() {
   
 }
 
+
 function _email_wrappers_delete_fields() {
   $fields = array(
     'email_wrapper_from_name',
@@ -443,12 +448,14 @@ function _email_wrappers_delete_fields() {
   drupal_set_message('Email Wrapper fields deleted.');
 }
 
+
 function _email_wrappers_delete_nodes() {
  require_once('email_wrappers.module');
  $nids = email_wrappers_get_nodes();
  node_delete_multiple($nids);
  drupal_set_message('Email Wrappers have been deleted.');
 }
+
 
 function _email_wrappers_update_field_value($field_name, $nid, $value, $delta = 0, $format = NULL) {
   $fields = array(

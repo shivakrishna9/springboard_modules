@@ -39,17 +39,42 @@ function fundraiser_ubercart_mail_alter(&$message) {
   if ($message['id'] == 'uc_order_action-mail') {
     // Gather data.
     $parts = explode("/", $_GET['q']);
-    $nid = $parts[1];
-    $node = node_load($nid);
-    // Make changes.
-    $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
-      ' <' . $node->receipt_email_address . '>';
-    $bcc = variable_get('fundraiser_receipt_bcc', '');
-    if (!empty($bcc)) {
-      $message['headers']['Bcc'] = $bcc;
+    if (isset($parts[1])) {
+      $node = node_load($parts[1]);
+      // Make changes.
+      $message['headers']['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Errors-To'] = $node->receipt_email_from .
+        ' <' . $node->receipt_email_address . '>';
+      $bcc = variable_get('fundraiser_receipt_bcc', '');
+      if (!empty($bcc)) {
+        $message['headers']['Bcc'] = $bcc;
+      }
+      $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
+      $message['subject'] = $node->receipt_email_subject;
     }
-    $message['from'] = $node->receipt_email_from . ' <' . $node->receipt_email_address . '>';
-    $message['subject'] = $node->receipt_email_subject;
+    else {
+      // Else, this is coming from a cron job, we should intercept it entirely.
+      $message['send'] = FALSE;
+    }
+  }
+}
+
+/**
+ * Implements hook_uc_order().
+ */
+function fundraiser_ubercart_uc_order($op, $order, $arg2) {
+  if ($op == 'delete') {
+    $donation = fundraiser_donation_get_donation($order->order_id); // Get the donation object.
+    if (isset($donation->nid)) { // This is a fundraiser donation order.
+      fundraiser_donation_delete($donation); // Delete it.
+    }
+  }
+  // cc_cvv is unset on order save for PCI compliance.
+  // Since we can't rely on all UC modules to handle the empty cc_cvv index correctly (Test Gateway)
+  // We set the value if it is not already set.
+  if ($op == 'load') {
+    if (!isset($order->payment_details['cc_cvv'])) {
+      $order->payment_details['cc_cvv'] = '';
+    }
   }
 }
 
@@ -70,11 +95,11 @@ function fundraiser_ubercart_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implements hook_order_actions() from Ubercart.
+ * Implements hook_uc_order_actions() from Ubercart.
  * Add a refund option to the Order list.
- * From http://drupalcontrib.org/api/drupal/contributions!ubercart!docs!hooks.php/function/hook_order_actions/6
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_actions/7
  */
-function fundraiser_order_actions($order) {
+function fundraiser_uc_order_actions($order) {
   $gateway = _fundraiser_get_donation_gateway($order->order_id);
   $can_refund = isset($gateway['credit_refund']) ? $gateway['credit_refund'] : NULL;
   if (user_access('edit orders') &&
@@ -92,15 +117,87 @@ function fundraiser_order_actions($order) {
 }
 
 /**
+ * Implements hook_uc_order_pane() from Ubercart.
+ * Add a display of donation information to the order display.
+ * From http://api.drupalize.me/api/drupal/function/hook_uc_order_pane/7
+ */
+function fundraiser_ubercart_uc_order_pane() {
+  // Wrap pane interface around drupal information output.
+  $panes['fundraiser'] = array(
+    'callback' => 'fundraiser_ubercart_donation_pane', 
+    'title' => t('Fundraiser information'), 
+    'desc' => t('View Fundraiser information given a specific order.'), 
+    'class' => 'abs-left',
+    'weight' => 10,
+    'show' => array('view', 'edit'),
+  );
+  return $panes;
+}
+
+/**
+ * Callback for donation pane display.
+ */
+function fundraiser_ubercart_donation_pane($op, $order, &$form = NULL, &$form_state = NULL) {
+  $table = fundraiser_donation_information_table($order->order_id);
+  if ($op == 'view') {
+    return array(
+      '#markup' => $table,
+    );
+  }
+  return $table;
+}
+
+/**
  * Implements hook_fundraiser_gateway_info().
  */
 function fundraiser_ubercart_fundraiser_gateway_info() {
-  // From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
-  // Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
-  // Returns in the format:
-  // $gateway = array('id', 'title', 'credit', 'credit_refund', 'etc');
-  // If no gateways are enabled, this returns an empty array.
-  return _uc_payment_gateway_list('', TRUE);
+  /**
+   * From Ubercart http://api.lullabot.com/_uc_payment_gateway_list/7
+   * Is ultimately configured by http://api.lullabot.com/hook_uc_payment_gateway
+   * _uc_payment_gateway_list() returns in the format:
+   * Array(
+   *   [test_gateway] =&gt; Array(
+   *     [title] =&gt; Test Gateway
+   *     [description] =&gt; Process credit card payments through the Test Gateway.
+   *     [credit] =&gt; test_gateway_charge
+   *     [id] =&gt; test_gateway
+   *     [enabled] =&gt; 1
+   *   )
+   * )
+   * If no gateways are enabled, this returns an empty array.
+   *
+   * For the purposes of our hook we want to return:
+   * Array(
+   *   [test_gateway] =&gt; Array(
+   *     [id] =&gt; test_gateway
+   *     [title] =&gt; Test Gateway
+   *     [description] =&gt; Process credit card payments through the Test Gateway.
+   *     [charge_function] =&gt; charge_function
+   *     [refund_function] =&gt; refund_function
+   *     [gateway_details] => Array(Previous gateway details)
+   *   )
+   * )
+   */ 
+  $uc_gateways = _uc_payment_gateway_list('', TRUE);
+  $fundraiser_gateways = array();
+  foreach ($uc_gateways as $uc_gateway) {
+    if ($uc_gateway['enabled'] == 1) {
+      $this_gateway['id'] = $uc_gateway['id'];
+      $this_gateway['module'] = 'fundraiser_ubercart';
+      $this_gateway['module_name'] = t('Ubercart');
+      $this_gateway['title'] = $uc_gateway['title'];
+      $this_gateway['description'] = $uc_gateway['description'];
+      $this_gateway['charge_function'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
+      $this_gateway['refund_function'] = isset($uc_gateway['credit_refund']) ? $uc_gateway['credit_refund'] : $uc_gateway['credit'];
+      $this_gateway['gateway_details'] = $uc_gateway;
+      $fundraiser_gateways[] = $this_gateway;
+    }
+  }
+  // Grab additional gateways designed to go through Ubercart.
+  // See Gateway Manager.
+  $additional_gateways = module_invoke_all('fundraiser_ubercart_gateway_info');
+  $fundraiser_gateways = array_merge($fundraiser_gateways, $additional_gateways);
+  return $fundraiser_gateways;
 }
 
 /**
@@ -129,45 +226,45 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
 
   $countries = fundraiser_ubercart_get_countries();
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
-  $default_available = array(840, 124);
+  $default_available = array('US', 'CA');
   $options = '';
   if ($include_all_countries) {
     foreach ($countries->countries as $country_id => $country) {
-      $options .= $country_id . '|' . $country->country_name . "\n";
+      $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
     }
   }
   else {
     foreach ($countries->countries as $country_id => $country) {
-      if (in_array($country_id, $default_available)) {
-        $options .= $country_id . '|' . $country->country_name . "\n";
+      if (in_array($country->country_iso_code_2, $default_available)) {
+        $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
       }
     }
   }
   $fields['billing_information']['country'] = array(
-    '#title' => 'Country',
+    '#title' => t('Country'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
       'description' => '',
       'items' => $options,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
     '#display_callback' => '_fundraiser_ubercart_country_field_display',
   );
   $options = '';
   foreach ($countries->zones as $zone_id => $zone) {
-    $options .= $zone_id . '|' . $zone->zone_name . "\n";
+    $options .= $zone->zone_code . '|' . $zone->zone_name . "\n";
   }
   $fields['billing_information']['state'] = array(
-    '#title' => 'State/Province',
+    '#title' => t('State/Province'),
     '#type' => 'select',
     '#required' => 1,
     '#extra' => array(
       'description' => '',
       'items' => $options,
       'multiple' => 0,
-      'aslist' => 'Y',
+      'aslist' => 1,
     ),
     '#display_callback' => '_fundraiser_ubercart_zone_field_display',
   );
@@ -175,7 +272,6 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
   // Add our own validation routines to the billing fields for credit cards.
   $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_ubercart_card_number_field_validate';
   $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_ubercart_card_cvv_field_validate';
-  $fields['credit_card_information']['card_expiration_month']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
   $fields['credit_card_information']['card_expiration_year']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
   return $fields;
 }
@@ -185,7 +281,7 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
  */
 function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $submission_fields, $value) {
   $valid = _uc_credit_valid_card_number($value);
-  if (!empty($valid) && (!$valid || !ctype_digit($value) )) {
+  if (!$valid || !ctype_digit($value) || drupal_strlen($value) < 10) {
     return t('You have entered an invalid credit card number.');
   }
 }
@@ -195,7 +291,7 @@ function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $su
  */
 function _fundraiser_ubercart_card_cvv_field_validate($form, $form_state, $submission_fields, $value) {
   $valid =_uc_credit_valid_cvv($value);
-  if (!empty($value) && !$valid) {
+  if (!$valid && !empty($value)) {
     return t('You have entered an invalid CVV number.');
   }
 }
@@ -207,7 +303,7 @@ function _fundraiser_ubercart_card_expiration_year_field_validate($form, $form_s
   $cc_expiration_month = $submission_fields['card_expiration_month'];
   $cc_expiration_year = $submission_fields['card_expiration_year'];
   $valid = _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
-  if (!empty($cc_expiration_month) && !empty($cc_expiration_year) && !$valid) {
+  if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
     return t('The credit card you entered has expired.');
   }
 }
@@ -267,22 +363,48 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
   $available_zones = isset($countries->zones) ? $countries->zones : array();
   // Filter the available zones by the set country.
   if (array_key_exists('country', $fields)) {
+    $country_id = fundraiser_ubercart_get_country_id_by_iso2($fields['country']);
     // Filter options down to just the zones available for this country.
-    if (isset($countries->countries[ $fields['country'] ])) {
-      $available_zones = $countries->countries[ $fields['country'] ]->zones;
+    if (isset($countries->countries[ $country_id ])) {
+      $available_zones = $countries->countries[ $country_id ]->zones;
+    }
+  }
+  else {
+    // Provide a default based on the form values.
+    $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
+    // Filter options down to just the zones available for this country.
+    if (isset($country_field['#default_value'])) {
+      $default = $country_field['#default_value'];
+    }
+    else {
+      $default = array_shift(array_keys($country_field['#options']));
+    }
+    $default = fundraiser_ubercart_get_country_id_by_iso2($default);
+    if (isset($countries->countries[ $default ])) {
+      $available_zones = $countries->countries[ $default ]->zones;
     }
   }
   // Given available zones, filter the dropdown to match.
   if (!empty($available_zones)) {
     $new_zone_options = array();
     foreach ($available_zones as $zone_id => $zone) {
-      $new_zone_options[$zone_id] = $zone->zone_name;
+      $new_zone_options[ $zone->zone_code ] = $zone->zone_name;
     }
     $field['#options'] = $new_zone_options;
   }
   $field['#prefix'] = '<div id="zone-select-wrapper">';
   $field['#suffix'] = '</div>';
   return $field;
+}
+
+/**
+ * Implements hook_fundraiser_donation_comment().
+ */
+function fundraiser_ubercart_fundraiser_donation_comment($donation, $comment, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
+  // Given a donation, comment, etc - make a UC comment.
+  global $user;
+  $status = isset($donation->status) ? $donation->status : 'pending';
+  uc_order_comment_save($donation->did, $user->uid, t($comment, $variables), 'admin', $status, FALSE);
 }
 
 /**
@@ -315,6 +437,10 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
       $donation->donation[$field_name] = isset($order->$order_name) ? $order->$order_name : '';
     }
   }
+  // Override for donation billing country and zone, the correct value (cause it's not the number).
+  $donation->donation['country'] = fundraiser_ubercart_get_iso2_by_country_id($donation->donation['country']);
+  $donation->donation['state'] = fundraiser_ubercart_get_code_by_zone_id($donation->donation['state']);
+
   $donation->donation['card_number'] = $order->payment_details['cc_number'];
   $donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
   $donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
@@ -322,7 +448,12 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->donation['cc_type'] = $order->payment_details['cc_type'];
 
   // Add the order status data.
-  $donation->status = isset($order->order_status) ? $order->order_status : 'unkown';
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
 
   // Time of charge.
   $donation->last_changed = $order->modified;
@@ -386,8 +517,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $order->billing_street1 = $donation->donation['address'];
   $order->billing_street2 = $donation->donation['address_line_2'];
   $order->billing_postal_code = $donation->donation['zip'];
-  $order->billing_zone = $donation->donation['state'];
-  $order->billing_country = $donation->donation['country'];
+  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
+  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
 
   // Card properties.
   $order->payment_method = 'credit';
@@ -400,7 +531,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     'cc_exp_month' => $donation->donation['card_expiration_month'],
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => '',
-    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+    // cc_cvv is unset on order save for PCI compliance.
     'cc_bank' => '',
   );
   $order->line_items = array();
@@ -420,7 +552,6 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
   // Save the order.
   uc_order_save($order);
-  uc_order_comment_save($order->order_id, $user->uid, t('Donation created by :user.', array(':user' => $user->name)), 'admin');
 
   // We only need to return the did at this point.
   // When we charge later, this is the only value that the glue module will need.
@@ -440,13 +571,56 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 /**
  * Implements hook_fundraiser_donation_process().
  */
-function fundraiser_ubercart_fundraiser_donation_process($donation, $charge_function) {
+function fundraiser_ubercart_fundraiser_donation_process($donation) {
+  // Grab the gateway configuration from fundriaser's data.
+  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Check for the charge function to be defined.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
+    watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
+    return; // Return the failure.
+  }
+  // Found it, let's try it.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  // Create the charge information.
+  $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
+  $donation->data = (array) $donation->data;
+  $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
+  $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
   // Execute the charge as per the given gateway.
   $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
   $donation->data = array_merge($data, $donation->data);
-  $result = $charge_function($donation->did, $donation->donation_amount, $donation->data);
+  // Make the charge, the charge functions can handle looking up the order and other data.
+  if (function_exists($charge_function)) {
+    $result = $charge_function($donation->did, $donation->donation['amount'], $donation->data);
+  }
+  else {
+    watchdog('fundraiser_ubercart', 'Charge function :function does not exist.', array(':function' => $charge_function));
+  }
   // Have to pass up to the system.
   $donation->result = $result;
+  // If a success set up the order information now, so it's available on success responses.
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    // New user account is created during uc_cart_complete_sale.
+    $order = uc_order_load($donation->did);
+    uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+    uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
+      t('Payment processed by the fundraiser module.'));
+    // Look up the created user, and add them to the donation object.
+    $donation->uid = $order->uid;
+    $donation->user = user_load($order->uid);
+    // Add the order status data.
+    // Translate the status according to UC label.
+    $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+    if (!empty($order->order_status)) {
+      $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+      $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+    }
+  }
 }
 
 /**
@@ -459,19 +633,22 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   // Load the order with new data.
   $old_amount = $order->order_total;
   $order->order_total = $donation->donation['amount'];
-  $order->products[0]->price = $donation->donation['amount'];
+  // Update the existing product (by id).
+  // Do Not add a new one.
+  foreach ($order->products as $delta => $product) {
+    $order->products[ $delta ]->price = $donation->donation['amount'];
+  }
 
   // Billing information.
   $order->primary_email = $donation->donation['mail'];
-  $order->order_total = $donation->donation['amount'];
   $order->billing_first_name = $donation->donation['first_name'];
   $order->billing_last_name = $donation->donation['last_name'];
   $order->billing_city = $donation->donation['city'];
   $order->billing_street1 = $donation->donation['address'];
   $order->billing_street2 = $donation->donation['address_line_2'];
   $order->billing_postal_code = $donation->donation['zip'];
-  $order->billing_zone = $donation->donation['state'];
-  $order->billing_country = $donation->donation['country'];
+  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
+  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
 
   // Card information.
   $order->payment_method = 'credit';
@@ -483,33 +660,38 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
     'cc_exp_month' => $donation->donation['card_expiration_month'],
     'cc_exp_year' => $donation->donation['card_expiration_year'],
     'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
-    'cc_cvv' => $donation->donation['card_cvv'],
+    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
     'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
   );
 
   // Update the card type based on given card number.
   $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
 
+  // Update the donation status.
+  if (isset($order->status) && isset($donation->status) && $order->status != $donation->status) {
+    $order->status = $donation->status;
+  }
+
   // Save the updated order.
   uc_credit_cache('save', $order->payment_details, FALSE);
   uc_order_save($order);
   uc_credit_cache('clear');
-  global $user;
-  uc_order_comment_save($donation->did, $user->uid, t('Donation updated by :user.', array(':user' => $user->name)), 'admin');
+
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
 }
 
 /**
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_ubercart_fundraiser_donation_success($donation) {
-  // Mark as complete. Complete the sale in Ubercart.
-  $order = uc_order_load($donation->did);
-  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-  uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
-    t('Payment processed by the fundraiser module.'));
+  // Mark as complete.
   _fundraiser_ubercart_update_order_status('payment_received', $donation->did);
-  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  uc_order_comment_save($donation->did, $user->uid, t('Donation successfully completed by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /**
@@ -520,8 +702,6 @@ function fundraiser_ubercart_fundraiser_donation_decline($donation) {
   _fundraiser_ubercart_update_order_status('failed', $donation->did);
   // Clear the credit card cache between orders
   uc_credit_cache('clear');
-  global $user; // Completing user is NOT ALWAYS the same as the given submission user.
-  uc_order_comment_save($donation->did, $user->uid, t('Donation declined at gateway by :user.', array(':user' => $user->name)), 'admin');
 }
 
 /**
@@ -535,18 +715,39 @@ function fundraiser_ubercart_fundraiser_donation_exception($donation) {
  * Implements hook_fundraiser_donation_cancel().
  */
 function fundraiser_ubercart_fundraiser_donation_cancel($donation) {
-  // Mark the sale in Ubercart as cancelled.
+  // Mark the sale in Ubercart as canceled.
   _fundraiser_ubercart_update_order_status('canceled', $donation->did);
-  // Make a comment on the order.
-  global $user;
-  uc_order_comment_save($donation->did, $user->uid, t('Donation cancelled by :user.', array(':user' => $user->name)), 'admin');
+  $order = uc_order_load($donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ */
+function fundraiser_ubercart_fundraiser_donation_delete($donation) {
+  // Mark the sale in Ubercart as canceled.
+  _fundraiser_ubercart_update_order_status('canceled', $donation->did);
+  $order = uc_order_load($donation->did);
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
 }
 
 /**
  * Implements hook_fundraiser_donation_refund().
  */
-function fundraiser_ubercart_fundraiser_donation_refund($donation, $refund_function) {
-  fundraiser_ubercart_fundraiser_donation_process($donation, $refund_function);
+function fundraiser_ubercart_fundraiser_donation_refund($donation) {
+  fundraiser_ubercart_fundraiser_donation_process($donation);
 }
 
 /**
@@ -617,40 +818,91 @@ function _fundraiser_ubercart_update_order_status($status, $order_id) {
  * DB function, look in country table for country info.
  */
 function _fundraiser_ubercart_get_countries() {
-  return db_query('SELECT * FROM {uc_countries}')->fetchAll();
+  return db_query('SELECT * FROM {uc_countries} ORDER BY country_name ASC')->fetchAll();
 }
 
 /**
  * DB function, look in zone table for zone info.
  */
 function _fundraiser_ubercart_get_zone_by_country($country_id) {
-  return db_query('SELECT * FROM {uc_zones} ' .
-    'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
-    array(':zone_country_id' => $country_id))->fetchAll();
+  // Some countries need an override, the zone_code is NOT the correct display for them.
+  // Most zone codes are correct by natural order - be that alphabetical or numerical. But some countries are wierd.
+  // For those, we add them to the exception list and order by zone_name.
+  $alphabetical_exception = array('840');
+  // Countries: 840 -> US
+  if (in_array($country_id, $alphabetical_exception)) {
+    return db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = :zone_country_id ORDER BY zone_name ASC',
+      array(':zone_country_id' => $country_id))->fetchAll();
+  }
+  else {
+    return db_query('SELECT * FROM {uc_zones} ' .
+      'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
+      array(':zone_country_id' => $country_id))->fetchAll();
+  }
+}
+
+// TODO add caching for these.
+/**
+ * DB function. Translate from code to number value.
+ */
+function fundraiser_ubercart_get_country_id_by_iso2($iso2) {
+  return db_query('SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = :iso2', array(':iso2' => $iso2))->fetchField();
+}
+
+/**
+ * DB function. Translate from code to number value.
+ */
+function fundraiser_ubercart_get_zone_id_by_code($code) {
+  return db_query('SELECT zone_id FROM {uc_zones} WHERE zone_code = :code', array(':code' => $code))->fetchField();
+}
+
+/**
+ * DB function. Translate from number value to code.
+ */
+function fundraiser_ubercart_get_iso2_by_country_id($country_id) {
+  return db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id', array(':country_id' => $country_id))->fetchField();
+}
+
+/**
+ * DB function. Translate from number value to code.
+ */
+function fundraiser_ubercart_get_code_by_zone_id($zone_id) {
+  return db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id', array(':zone_id' => $zone_id))->fetchField();
+}
+
+/**
+ * DB function. Translate status to status label.
+ */
+function _fundraiser_ubercart_get_label_by_status($status) {
+  return db_query('SELECT title FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
+}
+
+/**
+ * DB function, determine if given this status the donation has been charged already.
+ */
+function _fundraiser_ubercart_get_charged_by_status($status) {
+  $chargable_states = array('in_checkout', 'post_checkout'); // These are hard set from Ubercart.
+  $state = db_query('SELECT state FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
+  if (in_array($state, $chargable_states)) {
+    return FALSE; // If the donation is still able to be charged, say it hasn't been.
+  }
+  return TRUE;
 }
 
 /**
  * Below here are orphan or unknown origin functions. To be reviewed later. TODO
  */
 
-
 /**
  * Implements hook_fundraiser_decrypt_credit(). //where is this called?.
  *
 function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   $key = uc_credit_encryption_key();
-  $crypt = new uc_encryption_class;
+  $crypt = new UbercartEncryption;
   $cc = unserialize($data);
   $cc_data = unserialize($crypt->decrypt($key, $cc['cc_data']));
   $cc_data['cc_number'] = substr($cc_data['cc_number'], -4);
   return $cc_data;
 }
  */
-
-// Theme / formaty code, really should get refactored and moved to fundraiser. -SeH
-/**
- * Implements hook_fundraiser_format_price();
- */
-function fundraiser_ubercart_fundraiser_format_price($price) {
-  return theme('uc_price', array('price' => $price));
-}

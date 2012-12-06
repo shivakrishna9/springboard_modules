@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -12,8 +11,13 @@
  * Admin configuration form for page wrappers.
  */ 
 function page_wrappers_settings_form() {
-  $options = node_get_types('names');
-  
+  $types = node_type_get_types();
+  unset($types['page_wrapper']);
+  $options = array();
+  foreach ($types as $db_name => $type) {
+    $options[$db_name] = $type->name;
+  }
+
   $form['page_wrapper_enabled_node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Page wrapper-enabled content types'),

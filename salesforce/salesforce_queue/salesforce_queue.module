@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * @file
+ * Provides batch processing functionality for Salesforce integration.
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {
+  // Remove overly restrictive validation routine. Ideally the current monolithic 
+  // validation handler be broken down into 3 separate validation routines:
+  // - Check for existence of duplicate map
+  // - Field type validation (this is still too strict IMHO)
+  // - Dedupe field (SOAP API has different limitations)
+  // Then we'd only need to alter the dedupe field validation.
+  unset($form['#validate']);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_queue_menu() {
+  $items['salesforce-queue-sandbox'] = array(
+    'title' => 'Salesforce queue sandbox',
+    'page callback' => 'salesforce_queue_sandbox',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function salesforce_queue_add() {
+
+}
+
+function salesforce_queue_delete() {
+
+}
+
+function salesforce_queue_sandbox() {
+  $sfapi = salesforce_get_api();
+  module_load_include('inc', 'salesforce_soap');
+  $soap = new SalesforceSoapPartner($sfapi);
+  
+ // define("USERNAME", "jr+demo69@jacksonriver.com");
+ // define("PASSWORD", "WNju0nBG");
+ // define("SECURITY_TOKEN", "04r9vhFnkfV5f0BSjImUDOym3");
+
+  //$path = libraries_get_path('salesforce');
+  //require_once($path . '/soapclient/SforcePartnerClient.php');
+  //$wsdl = libraries_get_path('salesforce') . '/soapclient/partner.wsdl.xml';
+  //$soap = new SforcePartnerClient();
+  //$soap->createConnection($wsdl);
+  //$soap->login(USERNAME, PASSWORD.SECURITY_TOKEN);
+
+  $sObject = new stdClass();
+  $sObject->fields->LastName  = 'John';
+  $sObject->fields->FirstName = 'Doe';
+  $sObject->type  = 'Contact';
+ 
+
+  try {
+    $response = $soap->create(array($sObject));
+  }
+  catch (exception $e) {
+    print '<pre>';
+    print_r($e);
+    print '</pre>';
+  }
+
+  krumo($response);
+
+
+}
+
+function salesforce_queue_convert_to_fields($object) {
+  
+}

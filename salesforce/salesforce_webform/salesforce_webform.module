@@ -1,0 +1,133 @@
+<?php
+
+/**
+ * @file
+ * Manages webform to Salesforce mappings.
+ */
+
+/**
+ * @defgroup core_drupal_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_webform_entity_info() {
+  return array(
+    'salesforce_webform_map' => array(
+      'label' => t('Salesforce Webform Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'salesforce_webform_map',
+      'entity keys' => array(
+        'id' => 'nid',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+      'module' => 'salesforce_webform',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_webform_menu() {
+  // %webform_menu returns $node if $node is a webform
+  $items['node/%webform_menu/webform/salesforce-map'] = array(
+    'title' => 'Salesforce map',
+    'page callback' => 'salesforce_webform_map_page',
+    'page arguments' => array(1),
+    'access callback' => 'salesforce_webform_map_page_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_webform.map.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_webform_permission() {
+  return array(
+    'map salesforce to webform' => array(
+      'title' => t('Map Salesforce objects to webforms'),
+      'description' => t('Configure the mapping of Salesforce objects with
+        webforms so submissions can sync with Salesforce.'),
+    ),
+  );
+}
+
+/**
+ * @} core_drupal_hooks
+ */
+
+
+/**
+ * Access callback to reach the mapping page
+ *
+ * All by its little old self because menu doesn't load the include file until
+ * after the access check.
+ *
+ * @D6TOD7: Previoiusly was sf_webform_map_access()
+ */
+function salesforce_webform_map_page_access($node) {
+  if (
+       $node !== FALSE // %webform_menu returns FALSE if not valid
+       // @TODO: Ensure that 'donation_form' is still accurate in the D6TOD7 port
+       && $node->type != 'dontation_form'
+       && user_access('map salesforce to webform')
+     ) {
+    return TRUE;
+   }
+  return FALSE;
+}
+
+
+/**
+ * @defgroup webform_alters Hooking into the webform processes
+ * @{
+ */
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
+  // If form is a webform and webform is mapped to a salesforce object
+    // add our submit handler salesforce_webform_client_form_submit
+  // end
+}
+
+/**
+ * A submit handler added to webforms that have Salesforce mappings
+ *
+ * @D6TOD7: Previously was sf_webform_submit()
+ */
+function salesforce_webform_client_form_submit() {
+  // Queue up the new submissions
+}
+
+/**
+ * Implementation of hook_node_load().
+ */
+function salesforce_webform_node_load($nodes, $types) {
+  if (in_array('webform', $types)) {
+    foreach ($nodes as $nid => $node) {
+      // Add the salesforce_webform_map entity to the node
+    }
+  }
+}
+
+/**
+ * Implementation of hook_node_delete().
+ */
+function salesforce_webform_node_delete($node) {
+  // delete the salesforce_webform_map entity
+}
+
+/**
+ * @} webform_alters
+ */

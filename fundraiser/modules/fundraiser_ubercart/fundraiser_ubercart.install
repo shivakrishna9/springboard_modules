@@ -4,6 +4,14 @@
  * Install, update and uninstall functions for the fundraiser module.
  */
 
+/** 
+ * Implements hook_install().
+ */
+function fundraiser_ubercart_install() {
+  // Set to a lower weight to allow fundraiser_webform to function properly with other modules.
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'fundraiser_ubercart' and type = 'module'");
+}
+
 /**
  * Implements hook_enable().
  */
@@ -54,7 +62,7 @@ function fundraiser_ubercart_install_fundraiser_statuses() {
   $fundraiser_statuses = array(
     'pending_future_payment' => array(
       'title' => 'Pending Future Payment',
-      'state' => 'post_checkout',
+      'state' => 'in_checkout',
       'locked' => 1,
       'weight' => -20,
     ),
@@ -239,7 +247,7 @@ function fundraiser_ubercart_install_create_countries() {
   $country_set[] = array(520, 'Nauru', 'NR', 'NRU', 1);
   $country_set[] = array(524, 'Nepal', 'NP', 'NPL', 1);
   $country_set[] = array(528, 'Netherlands', 'NL', 'NLD', 1);
-  $country_set[] = array(530, 'Netherlands Antilles', 'AN', 'ANT', 1);
+//  $country_set[] = array(530, 'Netherlands Antilles', 'AN', 'ANT', 1);
   $country_set[] = array(540, 'New Caledonia', 'NC', 'NCL', 1);
   $country_set[] = array(554, 'New Zealand', 'NZ', 'NZL', 1);
   $country_set[] = array(558, 'Nicaragua', 'NI', 'NIC', 1);
@@ -326,7 +334,7 @@ function fundraiser_ubercart_install_create_countries() {
   $country_set[] = array(876, 'Wallis and Futuna', 'WF', 'WLF', 1);
   $country_set[] = array(732, 'Western Sahara', 'EH', 'ESH', 1);
   $country_set[] = array(887, 'Yemen', 'YE', 'YEM', 1);
-  $country_set[] = array(891, 'Yugoslavia', 'YU', 'YUG', 1);
+//  $country_set[] = array(891, 'Yugoslavia', 'YU', 'YUG', 1);
   $country_set[] = array(894, 'Zambia', 'ZM', 'ZMB', 1);
   $country_set[] = array(716, 'Zimbabwe', 'ZW', 'ZWE', 1);
   foreach ($country_set as $country) {

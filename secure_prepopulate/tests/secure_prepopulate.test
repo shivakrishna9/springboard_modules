@@ -8,8 +8,8 @@
 class SecurePrepopulateTestCase extends DrupalWebTestCase {
   private $_webform_node;
   private $_test_components;
-  public $_encrypted; 
-  
+  public $_encrypted;
+
   /**
    * Implementation of setUp().
    */
@@ -19,16 +19,14 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
       'profile',
       'secure_prepopulate'
     );
-    
     // set up some default variables
     variable_set('secure_prepopulate_key', '12345678901234561234567890123456');
     variable_set('secure_prepopulate_iv', '1234567890123456');
     variable_set('secure_prepopulate_precedence', 'url');
     variable_set('webform_node_types', array('webform'));
-    
     $this->_encrypted = 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA'; // encrypted = first_name=Euro&last_name=Guy&uid=29
   }
-  
+
   /**
    * Defines the webform compontents to be used in testing.
    */
@@ -36,7 +34,6 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
     if (isset($this->_test_components)) {
       return $this->_test_components;
     }
-
     $this->_test_components = array(
       'first_name' => array(
         'component' => array(
@@ -59,10 +56,9 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
         ),
       ),
     );
-      
     return $this->_test_components;
   }
-  
+
   /**
    * Create a webform node.
    *
@@ -73,7 +69,6 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
     if (isset($this->_webform_node)) {
       return $this->_webform_node;
     }
-
     $settings = array(
      'type' => 'webform',
      'language' => '',
@@ -104,7 +99,6 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
         'emails' => array(),
       ),
     );
-
     $cid = 0;
     foreach ($this->testComponents() as $key => $component_info) {
       $cid++;
@@ -112,9 +106,7 @@ class SecurePrepopulateTestCase extends DrupalWebTestCase {
       $settings['webform']['components'][$cid]['cid'] = $cid;
       $settings['webform']['components'][$cid]['pid'] = 0;
     }
-
     $this->_webform_node = $this->drupalCreateNode($settings);
-
     return $this->_webform_node;
   }
 }

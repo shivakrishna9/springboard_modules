@@ -2,12 +2,11 @@
 
 /**
  * @file
- * Provides a way to track which campaigns and market sources drive users to the
- * site.
+ * Install market_source.
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function market_source_install() {
   // Default to six hours
@@ -15,10 +14,15 @@ function market_source_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function market_source_uninstall() {
   variable_del('market_source_validity_period');
 }
 
-
+/**
+ * Implements hook_update_last_removed().
+ */
+function market_source_update_last_removed() {
+  return 6001;
+}

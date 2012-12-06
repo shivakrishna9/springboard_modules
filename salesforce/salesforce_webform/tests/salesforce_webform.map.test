@@ -1,0 +1,85 @@
+<?php
+include_once(dirname(__FILE__) . '/salesforce_webform.test');
+
+/**
+ * @file
+ * Tests for includes/salesforce_webform.map.inc.
+ */
+
+/**
+ * Tests mapping Salesforce objects onto webforms
+ */
+class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Mapping',
+      'description' => 'Ensure that the salesforce_webform.mapping componant functions properly.',
+      'group' => 'Salesforce Webform',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp();
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test the salesforce_webform_map entity
+   */
+  public function testEntity() {
+    // Map entity type exists
+    $entity_info = entity_get_info('salesforce_webform_map');
+    $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
+    $this->assertEqual('Salesforce Webform Map', $entity_info['label'], 'Entity has expected label.');
+
+    // Create a salesforce_webform_map entity object
+    $test_map = array(
+      'nid' => 3,
+      'name' => 'foo',
+      'salesforce_object_type' => 'bar',
+      'salesforce_record_type' => 'baz',
+      'field_map' => array(
+        'foo' => 'bar',
+        'baz' => array(
+          'bang' => 'boom',
+          'fizz' => 'buzz',
+        ),
+        'hello' => 'world',
+      ),
+      'locked' => FALSE,
+      'status' => TRUE,
+    );
+    $test_map = entity_create('salesforce_webform_map', $test_map);
+    $this->assertEqual('salesforce_webform_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
+
+    // Save the entity to the database
+    entity_save('salesforce_webform_map', $test_map);
+    $test_map_db = entity_load('salesforce_webform_map', array(3));
+    $this->assertEqual('foo', $test_map_db[3]->name, 'Newly created entity has the correct name.');
+
+    // Delete the entity from the database
+    entity_delete('salesforce_webform_map', 3);
+    $all_entities = entity_load('salesforce_webform_map');
+    $this->assertTrue(empty($all_entities));
+  }
+
+  /**
+   * Tests for the mapping form
+   */
+  public function testMappingForm() {
+    // @TODO
+  }
+}

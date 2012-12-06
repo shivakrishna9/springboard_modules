@@ -1,41 +1,41 @@
 <?php
-// $Id$
-
 /**
  * @file
- * Install file for the og payment gateway module. 
- * 
+ * Install file for the og payment gateway module.
+ *
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function og_payment_gateway_install() {
-	drupal_install_schema('og_payment_gateway');
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_install_schema('og_payment_gateway')
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function og_payment_gateway_uninstall() {
-	drupal_uninstall_schema('og_payment_gateway');
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_uninstall_schema('og_payment_gateway')
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function og_payment_gateway_schema() {
   $schema['og_payment_gateway'] = array(
-    'description' => t('Table to store payment gateway organic group relationships.'),
+    'description' => 'Table to store payment gateway organic group relationships.',
     'fields' => array(
       'gid' => array(
-        'description' => t('The id of the payment gateway.'),
+        'description' => 'The id of the payment gateway.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'group_nid' => array(
-        'description' => t('The id of the payment gateway node.'),
+        'description' => 'The id of the payment gateway node.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -43,6 +43,6 @@ function og_payment_gateway_schema() {
     ),
     'primary key' => array('gid', 'group_nid'),
   );
-  
+
   return $schema;
 }

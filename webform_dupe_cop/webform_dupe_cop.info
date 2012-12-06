@@ -1,0 +1,9 @@
+name = Webform Dupe Cop
+description = Stops duplicate Webform data submissions.
+package = Webform Extra
+core = 7.x
+version = 7.x-3.3
+dependencies[] = webform
+files[] = webform_dupe_cop.admin.inc
+files[] = webform_dupe_cop.install
+files[] = webform_dupe_cop.module

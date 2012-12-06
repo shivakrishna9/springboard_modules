@@ -1,69 +1,48 @@
 <?php
-// $Id$
-
 /**
  * @file
  *   Secure pre-populate install/schema hooks
  */
 
 /**
- * Implementation of hook_requirements().
+ * Implements hook_requirements().
  */
 function secure_prepopulate_requirements($phase) {
   $severity = REQUIREMENT_ERROR;
-  
   // check for mcrypt extension
   if (extension_loaded("mcrypt")) {
     $severity = REQUIREMENT_OK;
   }
-  
   $requirements = array(
     array(
-      'title' => 'Secure pre-populate',
-      'description' => 'The Secure pre-populate module requires the PHP Mcrypt extension has to be installed on the web server.',
+      'title' => 'Secure Pre-populate',
+      'description' => t('Secure Pre-populate requires that PHP Mcrypt extension be installed on the web server.'),
       'severity' => $severity,
     ),
   );
-  
   return $requirements;
 }
 
 /**
- * Implementation of hook_install().
- */
-function secure_prepopulate_install() {
-  drupal_install_schema('secure_prepopulate');
-}
-
-/**
- * Implementation of hook_uninstall().
- */
-function secure_prepopulate_uninstall() {
-  drupal_uninstall_schema('secure_prepopulate');
-}
-
-/**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function secure_prepopulate_schema() {
   $schema = array();
-  
   $schema['secure_prepopulate_expired'] = array(
-    'description' => t('TODO: please describe this table!'),
+    'description' => 'Expired pre-populate strings',
     'fields' => array(
       'hash' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => 'The hashed qs string',
         'type' => 'varchar',
         'length' => '40',
         'not null' => FALSE,
       ),
       'expire_date' => array(
-        'description' => t('TODO: please describe this field!'),
+        'description' => 'When it expired',
         'type' => 'int',
         'not null' => FALSE,
       ),
     ),
   );
-  
   return $schema;
 }

@@ -1,6 +1,0 @@
-name = Donation form layouts
-description = Provides layouts for donation forms (1 column, 2 column, etc.)
-core = 7.x
-package = Jackson River Springboard - extras
-dependencies[] = fundraiser
-version =  7.x-3.0-dev

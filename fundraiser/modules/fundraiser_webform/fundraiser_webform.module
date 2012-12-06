@@ -27,15 +27,22 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
 }
 
 /**
+ * Implements fundraiser_donation_information_table_alter().
+ */
+function fundraiser_webform_fundraiser_donation_information_table_alter(&$variables, $donation) {
+  // Add submission information to the display table.
+  $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+    array('@sid' => $donation->sid, '!title' => l(t('View submission'),
+      'node/' . $donation->node->nid . '/submission/' . $donation->sid))));
+}
+
+/**
  * Implements hook_node_type_insert().
  */
 function fundraiser_webform_node_type_insert($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
+    _fundraiser_webform_toggle_webform($info->type, TRUE);
     webform_node_type('update', $info); // From webform.module.
-    // Add as a primary type too.
-    $webform_types = webform_variable_get('webform_node_types_primary');
-    $webform_types[] = $info->type;
-    variable_set('webform_node_types_primary', $webform_types);
   }
 }
 
@@ -52,10 +59,7 @@ function fundraiser_webform_node_type_update($info) {
 function fundraiser_webform_node_type_delete($info) {
   if (fundraiser_is_donation_type($info->type)) { // From fundraiser.module.
     webform_node_type('delete', $info); // From webform.module.
-    // Remove as a primary type too.
-    $webform_types = webform_variable_get('webform_node_types_primary');
-    unset($webform_types[ $info->type] );
-    variable_set('webform_node_types_primary', $webform_types);
+    _fundraiser_webform_toggle_webform($info->type, FALSE);
   }
 }
 
@@ -112,23 +116,28 @@ function fundraiser_webform_form_node_type_form_alter(&$form, &$form_state) {
  * Submit callback for fundraiser_webform_form_node_type_form_alter()
  */
 function fundraiser_webform_form_node_type_form_alter_submit($form, &$form_state) {
-  $is_enabled = $form_state['values']['fundraiser'];
+  _fundraiser_webform_toggle_webform($form_state['values']['type'], $form_state['values']['fundraiser']);
+}
+
+/**
+ * Helper function, enable or disable webform settings.
+ */
+function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
-  $type = $form_state['values']['type'];
   // Make sure this content type is enabled for webform if not already.
   // Add the selected node types to the webform_node_types_primary so a webform is added by default.
   if ($is_enabled) {
-    if (!in_array($type, $webform_node_types)) {
-      $webform_node_types = array_merge($webform_node_types, array($type));
-    }
-    if (!in_array($type, $webform_node_types_primary)) {
-      $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
-    }
+    $webform_node_types = array_merge($webform_node_types, array($type));
+    $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
+  }
+  else {
+    $webform_node_types = array_diff($webform_node_types, array($type));
+    $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
   }
   // Re-save the variables.
-  variable_set('webform_node_types', $webform_node_types);
-  variable_set('webform_node_types_primary', $webform_node_types_primary);
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 }
 
 /**
@@ -139,23 +148,23 @@ function fundraiser_webform_form_fundraiser_admin_settings_alter(&$form, &$form_
   if (module_exists('webform_user')) {
     $form['fundraiser_webform'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Fundraiser webform'),
-      '#description' => t('Configure fundraiser webform settings.'),
+      '#title' => t('Fundraiser Webform'),
+      '#description' => t('Configure Fundraiser Webform settings.'),
       '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#collapsed' => TRUE,
     );
     $form['fundraiser_webform']['webform_users'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Webform user integration'),
+      '#title' => t('Webform User integration'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
     $form['fundraiser_webform']['webform_users']['help'] = array(
-      '#markup' => '<div>' . t('Webform user creates webform components. Because Fundraiser also creates components for user ' .
-      'data we need to avoid doubling up on component creation. Therefore a map of fundraiser components to user profile components ' .
-      'needs to be created. This will prevent webform user from creating the same components that fundraiser already handles. ' .
-      'For each profile field listed here set which (if any) fundraiser field will handle creating a component for it instead. ' .
-      'Fields left unmapped will be created by webform user.').'</div>',
+      '#markup' => '<div>' . t('Webform User creates webform components based on User profile fields. Because Fundraiser also creates ' .
+      'components for user fields we need to avoid doubling up on component creation. Therefore a map of Fundraiser components to user ' .
+      'profile fields needs to be created. This will prevent Webform User from creating the same components that Fundraiser already ' .
+      'handles. For each profile field listed here set which (if any) Fundraiser field will handle creating a component for it instead. ' .
+      'Fields left unmapped will be created by Webform User.').'</div>',
     );
     // If the module exists, we can use it's functions.
     $profile_fields = _webform_user_get_profile_fields();
@@ -225,12 +234,32 @@ function fundraiser_webform_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id) {
+  // On node creation forms, tweak the display iff webform user is an active module.
+  // Why here? Because order matters. The form we're merging here is added on an earlier hook.
+  if (module_exists('webform_user')) {
+    if (fundraiser_is_donation_type($form['#node']->type) && strstr($form_id, '_node_form') !== FALSE) {
+      // Merge the webform user form into fundraiser iff webform user exists and is set for this node type.
+      if (isset($form['webform_user'])) {
+        $form['fundraiser_settings']['send_new_user_email'] = $form['webform_user']['send_new_user_email'];
+        $form['fundraiser_settings']['is_webform_user'] = $form['webform_user']['is_webform_user'];
+        $form['fundraiser_settings']['is_webform_user']['#type'] = 'hidden';
+        $form['fundraiser_settings']['is_webform_user']['#value'] = 1;
+        unset($form['webform_user']);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
- * Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
  */
 function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter the webform client form.
+  // Why hook_form_alter and not hook_form_FORM_ID_alter? Because webform's form id varies: webform_client_form_NID.
   if (strstr($form_id, 'webform_client_form') !== FALSE) {
     // Handle donation form edit submission pg.
     if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') { // From fundraiser.module.
@@ -423,6 +452,12 @@ function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
+  // Add js and css as needed.
+  $base = drupal_get_path('module', 'fundraiser_webform');
+  drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
+  drupal_add_js( $base . '/js/fundraiser.js', 'file');
+  drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
+
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.

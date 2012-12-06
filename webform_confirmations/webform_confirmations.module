@@ -15,23 +15,101 @@
  */
 function webform_confirmations_preprocess_webform_confirmation(&$vars) {
   if (isset($vars['node']->nid) && _webform_confirmations_is_configured($vars['node'])) {
-    // Reprocess the message. Webform properly uses a strip_tag here that will kill all HTML.
-    // So for our purposes, we need to reprocess the set message to get the correct values.
-    $vars['confirmation_message'] = check_markup($vars['node']->webform['confirmation'], $vars['node']->webform['confirmation_format'], '', TRUE);
-    // We get check_markup() from filter.module.
-    // Set title if available from configurations.
-    if (!empty($vars['node']->confirmation_page_title)) {
-      drupal_set_title($vars['node']->confirmation_page_title);
+    // Check for access, if the user doesn't have access - change the message to match.
+    $access = FALSE;
+    if (isset($vars['sid'])) {
+      // Gather information about this sid. If the logged in user is the same as submitted it, allowed.
+      global $user;
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+      // If a logged in user, check user id.
+      if ($user->uid != 0) {
+        if ($user->uid == $submission->uid) {
+          $access = TRUE;
+        }
+      }
+      // If anon, then check the IP address. (Anon submissions should be all on the same IP.)
+      if ($user->hostname == $submission->remote_addr) {
+        $access = TRUE;
+      }
+      // If has permissions as an admin user.
+      if (user_access('access all webform results')) {
+        $access = TRUE;
+      }
     }
-    // Replace webform tokens for the submission.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
-    $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE);
-    // _webform_filter_values removes HTML if strict is set to TRUE.
-    // Replace drupal tokens for the submission.
-    $token_set = array('node' => node_load($vars['node']->nid));
-    drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
-    $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set);
+    if ($access) {
+      // Reprocess the message. Webform properly uses a strip_tag here that will kill all HTML.
+      // So for our purposes, we need to reprocess the set message to get the correct values.
+      $vars['confirmation_message'] = check_markup($vars['node']->webform['confirmation'], $vars['node']->webform['confirmation_format'], '', TRUE);
+      // We get check_markup() from filter.module.
+      // Set title if available from configurations.
+      if (!empty($vars['node']->confirmation_page_title)) {
+        drupal_set_title($vars['node']->confirmation_page_title);
+      }
+      // Replace webform tokens for the submission.
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($vars['node']->nid, $vars['sid']);
+      $vars['confirmation_message'] = _webform_filter_values($vars['confirmation_message'], $vars['node'], $submission, NULL, FALSE);
+      // _webform_filter_values removes HTML if strict is set to TRUE.
+      // Replace drupal tokens for the submission.
+      $token_set = array('node' => node_load($vars['node']->nid));
+      drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
+      $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set);
+    }
+    else {
+      // No access.
+      $vars['confirmation_message'] = t('You are not authorized to access this page.');
+      drupal_set_title(t('Access denied'));
+    }
+  }
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ *  Conditionally add send on order success checkbox to webform email configuration forms.
+ */
+function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_state, $form_id) {
+  if (module_exists('email_wrappers') && fundraiser_is_donation_type($form['node']['#value']->type)) {
+    
+    $node = $form['node']['#value'];
+    $send_default = _webform_confirmation_send_on_settings($form_state);
+    $send_options = array(
+      0 => t('Always'),
+      1 => t('Donation succeeds'),
+      2 => t('Donation fails'),
+    );
+    // TODO: correctly set default on this form element based on prior settings.
+    $form['send_on_settings'] = array(
+      '#type' => 'radios',
+      '#title' => t('Send on successful donation'),
+      '#description' => t('Only send a copy of this email if the donation is successful.'),
+      '#options' => $send_options,
+      '#default_value' => $send_default,
+      '#weight' => -49,
+    );
+    $form['template']['tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Available tokens'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 9,
+    );
+    $token_set = array('node');
+    // Then add any other token set as needed.
+    drupal_alter('webform_confirmations_token_info', $token_set, $node);
+    $form['template']['tokens']['tokens'] = array(
+      '#type' => 'item',
+      '#title' => t('Drupal tokens'),
+      '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+    );
+    $form['template']['tokens']['webform_tokens'] = array(
+      '#type' => 'item',
+      '#title' => t('Webform tokens'),
+      '#description' => theme('webform_token_help', array()),
+    );
+    $form['#validate'][] = '_webform_confirmations_email_edit_validate';
   }
 }
 
@@ -42,7 +120,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   // On webform configuration forms, provide override for the Page title and notice re: token support.
   $node = node_load($form['nid']['#value']);
   // Webform tokens for use in the custom URL redirect are implemented
-  // in webform/includes/webform.pages.inc: 
+  // in webform/includes/webform.pages.inc:
   // Tokens for the page text - are NOT implemented in normal webform.
   // So we also need to tweak the token display message to say we'll support it.
   $form['submission']['confirmation']['confirmation_page_title'] = array(
@@ -58,12 +136,12 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '#collapsed' => TRUE,
   );
   $token_set = array('node');
-  // Then add any other token set as needed.
+  // Then add any other token set as needed. (Here is where donation, donation user etc get put in.)
   drupal_alter('webform_confirmations_token_info', $token_set, $node);
   $form['submission']['help']['tokens'] = array(
     '#type' => 'item',
     '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set)),
+    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
   );
   $form['submission']['help']['webform_tokens'] = array(
     '#type' => 'item',
@@ -75,7 +153,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '(See tokens below).');
   $form['submission']['redirection']['#description'] = t('Choose where to redirect the user upon successful submission. The Custom URL ' .
     'option supports Webform token replacements. (See tokens below).');
-  // Shuffle things later into the form.
+  // Shuffle things to display later in the form, there may be a better way to reorg the array. Check later.
   $total_submit_limit = $form['submission']['total_submit_limit'];
   $submit_limit = $form['submission']['submit_limit'];
   $status = $form['submission']['status'];
@@ -89,13 +167,44 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   $form['#submit'][] = '_webform_confirmations_submit';
 }
 
+
 /**
- * Submit handler for webform configuration form.
+ * Implements hook_fundraiser_donation_success().
+ *
+ * Send templated confirmation emails when a donation is successful.
  */
-function _webform_confirmations_submit($form, &$form_state) {
-  $confirmation['nid'] = $form_state['values']['nid'];
-  $confirmation['confirmation_page_title'] = check_plain($form_state['values']['confirmation']['confirmation_page_title']);
-  _webform_confirmations_update($confirmation);
+function webform_confirmations_fundraiser_donation_success($donation) {
+  if (module_exists('email_wrappers')) {
+    $settings = email_wrappers_load_settings($donation->nid, NULL);
+
+    if ($settings) {
+      foreach ($settings as $mail_config) {
+
+        if (isset($mail_config['extra']['send_on_donation_success']) && $mail_config['extra']['send_on_donation_success'] === TRUE) {
+          _webform_confirmation_send_confirmation_mail($mail_config, $donation);
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_fundraiser_donation_decline().
+ *
+ * If
+ */
+function webform_confirmations_fundraiser_donation_decline($donation) {
+  if (module_exists('email_wrappers')) {
+    $settings = email_wrappers_load_settings($donation->nid, NULL);
+    if ($settings) {
+      foreach ($settings as $mail_config) {
+        if (isset($mail_config['extra']['send_on_donation_decline']) && $mail_config['extra']['send_on_donation_decline'] === TRUE) {
+          _webform_confirmation_send_confirmation_mail($mail_config, $donation);
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -109,6 +218,17 @@ function webform_confirmations_node_load($nodes, $types) {
       isset($webform_confirmation->confirmation_page_title) ? $webform_confirmation->confirmation_page_title : '';
   }
 }
+
+
+/**
+ * Submit handler for webform configuration form.
+ */
+function _webform_confirmations_submit($form, &$form_state) {
+  $confirmation['nid'] = $form_state['values']['nid'];
+  $confirmation['confirmation_page_title'] = check_plain($form_state['values']['confirmation']['confirmation_page_title']);
+  _webform_confirmations_update($confirmation);
+}
+
 
 /**
  * Helper function, check if node is configured for confirmations.
@@ -182,4 +302,85 @@ function _webform_confirmations_delete($nid) {
 function _webform_confirmations_get_by_nids($nids) {
   return db_query('SELECT * FROM {webform_confirmations} WHERE nid IN (:nids)',
     array(':nids' => $nids));
+}
+
+/**
+ * Additional validation for webform email forms, required for conditional integration with Email Wrappers.
+ */
+function _webform_confirmations_email_edit_validate($form, &$form_state) {
+
+  switch ($form_state['values']['send_on_settings']) {
+    case 0:
+      $form_state['extra']['send_on_donation_success'] = FALSE;
+      $form_state['extra']['send_on_donation_decline'] = FALSE;
+      $form_state['extra']['send_on_submission'] = TRUE;
+      break;
+    case 1:
+      $form_state['extra']['send_on_donation_success'] = TRUE;
+      $form_state['extra']['send_on_donation_decline'] = FALSE;
+      $form_state['extra']['send_on_submission'] = FALSE;
+      break;
+
+    case 2:
+      $form_state['extra']['send_on_donation_success'] = FALSE;
+      $form_state['extra']['send_on_donation_decline'] = TRUE;
+      $form_state['extra']['send_on_submission'] = FALSE;
+      break;
+  }
+}
+
+/**
+ * Retrieve send on defaults from saved settings.
+ */
+function _webform_confirmation_send_on_settings($form_state) {
+  $default = 1;
+  
+  if (isset($form_state['build_info']['args'][1]['eid'])) {
+    $nid = $form_state['build_info']['args'][1]['nid'];
+    $eid = $form_state['build_info']['args'][1]['eid'];
+    $settings = email_wrappers_load_settings($nid, $eid);
+    $extra = $settings['extra'];
+    if (isset($extra['send_on_submission']) && $extra['send_on_submission']) {
+      $default = 0;
+    }
+    elseif (isset($extra['send_on_donation_success']) && $extra['send_on_donation_success']) {
+      $default = 1;
+    }
+    elseif (isset($extra['send_on_donation_decline']) && $extra['send_on_donation_decline']) {
+      $default = 2;
+    }
+  }
+ 
+  return $default;
+}
+
+/**
+ * Send confirmation mail.
+ *
+ * @param $settings
+ * Email Wrappers settings array.
+ *
+ * @param $donation
+ * Fundraiser donation object.
+ */
+function _webform_confirmation_send_confirmation_mail($settings, $donation) {
+  $nid = $settings['nid'];
+  $eid = $settings['eid'];
+  $account = $donation->user;
+          
+  // Pull the deferred mail queue in and see if we have any pending mails to send.
+  $mail_queue = &drupal_static('email_wrappers_mail_queue');
+
+  if (isset($mail_queue[$nid][$eid])) {
+    $params = $mail_queue[$nid][$eid]['params'];
+    $message = $params['message'];
+
+    // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
+    $token_set = array('node' => node_load($nid), 'donation' => $donation);
+    $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
+    $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
+
+    drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
+    unset($mail_queue[$nid][$eid]);
+  }
 }

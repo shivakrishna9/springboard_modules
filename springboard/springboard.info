@@ -1,7 +1,9 @@
 ; $Id$
 name = Springboard
-description = Springboard provides a coherent interface for administering your site
-core = 6.x
+description = Provides an admin interface for the suite of Springboard modules
+core = 7.x
 package = Jackson River Springboard
-version =  6.x-3.0-dev
-dependencies[] = 'ctools'
+configure = admin/springboard
+version =  7.x-3.0-dev
+dependencies[] = ctools
+files[] = springboard.admin.inc

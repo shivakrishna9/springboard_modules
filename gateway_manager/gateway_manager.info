@@ -1,9 +1,7 @@
-; $Id$
 name = Payment Gateway Manager
-description = Allows a user to configure multiple versions of the same payment gateway with different settings.
-core = 6.x
+description = Allows a user to configure multiple versions of the same Ubercart payment gateway with different settings.
+core = 7.x
 package = Jackson River Springboard - payment
-dependencies[] = fundraiser
+dependencies[] = fundraiser_ubercart
 dependencies[] = uc_credit
 dependencies[] = taxonomy
-version =  6.x-3.0-dev

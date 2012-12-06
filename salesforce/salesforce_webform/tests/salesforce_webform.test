@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for salesforce_webform
+ */
+
+/**
+ * Tests basic set up for mapping salesforce objects to webforms
+ */
+class SalesforceWebformTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'General Salesforce Webform Tests',
+      'description' => 'Ensure that the salesforce_webform module functions properly.',
+      'group' => 'Salesforce Webform',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp(
+      'entity',
+      'libraries',
+      'salesforce',
+      'salesforce_mapping',
+      'salesforce_pull',
+      'salesforce_push',
+      'webform',
+      'salesforce_webform'
+    );
+
+    // Create an admin user
+    $permissions = array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+      'administer salesforce',
+      'access all webform results',
+      'access own webform results',
+      'edit all webform submissions',
+      'delete all webform submissions',
+      'access own webform submissions',
+      'edit own webform submissions',
+      'delete own webform submissions',
+      'map salesforce to webform',
+    );
+    $this->admin_user = $this->drupalCreateUser($permissions);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+}

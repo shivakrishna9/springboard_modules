@@ -1,0 +1,7 @@
+name = Salesforce Queue
+description = Batch processing for Salesforce integration.
+package = Salesforce
+core = 7.x
+
+dependencies[] = salesforce
+dependencies[] = salesforce_soap

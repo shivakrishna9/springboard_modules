@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_requirements().
+ * Implements hook_requirements().
  */
 function gm_cybersource_requirements($phase) {
   $t = get_t();
@@ -43,7 +43,16 @@ function gm_cybersource_requirements($phase) {
   return $requirements;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function gm_cybersource_uninstall() {
   // Delete related variables all at once.
-  db_query("DELETE FROM {variable} WHERE name LIKE 'gm_cybersource_%%' OR name LIKE 'cs_ship_from_%%'");
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("DELETE FROM {variable} WHERE name LIKE 'gm_cybersource_%%' OR name LIKE 'cs_ship_from_%%'") */
+  db_delete('variable')
+  ->condition('name', 'gm_cybersource_%%', 'LIKE')
+  ->condition('name', 'cs_ship_from_%%', 'LIKE')
+  ->execute();
 }

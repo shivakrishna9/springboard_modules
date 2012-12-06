@@ -1,112 +1,31 @@
 <?php
-
 /**
- * Implements hook_schema().
+ * @file
+ * Provides installation for Springboard.
  */
-function springboard_schema() {
-  $schema['springboard_panes'] = array(
-    'description' => t('Stores data for webform submission goals.'),
-    'fields' => array(
-      'delta' => array(
-        'description' => t('Parent id, nid for webforms, Salesforce campaign id for campaigns'),
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'description' => array(
-        'description' => t(''),
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'weight' => array(
-        'description' => t(''),
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'status' => array(
-        'description' => t(''),
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0, 
-      ),
-    ),
-  );
-  return $schema;
-}
 
 /**
  * Implements hook_install().
  */
 function springboard_install() {
-  drupal_install_schema('springboard');
-  $panes = array(
-    'springboard_sf_status' => array(
-      'description' => t(''),
-      'weight' => 0,
-      'status' => 1,
-    ),
-    'springboard_jump' => array(
-      'description' => t(''),
-      'weight' => 1,
-      'status' => 1,
-    ),
-    'springboard_logo' => array(
-      'description' => t(''),
-      'weight' => -1,
-      'status' => 1,
-    ),
-    'springboard_fundraiser_performance' => array(
-      'description' => t('Fundraiser Performance'),
-      'weight' => 2,
-      'status' => 1,
-    ),
-  );
-  foreach($panes as $delta => $pane) {
-    db_query("INSERT INTO {springboard_panes} (delta, description, weight, status) 
-      VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
-
-  }
+  // Set the variable to provide configure button on settings page.
+  variable_set('springboard_needs_config', TRUE);
+  // Add a message about configuring Springboard
+  drupal_set_message(st('The Springboard module was successfully enabled. !link',
+    array('!link' => l(st('Please configure Springboard now.'), 'admin/springboard/settings/springboard'))));
 }
 
 /**
- * Implements hook_uninstall().
+ * Implements hook_update_N().
+ * Uninstall the table in favor of hook based panes.
  */
-function springboard_uninstall() {
-  drupal_uninstall_schema('springboard');
-}
-
-/**
- * 
- */
-function springboard_update_6300() {
-  $ret = array();
-  $schema = springboard_schema();
-  db_create_table($ret, 'springboard_panes', $schema['springboard_panes']);
-  $panes = array(
-    'springboard_sf_status' => array(
-      'description' => t(''),
-      'weight' => 0,
-      'status' => 1,
-    ),
-    'springboard_jump' => array(
-      'description' => t(''),
-      'weight' => 1,
-      'status' => 1,
-    ),
-    'springboard_logo' => array(
-      'description' => t(''),
-      'weight' => -1,
-      'status' => 1,
-    ),
-    'springboard_fundraiser_performance' => array(
-      'description' => t('Fundraiser Performance'),
-      'weight' => 2,
-      'status' => 1,
-    ),
-  );
-  foreach($panes as $delta => $pane) {
-    $ret[] = update_sql("INSERT INTO {springboard_panes} (delta, description, weight, status) 
-      VALUES ('%s', '%s', %d, %d)", $delta, $pane['description'], $pane['weight'], $pane['status']);
+function springboard_update_7000() {
+  // If we used to be a Springboard profile install, switch to standard.
+  if (variable_get('install_profile', '') == 'springboard') {
+    variable_set('install_profile', 'standard');
   }
-  return $ret;
+  // Drop the old pane table if it exists, we're moving to hooks.
+  if (db_table_exists('springboard_sf_status')) {
+    db_drop_table('springboard_sf_status');
+  }
 }
