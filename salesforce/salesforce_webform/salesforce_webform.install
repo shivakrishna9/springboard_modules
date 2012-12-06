@@ -12,12 +12,6 @@ function salesforce_webform_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-      'name' => array(
-        'description' => 'The machine-readable name of this salesforce_map type.',
-        'type' => 'varchar',
-        'length' => '32',
-        'not null' => TRUE,
-      ),
       'salesforce_object_type' => array(
         'description' => 'The Salesforce object type for this mapping.',
         'type' => 'varchar',
@@ -31,6 +25,13 @@ function salesforce_webform_schema() {
         'length' => '100',
         'not null' => TRUE,
         'default' => '',
+      ),
+      'salesforce_dedupe_field' => array(
+        'description' => 'The Salesforce field that will be used for UPSERT',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+        'default' => NULL,
       ),
       'field_map' => array(
         'description' => 'A serialized object that stores the field mappings.',
@@ -73,10 +74,6 @@ function salesforce_webform_schema() {
       ),
     ),
     'primary key' => array('nid'),
-    'unique keys' => array(
-      'name' => array('name'),
-      'webform_nid' => array('nid', 'salesforce_object_type')
-    ),
   );
 
   return $schema;

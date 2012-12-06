@@ -48,7 +48,6 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     // Create a salesforce_webform_map entity object
     $test_map = array(
       'nid' => 3,
-      'name' => 'foo',
       'salesforce_object_type' => 'bar',
       'salesforce_record_type' => 'baz',
       'field_map' => array(
@@ -68,7 +67,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     // Save the entity to the database
     entity_save('salesforce_webform_map', $test_map);
     $test_map_db = entity_load('salesforce_webform_map', array(3));
-    $this->assertEqual('foo', $test_map_db[3]->name, 'Newly created entity has the correct name.');
+    $this->assertEqual('bar', $test_map_db[3]->salesforce_object_type, 'Newly created entity has the correct object type.');
 
     // Delete the entity from the database
     entity_delete('salesforce_webform_map', 3);

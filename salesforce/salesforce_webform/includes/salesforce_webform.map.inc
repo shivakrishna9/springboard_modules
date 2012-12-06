@@ -105,7 +105,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
 
   // The type of record of the chosen Salesforce Object
   $sf_records = _sfw_salesforce_record_type_list($sfapi, $sf_object);
-  if (!empty($sf_records)) {
+  if (count($sf_records) > 1) {
     $form['salesforce_object_info']['salesforce_record_type'] = array(
       '#id' => 'salesforce-record-type',
       '#title' => t('Object Record Type'),
@@ -137,7 +137,6 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#suffix' => '</div>',
   );
   $wf_components = $node->webform['components'];
-  array_unshift($sf_fields, '-');
   foreach ($wf_components as $cid => $component) {
     $sf_field = _sfw_default_value('cid_'. $cid, $form_state);
     $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
@@ -290,7 +289,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Submit',
+    '#value' => 'Save',
   );
 
   return $form;
@@ -328,7 +327,49 @@ function salesforce_webform_map_form_validate($form, &$form_state) {
  * @D6TOD7: Previously was sf_webform_map_form_submit()
  */
 function salesforce_webform_map_form_submit($form, &$form_state) {
-  // Store all the data.  Save using the CRUD API below.
+  $node = $form_state['build_info']['args'][0];
+  $salesforce_object_type = $form_state['input']['salesforce_object_info']['salesforce_object_type'];
+  $salesforce_record_type = '';
+  if (isset($form_state['input']['salesforce_object_info']['salesforce_record_type'])) {
+    $salesforce_record_type = $form_state['input']['salesforce_object_info']['salesforce_record_type'];
+  }
+  $dedupe_field = $form_state['input']['salesforce_dedupe'];
+
+  $field_map = array();
+  foreach ($form_state['input']['field_map'] as $group => $rows) {
+    foreach ($rows as $row) {
+      $sf_field = reset($row);
+      $component = key($row);
+      $field_map[$component] = $sf_field;
+    }
+  }
+
+  if (isset($node->salesforce_webform_map)) {
+    $map = $node->salesforce_webform_map;
+    $map->salesforce_object_type = $salesforce_object_type;
+    $map->salesforce_record_type = $salesforce_record_type;
+    $map->dedupe_field = $dedupe_field;
+    $map->field_map = $field_map;
+    $map->updated = time();
+  }
+  else {
+    $map = array(
+      'nid' => $node->nid,
+      'salesforce_object_type' => $salesforce_object_type,
+      'salesforce_record_type' => $salesforce_record_type,
+      'salesforce_dedupe_field' => $dedupe_field,
+      'field_map' => $field_map,
+      'created' => time(),
+      'updated' => time(),
+    );
+  }
+  $result = salesforce_webform_save_map($map);
+  if ($result === FALSE) {
+    drupal_set_message(t('There was an error saving the map.'), 'error');
+  }
+  else {
+    drupal_set_message(t('The map was saved successfully.'));
+  }
 }
 
 /**
@@ -610,7 +651,9 @@ function _sfw_salesforce_default_record_type($sf_object) {
  */
 function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
   $object_info = $sfapi->objectDescribe($sf_object);
-  $field_list = array();
+  $field_list = array(
+    NULL => '-',
+  );
   foreach ($object_info['fields'] as $field) {
     if ($field['updateable']) { // Filter out fields that can't be altered
       $field_list[$field['name']] = $field['label'];
