@@ -394,15 +394,53 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
  *   The value of the field you requested
  */
 function _sfw_default_value($field, $form_state) {
+  $node = $form_state['build_info']['args'][0];
+  if (empty($form_state['input']) && !isset($node->salesforce_webform_map)) {
+    return NULL;
+  }
+
   // If there isn't any user contributed data yet, check against the node
-  // @TODO: Requires adding map entity on node load
   if (empty($form_state['input'])) {
-    // Check against the node at $form_state['build_info']['args'][0]
+    // Check against the node
+    $map = $node->salesforce_webform_map;
     switch ($field) {
+      // The top level fields
+      case 'salesforce_object_type':
+      case 'salesforce_record_type':
+        return $map->$field;
+
       case 'salesforce_dedupe_none':
-        // if not configured in node
+        if (empty($map->salesforce_dedupe_field) || $map->salesforce_dedupe_field == 'salesforce_dedupe_none') {
           return TRUE;
-        // else return node's value
+        }
+        return FALSE;
+
+      default:
+        if (strpos($field, 'dedupe') === FALSE) {
+          // All of these are merely in the field map
+          if (isset($map->field_map[$field])) {
+            return $map->field_map[$field];
+          }
+          return NULL;
+        }
+        // If we already know that there are no dedupe fields, don't bother
+        else if ($map->salesforce_dedupe_field != 'salesforce_dedupe_none') {
+          // And these guys are all dedupe fields which actually need to check
+          // against the salesforce_dedupe value
+
+          // Get the CID
+          $field_parts = explode('_', $field);
+          $cid = array_pop($field_parts);
+
+          // Get the mapped field for this componant
+          $sf_field = _sfw_default_value('cid_'. $cid, $form_state);
+
+          // See if this is the currently configured dedupe field
+          if ($map->salesforce_dedupe_field == $sf_field) {
+            return TRUE;
+          }
+          return FALSE;
+        }
     }
   }
   else {
@@ -457,8 +495,12 @@ function _sfw_default_value($field, $form_state) {
 
         if (strpos($field, 'dedupe') === FALSE && isset($form_state['input']['field_map'])) {
           // These guys are all salesforce_webform_map fields
-          return $form_state['input']['field_map']['salesforce_webform_map'][$cid][$field];
+          if (isset($form_state['input']['field_map']['salesforce_webform_map'][$cid][$field])) {
+            return $form_state['input']['field_map']['salesforce_webform_map'][$cid][$field];
+          }
+          return NULL;
         }
+        // If we already know that there are no dedupe fields, don't bother
         else if (isset($form_state['input']['salesforce_dedupe']) && $form_state['input']['salesforce_dedupe'] != 'salesforce_dedupe_none') {
           // And these guys are all dedupe fields which actually need to check
           // against the salesforce_dedupe value
@@ -470,9 +512,8 @@ function _sfw_default_value($field, $form_state) {
           if ($form_state['input']['salesforce_dedupe'] == $sf_field) {
             return TRUE;
           }
+          return FALSE;
         }
-
-
     }
   }
   return NULL;
