@@ -1262,6 +1262,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
+    'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
     'ORDER BY r.next_charge ASC ', 0, $limit,
     array(':now' => $now))->fetchAll();
   return $donations;
