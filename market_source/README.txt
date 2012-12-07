@@ -16,6 +16,12 @@ None.
 
 * Custom Market Source fields can be configured via the admin interface: admin/settings/market_source
 
+-- TROUBLESHOOTING --
+
+* If a link used to arrive at a Market Source monitored page has rel set to 
+  "nofollow", the initial referrer and referrer information will be lost.
+  Per spec, rel="nofollow" removed the referrer information from the request.
+  See: http://www.w3schools.com/html5/att_a_rel.asp
 
 -- CONTACT --
 Current maintainers:
