@@ -79,6 +79,21 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
    * Tests for the mapping form
    */
   public function testMappingForm() {
-    // @TODO
+    // Form throws message if the webform has no components
+    $webform_no_components = $this->swCreateWebform(FALSE);
+    $this->drupalGet('node/'. $webform_no_components->nid .'/webform/salesforce-map');
+    $this->assertText('You must first add components to your webform', 'Message appears when webform has no components.');
+
+    // Form throws message if it cannot connect to Salesforce
+    $webform = $this->swCreateWebform();
+    $this->drupalGet('node/'. $webform->nid .'/webform/salesforce-map');
+    $this->assertText('Cannot connect to Salesforce', 'Message appears when Salesforce is not connected.');
+
+    // Form displays only the object type select after connecting to Salesforce
+    $this->swSalesforceConnect();
+    $this->drupalGet('node/'. $webform->nid .'/webform/salesforce-map');
+    $this->assertFieldById('salesforce-object-type', '', 'Salesforce object type field exists.');
+    $this->assertNoFieldById('salesforce-record-type', '', 'Salesforce record type is hidden as expected.');
+    $this->assertNoFieldById('salesforce-field-map-nid', '', 'Node id mapping is hidden as expected.');
   }
 }
