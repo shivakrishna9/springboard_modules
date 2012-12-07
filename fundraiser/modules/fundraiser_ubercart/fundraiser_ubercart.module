@@ -572,8 +572,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
  * Implements hook_fundraiser_donation_process().
  */
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
-  // Grab the gateway configuration from fundriaser's data.
-  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_gateway_info(_fundraiser_get_donation_gateway($did));
   // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {

@@ -1462,12 +1462,16 @@ function fundraiser_donation_create($donation) {
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
   $fundraiser_node = node_load($donation->nid);
+  if (is_array($fundraiser_node->gateway)) {
+    $fundraiser_node->gateway = !empty($fundraiser_node->gateway['id']) ? $fundraiser_node->gateway['id'] : '';
+  }
+  $donation->gateway = $fundraiser_node->gateway;
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid,  // Submission user id.
     'sid' => $donation->sid,  // Submission id.
-    'gateway' => $fundraiser_node->gateway,
+    'gateway' => $donation->gateway,
     'txn_id' => '',
   );
   _fundraiser_create_donation($donation_record);
@@ -2149,7 +2153,7 @@ function _fundraiser_get_refund_by_did($did) {
  */
 function _fundraiser_get_donation_gateway($did) {
   $gateway = (object) array();
-  // First check the donation table.
+  // First check the donation table. It trumps the fundraiser table in case the FR has changed since.
   $gateway->gateway = db_query('SELECT d.gateway FROM {fundraiser_donation} d ' .
     'WHERE d.did = :did', array(':did' => $did))->fetchField();
   // Then fall back to the gateway on the original fundraiser.
