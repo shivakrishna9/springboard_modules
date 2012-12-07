@@ -95,5 +95,45 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldById('salesforce-object-type', '', 'Salesforce object type field exists.');
     $this->assertNoFieldById('salesforce-record-type', '', 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldById('salesforce-field-map-nid', '', 'Node id mapping is hidden as expected.');
+
+    // Select a Salesforce object with a record type
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Opportunity',
+    );
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
+    $this->assertFieldById('salesforce-record-type', '', 'Salesforce record type is displayed because Opportunity object has a record type.');
+    $this->assertFieldById('salesforce-field-map-nid', '', 'Node id mapping has shown up.');
+
+    // Select a Salesforce object without a record type
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Contact',
+    );
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
+    $this->assertNoFieldById('salesforce-record-type', '', 'Salesforce record type is hidden because Contact object does not have a record type.');
+    $this->assertFieldById('salesforce-field-map-nid', '', 'Node id mapping has shown up.');
+
+    // Fill out the mapping for the first and last names
+    $names = array(
+      1 => 'FirstName',
+      2 => 'LastName',
+    );
+    foreach ($names as $cid => $sf_field) {
+      $empty_dedupe_field = '<input type="hidden" name="field_map[salesforce_webform_map]['. $cid .'][salesforce_dedupe_'. $cid .']">';
+      $this->assertFieldById('salesforce-field-map-webform-cid-'. $cid, '', 'Mapping field for cid '. $cid .' has shown up.');
+      $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up for an unmapped field.');
+      $edit['field_map[salesforce_webform_map]['. $cid .'][cid_'. $cid .']'] = $sf_field;
+      $this->drupalPostAjax(NULL, $edit, 'field_map[salesforce_webform_map]['. $cid .'][cid_'. $cid .']');
+      $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up on a mapped field that is not unique.');
+    }
+
+    // Set the email address mapping
+    $empty_dedupe_field = '<input type="hidden" name="field_map[salesforce_webform_map][3][salesforce_dedupe_3]">';
+    $this->assertFieldById('salesforce-field-map-webform-cid-3', '', 'Mapping field for cid 3 has shown up.');
+    $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up for an unmapped field.');
+    $edit['field_map[salesforce_webform_map][3][cid_3]'] = 'Email';
+    $this->drupalPostAjax(NULL, $edit, 'field_map[salesforce_webform_map][3][cid_3]');
+    $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for unique Salesforce field.');
+    $dedupe_field = '<input name="salesforce_dedupe" type="radio" id="salesforce-field-dedupe-cid-3" value="Email" class="form-radio">';
+    $this->assertRaw($dedupe_field, 'Dedupe field radio showed up for a unique Salesforce field.');
   }
 }
