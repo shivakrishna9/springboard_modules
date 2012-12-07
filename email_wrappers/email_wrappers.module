@@ -105,7 +105,6 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
  * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
  */
 function email_wrappers_form_alter(&$form, $form_state, $form_id) {
-  drupal_set_message('form id:' . $form_id);
   // TODO: replace with specific hook_form_FORM_ID_alter()
   
   // Add a few tweaks to the webform email list form.
