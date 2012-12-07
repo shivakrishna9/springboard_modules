@@ -83,8 +83,8 @@ function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_
     // TODO: correctly set default on this form element based on prior settings.
     $form['send_on_settings'] = array(
       '#type' => 'radios',
-      '#title' => t('Send on successful donation'),
-      '#description' => t('Only send a copy of this email if the donation is successful.'),
+      '#title' => t('Send when'),
+      '#description' => t('Only send a copy of this email if the selected condition is met.'),
       '#options' => $send_options,
       '#default_value' => $send_default,
       '#weight' => -49,

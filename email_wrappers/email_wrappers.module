@@ -81,13 +81,33 @@ function email_wrappers_preview_modal() {
 
 }
 
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * For donation forms, set default "to" email address to donation form email address component
+ * on webform email add form.
+ */
+function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
+  if (fundraiser_is_donation_type($form['#node']->type)) {
+    $cid = _email_wrappers_get_cid($form['#node']->webform['components'], 'mail');
+    $form['add']['email_option']['#default_value'] = 'component';
+    if ($cid) {
+      $form['add']['email_component']['#default_value'] = $cid;
+    }
+      
+  }
+}
+
 /**
  * Implements hook_form_alter().
  *
  * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
  */
 function email_wrappers_form_alter(&$form, $form_state, $form_id) {
+  drupal_set_message('form id:' . $form_id);
   // TODO: replace with specific hook_form_FORM_ID_alter()
+  
   // Add a few tweaks to the webform email list form.
   if ($form_id === 'webform_email_edit_form') {
     $template_nid = FALSE;
@@ -620,4 +640,17 @@ function _email_wrappers_preview($op, $message, $nid) {
       break;
   }
   return $output;
+}
+
+/**
+ * Quick and dirty helper function to dredge up the cid of a webform component
+ * given the standard array of components and a form key.
+ */
+function _email_wrappers_get_cid($components, $form_key) {
+  foreach ($components as $cid => $component) {
+    if ($component['form_key'] == $form_key) {
+      return $cid;
+    }
+  }
+  return FALSE;
 }
