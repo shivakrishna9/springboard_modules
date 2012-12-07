@@ -885,9 +885,9 @@ function _fundraiser_ubercart_get_charged_by_status($status) {
   $chargable_states = array('in_checkout', 'post_checkout'); // These are hard set from Ubercart.
   $state = db_query('SELECT state FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
   if (in_array($state, $chargable_states)) {
-    return TRUE; // If the donation is still able to be charged, say it hasn't been.
+    return FALSE; // If the donation is still able to be charged, say it hasn't been.
   }
-  return FALSE;
+  return TRUE;
 }
 
 /**
