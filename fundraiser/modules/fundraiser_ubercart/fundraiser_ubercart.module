@@ -452,7 +452,7 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status) ? 1 : 0;
   }
 
   // Time of charge.
@@ -885,9 +885,9 @@ function _fundraiser_ubercart_get_charged_by_status($status) {
   $chargable_states = array('in_checkout', 'post_checkout'); // These are hard set from Ubercart.
   $state = db_query('SELECT state FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
   if (in_array($state, $chargable_states)) {
-    return FALSE; // If the donation is still able to be charged, say it hasn't been.
+    return TRUE; // If the donation is still able to be charged, say it hasn't been.
   }
-  return TRUE;
+  return FALSE;
 }
 
 /**
