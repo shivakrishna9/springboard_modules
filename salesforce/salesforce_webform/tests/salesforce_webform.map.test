@@ -135,5 +135,42 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for unique Salesforce field.');
     $dedupe_field = '<input name="salesforce_dedupe" type="radio" id="salesforce-field-dedupe-cid-3" value="Email" class="form-radio">';
     $this->assertRaw($dedupe_field, 'Dedupe field radio showed up for a unique Salesforce field.');
+
+    // Save the form and verify the form reloaded correctly
+    $edit['salesforce_dedupe'] = 'Email';
+    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->assertText('The map was saved successfully.', 'Saving posted correctly.');
+    $this->assertFieldById('salesforce-object-type', 'Contact', 'Object Type saved and refreshed on form.');
+    foreach ($names as $cid => $sf_field) {
+      $this->assertFieldById('salesforce-field-map-webform-cid-'. $cid, $sf_field, 'Mapping for cid '. $cid .' saved and refreshed on form.');
+    }
+    $this->assertFieldById('salesforce-field-map-webform-cid-3', 'Email', 'Mapping for cid 3 saved and refreshed on on form.');
+    $this->assertFieldChecked('salesforce-field-dedupe-cid-3', 'Email dedupe field saved and selected.');
+
+    // Change the object type to change the entire form
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Opportunity',
+    );
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
+    $this->assertRaw($empty_dedupe_field, 'Form changed with object type change, empty dedupe field appeared.');
+    $this->assertNoRaw($dedupe_field, 'Form changed with object type change, dedupe option disappeared.');
+
+    // Cancel the changes and verify
+    $this->drupalPost(NULL, $edit, t('Cancel'));
+    $this->assertText('The Salesforce webform map has been reset to the original values.', 'Cancelling form posted correctly.');
+    $this->assertFieldById('salesforce-object-type', 'Contact', 'Object Type refreshed on form.');
+    foreach ($names as $cid => $sf_field) {
+      $this->assertFieldById('salesforce-field-map-webform-cid-'. $cid, $sf_field, 'Mapping for cid '. $cid .' refreshed on form.');
+    }
+    $this->assertFieldById('salesforce-field-map-webform-cid-3', 'Email', 'Mapping for cid 3 refreshed on on form.');
+    $this->assertFieldChecked('salesforce-field-dedupe-cid-3', 'Email dedupe field is selected.');
+
+    // Unmap the webform from Salesforce
+    $this->drupalPost(NULL, array(), t('Unmap'));
+    $this->assertText('The Salesforce to webform map has been removed.', 'Unmapping form posted correctly');
+    $this->assertFieldById('salesforce-object-type', '', 'Object Type field appears on form.');
+    $this->assertNoFieldById('salesforce-object-type', 'Contact', 'Object Type field does not have previously saved value.');
+    $this->assertNoFieldById('salesforce-record-type', '', 'Salesforce record type is hidden as expected.');
+    $this->assertNoFieldById('salesforce-field-map-nid', '', 'Node id mapping is hidden as expected.');
   }
 }
