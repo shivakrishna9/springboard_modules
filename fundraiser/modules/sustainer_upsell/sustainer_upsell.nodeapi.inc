@@ -9,7 +9,7 @@
 function sustainer_upsell_nodeapi(&$node, $op, $teaser, $page) {
   $donation_node = fundraiser_is_donation_type($node->type);
   if ($donation_node) {
-    switch($op) {
+    switch ($op) {
       case 'load':
         sustainer_upsell_node_load($node);
         break;
@@ -37,8 +37,8 @@ function sustainer_upsell_nodeapi(&$node, $op, $teaser, $page) {
  *   The node being loaded.
  */
 function sustainer_upsell_node_load(&$node) {
-  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_content FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
-  if(!empty($sustainer)) {
+  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_content, upsell_class, modal_width, modal_height FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
+  if (!empty($sustainer)) {
     foreach ($sustainer as $field => $value) {
       $node->{$field} = $value;
     }
@@ -52,17 +52,23 @@ function sustainer_upsell_node_load(&$node) {
  *   The node being updated.
  */
 function sustainer_upsell_node_update(&$node) {
-  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_content FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
-  if(!empty($sustainer)) {
+  $sustainer = db_fetch_array(db_query("SELECT sustainer_upsell_enabled, sustainer_upsell_content, upsell_class, modal_width, modal_height FROM {sustainer_upsell_form_settings} WHERE nid = %d", $node->nid));
+  if (!empty($sustainer)) {
     db_query(
     "
       UPDATE {sustainer_upsell_form_settings} SET 
         sustainer_upsell_enabled = '%s',
-        sustainer_upsell_content = '%s'
+        sustainer_upsell_content = '%s',
+        upsell_class = '%s',
+        modal_width = %d,
+        modal_height =%d
       WHERE nid = %d
     ",
       $node->sustainer_upsell_enabled,
       $node->sustainer_upsell_content,
+      $node->upsell_class,
+      $node->modal_width,
+      $node->modal_height,
       $node->nid
     );
   }
@@ -73,14 +79,20 @@ function sustainer_upsell_node_update(&$node) {
       (
         nid,
         sustainer_upsell_enabled,
-        sustainer_upsell_content
+        sustainer_upsell_thank_you_content,
+        upsell_class,
+        modal_width,
+        modal_height
       )
-      VALUES (%d, '%s', '%s')
+      VALUES (%d, '%s', '%s', '%s', %d, %d)
     ",
       $node->nid,
       $node->sustainer_upsell_enabled,
-      $node->sustainer_upsell_content
-    );
+      $node->sustainer_upsell_content,
+      $node->upsell_class,
+      $node->modal_width,
+      $node->modal_height
+  );
   }
 }
 
@@ -104,12 +116,18 @@ function sustainer_upsell_node_insert(&$node) {
       (
         nid,
         sustainer_upsell_enabled,
-        sustainer_upsell_thank_you_content
+        sustainer_upsell_thank_you_content,
+        upsell_class,
+        modal_width,
+        modal_height
       )
-      VALUES (%d, '%s', '%s')
+      VALUES (%d, '%s', '%s', '%s', %d, %d)
     ",
       $node->nid,
       $node->sustainer_upsell_enabled,
-      $node->sustainer_upsell_content
+      $node->sustainer_upsell_content,
+      $node->upsell_class,
+      $node->modal_width,
+      $node->modal_height
   );
 }

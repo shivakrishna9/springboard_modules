@@ -1,5 +1,35 @@
 <?php
 /**
+ * @file
+ * Install, update, and uninstall functions for the sustainer_upsell module.
+ */
+ 
+/**
+ * Implementation of hook_requirements()
+ * We need to be sure that either thickbox OR lightbox2 module
+ * is installed and active before enabling this module.
+ */
+function sustainer_upsell_requirements($phase) {
+  // Ensure translations don't break at install time
+  $t = get_t();
+  $severity = REQUIREMENT_OK;
+  
+  // Check for either lightbox2 or thickbox
+  if (!function_exists(lightbox2_menu) && !function_exists(thickbox_menu)) {
+    $severity = REQUIREMENT_ERROR;
+  }    
+  
+  // Set the requirements array
+  $requirements['sustainer_upsell'] = array(
+    'title' => $t('Modal library'), 
+    'description' => $t('The sustainer upsell module requires either the Thickbox or the Lightbox2 module to be installed in order to work.'),
+    'severity' => $severity,
+  ); 
+  
+  return $requirements;
+}
+
+/**
  * Implementation of hook_install().
  */
 function sustainer_upsell_install() {
@@ -85,3 +115,13 @@ function sustainer_upsell_schema() {
   return $schema;
 }
 
+/**
+ * Update to add the class and optional height/width for modals
+ */
+function sustainer_upsell_update_6001() {
+  $ret = array();
+  db_add_field($ret, 'sustainer_upsell_form_settings', 'upsell_class', array('type' => 'text'));
+  db_add_field($ret, 'sustainer_upsell_form_settings', 'modal_width', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_add_field($ret, 'sustainer_upsell_form_settings', 'modal_height', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE));
+  return $ret;
+}

@@ -8,3 +8,4 @@ dependencies[] = uc_product
 dependencies[] = uc_payment
 dependencies[] = profile
 dependencies[] = uc_cart
+dependencies[] = mailtron

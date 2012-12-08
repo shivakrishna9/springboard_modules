@@ -1,6 +1,7 @@
 name = Sustainer Upsell
-description = Upsell lightbox for recurring donations
+description = Upsell lightbox for recurring donations. Requires either Thickbox or Lightbox2.
 core = 6.x
 package = Jackson River Springboard - extras
 dependencies[] = fundraiser
+dependencies[] = mailtron
 version =  6.x-3.3
