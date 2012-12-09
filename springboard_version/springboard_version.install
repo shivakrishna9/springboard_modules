@@ -24,6 +24,8 @@ function springboard_version_update_6033() {
  * NOTE: ALWAYS RUN THIS AS PART OF UPDATE HOOKS.
  */
 function _springboard_version_hash_modules() {
+  // Include the module so we have what we need.
+  module_load_include('module', 'springboard_version', 'springboard_version');
   $springboard_tracked = springboard_version_info();
   $hashes = '';
   foreach ($springboard_tracked as $module => $version) {

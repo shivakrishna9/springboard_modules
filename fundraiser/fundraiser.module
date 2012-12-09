@@ -1521,7 +1521,7 @@ function fundraiser_get_country_zones($country_id) {
   }
   else {
     $results = db_query('SELECT * FROM {uc_zones} ' .
-      'WHERE zone_country_id = %x ORDER BY zone_code ASC', $country_id);
+      'WHERE zone_country_id = %d ORDER BY zone_code ASC', $country_id);
   }
   $zone_array[$country_id] = array();
   while ($zone = db_fetch_object($results)) {
