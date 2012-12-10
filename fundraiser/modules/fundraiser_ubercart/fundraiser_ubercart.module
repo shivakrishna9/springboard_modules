@@ -452,7 +452,7 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status) ? 1 : 0;
   }
 
   // Time of charge.
@@ -572,8 +572,8 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
  * Implements hook_fundraiser_donation_process().
  */
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
-  // Grab the gateway configuration from fundriaser's data.
-  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_get_donation_gateway($donation->did);
   // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {

@@ -4,23 +4,12 @@
  * Implements hook_schema().
  */
 function salesforce_webform_schema() {
-  $schema['salesforce_webform_mapping'] = array(
+  $schema['salesforce_webform_map'] = array(
     'description' => 'Webform to Salesforce mappings',
     'fields' => array(
-      'salesforce_webform_mapping_id' => array(
-        'description' => 'Primary Key: Unique salesforce_webform_mapping entity ID.',
-        'type' => 'serial',
-        'not null' => TRUE,
-      ),
       'nid' => array(
-        'description' => 'Id of the webform node to which this map applies.',
+        'description' => 'Node id of the webform node to which this map applies.',
         'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'name' => array(
-        'description' => 'The machine-readable name of this salesforce_mapping type.',
-        'type' => 'varchar',
-        'length' => '32',
         'not null' => TRUE,
       ),
       'salesforce_object_type' => array(
@@ -37,20 +26,28 @@ function salesforce_webform_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'field_mappings' => array(
+      'salesforce_dedupe_field' => array(
+        'description' => 'The Salesforce field that will be used for UPSERT',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'field_map' => array(
         'description' => 'A serialized object that stores the field mappings.',
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
+        'serialize' => TRUE,
       ),
       'created' => array(
-        'description' => 'The Unix timestamp when the salesforce_mapping was created.',
+        'description' => 'The Unix timestamp when the salesforce_map was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'updated' => array(
-        'description' => 'The Unix timestamp when the salesforce_mapping was most recently saved.',
+        'description' => 'The Unix timestamp when the salesforce_map was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -67,14 +64,16 @@ function salesforce_webform_schema() {
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
-        'default' => 1,
+        'default' => 0x01,
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
       ),
     ),
-    'primary key' => array('salesforce_webform_mapping_id'),
-    'unique keys' => array(
-      'name' => array('name'),
-      'webform_nid' => array('nid', 'salesforce_object_type')
-    ),
+    'primary key' => array('nid'),
   );
 
   return $schema;

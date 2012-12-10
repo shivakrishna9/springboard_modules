@@ -1,0 +1,141 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for salesforce_webform
+ */
+
+/**
+ * Tests basic set up for mapping salesforce objects to webforms
+ */
+class SalesforceWebformTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'General Salesforce Webform Tests',
+      'description' => 'Ensure that the salesforce_webform module functions properly.',
+      'group' => 'Salesforce Webform',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp(
+      'entity',
+      'libraries',
+      'salesforce',
+      'salesforce_mapping',
+      'salesforce_pull',
+      'salesforce_push',
+      'webform',
+      'salesforce_webform'
+    );
+
+    // Create an admin user
+    $permissions = array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+      'administer salesforce',
+      'access all webform results',
+      'access own webform results',
+      'edit all webform submissions',
+      'delete all webform submissions',
+      'access own webform submissions',
+      'edit own webform submissions',
+      'delete own webform submissions',
+      'map salesforce to webform',
+    );
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    // Don't forget, need to pass --uri in drush command in order for logging
+    // in to work
+    $this->drupalLogin($this->admin_user);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+
+  /**
+   * Creates a simple webform of first name, last name and email address
+   *
+   * @return Object
+   *   Node object of the webform
+   */
+  public function swCreateWebform($with_components = TRUE) {
+    // Create a webform and add a few components
+    $settings = array(
+      'type' => 'webform',
+      'title' => 'Webform Example',
+    );
+    $webform = $this->drupalCreateNode($settings);
+    if (!$with_components) {
+      return $webform;
+    }
+    $component_name_first = array(
+      'type' => 'textfield',
+      'nid' => $webform->nid,
+      'cid' => NULL,
+      'clone' => FALSE,
+      'name' => 'First Name',
+      'form_key' => 'first_name',
+      'extra' => array(
+        'title_display' => 'before',
+        'private' => 0,
+        'disabled' => 0,
+        'unique' => 0,
+        'conditional_operator' => '',
+      ),
+      'mandatory' => 0,
+      'pid' => 0,
+      'weight' => 0,
+      'value' => '',
+    );
+    $component_name_last = $component_name_first;
+    $component_name_last['name'] = 'Last Name';
+    $component_name_last['form_key'] = 'last_name';
+    $component_name_last['weight'] = 1;
+    $component_email = $component_name_first;
+    $component_email['type'] = 'email';
+    $component_email['name'] = 'Email';
+    $component_email['form_key'] = 'email';
+    $component_email['weight'] = 2;
+    webform_component_insert($component_name_first);
+    webform_component_insert($component_name_last);
+    webform_component_insert($component_email);
+    return node_load($webform->nid, NULL, TRUE);
+  }
+
+  /**
+   * Grabs the Salesforce connection information from the live db and authenticates
+   *
+   * @return Object
+   *   Salesforce Object
+   */
+  public function swSalesforceConnect() {
+    // Steal the Salesforce configuration from the live database
+    global $db_prefix;
+    $table = empty($db_prefix) ? 'variable' : $db_prefix .'_variable';
+    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
+    $result = db_query($sql);
+    foreach ($result as $record) {
+      variable_set($record->name, unserialize($record->value));
+    }
+
+    // Test the connection
+    $salesforce = salesforce_get_api();
+    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+    return $salesforce;
+  }
+}

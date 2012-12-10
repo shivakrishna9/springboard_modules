@@ -72,12 +72,21 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
  */
 function webform_confirmations_form_webform_email_edit_form_alter(&$form, $form_state, $form_id) {
   if (module_exists('email_wrappers') && fundraiser_is_donation_type($form['node']['#value']->type)) {
+    
     $node = $form['node']['#value'];
-    $form['send_on_order_success'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Send on successful donation'),
-      '#description' => t('Only send a copy of this email if the donation is successful.'),
-      '#default_value' => 1,
+    $send_default = _webform_confirmation_send_on_settings($form_state);
+    $send_options = array(
+      0 => t('Always'),
+      1 => t('Donation succeeds'),
+      2 => t('Donation fails'),
+    );
+    // TODO: correctly set default on this form element based on prior settings.
+    $form['send_on_settings'] = array(
+      '#type' => 'radios',
+      '#title' => t('Send when'),
+      '#description' => t('Only send a copy of this email if the selected condition is met.'),
+      '#options' => $send_options,
+      '#default_value' => $send_default,
       '#weight' => -49,
     );
     $form['template']['tokens'] = array(
@@ -166,40 +175,37 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
  */
 function webform_confirmations_fundraiser_donation_success($donation) {
   if (module_exists('email_wrappers')) {
-    $results = email_wrappers_load_settings($donation->nid, NULL);
+    $settings = email_wrappers_load_settings($donation->nid, NULL);
 
-    if ($results) {
-      while ($settings = $results->fetchAssoc()) {
-        $settings['extra'] = unserialize($settings['extra']);
-   
-        if (isset($settings['extra']['send_on_order_success']) && $settings['extra']['send_on_order_success']) {
-           
-          $nid = $settings['nid'];
-          $eid = $settings['eid'];
-          $account = $donation->user;
-          
-          // Pull the deferred mail queue in and see if we have any pending mails to send.
-          $mail_queue = &drupal_static('email_wrappers_mail_queue');
-          
-          if (isset($mail_queue[$nid][$eid])) {
-            $params = $mail_queue[$nid][$eid]['params'];
-            $message = $params['message'];
+    if ($settings) {
+      foreach ($settings as $mail_config) {
 
-            // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
-            $token_set = array('node' => node_load($nid), 'donation' => $donation);
-            
-            $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
-            $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
-            
-            drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
-            unset($mail_queue[$nid][$eid]);
-          }
+        if (isset($mail_config['extra']['send_on_donation_success']) && $mail_config['extra']['send_on_donation_success'] === TRUE) {
+          _webform_confirmation_send_confirmation_mail($mail_config, $donation);
         }
       }
     }
   }
 }
 
+
+/**
+ * Implements hook_fundraiser_donation_decline().
+ *
+ * If
+ */
+function webform_confirmations_fundraiser_donation_decline($donation) {
+  if (module_exists('email_wrappers')) {
+    $settings = email_wrappers_load_settings($donation->nid, NULL);
+    if ($settings) {
+      foreach ($settings as $mail_config) {
+        if (isset($mail_config['extra']['send_on_donation_decline']) && $mail_config['extra']['send_on_donation_decline'] === TRUE) {
+          _webform_confirmation_send_confirmation_mail($mail_config, $donation);
+        }
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_node_load().
@@ -303,8 +309,78 @@ function _webform_confirmations_get_by_nids($nids) {
  */
 function _webform_confirmations_email_edit_validate($form, &$form_state) {
 
-  $form_state['extra']['send_on_order_success'] = $form_state['values']['send_on_order_success'];
-  $form_state['extra']['send_on_submission'] = !$form_state['values']['send_on_order_success'];
+  switch ($form_state['values']['send_on_settings']) {
+    case 0:
+      $form_state['extra']['send_on_donation_success'] = FALSE;
+      $form_state['extra']['send_on_donation_decline'] = FALSE;
+      $form_state['extra']['send_on_submission'] = TRUE;
+      break;
+    case 1:
+      $form_state['extra']['send_on_donation_success'] = TRUE;
+      $form_state['extra']['send_on_donation_decline'] = FALSE;
+      $form_state['extra']['send_on_submission'] = FALSE;
+      break;
 
+    case 2:
+      $form_state['extra']['send_on_donation_success'] = FALSE;
+      $form_state['extra']['send_on_donation_decline'] = TRUE;
+      $form_state['extra']['send_on_submission'] = FALSE;
+      break;
+  }
 }
 
+/**
+ * Retrieve send on defaults from saved settings.
+ */
+function _webform_confirmation_send_on_settings($form_state) {
+  $default = 1;
+  
+  if (isset($form_state['build_info']['args'][1]['eid'])) {
+    $nid = $form_state['build_info']['args'][1]['nid'];
+    $eid = $form_state['build_info']['args'][1]['eid'];
+    $settings = email_wrappers_load_settings($nid, $eid);
+    $extra = $settings['extra'];
+    if (isset($extra['send_on_submission']) && $extra['send_on_submission']) {
+      $default = 0;
+    }
+    elseif (isset($extra['send_on_donation_success']) && $extra['send_on_donation_success']) {
+      $default = 1;
+    }
+    elseif (isset($extra['send_on_donation_decline']) && $extra['send_on_donation_decline']) {
+      $default = 2;
+    }
+  }
+ 
+  return $default;
+}
+
+/**
+ * Send confirmation mail.
+ *
+ * @param $settings
+ * Email Wrappers settings array.
+ *
+ * @param $donation
+ * Fundraiser donation object.
+ */
+function _webform_confirmation_send_confirmation_mail($settings, $donation) {
+  $nid = $settings['nid'];
+  $eid = $settings['eid'];
+  $account = $donation->user;
+          
+  // Pull the deferred mail queue in and see if we have any pending mails to send.
+  $mail_queue = &drupal_static('email_wrappers_mail_queue');
+
+  if (isset($mail_queue[$nid][$eid])) {
+    $params = $mail_queue[$nid][$eid]['params'];
+    $message = $params['message'];
+
+    // Email Wrappers handles webform token replacement so all we need to do is pick off order tokens.
+    $token_set = array('node' => node_load($nid), 'donation' => $donation);
+    $params['settings']['html_message'] = token_replace($params['settings']['html_message'], $token_set);
+    $params['settings']['text_message'] = token_replace($params['settings']['text_message'], $token_set);
+
+    drupal_mail('email_wrappers', 'wf_submission', $message['to'], user_preferred_language($account), $params);
+    unset($mail_queue[$nid][$eid]);
+  }
+}
