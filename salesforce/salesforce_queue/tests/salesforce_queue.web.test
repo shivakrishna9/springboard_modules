@@ -1,0 +1,6 @@
+<?php
+
+/**
+ * @file
+ * Salesforce queue module web tests.
+ */

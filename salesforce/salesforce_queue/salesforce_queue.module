@@ -9,7 +9,7 @@
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {
-  // Remove overly restrictive validation routine. Ideally the current monolithic 
+  // Remove overly restrictive validation routine. Ideally the current monolithic
   // validation handler be broken down into 3 separate validation routines:
   // - Check for existence of duplicate map
   // - Field type validation (this is still too strict IMHO)
@@ -32,50 +32,132 @@ function salesforce_queue_menu() {
   return $items;
 }
 
-function salesforce_queue_add() {
+/**
+ * Implements hook_salesforce_async_queue_name().
+ */
+function salesforce_queue_salesforce_async_queue_name_alter(&$queue_name) {
+  // Change the queue_name so we can implement SalesforceQueue.
+  $queue_name = 'salesforce';
+}
+
+/**
+ * Implements hook_salesforce_push_queue_item_alter().
+ */
+function salesforce_queue_salesforce_push_queue_item_alter(&$item, $mapping) {
+  // Go ahead and convert the entity into it's Salesforce representation before
+  // stashing it into the queue.
+  print '<pre>';
+  print_r($mapping);
+  print '</pre>';
+  //die();
 
 }
 
-function salesforce_queue_delete() {
-
-}
 
 function salesforce_queue_sandbox() {
-  $sfapi = salesforce_get_api();
-  module_load_include('inc', 'salesforce_soap');
-  $soap = new SalesforceSoapPartner($sfapi);
-  
- // define("USERNAME", "jr+demo69@jacksonriver.com");
- // define("PASSWORD", "WNju0nBG");
- // define("SECURITY_TOKEN", "04r9vhFnkfV5f0BSjImUDOym3");
-
-  //$path = libraries_get_path('salesforce');
-  //require_once($path . '/soapclient/SforcePartnerClient.php');
-  //$wsdl = libraries_get_path('salesforce') . '/soapclient/partner.wsdl.xml';
-  //$soap = new SforcePartnerClient();
-  //$soap->createConnection($wsdl);
-  //$soap->login(USERNAME, PASSWORD.SECURITY_TOKEN);
-
-  $sObject = new stdClass();
-  $sObject->fields->LastName  = 'John';
-  $sObject->fields->FirstName = 'Doe';
-  $sObject->type  = 'Contact';
- 
-
-  try {
-    $response = $soap->create(array($sObject));
-  }
-  catch (exception $e) {
-    print '<pre>';
-    print_r($e);
-    print '</pre>';
-  }
-
-  krumo($response);
-
-
+  $page = array(
+    'FirstName' => 'Phillip',
+    'LastName' => 'Cave',
+    'Account' => 'User::User::2',
+  );
+  $qid = salesforce_queue_insert('1', 'entity', 'page', 'Page', 'create', $page);
 }
 
-function salesforce_queue_convert_to_fields($object) {
-  
+
+/**
+ * Inserts an item into the Salesforce queue.
+ *
+ * @param $drupal_id
+ *   The id of the Drupal object. This could be a nid, uid, sid, etc.
+ * @param $module
+ *   The module name that implements the delta. For node types this would be entity.
+ * @param $delta
+ *   The module sub-type. For node types this would be node type name, article for instance.
+ * @param $salesforce_type
+ *   The name of the Salesforce type that is being exported.
+ * @param $operation
+ *   The CRUD operation being run in Salesforce (upsert, create, update, delete).
+ * @param $sobject
+ *   The Salesforce object that is being queued.
+ *
+ * @return
+ *   The id of the queue entry or false if insertion fails or a duplicate is already
+ *   in the queue.
+ */
+function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject) {
+
+  // allow other modules to alter the object before it is queued
+  drupal_alter('salesforce_queue_prequeue', $sobject, $drupal_id, $module, $delta);
+
+  if (!salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)) {
+
+    $qid = db_insert('salesforce_queue')
+      ->fields(array(
+        'drupal_id' => $drupal_id,
+        'module' => $module,
+        'delta' => $delta,
+        'salesforce_type' => $salesforce_type,
+        'operation' => $operation,
+        'sobject' => json_encode($sobject),
+        'created' => REQUEST_TIME,
+        ))
+      ->execute();
+
+    return $qid;
+  }
+  else {
+    // TODO: log or throw exception?
+    return FALSE;
+  }
+}
+
+/**
+ * Determines if an item is already in the queue.
+ *
+ * @param $drupal_id
+ *   The id of the Drupal object. This could be a nid, uid, sid, etc.
+ * @param $module
+ *   The module name that implements the delta. For node types this would be entity.
+ * @param $delta
+ *   The module sub-type. For node types this would be node type name, article for instance.
+ * @param $salesforce_type
+ *   The name of the Salesforce object type.
+ */
+function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type) {
+  $query = db_select('salesforce_queue', 's')
+    ->fields('s', array('id'))
+    ->condition('s.drupal_id', $drupal_id)
+    ->condition('s.module', $module)
+    ->condition('s.delta', $delta)
+    ->condition('s.salesforce_type', $salesforce_type);
+
+  $count = $query->countQuery()->execute()->fetchField();
+
+  // Return TRUE if this item is already in the queue.
+  return $count > 0;
+}
+
+/**
+ * Removes an item from the queue.
+ *
+ * @param $drupal_id
+ *   The id of the Drupal object. This could be a nid, uid, sid, etc.
+ * @param $module
+ *   The module name that implements the delta. For node types this would be entity.
+ * @param $delta
+ *   The module sub-type. For node types this would be node type name, article for instance.
+ * @param $salesforce_type
+ *   The name of the Salesforce object type.
+ */
+function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type) {
+  // TODO: pre-delete hook
+  $count = db_delete('salesforce_queue')
+    ->condition('drupal_id', $drupal_id)
+    ->condition('module', $module)
+    ->condition('delta', $delta)
+    ->condition('salesforce_type', $salesforce_type)
+    ->execute();
+
+  // TODO: log removal
+  return $count;
 }
