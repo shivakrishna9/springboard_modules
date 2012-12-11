@@ -332,7 +332,7 @@ function _market_source_validate_cid($val) {
   $val = trim($val);
   if (!empty($val)) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
-      if (strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+      if (strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = salesforce_management_api_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
