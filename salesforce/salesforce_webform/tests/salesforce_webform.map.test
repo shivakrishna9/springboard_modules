@@ -101,6 +101,14 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('salesforce_object_info[salesforce_record_type]', '', 'Salesforce record type is displayed because Opportunity object has a record type.');
     $this->assertFieldByName('field_map[salesforce_node_map][nid][sf_field]', '', 'Node id mapping has shown up.');
 
+    // Fill out a couple mappings with the same webform field
+    // Validation will reject this
+    $this->swFormMapField('1', 'Name', 'salesforce_webform_map', TRUE);
+    $this->swFormMapField('2', 'Name', 'salesforce_webform_map', TRUE);
+    $edit = $this->_swfEdit;
+    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->assertText('Multiple webform components cannot be mapped to the same Salesforce fields.', 'Validation rejected correctly.');
+    $this->_swfEdit = array();
 
     // Select a Salesforce object without a record type
     $this->swFormMapField('salesforce_object_type', 'Contact', 'salesforce_object_info');

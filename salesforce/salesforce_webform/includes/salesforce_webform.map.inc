@@ -317,8 +317,37 @@ function salesforce_webform_map_form_ajax_sf_dedupe($form, &$form_state) {
  * Validate the mapping form
  */
 function salesforce_webform_map_form_validate($form, &$form_state) {
-  // @TODO
-  //   - Using the same Salesforce field twice
+  if (!isset($form_state['input']['field_map'])) {
+    // There is nothing to check
+    return;
+  }
+
+  // No Salesforce field can be used twice
+  $error_text = t('Multiple webform components cannot be mapped to the same Salesforce fields.');
+  $sf_fields = array();
+  foreach ($form_state['input']['field_map'] as $group => $rows) {
+    foreach ($rows as $drupal_value => $sf_values) {
+      $sf_field = isset($sf_values['sf_field']) ? $sf_values['sf_field'] : NULL;
+      if (!empty($sf_field)) {
+        $field_path = 'field_map]['. $group .']['. $drupal_value .'][sf_field';
+        $count = isset($sf_fields[$sf_field]) ? count($sf_fields[$sf_field]) : 0;
+        if ($count == 1) {
+          // Set error on current field
+          form_set_error($field_path, $error_text);
+
+          // Set error on prior field
+          $prior_drupal_value = key($sf_fields[$sf_field]);
+          $prior_field_path = 'field_map]['. $sf_fields[$sf_field][$prior_drupal_value] .']['. $prior_drupal_value .'][sf_field';
+          form_set_error($prior_field_path, $error_text);
+        }
+        else if ($count > 1) {
+          // Add another error for this field being used again
+          form_set_error($field_path, $error_text);
+        }
+        $sf_fields[$sf_field][$drupal_value] = $group;
+      }
+    }
+  }
 }
 
 /**
