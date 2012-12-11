@@ -151,10 +151,21 @@ function salesforce_webform_node_delete($node) {
  */
 function salesforce_webform_save_map($map) {
   if (is_array($map)) {
-    // Creates an entity object, but does not add it to the database
-    $map = entity_create('salesforce_webform_map', $map);
+    // Allow sending an array and updating an existing entity with the values
+    $entity = salesforce_webform_load_map($map['nid']);
+    if ($entity) {
+      foreach ($map as $key => $value) {
+        $entity->$key = $value;
+      }
+      $map = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database
+      $map = entity_create('salesforce_webform_map', $map);
+    }
   }
   if ($map->entityType() == 'salesforce_webform_map') {
+    $map->updated = time();
     // Adds the data to the database
     return entity_save('salesforce_webform_map', $map);
   }
