@@ -44,7 +44,15 @@ function salesforce_webform_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_webform.map.inc',
   );
-
+  $items['admin/config/content/salesforce-webform'] = array(
+    'title' => 'Salesforce Webform Settings',
+    'page callback' => 'salesforce_webform_admin_page',
+    'description' => 'Configure how the Salesforce integration will work with webform submissions.',
+    // I am assuming that if you can configure Salesforce you also understand
+    // the best way to configure the Salesforce webform interface
+    'access arguments' => array('administer salesforce'),
+    'file' => 'includes/salesforce_webform.admin.inc',
+  );
   return $items;
 }
 

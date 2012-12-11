@@ -1,6 +1,30 @@
 <?php
 
 /**
+ * @file
+ * Install hooks and schema
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function salesforce_webform_install() {
+  if (module_exists('salesforce_queue')) {
+    variable_set('salesforce_webform_queue_system', 'salesforce_queue');
+  }
+  else {
+    variable_set('salesforce_webform_queue_system', 'instant');
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function salesforce_webform_uninstall() {
+  variable_del('salesforce_webform_queue_system');
+}
+
+/**
  * Implements hook_schema().
  */
 function salesforce_webform_schema() {
