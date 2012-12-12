@@ -279,6 +279,26 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_submission_map']);
 
+  // Mapping configuration options
+  $form['map_config'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Map Configuration',
+  );
+
+  // Options for Syncing with Salesforce
+  $form['map_config']['sync_options'] = array(
+    '#id' => 'salesforce-map-config-sync',
+    '#type' => 'checkboxes',
+    '#required' => TRUE,
+    '#title' => t('Salesforce Sync Options'),
+    '#description' => t('When should submissions of this webform be synced with Salesforce?'),
+    '#default_value' => _sfw_default_value($form_state, 'sync_options', 'map_config'),
+    '#options' => array(
+      'create' => t('New submissions'),
+      'update' => t('Modified submissions'),
+      'delete' => t('Deleted submissions'),
+    ),
+  );
 
   // Buttons buttons buttons
   $form['submit'] = array(
@@ -428,8 +448,16 @@ function _sfw_default_value($form_state, $field, $group = NULL, $drupal_field = 
   }
 
   // Salesforce object, record and dedupe field value
-  if (empty($group) || $group == 'salesforce_object_info') {
-    if (isset($map[$field])) {
+  if (empty($group) || $group == 'salesforce_object_info' || $group == 'map_config') {
+    if ($field == 'sync_options' && empty($map['sync_options'])) {
+      // Make all the default value
+      return array(
+        'create',
+        'update',
+        'delete',
+      );
+    }
+    else if (isset($map[$field])) {
       return $map[$field];
     }
     else if ($field == 'salesforce_record_type') {
@@ -506,6 +534,8 @@ function _sfw_convert_input($input) {
       }
     }
   }
+
+  $map['sync_options'] = isset($input['map_config']['sync_options']) ? $input['map_config']['sync_options'] : array();
 
   return $map;
 }

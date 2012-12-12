@@ -64,6 +64,13 @@ function salesforce_webform_schema() {
         'not null' => FALSE,
         'serialize' => TRUE,
       ),
+      'sync_options' => array(
+        'description' => 'A serialized array describing the map\'s syncing options.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+      ),
       'created' => array(
         'description' => 'The Unix timestamp when the salesforce_map was created.',
         'type' => 'int',
