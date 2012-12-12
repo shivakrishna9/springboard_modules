@@ -100,12 +100,11 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
 }
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_FORM_ID_alter().
  *
  * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
  */
-function email_wrappers_form_alter(&$form, $form_state, $form_id) {
-  // TODO: replace with specific hook_form_FORM_ID_alter()
+function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
   
   // Add a few tweaks to the webform email list form.
   if ($form_id === 'webform_email_edit_form') {
@@ -125,10 +124,10 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
     }
   
     // no settings available, load defaults from the selected template
-    if ($template_nid && !isset($defaults['tid'])) {
+    if ($template_nid) {
       $defaults = email_wrappers_load_defaults_from_template($form_state['input']['email_wrappers_email_template']);
     }
-    
+
     // alter email header values based on defaults
     if (isset($defaults['subject'])) {
       _email_wrappers_webform_option_defaults($form, 'subject', $defaults['subject']);
@@ -156,7 +155,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
       '#title' => t('Template'),
       '#options' => _email_wrappers_list_templates(),
       '#weight' => -50,
-      '#default_value' => isset($defaults['tid']) ? $defaults['tid'] : '',
+      '#default_value' => (isset($defaults['tid']) && $defaults['tid']) ? $defaults['tid'] : 0,
       '#ajax' => array(
         'callback' => 'email_wrappers_email_ajax',
         'wrapper' => 'webform-email-form-wrapper',
@@ -175,6 +174,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
 
     // Throw some defaults at webform's built in templating system since it's being overridden anyway.
     if ((isset($form_state['input']['email_wrappers_email_template']) && $form_state['input']['email_wrappers_email_template']) || isset($defaults['html_message'])) {
+
       $form['template']['template_option']['#access'] = FALSE;
      
       $form['template']['template']['#access'] = FALSE;
@@ -187,7 +187,7 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
         '#default_value' => $defaults['html_message'],
         '#required' => TRUE,
       );
-
+      
       $form['template']['email_wrappers_text_message'] = array(
         '#type' => 'textarea',
         '#title' => t('Text-only message (no HTML allowed)'),
@@ -198,6 +198,12 @@ function email_wrappers_form_alter(&$form, $form_state, $form_id) {
 
       $form['template']['tokens']['#weight'] = 9;
       $form['template']['components']['#weight'] = 10;
+      
+      // Unset $form_state['input'] values so imported template defaults aren't overwritten by $_POST values during ajax
+      // @see:http://drupal.org/node/990502
+      unset($form_state['input']['email_wrappers_html_message']);
+      unset($form_state['input']['email_wrappers_text_message']);
+      unset($form_state['input']['email_wrappers_bcc']);
     }
 
     // Ctools modals setup for preview button
