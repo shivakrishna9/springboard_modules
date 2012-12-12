@@ -16,7 +16,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Mapping',
+      'name' => 'Queuing',
       'description' => 'Ensure that the salesforce_webform.queue componant functions properly.',
       'group' => 'Salesforce Webform',
     );

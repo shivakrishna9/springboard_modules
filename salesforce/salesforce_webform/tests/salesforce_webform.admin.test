@@ -16,7 +16,7 @@ class SalesforceWebformAdminTestCase extends SalesforceWebformTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Mapping',
+      'name' => 'Configuration',
       'description' => 'Ensure that the salesforce_webform.admin componant functions properly.',
       'group' => 'Salesforce Webform',
     );
