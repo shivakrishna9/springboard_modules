@@ -13,12 +13,12 @@ function sustainer_upsell_admin_settings_form(&$form) {
     '#prefix' => '<div class="clear-block" id="brackets-wrapper">',
     '#suffix' => '</div>',
   );
-  $brackets = variable_get("sustainer_upsell_brackets", array());
+  $brackets = variable_get("sustainer_upsell_brackets", array(3));
   $form['sustainer_upsell_brackets']['brackets'] = array(
     '#prefix' => '<div id="bracket-amounts">',
     '#suffix' => '</div>',
   );
-  if ($_POST['brackets_delta']) {
+  if (isset($_POST['brackets_delta'])) {
     $delta = $_POST['brackets_delta']+1;
   }
   elseif (count($brackets)) {
@@ -118,7 +118,7 @@ function sustainer_upsell_admin_settings_form(&$form) {
     $boxes['thickbox'] = 'Thickbox';
   }
   if (module_exists('lightbox2')) {
-    $boxes['lightbox2'] = 'Lightbox2';
+    $boxes['lightbox'] = 'Lightbox2';
   }
   $form['sustainer_upsell_box']['sustainer_upsell_box_type'] = array(
     '#title' => t('Box Module'),
