@@ -60,9 +60,8 @@ function salesforce_queue_sandbox() {
     'LastName' => 'Cave',
     'Account' => 'User::User::2',
   );
-  $qid = salesforce_queue_insert('1', 'entity', 'page', 'Page', 'create', $page);
+  $qid = salesforce_queue_insert('1', 'entity', 'page', 'Page', 'upsert', $page, 'Email');
 }
-
 
 /**
  * Inserts an item into the Salesforce queue.
@@ -79,12 +78,14 @@ function salesforce_queue_sandbox() {
  *   The CRUD operation being run in Salesforce (upsert, create, update, delete).
  * @param $sobject
  *   The Salesforce object that is being queued.
+ * @param $dedupe_field
+ *   The Salesforce field to dedupe on during UPSERT operations.
  *
  * @return
  *   The id of the queue entry or false if insertion fails or a duplicate is already
  *   in the queue.
  */
-function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject) {
+function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject, $dedupe_field = NULL) {
 
   // allow other modules to alter the object before it is queued
   drupal_alter('salesforce_queue_prequeue', $sobject, $drupal_id, $module, $delta);
@@ -98,6 +99,7 @@ function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, 
         'delta' => $delta,
         'salesforce_type' => $salesforce_type,
         'operation' => $operation,
+        'dedupe_field' => $dedupe_field,
         'sobject' => json_encode($sobject),
         'created' => REQUEST_TIME,
         ))
