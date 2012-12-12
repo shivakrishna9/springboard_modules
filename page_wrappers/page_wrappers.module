@@ -437,6 +437,7 @@ function _page_wrappers_available_wrappers() {
       ->condition('etid', $wrapper_nids, 'IN')
       ->execute();
     $results = $result->fetchAll();
+    $wrappers_og = array();
     foreach ($results as $data) {
     
       // to avoid dupes we make sure the wrapper hasn't already been added to wrappers_og
