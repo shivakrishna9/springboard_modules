@@ -22,6 +22,16 @@ function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_stat
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
+  $items['admin/structure/salesforce/queue'] = array(
+    'title' => 'Salesforce Queue Settings',
+    'description' => 'Configuration settings for the Salesforce queue.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_queue_admin_settings'),
+    'access arguments' => array('configure salesforce queue'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'salesforce_queue.admin.inc',
+  );
+
   $items['salesforce-queue-sandbox'] = array(
     'title' => 'Salesforce queue sandbox',
     'page callback' => 'salesforce_queue_sandbox',
@@ -30,6 +40,69 @@ function salesforce_queue_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_queue_permission() {
+  return array(
+    'configure salesforce queue' => array(
+      'description' => t('Configure settings for the Salesforce queue.'),
+      'title' => t('Configure Salesforce queue'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function salesforce_queue_cron() {
+  //salesforce_queue_prune_logs();
+  // Bail on normal cron run if standalone cron is enabled.
+  if (_salesforce_queue_standalone_cron_enabled()) {
+    // If standalone cron is enabled, do nothing.
+    return 0;
+  }
+  else {
+    // Process the queue normally.
+    watchdog('salesforce_queue', t('Standard cron run.'));
+    if (lock_acquire('salesforce_queue_standalone_cron')) {
+      salesforce_queue_process();
+      lock_release('salesforce_queue_standalone_cron');
+    }
+    else {
+      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
+    }
+  }
+}
+
+/**
+ * Menu callback for the standalone cron.
+ */
+function salesforce_queue_standalone_cron() {
+  if (_salesforce_queue_standalone_cron_enabled()) {
+    // Process the queue.
+    watchdog('salesforce_queue_cron', t('Standalone cron run.'));
+
+    // Acquire an excluse lock on the process.
+    if (lock_acquire('salesforce_queue_standalone_cron')) {
+      salesforce_queue_process();
+      watchdog('salesforce_queue', 'Salesforce queue cron run completed.', array(), WATCHDOG_NOTICE);
+      lock_release('salesforce_queue_standalone_cron');
+    }
+    else {
+      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
+    }
+  }
+}
+
+/**
+ * Processes the data in the Salesforce queue.
+ */
+function salesforce_queue_process() {
+  watchdog('salesforce_queue', 'The queue is being processed.');
 }
 
 /**
@@ -162,4 +235,8 @@ function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type)
 
   // TODO: log removal
   return $count;
+}
+
+function _salesforce_queue_standalone_cron_enabled() {
+  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
 }

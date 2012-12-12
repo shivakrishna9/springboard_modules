@@ -10,3 +10,5 @@ files[] = tests/salesforce_queue.web.test
 dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
+
+configure = admin/structure/salesforce/queue
