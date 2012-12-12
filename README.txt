@@ -43,6 +43,8 @@ Sustainer Pause - this module users with recurring donations to pause payments w
 
 Sustainer Upsell - this module prompts users with recurring donations to increase their donations. Pull request: https://github.com/JacksonRiver/springboard_modules/pull/189
 
+Fundraiser Offline - this module provides a way for administrative users to enter offline donations through the website.
+
 Feature changes/new features:
 
 Batch sizes by type - the batch size is now configurable per type of integration. Pull request: https://github.com/JacksonRiver/springboard_modules/pull/182
