@@ -170,45 +170,4 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', NULL, 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', NULL, 'Node id mapping is hidden as expected.');
   }
-
-  public function swFormMapField($drupal_field, $sf_field, $group, $dedupe = FALSE) {
-    if (!isset($this->_swfEdit)) {
-      $this->_swfEdit = array();
-    }
-
-    if ($group == 'salesforce_object_info') {
-      $name = $group .'['. $drupal_field .']';
-    }
-    else {
-      $name = 'field_map['. $group .']['. $drupal_field .'][sf_field]';
-      $name_dedupe = 'field_map['. $group .']['. $drupal_field .'][dedupe]';
-    }
-
-    // Check the field is there, and set the value
-    $this->assertFieldByName($name, NULL, 'Mapping field '. $name .' exists.');
-    $this->_swfEdit[$name] = $sf_field;
-
-    // Check that dedupe is hidden for unmapped fields
-    if ($group == 'salesforce_webform_map' || $group == 'salesforce_object_info') {
-      if ($group == 'salesforce_webform_map') {
-        $empty_dedupe_field = '<input type="hidden" name="'. $name_dedupe .'">';
-        $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up for an unmapped field.');
-      }
-
-      $this->drupalPostAjax(NULL, $this->_swfEdit, $name);
-
-      // Check that the dedupe field was properly changed
-      if ($dedupe) {
-        $dedupe_field = '<input name="salesforce_dedupe_field" type="radio" id="salesforce-dedupe-'. $drupal_field .'" value="'. $sf_field .'" class="form-radio">';
-        $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for '. $sf_field);
-        $this->assertRaw($dedupe_field, 'Dedupe radio showed up for '. $sf_field);
-      }
-      else if ($group == 'salesforce_webform_map') {
-        $this->assertRaw($empty_dedupe_field, 'Dedupe radio appropriately hidden for '. $sf_field);
-      }
-    }
-    else {
-      // no need to do an drupalPostAjax
-    }
-  }
 }
