@@ -1,0 +1,142 @@
+<?php
+include_once(dirname(__FILE__) . '/salesforce_webform.test');
+
+/**
+ * @file
+ * Tests for includes/salesforce_webform.queue.inc.
+ */
+
+/**
+ * Tests mapping Salesforce objects onto webforms
+ */
+class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Mapping',
+      'description' => 'Ensure that the salesforce_webform.queue componant functions properly.',
+      'group' => 'Salesforce Webform',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp();
+
+    // Create a webform
+    $this->webform = $this->swCreateWebform();
+
+    // Map some Salesforce fields to the webform
+    $this->swSalesforceConnect();
+    $this->drupalGet('node/'. $this->webform->nid .'/webform/salesforce-map');
+    $this->swFormMapField('salesforce_object_type', 'Contact', 'salesforce_object_info');
+    $this->swFormMapField('first_name', 'FirstName', 'salesforce_webform_map');
+    $this->swFormMapField('last_name', 'LastName', 'salesforce_webform_map');
+    $this->swFormMapField('email', 'Email', 'salesforce_webform_map', TRUE);
+    $edit = $this->_swfEdit;
+    $edit['salesforce_dedupe_field'] = 'Email';
+    $this->drupalPost(NULL, $edit, 'Save');
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    // Unmap Salesforce fields from the webform
+    $this->drupalGet('node/'. $this->webform->nid .'/webform/salesforce-map');
+    $this->drupalPost(NULL, array(), 'Unmap');
+
+    // Delete the webform node
+    node_delete($this->webform->nid);
+
+    parent::tearDown();
+  }
+
+  /**
+   * Test the salesforce_webform_map entity
+   */
+  public function testWebformSubmission() {
+    $current_queue_system = variable_get('salesforce_webform_queue_system', NULL);
+    $path = 'node/'. $this->webform->nid;
+    $edit = array(
+      'submitted[first_name]' => 'ExampleFirstName',
+      'submitted[last_name]' => 'ExampleLastName',
+      'submitted[email]' => 'example@email.com',
+    );
+
+    // No queue system set submit error
+    variable_del('salesforce_webform_queue_system');
+    $this->drupalGet($path);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertText('The Queue System configuration is not set', 'Error is reported when no queue system is set.');
+
+    // Instant queue system works as expected
+    variable_set('salesforce_webform_queue_system', 'instant');
+    $this->drupalGet($path);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertText('We have no ability to instantly send data to Salesforce', 'Error is reported when no queue system is set.');
+
+    // DrupalQueue system works as expected
+    variable_set('salesforce_webform_queue_system', 'drupal_queue');
+    $this->drupalGet($path);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertNoText('The submission was not sent to Salesforce.', 'There was not an obvious error adding an item to the Drupal Queue.');
+    $queue = DrupalQueue::get('salesforce_webform');
+    $queue_item = $queue->claimItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to claim an item from the DrupalQueue');
+    if (is_object($queue_item)) {
+      $this->assertTrue(isset($queue_item->data['sObject']), 'Sent an item to DrupalQueue');
+      if (isset($queue_item->data['sObject'])) {
+        $this->assertTrue(is_object($queue_item->data['sObject']), 'Sent an sObject to the DrupalQueue');
+        if (is_object($queue_item->data['sObject'])) {
+          $queue_fields = $queue_item->data['sObject']->fields;
+          $this->assertEqual($queue_fields['FirstName'], $edit['submitted[first_name]'], 'first_name DrupalQueue data matches submitted data.');
+          $this->assertEqual($queue_fields['LastName'], $edit['submitted[last_name]'], 'last_name DrupalQueue data matches submitted data.');
+          $this->assertEqual($queue_fields['Email'], $edit['submitted[email]'], 'email DrupalQueue data matches submitted data.');
+        }
+      }
+    }
+    $queue->deleteItem($queue_item);
+
+    // Salesforce Queue system works as expected
+    variable_set('salesforce_webform_queue_system', 'salesforce_queue');
+    $this->drupalGet($path);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertNoText('The submission was not sent to Salesforce.', 'There was not an obvious error adding an item to the Salesforce Queue.');
+    $query = db_select('salesforce_queue', 'sq')
+      ->fields('sq');
+    $result = $query->execute();
+    foreach ($result as $record) {
+      // do nothing but reset the var $record and get the last item
+    }
+    $queue_item = $record;
+    $this->assertTrue(is_object($queue_item), 'Was able to send an item to the Salesforce Queue');
+    if (is_object($queue_item)) {
+      $sObject = json_decode($queue_item->sobject);
+      $this->assertTrue(is_object($sObject), 'Sent an sObject to the Salesforce Queue');
+      if (is_object($sObject)) {
+        $this->assertEqual($sObject->type, 'Contact', 'sObject type sent to Salesforce Queue correctly.');
+        $this->assertTrue(is_object($sObject->fields), 'sObject field data sent to Salesforce Queue correctly.');
+        if (is_object($sObject->fields)) {
+          $queue_fields = $sObject->fields;
+          $this->assertEqual($queue_fields->FirstName, $edit['submitted[first_name]'], 'first_name Salesforce Queue data matches submitted data.');
+          $this->assertEqual($queue_fields->LastName, $edit['submitted[last_name]'], 'last_name Salesforce Queue data matches submitted data.');
+          $this->assertEqual($queue_fields->Email, $edit['submitted[email]'], 'email Salesforce Queue data matches submitted data.');
+        }
+      }
+    }
+
+    // Put the queue system config back to what it was
+    if (is_null($current_queue_system)) {
+      variable_del('salesforce_webform_queue_system');
+    }
+    else {
+      variable_set('salesforce_webform_queue_system', $current_queue_system);
+    }
+  }
+}

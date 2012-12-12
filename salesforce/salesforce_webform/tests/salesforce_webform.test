@@ -32,6 +32,8 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'salesforce_mapping',
       'salesforce_pull',
       'salesforce_push',
+      'salesforce_queue',
+      'salesforce_soap',
       'webform',
       'salesforce_webform'
     );

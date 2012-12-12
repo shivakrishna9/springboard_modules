@@ -5,10 +5,12 @@ core = 7.x
 
 files[] = includes/salesforce_webform.admin.inc
 files[] = includes/salesforce_webform.map.inc
+files[] = includes/salesforce_webform.queue.inc
 
 files[] = tests/salesforce_webform.test
 files[] = tests/salesforce_webform.admin.test
 files[] = tests/salesforce_webform.map.test
+files[] = tests/salesforce_webform.queue.test
 
 dependencies[] = entity
 dependencies[] = salesforce
