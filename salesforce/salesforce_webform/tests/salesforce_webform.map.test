@@ -169,5 +169,9 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertNoFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type field does not have previously saved value.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', NULL, 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', NULL, 'Node id mapping is hidden as expected.');
+
+    // Delete the webforms
+    node_delete($webform_no_components->nid);
+    node_delete($webform->nid);
   }
 }
