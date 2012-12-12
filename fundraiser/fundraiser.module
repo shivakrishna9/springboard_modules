@@ -2245,6 +2245,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL) {
   global $user;
 
   // reload the original order so we get any changes that have been made by the payment gateways
+  uc_credit_cache('clear');
   $order = uc_order_load($order_id);
 
   // determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)
