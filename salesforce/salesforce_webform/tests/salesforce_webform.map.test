@@ -106,7 +106,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->swFormMapField('first_name', 'Name', 'salesforce_webform_map', TRUE);
     $this->swFormMapField('last_name', 'Name', 'salesforce_webform_map', TRUE);
     $edit = $this->_swfEdit;
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->drupalPost(NULL, $edit, 'Save');
     $this->assertText('Multiple webform components cannot be mapped to the same Salesforce fields.', 'Validation rejected correctly.');
     $this->_swfEdit = array();
 
@@ -127,7 +127,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     // Save the form and verify the form reloaded correctly
     $edit = $this->_swfEdit;
     $edit['salesforce_dedupe_field'] = 'Email';
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->drupalPost(NULL, $edit, 'Save');
     $this->assertText('The map was saved successfully.', 'Saving posted correctly.');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type saved and refreshed on form.');
     $this->assertFieldChecked('salesforce-dedupe-email', 'Email dedupe field saved and selected.');
@@ -150,7 +150,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', 'ReportsToId', 'Node property map field reset.');
 
     // Cancel the changes and verify
-    $this->drupalPost(NULL, $edit, t('Cancel'));
+    $this->drupalPost(NULL, $edit, 'Cancel');
     $this->assertText('The Salesforce webform map has been reset to the original values.', 'Cancelling form posted correctly.');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type refreshed on form.');
     $this->assertFieldChecked('salesforce-dedupe-email', 'Email dedupe field selected.');
@@ -163,7 +163,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('field_map[salesforce_submission_map][date][sf_field]', 'Jigsaw', 'submission title refreshed on form.');
 
     // Unmap the webform from Salesforce
-    $this->drupalPost(NULL, array(), t('Unmap'));
+    $this->drupalPost(NULL, array(), 'Unmap');
     $this->assertText('The Salesforce to webform map has been removed.', 'Unmapping form posted correctly');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', NULL, 'Object Type field appears on form.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type field does not have previously saved value.');
