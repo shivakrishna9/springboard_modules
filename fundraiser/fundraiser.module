@@ -1731,7 +1731,7 @@ function fundraiser_webform_validate($form, &$form_state) {
     foreach ($fundraiser_fields as $key => $value) {
       $message .= $key . ': ' . $value . "\n";
     }
-      fundraiser_track_local_failure();
+    fundraiser_track_local_failure();
     watchdog('fundraiser', $message, NULL, WATCHDOG_DEBUG, NULL);
   }
 

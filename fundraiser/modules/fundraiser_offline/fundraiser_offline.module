@@ -278,7 +278,7 @@ function fundraiser_offline_form_alter(&$form, &$form_state, $form_id) {
     _fundraiser_offline_form_not_hidden($form, $fields);
 
     $component_hierarchy = fundraiser_parse_components($form['#parameters'][2]->nid, $form['#parameters'][2]->webform['components']);
-    // If we have a preset campaign, source doe, then set those fields here.
+    // If we have a preset campaign, source, then set those fields here.
     if (isset($_SESSION['fundraiser_offline_cid'])) {
       $cid_field = & fundraiser_find_field($form, $component_hierarchy['cid']); // Created by market_source.module.
       $cid_field['#default_value'] == $_SESSION['fundraiser_offline_cid'];
@@ -286,6 +286,13 @@ function fundraiser_offline_form_alter(&$form, &$form_state, $form_id) {
     if (isset($_SESSION['fundraiser_offline_source_code'])) {
       $source_code_field = & fundraiser_find_field($form, $component_hierarchy['source_code']);
       $source_code_field['#default_value'] == $_SESSION['fundraiser_offline_source_code'];
+    }
+
+    // Unset any default profile files, we don't need them here.
+    $map = fundraiser_user_map($form['#node']->nid);
+    foreach ($map as $field_key => $profile_key) {
+      $field =& fundraiser_find_field($form, $component_hierarchy[$field_key]); // From fundraiser.module
+      unset($field['#default_value']);
     }
 
     // Add our own action and submit.
@@ -377,7 +384,7 @@ function fundraiser_offline_validate($form, &$form_state) {
     $errors = TRUE;
   }
 
-  // OFFLINE CHANGE HERE. We don't validate the CVV or email. Removed lines.
+  // OFFLINE CHANGE HERE. We don't validate the CVV or email. Removed these lines.
   /*
    // Validate the CVV Number
    if (!empty($cc_cvv) && variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
@@ -610,7 +617,8 @@ function fundraiser_offline_submit($form, &$form_state) {
   }
 
   if ($result['success']) {
-    fundraiser_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
+    // OFFLINE: Fundraiser order_accept has a offline dependancy for users.
+    fundraiser_offline_order_accept($order->order_id, $result['data']['txn_id'], $result['message'], $result['data']['auth_code']);
     $node = node_load(array('nid' => $node_id));
     module_invoke_all('fundraiser_webform_submit', $order, $node, $form_state);
     // OFFLINE: Call offline success result.
@@ -629,6 +637,68 @@ function fundraiser_offline_submit($form, &$form_state) {
     fundraiser_offline_fundraiser_donation_decline($order);
   }
 }
+
+/**
+ * Mostly a copy of fundraiser_order_accept() from fundraiser.module.
+ */
+function fundraiser_offline_order_accept($order_id, $transaction_id, $message = NULL, $auth_code = '') {
+  // reload the order
+  $order = uc_order_load($order_id);
+
+  module_invoke_all('fundraiser_order_success', $order);
+
+  fundraiser_track_conversion();
+
+  // use order_id to find the nid and then go ahead and load up the node
+  $webform = db_fetch_object(db_query("SELECT webform_nid, sid, recurring_status FROM {fundraiser_webform_order} WHERE order_id = %d", $order_id));
+  $node = node_load($webform->webform_nid);
+
+  // complete the sale
+  uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+
+  // enter the payment
+  uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
+
+  // mark payment as received
+  db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", 'payment_received', $order_id);
+
+  // update the order/webform relationship
+  db_query("UPDATE {fundraiser_webform_order}
+    SET
+      gateway = '%s',
+      txn_id = '%s',
+      auth_code = '%s'
+    WHERE
+      order_id = %d",
+    $node->gateway, $transaction_id, $auth_code, $order_id);
+
+  // update the uid on the webform submission
+  db_query("UPDATE {webform_submissions} SET uid = %d WHERE sid = %d", $order->uid, $webform->sid);
+
+  // Update the recurring status, if it was changed by the payment gateway module
+  if ($webform->recurring_status != $order->data['recurring_status']) {
+    db_query('UPDATE {fundraiser_webform_order} SET recurring_status = %d WHERE order_id = %d', $order->data['recurring_status'], $order_id);
+  }
+
+  // OFFLINE: Don't do this.
+  // update the user's profile
+  // fundraiser_update_user_profile($order->uid, $webform->webform_nid, $webform->sid);
+
+  // if it's recurring, spawn all the future orders
+  if (fundraiser_is_recurring_order($order_id)) {
+    fundraiser_create_future_orders($order_id, $node->gateway);
+  }
+
+  // TODO: This should be changed to a hook (hook_donation_successful) and another module can put it in the queue.
+  fundraiser_add_to_queue($order);
+
+  // show gateay message if appropriate
+  $display_message = variable_get('fundraiser_gateway_messages', 1);
+  if ($display_message) {
+    drupal_set_message($message);
+  }
+}
+
 
 /**
  * Additional submit form at the end of the donation form. Controls redirect in offline mode.
