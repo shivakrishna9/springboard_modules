@@ -294,7 +294,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#description' => t('When should submissions of this webform be synced with Salesforce?'),
     '#default_value' => _sfw_default_value($form_state, 'sync_options', 'map_config'),
     '#options' => array(
-      'create' => t('New submissions'),
+      'insert' => t('New submissions'),
       'update' => t('Modified submissions'),
       'delete' => t('Deleted submissions'),
     ),
@@ -454,7 +454,7 @@ function _sfw_default_value($form_state, $field, $group = NULL, $drupal_field = 
     if ($field == 'sync_options' && empty($map['sync_options'])) {
       // Make all the default value
       return array(
-        'create',
+        'insert',
         'update',
         'delete',
       );

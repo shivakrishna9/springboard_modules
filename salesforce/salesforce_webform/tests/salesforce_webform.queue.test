@@ -28,47 +28,70 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   public function setUp() {
     parent::setUp();
 
-    // Create a webform
-    $this->webform = $this->swCreateWebform();
+    // Create webforms
+    $this->webform1 = $this->swCreateWebform(); // No dedupe field
+    $this->webform2 = $this->swCreateWebform(); // Will have dedupe field
 
-    // Map some Salesforce fields to the webform
+    // Map some Salesforce fields to the webforms
     // Using swFormMapField() broke in setUp() when map not loaded on node. But
     // thats OK in this context because we don't need to test the mapping form
     $this->swSalesforceConnect();
-    $this->drupalGet('node/'. $this->webform->nid .'/webform/salesforce-map');
-    $edit = array(
+    $edit1 = array(
       'salesforce_object_info[salesforce_object_type]' => 'Contact',
     );
-    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
-    $edit = array(
-      'salesforce_object_info[salesforce_object_type]' => 'Contact',
+    $edit2 = $edit1 + array(
       'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
       'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
       'field_map[salesforce_webform_map][email][sf_field]' => 'Email',
     );
-    $this->drupalPost(NULL, $edit, 'Save');
+    $edit3 = $edit2 + array(
+      'salesforce_dedupe_field' => 'Email',
+    );
+    // First webform without dedupe field set
+    $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
+    $this->drupalPostAjax(NULL, $edit1, 'salesforce_object_info[salesforce_object_type]');
+    $this->drupalPost(NULL, $edit2, 'Save');
+    // Second webform with dedupe field set
+    $this->drupalGet('node/'. $this->webform2->nid .'/webform/salesforce-map');
+    $this->drupalPostAjax(NULL, $edit1, 'salesforce_object_info[salesforce_object_type]');
+    $this->drupalPost(NULL, $edit2, 'Save');
+    $this->drupalPost(NULL, $edit3, 'Save');
+
+    // Store the queue system
+    $this->queue_system = variable_get('salesforce_webform_queue_system', NULL);
   }
 
   /**
    * Implementation of tearDown().
    */
   public function tearDown() {
+    // Put the queue system config back to what it was
+    if (is_null($this->queue_system)) {
+      variable_del('salesforce_webform_queue_system');
+    }
+    else {
+      variable_set('salesforce_webform_queue_system', $this->queue_system);
+    }
+
     // Unmap Salesforce fields from the webform
-    $this->drupalGet('node/'. $this->webform->nid .'/webform/salesforce-map');
+    $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
+    $this->drupalPost(NULL, array(), 'Unmap');
+    $this->drupalGet('node/'. $this->webform2->nid .'/webform/salesforce-map');
     $this->drupalPost(NULL, array(), 'Unmap');
 
     // Delete the webform node
-    node_delete($this->webform->nid);
+    node_delete($this->webform2->nid);
+    node_delete($this->webform1->nid);
 
     parent::tearDown();
   }
 
   /**
-   * Test the salesforce_webform_map entity
+   * Tests that information was sent to the queues properly
    */
-  public function testWebformSubmission() {
-    $current_queue_system = variable_get('salesforce_webform_queue_system', NULL);
-    $path = 'node/'. $this->webform->nid;
+  public function testQueueSystem() {
+    $path = 'node/'. $this->webform1->nid;
+    $path2 = 'node/'. $this->webform2->nid;
     $edit = array(
       'submitted[first_name]' => 'ExampleFirstName',
       'submitted[last_name]' => 'ExampleLastName',
@@ -87,7 +110,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     $this->drupalPost(NULL, $edit, 'Submit');
     $this->assertText('We have no ability to instantly send data to Salesforce', 'Error is reported when no queue system is set.');
 
-    // DrupalQueue system works as expected
+    // DrupalQueue queues on submission creation for create
     variable_set('salesforce_webform_queue_system', 'drupal_queue');
     $this->drupalGet($path);
     $this->drupalPost(NULL, $edit, 'Submit');
@@ -96,6 +119,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     $queue_item = $queue->claimItem();
     $this->assertTrue(is_object($queue_item), 'Was able to claim an item from the DrupalQueue');
     if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->data['operation'], 'CREATE', 'The correct CREATE operation was sent to DrupalQueue.');
       $this->assertTrue(isset($queue_item->data['sObject']), 'Sent an item to DrupalQueue');
       if (isset($queue_item->data['sObject'])) {
         $this->assertTrue(is_object($queue_item->data['sObject']), 'Sent an sObject to the DrupalQueue');
@@ -107,20 +131,47 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
         }
       }
     }
-    $queue->deleteItem($queue_item);
+    $queue->deleteItem($queue_item); // Simulate processed item
 
-    // Salesforce Queue system works as expected
+    // DrupalQueue queues on submission update (NOTE: referring to prior submission's sid)
+    $this->drupalGet($path .'/submission/'. $queue_item->data['drupal_id'] .'/edit');
+    $this->drupalPost(NULL, array(), 'Submit');
+    $this->assertText('Submission updated.', 'The subimission saved as expected.');
+    $queue_item = $queue->claimItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to claim an item from the DrupalQueue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->data['operation'], 'UPDATE', 'The correct UPDATE operation was sent to DrupalQueue.');
+    }
+    $queue->deleteItem($queue_item); // Simulate processed item
+
+    // DrupalQueue queues on submission delete (NOTE: referring to prior submission's sid)
+    $this->drupalGet($path .'/submission/'. $queue_item->data['drupal_id'] .'/delete');
+    $this->drupalPost(NULL, array(), 'Delete');
+    $this->assertText('Submission deleted.', 'The subimission deleted as expected.');
+    $queue_item = $queue->claimItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to claim an item from the DrupalQueue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->data['operation'], 'DELETE', 'The correct DELETE operation was sent to DrupalQueue.');
+    }
+    $queue->deleteItem($queue_item); // Simulate processed item
+
+    // DrupalQueue queues on submission create for upsert
+    $this->drupalGet($path2);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertNoText('The submission was not sent to Salesforce.', 'There was not an obvious error adding an item to the Drupal Queue.');
+    $queue_item = $queue->claimItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to claim an item from the DrupalQueue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->data['operation'], 'UPSERT', 'The correct UPSERT operation was sent to DrupalQueue.');
+    }
+    $queue->deleteItem($queue_item); // Simulate processed item
+
+    // Salesforce Queue queues on submission creation for create
     variable_set('salesforce_webform_queue_system', 'salesforce_queue');
     $this->drupalGet($path);
     $this->drupalPost(NULL, $edit, 'Submit');
     $this->assertNoText('The submission was not sent to Salesforce.', 'There was not an obvious error adding an item to the Salesforce Queue.');
-    $query = db_select('salesforce_queue', 'sq')
-      ->fields('sq');
-    $result = $query->execute();
-    foreach ($result as $record) {
-      // do nothing but reset the var $record and get the last item
-    }
-    $queue_item = $record;
+    $queue_item = $this->swFetchSalesforceQueueItem();
     $this->assertTrue(is_object($queue_item), 'Was able to send an item to the Salesforce Queue');
     if (is_object($queue_item)) {
       $sObject = json_decode($queue_item->sobject);
@@ -136,13 +187,133 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
         }
       }
     }
+    $this->swDeleteSalesforceQueueItem($queue_item->id); // Simulate processed item
 
-    // Put the queue system config back to what it was
-    if (is_null($current_queue_system)) {
-      variable_del('salesforce_webform_queue_system');
+    // Salesforce Queue queues on submission update (NOTE: referring to prior submission's sid)
+    $this->drupalGet($path .'/submission/'. $queue_item->drupal_id .'/edit');
+    $this->drupalPost(NULL, array(), 'Submit');
+    $this->assertText('Submission updated.', 'The subimission saved as expected.');
+    $queue_item = $this->swFetchSalesforceQueueItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to send an item to the Salesforce Queue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->operation, 'UPDATE', 'The correct UPDATE operation was sent to Salesforce Queue.');
     }
-    else {
-      variable_set('salesforce_webform_queue_system', $current_queue_system);
+    $this->swDeleteSalesforceQueueItem($queue_item->id); // Simulate processed item
+
+    // Salesforce Queue queues on submission delete (NOTE: referring to prior submission's sid)
+    $this->drupalGet($path .'/submission/'. $queue_item->drupal_id .'/delete');
+    $this->drupalPost(NULL, array(), 'Delete');
+    $this->assertText('Submission deleted.', 'The subimission deleted as expected.');
+    $queue_item = $this->swFetchSalesforceQueueItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to send an item to the Salesforce Queue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->operation, 'DELETE', 'The correct DELETE operation was sent to Salesforce Queue.');
     }
+    $this->swDeleteSalesforceQueueItem($queue_item->id); // Simulate processed item
+
+    // Salesforce Queue queues on submission create for upsert
+    $this->drupalGet($path2);
+    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->assertNoText('The submission was not sent to Salesforce.', 'There was not an obvious error adding an item to the Salesforce Queue.');
+    $queue_item = $this->swFetchSalesforceQueueItem();
+    $this->assertTrue(is_object($queue_item), 'Was able to send an item to the Salesforce Queue');
+    if (is_object($queue_item)) {
+      $this->assertEqual($queue_item->operation, 'UPSERT', 'The correct UPSERT operation was sent to Salesforce Queue.');
+    }
+    $this->swDeleteSalesforceQueueItem($queue_item->id); // Simulate processed item
+  }
+
+  /**
+   * Tests that sync options are obeyed
+   */
+  public function testSyncOptions() {
+    variable_set('salesforce_webform_queue_system', 'drupal_queue');
+    $path = 'node/'. $this->webform1->nid;
+    $edit = array(
+      'submitted[first_name]' => 'ExampleFirstName',
+      'submitted[last_name]' => 'ExampleLastName',
+      'submitted[email]' => 'example@email.com',
+    );
+
+    // testQueueSystem() tests when all are selected.  Lets run through the
+    // tests when different combinations are selected
+    $combinations = array(
+      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => FALSE),
+      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => FALSE),
+      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
+      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => FALSE),
+      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => TRUE),
+      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
+    );
+    foreach ($combinations as $sync_config) {
+      $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
+      $this->drupalPost(NULL, $sync_config, 'Save');
+
+      // Create submission
+      $this->drupalGet($path);
+      $this->drupalPost(NULL, $edit, 'Submit');
+      $queue = DrupalQueue::get('salesforce_webform');
+      $queue_item = $queue->claimItem();
+      if ($sync_config['map_config[sync_options][insert]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on insert was sent to queue.');
+        $queue->deleteItem($queue_item); // Simulate processed item
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on insert was not sent to the queue.');
+      }
+
+      // Get the SID of the new submission
+      $matches = array();
+      preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
+      $sid = $matches[1];
+
+      // Update submission
+      $this->drupalGet($path .'/submission/'. $sid .'/edit');
+      $this->drupalPost(NULL, array(), 'Submit');
+      $queue = DrupalQueue::get('salesforce_webform');
+      $queue_item = $queue->claimItem();
+      if ($sync_config['map_config[sync_options][update]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on update was not sent to queue.');
+        $queue->deleteItem($queue_item); // Simulate processed item
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on update was sent to the queue.');
+      }
+
+      // Delete submission
+      $this->drupalGet($path .'/submission/'. $sid .'/delete');
+      $this->drupalPost(NULL, array(), 'Delete');
+      $queue = DrupalQueue::get('salesforce_webform');
+      $queue_item = $queue->claimItem();
+      if ($sync_config['map_config[sync_options][delete]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was not sent to queue.');
+        $queue->deleteItem($queue_item); // Simulate processed item
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on delete was sent to the queue.');
+      }
+    }
+  }
+
+  /**
+   * Helper to return the last queued item
+   */
+  public function swFetchSalesforceQueueItem() {
+    $query = db_select('salesforce_queue', 'sq')
+      ->fields('sq');
+    $result = $query->execute();
+    foreach ($result as $record) {
+      // do nothing but reset the var $record and get the last item
+    }
+    return $record;
+  }
+
+  /**
+   * Helper to delete a queue item
+   */
+  public function swDeleteSalesforceQueueItem($qid) {
+    db_delete('salesforce_queue')
+    ->condition('id', $qid)
+    ->execute();
   }
 }
