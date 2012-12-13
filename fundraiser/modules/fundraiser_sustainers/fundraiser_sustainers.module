@@ -367,6 +367,24 @@ function fundraiser_sustainers_fundraiser_field_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_information_table_alter().
+ */
+function fundraiser_sustainers_fundraiser_donation_information_table_alter(&$variables, $donation) {
+  if ($donation->sid == 0) {
+    $recurring = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+    if (!empty($recurring->master_did)) {
+      $variables['rows'][] = array(t('This donation is part of a sustainer donation set.'), '');
+      $master_donation = fundraiser_donation_get_donation($recurring->master_did);
+      if (!empty($master_donation->did)) {
+        $variables['rows'][] = array('Fundraiser parent donation submission', t('#@sid - !title',
+          array('@sid' => $master_donation->sid, '!title' => l(t('View submission'),
+            'node/' . $master_donation->node->nid . '/submission/' . $master_donation->sid))));
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  * Adds the admin form for crons to the fundraiser settings form.
  */
