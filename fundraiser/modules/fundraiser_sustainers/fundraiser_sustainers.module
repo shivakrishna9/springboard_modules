@@ -765,6 +765,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
     $donation = fundraiser_donation_get_donation($donation->did);
     // Update it.
     $donation->donation = array_merge($donation->donation, $submitted_values);
+    // Mark the billing information as needing to be updated.
+    $donation->update_billing = TRUE;
     // Save each donation.
     fundraiser_donation_update($donation);
     // Add a comment.
