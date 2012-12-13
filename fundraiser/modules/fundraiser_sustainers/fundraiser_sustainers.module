@@ -225,7 +225,7 @@ function fundraiser_sustainer_tokens_alter(&$replacements, $context) {
 }
 
 /**
- * Implemenation of hook_mail().
+ * Implements hook_mail().
  */
 function fundraiser_sustainer_mail($key, &$message, &$params) {
   switch ($key) {
@@ -974,7 +974,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   }
   else {
     // For all recurring when processed, check if we need to send a notice about the set almost done.
-    if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) == 1) {
+    if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 2) {
       _fundraiser_sustainers_send_cc_notification($donation->recurring->master_did, $donation->uid);
     }
     // And update the sustainer table.
@@ -1062,7 +1062,6 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   $did = db_query('SELECT did FROM {fundraiser_sustainers} WHERE master_did = :master_did AND gateway_resp IS NULL LIMIT 0,1', // Coder: this is ok.
     array(':master_did' => $master_did))->fetchColumn();
   $donation = fundraiser_donation_get_donation($did);
-
   // Do token replacement on body.
   $body = variable_get('fundraiser_cc_exp_body',
     'Your card ending in [donation:card_number] is about to expire on [donation:card_expiration_month]/[donation:card_expiration_year].');
