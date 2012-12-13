@@ -61,7 +61,7 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
 function salesforce_webform_client_form_submit($form, &$form_state) {
   $node = $form['#node'];
   $sid = $form_state['values']['details']['sid'];
-  $map = $node->salesforce_webform_map;
+  $map = salesforce_webform_load_map($node->nid);
   $input = $form_state['input']['submitted'];
 
   // Build up the field data

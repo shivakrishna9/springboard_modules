@@ -32,14 +32,20 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     $this->webform = $this->swCreateWebform();
 
     // Map some Salesforce fields to the webform
+    // Using swFormMapField() broke in setUp() when map not loaded on node. But
+    // thats OK in this context because we don't need to test the mapping form
     $this->swSalesforceConnect();
     $this->drupalGet('node/'. $this->webform->nid .'/webform/salesforce-map');
-    $this->swFormMapField('salesforce_object_type', 'Contact', 'salesforce_object_info');
-    $this->swFormMapField('first_name', 'FirstName', 'salesforce_webform_map');
-    $this->swFormMapField('last_name', 'LastName', 'salesforce_webform_map');
-    $this->swFormMapField('email', 'Email', 'salesforce_webform_map', TRUE);
-    $edit = $this->_swfEdit;
-    $edit['salesforce_dedupe_field'] = 'Email';
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Contact',
+    );
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Contact',
+      'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
+      'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
+      'field_map[salesforce_webform_map][email][sf_field]' => 'Email',
+    );
     $this->drupalPost(NULL, $edit, 'Save');
   }
 

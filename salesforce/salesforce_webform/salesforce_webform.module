@@ -93,26 +93,11 @@ function salesforce_webform_map_page_access($node) {
 }
 
 /**
- * Implementation of hook_node_load().
- */
-function salesforce_webform_node_load($nodes, $types) {
-  if (in_array('webform', $types)) {
-    foreach ($nodes as $nid => $node) {
-      // Add the salesforce_webform_map entity to the node
-     // $map = salesforce_webform_load_map($nid);
-      if (is_object($map)) {
-        $node->salesforce_webform_map = $map;
-      }
-    }
-  }
-}
-
-/**
  * Implementation of hook_node_delete().
  */
 function salesforce_webform_node_delete($node) {
   // delete the salesforce_webform_map entity
- // salesforce_webform_delete_map($node->nid);
+  salesforce_webform_delete_map($node->nid);
 }
 
 /**
@@ -120,17 +105,15 @@ function salesforce_webform_node_delete($node) {
  */
 function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
   // If form is a webform and mapped, add our submit handler
-  if (
-       isset($form['#node'])
-       && $form_id == 'webform_client_form_'. $form['#node']->nid
-       && isset($form['#node']->salesforce_webform_map)
-       && !empty($form['#node']->salesforce_webform_map->field_map)
-     ) {
-    if (!isset($form['#submit'])) {
-      $form['#submit'] = array();
+  if (isset($form['#node']) && $form_id == 'webform_client_form_'. $form['#node']->nid) {
+    $map = salesforce_webform_load_map($form['#node']->nid);
+    if (!empty($map)) {
+      if (!isset($form['#submit'])) {
+        $form['#submit'] = array();
+      }
+      $form['#submit'][] = 'salesforce_webform_client_form_submit';
+      module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
     }
-    $form['#submit'][] = 'salesforce_webform_client_form_submit';
-    module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
   }
 }
 
