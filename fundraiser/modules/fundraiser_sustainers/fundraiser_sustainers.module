@@ -208,6 +208,23 @@ function fundraiser_sustainers_charge_now($did) {
 }
 
 /**
+ * Implements hook_tokens_alter().
+ */
+function fundraiser_sustainer_tokens_alter(&$replacements, $context) {
+  $type = $context['type'];
+  $tokens = $context['tokens'];
+  $data = $context['data'];
+  $options = $context['options'];
+  if ($type = 'donation' && !empty($data['donation'])) {
+    $donation = $data['donation'];
+    $replacements['recurs_monthly'] = t('No');
+    if (!empty($donation->donation['recurs_monthly']) && $donation->donation['recurs_monthly']) {
+      $replacements['recurs_monthly'] = t('Yes');
+    }
+  }
+}
+
+/**
  * Implemenation of hook_mail().
  */
 function fundraiser_sustainer_mail($key, &$message, &$params) {
