@@ -628,8 +628,8 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
         'txn_type' => 'reference_txn', // Reference if it does.
         'ref_id' => $ref_id,
       );
+      $donation->data = array_merge($donation->data, $data);
     }
-    $donation->data = array_merge($donation->data, $data);
     // If no charge default set, use auth_charge
     if (!isset($donation->data['txn_type'])) {
       $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
