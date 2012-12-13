@@ -305,7 +305,8 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
     '#type' => 'submit',
     '#value' => 'Save',
   );
-  if (isset($node->salesforce_webform_map)) {
+  $map = salesforce_webform_load_map($node->nid);
+  if (!empty($map)) {
     $form['cancel'] = array(
       '#type' => 'submit',
       '#value' => 'Cancel',
@@ -435,13 +436,14 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
  */
 function _sfw_default_value($form_state, $field, $group = NULL, $drupal_field = NULL) {
   $node = $form_state['build_info']['args'][0];
-  if (empty($form_state['input']) && !isset($node->salesforce_webform_map)) {
+  $node_map = salesforce_webform_load_map($node->nid);
+  if (empty($form_state['input']) && empty($node_map)) {
     return '';
   }
 
   // Refer against inputted values if the form has been submitted, else the node
-  if (empty($form_state['input']['salesforce_object_info']) && isset($node->salesforce_webform_map)) {
-    $map = (array)$node->salesforce_webform_map;
+  if (empty($form_state['input']['salesforce_object_info']) && !empty($node_map)) {
+    $map = (array)$node_map;
   }
   else {
     $map = _sfw_convert_input($form_state['input']);
