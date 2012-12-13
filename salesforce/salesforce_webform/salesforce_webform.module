@@ -44,7 +44,15 @@ function salesforce_webform_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_webform.map.inc',
   );
-
+  $items['admin/config/content/salesforce-webform'] = array(
+    'title' => 'Salesforce Webform Settings',
+    'page callback' => 'salesforce_webform_admin_page',
+    'description' => 'Configure how the Salesforce integration will work with webform submissions.',
+    // I am assuming that if you can configure Salesforce you also understand
+    // the best way to configure the Salesforce webform interface
+    'access arguments' => array('administer salesforce'),
+    'file' => 'includes/salesforce_webform.admin.inc',
+  );
   return $items;
 }
 
@@ -84,28 +92,6 @@ function salesforce_webform_map_page_access($node) {
   return FALSE;
 }
 
-
-/**
- * @defgroup webform_alters Hooking into the webform processes
- * @{
- */
-
-/**
- * Implementation of hook_form_alter().
- */
-function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
-  // If form is a webform and webform is mapped to a salesforce object
-    // add our submit handler salesforce_webform_client_form_submit
-  // end
-}
-
-/**
- * A submit handler added to webforms that have Salesforce mappings
- */
-function salesforce_webform_client_form_submit() {
-  // Queue up the new submissions
-}
-
 /**
  * Implementation of hook_node_load().
  */
@@ -130,8 +116,23 @@ function salesforce_webform_node_delete($node) {
 }
 
 /**
- * @} webform_alters
+ * Implementation of hook_form_alter().
  */
+function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
+  // If form is a webform and mapped, add our submit handler
+  if (
+       isset($form['#node'])
+       && $form_id == 'webform_client_form_'. $form['#node']->nid
+       && isset($form['#node']->salesforce_webform_map)
+       && !empty($form['#node']->salesforce_webform_map->field_map)
+     ) {
+    if (!isset($form['#submit'])) {
+      $form['#submit'] = array();
+    }
+    $form['#submit'][] = 'salesforce_webform_client_form_submit';
+    module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
+  }
+}
 
 
 /**

@@ -35,7 +35,7 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form')) {
     $node = $form['#node'];
     if ($node->type == 'donation_form') {
-      if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) 
+      if (isset($_SESSION['dynamic_gift_string_values'][$node->nid])
         && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
         $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
         // create an array of amounts to replace the defaults
@@ -47,6 +47,11 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
         $amount_field =& _fundraiser_webform_find_field($form, $component_hierarchy['amount']);
         // make sure we have the field and a good array of amounts
         if ($amount_field && $amounts) {
+
+          // we want to preserve the "other amount" option if present in the original form.
+          if (isset($amount_field["#options"]['other'])) {
+            $amounts['other'] = t('Other');
+          }
           $amount_field['#options'] = $amounts;
           // set the default if available
           if (is_numeric($default)) {

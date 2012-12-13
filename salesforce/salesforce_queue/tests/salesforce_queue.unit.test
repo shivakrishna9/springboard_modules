@@ -25,7 +25,7 @@ class SalesforceQueueUnitTestCase extends DrupalWebTestCase {
       'Email' => 'john.doe@example.com',
     );
 
-    $qid = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'create', $contact);
+    $qid = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'upsert', $contact, 'Email');
 
     $this->assertEqual(1, $qid, t('First item id in the queue is 1.'));
   }
