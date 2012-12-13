@@ -1731,7 +1731,7 @@ function fundraiser_webform_validate($form, &$form_state) {
     foreach ($fundraiser_fields as $key => $value) {
       $message .= $key . ': ' . $value . "\n";
     }
-      fundraiser_track_local_failure();
+    fundraiser_track_local_failure();
     watchdog('fundraiser', $message, NULL, WATCHDOG_DEBUG, NULL);
   }
 
@@ -2245,6 +2245,7 @@ function fundraiser_create_future_orders($order_id, $gateway = NULL, $amount = N
   global $user;
 
   // reload the original order so we get any changes that have been made by the payment gateways
+  uc_credit_cache('clear');
   $order = uc_order_load($order_id);
 
   // determine the number of future donations (Salesforce hard limit is 50. Set as 49 because original order is 1)

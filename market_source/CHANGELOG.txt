@@ -1,3 +1,7 @@
+2012-12-11  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+  * market_source.module (_market_source_validate_cid) - IFAW #1133 - Fixing a bug where the campaign ID validation in market_source would fail every time due to a non-existent constant value.
+
 2012-10-10  Sheena Donnelly  <sheena.donnelly@jacksonriver.com>
 
   * market_source.admin.inc (misc): ACLU #495 - Added "persistence" checkbox to Market Source admin for custom fields and added value to Drupal variable array for that value. Added list of default fields to Market Source admin with configurable "persistence" checkbox and created new Drupal variable to save the results of the configuration for default fields. Updated the qa_keys variable that is sent to javascript to include an array with two values for each field: "value" and "persistence". Updated javascript to account for this variable changed. Added conditional to javascript to check that "persistence" = true before setting cookies. All persistence options default to TRUE to maintain original functionality when updating existing sites.
