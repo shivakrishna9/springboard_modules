@@ -32,6 +32,8 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'salesforce_mapping',
       'salesforce_pull',
       'salesforce_push',
+      'salesforce_queue',
+      'salesforce_soap',
       'webform',
       'salesforce_webform'
     );
@@ -54,6 +56,9 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'map salesforce to webform',
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
+    // Don't forget, need to pass --uri in drush command in order for logging
+    // in to work
+    $this->drupalLogin($this->admin_user);
   }
 
   /**
@@ -62,5 +67,128 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   public function tearDown() {
     user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
+  }
+
+  /**
+   * Creates a simple webform of first name, last name and email address
+   *
+   * @return Object
+   *   Node object of the webform
+   */
+  public function swCreateWebform($with_components = TRUE) {
+    // Create a webform and add a few components
+    $settings = array(
+      'type' => 'webform',
+      'title' => 'Webform Example',
+    );
+    $webform = $this->drupalCreateNode($settings);
+    if (!$with_components) {
+      return $webform;
+    }
+    $component_name_first = array(
+      'type' => 'textfield',
+      'nid' => $webform->nid,
+      'cid' => NULL,
+      'clone' => FALSE,
+      'name' => 'First Name',
+      'form_key' => 'first_name',
+      'extra' => array(
+        'title_display' => 'before',
+        'private' => 0,
+        'disabled' => 0,
+        'unique' => 0,
+        'conditional_operator' => '',
+      ),
+      'mandatory' => 0,
+      'pid' => 0,
+      'weight' => 0,
+      'value' => '',
+    );
+    $component_name_last = $component_name_first;
+    $component_name_last['name'] = 'Last Name';
+    $component_name_last['form_key'] = 'last_name';
+    $component_name_last['weight'] = 1;
+    $component_email = $component_name_first;
+    $component_email['type'] = 'email';
+    $component_email['name'] = 'Email';
+    $component_email['form_key'] = 'email';
+    $component_email['weight'] = 2;
+    webform_component_insert($component_name_first);
+    webform_component_insert($component_name_last);
+    webform_component_insert($component_email);
+    return node_load($webform->nid, NULL, TRUE);
+  }
+
+  /**
+   * Map a webform component to a Salesforce field
+   *
+   * You must first $this->drupalGet() the mapping form
+   *
+   * @param String $drupal_field
+   * @param String $sf_field
+   * @param String $group
+   * @param Bool $dedupe
+   */
+  public function swFormMapField($drupal_field, $sf_field, $group, $dedupe = FALSE) {
+    if (!isset($this->_swfEdit)) {
+      $this->_swfEdit = array();
+    }
+
+    if ($group == 'salesforce_object_info') {
+      $name = $group .'['. $drupal_field .']';
+    }
+    else {
+      $name = 'field_map['. $group .']['. $drupal_field .'][sf_field]';
+      $name_dedupe = 'field_map['. $group .']['. $drupal_field .'][dedupe]';
+    }
+
+    // Check the field is there, and set the value
+    $this->assertFieldByName($name, NULL, 'Mapping field '. $name .' exists.');
+    $this->_swfEdit[$name] = $sf_field;
+
+    // Check that dedupe is hidden for unmapped fields
+    if ($group == 'salesforce_webform_map' || $group == 'salesforce_object_info') {
+      if ($group == 'salesforce_webform_map') {
+        $empty_dedupe_field = '<input type="hidden" name="'. $name_dedupe .'">';
+        $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up for an unmapped field.');
+      }
+
+      $this->drupalPostAjax(NULL, $this->_swfEdit, $name);
+
+      // Check that the dedupe field was properly changed
+      if ($dedupe) {
+        $dedupe_field = '<input name="salesforce_dedupe_field" type="radio" id="salesforce-dedupe-'. $drupal_field .'" value="'. $sf_field .'" class="form-radio">';
+        $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for '. $sf_field);
+        $this->assertRaw($dedupe_field, 'Dedupe radio showed up for '. $sf_field);
+      }
+      else if ($group == 'salesforce_webform_map') {
+        $this->assertRaw($empty_dedupe_field, 'Dedupe radio appropriately hidden for '. $sf_field);
+      }
+    }
+    else {
+      // no need to do an drupalPostAjax
+    }
+  }
+
+  /**
+   * Grabs the Salesforce connection information from the live db and authenticates
+   *
+   * @return Object
+   *   Salesforce Object
+   */
+  public function swSalesforceConnect() {
+    // Steal the Salesforce configuration from the live database
+    global $db_prefix;
+    $table = empty($db_prefix) ? 'variable' : $db_prefix .'_variable';
+    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
+    $result = db_query($sql);
+    foreach ($result as $record) {
+      variable_set($record->name, unserialize($record->value));
+    }
+
+    // Test the connection
+    $salesforce = salesforce_get_api();
+    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+    return $salesforce;
   }
 }

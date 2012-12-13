@@ -61,6 +61,7 @@ function secure_prepopulate_permission() {
  * Implements hook_init().
  */
 function secure_prepopulate_init() {
+
   // Check for the presence of the af query string parameter and we're on a node page.
   if (isset($_GET['af']) && arg(0) == 'node' && is_numeric(arg(1))) {
     $af = $_GET['af'];
@@ -107,11 +108,14 @@ function secure_prepopulate_theme() {
  * Adds a welcome_back key to the node for themeing and output.
  */
 function secure_prepopulate_node_view($node, $view_mode, $langcode) {
+
   // First check to see if there is any prepopulate values available.
   if (isset($_SESSION['secure_prepopulate_values']) && is_array($_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
+
     if ($view_mode == 'full' && !empty($node->webform) && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
+
       $node->content['welcome_back'] = array(
-        '#value' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
+        '#markup' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
           array('values' => $_SESSION['secure_prepopulate_values'][$node->nid], 'nid' => $node->nid)), // Coder: This is ok.
         '#weight' => -1,
       );
@@ -140,6 +144,7 @@ function secure_prepopulate_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+
 /**
  * After build form alteration routine to ensure that url prepopulation is the last thing that happens.
  */
@@ -158,8 +163,41 @@ function secure_prepopulate_after_build($form, &$form_state) {
   $component_hierarchy = _secure_prepopulate_parse_form($node->nid, $components);
   // Try to prepopulate any fields found in the prepopulate_data array.
   foreach ($prepopulate_data as $form_key => $value) {
+
     if (isset($component_hierarchy[$form_key]) && $field =& _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
       switch ($field['#type']) {
+        case 'select':
+          $valid = array_keys($field['#options']);
+          if (in_array($value, $valid)) {
+            $field['#value'] = $value;
+            $field['#default_value'] = $value;
+          }
+          else {
+            if (module_exists('fundraiser_ubercart')) {
+
+              // special handling for state if country is also supplied
+              if (fundraiser_is_donation_type($node->type) && $form_key == 'state' && isset($prepopulate_data['country'])) {
+                $country_component =& _secure_prepopulate_find_field($form, $component_hierarchy['country']);
+                $countries = fundraiser_ubercart_get_countries();
+
+                foreach ($countries->countries as $id => $country) {
+                  
+                  if ($country->country_iso_code_2 == $prepopulate_data['country']) {
+                    $zones = $country->zones;
+                    break;
+                  }
+                }
+                foreach ($zones as $id => $zone) {
+                  $state_options[$zone->zone_code] = $zone->zone_name;
+                }
+                $field['#options'] = $state_options;
+                $field['#value'] = $value;
+                $field['#default_value'] = $value;
+              }
+            }
+            
+          }
+          break;
         case 'radios':
           if (array_key_exists($value, $field)) {
             $field[$value]['#value'] = $value;
@@ -178,9 +216,10 @@ function secure_prepopulate_after_build($form, &$form_state) {
           $field['year']['#value'] = $value['year'];
           $field['day']['#value'] = $value['day'];
         break;
+        default:
+          $field['#value'] = $value;
+          $field['#default_value'] = $value;
       }
-      $field['#value'] = $value;
-      $field['#default_value'] = $value;
     }
   }
   // Clear out any other form fields that might be populated by another module.
@@ -220,8 +259,8 @@ function secure_prepopulate_after_build($form, &$form_state) {
               }
               else {
                 // For all other component default values, copy them to $field.
-                $field['#value'] = $field['#webform_component']['value'];
-                $field['#default_value'] = $field['#webform_component']['value'];
+               // $field['#value'] = $field['#webform_component']['value'];
+               // $field['#default_value'] = $field['#webform_component']['value'];
               }
             break;
           }

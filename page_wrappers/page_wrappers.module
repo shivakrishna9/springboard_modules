@@ -419,10 +419,33 @@ function _page_wrappers_enabled_type($node, $preview = FALSE) {
  * Gets all configured wrappers.
  */
 function _page_wrappers_available_wrappers() {
+  global $user;
+ 
   $result = db_query("SELECT n.title, n.nid FROM {node} n WHERE type = 'page_wrapper'")->fetchAll();
   $wrappers = array(t('-- Select --'));
   foreach ($result as $data) {
     $wrappers[$data->nid] = $data->title;
+  }
+  
+  // Optionally filter available wrappers by organic groups the user is enrolled in.
+  if (module_exists('og') && variable_get('page_wrappers_filter_by_og', FALSE)) {
+    $wrapper_nids = array_keys($wrappers);
+    $user_groups = og_get_entity_groups();
+    $result = db_select('og_membership', 'o')
+      ->fields('o', array('gid', 'etid'))
+      ->condition('entity_type', 'node')
+      ->condition('etid', $wrapper_nids, 'IN')
+      ->execute();
+    $results = $result->fetchAll();
+    $wrappers_og = array();
+    foreach ($results as $data) {
+    
+      // to avoid dupes we make sure the wrapper hasn't already been added to wrappers_og
+      if (in_array($data->gid, $user_groups['node']) && !in_array($data->etid, array_keys($wrappers_og))) {
+        $wrappers_og[$data->etid] = $wrappers[$data->etid];
+      }
+    }
+    $wrappers = $wrappers_og;
   }
   
   // allow other modules to alter the array of available templates

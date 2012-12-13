@@ -51,6 +51,7 @@ function gm_authorizenet_gateway_manager_gateway_info() {
     'settings' => 'gm_authorizenet_settings_form',
     'credit' => 'gm_authorizenet_charge',
     'credit_refund' => 'gm_authorizenet_refund',
+    'billing_update' => 'gm_authorizenet_billing_update',
     'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
   );
   return $gateways;
@@ -986,4 +987,136 @@ function gm_authorizenet_refund($order_id, $amount, $data) {
     return gm_authorizenet_charge($order_id, $amount, $data);
   }
   return array();
+}
+
+/**
+ * Main function to update a Authorize.net CIM profile with new billing information.
+ *
+ * @param $profile_id
+ *   The CIM profile to update.
+ * @param $billing_info
+ *   An array of credit card billing information.
+ * @param $data
+ *   Config data to use during the update.
+ */
+function gm_authorizenet_billing_update($profile_id, $billing_info, $data) {
+  $result = array(
+    'success' => TRUE,
+  );
+
+  // first, we need the profile so we can get the payment profile id
+  $response = gm_authorizenet_cim_profile_get($profile_id, $data);
+
+  // Profile get failed
+  if ($response['resultCode'] == 'Error') {
+    $result['success'] = FALSE;
+    $result['message'] = $response['text'];
+    $result['data'] = array('profile_id' => $profile_id);
+    return $result;
+  }
+
+  // Continue on and try to get the payment profile
+  $payment_profile_id = $response['customerPaymentProfileId'];
+  if ($payment_profile_id) {
+    $response = gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id, $billing_info, $data);
+    if ($response['resultCode'] == 'Ok') {
+      $result['message'] = t('Billing information successfully updated for profile id @profile_id', array('@profile_id' => $profile_id));
+      // Make sensitive data before returning it
+      $billing_info['card_number'] = str_pad(substr($billing_info['card_number'], -4), strlen($billing_info['card_number']), '*', STR_PAD_LEFT);
+      $result['data'] = array(
+        'profile_id' => $profile_id,
+        'payment_profile_id' => $payment_profile_id,
+        'billing_info' => $billing_info,
+      );
+    }
+    else {
+      // Update failed for some reason
+      $result['success'] = FALSE;
+      $result['message'] = $response['text'];
+      $result['data'] = array(
+        'profile_id' => $profile_id,
+        'payment_profile_id' => $payment_profile_id,
+        'billing_info' => $billing_info,
+      );
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Updates a CIM payment profile with new billing and credit card information.
+ *
+ * @param $profile_id
+ *   Payment gateway-assigned ID associated with the customer profile.
+ * @param $payment_profile_id
+ *   Payment gateway assigned ID associated with the customer payment profile.
+ * @param $billing_info
+ *   Array of billing info to update the payment profile.
+ *     array(
+ *      'first_name' => 'John',
+ *      'last_name' => 'Doe',
+ *      'address => '100 Elm Street',
+ *      'city' => 'Springfield'
+ *      'state' => 44,
+ *      'zipcode' => 55555,
+ *      'country' => 840,
+ *      'card_number' => 4111111111111111,
+ *      'card_exp_date' => array(
+ *        'year' => 2012,
+ *        'month' => 12,
+ *      ),
+ *      'card_cvv' => 122,
+ *    );
+ *
+ */
+function gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id, $billing_info, $data) {
+  $server = $data['config']['gm_authnet_cim_mode'];
+
+  // format expirdation date for API
+  $expiration_date = $billing_info['card_exp_date']['year'] . '-' . sprintf("%02d", $billing_info['card_exp_date']['month']);
+
+  // If a numeric country is supplied, convert to iso code 2
+  if (!empty($billing_info['country']) && is_numeric($billing_info['country'])) {
+    $country = uc_get_country_data(array('country_id' => $billing_info['country']));
+    // Get the iso code, that's all we need
+    $country = $country[0]['country_iso_code_2'];
+  }
+
+  // If a numeric state is supplied, convert to code
+  if (!empty($billing_info['state']) && is_numeric($billing_info['state'])) {
+    $state = uc_get_zone_code($billing_info['state']);
+  }
+  else {
+    $state = $billing_info['state'];
+  }
+
+  // create the updateCustomerPaymentProfileRequest xml request
+  $request = array(
+    'customerProfileId' => $profile_id,
+    'paymentProfile' => array(
+      'billTo' => array(
+        'firstName' => $billing_info['first_name'],
+        'lastName' => $billing_info['last_name'],
+        'address' => $billing_info['address'],
+        'city' => $billing_info['city'],
+        'state' => $state,
+        'zip' => $billing_info['zip'],
+        'country' => $country,
+      ),
+      'payment' => array(
+        'creditCard' => array(
+          'cardNumber' => $billing_info['card_num'],
+          'expirationDate' => $expiration_date,
+          'cardCode' => $billing_info['card_cvv'],
+        ),
+      ),
+      'customerPaymentProfileId' => $payment_profile_id,
+    ),
+  );
+
+  $xml = _gm_authorizenet_xml_api_wrapper('updateCustomerPaymentProfileRequest',   _gm_authorizenet_array_to_xml($request), $data['config']);
+  $response = gm_authorizenet_xml_api($server, $xml);
+  $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
+  return _gm_authorizenet_cim_parse_response($xml_raw);
 }

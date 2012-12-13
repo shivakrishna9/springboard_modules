@@ -208,7 +208,24 @@ function fundraiser_sustainers_charge_now($did) {
 }
 
 /**
- * Implemenation of hook_mail().
+ * Implements hook_tokens_alter().
+ */
+function fundraiser_sustainer_tokens_alter(&$replacements, $context) {
+  $type = $context['type'];
+  $tokens = $context['tokens'];
+  $data = $context['data'];
+  $options = $context['options'];
+  if ($type = 'donation' && !empty($data['donation'])) {
+    $donation = $data['donation'];
+    $replacements['recurs_monthly'] = t('No');
+    if (!empty($donation->donation['recurs_monthly']) && $donation->donation['recurs_monthly']) {
+      $replacements['recurs_monthly'] = t('Yes');
+    }
+  }
+}
+
+/**
+ * Implements hook_mail().
  */
 function fundraiser_sustainer_mail($key, &$message, &$params) {
   switch ($key) {
@@ -513,7 +530,7 @@ function fundraiser_sustainers_edit_form($did) {
       }
       $donations_row['status'] = !empty($this_donation->status_label) ? $this_donation->status_label : $this_donation->status;
       if (user_access('fastforward recurring donations')) {
-        if (!empty($this_donation->status_charged) && $this_donation->status_charged == FALSE) {
+        if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
           // Add a button to fastforward this particular donation
           $donations_row['ffwd'] = l(t('advance charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
             array('query' => drupal_get_destination()) );
@@ -765,6 +782,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
     $donation = fundraiser_donation_get_donation($donation->did);
     // Update it.
     $donation->donation = array_merge($donation->donation, $submitted_values);
+    // Mark the billing information as needing to be updated.
+    $donation->update_billing = TRUE;
     // Save each donation.
     fundraiser_donation_update($donation);
     // Add a comment.
@@ -955,7 +974,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   }
   else {
     // For all recurring when processed, check if we need to send a notice about the set almost done.
-    if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) == 1) {
+    if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 2) {
       _fundraiser_sustainers_send_cc_notification($donation->recurring->master_did, $donation->uid);
     }
     // And update the sustainer table.
@@ -1043,7 +1062,6 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   $did = db_query('SELECT did FROM {fundraiser_sustainers} WHERE master_did = :master_did AND gateway_resp IS NULL LIMIT 0,1', // Coder: this is ok.
     array(':master_did' => $master_did))->fetchColumn();
   $donation = fundraiser_donation_get_donation($did);
-
   // Do token replacement on body.
   $body = variable_get('fundraiser_cc_exp_body',
     'Your card ending in [donation:card_number] is about to expire on [donation:card_expiration_month]/[donation:card_expiration_year].');
@@ -1262,6 +1280,7 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
     'AND r.next_charge < :now ' .
+    'AND r.attempts < 3 ' . // If already been tried 3 times, Stop Trying.
     'ORDER BY r.next_charge ASC ', 0, $limit,
     array(':now' => $now))->fetchAll();
   return $donations;

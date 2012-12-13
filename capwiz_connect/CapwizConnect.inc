@@ -426,22 +426,24 @@ class CapizConnect {
       );
       watchdog('capwiz_connect', $message, $message_vars);
     }
-    
-    // If this is the last batch of users, set the last sync time to right now
-    // so that the next batch will only query users who are updated after right
-    // now.  Also, reset the offset.
+ 
+    // We have no more items to import, reset the settings
     if (!$this->hasMoreUsers()) {
-      $this->account_details->user_sync_since = $batch_start_time;
-      db_query('UPDATE {capwiz_connect_accounts} SET user_sync_since=%d, user_sync_offset=%d WHERE id=%d', $this->account_details->user_sync_since, 0, $this->account_details->id);
+      $time_set = $batch_start_time;
+      $offset_set = 0;
     }
+    // We have more items the time remains the same and the offset gets updated
     else {
-      // Save the new user offset so we know where to start the next batch
-      db_query('UPDATE {capwiz_connect_accounts} SET user_sync_offset=%d WHERE id=%d', $this->last_user_offset, $this->account_details->id);
+      $time_set = $this->account_details->user_sync_since;
+      $offset_set = $this->last_user_offset;      
     }
-    
+
+    // Update the settings
+    db_update('capwiz_connect_accounts')
+      ->fields(array('user_sync_since' => $time_set, 'user_sync_offset' => $offset_set))
+      ->condition ('id', $this->account_details->id)
+      ->execute();
   }
-  
-  
   
   /**
    * Local method to save a Capwiz user as a Drupal user and add the user to
@@ -474,29 +476,17 @@ class CapizConnect {
         }
       }
       else {
-        $drupal_account_password = user_password();
-        $drupal_account = array(
+        $edit = array(
           'name'    => $email,
-          'pass'    => md5($drupal_account_password),
-          'mail'    => $email,
-          'created' => $time = REQUEST_TIME,
-          'access'  => $time,
-          'login'   => 0,
-          'status'  => 1,
+          'pass'    => user_password(),
+          'mail'    => $email
         );
 
-        db_query('INSERT INTO {users} (name, pass, mail, created, access, login, status) VALUES ("%s", "%s", "%s", %d, %d, %d, %d)', $drupal_account);
-        $drupal_account = (object)$drupal_account;
-        $drupal_account->uid  = db_last_insert_id('users', 'uid');
+        $drupal_account = user_save('', $edit);
         $return_value = self::$STAT_CREATE_OK;
       }
     }
-    
-    // Add the new/updated user to the SF queue
-    if (module_exists('sf_user') && $drupal_account->uid > 0) {
-      sf_queue_insert($drupal_account->uid, 'user', 'upsert');
-    }
-    
+
     // Round up the details on any legislators for this user
     $legislators = array();
     if (!empty($user->officials)) {
@@ -513,14 +503,11 @@ class CapizConnect {
         );
       }
     }
-    
+
     // Make sure the map field is an array
     if (!is_array($this->account_details->mapping_user['map'])) {
       $this->account_details->mapping_user['map'] = array();
     }
-    
-    
-    
 
     foreach ($this->account_details->mapping_user['map'] as $field_key => $target_field) {
       $business_rule = $this->account_details->mapping_user['business'][$field_key];
@@ -848,8 +835,10 @@ class CapizConnect {
     }
 
     // Update the settings
-    db_query('UPDATE {capwiz_connect_accounts} SET action_sync_since=%d, action_sync_offset=%d WHERE id=%d', $time_set, $offset_set, $this->account_details->id);
-
+    db_update('capwiz_connect_accounts')
+      ->fields(array('action_sync_since' => $time_set, 'action_sync_offset' => $offset_set))
+      ->condition ('id', $this->account_details->id)
+      ->execute();
   }
   
   /**
@@ -863,7 +852,7 @@ class CapizConnect {
    */
   private function saveAction($action) {
     $return_value = 0;
-    
+
     $message_id = $action->messageId;
     $record = array(
       'message_id' => $message_id,
@@ -875,14 +864,14 @@ class CapizConnect {
     );
 
     // Check if this is a duplicate message. Capwiz creates an event for each message recipient selected by the user, we only need to record one of them
-    $duplicate_message = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE capwiz_alert_id='%s' AND capwiz_user_id='%s' AND action_timestamp=%d AND message_id <> %d", $record['capwiz_alert_id'], $record['capwiz_user_id'], $record['action_timestamp'], $message_id));
+    $duplicate_message = db_query('SELECT id FROM {capwiz_connect_actions} WHERE capwiz_alert_id=:alert_id AND capwiz_user_id=:user_id AND action_timestamp=:time AND message_id <> :message_id', array(':alert_id' => $record['capwiz_alert_id'], ':user_id' => $record['capwiz_user_id'], ':time' => $record['action_timestamp'], ':message_id' => $message_id))->fetchField();
     if ($duplicate_message > 0) {
       return self::$STAT_DUPLICATE_MESSAGE;
     }
-        
+
     // Check if this action (identified by message ID) is already in our DB
-    $existing_record_id = db_result(db_query("SELECT id FROM {capwiz_connect_actions} WHERE message_id='%s'", $message_id));
-      
+    $existing_record_id = db_query('SELECT id FROM {capwiz_connect_actions} WHERE message_id=:message_id', array(':message_id' => $message_id))->fetchField();
+
     if ($existing_record_id > 0) {
       // If its an existing message do nothing
       return self::$STAT_UPDATE_OK;
@@ -899,7 +888,7 @@ class CapizConnect {
     
     // Insert the action into the Salesforce processing queue
     if ($record['id']) {
-      sf_queue_insert($record['id'], 'capwiz_connect_action', 'upsert');
+      //sf_queue_insert($record['id'], 'capwiz_connect_action', 'upsert');
     }
     
     return $return_value;

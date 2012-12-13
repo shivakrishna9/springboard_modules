@@ -3,5 +3,12 @@ description = Batch processing for Salesforce integration.
 package = Salesforce
 core = 7.x
 
+files[] = includes/salesforce_queue.queue.inc
+files[] = tests/salesforce_queue.unit.test
+files[] = tests/salesforce_queue.web.test
+
+dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
+
+configure = admin/structure/salesforce/queue

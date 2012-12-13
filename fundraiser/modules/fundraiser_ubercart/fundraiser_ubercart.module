@@ -452,7 +452,7 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status) ? 1 : 0;
   }
 
   // Time of charge.
@@ -460,14 +460,15 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
 
   // Add specific order data.
   $donation->data = isset($order->data) ? $order->data : array();
-  $ref_id = '';
+  $data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
   if (isset($order->data['cc_txns']['references'])) {
     $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+    $donation->donation['reference_id'] = $ref_id;
+    $data = array(
+      'txn_type' => 'reference_txn', // Reference if it does.
+      'ref_id' => $ref_id,
+    );
   }
-  $data = array(
-    'txn_type' => 'reference_txn',
-    'ref_id' => $ref_id,
-  );
   $donation->data = array_merge($donation->data, $data);
 }
 
@@ -486,7 +487,6 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
-  $data = isset($donation->donation['data']) ? $donation->donation['data'] : array();
 
   // Create a UC order.
   $order = uc_order_new($user->uid);
@@ -542,9 +542,15 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
     $order->data['gateway'] = $node->gateway;
   }
 
-  // Lastly add order data field information.
-  foreach ($data as $field => $value) {
-    $order->data[$field] = $value;
+  // Add additional order data field information.  
+  $data = isset($donation->donation['data']) ? $donation->donation['data'] : array();
+  $order->data = array_merge($order->data, $data);
+  // Add anything from the donation data proper.
+  if (isset($donation->data)) {
+    $order->data =  array_merge($order->data, $donation->data);
+  }
+  if (!isset($order->data['txn_type'])) {
+    $order->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
   }
 
   // Cache the cc details stored by the handler.
@@ -570,10 +576,12 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
 /**
  * Implements hook_fundraiser_donation_process().
+ * Could be called immediately after creation, or recurring months later.
+ * So could use auth_capture, or could use a reference_txn.
  */
 function fundraiser_ubercart_fundraiser_donation_process($donation) {
-  // Grab the gateway configuration from fundriaser's data.
-  $info = _fundraiser_gateway_info($donation->node->gateway['id']);
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_get_donation_gateway($donation->did);
   // Check for the charge function to be defined.
   $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   if (empty($charge_function)) {
@@ -584,16 +592,15 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
     return; // Return the failure.
   }
-  // Found it, let's try it.
-  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
   // Create the charge information.
   $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
   $donation->data = (array) $donation->data;
   $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
   $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
-  // Execute the charge as per the given gateway.
-  $data = array('txn_type' => 'auth_capture'); // Set the data for what we're trying to do.
-  $donation->data = array_merge($data, $donation->data);
+  // If no charge default set, use auth_charge
+  if (!isset($donation->data['txn_type'])) {
+    $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+  }
   // Make the charge, the charge functions can handle looking up the order and other data.
   if (function_exists($charge_function)) {
     $result = $charge_function($donation->did, $donation->donation['amount'], $donation->data);
@@ -605,7 +612,6 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
   $donation->result = $result;
   // If a success set up the order information now, so it's available on success responses.
   if (isset($donation->result['success']) && $donation->result['success']) {
-    // New user account is created during uc_cart_complete_sale.
     $order = uc_order_load($donation->did);
     uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
     uc_payment_enter($order->order_id, 'fundraiser', $order->order_total, 0, NULL,
@@ -613,8 +619,22 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     // Look up the created user, and add them to the donation object.
     $donation->uid = $order->uid;
     $donation->user = user_load($order->uid);
+    // Add the order data if updated by processing. (Charged gateways for example.)
+    $donation->data = isset($order->data) ? $order->data : array();
+    if (isset($order->data['cc_txns']['references'])) {
+      $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+      $donation->donation['reference_id'] = $ref_id;
+      $data = array(
+        'txn_type' => 'reference_txn', // Reference if it does.
+        'ref_id' => $ref_id,
+      );
+      $donation->data = array_merge($donation->data, $data);
+    }
+    // If no charge default set, use auth_charge
+    if (!isset($donation->data['txn_type'])) {
+      $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+    }
     // Add the order status data.
-    // Translate the status according to UC label.
     $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
     if (!empty($order->order_status)) {
       $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
@@ -683,6 +703,43 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   if (!empty($order->order_status)) {
     $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
     $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
+  
+  // Update the gateway billing if applicable.
+  // To do later: Makeing the detection of dirty billing data internal.
+  if (!empty($donation->update_billing) && $donation->update_billing) {   
+    // Grab the gateway configuration from fundraisers data.
+    $info = _fundraiser_get_donation_gateway($donation->did);
+    // Check for the billing function to be defined.
+    $billing_update_function = isset($info['billing_update_function']) ? $info['billing_update_function'] : '';
+    if (!empty($donation->donation['reference_id']) && !empty($billing_update_function) && function_exists($billing_update_function)) {
+      // Create the charge information.
+      $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
+      $donation->data = (array) $donation->data;
+      $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
+      $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
+      // If no charge default set, use auth_charge
+      if (!isset($donation->data['txn_type'])) {
+        $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+      }
+      // Create billing information to update gateways with.
+      $billing_info = array(
+         'first_name' => $donation->donation['first_name'],
+         'last_name' => $donation->donation['last_name'],
+         'address' => $donation->donation['address'],
+         'city' => $donation->donation['city'],
+         'state' => fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']),
+         'zipcode' => $donation->donation['zip'],
+         'country' => fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']),
+         'card_number' => $donation->donation['card_number'],
+         'card_exp_date' => array(
+           'year' => $donation->donation['card_expiration_year'],
+           'month' => $donation->donation['card_expiration_month'],
+         ),
+         'card_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+      );
+      $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
+    }
   }
 }
 

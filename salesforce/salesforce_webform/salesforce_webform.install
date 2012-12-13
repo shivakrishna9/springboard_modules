@@ -1,6 +1,30 @@
 <?php
 
 /**
+ * @file
+ * Install hooks and schema
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function salesforce_webform_install() {
+  if (module_exists('salesforce_queue')) {
+    variable_set('salesforce_webform_queue_system', 'salesforce_queue');
+  }
+  else {
+    variable_set('salesforce_webform_queue_system', 'instant');
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function salesforce_webform_uninstall() {
+  variable_del('salesforce_webform_queue_system');
+}
+
+/**
  * Implements hook_schema().
  */
 function salesforce_webform_schema() {
@@ -10,12 +34,6 @@ function salesforce_webform_schema() {
       'nid' => array(
         'description' => 'Node id of the webform node to which this map applies.',
         'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'name' => array(
-        'description' => 'The machine-readable name of this salesforce_map type.',
-        'type' => 'varchar',
-        'length' => '32',
         'not null' => TRUE,
       ),
       'salesforce_object_type' => array(
@@ -32,8 +50,22 @@ function salesforce_webform_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'salesforce_dedupe_field' => array(
+        'description' => 'The Salesforce field that will be used for UPSERT',
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
       'field_map' => array(
         'description' => 'A serialized object that stores the field mappings.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+      ),
+      'sync_options' => array(
+        'description' => 'A serialized array describing the map\'s syncing options.',
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
@@ -73,10 +105,6 @@ function salesforce_webform_schema() {
       ),
     ),
     'primary key' => array('nid'),
-    'unique keys' => array(
-      'name' => array('name'),
-      'webform_nid' => array('nid', 'salesforce_object_type')
-    ),
   );
 
   return $schema;
