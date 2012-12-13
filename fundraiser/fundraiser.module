@@ -232,7 +232,8 @@ function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
   }
   $children = element_children($fields);
   foreach ($children as $child) {
-    if (isset($fields[$child]['#type']) && $fields[$child]['#type'] != 'fieldset') {
+    $disallowed = array('card_cvv');
+    if (isset($fields[$child]['#type']) && $fields[$child]['#type'] != 'fieldset' && !in_array($child, $disallowed)) {
       // Add children.
       $tokens[$child] = array(
         'name' => isset($fields[$child]['#title']) ? $fields[$child]['#title'] : $child,
@@ -258,8 +259,8 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     $data = is_array($donation->donation) ? $donation->donation : array();
     // User and etc types.
     $data['did'] = isset($donation->did) ? $donation->did : '';
-    $data['node'] = isset($donation->node) ? $donation->node : '';
-    $data['user'] = isset($donation->user) ? $donation->user : '';
+    $data['node'] = isset($donation->node->nid) ? $donation->node->nid : '';
+    $data['user'] = isset($donation->user->uid) ? $donation->user->uid : '';
     // Specific changes.
     $data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
     $data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
