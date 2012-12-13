@@ -99,7 +99,7 @@ function salesforce_webform_node_load($nodes, $types) {
   if (in_array('webform', $types)) {
     foreach ($nodes as $nid => $node) {
       // Add the salesforce_webform_map entity to the node
-      $map = salesforce_webform_load_map($nid);
+     // $map = salesforce_webform_load_map($nid);
       if (is_object($map)) {
         $node->salesforce_webform_map = $map;
       }
@@ -112,7 +112,7 @@ function salesforce_webform_node_load($nodes, $types) {
  */
 function salesforce_webform_node_delete($node) {
   // delete the salesforce_webform_map entity
-  salesforce_webform_delete_map($node->nid);
+ // salesforce_webform_delete_map($node->nid);
 }
 
 /**
