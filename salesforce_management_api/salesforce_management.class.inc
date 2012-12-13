@@ -68,14 +68,12 @@ class DrupalSalesforce {
       // Log the login occurence.
       $this->watchdog(SALESFORCE_LOG_ALL, t('@user (@email) logged into Salesforce.', array('@user' => $login->userInfo->userFullName, '@email' => $login->userInfo->userEmail)));
     }
-    catch (Exception $e) {
-      // Log the error message.
+   catch (Exception $e) {
+       // Log the error message.
       $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .
-        '<br/>Request: <pre>' . check_plain($this->client->getLastRequest()) . '</pre><br/>' .
         'Error: <pre>' . check_plain($e->faultstring) . '</pre>', WATCHDOG_ERROR);
-
       // Indicate the failed login.
-      return $e->getMessage();
+      return FALSE;
     }
 
     // Indicate the successful login.
