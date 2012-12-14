@@ -226,6 +226,31 @@ function gm_authorizenet_charge($order_id, $amount, $data) {
 }
 
 /**
+ * Returns a CIM profile for a given profile id.
+ *
+ * @param $profile_id
+ *   A valid Authorize.net CIM.
+ * @param $data
+ *   Gateway configuration data.
+ */
+function gm_authorizenet_cim_profile_get($profile_id, $data) {
+  $server = $data['config']['gm_authnet_cim_mode'];
+  $request = array(
+    'customerProfileId' => $profile_id,
+  );
+
+  // Request a profile from auth.net.
+  $xml = _gm_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _gm_authorizenet_array_to_xml($request), $data['config']);
+
+  // Parse the response.
+  $response = gm_authorizenet_xml_api($server, $xml);
+  $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
+  $xml_raw = strstr($response, '<getCustomerProfileResponse');
+
+  return _gm_authorizenet_cim_parse_response($xml_raw);
+}
+
+/**
  * Create a CIM profile using an order's data.
  */
 function _gm_authorizenet_cim_profile_create($order, $data) {
