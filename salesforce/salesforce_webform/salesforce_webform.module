@@ -51,7 +51,7 @@ function salesforce_webform_menu() {
     // I am assuming that if you can configure Salesforce you also understand
     // the best way to configure the Salesforce webform interface
     'access arguments' => array('administer salesforce'),
-    'file' => 'includes/salesforce_webform.admin.inc',
+    'file' => 'includes/salesforce_webform.queue.inc',
   );
   return $items;
 }
