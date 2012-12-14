@@ -77,6 +77,11 @@ function salesforce_webform_admin_form_submit($form, &$form_state) {
   }
 
   drupal_set_message(t('Your settings have been saved.'));
+
+  // PSA
+  if ($queue_system == 'instant') {
+    drupal_set_message(t('Just so you know, instantaneously sending submission data to Salesforce does not actually work.'), 'warning');
+  }
 }
 
 /**
@@ -155,6 +160,10 @@ function salesforce_webform_dequeue_all($nid) {
         ->execute();
 
     case 'salesforce_queue':
+      if (!module_exists('salesforce_queue')) {
+        drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
+        return FALSE;
+      }
       return db_delete('salesforce_queue')
         ->condition('module', 'webform')
         ->condition('delta', 'webform:'. $nid)

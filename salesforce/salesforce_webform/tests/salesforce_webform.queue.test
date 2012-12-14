@@ -291,6 +291,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
 
   /**
    * Test dequeuing submissions when the webform has been deleted for DrupalQueue
+   *
+   * Separated from Salesforce Queue to have setUp() and tearDown() between them
    */
   public function testNodeDeleteDequeueDrupalQueue() {
     variable_set('salesforce_webform_queue_system', 'drupal_queue');
@@ -313,6 +315,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
 
   /**
    * Test dequeuing submissions when the webform has been deleted for Salesforce Queue
+   *
+   * Separated from DrupalQueue to have setUp() and tearDown() between them
    */
   public function testNodeDeleteDequeueSalesforceQueue() {
     variable_set('salesforce_webform_queue_system', 'salesforce_queue');
@@ -328,7 +332,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     foreach ($result as $record) {
       $unexpected_records[] = $record->id;
     }
-    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on DrupalQueue.');
+    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on Salesforce Queue.');
   }
 
   /**
