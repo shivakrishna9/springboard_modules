@@ -133,32 +133,32 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
  * Handles the actual process of sending the request to dequeue all related items
  */
 function salesforce_webform_dequeue_all($nid) {
- $queue_system = variable_get('salesforce_webform_queue_system', '');
- switch ($queue_system) {
-   case 'drupal_queue':
-     $query = db_select('queue', 'q')
-       ->fields('q')
-       ->condition('name', 'salesforce_webform');
-     $result = $query->execute();
-     $delete = array();
-     foreach ($result as $record) {
-       $data = unserialize($record->data);
-       if ($data['delta'] == 'webform:'. $nid) {
-         $delete[] = $record->item_id;
-       }
-     }
-     if (empty($delete)) {
-       return TRUE;
-     }
-     return db_delete('queue')
-       ->condition('item_id', $delete, 'IN')
-       ->execute();
+  $queue_system = variable_get('salesforce_webform_queue_system', '');
+  switch ($queue_system) {
+    case 'drupal_queue':
+      $query = db_select('queue', 'q')
+        ->fields('q')
+        ->condition('name', 'salesforce_webform');
+      $result = $query->execute();
+      $delete = array();
+      foreach ($result as $record) {
+        $data = unserialize($record->data);
+        if ($data['delta'] == 'webform:'. $nid) {
+          $delete[] = $record->item_id;
+        }
+      }
+      if (empty($delete)) {
+        return TRUE;
+      }
+      return db_delete('queue')
+        ->condition('item_id', $delete, 'IN')
+        ->execute();
 
-   case 'salesforce_queue':
-     return db_delete('salesforce_queue')
-       ->condition('module', 'webform')
-       ->condition('delta', 'webform:'. $nid)
-       ->execute();
+    case 'salesforce_queue':
+      return db_delete('salesforce_queue')
+        ->condition('module', 'webform')
+        ->condition('delta', 'webform:'. $nid)
+        ->execute();
  }
 
  // There is nothing to do here
