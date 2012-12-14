@@ -656,7 +656,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
-    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
+    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00, 2),
   );
 
   // TODO this should probably go on a different table, not here.
@@ -756,7 +756,7 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 0,
     '#extra' => array(
-      'description' => t('Minimum payment $ @min.', array('@min' => variable_get('fundraiser_default_minimum', 10.00))),
+      'description' => t('Minimum payment $ @min.', array('@min' => number_format(variable_get('fundraiser_default_minimum', 10.00), 2))),
       'width' => 10,
       'field_prefix' => '$',
     ),
@@ -898,7 +898,7 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
     // show the minimum amount when only displaying an amount text box
-    $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+    $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
     return $field;
   }
   // Else we want a select field.
@@ -944,7 +944,7 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = 'Minimum payment $' . $fundraiser->minimum_donation_amount . '.';
+  $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2). '.';
   // Return the field to be created.
   return $field;
 }
