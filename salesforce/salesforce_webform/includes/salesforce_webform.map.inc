@@ -395,21 +395,22 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
     return;
   }
 
-  else if (!$form_state['clicked_button']['#value'] == 'Save') {
-    drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
+  // Save the contributed values
+  else if ($form_state['clicked_button']['#value'] == 'Save') {
+    $map = _sfw_convert_input($form_state['input']);
+    $map['nid'] = $node->nid;
+    $result = salesforce_webform_save_map($map);
+    if ($result === FALSE) {
+      drupal_set_message(t('There was an error saving the map.'), 'error');
+    }
+    else {
+      drupal_set_message(t('The map was saved successfully.'));
+    }
     return;
   }
 
-  // Save the contributed values
-  $map = _sfw_convert_input($form_state['input']);
-  $map['nid'] = $node->nid;
-  $result = salesforce_webform_save_map($map);
-  if ($result === FALSE) {
-    drupal_set_message(t('There was an error saving the map.'), 'error');
-  }
-  else {
-    drupal_set_message(t('The map was saved successfully.'));
-  }
+  // No action was specified
+  drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
 }
 
 /**
