@@ -6,6 +6,80 @@
  */
 
 /**
+ * Page callback to render the admin page
+ */
+function salesforce_webform_admin_page() {
+  $build = array();
+  $build['content'] = array(
+    'page_description' => array(
+      '#id' => 'salesforce-webform-admin-helptext-page',
+      '#type' => 'markup',
+      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with webform submissions.') .'</p>',
+      '#prefix' => '<div class="salesforce-webform-admin-helptext">',
+      '#suffix' => '</div>',
+    ),
+    'salesforce_webform_admin_form' => drupal_get_form('salesforce_webform_admin_form'),
+  );
+  return $build;
+}
+
+/**
+ * Configuration form for this module
+ */
+function salesforce_webform_admin_form($form, &$form_state) {
+  $form = array();
+
+  // Queue system options
+  $queue_options = array(
+    'instant' => t('Send Instantaneously'),
+    'drupal_queue' => t('Drupal Queue'),
+  );
+  $salesforce_queue_exists = module_exists('salesforce_queue');
+  if ($salesforce_queue_exists) {
+    $queue_options['salesforce_queue'] = t('Salesforce Queue');
+  }
+
+  // Default queue
+  $queue_system = variable_get('salesforce_webform_queue_system', '');
+  if (empty($queue_system)) {
+    $queue_system = $salesforce_queue_exists ? 'salesforce_queue' : 'instant';
+  }
+
+  // Queue system form
+  $form['salesforce_webform_queue_system'] = array(
+    '#id' => 'salesforce-webform-queue-system',
+    '#title' => t('Queue System'),
+    '#description' => t(''),
+    '#type' => 'radios',
+    '#default_value' => $queue_system,
+    '#options' => $queue_options,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save',
+  );
+
+  return $form;
+}
+
+/**
+ * Submit callback for the configuration form
+ */
+function salesforce_webform_admin_form_submit($form, &$form_state) {
+  $former_queue_system = variable_get('salesforce_webform_queue_system', '');
+  $queue_system = $form_state['input']['salesforce_webform_queue_system'];
+  variable_set('salesforce_webform_queue_system', $queue_system);
+
+  // @TODO: Decommission old queue
+  if (!empty($former_queue_system)) {
+    // Switch existing queue data to the new queue and delete old queue
+  }
+
+  drupal_set_message(t('Your settings have been saved.'));
+}
+
+/**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
 function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
@@ -56,58 +130,40 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
 }
 
 /**
- * A submit handler added to webforms that have Salesforce mappings
+ * Handles the actual process of sending the request to dequeue all related items
  */
-function salesforce_webform_client_form_submit($form, &$form_state) {
-  $node = $form['#node'];
-  $sid = $form_state['values']['details']['sid'];
-  $map = salesforce_webform_load_map($node->nid);
-  $input = $form_state['input']['submitted'];
+function salesforce_webform_dequeue_all($nid) {
+ $queue_system = variable_get('salesforce_webform_queue_system', '');
+ switch ($queue_system) {
+   case 'drupal_queue':
+     $query = db_select('queue', 'q')
+       ->fields('q')
+       ->condition('name', 'salesforce_webform');
+     $result = $query->execute();
+     $delete = array();
+     foreach ($result as $record) {
+       $data = unserialize($record->data);
+       if ($data['delta'] == 'webform:'. $nid) {
+         $delete[] = $record->item_id;
+       }
+     }
+     if (empty($delete)) {
+       return TRUE;
+     }
+     return db_delete('queue')
+       ->condition('item_id', $delete, 'IN')
+       ->execute();
 
-  // Build up the field data
-  $fields = array();
-  // Salesforce webform map
-  foreach ($input as $wf_field => $input_value) {
-    if (isset($map->field_map['salesforce_webform_map'][$wf_field])) {
-      $sf_field = $map->field_map['salesforce_webform_map'][$wf_field];
-      $fields[$sf_field] = $input_value;
-    }
-  }
-  // Node properties map
-  if (isset($map->field_map['salesforce_node_map'])) {
-    if (isset($map->field_map['salesforce_node_map']['nid'])) {
-      $sf_field = $map->field_map['salesforce_node_map']['nid'];
-      $fields[$sf_field] = $node->nid;
-    }
-    if (isset($map->field_map['salesforce_node_map']['title'])) {
-      $sf_field = $map->field_map['salesforce_node_map']['title'];
-      $fields[$sf_field] = $node->title;
-    }
-  }
-  // Submission properties map
-  if (isset($map->field_map['salesforce_submission_map'])) {
-    if (isset($map->field_map['salesforce_submission_map']['sid'])) {
-      $sf_field = $map->field_map['salesforce_submission_map']['sid'];
-      $fields[$sf_field] = $sid;
-    }
-    if (isset($map->field_map['salesforce_submission_map']['date'])) {
-      $sf_field = $map->field_map['salesforce_submission_map']['date'];
-      $fields[$sf_field] = time();
-    }
-  }
+   case 'salesforce_queue':
+     return db_delete('salesforce_queue')
+       ->condition('module', 'webform')
+       ->condition('delta', 'webform:'. $nid)
+       ->execute();
+ }
 
-  // Create the Salesforce object
-  $sObject = new stdClass();
-  $sObject->fields = $fields;
-  $sObject->type = $map->salesforce_object_type;
-  if (!empty($map->salesforce_record_type)) {
-    $sObject->record = $map->salesforce_record_type;
-  }
-
-  // Queue up the submissions
-  $result = salesforce_webform_queue($sid, $node->nid, $sObject, $map->salesforce_dedupe_field);
-  if (!$result) {
-    // @TODO Send an error to admin that submission didn't go to queue
-    drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
-  }
+ // There is nothing to do here
+ // If there is no queue system set, why not return TRUE?  There likely are no
+ // queue items to delete anyhow!  'Instant' would be returning TRUE in this
+ // case anyway.
+ return TRUE;
 }
