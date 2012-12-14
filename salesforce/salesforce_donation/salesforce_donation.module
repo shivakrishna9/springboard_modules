@@ -1,0 +1,262 @@
+<?php
+
+/**
+ * @file
+ * Manages webform to Salesforce mappings.
+ */
+
+/**
+ * @defgroup core_drupal_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_donation_entity_info() {
+  return array(
+    'salesforce_donation_map' => array(
+      'label' => t('Salesforce Webform Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'salesforce_donation_map',
+      'entity keys' => array(
+        'id' => 'nid',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+      'module' => 'salesforce_donation',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_donation_menu() {
+  // %webform_menu returns $node if $node is a webform
+  $items['node/%webform_menu/webform/salesforce-map'] = array(
+    'title' => 'Salesforce map',
+    'page callback' => 'salesforce_donation_map_page',
+    'page arguments' => array(1),
+    'access callback' => 'salesforce_donation_map_page_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_donation.map.inc',
+  );
+  $items['admin/config/content/salesforce-webform'] = array(
+    'title' => 'Salesforce Webform Settings',
+    'page callback' => 'salesforce_donation_admin_page',
+    'description' => 'Configure how the Salesforce integration will work with webform submissions.',
+    // I am assuming that if you can configure Salesforce you also understand
+    // the best way to configure the Salesforce webform interface
+    'access arguments' => array('administer salesforce'),
+    'file' => 'includes/salesforce_donation.queue.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_donation_permission() {
+  return array(
+    'map salesforce to webform' => array(
+      'title' => t('Map Salesforce objects to webforms'),
+      'description' => t('Configure the mapping of Salesforce objects with
+        webforms so submissions can sync with Salesforce.'),
+    ),
+  );
+}
+
+/**
+ * @} core_drupal_hooks
+ */
+
+
+/**
+ * Access callback to reach the mapping page
+ *
+ * All by its little old self because menu doesn't load the include file until
+ * after the access check.
+ */
+function salesforce_donation_map_page_access($node) {
+  if (
+       $node !== FALSE // %webform_menu returns FALSE if not valid
+       // @TODO: Ensure that 'donation_form' is still accurate in the D6TOD7 port
+       && $node->type != 'dontation_form'
+       && user_access('map salesforce to webform')
+     ) {
+    return TRUE;
+   }
+  return FALSE;
+}
+
+/**
+ * Implementation of hook_node_delete().
+ */
+function salesforce_donation_node_delete($node) {
+  // Dequeue all submissions related to this webform
+  module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
+  salesforce_donation_dequeue_all($node->nid);
+
+  // delete the salesforce_donation_map entity
+  salesforce_donation_delete_map($node->nid);
+}
+
+/**
+ * Implementations of hook_webform_submission_ACTION().
+ */
+function salesforce_donation_webform_submission_insert($node, $submission) {
+  salesforce_donation_submission_helper('insert', $node, $submission);
+}
+function salesforce_donation_webform_submission_update($node, $submission) {
+  salesforce_donation_submission_helper('update', $node, $submission);
+}
+function salesforce_donation_webform_submission_delete($node, $submission) {
+  salesforce_donation_submission_helper('delete', $node, $submission);
+}
+function salesforce_donation_submission_helper($op, $node, $submission) {
+  $map = salesforce_donation_load_map($node->nid);
+  if (!empty($map) && !empty($map->sync_options[$op])) {
+    module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
+    $sObject = salesforce_donation_map_submission($submission, $map, $node);
+    $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
+    $result = salesforce_donation_queue($submission->sid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    if (!$result) {
+      // @TODO Send an error to admin that submission didn't go to queue
+      drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+    }
+  }
+}
+
+
+/**
+ * @defgroup salesforce_donation_map_crud Made easier with Entity API
+ * @{
+ */
+
+/**
+ * Creates and saves a Salesforce+Webform map
+ *
+ * @param $map
+ *   Can be an array of values or a salesforce_donation_map entity object
+ *
+ * @return
+ *   The new version of the object (such as if you had passed in an array) and
+ *   FALSE if what you passed through was incompatible with the save process.
+ */
+function salesforce_donation_save_map($map) {
+  if (is_array($map)) {
+    // Allow sending an array and updating an existing entity with the values
+    $entity = salesforce_donation_load_map($map['nid']);
+    if ($entity) {
+      foreach ($map as $key => $value) {
+        $entity->$key = $value;
+      }
+      $map = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database
+      $map = entity_create('salesforce_donation_map', $map);
+    }
+  }
+  if ($map->entityType() == 'salesforce_donation_map') {
+    $map->updated = time();
+    // Adds the data to the database
+    return entity_save('salesforce_donation_map', $map);
+  }
+  return FALSE;
+}
+
+/**
+ * Retreives a Salesforce+Webform map
+ *
+ * @param $nid
+ *   The nid of the webform of whose map we want to load
+ *
+ * @return
+ *   The entity object you requested
+ */
+function salesforce_donation_load_map($nid) {
+  $entities = entity_load('salesforce_donation_map', array($nid));
+  if (isset($entities[$nid])) {
+    return $entities[$nid];
+  }
+  return FALSE;
+}
+
+/**
+ * Deletes a Salesforce+Webform map
+ *
+ * @param $nid
+ *   The nid of the webform of whose map we're deleting
+ *
+ * @return
+ *   FALSE if the delete could be performed
+ */
+function salesforce_donation_delete_map($nid) {
+  return entity_delete('salesforce_donation_map', $nid);
+}
+
+/**
+ *
+ * @param stdClass $submission
+ *   A webform submission object
+ * @param Entity $map
+ *   A Salesforce webform map entity
+ * @param stdClass $node
+ *   Optionally provide a node object
+ * @return $sObject
+ *   A Salesforce Object that has Salesforce fields with the webform's values
+ */
+function salesforce_donation_map_submission(stdClass $submission, Entity $map, $node = NULL) {
+  $node = is_object($node) ? $node : node_load($submission->nid);
+  $fields = array();
+
+  // Salesforce webform map
+  foreach ($submission->data as $cid => $values) {
+    $wf_field = $node->webform['components'][$cid]['form_key'];
+    if (isset($map->field_map['salesforce_donation_map'][$wf_field])) {
+      $sf_field = $map->field_map['salesforce_donation_map'][$wf_field];
+      $fields[$sf_field] = $values['value'][0];
+    }
+  }
+  // Node properties map
+  if (isset($map->field_map['salesforce_node_map'])) {
+    if (isset($map->field_map['salesforce_node_map']['nid'])) {
+      $sf_field = $map->field_map['salesforce_node_map']['nid'];
+      $fields[$sf_field] = $node->nid;
+    }
+    if (isset($map->field_map['salesforce_node_map']['title'])) {
+      $sf_field = $map->field_map['salesforce_node_map']['title'];
+      $fields[$sf_field] = $node->title;
+    }
+  }
+  // Submission properties map
+  if (isset($map->field_map['salesforce_submission_map'])) {
+    if (isset($map->field_map['salesforce_submission_map']['sid'])) {
+      $sf_field = $map->field_map['salesforce_submission_map']['sid'];
+      $fields[$sf_field] = $submission->sid;
+    }
+    if (isset($map->field_map['salesforce_submission_map']['date'])) {
+      $sf_field = $map->field_map['salesforce_submission_map']['date'];
+      $fields[$sf_field] = REQUEST_TIME;
+    }
+  }
+
+  // Create the Salesforce object
+  $sObject = new stdClass();
+  $sObject->fields = $fields;
+  $sObject->type = $map->salesforce_object_type;
+  if (!empty($map->salesforce_record_type)) {
+    $sObject->record = $map->salesforce_record_type;
+  }
+
+  drupal_alter('salesforce_donation_map_submission', $sObject);
+  return $sObject;
+}
+
+/**
+ * @} salesforce_donation_map_crud
+ */
