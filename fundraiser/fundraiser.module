@@ -656,7 +656,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
-    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00, 2),
+    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00, 2)),
   );
 
   // TODO this should probably go on a different table, not here.
