@@ -96,6 +96,10 @@ function salesforce_webform_map_page_access($node) {
  * Implementation of hook_node_delete().
  */
 function salesforce_webform_node_delete($node) {
+  // Dequeue all submissions related to this webform
+  module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
+  salesforce_webform_dequeue_all($node->nid);
+
   // delete the salesforce_webform_map entity
   salesforce_webform_delete_map($node->nid);
 }

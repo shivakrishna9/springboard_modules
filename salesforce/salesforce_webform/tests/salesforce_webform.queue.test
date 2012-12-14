@@ -73,12 +73,6 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       variable_set('salesforce_webform_queue_system', $this->queue_system);
     }
 
-    // Unmap Salesforce fields from the webform
-    $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
-    $this->drupalPost(NULL, array(), 'Unmap');
-    $this->drupalGet('node/'. $this->webform2->nid .'/webform/salesforce-map');
-    $this->drupalPost(NULL, array(), 'Unmap');
-
     // Delete the webform node
     node_delete($this->webform2->nid);
     node_delete($this->webform1->nid);
@@ -296,6 +290,48 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   }
 
   /**
+   * Test dequeuing submissions when the webform has been deleted for DrupalQueue
+   */
+  public function testNodeDeleteDequeueDrupalQueue() {
+    variable_set('salesforce_webform_queue_system', 'drupal_queue');
+    $this->swGenerateSubmissions($this->webform1->nid);
+    $this->swGenerateSubmissions($this->webform2->nid);
+    node_delete($this->webform1->nid);
+    $query = db_select('queue', 'q')
+     ->fields('q')
+     ->condition('name', 'salesforce_webform');
+    $result = $query->execute();
+    $unexpected_records = array();
+    foreach ($result as $record) {
+      $data = unserialize($record->data);
+      if ($data['delta'] == 'webform:'. $this->webform1->nid) {
+        $unexpected_records[] = $record->item_id;
+      }
+    }
+    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on DrupalQueue.');
+  }
+
+  /**
+   * Test dequeuing submissions when the webform has been deleted for Salesforce Queue
+   */
+  public function testNodeDeleteDequeueSalesforceQueue() {
+    variable_set('salesforce_webform_queue_system', 'salesforce_queue');
+    $this->swGenerateSubmissions($this->webform1->nid);
+    $this->swGenerateSubmissions($this->webform2->nid);
+    node_delete($this->webform1->nid);
+    $query = db_select('salesforce_queue', 'sq')
+      ->fields('sq')
+      ->condition('module', 'webform')
+      ->condition('delta', 'webform:'. $this->webform1->nid);
+    $result = $query->execute();
+    $unexpected_records = array();
+    foreach ($result as $record) {
+      $unexpected_records[] = $record->id;
+    }
+    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on DrupalQueue.');
+  }
+
+  /**
    * Test the configuration form
    */
   public function testConfigForm() {
@@ -343,5 +379,22 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     db_delete('salesforce_queue')
     ->condition('id', $qid)
     ->execute();
+  }
+
+  /**
+   * Helper to generate random submissions for a given webform
+   */
+  public function swGenerateSubmissions($nid, $count = 25) {
+    $i = 0;
+    while ($i <= $count) {
+      $i++;
+      $edit = array(
+        'submitted[first_name]' => $this->randomName(),
+        'submitted[last_name]' => $this->randomName(),
+        'submitted[email]' => $this->randomName() .'@'. $this->randomName() .'.com',
+      );
+      $this->drupalGet('node/'. $nid);
+      $this->drupalPost(NULL, $edit, 'Submit');
+    }
   }
 }
