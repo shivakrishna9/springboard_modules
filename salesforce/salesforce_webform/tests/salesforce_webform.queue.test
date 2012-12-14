@@ -33,29 +33,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     $this->webform2 = $this->swCreateWebform(); // Will have dedupe field
 
     // Map some Salesforce fields to the webforms
-    // Using swFormMapField() broke in setUp() when map not loaded on node. But
-    // thats OK in this context because we don't need to test the mapping form
-    $this->swSalesforceConnect();
-    $edit1 = array(
-      'salesforce_object_info[salesforce_object_type]' => 'Contact',
-    );
-    $edit2 = $edit1 + array(
-      'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
-      'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
-      'field_map[salesforce_webform_map][email][sf_field]' => 'Email',
-    );
-    $edit3 = $edit2 + array(
-      'salesforce_dedupe_field' => 'Email',
-    );
-    // First webform without dedupe field set
-    $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
-    $this->drupalPostAjax(NULL, $edit1, 'salesforce_object_info[salesforce_object_type]');
-    $this->drupalPost(NULL, $edit2, 'Save');
-    // Second webform with dedupe field set
-    $this->drupalGet('node/'. $this->webform2->nid .'/webform/salesforce-map');
-    $this->drupalPostAjax(NULL, $edit1, 'salesforce_object_info[salesforce_object_type]');
-    $this->drupalPost(NULL, $edit2, 'Save');
-    $this->drupalPost(NULL, $edit3, 'Save');
+    $this->swMapWebform($this->webform1->nid);
+    $this->swMapWebform($this->webform2->nid, TRUE);
 
     // Store the queue system
     $this->queue_system = variable_get('salesforce_webform_queue_system', NULL);
