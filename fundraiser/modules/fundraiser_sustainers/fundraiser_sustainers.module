@@ -17,7 +17,7 @@ function fundraiser_sustainers_cron() {
   }
   else {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
-    fundraiser_sustainer_standalone_cron();
+    fundraiser_sustainers_standalone_cron();
   }
 }
 
@@ -47,7 +47,7 @@ function fundraiser_sustainers_permission() {
 function fundraiser_sustainers_menu() {
   // Add the cron handler if it's enabled.
   $items['fundraiser_cron'] = array(
-    'page callback' => 'fundraiser_sustainer_standalone_cron',
+    'page callback' => 'fundraiser_sustainers_standalone_cron',
     'access callback' => 'fundraiser_sustainers_standalone_cron_access',
     'type' => MENU_CALLBACK,
   );
@@ -181,7 +181,7 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
 /**
  * Menu callback for the standalone cron.
  */
-function fundraiser_sustainer_standalone_cron() {
+function fundraiser_sustainers_standalone_cron() {
   // Process recurring donations.
   if (fundraiser_sustainers_processor_key_match()) {
     fundraiser_sustainers_process_recurring_donations();
@@ -210,7 +210,7 @@ function fundraiser_sustainers_charge_now($did) {
 /**
  * Implements hook_tokens_alter().
  */
-function fundraiser_sustainer_tokens_alter(&$replacements, $context) {
+function fundraiser_sustainers_tokens_alter(&$replacements, $context) {
   $type = $context['type'];
   $tokens = $context['tokens'];
   $data = $context['data'];
@@ -227,7 +227,7 @@ function fundraiser_sustainer_tokens_alter(&$replacements, $context) {
 /**
  * Implements hook_mail().
  */
-function fundraiser_sustainer_mail($key, &$message, &$params) {
+function fundraiser_sustainers_mail($key, &$message, &$params) {
   switch ($key) {
     case 'fundraiser_cc_notification':
       $message['subject'] = variable_get('fundraiser_cc_exp_subject', 'Your credit card is about to expire');
@@ -1089,7 +1089,7 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   $params['fundraiser_sustainers_token_set'] = $token_set;
   $params['fundraiser_sustainers_body'] = $body;
   watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
-  drupal_mail('fundraiser', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
+  drupal_mail('fundraiser_sustainers', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
 }
 
 /**
