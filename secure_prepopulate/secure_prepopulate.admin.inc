@@ -51,9 +51,11 @@ function secure_prepopulate_admin_settings_validate(&$form, $form_state) {
 /**
  * Token Generator form.
  */
-function secure_prepopulate_token_generator($form = array(), $edit = array()) {
-  $form = array();
+function secure_prepopulate_token_generator($form, $form_state) {
   
+  $default_country = isset($form_state['values']['country']) ? $form_state['values']['country'] : 'US';
+  $state_options = array();
+
   $form['secure_prepopulate'] = array(
     '#type' => 'fieldset',
     '#title' => t('Secure Pre-populate Token'),
@@ -66,7 +68,6 @@ function secure_prepopulate_token_generator($form = array(), $edit = array()) {
     '#type' => 'textfield',
     '#title' => t('First name'),
     '#size' => 20,
-    '#default_value' => isset($edit['input']['first_name']) ? $edit['input']['first_name'] : '',
   );
   // last_name
   $form['secure_prepopulate']['last_name'] = array(
@@ -97,11 +98,33 @@ function secure_prepopulate_token_generator($form = array(), $edit = array()) {
     '#type' => 'textfield',
     '#title' => t('City'),
   );
-  // state
-  // TODO: list state options based on country selection.
 
-  // country
-  // TODO: list country options
+  if (module_exists('fundraiser_ubercart')) {
+    $countries = fundraiser_ubercart_get_countries();
+    foreach ($countries->countries as $country) {
+      if ($country->country_iso_code_2 == $default_country) {
+        $country_options[$country->country_iso_code_2] = $country->country_name;
+        $zones = $country->zones;
+        foreach ($zones as $zone) {
+          $state_options[$zone->zone_code] = $zone->zone_name;
+        }
+      }
+    }
+    
+    $form['secure_prepopulate']['country'] = array(
+      '#type' => 'select',
+      '#title' => t('Country'),
+      '#options' => $country_options,
+      '#default_value' => $default_country,
+    );
+    $form['secure_prepopulate']['state'] = array(
+      '#type' => 'select',
+      '#title' => t('State or province'),
+      '#options' => $state_options,
+      '#prefix' => '<div class="secure-prepopulate-state-wrapper">',
+      '#suffix' => '</div>',
+    );
+  }
   // zip
   $form['secure_prepopulate']['zip'] = array(
     '#type' => 'textfield',
