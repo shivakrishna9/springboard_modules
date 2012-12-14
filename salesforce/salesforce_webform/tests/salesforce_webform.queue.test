@@ -340,14 +340,25 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    */
   public function testConfigForm() {
     // Check installed variable setting
-    $this->assertEqual('salesforce_queue', variable_get('salesforce_webform_queue_system', NULL), 'Default queue_system installed correctly.');
+    $queue_system = variable_get('salesforce_webform_queue_system', '');
+    $queue_system = empty($queue_system) ? 'salesforce_queue' : $queue_system;
 
     // Load the configuration form and check default values
+    $queue_systems = array(
+      'instant' => 'instant',
+      'drupal_queue' => 'drupal-queue',
+      'salesforce_queue' => 'salesforce-queue',
+    );
     $this->drupalGet('admin/config/content/salesforce-webform');
     $this->assertFieldByName('salesforce_webform_queue_system', NULL, 'salesforce_webform_queue_system form item exists.');
-    $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-instant', 'Instant is not selected');
-    $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-drupal-queue', 'Drupal Queue is not selected');
-    $this->assertFieldChecked('edit-salesforce-webform-queue-system-salesforce-queue', 'Salesforce Queue is selected');
+    foreach ($queue_systems as $queue_name => $queue_id) {
+      if ($queue_name == $queue_system) {
+        $this->assertFieldChecked('edit-salesforce-webform-queue-system-'. $queue_id, $queue_name .' is selected by default.');
+      }
+      else {
+        $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-'. $queue_id, $queue_name .' is not selected by default.');
+      }
+    }
 
     // Set new value and check new default values
     $edit = array(
