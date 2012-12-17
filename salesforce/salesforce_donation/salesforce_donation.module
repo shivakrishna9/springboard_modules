@@ -65,44 +65,43 @@ function salesforce_donation_permission() {
  * Access callback to reach the mapping page
  */
 function salesforce_donation_map_page_access($node) {
-  if (
-       $node !== FALSE // %webform_menu returns FALSE if not valid
-       && fundraiser_is_donation_type($node->type)
-       && user_access('map salesforce to donation')
-     ) {
+  if ($node !== FALSE
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to donation')
+    ) {
     return TRUE;
-   }
+  }
   return FALSE;
 }
 
 /**
- * Implementation of hook_node_delete().
+ * Implements hook_node_delete().
  */
 function salesforce_donation_node_delete($node) {
   // Dequeue all submissions related to this node.
   module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
   salesforce_donation_dequeue_all($node->nid);
 
-  // delete the salesforce_donation_map entity
+  // Delete the salesforce_donation_map entity.
   salesforce_donation_delete_map($node->nid);
 }
 
 /**
- * Implements of hook_fundraiser_donation_success().
+ * Implements hook_fundraiser_donation_success().
  */
 function salesforce_donation_fundraiser_donation_success($donation) {
   _salesforce_donation_submission_helper('insert', $donation);
 }
 
 /**
- * Implements of hook_fundraiser_donation_update().
+ * Implements hook_fundraiser_donation_update().
  */
 function salesforce_donation_fundraiser_donation_update($donation) {
   _salesforce_donation_submission_helper('insert', $donation);
 }
 
 /**
- * Implements of hook_fundraiser_donation_delete().
+ * Implements hook_fundraiser_donation_delete().
  */
 function salesforce_donation_fundraiser_donation_delete($donation) {
   _salesforce_donation_submission_helper('insert', $donation);

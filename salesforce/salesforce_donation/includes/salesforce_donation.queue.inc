@@ -14,7 +14,7 @@ function salesforce_donation_admin_page() {
     'page_description' => array(
       '#id' => 'salesforce-donation-admin-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with donations.') .'</p>',
+      '#markup' => '<p>' . t('Configure how the Salesforce integration will work with donations.') . '</p>',
       '#prefix' => '<div class="salesforce-donation-admin-helptext">',
       '#suffix' => '</div>',
     ),
@@ -86,7 +86,7 @@ function salesforce_donation_admin_form_submit($form, &$form_state) {
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) { // Coder: This is ok.
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
   if (empty($operation)) {
     $operation = 'CREATE';
@@ -110,10 +110,10 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
       $data = array(
         'drupal_id' => $did,
         'module' => 'webform',
-        'delta' => 'webform:'. $nid,
-        'salesforce_type' => $sObject->type,
+        'delta' => 'webform:' . $nid,
+        'salesforce_type' => $sObject->type, // Coder: This is ok.
         'operation' => $operation,
-        'sobject' => $sObject,
+        'sobject' => $sObject, // Coder: This is ok.
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);
@@ -123,7 +123,7 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
         drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
         return FALSE;
       }
-      return salesforce_queue_insert($did, 'webform', 'webform:'. $nid, $sObject->type, $operation, $sObject, $dedupe_field);
+      return salesforce_queue_insert($did, 'webform', 'webform:' . $nid, $sObject->type, $operation, $sObject, $dedupe_field); // Coder: This is ok.
   }
 
   // @TODO Set error that a queue_system is not set
@@ -137,37 +137,35 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
  * Handles the actual process of sending the request to dequeue all related items
  */
 function salesforce_donation_dequeue_all($nid) {
- $queue_system = variable_get('salesforce_donation_queue_system', '');
- switch ($queue_system) {
-   case 'drupal_queue':
-     $query = db_select('queue', 'q')
-       ->fields('q')
-       ->condition('name', 'salesforce_donation');
-     $result = $query->execute();
-     $delete = array();
-     foreach ($result as $record) {
-       $data = unserialize($record->data);
-       if ($data['delta'] == 'webform:'. $nid) {
-         $delete[] = $record->item_id;
-       }
-     }
-     if (empty($delete)) {
-       return TRUE;
-     }
-     return db_delete('queue')
-       ->condition('item_id', $delete, 'IN')
-       ->execute();
-
-   case 'salesforce_queue':
-     return db_delete('salesforce_queue')
-       ->condition('module', 'webform')
-       ->condition('delta', 'webform:'. $nid)
-       ->execute();
- }
-
- // There is nothing to do here
- // If there is no queue system set, why not return TRUE?  There likely are no
- // queue items to delete anyhow!  'Instant' would be returning TRUE in this
- // case anyway.
- return TRUE;
+  $queue_system = variable_get('salesforce_donation_queue_system', '');
+  switch ($queue_system) {
+    case 'drupal_queue':
+      $query = db_select('queue', 'q')
+        ->fields('q')
+        ->condition('name', 'salesforce_donation');
+      $result = $query->execute();
+      $delete = array();
+      foreach ($result as $record) {
+        $data = unserialize($record->data);
+        if ($data['delta'] == 'webform:' . $nid) {
+          $delete[] = $record->item_id;
+        }
+      }
+      if (empty($delete)) {
+        return TRUE;
+      }
+      return db_delete('queue')
+        ->condition('item_id', $delete, 'IN')
+        ->execute();
+    case 'salesforce_queue':
+      return db_delete('salesforce_queue')
+        ->condition('module', 'webform')
+        ->condition('delta', 'webform:' . $nid)
+        ->execute();
+  }
+  // There is nothing to do here
+  // If there is no queue system set, why not return TRUE?  There likely are no
+  // queue items to delete anyhow!  'Instant' would be returning TRUE in this
+  // case anyway.
+  return TRUE;
 }
