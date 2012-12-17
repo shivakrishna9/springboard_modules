@@ -114,7 +114,7 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
         'delta' => 'webform:'. $nid,
         'salesforce_type' => $sObject->type,
         'operation' => $operation,
-        'sObject' => $sObject,
+        'sobject' => $sObject,
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);
