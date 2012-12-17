@@ -175,7 +175,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
       '#suffix' => '</div>',
     ),
   );
-  $form['field_map']['salesforce_donation_map']['#row_storage']['status'] => array(
+  $form['field_map']['salesforce_donation_map']['#row_storage']['status'] = array(
     'label' => array(
       '#id' => 'map-label-status',
       '#markup' => t('Status'),
