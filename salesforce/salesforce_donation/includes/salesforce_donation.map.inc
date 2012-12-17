@@ -126,6 +126,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
         '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'did'),
         '#options' => $sf_fields,
       ),
+      'dedupe' => array(
+        '#id' => 'salesforce-dedupe-did',
+        '#type' => 'hidden',
+        '#value' => NULL,
+        '#prefix' => '<div id="salesforce-ajax-dedupe-did">',
+        '#suffix' => '</div>',
+      ),
     ),
   );
   $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
@@ -141,6 +148,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
         '#type' => 'select',
         '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'gateway'),
         '#options' => $sf_fields,
+      ),
+      'dedupe' => array(
+        '#id' => 'salesforce-dedupe-gateway',
+        '#type' => 'hidden',
+        '#value' => NULL,
+        '#prefix' => '<div id="salesforce-ajax-dedupe-gateway">',
+        '#suffix' => '</div>',
       ),
     ),
   );
@@ -158,6 +172,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
         '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'txn_id'),
         '#options' => $sf_fields,
       ),
+      'dedupe' => array(
+        '#id' => 'salesforce-dedupe-txn_id',
+        '#type' => 'hidden',
+        '#value' => NULL,
+        '#prefix' => '<div id="salesforce-ajax-dedupe-txn_id">',
+        '#suffix' => '</div>',
+      ),
     ),
   );
   $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
@@ -173,6 +194,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
         '#type' => 'select',
         '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'status'),
         '#options' => $sf_fields,
+      ),
+      'dedupe' => array(
+        '#id' => 'salesforce-dedupe-status',
+        '#type' => 'hidden',
+        '#value' => NULL,
+        '#prefix' => '<div id="salesforce-ajax-dedupe-status">',
+        '#suffix' => '</div>',
       ),
     ),
   );
@@ -338,7 +366,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
       ),
     ),
   );
-  _sfw_generate_form_table($form['field_map']['salesforce_node_map']);
+  _sfw_generate_form_table($form['field_map']['salesforce_user_map']);
 
   // Add the map from submission properties to Salesforce fields
   $form['field_map']['salesforce_submission_map'] = array(
