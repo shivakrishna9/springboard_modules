@@ -50,6 +50,16 @@ function salesforce_donation_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function salesforce_donation_menu_alter(&$items) {
+  // IIF salesforce_donation exists.
+  if (module_exists('salesforce_webform')) {
+    $items['node/%webform_menu/webform/salesforce-map']['access callback'] = 'salesforce_donation_webform_map_page_access';
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function salesforce_donation_permission() {
@@ -57,6 +67,10 @@ function salesforce_donation_permission() {
     'map salesforce to donation' => array(
       'title' => t('Map Salesforce objects to donations'),
       'description' => t('Configure the mapping of Salesforce objects with fundraisers so donations can sync with Salesforce.'),
+    ),
+    'map donation salesforce to webform' => array(
+      'title' => t('Map Salesforce objects to webform on Donations'),
+      'description' => t('Advanced user setting: map donations and webform on the same node for Salesforce sync.'),
     ),
   );
 }
@@ -71,6 +85,23 @@ function salesforce_donation_map_page_access($node) {
     ) {
     return TRUE;
   }
+  return FALSE;
+}
+
+/**
+ * Access callback to reach the mapping page
+ *
+ * All by its little old self because menu doesn't load the include file until
+ * after the access check.
+ */
+function salesforce_donation_webform_map_page_access($node) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to webform')
+    && user_access('map donation salesforce to webform')
+    ) {
+    return TRUE;
+   }
   return FALSE;
 }
 
@@ -229,6 +260,13 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
         $sf_field = $map->field_map['salesforce_donation_map'][$form_key];
         $fields[$sf_field] = $donation->donation[$form_key];
       }
+    }
+  }
+  // Salesforce webform map
+  foreach ($donation->submission_data as $form_key => $submission_value) {
+    if (isset($map->field_map['salesforce_webform_map'][$form_key])) {
+      $sf_field = $map->field_map['salesforce_webform_map'][$form_key];
+      $fields[$sf_field] = is_array($submission_value) ? serialize($submission_value) : $submission_value;
     }
   }
   // Node properties map
