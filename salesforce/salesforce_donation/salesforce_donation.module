@@ -150,7 +150,7 @@ function _salesforce_donation_submission_helper($op, $donation) {
     module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
     $sObject = salesforce_donation_map_submission($donation, $map, $donation->node);
     $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
-    $result = salesforce_donation_queue($donation->did, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    $result = salesforce_donation_queue($donation->did, $donation->nid, $sObject, $map->salesforce_dedupe_field, $operation);
     if (!$result) {
       // @TODO Send an error to admin that submission didn't go to queue
       drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
