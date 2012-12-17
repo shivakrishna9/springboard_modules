@@ -81,12 +81,9 @@ function salesforce_webform_permission() {
  * after the access check.
  */
 function salesforce_webform_map_page_access($node) {
-  if (
-       $node !== FALSE // %webform_menu returns FALSE if not valid
-       // @TODO: Ensure that 'donation_form' is still accurate in the D6TOD7 port
-       && $node->type != 'dontation_form'
-       && user_access('map salesforce to webform')
-     ) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && user_access('map salesforce to webform')
+    ) {
     return TRUE;
    }
   return FALSE;
