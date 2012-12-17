@@ -277,24 +277,26 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   $wf_components = $node->webform['components'];
   foreach ($wf_components as $cid => $component) {
-    $form_key = $component['form_key'];
-    $sf_field = _sfw_default_value($form_state, 'sf_field', 'salesforce_webform_map', $form_key);
-    $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
-    $row = array(
-      'label' => array(
-        '#id' => 'webform-label-' . $form_key,
-        '#markup' => $component['name'] . ' (' . $component['type'] . ')',
-        '#prefix' => '<label class="' . $map_row_class_name . '">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-' . $form_key,
-        '#type' => 'select',
-        '#default_value' => $sf_field,
-        '#options' => $sf_fields,
-      ),
-    );
-    $form['field_map']['salesforce_webform_map']['#row_storage'][$form_key] = $row;
+    if ($component['type'] != 'fieldset') {
+      $form_key = $component['form_key'];
+      $sf_field = _sfw_default_value($form_state, 'sf_field', 'salesforce_webform_map', $form_key);
+      $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
+      $row = array(
+        'label' => array(
+          '#id' => 'webform-label-' . $form_key,
+          '#markup' => $component['name'] . ' (' . $component['type'] . ')',
+          '#prefix' => '<label class="' . $map_row_class_name . '">',
+          '#suffix' => '</label>',
+        ),
+        'sf_field' => array(
+          '#id' => 'salesforce-map-' . $form_key,
+          '#type' => 'select',
+          '#default_value' => $sf_field,
+          '#options' => $sf_fields,
+        ),
+      );
+      $form['field_map']['salesforce_webform_map']['#row_storage'][$form_key] = $row;
+    }
   }
   _sfw_generate_form_table($form['field_map']['salesforce_webform_map']);
 
