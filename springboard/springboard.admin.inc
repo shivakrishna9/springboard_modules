@@ -24,7 +24,7 @@ function springboard_admin_settings() {
     $form['springboard_config']['settings']['sf_enable'] = array(
       '#title' => 'Enable Salesforce Integration?',
       '#type' => 'checkbox',
-      '#description' => st('If your organization has a Salesforce org and plans on synching information between Drupal ' .
+      '#description' => t('If your organization has a Salesforce org and plans on synching information between Drupal ' .
         'and Salesforce you should enable integration.'),
     );
     $form['springboard_config']['settings']['sf'] = array(
