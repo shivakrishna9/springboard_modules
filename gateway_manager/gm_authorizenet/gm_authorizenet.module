@@ -1126,12 +1126,12 @@ function gm_authorizenet_update_payment_profile($profile_id, $payment_profile_id
         'address' => $billing_info['address'],
         'city' => $billing_info['city'],
         'state' => $state,
-        'zip' => $billing_info['zip'],
+        'zip' => $billing_info['zipcode'],
         'country' => $country,
       ),
       'payment' => array(
         'creditCard' => array(
-          'cardNumber' => $billing_info['card_num'],
+          'cardNumber' => $billing_info['card_number'],
           'expirationDate' => $expiration_date,
           'cardCode' => $billing_info['card_cvv'],
         ),
