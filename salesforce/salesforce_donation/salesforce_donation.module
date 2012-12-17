@@ -126,17 +126,19 @@ function salesforce_donation_fundraiser_donation_success($donation) {
 
 /**
  * Implements hook_fundraiser_donation_update().
- */
+ *
 function salesforce_donation_fundraiser_donation_update($donation) {
   _salesforce_donation_submission_helper('insert', $donation);
 }
+//*/
 
 /**
  * Implements hook_fundraiser_donation_delete().
- */
+ *
 function salesforce_donation_fundraiser_donation_delete($donation) {
   _salesforce_donation_submission_helper('insert', $donation);
 }
+//*/
 
 /**
  * Helper function, handle insert/ update/ delete of donation.
