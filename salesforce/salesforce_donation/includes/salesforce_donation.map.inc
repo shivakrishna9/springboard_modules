@@ -275,25 +275,16 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
     $row = array(
       'label' => array(
-        '#id' => 'webform-label-'. $form_key,
-        '#markup' => $component['name'] .' ('. $component['type'] .')',
-        '#prefix' => '<label class="'. $map_row_class_name .'">',
+        '#id' => 'webform-label-' . $form_key,
+        '#markup' => $component['name'] . ' (' . $component['type'] . ')',
+        '#prefix' => '<label class="' . $map_row_class_name . '">',
         '#suffix' => '</label>',
       ),
       'sf_field' => array(
-        '#id' => 'salesforce-map-'. $form_key,
+        '#id' => 'salesforce-map-' . $form_key,
         '#type' => 'select',
         '#default_value' => $sf_field,
         '#options' => $sf_fields,
-        '#ajax' => array(
-          'callback' => 'salesforce_webform_map_form_ajax_sf_dedupe',
-          'wrapper' => 'salesforce-ajax-dedupe-'. $form_key,
-          'method' => 'replace',
-          'effect' => 'fade',
-
-          // This is referred to in the AJAX callback
-          '#form_key' => $form_key,
-        ),
       ),
     );
     $form['field_map']['salesforce_webform_map']['#row_storage'][$form_key] = $row;
