@@ -46,3 +46,177 @@ function secure_prepopulate_admin_settings_validate(&$form, $form_state) {
     form_set_error('secure_prepopulate_iv', 'Initialization vector must be either 128 bits (16 bytes) in length.');
   }
 }
+
+
+/**
+ * Token Generator form.
+ */
+function secure_prepopulate_token_generator($form, $form_state) {
+  
+  $default_country = isset($form_state['values']['country']) ? $form_state['values']['country'] : 'US';
+  $state_options = array();
+
+  $form['secure_prepopulate'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Secure Pre-populate Token'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  // TODO: add user select box to import settings from existing user account.
+  
+  $form['secure_prepopulate']['first_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('First name'),
+    '#size' => 20,
+  );
+  // last_name
+  $form['secure_prepopulate']['last_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Last name'),
+    '#size' => 20,
+
+  );
+  // email
+  $form['secure_prepopulate']['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+    '#size' => 50,
+
+  );
+  // address
+  $form['secure_prepopulate']['address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address'),
+  );
+  // address_line_2
+  $form['secure_prepopulate']['address_line_2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address 2'),
+  );
+  // city
+  $form['secure_prepopulate']['city'] = array(
+    '#type' => 'textfield',
+    '#title' => t('City'),
+  );
+
+  if (module_exists('fundraiser_ubercart')) {
+    $countries = fundraiser_ubercart_get_countries();
+    foreach ($countries->countries as $country) {
+      if ($country->country_iso_code_2 == $default_country) {
+        $country_options[$country->country_iso_code_2] = $country->country_name;
+        $zones = $country->zones;
+        foreach ($zones as $zone) {
+          $state_options[$zone->zone_code] = $zone->zone_name;
+        }
+      }
+    }
+    
+    $form['secure_prepopulate']['country'] = array(
+      '#type' => 'select',
+      '#title' => t('Country'),
+      '#options' => $country_options,
+      '#default_value' => $default_country,
+    );
+    $form['secure_prepopulate']['state'] = array(
+      '#type' => 'select',
+      '#title' => t('State or province'),
+      '#options' => $state_options,
+      '#prefix' => '<div class="secure-prepopulate-state-wrapper">',
+      '#suffix' => '</div>',
+    );
+  }
+  // zip
+  $form['secure_prepopulate']['zip'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Postal code'),
+    '#size' => 10,
+  );
+  
+  if (module_exists('dynamic_gift_strings')) {
+    $form['dynamic_gift_strings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Dynamic Gift Strings Token'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['dynamic_gift_strings']['amounts']= array(
+      '#title' => t('Ask amounts'),
+      '#type' => 'textfield',
+      '#description' =>t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
+      '#size' => 50,
+    );
+    $form['dynamic_gift_strings']['default_amount'] = array(
+      '#title' => t('Default amount'),
+      '#type' => 'textfield',
+      '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
+      '#size' => 5,
+    );
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Generate token'),
+  );
+  $form['#submit'][] = 'secure_prepopulate_token_generator_submit';
+  return $form;
+}
+
+
+function secure_prepopulate_token_generator_submit($form, $form_state) {
+
+  if ($af =secure_prepopulate_generate_af_string($form_state['values'])) {
+    drupal_set_message('af token generated:');
+    drupal_set_message($af);
+  }
+  if (module_exists('dynamic_gift_strings')) {
+    if ($gs = secure_prepopulate_generate_gs_string($form_state['values'])) {
+      drupal_set_message('gs token generated:');
+      drupal_set_message($gs);
+    }
+  }
+}
+
+/**
+ * Generate an af query string based on values submitted by the token generator form.
+ */
+function secure_prepopulate_generate_af_string($input) {
+  $keys = array(
+    'first_name',
+    'last_name',
+    'email',
+    'address',
+    'address_line_2',
+    'city',
+    'country',
+    'state',
+    'zip',
+  );
+  $query_str = array();
+  foreach ($keys as $key) {
+    if (isset($input[$key]) && $input[$key]) {
+      $query_str[] = $key . '=' . $input[$key];
+    }
+  }
+  if (!count($query_str)) {
+    return FALSE;
+  }
+  $query_str = implode('&', $query_str);
+  $key = variable_get('secure_prepopulate_key', '');
+  $vector = variable_get('secure_prepopulate_iv', '');
+  $crypt = _secure_prepopulate_encrypt($query_str, $key, $vector);
+  return 'af=' . $crypt;
+}
+
+function secure_prepopulate_generate_gs_string($input) {
+  $query = array();
+  if (isset($input['amounts']) && $input['amounts']) {
+    $query_str = 'amounts=' . str_replace(',', '|', $input['amounts']);
+    if (isset($input['default_amount'])) {
+      $query_str .= '&default=' . $input['default_amount'];
+    }
+    $key = variable_get('secure_prepopulate_key', '');
+    $vector = variable_get('secure_prepopulate_iv', '');
+    $crypt = _secure_prepopulate_encrypt($query_str, $key, $vector);
+    return 'gs=' . $crypt;
+  }
+  return FALSE;
+}
