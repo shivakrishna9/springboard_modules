@@ -121,7 +121,6 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
             // Referrs to previous loop's $queue_item
             $op_path = $path .'/submission/'. $queue_item['drupal_id'] .'/delete';
             $assert_text = 'Submission deleted';
-            $op_edit = $edit;
             $op_edit = array();
             $op_button = 'Delete';
             break;
