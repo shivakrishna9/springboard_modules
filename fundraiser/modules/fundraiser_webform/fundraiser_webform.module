@@ -624,7 +624,7 @@ function fundraiser_webform_fundraiser_donation_get_donation($donation) {
     $data = fundraiser_webform_get_submission($donation->sid);
     foreach ($data as $form_key => $value) {
       // If only one value, use the value.
-      $donation->submission_data[$form_key] = $value[0];
+      $donation->submission_data[$form_key] = isset($value[0]) ? $value[0] : '';
       if (count($value) > 1) {
         // Else, value is the array.
         $donation->submission_data[$form_key] = $value;
