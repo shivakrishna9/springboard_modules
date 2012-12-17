@@ -12,10 +12,10 @@ function salesforce_donation_map_page($node) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-webform-map-helptext-page',
+      '#id' => 'salesforce-donation-map-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('When users submit this webform, map which values of the webform\'s components should be sent to your Salesforce organization.') .'</p>',
-      '#prefix' => '<div class="salesforce-webform-map-helptext">',
+      '#markup' => '<p>'. t('When users submit donations, map which values of the donation should be sent to your Salesforce organization.') .'</p>',
+      '#prefix' => '<div class="salesforce-donation-map-helptext">',
       '#suffix' => '</div>',
     ),
     'salesforce_donation_map_form' => drupal_get_form('salesforce_donation_map_form', $node),
@@ -23,27 +23,10 @@ function salesforce_donation_map_page($node) {
   return $build;
 }
 
-
-/**
- * @defgroup salesforce_donation_map_form
- * @{
- */
-
 /**
  * Form to do the actual mapping configuration processes
  */
 function salesforce_donation_map_form($form, &$form_state, $node) {
-  // Fail if there are no components attached to the webform
-  if (empty($node->webform['components'])) {
-    return array(
-      'no_components' => array(
-        '#markup' => '<p>'. t('You must first add components to your webform before proceeding with mapping to Salesforce objects.') .'</p>',
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-components">',
-        '#suffix' => '</div>',
-      ),
-    );
-  }
-
   // Fail if we can't connect to Salesforce
   $sfapi = salesforce_get_api();
   if (!$sfapi->isAuthorized()) {
@@ -61,7 +44,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   $form = array(
     '#tree' => TRUE,
     '#node' => $node,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-object">',
+    '#prefix' => '<div id="salesforce-donation-map-ajax-sf-object">',
     '#sufix' => '</div>',
   );
 
@@ -77,13 +60,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     '#id' => 'salesforce-object-type',
     '#title' => t('Salesforce object'),
     '#type' => 'select',
-    '#description' => t('Select a Salesforce object to map to this webform.'),
+    '#description' => t('Select a Salesforce object to map to donations.'),
     '#default_value' => $sf_object,
     '#options' => $sf_objects,
     '#required' => TRUE,
     '#ajax' => array(
       'callback' => 'salesforce_donation_map_form_ajax_sf_object',
-      'wrapper' => 'salesforce-webform-map-ajax-sf-object',
+      'wrapper' => 'salesforce-donation-map-ajax-sf-object',
       'method' => 'replace',
       'effect' => 'fade',
       // @TODO: Warn user that changing this value will erase their map work
@@ -112,68 +95,67 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
 
   // Add the mapping functionality to the form
   $sf_fields = _sfw_salesforce_field_list($sfapi, $sf_object);
-  $map_row_class_name = 'salesforce-webform-map-field';
+  $map_row_class_name = 'salesforce-donation-map-field';
   $form['field_map'] = array(
     '#type' => 'fieldset',
     '#title' => 'Field Mapping',
   );
 
-  // Add the map from webform components to Salesforce fields
+  // Add the map from donation to Salesforce fields
   $form['field_map']['salesforce_donation_map'] = array(
-    '#id' => 'salesforce-webform-map',
+    '#id' => 'salesforce-donation-map',
     '#tree' => TRUE,
     '#theme' => 'table',
-    '#header' => array(t('Webform Componant'), t('Salesforce Field'), t('Dedupe Field')),
+    '#header' => array(t('Donation Field'), t('Salesforce Field'), t('Dedupe Field')),
     '#row_storage' => array(),
     '#sticky' => FALSE,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe">',
+    '#prefix' => '<div id="salesforce-donation-map-ajax-sf-dedupe">',
     '#suffix' => '</div>',
   );
-  $wf_components = $node->webform['components'];
-  foreach ($wf_components as $cid => $component) {
-    $form_key = $component['form_key'];
-    $sf_field = _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', $form_key);
-    $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
-    $row = array(
-      'label' => array(
-        '#id' => 'webform-label-'. $form_key,
-        '#markup' => $component['name'] .' ('. $component['type'] .')',
-        '#prefix' => '<label class="'. $map_row_class_name .'">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-'. $form_key,
-        '#type' => 'select',
-        '#default_value' => $sf_field,
-        '#options' => $sf_fields,
-        '#ajax' => array(
-          'callback' => 'salesforce_donation_map_form_ajax_sf_dedupe',
-          'wrapper' => 'salesforce-ajax-dedupe-'. $form_key,
-          'method' => 'replace',
-          'effect' => 'fade',
-
-          // These are referred to in the AJAX callback
-          '#form_key' => $form_key,
+  $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
+  foreach ($donation_fields as $form_key => $donation_field) {
+    // Skip if this is a fieldset type.
+    if ($donation_field['#type'] != 'fieldset') {
+      $sf_field = _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', $form_key);
+      $sf_field_dedupe = _sfw_salesforce_field_can_dedupe($sfapi, $sf_object, $sf_field);
+      $row = array(
+        'label' => array(
+          '#id' => 'donation-label-'. $form_key,
+          '#markup' => $donation_field['#title'] .' ('. $donation_field['#type'] .')',
+          '#prefix' => '<label class="'. $map_row_class_name .'">',
+          '#suffix' => '</label>',
         ),
-      ),
-      'dedupe' => array(
-        '#id' => 'salesforce-dedupe-'. $form_key,
-        '#type' => 'hidden',
-        '#value' => NULL,
-        '#prefix' => '<div id="salesforce-ajax-dedupe-'. $form_key .'">',
-        '#suffix' => '</div>',
-      ),
-    );
-
-    if (!empty($sf_field) && $sf_field_dedupe) {
-      $dedupe_field = &$row['dedupe'];
-      $dedupe_field['#type'] = 'radio';
-      $dedupe_field['#return_value'] = $sf_field;
-      $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe_field');
-      $dedupe_field['#value'] = _sfw_default_value($form_state, 'dedupe', 'salesforce_donation_map', $form_key);
+        'sf_field' => array(
+          '#id' => 'salesforce-map-'. $form_key,
+          '#type' => 'select',
+          '#default_value' => $sf_field,
+          '#options' => $sf_fields,
+          '#ajax' => array(
+            'callback' => 'salesforce_donation_map_form_ajax_sf_dedupe',
+            'wrapper' => 'salesforce-ajax-dedupe-'. $form_key,
+            'method' => 'replace',
+            'effect' => 'fade',
+            '#form_key' => $form_key,
+          ),
+        ),
+        'dedupe' => array(
+          '#id' => 'salesforce-dedupe-'. $form_key,
+          '#type' => 'hidden',
+          '#value' => NULL,
+          '#prefix' => '<div id="salesforce-ajax-dedupe-'. $form_key .'">',
+          '#suffix' => '</div>',
+        ),
+      );
+  
+      if (!empty($sf_field) && $sf_field_dedupe) {
+        $dedupe_field = &$row['dedupe'];
+        $dedupe_field['#type'] = 'radio';
+        $dedupe_field['#return_value'] = $sf_field;
+        $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe_field');
+        $dedupe_field['#value'] = _sfw_default_value($form_state, 'dedupe', 'salesforce_donation_map', $form_key);
+      }
+      $form['field_map']['salesforce_donation_map']['#row_storage'][$form_key] = $row;
     }
-
-    $form['field_map']['salesforce_donation_map']['#row_storage'][$form_key] = $row;
   }
   // Add some help text
   $form['field_map']['salesforce_donation_map']['#row_storage'][0] = array(
@@ -181,13 +163,13 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
       '#markup' => '',
     ),
     'helptext' => array(
-      '#id' => 'salesforce-webform-map-helptext-field-map',
+      '#id' => 'salesforce-donation-map-helptext-field-map',
       '#markup' => '<p>'. t('<strong>Dedupe Field:</strong> Minimizes duplicate
         records and allows updating existing records. Selecting a dedupe field
         chooses which field is the unique identifier for this form.  A dedupe
         option only appears if the selected field can be used as a unique
         identifier. Select \'None\' to not use this feature.') .'</p>',
-      '#prefix' => '<div class="salesforce-webform-map-helptext">',
+      '#prefix' => '<div class="salesforce-donation-map-helptext">',
       '#suffix' => '</div>',
     ),
     'no_dedupe' => array(
@@ -201,7 +183,8 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_donation_map']);
 
-  // Add the map from node properties to Salesforce fields
+  // Add the map from node properties to Salesforce fields.
+  // This remains exactly the same as before.
   $form['field_map']['salesforce_node_map'] = array(
     '#id' => 'salesforce-node-map',
     '#tree' => TRUE,
@@ -240,7 +223,8 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_node_map']);
 
-  // Add the map from submission properties to Salesforce fields
+  // No submission info here, so remove that from the mapping.
+  /* Add the map from submission properties to Salesforce fields
   $form['field_map']['salesforce_submission_map'] = array(
     '#id' => 'salesforce-submission-map',
     '#tree' => TRUE,
@@ -278,6 +262,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     ),
   );
   _sfw_generate_form_table($form['field_map']['salesforce_submission_map']);
+ */
 
   // Mapping configuration options
   $form['map_config'] = array(
@@ -291,12 +276,12 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     '#type' => 'checkboxes',
     '#required' => TRUE,
     '#title' => t('Salesforce Sync Options'),
-    '#description' => t('When should submissions of this webform be synced with Salesforce?'),
+    '#description' => t('When should donations be synced with Salesforce?'),
     '#default_value' => _sfw_default_value($form_state, 'sync_options', 'map_config'),
     '#options' => array(
-      'insert' => t('New submissions'),
-      'update' => t('Modified submissions'),
-      'delete' => t('Deleted submissions'),
+      'insert' => t('New donations'),
+      'update' => t('Modified donations'),
+      'delete' => t('Deleted donations'),
     ),
   );
 
@@ -345,7 +330,7 @@ function salesforce_donation_map_form_validate($form, &$form_state) {
   }
 
   // No Salesforce field can be used twice
-  $error_text = t('Multiple webform components cannot be mapped to the same Salesforce fields.');
+  $error_text = t('Multiple donation fields cannot be mapped to the same Salesforce fields.');
   $sf_fields = array();
   foreach ($form_state['input']['field_map'] as $group => $drupal_fields) {
     foreach ($drupal_fields as $drupal_field => $columns) {
@@ -382,17 +367,17 @@ function salesforce_donation_map_form_submit($form, &$form_state) {
   if ($form_state['clicked_button']['#value'] == 'Unmap') {
     $result = salesforce_donation_delete_map($node->nid);
     if ($result === FALSE) {
-      drupal_set_message(t('The Salesforce to webform map could not be deleted.'), 'error');
+      drupal_set_message(t('The Salesforce to donation map could not be deleted.'), 'error');
     }
     else {
-      drupal_set_message(t('The Salesforce to webform map has been removed.'));
+      drupal_set_message(t('The Salesforce to donation map has been removed.'));
     }
     return;
   }
 
   // Cancel and do nothing
   else if ($form_state['clicked_button']['#value'] == 'Cancel') {
-    drupal_set_message(t('The Salesforce webform map has been reset to the original values.'));
+    drupal_set_message(t('The Salesforce donation map has been reset to the original values.'));
     return;
   }
 
@@ -412,16 +397,6 @@ function salesforce_donation_map_form_submit($form, &$form_state) {
     drupal_set_message(t('The map was saved successfully.'));
   }
 }
-
-/**
- * @} salesforce_donation_map_form
- */
-
-
-/**
- * @defgroup form_helper Misc tools to help streamline form building
- * @{
- */
 
 /**
  * Helper function for the tedious case of finding the default value of a field
@@ -716,7 +691,3 @@ function _sfw_salesforce_field_is_unique(Salesforce $sfapi, $sf_object, $sf_fiel
     }
   }
 }
-
-/**
- * @} form_helper
- */

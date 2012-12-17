@@ -12,10 +12,10 @@ function salesforce_donation_admin_page() {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-webform-admin-helptext-page',
+      '#id' => 'salesforce-donation-admin-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with webform submissions.') .'</p>',
-      '#prefix' => '<div class="salesforce-webform-admin-helptext">',
+      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with donations.') .'</p>',
+      '#prefix' => '<div class="salesforce-donation-admin-helptext">',
       '#suffix' => '</div>',
     ),
     'salesforce_donation_admin_form' => drupal_get_form('salesforce_donation_admin_form'),
@@ -47,7 +47,7 @@ function salesforce_donation_admin_form($form, &$form_state) {
 
   // Queue system form
   $form['salesforce_donation_queue_system'] = array(
-    '#id' => 'salesforce-webform-queue-system',
+    '#id' => 'salesforce-donation-queue-system',
     '#title' => t('Queue System'),
     '#description' => t(''),
     '#type' => 'radios',
@@ -82,7 +82,7 @@ function salesforce_donation_admin_form_submit($form, &$form_state) {
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_donation_queue($sid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
   if (empty($operation)) {
     $operation = 'CREATE';
@@ -104,7 +104,7 @@ function salesforce_donation_queue($sid, $nid, stdClass $sObject, $dedupe_field 
       $queue = DrupalQueue::get('salesforce_donation');
       $queue->createQueue('salesforce_donation'); // It doesn't hurt to make sure
       $data = array(
-        'drupal_id' => $sid,
+        'drupal_id' => $did,
         'module' => 'webform',
         'delta' => 'webform:'. $nid,
         'salesforce_type' => $sObject->type,
@@ -119,7 +119,7 @@ function salesforce_donation_queue($sid, $nid, stdClass $sObject, $dedupe_field 
         drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
         return FALSE;
       }
-      return salesforce_queue_insert($sid, 'webform', 'webform:'. $nid, $sObject->type, $operation, $sObject, $dedupe_field);
+      return salesforce_queue_insert($did, 'webform', 'webform:'. $nid, $sObject->type, $operation, $sObject, $dedupe_field);
   }
 
   // @TODO Set error that a queue_system is not set
