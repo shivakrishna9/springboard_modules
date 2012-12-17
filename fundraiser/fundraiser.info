@@ -1,11 +1,11 @@
 name = Fundraiser
 description = Fundraising Module
-core = 6.x
 package = Jackson River Springboard
-dependencies[] = mailtron
-dependencies[] = profile
+core = 6.x
+version = 6.x-3.3
+dependencies[] = webform
 dependencies[] = uc_product
 dependencies[] = uc_payment
+dependencies[] = profile
 dependencies[] = uc_cart
-dependencies[] = webform
-version =  6.x-3.2
+dependencies[] = mailtron

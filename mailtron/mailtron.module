@@ -8,7 +8,7 @@ function mailtron_perm() {
 }
 
 
-// TODO: design build-a-mail admin interface, may include trigger/action/rules integration.
+// @TODO: design build-a-mail admin interface, may include trigger/action/rules integration.
 /**
  * Implements hook_menu().
  */
@@ -23,8 +23,8 @@ function mailtron_perm() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'mailtron.admin.inc',
   );
-  // TODO: ahah callback for template selection.
-  // TODO: modal callback for preview window.
+  // @TODO: ahah callback for template selection.
+  // @TODO: modal callback for preview window.
   return $items;
 }*/
 

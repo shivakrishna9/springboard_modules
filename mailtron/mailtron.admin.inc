@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @file admin forms and associated functions.
+ */
 
 /**
  * Build form.

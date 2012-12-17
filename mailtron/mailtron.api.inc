@@ -9,7 +9,8 @@ require_once('mailtron.module');
 /**
  * Drop this into your code to add/edit/delete mailtron mail settings.
  * 
- * Be sure to provide module and name (unique per module, much like block deltas) to ensure mailtron can load your module-specific settings.
+ * Be sure to provide module and name (unique per module, much like block deltas) 
+ * to ensure mailtron can load your module-specific settings.
  *
  * @param $edit
  * Placeholder for form API edit cruft.
@@ -17,12 +18,16 @@ require_once('mailtron.module');
  * @param $params
  * Associative array of additional parameters. Supported values:
  * - module (required): your module name
- * - name (required): the name of your email configuration (unique per module, similar to block deltas)
+ * - name (required): the name of your email configuration 
+ *     (unique per module, similar to block deltas)
  * - send_callback (optional): callback function to invoke after a mail is sent.
- * - recipient_callback (optional): callback function to invoke to get mail recipient address. This is required if you aren't hardcoding the recipient in
- *   the mail configuration.
- * - tokens (optional) : array of key/value token namespaces for field replacement for subject, html_body, text_body
- * - default (optional) : array of field_name/value for default values for this implementation of the form
+ * - recipient_callback (optional): callback function to invoke to get mail recipient 
+ *     address. This is required if you aren't hardcoding the recipient in the 
+ *     mail configuration.
+ * - tokens (optional) : array of key/value token namespaces for field replacement 
+ *     for subject, html_body, text_body
+ * - default (optional) : array of field_name/value for default values for this 
+ *     implementation of the form
  */
 function mailtron_mail_form($edit, $params = array()) {
   // Load the settings for this from from the database if it exists.
@@ -134,7 +139,7 @@ function mailtron_mail_form($edit, $params = array()) {
     '#description' => t('If you wish to send HTML or multipart HTML/text email enter the HTML version of the message body here.'),
     '#default_value' => isset($settings->html_body) ? $settings->html_body : $default['html_body'],
   );
-  // TODO: replace with input format UI
+  // @TODO: replace with input format UI
   $form['message']['html_body_format'] = array(
     '#type' => 'markup',
     '#title' => t(''),
