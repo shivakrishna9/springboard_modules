@@ -11,7 +11,7 @@
 function salesforce_donation_entity_info() {
   return array(
     'salesforce_donation_map' => array(
-      'label' => t('Salesforce Donation Map'),
+      'label' => t('Salesforce donation map'),
       'entity class' => 'Entity',
       'controller class' => 'EntityAPIControllerExportable',
       'base table' => 'salesforce_donation_map',
@@ -31,7 +31,7 @@ function salesforce_donation_entity_info() {
 function salesforce_donation_menu() {
   // %webform_menu returns $node if $node is a webform
   $items['node/%webform_menu/webform/donation-map'] = array(
-    'title' => 'Salesforce map',
+    'title' => 'Salesforce donation map',
     'page callback' => 'salesforce_donation_map_page',
     'page arguments' => array(1),
     'access callback' => 'salesforce_donation_map_page_access',
@@ -40,7 +40,7 @@ function salesforce_donation_menu() {
     'file' => 'includes/salesforce_donation.map.inc',
   );
   $items['admin/config/content/salesforce-donation'] = array(
-    'title' => 'Salesforce Donation Settings',
+    'title' => 'Salesforce donation settings',
     'page callback' => 'salesforce_donation_admin_page',
     'description' => 'Configure how the Salesforce integration will work with donations.',
     'access arguments' => array('administer salesforce'),
@@ -202,7 +202,26 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
   $node = is_object($node) ? $node : node_load($donation->nid);
   $fields = array();
 
-  // Donation webform map
+  // Donation properties map
+  if (isset($map->field_map['salesforce_donation_map'])) {
+    if (isset($map->field_map['salesforce_donation_map']['did'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['did'];
+      $fields[$sf_field] = $donation->did;
+    }
+    if (isset($map->field_map['salesforce_donation_map']['gateway'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['gateway'];
+      $fields[$sf_field] = $donation->gateway;
+    }
+    if (isset($map->field_map['salesforce_donation_map']['txn_id'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['txn_id'];
+      $fields[$sf_field] = $donation->txn_id;
+    }
+    if (isset($map->field_map['salesforce_donation_map']['status'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['status'];
+      $fields[$sf_field] = $donation->status;
+    }
+  }
+  // Donation fields map
   $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
   foreach ($donation_fields as $form_key => $donation_field) {
     if (isset($map->field_map['salesforce_donation_map'][$form_key])) {
@@ -223,18 +242,32 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
       $fields[$sf_field] = $donation->node->title;
     }
   }
-  /* Submission properties map
+  // User properties map
+  if (isset($map->field_map['salesforce_user_map'])) {
+    if (isset($map->field_map['salesforce_user_map']['uid'])) {
+      $sf_field = $map->field_map['salesforce_user_map']['uid'];
+      $fields[$sf_field] = $donation->uid;
+    }
+    if (isset($map->field_map['salesforce_user_map']['name'])) {
+      $sf_field = $map->field_map['salesforce_user_map']['name'];
+      $fields[$sf_field] = $donation->user->name;
+    }
+    if (isset($map->field_map['salesforce_user_map']['email'])) {
+      $sf_field = $map->field_map['salesforce_user_map']['email'];
+      $fields[$sf_field] = $donation->user->email;
+    }
+  }
+  // Submission properties map
   if (isset($map->field_map['salesforce_submission_map'])) {
     if (isset($map->field_map['salesforce_submission_map']['sid'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['sid'];
-      $fields[$sf_field] = $submission->sid;
+      $fields[$sf_field] = $donation->sid;
     }
     if (isset($map->field_map['salesforce_submission_map']['date'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['date'];
       $fields[$sf_field] = REQUEST_TIME;
     }
   }
-  */
 
   // Create the Salesforce object
   $sObject = new stdClass();

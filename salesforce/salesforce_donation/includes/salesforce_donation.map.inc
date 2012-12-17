@@ -111,6 +111,72 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     '#prefix' => '<div id="salesforce-donation-map-ajax-sf-dedupe">',
     '#suffix' => '</div>',
   );
+  // Donation elements.
+  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
+    'did' => array(
+      'label' => array(
+        '#id' => 'map-label-did',
+        '#markup' => t('Donation ID'),
+        '#prefix' => '<label class="' . $map_row_class_name . '">',
+        '#suffix' => '</label>',
+      ),
+      'sf_field' => array(
+        '#id' => 'salesforce-map-did',
+        '#type' => 'select',
+        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'did'),
+        '#options' => $sf_fields,
+      ),
+    ),
+  );
+  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
+    'gateway' => array(
+      'label' => array(
+        '#id' => 'map-label-gateway',
+        '#markup' => t('Gateway ID'),
+        '#prefix' => '<label class="' . $map_row_class_name . '">',
+        '#suffix' => '</label>',
+      ),
+      'sf_field' => array(
+        '#id' => 'salesforce-map-gateway',
+        '#type' => 'select',
+        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'gateway'),
+        '#options' => $sf_fields,
+      ),
+    ),
+  );
+  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
+    'txn_id' => array(
+      'label' => array(
+        '#id' => 'map-label-txn_id',
+        '#markup' => t('Transaction ID'),
+        '#prefix' => '<label class="' . $map_row_class_name . '">',
+        '#suffix' => '</label>',
+      ),
+      'sf_field' => array(
+        '#id' => 'salesforce-map-txn_id',
+        '#type' => 'select',
+        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'txn_id'),
+        '#options' => $sf_fields,
+      ),
+    ),
+  );
+  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
+    'status' => array(
+      'label' => array(
+        '#id' => 'map-label-status',
+        '#markup' => t('Status'),
+        '#prefix' => '<label class="' . $map_row_class_name . '">',
+        '#suffix' => '</label>',
+      ),
+      'sf_field' => array(
+        '#id' => 'salesforce-map-status',
+        '#type' => 'select',
+        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'status'),
+        '#options' => $sf_fields,
+      ),
+    ),
+  );
+  // Donation fields.
   $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
   foreach ($donation_fields as $form_key => $donation_field) {
     // Skip if this is a fieldset type.
@@ -182,8 +248,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_donation_map']);
 
-  // Add the map from node properties to Salesforce fields.
-  // This remains exactly the same as before.
+  // Add the map from node properties to Salesforce fields. For nid and title.
   $form['field_map']['salesforce_node_map'] = array(
     '#id' => 'salesforce-node-map',
     '#tree' => TRUE,
@@ -222,8 +287,60 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_node_map']);
 
-  // No submission info here, so remove that from the mapping.
-  /* Add the map from submission properties to Salesforce fields
+  // Add the map from user properties to Salesforce fields.
+  $form['field_map']['salesforce_user_map'] = array(
+    '#id' => 'salesforce-user-map',
+    '#tree' => TRUE,
+    '#theme' => 'table',
+    '#header' => array(t('User Property'), t('Salesforce Field')),
+    '#row_storage' => array(
+      'uid' => array(
+        'label' => array(
+          '#id' => 'map-label-uid',
+          '#markup' => t('User ID'),
+          '#prefix' => '<label class="' . $map_row_class_name . '">',
+          '#suffix' => '</label>',
+        ),
+        'sf_field' => array(
+          '#id' => 'salesforce-map-uid',
+          '#type' => 'select',
+          '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_user_map', 'uid'),
+          '#options' => $sf_fields,
+        ),
+      ),
+      'name' => array(
+        'label' => array(
+          '#id' => 'map-label-user-name',
+          '#markup' => t('User Name'),
+          '#prefix' => '<label class="' . $map_row_class_name . '">',
+          '#suffix' => '</label>',
+        ),
+        'sf_field' => array(
+          '#id' => 'salesforce-map-user-name',
+          '#type' => 'select',
+          '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_user_map', 'name'),
+          '#options' => $sf_fields,
+        ),
+      ),
+      'email' => array(
+        'label' => array(
+          '#id' => 'map-label-user-email',
+          '#markup' => t('User Email'),
+          '#prefix' => '<label class="' . $map_row_class_name . '">',
+          '#suffix' => '</label>',
+        ),
+        'sf_field' => array(
+          '#id' => 'salesforce-map-user-email',
+          '#type' => 'select',
+          '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_user_map', 'email'),
+          '#options' => $sf_fields,
+        ),
+      ),
+    ),
+  );
+  _sfw_generate_form_table($form['field_map']['salesforce_node_map']);
+
+  // Add the map from submission properties to Salesforce fields
   $form['field_map']['salesforce_submission_map'] = array(
     '#id' => 'salesforce-submission-map',
     '#tree' => TRUE,
@@ -261,7 +378,6 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     ),
   );
   _sfw_generate_form_table($form['field_map']['salesforce_submission_map']);
- */
 
   // Mapping configuration options
   $form['map_config'] = array(
