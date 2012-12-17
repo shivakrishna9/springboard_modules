@@ -272,11 +272,8 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     '#id' => 'salesforce-webform-map',
     '#tree' => TRUE,
     '#theme' => 'table',
-    '#header' => array(t('Webform Field'), t('Salesforce Field'), t('Dedupe Field')),
+    '#header' => array(t('Webform Field'), t('Salesforce Field')),
     '#row_storage' => array(),
-    '#sticky' => FALSE,
-    '#prefix' => '<div id="salesforce-webform-map-ajax-sf-dedupe">',
-    '#suffix' => '</div>',
   );
   $wf_components = $node->webform['components'];
   foreach ($wf_components as $cid => $component) {
