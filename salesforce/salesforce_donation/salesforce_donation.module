@@ -261,7 +261,7 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
   if (isset($map->field_map['salesforce_submission_map'])) {
     if (isset($map->field_map['salesforce_submission_map']['sid'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['sid'];
-      $fields[$sf_field] = $donation->sid;
+      $fields[$sf_field] = $donation->sid; // If sid = 0, then no submission id. (may be created by sustainer)
     }
     if (isset($map->field_map['salesforce_submission_map']['date'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['date'];
