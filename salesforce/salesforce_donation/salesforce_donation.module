@@ -233,7 +233,8 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
       $sf_field = $map->field_map['salesforce_submission_map']['date'];
       $fields[$sf_field] = REQUEST_TIME;
     }
-  */}
+  }
+  */
 
   // Create the Salesforce object
   $sObject = new stdClass();
