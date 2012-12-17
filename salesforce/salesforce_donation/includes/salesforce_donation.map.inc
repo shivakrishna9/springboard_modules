@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Configures the mapping of Salesforce objects to webforms
+ * Configures the mapping of Salesforce objects to donations.
  */
 
 /**
@@ -34,7 +34,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
       'no_sfapi' => array(
         '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
                 array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) . '</p>',
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-salesforce">',
+        '#prefix' => '<div class="salesforce-donation-map-error salesforce-donation-map-error-salesforce">',
         '#suffix' => '</div>',
       ),
     );
@@ -520,7 +520,7 @@ function salesforce_donation_map_form_submit($form, &$form_state) {
   elseif ($form_state['clicked_button']['#value'] == 'Save') {
     $map = _sfw_convert_input($form_state['input']);
     $map['nid'] = $node->nid;
-    $result = salesforce_webform_save_map($map);
+    $result = salesforce_donation_save_map($map);
     if ($result === FALSE) {
       drupal_set_message(t('There was an error saving the map.'), 'error');
     }
