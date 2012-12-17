@@ -325,3 +325,46 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
   drupal_alter('salesforce_donation_map_submission', $sObject);
   return $sObject;
 }
+
+/*
+// TODO: all if these are leftovers from previous implmenetaiton
+
+function sf_donation_form_alter(&$form, &$form_state, $form_id) {
+  // Add a setting to the fundraiser administration page to run on SF exports.
+  if ($form_id == 'fundraiser_admin_settings') {
+    $description = 'Use this option if you want donations to be exported to Salesforce.';
+    $attributes = array();
+    $form['fundraiser_salesforce_integration'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Integrate with Salesforce'),
+      '#default_value' => variable_get('fundraiser_salesforce_integration', 0),
+      '#description' => t($description),
+      '#attributes' => $attributes,
+    );
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ *
+function sf_donation_hook_fundraiser_donation_update($donation) {
+  // put order back in queue so that amount gets updated in Salesforce
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ *
+function sf_donation_fundraiser_donation_cancel($donation) {
+  if (module_exists('sf_donation') && module_exists('queue_api')) {
+    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
+  }
+  // call out to saleforce module if installed
+  //if (module_exists('sf_donation')) {
+  //  sf_donation_canel_recurring_donations($master_order_id);
+  //}
+}
+
+*/
