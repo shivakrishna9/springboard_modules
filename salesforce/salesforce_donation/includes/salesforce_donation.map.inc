@@ -112,96 +112,88 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
     '#suffix' => '</div>',
   );
   // Donation elements.
-  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
-    'did' => array(
-      'label' => array(
-        '#id' => 'map-label-did',
-        '#markup' => t('Donation ID'),
-        '#prefix' => '<label class="' . $map_row_class_name . '">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-did',
-        '#type' => 'select',
-        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'did'),
-        '#options' => $sf_fields,
-      ),
-      'dedupe' => array(
-        '#id' => 'salesforce-dedupe-did',
-        '#type' => 'hidden',
-        '#value' => NULL,
-        '#prefix' => '<div id="salesforce-ajax-dedupe-did">',
-        '#suffix' => '</div>',
-      ),
+  $form['field_map']['salesforce_donation_map']['#row_storage']['did'] = array(
+    'label' => array(
+      '#id' => 'map-label-did',
+      '#markup' => t('Donation ID'),
+      '#prefix' => '<label class="' . $map_row_class_name . '">',
+      '#suffix' => '</label>',
+    ),
+    'sf_field' => array(
+      '#id' => 'salesforce-map-did',
+      '#type' => 'select',
+      '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'did'),
+      '#options' => $sf_fields,
+    ),
+    'dedupe' => array(
+      '#id' => 'salesforce-dedupe-did',
+      '#type' => 'hidden',
+      '#value' => NULL,
+      '#prefix' => '<div id="salesforce-ajax-dedupe-did">',
+      '#suffix' => '</div>',
     ),
   );
-  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
-    'gateway' => array(
-      'label' => array(
-        '#id' => 'map-label-gateway',
-        '#markup' => t('Gateway ID'),
-        '#prefix' => '<label class="' . $map_row_class_name . '">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-gateway',
-        '#type' => 'select',
-        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'gateway'),
-        '#options' => $sf_fields,
-      ),
-      'dedupe' => array(
-        '#id' => 'salesforce-dedupe-gateway',
-        '#type' => 'hidden',
-        '#value' => NULL,
-        '#prefix' => '<div id="salesforce-ajax-dedupe-gateway">',
-        '#suffix' => '</div>',
-      ),
+  $form['field_map']['salesforce_donation_map']['#row_storage']['gateway'] = array(
+    'label' => array(
+      '#id' => 'map-label-gateway',
+      '#markup' => t('Gateway ID'),
+      '#prefix' => '<label class="' . $map_row_class_name . '">',
+      '#suffix' => '</label>',
+    ),
+    'sf_field' => array(
+      '#id' => 'salesforce-map-gateway',
+      '#type' => 'select',
+      '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'gateway'),
+      '#options' => $sf_fields,
+    ),
+    'dedupe' => array(
+      '#id' => 'salesforce-dedupe-gateway',
+      '#type' => 'hidden',
+      '#value' => NULL,
+      '#prefix' => '<div id="salesforce-ajax-dedupe-gateway">',
+      '#suffix' => '</div>',
     ),
   );
-  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
-    'txn_id' => array(
-      'label' => array(
-        '#id' => 'map-label-txn_id',
-        '#markup' => t('Transaction ID'),
-        '#prefix' => '<label class="' . $map_row_class_name . '">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-txn_id',
-        '#type' => 'select',
-        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'txn_id'),
-        '#options' => $sf_fields,
-      ),
-      'dedupe' => array(
-        '#id' => 'salesforce-dedupe-txn_id',
-        '#type' => 'hidden',
-        '#value' => NULL,
-        '#prefix' => '<div id="salesforce-ajax-dedupe-txn_id">',
-        '#suffix' => '</div>',
-      ),
+  $form['field_map']['salesforce_donation_map']['#row_storage']['txn_id'] = array(
+    'label' => array(
+      '#id' => 'map-label-txn_id',
+      '#markup' => t('Transaction ID'),
+      '#prefix' => '<label class="' . $map_row_class_name . '">',
+      '#suffix' => '</label>',
+    ),
+    'sf_field' => array(
+      '#id' => 'salesforce-map-txn_id',
+      '#type' => 'select',
+      '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'txn_id'),
+      '#options' => $sf_fields,
+    ),
+    'dedupe' => array(
+      '#id' => 'salesforce-dedupe-txn_id',
+      '#type' => 'hidden',
+      '#value' => NULL,
+      '#prefix' => '<div id="salesforce-ajax-dedupe-txn_id">',
+      '#suffix' => '</div>',
     ),
   );
-  $form['field_map']['salesforce_donation_map']['#row_storage'][] = array(
-    'status' => array(
-      'label' => array(
-        '#id' => 'map-label-status',
-        '#markup' => t('Status'),
-        '#prefix' => '<label class="' . $map_row_class_name . '">',
-        '#suffix' => '</label>',
-      ),
-      'sf_field' => array(
-        '#id' => 'salesforce-map-status',
-        '#type' => 'select',
-        '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'status'),
-        '#options' => $sf_fields,
-      ),
-      'dedupe' => array(
-        '#id' => 'salesforce-dedupe-status',
-        '#type' => 'hidden',
-        '#value' => NULL,
-        '#prefix' => '<div id="salesforce-ajax-dedupe-status">',
-        '#suffix' => '</div>',
-      ),
+  $form['field_map']['salesforce_donation_map']['#row_storage']['status'] => array(
+    'label' => array(
+      '#id' => 'map-label-status',
+      '#markup' => t('Status'),
+      '#prefix' => '<label class="' . $map_row_class_name . '">',
+      '#suffix' => '</label>',
+    ),
+    'sf_field' => array(
+      '#id' => 'salesforce-map-status',
+      '#type' => 'select',
+      '#default_value' => _sfw_default_value($form_state, 'sf_field', 'salesforce_donation_map', 'status'),
+      '#options' => $sf_fields,
+    ),
+    'dedupe' => array(
+      '#id' => 'salesforce-dedupe-status',
+      '#type' => 'hidden',
+      '#value' => NULL,
+      '#prefix' => '<div id="salesforce-ajax-dedupe-status">',
+      '#suffix' => '</div>',
     ),
   );
   // Donation fields.
