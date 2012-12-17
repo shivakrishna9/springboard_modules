@@ -77,6 +77,10 @@ function salesforce_donation_admin_form_submit($form, &$form_state) {
   }
 
   drupal_set_message(t('Your settings have been saved.'));
+
+  if ($queue_system == 'instant') {
+    drupal_set_message(t('Instantaneously sending submission data to Salesforce does not actually work.'), 'warning');
+  }
 }
 
 /**
@@ -109,7 +113,7 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
         'delta' => 'webform:'. $nid,
         'salesforce_type' => $sObject->type,
         'operation' => $operation,
-        'sObject' => $sObject,
+        'sobject' => $sObject,
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);

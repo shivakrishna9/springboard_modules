@@ -69,7 +69,6 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
       'wrapper' => 'salesforce-donation-map-ajax-sf-object',
       'method' => 'replace',
       'effect' => 'fade',
-      // @TODO: Warn user that changing this value will erase their map work
     ),
   );
 
@@ -381,21 +380,22 @@ function salesforce_donation_map_form_submit($form, &$form_state) {
     return;
   }
 
-  else if (!$form_state['clicked_button']['#value'] == 'Save') {
-    drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
+  // Save the contributed values
+  else if ($form_state['clicked_button']['#value'] == 'Save') {
+    $map = _sfw_convert_input($form_state['input']);
+    $map['nid'] = $node->nid;
+    $result = salesforce_webform_save_map($map);
+    if ($result === FALSE) {
+      drupal_set_message(t('There was an error saving the map.'), 'error');
+    }
+    else {
+      drupal_set_message(t('The map was saved successfully.'));
+    }
     return;
   }
 
-  // Save the contributed values
-  $map = _sfw_convert_input($form_state['input']);
-  $map['nid'] = $node->nid;
-  $result = salesforce_donation_save_map($map);
-  if ($result === FALSE) {
-    drupal_set_message(t('There was an error saving the map.'), 'error');
-  }
-  else {
-    drupal_set_message(t('The map was saved successfully.'));
-  }
+  // No action was specified
+  drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
 }
 
 /**
