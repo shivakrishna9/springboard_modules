@@ -268,7 +268,7 @@ function salesforce_donation_map_form($form, &$form_state, $node) {
   );
   _sfw_generate_form_table($form['field_map']['salesforce_donation_map']);
 
-  $wf_components = $donation->node->webform['components'];
+  $wf_components = $node->webform['components'];
   foreach ($wf_components as $cid => $component) {
     $form_key = $component['form_key'];
     $sf_field = _sfw_default_value($form_state, 'sf_field', 'salesforce_webform_map', $form_key);
