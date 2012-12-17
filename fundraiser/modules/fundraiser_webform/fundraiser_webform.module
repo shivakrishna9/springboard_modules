@@ -952,7 +952,7 @@ function _fundraiser_webform_get_amount_count($nid) {
 function fundraiser_webform_get_submission($sid) {
   $data = array();
   // Query the required submission data.
-  $query = db_select('webform_submissions', 'sd');
+  $query = db_select('webform_submitted_data', 'sd');
   $query->leftJoin('webform_component', 'sc', 'sc.cid = sd.cid');
   $query->fields('sd', array('no', 'data'))
     ->fields('sc', array('form_key'))
