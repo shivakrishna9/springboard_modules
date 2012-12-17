@@ -31,9 +31,11 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
  */
 function fundraiser_webform_fundraiser_donation_information_table_alter(&$variables, $donation) {
   // Add submission information to the display table.
-  $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
-    array('@sid' => $donation->sid, '!title' => l(t('View submission'),
-      'node/' . $donation->node->nid . '/submission/' . $donation->sid))));
+  if ($donation->sid > 0) {
+    $variables['rows'][] = array('Fundraiser submission', t('#@sid - !title',
+      array('@sid' => $donation->sid, '!title' => l(t('View submission'),
+        'node/' . $donation->node->nid . '/submission/' . $donation->sid))));
+  }
 }
 
 /**
@@ -613,6 +615,25 @@ function _fundraiser_webform_fundraiser_field_info_alter($field_key, $field, $ma
 }
 
 /**
+ * Implements hook_fundraiser_donation_get_donation().
+ */
+function fundraiser_webform_fundraiser_donation_get_donation($donation) {
+  // Add submission values to the donation object under $donation->submission_data
+  // Keyed by value.
+  if ($donation->sid > 0) { // Then this donation was created via user submission.
+    $data = fundraiser_webform_get_submission($donation->sid);
+    foreach ($data as $form_key => $value) {
+      // If only one value, use the value.
+      $donation->submission_data[$form_key] = $value['value'][0];
+      if (count($value) > 1) {
+        // Else, value is the array.
+        $donation->submission_data[$form_key] = $value['value'];
+      }
+    }
+  }
+}
+
+/**
  * Helper functions below.
  */
 
@@ -923,4 +944,25 @@ function _fundraiser_webform_get_amount_count($nid) {
   foreach ($results as $result) {
     return $result->count;
   }
+}
+
+/**
+ * DB function, get the submission data out, keyed by form_key.
+ */
+function fundraiser_webform_get_submission($sid) {
+  $data = array();
+  // Query the required submission data.
+  $query = db_select('webform_submitted_data', 'sd');
+  $query->leftJoin('webform_component', 'sc', 'sc.cid = sd.cid');
+  $query->fields('sd', array('no', 'data'))
+    ->fields('sc', array('form_key'))
+    ->condition('sd.sid', $sid)
+    ->orderBy('sd.sid', 'ASC')
+    ->orderBy('sd.cid', 'ASC')
+    ->orderBy('sd.no', 'ASC');
+  $result = $query->execute();
+  foreach ($result as $row) {
+    $data[$row->form_key]['value'][$row->no] = $row->data;
+  }
+  return $data;
 }

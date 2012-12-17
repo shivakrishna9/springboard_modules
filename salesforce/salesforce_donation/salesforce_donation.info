@@ -6,3 +6,5 @@ version = 7.x-3.3
 dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = fundraiser
+files[] = includes/salesforce_donation.map.inc
+files[] = includes/salesforce_donation.queue.inc

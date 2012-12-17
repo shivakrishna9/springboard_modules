@@ -51,7 +51,7 @@ function salesforce_webform_menu() {
     // I am assuming that if you can configure Salesforce you also understand
     // the best way to configure the Salesforce webform interface
     'access arguments' => array('administer salesforce'),
-    'file' => 'includes/salesforce_webform.admin.inc',
+    'file' => 'includes/salesforce_webform.queue.inc',
   );
   return $items;
 }
@@ -81,56 +81,49 @@ function salesforce_webform_permission() {
  * after the access check.
  */
 function salesforce_webform_map_page_access($node) {
-  if (
-       $node !== FALSE // %webform_menu returns FALSE if not valid
-       // @TODO: Ensure that 'donation_form' is still accurate in the D6TOD7 port
-       && $node->type != 'dontation_form'
-       && user_access('map salesforce to webform')
-     ) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && user_access('map salesforce to webform')
+    ) {
     return TRUE;
    }
   return FALSE;
 }
 
 /**
- * Implementation of hook_node_load().
- */
-function salesforce_webform_node_load($nodes, $types) {
-  if (in_array('webform', $types)) {
-    foreach ($nodes as $nid => $node) {
-      // Add the salesforce_webform_map entity to the node
-     // $map = salesforce_webform_load_map($nid);
-      if (is_object($map)) {
-        $node->salesforce_webform_map = $map;
-      }
-    }
-  }
-}
-
-/**
  * Implementation of hook_node_delete().
  */
 function salesforce_webform_node_delete($node) {
+  // Dequeue all submissions related to this webform
+  module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
+  salesforce_webform_dequeue_all($node->nid);
+
   // delete the salesforce_webform_map entity
- // salesforce_webform_delete_map($node->nid);
+  salesforce_webform_delete_map($node->nid);
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implementations of hook_webform_submission_ACTION().
  */
-function salesforce_webform_form_alter(&$form, $form_state, $form_id) {
-  // If form is a webform and mapped, add our submit handler
-  if (
-       isset($form['#node'])
-       && $form_id == 'webform_client_form_'. $form['#node']->nid
-       && isset($form['#node']->salesforce_webform_map)
-       && !empty($form['#node']->salesforce_webform_map->field_map)
-     ) {
-    if (!isset($form['#submit'])) {
-      $form['#submit'] = array();
-    }
-    $form['#submit'][] = 'salesforce_webform_client_form_submit';
+function salesforce_webform_webform_submission_insert($node, $submission) {
+  salesforce_webform_submission_helper('insert', $node, $submission);
+}
+function salesforce_webform_webform_submission_update($node, $submission) {
+  salesforce_webform_submission_helper('update', $node, $submission);
+}
+function salesforce_webform_webform_submission_delete($node, $submission) {
+  salesforce_webform_submission_helper('delete', $node, $submission);
+}
+function salesforce_webform_submission_helper($op, $node, $submission) {
+  $map = salesforce_webform_load_map($node->nid);
+  if (!empty($map) && !empty($map->sync_options[$op])) {
     module_load_include('inc', 'salesforce_webform', 'includes/salesforce_webform.queue');
+    $sObject = salesforce_webform_map_submission($submission, $map, $node);
+    $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
+    $result = salesforce_webform_queue($submission->sid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    if (!$result) {
+      // @TODO Send an error to admin that submission didn't go to queue
+      drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+    }
   }
 }
 
@@ -201,6 +194,64 @@ function salesforce_webform_load_map($nid) {
  */
 function salesforce_webform_delete_map($nid) {
   return entity_delete('salesforce_webform_map', $nid);
+}
+
+/**
+ *
+ * @param stdClass $submission
+ *   A webform submission object
+ * @param Entity $map
+ *   A Salesforce webform map entity
+ * @param stdClass $node
+ *   Optionally provide a node object
+ * @return $sObject
+ *   A Salesforce Object that has Salesforce fields with the webform's values
+ */
+function salesforce_webform_map_submission(stdClass $submission, Entity $map, $node = NULL) {
+  $node = is_object($node) ? $node : node_load($submission->nid);
+  $fields = array();
+
+  // Salesforce webform map
+  foreach ($submission->data as $cid => $values) {
+    $wf_field = $node->webform['components'][$cid]['form_key'];
+    if (isset($map->field_map['salesforce_webform_map'][$wf_field])) {
+      $sf_field = $map->field_map['salesforce_webform_map'][$wf_field];
+      $fields[$sf_field] = $values['value'][0];
+    }
+  }
+  // Node properties map
+  if (isset($map->field_map['salesforce_node_map'])) {
+    if (isset($map->field_map['salesforce_node_map']['nid'])) {
+      $sf_field = $map->field_map['salesforce_node_map']['nid'];
+      $fields[$sf_field] = $node->nid;
+    }
+    if (isset($map->field_map['salesforce_node_map']['title'])) {
+      $sf_field = $map->field_map['salesforce_node_map']['title'];
+      $fields[$sf_field] = $node->title;
+    }
+  }
+  // Submission properties map
+  if (isset($map->field_map['salesforce_submission_map'])) {
+    if (isset($map->field_map['salesforce_submission_map']['sid'])) {
+      $sf_field = $map->field_map['salesforce_submission_map']['sid'];
+      $fields[$sf_field] = $submission->sid;
+    }
+    if (isset($map->field_map['salesforce_submission_map']['date'])) {
+      $sf_field = $map->field_map['salesforce_submission_map']['date'];
+      $fields[$sf_field] = REQUEST_TIME;
+    }
+  }
+
+  // Create the Salesforce object
+  $sObject = new stdClass();
+  $sObject->fields = $fields;
+  $sObject->type = $map->salesforce_object_type;
+  if (!empty($map->salesforce_record_type)) {
+    $sObject->record = $map->salesforce_record_type;
+  }
+
+  drupal_alter('salesforce_webform_map_submission', $sObject);
+  return $sObject;
 }
 
 /**

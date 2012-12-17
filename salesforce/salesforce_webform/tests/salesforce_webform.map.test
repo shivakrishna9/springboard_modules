@@ -95,16 +95,16 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', '', 'Salesforce object type field exists.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', '', 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', '', 'Node id mapping is hidden as expected.');
-    $this->assertNoFieldByName('map_config[sync_options][create]', '', 'Sync Config is hidden as expected.');
+    $this->assertNoFieldByName('map_config[sync_options][insert]', '', 'Sync Config is hidden as expected.');
 
     // Select a Salesforce object with a record type
     $this->swFormMapField('salesforce_object_type', 'Opportunity', 'salesforce_object_info');
     $this->assertFieldByName('salesforce_object_info[salesforce_record_type]', NULL, 'Salesforce record type is displayed because Opportunity object has a record type.');
     $this->assertFieldByName('field_map[salesforce_node_map][nid][sf_field]', NULL, 'Node id mapping has shown up.');
-    $this->assertFieldByName('map_config[sync_options][create]', NULL, 'Sync Config has shown up.');
+    $this->assertFieldByName('map_config[sync_options][insert]', NULL, 'Sync Config has shown up.');
 
     // Verify default settings for Sync config
-    $this->assertFieldChecked('edit-map-config-sync-options-create', 'Sync on create selected.');
+    $this->assertFieldChecked('edit-map-config-sync-options-insert', 'Sync on insert selected.');
     $this->assertFieldChecked('edit-map-config-sync-options-update', 'Sync on update selected.');
     $this->assertFieldChecked('edit-map-config-sync-options-delete', 'Sync on delete selected.');
 
@@ -147,7 +147,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->assertFieldByName('field_map[salesforce_node_map][title][sf_field]', 'Department', 'node title saved and refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_submission_map][sid][sf_field]', 'OwnerId', 'submiddion id saved and refreshed on form.');
     $this->assertFieldByName('field_map[salesforce_submission_map][date][sf_field]', 'Jigsaw', 'submission title saved and refreshed on form.');
-    $this->assertFieldChecked('edit-map-config-sync-options-create', 'Sync on create saved and selected.');
+    $this->assertFieldChecked('edit-map-config-sync-options-insert', 'Sync on insert saved and selected.');
     $this->assertNoFieldChecked('edit-map-config-sync-options-update', 'Sync on update saved and not selected.');
     $this->assertNoFieldChecked('edit-map-config-sync-options-delete', 'Sync on delete saved and not selected.');
 
