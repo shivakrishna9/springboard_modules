@@ -33,6 +33,7 @@ function salesforce_generic_admin_form($form, &$form_state) {
     'instant' => t('Send Instantaneously'),
     'drupal_queue' => t('Drupal Queue'),
   );
+  // TODO: Shouldn't this be a hook?
   $salesforce_queue_exists = module_exists('salesforce_queue');
   if ($salesforce_queue_exists) {
     $queue_options['salesforce_queue'] = t('Salesforce Queue');
@@ -44,7 +45,7 @@ function salesforce_generic_admin_form($form, &$form_state) {
   }
   // Queue system form
   $form['salesforce_generic_queue_system'] = array(
-    '#id' => 'salesforce-webform-queue-system',
+    '#id' => 'salesforce-map-queue-system',
     '#title' => t('Queue System'),
     '#description' => t(''),
     '#type' => 'radios',
@@ -80,6 +81,8 @@ function salesforce_generic_admin_form_submit($form, &$form_state) {
  * Handles the actual process of sending to the queue whichever queue that may be
  */
 function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+// TODO: Hook?
+
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
   if (empty($operation)) {
     $operation = 'CREATE';
@@ -130,6 +133,8 @@ function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field =
  * Handles the actual process of sending the request to dequeue all related items
  */
 function salesforce_generic_dequeue_all($nid) {
+// TODO: Hook?
+
   $queue_system = variable_get('salesforce_generic_queue_system', '');
   switch ($queue_system) {
     case 'drupal_queue':

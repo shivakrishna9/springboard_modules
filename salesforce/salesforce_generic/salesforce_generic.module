@@ -11,7 +11,7 @@
 function salesforce_generic_entity_info() {
   return array(
     'salesforce_generic_map' => array(
-      'label' => t('Salesforce Webform Map'),
+      'label' => t('Salesforce Map'),
       'entity class' => 'Entity',
       'controller class' => 'EntityAPIControllerExportable',
       'base table' => 'salesforce_generic_map',
@@ -42,32 +42,57 @@ function salesforce_generic_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_generic.map.inc',
   );
-  $first = TRUE;
+  $items['node/%node/salesforce/salesforce'] = array(
+    'title' => 'Salesforce maps',
+    'page callback' => 'salesforce_generic_map',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('map salesforce objects'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'includes/salesforce_generic.map.inc',
+    'weight' => 100,
+  );
   foreach ($modules as $module => $info) {
-    // TODO later remove nid dependancy, for now - each item comes with some nid associated.
     $items['node/%node/salesforce/' . $module] = array(
       'title' => $info['label'] . ' map',
       'page callback' => 'salesforce_generic_map_page',
       'page arguments' => array(1, 3),
       'access callback' => $info['access callback'],
       'access arguments' => array(1, 3),
-      'type' => $first ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'type' => MENU_LOCAL_TASK,
       'file' => 'includes/salesforce_generic.map.inc',
     );
-    $first = FALSE;
   }
   // Admin interface.
-  $items['admin/config/content/salesforce-generic'] = array(
-    'title' => 'Salesforce generic settings',
+  $items['admin/config/salesforce'] = array(
+    'title' => 'Salesforce',
+    'description' => 'Salesforce settings.',
+    'position' => 'right',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('access administration pages'),
+    'file' => 'system.admin.inc',
+  );
+  $items['admin/config/salesforce/salesforce-generic'] = array(
+    'title' => 'Salesforce generic',
     'page callback' => 'salesforce_generic_admin_page',
     'description' => 'Configure how the Salesforce integration will work with generic objects.',
-    // I am assuming that if you can configure Salesforce you also understand
-    // the best way to configure the Salesforce webform interface
     'access arguments' => array('administer salesforce'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_generic.queue.inc',
   );
   return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function salesforce_generic_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    return array(
+      'node/*/salesforce' => TRUE,
+      'node/*/salesforce/*' => TRUE,
+    );
+  }
 }
 
 /**
@@ -133,7 +158,7 @@ function salesforce_generic_send_object_to_queue($module, $op, $node, $oid, $dru
  * @param Entity $map
  *   A Salesforce map.
  * @return $sObject
- *   A Salesforce Object that has Salesforce fields with the webform's values
+ *   A Salesforce Object that has Salesforce fields with the object field values.
  */
 function salesforce_generic_map_object($module, stdClass $object, Entity $map, $node) {
   // Gather the fields for this object from their handler modules.
@@ -193,7 +218,7 @@ function salesforce_generic_save_map($map, $module = 'salesforce_generic') {
  * Retreives a Salesforce map
  *
  * @param $nid
- *   The nid of the webform of whose map we want to load
+ *   The nid of the object of whose map we want to load.
  *
  * @return
  *   The entity object you requested
@@ -213,7 +238,7 @@ function salesforce_generic_load_map($nid, $module = 'salesforce_generic') {
  * Deletes a Salesforce map
  *
  * @param $nid
- *   The nid of the webform of whose map we're deleting
+ *   The nid of the object of whose map we're deleting.
  *
  * @return
  *   FALSE if the delete could be performed

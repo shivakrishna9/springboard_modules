@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Configures the mapping of Salesforce objects to webforms
+ * Configures the mapping of Salesforce objects to Drupal objects.
  */
 
 /**
@@ -12,7 +12,7 @@ function salesforce_generic_map($node) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-webform-map-helptext-page',
+      '#id' => 'salesforce-map-helptext-page',
       '#type' => 'markup',
       '#markup' => '<p>'. t('Handle the maps for Salesforce maps associated with this node.') .'</p>',
     ),
@@ -27,10 +27,10 @@ function salesforce_generic_map_page($node, $module) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-webform-map-helptext-page',
+      '#id' => 'salesforce-map-helptext-page',
       '#type' => 'markup',
       '#markup' => '<p>'. t('Map which values should be sent to your Salesforce organization.') .'</p>',
-      '#prefix' => '<div class="salesforce-webform-map-helptext">',
+      '#prefix' => '<div class="salesforce-map-helptext">',
       '#suffix' => '</div>',
     ),
     'salesforce_generic_map_form' => drupal_get_form('salesforce_generic_map_form', $node, $module),
@@ -42,17 +42,6 @@ function salesforce_generic_map_page($node, $module) {
  * Form to do the actual mapping configuration processes
  */
 function salesforce_generic_map_form($form, &$form_state, $node, $module) {
-  // Fail if there are no components attached to the webform
-  if (empty($node->webform['components'])) {
-    return array(
-      'no_components' => array(
-        '#markup' => '<p>'. t('You must first add components to your webform before proceeding with mapping to Salesforce objects.') .'</p>',
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-components">',
-        '#suffix' => '</div>',
-      ),
-    );
-  }
-
   // Fail if we can't connect to Salesforce
   $sfapi = salesforce_get_api();
   if (!$sfapi->isAuthorized()) {
@@ -60,7 +49,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
       'no_sfapi' => array(
         '#markup' => '<p>'. t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
                 array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) .'</p>',
-        '#prefix' => '<div class="salesforce-webform-map-error salesforce-webform-map-error-salesforce">',
+        '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
         '#suffix' => '</div>',
       ),
     );
@@ -87,7 +76,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
     '#id' => 'salesforce-object-type',
     '#title' => t('Salesforce object'),
     '#type' => 'select',
-    '#description' => t('Select a Salesforce object to map to this webform.'),
+    '#description' => t('Select a Salesforce object to map to this Drupal object.'),
     '#default_value' => $sf_object,
     '#options' => $sf_objects,
     '#required' => TRUE,
@@ -130,7 +119,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
   $fields = module_invoke($module, 'salesforce_generic_map_field_info', $node);
   foreach ($fields as $category => $category_info) {
     $map_row_class_name = 'salesforce-' . $category_info['#type'] . '-map-field';
-    // Add the map from webform components to Salesforce fields
+    // Add the map from Drupal object fields to Salesforce fields
     $form['field_map'][$category] = array(
       '#id' => 'salesforce-' . $category_info['#type'] . '-map',
       '#tree' => TRUE,
@@ -228,7 +217,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
     '#type' => 'checkboxes',
     '#required' => TRUE,
     '#title' => t('Salesforce Sync Options'),
-    '#description' => t('When should submissions of this webform be synced with Salesforce?'),
+    '#description' => t('When should submissions of this object type be synced with Salesforce?'),
     '#default_value' => _sfw_default_value($form, $form_state, 'sync_options', 'map_config'),
     '#options' => array(
       'insert' => t('New submissions'),
@@ -282,7 +271,7 @@ function salesforce_generic_map_form_validate($form, &$form_state) {
   }
 
   // No Salesforce field can be used twice
-  $error_text = t('Multiple webform components cannot be mapped to the same Salesforce fields.');
+  $error_text = t('Multiple fields cannot be mapped to the same Salesforce fields.');
   $sf_fields = array();
   foreach ($form_state['input']['field_map'] as $group => $drupal_fields) {
     foreach ($drupal_fields as $drupal_field => $columns) {
@@ -322,14 +311,14 @@ function salesforce_generic_map_form_submit($form, &$form_state) {
       drupal_set_message(t('There was an error deleting the map.'), 'error');
     }
     else {
-      drupal_set_message(t('The Salesforce to webform map has been removed.'));
+      drupal_set_message(t('The Salesforce to Drupal object map has been removed.'));
     }
     return;
   }
 
   // Cancel and do nothing
   else if ($form_state['clicked_button']['#value'] == 'Cancel') {
-    drupal_set_message(t('The Salesforce webform map has been reset to the original values.'));
+    drupal_set_message(t('The Salesforce map has been reset to the original values.'));
     return;
   }
 
