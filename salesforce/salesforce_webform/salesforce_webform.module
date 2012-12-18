@@ -71,7 +71,7 @@ function salesforce_webform_webform_submission_delete($node, $submission) {
  * Implements hook_salesforce_generic_map_fields().
  *
  * @param stdClass $submission
- *   A donation object
+ *   A submission object
  * @param Entity $map
  *   A Salesforce map entity
  * @return $fields
@@ -120,7 +120,7 @@ function salesforce_webform_salesforce_generic_map_fields(stdClass $submission, 
  * @return $fields
  *   A set of fields to be used in mapping form.
  */
-function salesforce_donation_salesforce_generic_map_field_info($node) {
+function salesforce_webform_salesforce_generic_map_field_info($node) {
   // Build an array of fields to map against.
   // Nested by category. If the category allows for dedupes, note that.
   $fields = array();
