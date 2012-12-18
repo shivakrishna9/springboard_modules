@@ -14,7 +14,7 @@ function salesforce_genmap_admin_page() {
     'page_description' => array(
       '#id' => 'salesforce-generic-admin-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with generic Drupal objects.') .'</p>',
+      '#markup' => '<p>' . t('Configure how the Salesforce integration will work with generic Drupal objects.') . '</p>',
       '#prefix' => '<div class="salesforce-generic-admin-helptext">',
       '#suffix' => '</div>',
     ),
@@ -80,7 +80,7 @@ function salesforce_genmap_admin_form_submit($form, &$form_state) {
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_genmap_queue($module, $type, $oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+function salesforce_genmap_queue($module, $type, $oid, $nid, stdClass $sf_object, $dedupe_field = NULL, $operation = NULL) {
 // TODO: Hook?
 
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
@@ -107,9 +107,9 @@ function salesforce_genmap_queue($module, $type, $oid, $nid, stdClass $sObject, 
         'drupal_id' => $oid,
         'module' => $module,
         'delta' => $type . ':' . $nid,
-        'salesforce_type' => $sObject->type,
+        'salesforce_type' => $sf_object->type,
         'operation' => $operation,
-        'sobject' => $sObject,
+        'sobject' => $sf_object,
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);
@@ -119,7 +119,7 @@ function salesforce_genmap_queue($module, $type, $oid, $nid, stdClass $sObject, 
         drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
         return FALSE;
       }
-      return salesforce_queue_insert($oid, $module, $module . ':' . $nid, $sObject->type, $operation, $sObject, $dedupe_field);
+      return salesforce_queue_insert($oid, $module, $module . ':' . $nid, $sf_object->type, $operation, $sf_object, $dedupe_field);
   }
 
   // @TODO Set error that a queue_system is not set
@@ -165,11 +165,11 @@ function salesforce_genmap_dequeue_all($module, $type, $nid) {
         ->condition('module', $module)
         ->condition('delta', $type . ':' . $nid)
         ->execute();
- }
+  }
 
- // There is nothing to do here
- // If there is no queue system set, why not return TRUE?  There likely are no
- // queue items to delete anyhow!  'Instant' would be returning TRUE in this
- // case anyway.
- return TRUE;
+  // There is nothing to do here
+  // If there is no queue system set, why not return TRUE?  There likely are no
+  // queue items to delete anyhow!  'Instant' would be returning TRUE in this
+  // case anyway.
+  return TRUE;
 }

@@ -14,7 +14,7 @@ function salesforce_genmap_map($node) {
     'page_description' => array(
       '#id' => 'salesforce-map-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('Handle the maps for Salesforce maps associated with this node.') .'</p>',
+      '#markup' => '<p>' . t('Handle the maps for Salesforce maps associated with this node.') . '</p>',
     ),
   );
   return $build;
@@ -29,7 +29,7 @@ function salesforce_genmap_map_page($node, $module) {
     'page_description' => array(
       '#id' => 'salesforce-map-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>'. t('Map which values should be sent to your Salesforce organization.') .'</p>',
+      '#markup' => '<p>' . t('Map which values should be sent to your Salesforce organization.') . '</p>',
       '#prefix' => '<div class="salesforce-map-helptext">',
       '#suffix' => '</div>',
     ),
@@ -47,8 +47,8 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
   if (!$sfapi->isAuthorized()) {
     return array(
       'no_sfapi' => array(
-        '#markup' => '<p>'. t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
-                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) .'</p>',
+        '#markup' => '<p>' . t('Cannot connect to Salesforce, preventing the ability to map Salesforce objects.  !ConfigureSalesforce',
+                array('!ConfigureSalesforce' => l(t('Configure Salesforce'), 'admin/config/services/salesforce'))) . '</p>',
         '#prefix' => '<div class="salesforce-map-error salesforce-map-error-salesforce">',
         '#suffix' => '</div>',
       ),
@@ -168,7 +168,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
           $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe_field');
           $dedupe_field['#value'] = _sfw_default_value($form, $form_state, 'dedupe', $category, $field_key);
         }
-      } 
+      }
       $form['field_map'][$category]['#row_storage'][$field_key] = $row;
     } // End foreach field.
     // Add additional dedupe features if dedupe is true.
@@ -184,11 +184,11 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
         ),
         'helptext' => array(
           '#id' => 'salesforce-' . $category_info['#type'] . '-map-helptext-field-map',
-          '#markup' => '<p>'. t('<strong>Dedupe Field:</strong> Minimizes duplicate
+          '#markup' => '<p>' . t('<strong>Dedupe Field:</strong> Minimizes duplicate
             records and allows updating existing records. Selecting a dedupe field
             chooses which field is the unique identifier for this form.  A dedupe
             option only appears if the selected field can be used as a unique
-            identifier. Select \'None\' to not use this feature.') .'</p>',
+            identifier. Select \'None\' to not use this feature.') . '</p>',
           '#prefix' => '<div class="salesforce-' . $category_info['#type'] . '-map-helptext">',
           '#suffix' => '</div>',
         ),
@@ -279,7 +279,7 @@ function salesforce_genmap_map_form_validate($form, &$form_state) {
     foreach ($drupal_fields as $drupal_field => $columns) {
       $sf_field = isset($columns['sf_field']) ? $columns['sf_field'] : NULL;
       if (!empty($sf_field)) {
-        $field_path = 'field_map]['. $group .']['. $drupal_field .'][sf_field';
+        $field_path = 'field_map][' . $group . '][' . $drupal_field . '][sf_field';
         $count = isset($sf_fields[$sf_field]) ? count($sf_fields[$sf_field]) : 0;
         if ($count == 1) {
           // Set error on current field
@@ -287,10 +287,10 @@ function salesforce_genmap_map_form_validate($form, &$form_state) {
 
           // Set error on prior field
           $prior_drupal_field = key($sf_fields[$sf_field]);
-          $prior_field_path = 'field_map]['. $sf_fields[$sf_field][$prior_drupal_field] .']['. $prior_drupal_field .'][sf_field';
+          $prior_field_path = 'field_map][' . $sf_fields[$sf_field][$prior_drupal_field] . '][' . $prior_drupal_field . '][sf_field';
           form_set_error($prior_field_path, $error_text);
         }
-        else if ($count > 1) {
+        elseif ($count > 1) {
           // Add another error for this field being used again
           form_set_error($field_path, $error_text);
         }
@@ -319,13 +319,13 @@ function salesforce_genmap_map_form_submit($form, &$form_state) {
   }
 
   // Cancel and do nothing
-  else if ($form_state['clicked_button']['#value'] == 'Cancel') {
+  elseif ($form_state['clicked_button']['#value'] == 'Cancel') {
     drupal_set_message(t('The Salesforce map has been reset to the original values.'));
     return;
   }
 
   // Save the contributed values
-  else if ($form_state['clicked_button']['#value'] == 'Save') {
+  elseif ($form_state['clicked_button']['#value'] == 'Save') {
     $map = _sfw_convert_input($form_state['input']);
     $map['nid'] = $node->nid;
     $result = salesforce_genmap_save_map($map, $form['#module']);
@@ -388,10 +388,10 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
         'delete',
       );
     }
-    else if (isset($map[$field])) {
+    elseif (isset($map[$field])) {
       return $map[$field];
     }
-    else if ($field == 'salesforce_record_type') {
+    elseif ($field == 'salesforce_record_type') {
       // If there is not a set record type yet, use the default record type for the object
       if (empty($map[$group]['salesforce_record_type'])) {
         $sf_object = _sfw_default_value($form, $form_state, 'salesforce_object_type', $group);
@@ -401,7 +401,7 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
   }
 
   // Handling for the case of no dedupe field value
-  else if ($field == 'no_dedupe') {
+  elseif ($field == 'no_dedupe') {
     $salesforce_dedupe_field = _sfw_default_value($form, $form_state, 'salesforce_dedupe_field');
     if (empty($salesforce_dedupe_field) || $salesforce_dedupe_field == 'none') {
       return TRUE;
@@ -413,7 +413,7 @@ function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_f
   // These are found by seeing which salesforce field is mapped to the related
   // dedupe field and then checking if salesforce_dedupe_field has that field
   // selected
-  else if ($field == 'dedupe') {
+  elseif ($field == 'dedupe') {
     $salesforce_dedupe_field = _sfw_default_value($form, $form_state, 'salesforce_dedupe_field');
     if (!empty($salesforce_dedupe_field) && $salesforce_dedupe_field != 'none') {
       $sf_field = _sfw_default_value($form, $form_state, 'sf_field', $group, $drupal_field);
@@ -519,7 +519,7 @@ function _sfw_salesforce_object_list(Salesforce $sfapi) {
   if (!empty($dupes)) {
     foreach ($objects_list as $object_name => $object_label) {
       if (in_array($object_label, $dupes)) {
-        $objects_list[$object_name] = $object_label .' ('. $object_name .')';
+        $objects_list[$object_name] = $object_label . ' (' . $object_name . ')';
       }
     }
   }

@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function salesforce_genmap_install() {
   if (module_exists('salesforce_queue')) {
@@ -18,7 +18,7 @@ function salesforce_genmap_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function salesforce_genmap_uninstall() {
   variable_del('salesforce_genmap_queue_system');
@@ -33,10 +33,10 @@ function salesforce_genmap_schema() {
     'fields' => array(
       'mid' => array(
         'description' => 'Map id of the map.',
-        'type' => 'serial', 
-        'unsigned' => TRUE, 
+        'type' => 'serial',
+        'unsigned' => TRUE,
         'not null' => TRUE,
-      ),  
+      ),
       'nid' => array(
         'description' => 'Node id of the webform node to which this map applies.',
         'type' => 'int',

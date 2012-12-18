@@ -9,7 +9,7 @@
  * @name core_drupal_hooks
  * @{
  */
- 
+
 /**
  * Implements hook_permission().
  */
@@ -259,7 +259,7 @@ function salesforce_donation_webform_map_page_access($node) {
     && user_access('map salesforce to webform on donation')
     ) {
     return TRUE;
-   }
+  }
   return FALSE;
 }
 

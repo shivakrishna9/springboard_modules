@@ -152,7 +152,7 @@ function salesforce_webform_map_page_access($node) {
     && user_access('map salesforce to webform')
     ) {
     return TRUE;
-   }
+  }
   return FALSE;
 }
 
