@@ -71,17 +71,38 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *     - sobject: Salesforce sObject
    *
    * @return bool
-   *   TRUE if the queue item was created, FALSE if the queue item could not
-   *   be created
+   *   If the item insert or update failed, returns FALSE. If it succeeded,
+   *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   public function createItem($data) {
-    $data['sobject'] = json_encode($data['sobject']);
-    $data['queue'] = $this->queue_name == 'all' ? 'new' : $this->queue_name;
+    $keys = array();
 
-    // We cannot rely on REQUEST_TIME because many items might be created
-    // by a single request which takes longer than 1 second.
-    $data['created'] = time();
-    return (bool) drupal_write_record('salesforce_queue', $data);
+    if ($this->itemInQueue($data)) {
+      // If this item is in the queue, replace the original.
+      // With drupal_write_record, replacement is just a matter of filling in
+      // the $keys array
+      $keys = array('drupal_id', 'module', 'delta', 'salesforce_type');
+    }
+    else {
+      // As a new record, fill in all the new fields
+      $data['queue'] = $this->queue_name == 'all' ? 'new' : $this->queue_name;
+
+      // We cannot rely on REQUEST_TIME because many items might be created
+      // by a single request which takes longer than 1 second.
+      $data['created'] = time();
+    }
+
+    // Invoke hook_salesforce_queue_create_item_alter().
+    drupal_alter('salesforce_queue_create_item', $data['sobject'], $data['drupal_id'], $data['module'], $data['delta']);
+
+    // Insert this baby
+    $data['sobject'] = json_encode($data['sobject']);
+    $result = drupal_write_record('salesforce_queue', $data, $keys);
+
+    // Invoke hook_salesforce_queue_create_item().
+    module_invoke_all('salesforce_queue_create_item', $data['sobject'], $data['drupal_id'], $data['module'], $data['delta'], $result);
+
+    return $result;
   }
 
   /**
@@ -212,4 +233,32 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * @} DrupalQueueInterface
    */
+
+  /**
+   * Check to see if a given item is already in the queue
+   *
+   * @param array $data
+   *   An array of data that is typically used in createItem() to send to queue.
+   *   The nessisary keys for this method are:
+   *     - drupal_id: Unique identifier of the Drupal object, such as the
+   *         entity ID
+   *     - module: Module implementing the data type
+   *     - delta: Name or id of the subtype
+   *     - salesforce_type: Salesforce object type
+   *
+   * @return bool
+   *   TRUE if the item is in the queue, FALSE if the item is not
+   */
+  public function itemInQueue($data) {
+    $count = db_select('salesforce_queue', 'q')
+      ->fields('q', array('item_id'))
+      ->condition('drupal_id', $data['drupal_id'])
+      ->condition('module', $data['module'])
+      ->condition('delta', $data['delta'])
+      ->condition('salesforce_type', $data['salesforce_type'])
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+    return $count > 0;
+  }
 }

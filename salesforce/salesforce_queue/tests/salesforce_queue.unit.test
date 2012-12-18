@@ -34,28 +34,19 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
     parent::tearDown();
   }
 
-  public function testQueueInsert() {
+  public function testInsert() {
     $contact = array(
       'FirstName' => 'John',
       'LastName' => 'Doe',
       'Email' => 'john.doe@example.com',
     );
 
-    $qid = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'upsert', $contact, 'Email');
+    $result = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'upsert', $contact, 'Email');
+    $this->assertEqual(SAVED_NEW, $result, 'New queue item created new record.');
 
-    $this->assertEqual(1, $qid, t('First item id in the queue is 1.'));
-  }
-
-  public function testQueueInsertWithDuplicate() {
-    $contact = array(
-      'FirstName' => 'John',
-      'LastName' => 'Doe',
-      'Email' => 'john.doe@example.com',
-    );
-
-    $qid = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'create', $contact);
-    $qid2 = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'create', $contact);
-    $this->assertEqual(FALSE, $qid2, t('Duplicate item did not get inserted into queue.'));
+    // Do the same, but ensure it was an update
+    $result2 = salesforce_queue_insert('1', 'user', 'user', 'Contact', 'upsert', $contact, 'Email');
+    $this->assertEqual(SAVED_UPDATED, $result2, 'Duplicate queue item updated previous record.');
   }
 
   public function testQueueDeletion() {

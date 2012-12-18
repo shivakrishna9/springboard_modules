@@ -148,7 +148,7 @@ function salesforce_queue_sandbox() {
 }
 
 /**
- * Inserts an item into the Salesforce queue.
+ * Wrapper to insert an item into the Salesforce queue
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
@@ -165,40 +165,26 @@ function salesforce_queue_sandbox() {
  * @param $dedupe_field
  *   The Salesforce field to dedupe on during UPSERT operations.
  *
- * @return
- *   The id of the queue entry or false if insertion fails or a duplicate is already
- *   in the queue.
+ * @return bool
+ *   TRUE if the item was created successfully, FALSE if the item could not be
+ *   created
  */
 function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject, $dedupe_field = NULL) {
-
-  // allow other modules to alter the object before it is queued
-  drupal_alter('salesforce_queue_prequeue', $sobject, $drupal_id, $module, $delta);
-
-  if (!salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)) {
-
-    $qid = db_insert('salesforce_queue')
-      ->fields(array(
-        'drupal_id' => $drupal_id,
-        'module' => $module,
-        'delta' => $delta,
-        'salesforce_type' => $salesforce_type,
-        'operation' => $operation,
-        'dedupe_field' => $dedupe_field,
-        'sobject' => json_encode($sobject),
-        'created' => REQUEST_TIME,
-        ))
-      ->execute();
-
-    return $qid;
-  }
-  else {
-    // TODO: log or throw exception?
-    return FALSE;
-  }
+  $item = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+    'operation' => $operation,
+    'dedupe_field' => $dedupe_field,
+    'sobject' => $sobject,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->createItem($item);
 }
 
 /**
- * Determines if an item is already in the queue.
+ * Wrapper to determine if an item is already in the queue
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
@@ -213,17 +199,14 @@ function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, 
  *   TRUE if the item is in the queue, FALSE if the item is not
  */
 function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type) {
-  $query = db_select('salesforce_queue', 's')
-    ->fields('s', array('id'))
-    ->condition('s.drupal_id', $drupal_id)
-    ->condition('s.module', $module)
-    ->condition('s.delta', $delta)
-    ->condition('s.salesforce_type', $salesforce_type);
-
-  $count = $query->countQuery()->execute()->fetchField();
-
-  // Return TRUE if this item is already in the queue.
-  return $count > 0;
+  $data = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->createItem($data);
 }
 
 /**
