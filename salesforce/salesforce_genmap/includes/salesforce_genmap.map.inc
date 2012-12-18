@@ -17,6 +17,14 @@ function salesforce_genmap_map($node) {
       '#markup' => '<p>' . t('Handle the maps for Salesforce maps associated with this node.') . '</p>',
     ),
   );
+  $helps = module_invoke_all('salesforce_genmap_map_help');
+  foreach ($helps as $index => $help) {
+    $build['content']['additional_help'] = array(
+      '#id' => 'salesforce-map-helptext-' . $index . '-page',
+      '#type' => 'markup',
+      '#markup' => '<p>' . $help . '</p>',
+    );
+  }
   return $build;
 }
 

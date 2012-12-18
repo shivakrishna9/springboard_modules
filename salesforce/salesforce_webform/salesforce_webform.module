@@ -33,6 +33,13 @@ function salesforce_webform_permission() {
  */
 
 /**
+ * Implements hook_salesforce_genmap_map_help().
+ */
+function salesforce_webform_alesforce_genmap_map_help() {
+  return array( 'salesforce_webform' => t('Salesforce webform provides a way to map submission values to Salesforce objects.') );
+}
+
+/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_webform_salesforce_genmap_info() {
