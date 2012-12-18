@@ -8,27 +8,26 @@
 /**
  * Page callback to render the admin page
  */
-function salesforce_donation_admin_page() {
+function salesforce_generic_admin_page() {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
-      '#id' => 'salesforce-donation-admin-helptext-page',
+      '#id' => 'salesforce-generic-admin-helptext-page',
       '#type' => 'markup',
-      '#markup' => '<p>' . t('Configure how the Salesforce integration will work with donations.') . '</p>',
-      '#prefix' => '<div class="salesforce-donation-admin-helptext">',
+      '#markup' => '<p>'. t('Configure how the Salesforce integration will work with generic Drupal objects.') .'</p>',
+      '#prefix' => '<div class="salesforce-generic-admin-helptext">',
       '#suffix' => '</div>',
     ),
-    'salesforce_donation_admin_form' => drupal_get_form('salesforce_donation_admin_form'),
+    'salesforce_generic_admin_form' => drupal_get_form('salesforce_generic_admin_form'),
   );
   return $build;
 }
 
 /**
- * Configuration form for this module
+ * Configuration form for handling queues.
  */
-function salesforce_donation_admin_form($form, &$form_state) {
+function salesforce_generic_admin_form($form, &$form_state) {
   $form = array();
-
   // Queue system options
   $queue_options = array(
     'instant' => t('Send Instantaneously'),
@@ -38,55 +37,49 @@ function salesforce_donation_admin_form($form, &$form_state) {
   if ($salesforce_queue_exists) {
     $queue_options['salesforce_queue'] = t('Salesforce Queue');
   }
-
   // Default queue
-  $queue_system = variable_get('salesforce_donation_queue_system', '');
+  $queue_system = variable_get('salesforce_generic_queue_system', '');
   if (empty($queue_system)) {
     $queue_system = $salesforce_queue_exists ? 'salesforce_queue' : 'instant';
   }
-
   // Queue system form
-  $form['salesforce_donation_queue_system'] = array(
-    '#id' => 'salesforce-donation-queue-system',
+  $form['salesforce_generic_queue_system'] = array(
+    '#id' => 'salesforce-webform-queue-system',
     '#title' => t('Queue System'),
     '#description' => t(''),
     '#type' => 'radios',
     '#default_value' => $queue_system,
     '#options' => $queue_options,
   );
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
   );
-
   return $form;
 }
 
 /**
- * Submit callback for the configuration form
+ * Submit callback for the configuration form.
  */
-function salesforce_donation_admin_form_submit($form, &$form_state) {
-  $former_queue_system = variable_get('salesforce_donation_queue_system', '');
-  $queue_system = $form_state['input']['salesforce_donation_queue_system'];
-  variable_set('salesforce_donation_queue_system', $queue_system);
-
-  // @TODO: Decommission old queue
+function salesforce_generic_admin_form_submit($form, &$form_state) {
+  $former_queue_system = variable_get('salesforce_generic_queue_system', '');
+  $queue_system = $form_state['input']['salesforce_generic_queue_system'];
+  variable_set('salesforce_generic_queue_system', $queue_system);
+  // @TODO: Decommission old queue.
   if (!empty($former_queue_system)) {
-    // Switch existing queue data to the new queue and delete old queue
+    // Switch existing queue data to the new queue and delete old queue.
   }
-
   drupal_set_message(t('Your settings have been saved.'));
-
+  // PSA
   if ($queue_system == 'instant') {
-    drupal_set_message(t('Instantaneously sending submission data to Salesforce does not actually work.'), 'warning');
+    drupal_set_message(t('Just so you know, instantaneously sending submission data to Salesforce does not actually work.'), 'warning');
   }
 }
 
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) { // Coder: This is ok.
+function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
   if (empty($operation)) {
     $operation = 'CREATE';
@@ -96,7 +89,7 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
   }
 
   // Send to queue based on which queue system we're using
-  $queue_system = variable_get('salesforce_donation_queue_system', '');
+  $queue_system = variable_get('salesforce_generic_queue_system', '');
   switch ($queue_system) {
 
     case 'instant':
@@ -105,15 +98,15 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
       return FALSE;
 
     case 'drupal_queue':
-      $queue = DrupalQueue::get('salesforce_donation');
-      $queue->createQueue('salesforce_donation'); // It doesn't hurt to make sure
+      $queue = DrupalQueue::get('salesforce_generic');
+      $queue->createQueue('salesforce_generic'); // It doesn't hurt to make sure
       $data = array(
-        'drupal_id' => $did,
-        'module' => 'webform',
-        'delta' => 'webform:' . $nid,
-        'salesforce_type' => $sObject->type, // Coder: This is ok.
+        'drupal_id' => $oid,
+        'module' => 'generic', // TODO correct this.
+        'delta' => 'webform:'. $nid, // TODO correct this
+        'salesforce_type' => $sObject->type,
         'operation' => $operation,
-        'sobject' => $sObject, // Coder: This is ok.
+        'sobject' => $sObject,
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);
@@ -123,7 +116,7 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
         drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
         return FALSE;
       }
-      return salesforce_queue_insert($did, 'webform', 'webform:' . $nid, $sObject->type, $operation, $sObject, $dedupe_field); // Coder: This is ok.
+      return salesforce_queue_insert($oid, 'webform', 'webform:'. $nid, $sObject->type, $operation, $sObject, $dedupe_field);
   }
 
   // @TODO Set error that a queue_system is not set
@@ -136,18 +129,18 @@ function salesforce_donation_queue($did, $nid, stdClass $sObject, $dedupe_field 
 /**
  * Handles the actual process of sending the request to dequeue all related items
  */
-function salesforce_donation_dequeue_all($nid) {
-  $queue_system = variable_get('salesforce_donation_queue_system', '');
+function salesforce_generic_dequeue_all($nid) {
+  $queue_system = variable_get('salesforce_generic_queue_system', '');
   switch ($queue_system) {
     case 'drupal_queue':
       $query = db_select('queue', 'q')
         ->fields('q')
-        ->condition('name', 'salesforce_donation');
+        ->condition('name', 'salesforce_generic');
       $result = $query->execute();
       $delete = array();
       foreach ($result as $record) {
         $data = unserialize($record->data);
-        if ($data['delta'] == 'webform:' . $nid) {
+        if ($data['delta'] == 'webform:'. $nid) { //TODO : clear out this delta, it may not be accurate in the generic case.
           $delete[] = $record->item_id;
         }
       }
@@ -157,15 +150,21 @@ function salesforce_donation_dequeue_all($nid) {
       return db_delete('queue')
         ->condition('item_id', $delete, 'IN')
         ->execute();
+
     case 'salesforce_queue':
+      if (!module_exists('salesforce_queue')) {
+        drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
+        return FALSE;
+      }
       return db_delete('salesforce_queue')
         ->condition('module', 'webform')
-        ->condition('delta', 'webform:' . $nid)
+        ->condition('delta', 'webform:'. $nid) //TODO : clear out this delta, it may not be accurate in the generic case.
         ->execute();
-  }
-  // There is nothing to do here
-  // If there is no queue system set, why not return TRUE?  There likely are no
-  // queue items to delete anyhow!  'Instant' would be returning TRUE in this
-  // case anyway.
-  return TRUE;
+ }
+
+ // There is nothing to do here
+ // If there is no queue system set, why not return TRUE?  There likely are no
+ // queue items to delete anyhow!  'Instant' would be returning TRUE in this
+ // case anyway.
+ return TRUE;
 }

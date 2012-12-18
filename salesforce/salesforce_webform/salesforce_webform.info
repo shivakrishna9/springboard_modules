@@ -2,14 +2,12 @@ name = Salesforce Webform
 description = Map and push webform submissions to Salesforce.
 package = Salesforce
 core = 7.x
-
+dependencies[] = entity
+dependencies[] = salesforce
+dependencies[] = salesforce_generic
+dependencies[] = webform
 files[] = includes/salesforce_webform.map.inc
 files[] = includes/salesforce_webform.queue.inc
-
 files[] = tests/salesforce_webform.test
 files[] = tests/salesforce_webform.map.test
 files[] = tests/salesforce_webform.queue.test
-
-dependencies[] = entity
-dependencies[] = salesforce
-dependencies[] = webform

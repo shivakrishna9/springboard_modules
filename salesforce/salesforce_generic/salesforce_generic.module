@@ -1,0 +1,235 @@
+<?php
+
+/**
+ * @file
+ * Manages generic case Salesforce mappings.
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_generic_entity_info() {
+  return array(
+    'salesforce_generic_map' => array(
+      'label' => t('Salesforce Webform Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'salesforce_generic_map',
+      'entity keys' => array(
+        'id' => 'mid',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+      'module' => 'salesforce_generic',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_generic_menu() {
+  // Gather modules that provide mapping support for generic objects.
+  $modules = module_invoke_all('salesforce_generic_info');
+  drupal_alter('salesforce_generic_info', $modules);
+  // Returns an array, keyed by supporting module.
+  $items['node/%node/salesforce'] = array(
+    'title' => 'Salesforce maps',
+    'page callback' => 'salesforce_generic_map',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('map salesforce objects'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_generic.map.inc',
+  );
+  $first = TRUE;
+  foreach ($modules as $module => $info) {
+    // TODO later remove nid dependancy, for now - each item comes with some nid associated.
+    $items['node/%node/salesforce/' . $module] = array(
+      'title' => $info['label'] . ' map',
+      'page callback' => 'salesforce_generic_map_page',
+      'page arguments' => array(1, 3),
+      'access callback' => $info['access callback'],
+      'access arguments' => array(1, 3),
+      'type' => $first ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'includes/salesforce_generic.map.inc',
+    );
+    $first = FALSE;
+  }
+  // Admin interface.
+  $items['admin/config/content/salesforce-generic'] = array(
+    'title' => 'Salesforce generic settings',
+    'page callback' => 'salesforce_generic_admin_page',
+    'description' => 'Configure how the Salesforce integration will work with generic objects.',
+    // I am assuming that if you can configure Salesforce you also understand
+    // the best way to configure the Salesforce webform interface
+    'access arguments' => array('administer salesforce'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/salesforce_generic.queue.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_generic_permission() {
+  return array(
+    'map salesforce objects' => array(
+      'title' => t('Map Salesforce objects'),
+      'description' => t('Configure the mapping of Salesforce objects.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+// TODO later remove nid dependancy, for now - each item comes with some nid associated.
+function salesforce_generic_node_delete($node) {
+  // Dequeue all submissions related to this node.
+  module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
+  salesforce_generic_dequeue_all($node->nid);
+  // Delete all salesforce_donation_map entities.
+  salesforce_generic_delete_map($node->nid);
+}
+
+/**
+ * Helper function to place an object, given a nod, oid, object with a map and queue.
+ *
+ * @param $module
+ *   Module calling this function, so we can map fields correctly.
+ * @param $op
+ *   Type of operation.
+ * @param $node
+ *   Associated node for map.
+ * @param $oid
+ *   Object id to be mapped.
+ * @param Object $drupal_object
+ *   Object to be mapped.
+ */
+function salesforce_generic_send_object_to_queue($module, $op, $node, $oid, $drupal_object) {
+  $map = salesforce_generic_load_map($node->nid, $module);
+  if (!empty($map) && !empty($map->sync_options[$op])) {
+    module_load_include('inc', 'salesforce_generic', 'includes/salesforce_generic.queue');
+    $sObject = salesforce_generic_map_object($module, $drupal_object, $map, $node);
+    $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
+    // Add to the queue.
+    $result = salesforce_generic_queue($oid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    if (!$result) {
+      // @TODO Send an error to admin that submission didn't go to queue
+      drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+    }
+  }
+}
+
+/**
+ * Map the drupal object to a Salesforce object.
+ *
+ * @param $module
+ *   Calling module for this map, makes sure fields are mapped by correct handler.
+ * @param stdClass $object
+ *   A drupal object.
+ * @param Entity $map
+ *   A Salesforce map.
+ * @return $sObject
+ *   A Salesforce Object that has Salesforce fields with the webform's values
+ */
+function salesforce_generic_map_object($module, stdClass $object, Entity $map, $node) {
+  // Gather the fields for this object from their handler modules.
+  $fields = array();
+  $fields = module_invoke($module, 'salesforce_generic_map_fields', $object, $map, $node);
+  drupal_alter('salesforce_generic_map_fields', $fields, $module, $object, $map, $node);
+
+  // Create the Salesforce object
+  $sObject = new stdClass();
+  $sObject->fields = $fields;
+  $sObject->type = $map->salesforce_object_type;
+  if (!empty($map->salesforce_record_type)) {
+    $sObject->record = $map->salesforce_record_type;
+  }
+
+  // Let other modules modify it.
+  drupal_alter('salesforce_generic_map_object', $sObject);
+  return $sObject;
+}
+
+/**
+ * Creates and saves a Salesforce map.
+ *
+ * @param $map
+ *   Can be an array of values or a salesforce_generic_map entity object
+ *
+ * @return
+ *   The new version of the object (such as if you had passed in an array) and
+ *   FALSE if what you passed through was incompatible with the save process.
+ */
+function salesforce_generic_save_map($map, $module = 'salesforce_generic') {
+  if (is_array($map)) {
+    $map['map_handler'] = $module;
+    // Allow sending an array and updating an existing entity with the values
+    $entity = salesforce_generic_load_map($map['nid'], $module);
+    if ($entity) {
+      foreach ($map as $key => $value) {
+        $entity->$key = $value;
+      }
+      $map = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database
+      $map = entity_create('salesforce_generic_map', $map);
+    }
+  }
+  if ($map->entityType() == 'salesforce_generic_map') {
+    $map->map_handler = $module;
+    $map->updated = time();
+    // Adds the data to the database.
+    return entity_save('salesforce_generic_map', $map);
+  }
+  return FALSE;
+}
+
+/**
+ * Retreives a Salesforce map
+ *
+ * @param $nid
+ *   The nid of the webform of whose map we want to load
+ *
+ * @return
+ *   The entity object you requested
+ */
+function salesforce_generic_load_map($nid, $module = 'salesforce_generic') {
+  $mid = _salesforce_generic_get_map_id_by_nid_module($nid, $module);
+  if (!empty($mid)) {
+    $entities = entity_load('salesforce_generic_map', array($mid));
+    if (isset($entities[$mid])) {
+      return $entities[$mid];
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Deletes a Salesforce map
+ *
+ * @param $nid
+ *   The nid of the webform of whose map we're deleting
+ *
+ * @return
+ *   FALSE if the delete could be performed
+ */
+function salesforce_generic_delete_map($nid, $module = 'salesforce_generic') {
+  $mid = _salesforce_generic_get_map_id_by_nid_module($nid, $module);
+  if (!empty($mid)) {
+    return entity_delete('salesforce_generic_map', $mid);
+  }
+}
+
+/**
+ * DB function, return map id given node and module id.
+ */
+// TODO: Find out if entity will handle two value primary keys, if so, use that instead.
+function _salesforce_generic_get_map_id_by_nid_module($nid, $module = 'salesforce_generic') {
+  return db_query('SELECT mid FROM {salesforce_generic_map} WHERE nid = :nid AND $module = :module',
+    array(':nid' => $nid, ':module' => $module))->fetchColumn();
+}

@@ -1,0 +1,9 @@
+name = Salesforce Generic
+description = Map and push generic objects to Salesforce.
+package = Salesforce
+core = 7.x
+dependencies[] = entity
+dependencies[] = salesforce
+dependencies[] = webform
+files[] = includes/salesforce_generic.map.inc
+files[] = includes/salesforce_generic.queue.inc
