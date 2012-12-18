@@ -210,7 +210,7 @@ function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)
 }
 
 /**
- * Removes an item from the queue.
+ * Wrapper to remove an item from the queue.
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
@@ -220,18 +220,20 @@ function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)
  *   The module sub-type. For node types this would be node type name, article for instance.
  * @param $salesforce_type
  *   The name of the Salesforce object type.
+ *
+ * @return bool
+ *   TRUE if the item was removed from the queue, FALSE if the item was not
  */
 function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type) {
-  // TODO: pre-delete hook
-  $count = db_delete('salesforce_queue')
-    ->condition('drupal_id', $drupal_id)
-    ->condition('module', $module)
-    ->condition('delta', $delta)
-    ->condition('salesforce_type', $salesforce_type)
-    ->execute();
-
-  // TODO: log removal
-  return $count;
+  $item = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  $item = (object)$item;
+  return $queue->deleteItem($item);
 }
 
 /**

@@ -47,5 +47,19 @@ function hook_salesforce_queue_create_item($sObject, $drupal_id, $module, $delta
 }
 
 /**
+ * Fire off behavior before an item is deleted from the queue
+ *
+ * @param int $drupal_id
+ *   Unique identifier of the Drupal object, such as the entity ID
+ * @param string $module
+ *   Module implementing the data type
+ * @param varchar $delta
+ *   Name or id of the subtype
+ */
+function hook_salesforce_queue_delete_item($drupal_id, $module, $delta) {
+
+}
+
+/**
  * @}
  */

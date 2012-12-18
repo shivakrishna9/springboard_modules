@@ -202,9 +202,19 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   TRUE on successful delete, FALSE if the delete could not be performed
    */
   public function deleteItem($item) {
-    return db_delete('salesforce_queue')
-      ->condition('item_id', $item->item_id)
+    // Invoke hook_salesforce_queue_delete_item().
+    module_invoke_all('salesforce_queue_delete_item', $item->drupal_id, $item->module, $item->delta);
+
+    $result = db_delete('salesforce_queue')
+      ->condition('drupal_id', $item->drupal_id)
+      ->condition('module', $item->module)
+      ->condition('delta', $item->delta)
+      ->condition('salesforce_type', $item->salesforce_type)
       ->execute();
+
+    // @TODO log removal
+
+    return $result;
   }
 
   /**
