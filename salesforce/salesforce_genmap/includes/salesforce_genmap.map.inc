@@ -308,7 +308,7 @@ function salesforce_genmap_map_form_submit($form, &$form_state) {
 
   // Delete the map
   if ($form_state['clicked_button']['#value'] == 'Unmap') {
-    $result = salesforce_genmap_delete_map($node->nid);
+    $result = salesforce_genmap_delete_map($node->nid, $form['#module']);
     if ($result === FALSE) {
       drupal_set_message(t('There was an error deleting the map.'), 'error');
     }
