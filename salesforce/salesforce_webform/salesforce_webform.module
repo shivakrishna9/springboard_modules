@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Manages webform to Salesforce mappings.
+ * Manages Webform to Salesforce mappings.
  */
 
 /**
- * @defgroup core_drupal_hooks
+ * @name core_drupal_hooks
  * @{
  */
 
@@ -28,6 +28,11 @@ function salesforce_webform_permission() {
  */
 
 /**
+ * @name salesforce_genmap_hooks
+ * @{
+ */
+
+/**
  * Implements hook_salesforce_genmap_info().
  */
 function salesforce_webform_salesforce_genmap_info() {
@@ -37,34 +42,6 @@ function salesforce_webform_salesforce_genmap_info() {
     'access callback' => 'salesforce_webform_map_page_access',
   );
   return $items;
-}
-
-/**
- * Access callback to reach the mapping page
- *
- * All by its little old self because menu doesn't load the include file until
- * after the access check.
- */
-function salesforce_webform_map_page_access($node) {
-  if ($node !== FALSE // %webform_menu returns FALSE if not valid
-    && user_access('map salesforce to webform')
-    ) {
-    return TRUE;
-   }
-  return FALSE;
-}
-
-/**
- * Implementations of hook_webform_submission_ACTION().
- */
-function salesforce_webform_webform_submission_insert($node, $submission) {
-  salesforce_genmap_send_object_to_queue('salesforce_webform', 'insert', $node, $submission->sid, $submission);
-}
-function salesforce_webform_webform_submission_update($node, $submission) {
-  salesforce_genmap_send_object_to_queue('salesforce_webform', 'update', $node, $submission->sid, $submission);
-}
-function salesforce_webform_webform_submission_delete($node, $submission) {
-  salesforce_genmap_send_object_to_queue('salesforce_webform', 'delete', $node, $submission->sid, $submission);
 }
 
 /**
@@ -161,4 +138,33 @@ function salesforce_webform_salesforce_genmap_map_field_info($node) {
   );
   // And return the fields for the map to generate the form.
   return $fields;
+}
+
+/**
+ * @} salesforce_genmap_hooks
+ */
+
+/**
+ * Access callback to reach the mapping page
+ */
+function salesforce_webform_map_page_access($node) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && user_access('map salesforce to webform')
+    ) {
+    return TRUE;
+   }
+  return FALSE;
+}
+
+/**
+ * Implementations of hook_webform_submission_ACTION().
+ */
+function salesforce_webform_webform_submission_insert($node, $submission) {
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'insert', $node, $submission->sid, $submission);
+}
+function salesforce_webform_webform_submission_update($node, $submission) {
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'update', $node, $submission->sid, $submission);
+}
+function salesforce_webform_webform_submission_delete($node, $submission) {
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'delete', $node, $submission->sid, $submission);
 }

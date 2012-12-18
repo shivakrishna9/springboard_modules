@@ -6,6 +6,11 @@
  */
 
 /**
+ * @name core_drupal_hooks
+ * @{
+ */
+
+/**
  * Implements hook_entity_info().
  */
 function salesforce_genmap_entity_info() {
@@ -121,7 +126,10 @@ function salesforce_genmap_node_delete($node) {
   salesforce_genmap_delete_map($node->nid);
 }
 
-
+/**
+ * @} core_drupal_hooks
+ */
+ 
 /**
  * Helper function to place an object, given a nod, oid, object with a map and queue.
  *
@@ -161,6 +169,8 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
  *   A drupal object.
  * @param Entity $map
  *   A Salesforce map.
+ * @param $node
+ *   Associated map node.
  * @return $sObject
  *   A Salesforce Object that has Salesforce fields with the object field values.
  */
@@ -188,6 +198,8 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
  *
  * @param $map
  *   Can be an array of values or a salesforce_genmap_map entity object
+ * @param $module
+ *   Handler module for the mapping object
  *
  * @return
  *   The new version of the object (such as if you had passed in an array) and
@@ -223,6 +235,8 @@ function salesforce_genmap_save_map($map, $module = 'salesforce_genmap') {
  *
  * @param $nid
  *   The nid of the object of whose map we want to load.
+ * @param $module
+ *   Handler module for the mapping object
  *
  * @return
  *   The entity object you requested
@@ -243,6 +257,8 @@ function salesforce_genmap_load_map($nid, $module = 'salesforce_genmap') {
  *
  * @param $nid
  *   The nid of the object of whose map we're deleting.
+ * @param $module
+ *   Handler module for the mapping object
  *
  * @return
  *   FALSE if the delete could be performed
@@ -256,6 +272,7 @@ function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
 
 /**
  * Helper function.
+ * Return a list of handler modules, or information on a specific one.
  */
 function salesforce_genmap_info($module = NULL) {
   static $modules;
@@ -271,10 +288,11 @@ function salesforce_genmap_info($module = NULL) {
 }
 
 /**
- * DB function, return map id given node and module id.
+ * DB function.
+ * Return map id given node and module id.
  */
-// TODO: Find out if entity will handle two value primary keys, if so, use that instead.
 function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'salesforce_genmap') {
+  // TODO: Find out if entity will handle two value primary keys, if so, use that instead.
   return db_query('SELECT mid FROM {salesforce_genmap_map} WHERE nid = :nid AND map_handler = :map_handler',
     array(':nid' => $nid, ':map_handler' => $map_handler))->fetchField();
 }

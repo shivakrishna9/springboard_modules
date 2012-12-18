@@ -6,6 +6,11 @@
  */
 
 /**
+ * @name core_drupal_hooks
+ * @{
+ */
+ 
+/**
  * Implements hook_permission().
  */
 function salesforce_donation_permission() {
@@ -20,6 +25,15 @@ function salesforce_donation_permission() {
     ),
   );
 }
+
+/**
+ * @} core_drupal_hooks
+ */
+
+/**
+ * @name salesforce_genmap_hooks
+ * @{
+ */
 
 /**
  * Implements hook_salesforce_genmap_info().
@@ -42,63 +56,6 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
     $items['salesforce_webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
   }
 }
-
-/**
- * Access callback to reach the mapping page
- */
-function salesforce_donation_map_page_access($node) {
-  if ($node !== FALSE
-    && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to donation')
-    ) {
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/**
- * Access callback to reach the mapping page for salesforce webforms, to avoid complicated UI.
- * Only let trained users use these two systems together.
- */
-function salesforce_donation_webform_map_page_access($node) {
-  if ($node !== FALSE // %webform_menu returns FALSE if not valid
-    && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to webform')
-    && user_access('map salesforce to webform on donation')
-    ) {
-    return TRUE;
-   }
-  return FALSE;
-}
-
-/**
- * Implements hook_fundraiser_donation_success().
- */
-function salesforce_donation_fundraiser_donation_success($donation) {
-  // Reload the donation to get everything we need from submission table then call.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
-}
-
-/**
- * Implements hook_fundraiser_donation_update().
- *
-function salesforce_donation_fundraiser_donation_update($donation) {
-  // Reload the donation to get everything we need.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
-}
-//*/
-
-/**
- * Implements hook_fundraiser_donation_delete().
- *
-function salesforce_donation_fundraiser_donation_delete($donation) {
-  // Reload the donation to get everything we need.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
-}
-//*/
 
 /**
  * Implements hook_salesforce_genmap_map_fields().
@@ -273,3 +230,64 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // And return the fields for the map to generate the form.
   return $fields;
 }
+
+/**
+ * @} salesforce_genmap_hooks
+ */
+
+/**
+ * Access callback to reach the mapping page
+ */
+function salesforce_donation_map_page_access($node) {
+  if ($node !== FALSE
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to donation')
+    ) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Access callback to reach the mapping page for salesforce webforms, to avoid complicated UI.
+ * Only let trained users use these two systems together.
+ */
+function salesforce_donation_webform_map_page_access($node) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to webform')
+    && user_access('map salesforce to webform on donation')
+    ) {
+    return TRUE;
+   }
+  return FALSE;
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function salesforce_donation_fundraiser_donation_success($donation) {
+  // Reload the donation to get everything we need from submission table then call.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+}
+
+/**
+ * Implements hook_fundraiser_donation_update().
+ *
+function salesforce_donation_fundraiser_donation_update($donation) {
+  // Reload the donation to get everything we need.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
+}
+//*/
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ *
+function salesforce_donation_fundraiser_donation_delete($donation) {
+  // Reload the donation to get everything we need.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
+}
+//*/
