@@ -28,9 +28,9 @@ function salesforce_webform_permission() {
  */
 
 /**
- * Implements hook_salesforce_generic_info().
+ * Implements hook_salesforce_genmap_info().
  */
-function salesforce_webform_salesforce_generic_info() {
+function salesforce_webform_salesforce_genmap_info() {
   $items['salesforce_webform'] = array(
     'type' => 'webform',
     'label' => 'Webform',
@@ -58,17 +58,17 @@ function salesforce_webform_map_page_access($node) {
  * Implementations of hook_webform_submission_ACTION().
  */
 function salesforce_webform_webform_submission_insert($node, $submission) {
-  salesforce_generic_send_object_to_queue('salesforce_webform', 'insert', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'insert', $node, $submission->sid, $submission);
 }
 function salesforce_webform_webform_submission_update($node, $submission) {
-  salesforce_generic_send_object_to_queue('salesforce_webform', 'update', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'update', $node, $submission->sid, $submission);
 }
 function salesforce_webform_webform_submission_delete($node, $submission) {
-  salesforce_generic_send_object_to_queue('salesforce_webform', 'delete', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('salesforce_webform', 'delete', $node, $submission->sid, $submission);
 }
 
 /**
- * Implements hook_salesforce_generic_map_fields().
+ * Implements hook_salesforce_genmap_map_fields().
  *
  * @param stdClass $submission
  *   A submission object
@@ -77,7 +77,7 @@ function salesforce_webform_webform_submission_delete($node, $submission) {
  * @return $fields
  *   A set of fields mapped to value.
  */
-function salesforce_webform_salesforce_generic_map_fields(stdClass $submission, Entity $map, $node) {
+function salesforce_webform_salesforce_genmap_map_fields(stdClass $submission, Entity $map, $node) {
   $fields = array();
   // Salesforce webform map
   foreach ($submission->data as $cid => $values) {
@@ -113,14 +113,14 @@ function salesforce_webform_salesforce_generic_map_fields(stdClass $submission, 
 }
 
 /**
- * Implements hook_salesforce_generic_map_field_info().
+ * Implements hook_salesforce_genmap_map_field_info().
  *
  * @param stdClass $node
  *   Provide a node object
  * @return $fields
  *   A set of fields to be used in mapping form.
  */
-function salesforce_webform_salesforce_generic_map_field_info($node) {
+function salesforce_webform_salesforce_genmap_map_field_info($node) {
   // Build an array of fields to map against.
   // Nested by category. If the category allows for dedupes, note that.
   $fields = array();

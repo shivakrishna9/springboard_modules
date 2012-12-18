@@ -8,27 +8,27 @@
 /**
  * Implementation of hook_install().
  */
-function salesforce_generic_install() {
+function salesforce_genmap_install() {
   if (module_exists('salesforce_queue')) {
-    variable_set('salesforce_generic_queue_system', 'salesforce_queue');
+    variable_set('salesforce_genmap_queue_system', 'salesforce_queue');
   }
   else {
-    variable_set('salesforce_generic_queue_system', 'instant');
+    variable_set('salesforce_genmap_queue_system', 'instant');
   }
 }
 
 /**
  * Implementation of hook_uninstall().
  */
-function salesforce_generic_uninstall() {
-  variable_del('salesforce_generic_queue_system');
+function salesforce_genmap_uninstall() {
+  variable_del('salesforce_genmap_queue_system');
 }
 
 /**
  * Implements hook_schema().
  */
-function salesforce_generic_schema() {
-  $schema['salesforce_generic_map'] = array(
+function salesforce_genmap_schema() {
+  $schema['salesforce_genmap_map'] = array(
     'description' => 'Object to Salesforce mappings',
     'fields' => array(
       'mid' => array(
@@ -47,7 +47,7 @@ function salesforce_generic_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => TRUE,
-        'default' => 'salesforce_generic',
+        'default' => 'salesforce_genmap',
       ),
       'salesforce_object_type' => array(
         'description' => 'The Salesforce object type for this mapping.',

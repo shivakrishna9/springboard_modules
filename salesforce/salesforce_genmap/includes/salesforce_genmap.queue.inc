@@ -8,7 +8,7 @@
 /**
  * Page callback to render the admin page
  */
-function salesforce_generic_admin_page() {
+function salesforce_genmap_admin_page() {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -18,7 +18,7 @@ function salesforce_generic_admin_page() {
       '#prefix' => '<div class="salesforce-generic-admin-helptext">',
       '#suffix' => '</div>',
     ),
-    'salesforce_generic_admin_form' => drupal_get_form('salesforce_generic_admin_form'),
+    'salesforce_genmap_admin_form' => drupal_get_form('salesforce_genmap_admin_form'),
   );
   return $build;
 }
@@ -26,7 +26,7 @@ function salesforce_generic_admin_page() {
 /**
  * Configuration form for handling queues.
  */
-function salesforce_generic_admin_form($form, &$form_state) {
+function salesforce_genmap_admin_form($form, &$form_state) {
   $form = array();
   // Queue system options
   $queue_options = array(
@@ -39,12 +39,12 @@ function salesforce_generic_admin_form($form, &$form_state) {
     $queue_options['salesforce_queue'] = t('Salesforce Queue');
   }
   // Default queue
-  $queue_system = variable_get('salesforce_generic_queue_system', '');
+  $queue_system = variable_get('salesforce_genmap_queue_system', '');
   if (empty($queue_system)) {
     $queue_system = $salesforce_queue_exists ? 'salesforce_queue' : 'instant';
   }
   // Queue system form
-  $form['salesforce_generic_queue_system'] = array(
+  $form['salesforce_genmap_queue_system'] = array(
     '#id' => 'salesforce-map-queue-system',
     '#title' => t('Queue System'),
     '#description' => t(''),
@@ -62,10 +62,10 @@ function salesforce_generic_admin_form($form, &$form_state) {
 /**
  * Submit callback for the configuration form.
  */
-function salesforce_generic_admin_form_submit($form, &$form_state) {
-  $former_queue_system = variable_get('salesforce_generic_queue_system', '');
-  $queue_system = $form_state['input']['salesforce_generic_queue_system'];
-  variable_set('salesforce_generic_queue_system', $queue_system);
+function salesforce_genmap_admin_form_submit($form, &$form_state) {
+  $former_queue_system = variable_get('salesforce_genmap_queue_system', '');
+  $queue_system = $form_state['input']['salesforce_genmap_queue_system'];
+  variable_set('salesforce_genmap_queue_system', $queue_system);
   // @TODO: Decommission old queue.
   if (!empty($former_queue_system)) {
     // Switch existing queue data to the new queue and delete old queue.
@@ -80,7 +80,7 @@ function salesforce_generic_admin_form_submit($form, &$form_state) {
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_generic_queue($module, $type, $oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+function salesforce_genmap_queue($module, $type, $oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
 // TODO: Hook?
 
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
@@ -92,7 +92,7 @@ function salesforce_generic_queue($module, $type, $oid, $nid, stdClass $sObject,
   }
 
   // Send to queue based on which queue system we're using
-  $queue_system = variable_get('salesforce_generic_queue_system', '');
+  $queue_system = variable_get('salesforce_genmap_queue_system', '');
   switch ($queue_system) {
 
     case 'instant':
@@ -101,8 +101,8 @@ function salesforce_generic_queue($module, $type, $oid, $nid, stdClass $sObject,
       return FALSE;
 
     case 'drupal_queue':
-      $queue = DrupalQueue::get('salesforce_generic');
-      $queue->createQueue('salesforce_generic'); // It doesn't hurt to make sure
+      $queue = DrupalQueue::get('salesforce_genmap');
+      $queue->createQueue('salesforce_genmap'); // It doesn't hurt to make sure
       $data = array(
         'drupal_id' => $oid,
         'module' => $module,
@@ -132,15 +132,15 @@ function salesforce_generic_queue($module, $type, $oid, $nid, stdClass $sObject,
 /**
  * Handles the actual process of sending the request to dequeue all related items
  */
-function salesforce_generic_dequeue_all($module, $type, $nid) {
+function salesforce_genmap_dequeue_all($module, $type, $nid) {
 // TODO: Hook?
 
-  $queue_system = variable_get('salesforce_generic_queue_system', '');
+  $queue_system = variable_get('salesforce_genmap_queue_system', '');
   switch ($queue_system) {
     case 'drupal_queue':
       $query = db_select('queue', 'q')
         ->fields('q')
-        ->condition('name', 'salesforce_generic');
+        ->condition('name', 'salesforce_genmap');
       $result = $query->execute();
       $delete = array();
       foreach ($result as $record) {

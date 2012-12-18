@@ -8,7 +8,7 @@
 /**
  * Page callback to render the mapping page
  */
-function salesforce_generic_map($node) {
+function salesforce_genmap_map($node) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -23,7 +23,7 @@ function salesforce_generic_map($node) {
 /**
  * Page callback to render the mapping page
  */
-function salesforce_generic_map_page($node, $module) {
+function salesforce_genmap_map_page($node, $module) {
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -33,7 +33,7 @@ function salesforce_generic_map_page($node, $module) {
       '#prefix' => '<div class="salesforce-map-helptext">',
       '#suffix' => '</div>',
     ),
-    'salesforce_generic_map_form' => drupal_get_form('salesforce_generic_map_form', $node, $module),
+    'salesforce_genmap_map_form' => drupal_get_form('salesforce_genmap_map_form', $node, $module),
   );
   return $build;
 }
@@ -41,7 +41,7 @@ function salesforce_generic_map_page($node, $module) {
 /**
  * Form to do the actual mapping configuration processes
  */
-function salesforce_generic_map_form($form, &$form_state, $node, $module) {
+function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
   // Fail if we can't connect to Salesforce
   $sfapi = salesforce_get_api();
   if (!$sfapi->isAuthorized()) {
@@ -81,7 +81,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
     '#options' => $sf_objects,
     '#required' => TRUE,
     '#ajax' => array(
-      'callback' => 'salesforce_generic_map_form_ajax_sf_object',
+      'callback' => 'salesforce_genmap_map_form_ajax_sf_object',
       'wrapper' => 'salesforce-generic-map-ajax-sf-object',
       'method' => 'replace',
       'effect' => 'fade',
@@ -116,7 +116,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
   );
 
   // Get the fields to map for this module.
-  $fields = module_invoke($module, 'salesforce_generic_map_field_info', $node);
+  $fields = module_invoke($module, 'salesforce_genmap_map_field_info', $node);
   foreach ($fields as $category => $category_info) {
     $map_row_class_name = 'salesforce-' . $category_info['#type'] . '-map-field';
     // Add the map from Drupal object fields to Salesforce fields
@@ -146,7 +146,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
       );
       if ($category_info['#dedupe'] == TRUE) {
         $row['sf_field']['#ajax'] = array(
-          'callback' => 'salesforce_generic_map_form_ajax_sf_dedupe',
+          'callback' => 'salesforce_genmap_map_form_ajax_sf_dedupe',
           'wrapper' => 'salesforce-ajax-dedupe-' . $field_key,
           'method' => 'replace',
           'effect' => 'fade',
@@ -231,7 +231,7 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
     '#type' => 'submit',
     '#value' => 'Save',
   );
-  $map = salesforce_generic_load_map($node->nid, $module);
+  $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map)) {
     $form['cancel'] = array(
       '#type' => 'submit',
@@ -249,22 +249,22 @@ function salesforce_generic_map_form($form, &$form_state, $node, $module) {
 /**
  * AJAX callback to populate the form for the chosen Salesforce object
  */
-function salesforce_generic_map_form_ajax_sf_object($form) {
+function salesforce_genmap_map_form_ajax_sf_object($form) {
   return $form;
 }
 
 /**
  * AJAX callback to set a field row's dedupe cell
  */
-function salesforce_generic_map_form_ajax_sf_dedupe($form, &$form_state) {
+function salesforce_genmap_map_form_ajax_sf_dedupe($form, &$form_state) {
   $form_key = $form_state['triggering_element']['#ajax']['#form_key'];
-  return $form['field_map']['salesforce_generic_map'][$form_key]['dedupe'];
+  return $form['field_map']['salesforce_genmap_map'][$form_key]['dedupe'];
 }
 
 /**
  * Validate the mapping form
  */
-function salesforce_generic_map_form_validate($form, &$form_state) {
+function salesforce_genmap_map_form_validate($form, &$form_state) {
   if (!isset($form_state['input']['field_map'])) {
     // There is nothing to check
     return;
@@ -301,12 +301,12 @@ function salesforce_generic_map_form_validate($form, &$form_state) {
 /**
  * Submit callback for the mapping form
  */
-function salesforce_generic_map_form_submit($form, &$form_state) {
+function salesforce_genmap_map_form_submit($form, &$form_state) {
   $node = $form_state['build_info']['args'][0];
 
   // Delete the map
   if ($form_state['clicked_button']['#value'] == 'Unmap') {
-    $result = salesforce_generic_delete_map($node->nid);
+    $result = salesforce_genmap_delete_map($node->nid);
     if ($result === FALSE) {
       drupal_set_message(t('There was an error deleting the map.'), 'error');
     }
@@ -326,7 +326,7 @@ function salesforce_generic_map_form_submit($form, &$form_state) {
   else if ($form_state['clicked_button']['#value'] == 'Save') {
     $map = _sfw_convert_input($form_state['input']);
     $map['nid'] = $node->nid;
-    $result = salesforce_generic_save_map($map, $form['#module']);
+    $result = salesforce_genmap_save_map($map, $form['#module']);
     if ($result === FALSE) {
       drupal_set_message(t('There was an error saving the map.'), 'error');
     }
@@ -341,7 +341,7 @@ function salesforce_generic_map_form_submit($form, &$form_state) {
 }
 
 /**
- * @} salesforce_generic_map_form
+ * @} salesforce_genmap_map_form
  */
 
 
@@ -363,7 +363,7 @@ function salesforce_generic_map_form_submit($form, &$form_state) {
  */
 function _sfw_default_value($form, $form_state, $field, $group = NULL, $drupal_field = NULL) {
   $node = $form_state['build_info']['args'][0];
-  $node_map = salesforce_generic_load_map($node->nid, $form['#module']); //TODO add module info
+  $node_map = salesforce_genmap_load_map($node->nid, $form['#module']); //TODO add module info
   if (empty($form_state['input']) && empty($node_map)) {
     return '';
   }
