@@ -45,7 +45,7 @@ function salesforce_genmap_admin_form($form, &$form_state) {
   }
   // Queue system form
   $form['salesforce_genmap_queue_system'] = array(
-    '#id' => 'salesforce-map-queue-system',
+    '#id' => 'salesforce-genmap-map-queue-system',
     '#title' => t('Queue System'),
     '#description' => t(''),
     '#type' => 'radios',

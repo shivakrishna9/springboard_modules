@@ -37,17 +37,18 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
   }
 
   /**
-   * Test the salesforce_webform_map entity
+   * Test the salesforce_genmap_map entity
    */
   public function testEntity() {
     // Map entity type exists
-    $entity_info = entity_get_info('salesforce_webform_map');
+    $entity_info = entity_get_info('salesforce_genmap_map');
     $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
-    $this->assertEqual('Salesforce Webform Map', $entity_info['label'], 'Entity has expected label.');
+    $this->assertEqual('Salesforce Map', $entity_info['label'], 'Entity has expected label.');
 
-    // Create a salesforce_webform_map entity object
+    // Create a salesforce_genmap_map entity object
     $test_map = array(
       'nid' => 3,
+      'map_handler' => 'salesforce_webform',
       'salesforce_object_type' => 'bar',
       'salesforce_record_type' => 'baz',
       'field_map' => array(
@@ -61,17 +62,18 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
       'locked' => FALSE,
       'status' => TRUE,
     );
-    $test_map = entity_create('salesforce_webform_map', $test_map);
-    $this->assertEqual('salesforce_webform_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
+    $test_map = entity_create('salesforce_genmap_map', $test_map);
+    $this->assertEqual('salesforce_genmap_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
 
     // Save the entity to the database
-    entity_save('salesforce_webform_map', $test_map);
-    $test_map_db = entity_load('salesforce_webform_map', array(3));
-    $this->assertEqual('bar', $test_map_db[3]->salesforce_object_type, 'Newly created entity has the correct object type.');
+    entity_save('salesforce_genmap_map', $test_map);
+    $new_map_id = _salesforce_genmap_get_map_id_by_nid_module(3, 'salesforce_webform');
+    $test_map_db = entity_load('salesforce_genmap_map', array($new_map_id));
+    $this->assertEqual('bar', $test_map_db[$new_map_id]->salesforce_object_type, 'Newly created entity has the correct object type.');
 
     // Delete the entity from the database
-    entity_delete('salesforce_webform_map', 3);
-    $all_entities = entity_load('salesforce_webform_map');
+    entity_delete('salesforce_genmap_map', $new_map_id);
+    $all_entities = entity_load('salesforce_genmap_map');
     $this->assertTrue(empty($all_entities));
   }
 
@@ -79,19 +81,20 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
    * Tests for the mapping form
    */
   public function testMappingForm() {
+    // No longer relevant for the generic case.
     // Form throws message if the webform has no components
-    $webform_no_components = $this->swCreateWebform(FALSE);
-    $this->drupalGet('node/'. $webform_no_components->nid .'/webform/salesforce-map');
-    $this->assertText('You must first add components to your webform', 'Message appears when webform has no components.');
+    //$webform_no_components = $this->swCreateWebform(FALSE);
+    //$this->drupalGet('node/'. $webform_no_components->nid .'/salesforce/salesforce_webform');
+    //$this->assertText('You must first add components to your webform', 'Message appears when webform has no components.');
 
     // Form throws message if it cannot connect to Salesforce
     $webform = $this->swCreateWebform();
-    $this->drupalGet('node/'. $webform->nid .'/webform/salesforce-map');
+    $this->drupalGet('node/'. $webform->nid .'/salesforce/salesforce_webform');
     $this->assertText('Cannot connect to Salesforce', 'Message appears when Salesforce is not connected.');
 
     // Form displays only the object type select after connecting to Salesforce
     $this->swSalesforceConnect();
-    $this->drupalGet('node/'. $webform->nid .'/webform/salesforce-map');
+    $this->drupalGet('node/'. $webform->nid .'/salesforce/salesforce_webform');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', '', 'Salesforce object type field exists.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', '', 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', '', 'Node id mapping is hidden as expected.');

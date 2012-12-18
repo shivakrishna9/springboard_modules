@@ -151,6 +151,7 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
           'method' => 'replace',
           'effect' => 'fade',
           '#form_key' => $field_key,
+          '#category' => $category,
         );
         $row['dedupe'] = array(
           '#id' => 'salesforce-dedupe-' . $field_key,
@@ -165,10 +166,10 @@ function salesforce_genmap_map_form($form, &$form_state, $node, $module) {
           $dedupe_field['#type'] = 'radio';
           $dedupe_field['#return_value'] = $sf_field;
           $dedupe_field['#attributes'] = array('name' => 'salesforce_dedupe_field');
-          $dedupe_field['#value'] = _sfw_default_value($form, $form_state, 'dedupe', $category, $form_key);
+          $dedupe_field['#value'] = _sfw_default_value($form, $form_state, 'dedupe', $category, $field_key);
         }
       } 
-      $form['field_map'][$category]['#row_storage'][$form_key] = $row;
+      $form['field_map'][$category]['#row_storage'][$field_key] = $row;
     } // End foreach field.
     // Add additional dedupe features if dedupe is true.
     if ($category_info['#dedupe'] == TRUE) {
@@ -258,7 +259,8 @@ function salesforce_genmap_map_form_ajax_sf_object($form) {
  */
 function salesforce_genmap_map_form_ajax_sf_dedupe($form, &$form_state) {
   $form_key = $form_state['triggering_element']['#ajax']['#form_key'];
-  return $form['field_map']['salesforce_genmap_map'][$form_key]['dedupe'];
+  $category = $form_state['triggering_element']['#ajax']['#category'];
+  return $form['field_map'][$category][$form_key]['dedupe'];
 }
 
 /**

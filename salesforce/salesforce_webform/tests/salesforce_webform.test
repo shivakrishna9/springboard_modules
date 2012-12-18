@@ -35,6 +35,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'salesforce_queue',
       'salesforce_soap',
       'webform',
+      'salesforce_genmap',
       'salesforce_webform'
     );
 
@@ -128,7 +129,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
    */
   public function swMapWebform($nid, $dedupe = FALSE) {
     $this->swSalesforceConnect();
-    $this->drupalGet('node/'. $nid .'/webform/salesforce-map');
+    $this->drupalGet('node/'. $nid .'/salesforce/salesforce_webform');
 
     // AJAX select the object type so the mapping fields show up
     $edit = array(

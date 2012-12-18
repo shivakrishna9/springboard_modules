@@ -274,7 +274,7 @@ function salesforce_genmap_info($module = NULL) {
  * DB function, return map id given node and module id.
  */
 // TODO: Find out if entity will handle two value primary keys, if so, use that instead.
-function _salesforce_genmap_get_map_id_by_nid_module($nid, $module = 'salesforce_genmap') {
-  return db_query('SELECT mid FROM {salesforce_genmap_map} WHERE nid = :nid AND $module = :module',
-    array(':nid' => $nid, ':module' => $module))->fetchColumn();
+function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'salesforce_genmap') {
+  return db_query('SELECT mid FROM {salesforce_genmap_map} WHERE nid = :nid AND map_handler = :map_handler',
+    array(':nid' => $nid, ':map_handler' => $map_handler))->fetchField();
 }
