@@ -1,0 +1,157 @@
+<?php
+include_once(dirname(__FILE__) . '/salesforce_queue.test');
+
+/**
+ * @file
+ * Simple tests for includes/salesforce_queue.queue.inc
+ */
+
+/**
+ * Tests basic set up for queueing data for Salesforce and sending it
+ */
+class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'SalesforceQueue',
+      'description' => 'Ensure that the SalesforceQueue class functions properly.',
+      'group' => 'Salesforce Queue',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp();
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test the SalesforceQueue class
+   */
+  public function testSalesforceQueue() {
+    module_load_include('inc', 'system', 'system.queue');
+
+    // get() && __construct() && createQueue()
+    // You can work against the entire queue at once ignoring if items are
+    // slated for a certain task or not, or you can grab items specified for
+    // something specific, like retries, permenant failures, etc.  It is
+    // completely arbitrary, so for the case of testing I'm using "foo"
+    $whole_queue = SalesforceQueue::Get();
+    $foo_queue = SalesforceQueue::Get('foo');
+
+    // createItem()
+    // The "whole" queue does not have a subset defined, so it will actually put
+    // all of the new items in a "new" queue by default.  All of the items in
+    // the "foo" queue will get placed in the "foo" queue by default.
+    $this->createQueueItems($whole_queue);
+    $this->createQueueItems($foo_queue);
+
+    // Lets grab the "new" queue so we can test against it, too
+    $new_queue = SalesforceQueue::Get('new');
+
+    // numberOfItems()
+    // Note that the "whole" queue is going to count both the items that it
+    // added as well as the items that the "foo" queue added
+    $this->assertEqual(10, $whole_queue->numberOfItems(), 'Counted 10 records for the entire queue.');
+    $this->assertEqual(5, $new_queue->numberOfItems(), 'Counted 5 records for the "new" queue.');
+    $this->assertEqual(5, $foo_queue->numberOfItems(), 'Counted 5 records for the "foo" queue.');
+
+    // claimItem()
+    // Each will claim an item from its own queue
+    $new_queue_item = $new_queue->claimItem();
+    $this->assertTrue(is_object($new_queue_item), 'Retreived an item from the new queue');
+    $this->assertEqual('new', $new_queue_item->queue, 'New queue retreived an item from the new queue.');
+    $this->assertTrue(isset($new_queue_item->sobject->type), 'The sObject has been defined in the new queue item.');
+    $foo_queue_item = $foo_queue->claimItem();
+    $this->assertTrue(is_object($foo_queue_item), 'Retreived an item from the foo queue');
+    $this->assertEqual('foo', $foo_queue_item->queue, 'Foo queue retreived an item from the foo queue.');
+    $this->assertTrue(isset($foo_queue_item->sobject->type), 'The sObject has been defined in the foo queue item.');
+
+    // The whole queue will select the oldest queue item, regardless of which
+    // queue it came from.  Currently, the oldest is from the new queue
+    $whole_queue_item = $whole_queue->claimItem();
+    $this->assertTrue(is_object($whole_queue_item), 'Retreived an item from the queue');
+    $this->assertEqual('new', $whole_queue_item->queue, 'Whole queue retreived an item from the new queue as expected.');
+    $this->assertTrue(isset($whole_queue_item->sobject->type), 'The sObject has been defined in the whole queue item.');
+
+    // The new_queue and whole_queue should not have picked up the same item
+    $this->assertNotEqual($whole_queue_item->item_id, $new_queue_item->item_id, 'New queue and whole queue processes did not lease the same item.');
+
+    // releaseItem() && deleteItem()
+    $items = array(
+      array($whole_queue, $whole_queue_item),
+      array($new_queue, $new_queue_item),
+      array($foo_queue, $foo_queue_item),
+    );
+    foreach ($items as $item) {
+      // Release
+      $this->assertTrue($item[0]->releaseItem($item[1]), 'Release item query returned success.');
+      $record = db_query("SELECT * FROM {salesforce_queue} q WHERE item_id = :item_id", array(':item_id' => $item[1]->item_id))->fetchObject();
+      $this->assertEqual(0, $record->expire, 'Released queue item has had it\'s expire time set back to 0.');
+
+      // Delete
+      $this->assertTrue($item[0]->deleteItem($item[1]), 'Delete item query returned success.');
+      $record = db_query("SELECT * FROM {salesforce_queue} q WHERE item_id = :item_id", array(':item_id' => $item[1]->item_id))->fetchObject();
+      $this->assertFalse($record, 'The deleted queue item is nowhere to be found in the queue.');
+    }
+
+    // deleteQueue
+    // When you define a specific queue, it deletes all items in that queue only
+    $foo_queue->deleteQueue();
+    $result = $foo_queue->numberOfItems();
+    $this->assertEqual(0, $result, 'Counted '. $result .' items in the Foo queue when we had deleted the Foo queue.');
+    $result = $whole_queue->numberOfItems();
+    $this->assertEqual(3, $result, 'Counted '. $result .' items in the whole queue when we had only deleted the Foo queue.');
+    $result = $new_queue->numberOfItems();
+    $this->assertEqual(3, $result, 'Counted '. $result .' items in the new queue when we had only deleted the Foo queue.');
+
+    // If you don't define a specific queue, it purges the whole queue
+    // Create some more foo items to ensure that cross-queues get deleted
+    $this->createQueueItems($foo_queue);
+    $whole_queue->deleteQueue();
+    $result = $whole_queue->numberOfItems();
+    $this->assertEqual(0, $result, 'Counted '. $result .' items in the whole queue when we had purged the queue.');
+
+  }
+
+  public function createQueueItems(SalesforceQueue $queue, $num = 5) {
+    $i = 0;
+    while ($i < $num) {
+      $i++;
+      $sObject = new stdClass;
+      $sObject->type = $this->randomName();
+      $sObject->record = $this->randomName();
+      $sObject->fields = array(
+        $this->randomName() => $this->randomName(),
+        $this->randomName() => $this->randomName(),
+        $this->randomName() => $this->randomName(),
+      );
+      $fields = array_keys($sObject->fields);
+      $fields_rand = array_rand($fields);
+      $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
+      $ops_rand = array_rand($ops);
+      $data = array(
+        'drupal_id' => rand(1, $num*100),
+        'module' => $this->randomName(),
+        'delta' => $this->randomName() .':'. rand(1, $num*100),
+        'salesforce_type' => $sObject->type,
+        'operation' => $ops[$ops_rand],
+        'dedupe_field' => $fields[$fields_rand],
+        'sobject' => $sObject,
+      );
+      $result = $queue->createItem($data);
+      $this->assertTrue($result, 'Created a queue item.');
+    }
+  }
+}

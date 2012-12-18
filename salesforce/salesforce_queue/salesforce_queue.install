@@ -5,22 +5,6 @@
  * Install hooks for the Salesforce Queue module.
  */
 
-
-/**
- * Implements hook_install().
- */
-function salesforce_queue_install() {
-  // Define our custom queue
-  //variable_set('queue_class_salesforce', 'SalesforceQueue');
-}
-
-/**
- * Implements hook_uninstall().
- */
-function salesforce_queue_uninstall() {
-  //variable_del('queue_class_salesforce');
-}
-
 /**
  * Implements hook_schema().
  */
@@ -28,7 +12,7 @@ function salesforce_queue_schema() {
   $schema['salesforce_queue'] = array(
     'description' => 'Salesforce queue',
     'fields' => array(
-      'id' => array(
+      'item_id' => array(
         'description' => 'Unique id of the queue item.',
         'type' => 'serial',
         'unsigned' => TRUE,
@@ -82,8 +66,27 @@ function salesforce_queue_schema() {
         'size' => 'big',
         'not null' => FALSE,
       ),
+      'queue' => array(
+        'description' => 'The name of the processing queue this item is within.',
+        'type' => 'varchar',
+        'length' => '40',
+        'not null' => FALSE,
+        'default' => 'new',
+      ),
+      'count' => array(
+        'description' => 'Number of times this item as failed attempts to be processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'created' => array(
         'description' => 'Timestamp of when the item was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'expire' => array(
+        'description' => 'Timestamp of when a processor\'s claim to the item will expire.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -95,7 +98,7 @@ function salesforce_queue_schema() {
         'default' => 0,
       ),
     ),
-    'primary key' => array('id'),
+    'primary key' => array('item_id'),
     'indexes' => array(
       'IX_Drupal_Id' => array('drupal_id'),
     ),
