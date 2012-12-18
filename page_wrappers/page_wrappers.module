@@ -12,7 +12,7 @@ function page_wrappers_menu() {
     'access arguments' => array('administer page wrappers'),
     'file' => 'page_wrappers.admin.inc',
   );
-  
+
   return $items;
 }
 
@@ -71,12 +71,12 @@ function page_wrappers_preprocess_page(&$vars) {
   if (arg(0) == 'node' && arg(2) == 'edit') {
     return;
   }
-  
+
   //if this is a webform confirmation page add the node variable
   if (arg(0) == 'node' && arg(2) == 'done') {
     $vars['node'] = node_load(arg(1));
   }
-  
+
   // if the node type has a wrapper and has one assigned
   if (isset($vars['node']) && _page_wrappers_enabled_type($vars['node'], TRUE) && isset($vars['node']->wrapper)) {
     $template = _page_wrappers_template_filename($vars['node']->wrapper);
@@ -98,12 +98,12 @@ function page_wrappers_preprocess_page(&$vars) {
           drupal_add_css($css_file['uri']);
         }
       }
-    
+
       // if there's a js file add it
       if (isset($wrapper_node->page_wrappers_js) && count($wrapper_node->page_wrappers_js)) {
 
         $js_files = field_get_items('node', $wrapper_node, 'page_wrappers_js');
-        
+
         foreach ($js_files as $js_file) {
           drupal_add_js($js_file['uri']);
         }
@@ -181,7 +181,7 @@ function page_wrappers_form(&$node, &$form_state) {
     '#required' => TRUE,
     '#default_value' => $node->title,
   );
-  
+
   return $form;
 }
 
@@ -207,7 +207,7 @@ function page_wrappers_node_update($node) {
 
   if ($node->type == 'page_wrapper') {
     $template = _page_wrappers_create_template($node);
-    
+
     db_update('page_wrappers')
       ->fields(array(
        'nid' => $node->nid,
@@ -260,7 +260,7 @@ function page_wrappers_node_load($nodes, $types) {
   }
 
   $enabled_types = variable_get('page_wrapper_enabled_node_types', array('donation_form' => 'donation_form'));
-    
+
   // We can use $types to figure out if we need to process any of these nodes.
   $our_types = array();
   foreach ($types as $type) {
@@ -282,12 +282,12 @@ function page_wrappers_node_load($nodes, $types) {
       $nodes[$node->nid]->wrapper = NULL;
     }
   }
-  
+
   // Ensure we have nids to work with
   if (!isset($nids) || !count($nids)) {
     return;
   }
-    
+
   $result = db_query('SELECT nid, wrapper_nid FROM {node_page_wrappers} WHERE nid IN(:nids)', array(':nids' => $nids));
   foreach ($result as $record) {
     $nodes[$record->nid]->wrapper = $record->wrapper_nid;
@@ -347,7 +347,7 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
       );
     }
   }
-  
+
   // page_wrapper_node_form
   if ($form_id == 'page_wrapper_node_form') {
     // add some help the body (Template HTML) field
@@ -360,20 +360,20 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
  * Implementation of hook_file_insert().
  */
 function page_wrappers_file_insert($file) {
-    
+
   //add timestamps to files and rename js files, do not do this on clone process
   if (arg(2) != 'clone' && ($file->source == 'field_js_file_und_0' || $file->source == 'field_css_file_und_0')) {
-    
+
     $dir = drupal_dirname($file->uri);
     $filename = _page_wrappers_add_timestamp($file->filename);
-    
+
     // for .js files, strip off the .txt extension that gets added
     if ($file->source == 'field_js_file_und_0') {
       $filename = substr($filename, 0, strlen($filename) - 4);
     }
-    
+
     $destination = $dir . '/' . $filename;
-    
+
     file_move($file, $destination);
   }
 }
@@ -410,23 +410,23 @@ function _page_wrappers_enabled_type($node, $preview = FALSE) {
   elseif ($preview && $node->type == 'page_wrapper') {
     return TRUE;
   }
-  
+
   return FALSE;
 }
- 
+
 
 /**
  * Gets all configured wrappers.
  */
 function _page_wrappers_available_wrappers() {
   global $user;
- 
+
   $result = db_query("SELECT n.title, n.nid FROM {node} n WHERE type = 'page_wrapper'")->fetchAll();
   $wrappers = array(t('-- Select --'));
   foreach ($result as $data) {
     $wrappers[$data->nid] = $data->title;
   }
-  
+
   // Optionally filter available wrappers by organic groups the user is enrolled in.
   if (module_exists('og') && variable_get('page_wrappers_filter_by_og', FALSE)) {
     $wrapper_nids = array_keys($wrappers);
@@ -437,9 +437,9 @@ function _page_wrappers_available_wrappers() {
       ->condition('etid', $wrapper_nids, 'IN')
       ->execute();
     $results = $result->fetchAll();
-    $wrappers_og = array();
+    $wrappers_og = array(t('-- Select --'));
     foreach ($results as $data) {
-    
+
       // to avoid dupes we make sure the wrapper hasn't already been added to wrappers_og
       if (in_array($data->gid, $user_groups['node']) && !in_array($data->etid, array_keys($wrappers_og))) {
         $wrappers_og[$data->etid] = $wrappers[$data->etid];
@@ -447,7 +447,7 @@ function _page_wrappers_available_wrappers() {
     }
     $wrappers = $wrappers_og;
   }
-  
+
   // allow other modules to alter the array of available templates
   drupal_alter('available_page_wrappers', $wrappers);
   return $wrappers;
@@ -464,7 +464,7 @@ function _page_wrappers_available_wrappers() {
 function _page_wrappers_assign_wrapper($nid, $wrapper_nid) {
   // check if there is an existing entry at all for this node.
   $exists = db_query('SELECT nid FROM {node_page_wrappers} WHERE nid = :nid', array(':nid' => $nid))->fetchField();
-  
+
   // wrapper is being assigned
   if ($wrapper_nid) {
     if (!$exists) {
@@ -539,21 +539,21 @@ function _page_wrappers_create_template($node) {
     $full_path = $full_path . '/' . $filename;
     // open the file for writing
     $file = fopen($full_path, 'w');
-    
+
     // build up template markup
     $html_template = field_get_items('node', $node, 'page_wrappers_html_template');
 
     $body = _page_wrappers_tokens($html_template[0]['value']);
-    
+
     fputs($file, $body);
-    
+
     fclose($file);
-    
+
     return $filename;
   }
-  
+
   return FALSE;
-  
+
 }
 
 
@@ -598,18 +598,18 @@ function _page_wrappers_template_exists($template) {
 function page_wrappers_clone_node_alter(&$node, $context) {
   if ($context['method'] == 'save-edit' && $node->type == 'page_wrapper') {
     $original_node = $context['original_node'];
-      
+
     // make copies of any css and js files accordingly
     if (isset($original_node->field_css_file['und']) && isset($original_node->field_js_file['und'][0]['fid'])) {
       $node->field_js_file['und'][0]['source'] = 'field_js_file_und_0';
       $node->field_js_file['und'][0] = _page_wrappers_clone_file($node->field_js_file['und'][0]);
     }
-    
+
     if (isset($original_node->field_css_file['und']) && isset($original_node->field_css_file['und'][0]['fid'])) {
       $node->field_css_file['und'][0]['source'] = 'field_css_file_und_0';
       $node->field_css_file['und'][0] = _page_wrappers_clone_file($node->field_css_file['und'][0]);
     }
-    
+
     //need to clear caches for theme updates
     drupal_flush_all_caches();
   }
@@ -623,7 +623,7 @@ function page_wrappers_clone_node_alter(&$node, $context) {
  */
 function _page_wrappers_clone_file($file) {
   $file = (object) $file;
-  
+
   if ($copy = file_copy($file, $file->uri, FILE_EXISTS_RENAME)) {
     return (array) $copy;
   }
@@ -638,13 +638,13 @@ function _page_wrapper_preview_form() {
     '#title' => t('Donation'),
     '#weight' => 1,
   );
-  
+
   $form['donation']['amount'] = array(
     '#type' => 'radios',
     '#title' => t('Please select your tax-deductible gift amount below'),
     '#options' => array('$10', '$20', '$50', '$100'),
   );
-  
+
   $form['personal'] = array(
     '#type' => 'fieldset',
     '#title' => 'Your Information',
@@ -654,83 +654,83 @@ function _page_wrapper_preview_form() {
     '#type' => 'textfield',
     '#title' => t('First Name'),
   );
-  
+
   $form['personal']['lastname'] = array(
     '#type' => 'textfield',
     '#title' => t('Last Name'),
   );
-  
+
   $form['personal']['email'] = array(
     '#type' => 'textfield',
     '#title' => t('Email'),
   );
-  
+
   $form['billing'] = array(
     '#type' => 'fielset',
     '#title' => t('Credit Card Billing Information'),
     '#weight' => 3,
   );
-  
+
   $form['billing']['address'] = array(
     '#type' => 'textfield',
     '#title' => t('Address'),
   );
-  
+
   $form['billing']['address2'] = array(
     '#type' => 'textfield',
     '#title' => t('Address Line 2'),
   );
-  
+
   $form['billing']['city'] = array(
     '#type' => 'textfield',
     '#title' => t('City'),
   );
-  
+
   $form['billing']['country'] = array(
     '#type' => 'select',
     '#title' => t('Country'),
     '#options' => array('United States'),
   );
-  
+
   $form['billing']['state'] = array(
     '#type' => 'select',
     '#title' => t('State/Province'),
     '#options' => array('Alabama', 'Alaska'),
   );
-  
+
   $form['billing']['zip'] = array(
     '#type' => 'textfield',
     '#title' => t('ZIP/Postal Code'),
   );
-  
+
   $form['cc'] = array(
     '#type' => 'fieldset',
     '#title' => t('Credit Card Information'),
     '#weight' => 4,
   );
-  
+
   $form['cc']['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Number'),
   );
-  
+
   $form['cc']['expdate'] = array(
     '#type' => 'date',
     '#title' => t('Expiration Date'),
   );
-  
+
   $form['cc']['cvv'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Security Code'),
   );
-  
+
   $form['cc']['recurs'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Recurring Payment'),
     '#options' => array('Yes'),
     '#multiple' => TRUE,
   );
-  
+
   return $form;
 }
 
