@@ -1,21 +1,37 @@
 <?php
+include_once(dirname(__FILE__) . '/salesforce_queue.test');
+
+/**
+ * @file
+ * Unit tests
+ */
 
 /**
  * @file
  * Salesforce queue module unit tests.
  */
-class SalesforceQueueUnitTestCase extends DrupalWebTestCase {
+class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
 
   public static function getInfo() {
     return array(
       'name' => t('Salesforce queue unit tests'),
       'description' => t('Unit tests for the Salesforce queue module.'),
-      'group' => t('Salesforce'),
+      'group' => t('Salesforce Queue'),
     );
   }
 
+  /**
+   * Implementation of setUp().
+   */
   public function setUp() {
-    parent::setUp('salesforce_queue');
+    parent::setUp();
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    parent::tearDown();
   }
 
   public function testQueueInsert() {

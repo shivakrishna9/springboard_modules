@@ -86,7 +86,6 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
       'wrapper' => 'salesforce-webform-map-ajax-sf-object',
       'method' => 'replace',
       'effect' => 'fade',
-      // @TODO: Warn user that changing this value will erase their map work
     ),
   );
 
@@ -152,7 +151,7 @@ function salesforce_webform_map_form($form, &$form_state, $node) {
           'method' => 'replace',
           'effect' => 'fade',
 
-          // These are referred to in the AJAX callback
+          // This is referred to in the AJAX callback
           '#form_key' => $form_key,
         ),
       ),
@@ -382,7 +381,7 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
   if ($form_state['clicked_button']['#value'] == 'Unmap') {
     $result = salesforce_webform_delete_map($node->nid);
     if ($result === FALSE) {
-      drupal_set_message(t('The Salesforce to webform map could not be deleted.'), 'error');
+      drupal_set_message(t('There was an error deleting the map.'), 'error');
     }
     else {
       drupal_set_message(t('The Salesforce to webform map has been removed.'));
@@ -396,21 +395,22 @@ function salesforce_webform_map_form_submit($form, &$form_state) {
     return;
   }
 
-  else if (!$form_state['clicked_button']['#value'] == 'Save') {
-    drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
+  // Save the contributed values
+  else if ($form_state['clicked_button']['#value'] == 'Save') {
+    $map = _sfw_convert_input($form_state['input']);
+    $map['nid'] = $node->nid;
+    $result = salesforce_webform_save_map($map);
+    if ($result === FALSE) {
+      drupal_set_message(t('There was an error saving the map.'), 'error');
+    }
+    else {
+      drupal_set_message(t('The map was saved successfully.'));
+    }
     return;
   }
 
-  // Save the contributed values
-  $map = _sfw_convert_input($form_state['input']);
-  $map['nid'] = $node->nid;
-  $result = salesforce_webform_save_map($map);
-  if ($result === FALSE) {
-    drupal_set_message(t('There was an error saving the map.'), 'error');
-  }
-  else {
-    drupal_set_message(t('The map was saved successfully.'));
-  }
+  // No action was specified
+  drupal_set_message(t('Form was submitted unexpectedly. It has been reset to the original values.'), 'error');
 }
 
 /**

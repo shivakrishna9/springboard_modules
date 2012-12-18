@@ -120,6 +120,40 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Map a webform all at once
+   *
+   * Using swFormMapField() broke in setUp() when map stop being loaded on the
+   * node. But thats OK in the setUp() context because we don't need to test the
+   * mapping of the form.
+   */
+  public function swMapWebform($nid, $dedupe = FALSE) {
+    $this->swSalesforceConnect();
+    $this->drupalGet('node/'. $nid .'/webform/salesforce-map');
+
+    // AJAX select the object type so the mapping fields show up
+    $edit = array(
+      'salesforce_object_info[salesforce_object_type]' => 'Contact',
+    );
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
+
+    // Map the fields and save
+    $edit += array(
+      'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
+      'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
+      'field_map[salesforce_webform_map][email][sf_field]' => 'Email',
+    );
+    $this->drupalPost(NULL, $edit, 'Save');
+
+    if ($dedupe) {
+      // Dedupe field only shows up after the fields have been mapped and posted
+      $edit += array(
+        'salesforce_dedupe_field' => 'Email',
+      );
+      $this->drupalPost(NULL, $edit, 'Save');
+    }
+  }
+
+  /**
    * Map a webform component to a Salesforce field
    *
    * You must first $this->drupalGet() the mapping form

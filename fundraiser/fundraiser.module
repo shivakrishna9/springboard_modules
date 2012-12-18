@@ -1831,6 +1831,26 @@ function _fundraiser_get_field_keys($field_info = NULL, $keys = array()) {
 }
 
 /**
+ * Helper function, given the array from field_info - get the listed fields.
+ * WARNING: Recursion is here to walk the field info array to gather fields.
+ */
+function _fundraiser_get_field_fields($field_info = NULL, $fields = array()) {
+  if ($field_info == NULL) {
+    $field_info = fundraiser_field_info();
+  }
+  $children = element_children($field_info);
+  foreach ($children as $child) {
+    $fields[$child] = $field_info[$child];
+  }
+  foreach ($children as $child) {
+    if ($field_info[$child] != NULL && !empty($field_info[$child])) {
+      $fields = _fundraiser_get_field_fields($field_info[$child], $fields);
+    }
+  }
+  return $fields;
+}
+
+/**
  * Helper function, collects gateway information by calling hook_fundraiser_gateway_info.
  */
 function _fundraiser_gateway_info($id = NULL) {

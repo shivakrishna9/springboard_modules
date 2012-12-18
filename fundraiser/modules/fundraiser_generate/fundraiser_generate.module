@@ -164,7 +164,7 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
             'address' => devel_generate_word(mt_rand(10, 20)), // From devel_generate.module.
             'address_line_2' => '',
             'city' => devel_generate_word(mt_rand(7, 15)), // From devel_generate.module.
-            'country' => '840',
+            'country' => 'US',
             'state' => _fundraiser_generate_random_state(),
             'zip' => mt_rand(11111, 55555),
           ),
@@ -197,7 +197,7 @@ function fundraiser_generate_donations($nid, $count = 1, $type = 'single', $ms =
 function _fundraiser_generate_get_forms() {
   $forms = array();
   $result = db_query("SELECT nid, title FROM {node} WHERE type = :type ORDER BY title", array(':type' => 'donation_form'));
-  while ($data = db_fetch_object($result)) {
+  while ($data = $result->fetchObject()) {
     $forms[$data->nid] = $data->title;
   }
   return $forms;
@@ -210,7 +210,8 @@ function _fundraiser_generate_random_state() {
   static $zones;
   if (count($zones == 0)) {
     // Load up available zones from fundraiser hooks.
-    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840)); //TODO this is no longer a valid hook.
+    //TODO this is no longer a valid hook.
+    $zones = array_values(module_invoke_all('fundraiser_get_country_zones', 840));
   }
   // Get length of array.
   $length = count($zones) - 1;

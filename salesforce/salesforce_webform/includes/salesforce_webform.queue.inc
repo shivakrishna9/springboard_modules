@@ -77,6 +77,11 @@ function salesforce_webform_admin_form_submit($form, &$form_state) {
   }
 
   drupal_set_message(t('Your settings have been saved.'));
+
+  // PSA
+  if ($queue_system == 'instant') {
+    drupal_set_message(t('Just so you know, instantaneously sending submission data to Salesforce does not actually work.'), 'warning');
+  }
 }
 
 /**
@@ -109,7 +114,7 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
         'delta' => 'webform:'. $nid,
         'salesforce_type' => $sObject->type,
         'operation' => $operation,
-        'sObject' => $sObject,
+        'sobject' => $sObject,
         'dedupe_field' => $dedupe_field,
       );
       return $queue->createItem($data);
@@ -133,32 +138,36 @@ function salesforce_webform_queue($sid, $nid, stdClass $sObject, $dedupe_field =
  * Handles the actual process of sending the request to dequeue all related items
  */
 function salesforce_webform_dequeue_all($nid) {
- $queue_system = variable_get('salesforce_webform_queue_system', '');
- switch ($queue_system) {
-   case 'drupal_queue':
-     $query = db_select('queue', 'q')
-       ->fields('q')
-       ->condition('name', 'salesforce_webform');
-     $result = $query->execute();
-     $delete = array();
-     foreach ($result as $record) {
-       $data = unserialize($record->data);
-       if ($data['delta'] == 'webform:'. $nid) {
-         $delete[] = $record->item_id;
-       }
-     }
-     if (empty($delete)) {
-       return TRUE;
-     }
-     return db_delete('queue')
-       ->condition('item_id', $delete, 'IN')
-       ->execute();
+  $queue_system = variable_get('salesforce_webform_queue_system', '');
+  switch ($queue_system) {
+    case 'drupal_queue':
+      $query = db_select('queue', 'q')
+        ->fields('q')
+        ->condition('name', 'salesforce_webform');
+      $result = $query->execute();
+      $delete = array();
+      foreach ($result as $record) {
+        $data = unserialize($record->data);
+        if ($data['delta'] == 'webform:'. $nid) {
+          $delete[] = $record->item_id;
+        }
+      }
+      if (empty($delete)) {
+        return TRUE;
+      }
+      return db_delete('queue')
+        ->condition('item_id', $delete, 'IN')
+        ->execute();
 
-   case 'salesforce_queue':
-     return db_delete('salesforce_queue')
-       ->condition('module', 'webform')
-       ->condition('delta', 'webform:'. $nid)
-       ->execute();
+    case 'salesforce_queue':
+      if (!module_exists('salesforce_queue')) {
+        drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
+        return FALSE;
+      }
+      return db_delete('salesforce_queue')
+        ->condition('module', 'webform')
+        ->condition('delta', 'webform:'. $nid)
+        ->execute();
  }
 
  // There is nothing to do here

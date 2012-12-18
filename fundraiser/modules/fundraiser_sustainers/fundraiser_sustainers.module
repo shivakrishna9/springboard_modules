@@ -519,14 +519,14 @@ function fundraiser_sustainers_edit_form($did) {
   $billing_info = '<div id="billing-info">' .
   '<h2>Billing Address</h2>' .
   '<address>' .
-  $donation->donation['address'] . '<br />' .
-  $donation->donation['city'] . ', ' . $donation->donation['state'] . ' ' . $donation->donation['zip'] .
+  $next_donation->donation['address'] . '<br />' .
+  $next_donation->donation['city'] . ', ' . $next_donation->donation['state'] . ' ' . $next_donation->donation['zip'] .
   '</address>';
   // If the logged in viewing user is NOT the same as the donation user.
   if ($donation->user->uid != $user->uid) {
-    $billing_info .= '<div id="additioanl-billing-info">Customer Account: <a href=\'/user/' . $donation->uid . '\'>' .
-      $donation->user->name . '</a>' .
-      '<br />Primary email: ' . $donation->user->mail . '</div>';
+    $billing_info .= '<div id="additioanl-billing-info">Customer Account: <a href=\'/user/' . $next_donation->uid . '\'>' .
+      $next_donation->user->name . '</a>' .
+      '<br />Primary email: ' . $next_donation->user->mail . '</div>';
   }
   $billing_info .= '</div>';
 
@@ -535,7 +535,7 @@ function fundraiser_sustainers_edit_form($did) {
   $donations_header = array('Amount', 'Charge Date', 'Processed Status');
   if (user_access('fastforward recurring donations')) {
     // Add a button to fastforward this particular donation
-    $donations_header[] = t('Advanced Charge to Today');
+    $donations_header[] = t('Advance Charge to Today');
   }
   $donations_rows = array();
   if ($donation_set) {
@@ -593,7 +593,7 @@ function fundraiser_sustainers_edit_form($did) {
   $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Credit Card Information</h2>' . $billing_update_form . '</div>';
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
-    $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $donation) );
+    $cancel_form = drupal_render( drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation) );
   }
   elseif ($remaining_donation_count == 0) {
     $cancel_form = t('There are no further charges for this recurring donation.');
@@ -948,6 +948,13 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
   $recurring = _fundraiser_sustainers_get_recurring_by_did($donation->did);
   if ($recurring) {
     $donation->recurring = $recurring;
+    // Skip this for the master donation
+    if (isset($donation->recurring->master_did) && $donation->recurring->master_did != $donation->did) {
+      // Use the same submission information from the original donation.
+      $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
+      $donation->submission_data = $master_donation->submission_data;
+      $donation->sid = $master_donation->sid;
+    }
     $donation->donation['recurs_monthly'] = TRUE;
   }
   else {
