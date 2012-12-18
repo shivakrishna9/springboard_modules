@@ -1269,7 +1269,7 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\' OR r.gateway_resp = \'paused\') ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
 }

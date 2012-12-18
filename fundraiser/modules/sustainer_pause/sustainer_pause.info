@@ -1,0 +1,9 @@
+; $Id$
+name = Sustainer Pause
+description = Adds the ability for users to pause/unpause recurring contributions
+core = 7.x
+package = Jackson River Springboard - extras
+dependencies[] = fundraiser_sustainers
+version =  7.x-1.0-beta1
+
+files[] = sustainer_pause.mail.inc

@@ -1,0 +1,7 @@
+; $Id$
+name = Mailtron 5000 example module
+description = Working example module useful for getting a feel for working with Mailtron 5000.
+core = 7.x
+package = Mail
+version = 7.x-1.0-dev
+dependencies[] = mailtron

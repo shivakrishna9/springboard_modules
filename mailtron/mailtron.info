@@ -1,0 +1,7 @@
+; $Id$
+name = Mailtron 5000
+description = Templatable HTML/text emails on demand
+core = 7.x
+package = Mail
+version = 7.x-1.0-beta
+dependencies[] = mimemail

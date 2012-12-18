@@ -1,0 +1,31 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the sustiner_pause module.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function sustainer_pause_enable() {
+  // Add pause to UC statuses
+  db_insert('uc_order_statuses')
+    ->fields(array(
+      'order_status_id' => 'paused',
+      'title' => 'Paused',
+      'state' => 'post_checkout',
+      'weight' => -20,
+      'locked' => 1,
+    ))
+    ->execute();
+}
+
+/**
+ * Implements hook_disable().
+ */
+function sustainer_pause_disable() {
+  // Remove pause from UC status
+  db_delete('uc_order_statuses')
+  ->condition('order_status_id', 'paused')
+  ->execute();
+}
