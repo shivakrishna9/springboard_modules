@@ -110,27 +110,6 @@ function salesforce_queue_process() {
 }
 
 /**
- * Implements hook_salesforce_async_queue_name().
- */
-function salesforce_queue_salesforce_async_queue_name_alter(&$queue_name) {
-  // Change the queue_name so we can implement SalesforceQueue.
-  $queue_name = 'salesforce';
-}
-
-/**
- * Implements hook_salesforce_push_queue_item_alter().
- */
-function salesforce_queue_salesforce_push_queue_item_alter(&$item, $mapping) {
-  // Go ahead and convert the entity into it's Salesforce representation before
-  // stashing it into the queue.
-  print '<pre>';
-  print_r($mapping);
-  print '</pre>';
-  //die();
-
-}
-
-/**
  * Wrapper to insert an item into the Salesforce queue
  *
  * @param $drupal_id
