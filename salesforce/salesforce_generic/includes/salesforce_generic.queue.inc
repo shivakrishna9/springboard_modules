@@ -80,7 +80,7 @@ function salesforce_generic_admin_form_submit($form, &$form_state) {
 /**
  * Handles the actual process of sending to the queue whichever queue that may be
  */
-function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
+function salesforce_generic_queue($module, $type, $oid, $nid, stdClass $sObject, $dedupe_field = NULL, $operation = NULL) {
 // TODO: Hook?
 
   // Use UPSERT if there is a dedupe field set, otherwise use CREATE
@@ -105,8 +105,8 @@ function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field =
       $queue->createQueue('salesforce_generic'); // It doesn't hurt to make sure
       $data = array(
         'drupal_id' => $oid,
-        'module' => 'generic', // TODO correct this.
-        'delta' => 'webform:'. $nid, // TODO correct this
+        'module' => $module,
+        'delta' => $type . ':' . $nid,
         'salesforce_type' => $sObject->type,
         'operation' => $operation,
         'sobject' => $sObject,
@@ -119,7 +119,7 @@ function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field =
         drupal_set_message(t('The salesforce_queue module is not enabled, yet it is set as the queue system.'), 'error');
         return FALSE;
       }
-      return salesforce_queue_insert($oid, 'webform', 'webform:'. $nid, $sObject->type, $operation, $sObject, $dedupe_field);
+      return salesforce_queue_insert($oid, $module, $module . ':' . $nid, $sObject->type, $operation, $sObject, $dedupe_field);
   }
 
   // @TODO Set error that a queue_system is not set
@@ -132,7 +132,7 @@ function salesforce_generic_queue($oid, $nid, stdClass $sObject, $dedupe_field =
 /**
  * Handles the actual process of sending the request to dequeue all related items
  */
-function salesforce_generic_dequeue_all($nid) {
+function salesforce_generic_dequeue_all($module, $type, $nid) {
 // TODO: Hook?
 
   $queue_system = variable_get('salesforce_generic_queue_system', '');
@@ -145,7 +145,7 @@ function salesforce_generic_dequeue_all($nid) {
       $delete = array();
       foreach ($result as $record) {
         $data = unserialize($record->data);
-        if ($data['delta'] == 'webform:'. $nid) { //TODO : clear out this delta, it may not be accurate in the generic case.
+        if ($data['delta'] == $type . ':' . $nid) {
           $delete[] = $record->item_id;
         }
       }
@@ -162,8 +162,8 @@ function salesforce_generic_dequeue_all($nid) {
         return FALSE;
       }
       return db_delete('salesforce_queue')
-        ->condition('module', 'webform')
-        ->condition('delta', 'webform:'. $nid) //TODO : clear out this delta, it may not be accurate in the generic case.
+        ->condition('module', $module)
+        ->condition('delta', $type . ':' . $nid)
         ->execute();
  }
 

@@ -30,8 +30,7 @@ function salesforce_generic_entity_info() {
  */
 function salesforce_generic_menu() {
   // Gather modules that provide mapping support for generic objects.
-  $modules = module_invoke_all('salesforce_generic_info');
-  drupal_alter('salesforce_generic_info', $modules);
+  $modules = salesforce_generic_info();
   // Returns an array, keyed by supporting module.
   $items['node/%node/salesforce'] = array(
     'title' => 'Salesforce maps',
@@ -114,10 +113,14 @@ function salesforce_generic_permission() {
 function salesforce_generic_node_delete($node) {
   // Dequeue all submissions related to this node.
   module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
-  salesforce_generic_dequeue_all($node->nid);
+  $modules = salesforce_generic_info();
+  foreach ($modules as $module => $info) {
+    salesforce_generic_dequeue_all($module, $info['type'], $node->nid);
+  }
   // Delete all salesforce_donation_map entities.
   salesforce_generic_delete_map($node->nid);
 }
+
 
 /**
  * Helper function to place an object, given a nod, oid, object with a map and queue.
@@ -140,7 +143,8 @@ function salesforce_generic_send_object_to_queue($module, $op, $node, $oid, $dru
     $sObject = salesforce_generic_map_object($module, $drupal_object, $map, $node);
     $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
     // Add to the queue.
-    $result = salesforce_generic_queue($oid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    $module_info = salesforce_generic_info($module);
+    $result = salesforce_generic_queue($module, $module_info['type'], $oid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
     if (!$result) {
       // @TODO Send an error to admin that submission didn't go to queue
       drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
@@ -248,6 +252,22 @@ function salesforce_generic_delete_map($nid, $module = 'salesforce_generic') {
   if (!empty($mid)) {
     return entity_delete('salesforce_generic_map', $mid);
   }
+}
+
+/**
+ * Helper function.
+ */
+function salesforce_generic_info($module = NULL) {
+  static $modules;
+  if (empty($modules)) {
+    // Gather modules that provide mapping support for generic objects.
+    $modules = module_invoke_all('salesforce_generic_info');
+    drupal_alter('salesforce_generic_info', $modules);
+  }
+  if ($module == NULL) {
+    return $modules;
+  }
+  return isset($modules[$module]) ? $modules[$module] : array();
 }
 
 /**
