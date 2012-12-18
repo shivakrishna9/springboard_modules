@@ -60,6 +60,11 @@ function salesforce_queue_permission() {
 }
 
 /**
+ * @name salesforce_queue_cron  Cron controls
+ * @{
+ */
+
+/**
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
@@ -101,6 +106,18 @@ function salesforce_queue_standalone_cron() {
     }
   }
 }
+
+/**
+ * Indicates whether or not queue standalone cron is enabled.
+ */
+function _salesforce_queue_standalone_cron_enabled() {
+  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
+}
+
+/**
+ * @}
+ */
+
 
 /**
  * Processes the data in the Salesforce queue.
@@ -211,11 +228,4 @@ function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type)
 function salesforce_queue_info() {
   // Get information from other modules.
   return module_invoke_all('salesforce_queue_info');
-}
-
-/**
- * Indicates whether or not queue standalone cron is enabled.
- */
-function _salesforce_queue_standalone_cron_enabled() {
-  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
 }
