@@ -32,6 +32,17 @@ function salesforce_queue_menu() {
     'file' => 'salesforce_queue.admin.inc',
   );
 
+  $items['admin/structure/salesforce/object-verify'] = array(
+    'title' => 'Salesforce Queue Object Verify',
+    'description' => 'Utility for verifying the format of Salesforce objects.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_queue_object_verification_form'),
+    'access arguments' => array('configure salesforce queue'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'salesforce_queue.utility.inc',
+    'weight' => 10,
+  );
+
   $items['salesforce-queue-sandbox'] = array(
     'title' => 'Salesforce queue sandbox',
     'page callback' => 'salesforce_queue_sandbox',
