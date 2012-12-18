@@ -188,8 +188,9 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       '#fields' => array()
     );
     $wf_components = $node->webform['components'];
+    $donation_field_keys = array_keys($donation_fields);
     foreach ($wf_components as $cid => $component) {
-      if ($component['type'] != 'fieldset') {
+      if ($component['type'] != 'fieldset' && !in_array($component['form_key'], $donation_field_keys)) {
         $form_key = $component['form_key'];
         $fields['salesforce_webform_map']['#fields'][$form_key] = $component['name'] .
           ' (' . $component['type'] . ')';
