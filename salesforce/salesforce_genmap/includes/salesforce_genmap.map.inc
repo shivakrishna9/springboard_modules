@@ -19,7 +19,7 @@ function salesforce_genmap_map($node) {
   );
   $helps = module_invoke_all('salesforce_genmap_map_help');
   foreach ($helps as $index => $help) {
-    $build['content']['additional_help'] = array(
+    $build['content']['additional_help_' . $index] = array(
       '#id' => 'salesforce-map-helptext-' . $index . '-page',
       '#type' => 'markup',
       '#markup' => '<p>' . $help . '</p>',
