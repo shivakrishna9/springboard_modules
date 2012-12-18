@@ -263,7 +263,7 @@ function salesforce_donation_salesforce_generic_map_field_info($node) {
   // Submission fields.
   $fields['salesforce_user_map'] = array(
     '#type' => 'submission',
-    '#label' => t('User Property'),
+    '#label' => t('Submission Property'),
     '#dedupe' => FALSE,
     '#fields' => array(
       'sid' => t('Submission ID'),
