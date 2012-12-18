@@ -150,7 +150,7 @@ function salesforce_webform_salesforce_genmap_map_field_info($node) {
     ),
   );
   // Submission fields.
-  $fields['salesforce_user_map'] = array(
+  $fields['salesforce_submission_map'] = array(
     '#type' => 'submission',
     '#label' => t('Submission Property'),
     '#dedupe' => FALSE,

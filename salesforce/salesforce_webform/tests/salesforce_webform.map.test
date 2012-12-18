@@ -81,12 +81,6 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
    * Tests for the mapping form
    */
   public function testMappingForm() {
-    // No longer relevant for the generic case.
-    // Form throws message if the webform has no components
-    //$webform_no_components = $this->swCreateWebform(FALSE);
-    //$this->drupalGet('node/'. $webform_no_components->nid .'/salesforce/salesforce_webform');
-    //$this->assertText('You must first add components to your webform', 'Message appears when webform has no components.');
-
     // Form throws message if it cannot connect to Salesforce
     $webform = $this->swCreateWebform();
     $this->drupalGet('node/'. $webform->nid .'/salesforce/salesforce_webform');
@@ -117,7 +111,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
     $this->swFormMapField('last_name', 'Name', 'salesforce_webform_map', TRUE);
     $edit = $this->_swfEdit;
     $this->drupalPost(NULL, $edit, 'Save');
-    $this->assertText('Multiple webform components cannot be mapped to the same Salesforce fields.', 'Validation rejected correctly.');
+    $this->assertText('Multiple fields cannot be mapped to the same Salesforce fields.', 'Validation rejected correctly.');
     $this->_swfEdit = array();
 
     // Select a Salesforce object without a record type
@@ -166,7 +160,7 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
 
     // Cancel the changes and verify
     $this->drupalPost(NULL, $edit, 'Cancel');
-    $this->assertText('The Salesforce webform map has been reset to the original values.', 'Cancelling form posted correctly.');
+    $this->assertText('The Salesforce map has been reset to the original values.', 'Cancelling form posted correctly.');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type refreshed on form.');
     $this->assertFieldChecked('salesforce-dedupe-email', 'Email dedupe field selected.');
     $this->assertFieldByName('field_map[salesforce_webform_map][first_name][sf_field]', 'FirstName', 'first_name refreshed on form.');
@@ -179,14 +173,13 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
 
     // Unmap the webform from Salesforce
     $this->drupalPost(NULL, array(), 'Unmap');
-    $this->assertText('The Salesforce to webform map has been removed.', 'Unmapping form posted correctly');
+    $this->assertText('The Salesforce to Drupal object map has been removed.', 'Unmapping form posted correctly');
     $this->assertFieldByName('salesforce_object_info[salesforce_object_type]', NULL, 'Object Type field appears on form.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_object_type]', 'Contact', 'Object Type field does not have previously saved value.');
     $this->assertNoFieldByName('salesforce_object_info[salesforce_record_type]', NULL, 'Salesforce record type is hidden as expected.');
     $this->assertNoFieldByName('field_map[salesforce_node_map][nid][sf_field]', NULL, 'Node id mapping is hidden as expected.');
 
     // Delete the webforms
-    node_delete($webform_no_components->nid);
     node_delete($webform->nid);
   }
 }

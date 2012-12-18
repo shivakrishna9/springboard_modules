@@ -112,12 +112,12 @@ function salesforce_genmap_permission() {
 // TODO later remove nid dependancy, for now - each item comes with some nid associated.
 function salesforce_genmap_node_delete($node) {
   // Dequeue all submissions related to this node.
-  module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.queue');
   $modules = salesforce_genmap_info();
   foreach ($modules as $module => $info) {
     salesforce_genmap_dequeue_all($module, $info['type'], $node->nid);
   }
-  // Delete all salesforce_donation_map entities.
+  // Delete all salesforce_genmap_map entities.
   salesforce_genmap_delete_map($node->nid);
 }
 
