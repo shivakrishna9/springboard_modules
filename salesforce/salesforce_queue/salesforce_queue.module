@@ -126,6 +126,12 @@ function salesforce_queue_process() {
   watchdog('salesforce_queue', 'The queue is being processed.');
 }
 
+
+/**
+ * @defgroup salesforce_queue_crud CRUD wrappers for SalesforceQueue class
+ * @{
+ */
+
 /**
  * Wrapper to insert an item into the Salesforce queue
  *
@@ -214,6 +220,10 @@ function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type)
   $item = (object)$item;
   return $queue->deleteItem($item);
 }
+
+/**
+ * @} salesforce_queue_crud
+ */
 
 /**
  * Invokes hook_salesforce_queue_info().
