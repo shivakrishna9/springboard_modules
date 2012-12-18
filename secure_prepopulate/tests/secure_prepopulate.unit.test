@@ -1,0 +1,50 @@
+<?php
+/**
+* Administration tests for my module.
+*/
+class securePrepopulateUnitTestCase extends DrupalWebTestCase {
+
+
+/**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array (
+      'name' => t('Secure pre-populate unit tests'),
+      'description' => t('Administration tests for my module.'),
+      'group' => t('Secure Prepopulate'),
+    );
+  }
+
+  public function setUp() {
+    // Enable any module that you will need in your tests.
+    parent::setUp('secure_prepopulate');
+  }
+
+  public function testCrypt() {
+    $settings = array(
+      'first_name' => 'Allen',
+      'last_name' => 'Freeman',
+      'email' => 'allen.freeman@example.com',
+      'address' => '12345 Test Dr',
+      'address_line_2' => 'Apt 2',
+      'city' => 'Springfield',
+      'country' => 'US',
+      'state' => 'IL',
+      'zip' => '55555',
+    );
+    foreach ($settings as $key => $value) {
+      $query[] = "$key=$value";
+    }
+    $query_string = implode('&', $query);
+    $vector =  'cae023134cfcbf45';
+    $key = '7576586e4a5cb0611e3a1f080a30615a';
+    $crypt = _secure_prepopulate_encrypt($query_string, $key, $vector);
+    $expected = '7vGjVvf%2FxlO%2FnVEq8FtS%2B%2FVAjjZGbAYBHddPjrpNCN5twzqjTrOf4W%2FRV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk%2FlVnUWBO8Vg%2BWRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA%3D%3D';
+
+    $result = !strcmp($expected, $crypt);
+    $message = '_secure_prepopulate_encrypt() returns expected values.';
+    $this->assertTrue($result, $message);
+  }
+}
+?>
