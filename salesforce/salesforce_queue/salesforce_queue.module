@@ -159,7 +159,7 @@ function salesforce_queue_sandbox() {
  * @param $salesforce_type
  *   The name of the Salesforce type that is being exported.
  * @param $operation
- *   The CRUD operation being run in Salesforce (upsert, create, update, delete).
+ *   The CRUD operation being run in Salesforce (UPSERT, CREATE, UPDATE, DELETE).
  * @param $sobject
  *   The Salesforce object that is being queued.
  * @param $dedupe_field
@@ -208,6 +208,9 @@ function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, 
  *   The module sub-type. For node types this would be node type name, article for instance.
  * @param $salesforce_type
  *   The name of the Salesforce object type.
+ *
+ * @return bool
+ *   TRUE if the item is in the queue, FALSE if the item is not
  */
 function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type) {
   $query = db_select('salesforce_queue', 's')

@@ -106,7 +106,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
       $this->assertFalse($record, 'The deleted queue item is nowhere to be found in the queue.');
     }
 
-    // deleteQueue
+    // deleteQueue()
     // When you define a specific queue, it deletes all items in that queue only
     $foo_queue->deleteQueue();
     $result = $foo_queue->numberOfItems();

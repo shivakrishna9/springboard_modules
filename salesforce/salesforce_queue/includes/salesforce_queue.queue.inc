@@ -2,7 +2,11 @@
 
 /**
  * @file
- * Salesforce specific implementation of DrupalQueue.
+ * Contains SalesforceQueue
+ */
+
+/**
+ * Salesforce specific implementation of DrupalQueue
  */
 class SalesforceQueue implements DrupalReliableQueueInterface {
 
@@ -16,7 +20,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * A queue object for the given queue
    *
-   * @param String $queue_name
+   * @param string $queue_name
    *   Arbitrary string to name a subset of a queue.  Standard queues are 'new',
    *   'retry', and 'failure'.  The default name 'all' is a working name
    *   allowing you to have access to all queue items regardless of which queue
@@ -34,12 +38,12 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * @defgroup DrupalQueueInterface  The required interface methods
+   * @name DrupalQueueInterface  The required interface methods
    * @{
    */
 
   /**
-   * @param String $queue_name
+   * @param string $queue_name
    *   Declare which queue subset you are working with.  Use 'all' to work with
    *   all items in the entire queue.
    */
@@ -50,7 +54,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Add an item to the queue
    *
-   * @param Array $data
+   * If an item with identical values for drupal_id, module, delta and
+   * salesforce_type is already in the queue, the item in the queue will be
+   * updated with the data provided rather than another queue item created.
+   *
+   * @param array $data
    *   A key array with the following:
    *     - drupal_id: Unique identifier of the Drupal object, such as the
    *         entity ID
@@ -61,7 +69,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *         DELETE
    *     - dedupe_field: Salesforce field to dedupe on during UPSERT operations
    *     - sobject: Salesforce sObject
-   * @return Bool
+   *
+   * @return bool
    *   TRUE if the queue item was created, FALSE if the queue item could not
    *   be created
    */
@@ -78,7 +87,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Quantity of items in the queue you have initialized
    *
-   * @return Int
+   * @return int
    */
   public function numberOfItems() {
     $sql = "SELECT COUNT(item_id)
@@ -91,14 +100,15 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Grab a single item from the queue and inform others it is taken
+   * Grab a single item from the initiated queue and inform others it is taken
    *
    * @TODO Figure out best default lease time
    *
-   * @param Int $lease_time
+   * @param int $lease_time
    *   The amount of time you believe it will take to process the item.  If your
    *   process takes longer, another process could take the item.
-   * @return Object
+   *
+   * @return object
    *   Returns all the information about the item from the queue.
    */
   public function claimItem($lease_time = 30) {
@@ -146,9 +156,10 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Give up your lease on an item
    *
-   * @param Object $item
+   * @param object $item
    *   The original queue item as given to you in claimItem()
-   * @return Bool
+   *
+   * @return bool
    *   TRUE on successful release, FALSE if the release could not be performed
    */
   public function releaseItem($item) {
@@ -157,15 +168,16 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
         'expire' => 0,
       ))
       ->condition('item_id', $item->item_id);
-      return $update->execute();
+    return $update->execute();
   }
 
   /**
    * Remove an item from the queue
    *
-   * @param Object $item
+   * @param object $item
    *   The original queue item as given to you in claimItem()
-   * @return Bool
+   *
+   * @return bool
    *   TRUE on successful delete, FALSE if the delete could not be performed
    */
   public function deleteItem($item) {
@@ -179,14 +191,14 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function createQueue() {
     // All tasks are stored in a single database table (which is created when
-    // Drupal is first installed) so there is nothing we need to do to create
-    // a new queue.
+    // salesforce_queue is first installed) so there is nothing we need to do to
+    // create a new queue.
   }
 
   /**
-   * Delete all queued items in the given queue
+   * Delete all queued items in the initiated queue
    *
-   * @return Bool
+   * @return bool
    *   TRUE on successful delete, FALSE if the delete could not be performed
    */
   public function deleteQueue() {
