@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ * Simpletests for salesforce_queue
+ */
+
+/**
+ * Tests basic set up for queueing data for Salesforce and sending it
+ */
+class SalesforceQueueTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'General API for Salesforce Queue Tests',
+      'description' => 'Ensure that the salesforce_queue module functions properly.',
+      'group' => 'Salesforce Queue',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp(
+      'salesforce_queue'
+    );
+
+    // Create an admin user
+    $permissions = array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+    );
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    // Don't forget, need to pass --uri in drush command in order for logging
+    // in to work
+    $this->drupalLogin($this->admin_user);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+
+  /**
+   * Grabs the Salesforce connection information from the live db and authenticates
+   *
+   * @return Object
+   *   Salesforce Object
+   */
+  public function salesforceConnect() {
+    // Steal the Salesforce configuration from the live database
+    global $db_prefix;
+    $table = empty($db_prefix) ? 'variable' : $db_prefix .'_variable';
+    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
+    $result = db_query($sql);
+    foreach ($result as $record) {
+      variable_set($record->name, unserialize($record->value));
+    }
+
+    // Test the connection
+    $salesforce = salesforce_get_api();
+    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+    return $salesforce;
+  }
+}
