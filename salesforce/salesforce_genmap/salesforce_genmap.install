@@ -8,33 +8,46 @@
 /**
  * Implements hook_install().
  */
-function salesforce_donation_install() {
+function salesforce_genmap_install() {
   if (module_exists('salesforce_queue')) {
-    variable_set('salesforce_donation_queue_system', 'salesforce_queue');
+    variable_set('salesforce_genmap_queue_system', 'salesforce_queue');
   }
   else {
-    variable_set('salesforce_donation_queue_system', 'instant');
+    variable_set('salesforce_genmap_queue_system', 'instant');
   }
 }
 
 /**
  * Implements hook_uninstall().
  */
-function salesforce_donation_uninstall() {
-  variable_del('salesforce_donation_queue_system');
+function salesforce_genmap_uninstall() {
+  variable_del('salesforce_genmap_queue_system');
 }
 
 /**
  * Implements hook_schema().
  */
-function salesforce_donation_schema() {
-  $schema['salesforce_donation_map'] = array(
-    'description' => 'Donation to Salesforce mappings',
+function salesforce_genmap_schema() {
+  $schema['salesforce_genmap_map'] = array(
+    'description' => 'Object to Salesforce mappings',
     'fields' => array(
+      'mid' => array(
+        'description' => 'Map id of the map.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'nid' => array(
-        'description' => 'Node id of the fundraiser node to which this map applies.',
+        'description' => 'Node id of the webform node to which this map applies.',
         'type' => 'int',
         'not null' => TRUE,
+      ),
+      'map_handler' => array(
+        'description' => 'Module that handles field mapping for this map.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => 'salesforce_genmap',
       ),
       'salesforce_object_type' => array(
         'description' => 'The Salesforce object type for this mapping.',
@@ -104,7 +117,7 @@ function salesforce_donation_schema() {
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('nid'),
+    'primary key' => array('mid'),
   );
 
   return $schema;

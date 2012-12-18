@@ -6,58 +6,9 @@
  */
 
 /**
- * Implements hook_entity_info().
+ * @name core_drupal_hooks
+ * @{
  */
-function salesforce_donation_entity_info() {
-  return array(
-    'salesforce_donation_map' => array(
-      'label' => t('Salesforce donation map'),
-      'entity class' => 'Entity',
-      'controller class' => 'EntityAPIControllerExportable',
-      'base table' => 'salesforce_donation_map',
-      'entity keys' => array(
-        'id' => 'nid',
-      ),
-      'fieldable' => FALSE,
-      'exportable' => TRUE,
-      'module' => 'salesforce_donation',
-    ),
-  );
-}
-
-/**
- * Implements hook_menu().
- */
-function salesforce_donation_menu() {
-  // %webform_menu returns $node if $node is a webform
-  $items['node/%webform_menu/webform/donation-map'] = array(
-    'title' => 'Salesforce donation map',
-    'page callback' => 'salesforce_donation_map_page',
-    'page arguments' => array(1),
-    'access callback' => 'salesforce_donation_map_page_access',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'includes/salesforce_donation.map.inc',
-  );
-  $items['admin/config/content/salesforce-donation'] = array(
-    'title' => 'Salesforce donation settings',
-    'page callback' => 'salesforce_donation_admin_page',
-    'description' => 'Configure how the Salesforce integration will work with donations.',
-    'access arguments' => array('administer salesforce'),
-    'file' => 'includes/salesforce_donation.queue.inc',
-  );
-  return $items;
-}
-
-/**
- * Implements hook_menu_alter().
- */
-function salesforce_donation_menu_alter(&$items) {
-  // IIF salesforce_donation exists.
-  if (module_exists('salesforce_webform')) {
-    $items['node/%webform_menu/webform/salesforce-map']['access callback'] = 'salesforce_donation_webform_map_page_access';
-  }
-}
 
 /**
  * Implements hook_permission().
@@ -68,7 +19,7 @@ function salesforce_donation_permission() {
       'title' => t('Map Salesforce objects to donations'),
       'description' => t('Configure the mapping of Salesforce objects with fundraisers so donations can sync with Salesforce.'),
     ),
-    'map donation salesforce to webform' => array(
+    'map salesforce to webform on donation' => array(
       'title' => t('Map Salesforce objects to webform on Donations'),
       'description' => t('Advanced user setting: map donations and webform on the same node for Salesforce sync.'),
     ),
@@ -76,168 +27,48 @@ function salesforce_donation_permission() {
 }
 
 /**
- * Access callback to reach the mapping page
+ * @} core_drupal_hooks
  */
-function salesforce_donation_map_page_access($node) {
-  if ($node !== FALSE
-    && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to donation')
-    ) {
-    return TRUE;
-  }
-  return FALSE;
-}
 
 /**
- * Access callback to reach the mapping page
- *
- * All by its little old self because menu doesn't load the include file until
- * after the access check.
+ * @name salesforce_genmap_hooks
+ * @{
  */
-function salesforce_donation_webform_map_page_access($node) {
-  if ($node !== FALSE // %webform_menu returns FALSE if not valid
-    && fundraiser_is_donation_type($node->type)
-    && user_access('map salesforce to webform')
-    && user_access('map donation salesforce to webform')
-    ) {
-    return TRUE;
-   }
-  return FALSE;
-}
 
 /**
- * Implements hook_node_delete().
+ * Implements hook_salesforce_genmap_info().
  */
-function salesforce_donation_node_delete($node) {
-  // Dequeue all submissions related to this node.
-  module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
-  salesforce_donation_dequeue_all($node->nid);
-
-  // Delete the salesforce_donation_map entity.
-  salesforce_donation_delete_map($node->nid);
+function salesforce_donation_salesforce_genmap_info() {
+  $items['salesforce_donation'] = array(
+    'type' => 'donation',
+    'label' => 'Donation',
+    'access callback' => 'salesforce_donation_map_page_access',
+  );
+  return $items;
 }
 
 /**
- * Implements hook_fundraiser_donation_success().
+ * Implements hook_salesforce_genmap_info_alter().
  */
-function salesforce_donation_fundraiser_donation_success($donation) {
-  _salesforce_donation_submission_helper('insert', $donation);
-}
-
-/**
- * Implements hook_fundraiser_donation_update().
- *
-function salesforce_donation_fundraiser_donation_update($donation) {
-  _salesforce_donation_submission_helper('insert', $donation);
-}
-//*/
-
-/**
- * Implements hook_fundraiser_donation_delete().
- *
-function salesforce_donation_fundraiser_donation_delete($donation) {
-  _salesforce_donation_submission_helper('insert', $donation);
-}
-//*/
-
-/**
- * Helper function, handle insert/ update/ delete of donation.
- */
-function _salesforce_donation_submission_helper($op, $donation) {
-  // Reload the donation to get everything we need.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  // Make mapping.
-  $map = salesforce_donation_load_map($donation->node->nid);
-  if (!empty($map) && !empty($map->sync_options[$op])) {
-    module_load_include('inc', 'salesforce_donation', 'includes/salesforce_donation.queue');
-    $sObject = salesforce_donation_map_submission($donation, $map, $donation->node);
-    $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
-    $result = salesforce_donation_queue($donation->did, $donation->nid, $sObject, $map->salesforce_dedupe_field, $operation);
-    if (!$result) {
-      // @TODO Send an error to admin that submission didn't go to queue
-      drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
-    }
+function salesforce_donation_salesforce_genmap_info_alter(&$items) {
+  // IIF salesforce_donation exists.
+  if (module_exists('salesforce_webform')) {
+    $items['salesforce_webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
   }
 }
 
 /**
- * Creates and saves a Salesforce+Donation map
- *
- * @param $map
- *   Can be an array of values or a salesforce_donation_map entity object
- *
- * @return
- *   The new version of the object (such as if you had passed in an array) and
- *   FALSE if what you passed through was incompatible with the save process.
- */
-function salesforce_donation_save_map($map) {
-  if (is_array($map)) {
-    // Allow sending an array and updating an existing entity with the values
-    $entity = salesforce_donation_load_map($map['nid']);
-    if ($entity) {
-      foreach ($map as $key => $value) {
-        $entity->$key = $value;
-      }
-      $map = $entity;
-    }
-    else {
-      // Create a new entity object, but does not yet add to the database
-      $map = entity_create('salesforce_donation_map', $map);
-    }
-  }
-  if ($map->entityType() == 'salesforce_donation_map') {
-    $map->updated = time();
-    // Adds the data to the database
-    return entity_save('salesforce_donation_map', $map);
-  }
-  return FALSE;
-}
-
-/**
- * Retreives a Salesforce+Donation map
- *
- * @param $nid
- *   The nid of the webform of whose map we want to load
- *
- * @return
- *   The entity object you requested
- */
-function salesforce_donation_load_map($nid) {
-  $entities = entity_load('salesforce_donation_map', array($nid));
-  if (isset($entities[$nid])) {
-    return $entities[$nid];
-  }
-  return FALSE;
-}
-
-/**
- * Deletes a Salesforce+Donation map
- *
- * @param $nid
- *   The nid of the webform of whose map we're deleting
- *
- * @return
- *   FALSE if the delete could be performed
- */
-function salesforce_donation_delete_map($nid) {
-  return entity_delete('salesforce_donation_map', $nid);
-}
-
-/**
+ * Implements hook_salesforce_genmap_map_fields().
  *
  * @param stdClass $donation
  *   A donation object
  * @param Entity $map
- *   A Salesforce donation map entity
- * @param stdClass $node
- *   Optionally provide a node object
- * @return $sObject
- *   A Salesforce Object that has Salesforce fields with the webform's values
+ *   A Salesforce map entity
+ * @return $fields
+ *   A set of fields mapped to value.
  */
-function salesforce_donation_map_submission(stdClass $donation, Entity $map, $node = NULL) {
-  $node = is_object($node) ? $node : node_load($donation->nid);
+function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node) {
   $fields = array();
-
   // Donation properties map
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['did'])) {
@@ -313,58 +144,150 @@ function salesforce_donation_map_submission(stdClass $donation, Entity $map, $no
       $fields[$sf_field] = REQUEST_TIME;
     }
   }
-
-  // Create the Salesforce object
-  $sObject = new stdClass();
-  $sObject->fields = $fields;
-  $sObject->type = $map->salesforce_object_type;
-  if (!empty($map->salesforce_record_type)) {
-    $sObject->record = $map->salesforce_record_type;
-  }
-
-  drupal_alter('salesforce_donation_map_submission', $sObject);
-  return $sObject;
+  return $fields;
 }
 
-/*
-// TODO: all if these are leftovers from previous implmenetaiton
-
-function sf_donation_form_alter(&$form, &$form_state, $form_id) {
-  // Add a setting to the fundraiser administration page to run on SF exports.
-  if ($form_id == 'fundraiser_admin_settings') {
-    $description = 'Use this option if you want donations to be exported to Salesforce.';
-    $attributes = array();
-    $form['fundraiser_salesforce_integration'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Integrate with Salesforce'),
-      '#default_value' => variable_get('fundraiser_salesforce_integration', 0),
-      '#description' => t($description),
-      '#attributes' => $attributes,
-    );
+/**
+ * Implements hook_salesforce_genmap_map_field_info().
+ *
+ * @param stdClass $node
+ *   Provide a node object
+ * @return $fields
+ *   A set of fields to be used in mapping form.
+ */
+function salesforce_donation_salesforce_genmap_map_field_info($node) {
+  // Build an array of fields to map against.
+  // Nested by category. If the category allows for dedupes, note that.
+  $fields = array();
+  $fields['salesforce_donation_map'] = array(
+    '#type' => 'donation',
+    '#label' => t('Donation Field'),
+    '#dedupe' => TRUE,
+    '#fields' => array(
+      'did' => t('Donation ID'),
+      'gateway' => t('Gateway ID'),
+      'txn_id' => t('Transaction ID'),
+      'status' =>  t('Payment Status'),
+    ),
+  );
+  // Additional donation fields.
+  $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
+  foreach ($donation_fields as $form_key => $donation_field) {
+    // Skip if this is a fieldset type.
+    if ($donation_field['#type'] != 'fieldset') {
+      $fields['salesforce_donation_map']['#fields'][$form_key] = $donation_field['#title'] .
+        ' (' . $donation_field['#type'] . ')';
+    }
   }
+  // Webform component fields.
+  if (module_exists('fundraiser_webform')) {
+    $fields['salesforce_webform_map'] = array(
+      '#type' => 'webform',
+      '#label' => t('Webform Componant'),
+      '#dedupe' => FALSE,
+      '#fields' => array()
+    );
+    $wf_components = $node->webform['components'];
+    foreach ($wf_components as $cid => $component) {
+      if ($component['type'] != 'fieldset') {
+        $form_key = $component['form_key'];
+        $fields['salesforce_webform_map']['#fields'][$form_key] = $component['name'] .
+          ' (' . $component['type'] . ')';
+      }
+    }
+  }
+  // Node fields.
+  $fields['salesforce_node_map'] = array(
+    '#type' => 'node',
+    '#label' => t('Node Property'),
+    '#dedupe' => FALSE,
+    '#fields' => array(
+      'nid' => t('Node ID'),
+      'title' => t('Node Title'),
+    ),
+  );
+  // User fields.
+  $fields['salesforce_user_map'] = array(
+    '#type' => 'user',
+    '#label' => t('User Property'),
+    '#dedupe' => FALSE,
+    '#fields' => array(
+      'uid' => t('User ID'),
+      'name' => t('User Name'),
+      'email' => t('User Email'),
+    ),
+  );
+  // Submission fields.
+  $fields['salesforce_submission_map'] = array(
+    '#type' => 'submission',
+    '#label' => t('Submission Property'),
+    '#dedupe' => FALSE,
+    '#fields' => array(
+      'sid' => t('Submission ID'),
+      'date' => t('Submission Date'),
+    ),
+  );
+  // And return the fields for the map to generate the form.
+  return $fields;
+}
+
+/**
+ * @} salesforce_genmap_hooks
+ */
+
+/**
+ * Access callback to reach the mapping page
+ */
+function salesforce_donation_map_page_access($node) {
+  if ($node !== FALSE
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to donation')
+    ) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Access callback to reach the mapping page for salesforce webforms, to avoid complicated UI.
+ * Only let trained users use these two systems together.
+ */
+function salesforce_donation_webform_map_page_access($node) {
+  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+    && fundraiser_is_donation_type($node->type)
+    && user_access('map salesforce to webform')
+    && user_access('map salesforce to webform on donation')
+    ) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function salesforce_donation_fundraiser_donation_success($donation) {
+  // Reload the donation to get everything we need from submission table then call.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
 }
 
 /**
  * Implements hook_fundraiser_donation_update().
  *
-function sf_donation_hook_fundraiser_donation_update($donation) {
-  // put order back in queue so that amount gets updated in Salesforce
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
+function salesforce_donation_fundraiser_donation_update($donation) {
+  // Reload the donation to get everything we need.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
 }
+//*/
 
 /**
- * Implements hook_fundraiser_donation_cancel().
+ * Implements hook_fundraiser_donation_delete().
  *
-function sf_donation_fundraiser_donation_cancel($donation) {
-  if (module_exists('sf_donation') && module_exists('queue_api')) {
-    sf_queue_insert($donation->did, FUNDRAISER_SINGLE_DONATION_TYPE, 'update');
-  }
-  // call out to saleforce module if installed
-  //if (module_exists('sf_donation')) {
-  //  sf_donation_canel_recurring_donations($master_order_id);
-  //}
+function salesforce_donation_fundraiser_donation_delete($donation) {
+  // Reload the donation to get everything we need.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
 }
-
-*/
+//*/

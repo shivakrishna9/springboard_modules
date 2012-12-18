@@ -37,7 +37,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     $this->swMapWebform($this->webform2->nid, TRUE);
 
     // Store the queue system
-    $this->queue_system = variable_get('salesforce_webform_queue_system', NULL);
+    $this->queue_system = variable_get('salesforce_genmap_queue_system', NULL);
   }
 
   /**
@@ -46,10 +46,10 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   public function tearDown() {
     // Put the queue system config back to what it was
     if (is_null($this->queue_system)) {
-      variable_del('salesforce_webform_queue_system');
+      variable_del('salesforce_genmap_queue_system');
     }
     else {
-      variable_set('salesforce_webform_queue_system', $this->queue_system);
+      variable_set('salesforce_genmap_queue_system', $this->queue_system);
     }
 
     // Delete the webform node
@@ -63,8 +63,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    * Tests that information was sent to the queues properly
    */
   public function testQueueSystem() {
-    $path = 'node/'. $this->webform1->nid;
-    $path2 = 'node/'. $this->webform2->nid;
+    $path = 'node/' . $this->webform1->nid;
+    $path2 = 'node/' . $this->webform2->nid;
     $edit = array(
       'submitted[first_name]' => 'ExampleFirstName',
       'submitted[last_name]' => 'ExampleLastName',
@@ -72,13 +72,13 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     );
 
     // No queue system set submit error
-    variable_del('salesforce_webform_queue_system');
+    variable_del('salesforce_genmap_queue_system');
     $this->drupalGet($path);
     $this->drupalPost(NULL, $edit, 'Submit');
     $this->assertText('The Queue System configuration is not set', 'Error is reported when no queue system is set.');
 
     // Instant queue system works as expected
-    variable_set('salesforce_webform_queue_system', 'instant');
+    variable_set('salesforce_genmap_queue_system', 'instant');
     $this->drupalGet($path);
     $this->drupalPost(NULL, $edit, 'Submit');
     $this->assertText('We have no ability to instantly send data to Salesforce', 'Error is reported when no queue system is set.');
@@ -95,7 +95,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     );
     $button = 'Submit';
     foreach ($queue_systems as $queue_system) {
-      variable_set('salesforce_webform_queue_system', $queue_system);
+      variable_set('salesforce_genmap_queue_system', $queue_system);
       foreach ($ops as $op) {
         switch ($op) {
           case 'UPSERT':
@@ -112,14 +112,14 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
             break;
           case 'UPDATE':
             // Referrs to previous loop's $queue_item
-            $op_path = $path .'/submission/'. $queue_item['drupal_id'] .'/edit';
+            $op_path = $path . '/submission/' . $queue_item['drupal_id'] . '/edit';
             $assert_text = 'Submission updated';
             $op_edit = $edit;
             $op_button = $button;
             break;
           case 'DELETE':
             // Referrs to previous loop's $queue_item
-            $op_path = $path .'/submission/'. $queue_item['drupal_id'] .'/delete';
+            $op_path = $path . '/submission/' . $queue_item['drupal_id'] . '/delete';
             $assert_text = 'Submission deleted';
             $op_edit = array();
             $op_button = 'Delete';
@@ -129,7 +129,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
         // Test the submissions for each queue for each state
         $this->drupalGet($op_path);
         $this->drupalPost($op_path, $op_edit, $op_button);
-        $this->assertText($assert_text, 'There was not an obvious error submitting '. $op .' on the '. $queue_system .'.');
+        $this->assertText($assert_text, 'There was not an obvious error submitting ' . $op . ' on the ' . $queue_system . '.');
         $queue_item = $this->swFetchQueueItem($queue_system);
         $this->swCompareSubmissionQueueItem($edit, $queue_item, $op, $queue_system);
         $this->swDeleteQueueItem($queue_item, $queue_system); // Simulate processed item
@@ -141,8 +141,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    * Tests that sync options are obeyed
    */
   public function testSyncOptions() {
-    variable_set('salesforce_webform_queue_system', 'drupal_queue');
-    $path = 'node/'. $this->webform1->nid;
+    variable_set('salesforce_genmap_queue_system', 'drupal_queue');
+    $path = 'node/' . $this->webform1->nid;
     $edit = array(
       'submitted[first_name]' => 'ExampleFirstName',
       'submitted[last_name]' => 'ExampleLastName',
@@ -160,13 +160,13 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
     );
     foreach ($combinations as $sync_config) {
-      $this->drupalGet('node/'. $this->webform1->nid .'/webform/salesforce-map');
+      $this->drupalGet('node/' . $this->webform1->nid . '/salesformce/salesforce_webform');
       $this->drupalPost(NULL, $sync_config, 'Save');
 
       // Create submission
       $this->drupalGet($path);
       $this->drupalPost(NULL, $edit, 'Submit');
-      $queue = DrupalQueue::get('salesforce_webform');
+      $queue = DrupalQueue::get('salesforce_genmap');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][insert]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on insert was sent to queue.');
@@ -182,9 +182,9 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       $sid = $matches[1];
 
       // Update submission
-      $this->drupalGet($path .'/submission/'. $sid .'/edit');
+      $this->drupalGet($path . '/submission/' . $sid . '/edit');
       $this->drupalPost(NULL, array(), 'Submit');
-      $queue = DrupalQueue::get('salesforce_webform');
+      $queue = DrupalQueue::get('salesforce_genmap');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][update]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on update was not sent to queue.');
@@ -195,9 +195,9 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       }
 
       // Delete submission
-      $this->drupalGet($path .'/submission/'. $sid .'/delete');
+      $this->drupalGet($path . '/submission/' . $sid . '/delete');
       $this->drupalPost(NULL, array(), 'Delete');
-      $queue = DrupalQueue::get('salesforce_webform');
+      $queue = DrupalQueue::get('salesforce_genmap');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][delete]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was not sent to queue.');
@@ -215,18 +215,18 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    * Separated from Salesforce Queue to have setUp() and tearDown() between them
    */
   public function testNodeDeleteDequeueDrupalQueue() {
-    variable_set('salesforce_webform_queue_system', 'drupal_queue');
+    variable_set('salesforce_genmap_queue_system', 'drupal_queue');
     $this->swGenerateSubmissions($this->webform1->nid);
     $this->swGenerateSubmissions($this->webform2->nid);
     node_delete($this->webform1->nid);
     $query = db_select('queue', 'q')
-     ->fields('q')
-     ->condition('name', 'salesforce_webform');
+      ->fields('q')
+      ->condition('name', 'salesforce_genmap');
     $result = $query->execute();
     $unexpected_records = array();
     foreach ($result as $record) {
       $data = unserialize($record->data);
-      if ($data['delta'] == 'webform:'. $this->webform1->nid) {
+      if ($data['delta'] == 'webform:' . $this->webform1->nid) {
         $unexpected_records[] = $record->item_id;
       }
     }
@@ -239,14 +239,14 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    * Separated from DrupalQueue to have setUp() and tearDown() between them
    */
   public function testNodeDeleteDequeueSalesforceQueue() {
-    variable_set('salesforce_webform_queue_system', 'salesforce_queue');
+    variable_set('salesforce_genmap_queue_system', 'salesforce_queue');
     $this->swGenerateSubmissions($this->webform1->nid);
     $this->swGenerateSubmissions($this->webform2->nid);
     node_delete($this->webform1->nid);
     $query = db_select('salesforce_queue', 'sq')
       ->fields('sq')
-      ->condition('module', 'webform')
-      ->condition('delta', 'webform:'. $this->webform1->nid);
+      ->condition('module', 'salesforce_webform')
+      ->condition('delta', 'webform:' . $this->webform1->nid);
     $result = $query->execute();
     $unexpected_records = array();
     foreach ($result as $record) {
@@ -260,7 +260,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
    */
   public function testConfigForm() {
     // Check installed variable setting
-    $queue_system = variable_get('salesforce_webform_queue_system', '');
+    $queue_system = variable_get('salesforce_genmap_queue_system', '');
     $queue_system = empty($queue_system) ? 'salesforce_queue' : $queue_system;
 
     // Load the configuration form and check default values
@@ -269,29 +269,29 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       'drupal_queue' => 'drupal-queue',
       'salesforce_queue' => 'salesforce-queue',
     );
-    $this->drupalGet('admin/config/content/salesforce-webform');
-    $this->assertFieldByName('salesforce_webform_queue_system', NULL, 'salesforce_webform_queue_system form item exists.');
+    $this->drupalGet('admin/config/salesforce/salesforce-genmap');
+    $this->assertFieldByName('salesforce_genmap_queue_system', NULL, 'salesforce_genmap_queue_system form item exists.');
     foreach ($queue_systems as $queue_name => $queue_id) {
       if ($queue_name == $queue_system) {
-        $this->assertFieldChecked('edit-salesforce-webform-queue-system-'. $queue_id, $queue_name .' is selected by default.');
+        $this->assertFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is selected by default.');
       }
       else {
-        $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-'. $queue_id, $queue_name .' is not selected by default.');
+        $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is not selected by default.');
       }
     }
 
     // Set new value and check new default values
     $edit = array(
-      'salesforce_webform_queue_system' => 'drupal_queue',
+      'salesforce_genmap_queue_system' => 'drupal_queue',
     );
     $this->drupalPost(NULL, $edit, 'Save');
-    $this->assertText('Your settings have been saved.', 'Configuration page posted correctly.');
-    $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-instant', 'Instant is not selected');
-    $this->assertFieldChecked('edit-salesforce-webform-queue-system-drupal-queue', 'Drupal Queue is selected');
-    $this->assertNoFieldChecked('edit-salesforce-webform-queue-system-salesforce-queue', 'Salesforce Queue is not selected');
+    $this->assertText('Your settings have been saved. ', 'Configuration page posted correctly.');
+    $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-instant', 'Instant is not selected');
+    $this->assertFieldChecked('edit-salesforce-genmap-queue-system-drupal-queue', 'Drupal Queue is selected');
+    $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-salesforce-queue', 'Salesforce Queue is not selected');
 
     // Verify saved value
-    $this->assertEqual('drupal_queue', variable_get('salesforce_webform_queue_system', NULL), 'queue_system saved correctly.');
+    $this->assertEqual('drupal_queue', variable_get('salesforce_genmap_queue_system', NULL), 'queue_system saved correctly.');
   }
 
   /**
@@ -300,7 +300,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   public function swFetchQueueItem($queue_system) {
     switch ($queue_system) {
       case 'drupal_queue':
-        $queue = DrupalQueue::get('salesforce_webform');
+        $queue = DrupalQueue::get('salesforce_genmap');
         $queue_item = $queue->claimItem();
         if (!empty($queue_item)) {
           $queue->releaseItem($queue_item);
@@ -383,19 +383,19 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
     }
     else {
       if (isset($queue_item['operation'])) {
-        $this->assertEqual($queue_item['operation'], $operation, 'The correct '. $operation .' operation was sent to '. $queue_system);
+        $this->assertEqual($queue_item['operation'], $operation, 'The correct ' . $operation . ' operation was sent to ' . $queue_system);
       }
       else {
-        $this->assertTrue(FALSE, 'Operation not set in '. $queue_system .' queue item.');
+        $this->assertTrue(FALSE, 'Operation not set in ' . $queue_system . ' queue item.');
       }
       if (isset($queue_item['sobject']) && is_object($queue_item['sobject'])) {
         $fields = $queue_item['sobject']->fields;
-        $this->assertEqual($fields['FirstName'], $edit['submitted[first_name]'], 'first_name '. $queue_system .' data matches submitted data.');
-        $this->assertEqual($fields['LastName'], $edit['submitted[last_name]'], 'last_name '. $queue_system .' data matches submitted data.');
-        $this->assertEqual($fields['Email'], $edit['submitted[email]'], 'email '. $queue_system .' data matches submitted data.');
+        $this->assertEqual($fields['FirstName'], $edit['submitted[first_name]'], 'first_name ' . $queue_system . ' data matches submitted data.');
+        $this->assertEqual($fields['LastName'], $edit['submitted[last_name]'], 'last_name ' . $queue_system . ' data matches submitted data.');
+        $this->assertEqual($fields['Email'], $edit['submitted[email]'], 'email ' . $queue_system . ' data matches submitted data.');
       }
       else {
-        $this->assertTrue(FALSE, 'sObject not built properly in '. $queue_system .' queue item.');
+        $this->assertTrue(FALSE, 'sObject not built properly in ' . $queue_system . ' queue item.');
       }
     }
   }
@@ -410,9 +410,9 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       $edit = array(
         'submitted[first_name]' => $this->randomName(),
         'submitted[last_name]' => $this->randomName(),
-        'submitted[email]' => $this->randomName() .'@'. $this->randomName() .'.com',
+        'submitted[email]' => $this->randomName() . '@' . $this->randomName() . '.com',
       );
-      $this->drupalGet('node/'. $nid);
+      $this->drupalGet('node/' . $nid);
       $this->drupalPost(NULL, $edit, 'Submit');
     }
   }
