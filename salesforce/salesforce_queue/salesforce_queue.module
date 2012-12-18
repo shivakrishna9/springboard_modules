@@ -43,13 +43,6 @@ function salesforce_queue_menu() {
     'weight' => 10,
   );
 
-  $items['salesforce-queue-sandbox'] = array(
-    'title' => 'Salesforce queue sandbox',
-    'page callback' => 'salesforce_queue_sandbox',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
   return $items;
 }
 
@@ -135,16 +128,6 @@ function salesforce_queue_salesforce_push_queue_item_alter(&$item, $mapping) {
   print '</pre>';
   //die();
 
-}
-
-
-function salesforce_queue_sandbox() {
-  $page = array(
-    'FirstName' => 'Phillip',
-    'LastName' => 'Cave',
-    'Account' => 'User::User::2',
-  );
-  $qid = salesforce_queue_insert('1', 'entity', 'page', 'Page', 'upsert', $page, 'Email');
 }
 
 /**
