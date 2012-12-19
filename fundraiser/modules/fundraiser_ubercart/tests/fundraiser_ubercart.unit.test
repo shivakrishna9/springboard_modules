@@ -48,7 +48,7 @@ class FundraiserUbercartUnitTestCase extends FundraiserUbercartUnitTestSetup {
   function testUbercartDBFunctions() {
     // Check countries created.
     $countries = _fundraiser_ubercart_get_countries();
-    $this->assertEqual(count($countries), 245, '_fundraiser_ubercart_get_countries() got correct default number of countries.', 'testUbercartDBFunctions');
+    $this->assertEqual(count($countries), 243, '_fundraiser_ubercart_get_countries() got correct default number of countries.', 'testUbercartDBFunctions');
 
     // Check zones.
     $zones = _fundraiser_ubercart_get_zone_by_country(840); // For US.
@@ -56,7 +56,7 @@ class FundraiserUbercartUnitTestCase extends FundraiserUbercartUnitTestSetup {
 
     // Check the higher level related array construction of this data.
     $countries_to_zones = fundraiser_ubercart_get_countries();
-    $this->assertEqual(count($countries_to_zones->countries), 245, 'fundraiser_ubercart_get_countries() got correct default number of countries.', 'testUbercartDBFunctions');
+    $this->assertEqual(count($countries_to_zones->countries), 243, 'fundraiser_ubercart_get_countries() got correct default number of countries.', 'testUbercartDBFunctions');
     $this->assertEqual($countries_to_zones->countries[124]->country_name, 'Canada', '_fundraiser_ubercart_get_countries() got correct name for US.', 'testUbercartDBFunctions');
     $this->assertEqual($countries_to_zones->countries[840]->country_name, 'United States', '_fundraiser_ubercart_get_countries() got correct name for US.', 'testUbercartDBFunctions');
     $this->assertEqual(count($countries_to_zones->countries[840]->zones), 65, 'fundraiser_ubercart_get_countries() got correct default number of zones for US.', 'testUbercartDBFunctions');
