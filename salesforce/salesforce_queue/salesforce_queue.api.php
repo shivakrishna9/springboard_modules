@@ -61,5 +61,23 @@ function hook_salesforce_queue_delete_item($drupal_id, $module, $delta) {
 }
 
 /**
+ * Fire off behavior before the queue processing begins
+ *
+ * @param SalesforceQueue $queue
+ */
+function hook_salesforce_queue_preprocess_queue(SalesforceQueue $queue) {
+
+}
+
+/**
+ * Fire off behavior after the queue processing completes
+ *
+ * @param SalesforceQueue $queue
+ */
+function hook_salesforce_queue_postprocess_queue(SalesforceQueue $queue) {
+
+}
+
+/**
  * @}
  */
