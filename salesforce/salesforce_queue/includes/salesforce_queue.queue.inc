@@ -111,12 +111,14 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    * @return int
    */
   public function numberOfItems() {
-    $sql = "SELECT COUNT(item_id)
-      FROM {salesforce_queue}";
+    $query = db_select('salesforce_queue', 'q')
+      ->fields('q', array('item_id'));
     if ($this->queue_name != 'all') {
-      $sql .= " WHERE queue = :queue_name";
+      $query->condition('queue', $this->queue_name);
     }
-    return db_query($sql, array(':queue_name' => $this->queue_name))
+    return $query
+      ->countQuery()
+      ->execute()
       ->fetchField();
   }
 
@@ -138,15 +140,15 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // until an item is successfully claimed or we are reasonably sure there
     // are no unclaimed items left.
     while (TRUE) {
-      $sql = "SELECT *
-        FROM {salesforce_queue} q
-        WHERE expire = 0";
-      $sql_vars = array();
+      $query = db_select('salesforce_queue', 'q')
+        ->fields('q')
+        ->condition('expire', 0)
+        ->range(0, 1)
+        ->orderBy('created', 'ASC');
       if ($this->queue_name != 'all') {
-        $sql .= " AND queue = :queue_name";
-        $sql_vars[':queue_name'] = $this->queue_name;
+        $query->condition('queue', $this->queue_name);
       }
-      $item = db_query_range($sql, 0, 1, $sql_vars)->fetchObject();
+      $item = $query->execute()->fetchObject();
       if ($item) {
         // Try to update the item. Only one thread can succeed in UPDATEing the
         // same row. We cannot rely on REQUEST_TIME because items might be
