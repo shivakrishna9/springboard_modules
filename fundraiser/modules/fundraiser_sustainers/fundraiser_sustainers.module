@@ -798,22 +798,19 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   foreach ($donations as $donation) {
     // Get the original donation.
     $donation = fundraiser_donation_get_donation($donation->did);
-    // If the donation has not been charged yet, update it. If it has, leave it alone.
-    if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
-      // Update it.
-      $donation->donation = array_merge($donation->donation, $submitted_values);
-      // Mark the billing information as needing to be updated.
-      $donation->update_billing = TRUE;
-      // Save each donation.
-      fundraiser_donation_update($donation);
-      // Add a comment.
-      global $user;
-      $username = isset($user->name) ? $user->name : 'Anonymous';
-      fundraiser_donation_comment($donation, 'The card to be charged was changed on @date by @username.',
-        array('@date' => format_date(strtotime('now')), '@username' => $username));
-      watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
-        array('@did' => $donation->did));
-    }
+    // Update it.
+    $donation->donation = array_merge($donation->donation, $submitted_values);
+    // Mark the billing information as needing to be updated.
+    $donation->update_billing = TRUE;
+    // Save each donation.
+    fundraiser_donation_update($donation);
+    // Add a comment.
+    global $user;
+    $username = isset($user->name) ? $user->name : 'Anonymous';
+    fundraiser_donation_comment($donation, 'The card to be charged was changed on @date by @username.',
+      array('@date' => format_date(strtotime('now')), '@username' => $username));
+    watchdog('fundraiser_sustainers', 'Billing information updated for #@did.',
+      array('@did' => $donation->did));
   }
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
