@@ -48,7 +48,7 @@ function sustainer_pause_menu() {
 }
 
 /**
- * Implements hook_perm().
+ * Implements hook_permission().
  */
 function sustainer_pause_permission() {
   return array(
