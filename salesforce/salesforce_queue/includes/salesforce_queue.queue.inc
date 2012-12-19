@@ -18,6 +18,13 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   protected $queue_name;
 
   /**
+   * List of IDs used to identify unique leasors
+   *
+   * @var array
+   */
+  protected $leasor_ids;
+
+  /**
    * A queue object for the given queue
    *
    * @param string $queue_name
@@ -123,7 +130,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Grab a single item from the initiated queue and inform others it is taken
+   * Wrapper for claimBatch() to claim just a single item from the queue
    *
    * @TODO Figure out best default lease time
    *
@@ -135,44 +142,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   Returns all the information about the item from the queue.
    */
   public function claimItem($lease_time = 30) {
-    // Claim an item by updating its expire fields. If claim is not successful
-    // another thread may have claimed the item in the meantime. Therefore loop
-    // until an item is successfully claimed or we are reasonably sure there
-    // are no unclaimed items left.
-    while (TRUE) {
-      $query = db_select('salesforce_queue', 'q')
-        ->fields('q')
-        ->condition('expire', 0)
-        ->range(0, 1)
-        ->orderBy('created', 'ASC');
-      if ($this->queue_name != 'all') {
-        $query->condition('queue', $this->queue_name);
-      }
-      $item = $query->execute()->fetchObject();
-      if ($item) {
-        // Try to update the item. Only one thread can succeed in UPDATEing the
-        // same row. We cannot rely on REQUEST_TIME because items might be
-        // claimed by a single consumer which runs longer than 1 second. If we
-        // continue to use REQUEST_TIME instead of the current time(), we steal
-        // time from the lease, and will tend to reset items before the lease
-        // should really expire.
-        $update = db_update('salesforce_queue')
-          ->fields(array(
-            'expire' => time() + $lease_time,
-          ))
-          ->condition('item_id', $item->item_id)
-          ->condition('expire', 0);
-        // If there are affected rows, this update succeeded.
-        if ($update->execute()) {
-          $item = $this->unfoldItem($item);
-          return $item;
-        }
-      }
-      else {
-        // No items currently available to claim.
-        return FALSE;
-      }
-    }
+    $items = $this->claimBatch(1, $lease_time);
+    return $items[0];
   }
 
   /**
@@ -258,6 +229,62 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     return $item;
   }
 
+  /**
+   * Grab a batch of items from the initiated queue and inform others they are taken
+   *
+   * @TODO Figure out best default lease time
+   *
+   * @param int $quantity
+   *   The maximum number of items to retreive from the queue.  If the queue
+   *   does not have that many items, all remaining items will be retreived.
+   * @param int $lease_time
+   *   The amount of time you believe it will take to process the item.  If your
+   *   process takes longer, another process could take the item.
+   *
+   * @return array
+   *   Returns an array of objects retreived from the queue up to the number of
+   *   items requested for $quantity. FALSE if no items were retreived from the
+   *   queue.
+   */
+  public function claimBatch($quantity = 200, $lease_time = 3600) {
+    // DrupalQueue first selects a row and then tries to update the row, and
+    // will try again if the update fails because another worker took it in the
+    // mean time.  For a batch situation, we will first update the rows and then
+    // claim all rows that have our leasor id.  This should allow us to claim
+    // batches while avoiding multiple workers steping on each other's toes.
+
+    // Update the number of rows that match our quantity
+    $id = uniqid();
+    $this->leasor_ids[] = $id;
+    $expire = time() + $lease_time; // REQUEST_TIME not fast enough
+    $placeholders = array(
+      ':expire' => $expire,
+      ':leasor' => $id,
+    );
+    $sql = "UPDATE {salesforce_queue}
+      SET expire = :expire,
+        leasor = :leasor
+      WHERE expire = 0";
+    if ($this->queue_name != 'all') {
+      $sql .= " AND queue = :queue_name";
+      $placeholders[':queue_name'] = $this->queue_name;
+    }
+    // placeholders fail in limit, and range fails for UPDATE
+    $sql .= " ORDER BY created ASC LIMIT " . (int)$quantity;
+    db_query($sql, $placeholders);
+
+    // Select the items leased to us
+    $result = db_select('salesforce_queue', 'q')
+      ->fields('q')
+      ->condition('leasor', $id)
+      ->orderBy('created', 'ASC')
+      ->execute();
+    $items = array();
+    foreach ($result as $record) {
+      $items[] = $this->unfoldItem($record);
+    }
+    return empty($items) ? FALSE : $items;
+  }
 
   /**
    * Check to see if a given item is already in the queue
