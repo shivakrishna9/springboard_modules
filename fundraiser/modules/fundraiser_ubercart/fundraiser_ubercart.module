@@ -375,13 +375,10 @@ function _fundraiser_ubercart_zone_field_display($form, $form_state, $field) {
     // Filter options down to just the zones available for this country.
     if (isset($country_field['#default_value'])) {
       $default = $country_field['#default_value'];
-    }
-    else {
-      $default = array_shift(array_keys($country_field['#options']));
-    }
-    $default = fundraiser_ubercart_get_country_id_by_iso2($default);
-    if (isset($countries->countries[ $default ])) {
-      $available_zones = $countries->countries[ $default ]->zones;
+      $default = fundraiser_ubercart_get_country_id_by_iso2($default);
+      if (isset($countries->countries[ $default ])) {
+        $available_zones = $countries->countries[ $default ]->zones;
+      }
     }
   }
   // Given available zones, filter the dropdown to match.

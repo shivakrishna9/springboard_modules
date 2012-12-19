@@ -814,6 +814,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   }
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
+  // Update this donation (don't save it) so we have the right parentage with the new billing.
+  $master_donation->donation = array_merge($master_donation->donation, $submitted_values);
   // Create new orders based on expiration date as needed.
   _fundraiser_sustainers_create_future_orders($master_donation, $form_state['values']['card_expiration_month'],
     $form_state['values']['card_expiration_year']);
@@ -825,18 +827,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
  * If the recurring donations exist already update, cancelling those that are past expiration.
  */
 function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
-  // Add the master to the recurring table.
-  $recurring_donation = array(
-    'did' => $donation->did,
-    'master_did' => $donation->did,
-    'next_charge' => strtotime('now'),
-    'gateway_resp' => 'success',
-    'attempts' => 1,
-  );
-  // Update the recurring table.
-  _fundraiser_sustainers_create_recurring($recurring_donation);
-
-  // Handle the rest of the set.
+  // Handle the rest of the set based on the given donation.
   $start = strtotime("now");
   $stop = mktime(0, 0, 0, $month, 1, $year);
   $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
@@ -993,6 +984,16 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
     // If this is in fact a recurring donation, then we act.
     if ($donation->donation['recurs_monthly'] == TRUE) {
       $donation->recurring->master_did = $donation->did;
+      // Add the master to the recurring table.
+      $recurring_donation = array(
+        'did' => $donation->did,
+        'master_did' => $donation->did,
+        'next_charge' => strtotime('now'),
+        'gateway_resp' => 'success',
+        'attempts' => 1,
+      );
+      // Update the recurring table.
+      _fundraiser_sustainers_create_recurring($recurring_donation);
       // This created donation is the master, so passing it in to create the set.
       _fundraiser_sustainers_create_future_orders($donation, $donation->donation['card_expiration_month'], $donation->donation['card_expiration_year']);
     }
