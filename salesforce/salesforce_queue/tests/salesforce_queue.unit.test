@@ -54,6 +54,15 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
   }
 
   /**
+   * Test for salesforce_queue_get()
+   */
+  public function testGet() {
+    salesforce_queue_insert('1', 'user', 'user', 'Contact', 'upsert', $this->example_contact, 'Email');
+    $item = salesforce_queue_get('1', 'user', 'user', 'Contact');
+    $this->assertEqual('John', $item->sobject->FirstName, 'Fetched item from queue matches inserted item.');
+  }
+
+  /**
    * Test for salesforce_queue_dequeue()
    */
   public function testDequeue() {

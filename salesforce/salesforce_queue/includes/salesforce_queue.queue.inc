@@ -162,8 +162,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
           ->condition('expire', 0);
         // If there are affected rows, this update succeeded.
         if ($update->execute()) {
-          $item->sobject = json_decode($item->sobject);
-          $item->sobject->fields = (array)$item->sobject->fields;
+          $item = $this->unfoldItem($item);
           return $item;
         }
       }
@@ -245,6 +244,20 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
 
   /**
+   * Helper method to open an item after it has been retreived from the database
+   */
+  private function unfoldItem($item) {
+    if (is_object($item)) {
+      $item->sobject = json_decode($item->sobject);
+      if (isset($item->sobject->fields)) {
+        $item->sobject->fields = (array)$item->sobject->fields;
+      }
+    }
+    return $item;
+  }
+
+
+  /**
    * Check to see if a given item is already in the queue
    *
    * @param array $data
@@ -270,5 +283,37 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->execute()
       ->fetchField();
     return $count > 0;
+  }
+
+  /**
+   * Retreive an item from the queue
+   *
+   * Do NOT use this to process an item. 'Get' does not lease queue items and
+   * merely provides you the information about the queue item.  In order to
+   * retreive an item for processing, you must 'claim' it.
+   *
+   * @param int $drupal_id
+   *   Unique identifier of the Drupal object, such as the entity ID
+   * @param string $module
+   *   Module implementing the data type
+   * @param varchar $delta
+   *   Name or id of the subtype
+   * @param string $salesforce_type
+   *   Salesforce object type
+   *
+   * @return object
+   *   The queue item you requested, or FALSE if the item is not there
+   */
+  public function getItem($drupal_id, $module, $delta, $salesforce_type) {
+    $item = db_select('salesforce_queue', 'q')
+      ->fields('q')
+      ->condition('drupal_id', $drupal_id)
+      ->condition('module', $module)
+      ->condition('delta', $delta)
+      ->condition('salesforce_type', $salesforce_type)
+      ->execute()
+      ->fetchObject();
+    $item = $this->unfoldItem($item);
+    return $item;
   }
 }

@@ -169,6 +169,38 @@ function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, 
 }
 
 /**
+ * Wrapper to fetch a specific item from the queue
+ *
+ * Do NOT use this to process an item. 'Get' does not lease queue items and
+ * merely provides you the information about the queue item.  In order to
+ * retreive an item for processing, you must 'claim' it.
+ *
+ * @param $drupal_id
+ *   The id of the Drupal object. This could be a nid, uid, sid, etc.
+ * @param $module
+ *   The module name that implements the delta. For node types this would be
+ *   entity.
+ * @param $delta
+ *   The module sub-type. For node types this would be node type name, article
+ *   for instance.
+ * @param $salesforce_type
+ *   The name of the Salesforce object type.
+ *
+ * @return object
+ *   The queue item, otherwise FALSE if the item is not in the queue
+ */
+function salesforce_queue_get($drupal_id, $module, $delta, $salesforce_type) {
+  $data = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->getItem($drupal_id, $module, $delta, $salesforce_type);
+}
+
+/**
  * Wrapper to determine if an item is already in the queue
  *
  * @param $drupal_id
