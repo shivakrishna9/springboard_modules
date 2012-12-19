@@ -12,14 +12,14 @@ Drupal.behaviors.emailBehavior = function(){
   });
 
   $('#edit-template-wrapper-preview').mouseout(function(){
-    $('#node-form').get(0).setAttribute('action', $old_action);
-     $current_action = $('#node-form').attr('action');
+    $('#edit-template-wrapper-preview').get(0).setAttribute('action', $old_action);
+     $current_action = $('#edit-template-wrapper-preview').attr('action');
   });
 
   $('#edit-submit').mouseover(function() {
     // This shouldn't be necessary.
     $('#fundraiser-confirmation-settings-form').get(0).setAttribute('action', $old_action);
-
+    $current_action = $('#edit-template-wrapper-preview').attr('action');
   });
 };
 
