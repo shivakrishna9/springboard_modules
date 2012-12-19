@@ -1073,12 +1073,23 @@ function salesforce_management_api_get_campaigns() {
   else {
     $sf = salesforce_management_api_connect();
     $campaigns = array();
+    $continue = TRUE;
     // only continue if we got a valid connection
     if ($sf) {
-      $results = $sf->client->query("select Id, Name from Campaign Order By Name");
-      if (count($results->records)) {
-        foreach ($results->records as $campaign) {
+      $soql = "select Id, Name from Campaign Order By Name";
+      // Allow others to rewrite this and take the last one added
+      $newsoql = end(module_invoke_all('salesforce_get_campaigns_soql'));
+      if ($newsoql) { $soql = $newsoql; }
+      $results = $sf->client->query($soql);
+      while ($continue && count($results->records)) {
+        foreach($results->records as $campaign) {
           $campaigns[$campaign->Id] = $campaign->Name;
+        }
+        if ($results->done) {
+          $continue = FALSE;
+        }
+        else {
+          $results = $sf->client->queryMore($results->queryLocator);
         }
       }
     }
