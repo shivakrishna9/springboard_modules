@@ -15,5 +15,5 @@
 ?>
 
 <div id="welcome-back">
-  Welcome back <? print $values['first_name']; ?>. Not <? print $values['first_name']; ?>? <? print l(t('Click here'), 'secure-prepopulate/not-me/' . $nid); ?>
+  Welcome back <?php print $values['first_name']; ?>. Not <?php print $values['first_name']; ?>? <?php print l(t('Click here'), 'secure-prepopulate/not-me/' . $nid); ?>
 </div>
