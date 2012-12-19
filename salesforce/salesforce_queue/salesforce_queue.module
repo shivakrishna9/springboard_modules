@@ -215,7 +215,7 @@ function salesforce_queue_get($drupal_id, $module, $delta, $salesforce_type) {
  * @return bool
  *   TRUE if the item is in the queue, FALSE if the item is not
  */
-function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type) {
+function salesforce_queue_in_queue($drupal_id, $module, $delta, $salesforce_type) {
   $data = array(
     'drupal_id' => $drupal_id,
     'module' => $module,

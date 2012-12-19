@@ -68,10 +68,10 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
   public function testDequeue() {
     // Add an item in the queue and ensure it is there
     salesforce_queue_insert('1', 'user', 'user', 'Contact', 'create', $this->example_contact);
-    $this->assertTrue(salesforce_queue_enqueue('1', 'user', 'user', 'Contact'), 'New queue item created.');
+    $this->assertTrue(salesforce_queue_in_queue('1', 'user', 'user', 'Contact'), 'New queue item created.');
 
     // Delete the item and ensure it is not there
     salesforce_queue_dequeue('1', 'user', 'user', 'Contact');
-    $this->assertTrue(salesforce_queue_enqueue('1', 'user', 'user', 'Contact'), 'Deleted queue item is gone.');
+    $this->assertTrue(salesforce_queue_in_queue('1', 'user', 'user', 'Contact'), 'Deleted queue item is gone.');
   }
 }
