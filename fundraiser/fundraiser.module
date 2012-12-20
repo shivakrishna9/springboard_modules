@@ -399,6 +399,10 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
       // Return a 404 if the page isn't secure and should be.
       watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
         array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+      $message = variable_get('fundraiser_http_error_message', t('We\'re sorry. The donation form you are trying ' .
+        'to access has not been secured properly. Safeguarding your personal information is extremely important ' .
+        'to us, therefore we cannot accept donations from this form at this time.'));
+      drupal_set_message(t($message));
       drupal_not_found();
       exit();
     }
