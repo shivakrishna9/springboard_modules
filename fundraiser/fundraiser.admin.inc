@@ -22,6 +22,15 @@ function fundraiser_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_development_mode', 0),
     '#description' => t('Development mode allows you to access donation forms over HTTP.'),
   );
+  $form['fundraiser']['fundraiser_http_error_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('HTTPS error message'),
+    '#default_value' => variable_get('fundraiser_http_error_message', t('We\'re sorry. The donation form you are trying ' .
+        'to access has not been secured properly. Safeguarding your personal information is extremely important ' .
+        'to us, therefore we cannot accept donations from this form at this time.')),
+    '#description' => t('The message to display to the user when a donation page is not secure and the site is in ' .
+      'NOT in development mode.'),
+  );
   $form['fundraiser']['fundraiser_default_minimum'] = array(
     '#type' => 'textfield',
     '#title' => t('Default minimum donation amount'),
