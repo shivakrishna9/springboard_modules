@@ -43,13 +43,6 @@ function salesforce_queue_menu() {
     'weight' => 10,
   );
 
-  $items['salesforce-queue-sandbox'] = array(
-    'title' => 'Salesforce queue sandbox',
-    'page callback' => 'salesforce_queue_sandbox',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
   return $items;
 }
 
@@ -65,6 +58,11 @@ function salesforce_queue_permission() {
     ),
   );
 }
+
+/**
+ * @name salesforce_queue_cron  Cron controls
+ * @{
+ */
 
 /**
  * Implements hook_cron().
@@ -110,45 +108,32 @@ function salesforce_queue_standalone_cron() {
 }
 
 /**
+ * Indicates whether or not queue standalone cron is enabled.
+ */
+function _salesforce_queue_standalone_cron_enabled() {
+  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
+}
+
+/**
+ * @}
+ */
+
+
+/**
  * Processes the data in the Salesforce queue.
  */
 function salesforce_queue_process() {
   watchdog('salesforce_queue', 'The queue is being processed.');
 }
 
+
 /**
- * Implements hook_salesforce_async_queue_name().
+ * @defgroup salesforce_queue_crud CRUD wrappers for SalesforceQueue class
+ * @{
  */
-function salesforce_queue_salesforce_async_queue_name_alter(&$queue_name) {
-  // Change the queue_name so we can implement SalesforceQueue.
-  $queue_name = 'salesforce';
-}
 
 /**
- * Implements hook_salesforce_push_queue_item_alter().
- */
-function salesforce_queue_salesforce_push_queue_item_alter(&$item, $mapping) {
-  // Go ahead and convert the entity into it's Salesforce representation before
-  // stashing it into the queue.
-  print '<pre>';
-  print_r($mapping);
-  print '</pre>';
-  //die();
-
-}
-
-
-function salesforce_queue_sandbox() {
-  $page = array(
-    'FirstName' => 'Phillip',
-    'LastName' => 'Cave',
-    'Account' => 'User::User::2',
-  );
-  $qid = salesforce_queue_insert('1', 'entity', 'page', 'Page', 'upsert', $page, 'Email');
-}
-
-/**
- * Inserts an item into the Salesforce queue.
+ * Wrapper to insert an item into the Salesforce queue
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
@@ -159,72 +144,64 @@ function salesforce_queue_sandbox() {
  * @param $salesforce_type
  *   The name of the Salesforce type that is being exported.
  * @param $operation
- *   The CRUD operation being run in Salesforce (upsert, create, update, delete).
+ *   The CRUD operation being run in Salesforce (UPSERT, CREATE, UPDATE, DELETE).
  * @param $sobject
  *   The Salesforce object that is being queued.
  * @param $dedupe_field
  *   The Salesforce field to dedupe on during UPSERT operations.
  *
- * @return
- *   The id of the queue entry or false if insertion fails or a duplicate is already
- *   in the queue.
+ * @return bool
+ *   TRUE if the item was created successfully, FALSE if the item could not be
+ *   created
  */
 function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject, $dedupe_field = NULL) {
-
-  // allow other modules to alter the object before it is queued
-  drupal_alter('salesforce_queue_prequeue', $sobject, $drupal_id, $module, $delta);
-
-  if (!salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)) {
-
-    $qid = db_insert('salesforce_queue')
-      ->fields(array(
-        'drupal_id' => $drupal_id,
-        'module' => $module,
-        'delta' => $delta,
-        'salesforce_type' => $salesforce_type,
-        'operation' => $operation,
-        'dedupe_field' => $dedupe_field,
-        'sobject' => json_encode($sobject),
-        'created' => REQUEST_TIME,
-        ))
-      ->execute();
-
-    return $qid;
-  }
-  else {
-    // TODO: log or throw exception?
-    return FALSE;
-  }
+  $item = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+    'operation' => $operation,
+    'dedupe_field' => $dedupe_field,
+    'sobject' => $sobject,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->createItem($item);
 }
 
 /**
- * Determines if an item is already in the queue.
+ * Wrapper to fetch a specific item from the queue
+ *
+ * Do NOT use this to process an item. 'Get' does not lease queue items and
+ * merely provides you the information about the queue item.  In order to
+ * retreive an item for processing, you must 'claim' it.
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
  * @param $module
- *   The module name that implements the delta. For node types this would be entity.
+ *   The module name that implements the delta. For node types this would be
+ *   entity.
  * @param $delta
- *   The module sub-type. For node types this would be node type name, article for instance.
+ *   The module sub-type. For node types this would be node type name, article
+ *   for instance.
  * @param $salesforce_type
  *   The name of the Salesforce object type.
+ *
+ * @return object
+ *   The queue item, otherwise FALSE if the item is not in the queue
  */
-function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type) {
-  $query = db_select('salesforce_queue', 's')
-    ->fields('s', array('id'))
-    ->condition('s.drupal_id', $drupal_id)
-    ->condition('s.module', $module)
-    ->condition('s.delta', $delta)
-    ->condition('s.salesforce_type', $salesforce_type);
-
-  $count = $query->countQuery()->execute()->fetchField();
-
-  // Return TRUE if this item is already in the queue.
-  return $count > 0;
+function salesforce_queue_get($drupal_id, $module, $delta, $salesforce_type) {
+  $data = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->getItem($drupal_id, $module, $delta, $salesforce_type);
 }
 
 /**
- * Removes an item from the queue.
+ * Wrapper to determine if an item is already in the queue
  *
  * @param $drupal_id
  *   The id of the Drupal object. This could be a nid, uid, sid, etc.
@@ -234,19 +211,51 @@ function salesforce_queue_enqueue($drupal_id, $module, $delta, $salesforce_type)
  *   The module sub-type. For node types this would be node type name, article for instance.
  * @param $salesforce_type
  *   The name of the Salesforce object type.
+ *
+ * @return bool
+ *   TRUE if the item is in the queue, FALSE if the item is not
+ */
+function salesforce_queue_in_queue($drupal_id, $module, $delta, $salesforce_type) {
+  $data = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  return $queue->createItem($data);
+}
+
+/**
+ * Wrapper to remove an item from the queue.
+ *
+ * @param $drupal_id
+ *   The id of the Drupal object. This could be a nid, uid, sid, etc.
+ * @param $module
+ *   The module name that implements the delta. For node types this would be entity.
+ * @param $delta
+ *   The module sub-type. For node types this would be node type name, article for instance.
+ * @param $salesforce_type
+ *   The name of the Salesforce object type.
+ *
+ * @return bool
+ *   TRUE if the item was removed from the queue, FALSE if the item was not
  */
 function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type) {
-  // TODO: pre-delete hook
-  $count = db_delete('salesforce_queue')
-    ->condition('drupal_id', $drupal_id)
-    ->condition('module', $module)
-    ->condition('delta', $delta)
-    ->condition('salesforce_type', $salesforce_type)
-    ->execute();
-
-  // TODO: log removal
-  return $count;
+  $item = array(
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'salesforce_type' => $salesforce_type,
+  );
+  $queue = SalesforceQueue::get();
+  $item = (object)$item;
+  return $queue->deleteItem($item);
 }
+
+/**
+ * @} salesforce_queue_crud
+ */
 
 /**
  * Invokes hook_salesforce_queue_info().
@@ -261,11 +270,4 @@ function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type)
 function salesforce_queue_info() {
   // Get information from other modules.
   return module_invoke_all('salesforce_queue_info');
-}
-
-/**
- * Indicates whether or not queue standalone cron is enabled.
- */
-function _salesforce_queue_standalone_cron_enabled() {
-  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
 }

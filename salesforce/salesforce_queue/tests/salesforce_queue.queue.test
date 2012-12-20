@@ -88,6 +88,26 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
     // The new_queue and whole_queue should not have picked up the same item
     $this->assertNotEqual($whole_queue_item->item_id, $new_queue_item->item_id, 'New queue and whole queue processes did not lease the same item.');
 
+    // If you create an item with the same primary keys [drupal_id, module,
+    // delta, salesforce_type] as another item already in the queue, then that
+    // item will be replaced with the new data instead of a new queue item being
+    // created. Lets re-create an item we just fetched and see it merge.
+    $data = (array)$whole_queue_item;
+    // Unset everything we don't use when creating a new item
+    $keys = array('drupal_id', 'module', 'delta', 'salesforce_type', 'operation', 'dedupe_field', 'sobject');
+    foreach ($data as $key => $value) { if (!in_array($key, $keys)) unset($data[$key]); }
+
+    // Change one value that is not a primary key, create a queue item and
+    // ensure that it was merged with the original
+    $data['dedupe_field'] = 'foobar';
+    $whole_queue->createItem($data);
+    $dedupe_value = db_select('salesforce_queue', 'q')
+      ->fields('q', array('dedupe_field'))
+      ->condition('item_id', $whole_queue_item->item_id)
+      ->execute()
+      ->fetchField();
+    $this->assertEqual('foobar', $dedupe_value, 'Requeing item updated old queue item.');
+
     // releaseItem() && deleteItem()
     $items = array(
       array($whole_queue, $whole_queue_item),
@@ -106,7 +126,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
       $this->assertFalse($record, 'The deleted queue item is nowhere to be found in the queue.');
     }
 
-    // deleteQueue
+    // deleteQueue()
     // When you define a specific queue, it deletes all items in that queue only
     $foo_queue->deleteQueue();
     $result = $foo_queue->numberOfItems();
@@ -122,7 +142,23 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
     $whole_queue->deleteQueue();
     $result = $whole_queue->numberOfItems();
     $this->assertEqual(0, $result, 'Counted '. $result .' items in the whole queue when we had purged the queue.');
+    $result = $foo_queue->numberOfItems();
+    $this->assertEqual(0, $result, 'Counted '. $result .' items in the Foo queue when we had purged the queue.');
 
+    // itemInQueue()
+    // Lets see if an item we've claimed is in the queue
+    $this->createQueueItems($whole_queue, 15);
+    $item = $whole_queue->claimItem();
+    $data = (array)$item;
+    $this->assertTrue($whole_queue->itemInQueue($data), 'The claimed item is in queue.');
+    // Now lets claim items and change just one trait and ensure it fails
+    $keys = array('drupal_id', 'module', 'delta', 'salesforce_type');
+    foreach ($keys as $key) {
+      $item = $whole_queue->claimItem();
+      $data = (array)$item;
+      $data[$key] = 'foo';
+      $this->assertFalse($whole_queue->itemInQueue($data), 'The altered claimed item is not in the queue.');
+    }
   }
 
   public function createQueueItems(SalesforceQueue $queue, $num = 5) {
