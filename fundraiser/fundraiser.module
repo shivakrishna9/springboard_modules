@@ -475,17 +475,24 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
       drupal_not_found();
       exit();
     }
-    // Set a reminder to turn off development mode on the page view.
-    if (variable_get('fundraiser_development_mode', 0) && $view_mode == 'full') {
-      drupal_set_message(t('Fundraiser is currently running in development mode. Remember to ' .
-        '!link this feature on production websites.',
-        array('!link' => l('turn off', 'admin/config/system/fundraiser'))));
+
+    // Messaging checks. We want to hide warning/admin messages if user can't
+    // edit the current node.
+    if ($view_mode == 'full' && node_access("update", $node)) {
+      // Set a reminder to turn off development mode on the page view.
+      if (variable_get('fundraiser_development_mode', 0)) {
+        $link = l('turn off', 'admin/config/system/fundraiser');
+        drupal_set_message(t('Fundraiser is currently running in development mode. Remember to ' .
+          '!link this feature on production websites.',
+           array('!link' => $link)));
+      }
+      // Throw a warning if no confirmation email has been configured.
+      if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL)) {
+        drupal_set_message(t('Warning: no confirmation emails have been configured for this donation form.' .
+          ' Users who submit a donation will not recieve an email confirming their donation.'), 'error');
+      }
     }
 
-    // Throw a warning if no confirmation email has been configured.
-    if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL) && $view_mode == 'full') {
-      drupal_set_message(t('Warning: no confirmation emails have been configured for this donation form. Users who submit a donation will not recieve an email confirming their donation.'), 'error');
-    }
   }
   // NOTE: Glue display modules are responsible for using hook_node_view to display themselves with the node.
   // Some, like webform based glue modules, already do the work of displaying on a form themselves.
