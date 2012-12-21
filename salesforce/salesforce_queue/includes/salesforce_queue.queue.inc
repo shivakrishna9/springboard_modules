@@ -34,14 +34,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   subset they are in.
    */
   public static function get($queue_name = 'all') {
-    $queues = &drupal_static(__function__);
-    if (!isset($queues)) {
-      $queues = array();
-    }
-    if (!isset($queues[$queue_name])) {
-      $queues[$queue_name] = new SalesforceQueue($queue_name);
-    }
-    return $queues[$queue_name];
+    $queue = new SalesforceQueue($queue_name);
+    return $queue;
   }
 
   /**
