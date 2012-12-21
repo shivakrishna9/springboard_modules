@@ -8,79 +8,6 @@
 // Include theme related functions.
 require_once('fundraiser.theme.inc'); //TODO merge this back in.
 
-// THESE settings likely to be replaced elsewhere? Hold onto them for the moment.
-/**
- * Form for fundraiser confirmation page settings.
- *
-function webform_confirmations_settings_form($form, &$form_state, $node) {
-  // Additional values have been loaded on node_load, so are available here.
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-
-  $form['email'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Confirmation email settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['email']['receipt_email_address'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Address'),
-    '#description' => t('The email address that the receipt email will come from.'),
-    '#weight' => -4.6,
-    '#maxlength' => 255,
-    '#default_value' => isset($node->receipt_email_address) ? $node->receipt_email_address : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_from'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email From'),
-    '#description' => t('The name that is associated with the receipt email address.'),
-    '#weight' => -4.5,
-    '#default_value' => isset($node->receipt_email_from) ? $node->receipt_email_from : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Receipt Email Subject'),
-    '#description' => t('The subject of the donation receipt email.'),
-    '#weight' => -4.4,
-    '#default_value' => isset($node->receipt_email_subject) ? $node->receipt_email_subject : '',
-    '#required' => TRUE,
-  );
-  $form['email']['receipt_email_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Confirmation Email Message'),
-    '#weight' => -4.3,
-    '#default_value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-    '#weight' => 300,
-  );
-  return $form;
-}
-//*/
-
-/**
- * Validation function for fundraiser_webform_confirmation_settings_form().
- *
-function webform_confirmations_settings_form_validate($form, &$form_state) {
-  // Validate the email address.
-  if (!_fundraiser_validate_email($form_state['values']['receipt_email_address'])) {
-    form_set_error('receipt_email_address', t('Receipt Email Address must be a valid email address.'));
-  }
-}
-
-// Update the fundraiser with the submitted material.\
-//  $fundraiser->receipt_email_from = check_plain($form_state['values']['receipt_email_from']);
-//  $fundraiser->receipt_email_address = $form_state['values']['receipt_email_address'];
-//  $fundraiser->receipt_email_subject = check_plain($form_state['values']['receipt_email_subject']);
-//  $fundraiser->receipt_email_message = $form_state['values']['receipt_email_message'];
-//*/
-
 /**
  * Implements hook_permission().
  */
@@ -466,14 +393,6 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
     // Track the pageview.
     if ($view_mode == 'full') {
       _fundraiser_update_tracking_value($node->nid, 'pageviews');
-    }
-    // Check to see if the form is being accessed over HTTPS.
-    if ($view_mode == 'full' && (!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
-      // Return a 404 if the page isn't secure and should be.
-      watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
-        array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
-      drupal_not_found();
-      exit();
     }
 
     // Messaging checks. We want to hide warning/admin messages if user can't
@@ -1101,23 +1020,46 @@ function fundraiser_validate_form_fields($form, $form_state, $submission_fields,
  * Must be called from glue display module when displaying the donation form.
  */
 function fundraiser_donation_form(&$form, &$form_state) {
-  // Add validation and submit routines for fundraiser to get called during submission.
-  // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
-  // We add these first to make sure they're available for the hook call.
-  $form['#validate'][] = 'fundraiser_donation_validate';
-  $form['#submit'][] = 'fundraiser_donation_submit';
-
-  // When confirmations are moved, this goes elsewhere.
-  $form['#submit'][] = 'fundraiser_donation_post_submit';
-
-  // Call hook to allow sub modules to add / manipulate the form.
-  // NOTE: we are not using module_invoke_all on purpose here.
-  // Node objects (common on webform objs) flag as recursive warnings.
-  //$form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
-  foreach (module_implements('fundraiser_donation_form') as $module) {
-    $result = module_invoke($module, 'fundraiser_donation_form', $form, $form_state);
-    if (isset($result) && is_array($result)) {
-      $form = array_merge($form, $result);
+  // Check to see if the form is being accessed over HTTPS.
+  if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
+    // Return a 404 if the page isn't secure and should be.
+    $node = $form['#node'];
+    watchdog('fundraiser', 'The donation form <em>!title</em> is not protected with SSL.',
+      array('!title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
+    $message = variable_get('fundraiser_http_error_message', t('We\'re sorry. The donation form you are trying ' .
+      'to access has not been secured properly. Safeguarding your personal information is extremely important ' .
+      'to us, therefore we cannot accept donations from this form at this time.'));
+    // Remove all other form elements.
+    foreach (element_children($form) as $child) {
+      unset($form[$child]);
+    }
+    // Display the message.
+    $form['fundraiser_http_error'] = array(
+      '#type' => 'item',
+      '#markup' => $message,
+    );
+  }
+  else {
+    // Prevent caching on this form, this will keep the back button operational.
+    drupal_add_http_header('Cache-Control', 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0');
+    // Add validation and submit routines for fundraiser to get called during submission.
+    // Otherwise, do nothing, rely on the glue modules to provide the form we need to the user.
+    // We add these first to make sure they're available for the hook call.
+    $form['#validate'][] = 'fundraiser_donation_validate';
+    $form['#submit'][] = 'fundraiser_donation_submit';
+  
+    // When confirmations are moved, this goes elsewhere.
+    $form['#submit'][] = 'fundraiser_donation_post_submit';
+  
+    // Call hook to allow sub modules to add / manipulate the form.
+    // NOTE: we are not using module_invoke_all on purpose here.
+    // Node objects (common on webform objs) flag as recursive warnings.
+    //$form = module_invoke_all('fundraiser_donation_form', $form, $form_state);
+    foreach (module_implements('fundraiser_donation_form') as $module) {
+      $result = module_invoke($module, 'fundraiser_donation_form', $form, $form_state);
+      if (isset($result) && is_array($result)) {
+        $form = array_merge($form, $result);
+      }
     }
   }
 }
