@@ -72,4 +72,42 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
     return $salesforce;
   }
+
+  /**
+   * Creates a random bunch of items to send to the given queue
+   *
+   * @param SalesforceQueue $queue
+   *   Queue to send items to
+   * @param int $num
+   *   Number of items to create
+   */
+  public function createQueueItems(SalesforceQueue $queue, $num = 5) {
+    $i = 0;
+    while ($i < $num) {
+      $i++;
+      $sObject = new stdClass;
+      $sObject->type = $this->randomName();
+      $sObject->record = $this->randomName();
+      $sObject->fields = array(
+        $this->randomName() => $this->randomName(),
+        $this->randomName() => $this->randomName(),
+        $this->randomName() => $this->randomName(),
+      );
+      $fields = array_keys($sObject->fields);
+      $fields_rand = array_rand($fields);
+      $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
+      $ops_rand = array_rand($ops);
+      $data = array(
+        'drupal_id' => rand(1, $num*100),
+        'module' => $this->randomName(),
+        'delta' => $this->randomName() .':'. rand(1, $num*100),
+        'salesforce_type' => $sObject->type,
+        'operation' => $ops[$ops_rand],
+        'dedupe_field' => $fields[$fields_rand],
+        'sobject' => $sObject,
+      );
+      $result = $queue->createItem($data);
+      $this->assertTrue($result, 'Created a queue item.');
+    }
+  }
 }
