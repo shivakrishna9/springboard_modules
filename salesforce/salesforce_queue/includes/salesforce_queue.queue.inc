@@ -13,9 +13,18 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * The name of the queue this instance is working with.
    *
+   * The 'all' queue is the multi-queue manager
+   *
    * @var string
    */
   protected $queue_name;
+
+  /**
+   * The queues that the 'all' queue manages
+   *
+   * @var array
+   */
+  protected $tracked_queues;
 
   /**
    * List of IDs used to identify unique leasors
@@ -50,6 +59,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function __construct($queue_name) {
     $this->queue_name = $queue_name;
+    $this->tracked_queues = variable_get('salesforce_queue_tracked_queues', array('new', 'retry'));
   }
 
   /**
@@ -262,7 +272,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       SET expire = :expire,
         leasor = :leasor
       WHERE expire = 0";
-    if ($this->queue_name != 'all') {
+    if ($this->queue_name == 'all') {
+      $sql .= " AND queue IN (:tracked_queues)";
+      $placeholders[':tracked_queues'] = $this->tracked_queues;
+    }
+    else {
       $sql .= " AND queue = :queue_name";
       $placeholders[':queue_name'] = $this->queue_name;
     }
