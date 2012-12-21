@@ -333,6 +333,11 @@ function _market_source_validate_cid($val) {
   if (!empty($val)) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
       if (strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
+        // The $val string might be 15 characters in length.
+        if ((strlen($val) == 15) && function_exists('salesforce_management_api_get_sfid18')) {
+          // Convert to 18 character format.
+          $val = salesforce_management_api_get_sfid18($val);
+        }
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = salesforce_management_api_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
