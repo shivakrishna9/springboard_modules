@@ -30,7 +30,7 @@ function email_wrappers_menu() {
     'file' => 'email_wrappers.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   // TODO: implement preview modal.
   $items['email_wrappers/preview_modal/%ctools_js/preview'] = array(
     'title' => 'AJAX modal dialog',
@@ -45,13 +45,13 @@ function email_wrappers_menu() {
 
 // Modal display window for email preview. At some point this should be converted to one or more theme functions/templates.
 function email_wrappers_preview_modal() {
-    
+
     module_load_include('inc', 'ctools', 'includes/modal');
     $title = 'Template Preview';
     $values = $_POST['template_wrapper'];
 
     $template = $_POST['email_wrappers_email_template'];
-   
+
     $output = array();
     $output['subject'] = $_POST['subject_custom'];
     $output['email'] = array(
@@ -63,7 +63,7 @@ function email_wrappers_preview_modal() {
     $keys = array_keys($output);
     foreach($keys as $key) {
       if (is_array($output[$key])) {
- 
+
         $preview .= '<fieldset id="field-' . $key . '"><label for="field-' . $key . '" style="font-weight:bold">' . ucfirst($key) . '</label>';
         $subkeys = array_keys($output[$key]);
         foreach ($subkeys as $subkey) {
@@ -95,7 +95,7 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
     if ($cid) {
       $form['add']['email_component']['#default_value'] = $cid;
     }
-      
+
   }
 }
 
@@ -105,9 +105,11 @@ function email_wrappers_form_webform_emails_form_alter(&$form, $form_state) {
  * Adds mail template UI to Fundraiser donation form and webform confirmation settings form.
  */
 function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
-  
+
   // Add a few tweaks to the webform email list form.
   if ($form_id === 'webform_email_edit_form') {
+    $path = drupal_get_path('module', 'email_wrappers');
+    drupal_add_js($path . '/script/email_wrappers.template_select.js');
     $template_nid = FALSE;
     if (isset($form_state['input']['email_wrappers_email_template']) && $form_state['input']['email_wrappers_email_template']) {
       $template_nid = $form_state['input']['email_wrappers_email_template'];
@@ -122,7 +124,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     if (isset($form['eid']['#value'])) {
       $defaults = email_wrappers_load_settings($form['node']['#value']->nid, $form['eid']['#value']);
     }
-  
+
     // no settings available, load defaults from the selected template
     if ($template_nid) {
       $defaults = email_wrappers_load_defaults_from_template($form_state['input']['email_wrappers_email_template']);
@@ -138,18 +140,18 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     if (isset($defaults['from_name'])) {
       _email_wrappers_webform_option_defaults($form, 'from_name', $defaults['from_name']);
     }
-  
+
     // we're gonna cache these since they may come in handy later.
     $form['email_wrappers_defaults'] = array(
       '#type' => 'value',
       '#value' => $defaults,
     );
-    
+
     // set ajax target div
     $form['#prefix'] = '<div id="webform-email-form-wrapper">';
     $form['#suffix'] = '</div>';
-  
-  
+
+
     $form['email_wrappers_email_template'] = array(
       '#type' => 'select',
       '#title' => t('Template'),
@@ -162,7 +164,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
         'effect' => 'fade',
       ),
     );
-    
+
     // add bcc field
     $form['email_wrappers_bcc'] = array(
       '#type' => 'textfield',
@@ -176,9 +178,9 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
     if ((isset($form_state['input']['email_wrappers_email_template']) && $form_state['input']['email_wrappers_email_template']) || isset($defaults['html_message'])) {
 
       $form['template']['template_option']['#access'] = FALSE;
-     
+
       $form['template']['template']['#access'] = FALSE;
- 
+
       // TODO: include filter settings?
       $form['template']['email_wrappers_html_message'] = array(
         '#type' => 'textarea',
@@ -187,7 +189,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
         '#default_value' => $defaults['html_message'],
         '#required' => TRUE,
       );
-      
+
       $form['template']['email_wrappers_text_message'] = array(
         '#type' => 'textarea',
         '#title' => t('Text-only message (no HTML allowed)'),
@@ -198,7 +200,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
 
       $form['template']['tokens']['#weight'] = 9;
       $form['template']['components']['#weight'] = 10;
-      
+
       // Unset $form_state['input'] values so imported template defaults aren't overwritten by $_POST values during ajax
       // @see:http://drupal.org/node/990502
       unset($form_state['input']['email_wrappers_html_message']);
@@ -222,7 +224,7 @@ function email_wrappers_form_webform_email_edit_form_alter(&$form, &$form_state,
 
     $form['#submit'][] = 'email_wrappers_email_submit_callback';
   }
-  
+
   if ($form_id == 'webform_email_delete_form') {
     $form['#submit'][] = 'email_wrappers_delete_callback';
   }
@@ -368,7 +370,7 @@ function email_wrappers_mail_alter(&$message) {
   if ($message['id'] == 'webform_submission' && $message['module'] == 'webform') {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
-    
+
   if (!isset($message['params']['settings'])) {
     $settings = email_wrappers_load_settings($nid, $eid);
   }
@@ -429,7 +431,7 @@ function email_wrappers_render_email_body($eid, $message, $settings) {
   $boundary = $message['params']['boundary'];
   $html_raw = str_replace('%html_message', $settings['html_message'], $settings['html_template']);
   $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
-  
+
   $multi_body  = "
 
 This is a multi-part message in MIME format.
@@ -447,7 +449,7 @@ Content-Transfer-Encoding: 8bit
 $html_raw
 
 ";
- 
+
   // TODO: if we need to do token module token replacement this would probably be a good place for it.
   // perform webform token replacement.
   return  _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
@@ -493,7 +495,7 @@ function _email_wrappers_list_templates() {
  *   extra - serialized array of additional settings
  */
 function email_wrappers_load_settings($nid, $eid) {
-  
+
   if ($eid) {
     $query = db_select('email_wrappers_webform', 'e');
     $query->join('field_data_email_wrapper_html_template', 'f', 'e.tid = f.entity_id');
