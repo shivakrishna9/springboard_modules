@@ -137,6 +137,9 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function claimItem($lease_time = 30) {
     $items = $this->claimBatch(1, $lease_time);
+    if (empty($items)) {
+      return FALSE;
+    }
     return $items[0];
   }
 
