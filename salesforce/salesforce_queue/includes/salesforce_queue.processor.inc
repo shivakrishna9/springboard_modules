@@ -22,46 +22,165 @@ class SalesforceQueueProcessor {
    *
    * @var array
    */
-  protected $items;
+  protected $items = array();
 
   /**
-   * Kicks off processing items from the given queue
+   * The configured maximum number of items that can be processed at once
+   *
+   * This depends upon the system resources
+   *
+   * @var int
+   */
+  protected $max_items = 1000;
+
+  /**
+   * The configured default time the queue will be leased to our process
+   *
+   * @var int
+   */
+  protected $lease_time = 3600;
+
+  /**
+   * Unique identifier that allows this process to unlock the lease on the queue
+   *
+   * @var string
+   */
+  protected $lease_key;
+
+  /**
+   * Salesforce object to connect with
+   *
+   * @var Salesforce
+   */
+  protected $sfapi;
+
+  /**
+   * Defines a default response to the end of the processing
+   *
+   * @var int
+   */
+  protected $end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
+
+  /**
+   * A processor object for the given queue
    *
    * @param SalesforceQueue $queue
+   *   The desired queue to process against, or NULL to process against the
+   *   multi-queue manager
+   *
+   * @return SalesforceQueueProcessor
+   *   A processor for the given queue
    */
-  public static function process(SalesforceQueue $queue) {
+  public static function get($queue = NULL) {
+    $queue = empty($queue) ? SalesforceQueue::get() : $queue;
+    $processor = new SalesforceQueueProcessor($queue);
+    return $processor;
+  }
+
+  /**
+   * @param SalesforceQueue $queue
+   */
+  public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
+    $this->max_items = variable_get('salesforce_queue_max_items', 1000);
+    $this->lease_time = variable_get('salesforce_queue_lease_item', 3600);
+  }
 
+  /**
+   * Kicks off processing up-to the maximum allowed items from the given queue
+   */
+  public function process() {
     // Invokes hook_salesforce_queue_preprocess_queue().
-    module_invoke_all('salesforce_queue_preprocess_queue', $queue);
+    module_invoke_all('salesforce_queue_preprocess_queue', $this->queue);
 
-    // @TODO all of the processing
-    if (empty($this->items)) {
-      $this->claimBatch();
+    // Check Salesforce connection
+    $this->sfapi = salesforce_get_api(); // always refresh
+    if (!$this->sfapi->isAuthorized()) {
+      // Cannot connect to Salesforce
+      watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
+        . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
+      $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
+    }
+    else {
+      // Gather items to process
+      $this->claimItems();
+      if (!empty($this->items)) {
+        // Invokes hook_salesforce_queue_process_items_alter().
+        drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
+      }
     }
 
-    // Invokes hook_salesforce_queue_postprocess_queue().
-    module_invoke_all('salesforce_queue_postprocess_queue', $queue);
+    if ($this->end_status == SALESFORCE_QUEUE_PROCESS_NOT_STARTED) {
+      // We got to the end without anyone else reporting anything!
+      $end_status = SALESFORCE_QUEUE_PROCESS_COMPLETE;
+    }
+    else {
+      $end_status = $this->end_status;
+    }
 
-    return $this;
+    $this->resetInternalState();
+
+    // Invokes hook_salesforce_queue_postprocess_queue().
+    module_invoke_all('salesforce_queue_postprocess_queue', $this->queue, $end_status);
+
+    return $end_status;
   }
 
   /**
    * Claim a batch of items to process
-   *
-   * @param int $quantity
-   *   Number of items to claim from the queue
-   * @param int $lease_time
-   *   The amount of time you believe it will take to process the batch.  If your
-   *   process takes longer, another process could take the items.
    */
-  public function claimBatch($quantity = 200, $lease_time = 3600) {
-    $items = $this->queue->claimBatch($quantity, $lease_time);
+  public function claimItems() {
+    // If there are still unprocessed items, lets finish those first
     if (empty($this->items)) {
-      $this->items = $items;
+      // Claim some items
+      $items = $this->queue->claimBatch($this->max_items, $this->lease_time);
+
+      // SalesforceQueue::claimBatch() returns FALSE if there are no more items
+      // or when the queue is currently leased
+      if (empty($items)) {
+        // Is the queue leased?
+        if ($this->queue->queueIsLeased()) {
+          // The process was run while the queue is already leased.  This could
+          // be user error, or could be a sign that processes are piling up due
+          // to some sort of conflict with server resources or connections with
+          // Salesforce, or the configuration settings about how much to process
+          // or even how often we're trying to run this process.
+          $message = 'SalesforceQueueProcess was run, but could not claim '
+            . 'items because the queue was leased. This could be a minor issue '
+            . 'or more severe issue so it would warrant you looking into this.';
+          $severity = WATCHDOG_ERROR;
+          $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
+        }
+        else if ($this->queue->numberOfItems() < 1) {
+          // No items are in the queue.  Pretty minor issue.
+          $message = 'SalesforceQueueProcess was run, but no items were found '
+            . 'in the queue to process.  Not much for you to worry about.';
+          $severity = WATCHDOG_DEBUG;
+          $this->end_status = SALESFORCE_QUEUE_PROCESS_NO_ITEMS;
+        }
+        else {
+          // If we get here, then we're really clueless as to what is going on
+          $message = 'SalesforceQueueProcess was run, but we could not claim '
+            . 'items for an unknown reason.  Eeps.';
+          $severity = WATCHDOG_ALERT;
+          $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS;
+        }
+        watchdog('salesforce_queue', $message, array(), $severity);
+      }
+      else {
+        $this->lease_key = $items[0]->lease_key;
+        $this->items = $items;
+      }
     }
-    else {
-      $this->items += $items;
-    }
+    return $this->items;
+  }
+
+  /**
+   * Release our claim on the queue and reset our internal state
+   */
+  private function resetInternalState() {
+    $this->items = array();
+    $this->end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
+    return $this->queue->releaseBatch($this->lease_key);
   }
 }
