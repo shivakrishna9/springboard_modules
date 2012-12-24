@@ -99,4 +99,70 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $items2 = $this->processor->claimItems();
     $this->assertEqual(serialize($items), serialize($items2), 'Processor gave us back the same set of unprocessed items.');
   }
+
+  public function testCreateBatches() {
+    // Batch size is user configurable.  Lets say the user configured the batch
+    // size to be 10 items.
+    variable_set('salesforce_queue_salesforce_max', 10);
+
+    // Lets create and claim 200 items so that the randomness factor will ensure
+    // that will will get more than 10 items for each type of batch
+    $this->createQueueItems($this->queue, 200);
+    $this->processor = SalesforceQueueProcessor::get($this->queue); // new for our new settings
+    $this->processor->claimItems();
+    $batches = $this->processor->createBatches();
+
+    // Declare which objects and operations should appear before which other o
+    // bjects and operations
+    $object_order = array(
+      'Account' => 'Contact',
+      'Contact' => 'Opportunity',
+      'Opportunity' => NULL,
+    );
+    $operation_order = array(
+      'CREATE' => 'UPSERT',
+      'UPSERT' => 'UPDATE',
+      'UPDATE' => 'DELETE',
+      'DELETE' => NULL,
+    );
+
+    // Ensure the sorted batches are ordered correctly
+    $encountered_items = array();
+    foreach ($batches as $batch) {
+      $object = $batch['object'];
+      $operation = $batch['operation'];
+
+      // Declare that the current object type and operation has been encountered
+      if (!isset($encountered_items[$object])) {
+        $encountered_items[$object] = array();
+      }
+      $encountered_items[$object][$operation] = $operation;
+
+
+      // Verify that objects that are supposed to be encountered only after
+      // this object has been processed has not been encountered yet
+      if (!is_null($object_order[$object])) {
+        $this->assertFalse(isset($encountered_items[$object_order[$object]]), 'Have not yet encountered an object before we were supposed to.');
+      }
+
+      // Verify that operations that are supposed to be encountered only after
+      // this operation has been processed have not been encountered yet
+      if (!is_null($operation_order[$operation])) {
+        $this->assertFalse(isset($encountered_items[$object][$operation_order[$operation]]), 'Have not yet encountered an operation before we were supposed to.');
+      }
+
+      // Verify that the number of items does not exceed the Salesforce max
+      // (which we set to 10 above)
+      $this->assertTrue((count($batch['items'] <= 10)), 'Batch size does not exceed Salesforce max configuration.');
+
+      // Verify all items match the opperation
+      foreach ($batch['items'] as $item) {
+        $this->assertEqual($object, $item->salesforce_type, 'Batch item object matches batch object.');
+        $this->assertEqual($operation, $item->operation, 'Batch item operation matches batch operation.');
+        if ($operation == 'UPSERT') {
+          $this->assertEqual($batch['dedupe'], $item->dedupe_field, 'Batch dedupe_field matches batch dedupe.');
+        }
+      }
+    }
+  }
 }

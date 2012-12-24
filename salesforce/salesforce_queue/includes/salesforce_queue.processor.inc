@@ -25,6 +25,13 @@ class SalesforceQueueProcessor {
   protected $items = array();
 
   /**
+   * Array of groups of items that can be sent to Salesforce simultaneously
+   *
+   * @var array
+   */
+  protected $batches = array();
+
+  /**
    * The configured maximum number of items that can be processed at once
    *
    * This depends upon the system resources
@@ -46,6 +53,13 @@ class SalesforceQueueProcessor {
    * @var string
    */
   protected $lease_key;
+
+   /**
+   * The maximum number of items that can be sent to Salesforce in one call
+   *
+   * @var int
+   */
+  protected $salesforce_max = 200;
 
   /**
    * Salesforce object to connect with
@@ -84,6 +98,7 @@ class SalesforceQueueProcessor {
     $this->queue = $queue;
     $this->max_items = variable_get('salesforce_queue_max_items', 1000);
     $this->lease_time = variable_get('salesforce_queue_lease_item', 3600);
+    $this->salesforce_max = variable_get('salesforce_queue_salesforce_max', 200);
   }
 
   /**
@@ -108,6 +123,10 @@ class SalesforceQueueProcessor {
         // Invokes hook_salesforce_queue_process_items_alter().
         drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
       }
+
+      // Sort the items into a set of logical batches that can be sent off to
+      // Salesforce
+      $this->createBatches();
     }
 
     if ($this->end_status == SALESFORCE_QUEUE_PROCESS_NOT_STARTED) {
@@ -176,11 +195,119 @@ class SalesforceQueueProcessor {
   }
 
   /**
+   * Group the items into batches that can be sent to Salesforce in one call
+   *
+   * A batch of items are defined as items that can be sent to Salesforce in
+   * one call. They can if they match the following requirements:
+   *   - Same Salesforce object type
+   *   - Same operation
+   *     - If operation is UPSERT, they have the same dedupe field
+   *   - No more than 200 items
+   *
+   * @NOTE There may be an additional complication when considering row-by-row
+   *       comparision.  A field map may have individual fields check against
+   *       Salesforce to see if it should write/overwrite/ignore the submitted
+   *       value when sending to Salesforce
+   */
+  public function createBatches() {
+    // Break down the items by object->operation->dedupe
+    $sort = array();
+    foreach ($this->items as $key => $item) {
+      // Adjust just in case an UPSERT command falls through without a dedupe
+      if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
+        $item->operation = 'CREATE';
+      }
+
+      // Handle special case UPSERT where they need to share dedupe field
+      if ($item->operation == 'UPSERT') {
+        $sort[$item->salesforce_type][$item->operation][$item->dedupe_field][] = $item;
+      }
+      else {
+        $sort[$item->salesforce_type][$item->operation][] = $item;
+      }
+      // Remove items as they are processed
+      unset($this->items[$key]);
+    }
+
+    // Sort the broken down items and build up the batches
+    uksort($sort, '_sfq_sort_objects');
+    foreach($sort as $object => $operations) {
+      uksort($sort[$object], '_sfq_sort_operations');
+
+      foreach ($sort[$object] as $op => $items) {
+        // Generate a batch item
+        $batch = array(
+          'object' => $object,
+          'operation' => $op,
+        );
+        if ($op == 'UPSERT') {
+          foreach ($items as $dedupe => $items2) {
+            $batch['dedupe'] = $dedupe;
+            // Break up by max number and add to batches
+            $chunks = array_chunk($items2, $this->salesforce_max);
+            foreach ($chunks as $chunk){
+              $batch['items'] = $chunk;
+              $this->batches[] = $batch;
+            }
+          }
+        }
+        else {
+          // Break up by max number and add to batches
+          $chunks = array_chunk($items, $this->salesforce_max);
+          foreach ($chunks as $chunk){
+            $batch['items'] = $chunk;
+            $this->batches[] = $batch;
+          }
+        }
+      }
+    }
+
+    return $this->batches;
+  }
+
+  /**
+   * Eat yum yums
+   */
+  private function eatBatch() {
+    // nom nom nom
+  }
+
+  /**
    * Release our claim on the queue and reset our internal state
    */
   private function resetInternalState() {
     $this->items = array();
+    $this->batches = array();
     $this->end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
     return $this->queue->releaseBatch($this->lease_key);
   }
+}
+
+/**
+ * uksort() function to sort keys by user configurable Salesforce object type
+ */
+function _sfq_sort_objects($a, $b) {
+  // @TODO set default object order
+  $objects = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
+  $object_order = array_flip($objects);
+  if ($object_order[$a] == $object_order[$b]) {
+    return 0;
+  }
+  return ($object_order[$a] < $object_order[$b]) ? -1 : 1; // lower is higher priority
+}
+
+/**
+ * uksort() function to sort keys by Salesforce operation
+ */
+function _sfq_sort_operations($a, $b) {
+  $op_order = array(
+    'CREATE' => 0,
+    'UPSERT' => 1,
+    'UPDATE' => 2,
+    'DELETE' => 3,
+  );
+  if ($op_order[$a] == $op_order[$b]) {
+    return 0;
+  }
+  return ($op_order[$a] < $op_order[$b]) ? -1 : 1; // lower is higher priority
 }
