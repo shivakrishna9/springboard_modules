@@ -82,30 +82,91 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    *   Number of items to create
    */
   public function createQueueItems(SalesforceQueue $queue, $num = 5) {
+    // Define objects
+    $objects = array(
+      array(
+        'type' => 'Account',
+        'records' => array(),
+        'fields' => array(
+          'Name' => FALSE,
+          'Type' => FALSE,
+          'AccountNumber' => FALSE,
+        ),
+      ),
+      array(
+        'type' => 'Contact',
+        'records' => array(),
+        'fields' => array(
+          'FirstName' => FALSE,
+          'LastName' => FALSE,
+          'Email' => TRUE,
+        ),
+      ),
+      array(
+        'type' => 'Opportunity',
+        'records' => array(
+          'Donation',
+          'Grant',
+          'Membership',
+        ),
+        'fields' => array(
+          'Name' => TRUE,
+          'Amount' => FALSE,
+          'AccountId' => FALSE,
+        ),
+      ),
+    );
+
+    // Define types of opperations
+    $ops = array(
+      'UPSERT',
+      'CREATE',
+      'UPDATE',
+      'DELETE'
+    );
+
     $i = 0;
     while ($i < $num) {
       $i++;
-      $sObject = new stdClass;
-      $sObject->type = $this->randomName();
-      $sObject->record = $this->randomName();
-      $sObject->fields = array(
-        $this->randomName() => $this->randomName(),
-        $this->randomName() => $this->randomName(),
-        $this->randomName() => $this->randomName(),
-      );
-      $fields = array_keys($sObject->fields);
-      $fields_rand = array_rand($fields);
-      $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
+
+      // Set up the data array
       $ops_rand = array_rand($ops);
       $data = array(
         'drupal_id' => rand(1, $num*100),
         'module' => $this->randomName(),
         'delta' => $this->randomName() .':'. rand(1, $num*100),
-        'salesforce_type' => $sObject->type,
         'operation' => $ops[$ops_rand],
-        'dedupe_field' => $fields[$fields_rand],
-        'sobject' => $sObject,
+        'dedupe_field' => NULL,
       );
+
+      // Create the Salesforce object
+      $object_rand = array_rand($objects);
+      $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
+      $sObject = new stdClass;
+      $sObject->type = $objects[$object_rand]['type'];
+      $sObject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
+      $sObject->fields = array();
+      foreach ($objects[$object_rand]['fields'] as $field => $dedupe) {
+        $sObject->fields[$field] = $this->randomName();
+
+        // If this field can be used for dedupe, give it a 50% chance of it
+        // being set.  Unless, of course, the operation is UPSERT, then it needs
+        // to be set.
+        if (($dedupe && rand(0, 1)) || $data['operation'] == 'UPSERT') {
+          $data['dedupe_field'] = $field;
+        }
+      }
+
+      // If the operation is UPSERT, and there is no dedupe field, change the
+      // operation to CREATE
+      if ($data['operation'] == 'UPSERT' && empty($data['dedupe_field'])) {
+        $data['operation'] = 'CREATE';
+      }
+
+      $data['salesforce_type'] = $sObject->type;
+      $data['sobject'] = $sObject;
+
+      // Create the queue item
       $result = $queue->createItem($data);
       $this->assertTrue($result, 'Created a queue item.');
     }
