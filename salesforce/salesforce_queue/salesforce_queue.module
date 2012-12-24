@@ -6,19 +6,6 @@
  */
 
 /**
- * Implements hook_form_FORM_ID_alter().
- */
-function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {
-  // Remove overly restrictive validation routine. Ideally the current monolithic
-  // validation handler be broken down into 3 separate validation routines:
-  // - Check for existence of duplicate map
-  // - Field type validation (this is still too strict IMHO)
-  // - Dedupe field (SOAP API has different limitations)
-  // Then we'd only need to alter the dedupe field validation.
-  unset($form['#validate']);
-}
-
-/**
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
