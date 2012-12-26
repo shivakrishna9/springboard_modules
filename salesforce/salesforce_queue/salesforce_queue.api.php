@@ -77,6 +77,7 @@ function hook_salesforce_queue_preprocess_queue(SalesforceQueue $queue) {
  *
  * @param array $items
  *   Array of queue objects
+ * @param SalesforceQueue $queue
  */
 function hook_salesforce_queue_process_items_alter(&$items, $queue) {
 
@@ -86,8 +87,8 @@ function hook_salesforce_queue_process_items_alter(&$items, $queue) {
  * Fire off behavior after the queue processing completes
  *
  * @param SalesforceQueue $queue
- * @param type $end_response
- *   The reason why the process was aborted.  Possible values are:
+ * @param int $end_response
+ *   The status of the process when it ended.  Possible values are:
  *     - SALESFORCE_QUEUE_PROCESS_NOT_STARTED: No processing has been initiated
  *     - SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT: Cannot connect to Salesforce
  *     - SALESFORCE_QUEUE_PROCESS_NO_ITEMS: There were no items found in the

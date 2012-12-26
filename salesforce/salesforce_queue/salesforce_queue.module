@@ -6,8 +6,10 @@
  */
 
 /**
- * @name salesforce_queue_fail_responses
+ * @defgroup salesforce_queue_processor_statuses Statuses of queue processor
  * @{
+ * The processor will return one of the following statuses once it completes its
+ * processing of a batch of queue items.
  */
 
 // The process completed as expected

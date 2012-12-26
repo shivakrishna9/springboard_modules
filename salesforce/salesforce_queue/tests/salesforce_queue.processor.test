@@ -100,6 +100,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(serialize($items), serialize($items2), 'Processor gave us back the same set of unprocessed items.');
   }
 
+  /**
+   * Test for SalesforceQueueProcessor::createBatches()
+   */
   public function testCreateBatches() {
     // Batch size is user configurable.  Lets say the user configured the batch
     // size to be 10 items.
@@ -112,8 +115,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->processor->claimItems();
     $batches = $this->processor->createBatches();
 
-    // Declare which objects and operations should appear before which other o
-    // bjects and operations
+    // Declare which objects and operations should appear before which other
+    // objects and operations
     $object_order = array(
       'Account' => 'Contact',
       'Contact' => 'Opportunity',

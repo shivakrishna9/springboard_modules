@@ -190,8 +190,6 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->condition('salesforce_type', $item->salesforce_type)
       ->execute();
 
-    // @TODO log removal
-
     return $result;
   }
 
