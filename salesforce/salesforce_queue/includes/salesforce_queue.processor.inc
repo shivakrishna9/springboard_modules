@@ -210,58 +210,133 @@ class SalesforceQueueProcessor {
    *       value when sending to Salesforce
    */
   public function createBatches() {
-    // Break down the items by object->operation->dedupe
-    $sort = array();
-    foreach ($this->items as $key => $item) {
+    // The goal is to have one loop through the items
+    $batch_groups = array();
+    foreach ($this->items as $item) {
+      $batch_key = NULL;
       // Adjust just in case an UPSERT command falls through without a dedupe
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
         $item->operation = 'CREATE';
       }
 
-      // Handle special case UPSERT where they need to share dedupe field
-      if ($item->operation == 'UPSERT') {
-        $sort[$item->salesforce_type][$item->operation][$item->dedupe_field][] = $item;
+      // Check to see if a batch group of the type of the current item is
+      // already in progress, if not, build one
+      $op = $item->operation;
+      $object = $item->salesforce_type;
+      $batch_template = array(
+        'object' => $object,
+        'operation' => $op,
+        'count' => 0,
+        'items' => array(),
+        'sobjects' => array(),
+      );
+      if (!isset($batch_groups[$object])) {
+        $batch_groups[$object] = array();
       }
-      else {
-        $sort[$item->salesforce_type][$item->operation][] = $item;
-      }
-      // Remove items as they are processed
-      unset($this->items[$key]);
-    }
-
-    // Sort the broken down items and build up the batches
-    uksort($sort, '_sfq_sort_objects');
-    foreach($sort as $object => $operations) {
-      uksort($sort[$object], '_sfq_sort_operations');
-
-      foreach ($sort[$object] as $op => $items) {
-        // Generate a batch item
-        $batch = array(
-          'object' => $object,
-          'operation' => $op,
-        );
+      if (!isset($batch_groups[$object][$op])) {
         if ($op == 'UPSERT') {
-          foreach ($items as $dedupe => $items2) {
-            $batch['dedupe'] = $dedupe;
-            // Break up by max number and add to batches
-            $chunks = array_chunk($items2, $this->salesforce_max);
-            foreach ($chunks as $chunk){
-              $batch['items'] = $chunk;
-              $this->batches[] = $batch;
-            }
+          $batch_groups[$object][$op] = array();
+          if (!isset($batch_groups[$object][$op][$item->dedupe_field])) {
+            $batch_groups[$object][$op][$item->dedupe_field] = array();
+            $batch_key = 0;
+            $batch = $batch_template;
           }
         }
         else {
-          // Break up by max number and add to batches
-          $chunks = array_chunk($items, $this->salesforce_max);
-          foreach ($chunks as $chunk){
-            $batch['items'] = $chunk;
-            $this->batches[] = $batch;
+          $batch_groups[$object][$op] = array();
+          $batch_key = 0;
+          $batch = $batch_template;
+        }
+      }
+      else if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$item->dedupe_field])) {
+        $batch_groups[$object][$op][$item->dedupe_field] = array();
+        $batch_key = 0;
+        $batch = $batch_template;
+      }
+
+      // Check to see if the current batch is filled up or not.  If it is full,
+      // start a new batch.
+      if (is_null($batch_key)) {
+        $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$item->dedupe_field] : $batch_groups[$object][$op];
+        end($batch_group);
+        $last_key = key($batch_group);
+        if ($batch_group[$last_key]['count'] >= $this->salesforce_max) {
+          // Create a new batch
+          $batch_key = $last_key + 1;
+          $batch = $batch_template;
+        }
+        else {
+          // Use current batch
+          $batch_key = $last_key;
+          $batch = $batch_group[$batch_key];
+        }
+      }
+
+      // When sending to Salesforce we just need the sobject, but in other
+      // processes we need the items.  To prevent looping through the items
+      // once again, we'll store a copy of each.
+      $batch['items'][] = $item;
+      $batch['sobjects'][] = $item->sobject;
+      $batch['count']++;
+      if ($op == 'UPSERT') {
+        $batch['dedupe'] = $item->dedupe_field;
+        $batch_groups[$object][$op][$item->dedupe_field][$batch_key] = $batch;
+      }
+      else {
+        $batch_groups[$object][$op][$batch_key] = $batch;
+      }
+    }
+
+    // Sort batches
+    // Move all of the batch items into the batches list in the configured order
+    // @TODO set default object order
+    $object_order = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
+    $op_order = array(
+      'CREATE',
+      'UPSERT',
+      'UPDATE',
+      'DELETE',
+    );
+    foreach ($object_order as $object) {
+      if (isset($batch_groups[$object])) {
+        foreach ($op_order as $op) {
+          if (isset($batch_groups[$object][$op])) {
+            if ($op == 'UPSERT') {
+              foreach ($batch_groups[$object][$op] as $field => $batches) {
+                $this->batches = array_merge($this->batches, $batch_groups[$object][$op][$field]);
+                unset($batch_groups[$object][$op][$field]);
+              }
+            }
+            else {
+              $this->batches = array_merge($this->batches, $batch_groups[$object][$op]);
+            }
+            unset($batch_groups[$object][$op]);
+          }
+        }
+        unset($batch_groups[$object]);
+      }
+    }
+
+    // Lastly, If any Salesforce objects were not configured for a specific
+    // order, append those to the end of the batch list
+    if (!empty($batch_groups)) {
+      foreach ($batch_groups as $object => $operations) {
+        foreach ($op_order as $op) {
+          if (isset($batch_groups[$object][$op])) {
+            if ($op == 'UPSERT') {
+              foreach ($batch_groups[$object][$op] as $field => $batches) {
+                $this->batches = array_merge($this->batches, $batch_groups[$object][$op][$field]);
+              }
+            }
+            else {
+              $this->batches = array_merge($this->batches, $batch_groups[$object][$op]);
+            }
           }
         }
       }
     }
 
+    // All done!
     return $this->batches;
   }
 
@@ -281,33 +356,4 @@ class SalesforceQueueProcessor {
     $this->end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
     return $this->queue->releaseBatch($this->lease_key);
   }
-}
-
-/**
- * uksort() function to sort keys by user configurable Salesforce object type
- */
-function _sfq_sort_objects($a, $b) {
-  // @TODO set default object order
-  $objects = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
-  $object_order = array_flip($objects);
-  if ($object_order[$a] == $object_order[$b]) {
-    return 0;
-  }
-  return ($object_order[$a] < $object_order[$b]) ? -1 : 1; // lower is higher priority
-}
-
-/**
- * uksort() function to sort keys by Salesforce operation
- */
-function _sfq_sort_operations($a, $b) {
-  $op_order = array(
-    'CREATE' => 0,
-    'UPSERT' => 1,
-    'UPDATE' => 2,
-    'DELETE' => 3,
-  );
-  if ($op_order[$a] == $op_order[$b]) {
-    return 0;
-  }
-  return ($op_order[$a] < $op_order[$b]) ? -1 : 1; // lower is higher priority
 }
