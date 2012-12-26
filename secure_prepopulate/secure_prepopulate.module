@@ -324,14 +324,10 @@ function secure_prepopulate_parse_qs($qs) {
     // look for billing_country, billing_state specifically
     if (array_key_exists('billing_country', $result)) {
       $result['billing_country'] = _secure_prepopulate_convert_country($result['billing_country']);
+      $result['country'] = _secure_prepopulate_convert_country($result['country']);
     }
     if (array_key_exists('billing_state', $result)) {
       $result['billing_state'] = _secure_prepopulate_convert_state($result['billing_state']);
-    }
-    if (array_key_exists('country', $result)) {
-      $result['country'] = _secure_prepopulate_convert_country($result['country']);
-    }
-    if (array_key_exists('state', $result)) {
       $result['state'] = _secure_prepopulate_convert_state($result['state']);
     }
   }
