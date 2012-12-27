@@ -160,7 +160,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
     );
     foreach ($combinations as $sync_config) {
-      $this->drupalGet('node/' . $this->webform1->nid . '/salesformce/salesforce_webform');
+      $this->drupalGet('node/' . $this->webform1->nid . '/salesforce/salesforce_webform');
       $this->drupalPost(NULL, $sync_config, 'Save');
 
       // Create submission
@@ -269,7 +269,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       'drupal_queue' => 'drupal-queue',
       'salesforce_queue' => 'salesforce-queue',
     );
-    $this->drupalGet('admin/config/salesforce/salesforce-genmap');
+    $this->drupalGet('admin/config/salesforce/salesforce-generic');
     $this->assertFieldByName('salesforce_genmap_queue_system', NULL, 'salesforce_genmap_queue_system form item exists.');
     foreach ($queue_systems as $queue_name => $queue_id) {
       if ($queue_name == $queue_system) {
@@ -285,7 +285,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
       'salesforce_genmap_queue_system' => 'drupal_queue',
     );
     $this->drupalPost(NULL, $edit, 'Save');
-    $this->assertText('Your settings have been saved. ', 'Configuration page posted correctly.');
+    $this->assertText('Your settings have been saved.', 'Configuration page posted correctly.');
     $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-instant', 'Instant is not selected');
     $this->assertFieldChecked('edit-salesforce-genmap-queue-system-drupal-queue', 'Drupal Queue is selected');
     $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-salesforce-queue', 'Salesforce Queue is not selected');
@@ -308,18 +308,13 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
         return $this->swFormatQueueItem($queue_item, $queue_system);
 
       case 'salesforce_queue':
-        $query = db_select('salesforce_queue', 'sq')
-          ->fields('sq');
-        $result = $query->execute();
-        foreach ($result as $record) {
-          // do nothing but reset the var $record and get the last item
-        }
-        if (isset($record)) {
-          return $this->swFormatQueueItem($record, $queue_system);
-        }
-        else {
+        $queue = SalesforceQueue::get();
+        $queue_item = $queue->claimItem();
+        if (empty($queue_item)) {
           return array();
         }
+        $queue->releaseItem($queue_item);
+        return $this->swFormatQueueItem($queue_item, $queue_system);
     }
   }
 
@@ -339,7 +334,7 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
 
       case 'salesforce_queue':
         db_delete('salesforce_queue')
-        ->condition('id', $queue_item['id'])
+        ->condition('item_id', $queue_item['item_id'])
         ->execute();
         return;
     }
@@ -362,11 +357,9 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
         return array();
 
       case 'salesforce_queue':
+        $this->assertTrue(is_object($queue_item->sobject), 'Received an expected queue item for Salesforce Queue.');
         if (is_object($queue_item)) {
-          $this->assertTrue(is_string($queue_item->sobject), 'Received an expected queue item for Salesforce Queue.');
           $item = (array)$queue_item;
-          $item['sobject'] = json_decode($queue_item->sobject);
-          $item['sobject']->fields = (array)$item['sobject']->fields;
           return $item;
         }
         $this->assertTrue(FALSE, 'Expected queue item not received for Salesforce Queue.');
