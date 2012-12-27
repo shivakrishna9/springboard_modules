@@ -867,6 +867,7 @@ function _webform_user_save_profile_map($uid, &$map) {
       switch ($field['type']) {
         case 'checkbox':
         case 'checkboxes':
+        case 'list_boolean':
           // These take integers.
           if (in_array($field['name'], array_keys($map))) {
             $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
