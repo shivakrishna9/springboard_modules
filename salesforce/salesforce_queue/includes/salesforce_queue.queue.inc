@@ -106,14 +106,14 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     }
 
     // Invoke hook_salesforce_queue_create_item_alter().
-    drupal_alter('salesforce_queue_create_item', $data['sobject'], $data['drupal_id'], $data['module'], $data['delta']);
+    drupal_alter('salesforce_queue_create_item', $data);
 
     // Insert this baby
     $data['sobject'] = json_encode($data['sobject']);
     $result = drupal_write_record('salesforce_queue', $data, $keys);
 
     // Invoke hook_salesforce_queue_create_item().
-    module_invoke_all('salesforce_queue_create_item', $data['sobject'], $data['drupal_id'], $data['module'], $data['delta'], $result);
+    module_invoke_all('salesforce_queue_create_item', $data, $result);
 
     return $result;
   }
@@ -181,7 +181,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function deleteItem($item) {
     // Invoke hook_salesforce_queue_delete_item().
-    module_invoke_all('salesforce_queue_delete_item', $item->drupal_id, $item->module, $item->delta);
+    module_invoke_all('salesforce_queue_delete_item', $item);
 
     $result = db_delete('salesforce_queue')
       ->condition('drupal_id', $item->drupal_id)
