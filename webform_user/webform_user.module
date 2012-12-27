@@ -865,6 +865,12 @@ function _webform_user_save_profile_map($uid, &$map) {
     foreach ($fields as $field) {
       // So far no types actually require a unique solution.
       switch ($field['type']) {
+        'checkbox':
+        'checkboxes':
+          // These take integers.
+          if (in_array($field['name'], array_keys($map))) {
+            $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
+          }
         default:
           // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], array_keys($map))) {
