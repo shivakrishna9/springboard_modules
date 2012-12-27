@@ -598,7 +598,7 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
       if ($type == 'date') {
-        if ($val[0] && $val[1] && $val[2]) {
+        if (isset($val[0]) && isset($val[1]) && isset($val[2])) {
           $val['month'] = $val[0];
           $val['day'] = $val[1];
           $val['year'] = $val[2];
