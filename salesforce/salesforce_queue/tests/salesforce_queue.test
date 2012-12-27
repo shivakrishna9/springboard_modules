@@ -81,7 +81,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    * @param int $num
    *   Number of items to create
    */
-  public function createQueueItems(SalesforceQueue $queue, $num = 5) {
+  public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array()) {
     // Define objects
     $objects = array(
       array(
@@ -118,12 +118,14 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     );
 
     // Define types of opperations
-    $ops = array(
-      'UPSERT',
-      'CREATE',
-      'UPDATE',
-      'DELETE'
-    );
+    if (empty($ops)) {
+      $ops = array(
+        'UPSERT',
+        'CREATE',
+        'UPDATE',
+        'DELETE'
+      );
+    }
 
     $i = 0;
     while ($i < $num) {
