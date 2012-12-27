@@ -364,10 +364,12 @@ function market_source_node_insert($node) {
   $webform_types = variable_get('webform_node_types', array('webform'));
   // Skip adding custom webform components if the node is being cloned.
   if (!property_exists($node, 'is_being_cloned') || $node->is_being_cloned === 0) {
-    // make sure this node type contains a webform and it's not a donation form.
-    if (in_array($node->type, $webform_types)) {
-      module_load_include('inc', 'webform', 'includes/webform.components');
-      $components = market_source_create_standard_components($node->nid);
+    if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
+      // make sure this node type contains a webform.
+      if (in_array($node->type, $webform_types)) {
+        module_load_include('inc', 'webform', 'includes/webform.components');
+        $components = market_source_create_standard_components($node->nid);
+      }
     }
   }
 }
