@@ -723,6 +723,8 @@ function _webform_user_create_webform_components(&$node) {
       // 'taxonomy_term_reference', 'image'
       switch ($item['type']) {
         case 'checkbox':
+        // From list_field_info().
+        case 'list_boolean':
           $item['type'] = 'select';
           $item['extra']['items'] = $field['name'] . '|' . $field['title'];
           $item['extra']['aslist'] = 0;
@@ -734,13 +736,13 @@ function _webform_user_create_webform_components(&$node) {
         case 'url':
           $item['type'] = 'textfield';
           break;
-        // All standard entity fields from number_field_info().
+        // From number_field_info().
         case 'number_integer':
         case 'number_decimal':
         case 'number_float':
           $item['type'] = 'textarea';
           break;
-        // All standard entity fields from text_field_info().
+        // From text_field_info().
         case 'text':
           $item['type'] = 'textfield';
           break;
@@ -748,18 +750,17 @@ function _webform_user_create_webform_components(&$node) {
         case 'text_with_summary':
           $item['type'] = 'textarea';
           break;
-        // All standard entity fields from list_field_info().
+        // From list_field_info().
         case 'list_text':
         case 'list_integer':
         case 'list_float':
-        case 'list_boolean':
           $item['type'] = 'select';
           $field['options'] = _webform_user_implode_options($field['options']);
           $item['extra']['items'] = $field['options'];
           $item['extra']['aslist'] = 'Y';
           $item['extra']['multiple'] = 0;
           break;
-        // All standard entity fields from date_field_info().
+        // From date_field_info().
         case 'date':
         case 'datetime':
         case 'datestamp':
