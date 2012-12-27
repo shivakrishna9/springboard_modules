@@ -448,7 +448,7 @@ function webform_user_node_insert($node) {
  */
 function webform_user_clone_node_alter(&$node, $context) {
   // If the newly created node is a webform user node, set the defaults and create comps.
-  if (_webform_user_is_webform_user_node_type($context['original_node']->->type)) {
+  if (_webform_user_is_webform_user_node_type($context['original_node']->type)) {
     if (_webform_user_is_webform_user_node($context['original_node'])) {
       webform_user_clone_component_map($node, $context['original_node']->nid);
       webform_user_clone_node($node,  $context['original_node']->nid);
