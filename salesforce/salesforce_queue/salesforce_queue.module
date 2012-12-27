@@ -252,7 +252,7 @@ function salesforce_queue_in_queue($drupal_id, $module, $delta, $salesforce_type
     'salesforce_type' => $salesforce_type,
   );
   $queue = SalesforceQueue::get();
-  return $queue->createItem($data);
+  return $queue->itemInQueue($data);
 }
 
 /**
