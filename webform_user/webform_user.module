@@ -442,7 +442,6 @@ function webform_user_node_insert($node) {
       }
       else {
         webform_user_clone_component_map($node, $node->clone_from_original_nid);
-        webform_user_clone_node($node, $node->clone_from_original_nid);
       }
     }
   }
@@ -456,7 +455,7 @@ function webform_user_node_update($node) {
     // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
-      && $current_node->webform['components'][1]['form_key'] != 'mail') {
+      && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
       // TODO confirm that this works if email not #1, other modules make components too.
       _webform_user_create_webform_components($node);
     }
@@ -1068,24 +1067,5 @@ function webform_user_clone_component_map($node, $original_nid) {
   }
   if ($mapped) {
     drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
-  }
-}
-
-/**
- * Database function, clone webform user node settings.
- */
-function webform_user_clone_node($node, $original_nid) {
-  // If this is already set, don't copy over it.
-  $check = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
-    array(':nid' => $node->nid))->fetchObject();
-  if (!isset($check->nid)) { 
-    $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
-      array(':nid' => $original_nid))->fetchObject();
-    if ($original) {
-      $new = (array) $original;
-      $new['nid'] = $node->nid; // Update to the new nid.
-      drupal_write_record('webform_user', $new);
-      drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
-    }
   }
 }
