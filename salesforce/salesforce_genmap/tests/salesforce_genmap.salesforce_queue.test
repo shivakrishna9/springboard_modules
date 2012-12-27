@@ -1,0 +1,103 @@
+<?php
+module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
+
+/**
+ * @file
+ * Simple tests for salesforce_genmap salesforce_queue hooks
+ */
+
+/**
+ * Ensure that the salesforce_genmap integration with salesforce_queue functions
+ * properly
+ */
+class SalesforceGenmapSalesforceQueueTestCase extends SalesforceQueueTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Salesforce Genmap Salesforce Queue tests',
+      'description' => 'Ensure that the salesforce_genmap integration with salesforce_queue functions properly.',
+      'group' => 'Salesforce Generic Mapping',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array()) {
+    $modules = $modules + array(
+      'salesforce_genmap',
+    );
+    parent::setUp($modules);
+
+    // Initiate a queue and processor
+    $this->queue = SalesforceQueue::get();
+    $this->processor = SalesforceQueueProcessor::get($this->queue);
+
+    // Set up the processor's Salesforce connection
+    // This is special for simpletest due to the access token being stored in
+    // the session
+    $sfapi = $this->salesforceConnect();
+    $this->processor->_setSalesforceApi($sfapi);
+    $soap = new SalesforceSoapPartner($sfapi);
+    $this->processor->_setSalesforceSoap($soap);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    // Remove the items we created in our Salesforce instance
+    $this->processor->_deleteNewSfRecords();
+
+    parent::tearDown();
+  }
+
+  /**
+   * Test the salesforce_queue hooks
+   */
+  public function testSalesforceQueueHooks() {
+    // Create items, then grab them so we can reference them later
+    $this->createQueueItems($this->queue, 5, array('CREATE'), array('Opportunity'));
+    $items = $this->queue->claimBatch();
+    $this->queue->releaseBatch($items[0]->lease_key);
+
+    // Items added to Salesforce will have their records mapped to their
+    // Salesforce Ids.  Retreive records and verify record maps were created.
+    $this->processor->process();
+    $records = entity_load('salesforce_genmap_record_map');
+    $this->assertEqual(5, count($records), 'Mapped '. count($records) .' records out of 5 queued.');
+
+    // Updated and deleted items will automatically have their sfid added when queued
+    $ops = array('UPDATE', 'DELETE');
+    foreach ($ops as $op) {
+      $item = array_shift($items);
+      $data = array(
+        'drupal_id' => $item->drupal_id,
+        'module' => $item->module,
+        'delta' => $item->delta,
+        'salesforce_type' => $item->salesforce_type,
+        'operation' => $op,
+        'dedupe_field' => $item->dedupe_field,
+        'sobject' => $item->sobject,
+      );
+      $this->queue->createItem($data);
+
+      // When successful, the queue will be empty after processing
+      $this->processor->process();
+      $temp_claim = $this->queue->claimBatch();
+      $this->assertTrue(empty($temp_claim), 'sfid added to '. $op .' queue item.');
+      if (is_array($temp_claim)) {
+        // If the above failed, release the queue
+        $this->queue->releaseBatch($temp_claim[0]->lease_key);
+      }
+    }
+
+    // Remove the items that were created and verify the record maps deleted
+    $this->processor->_deleteNewSfRecords();
+    $records = entity_load('salesforce_genmap_record_map');
+    $this->assertEqual(0, count($records), count($records) .' records remained after deleting all newly created Salesforce records.');
+  }
+}

@@ -6,4 +6,5 @@ dependencies[] = entity
 dependencies[] = salesforce
 files[] = includes/salesforce_genmap.map.inc
 files[] = includes/salesforce_genmap.queue.inc
+files[] = tests/salesforce_genmap.salesforce_queue.test
 files[] = tests/salesforce_genmap.test

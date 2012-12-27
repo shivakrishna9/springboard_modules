@@ -383,6 +383,54 @@ function salesforce_genmap_delete_record_map($record) {
 
 
 /**
+ * @name salesforce_genmap_queue_hooks Queue hooks
+ * @{
+ */
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter().
+ */
+function salesforce_genmap_salesforce_queue_create_item_alter(&$item) {
+  // When adding queue items, ensure that the sfid is in the sobject
+  if (($item['operation'] == 'UPDATE' || $item['operation'] == 'DELETE') && !isset($item['sobject']->Id)) {
+    $record = salesforce_genmap_load_record_map($item);
+    if (!empty($record) && isset($record->sfid)) {
+      $item['sobject']->Id = $record->sfid;
+    }
+  }
+}
+
+/**
+ * Implements hook_salesforce_queue_process_pass_item().
+ */
+function salesforce_genmap_salesforce_queue_process_pass_item($item, $result, $queue) {
+  $record = array(
+    'sfid' => $result->id,
+    'module' => $item->module,
+    'delta' => $item->delta,
+    'drupal_id' => $item->drupal_id,
+    'salesforce_type' => $item->salesforce_type,
+  );
+  switch ($item->operation) {
+    // Create record maps on new items
+    case 'CREATE':
+    case 'UPSERT':
+      salesforce_genmap_save_record_map($record);
+      break;
+
+    // Delete record maps on removed items
+    case 'DELETE':
+      salesforce_genmap_delete_record_map($record);
+      break;
+  }
+}
+
+/**
+ * @}
+ */
+
+
+/**
  * Helper function.
  * Return a list of handler modules, or information on a specific one.
  */
