@@ -171,7 +171,7 @@ function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
     $form['webform_user']['is_webform_user'] = array(
       '#title' => t('Create or update users when this webform is submitted.'),
       '#type' => 'checkbox',
-      '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : NULL,
+      '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : TRUE,
       '#description' => t('When checked, user profile fields will automatically be added to the webform. ' .
         'When the form is submitted, new users will be created using those form values.'),
     );
