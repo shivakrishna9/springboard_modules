@@ -436,22 +436,14 @@ function webform_user_node_insert($node) {
   if (_webform_user_is_webform_user_node_type($node->type)) {
     if (_webform_user_is_webform_user_node($node)) {
       _webform_user_set_values($node);
-      _webform_user_create_webform_components($node);
-    }
-  }
-}
-
-/**
- * Implements hook_clone_node_alter() from Node clone module.
- *
- * From: http://drupal.org/node/1256478
- */
-function webform_user_clone_node_alter(&$node, $context) {
-  // If the newly created node is a webform user node, set the defaults and create comps.
-  if (_webform_user_is_webform_user_node_type($context['original_node']->type)) {
-    if (_webform_user_is_webform_user_node($context['original_node'])) {
-      //webform_user_clone_component_map($node, $context['original_node']->nid);
-      //webform_user_clone_node($node,  $context['original_node']->nid);
+      if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
+        // We only want to create new components if this is NOT a clone.
+        _webform_user_create_webform_components($node);
+      }
+      else {
+        webform_user_clone_component_map($node, $node->clone_from_original_nid);
+        webform_user_clone_node($node, $node->clone_from_original_nid);
+      }
     }
   }
 }
@@ -656,12 +648,6 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
  * Creates webform components for this node. All selected profile fields, plus the required email field.
  */
 function _webform_user_create_webform_components(&$node) {
-  // Only create components if we don't already have some for this node.
-  $map = webform_user_user_map($node->nid);
-  if (!empty($map)) {
-    return;
-  }
-
   // Include webform component functions to allow creation.
   module_load_include('inc', 'webform', 'includes/webform.components');
 
