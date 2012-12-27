@@ -256,45 +256,6 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   }
 
   /**
-   * Test the configuration form
-   */
-  public function testConfigForm() {
-    // Check installed variable setting
-    $queue_system = variable_get('salesforce_genmap_queue_system', '');
-    $queue_system = empty($queue_system) ? 'salesforce_queue' : $queue_system;
-
-    // Load the configuration form and check default values
-    $queue_systems = array(
-      'instant' => 'instant',
-      'drupal_queue' => 'drupal-queue',
-      'salesforce_queue' => 'salesforce-queue',
-    );
-    $this->drupalGet('admin/config/salesforce/salesforce-generic');
-    $this->assertFieldByName('salesforce_genmap_queue_system', NULL, 'salesforce_genmap_queue_system form item exists.');
-    foreach ($queue_systems as $queue_name => $queue_id) {
-      if ($queue_name == $queue_system) {
-        $this->assertFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is selected by default.');
-      }
-      else {
-        $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is not selected by default.');
-      }
-    }
-
-    // Set new value and check new default values
-    $edit = array(
-      'salesforce_genmap_queue_system' => 'drupal_queue',
-    );
-    $this->drupalPost(NULL, $edit, 'Save');
-    $this->assertText('Your settings have been saved.', 'Configuration page posted correctly.');
-    $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-instant', 'Instant is not selected');
-    $this->assertFieldChecked('edit-salesforce-genmap-queue-system-drupal-queue', 'Drupal Queue is selected');
-    $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-salesforce-queue', 'Salesforce Queue is not selected');
-
-    // Verify saved value
-    $this->assertEqual('drupal_queue', variable_get('salesforce_genmap_queue_system', NULL), 'queue_system saved correctly.');
-  }
-
-  /**
    * Helper to return the last queued item
    */
   public function swFetchQueueItem($queue_system) {

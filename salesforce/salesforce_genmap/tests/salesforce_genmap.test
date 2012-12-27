@@ -1,0 +1,160 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for salesforce_genmap
+ */
+
+/**
+ * Tests basic set up for mapping salesforce objects to webforms
+ */
+class SalesforceGenmapTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'General Salesforce Mapping Tests',
+      'description' => 'Ensure that the salesforce_genmap module functions properly.',
+      'group' => 'Salesforce Generic Mapping',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp() {
+    parent::setUp(
+      'entity',
+      'salesforce',
+      'salesforce_genmap'
+    );
+
+    // Create an admin user
+    $permissions = array(
+      'access content',
+      'administer site configuration',
+      'administer content types',
+      'administer nodes',
+      'administer users',
+      'administer salesforce',
+    );
+    $this->admin_user = $this->drupalCreateUser($permissions);
+    // Don't forget, need to pass --uri in drush command in order for logging
+    // in to work
+    $this->drupalLogin($this->admin_user);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
+    parent::tearDown();
+  }
+
+  /**
+   * Map and queue testing will need to be done by the dependant modules
+   */
+
+  /**
+   * Test the configuration form
+   */
+  public function testConfigForm() {
+    // Check installed variable setting
+    $queue_system = variable_get('salesforce_genmap_queue_system', '');
+    $queue_system = empty($queue_system) ? 'salesforce_queue' : $queue_system;
+
+    // Load the configuration form and check default values
+    $queue_systems = array(
+      'instant' => 'instant',
+      'drupal_queue' => 'drupal-queue',
+    );
+    $this->drupalGet('admin/config/salesforce/salesforce-generic');
+    $this->assertFieldByName('salesforce_genmap_queue_system', NULL, 'salesforce_genmap_queue_system form item exists.');
+    foreach ($queue_systems as $queue_name => $queue_id) {
+      if ($queue_name == $queue_system) {
+        $this->assertFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is selected by default.');
+      }
+      else {
+        $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-' . $queue_id, $queue_name . ' is not selected by default.');
+      }
+    }
+
+    // Set new value and check new default values
+    $edit = array(
+      'salesforce_genmap_queue_system' => 'drupal_queue',
+    );
+    $this->drupalPost(NULL, $edit, 'Save');
+    $this->assertText('Your settings have been saved.', 'Configuration page posted correctly.');
+    $this->assertNoFieldChecked('edit-salesforce-genmap-queue-system-instant', 'Instant is not selected');
+    $this->assertFieldChecked('edit-salesforce-genmap-queue-system-drupal-queue', 'Drupal Queue is selected');
+
+    // Verify saved value
+    $this->assertEqual('drupal_queue', variable_get('salesforce_genmap_queue_system', NULL), 'queue_system saved correctly.');
+  }
+
+  /**
+   * Test the salesforce_genmap_map entity
+   */
+  public function testEntity() {
+    // Map entity type exists
+    $entity_info = entity_get_info('salesforce_genmap_map');
+    $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
+    $this->assertEqual('Salesforce Map', $entity_info['label'], 'Entity has expected label.');
+
+    // Create a salesforce_genmap_map entity object
+    $test_map = array(
+      'nid' => 3,
+      'map_handler' => 'salesforce_genmap',
+      'salesforce_object_type' => 'bar',
+      'salesforce_record_type' => 'baz',
+      'field_map' => array(
+        'foo' => 'bar',
+        'baz' => array(
+          'bang' => 'boom',
+          'fizz' => 'buzz',
+        ),
+        'hello' => 'world',
+      ),
+      'locked' => FALSE,
+      'status' => TRUE,
+    );
+    $test_map = entity_create('salesforce_genmap_map', $test_map);
+    $this->assertEqual('salesforce_genmap_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
+
+    // Save the entity to the database
+    entity_save('salesforce_genmap_map', $test_map);
+    $new_map_id = _salesforce_genmap_get_map_id_by_nid_module(3, 'salesforce_genmap');
+    $test_map_db = entity_load('salesforce_genmap_map', array($new_map_id));
+    $this->assertEqual('bar', $test_map_db[$new_map_id]->salesforce_object_type, 'Newly created entity has the correct object type.');
+
+    // Delete the entity from the database
+    entity_delete('salesforce_genmap_map', $new_map_id);
+    $all_entities = entity_load('salesforce_genmap_map');
+    $this->assertTrue(empty($all_entities));
+  }
+
+  /**
+   * Grabs the Salesforce connection information from the live db and authenticates
+   *
+   * @return Object
+   *   Salesforce Object
+   */
+  public function salesforceConnect() {
+    // Steal the Salesforce configuration from the live database
+    global $db_prefix;
+    $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
+    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
+    $result = db_query($sql);
+    foreach ($result as $record) {
+      variable_set($record->name, unserialize($record->value));
+    }
+
+    // Test the connection
+    $salesforce = salesforce_get_api();
+    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+    return $salesforce;
+  }
+}
