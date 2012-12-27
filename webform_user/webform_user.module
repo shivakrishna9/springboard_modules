@@ -225,7 +225,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
                 break;
               case 'checkboxes':
                 if ($profile_value) { // Will be a 0 if unchecked.
-                  $form_field['#default_value'] = array($profile_value);
+                  $form_field['#default_value'] = array($profile_field);
                 }
                 break;
               default:
