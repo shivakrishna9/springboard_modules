@@ -460,7 +460,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Retreive an item from the queue
    *
-   * Do NOT use this to process an item. 'Get' does not lease queue items and
+   * Do NOT use this to process an item. 'Get' does not lease the queue and
    * merely provides you the information about the queue item.  In order to
    * retreive an item for processing, you must 'claim' it.
    *

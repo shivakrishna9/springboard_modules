@@ -213,16 +213,19 @@ class SalesforceQueueProcessor {
     // The goal is to have one loop through the items
     $batch_groups = array();
     foreach ($this->items as $item) {
-      $batch_key = NULL;
       // Adjust just in case an UPSERT command falls through without a dedupe
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
         $item->operation = 'CREATE';
       }
 
-      // Check to see if a batch group of the type of the current item is
-      // already in progress, if not, build one
+      // Set up our brevity vars
+      $batch_key = NULL;
       $op = $item->operation;
       $object = $item->salesforce_type;
+      $dedupe = $item->dedupe_field;
+
+      // Check to see if a batch group of the type of the current item is
+      // already made, if not, build one
       $batch_template = array(
         'object' => $object,
         'operation' => $op,
@@ -234,22 +237,12 @@ class SalesforceQueueProcessor {
         $batch_groups[$object] = array();
       }
       if (!isset($batch_groups[$object][$op])) {
-        if ($op == 'UPSERT') {
-          $batch_groups[$object][$op] = array();
-          if (!isset($batch_groups[$object][$op][$item->dedupe_field])) {
-            $batch_groups[$object][$op][$item->dedupe_field] = array();
-            $batch_key = 0;
-            $batch = $batch_template;
-          }
-        }
-        else {
-          $batch_groups[$object][$op] = array();
-          $batch_key = 0;
-          $batch = $batch_template;
-        }
+        $batch_groups[$object][$op] = array();
+        $batch_key = 0;
+        $batch = $batch_template;
       }
-      else if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$item->dedupe_field])) {
-        $batch_groups[$object][$op][$item->dedupe_field] = array();
+      if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$dedupe])) {
+        $batch_groups[$object][$op][$dedupe] = array();
         $batch_key = 0;
         $batch = $batch_template;
       }
@@ -257,7 +250,7 @@ class SalesforceQueueProcessor {
       // Check to see if the current batch is filled up or not.  If it is full,
       // start a new batch.
       if (is_null($batch_key)) {
-        $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$item->dedupe_field] : $batch_groups[$object][$op];
+        $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$dedupe] : $batch_groups[$object][$op];
         end($batch_group);
         $last_key = key($batch_group);
         if ($batch_group[$last_key]['count'] >= $this->salesforce_max) {
@@ -279,8 +272,8 @@ class SalesforceQueueProcessor {
       $batch['sobjects'][] = $item->sobject;
       $batch['count']++;
       if ($op == 'UPSERT') {
-        $batch['dedupe'] = $item->dedupe_field;
-        $batch_groups[$object][$op][$item->dedupe_field][$batch_key] = $batch;
+        $batch['dedupe'] = $dedupe;
+        $batch_groups[$object][$op][$dedupe][$batch_key] = $batch;
       }
       else {
         $batch_groups[$object][$op][$batch_key] = $batch;
@@ -291,12 +284,7 @@ class SalesforceQueueProcessor {
     // Move all of the batch items into the batches list in the configured order
     // @TODO set default object order
     $object_order = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
-    $op_order = array(
-      'CREATE',
-      'UPSERT',
-      'UPDATE',
-      'DELETE',
-    );
+    $op_order = array('CREATE', 'UPSERT', 'UPDATE', 'DELETE');
     foreach ($object_order as $object) {
       if (isset($batch_groups[$object])) {
         foreach ($op_order as $op) {
