@@ -1065,7 +1065,7 @@ function webform_user_user_map($nid) {
  * Database function, clone component map settings.
  */
 function webform_user_clone_component_map($node, $original_nid) {
-  $originals = db_query('SELECT cid, map_id FROM {webform_user_component_map} m WHERE nid = :nid'
+  $originals = db_query('SELECT cid, map_id FROM {webform_user_component_map} m WHERE nid = :nid',
     array(':nid' => $original_nid));
   $mapped = FALSE;
   foreach ($originals as $original) {
@@ -1083,7 +1083,7 @@ function webform_user_clone_component_map($node, $original_nid) {
  * Database function, clone webform user node settings.
  */
 function webform_user_clone_node($node, $original_nid) {
-  $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid'
+  $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
     array(':nid' => $original_nid))->fetchObject();
   if ($original) {
     $new = (array) $original;
