@@ -656,6 +656,12 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
  * Creates webform components for this node. All selected profile fields, plus the required email field.
  */
 function _webform_user_create_webform_components(&$node) {
+  // Only create components if we don't already have some for this node.
+  $map = webform_user_user_map($node->nid);
+  if (!empty($map)) {
+    return;
+  }
+
   // Include webform component functions to allow creation.
   module_load_include('inc', 'webform', 'includes/webform.components');
 
