@@ -868,10 +868,8 @@ function _webform_user_save_profile_map($uid, &$map) {
         case 'checkbox':
         case 'checkboxes':
         case 'list_boolean':
-          // These take integers.
-          if (in_array($field['name'], array_keys($map))) {
-            $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
-          }
+          // These take integers. Always set them T or F.
+          $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
         break;
         default:
           // Only add the profile result if the name is in the keys.
