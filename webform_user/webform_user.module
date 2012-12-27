@@ -1065,31 +1065,30 @@ function webform_user_user_map($nid) {
  * Database function, clone component map settings.
  */
 function webform_user_clone_component_map($node, $original_nid) {
-  $select = db_select('webform_user_component_map', 'm')
-    ->condition('nid', $original_nid, '=')
-    ->fields('m', array('cid', 'map_id'));
-  $select->addExpression($node->nid, 'nid');
-  db_insert('webform_user_component_map')
-    ->from($select)
-    ->execute();
-  drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+  $originals = db_query('SELECT cid, map_id FROM {webform_user_component_map} m WHERE nid = :nid'
+    array(':nid' => $original_nid));
+  $mapped = FALSE;
+  foreach ($originals as $original) {
+    $new = (array) $original;
+    $new['nid'] = $node->nid;
+    drupal_write_record('webform_user_component_map', $new);
+    $mapped = TRUE;
+  }
+  if ($mapped) {
+    drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+  }
 }
 
 /**
  * Database function, clone webform user node settings.
  */
 function webform_user_clone_node($node, $original_nid) {
-  $select = db_select('webform_user', 'w')
-    ->condition('nid', $original_nid, '=')
-    ->fields('w', array(
-      'is_webform_user',
-      'related_object',
-      'foreign_key_field',
-      'send_new_user_email',
-      'email_field',
-  ));
-  $select->addExpression($node->nid, 'nid');
-  db_insert('webform_user')
-    ->from($select)
-    ->execute();
+  $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid'
+    array(':nid' => $original_nid))->fetchObject();
+  if ($original) {
+    $new = (array) $original;
+    $new['nid'] = $node->nid; // Update to the new nid.
+    drupal_write_record('webform_user', $new);
+    drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+  }
 }
