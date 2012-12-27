@@ -700,7 +700,10 @@ function _webform_user_create_webform_components(&$node) {
           $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
         }
       }
-
+      /**
+       * Standard webform components available are:
+       * date, email, fieldset, file, grid, hidden, markup, number, pagebreak, select, textarea, textfield, time
+       */
       $item = array(
         'nid' => $node->nid,
         'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
@@ -714,7 +717,10 @@ function _webform_user_create_webform_components(&$node) {
           'description' => isset($field['explanation']) ? $field['explanation'] : '',
         ),
       );
+
       // Transform the component array for certain field types.
+      // TODO handle:
+      // 'taxonomy_term_reference', 'image'
       switch ($item['type']) {
         case 'checkbox':
           $item['type'] = 'select';
@@ -725,20 +731,39 @@ function _webform_user_create_webform_components(&$node) {
         case 'list':
           $item['type'] = 'textarea';
           break;
+        case 'url':
+          $item['type'] = 'textfield';
+          break;
+        // All standard entity fields from number_field_info().
+        case 'number_integer':
+        case 'number_decimal':
+        case 'number_float':
+          $item['type'] = 'textarea';
+          break;
+        // All standard entity fields from text_field_info().
         case 'text':
           $item['type'] = 'textfield';
           break;
+        case 'text_long':
+        case 'text_with_summary':
+          $item['type'] = 'textarea';
+          break;
+        // All standard entity fields from list_field_info().
         case 'list_text':
         case 'list_integer':
         case 'list_float':
-          $field['options'] = _webform_user_implode_options($field['options']);
+        case 'list_boolean':
           $item['type'] = 'select';
+          $field['options'] = _webform_user_implode_options($field['options']);
           $item['extra']['items'] = $field['options'];
           $item['extra']['aslist'] = 'Y';
           $item['extra']['multiple'] = 0;
           break;
-        case 'url':
-          $item['type'] = 'textfield';
+        // All standard entity fields from date_field_info().
+        case 'date':
+        case 'datetime':
+        case 'datestamp':
+          $item['type'] = 'date'; // TODO this is partial, dates MAY also have times, and we need to make second component.
           break;
       }
       // Add the component to the Webform.
@@ -831,20 +856,12 @@ function _webform_user_save_profile_map($uid, &$map) {
     foreach ($fields as $field) {
       // So far no types actually require a unique solution.
       switch ($field['type']) {
-        case 'text':
-        case 'textfield':
-        case 'url':
-        case 'hidden':
-        case 'list_text':
-        case 'list_integer':
-        case 'checkbox':
         default:
           // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], array_keys($map))) {
             $profile_values[ $field['name'] ] = $map[ $field['name'] ];
           }
         break;
-        // TODO: track down format for nonstandard fields like 'email'
       }
     }
     // Starting with the mail field.
@@ -935,6 +952,7 @@ function _webform_user_get_profile_fields() {
     $field['name'] = $result->field_name;
     $field['title'] = $result->data['label'];
     $field['type'] = $result->type;
+    // TODO Map types to types webform understands.
     $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
@@ -954,6 +972,7 @@ function _webform_user_get_profile_fields() {
         $field = array();
         $field['name'] = $profile_field->name;
         $field['title'] = $profile_field->title;
+        // TODO Map types to types webform understands.
         $field['type'] = $profile_field->type;
         $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
         $field['weight'] = $profile_field->weight;
