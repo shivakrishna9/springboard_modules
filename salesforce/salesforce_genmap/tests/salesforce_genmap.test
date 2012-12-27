@@ -63,8 +63,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
    */
   public function testConfigForm() {
     // Check installed variable setting
-    $queue_system = variable_get('salesforce_genmap_queue_system', '');
-    $queue_system = empty($queue_system) ? 'salesforce_queue' : $queue_system;
+    $queue_system = variable_get('salesforce_genmap_queue_system', 'instant');
 
     // Load the configuration form and check default values
     $queue_systems = array(

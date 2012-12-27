@@ -9,12 +9,7 @@
  * Implements hook_install().
  */
 function salesforce_genmap_install() {
-  if (module_exists('salesforce_queue')) {
-    variable_set('salesforce_genmap_queue_system', 'salesforce_queue');
-  }
-  else {
-    variable_set('salesforce_genmap_queue_system', 'instant');
-  }
+  variable_set('salesforce_genmap_queue_system', 'instant');
 }
 
 /**
