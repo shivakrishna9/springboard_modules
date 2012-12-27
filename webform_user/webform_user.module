@@ -1075,12 +1075,17 @@ function webform_user_clone_component_map($node, $original_nid) {
  * Database function, clone webform user node settings.
  */
 function webform_user_clone_node($node, $original_nid) {
-  $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
-    array(':nid' => $original_nid))->fetchObject();
-  if ($original) {
-    $new = (array) $original;
-    $new['nid'] = $node->nid; // Update to the new nid.
-    drupal_write_record('webform_user', $new);
-    drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+  // If this is already set, don't copy over it.
+  $check = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
+    array(':nid' => $node->nid))->fetchObject();
+  if (!isset($check->nid)) { 
+    $original = db_query('SELECT * FROM {webform_user} m WHERE nid = :nid',
+      array(':nid' => $original_nid))->fetchObject();
+    if ($original) {
+      $new = (array) $original;
+      $new['nid'] = $node->nid; // Update to the new nid.
+      drupal_write_record('webform_user', $new);
+      drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+    }
   }
 }
