@@ -15,6 +15,7 @@
  */
 function salesforce_genmap_entity_info() {
   return array(
+    // Maps Salesforce objects and fields to components of Drupal
     'salesforce_genmap_map' => array(
       'label' => t('Salesforce Map'),
       'entity class' => 'Entity',
@@ -22,6 +23,19 @@ function salesforce_genmap_entity_info() {
       'base table' => 'salesforce_genmap_map',
       'entity keys' => array(
         'id' => 'mid',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => TRUE,
+      'module' => 'salesforce_genmap',
+    ),
+    // Maps Salesforce records to Drupal records
+    'salesforce_genmap_record_map' => array(
+      'label' => t('Salesforce Record Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'salesforce_genmap_record_map',
+      'entity keys' => array(
+        'id' => 'rmid',
       ),
       'fieldable' => FALSE,
       'exportable' => TRUE,
@@ -202,6 +216,11 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
 }
 
 /**
+ * @defgroup salesforce_genmap_crud CRUD for mapping Drupal stuffs to Salesforce
+ * @{
+ */
+
+/**
  * Creates and saves a Salesforce map.
  *
  * @param $map
@@ -285,6 +304,85 @@ function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
 }
 
 /**
+ * Creates and saves a Salesforce record map.
+ *
+ * @param $record
+ *   Can be an array of values or a salesforce_genmap_record_map entity object
+ *
+ * @return
+ *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
+ *   FALSE is returned if the record could not be saved.
+ */
+function salesforce_genmap_save_record_map($record) {
+  if (is_array($record)) {
+    // Allow sending an array and updating an existing entity with the values
+    $entity = salesforce_genmap_load_record_map($record);
+    if ($entity) {
+      foreach ($record as $key => $value) {
+        $entity->$key = $value;
+      }
+      $record = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database
+      $record = entity_create('salesforce_genmap_record_map', $record);
+    }
+  }
+  if ($record->entityType() == 'salesforce_genmap_record_map') {
+    // Adds the data to the database.
+    return entity_save('salesforce_genmap_record_map', $record);
+  }
+  return FALSE;
+}
+
+/**
+ * Retreives a Salesforce record map
+ *
+ * @param $record
+ *   Can be an array of values or a salesforce_genmap_record_map entity object
+ *
+ * @return
+ *   The entity object you requested
+ */
+function salesforce_genmap_load_record_map($record) {
+  $rmid = _salesforce_genmap_get_rmid($record);
+  if (!empty($rmid)) {
+    $entities = entity_load('salesforce_genmap_record_map', array($rmid));
+    if (isset($entities[$rmid])) {
+      return $entities[$rmid];
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Deletes a Salesforce record map
+ *
+ * @param $record
+ *   Can be an array of values or a salesforce_genmap_record_map entity object
+ *
+ * @return
+ *   TRUE if the delete performed as expected, FALSE if the delete could not
+ *   work as expected.
+ */
+function salesforce_genmap_delete_record_map($record) {
+  $rmid = _salesforce_genmap_get_rmid($record);
+  if (!empty($rmid)) {
+    $result = entity_delete('salesforce_genmap_record_map', $rmid);
+    if ($result === FALSE) {
+      // entity_delete() only returns FALSE. Otherwise it has no return value
+      return FALSE;
+    }
+    return TRUE;
+  }
+}
+
+/**
+ * @} salesforce_genmap_crud
+ */
+
+
+/**
  * Helper function.
  * Return a list of handler modules, or information on a specific one.
  */
@@ -313,4 +411,36 @@ function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'sales
     ->condition('map_handler', $map_handler)
     ->execute()
     ->fetchField();
+}
+
+/**
+ * Helper to grab the record id of a map
+ */
+function _salesforce_genmap_get_rmid($item) {
+  if (is_object($item)) {
+    $record = (array) clone($item);
+  }
+  else {
+    $record = $item;
+  }
+  if (isset($record->rmid) && !empty($record->rmid)) {
+    return $record->rmid;
+  }
+  else if (isset($record['sobject']->Id)) {
+    return db_select('salesforce_genmap_record_map', 'm')
+      ->fields('m', array('rmid'))
+      ->condition('sfid', $record['sobject']->Id)
+      ->execute()
+      ->fetchField();
+  }
+  else {
+    return db_select('salesforce_genmap_record_map', 'm')
+      ->fields('m', array('rmid'))
+      ->condition('module', $record['module'])
+      ->condition('delta', $record['delta'])
+      ->condition('drupal_id', $record['drupal_id'])
+      ->condition('salesforce_type', $record['salesforce_type'])
+      ->execute()
+      ->fetchField();
+  }
 }
