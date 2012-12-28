@@ -595,7 +595,7 @@ function _sfw_salesforce_field_list(Salesforce $sfapi, $sf_object) {
     NULL => '-',
   );
   foreach ($object_info['fields'] as $field) {
-    if ($field['updateable']) { // Filter out fields that can't be altered
+    if ($field['updateable'] || $field['createable']) { // Filter out fields that can't be altered
       $field_list[$field['name']] = $field['label'];
     }
   }
