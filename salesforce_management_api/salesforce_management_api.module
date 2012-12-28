@@ -1105,7 +1105,7 @@ function salesforce_management_api_get_campaigns() {
       $temp_campaigns[$key] = $campaigns[$key];
     }
     $campaigns = $temp_campaigns;
-    cache_set($cid, $campaigns, 'cache', time() + (60 * 60 * 24));
+    cache_set('salesforce_campaigns', $campaigns, 'cache', time() + (60 * 60 * 24));
   }
 
   return $campaigns;
