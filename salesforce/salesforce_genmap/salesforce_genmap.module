@@ -202,8 +202,8 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
  *   Handler module for the mapping object
  *
  * @return
- *   The new version of the object (such as if you had passed in an array) and
- *   FALSE if what you passed through was incompatible with the save process.
+ *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
+ *   FALSE is returned if the map could not be saved.
  */
 function salesforce_genmap_save_map($map, $module = 'salesforce_genmap') {
   if (is_array($map)) {
@@ -261,12 +261,18 @@ function salesforce_genmap_load_map($nid, $module = 'salesforce_genmap') {
  *   Handler module for the mapping object
  *
  * @return
- *   FALSE if the delete could be performed
+ *   TRUE if the delete performed as expected, FALSE if the delete could not
+ *   work as expected.
  */
 function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
   $mid = _salesforce_genmap_get_map_id_by_nid_module($nid, $module);
   if (!empty($mid)) {
-    return entity_delete('salesforce_genmap_map', $mid);
+    $result = entity_delete('salesforce_genmap_map', $mid);
+    if ($result === FALSE) {
+      // entity_delete() only returns FALSE. Otherwise it has no return value
+      return FALSE;
+    }
+    return TRUE;
   }
 }
 
@@ -293,6 +299,10 @@ function salesforce_genmap_info($module = NULL) {
  */
 function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'salesforce_genmap') {
   // TODO: Find out if entity will handle two value primary keys, if so, use that instead.
-  return db_query('SELECT mid FROM {salesforce_genmap_map} WHERE nid = :nid AND map_handler = :map_handler',
-    array(':nid' => $nid, ':map_handler' => $map_handler))->fetchField();
+  return db_select('salesforce_genmap_map', 'm')
+    ->fields('m', array('mid'))
+    ->condition('nid', $nid)
+    ->condition('map_handler', $map_handler)
+    ->execute()
+    ->fetchField();
 }
