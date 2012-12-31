@@ -46,10 +46,22 @@ function salesforce_webform_form_salesforce_genmap_map_form_alter(&$form, &$form
  * @{
  */
 
-
-function salesforce_webform_salesforce_genmap_map_fields_alter(&$fields, $module, $object, $map, $node) {
-  drupal_set_message($module);
-  drupal_set_message(print_r($object, TRUE));
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_webform_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // First check to see if the module creating the object is saleforce_webform and
+  // that we're dealing with a webform_user submission.
+  if ($context['module'] == 'salesforce_webform' && $context['node']->is_webform_user) {
+    // Look up the foreign key for this webform user
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    if (array_key_exists($context['node']->nid, $webform_user_reference_fields)) {
+      $foreign_key_field = $webform_user_reference_fields[$context['node']->nid];
+      // Insert a token that contains the uid of the use that submitted the webform.
+      // TODO: finalize token format
+      $fields[$foreign_key_field] = sprintf('[User:User:%d]', $context['object']->uid);
+    }
+  }
 }
 
 /**
