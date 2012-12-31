@@ -178,7 +178,15 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
   // Gather the fields for this object from their handler modules.
   $fields = array();
   $fields = module_invoke($module, 'salesforce_genmap_map_fields', $object, $map, $node);
-  drupal_alter('salesforce_genmap_map_fields', $fields, $module, $object, $map, $node);
+
+  $context = array(
+    'module' => $module,
+    'object' => $object,
+    'map' => $map,
+    'node' => $node,
+  );
+  // Give other modules a chance to alter the object's field values.
+  drupal_alter('salesforce_genmap_map_fields', $fields, $context);
 
   // Create the Salesforce object
   $sObject = new stdClass();

@@ -11,14 +11,13 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
   function setUp() {
     parent::setUp('webform_user');
 
+    // Set up webform user.
+    $this->configureWebformUser();
+
+    // Set up a user profile.
     $this->createProfileFields();
 
-
-    // Configure webform_user
-    variable_set('webform_user_node_types', array('webform'));
-    variable_set('webform_user_webform', array(1, 'webform_user_all_profile_fields'));
-
-    // Do some user accounts
+    // Create user accounts.
 
     // Create a webform editor to test creating and editing own content.
     $permissions['editor'] = array(
@@ -38,15 +37,16 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
       'delete all webform submissions',
       'administer users',
     );
+
     foreach ($permissions as $user_key => $role_permissions) {
       $this->users[$user_key] = $this->drupalCreateUser($role_permissions);
     }
-
   }
 
   function configureWebformUser() {
-
-
+    // Configure webform_user
+    variable_set('webform_user_node_types', array('webform'));
+    variable_set('webform_user_webform', array(1, 'webform_user_all_profile_fields'));
   }
 
   function createProfileFields() {
