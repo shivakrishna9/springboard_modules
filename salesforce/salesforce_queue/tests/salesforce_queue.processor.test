@@ -127,6 +127,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->processor = SalesforceQueueProcessor::get($this->queue); // new for our new settings
     $this->processor->claimItems();
     $batches = $this->processor->createBatches();
+    $this->assertFalse(empty($batches), 'Returned items after processing batches.');
 
     // Declare which objects and operations should appear before which other
     // objects and operations

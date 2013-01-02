@@ -234,75 +234,114 @@ class SalesforceQueueProcessor {
   public function createBatches() {
     // The goal is to have one loop through the items
     $batch_groups = array();
-    foreach ($this->items as $item) {
+    $count = count($this->items);
+    while ($count > 0) {
+      $item = array_shift($this->items);
+      $count--;
+
       // Adjust just in case an UPSERT command falls through without a dedupe
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
         $item->operation = 'CREATE';
       }
 
-      // Set up our brevity vars
-      $batch_key = NULL;
-      $op = $item->operation;
-      $object = $item->salesforce_type;
-      $dedupe = $item->dedupe_field;
+      // Slot the item into a Object->Operation->Dedupe batch group
+      $this->addItemToBatchGroups($item, $batch_groups);
+    }
 
-      // Check to see if a batch group of the type of the current item is
-      // already made, if not, build one
-      $batch_template = array(
-        'object' => $object,
-        'operation' => $op,
-        'count' => 0,
-        'items' => array(),
-        'sobjects' => array(),
-      );
-      if (!isset($batch_groups[$object])) {
-        $batch_groups[$object] = array();
-      }
-      if (!isset($batch_groups[$object][$op])) {
-        $batch_groups[$object][$op] = array();
-        $batch_key = 0;
+    // Grab all the batches from the groups and put them in a linear order by
+    // how it has been configured
+    $batches = $this->sortBatches($batch_groups);
+
+    // All done! Add the new set of batches to the end of the current set
+    $this->batches = array_merge($this->batches, $batches);
+    return $this->batches;
+  }
+
+  /**
+   * Slot the given item into a Object->Operation->Dedupe batch group
+   *
+   * @param object $item
+   *   A queue item
+   * @param array $batch_groups
+   *   Temporary holder that categorizes all of the items and places them in
+   *   group no larger than salesforce_max
+   */
+  private function addItemToBatchGroups($item, &$batch_groups) {
+    // Set up our brevity vars
+    $batch_key = NULL;
+    $op = $item->operation;
+    $object = $item->salesforce_type;
+    $dedupe = $item->dedupe_field;
+    $batch_template = array(
+      'object' => $object,
+      'operation' => $op,
+      'count' => 0,
+      'items' => array(),
+      'sobjects' => array(),
+    );
+
+    // Check to see if a batch group of the type of the current item is
+    // already made, if not, build one
+    if (!isset($batch_groups[$object])) {
+      $batch_groups[$object] = array();
+    }
+    if (!isset($batch_groups[$object][$op])) {
+      $batch_groups[$object][$op] = array();
+      $batch_key = 0;
+      $batch = $batch_template;
+    }
+    if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$dedupe])) {
+      $batch_groups[$object][$op][$dedupe] = array();
+      $batch_key = 0;
+      $batch = $batch_template;
+    }
+
+    // Check to see if the current batch is filled up or not.  If it is full,
+    // start a new batch.
+    if (is_null($batch_key)) {
+      $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$dedupe] : $batch_groups[$object][$op];
+      end($batch_group);
+      $last_key = key($batch_group);
+      if ($batch_group[$last_key]['count'] >= $this->salesforce_max) {
+        // Create a new batch
+        $batch_key = $last_key + 1;
         $batch = $batch_template;
-      }
-      if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$dedupe])) {
-        $batch_groups[$object][$op][$dedupe] = array();
-        $batch_key = 0;
-        $batch = $batch_template;
-      }
-
-      // Check to see if the current batch is filled up or not.  If it is full,
-      // start a new batch.
-      if (is_null($batch_key)) {
-        $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$dedupe] : $batch_groups[$object][$op];
-        end($batch_group);
-        $last_key = key($batch_group);
-        if ($batch_group[$last_key]['count'] >= $this->salesforce_max) {
-          // Create a new batch
-          $batch_key = $last_key + 1;
-          $batch = $batch_template;
-        }
-        else {
-          // Use current batch
-          $batch_key = $last_key;
-          $batch = $batch_group[$batch_key];
-        }
-      }
-
-      // When sending to Salesforce we just need the sobject, but in other
-      // processes we need the items.  To prevent looping through the items
-      // once again, we'll store a copy of each.
-      $batch['items'][] = $item;
-      $batch['sobjects'][] = $item->sobject;
-      $batch['count']++;
-      if ($op == 'UPSERT') {
-        $batch['dedupe'] = $dedupe;
-        $batch_groups[$object][$op][$dedupe][$batch_key] = $batch;
       }
       else {
-        $batch_groups[$object][$op][$batch_key] = $batch;
+        // Use current batch
+        $batch_key = $last_key;
+        $batch = $batch_group[$batch_key];
       }
     }
 
-    // Sort batches
+    // When sending to Salesforce we just need the sobject, but in other
+    // processes we need the items.  To prevent looping through the items
+    // once again, we'll store a copy of each.
+    $batch['items'][] = $item;
+    $batch['sobjects'][] = $item->sobject;
+    $batch['count']++;
+    if ($op == 'UPSERT') {
+      $batch['dedupe'] = $dedupe;
+      $batch_groups[$object][$op][$dedupe][$batch_key] = $batch;
+    }
+    else {
+      $batch_groups[$object][$op][$batch_key] = $batch;
+    }
+  }
+
+  /**
+   * Grab all the batches from the groups and sort them in a linear order by how
+   * it has been configured for this site
+   *
+   * @param array $batch_groups
+   *   The temporary holder of queue items as created from addItemToBatchGroups
+   *
+   * @return array
+   *   Array of batches that can be processed by processBatches and processBatch
+   */
+  private function sortBatches($batch_groups) {
+    $batches = array();
+
     // Move all of the batch items into the batches list in the configured order
     // @TODO set default object order
     $object_order = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
@@ -312,42 +351,42 @@ class SalesforceQueueProcessor {
         foreach ($op_order as $op) {
           if (isset($batch_groups[$object][$op])) {
             if ($op == 'UPSERT') {
-              foreach ($batch_groups[$object][$op] as $field => $batches) {
-                $this->batches = array_merge($this->batches, $batch_groups[$object][$op][$field]);
+              foreach ($batch_groups[$object][$op] as $field => $field_batches) {
+                $batches = array_merge($batches, $batch_groups[$object][$op][$field]);
                 unset($batch_groups[$object][$op][$field]);
               }
+              unset($batch_groups[$object][$op]);
             }
             else {
-              $this->batches = array_merge($this->batches, $batch_groups[$object][$op]);
+              $batches = array_merge($batches, $batch_groups[$object][$op]);
+              unset($batch_groups[$object][$op]);
             }
-            unset($batch_groups[$object][$op]);
           }
         }
-        unset($batch_groups[$object]);
+        if (empty($batch_groups[$object])) {
+          unset($batch_groups[$object]);
+        }
       }
     }
 
     // Lastly, If any Salesforce objects were not configured for a specific
     // order, append those to the end of the batch list
-    if (!empty($batch_groups)) {
-      foreach ($batch_groups as $object => $operations) {
-        foreach ($op_order as $op) {
-          if (isset($batch_groups[$object][$op])) {
-            if ($op == 'UPSERT') {
-              foreach ($batch_groups[$object][$op] as $field => $batches) {
-                $this->batches = array_merge($this->batches, $batch_groups[$object][$op][$field]);
-              }
+    foreach ($batch_groups as $object => $operations) {
+      foreach ($op_order as $op) {
+        if (isset($batch_groups[$object][$op])) {
+          if ($op == 'UPSERT') {
+            foreach ($batch_groups[$object][$op] as $field => $batches) {
+              $batches = array_merge($batches, $batch_groups[$object][$op][$field]);
             }
-            else {
-              $this->batches = array_merge($this->batches, $batch_groups[$object][$op]);
-            }
+          }
+          else {
+            $batches = array_merge($batches, $batch_groups[$object][$op]);
           }
         }
       }
     }
 
-    // All done!
-    return $this->batches;
+    return $batches;
   }
 
   /**
