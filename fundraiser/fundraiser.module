@@ -225,7 +225,11 @@ function fundraiser_clone_access_alter(&$access, $node) {
  */
 function fundraiser_clone_node_alter(&$node, $context) {
   // Set the internal name.
-  $node->internal_name = t('Clone of %internal', array('%internal' => $context['original_node']->internal_name));
+  if (fundraiser_is_donation_type($context['original_node']->type)) {
+    if (isset($context['original_node']->internal_name)) {
+      $node->internal_name = t('Clone of %internal', array('%internal' => $context['original_node']->internal_name));
+    }
+  }
   // The additional load in hook_node_load already will have brought in additional node data.
   // The additional saves in hook_node_insert / hook_node_update will save the additional node data.
 }

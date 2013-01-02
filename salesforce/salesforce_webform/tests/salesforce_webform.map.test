@@ -37,47 +37,6 @@ class SalesforceWebformMapTestCase extends SalesforceWebformTestCase {
   }
 
   /**
-   * Test the salesforce_genmap_map entity
-   */
-  public function testEntity() {
-    // Map entity type exists
-    $entity_info = entity_get_info('salesforce_genmap_map');
-    $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
-    $this->assertEqual('Salesforce Map', $entity_info['label'], 'Entity has expected label.');
-
-    // Create a salesforce_genmap_map entity object
-    $test_map = array(
-      'nid' => 3,
-      'map_handler' => 'salesforce_webform',
-      'salesforce_object_type' => 'bar',
-      'salesforce_record_type' => 'baz',
-      'field_map' => array(
-        'foo' => 'bar',
-        'baz' => array(
-          'bang' => 'boom',
-          'fizz' => 'buzz',
-        ),
-        'hello' => 'world',
-      ),
-      'locked' => FALSE,
-      'status' => TRUE,
-    );
-    $test_map = entity_create('salesforce_genmap_map', $test_map);
-    $this->assertEqual('salesforce_genmap_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
-
-    // Save the entity to the database
-    entity_save('salesforce_genmap_map', $test_map);
-    $new_map_id = _salesforce_genmap_get_map_id_by_nid_module(3, 'salesforce_webform');
-    $test_map_db = entity_load('salesforce_genmap_map', array($new_map_id));
-    $this->assertEqual('bar', $test_map_db[$new_map_id]->salesforce_object_type, 'Newly created entity has the correct object type.');
-
-    // Delete the entity from the database
-    entity_delete('salesforce_genmap_map', $new_map_id);
-    $all_entities = entity_load('salesforce_genmap_map');
-    $this->assertTrue(empty($all_entities));
-  }
-
-  /**
    * Tests for the mapping form
    */
   public function testMappingForm() {

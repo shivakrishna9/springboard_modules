@@ -127,23 +127,30 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
  * Submit handler for fundraiser_form_node_type_form_alter.
  */
 function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
-  $is_enabled = $form_state['values']['webform_user'];
+  // NOTE: we need to make sure if there are other things toggling this value not to untoggle it.
+  _webform_user_toggle_webform($form_state['values']['type'], $form_state['values']['webform_user']);
+}
+
+/**
+ * Helper function, enable or disable webform settings.
+ */
+function _webform_user_toggle_webform($type, $is_enabled = TRUE) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
-  $type = $form_state['values']['type'];
   // Make sure this content type is enabled for webform if not already.
   // Add the selected node types to the webform_node_types_primary so a webform is added by default.
   if ($is_enabled) {
-    if (!in_array($type, $webform_node_types)) {
-      $webform_node_types = array_merge($webform_node_types, array($type));
-    }
-    if (!in_array($type, $webform_node_types_primary)) {
-      $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
-    }
+    $webform_node_types = array_merge($webform_node_types, array($type));
+    $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
   }
+// If disabled, we leave it as a webform for other modules to use.
+//  else {
+//    $webform_node_types = array_diff($webform_node_types, array($type));
+//    $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
+//  }
   // Re-save the variables.
-  variable_set('webform_node_types', $webform_node_types);
-  variable_set('webform_node_types_primary', $webform_node_types_primary);
+  variable_set('webform_node_types', array_unique($webform_node_types));
+  variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 }
 
 /**
@@ -164,7 +171,7 @@ function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
     $form['webform_user']['is_webform_user'] = array(
       '#title' => t('Create or update users when this webform is submitted.'),
       '#type' => 'checkbox',
-      '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : NULL,
+      '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : TRUE,
       '#description' => t('When checked, user profile fields will automatically be added to the webform. ' .
         'When the form is submitted, new users will be created using those form values.'),
     );
@@ -225,7 +232,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
                 break;
               case 'checkboxes':
                 if ($profile_value) { // Will be a 0 if unchecked.
-                  $form_field['#default_value'] = array($profile_value);
+                  $form_field['#default_value'] = array($profile_field);
                 }
                 break;
               default:
@@ -425,16 +432,17 @@ function webform_user_mapping_form_submit($form, &$form_state) {
  * Implements hook_node_insert().
  */
 function webform_user_node_insert($node) {
-  // If the new node is a clone, clone things.
-  if (isset($node->clone_from_original_nid)) {
-    webform_user_clone_component_map($node, $node->clone_from_original_nid);
-    webform_user_clone_node($node, $node->clone_from_original_nid);
-  }
   // If the newly created node is a webform user node, set the defaults and create comps.
   if (_webform_user_is_webform_user_node_type($node->type)) {
     if (_webform_user_is_webform_user_node($node)) {
       _webform_user_set_values($node);
-      _webform_user_create_webform_components($node);
+      if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
+        // We only want to create new components if this is NOT a clone.
+        _webform_user_create_webform_components($node);
+      }
+      else {
+        webform_user_clone_component_map($node, $node->clone_from_original_nid);
+      }
     }
   }
 }
@@ -447,7 +455,7 @@ function webform_user_node_update($node) {
     // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
-      && $current_node->webform['components'][1]['form_key'] != 'mail') {
+      && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
       // TODO confirm that this works if email not #1, other modules make components too.
       _webform_user_create_webform_components($node);
     }
@@ -598,7 +606,7 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
     if (is_array($val)) {
       // If it's a date, don't flatten the value.
       if ($type == 'date') {
-        if ($val[0] && $val[1] && $val[2]) {
+        if (isset($val[0]) && isset($val[1]) && isset($val[2])) {
           $val['month'] = $val[0];
           $val['day'] = $val[1];
           $val['year'] = $val[2];
@@ -700,7 +708,10 @@ function _webform_user_create_webform_components(&$node) {
           $fieldset_id = webform_component_insert($fieldset_lookup[ $field['category_key'] ]);
         }
       }
-
+      /**
+       * Standard webform components available are:
+       * date, email, fieldset, file, grid, hidden, markup, number, pagebreak, select, textarea, textfield, time
+       */
       $item = array(
         'nid' => $node->nid,
         'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
@@ -714,9 +725,14 @@ function _webform_user_create_webform_components(&$node) {
           'description' => isset($field['explanation']) ? $field['explanation'] : '',
         ),
       );
+
       // Transform the component array for certain field types.
+      // TODO handle:
+      // 'taxonomy_term_reference', 'image'
       switch ($item['type']) {
         case 'checkbox':
+        // From list_field_info().
+        case 'list_boolean':
           $item['type'] = 'select';
           $item['extra']['items'] = $field['name'] . '|' . $field['title'];
           $item['extra']['aslist'] = 0;
@@ -725,20 +741,38 @@ function _webform_user_create_webform_components(&$node) {
         case 'list':
           $item['type'] = 'textarea';
           break;
+        case 'url':
+          $item['type'] = 'textfield';
+          break;
+        // From number_field_info().
+        case 'number_integer':
+        case 'number_decimal':
+        case 'number_float':
+          $item['type'] = 'textarea';
+          break;
+        // From text_field_info().
         case 'text':
           $item['type'] = 'textfield';
           break;
+        case 'text_long':
+        case 'text_with_summary':
+          $item['type'] = 'textarea';
+          break;
+        // From list_field_info().
         case 'list_text':
         case 'list_integer':
         case 'list_float':
-          $field['options'] = _webform_user_implode_options($field['options']);
           $item['type'] = 'select';
+          $field['options'] = _webform_user_implode_options($field['options']);
           $item['extra']['items'] = $field['options'];
           $item['extra']['aslist'] = 'Y';
           $item['extra']['multiple'] = 0;
           break;
-        case 'url':
-          $item['type'] = 'textfield';
+        // From date_field_info().
+        case 'date':
+        case 'datetime':
+        case 'datestamp':
+          $item['type'] = 'date'; // TODO this is partial, dates MAY also have times, and we need to make second component.
           break;
       }
       // Add the component to the Webform.
@@ -831,20 +865,18 @@ function _webform_user_save_profile_map($uid, &$map) {
     foreach ($fields as $field) {
       // So far no types actually require a unique solution.
       switch ($field['type']) {
-        case 'text':
-        case 'textfield':
-        case 'url':
-        case 'hidden':
-        case 'list_text':
-        case 'list_integer':
         case 'checkbox':
+        case 'checkboxes':
+        case 'list_boolean':
+          // These take integers. Always set them T or F.
+          $profile_values[ $field['name'] ] = !empty($map[ $field['name'] ]) ? 1 : 0;
+        break;
         default:
           // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], array_keys($map))) {
             $profile_values[ $field['name'] ] = $map[ $field['name'] ];
           }
         break;
-        // TODO: track down format for nonstandard fields like 'email'
       }
     }
     // Starting with the mail field.
@@ -935,6 +967,7 @@ function _webform_user_get_profile_fields() {
     $field['name'] = $result->field_name;
     $field['title'] = $result->data['label'];
     $field['type'] = $result->type;
+    // TODO Map types to types webform understands.
     $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
@@ -954,6 +987,7 @@ function _webform_user_get_profile_fields() {
         $field = array();
         $field['name'] = $profile_field->name;
         $field['title'] = $profile_field->title;
+        // TODO Map types to types webform understands.
         $field['type'] = $profile_field->type;
         $field['mandatory'] = $profile_field->required ? $profile_field->required : 0;
         $field['weight'] = $profile_field->weight;
@@ -1028,31 +1062,16 @@ function webform_user_user_map($nid) {
  * Database function, clone component map settings.
  */
 function webform_user_clone_component_map($node, $original_nid) {
-  $select = db_select('webform_user_component_map', 'm')
-    ->condition('nid', $original_nid, '=')
-    ->fields('m', array('cid', 'map_id'));
-  $select->addExpression($node->nid, 'nid');
-  db_insert('webform_user_component_map')
-    ->from($select)
-    ->execute();
-  drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
-}
-
-/**
- * Database function, clone webform user node settings.
- */
-function webform_user_clone_node($node, $original_nid) {
-  $select = db_select('webform_user', 'w')
-    ->condition('nid', $original_nid, '=')
-    ->fields('w', array(
-      'is_webform_user',
-      'related_object',
-      'foreign_key_field',
-      'send_new_user_email',
-      'email_field',
-  ));
-  $select->addExpression($node->nid, 'nid');
-  db_insert('webform_user')
-    ->from($select)
-    ->execute();
+  $originals = db_query('SELECT cid, map_id FROM {webform_user_component_map} m WHERE nid = :nid',
+    array(':nid' => $original_nid));
+  $mapped = FALSE;
+  foreach ($originals as $original) {
+    $new = (array) $original;
+    $new['nid'] = $node->nid;
+    drupal_write_record('webform_user_component_map', $new);
+    $mapped = TRUE;
+  }
+  if ($mapped) {
+    drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
+  }
 }

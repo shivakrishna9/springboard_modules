@@ -9,41 +9,16 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
    * Implements setUp().
    */
   function setUp() {
-    parent::setUp('webform_user', 'profile2');
+    parent::setUp('webform_user');
 
-    // Create some profile fields, 'normal' core profile field
-    $field_name = 'firstname';
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'text',
-      'cardinality' => 1,
-    );
-    field_create_field($field);
-    $instance = array(
-      'field_name' => $field_name,
-      'entity_type' => 'user',
-      'bundle' => 'user',
-    );
-    field_create_instance($instance);
+    // Set up webform user.
+    $this->configureWebformUser();
 
-    // Profile2 style profile field
-    $field_name = 'lastname';
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'text',
-      'cardinality' => 1,
-    );
-    field_create_field($field);
-    $instance = array(
-      'field_name' => $field_name,
-      'entity_type' => 'profile2',
-      'bundle' => 'main',
-    );
-    field_create_instance($instance);
+    // Set up a user profile.
+    $this->createProfileFields();
 
-    // Configure webform_user
-    variable_set('webform_user_node_types', array('webform'));
-    // Do some user accounts
+    // Create user accounts.
+
     // Create a webform editor to test creating and editing own content.
     $permissions['editor'] = array(
       'access content',
@@ -62,9 +37,66 @@ class WebformUserIntegratedTestSetup extends DrupalWebTestCase {
       'delete all webform submissions',
       'administer users',
     );
+
     foreach ($permissions as $user_key => $role_permissions) {
       $this->users[$user_key] = $this->drupalCreateUser($role_permissions);
     }
+  }
+
+  function configureWebformUser() {
+    // Configure webform_user
+    variable_set('webform_user_node_types', array('webform'));
+    variable_set('webform_user_webform', array(1, 'webform_user_all_profile_fields'));
+  }
+
+  function createProfileFields() {
+    // Create some text profile fields
+    $field_name = 'first_name';
+    $field = array(
+      'field_name' => $field_name,
+      'type' => 'text',
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+    $instance = array(
+      'field_name' => $field_name,
+      'label' => 'First name',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    field_create_instance($instance);
+
+    $field_name = 'last_name';
+    $field = array(
+      'field_name' => $field_name,
+      'type' => 'text',
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+    $instance = array(
+      'field_name' => $field_name,
+      'label' => 'Last name',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    field_create_instance($instance);
+
+    $field_name = 'state';
+    $field = array(
+      'field_name' => $field_name,
+      'type' => 'list_text',
+      'settings' => array('allowed_values' => drupal_map_assoc(array('NY','DC','MD'))),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => $field_name,
+      'label' => 'State',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    field_create_instance($instance);
+
   }
 }
 
@@ -97,15 +129,17 @@ class WebformUserIntegratedTestCase extends WebformUserIntegratedTestSetup {
 
     // Confirm webform components are created.
     $this->assertTrue($this->webformUserComponentExists(1, 'mail'), t('Webform User mail component found.'));
-    $this->assertTrue($this->webformUserComponentExists(1, 'firstname'), t('Webform component created from core field found.'));
-    $this->assertTrue($this->webformUserComponentExists(1, 'lastname'), t('Webform component created from profile2 field found.'));
+    $this->assertTrue($this->webformUserComponentExists(1, 'first_name'), t('First name webform component created as textfield.'));
+    $this->assertTrue($this->webformUserComponentExists(1, 'last_name'), t('Last name webform component created as textfield.'));
+    $this->assertTrue($this->webformUserComponentExists(1, 'state'), t('State webform component created as select list.'));
 
     // Submit form anonymously.
     $this->drupalLogout();
     $edit = array(
       'submitted[mail]' => 'test@example.com',
-      'submitted[firstname]' => 'testname',
-      'submitted[lastname]' => 'testlast',
+      'submitted[first_name]' => 'John',
+      'submitted[last_name]' => 'Doe',
+      'submitted[state]' => 'DC',
     );
     $this->drupalPost('node/1', $edit, t('Submit'));
 
@@ -117,9 +151,29 @@ class WebformUserIntegratedTestCase extends WebformUserIntegratedTestSetup {
     // Confirm profile values set.
     $this->drupalLogin($this->users['admin']);
     $this->drupalGet('user/' . $uid . '/edit');
-    // TODO: provide a method for generic field checking so we can expand this test to deal with multiple profile field types.
-    $this->assertFieldById('edit-firstname-und-0-value', 'testname', t('Profile value set for firstname field.'));
 
+    // TODO: provide a method for generic field checking so we can expand this test to deal with multiple profile field types.
+    $this->assertFieldById('edit-first-name-und-0-value', 'John', t('Profile value set for first name field.'));
+    $this->assertFieldById('edit-last-name-und-0-value', 'Doe', t('Profile value set for last name field.'));
+    $this->assertFieldById('edit-state-und', 'DC', t('Profile value set for state field.'));
+
+    // Submit the form again as a logged in user
+    $this->drupalGet('node/1');
+    $edit = array(
+      'submitted[first_name]' => 'First',
+      'submitted[last_name]' => 'Last',
+      'submitted[state]' => 'MD',
+    );
+    $this->drupalPost('node/1', $edit, t('Submit'));
+
+    $this->drupalGet('node/1');
+    $this->assertFieldByName('submitted[mail]', $this->users['admin']->mail, t('E-mail field pre-populated correctly.'));
+    $this->assertFieldByName('submitted[first_name]', 'First', t('First name field pre-populated correctly.'));
+    $this->assertFieldByName('submitted[last_name]', 'Last', t('Last name field pre-populated correctly.'));
+    $this->assertFieldByName('submitted[state]', 'MD', t('State field pre-populated correctly.'));
+
+
+    /*
     // Submit form authenticated.
     $edit = array(
       'submitted[mail]' => 'admintest@example.com',
@@ -134,6 +188,7 @@ class WebformUserIntegratedTestCase extends WebformUserIntegratedTestSetup {
     // View form, confirm defaults set from user profile.
     $this->drupalGet('node/1');
     $this->assertFieldById('edit-submitted-firstname', 'admintest', t('Default component value set from core field value.'));
+    */
   }
 
   /**
@@ -201,7 +256,7 @@ class WebformUserUnitTestCase extends WebformUserIntegratedTestSetup {
         ' for ' . $email[0] . '.', 'testWebformUserHelperFunctions');
     }
   }
-  
+
   // TODO add testing for webform generated forms, form crawling, etc.
   // This will help detect errors if webform changes underfoot.
 }

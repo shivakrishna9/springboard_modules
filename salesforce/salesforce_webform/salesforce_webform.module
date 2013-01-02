@@ -24,6 +24,20 @@ function salesforce_webform_permission() {
 }
 
 /**
+ * Implements hook_form_id_alter().
+ */
+function salesforce_webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
+  // Check to see if this form has been designated as a webform user form. If so, we
+  // add an additional submit handler that will scan the fields in the mapped Salesforce
+  // object for a foreign key to the contact object.
+  if (module_exists('webform_user')) {
+    if (!empty($form['#node']) && _webform_user_is_webform_user_node($form['#node'])) {
+      $form['#submit'][] = 'salesforce_webform_user_assign_foreign_key';
+    }
+  }
+}
+
+/**
  * @} core_drupal_hooks
  */
 
@@ -31,6 +45,31 @@ function salesforce_webform_permission() {
  * @name salesforce_genmap_hooks
  * @{
  */
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_webform_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // First check to see if the module creating the object is saleforce_webform and
+  // that we're dealing with a webform_user submission.
+  if ($context['module'] == 'salesforce_webform' && $context['node']->is_webform_user) {
+    // Look up the foreign key for this webform user
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    if (array_key_exists($context['node']->nid, $webform_user_reference_fields)) {
+      $foreign_key_field = $webform_user_reference_fields[$context['node']->nid];
+      // Insert a token that contains the uid of the use that submitted the webform.
+      // TODO: finalize token format
+      $fields[$foreign_key_field] = sprintf('[User:User:%d]', $context['object']->uid);
+    }
+  }
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_object_alter().
+ */
+function salesforce_webform_salesforce_genmap_map_object_alter($sObject) {
+  //drupal_set_message(print_r($sObject, TRUE));
+}
 
 /**
  * Implements hook_salesforce_genmap_map_help().
@@ -174,4 +213,30 @@ function salesforce_webform_webform_submission_update($node, $submission) {
 }
 function salesforce_webform_webform_submission_delete($node, $submission) {
   salesforce_genmap_send_object_to_queue('salesforce_webform', 'delete', $node, $submission->sid, $submission);
+}
+
+/**
+ * Sets the foreign key field for webform_user integration.
+ *
+ * Scan the mapped Salesforce object's fields for a contact foreign
+ * key that will be used to relate the user who submitted
+ * the form to the submission in Salesforce.
+ */
+function salesforce_webform_user_assign_foreign_key($form, $form_state) {
+  $nid = $form_state['build_info']['args'][0]->nid;
+  $sobject_type = $form_state['values']['salesforce_object_info']['salesforce_object_type'];
+
+  $sfapi = salesforce_get_api();
+  if ($sfapi->isAuthorized()) {
+    $object_info = $sfapi->objectDescribe($sobject_type);
+    // Loop over each field and look for a reference field that references the contact object.
+    foreach ($object_info['fields'] as $field) {
+      if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
+        // Add the field name to the webform_user_reference_fields array.
+        $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+        $webform_user_reference_fields[$nid] = $field['name'];
+        variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+      }
+    }
+  }
 }

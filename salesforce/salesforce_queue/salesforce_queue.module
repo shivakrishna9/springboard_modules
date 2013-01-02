@@ -6,6 +6,35 @@
  */
 
 /**
+ * @defgroup salesforce_queue_processor_statuses Statuses of queue processor
+ * @{
+ * The processor will return one of the following statuses once it completes its
+ * processing of a batch of queue items.
+ */
+
+// The process completed as expected
+define('SALESFORCE_QUEUE_PROCESS_COMPLETE', 10);
+
+// No items were retreived from the queue
+define('SALESFORCE_QUEUE_PROCESS_NO_ITEMS', 1);
+
+// The process has never been initiated
+define('SALESFORCE_QUEUE_PROCESS_NOT_STARTED', 0);
+
+// Items cannot be claimed because the queue is leased
+define('SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED', -1);
+
+// Cannnot connect to Salesforce
+define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
+
+// Items cannot be claimed for an unknown reason
+define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
+
+/**
+ * @}
+ */
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {
@@ -223,7 +252,7 @@ function salesforce_queue_in_queue($drupal_id, $module, $delta, $salesforce_type
     'salesforce_type' => $salesforce_type,
   );
   $queue = SalesforceQueue::get();
-  return $queue->createItem($data);
+  return $queue->itemInQueue($data);
 }
 
 /**
