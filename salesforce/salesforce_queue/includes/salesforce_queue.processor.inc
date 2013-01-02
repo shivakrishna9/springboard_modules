@@ -159,6 +159,9 @@ class SalesforceQueueProcessor {
   public function claimItems() {
     // If there are still unprocessed items, lets finish those first
     if (empty($this->items)) {
+      // Make sure we don't have a claim on the queue by releasing it
+      $this->releaseQueue();
+
       // Claim some items
       $items = $this->queue->claimBatch($this->max_items, $this->lease_time);
 
@@ -200,6 +203,17 @@ class SalesforceQueueProcessor {
       }
     }
     return $this->items;
+  }
+
+  /**
+   * Releases this processor's claim on the queue
+   */
+  public function releaseQueue() {
+    $current_lease_key = variable_get('salesforce_queue_' . $this->queue_name . '_lease_key', NULL);
+    if (!empty($this->lease_key) && $this->lease_key == $current_lease_key) {
+      $this->queue->releaseBatch($this->lease_key);
+      $this->lease_key = NULL;
+    }
   }
 
   /**
@@ -350,6 +364,6 @@ class SalesforceQueueProcessor {
     $this->items = array();
     $this->batches = array();
     $this->end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
-    return $this->queue->releaseBatch($this->lease_key);
+    return $this->releaseQueue();
   }
 }
