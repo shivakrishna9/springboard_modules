@@ -31,6 +31,19 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Initiate a processor
     $this->queue = SalesforceQueue::get();
     $this->processor = SalesforceQueueProcessor::get($this->queue);
+
+    // Predeclare reusable reference lists
+    $this->operations = array(
+      'CREATE',
+      'UPSERT',
+      'UPDATE',
+      'DELETE',
+    );
+    $this->objects = array(
+      'Account',
+      'Contact',
+      'Opportunity',
+    );
   }
 
   /**
@@ -165,6 +178,15 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         if ($operation == 'UPSERT') {
           $this->assertEqual($batch['dedupe'], $item->dedupe_field, 'Batch dedupe_field matches batch dedupe.');
         }
+      }
+    }
+
+    // Ensure each Salesforce object was encountered
+    foreach ($this->objects as $object) {
+      $this->assertTrue(isset($encountered_items[$object]), $object .' Salesforce object was added to batches.');
+      // Ensure each operation was encountered
+      foreach ($this->operations as $op) {
+        $this->assertTrue(isset($encountered_items[$object][$op]), $op . ' operation for '. $object .' Salesforce object was added to batches.');
       }
     }
   }
