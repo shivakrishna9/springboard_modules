@@ -158,7 +158,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       // (which we set to 10 above)
       $this->assertTrue((count($batch['items'] <= 10)), 'Batch size does not exceed Salesforce max configuration.');
 
-      // Verify all items match the opperation
+      // Verify all items match the operation
       foreach ($batch['items'] as $item) {
         $this->assertEqual($object, $item->salesforce_type, 'Batch item object matches batch object.');
         $this->assertEqual($operation, $item->operation, 'Batch item operation matches batch operation.');

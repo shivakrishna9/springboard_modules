@@ -355,7 +355,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   The amount of time the queue will be leased to you before it will be
    *   opened to be leased to other processes.
    *
-   * @return mixed
+   * @return string
    *   A unique key that allows you to then release the lease prior to the lease
    *   time expiring.  FALSE if the queue is already leased.
    */
