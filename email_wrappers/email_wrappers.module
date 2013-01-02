@@ -349,8 +349,15 @@ function email_wrappers_mail($key, &$message, $params) {
 
     $eid = $params['email']['eid'];
     $nid = $params['email']['nid'];
-    $settings = $params['settings']; //email_wrappers_load_settings($nid, $eid);
+    $settings = $params['settings'];
 
+    $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
+    $message['headers']['MIME-version'] = '1.0';
+    $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
+    $message['body'] = array(email_wrappers_render_email_body($eid, $message, $settings));
+  }
+
+  if ($key == 'email_wrapper_api') {
     $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
     $message['headers']['MIME-version'] = '1.0';
     $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
@@ -371,14 +378,14 @@ function email_wrappers_mail_alter(&$message) {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
 
-  if (!isset($message['params']['settings'])) {
-    $settings = email_wrappers_load_settings($nid, $eid);
-  }
-  else {
-    $settings = $message['params']['settings'];
-  }
+    if (!isset($message['params']['settings'])) {
+      $settings = email_wrappers_load_settings($nid, $eid);
+    }
+    else {
+      $settings = $message['params']['settings'];
+    }
 
-  if ($settings) {
+    if ($settings) {
       $extra = $settings['extra'];
       $params = $message['params'];
       $params['settings'] = $settings;
@@ -427,8 +434,9 @@ function email_wrappers_mail_alter(&$message) {
  */
 function email_wrappers_render_email_body($eid, $message, $settings) {
 
-  $eid = $message['params']['email']['eid'];
+  $eid = isset($message['params']['email']['eid']) ? $message['params']['email']['eid'] : FALSE;
   $boundary = $message['params']['boundary'];
+  // TODO: filter HTML by field input type where appropriate.
   $html_raw = str_replace('%html_message', $settings['html_message'], $settings['html_template']);
   $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
 
@@ -452,7 +460,10 @@ $html_raw
 
   // TODO: if we need to do token module token replacement this would probably be a good place for it.
   // perform webform token replacement.
-  return  _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
+  if ($eid) {
+    $multi_body = _webform_filter_values($multi_body, $message['params']['node'], $message['params']['submission'], $message['params']['node']->webform['emails'][$eid], FALSE, TRUE);
+  }
+  return $multi_body;
 }
 
 
@@ -494,7 +505,7 @@ function _email_wrappers_list_templates() {
  *   text_template - plaintext template value, shared by any emails that use a given template
  *   extra - serialized array of additional settings
  */
-function email_wrappers_load_settings($nid, $eid) {
+function email_wrappers_load_settings($nid, $eid = FALSE) {
 
   if ($eid) {
     $query = db_select('email_wrappers_webform', 'e');
@@ -524,6 +535,42 @@ function email_wrappers_load_settings($nid, $eid) {
   }
 }
 
+/**
+ * Mail configuration loader.
+ */
+function email_wrappers_mail_load($params = array()) {
+  $mid = isset($params['mid']) ? $params['mid'] : FALSE;
+
+  static $settings = array();
+  if ($mid && $settings[$mid]) {
+    return $settings[$mid];
+  }
+  elseif ($mid) {
+   $query = db_select('email_wrappers', 'e');
+   $query->fields('e');
+   $query->condition('mid', $mid);
+   $result = $query->execute();
+   $mail = $result->fetchObject();
+   $settings[$mid] = $mail;
+  }
+  elseif (isset($params['module']) && isset($params['delta'])) {
+   // $result = db_query("SELECT * FROM {mailtron} WHERE module = '%s' AND name = '%s'", $params['module'], $params['name']);
+   // $mail = db_fetch_object($result);
+    $query = db_select('email_wrappers', 'e');
+    $query->fields('e');
+    $query->condition('module', $params['module']);
+    $query->condition('delta', $params['delta']);
+    $result = $query->execute();
+    $mail = $result->fetchObject();
+
+    if (isset($mail->mid)) {
+      $mid = $mail->mid;
+      $settings[$mid] = $mail;
+    }
+  }
+
+  return $mid ? $settings[$mid] : FALSE;
+}
 
 /**
  * Load email settings from db.
@@ -661,3 +708,31 @@ function _email_wrappers_get_cid($components, $form_key) {
   }
   return FALSE;
 }
+
+/**
+ * Implements hook_clone_node_alter().
+ */
+/**
+ * Implements hook_node_insert().
+ */
+function email_wrappers_node_insert($node) {
+  // If the new node is a clone, clone things.
+  if (!isset($node->clone_from_original_nid)) {
+    return;
+  }
+  // we're only interested in webform nodes with configured emails
+  if (in_array($node->type, webform_variable_get('webform_node_types')) && isset($node->webform['emails'])) {
+    $settings = email_wrappers_load_settings($node->clone_from_original_nid);
+    if ($settings) {
+      foreach ($settings as $data) {
+        // update the node id of existing record with the nid of the clone and
+        // save.
+        $data['nid'] = $node->nid;
+        $data['extra'] = serialize($data['extra']);
+        drupal_write_record('email_wrappers_webform', $data);
+      }
+    }
+  }
+}
+
+// TODO: add garbage collection on node delete.

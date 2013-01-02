@@ -12,7 +12,7 @@ function email_wrappers_install() {
     variable_set('email_wrappers_og_filter', 0);
   }
   _email_wrappers_create_fields();
-  
+
   // we need to add an entry to the mail_system variable for our implementation of MailSystemInterface.
   // @see: http://drupal.org/node/900794
   $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
@@ -35,7 +35,7 @@ function email_wrappers_uninstall() {
   // delete the email wrapper content type.
   node_type_delete('email_wrapper');
   field_purge_batch(1000);
-  
+
   // back out changes to mail_system variable.
   $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
   unset($mail_system['email_wrappers']);
@@ -89,6 +89,75 @@ $schema['email_wrappers_webform'] = array(
     'primary key' => array('nid', 'eid'),
   );
 
+  $schema['email_wrappers'] = array(
+    'description' => t('Stores data for donation_form nodes.'),
+    'fields' => array(
+      'mid' => array(
+        'description' => 'mail id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'module' => array(
+        'description' => 'parent module',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'delta' => array(
+        'description' => '',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'from_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'from_mail' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'recipients' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'cc' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'bcc' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'subject' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'html_message' => array(
+        'description' => t('HTML version of the email message.'),
+        'type' => 'text',
+      ),
+      'html_message_format' => array(
+        'description' => t('Input format'),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'text_message' => array(
+        'description' => t('Text version of the email message.'),
+        'type' => 'text',
+      ),
+      'extra' => array(
+        'description' => t('Extra settings defined by other modules.'),
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('mid'),
+  );
   return $schema;
 }
 
@@ -109,7 +178,7 @@ function email_wrappers_update_7001() {
     return $ret;
   }
   $ret[] = 'email confirmation found, migrating';
-  
+
   // get nodes
   $results = db_query('
     SELECT
@@ -151,12 +220,12 @@ function email_wrappers_update_7001() {
     _email_wrappers_update_field_value('email_wrapper_text_template', $nid, $confirmation['text_template']);
     // text message email_wrapper_text_message
     _email_wrappers_update_field_value('email_wrapper_text_message', $nid, $confirmation['text_message']);
-    
+
     // change node type in {node}
     db_query("UPDATE {node} SET type = :type WHERE nid = :nid", array(':type' => 'email_wrapper', ':nid' => $nid));
   }
-  
-  
+
+
   // copy data from {fundraiser_confirmations} to {email_wrappers}.
   $results = db_select('fundraiser_confirmations', 'f')
     ->fields('f', array(
@@ -209,7 +278,7 @@ function email_wrappers_update_7001() {
   $og_filter = variable_get('email_confirmation_og_filter');
   variable_set('email_wrapper_og_filter', $og_filter);
   variable_del('email_confirmation_og_filter');
-  
+
   // TODO: delete original email confirmation tables.
 }
 
@@ -425,7 +494,7 @@ function _email_wrappers_create_fields() {
     field_create_field($values);
     field_create_instance($instance);
   }
-  
+
 }
 
 
@@ -472,7 +541,7 @@ function _email_wrappers_update_field_value($field_name, $nid, $value, $delta = 
   db_insert("field_data_$field_name")
     ->fields($fields)
     ->execute();
-    
+
   db_insert("field_revision_$field_name")
     ->fields($fields)
     ->execute();
