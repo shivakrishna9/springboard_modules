@@ -154,7 +154,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs
         // to be set.
-        if (($dedupe && rand(0, 1)) || $data['operation'] == 'UPSERT') {
+        if ($dedupe && (rand(0, 1) || $data['operation'] == 'UPSERT')) {
           $data['dedupe_field'] = $field;
         }
       }

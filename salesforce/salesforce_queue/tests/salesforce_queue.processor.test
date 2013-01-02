@@ -187,7 +187,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       $this->assertTrue(isset($encountered_items[$object]), $object .' Salesforce object was added to batches.');
       // Ensure each operation was encountered
       foreach ($this->operations as $op) {
-        $this->assertTrue(isset($encountered_items[$object][$op]), $op . ' operation for '. $object .' Salesforce object was added to batches.');
+        if ($op != 'UPSERT' && $object != 'Account') { // Account does not have a dedupe field and so cannot be created through UPSERT
+          $this->assertTrue(isset($encountered_items[$object][$op]), $op . ' operation for '. $object .' Salesforce object was added to batches.');
+        }
       }
     }
   }
