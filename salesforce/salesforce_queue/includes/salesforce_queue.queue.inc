@@ -17,7 +17,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *
    * @var string
    */
-  protected $queue_name;
+  public $queue_name;
 
   /**
    * The queues that the 'all' queue manages

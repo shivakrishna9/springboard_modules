@@ -18,6 +18,13 @@ class SalesforceQueueProcessor {
   protected $queue;
 
   /**
+   * Name of the SalesforceQueue this processor is processing
+   *
+   * @var string
+   */
+  public $queue_name;
+
+  /**
    * Batch of items from the queue that need to be processed
    *
    * @var array
@@ -96,6 +103,7 @@ class SalesforceQueueProcessor {
    */
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
+    $this->queue_name = $queue->queue_name;
     $this->max_items = variable_get('salesforce_queue_max_items', 1000);
     $this->lease_time = variable_get('salesforce_queue_lease_item', 3600);
     $this->salesforce_max = variable_get('salesforce_queue_salesforce_max', 200);
