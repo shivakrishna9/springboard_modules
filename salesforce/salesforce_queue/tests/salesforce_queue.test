@@ -26,6 +26,9 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    */
   public function setUp() {
     parent::setUp(
+      'libraries',
+      'salesforce',
+      'salesforce_soap',
       'salesforce_queue'
     );
 
@@ -70,6 +73,12 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     // Test the connection
     $salesforce = salesforce_get_api();
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+
+    // Make a call to Salesforce that will do nothing just so we can get an
+    // access token into our session.  This is dumb, but I can't think of any
+    // other way to get an access token.
+    $salesforce->apiCall('');
+
     return $salesforce;
   }
 
@@ -81,10 +90,10 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    * @param int $num
    *   Number of items to create
    */
-  public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array()) {
+  public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array(), $exempt_objects = array()) {
     // Define objects
     $objects = array(
-      array(
+      'Account' => array(
         'type' => 'Account',
         'records' => array(),
         'fields' => array(
@@ -93,7 +102,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
           'AccountNumber' => FALSE,
         ),
       ),
-      array(
+      'Contact' => array(
         'type' => 'Contact',
         'records' => array(),
         'fields' => array(
@@ -102,7 +111,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
           'Email' => TRUE,
         ),
       ),
-      array(
+      'Opportunity' => array(
         'type' => 'Opportunity',
         'records' => array(
           'Donation',
@@ -113,11 +122,16 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
           'Name' => TRUE,
           'Amount' => FALSE,
           'AccountId' => FALSE,
+          'StageName' => FALSE,
+          'CloseDate' => FALSE,
         ),
       ),
     );
+    foreach ($exempt_objects as $exempt_object) {
+      unset($objects[$exempt_object]);
+    }
 
-    // Define types of opperations
+    // Define types of operations
     if (empty($ops)) {
       $ops = array(
         'UPSERT',
@@ -149,7 +163,18 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       $sObject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
       $sObject->fields = array();
       foreach ($objects[$object_rand]['fields'] as $field => $dedupe) {
-        $sObject->fields[$field] = $this->randomName();
+        if ($field == 'Email') {
+          $sObject->fields[$field] = $this->randomName() . '@' . $this->randomName() . '.com';
+        }
+        else if ($field == 'Amount') {
+          $sObject->fields[$field] = rand(1, 10000);
+        }
+        else if ($field == 'CloseDate') {
+          $sObject->fields[$field] = date('c', REQUEST_TIME);
+        }
+        else {
+          $sObject->fields[$field] = $this->randomName();
+        }
 
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs
@@ -163,6 +188,11 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       // operation to CREATE
       if ($data['operation'] == 'UPSERT' && empty($data['dedupe_field'])) {
         $data['operation'] = 'CREATE';
+      }
+
+      // If the operation is UPDATE or DELETE add in a fake Id field
+      if ($data['operation'] == 'UPDATE' || $data['operation'] == 'DELETE') {
+        $sObject->Id = $this->randomName();
       }
 
       $data['salesforce_type'] = $sObject->type;

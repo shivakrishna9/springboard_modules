@@ -24,6 +24,12 @@ define('SALESFORCE_QUEUE_PROCESS_NOT_STARTED', 0);
 // Items cannot be claimed because the queue is leased
 define('SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED', -1);
 
+// The lease expired before all batches could be completed
+define('SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED', -2);
+
+// Although items were claimed from the queue, none of them passed validation
+define('SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS', -3);
+
 // Cannnot connect to Salesforce
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
 
@@ -33,6 +39,41 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 /**
  * @}
  */
+
+
+/**
+ * @defgroup salesforce_queue_process_item_fail_responses Item fail responses
+ * @{
+ * When a queue item fails, it will give one of the following reasons for its
+ * failure.
+ */
+
+// The item could not reach processing because the lease on the queue expired
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED', 0);
+
+// Item failed when it was attempted to be created in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE', -1);
+
+// Item failed when it attempted an upsert in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT', -2);
+
+// Item failed when it attempted an update in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE', -3);
+
+// Item failed when it was attempted to be deleted in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE', -4);
+
+// Item failed validation. It does not have the proper properties nessisary to
+// be sent to Salesforce for the operation associated with it
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
+
+// The entire batch failed to be processed due to some error with Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
+
+/**
+ * @}
+ */
+
 
 /**
  * Implements hook_form_FORM_ID_alter().
