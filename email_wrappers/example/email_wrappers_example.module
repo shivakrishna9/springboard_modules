@@ -63,11 +63,11 @@ function email_wrappers_example_test_form() {
 function email_wrappers_example_send($form, $form_state) {
   module_load_include('inc', 'email_wrappers', 'email_wrappers.api');
   $params = array(
-    'name' => 'test_form',
+    'delta' => 'example_1',
     'module' => 'email_wrappers_example',
   );
   $mail = email_wrappers_mail_load($params);
-  email_wrappers_send_mail($mail);
+  email_wrappers_send_mail($mail, $params);
 }
 
 /**

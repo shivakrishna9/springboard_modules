@@ -182,7 +182,7 @@ function email_wrappers_mail_form_validate(&$form, $form_state) {
 
 function email_wrappers_mail_form_submit($form, $form_state) {
   $settings = _email_wrappers_concat_settings_from_submission($form_state['values']);
-  dsm($settings);
+
   if (!$settings->mid) {
     email_wrappers_save($settings);
   }
@@ -234,21 +234,19 @@ function _email_wrappers_concat_settings_from_submission($values) {
  * @param $params
  * Optional associative array containing additional parameters to send to callback functions.
  */
-function mailtron_send_mail($mail, $params = array()) {
-  // TODO: thoroughly examine dependency on mimemail, replace with hook_mail call
-  // unless mimemail is actually needed.
-  module_load_include('module', 'mimemail');
-  module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
+function email_wrappers_send_mail($mail, $params = array()) {
+  global $user;
   if (isset($mail->recipient_callback) && $mail->recipient_callback) {
     $function = $mail->recipient_callback;
     $mail->recipients = $function($mail, $params);
   }
 
-  module_invoke_all('mimemail_send_mail_alter', $mail);
+  $key = $mail->module . '_' . $mail->delta;
+  $params['from'] = $mail->from_name . " <" . $mail->from_mail . ">";
+  $params['mail'] = $mail;
+  $params['language'] = user_preferred_language($user);
 
-  $settings = mailtron_convert_settings($mail);
-  mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
-
+  drupal_mail('email_wrappers', $key, $mail->recipients, $params['language'], $params, $params['from'], $send = TRUE);
   // optionally call callback provided in $mail
   if (isset($mail->send_callback) && $mail->send_callback) {
     $function = $mail->send_callback;

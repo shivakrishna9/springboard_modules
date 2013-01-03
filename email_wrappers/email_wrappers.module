@@ -357,12 +357,6 @@ function email_wrappers_mail($key, &$message, $params) {
     $message['body'] = array(email_wrappers_render_email_body($eid, $message, $settings));
   }
 
-  if ($key == 'email_wrapper_api') {
-    $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
-    $message['headers']['MIME-version'] = '1.0';
-    $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
-    $message['body'] = array(email_wrappers_render_email_body($eid, $message, $settings));
-  }
 }
 
 /**
@@ -413,6 +407,16 @@ function email_wrappers_mail_alter(&$message) {
       $message['send'] = FALSE;
     }
   }
+
+  // Processing an email constructed via the dev API.
+  if ($message['module'] = 'email_wrappers' && isset($message['params']['module'], $message['params']['delta'])) {
+    // format body & headers
+    $message['params']['boundary'] = '----=_NextPart_' . md5(uniqid());
+    $message['headers']['MIME-version'] = '1.0';
+    $message['headers']['Content-Type'] = 'multipart/alternative; boundary="' . $message['params']['boundary'] . '"';
+    $message['subject'] = $message['params']['mail']->subject;
+    $message['body'] = array(email_wrappers_render_email_body(FALSE, $message));
+  }
 }
 
 /**
@@ -432,13 +436,20 @@ function email_wrappers_mail_alter(&$message) {
  * @return
  * Email message body, formatted for multipart MIME.
  */
-function email_wrappers_render_email_body($eid, $message, $settings) {
+function email_wrappers_render_email_body($eid, $message, $settings = array()) {
 
   $eid = isset($message['params']['email']['eid']) ? $message['params']['email']['eid'] : FALSE;
   $boundary = $message['params']['boundary'];
   // TODO: filter HTML by field input type where appropriate.
-  $html_raw = str_replace('%html_message', $settings['html_message'], $settings['html_template']);
-  $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
+  if (isset($settings['html_message'], $settings['text_message'])) {
+    $html_raw = str_replace('%html_message', $settings['html_message'], $settings['html_template']);
+    $text_raw = str_replace('%text_message', $settings['text_message'], $settings['text_template']);
+  }
+  else {
+    drupal_set_message('formatting one-off email');
+    $html_raw = $message['params']['mail']->html_message;
+    $text_raw = $message['params']['mail']->text_message;
+  }
 
   $multi_body  = "
 
