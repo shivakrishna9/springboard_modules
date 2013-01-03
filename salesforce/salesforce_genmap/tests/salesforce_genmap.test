@@ -24,12 +24,13 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp(
+  public function setUp($modules = array()) {
+    $modules = $modules + array(
       'entity',
       'salesforce',
-      'salesforce_genmap'
+      'salesforce_genmap',
     );
+    parent::setUp($modules);
 
     // Create an admin user
     $permissions = array(

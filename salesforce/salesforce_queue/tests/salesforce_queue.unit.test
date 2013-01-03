@@ -23,8 +23,8 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp();
+  public function setUp($modules = array()) {
+    parent::setUp($modules);
 
     // Set up example contact information
     $this->example_contact = array(

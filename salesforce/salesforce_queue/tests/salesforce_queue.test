@@ -24,13 +24,14 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp(
+  public function setUp($modules = array()) {
+    $modules = $modules + array(
       'libraries',
       'salesforce',
       'salesforce_soap',
-      'salesforce_queue'
+      'salesforce_queue',
     );
+    parent::setUp($modules);
 
     // Create an admin user
     $permissions = array(

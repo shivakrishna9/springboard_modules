@@ -25,8 +25,8 @@ class SalesforceWebformQueueTestCase extends SalesforceWebformTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp();
+  public function setUp($modules = array()) {
+    parent::setUp($modules);
 
     // Create webforms
     $this->webform1 = $this->swCreateWebform(); // No dedupe field
