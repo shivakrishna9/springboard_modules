@@ -666,6 +666,9 @@ class SalesforceQueueProcessor {
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
   public function _deleteNewSfRecords() {
+    if (empty($this->new_sf_records)) {
+      return;
+    }
     $batches = array_chunk($this->new_sf_records, $this->salesforce_max);
     $this->new_sf_records = array();
     foreach ($batches as $batch) {
