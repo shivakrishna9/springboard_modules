@@ -305,7 +305,6 @@ class SalesforceQueueProcessor {
    */
   private function addItemToBatchGroups($item, &$batch_groups) {
     // Set up our brevity vars
-    $batch_key = NULL;
     $op = $item->operation;
     $object = $item->salesforce_type;
     $dedupe = $item->dedupe_field;
@@ -317,38 +316,57 @@ class SalesforceQueueProcessor {
       'sobjects' => array(),
     );
 
-    // Check to see if a batch group of the type of the current item is
-    // already made, if not, build one
-    if (!isset($batch_groups[$object])) {
-      $batch_groups[$object] = array();
+    // Declare batch_group levels this item will be sorted under
+    $lvl1 = ($op == 'DELETE') ? 'DELETE' : $object;
+    $lvl2 = ($op == 'DELETE') ? NULL : $op;
+    $lvl3 = ($op == 'UPSERT') ? $dedupe : NULL;
+
+    // Find the batch_group for this item, while creating missing batch_groups
+    // along the way
+    if (!isset($batch_groups[$lvl1])) {
+      $batch_groups[$lvl1] = array();
     }
-    if (!isset($batch_groups[$object][$op])) {
-      $batch_groups[$object][$op] = array();
-      $batch_key = 0;
-      $batch = $batch_template;
+    // DELETE
+    if (is_null($lvl2)) {
+      $batch_group = &$batch_groups[$lvl1];
     }
-    if ($op == 'UPSERT' && !isset($batch_groups[$object][$op][$dedupe])) {
-      $batch_groups[$object][$op][$dedupe] = array();
-      $batch_key = 0;
-      $batch = $batch_template;
+    else {
+      if (!isset($batch_groups[$lvl1][$lvl2])) {
+        $batch_groups[$lvl1][$lvl2] = array();
+      }
+      // CREATE and UPDATE
+      if (is_null($lvl3)) {
+        $batch_group = &$batch_groups[$lvl1][$lvl2];
+      }
+      else {
+        // UPSERT
+        if (!isset($batch_groups[$lvl1][$lvl2][$lvl3])) {
+          $batch_groups[$lvl1][$lvl2][$lvl3] = array();
+        }
+        $batch_group = &$batch_groups[$lvl1][$lvl2][$lvl3];
+      }
     }
 
     // Check to see if the current batch is filled up or not.  If it is full,
     // start a new batch.
-    if (is_null($batch_key)) {
-      $batch_group = ($op == 'UPSERT') ? $batch_groups[$object][$op][$dedupe] : $batch_groups[$object][$op];
-      end($batch_group);
-      $last_key = key($batch_group);
-      if ($batch_group[$last_key]['count'] >= $this->salesforce_max) {
-        // Create a new batch
-        $batch_key = $last_key + 1;
-        $batch = $batch_template;
+    end($batch_group);
+    $last_key = key($batch_group);
+    reset($batch_group);
+    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->salesforce_max) {
+      // Create a new batch
+      $batch_key = empty($last_key) ? 0 : $last_key + 1;
+      $batch = $batch_template;
+      if ($op == 'DELETE') {
+        unset($batch['object']); // unneeded for DELETE
       }
-      else {
-        // Use current batch
-        $batch_key = $last_key;
-        $batch = $batch_group[$batch_key];
+      if ($op == 'UPSERT') {
+        $batch['dedupe'] = $dedupe;
       }
+    }
+    else {
+      // Use current batch
+      $batch_key = $last_key;
+      $batch = $batch_group[$batch_key];
     }
 
     // When sending to Salesforce we just need the sobject, but in other
@@ -357,13 +375,7 @@ class SalesforceQueueProcessor {
     $batch['items'][] = $item;
     $batch['sobjects'][] = ($op == 'DELETE') ? $item->sobject->Id : $item->sobject; // Because DELETE has to be weird like that
     $batch['count']++;
-    if ($op == 'UPSERT') {
-      $batch['dedupe'] = $dedupe;
-      $batch_groups[$object][$op][$dedupe][$batch_key] = $batch;
-    }
-    else {
-      $batch_groups[$object][$op][$batch_key] = $batch;
-    }
+    $batch_group[$batch_key] = $batch; // $batch_groups referred by reference
   }
 
   /**
@@ -379,10 +391,16 @@ class SalesforceQueueProcessor {
   private function sortBatches($batch_groups) {
     $batches = array();
 
+    // Remove the DELETE operation so we can place it at the end later
+    if (isset($batch_groups['DELETE'])) {
+      $delete_batches = $batch_groups['DELETE'];
+      unset($batch_groups['DELETE']);
+    }
+
     // Move all of the batch items into the batches list in the configured order
     // @TODO set default object order
     $object_order = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
-    $op_order = array('CREATE', 'UPSERT', 'UPDATE', 'DELETE');
+    $op_order = array('CREATE', 'UPSERT', 'UPDATE');
     foreach ($object_order as $object) {
       if (isset($batch_groups[$object])) {
         foreach ($op_order as $op) {
@@ -421,6 +439,11 @@ class SalesforceQueueProcessor {
           }
         }
       }
+    }
+
+    // Append the DELETE batches to the end
+    if (isset($delete_batches)) {
+      $batches = array_merge($batches, $delete_batches);
     }
 
     return $batches;

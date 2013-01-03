@@ -161,6 +161,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       'Account' => 'Contact',
       'Contact' => 'Opportunity',
       'Opportunity' => NULL,
+      NULL => NULL,
     );
     $operation_order = array(
       'CREATE' => 'UPSERT',
@@ -172,36 +173,48 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // Ensure the sorted batches are ordered correctly
     $encountered_items = array();
     foreach ($batches as $batch) {
-      $object = $batch['object'];
       $operation = $batch['operation'];
+      $object = $operation == 'DELETE' ? NULL : $batch['object'];
 
       // Declare that the current object type and operation has been encountered
-      if (!isset($encountered_items[$object])) {
-        $encountered_items[$object] = array();
+      if (!is_null($object)) {
+        if (!isset($encountered_items[$object])) {
+          $encountered_items[$object] = array();
+        }
+        $encountered_items[$object][$operation] = $operation;
       }
-      $encountered_items[$object][$operation] = $operation;
 
 
       // Verify that objects that are supposed to be encountered only after
       // this object has been processed has not been encountered yet
       if (!is_null($object_order[$object])) {
-        $this->assertFalse(isset($encountered_items[$object_order[$object]]), 'Have not yet encountered an object before we were supposed to.');
+        $this->assertFalse(isset($encountered_items[$object_order[$object]]), 'Encountered the '. $object .' object before we were supposed to.');
       }
 
       // Verify that operations that are supposed to be encountered only after
       // this operation has been processed have not been encountered yet
       if (!is_null($operation_order[$operation])) {
-        $this->assertFalse(isset($encountered_items[$object][$operation_order[$operation]]), 'Have not yet encountered an operation before we were supposed to.');
+        $this->assertFalse(isset($encountered_items[$object][$operation_order[$operation]]), 'Encountered the '. $operation .' operation for '. $object .' object before we were supposed to.');
       }
 
       // Verify that the number of items does not exceed the Salesforce max
       // (which we set to 10 above)
       $this->assertTrue((count($batch['items'] <= 10)), 'Batch size does not exceed Salesforce max configuration.');
 
-      // Verify all items match the operation
+      // Verify all items match the operation and object
       foreach ($batch['items'] as $item) {
-        $this->assertEqual($object, $item->salesforce_type, 'Batch item object matches batch object.');
         $this->assertEqual($operation, $item->operation, 'Batch item operation matches batch operation.');
+        // DELETE can have any object type
+        if ($operation == 'DELETE') {
+          // Add the encountered objects for the DELETE operation down here
+          if (!isset($encountered_items[$item->salesforce_type])) {
+            $encountered_items[$item->salesforce_type] = array();
+          }
+          $encountered_items[$item->salesforce_type]['DELETE'] = 'DELETE';
+        }
+        else {
+          $this->assertEqual($object, $item->salesforce_type, 'Batch item object matches batch object.');
+        }
         if ($operation == 'UPSERT') {
           $this->assertEqual($batch['dedupe'], $item->dedupe_field, 'Batch dedupe_field matches batch dedupe.');
         }
@@ -300,16 +313,18 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->processor->claimItems();
     $batches = $this->processor->createBatches();
     foreach ($batches as $batch) {
-      if (!isset($encountered_ops[$batch['operation']])) {
-        $encountered_ops[$batch['operation']] = array('pass' => 0, 'fail' => 0);
+      $object = isset($batch['object']) ? $batch['object'] : NULL;
+      $operation = $batch['operation'];
+      if (!isset($encountered_ops[$operation])) {
+        $encountered_ops[$operation] = array('pass' => 0, 'fail' => 0);
       }
-      if (!isset($encountered_objects[$batch['object']])) {
-        $encountered_objects[$batch['object']] = array('pass' => 0, 'fail' => 0);
+      if (!isset($encountered_objects[$object]) && !is_null($object)) {
+        $encountered_objects[$object] = array('pass' => 0, 'fail' => 0);
       }
 
       // Before sending the batch out to processing, map all of the
       // Opportunities to an Account Id we had created earlier
-      if ($batch['object'] == 'Opportunity') {
+      if ($object == 'Opportunity') {
         foreach ($batch['sobjects'] as $item) {
           $rand_account = array_rand($records['Account']);
           $item->fields['AccountId'] = $records['Account'][$rand_account]->sobject->Id;
@@ -338,7 +353,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         $batch_item_count++;
       }
       $batch_count = count($batch['items']);
-      $this->assertEqual($batch_count, $batch_item_count, $batch_item_count .' items of '. $batch_count .' items in the '.  $batch['object'] .' '. $batch['operation'] .' batch were processed.');
+      $this->assertEqual($batch_count, $batch_item_count, $batch_item_count .' items of '. $batch_count .' items in the '.  $object .' '. $operation .' batch were processed.');
     }
 
     // Ensure each operation was encountered and did not have a total fail rate
