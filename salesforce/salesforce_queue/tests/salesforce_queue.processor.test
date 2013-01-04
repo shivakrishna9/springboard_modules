@@ -172,7 +172,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Ensure the sorted batches are ordered correctly
     $encountered_items = array();
+    $item_count = 0;
     foreach ($batches as $batch) {
+      $item_count = $item_count + count($batch['items']);
       $operation = $batch['operation'];
       $object = $operation == 'DELETE' ? NULL : $batch['object'];
 
@@ -220,6 +222,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         }
       }
     }
+
+    $this->assertEqual(200, $item_count, 'Batches returned '. $item_count .' out of 200 items sent to be batched.');
 
     // Ensure each Salesforce object was encountered
     foreach ($this->objects as $object) {

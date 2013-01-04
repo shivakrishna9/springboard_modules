@@ -354,7 +354,7 @@ class SalesforceQueueProcessor {
     reset($batch_group);
     if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->salesforce_max) {
       // Create a new batch
-      $batch_key = empty($last_key) ? 0 : $last_key + 1;
+      $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
       if ($op == 'DELETE') {
         unset($batch['object']); // unneeded for DELETE
