@@ -139,18 +139,26 @@ class SalesforceQueueProcessor {
     // Invokes hook_salesforce_queue_preprocess_queue().
     module_invoke_all('salesforce_queue_preprocess_queue', $this->queue);
 
-    // Check Salesforce connection
-    $this->sfapi = $this->sfapi->isAuthorized() ? $this->sfapi : salesforce_get_api();
-    if (!$this->sfapi->isAuthorized()) {
-      // Cannot connect to Salesforce
-      watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
-        . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
-      $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
-    }
-    else {
-      // Gather items to process
-      $this->claimItems();
-      if (!empty($this->items)) {
+    // Gather items to process
+    // Because processor is run on cron, and an error is issued if Salesforce
+    // cannot connect, first check to see if there are any items in the queue.
+    // Cron may be run on numerous occasions before the site administrator
+    // starts actually using the Salesforce Queue, so lets send them more severe
+    // errors only if there are actually any queue items to process.
+    $this->claimItems();
+    if (!empty($this->items)) {
+      // Check Salesforce connection
+      // The extra check is for simpletests, which may require a specific $sfapi
+      $this->sfapi = $this->sfapi->isAuthorized() ? $this->sfapi : salesforce_get_api();
+      if (!$this->sfapi->isAuthorized()) {
+        // Cannot connect to Salesforce
+        watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
+          . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
+        $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
+      }
+
+      // Continue only if there is a Salesforce connection
+      else {
         // Invokes hook_salesforce_queue_process_items_alter().
         drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
 
@@ -158,6 +166,8 @@ class SalesforceQueueProcessor {
         // Salesforce
         $this->createBatches();
         if (empty($this->batches)) {
+          // If there were items in the queue, but no batches, then that means
+          // no claimed items were valid.
           $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS;
         }
         else {

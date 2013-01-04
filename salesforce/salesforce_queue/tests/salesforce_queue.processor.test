@@ -60,18 +60,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
    * Test for SalesforceQueueProcessor::process()
    */
   public function testProcess() {
-    // Since we haven't connected to Salesforce, processing will fail
-    $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT, $this->processor->process(), 'Received error for not being able to connect to Salesforce.');
-
-    // Connect to Salesforce
-    // All this extra stuff is special for simpletest to connect to SOAP due to
-    // the access token being stored in the session
-    $sfapi = $this->salesforceConnect();
-    $this->processor->_setSalesforceApi($this->salesforceConnect());
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->_setSalesforceSoap($soap);
-
-    // After connecting to Salesforce our next problem will be the lack of items
+    // First problem will be the lack of items
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_NO_ITEMS, $this->processor->process(), 'Notified that the queue is empty.');
 
     // Create queue items
@@ -82,7 +71,17 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED, $this->processor->process(), 'Cannot claim queue because queue is already leased.');
 
     // Release the claim and try again
+    // Since we haven't connected to Salesforce, processing will fail
     $this->queue->releaseBatch('', TRUE);
+    $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT, $this->processor->process(), 'Received error for not being able to connect to Salesforce.');
+
+    // Connect to Salesforce
+    // All this extra stuff is special for simpletest to connect to SOAP due to
+    // the access token being stored in the session
+    $sfapi = $this->salesforceConnect();
+    $this->processor->_setSalesforceApi($this->salesforceConnect());
+    $soap = new SalesforceSoapPartner($sfapi);
+    $this->processor->_setSalesforceSoap($soap);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_COMPLETE, $this->processor->process(), 'Able to claim items and move through processing.');
 
     // Take all of the items we created and try to create them again.  They will
