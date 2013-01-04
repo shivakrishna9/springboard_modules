@@ -129,6 +129,24 @@ function salesforce_queue_permission() {
   );
 }
 
+/**
+ * Implementation of hook_salesforce_queue_process_fail_item().
+ */
+function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
+  // Mark items for retry if they have not exceeded the maximum
+  $max_retries = variable_get('salesforce_queue_max_retries', 5);
+  if ($max_retries > $item->retries) {
+    $item->retries++;
+    $item->queue = 'retry';
+  }
+  // When the retry maximum is exceeded, put the item in the fail queue
+  else {
+    $item->queue = 'fail';
+  }
+  $item->sobject = json_encode($item->sobject);
+  drupal_write_record('salesforce_queue', $item, array('item_id'));
+}
+
 
 /**
  * @name salesforce_queue_process  Group for behaviors processing the queue

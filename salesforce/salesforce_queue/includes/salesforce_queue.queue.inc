@@ -38,7 +38,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *
    * @param string $queue_name
    *   Arbitrary string to name a subset of a queue.  Standard queues are 'new',
-   *   'retry', and 'failure'.  The default name 'all' is a working name
+   *   'retry', and 'fail'.  The default name 'all' is a working name
    *   allowing you to have access to all queue items regardless of which queue
    *   subset they are in.
    */
