@@ -129,72 +129,31 @@ function salesforce_queue_permission() {
   );
 }
 
+
 /**
- * @name salesforce_queue_cron  Cron controls
+ * @name salesforce_queue_process  Group for behaviors processing the queue
  * @{
  */
+
+/**
+ * Processes the data in the Salesforce queue.
+ */
+function salesforce_queue_process_queue($queue_name = 'all') {
+  $queue = SalesforceQueue::get($queue_name);
+  $processor = SalesforceQueueProcessor::get($queue);
+  return $processor->process();
+}
 
 /**
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
-  //salesforce_queue_prune_logs();
-  // Bail on normal cron run if standalone cron is enabled.
-  if (_salesforce_queue_standalone_cron_enabled()) {
-    // If standalone cron is enabled, do nothing.
-    return 0;
-  }
-  else {
-    // Process the queue normally.
-    watchdog('salesforce_queue', t('Standard cron run.'));
-    if (lock_acquire('salesforce_queue_standalone_cron')) {
-      salesforce_queue_process();
-      lock_release('salesforce_queue_standalone_cron');
-    }
-    else {
-      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
-    }
-  }
+  salesforce_queue_process_queue();
 }
 
 /**
- * Menu callback for the standalone cron.
+ * @} salesforce_queue_process
  */
-function salesforce_queue_standalone_cron() {
-  if (_salesforce_queue_standalone_cron_enabled()) {
-    // Process the queue.
-    watchdog('salesforce_queue_cron', t('Standalone cron run.'));
-
-    // Acquire an excluse lock on the process.
-    if (lock_acquire('salesforce_queue_standalone_cron')) {
-      salesforce_queue_process();
-      watchdog('salesforce_queue', 'Salesforce queue cron run completed.', array(), WATCHDOG_NOTICE);
-      lock_release('salesforce_queue_standalone_cron');
-    }
-    else {
-      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
-    }
-  }
-}
-
-/**
- * Indicates whether or not queue standalone cron is enabled.
- */
-function _salesforce_queue_standalone_cron_enabled() {
-  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
-}
-
-/**
- * @}
- */
-
-
-/**
- * Processes the data in the Salesforce queue.
- */
-function salesforce_queue_process() {
-  watchdog('salesforce_queue', 'The queue is being processed.');
-}
 
 
 /**

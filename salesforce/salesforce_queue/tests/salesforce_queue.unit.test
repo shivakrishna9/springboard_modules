@@ -32,6 +32,9 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
       'LastName' => 'Doe',
       'Email' => 'john.doe@example.com',
     );
+
+    // Set up the Salesforce connection
+    $this->salesforceConnect();
   }
 
   /**
@@ -39,6 +42,23 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
    */
   public function tearDown() {
     parent::tearDown();
+  }
+
+  /**
+   * Test for salesforce_queue_cron()
+   */
+  public function testCron() {
+    // Add item to queue and ensure it is there
+    $queue = SalesforceQueue::get();
+    $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
+    $items = $queue->claimBatch();
+    $queue->releaseBatch($items[0]->lease_key);
+    $this->assertFalse(empty($items), 'Queued up an item to test with.');
+
+    // Kick off cron, then verify the item is not there
+    $this->cronRun();
+    $items = $queue->claimBatch();
+    $this->assertTrue(empty($items), 'Cron processed queued item.');
   }
 
   /**
