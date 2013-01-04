@@ -99,7 +99,7 @@ function salesforce_queue_menu() {
     'page arguments' => array('salesforce_queue_admin_settings'),
     'access arguments' => array('configure salesforce queue'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'salesforce_queue.admin.inc',
+    'file' => 'includes/salesforce_queue.admin.inc',
   );
 
   $items['admin/structure/salesforce/object-verify'] = array(
@@ -109,7 +109,7 @@ function salesforce_queue_menu() {
     'page arguments' => array('salesforce_queue_object_verification_form'),
     'access arguments' => array('configure salesforce queue'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'salesforce_queue.utility.inc',
+    'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
   );
 
