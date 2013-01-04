@@ -220,7 +220,7 @@ class SalesforceQueueProcessor {
           $severity = WATCHDOG_ERROR;
           $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
         }
-        else if ($this->queue->numberOfItems() < 1) {
+        else if ($this->queue->numberOfItems(TRUE) < 1) {
           // No items are in the queue.  Pretty minor issue.
           $message = 'SalesforceQueueProcess was run, but no items were found '
             . 'in the queue to process.  Not much for you to worry about.';
