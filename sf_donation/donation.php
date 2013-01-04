@@ -96,7 +96,38 @@ class CommonGroundDonation extends Donation {
   }
 
   static function default_map() {
-    return array();
+    return array(
+      'donor_salesforce_account_id' => 'AccountId',
+      'name' => 'Name',
+      'amount' => 'Amount',
+      'cc_last_4' => 'CC_Last_4__c',
+      'cc_expiration_month' => 'CC_Exp_Month__c',
+      'cc_expiration_year' => 'CC_Exp_Year__c',
+      'cc_type' => 'CC_Type__c',
+      'donor_salesforce_contact_id' => 'cv__Contact__c',
+      'order_id' => 'cv__ExternalId__c',
+      'payment_type' => 'cv__Payment_Type__c',
+      'donation_form_name' => 'Donation_Form_Name__c',
+      'donation_form_url' => 'Donation_Form_URL__c',
+      'close_date' => 'CloseDate',
+      'transaction_date_gm' => 'Transaction_Date_Time__c',
+      'probability' => 'Probability',
+      'stage' => 'StageName',
+      'billing_first_name' => 'Billing_First_Name__c',
+      'billing_last_name' => 'Billing_Last_Name__c',
+      'billing_street1' => 'Billing_Street__c',
+      'billing_street2' => 'Billing_Street_Line_2__c',
+      'billing_city' => 'Billing_City__c',
+      'billing_zone' => 'Billing_State__c',
+      'billing_postal_code' => 'Billing_Zip__c',
+      'billing_country' => 'Billing_Country__c',
+      'cid' => 'CampaignId',
+      'referrer' => 'Referrer__c',
+      'initial_referrer' => 'Initial_Referrer__c',
+      'ms' => 'Market_Source__c',
+      'payment_gateway' => 'Payment_Gateway__c',
+      'payment_transaction_id' => 'Gateway_Reference__c',
+    );
   }
 }
 
