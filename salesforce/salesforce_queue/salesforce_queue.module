@@ -24,6 +24,12 @@ define('SALESFORCE_QUEUE_PROCESS_NOT_STARTED', 0);
 // Items cannot be claimed because the queue is leased
 define('SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED', -1);
 
+// The lease expired before all batches could be completed
+define('SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED', -2);
+
+// Although items were claimed from the queue, none of them passed validation
+define('SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS', -3);
+
 // Cannnot connect to Salesforce
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
 
@@ -33,6 +39,41 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 /**
  * @}
  */
+
+
+/**
+ * @defgroup salesforce_queue_process_item_fail_responses Item fail responses
+ * @{
+ * When a queue item fails, it will give one of the following reasons for its
+ * failure.
+ */
+
+// The item could not reach processing because the lease on the queue expired
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED', 0);
+
+// Item failed when it was attempted to be created in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE', -1);
+
+// Item failed when it attempted an upsert in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT', -2);
+
+// Item failed when it attempted an update in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE', -3);
+
+// Item failed when it was attempted to be deleted in Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE', -4);
+
+// Item failed validation. It does not have the proper properties nessisary to
+// be sent to Salesforce for the operation associated with it
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
+
+// The entire batch failed to be processed due to some error with Salesforce
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
+
+/**
+ * @}
+ */
+
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -89,71 +130,48 @@ function salesforce_queue_permission() {
 }
 
 /**
- * @name salesforce_queue_cron  Cron controls
+ * Implementation of hook_salesforce_queue_process_fail_item().
+ */
+function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
+  // Mark items for retry if they have not exceeded the maximum
+  $max_retries = variable_get('salesforce_queue_max_retries', 5);
+  if ($max_retries > $item->retries) {
+    $item->retries++;
+    $item->queue = 'retry';
+  }
+  // When the retry maximum is exceeded, put the item in the fail queue
+  else {
+    $item->queue = 'fail';
+  }
+  $item->sobject = json_encode($item->sobject);
+  drupal_write_record('salesforce_queue', $item, array('item_id'));
+}
+
+
+/**
+ * @name salesforce_queue_process  Group for behaviors processing the queue
  * @{
  */
+
+/**
+ * Processes the data in the Salesforce queue.
+ */
+function salesforce_queue_process_queue($queue_name = 'all') {
+  $queue = SalesforceQueue::get($queue_name);
+  $processor = SalesforceQueueProcessor::get($queue);
+  return $processor->process();
+}
 
 /**
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
-  //salesforce_queue_prune_logs();
-  // Bail on normal cron run if standalone cron is enabled.
-  if (_salesforce_queue_standalone_cron_enabled()) {
-    // If standalone cron is enabled, do nothing.
-    return 0;
-  }
-  else {
-    // Process the queue normally.
-    watchdog('salesforce_queue', t('Standard cron run.'));
-    if (lock_acquire('salesforce_queue_standalone_cron')) {
-      salesforce_queue_process();
-      lock_release('salesforce_queue_standalone_cron');
-    }
-    else {
-      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
-    }
-  }
+  salesforce_queue_process_queue();
 }
 
 /**
- * Menu callback for the standalone cron.
+ * @} salesforce_queue_process
  */
-function salesforce_queue_standalone_cron() {
-  if (_salesforce_queue_standalone_cron_enabled()) {
-    // Process the queue.
-    watchdog('salesforce_queue_cron', t('Standalone cron run.'));
-
-    // Acquire an excluse lock on the process.
-    if (lock_acquire('salesforce_queue_standalone_cron')) {
-      salesforce_queue_process();
-      watchdog('salesforce_queue', 'Salesforce queue cron run completed.', array(), WATCHDOG_NOTICE);
-      lock_release('salesforce_queue_standalone_cron');
-    }
-    else {
-      watchdog('salesforce_queue', 'Attempting to process salesforce queue while it is already running.', array(), WATCHDOG_WARNING);
-    }
-  }
-}
-
-/**
- * Indicates whether or not queue standalone cron is enabled.
- */
-function _salesforce_queue_standalone_cron_enabled() {
-  return variable_get('salesforce_queue_standalone_cron_enabled', FALSE);
-}
-
-/**
- * @}
- */
-
-
-/**
- * Processes the data in the Salesforce queue.
- */
-function salesforce_queue_process() {
-  watchdog('salesforce_queue', 'The queue is being processed.');
-}
 
 
 /**

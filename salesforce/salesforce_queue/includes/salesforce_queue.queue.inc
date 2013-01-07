@@ -38,7 +38,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *
    * @param string $queue_name
    *   Arbitrary string to name a subset of a queue.  Standard queues are 'new',
-   *   'retry', and 'failure'.  The default name 'all' is a working name
+   *   'retry', and 'fail'.  The default name 'all' is a working name
    *   allowing you to have access to all queue items regardless of which queue
    *   subset they are in.
    */
@@ -121,13 +121,21 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   /**
    * Quantity of items in the queue you have initialized
    *
+   * @param bool $only_tracked_queues
+   *   Whether or not the 'all' queue should count all items in the queue or
+   *   only items that are within the queues it tracks.  Defaults to FALSE so
+   *   it will count all items in the queue by default.
+   *
    * @return int
    */
-  public function numberOfItems() {
+  public function numberOfItems($only_tracked_queues = FALSE) {
     $query = db_select('salesforce_queue', 'q')
       ->fields('q', array('item_id'));
     if ($this->queue_name != 'all') {
       $query->condition('queue', $this->queue_name);
+    }
+    else if ($only_tracked_queues) {
+      $query->condition('queue', $this->tracked_queues, 'IN');
     }
     return $query
       ->countQuery()
