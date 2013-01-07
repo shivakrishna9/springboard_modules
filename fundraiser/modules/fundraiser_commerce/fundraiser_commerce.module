@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * Implements hook_fundraiser_donation_create().
+ */
+function fundraiser_commerce_fundraiser_donation_create($donation) {
+  // Get basic information from the donation node.
+  $user = $donation->user;
+  $node = $donation->node;
+
+  // Pick out the values we need to generate an order.
+  if ($donation->donation['amount'] == "other") {
+    $donation->donation['amount'] = preg_replace("/[^\d\.]/i", "", $donation->donation['other_amount']);
+  }
+
+  // Determine quantity and data from donation values.
+  $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
+
+  $order = commerce_order_new($user->uid, 'commerce_checkout');
+  commerce_order_save($order);
+
+  // Load the donate product
+  $product = commerce_product_load(1); // 1 is the id of the product entity
+  $product->commerce_donate_amount[LANGUAGE_NONE][0]['value'] = $donation->donation['amount'];
+  // Create a line item
+  $line_item = commerce_product_line_item_new($product, $quantity, $order->order_id, array(), 'commerce_donate');
+  // Set the donate amount value from the form submission, should probably use entity_metadata_wrapper for this
+  $line_item->commerce_donate_amount[LANGUAGE_NONE][0]['value'] = $donation->donation['amount'];
+  // Save the line item to get its ID.
+  commerce_line_item_save($line_item);
+
+  // Add the line item to the order using the wrapper.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $order_wrapper->commerce_line_items[] = $line_item;
+
+  // Save the order again to update its line item reference field.
+  commerce_order_save($order);
+
+  $donation->did = $order->order_id;
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ * Could be called immediately after creation, or recurring months later.
+ * So could use auth_capture, or could use a reference_txn.
+ */
+function fundraiser_commerce_fundraiser_donation_process($donation) {
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  // Check for the charge function to be defined.
+  //dpm($donation, 'donation');
+  //dpm($info, 'info');
+  //$charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    //dpm($charge_function);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_gateway_info().
+ */
+function fundraiser_commerce_fundraiser_gateway_info() {  
+  // This will load up the payment gateway entities, but not the details we need
+  //$conditions = array('event' => 'commerce_payment_methods', 'plugin' => 'reaction rule', 'active' => TRUE);
+  //$entities = entity_load('rules_config', FALSE, $conditions);
+
+  // This will load up all methods
+  $methods->payment_methods = array();
+  rules_invoke_all('commerce_payment_methods', $methods);
+
+  $fundraiser_gateways = array();
+  foreach ($methods->payment_methods as $id => $info) {
+    $method_instance = commerce_payment_method_instance_load($id);
+    $this_gateway['id'] = $method_instance['instance_id'];// Had to increase size of gateway columns to 255
+    $this_gateway['module'] = 'fundraiser_commerce';
+    $this_gateway['module_name'] = t('Commerce');
+    $this_gateway['title'] = $method_instance['title'];
+    $this_gateway['description'] = $method_instance['description'];
+    $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
+    $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
+    $this_gateway['gateway_details'] = $method_instance;
+    $fundraiser_gateways[] = $this_gateway; 
+  }
+  return $fundraiser_gateways;
+}
