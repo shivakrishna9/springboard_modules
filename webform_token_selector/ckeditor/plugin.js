@@ -2,7 +2,9 @@
   var callback = {
     exec:function(editor) {
       // get the current location so we can pass in the path
-      var url = $(location).attr('href');
+      //var url = $(location).attr('href');
+      var url = window.location.href;
+      alert('url:' + url);
       url = url.replace('http://', ''); // strip off http bs
       var parts = url.split('/');
       if (parts[1] == 'node' && parts[3] == 'webform') {

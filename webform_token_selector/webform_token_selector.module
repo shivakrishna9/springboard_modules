@@ -28,8 +28,7 @@ function webform_token_selector_preprocess_page(&$vars) {
   if (arg(1) == 'confirmation-token-list') {
     drupal_set_message('vars:');
     dsm($vars);
-    //$vars['template_file'] = 'page-confirmation-token-list';
-    array_unshift($vars['theme_hook_suggestions'], 'page_confirmation_token_list');
+   // array_unshift($vars['theme_hook_suggestions'], 'page_confirmation_token_list');
   }
 }
 
@@ -50,8 +49,17 @@ function webform_token_selector_theme() {
  */
 function webform_token_selector_theme_registry_alter(&$theme_registry) {
   // tell the theme registry to look in this module's directory for theme files
-  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'webform_token_selector') . '/templates';
-  $theme_registry['page']['preprocess_functions'][] = 'webform_token_selector_preprocess_page';
+ // $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'webform_token_selector') . '/templates';
+ // $theme_registry['page']['preprocess_functions'][] = 'webform_token_selector_preprocess_page';
+  $theme_registry['page__webform__confirmation-token-list'] = array(
+    'template' => 'page--webform--confirmation-token-list',
+    'path' => drupal_get_path('module', 'edutopia_images'),
+    'type' => 'theme_engine',
+    'theme_path' => drupal_get_path('module', 'webform_token_selector') . '/templates',
+    'render element' => 'elements',
+    'preprocess functions' => array('template_preprocess_page__webform__confirmation-token-list'),
+    'process functions' => array('template_process_page__webform__confirmation-token-list'),
+  );
 }
 
 /**
@@ -114,3 +122,4 @@ function webform_token_selector_token_list($nid) {
   $output = theme('confirmation_token_list', array('tokens' => $tokens));
   return $output;
 }
+
