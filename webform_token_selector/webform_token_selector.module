@@ -3,7 +3,7 @@
  * @file
  * Creates a CKEditor plugin for inserting webform component tokens.
  */
- 
+
 /**
  * Implementation of hook_menu().
  */
@@ -15,19 +15,22 @@ function webform_token_selector_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
 	);
-	
+
 	return $items;
-} 
+}
 
 /**
  * Implementation of hook_preprocess_page().
  *
  * Use a different page template for token list selector page.
- */ 
+ */
 function webform_token_selector_preprocess_page(&$vars) {
   if (arg(1) == 'confirmation-token-list') {
-    $vars['template_file'] = 'page-confirmation-token-list';
-  } 
+    drupal_set_message('vars:');
+    dsm($vars);
+    //$vars['template_file'] = 'page-confirmation-token-list';
+    array_unshift($vars['theme_hook_suggestions'], 'page_confirmation_token_list');
+  }
 }
 
 /**
@@ -35,7 +38,7 @@ function webform_token_selector_preprocess_page(&$vars) {
  */
 function webform_token_selector_theme() {
   return array(
-    'confirmation_tokens' => array(
+    'confirmation_token_list' => array(
       'arguments' => array('tokens' => NULL),
       'template' => 'templates/confirmation-token-list',
     ),
@@ -48,8 +51,9 @@ function webform_token_selector_theme() {
 function webform_token_selector_theme_registry_alter(&$theme_registry) {
   // tell the theme registry to look in this module's directory for theme files
   $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'webform_token_selector') . '/templates';
-} 
- 
+  $theme_registry['page']['preprocess_functions'][] = 'webform_token_selector_preprocess_page';
+}
+
 /**
  * Implementation of hook_wysiwyg_plugin().
  *
@@ -67,7 +71,7 @@ function webform_token_selector_wysiwyg_plugin($editor, $version) {
           'load' => TRUE,
         ),
       );
-      break;    
+      break;
   }
 }
 
@@ -83,14 +87,16 @@ function webform_token_selector_token_list($nid) {
   */
   $node = node_load($nid);
   $webform_tokens = array();
-  
+
   // make sure we have a node
   if ($node) {
     $all_tokens['webform'] = array();
-  
+
     foreach($node->webform['components'] as $component) {
-      if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
+
+      if ($component['type'] != 'hidden' && $component['type'] != 'fieldset') { // && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
         $parents = webform_component_parent_keys($node, $component);
+        // TODO: trigger this on form key since the name can change.
         if ($component['name'] == 'Please select your tax-deductible gift amount below') {
           $component['name'] = t('Donation amount');
         }
@@ -98,12 +104,13 @@ function webform_token_selector_token_list($nid) {
       }
     }
   }
-  
+
   // allow other modules to add more tokens
   $module_tokens = module_invoke_all('confirmation_page_tokens', $node->type);
   $tokens = array_merge($webform_tokens, $module_tokens);
-  
+  drupal_set_message('Tokens:');
+  dsm($tokens);
   // theme the output
-  $output = theme(array('confirmation_tokens'), $tokens);
+  $output = theme('confirmation_token_list', array('tokens' => $tokens));
   return $output;
 }

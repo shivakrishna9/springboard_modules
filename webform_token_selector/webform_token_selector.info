@@ -1,7 +1,10 @@
-name = Webform token selector
-description = Provides an interface for selecting webform confirmation page tokens to use with CKEditor.
-core = 6.x
-package = Jackson River Springboard - extras
+core = "7.x"
+description = "Provides an interface for selecting webform confirmation page tokens to use with CKEditor."
+name = "Webform token selector"
+version =  7.x-3.0-dev
+package = "Jackson River Springboard - extras"
+
 dependencies[] = webform_user
 dependencies[] = wysiwyg
-version =  6.x-3.0-dev
+
+files[] = webform_token_selector.module
