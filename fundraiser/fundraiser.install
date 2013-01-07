@@ -27,7 +27,7 @@ function fundraiser_schema() {
       'gateway' => array(
         'description' => 'The payment gateway the donation form uses to process credit cards.',
         'type' => 'varchar',
-        'length' => '50',
+        'length' => '255',
         'not null' => TRUE,
       ),
       'receipt_email_from' => array(
@@ -112,7 +112,7 @@ function fundraiser_schema() {
       'gateway' => array(
         'description' => 'The payment gateway the donation form uses to process credit cards.',
         'type' => 'varchar',
-        'length' => '50',
+        'length' => '255',
         'not null' => TRUE,
       ),
       'txn_id' => array(
