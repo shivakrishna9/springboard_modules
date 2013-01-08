@@ -373,8 +373,17 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Save the customer information. Contains billing info.
   // Look up the profile by user id or email, then if not found make a new profile.
   $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
-  //TODO if found, then use this profile, else use the other.
-  $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+  $profile_id = -1;
+  foreach($found as $id => $found) {
+    $profile_id = $id;
+  }
+  if ($profile_id != -1) {
+    $profile = commerce_customer_profile_load($profile_id);
+  }
+  else {
+    $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+  }
+  // Update profile with the billing information.
   $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
@@ -397,6 +406,10 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   commerce_order_save($order);
   // Set the order id to the donation to carry forward.
   $donation->did = $order->order_id;
+  // Set the order status to fundraiser_commerce's status.
+  _fundraiser_commerce_update_order_status('pending_future_payment', $donation->did);
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('pending_future_payment');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('pending_future_payment');
 }
 
 /**
@@ -600,7 +613,7 @@ function _fundraiser_commerce_update_order_status($status, $order_id) {
   // Commerce order provides four statuses: canceled, pending, processing, completed.
   // We provide (or alter the names of) more: pending_future_payment, failed, refunded, partially_refunded
   $order = commerce_order_load($order_id);
-  commerce_order_status_update($order, $status, TRUE);
+  commerce_order_status_update($order, $status, FALSE); // Do not skip saving the order here.
 }
 
 /**
