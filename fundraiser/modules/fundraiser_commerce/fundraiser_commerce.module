@@ -1,6 +1,9 @@
 <?php
 
 // Commerce does not automatically come with a UI for orders, we'll handle that later
+// Since all orders are Views based, we can add some default views here to replicate the interface
+// we want, and map data back to webform nodes via Donation.
+
 // Commerce mail rules can / should be turned off, so no need to implement hook_mail_alter().
 
 // TODO locate equilv. of hook_uc_order.
@@ -24,17 +27,41 @@ function fundraiser_commerce_commerce_line_item_type_info() {
 }
 
 /**
+ * Implements hook_commerce_order_status_info().
+ */
+function fundraiser_commerce_commerce_order_status_info() {
+  $fundraiser_statuses = array(
+    'pending_future_payment' => array(
+      'name' => 'pending_future_payment',
+      'title' => 'Pending Future Payment',
+      'state' => 'pending',
+    ),
+    'failed' => array(
+      'name' => 'failed',
+      'title' => 'Failed',
+      'state' => 'canceled',
+    ),
+    'refunded' => array(
+      'name' => 'refunded',
+      'title' => 'Refunded',
+      'state' => 'completed',
+    ),
+    'partially_refunded' => array(
+      'name' => 'partially_refunded',
+      'title' => 'Partially Refunded',
+      'state' => 'completed',
+    ),
+  );
+  return $fundraiser_statuses;
+}
+
+/**
  * Implements hook_fundraiser_gateway_info().
  */
-function fundraiser_commerce_fundraiser_gateway_info() {  
-  // This will load up the payment gateway entities, but not the details we need
-  // $conditions = array('event' => 'commerce_payment_methods', 'plugin' => 'reaction rule', 'active' => TRUE);
-  // $entities = entity_load('rules_config', FALSE, $conditions);
-
-  // This will load up all methods
+function fundraiser_commerce_fundraiser_gateway_info() {
+  /// Load all the methods available.
   $methods->payment_methods = array();
   rules_invoke_all('commerce_payment_methods', $methods);
-
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
     $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
@@ -57,20 +84,21 @@ function fundraiser_commerce_fundraiser_gateway_info() {
 function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   // Add overrides to country and zone information, derived from uc values.
   // From commerce defaults. 840 = US, 124 = CA.
-
+  // TODO review this code, perhaps we can push it further up into fundraiser proper.
+  // That would also avoid the wierd ajaxy stuff we have to do to get refernece back working.
   $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', 0);
+  $include_all_countries = 1;//variable_get('fundraiser_all_countries', 0);
   $default_available = array('US', 'CA');
   $options = '';
   if ($include_all_countries) {
     foreach ($countries->countries as $country_id => $country) {
-      $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
+      $options .= $country->iso . '|' . $country->country_name . "\n";
     }
   }
   else {
     foreach ($countries->countries as $country_id => $country) {
-      if (in_array($country->country_iso_code_2, $default_available)) {
-        $options .= $country->country_iso_code_2 . '|' . $country->country_name . "\n";
+      if (in_array($country->iso, $default_available)) {
+        $options .= $country->iso . '|' . $country->country_name . "\n";
       }
     }
   }
@@ -88,7 +116,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   );
   $options = '';
   foreach ($countries->zones as $zone_id => $zone) {
-    $options .= $zone->zone_code . '|' . $zone->zone_name . "\n";
+    $options .= $zone->iso . '|' . $zone->zone_name . "\n";
   }
   $fields['billing_information']['state'] = array(
     '#title' => t('State/Province'),
@@ -102,7 +130,6 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_commerce_zone_field_display',
   );
-
   // Add our own validation routines to the billing fields for credit cards.
   $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_commerce_card_number_field_validate';
   $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_commerce_card_cvv_field_validate';
@@ -201,7 +228,7 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   $available_zones = isset($countries->zones) ? $countries->zones : array();
   // Filter the available zones by the set country.
   if (array_key_exists('country', $fields)) {
-    $country_id = fundraiser_commerce_get_country_id_by_iso2($fields['country']);
+    $country_id = $fields['country'];
     // Filter options down to just the zones available for this country.
     if (isset($countries->countries[ $country_id ])) {
       $available_zones = $countries->countries[ $country_id ]->zones;
@@ -213,7 +240,7 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
     // Filter options down to just the zones available for this country.
     if (isset($country_field['#default_value'])) {
       $default = $country_field['#default_value'];
-      $default = fundraiser_commerce_get_country_id_by_iso2($default);
+      $default = $default;
       if (isset($countries->countries[ $default ])) {
         $available_zones = $countries->countries[ $default ]->zones;
       }
@@ -223,9 +250,13 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
   if (!empty($available_zones)) {
     $new_zone_options = array();
     foreach ($available_zones as $zone_id => $zone) {
-      $new_zone_options[ $zone->zone_code ] = $zone->zone_name;
+      $new_zone_options[ $zone->iso ] = $zone->zone_name;
     }
     $field['#options'] = $new_zone_options;
+  }
+  else {
+    // If there are no zones to match, then fall back on a non-select solution.
+    $field['#type'] = 'textfield';
   }
   $field['#prefix'] = '<div id="zone-select-wrapper">';
   $field['#suffix'] = '</div>';
@@ -265,38 +296,34 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     }
   }
 
-  // Override for donation billing country and zone, the correct value (cause it's not the number).
-  //$donation->donation['country'] = fundraiser_commerce_get_iso2_by_country_id($donation->donation['country']);
-  //$donation->donation['state'] = fundraiser_commerce_get_code_by_zone_id($donation->donation['state']);
+  // Time of last update / charge.
+  $donation->last_changed = $order->changed;
 
+  // Add the order status data.
+  $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+  if (!empty($order->status)) {
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
+  }
+
+  // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
   //$donation->donation['card_number'] = $order->payment_details['cc_number'];
   //$donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
   //$donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
   //$donation->donation['card_cvv'] = isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
   //$donation->donation['cc_type'] = $order->payment_details['cc_type'];
 
-  // Add the order status data.
-  // Translate the status according to UC label.
-  //$donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
-  //if (!empty($order->order_status)) {
-  //  $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
-  //  $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status) ? 1 : 0;
-  //}
-
-  // Time of charge.
-  $donation->last_changed = $order->changed;
-
   // Add specific order data.
-  $donation->data = isset($order->data) ? $order->data : array();
-  $data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
-  if (isset($order->data['cc_txns']['references'])) {
-    $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
-    $donation->donation['reference_id'] = $ref_id;
-    $data = array(
-      'txn_type' => 'reference_txn', // Reference if it does.
-      'ref_id' => $ref_id,
-    );
-  }
+  //$donation->data = isset($order->data) ? $order->data : array();
+  //$data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+  //if (isset($order->data['cc_txns']['references'])) {
+  //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+  //  $donation->donation['reference_id'] = $ref_id;
+  //  $data = array(
+  //    'txn_type' => 'reference_txn', // Reference if it does.
+  //    'ref_id' => $ref_id,
+  //  );
+  //}
   $donation->data = array_merge($donation->data, $data);
 }
 
@@ -349,11 +376,11 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   //TODO if found, then use this profile, else use the other.
   $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
   $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
-  //$profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = fundraiser_commerce_get_country_id_by_iso2($donation->donation['country']);
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
-  //$profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] =fundraiser_commerce_get_zone_id_by_code($donation->donation['state']);
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
@@ -378,6 +405,17 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
  * So could use auth_capture, or could use a reference_txn.
  */
 function fundraiser_commerce_fundraiser_donation_process($donation) {
+  /**
+    Drupal Commerce doesn’t maintain Ubercart’s separation of payment methods from payment gateways but rather
+    defines payment methods as any single way of collecting payment from a customer per payment provider. This
+    means there will not be a single Credit Card payment method with plugin modules for CyberSource, Authorize.Net,
+    etc. but a separate CC payment method for each payment provider with a common base set of code for building
+    credit card forms and handling the data securely.
+    See: http://dcorgdev.devcloud.acquia-sites.com/developer-guide/core-architecture/info-hooks/payment-info-hooks
+    Looking over this, it looks like the expectation is that all payment processors execute through a callback
+    into a form submission from a Commerce pane. This will need to be mirrored in our code.
+   */
+
   /*
   // We may need to use http://drupal.org/project/commerce_cardonfile
   // commerce_cardonfile_data_save
@@ -450,7 +488,9 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
  */
 function fundraiser_commerce_fundraiser_donation_update($donation) {
   // Get the original order.
-  //$order = commerce_order_load($donation->did);
+  $order = commerce_order_load($donation->did);
+  // Updte some things based on the new data submitted with the donation.
+  // This means updating customer profile for the most part.
 }
 
 /**
@@ -459,6 +499,8 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 function fundraiser_commerce_fundraiser_donation_success($donation) {
   // Mark as complete.
   _fundraiser_commerce_update_order_status('payment_received', $donation->did);
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
 }
 
 /**
@@ -467,8 +509,8 @@ function fundraiser_commerce_fundraiser_donation_success($donation) {
 function fundraiser_commerce_fundraiser_donation_decline($donation) {
   // Mark the sale in commerce as failed.
   _fundraiser_commerce_update_order_status('failed', $donation->did);
-  // Clear the credit card cache between orders
-  //uc_credit_cache('clear');
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('failed');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('failed');
 }
 
 /**
@@ -484,14 +526,8 @@ function fundraiser_commerce_fundraiser_donation_exception($donation) {
 function fundraiser_commerce_fundraiser_donation_cancel($donation) {
   // Mark the sale in commerce as canceled.
   _fundraiser_commerce_update_order_status('canceled', $donation->did);
-  $order = commerce_order_load($donation->did);
-  // Add the order status data.
-  // Translate the status according to UC label.
-  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
-  if (!empty($order->order_status)) {
-    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
-  }
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('canceled');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('canceled');
 }
 
 /**
@@ -500,14 +536,8 @@ function fundraiser_commerce_fundraiser_donation_cancel($donation) {
 function fundraiser_commerce_fundraiser_donation_delete($donation) {
   // Mark the sale in commerce as canceled.
   _fundraiser_commerce_update_order_status('canceled', $donation->did);
-  $order = commerce_order_load($donation->did);
-  // Add the order status data.
-  // Translate the status according to UC label.
-  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
-  if (!empty($order->order_status)) {
-    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
-  }
+  $donation->status_label = _fundraiser_commerce_get_label_by_status('canceled');
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('canceled');
 }
 
 /**
@@ -515,15 +545,6 @@ function fundraiser_commerce_fundraiser_donation_delete($donation) {
  */
 function fundraiser_commerce_fundraiser_donation_refund($donation) {
   fundraiser_commerce_fundraiser_donation_process($donation);
-}
-
-/**
- * Implements hook_fundraiser_get_credit_encryption_path().
- * This is called by modules that need to check for processing availablity outside of normal.
- * Such as sustainer.
- */
-function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
-  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
 }
 
 /**
@@ -576,87 +597,83 @@ function fundraiser_commerce_get_countries() {
  * Helper function, update order status on a order.
  */
 function _fundraiser_commerce_update_order_status($status, $order_id) {
-  /*
-  db_query('UPDATE {uc_orders} SET order_status = :status ' .
-    'WHERE order_id = :order_id',
-    array(':status' => $status, ':order_id' => $order_id));
-  */
+  // Commerce order provides four statuses: canceled, pending, processing, completed.
+  // We provide (or alter the names of) more: pending_future_payment, failed, refunded, partially_refunded
   $order = commerce_order_load($order_id);
   commerce_order_status_update($order, $status, TRUE);
 }
 
 /**
- * DB function, look in country table for country info.
+ * Helper function, look in country table for country info.
  */
 function _fundraiser_commerce_get_countries() {
-  return db_query('SELECT * FROM {uc_countries} ORDER BY country_name ASC')->fetchAll();
+  // Commerce does not store countries in a database, it relies instead on locale.inc
+  $countries = array();
+  // Necessary for country_get_list().
+  require_once DRUPAL_ROOT . '/includes/locale.inc';
+  $drupal_countries = country_get_list();
+  foreach ($drupal_countries as $iso => $human_name) {
+    $country['country_id'] = $iso;
+    $country['country_name'] = $human_name;
+    $country['iso'] = $iso;
+    $countries[] = (object) $country;
+  }
+  return $countries;
 }
 
 /**
  * DB function, look in zone table for zone info.
  */
 function _fundraiser_commerce_get_zone_by_country($country_id) {
-  // Some countries need an override, the zone_code is NOT the correct display for them.
-  // Most zone codes are correct by natural order - be that alphabetical or numerical. But some countries are wierd.
-  // For those, we add them to the exception list and order by zone_name.
-  $alphabetical_exception = array('840');
-  // Countries: 840 -> US
-  if (in_array($country_id, $alphabetical_exception)) {
-    return db_query('SELECT * FROM {uc_zones} ' .
-      'WHERE zone_country_id = :zone_country_id ORDER BY zone_name ASC',
-      array(':zone_country_id' => $country_id))->fetchAll();
+  // Commerce does not store countries in a database, it relies instead on locale.inc
+  // And a hard coded addressfield form widget for zone level information.
+  // In order to retrieve this information from Commerce, we need to call the addressfield widget
+  // And pull it from the form. The results will be different for each zone, and we can't grab them
+  // all at once. So thankfully we don't need to the way the rest of the system is designed.
+  // Some countries will have states, and do NOT have them listed here. UC has a more complete list.
+  // So we will need to leave those available for users to fill in as blanks.
+  module_load_include('inc', 'addressfield', 'plugins/format/address');
+  $address['country'] = $country_id;
+  addressfield_format_address_generate($form, $address, array('mode' => '')); // Data is loaded into $form
+  $zones = array();
+  if (isset($form['locality_block']['administrative_area']['#options'])) {
+    foreach ($form['locality_block']['administrative_area']['#options'] as $iso => $human_name) {
+      $zone['zone_id'] = $iso;
+      $zone['country_id'] = $country_id;
+      $zone['zone_name'] = $human_name;
+      $zone['iso'] = $iso;
+      $zones[] = (object) $zone;
+    }
   }
-  else {
-    return db_query('SELECT * FROM {uc_zones} ' .
-      'WHERE zone_country_id = :zone_country_id ORDER BY zone_code ASC',
-      array(':zone_country_id' => $country_id))->fetchAll();
-  }
-}
-
-// TODO add caching for these.
-/**
- * DB function. Translate from code to number value.
- */
-function fundraiser_commerce_get_country_id_by_iso2($iso2) {
-  return db_query('SELECT country_id FROM {uc_countries} WHERE country_iso_code_2 = :iso2', array(':iso2' => $iso2))->fetchField();
+  return $zones;
 }
 
 /**
- * DB function. Translate from code to number value.
- */
-function fundraiser_commerce_get_zone_id_by_code($code) {
-  return db_query('SELECT zone_id FROM {uc_zones} WHERE zone_code = :code', array(':code' => $code))->fetchField();
-}
-
-/**
- * DB function. Translate from number value to code.
- */
-function fundraiser_commerce_get_iso2_by_country_id($country_id) {
-  return db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = :country_id', array(':country_id' => $country_id))->fetchField();
-}
-
-/**
- * DB function. Translate from number value to code.
- */
-function fundraiser_commerce_get_code_by_zone_id($zone_id) {
-  return db_query('SELECT zone_code FROM {uc_zones} WHERE zone_id = :zone_id', array(':zone_id' => $zone_id))->fetchField();
-}
-
-/**
- * DB function. Translate status to status label.
+ * Helper function. Translate status to status label.
  */
 function _fundraiser_commerce_get_label_by_status($status) {
-  return db_query('SELECT title FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
+  // Grab the human readable label for the status.
+  commerce_order_status_get_title($status); // The machine name of the declares state, we need the human readable label.
 }
 
 /**
- * DB function, determine if given this status the donation has been charged already.
+ * Helper function, determine if given this status the donation has been charged already.
  */
 function _fundraiser_commerce_get_charged_by_status($status) {
-  $chargable_states = array('in_checkout', 'post_checkout'); // These are hard set from commerce.
-  $state = db_query('SELECT state FROM {uc_order_statuses} WHERE order_status_id = :state', array(':state' => $status))->fetchField();
-  if (in_array($state, $chargable_states)) {
+  $chargable_states = array('pending'); // Commerce order provides three states: canceled, pending, completed.
+  $status = commerce_order_status_load($status);
+  if (in_array($status['state'], $chargable_states)) {
     return FALSE; // If the donation is still able to be charged, say it hasn't been.
   }
   return TRUE;
 }
+
+/**
+ * Implements hook_fundraiser_get_credit_encryption_path().
+ * This is called by modules that need to check for processing availablity outside of normal.
+ * Such as sustainer.
+
+function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
+  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+}
+ */
