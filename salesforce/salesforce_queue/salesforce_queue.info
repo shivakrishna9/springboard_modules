@@ -6,6 +6,7 @@ core = 7.x
 files[] = includes/salesforce_queue.processor.inc
 files[] = includes/salesforce_queue.queue.inc
 
+files[] = tests/salesforce_queue.admin.test
 files[] = tests/salesforce_queue.processor.test
 files[] = tests/salesforce_queue.queue.test
 files[] = tests/salesforce_queue.test
@@ -15,4 +16,4 @@ dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
 
-configure = admin/structure/salesforce/queue
+configure = admin/config/services/salesforce/salesforce-queue

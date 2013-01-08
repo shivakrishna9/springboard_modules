@@ -125,9 +125,9 @@ class SalesforceQueueProcessor {
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
     $this->queue_name = $queue->queue_name;
-    $this->max_items = variable_get('salesforce_queue_max_items', 1000);
-    $this->lease_time = variable_get('salesforce_queue_lease_item', 3600);
-    $this->salesforce_max = variable_get('salesforce_queue_salesforce_max', 200);
+    $this->max_items = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
+    $this->lease_time = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
+    $this->salesforce_max = variable_get('salesforce_queue_salesforce_max', SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT);
     $this->sfapi = salesforce_get_api();
     $this->soap = new SalesforceSoapPartner($this->sfapi);
   }
@@ -537,7 +537,7 @@ class SalesforceQueueProcessor {
     // our lease expires. We do not want to risk the chance of items getting
     // sent to Salesforce twice, so we will not send items outside our lease or
     // when it is leased to someone else.
-    $current_lease_key = variable_get('salesforce_queue_' . $this->queue_name . '_lease_key', '');
+    $current_lease_key = variable_get('salesforce_queue_' . $this->queue_name . '_lease_key', NULL);
     if ($this->lease_expire < time() && $current_lease_key == $this->lease_key) {
       // Lease expired, fail
       $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED;

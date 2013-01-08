@@ -76,6 +76,9 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
    * Test for salesforce_queue_cron()
    */
   public function testCron() {
+    // Set cron frequency to 0 so it doesn't get in our way
+    variable_set('salesforce_queue_cron_frequency', 0);
+
     // Add item to queue and ensure it is there
     $queue = SalesforceQueue::get();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
@@ -87,6 +90,9 @@ class SalesforceQueueUnitTestCase extends SalesforceQueueTestCase {
     $this->cronRun();
     $items = $queue->claimBatch();
     $this->assertTrue(empty($items), 'Cron processed queued item.');
+
+    // Delete the variable to put us back to normal
+    variable_del('salesforce_queue_cron_frequency');
   }
 
   /**

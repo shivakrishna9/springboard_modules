@@ -6,6 +6,31 @@
  */
 
 /**
+ * @defgroup salesforce_queue_var_default Default variables from Salesforce Queue
+ * @{
+ */
+
+// Maximum items that can be claimed from the queue
+define('SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT', 1000);
+
+// Length of time the queue can be leased to a process
+define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
+
+// The maximum amount of items that can be sent to Salesforce in one call
+define('SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT', 200);
+
+// Maximum retries an item will go through before moving to the 'fail' queue
+define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
+
+// Minimum frequency the processor can be run when cron is run
+define('SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT', 60);
+
+/**
+ * @}
+ */
+
+
+/**
  * @defgroup salesforce_queue_processor_statuses Statuses of queue processor
  * @{
  * The processor will return one of the following statuses once it completes its
@@ -92,24 +117,26 @@ function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_stat
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
-  $items['admin/structure/salesforce/queue'] = array(
-    'title' => 'Salesforce Queue Settings',
+  $items['admin/config/services/salesforce/salesforce-queue'] = array(
+    'title' => 'Salesforce Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_queue_admin_settings'),
+    'page callback' => 'salesforce_queue_admin_page',
     'access arguments' => array('configure salesforce queue'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'salesforce_queue.admin.inc',
+    'type' => MENU_LOCAL_TASK, // Under the salesforce module
+    'file' => 'includes/salesforce_queue.admin.inc',
   );
+  $items['admin/config/services/salesforce/salesforce-queue/config'] = $items['admin/config/services/salesforce/salesforce-queue'];
+  $items['admin/config/services/salesforce/salesforce-queue/config']['title'] = 'Settings';
+  $items['admin/config/services/salesforce/salesforce-queue/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
 
-  $items['admin/structure/salesforce/object-verify'] = array(
-    'title' => 'Salesforce Queue Object Verify',
+  $items['admin/config/services/salesforce/salesforce-queue/salesforce-queue-object-verify'] = array(
+    'title' => 'Object Verify',
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_queue_object_verification_form'),
     'access arguments' => array('configure salesforce queue'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'salesforce_queue.utility.inc',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
   );
 
@@ -130,11 +157,23 @@ function salesforce_queue_permission() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function salesforce_queue_theme() {
+  return array(
+    'salesforce_queue_admin_form' => array(
+      'render element' => 'form',
+      'file' => 'includes/salesforce_queue.admin.inc',
+    ),
+  );
+}
+
+/**
  * Implementation of hook_salesforce_queue_process_fail_item().
  */
 function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
   // Mark items for retry if they have not exceeded the maximum
-  $max_retries = variable_get('salesforce_queue_max_retries', 5);
+  $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
   if ($max_retries > $item->retries) {
     $item->retries++;
     $item->queue = 'retry';
@@ -166,7 +205,14 @@ function salesforce_queue_process_queue($queue_name = 'all') {
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
-  salesforce_queue_process_queue();
+  // Limit the running of the processor to a configured frequency
+  $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
+  $cron_last = variable_get('salesforce_queue_cron_last', 0);
+  if (($cron_last + $cron_frequency) < REQUEST_TIME) {
+    salesforce_queue_process_queue();
+    // Set cron_last after process has completed
+    variable_set('salesforce_queue_cron_last', time());
+  }
 }
 
 /**
