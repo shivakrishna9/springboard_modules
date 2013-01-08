@@ -307,15 +307,15 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   }
 
   // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
-  //$donation->donation['card_number'] = $order->payment_details['cc_number'];
-  //$donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
-  //$donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
-  //$donation->donation['card_cvv'] = isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  //$donation->donation['cc_type'] = $order->payment_details['cc_type'];
+  $donation->donation['card_number'] = ''; // $order->payment_details['cc_number'];
+  $donation->donation['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
+  $donation->donation['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
+  $donation->donation['card_cvv'] =''; // isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
+  $donation->donation['cc_type'] =''; // $order->payment_details['cc_type'];
 
-  // Add specific order data.
-  //$donation->data = isset($order->data) ? $order->data : array();
-  //$data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+  // Add specific order data. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
+  $donation->data = isset($order->data) ? $order->data : array();
+  $data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
   //if (isset($order->data['cc_txns']['references'])) {
   //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
   //  $donation->donation['reference_id'] = $ref_id;
