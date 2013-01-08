@@ -4,11 +4,30 @@
 // Since all orders are Views based, we can add some default views here to replicate the interface
 // we want, and map data back to webform nodes via Donation.
 
-// Commerce mail rules can / should be turned off, so no need to implement hook_mail_alter().
+// Commerce mail rules can / should be turned off on installation, so no need to implement hook_mail_alter().
 
 // TODO locate equilv. of hook_uc_order.
-// To delete the donation on order delete
-// To add any additional bits as needed on order load.
+// To delete the donation on order delete.
+
+/**
+ * Implements hook_entity_view().
+ */
+function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) {
+  switch ($type) {
+    case 'commerce_order':
+      if ($view_mode == 'administrator' || $view_mode == 'full') {
+        $entity->content['fundraiser_donation'] = array(
+          '#prefix' => '<div class="field field-name-fundraiser-donation field-type-fundraiser-donation field-label-above">' .
+            '<div class="field-label">' . t('Fundraiser information') . ': </div>' .
+            '<div class="field-items"><div class="field-item even">',
+          '#markup' => fundraiser_donation_information_table($entity->order_id), // Table format.
+          '#suffix' => '</div></div></div>',
+        );
+      }
+    break;
+    default:
+  }
+}
 
 /**
  * Implements hook_commerce_line_item_type_info().
@@ -21,9 +40,93 @@ function fundraiser_commerce_commerce_line_item_type_info() {
     'description' => t('A donation charge, no product referenced here just the amount.'), 
     'product' => FALSE, 
     'add_form_submit_value' => t('Add donation'), 
-    'base' => 'fundraiser_commerce_line_item',
+    'base' => 'commerce_donation_line_item',
   );
   return $line_item_types;
+}
+
+/**
+ * Implements hook_LINE_ITEM_BASE_configuration().
+ * This function is called by the line item module when it is enabled or this module is enabled.
+ */
+// function commerce_donation_line_item_configuration($line_item_type) {}
+
+/**
+ * Implements hook_LINE_ITEM_BASE_title().
+ * Returns an appropriate title for this line item.
+ */
+function commerce_donation_line_item_title($line_item) {
+  $donation = fundraiser_donation_get_donation($line_item->order_id);
+  return t('Donation for Fundraiser #%nid %title', array('%nid' => $donation->nid, '%title' => $donation->node->title));
+}
+
+/**
+ * Implements hook_LINE_ITEM_BASE_add_form().
+ * Returns the elements necessary to add a product line item through a line item manager widget.
+ */
+function commerce_donation_line_item_add_form($element, &$form_state) {
+  $form = array();
+  $form['amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount'),
+    '#description' => t('Enter the amount of the donation to add to the order.'),
+    '#size' => 60,
+    '#maxlength' => 255,
+  );
+  if (function_exists('fundraiser_multi_currency_get_currencies')) {
+    $multi_currancy = fundraiser_multi_currency_get_currencies();
+    $available_currancy = array();
+    foreach ($multi_currancy as $currancy) {
+      $available_currancy[$currancy->code] = $currancy->name;
+    }
+    $form['currency'] = array(
+      '#type' => 'select',
+      '#title' => t('Currency'),
+      '#description' => t('Enter the currency of the donation to add to the order.'),
+      '#options' => $available_currancy,
+    );
+  }
+  // TODO - select a fundraiser to associate this with.
+  // AND add support when a donation is submitted via this order form, to update a donation obj and submission with the given amount.
+  // All this for later.
+  // For now, display a 'not from here' message.
+  $form['fundraiser_donation'] = array(
+    '#markup' => '<div class="commerce-donation-line-item-warning">' .
+      t('Warning: Donation line items added through this interface do not generate an additional donation object in the Fundraiser system,' .
+        'or update a donation associated with this order to the new amount. Please do not use this to update donations on orders.') . '</div>',
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for commerce_donation_line_item_add_form().
+ */
+function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$form_state, $form) {
+  $values = $element['actions'];
+  if (!empty($values['amount']['#value']) && is_numeric($values['amount']['#value'])) {
+    $values['currency']['#value'] = isset($values['currency']['#value']) ? $values['currency']['#value'] : 'USD';
+    // Create a line item for this order. Contains order amount info.
+    $line_item->line_item_label = t('Donation');
+    $line_item->quantity = 1;
+    $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
+      'amount' => $values['amount']['#value'] * 100, // Values are stored as int, so add 00 for decimal places.
+      'currency_code' => $values['currency']['#value'],
+    );
+    // Make sure the line item will be included in the update for order total.
+    $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
+      $line_item->commerce_unit_price[LANGUAGE_NONE][0],
+      'base_price',
+      array(
+        'amount' => $values['amount']['#value'] * 100,
+        'currency_code' => $values['currency']['#value'],
+        'data' => array(),
+      ),
+      TRUE
+    );
+  }
+  else {
+    return t('You have entered an invalid amount.');
+  }
 }
 
 /**
@@ -338,6 +441,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   if ($donation->donation['amount'] == 'other') {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
+  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : 'USD';
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
@@ -352,7 +456,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $line_item->quantity = $quantity;
   $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
     'amount' => $donation->donation['amount'] * 100, // Values are stored as int, so add 00 for decimal places.
-    'currency_code' => 'USD', // TODO make this changable later.
+    'currency_code' => $donation->donation['currency'],
   );
   // Make sure the line item will be included in the update for order total.
   $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
@@ -360,14 +464,15 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     'base_price',
     array(
       'amount' => $donation->donation['amount'] * 100,
-      'currency_code' => 'USD',
+      'currency_code' => $donation->donation['currency'],
       'data' => array(),
     ),
     TRUE
   );
   commerce_line_item_save($line_item);
+  // Add the line item to the order.
   $order->commerce_line_items[LANGUAGE_NONE][0] = array(
-    'line_item_id' => array($line_item->line_item_id),
+    'line_item_id' => $line_item->line_item_id,
   );
 
   // Save the customer information. Contains billing info.
