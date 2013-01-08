@@ -110,8 +110,9 @@ function hook_salesforce_queue_preprocess_batch($batch, SalesforceQueue $queue) 
  * @param array $batch
  *   Array of instructions that are used to formulate the API call to Salesforce
  * @param SalesforceQueue $queue
+ * @param SalesforceQueueProcessor $processor
  */
-function hook_salesforce_queue_process_batch_alter(&$batch, SalesforceQueue $queue) {
+function hook_salesforce_queue_process_batch_alter(&$batch, SalesforceQueue $queue, SalesforceQueueProcessor $processor) {
 
 }
 
