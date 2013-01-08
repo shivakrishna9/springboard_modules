@@ -166,7 +166,14 @@ function salesforce_queue_process_queue($queue_name = 'all') {
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
-  salesforce_queue_process_queue();
+  // Limit the running of the processor to a configured frequency
+  $cron_frequency = variable_get('salesforce_queue_cron_frequency', 60);
+  $cron_last = variable_get('salesforce_queue_cron_last', 0);
+  if (($cron_last + $cron_frequency) < REQUEST_TIME) {
+    salesforce_queue_process_queue();
+    // Set cron_last after process has completed
+    variable_set('salesforce_queue_cron_last', time());
+  }
 }
 
 /**
