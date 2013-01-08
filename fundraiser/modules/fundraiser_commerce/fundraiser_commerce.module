@@ -361,18 +361,53 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   commerce_customer_profile_save($profile);
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
-  // Save the transaction information. Contains card info.
-  // TODO set the transaction stuff.
+  // Transactions only record interactions, card data is explicitly not saved. (what in fundraiser is a txn_id)
+  // So the card data and information gets used during donation processing only.
+  // Then transactions added / updated, and card data may be stored in scrubbed format for _get() elsewhere.
+  // We will need to wrap or tweak form submissions in each implemented auth.
+
+  // Save the order again to update its line item reference field.
+  commerce_order_save($order);
+  // Set the order id to the donation to carry forward.
+  $donation->did = $order->order_id;
+}
+
+/**
+ * Implements hook_fundraiser_donation_process().
+ * Could be called immediately after creation, or recurring months later.
+ * So could use auth_capture, or could use a reference_txn.
+ */
+function fundraiser_commerce_fundraiser_donation_process($donation) {
+  /*
+  // We may need to use http://drupal.org/project/commerce_cardonfile
+  // commerce_cardonfile_data_save
+
+  // TODO:
+  // All transactions do is record events and interactions on this order during charging.
+  // So we don't actually create orders here in prep for charging later.
+  // Though we need to to support recurring and sustainers. Hm.
+  // Transaction stuff WIIL need to be wrapped.
   $transaction = commerce_payment_transaction_new($node->gateway, $order->order_id);
-  $transaction->instance_id = $node->gateway;
   $transaction->amount = $donation->donation['amount'] * 100;
   $transaction->currency_code = 'USD';
-  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-//  $transaction->message = 'Name: @name';
-//  $transaction->message_variables = array('@name' => $name);
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
   commerce_payment_transaction_save($transaction);
+  commerce_payment_commerce_payment_transaction_insert($transaction)
 
-  /*
+
+      // Check the order balance and invoke the event.
+      $balance = commerce_payment_order_balance($order);
+
+      if ($balance['amount'] <= 0) {
+        // Invoke the event including a hook of the same name.
+        rules_invoke_all('commerce_payment_order_paid_in_full', $order, $transaction);
+
+        // Update the order's data array to indicate this just happened.
+        $order->data['commerce_payment_order_paid_in_full_invoked'] = TRUE;
+
+        // Save the updated order.
+        commerce_order_save($order);
+      }
   Set card propertiers.
   // Card properties.
   $order->payment_method = 'credit';
@@ -389,25 +424,14 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     // cc_cvv is unset on order save for PCI compliance.
     'cc_bank' => '',
   );
+
+
    */
 /*
   if (!isset($available_countries)) {
     $available_countries = _addressfield_country_options_list();
   }
 */
-
-  // Save the order again to update its line item reference field.
-  commerce_order_save($order);
-  // Set the order id to the donation to carry forward.
-  $donation->did = $order->order_id;
-}
-
-/**
- * Implements hook_fundraiser_donation_process().
- * Could be called immediately after creation, or recurring months later.
- * So could use auth_capture, or could use a reference_txn.
- */
-function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundraisers data.
   $info = _fundraiser_get_donation_gateway($donation->did);
   // Check for the charge function to be defined.
