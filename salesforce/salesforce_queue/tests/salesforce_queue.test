@@ -40,6 +40,8 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       'administer content types',
       'administer nodes',
       'administer users',
+      'administer salesforce',
+      'configure salesforce queue',
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
@@ -68,7 +70,9 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
     $result = db_query($sql);
     foreach ($result as $record) {
-      variable_set($record->name, unserialize($record->value));
+      if (!strstr($record->name, 'salesforce_queue')) {
+        variable_set($record->name, unserialize($record->value));
+      }
     }
 
     // Test the connection

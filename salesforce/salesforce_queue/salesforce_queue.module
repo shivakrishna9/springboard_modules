@@ -117,23 +117,25 @@ function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_stat
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
-  $items['admin/structure/salesforce/queue'] = array(
-    'title' => 'Salesforce Queue Settings',
+  $items['admin/config/services/salesforce/salesforce-queue'] = array(
+    'title' => 'Salesforce Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_queue_admin_settings'),
+    'page callback' => 'salesforce_queue_admin_page',
     'access arguments' => array('configure salesforce queue'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK, // Under the salesforce module
     'file' => 'includes/salesforce_queue.admin.inc',
   );
+  $items['admin/config/services/salesforce/salesforce-queue/config'] = $items['admin/config/services/salesforce/salesforce-queue'];
+  $items['admin/config/services/salesforce/salesforce-queue/config']['title'] = 'Settings';
+  $items['admin/config/services/salesforce/salesforce-queue/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
 
-  $items['admin/structure/salesforce/object-verify'] = array(
-    'title' => 'Salesforce Queue Object Verify',
+  $items['admin/config/services/salesforce/salesforce-queue/salesforce-queue-object-verify'] = array(
+    'title' => 'Object Verify',
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_queue_object_verification_form'),
     'access arguments' => array('configure salesforce queue'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
   );
@@ -150,6 +152,18 @@ function salesforce_queue_permission() {
       'description' => t('Configure settings for the Salesforce queue.'),
       'title' => t('Configure Salesforce queue'),
       'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function salesforce_queue_theme() {
+  return array(
+    'salesforce_queue_admin_form' => array(
+      'render element' => 'form',
+      'file' => 'includes/salesforce_queue.admin.inc',
     ),
   );
 }
