@@ -10,7 +10,6 @@ files[] = tests/salesforce_queue.admin.test
 files[] = tests/salesforce_queue.processor.test
 files[] = tests/salesforce_queue.queue.test
 files[] = tests/salesforce_queue.test
-files[] = tests/salesforce_queue.unit.test
 
 dependencies[] = libraries
 dependencies[] = salesforce

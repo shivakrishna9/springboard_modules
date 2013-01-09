@@ -6,20 +6,6 @@
  */
 
 /**
- * Implements hook_install().
- */
-function salesforce_genmap_install() {
-  variable_set('salesforce_genmap_queue_system', 'instant');
-}
-
-/**
- * Implements hook_uninstall().
- */
-function salesforce_genmap_uninstall() {
-  variable_del('salesforce_genmap_queue_system');
-}
-
-/**
  * Implements hook_schema().
  */
 function salesforce_genmap_schema() {

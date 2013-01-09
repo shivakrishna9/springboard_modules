@@ -48,7 +48,7 @@ function drush_salesforce_queue_process($queue = 'salesforce_queue') {
    drush_print('Processing ' . $queue);
   }
 
-  $queue = SalesforceQueue::get();
+  $queue = salesforce_load_push_queue();
   $processor = SalesforceQueueProcessor::get($queue);
   $processor->process();
 

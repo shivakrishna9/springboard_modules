@@ -169,6 +169,18 @@ function salesforce_queue_theme() {
 }
 
 /**
+ * Implements hook_node_delete().
+ */
+function salesforce_queue_node_delete($node) {
+  // Dequeue all queue items related to this node.
+  db_delete('salesforce_queue')
+    ->condition('drupal_id', $node->nid)
+    ->condition('module', 'node')
+    ->condition('delta', $node->type)
+    ->execute();
+}
+
+/**
  * Implementation of hook_salesforce_queue_process_fail_item().
  */
 function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
@@ -186,6 +198,25 @@ function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $re
   drupal_write_record('salesforce_queue', $item, array('item_id'));
 }
 
+/**
+ * Implements hook_salesforce_ACTION_TASK().
+ */
+function salesforce_queue_salesforce_load_push_queue($args) {
+  $queue_name = isset($args['queue_name']) ? $args['queue_name'] : 'all';
+  return SalesforceQueue::get($queue_name);
+}
+if (!function_exists('salesforce_load_push_queue')) {
+  // Tempoary fix until salesforce supports our queue
+  function salesforce_load_push_queue($queue_name = 'all') {
+    if (class_exists('SalesforceQueue')) {
+      return SalesforceQueue::get($queue_name);
+    }
+    else {
+      return FALSE;
+    }
+  }
+}
+
 
 /**
  * @name salesforce_queue_process  Group for behaviors processing the queue
@@ -196,7 +227,7 @@ function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $re
  * Processes the data in the Salesforce queue.
  */
 function salesforce_queue_process_queue($queue_name = 'all') {
-  $queue = SalesforceQueue::get($queue_name);
+  $queue = salesforce_load_push_queue($queue_name);
   $processor = SalesforceQueueProcessor::get($queue);
   return $processor->process();
 }
@@ -221,136 +252,6 @@ function salesforce_queue_cron() {
 
 
 /**
- * @defgroup salesforce_queue_crud CRUD wrappers for SalesforceQueue class
- * @{
- */
-
-/**
- * Wrapper to insert an item into the Salesforce queue
- *
- * @param $drupal_id
- *   The id of the Drupal object. This could be a nid, uid, sid, etc.
- * @param $module
- *   The module name that implements the delta. For node types this would be entity.
- * @param $delta
- *   The module sub-type. For node types this would be node type name, article for instance.
- * @param $salesforce_type
- *   The name of the Salesforce type that is being exported.
- * @param $operation
- *   The CRUD operation being run in Salesforce (UPSERT, CREATE, UPDATE, DELETE).
- * @param $sobject
- *   The Salesforce object that is being queued.
- * @param $dedupe_field
- *   The Salesforce field to dedupe on during UPSERT operations.
- *
- * @return bool
- *   TRUE if the item was created successfully, FALSE if the item could not be
- *   created
- */
-function salesforce_queue_insert($drupal_id, $module, $delta, $salesforce_type, $operation, &$sobject, $dedupe_field = NULL) {
-  $item = array(
-    'drupal_id' => $drupal_id,
-    'module' => $module,
-    'delta' => $delta,
-    'salesforce_type' => $salesforce_type,
-    'operation' => $operation,
-    'dedupe_field' => $dedupe_field,
-    'sobject' => $sobject,
-  );
-  $queue = SalesforceQueue::get();
-  return $queue->createItem($item);
-}
-
-/**
- * Wrapper to fetch a specific item from the queue
- *
- * Do NOT use this to process an item. 'Get' does not lease queue items and
- * merely provides you the information about the queue item.  In order to
- * retreive an item for processing, you must 'claim' it.
- *
- * @param $drupal_id
- *   The id of the Drupal object. This could be a nid, uid, sid, etc.
- * @param $module
- *   The module name that implements the delta. For node types this would be
- *   entity.
- * @param $delta
- *   The module sub-type. For node types this would be node type name, article
- *   for instance.
- * @param $salesforce_type
- *   The name of the Salesforce object type.
- *
- * @return object
- *   The queue item, otherwise FALSE if the item is not in the queue
- */
-function salesforce_queue_get($drupal_id, $module, $delta, $salesforce_type) {
-  $data = array(
-    'drupal_id' => $drupal_id,
-    'module' => $module,
-    'delta' => $delta,
-    'salesforce_type' => $salesforce_type,
-  );
-  $queue = SalesforceQueue::get();
-  return $queue->getItem($drupal_id, $module, $delta, $salesforce_type);
-}
-
-/**
- * Wrapper to determine if an item is already in the queue
- *
- * @param $drupal_id
- *   The id of the Drupal object. This could be a nid, uid, sid, etc.
- * @param $module
- *   The module name that implements the delta. For node types this would be entity.
- * @param $delta
- *   The module sub-type. For node types this would be node type name, article for instance.
- * @param $salesforce_type
- *   The name of the Salesforce object type.
- *
- * @return bool
- *   TRUE if the item is in the queue, FALSE if the item is not
- */
-function salesforce_queue_in_queue($drupal_id, $module, $delta, $salesforce_type) {
-  $data = array(
-    'drupal_id' => $drupal_id,
-    'module' => $module,
-    'delta' => $delta,
-    'salesforce_type' => $salesforce_type,
-  );
-  $queue = SalesforceQueue::get();
-  return $queue->itemInQueue($data);
-}
-
-/**
- * Wrapper to remove an item from the queue.
- *
- * @param $drupal_id
- *   The id of the Drupal object. This could be a nid, uid, sid, etc.
- * @param $module
- *   The module name that implements the delta. For node types this would be entity.
- * @param $delta
- *   The module sub-type. For node types this would be node type name, article for instance.
- * @param $salesforce_type
- *   The name of the Salesforce object type.
- *
- * @return bool
- *   TRUE if the item was removed from the queue, FALSE if the item was not
- */
-function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type) {
-  $item = array(
-    'drupal_id' => $drupal_id,
-    'module' => $module,
-    'delta' => $delta,
-    'salesforce_type' => $salesforce_type,
-  );
-  $queue = SalesforceQueue::get();
-  $item = (object)$item;
-  return $queue->deleteItem($item);
-}
-
-/**
- * @} salesforce_queue_crud
- */
-
-/**
  * Invokes hook_salesforce_queue_info().
  *
  * This hook allows other modules to inform the queue system about
@@ -363,4 +264,15 @@ function salesforce_queue_dequeue($drupal_id, $module, $delta, $salesforce_type)
 function salesforce_queue_info() {
   // Get information from other modules.
   return module_invoke_all('salesforce_queue_info');
+}
+
+/**
+ * Implements hook_salesforce_info().
+ */
+function salesforce_queue_salesforce_info() {
+  return array(
+    'tasks' => array(
+      'push_queue',
+    ),
+  );
 }
