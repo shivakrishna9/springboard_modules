@@ -29,13 +29,8 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'entity',
       'libraries',
       'salesforce',
-      'salesforce_mapping',
-      'salesforce_pull',
-      'salesforce_push',
-      'salesforce_queue',
-      'salesforce_soap',
-      'webform',
       'salesforce_genmap',
+      'webform',
       'salesforce_webform',
     );
     parent::setUp($modules);
