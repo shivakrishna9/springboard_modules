@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Commerce based hook implementations for the fundraiser module donations.
+ */
+
 // Commerce does not automatically come with a UI for orders, we'll handle that later
 // Since all orders are Views based, we can add some default views here to replicate the interface
 // we want, and map data back to webform nodes via Donation.
@@ -557,12 +562,48 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Now execute the custom charge, keeping in mind for Commerce, the charge function is a submit handler.
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
-  $method_id = $method_instance['method_id'];
-  // For each supported method, grab the correct plugin.
+  // Since the plugin is only relevant in one situation, and then it's Not optional, no need to make it a module.
+  // Here we make sure we include the hook implementation.
+  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+  // Call the function with donation, this will handle internal translation for the specific gateway.
   // Translate from donation settings to the correct values for the plugin.
   // And execute the false form submit to make the charge.
-  // The form submit should return T/F for success / failure, and will create a transaction object on the order.
-  // Set the values donation needs for the rest of the system.
+  $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $donation)
+  // If no result then presume a failure.
+  if (empty($result)) {
+    $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
+    return; // Return the failure.
+  }
+  // Pass the result up the chain.
+  $donation->result = $result;
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    // Set the values donation needs for the rest of the system.
+    $order = commerce_order_load($donation->did);
+    // If a user was created in the midst of that it should be on the order object. If so, add here.
+    $donation->uid = $order->uid;
+    donation->user = user_load($order->uid);
+    // Add any additional data for the order.
+    //$donation->data = isset($order->data) ? $order->data : array();
+    //if (isset($order->data['cc_txns']['references'])) {
+    //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
+    //  $donation->donation['reference_id'] = $ref_id;
+    //  $data = array(
+    //    'txn_type' => 'reference_txn', // Reference if it does.
+    //    'ref_id' => $ref_id,
+    //  );
+    //  $donation->data = array_merge($donation->data, $data);
+    //}
+    // If no charge default set, use auth_charge
+    if (!isset($donation->data['txn_type'])) {
+      $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+    }
+    // Add the status data.
+    $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+    if (!empty($order->order_status)) {
+      $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
+      $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
+    }
+  }
 }
 
 /**
