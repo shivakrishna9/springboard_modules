@@ -2346,7 +2346,8 @@ function fundraiser_process_recurring_donations() {
           array('!message' => $result['message'])), 'admin');
         $attempt_count = db_result(db_query("SELECT attempts FROM {fundraiser_recurring} WHERE order_id = %d", $order->order_id));
         if ($attempt_count == 3) {
-          // final attempt. add debug alert
+          // final attempt. add debug alert and run final_payment_failure hook
+          module_invoke_all('final_payment_failure', $order_id);
           watchdog('fundraiser', t('Payment for recurring donation !id has failed 3 times. The order will not be submitted for payment again. Gateway message: !message', array('!id' => $order->order_id, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
           uc_order_comment_save($order_id, 0, t('Payment for this recurring donation has failed 3 times. The order will not be submitted for payment again.'));
         }

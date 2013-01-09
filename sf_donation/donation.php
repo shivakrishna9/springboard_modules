@@ -45,6 +45,7 @@ class NPSPDonation extends Donation {
       'pending_future_payment' => 'Pledged',
       'partially_refunded' => 'Partially Refunded',
       'refunded' => 'Refunded',
+      'failed' => 'Failed',
     );
   }
 
@@ -92,6 +93,7 @@ class CommonGroundDonation extends Donation {
       'payment_received' => 'Received',
       'payment_withdrawn' => 'Withdrawn',
       'pending_future_payment' => 'Not Received',
+      'failed' => 'Failed',
     );
   }
 

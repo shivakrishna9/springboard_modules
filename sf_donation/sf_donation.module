@@ -1196,3 +1196,19 @@ function _sf_donation_array_split($array, $pieces = 2) {
   $b = _sf_donation_array_split(array_slice($array, $newCount), $pieces -1);
   return array_merge(array($a), $b);
 }
+
+/**
+ * Implements hook_final_payment_failure
+ * When a recurring donation fails payment for the 3rd time, add the donation
+ * back to the queue if it was previously exported.
+ * @param int $order_id
+ */
+function sf_donation_final_payment_failure($order_id) {
+  // Check to see if a donation has been exported
+  $salesforce_donation = salesforce_management_api_id_load('donation', $order_id);
+
+  // If it has been exported, put it in the queue
+  if (!empty($salesforce_donation)) {
+    sf_queue_insert($order_id, FUNDRAISER_SINGLE_DONATION_TYPE , 'update');
+  }
+}
