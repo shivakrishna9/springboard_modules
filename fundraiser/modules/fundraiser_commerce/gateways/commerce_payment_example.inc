@@ -23,8 +23,7 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
   }
   else {
     $success = TRUE;
-    // And execute the false form submit to make the charge.
-    // It has even split the entire chunk of submission efforts outside of form_state
+    // commerce_payment_example has helpfully split submission efforts outside of form submission,
     // so we can directly call it as follows:
     commerce_payment_example_transaction($payment_method, $order, $charge, $name);
   }
