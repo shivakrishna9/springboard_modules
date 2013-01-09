@@ -5,27 +5,49 @@
  * Commerce based hook for commerce_payment_example.
  */
 
+// See commerce_authnet_commerce_payment_method_info() in commerce_authnet for details.
+
 /**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
-function commerce_pauthnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
-  $result = array(
-    'success' => FALSE,
-    'message' => 'This payment failed during gateway execution.'
-  );
+function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
+  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
+  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  $pane_values = array(
+    'credit_card' => array(
+      'number' => $donation->donation['card_number'],
+      'exp_month' => $donation->donation['card_expiration_month'],
+      'exp_year' => $donation->donation['card_expiration_year'],
+      'code' => $donation->donation['card_cvv'],
+    ),
+  );
 
-  // If a user is created in this process, make sure to map the order ownership.
-  // If a transaction, make sure to map those values into result array.
+  // Customer data for authnet pulls from the customer profile given on the order, so we can ignore that.
+  // If the charge fails, returns false, else nothing.
+  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  // Transactions are made even for failures.
+  // Grab the transaction information so we can return the transaction id.
+  // Use the last one in the list cause it's the last one we processed.
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $order->order_id));
+  foreach ($transactions as $transaction) {
+    $txn_id = $transaction->remote_id;
+    $message = $transaction->message;
+  }
+
   // And update the result array success field.
   $result = array(
     'success' => $success,
-    'comment' => t('Card charged, resolution code: 0022548315'),
+    'comment' => t('Card charged, resolution code: ' . $message),
     'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
     'uid' => $order->uid,
-    'data' => array('txn_id' => 'TEST-TXNID-001'),
+    'data' => array('txn_id' => $txn_id),
     'error type' => ($success) ? '' : 'billing',
   );
   return $result;

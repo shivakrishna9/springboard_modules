@@ -418,6 +418,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   }
 
   // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
+  // Not an issue on initial submit (set during user input phase), but CRITICAL for sustainer charges.
   $donation->donation['card_number'] = ''; // $order->payment_details['cc_number'];
   $donation->donation['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
   $donation->donation['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
