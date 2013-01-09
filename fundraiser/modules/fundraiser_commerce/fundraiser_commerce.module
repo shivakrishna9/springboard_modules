@@ -109,7 +109,7 @@ function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$fo
     $line_item->line_item_label = t('Donation');
     $line_item->quantity = 1;
     $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-      'amount' => $values['amount']['#value'] * 100, // Values are stored as int, so add 00 for decimal places.
+      'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']), 
       'currency_code' => $values['currency']['#value'],
     );
     // Make sure the line item will be included in the update for order total.
@@ -117,7 +117,7 @@ function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$fo
       $line_item->commerce_unit_price[LANGUAGE_NONE][0],
       'base_price',
       array(
-        'amount' => $values['amount']['#value'] * 100,
+        'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']),
         'currency_code' => $values['currency']['#value'],
         'data' => array(),
       ),
@@ -417,8 +417,8 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   $donation->donation['cc_type'] =''; // $order->payment_details['cc_type'];
 
   // Add specific order data. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
-  $donation->data = isset($order->data) ? $order->data : array();
-  $data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+  //$donation->data = isset($order->data) ? $order->data : array();
+  //$data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
   //if (isset($order->data['cc_txns']['references'])) {
   //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
   //  $donation->donation['reference_id'] = $ref_id;
@@ -427,6 +427,9 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   //    'ref_id' => $ref_id,
   //  );
   //}
+  // We may need to use http://drupal.org/project/commerce_cardonfile
+  // commerce_cardonfile_data_save
+  // TODO figure this out.
   $donation->data = array_merge($donation->data, $data);
 }
 
@@ -455,7 +458,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $line_item->line_item_label = t('Donation');
   $line_item->quantity = $quantity;
   $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => $donation->donation['amount'] * 100, // Values are stored as int, so add 00 for decimal places.
+    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']), 
     'currency_code' => $donation->donation['currency'],
   );
   // Make sure the line item will be included in the update for order total.
@@ -463,7 +466,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $line_item->commerce_unit_price[LANGUAGE_NONE][0],
     'base_price',
     array(
-      'amount' => $donation->donation['amount'] * 100,
+      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
       'currency_code' => $donation->donation['currency'],
       'data' => array(),
     ),
@@ -523,6 +526,18 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
  * So could use auth_capture, or could use a reference_txn.
  */
 function fundraiser_commerce_fundraiser_donation_process($donation) {
+  // Grab the gateway configuration from fundraisers data.
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  // Check for the charge function to be defined.
+  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  if (empty($charge_function)) {
+    // We can't find the gateway and we should tell someone about it.
+    watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
+      array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
+    watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
+    $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
+    return; // Return the failure.
+  }
   /**
     Drupal Commerce doesn’t maintain Ubercart’s separation of payment methods from payment gateways but rather
     defines payment methods as any single way of collecting payment from a customer per payment provider. This
@@ -530,75 +545,17 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     etc. but a separate CC payment method for each payment provider with a common base set of code for building
     credit card forms and handling the data securely.
     See: http://dcorgdev.devcloud.acquia-sites.com/developer-guide/core-architecture/info-hooks/payment-info-hooks
-    Looking over this, it looks like the expectation is that all payment processors execute through a callback
-    into a form submission from a Commerce pane. This will need to be mirrored in our code.
+    The Rules configuration for a specific gateway instance contains all of the additional configuration needed.
+    Essentially Commerce replicates the behavior of Gateway Manager.
+    
+    The problem is when you do this programatically - you don't have a predictable map of values in the form to use.
+    Each gateway has a custom form, and so we need to add a plugin to Fundraiser Commerce to wrap donation submissions
+    per gateway supported. To avoid module proloferation, we'll use plugins here based on the type of gateway.
+    The gateway module itself should handle transaction creation and order updates as if the form were actually submitted.
    */
 
-  /*
-  // We may need to use http://drupal.org/project/commerce_cardonfile
-  // commerce_cardonfile_data_save
-
-  // TODO:
-  // All transactions do is record events and interactions on this order during charging.
-  // So we don't actually create orders here in prep for charging later.
-  // Though we need to to support recurring and sustainers. Hm.
-  // Transaction stuff WIIL need to be wrapped.
-  $transaction = commerce_payment_transaction_new($node->gateway, $order->order_id);
-  $transaction->amount = $donation->donation['amount'] * 100;
-  $transaction->currency_code = 'USD';
-  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-  commerce_payment_transaction_save($transaction);
-  commerce_payment_commerce_payment_transaction_insert($transaction)
-
-
-      // Check the order balance and invoke the event.
-      $balance = commerce_payment_order_balance($order);
-
-      if ($balance['amount'] <= 0) {
-        // Invoke the event including a hook of the same name.
-        rules_invoke_all('commerce_payment_order_paid_in_full', $order, $transaction);
-
-        // Update the order's data array to indicate this just happened.
-        $order->data['commerce_payment_order_paid_in_full_invoked'] = TRUE;
-
-        // Save the updated order.
-        commerce_order_save($order);
-      }
-  Set card propertiers.
-  // Card properties.
-  $order->payment_method = 'credit';
-  $order->payment_details = array(
-    'cc_type' => _fundraiser_commerce_get_cc_type($donation->donation['card_number']),
-    'cc_owner' => '',
-    'cc_number' => $donation->donation['card_number'],
-    'cc_start_month' => '',
-    'cc_start_year' => '',
-    'cc_exp_month' => $donation->donation['card_expiration_month'],
-    'cc_exp_year' => $donation->donation['card_expiration_year'],
-    'cc_issue' => '',
-    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
-    // cc_cvv is unset on order save for PCI compliance.
-    'cc_bank' => '',
-  );
-
-
-   */
-/*
-  if (!isset($available_countries)) {
-    $available_countries = _addressfield_country_options_list();
-  }
-*/
-  // Grab the gateway configuration from fundraisers data.
-  $info = _fundraiser_get_donation_gateway($donation->did);
-  // Check for the charge function to be defined.
-  //dpm($donation, 'donation');
-  //dpm($info, 'info');
-  //$charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
-
-  /*
-  see commerce_payment_commerce_payment_transaction_insert($transaction)
-      // Check the order balance and invoke the event.
-      $balance = commerce_payment_order_balance($order);*/
+  // Now execute the custom charge, keeping in mind for Commerce, the charge function is a submit handler.
+  // $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
 }
 
 /**
