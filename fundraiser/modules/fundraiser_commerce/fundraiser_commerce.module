@@ -178,7 +178,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
     $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
-    $this_gateway['id'] = $method_instance['instance_id']; // Had to increase size of gateway columns to 255
+    $this_gateway['id'] = $method_instance['instance_id'];
     $this_gateway['module'] = 'fundraiser_commerce';
     $this_gateway['module_name'] = t('Commerce');
     $this_gateway['title'] = $method_instance['title'];
@@ -195,12 +195,10 @@ function fundraiser_commerce_fundraiser_gateway_info() {
  * Implements hook_fundraiser_field_info_alter().
  */
 function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
-  // Add overrides to country and zone information, derived from uc values.
-  // From commerce defaults. 840 = US, 124 = CA.
   // TODO review this code, perhaps we can push it further up into fundraiser proper.
-  // That would also avoid the wierd ajaxy stuff we have to do to get refernece back working.
+  // That would also avoid the wierd ajaxy stuff we have to do to get reference back working.
   $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = 1;//variable_get('fundraiser_all_countries', 0);
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
   $default_available = array('US', 'CA');
   $options = '';
   if ($include_all_countries) {
@@ -749,7 +747,7 @@ function _fundraiser_commerce_get_countries() {
 }
 
 /**
- * DB function, look in zone table for zone info.
+ * Helper function, look in zone table for zone info.
  */
 function _fundraiser_commerce_get_zone_by_country($country_id) {
   // Commerce does not store countries in a database, it relies instead on locale.inc
