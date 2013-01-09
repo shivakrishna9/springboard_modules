@@ -566,7 +566,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Here we make sure we include the hook implementation.
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   // Call the function with donation, this will handle internal translation for the specific gateway.
-  $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation)
+  $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation);
   // If no result then presume a failure or no hook installed for this gateway type.
   if (empty($result)) {
     $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
@@ -579,7 +579,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     $order = commerce_order_load($donation->did);
     // If a user was created in the midst of that it should be on the order object. If so, add here.
     $donation->uid = $order->uid;
-    donation->user = user_load($order->uid);
+    $donation->user = user_load($order->uid);
     // Add any additional data for the order.
     //$donation->data = isset($order->data) ? $order->data : array();
     //if (isset($order->data['cc_txns']['references'])) {
