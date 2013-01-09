@@ -29,14 +29,20 @@
 </style>
 
 <script type="text/javascript">
-  $(document).ready(function(){
+  (function ($) {
+
+  Drupal.behaviors.wts_token_list = {
+      attach: function (context, settings) {
+ 
     <?php foreach($tokens as $token_type => $token_list) : ?>
-      $("#<?php print $token_type . '-tokens'; ?>").change(function(e) {
+      $("#<?php print trim($token_type) . '-tokens'; ?>").change(function(e) {
         window.returnValue = $(this).val(); 
         window.close();
       });
     <?php endforeach; ?>
-  });
+      }
+    };
+  })(jQuery);
 </script>
 
 <div id="fundraiser-confirmation-tokens">

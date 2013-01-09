@@ -15,7 +15,6 @@
     <?php print $styles; ?>
   </head>
   <body>
-    <h1>Oh Hai</h1>
     <?php print $content;?>  
   </body>
 </html>

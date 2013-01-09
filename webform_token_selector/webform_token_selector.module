@@ -26,9 +26,8 @@ function webform_token_selector_menu() {
  */
 function webform_token_selector_preprocess_page(&$vars) {
   if (arg(1) == 'confirmation-token-list') {
-    drupal_set_message('vars:');
     dsm($vars);
-   // array_unshift($vars['theme_hook_suggestions'], 'page_confirmation_token_list');
+    $vars['theme_hook_suggestions'][] = 'page_confirmation_token_list';
   }
 }
 
@@ -41,26 +40,14 @@ function webform_token_selector_theme() {
       'arguments' => array('tokens' => NULL),
       'template' => 'templates/confirmation-token-list',
     ),
+    'page_confirmation_token_list' => array(
+      'file' => 'templates/page-confirmation-token-list.tpl.php',
+      'render element' => 'page'
+    ),
   );
 }
 
-/**
- * Implementation of hook_theme_registry_alter().
- */
-function webform_token_selector_theme_registry_alter(&$theme_registry) {
-  // tell the theme registry to look in this module's directory for theme files
- // $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'webform_token_selector') . '/templates';
- // $theme_registry['page']['preprocess_functions'][] = 'webform_token_selector_preprocess_page';
-  $theme_registry['page__webform__confirmation-token-list'] = array(
-    'template' => 'page--webform--confirmation-token-list',
-    'path' => drupal_get_path('module', 'edutopia_images'),
-    'type' => 'theme_engine',
-    'theme_path' => drupal_get_path('module', 'webform_token_selector') . '/templates',
-    'render element' => 'elements',
-    'preprocess functions' => array('template_preprocess_page__webform__confirmation-token-list'),
-    'process functions' => array('template_process_page__webform__confirmation-token-list'),
-  );
-}
+
 
 /**
  * Implementation of hook_wysiwyg_plugin().
@@ -90,19 +77,22 @@ function webform_token_selector_wysiwyg_plugin($editor, $version) {
  *   The id of the donation form node.
  */
 function webform_token_selector_token_list($nid) {
-  /*
-  just a hook for other modules to add tokens...
-  */
   $node = node_load($nid);
   $webform_tokens = array();
 
   // make sure we have a node
   if ($node) {
     $all_tokens['webform'] = array();
+ 
+    // 3rd party modules (like Fundraiser) use webform components to track sensitive data like
+    // credit card details that should not be surfaced lightly. In cases like this it is
+    // desirable to remove these components from the list of available components.
+    $token_blacklist = array();
+    drupal_alter('webform_token_selector_blacklist', $token_blacklist);
 
     foreach($node->webform['components'] as $component) {
 
-      if ($component['type'] != 'hidden' && $component['type'] != 'fieldset') { // && !in_array($component['form_key'], _fundraiser_field_blacklist())) {
+      if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], $token_blacklist)) {
         $parents = webform_component_parent_keys($node, $component);
         // TODO: trigger this on form key since the name can change.
         if ($component['name'] == 'Please select your tax-deductible gift amount below') {
@@ -115,9 +105,8 @@ function webform_token_selector_token_list($nid) {
 
   // allow other modules to add more tokens
   $module_tokens = module_invoke_all('confirmation_page_tokens', $node->type);
+
   $tokens = array_merge($webform_tokens, $module_tokens);
-  drupal_set_message('Tokens:');
-  dsm($tokens);
   // theme the output
   $output = theme('confirmation_token_list', array('tokens' => $tokens));
   return $output;
