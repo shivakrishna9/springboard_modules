@@ -154,6 +154,11 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Refunded',
       'state' => 'completed',
     ),
+    'payment_received' => array(
+      'name' => 'payment_received',
+      'title' => 'Payment Received',
+      'state' => 'completed',
+    ),
     'partially_refunded' => array(
       'name' => 'partially_refunded',
       'title' => 'Partially Refunded',
@@ -619,6 +624,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
  */
 function fundraiser_commerce_fundraiser_donation_success($donation) {
   // Mark as complete.
+drupal_set_message('fundraiser_commerce_fundraiser_donation_success');
   _fundraiser_commerce_update_order_status('payment_received', $donation->did);
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');
