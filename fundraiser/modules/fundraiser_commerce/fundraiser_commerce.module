@@ -555,7 +555,14 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
    */
 
   // Now execute the custom charge, keeping in mind for Commerce, the charge function is a submit handler.
-  // $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
+  $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
+  // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
+  $method_id = %method_instance['method_id'];
+  // For each supported method, grab the correct plugin.
+  // Translate from donation settings to the correct values for the plugin.
+  // And execute the false form submit to make the charge.
+  // The form submit should return T/F for success / failure, and will create a transaction object on the order.
+  // Set the values donation needs for the rest of the system.
 }
 
 /**
