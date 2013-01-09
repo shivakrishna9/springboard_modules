@@ -435,7 +435,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // We may need to use http://drupal.org/project/commerce_cardonfile
   // commerce_cardonfile_data_save
   // TODO figure this out.
-  $donation->data = array_merge($donation->data, $data);
+  //$donation->data = array_merge($donation->data, $data);
 }
 
 /**
@@ -566,10 +566,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Here we make sure we include the hook implementation.
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   // Call the function with donation, this will handle internal translation for the specific gateway.
-  // Translate from donation settings to the correct values for the plugin.
-  // And execute the false form submit to make the charge.
-  $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $donation)
-  // If no result then presume a failure.
+  $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation)
+  // If no result then presume a failure or no hook installed for this gateway type.
   if (empty($result)) {
     $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
     return; // Return the failure.
