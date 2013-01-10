@@ -65,13 +65,6 @@ function salesforce_webform_salesforce_genmap_map_fields_alter(&$fields, $contex
 }
 
 /**
- * Implements hook_salesforce_genmap_map_object_alter().
- */
-function salesforce_webform_salesforce_genmap_map_object_alter($sObject) {
-  //drupal_set_message(print_r($sObject, TRUE));
-}
-
-/**
  * Implements hook_salesforce_genmap_map_help().
  */
 function salesforce_webform_salesforce_genmap_map_help() {

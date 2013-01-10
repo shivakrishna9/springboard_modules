@@ -128,14 +128,7 @@ function salesforce_genmap_permission() {
 /**
  * Implements hook_node_delete().
  */
-// TODO later remove nid dependancy, for now - each item comes with some nid associated.
 function salesforce_genmap_node_delete($node) {
-  // Dequeue all submissions related to this node.
-  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.queue');
-  $modules = salesforce_genmap_info();
-  foreach ($modules as $module => $info) {
-    salesforce_genmap_dequeue_all($module, $info['type'], $node->nid);
-  }
   // Delete all salesforce_genmap_map entities.
   salesforce_genmap_delete_map($node->nid);
 }
@@ -161,12 +154,21 @@ function salesforce_genmap_node_delete($node) {
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object) {
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
-    module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.queue');
-    $sObject = salesforce_genmap_map_object($module, $drupal_object, $map, $node);
-    $operation = $op == 'update' ? 'UPDATE' : ($op == 'delete' ? 'DELETE' : NULL);
+    $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node);
+    $op = strtoupper($op);
+    $operation = $op == 'INSERT' ? (empty($map->salesforce_dedupe_field) ? 'CREATE' : 'UPSERT') : $op;
     // Add to the queue.
-    $module_info = salesforce_genmap_info($module);
-    $result = salesforce_genmap_queue($module, $module_info['type'], $oid, $node->nid, $sObject, $map->salesforce_dedupe_field, $operation);
+    $item = array(
+      'drupal_id' => $oid,
+      'module' => $module,
+      'delta' => $module . ':' . $node->nid,
+      'salesforce_type' => $sobject->type,
+      'operation' => $operation,
+      'dedupe_field' => $map->salesforce_dedupe_field,
+      'sobject' => $sobject,
+    );
+    $queue = salesforce_load_push_queue();
+    $result = $queue->createItem($item);
     if (!$result) {
       // @TODO Send an error to admin that submission didn't go to queue
       drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');

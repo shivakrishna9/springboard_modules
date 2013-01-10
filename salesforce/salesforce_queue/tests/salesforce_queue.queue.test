@@ -39,7 +39,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
   /**
    * Test the SalesforceQueue class
    */
-  public function testSalesforceQueue() {
+  public function ftestSalesforceQueue() {
     module_load_include('inc', 'system', 'system.queue');
 
     // get() && __construct() && createQueue()

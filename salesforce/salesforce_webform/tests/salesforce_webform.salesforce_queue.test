@@ -1,0 +1,199 @@
+<?php
+include_once(dirname(__FILE__) . '/salesforce_webform.test');
+
+/**
+ * @file
+ * Tests for includes/salesforce_webform.queue.inc.
+ */
+
+/**
+ * Tests mapping Salesforce objects onto webforms
+ */
+class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Queuing',
+      'description' => 'Ensure that the salesforce_webform.queue componant functions properly.',
+      'group' => 'Salesforce Webform',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array()) {
+    $modules = $modules + array(
+      'salesforce_soap',
+      'salesforce_queue',
+    );
+    parent::setUp($modules);
+
+    // Create webforms
+    $this->webform1 = $this->swCreateWebform(); // No dedupe field
+    $this->webform2 = $this->swCreateWebform(); // Will have dedupe field
+
+    // Map some Salesforce fields to the webforms
+    $this->swMapWebform($this->webform1->nid);
+    $this->swMapWebform($this->webform2->nid, TRUE);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    // Delete the webform node
+    node_delete($this->webform2->nid);
+    node_delete($this->webform1->nid);
+
+    parent::tearDown();
+  }
+
+  /**
+   * Tests that information was sent to the queue properly
+   */
+  public function testQueueSystem() {
+    $path = 'node/' . $this->webform1->nid;
+    $path2 = 'node/' . $this->webform2->nid;
+    $edit = array(
+      'submitted[first_name]' => 'ExampleFirstName',
+      'submitted[last_name]' => 'ExampleLastName',
+      'submitted[email]' => 'example@email.com',
+    );
+
+    // Test the submissions for each state
+    $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
+    foreach ($ops as $op) {
+      switch ($op) {
+        case 'UPSERT':
+          $op_path = $path2;
+          $assert_text = 'your submission has been received';
+          $op_edit = $edit;
+          $op_button = 'Submit';
+          break;
+        case 'CREATE':
+          $op_path = $path;
+          $assert_text = 'your submission has been received';
+          $op_edit = $edit;
+          $op_button = 'Submit';
+          break;
+        case 'UPDATE':
+          // Refers to previous loop's $item
+          $op_path = $path . '/submission/' . $item['drupal_id'] . '/edit';
+          $assert_text = 'Submission updated';
+          $op_edit = $edit;
+          $op_button = 'Submit';
+          break;
+        case 'DELETE':
+          // Refers to previous loop's $item
+          $op_path = $path . '/submission/' . $item['drupal_id'] . '/delete';
+          $assert_text = 'Submission deleted';
+          $op_edit = array();
+          $op_button = 'Delete';
+          break;
+      }
+      $this->drupalPost($op_path, $op_edit, $op_button);
+      $this->assertText($assert_text, 'There was not an obvious error submitting ' . $op . '.');
+      $item = $this->fetchQueueItem();
+      $this->compareSubmissionQueueItem($edit, $item, $op);
+      $this->deleteQueueItem($item); // Simulate processed item
+    }
+  }
+
+  /**
+   * Test dequeuing submissions when the webform has been deleted for Salesforce Queue
+   */
+  public function testNodeDeleteDequeue() {
+    $this->generateSubmissions($this->webform1->nid);
+    $this->generateSubmissions($this->webform2->nid);
+    node_delete($this->webform1->nid);
+    $query = db_select('salesforce_queue', 'sq')
+      ->fields('sq')
+      ->condition('module', 'salesforce_webform')
+      ->condition('delta', 'webform:' . $this->webform1->nid);
+    $result = $query->execute();
+    $unexpected_records = array();
+    foreach ($result as $record) {
+      $unexpected_records[] = $record->id;
+    }
+    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on Salesforce Queue.');
+  }
+
+  /**
+   * Helper to return the last queued item
+   */
+  public function fetchQueueItem() {
+    $queue = SalesforceQueue::get();
+    $item = $queue->claimItem();
+    $this->assertFalse(empty($item), 'Data was received from the queue.');
+    if (empty($item)) {
+      return array();
+    }
+    $queue->releaseItem($item);
+    return $this->formatQueueItem($item);
+  }
+
+  /**
+   * Helper to delete a queue item
+   */
+  public function deleteQueueItem($item) {
+    if (empty($item)) {
+      return;
+    }
+    db_delete('salesforce_queue')
+    ->condition('item_id', $item['item_id'])
+    ->execute();
+    return;
+  }
+
+  /**
+   * Make different queue items have the same format
+   */
+  public function formatQueueItem($item) {
+    $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
+    if (is_object($item)) {
+      $item = (array)$item;
+      return $item;
+    }
+    return array();
+  }
+
+  /**
+   * Helper to compare what was submitted to what was sent to the queue
+   */
+  public function compareSubmissionQueueItem($edit, $item, $operation) {
+    if (!empty($item)) {
+      $this->assertTrue(isset($item['operation']), 'Operation not set in SalesforceQueue queue item.');
+      if (isset($item['operation'])) {
+        $this->assertEqual($item['operation'], $operation, 'The ' . $item['operation'] . ' operation was sent to SalesforceQueue when '. $operation .' was expected.');
+      }
+      $this->assertTrue((isset($item['sobject']) && is_object($item['sobject'])), 'sObject not built properly in SalesforceQueue queue item.');
+      if (isset($item['sobject']) && is_object($item['sobject'])) {
+        $fields = $item['sobject']->fields;
+        $this->assertEqual($fields['FirstName'], $edit['submitted[first_name]'], 'first_name SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['LastName'], $edit['submitted[last_name]'], 'last_name SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['Email'], $edit['submitted[email]'], 'email SalesforceQueue data matches submitted data.');
+      }
+    }
+  }
+
+  /**
+   * Helper to generate random submissions for a given webform
+   */
+  public function generateSubmissions($nid, $count = 25) {
+    $i = 0;
+    while ($i <= $count) {
+      $i++;
+      $edit = array(
+        'submitted[first_name]' => $this->randomName(),
+        'submitted[last_name]' => $this->randomName(),
+        'submitted[email]' => $this->randomName() . '@' . $this->randomName() . '.com',
+      );
+      $this->drupalGet('node/' . $nid);
+      $this->drupalPost(NULL, $edit, 'Submit');
+    }
+  }
+}

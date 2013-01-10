@@ -46,6 +46,13 @@ class SalesforceQueueProcessor {
   public $new_sf_records = array();
 
   /**
+   * A running log of all the Ids of Salesforce records that have been processed
+   *
+   * @var array
+   */
+  public $processed_item_ids = array();
+
+  /**
    * The configured maximum number of items that can be processed at once
    *
    * This depends upon the system resources
@@ -114,7 +121,7 @@ class SalesforceQueueProcessor {
    *   A processor for the given queue
    */
   public static function get($queue = NULL) {
-    $queue = empty($queue) ? SalesforceQueue::get() : $queue;
+    $queue = empty($queue) ? salesforce_load_push_queue() : $queue;
     $processor = new SalesforceQueueProcessor($queue);
     return $processor;
   }
@@ -531,7 +538,7 @@ class SalesforceQueueProcessor {
     module_invoke_all('salesforce_queue_preprocess_batch', $batch, $this->queue);
 
     // Invokes hook_salesforce_queue_process_batch_alter().
-    drupal_alter('salesforce_queue_batch', $batch, $this->queue);
+    drupal_alter('salesforce_queue_batch', $batch, $this->queue, $this);
 
     // Make sure we have enough time to send these items to Salesforce before
     // our lease expires. We do not want to risk the chance of items getting
@@ -605,6 +612,8 @@ class SalesforceQueueProcessor {
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
       $item->sobject->Id = $result->id;
       $this->new_sf_records[] = $item;
+      $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
+      $this->processed_item_ids[$item->salesforce_type][$id_key] = $result->id;
     }
 
     // Invokes hook_salesforce_queue_process_pass_item().

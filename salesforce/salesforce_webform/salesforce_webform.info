@@ -8,4 +8,4 @@ dependencies[] = salesforce_genmap
 dependencies[] = webform
 files[] = tests/salesforce_webform.test
 files[] = tests/salesforce_webform.map.test
-files[] = tests/salesforce_webform.queue.test
+files[] = tests/salesforce_webform.salesforce_queue.test
