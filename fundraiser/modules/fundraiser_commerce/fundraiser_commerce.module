@@ -173,6 +173,7 @@ function fundraiser_commerce_commerce_order_status_info() {
  */
 function fundraiser_commerce_fundraiser_gateway_info() {
   /// Load all the methods available.
+  $methods = new stdClass();
   $methods->payment_methods = array();
   rules_invoke_all('commerce_payment_methods', $methods);
   $fundraiser_gateways = array();
