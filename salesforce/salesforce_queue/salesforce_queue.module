@@ -245,30 +245,3 @@ function salesforce_queue_cron() {
 /**
  * @} salesforce_queue_process
  */
-
-
-/**
- * Invokes hook_salesforce_queue_info().
- *
- * This hook allows other modules to inform the queue system about
- * the data they need to integrate. For now the sole purpose of this
- * hook is to allow other modules to tell the proessor about the item
- * types they are integrating. The entity integration would return an
- * array of all types that have been mapped.
- *
- */
-function salesforce_queue_info() {
-  // Get information from other modules.
-  return module_invoke_all('salesforce_queue_info');
-}
-
-/**
- * Implements hook_salesforce_info().
- */
-function salesforce_queue_salesforce_info() {
-  return array(
-    'tasks' => array(
-      'push_queue',
-    ),
-  );
-}
