@@ -221,6 +221,21 @@ function webform_confirmations_node_load($nodes, $types) {
 
 
 /**
+ * Implements hook_node_insert().
+ */
+function webform_confirmations_node_insert($node) {
+  // Set confirmation page title from the original. Not saved as part of node, cause it's not a node table.
+  if (isset($node->clone_from_original_nid)) {
+    $original = node_load($node->clone_from_original_nid);
+    if (_webform_confirmations_is_configured($original)) {
+      $confirmation['nid'] = $node->nid;
+      $confirmation['confirmation_page_title'] = $original->confirmation_page_title;
+      _webform_confirmations_update($confirmation);
+    }
+  }
+}
+
+/**
  * Submit handler for webform configuration form.
  */
 function _webform_confirmations_submit($form, &$form_state) {
