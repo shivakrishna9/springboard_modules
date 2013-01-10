@@ -15,16 +15,20 @@ function fundraiser_sustainers_admin() {
   $donation_sets = _fundraiser_sustainers_get_donation_sets();
   if ($donation_sets) {
     foreach ($donation_sets as $donation_set) {
-      $this_donation = fundraiser_donation_get_donation($donation_set->master_did);
-      $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
-      $next_charge = fundraiser_donation_get_donation($next_charge->did);
-      $row = array();
-      $row[] = l($donation_set->master_did, 'admin/config/system/fundraiser/recurring/' . $donation_set->master_did . '/view');
-      $row[] = $this_donation->user->name;
-      $row[] = '$' . money_format('%i', $next_charge->donation['amount']);
-      $row[] = date('m/d/y', $donation_set->next_charge);
-      $row[] = $donation_set->status;
-      $rows[] = $row;
+      if (isset($donation_set->master_did)) {
+        $this_donation = fundraiser_donation_get_donation($donation_set->master_did);
+        $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
+        if (isset($next_charge->did)) {
+          $next_charge = fundraiser_donation_get_donation($next_charge->did);
+          $row = array();
+          $row[] = l($donation_set->master_did, 'admin/config/system/fundraiser/recurring/' . $donation_set->master_did . '/view');
+          $row[] = $this_donation->user->name;
+          $row[] = '$' . money_format('%i', $next_charge->donation['amount']);
+          $row[] = date('m/d/y', $donation_set->next_charge);
+          $row[] = $donation_set->status;
+          $rows[] = $row;
+        }
+      }
     }
   }
   $output = '<h2>All Recurring Orders</h2>';

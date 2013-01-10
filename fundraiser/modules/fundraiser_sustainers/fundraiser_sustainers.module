@@ -56,15 +56,7 @@ function fundraiser_sustainers_menu() {
     'title' => 'My recurring donations',
     'page callback' => 'fundraiser_sustainers_user_overview',
     'page arguments' => array(1),
-    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items['user/%user/recurring_overview/%'] = array(
-    'title' => 'My recurring donations',
-    'page callback' => 'fundraiser_sustainers_edit',
-    'page arguments' => array(1, 3),
-    'access callback' => '_fundraiser_sustainers_user_has_recurring_donations',
+    'access callback' => 'user_edit_access', 
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
@@ -290,16 +282,14 @@ function fundraiser_sustainers_process_recurring_donations() {
 /**
  * Menu callback for the my recurring payments tab of the user profile.
  */
-function fundraiser_sustainers_user_overview($user) {
+function fundraiser_sustainers_user_overview($user, $did = NULL) {
   $donations = _fundraiser_sustainers_get_donation_sets_recurr_by_uid($user->uid);
   if (!$donations) {
-    drupal_set_message(t('You have no recurring donations.'), 'warning');
-    drupal_goto('user/' . $user->uid);
+    return '<div>' . t('You have no recurring donations.') . '</div>';
   }
   else {
-    if (count($donations) == 1) {
-      // Forward user to the donation IFF the user only has one.
-      drupal_goto('user/' . $user->uid . '/recurring_overview/' . $donations[0]->master_did);
+    if (!empty($did)) {
+      return fundraiser_sustainers_edit_form($did);
     }
     else {
       // Else display the list.
@@ -468,13 +458,6 @@ function fundraiser_update_cron_settings($form, $form_state) {
     // Refresh menu cache.
     menu_rebuild();
   }
-}
-
-/**
- * Menu callback, loads a specific order for the my recurring payments tab.
- */
-function fundraiser_sustainers_edit($user, $did) {
-  return fundraiser_sustainers_edit_form($did);
 }
 
 /**
@@ -1207,8 +1190,10 @@ function _fundraiser_sustainers_get_donation_sets() {
     'ORDER BY r.master_did DESC')->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
-    $donation_sets[$index]->next_charge = $next_charge->next_charge;
-    $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+    if (isset($next_charge->did)) {
+      $donation_sets[$index]->next_charge = $next_charge->next_charge;
+      $donation_sets[$index]->status = isset($next_charge->cancellation_reason) ? 'cancelled' : 'active';
+    }
   }
   return $donation_sets;
 }
