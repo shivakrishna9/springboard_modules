@@ -1,7 +1,7 @@
 name = "Page Wrappers"
 description = "Allows users to create page templates that can then be assigned to nodes."
 package = "Features"
-project = "page_wrappers
+project = "page_wrappers"
 core = "6.x"
 version = 6.x-3.3
 dependencies[] = "clone"
