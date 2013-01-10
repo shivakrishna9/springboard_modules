@@ -199,22 +199,18 @@ function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $re
 }
 
 /**
- * Implements hook_salesforce_ACTION_TASK().
+ * Wrapper to load a SalesforceQueue object
+ *
+ * @param string $queue_name
+ *   Name of the queue to load.  The default queues are 'new', 'retry' and
+ *   'fail', but any number of other queues can be created.  Use 'all' to have
+ *   access to the multi-queue manager.  If no queue name is provided, it will
+ *   default to 'all'.
+ *
+ * @return SalesforceQueue
  */
-function salesforce_queue_salesforce_load_push_queue($args) {
-  $queue_name = isset($args['queue_name']) ? $args['queue_name'] : 'all';
+function salesforce_queue_load($queue_name = 'all') {
   return SalesforceQueue::get($queue_name);
-}
-if (!function_exists('salesforce_load_push_queue')) {
-  // Tempoary fix until salesforce supports our queue
-  function salesforce_load_push_queue($queue_name = 'all') {
-    if (class_exists('SalesforceQueue')) {
-      return SalesforceQueue::get($queue_name);
-    }
-    else {
-      return FALSE;
-    }
-  }
 }
 
 
@@ -227,7 +223,7 @@ if (!function_exists('salesforce_load_push_queue')) {
  * Processes the data in the Salesforce queue.
  */
 function salesforce_queue_process_queue($queue_name = 'all') {
-  $queue = salesforce_load_push_queue($queue_name);
+  $queue = salesforce_queue_load($queue_name);
   $processor = SalesforceQueueProcessor::get($queue);
   return $processor->process();
 }
