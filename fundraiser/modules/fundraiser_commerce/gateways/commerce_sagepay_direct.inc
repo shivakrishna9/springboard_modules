@@ -2,30 +2,37 @@
 
 /**
  * @file
- * Commerce based hook for commerce_authnet.
+ * Commerce based hook for commerce_sagepay_direct.
  */
 
 /**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
-function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_sagepay_direct_fundraiser_commerce_execute_gateway($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array(); // Spare, no values here used during submission. Ignore.
   $pane_values = array(
     'credit_card' => array(
       'number' => $donation->donation['card_number'],
       'exp_month' => $donation->donation['card_expiration_month'],
       'exp_year' => $donation->donation['card_expiration_year'],
+      'start_month' => '',
+      'start_year' => '',
+      'issue' => '',
       'code' => $donation->donation['card_cvv'],
+      'type' => '',
     ),
   );
 
-  // Customer data for authnet pulls from the customer profile given on the order, so we can ignore that.
+  // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
-  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $result = commerce_sagepay_direct_submit_form_submit($payment_method, $pane_form, $pane_values, &$order, $charge);
+  // No false result returned, we need to use the order status to check for success.
+  // ALERT: The submission process here includes a drupal_goto. (whhhhhy!)
+  // So we need to copy and paste some work over from the regular module, to avoid that.
+  // THIS IS NOT READY FOR PRIMETIME.
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;

@@ -2,13 +2,15 @@
 
 /**
  * @file
- * Commerce based hook for commerce_authnet.
+ * Commerce based hook for commerce_ogone.
  */
 
 /**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
-function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_ogone_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+  // OGone is a REDIRECTION system. THIS MAKES THIS RATHER TRICKY. NOT READY YET.
+/*
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
@@ -25,7 +27,7 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
 
   // Customer data for authnet pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
-  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $result = commerce_ogone_process_transaction($order, $payment_method, $feedback, $redirect = TRUE);
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
@@ -38,7 +40,7 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
     $txn_id = $transaction->remote_id;
     $message = $transaction->message;
   }
-
+*/
   // And update the result array success field.
   $result = array(
     'success' => $success,

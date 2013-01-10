@@ -2,18 +2,18 @@
 
 /**
  * @file
- * Commerce based hook for commerce_authnet.
+ * Commerce based hook for commerce_paypal.
  */
 
 /**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
-function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+/*
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
-  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  $pane_form = array(); // Spare, no values here used during submission. Ignore.
   $pane_values = array(
     'credit_card' => array(
       'number' => $donation->donation['card_number'],
@@ -23,9 +23,9 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
     ),
   );
 
-  // Customer data for authnet pulls from the customer profile given on the order, so we can ignore that.
+  // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
-  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
@@ -49,4 +49,6 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
     'error type' => ($success) ? '' : 'billing',
   );
   return $result;
+*/
+// Paypal has two payment methods and one of them is a outsource and redirect. This is more complicated, and needs work.
 }
