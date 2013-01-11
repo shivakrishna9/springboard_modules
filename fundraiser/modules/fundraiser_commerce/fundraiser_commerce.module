@@ -186,6 +186,26 @@ function fundraiser_commerce_fundraiser_gateway_info() {
     $this_gateway['description'] = $method_instance['description'];
     $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
     $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
+    // Add the gateway type, usually credit. Could be: 'credit', 'debit', 'paypal', 'check'
+    // Override for specific gateways we support that we know aren't credit.
+    switch ($method_instance['module']) {
+      case 'commerce_no_payment':
+        $this_gateway['payment_method'] = 'none';
+      break;
+      //case '':
+      //  $this_gateway['payment_method'] = 'debit';
+      //break;
+      case 'commerce_paypal_wps':
+        $this_gateway['payment_method'] = 'paypal';
+      break;
+      case 'commerce_cheque':
+        $this_gateway['payment_method'] = 'check';
+      break;
+      default:
+        $this_gateway['payment_method'] = 'credit';
+      break;
+    }
+    // Include all details otherwise.
     $this_gateway['gateway_details'] = $method_instance;
     $fundraiser_gateways[] = $this_gateway; 
   }
@@ -243,48 +263,37 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     '#display_callback' => '_fundraiser_commerce_zone_field_display',
   );
   // Add our own validation routines to the billing fields for credit cards.
-  $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_commerce_card_number_field_validate';
-  $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_commerce_card_cvv_field_validate';
-  $fields['credit_card_information']['card_expiration_year']['#validate_callback'] = '_fundraiser_commerce_card_expiration_year_field_validate';
+  $fields['payment_information']['payment_fields']['#validate_callback'] = '_fundraiser_commerce_payment_fields_validate';
   return $fields;
 }
+
 
 /**
  * Validation callback for field card_number.
  */
-function _fundraiser_commerce_card_number_field_validate($form, $form_state, $submission_fields, $value) {
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-  $valid = commerce_payment_validate_credit_card_number($value);
-  if (!$valid || !ctype_digit($value) || drupal_strlen($value) < 10) {
-    return t('You have entered an invalid credit card number.');
+function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
+  // Assume all ubercart submissions are credit cards, but we still need to validate them.
+  $payment_method = $submission_fields['payment_method'];
+  if ($payment_method == 'credit') {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
+    $number = $submission_fields['card_number'];
+    $valid = commerce_payment_validate_credit_card_number($number);
+    if (!$valid || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      return t('You have entered an invalid credit card number.');
+    }
+    $cvv = $submission_fields['card_cvv'];
+    $valid = commerce_payment_validate_credit_card_security_code($cvv, $value);
+    if (!$valid && !empty($cvv)) {
+      return t('You have entered an invalid CVV number.');
+    }
+    $cc_expiration_month = $submission_fields['card_expiration_month'];
+    $cc_expiration_year = $submission_fields['card_expiration_year'];
+    $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
+    if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      return t('The credit card you entered has expired.');
+    }
   }
 }
-
-/**
- * Validation callback for field card_cvv.
- */
-function _fundraiser_commerce_card_cvv_field_validate($form, $form_state, $submission_fields, $value) {
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-  $number = $submission_fields['card_number'];
-  $valid = commerce_payment_validate_credit_card_security_code($number, $value);
-  if (!$valid && !empty($value)) {
-    return t('You have entered an invalid CVV number.');
-  }
-}
-
-/**
- * Validation callback for field card_expiration_month, card_expiration_year.
- */
-function _fundraiser_commerce_card_expiration_year_field_validate($form, $form_state, $submission_fields, $value) {
-  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-  $cc_expiration_month = $submission_fields['card_expiration_month'];
-  $cc_expiration_year = $submission_fields['card_expiration_year'];
-  $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
-  if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
-    return t('The credit card you entered has expired.');
-  }
-}
-
 /**
  * Display callback for field country. Set the defaults if the country has it.
  */

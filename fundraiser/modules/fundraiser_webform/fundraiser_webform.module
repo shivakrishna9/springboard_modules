@@ -6,6 +6,48 @@
  */
 
 /**
+ * Implements hook_webform_component_info
+ */
+function fundraiser_webform_webform_component_info() {
+  $components = array();
+  $components['payment_method'] = array(
+    'label' => t('Payment Method Select'),
+    'description' => t('Configure the payment methods for this form.'),
+    'features' => array(
+      'required' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/payment_method.inc'
+  );
+  $components['payment_fields'] = array(
+    'label' => t('Payment Gateway Fields'),
+    'description' => t('Container for the display of the payment gateway fields.'),
+    'features' => array(
+      'required' => FALSE,
+      'csv' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+      'group' => TRUE,
+    ),
+    'file' => 'components/payment_fields.inc'
+  );
+  return $components;
+}
+
+/**
+ * Implements hook_theme
+ */
+function fundraiser_webform_theme($existing, $type, $theme, $path) {
+  return array(
+    'fundraiser_webform_component_payment_methods' => array(
+      'render element' => 'form',
+      'file' => 'components/payment_method.inc'
+    )
+  );
+}
+
+/**
  * Implements hook_webform_confirmations_token_info_alter().
  */
 function fundraiser_webform_webform_confirmations_token_info_alter(&$tokens, $node) {
@@ -134,11 +176,7 @@ function _fundraiser_webform_toggle_webform($type, $is_enabled = TRUE) {
     $webform_node_types = array_merge($webform_node_types, array($type));
     $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
   }
-// If disabled, we leave it as a webform for other modules to use.
-//  else {
-//    $webform_node_types = array_diff($webform_node_types, array($type));
-//    $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
-//  }
+  // If disabled, we leave it as a webform for other modules to use.
   // Re-save the variables.
   variable_set('webform_node_types', array_unique($webform_node_types));
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
@@ -388,6 +426,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
 
+/*
   // Combine expiration month and year into a single component.
   $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
   $cc_exp_year_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_year']);
@@ -422,7 +461,7 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   // Remove old fields from form layout after moving them to their new location.
   $cc_exp_month_field = NULL;
   $cc_exp_year_field = NULL;
-
+*/
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
     theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.gif' )) .
@@ -444,12 +483,14 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
  * So: We put everything back after we're done so that webform never knows the difference.
  */
 function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
+/*
   $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] =
       $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_month'];
   $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] =
       $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_year'];
   // Remove 'expiration_date' so webform doesn't get confused when it tries to process.
   unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
+*/
 }
 
 /**
@@ -478,10 +519,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     // SCRUB DATA. We do not want to save these in the error watchdog message.
     // We can be sure these fields are in the set, since they're declared in fundraiser.
-    $submission_fields['card_number'] = substr_replace($submission_fields['card_number'],
-      str_repeat('*', drupal_strlen($submission_fields['card_number'])), 0);
-    $submission_fields['card_cvv'] = substr_replace($submission_fields['card_cvv'],
-      str_repeat('*', drupal_strlen($submission_fields['card_cvv'])), 0);
+//    $submission_fields['card_number'] = substr_replace($submission_fields['card_number'],
+//      str_repeat('*', drupal_strlen($submission_fields['card_number'])), 0);
+//    $submission_fields['card_cvv'] = substr_replace($submission_fields['card_cvv'],
+//      str_repeat('*', drupal_strlen($submission_fields['card_cvv'])), 0);
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
@@ -967,67 +1008,4 @@ function fundraiser_webform_get_submission($sid) {
     $data[$row->form_key]['value'][$row->no] = $row->data;
   }
   return $data;
-}
-
-/**
- * Implements hook_fundraiser_field_info
- */
-function fundraiser_webform_fundraiser_field_info() {
-  // Donation amounts are handled in a special case.
-  $fields['payment_method'] = array(
-    '#title' => t('Payment Method'),
-    '#type' => 'payment_method',
-    '#required' => 1,
-  );
-  $fields['payment_fields'] = array(
-    '#title' => t('Payment Fields'),
-    '#type' => 'payment_fields',
-    '#required' => 0,
-  );
-  return $fields;
-}
-
-/**
- * Implements hook_webform_component_info
- */
-function fundraiser_webform_webform_component_info() {
-  $components = array();
-
-  $components['payment_method'] = array(
-    'label' => t('Payment Method Select'),
-    'description' => t('Configure the payment methods for this form.'),
-    'features' => array(
-      'required' => FALSE,
-      'description' => FALSE,
-      'default_value' => FALSE,
-    ),
-    'file' => 'components/payment_method.inc'
-  );
-
-  $components['payment_fields'] = array(
-    'label' => t('Payment Gateway Fields'),
-    'description' => t('Container for the display of the payment gateway fields.'),
-    'features' => array(
-      'required' => FALSE,
-      'csv' => FALSE,
-      'description' => FALSE,
-      'default_value' => FALSE,
-      'group' => TRUE,
-    ),
-    'file' => 'components/payment_fields.inc'
-  );
-
-  return $components;
-}
-
-/**
- * Implements hook_theme
- */
-function fundraiser_webform_theme($existing, $type, $theme, $path) {
-  return array(
-    'fundraiser_webform_component_payment_methods' => array(
-      'render element' => 'form',
-      'file' => 'components/payment_method.inc'
-    )
-  );
 }

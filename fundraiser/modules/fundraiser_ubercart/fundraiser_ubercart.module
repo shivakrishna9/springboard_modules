@@ -190,6 +190,9 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $this_gateway['charge_function'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
       $this_gateway['refund_function'] = isset($uc_gateway['credit_refund']) ? $uc_gateway['credit_refund'] : $uc_gateway['credit'];
       $this_gateway['gateway_details'] = $uc_gateway;
+      // ALL currently supported ubercart systems are Credit Card Only.
+      $this_gateway['payment_method'] = 'credit';
+      $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }
   }
@@ -268,43 +271,34 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_ubercart_zone_field_display',
   );
-
   // Add our own validation routines to the billing fields for credit cards.
-  $fields['credit_card_information']['card_number']['#validate_callback'] = '_fundraiser_ubercart_card_number_field_validate';
-  $fields['credit_card_information']['card_cvv']['#validate_callback'] = '_fundraiser_ubercart_card_cvv_field_validate';
-  $fields['credit_card_information']['card_expiration_year']['#validate_callback'] = '_fundraiser_ubercart_card_expiration_year_field_validate';
+  $fields['payment_information']['payment_fields']['#validate_callback'] = '_fundraiser_ubercart_payment_fields_validate';
   return $fields;
 }
 
 /**
  * Validation callback for field card_number.
  */
-function _fundraiser_ubercart_card_number_field_validate($form, $form_state, $submission_fields, $value) {
-  $valid = _uc_credit_valid_card_number($value);
-  if (!$valid || !ctype_digit($value) || drupal_strlen($value) < 10) {
-    return t('You have entered an invalid credit card number.');
-  }
-}
-
-/**
- * Validation callback for field card_cvv.
- */
-function _fundraiser_ubercart_card_cvv_field_validate($form, $form_state, $submission_fields, $value) {
-  $valid =_uc_credit_valid_cvv($value);
-  if (!$valid && !empty($value)) {
-    return t('You have entered an invalid CVV number.');
-  }
-}
-
-/**
- * Validation callback for field card_expiration_month, card_expiration_year.
- */
-function _fundraiser_ubercart_card_expiration_year_field_validate($form, $form_state, $submission_fields, $value) {
-  $cc_expiration_month = $submission_fields['card_expiration_month'];
-  $cc_expiration_year = $submission_fields['card_expiration_year'];
-  $valid = _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
-  if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
-    return t('The credit card you entered has expired.');
+function _fundraiser_ubercart_payment_fields_validate($form, $form_state, $submission_fields, $value) {
+  // Assume all ubercart submissions are credit cards, but we still need to validate them.
+  $payment_method = $submission_fields['payment_method'];
+  if ($payment_method == 'credit') {
+    $number = $submission_fields['card_number'];
+    $valid = _uc_credit_valid_card_number($number);
+    if (!$valid || !ctype_digit($number) || drupal_strlen($number) < 10) {
+      return t('You have entered an invalid credit card number.');
+    }
+    $cvv = $submission_fields['card_cvv'];
+    $valid =_uc_credit_valid_cvv($cvv);
+    if (!$valid && !empty($cvv)) {
+      return t('You have entered an invalid CVV number.');
+    }
+    $cc_expiration_month = $submission_fields['card_expiration_month'];
+    $cc_expiration_year = $submission_fields['card_expiration_year'];
+    $valid = _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
+    if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+      return t('The credit card you entered has expired.');
+    }
   }
 }
 

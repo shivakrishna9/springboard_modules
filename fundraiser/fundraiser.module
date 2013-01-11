@@ -136,6 +136,7 @@ function fundraiser_token_info() {
     'type' => 'user',
   );
   // Modify given fields.
+  /*
   if (isset($info['tokens']['donation']['card_number'])) {
     $info['tokens']['donation']['card_number'] = array(
       'name' => t('Ending Card Number'),
@@ -147,6 +148,8 @@ function fundraiser_token_info() {
     'name' => t('Card Type'),
     'description' => t('The credit card type used for the donation.'),
   );
+  */
+  // TODO Adjust this tokening to account for the new changed in donation fields.
   return $info;
 }
 
@@ -159,6 +162,7 @@ function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
   }
   $children = element_children($fields);
   foreach ($children as $child) {
+    // TODO Adjust this tokening to account for the new changed in donation fields.
     $disallowed = array('card_cvv');
     if (isset($fields[$child]['#type']) && $fields[$child]['#type'] != 'fieldset' && !in_array($child, $disallowed)) {
       // Add children.
@@ -189,8 +193,9 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     $data['node'] = isset($donation->node->nid) ? $donation->node->nid : '';
     $data['user'] = isset($donation->user->uid) ? $donation->user->uid : '';
     // Specific changes.
-    $data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
-    $data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
+    // TODO Adjust this tokening to account for the new changed in donation fields.
+    //$data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
+    //$data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
   }
   // Replace the given tokens.
   $replacements = array();
@@ -721,7 +726,7 @@ function fundraiser_fundraiser_field_info() {
     '#validate_callback' => '_fundraiser_email_field_validate',
   );
   $fields['billing_information'] = array(
-    '#title' => t('Credit Card Billing Information'),
+    '#title' => t('Billing Information'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
@@ -760,68 +765,33 @@ function fundraiser_fundraiser_field_info() {
       'maxlength' => 5,
     ),
   );
-  $fields['credit_card_information'] = array(
-    '#title' => t('Credit Card Information'),
+  $fields['payment_information'] = array(
+    '#title' => t('Payment Information'),
     '#type' => 'fieldset',
     '#required' => 0,
   );
-  $fields['credit_card_information']['card_number'] = array(
-    '#title' => t('Card Number'),
-    '#type' => 'textfield',
+  /**
+   * These two fields are intended to hold the payment method information
+   * And the array of user entered data for the payment method.
+   * They replace previous implementations relying on CC fields.
+   */
+  $fields['payment_information']['payment_method'] = array(
+    '#title' => t('Payment Method'),
+    '#type' => 'payment_method',
     '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'width' => 20,
-    ),
+    // Acceptable values for this field to return from display are:
+    // 'none', 'credit', 'debit', 'paypal', 'check'
   );
-  $months = "1|January\n";
-  $months .= "2|February\n";
-  $months .= "3|March\n";
-  $months .= "4|April\n";
-  $months .= "5|May\n";
-  $months .= "6|June\n";
-  $months .= "7|July\n";
-  $months .= "8|August\n";
-  $months .= "9|September\n";
-  $months .= "10|October\n";
-  $months .= "11|November\n";
-  $months .= "12|December\n";
-  $fields['credit_card_information']['card_expiration_month'] = array(
-    '#title' => t('Expiration Month'),
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'items' => $months,
-      'multiple' => 0,
-      'aslist' => 1,
-    ),
-  );
-  $this_year = date('Y');
-  $years = $this_year . "\n";
-  for ($i = 1; $i <= 15; $i++) {
-    $years .= ($this_year + $i) . "\n";
-  }
-  $fields['credit_card_information']['card_expiration_year'] = array(
-    '#title' => t('Expiration Year'),
-    '#type' => 'select',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'items' => $years,
-      'multiple' => 0,
-      'aslist' => 1,
-    ),
-  );
-  $fields['credit_card_information']['card_cvv'] = array(
-    '#title' => t('Card Security Code'),
-    '#type' => 'textfield',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'maxlength' => 4,
-      'width' => 5,
-    ),
+  $fields['payment_information']['payment_fields'] = array(
+    '#title' => t('Payment Details'),
+    '#type' => 'payment_fields',
+    '#required' => 0,
+    // Acceptable values for this field to return from display are:
+    // An array for each method type, including relevant information for the submission type.
+    // credit_card_information -> array('card_number', 'card_expiration_month', 'card_expiration_year', 'card_cvv')
+    // debit_information -> array('bank_routing_number', 'account_number')
+    // paypal_information -> array('paypal_email')
+    // check_information -> array('')
   );
   return $fields;
 }
@@ -2231,6 +2201,8 @@ function _fundraiser_update_tracking_value($nid, $field) {
  * Note: this replaces _fundraiser_field_blacklist().
  */
 function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
+  // These fields may or may not even have a value depending on the user's selected form of submission.
+  // So this may not be a viable solution anymore.
   $fundraiser_blacklist = array(
     'card_number',
     'card_cvv',

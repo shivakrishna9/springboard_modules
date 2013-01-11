@@ -63,23 +63,18 @@ function _webform_edit_payment_method($component) {
 
   // Get all available payment methods.
   $temp_gateways = _fundraiser_gateway_info();
-  //temp array for testing, arrange gateways by payment method
-  $types = array('credit', 'debit', 'paypal', 'check');
-  foreach ($types as $type) {
-    $all_payment_methods[$type] = $temp_gateways;
-  }
-
   if (empty($temp_gateways)) {
     $form['no_gateways_notice']['#markup'] = '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>'; 
     return $form; 
   }
-  
+  foreach($temp_gateways as $temp_gateway) {
+    $type = isset($temp_gateway['payment_method']) ? $temp_gateway['payment_method'] : 'credit';
+    $all_payment_methods[$type][] = $temp_gateway;
+  }
   $field_payment_methods = !empty($component['extra']['payment_methods']) ? $component['extra']['payment_methods'] : array();
-
   foreach (array_keys($all_payment_methods) as $method_key) {
     $all_payment_methods[$method_key]['#weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
   }
-
   // Sort all payment methods by weight.
   uasort($all_payment_methods, '_fundraiser_webform_payment_method_weight_compare');
 
@@ -91,7 +86,6 @@ function _webform_edit_payment_method($component) {
     foreach (element_children($method) as $key) {
       $gateway_options[$method[$key]['id']] = $method[$key]['title'];
     }
-
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(
       '#type' => 'checkbox',
@@ -139,14 +133,12 @@ function _webform_edit_payment_method($component) {
   if (!empty($field_payment_methods['_default_method'])) {
     $fieldset['_default_method']['#default_value'] = $field_payment_methods['_default_method'];
   }
-
   $form['extra']['payment_methods'] = $fieldset;
-
   return $form;
 }
 
 /**
- * Sort payment methods by weight on the node form.
+ * Helper function, sort payment methods by weight on the node form.
  */
 function _fundraiser_webform_payment_method_weight_compare($a, $b) {
   $weight = $a['#weight'] - $b['#weight'];
@@ -231,7 +223,8 @@ function _fundraiser_component_payment_method_options($node) {
     $gateway_instance = gateway_manager_method_load($payment_method->method, $payment_method->gateway_instance);
 
     // Set the option label as the custom label or the hard-coded label from the gateway
-    $options[$payment_method->method] = !empty($payment_method->label) ? $payment_method->label : (!empty($gateway_instance['label']) ? $gateway_instance['label'] : $payment_method->method);
+    $options[$payment_method->method] = !empty($payment_method->label) ? $payment_method->label :
+      (!empty($gateway_instance['label']) ? $gateway_instance['label'] : $payment_method->method);
   }
   return $options; 
 }
