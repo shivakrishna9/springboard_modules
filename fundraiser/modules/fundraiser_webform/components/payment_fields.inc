@@ -48,22 +48,71 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
     foreach ($node->gateway_manager['payment_methods'] as $payment_method) {
       // Load up the instance
       $gateway_instance = gateway_manager_method_load($payment_method->method, $payment_method->gateway_instance);
-
+      $element[$payment_method->method] = array(
+        '#type' => 'fieldset',
+        '#attributes' => array(
+        'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method->method),
+        'class' => array('fundraiser-payment-method')
+        ),
+      );
+/*
       if (function_exists($gateway_instance['render_callback'])) {
-        $element[$payment_method->method] = array(
-          '#type' => 'fieldset',
-          '#attributes' => array(
-          'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method->method),
-          'class' => array('fundraiser-payment-method')
-          ),
-        );
-
         // Call the render callback function to get the fields
         $payment_method_fields = $gateway_instance['render_callback']();
-        // allow other modules to alter the fields before adding to form
-        drupal_alter('payment_method_fields', $payment_method_fields, $payment_method->method);
-        $element[$payment_method->method] += $payment_method_fields;
+        
       }
+*/
+      switch ($payment_method->method) {
+        case 'none':
+          $payment_method_fields['none_message'] = array(
+            '#markup' => '<div class="payment-method-message">' . t('Enjoy your free stuff.') . '</div>',
+          );
+        break;
+        case 'debit':
+          $payment_method_fields['debit_routing'] = array(
+            '#type' => 'text',
+            '#title' => t('Bank routing number'),
+          );
+          $payment_method_fields['debit_account'] = array(
+            '#type' => 'text',
+            '#title' => t('Bank account number'),
+          );
+        break;
+        case 'paypal':
+          $payment_method_fields['paypal_email'] = array(
+            '#type' => 'text',
+            '#title' => t('Paypal email'),
+          );
+        break;
+        case 'check':
+          $payment_method_fields['check_message'] = array(
+            '#markup' => '<div class="payment-method-message">' . t('Please remember to mail your check in.') . '</div>',
+          );
+        break;
+        case 'credit':
+        default:
+          $payment_method_fields['card_number'] = array(
+            '#type' => 'text',
+            '#title' => t('Credit card number'),
+          );
+          $payment_method_fields['card_expiration_month'] = array(
+            '#type' => 'text',
+            '#title' => t('Expiration month'),
+          );
+          $payment_method_fields['card_expiration_year'] = array(
+            '#type' => 'text',
+            '#title' => t('Expiration year'),
+          );
+          $payment_method_fields['card_cvv'] = array(
+            '#type' => 'text',
+            '#title' => t('CVV'),
+          );
+        break;
+      }
+      $element[$payment_method->method] += $payment_method_fields;
+      // Allow other modules to alter the fields before adding to form.
+      drupal_alter('payment_method_fields', $payment_method_fields, $payment_method->method);
+      $element[$payment_method->method] += $payment_method_fields;
     }
   }
   $element['#validate_callback'] = '_gateway_manager_donation_form_validate_required';
