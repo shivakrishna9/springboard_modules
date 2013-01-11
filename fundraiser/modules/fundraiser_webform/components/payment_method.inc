@@ -261,17 +261,16 @@ function _fundraiser_webform_payment_method_weight_compare($a, $b) {
  * Post-render function to add the id and active payment methods to the js settings
  */
 function _fundraiser_webform_component_payment_method_post_render($content, $element) {
-  // Add the wrapper id to the js settings
-  $nested_level = $element['#parents'][0] == 'submitted' ? 1 : 0;
-  $parents = str_replace('_', '-', implode('--', array_slice($element['#parents'], $nested_level)));
-  drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_method' => array('id' => 'webform-component-' . $parents)))), 'setting');
+  // Add the field id to the js settings
+  dpm($element);
+  drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_method' => array('id' => $element['#id'])))), 'setting');
   // Add the active methods to js settings
   $delta = 1;
   $js_settings = array();
   foreach ($element['#options'] as $key => $value) {
     $js_settings[$delta++] = $key;
   }
-  drupal_add_js(array('fundraiserWebform' => array('activeMethods' => $js_settings)), 'setting');
+  drupal_add_js(array('fundraiserWebform' => array('active_methods' => $js_settings)), 'setting');
   return $content;
 }
 
