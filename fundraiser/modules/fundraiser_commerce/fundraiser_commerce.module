@@ -190,19 +190,19 @@ function fundraiser_commerce_fundraiser_gateway_info() {
     // Override for specific gateways we support that we know aren't credit.
     switch ($method_instance['module']) {
       case 'commerce_no_payment':
-        $this_gateway['payment_method'] = 'none';
+        $this_gateway['payment_method'] = array('none');
       break;
       //case '':
-      //  $this_gateway['payment_method'] = 'debit';
+      //  $this_gateway['payment_method'] = array('debit');
       //break;
       case 'commerce_paypal_wps':
-        $this_gateway['payment_method'] = 'paypal';
+        $this_gateway['payment_method'] = array('paypal');
       break;
       case 'commerce_cheque':
-        $this_gateway['payment_method'] = 'check';
+        $this_gateway['payment_method'] = array('check');
       break;
       default:
-        $this_gateway['payment_method'] = 'credit';
+        $this_gateway['payment_method'] = array('credit');
       break;
     }
     // Include all details otherwise.
@@ -429,11 +429,12 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
 
   // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
   // Not an issue on initial submit (set during user input phase), but CRITICAL for sustainer charges.
+  $donation->donation['payment_method'] = 'credit'; // $order->payment_details['cc_number'];
   $donation->donation['card_number'] = ''; // $order->payment_details['cc_number'];
   $donation->donation['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
   $donation->donation['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
   $donation->donation['card_cvv'] =''; // isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  $donation->donation['cc_type'] =''; // $order->payment_details['cc_type'];
+  $donation->donation['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['card_number']); // $order->payment_details['cc_type'];
 
   // Add specific order data. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
   //$donation->data = isset($order->data) ? $order->data : array();
@@ -580,6 +581,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Here we make sure we include the hook implementation.
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   // Call the function with donation, this will handle internal translation for the specific gateway.
+  // A specific gateway may implement more than one form of charging (credit and PP for example) so leave that choice
+  // to the execution function. All the information needed is on the donation object.
   $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation);
   // If no result then presume a failure or no hook installed for this gateway type.
   if (empty($result)) {

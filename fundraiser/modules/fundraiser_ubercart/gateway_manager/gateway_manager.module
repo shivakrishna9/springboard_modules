@@ -155,7 +155,7 @@ function gateway_manager_fundraiser_ubercart_gateway_info() {
       $this_gateway['billing_update_function'] = isset($gateway['billing_update']) ? $gateway['billing_update'] : '';
       $this_gateway['gateway_details'] = isset($gateway) ? $gateway : array();
       // ALL currently supported ubercart systems are Credit Card Only.
-      $this_gateway['payment_method'] = 'credit';
+      $this_gateway['payment_method'] = array('credit');
       $gateway_info[$id] = $this_gateway;
     }
   }

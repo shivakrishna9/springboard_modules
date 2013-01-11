@@ -191,7 +191,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $this_gateway['refund_function'] = isset($uc_gateway['credit_refund']) ? $uc_gateway['credit_refund'] : $uc_gateway['credit'];
       $this_gateway['gateway_details'] = $uc_gateway;
       // ALL currently supported ubercart systems are Credit Card Only.
-      $this_gateway['payment_method'] = 'credit';
+      $this_gateway['payment_method'] = array('credit');
       $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }
@@ -432,11 +432,13 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
   $donation->donation['country'] = fundraiser_ubercart_get_iso2_by_country_id($donation->donation['country']);
   $donation->donation['state'] = fundraiser_ubercart_get_code_by_zone_id($donation->donation['state']);
 
+  // For ubercart these are the only values that will exist. We don't support any others.
+  $donation->donation['payment_method'] = 'credit';
   $donation->donation['card_number'] = $order->payment_details['cc_number'];
   $donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
   $donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
   $donation->donation['card_cvv'] = isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  $donation->donation['cc_type'] = $order->payment_details['cc_type'];
+  $donation->donation['card_type'] = $order->payment_details['cc_type'];
 
   // Add the order status data.
   // Translate the status according to UC label.
@@ -512,7 +514,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
 
   // Card properties.
-  $order->payment_method = 'credit';
+  $order->payment_method = 'credit'; //TODO check on this for possible US support later.
   $order->payment_details = array(
     'cc_type' => _fundraiser_ubercart_get_cc_type($donation->donation['card_number']),
     'cc_owner' => '',
