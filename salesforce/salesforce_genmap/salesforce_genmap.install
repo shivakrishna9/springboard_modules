@@ -123,6 +123,12 @@ function salesforce_genmap_schema() {
         'length' => '50',
         'not null' => TRUE,
       ),
+      'drupal_id' => array(
+        'description' => 'The id of the Drupal object.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+      ),
       'module' => array(
         'description' => 'Name of the module that implements the Drupal type.',
         'type' => 'varchar',
@@ -133,12 +139,6 @@ function salesforce_genmap_schema() {
         'description' => 'Name or id of the Drupal sub-type.',
         'type' => 'varchar',
         'length' => '255',
-        'not null' => TRUE,
-      ),
-      'drupal_id' => array(
-        'description' => 'The id of the Drupal object.',
-        'type' => 'varchar',
-        'length' => '50',
         'not null' => TRUE,
       ),
       'salesforce_type' => array(
