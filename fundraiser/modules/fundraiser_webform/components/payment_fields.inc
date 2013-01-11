@@ -50,8 +50,13 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
     $element[$payment_method] = array(
       '#type' => 'fieldset',
       '#attributes' => array(
-      'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method),
-      'class' => array('fundraiser-payment-method')
+        'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method),
+        'class' => array('fundraiser-payment-method'),
+        ),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="submitted[payment_information][payment_method]"]' => array('value' => $payment_method),
+        ),
       ),
     );
     switch ($payment_method) {

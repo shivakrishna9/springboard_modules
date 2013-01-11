@@ -161,7 +161,6 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
     $row = array();
     foreach (element_children($fieldset[$i]) as $field) {
       $this_element = $fieldset[$i][$field];
-
       if ($this_element['#type'] != 'value') {
         if (!isset($header[$field])) {
           $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
@@ -174,16 +173,13 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
       $header['_default_method'] = isset($default_method['#title']) ? $default_method['#title'] : '';
     }
     $row['_default_method'] = drupal_render($default_method[$i]);
-
     $rows[] = array(
       'data' => $row,
       'class' => array('draggable'),
     );
   }
-
   // Adding tabledrag support to this table.
   drupal_add_tabledrag('fundraiser-webform-payment-methods', 'order', 'sibling', 'fundraiser-webform-payment-methods-weight');
-
   return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'fundraiser-webform-payment-methods')));
 }
 
