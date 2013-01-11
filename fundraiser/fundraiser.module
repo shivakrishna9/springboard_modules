@@ -786,12 +786,12 @@ function fundraiser_fundraiser_field_info() {
     '#title' => t('Payment Details'),
     '#type' => 'payment_fields',
     '#required' => 0,
-    // Acceptable values for this field to return from display are:
-    // An array for each method type, including relevant information for the submission type.
-    // credit_card_information -> array('card_number', 'card_expiration_month', 'card_expiration_year', 'card_cvv')
-    // debit_information -> array('bank_routing_number', 'account_number')
-    // paypal_information -> array('paypal_email')
-    // check_information -> array('')
+    // Instead of returning the value of this field it's treated more like a variable fieldset.
+    // The values returned are dependant on the value returned by payment method.
+    // For credit cards: 'card_number', 'card_expiration_month', 'card_expiration_year', 'card_cvv', 'card_type'
+    // Debit -> 'debit_routing', 'debit_account'
+    // Paypal -> 'paypal_email'
+    // Check -> nothing added under $donation->donation
   );
   return $fields;
 }
