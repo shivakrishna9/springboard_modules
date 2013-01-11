@@ -109,6 +109,28 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
     }
   }
+  // Donation payment fields map.
+  // Depending on the payment method any number of additional fields may exist. So we need to add them here.
+  // Since which fields have values is completely dependant on the individual user's choice at time of
+  // donation we can't anticipate which one will have a value and which one won't. So add them all for mapping.
+  $payment_fields = array(
+    'card_number' => t('Credit card number'),
+    'card_expiration_month' => t('Card expiration month'),
+    'card_expiration_year' => t('Card expiration year'),
+    'card_cvv' => t('Credit card CVV'),
+    'card_type' => t('Credit card type'),
+    'paypal_email' => t('Paypal email'),
+    'debit_routing' => t('Debit bank routing number'),
+    'debit_account' => t('Debit bank account number'),
+  );
+  foreach ($payment_fields as $key => $title) {
+    if (isset($map->field_map['salesforce_donation_map'][$key])) {
+      if (isset($donation->donation[$key])) {
+        $sf_field = $map->field_map['salesforce_donation_map'][$key];
+        $fields[$sf_field] = $donation->donation[$key];
+      }
+    }
+  }
   // Salesforce webform map.
   if (isset($donation->submission_data)) {
     foreach ($donation->submission_data as $form_key => $submission_value) {
@@ -193,6 +215,24 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
         ' (' . $donation_field['#type'] . ')';
     }
   }
+  // Depending on the payment method any number of additional fields may exist. So we need to add them here.
+  // Since which fields have values is completely dependant on the individual user's choice at time of
+  // donation we can't anticipate which one will have a value and which one won't. So add them all for mapping.
+  $payment_fields = array(
+    'card_number' => t('Credit card number'),
+    'card_expiration_month' => t('Card expiration month'),
+    'card_expiration_year' => t('Card expiration year'),
+    'card_cvv' => t('Credit card CVV'),
+    'card_type' => t('Credit card type'),
+    'paypal_email' => t('Paypal email'),
+    'debit_routing' => t('Debit bank routing number'),
+    'debit_account' => t('Debit bank account number'),
+  );
+  foreach ($payment_fields as $key => $title) {
+      $fields['salesforce_donation_map']['#fields'][$key] = $title .
+        ' (' . t('Payment field') . ')';
+  }
+
   // Webform component fields.
   if (module_exists('fundraiser_webform')) {
     $fields['salesforce_webform_map'] = array(
