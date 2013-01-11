@@ -6,7 +6,7 @@
  */
 
 /**
- * Tests basic set up for queueing data for Salesforce and sending it
+ * Tests basic set up for queueing data for Salesforce and sending it.
  */
 class SalesforceQueueTestCase extends DrupalWebTestCase {
 
@@ -33,7 +33,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     );
     parent::setUp($modules);
 
-    // Create an admin user
+    // Create an admin user.
     $permissions = array(
       'access content',
       'administer site configuration',
@@ -45,7 +45,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work
+    // in to work.
     $this->drupalLogin($this->admin_user);
   }
 
@@ -58,25 +58,25 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test for hook_salesforce_queue_process_fail_item()
+   * Test for hook_salesforce_queue_process_fail_item().
    */
   public function testProcessFailItem() {
     $this->salesforceConnect();
 
-    // Queue up an Opportunity which will automatically fail
+    // Queue up an Opportunity which will automatically fail.
     $queue = SalesforceQueue::get();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Account', 'Contact'));
     $item = $queue->claimItem();
     $queue->releaseItem($item);
     salesforce_queue_process_queue();
 
-    // Verify the item has been marked to retry
+    // Verify the item has been marked to retry.
     $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->salesforce_type);
     $this->assertEqual('retry', $record->queue, 'Failed item placed into the retry queue.');
     $this->assertEqual(1, $record->retries, 'Failed item marked as having one retry.');
 
     // Do this until we hit maximum retries and make sure it is placed in the
-    // fail queue
+    // fail queue.
     $max_retries = variable_get('salesforce_queue_max_retries', 5);
     while ($max_retries > $record->retries) {
       salesforce_queue_process_queue();
@@ -88,40 +88,40 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test for salesforce_queue_cron()
+   * Test for salesforce_queue_cron().
    */
   public function testCron() {
     $this->salesforceConnect();
 
-    // Set cron frequency to 0 so it doesn't get in our way
+    // Set cron frequency to 0 so it doesn't get in our way.
     variable_set('salesforce_queue_cron_frequency', 0);
 
-    // Add item to queue and ensure it is there
+    // Add item to queue and ensure it is there.
     $queue = SalesforceQueue::get();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
     $items = $queue->claimBatch();
-    $queue->releaseBatch($items[0]->lease_key);
+    $queue->releaseBatch($items[0]->leaseKey);
     $this->assertFalse(empty($items), 'Queued up an item to test with.');
 
-    // Kick off cron, then verify the item is not there
+    // Kick off cron, then verify the item is not there.
     $this->cronRun();
     $items = $queue->claimBatch();
     $this->assertTrue(empty($items), 'Cron processed queued item.');
 
-    // Delete the variable to put us back to normal
+    // Delete the variable to put us back to normal.
     variable_del('salesforce_queue_cron_frequency');
   }
 
   /**
-   * Grabs the Salesforce connection information from the live db and authenticates
+   * Grabs the Salesforce connection info from the live db and authenticates.
    *
    * @return Object
    *   Salesforce Object
    */
   public function salesforceConnect() {
-    // Steal the Salesforce configuration from the live database
+    // Steal the Salesforce configuration from the live database.
     global $db_prefix;
-    $table = empty($db_prefix) ? 'variable' : $db_prefix .'_variable';
+    $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
     $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
     $result = db_query($sql);
     foreach ($result as $record) {
@@ -130,7 +130,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       }
     }
 
-    // Test the connection
+    // Test the connection.
     $salesforce = salesforce_get_api();
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
 
@@ -143,7 +143,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Creates a random bunch of items to send to the given queue
+   * Creates a random bunch of items to send to the given queue.
    *
    * @param SalesforceQueue $queue
    *   Queue to send items to
@@ -151,7 +151,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    *   Number of items to create
    */
   public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array(), $exempt_objects = array()) {
-    // Define objects
+    // Define objects.
     $objects = array(
       'Account' => array(
         'type' => 'Account',
@@ -191,13 +191,13 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       unset($objects[$exempt_object]);
     }
 
-    // Define types of operations
+    // Define types of operations.
     if (empty($ops)) {
       $ops = array(
         'UPSERT',
         'CREATE',
         'UPDATE',
-        'DELETE'
+        'DELETE',
       );
     }
 
@@ -205,35 +205,35 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     while ($i < $num) {
       $i++;
 
-      // Set up the data array
+      // Set up the data array.
       $ops_rand = array_rand($ops);
       $data = array(
-        'drupal_id' => rand(1, $num*100),
+        'drupal_id' => rand(1, $num * 100),
         'module' => $this->randomName(),
-        'delta' => $this->randomName() .':'. rand(1, $num*100),
+        'delta' => $this->randomName() . ':' . rand(1, $num * 100),
         'operation' => $ops[$ops_rand],
         'dedupe_field' => NULL,
       );
 
-      // Create the Salesforce object
+      // Create the Salesforce object.
       $object_rand = array_rand($objects);
       $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
-      $sObject = new stdClass;
-      $sObject->type = $objects[$object_rand]['type'];
-      $sObject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
-      $sObject->fields = array();
+      $sobject = new stdClass();
+      $sobject->type = $objects[$object_rand]['type'];
+      $sobject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
+      $sobject->fields = array();
       foreach ($objects[$object_rand]['fields'] as $field => $dedupe) {
         if ($field == 'Email') {
-          $sObject->fields[$field] = $this->randomName() . '@' . $this->randomName() . '.com';
+          $sobject->fields[$field] = $this->randomName() . '@' . $this->randomName() . '.com';
         }
-        else if ($field == 'Amount') {
-          $sObject->fields[$field] = rand(1, 10000);
+        elseif ($field == 'Amount') {
+          $sobject->fields[$field] = rand(1, 10000);
         }
-        else if ($field == 'CloseDate') {
-          $sObject->fields[$field] = date('c', REQUEST_TIME);
+        elseif ($field == 'CloseDate') {
+          $sobject->fields[$field] = date('c', REQUEST_TIME);
         }
         else {
-          $sObject->fields[$field] = $this->randomName();
+          $sobject->fields[$field] = $this->randomName();
         }
 
         // If this field can be used for dedupe, give it a 50% chance of it
@@ -245,20 +245,20 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       }
 
       // If the operation is UPSERT, and there is no dedupe field, change the
-      // operation to CREATE
+      // operation to CREATE.
       if ($data['operation'] == 'UPSERT' && empty($data['dedupe_field'])) {
         $data['operation'] = 'CREATE';
       }
 
-      // If the operation is UPDATE or DELETE add in a fake Id field
+      // If the operation is UPDATE or DELETE add in a fake Id field.
       if ($data['operation'] == 'UPDATE' || $data['operation'] == 'DELETE') {
-        $sObject->Id = $this->randomName();
+        $sobject->Id = $this->randomName();
       }
 
-      $data['salesforce_type'] = $sObject->type;
-      $data['sobject'] = $sObject;
+      $data['salesforce_type'] = $sobject->type;
+      $data['sobject'] = $sobject;
 
-      // Create the queue item
+      // Create the queue item.
       $result = $queue->createItem($data);
       $this->assertTrue($result, 'Created a queue item.');
     }

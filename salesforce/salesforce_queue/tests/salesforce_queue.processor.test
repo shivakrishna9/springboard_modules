@@ -1,10 +1,11 @@
 <?php
-include_once(dirname(__FILE__) . '/salesforce_queue.test');
 
 /**
  * @file
  * Simple tests for includes/salesforce_queue.processor.inc
  */
+
+include_once dirname(__FILE__) . '/salesforce_queue.test';
 
 /**
  * Tests basic set up for queueing data for Salesforce and sending it
@@ -28,11 +29,11 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   public function setUp($modules = array()) {
     parent::setUp($modules);
 
-    // Initiate a processor
+    // Initiate a processor.
     $this->queue = SalesforceQueue::get();
     $this->processor = SalesforceQueueProcessor::get($this->queue);
 
-    // Predeclare reusable reference lists
+    // Predeclare reusable reference lists.
     $this->operations = array(
       'CREATE',
       'UPSERT',
@@ -50,43 +51,44 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
    * Implementation of tearDown().
    */
   public function tearDown() {
-    // Remove the items we created in our Salesforce instance
-    $this->processor->_deleteNewSfRecords();
+    // Remove the items we created in our Salesforce instance.
+    $this->processor->deleteNewSfRecords();
 
     parent::tearDown();
   }
 
   /**
-   * Test for SalesforceQueueProcessor::process()
+   * Test for SalesforceQueueProcessor::process().
    */
   public function testProcess() {
-    // First problem will be the lack of items
+    // First problem will be the lack of items.
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_NO_ITEMS, $this->processor->process(), 'Notified that the queue is empty.');
 
-    // Create queue items
+    // Create queue items.
     $this->createQueueItems($this->queue, 10, array('CREATE', 'UPSERT'), array('Opportunity'));
 
-    // Going to lock the queue by another process and have it fail from a locked queue
+    // Going to lock the queue by another process and have it fail from a locked
+    // queue.
     $this->queue->claimBatch();
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED, $this->processor->process(), 'Cannot claim queue because queue is already leased.');
 
-    // Release the claim and try again
-    // Since we haven't connected to Salesforce, processing will fail
+    // Release the claim and try again.
+    // Since we haven't connected to Salesforce, processing will fail.
     $this->queue->releaseBatch('', TRUE);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT, $this->processor->process(), 'Received error for not being able to connect to Salesforce.');
 
-    // Connect to Salesforce
+    // Connect to Salesforce.
     // All this extra stuff is special for simpletest to connect to SOAP due to
-    // the access token being stored in the session
+    // the access token being stored in the session.
     $sfapi = $this->salesforceConnect();
-    $this->processor->_setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceApi($this->salesforceConnect());
     $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->_setSalesforceSoap($soap);
+    $this->processor->setSalesforceSoap($soap);
     $this->assertEqual(SALESFORCE_QUEUE_PROCESS_COMPLETE, $this->processor->process(), 'Able to claim items and move through processing.');
 
     // Take all of the items we created and try to create them again.  They will
-    // not pass validation, giving us no valid items error
-    foreach ($this->processor->new_sf_records as $item) {
+    // not pass validation, giving us no valid items error.
+    foreach ($this->processor->newSfRecords as $item) {
       $data = array(
         'drupal_id' => $item->drupal_id,
         'module' => $item->module,
@@ -102,16 +104,16 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   }
 
   /**
-   * Test for SalesforceQueueProcessor::claimItems()
+   * Test for SalesforceQueueProcessor::claimItems().
    */
   public function testClaimItems() {
     // SALESFORCE_QUEUE_PROCESS_NO_ITEMS
-    // Get items but find none
+    // Get items but find none.
     $items = $this->processor->claimItems();
     $this->assertTrue(empty($items), 'Could not get items because there are none.');
 
     // SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED
-    // Make items, lease the queue and get no items
+    // Make items, lease the queue and get no items.
     $this->createQueueItems($this->queue, 20);
     $item = $this->queue->claimItem();
     $items = $this->processor->claimItems();
@@ -122,24 +124,25 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // I don't know how to test this error because I don't quite know how to
     // actually get there.  The error is just there just in case some intrepid
     // user actually somehow gets there.
-
+    //
     // Number of items retreived is user configurable.  Lets say the user
     // configured 10 items.
     variable_set('salesforce_queue_max_items', 10);
 
-    // Claim items, and we should get 10
-    $this->processor = SalesforceQueueProcessor::get($this->queue); // new for our new settings
+    // Claim items, and we should get 10.
+    // Create new processor for our new settings.
+    $this->processor = SalesforceQueueProcessor::get($this->queue);
     $items = $this->processor->claimItems();
     $count = count($items);
     $this->assertEqual(10, $count, 'Retreived ' . $count . ' items when we expected 10 items.');
 
-    // Since we didn't process these items, we'll get the same exact set
+    // Since we didn't process these items, we'll get the same exact set.
     $items2 = $this->processor->claimItems();
     $this->assertEqual(serialize($items), serialize($items2), 'Processor gave us back the same set of unprocessed items.');
   }
 
   /**
-   * Test for SalesforceQueueProcessor::createBatches()
+   * Test for SalesforceQueueProcessor::createBatches().
    */
   public function testCreateBatches() {
     // Batch size is user configurable.  Lets say the user configured the batch
@@ -147,15 +150,16 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     variable_set('salesforce_queue_salesforce_max', 10);
 
     // Lets create and claim 200 items so that the randomness factor will ensure
-    // that will will get more than 10 items for each type of batch
+    // that will will get more than 10 items for each type of batch.
     $this->createQueueItems($this->queue, 200);
-    $this->processor = SalesforceQueueProcessor::get($this->queue); // new for our new settings
+    // Create new processor for our new settings.
+    $this->processor = SalesforceQueueProcessor::get($this->queue);
     $this->processor->claimItems();
     $batches = $this->processor->createBatches();
     $this->assertFalse(empty($batches), 'Returned items after processing batches.');
 
     // Declare which objects and operations should appear before which other
-    // objects and operations
+    // objects and operations.
     $object_order = array(
       'Account' => 'Contact',
       'Contact' => 'Opportunity',
@@ -169,7 +173,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       'DELETE' => NULL,
     );
 
-    // Ensure the sorted batches are ordered correctly
+    // Ensure the sorted batches are ordered correctly.
     $encountered_items = array();
     $item_count = 0;
     foreach ($batches as $batch) {
@@ -177,7 +181,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       $operation = $batch['operation'];
       $object = $operation == 'DELETE' ? NULL : $batch['object'];
 
-      // Declare that the current object type and operation has been encountered
+      // Declare that the current object type and operation has been
+      // encountered.
       if (!is_null($object)) {
         if (!isset($encountered_items[$object])) {
           $encountered_items[$object] = array();
@@ -187,27 +192,27 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
 
       // Verify that objects that are supposed to be encountered only after
-      // this object has been processed has not been encountered yet
+      // this object has been processed has not been encountered yet.
       if (!is_null($object_order[$object])) {
-        $this->assertFalse(isset($encountered_items[$object_order[$object]]), 'Encountered the '. $object .' object before we were supposed to.');
+        $this->assertFalse(isset($encountered_items[$object_order[$object]]), 'Encountered the ' . $object . ' object before we were supposed to.');
       }
 
       // Verify that operations that are supposed to be encountered only after
-      // this operation has been processed have not been encountered yet
+      // this operation has been processed have not been encountered yet.
       if (!is_null($operation_order[$operation])) {
-        $this->assertFalse(isset($encountered_items[$object][$operation_order[$operation]]), 'Encountered the '. $operation .' operation for '. $object .' object before we were supposed to.');
+        $this->assertFalse(isset($encountered_items[$object][$operation_order[$operation]]), 'Encountered the ' . $operation . ' operation for ' . $object . ' object before we were supposed to.');
       }
 
       // Verify that the number of items does not exceed the Salesforce max
-      // (which we set to 10 above)
+      // (which we set to 10 above).
       $this->assertTrue((count($batch['items'] <= 10)), 'Batch size does not exceed Salesforce max configuration.');
 
-      // Verify all items match the operation and object
+      // Verify all items match the operation and object.
       foreach ($batch['items'] as $item) {
         $this->assertEqual($operation, $item->operation, 'Batch item operation matches batch operation.');
-        // DELETE can have any object type
+        // DELETE can have any object type.
         if ($operation == 'DELETE') {
-          // Add the encountered objects for the DELETE operation down here
+          // Add the encountered objects for the DELETE operation down here.
           if (!isset($encountered_items[$item->salesforce_type])) {
             $encountered_items[$item->salesforce_type] = array();
           }
@@ -222,33 +227,35 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       }
     }
 
-    $this->assertEqual(200, $item_count, 'Batches returned '. $item_count .' out of 200 items sent to be batched.');
+    $this->assertEqual(200, $item_count, 'Batches returned ' . $item_count . ' out of 200 items sent to be batched.');
 
-    // Ensure each Salesforce object was encountered
+    // Ensure each Salesforce object was encountered.
     foreach ($this->objects as $object) {
-      $this->assertTrue(isset($encountered_items[$object]), $object .' Salesforce object was added to batches.');
-      // Ensure each operation was encountered
+      $this->assertTrue(isset($encountered_items[$object]), $object . ' Salesforce object was added to batches.');
+      // Ensure each operation was encountered.
       foreach ($this->operations as $op) {
-        if ($op != 'UPSERT' && $object != 'Account') { // Account does not have a dedupe field and so cannot be created through UPSERT
-          $this->assertTrue(isset($encountered_items[$object][$op]), $op . ' operation for '. $object .' Salesforce object was added to batches.');
+        // Account does not have a dedupe field and so cannot be created
+        // through UPSERT.
+        if ($op != 'UPSERT' && $object != 'Account') {
+          $this->assertTrue(isset($encountered_items[$object][$op]), $op . ' operation for ' . $object . ' Salesforce object was added to batches.');
         }
       }
     }
   }
 
   /**
-   * Test for SalesforceQueueProcessor::processBatch()
+   * Test for SalesforceQueueProcessor::processBatch().
    */
   public function testProcessBatch() {
-    // Set up the processor's Salesforce connection
+    // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
-    // the session
+    // the session.
     $sfapi = $this->salesforceConnect();
-    $this->processor->_setSalesforceApi($sfapi);
+    $this->processor->setSalesforceApi($sfapi);
     $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->_setSalesforceSoap($soap);
+    $this->processor->setSalesforceSoap($soap);
 
-    // Create a bunch of items to work with and process 'em
+    // Create a bunch of items to work with and process 'em.
     $this->createQueueItems($this->queue, 50, array('CREATE'));
     $this->processor->claimItems();
     $records = array();
@@ -256,7 +263,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     foreach ($batches as $batch) {
       $results = $this->processor->processBatch();
 
-      // Check out the results
+      // Check out the results.
       foreach ($results as $key => $result) {
         $item = $batch['items'][$key];
         $object = $item->salesforce_type;
@@ -265,18 +272,18 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
           $item->sobject->Id = $result->id;
           $records[$object][] = $item;
         }
-        // All opportunities will fail because the AccountId field is invalid
+        // All opportunities will fail because the AccountId field is invalid.
         if ($object == 'Opportunity') {
           $this->assertFalse($result->success, 'Opportunity item failed as expected.');
         }
-        // The others types should have been created
+        // The others types should have been created.
         else {
           $this->assertTrue($result->success, $object . ' item succeeded as expected.');
         }
       }
     }
 
-    // Queue more new items and UPSERT items
+    // Queue more new items and UPSERT items.
     $this->createQueueItems($this->queue, 25, array('CREATE', 'UPSERT'));
 
     // Take the items we created and queue them up for UPSERT if they have a
@@ -284,7 +291,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // UPDATED.  The remainder will be deleted.
     foreach ($records as $object => $object_records) {
       foreach ($object_records as $key => $record) {
-        $item = clone($record); // Yeaup, had a problem with it passing by reference
+        // Yeaup, had a problem with it passing by reference.
+        $item = clone($record);
         $sobject = clone($record->sobject);
         $data = array(
           'drupal_id' => $item->drupal_id,
@@ -298,19 +306,19 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
           $data['operation'] = 'UPSERT';
           unset($data['sobject']->Id);
         }
-        else if (rand(0, 1)) {
+        elseif (rand(0, 1)) {
           $data['operation'] = 'UPDATE';
         }
         else {
           $data['operation'] = 'DELETE';
-          // Remove itself from records so it is not referenced to later
+          // Remove itself from records so it is not referenced to later.
           unset($records[$object][$key]);
         }
         $this->queue->createItem($data);
       }
     }
 
-    // Get the items out of the queue and create the batches
+    // Get the items out of the queue and create the batches.
     $encountered_ops = array();
     $encountered_objects = array();
     $this->processor->claimItems();
@@ -326,7 +334,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       }
 
       // Before sending the batch out to processing, map all of the
-      // Opportunities to an Account Id we had created earlier
+      // Opportunities to an Account Id we had created earlier.
       if ($object == 'Opportunity') {
         foreach ($batch['sobjects'] as $item) {
           $rand_account = array_rand($records['Account']);
@@ -334,10 +342,10 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         }
       }
 
-      // Send everything out to Salesforce
+      // Send everything out to Salesforce.
       $results = $this->processor->processBatch();
 
-      // Check out the results
+      // Check out the results.
       $batch_item_count = 0;
       foreach ($results as $key => $result) {
         $item = $batch['items'][$key];
@@ -345,50 +353,50 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
         if (!empty($result->id) && !in_array($result->id, $sf_items)) {
           $sf_items[] = $result->id;
         }
-        // Whatever was requested should have succeeded as expected
+        // Whatever was requested should have succeeded as expected.
         $this->assertTrue($result->success, $object . ' item succeeded as expected.');
 
         // Check to see which operations an dobjects were encountered and how
-        // they faired communiating with Salesforce
+        // they faired communiating with Salesforce.
         $item_result = $result->success ? 'pass' : 'fail';
         $encountered_ops[$item->operation][$item_result]++;
         $encountered_objects[$item->salesforce_type][$item_result]++;
         $batch_item_count++;
       }
       $batch_count = count($batch['items']);
-      $this->assertEqual($batch_count, $batch_item_count, $batch_item_count .' items of '. $batch_count .' items in the '.  $object .' '. $operation .' batch were processed.');
+      $this->assertEqual($batch_count, $batch_item_count, $batch_item_count . ' items of ' . $batch_count . ' items in the ' .  $object . ' ' . $operation . ' batch were processed.');
     }
 
-    // Ensure each operation was encountered and did not have a total fail rate
+    // Ensure each operation was encountered and did not have a total fail rate.
     foreach ($this->operations as $op) {
-      $this->assertTrue(isset($encountered_ops[$op]), $op .' operation was encountered and processed.');
+      $this->assertTrue(isset($encountered_ops[$op]), $op . ' operation was encountered and processed.');
       if (isset($encountered_ops[$op])) {
         $pass = $encountered_ops[$op]['pass'];
         $fail = $encountered_ops[$op]['fail'];
-        $this->assertFalse(empty($pass), $op .' operation did not have a total fail rate.');
-        $this->assertFalse((empty($pass) && empty($fail)), $op .' operation did not have total failure to reach Salesforce.');
+        $this->assertFalse(empty($pass), $op . ' operation did not have a total fail rate.');
+        $this->assertFalse((empty($pass) && empty($fail)), $op . ' operation did not have total failure to reach Salesforce.');
       }
     }
 
     // Ensure each Salesforce object was encountered and did not have a total
-    // fail rate
+    // fail rate.
     foreach ($this->objects as $object) {
-      $this->assertTrue(isset($encountered_objects[$object]), $object .' Salesforce object was encountered and processed.');
+      $this->assertTrue(isset($encountered_objects[$object]), $object . ' Salesforce object was encountered and processed.');
       if (isset($encountered_ops[$object])) {
         $pass = $encountered_ops[$object]['pass'];
         $fail = $encountered_ops[$object]['fail'];
-        $this->assertFalse(empty($pass), $object .' Salesforce object did not have a total fail rate.');
-        $this->assertFalse((empty($pass) && empty($fail)), $op .' Salesforce object did not have total failure to reach Salesforce.');
+        $this->assertFalse(empty($pass), $object . ' Salesforce object did not have a total fail rate.');
+        $this->assertFalse((empty($pass) && empty($fail)), $op . ' Salesforce object did not have total failure to reach Salesforce.');
       }
     }
 
-    // Ensure that the queue is totally empty
+    // Ensure that the queue is totally empty.
     // Test batches before items because claiming items will always make batch
     // test fail.  This way we'll at least know if batches were succesfully
     // cleared or not.
     $batches = $this->processor->createBatches();
     $this->assertTrue(empty($batches), 'No batches remain after processing.');
     $items = $this->processor->claimItems();
-    $this->assertTrue(empty($items), count($items) .' items retreived from queue after processing.');
+    $this->assertTrue(empty($items), count($items) . ' items retreived from queue after processing.');
   }
 }

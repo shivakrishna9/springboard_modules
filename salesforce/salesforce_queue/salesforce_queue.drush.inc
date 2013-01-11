@@ -40,20 +40,20 @@ function salesforce_queue_drush_command() {
  *
  * Processes the specified Salesforce queue.
  *
- * @param $queue
+ * @param string $queue
  *   An optional queue to process.
  */
 function drush_salesforce_queue_process($queue = 'salesforce_queue') {
   if (isset($queue)) {
-   drush_print('Processing ' . $queue);
+    drush_print('Processing ' . $queue);
   }
 
   $queue = salesforce_queue_load();
   $processor = SalesforceQueueProcessor::get($queue);
   $processor->process();
 
-  drush_print(print_r($processor->new_sf_records, true));
+  drush_print(print_r($processor->newSfRecords, TRUE));
 
-  //log to the command line with an OK status
+  // Log to the command line with an OK status.
   drush_log('Running salesforce-queue-process', 'ok');
 }

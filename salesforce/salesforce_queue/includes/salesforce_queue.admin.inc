@@ -29,7 +29,7 @@ function salesforce_queue_admin_page() {
 function salesforce_queue_admin_form($form, &$form_state) {
   $form = array();
 
-  // var salesforce_queue_max_items
+  // Variable salesforce_queue_max_items.
   $form['max_items'] = array(
     '#id' => 'salesforce-queue-max-items',
     '#title' => t('Maximum Items to Process'),
@@ -41,7 +41,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
     '#default_value' => _sfq_get_value('max_items', $form_state),
   );
 
-  // var salesforce_queue_salesforce_max
+  // Variable salesforce_queue_salesforce_max.
   $form['salesforce_max'] = array(
     '#id' => 'salesforce-queue-salesforce-max',
     '#title' => t('Maximum Salesforce Batch Size'),
@@ -52,7 +52,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
     '#default_value' => _sfq_get_value('salesforce_max', $form_state),
   );
 
-  // var salesforce_queue_max_retries
+  // Variable salesforce_queue_max_retries.
   $form['max_retries'] = array(
     '#id' => 'salesforce-queue-max-retries',
     '#title' => t('Maximum Retries of a Queue Item'),
@@ -62,7 +62,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
     '#default_value' => _sfq_get_value('max_retries', $form_state),
   );
 
-  // var salesforce_queue_lease_time
+  // Variable salesforce_queue_lease_time.
   $form['lease_time'] = array(
     '#id' => 'salesforce-queue-lease-time',
     '#title' => t('Queue Lease Limit'),
@@ -73,10 +73,11 @@ function salesforce_queue_admin_form($form, &$form_state) {
       allowed to run. The value is in minutes.'),
     '#type' => 'textfield',
     '#size' => 6,
-    '#default_value' => (_sfq_get_value('lease_time', $form_state) / 60), // Seconds to minutes
+    // Convert value from seconds to minutes.
+    '#default_value' => (_sfq_get_value('lease_time', $form_state) / 60),
   );
 
-  // var salesforce_queue_cron_frequency
+  // Variable salesforce_queue_cron_frequency.
   $form['cron_frequency'] = array(
     '#id' => 'salesforce-queue-cron-frequency',
     '#title' => t('Minimum Cron Frequency'),
@@ -84,17 +85,17 @@ function salesforce_queue_admin_form($form, &$form_state) {
       queue processor can run again through cron.  The value is in minutes.'),
     '#type' => 'textfield',
     '#size' => 6,
-    '#default_value' => (_sfq_get_value('cron_frequency', $form_state) / 60), // Seconds to minutes
+    // Convert value from seconds to minutes.
+    '#default_value' => (_sfq_get_value('cron_frequency', $form_state) / 60),
   );
 
-  // var salesforce_queue_tracked_queues
+  // Variable salesforce_queue_tracked_queues.
   // Which queues does the multi-queue processor (e.g. 'all') track?
   // NOTE: Not displaying this option because it may be too confusing to a
-  //       non-developer and something we don't even want to offer to site
-  //       builders. I'm throwing the code out there if for whatever reason a
-  //       specific instance needs more than 'new', 'retry' and 'fail' queues to
-  //       meet their needs and we have a site builder who needs to manage those
-  //       additional queues.
+  // non-developer and something we don't even want to offer to site builders.
+  // I'm throwing the code out there if for whatever reason a specific instance
+  // needs more than 'new', 'retry' and 'fail' queues to meet their needs and we
+  // have a site builder who needs to manage those additional queues.
   $display_tracked_queue_config = variable_get('salesforce_queue_tracked_queues_show_config', FALSE);
   if ($display_tracked_queue_config) {
     $form['tracked_queues'] = array(
@@ -109,7 +110,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
     );
   }
 
-  // var salesforce_queue_object_order
+  // Variable salesforce_queue_object_order.
   $form['object_order_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Queue Sort Order for Salesforce Objects'),
@@ -155,7 +156,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
     );
   }
 
-  // Save
+  // Save.
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
@@ -172,12 +173,6 @@ function salesforce_queue_admin_form($form, &$form_state) {
  *
  * This is really just so we can render the draggable table.  Such a complicated
  * thing that beast is.
- *
- * @param $variables
- *   An associative array containing:
- *   - form: A render element representing the form.
- *
- * @ingroup themeable
  */
 function theme_salesforce_queue_admin_form($variables) {
   $form = $variables['form'];
@@ -194,7 +189,12 @@ function theme_salesforce_queue_admin_form($variables) {
     );
   }
   $header = array();
-  $table = theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'salesforce-queue-object-order')));
+  $table_config = array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'salesforce-queue-object-order'),
+  );
+  $table = theme('table', $table_config);
   $form['object_order_fieldset']['object_order'] = array('#markup' => $table);
   $output = drupal_render_children($form);
 
@@ -234,7 +234,7 @@ function salesforce_queue_admin_form_submit($form, &$form_state) {
     drupal_set_message(t('The form has been reset to its original values.'));
     return;
   }
-  else if ($form_state['input']['op'] != 'Save') {
+  elseif ($form_state['input']['op'] != 'Save') {
     drupal_set_message(t('The form was submitted unexpectedly.  No action was taken, nothing was saved.'), 'error');
     return;
   }
@@ -257,22 +257,22 @@ function salesforce_queue_admin_form_submit($form, &$form_state) {
 }
 
 /**
- * Helper function to find the value for the given field for the current state
+ * Helper function to find the value for the given field for the current state.
  */
 function _sfq_get_value($field, $form_state) {
   $value = NULL;
   if (isset($form_state['input'][$field])) {
-    // Convert the user contributed value into an expected format
+    // Convert the user contributed value into an expected format.
     $value = $form_state['input'][$field];
     switch ($field) {
       case 'cron_frequency':
       case 'lease_time':
-        // Convert the user input from minutes to seconds
+        // Convert the user input from minutes to seconds.
         $value = ($value * 60);
         break;
 
       case 'tracked_queues':
-        // Extract null items, or else it will confuse future uses of this var
+        // Extract null items, or else it will confuse future uses of this var.
         foreach ($value as $key => $queue_name) {
           if (is_null($queue_name)) {
             unset($value[$key]);
@@ -308,28 +308,36 @@ function _sfq_get_value($field, $form_state) {
     }
   }
   else {
-    // Use current configured value, or default value
+    // Use current configured value, or default value.
     switch ($field) {
       case 'cron_frequency':
         $value = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
         break;
+
       case 'lease_time':
         $value = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
         break;
+
       case 'max_items':
         $value = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
         break;
+
       case 'max_retries':
         $value = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
         break;
+
       case 'object_order':
-        $value = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
+        $default_order = array('Account', 'Contact', 'Opportunity');
+        $value = variable_get('salesforce_queue_object_order', $default_order);
         break;
+
       case 'salesforce_max':
         $value = variable_get('salesforce_queue_salesforce_max', SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT);
         break;
+
       case 'tracked_queues':
-        $value = variable_get('salesforce_queue_tracked_queues', array('new' => 'new', 'retry' => 'retry'));
+        $default_queues = array('new' => 'new', 'retry' => 'retry');
+        $value = variable_get('salesforce_queue_tracked_queues', $default_queues);
         break;
     }
   }
@@ -337,26 +345,26 @@ function _sfq_get_value($field, $form_state) {
 }
 
 /**
- * Helper to find queue names that have been used in the system
+ * Helper to find queue names that have been used in the system.
  *
  * We really have no idea what queues have been used so we're just going to have
  * to search around.
  */
 function _sfq_get_queue_names() {
-  // Defaults
+  // Defaults.
   $default_queues = array(
     'new' => 'new',
     'retry' => 'retry',
     'fail' => 'fail',
   );
 
-  // Start with the current tracked queues
+  // Start with the current tracked queues.
   $tracked_queues = variable_get('salesforce_queue_tracked_queues', $default_queues);
-  $queue_names = $default_queues + $tracked_queues; // Merge in the defaults
-                                                    // in case someone messed
-                                                    // with the var
+  // Merge in the defaults in case someone messed with the variable outside of
+  // the configuration page.
+  $queue_names = $default_queues + $tracked_queues;
 
-  // Find queue names from the variables table
+  // Find queue names from the variables table.
   $sql = "SELECT * FROM {variable} v WHERE v.name LIKE 'salesforce_queue_%_lease_expire'";
   $result = db_query($sql);
   foreach ($result as $record) {
@@ -366,7 +374,7 @@ function _sfq_get_queue_names() {
     }
   }
 
-  // Find queue names from the queue
+  // Find queue names from the queue.
   $result = db_select('salesforce_queue', 'q')
     ->fields('q', array('queue'))
     ->distinct()
@@ -380,7 +388,7 @@ function _sfq_get_queue_names() {
 }
 
 /**
- * Gather a simple list of Salesforce objects
+ * Gather a simple list of Salesforce objects.
  *
  * NOTE: This is a straight-up copy from salesforce_genmap.  I wonder if there
  *       is any way this could be made in some sharable format?
@@ -402,7 +410,7 @@ function _sfq_salesforce_object_list(Salesforce $sfapi) {
   foreach ($objects_info as $object) {
     // Some objects have the same label, which just makes things confusing
     // I could make only subsequent duplicates unique, but I figure that users
-    // may wonder what the first instance is referencing
+    // may wonder what the first instance is referencing.
     if (in_array($object['label'], $objects_list)) {
       $dupes[] = $object['label'];
     }
@@ -410,7 +418,7 @@ function _sfq_salesforce_object_list(Salesforce $sfapi) {
     $objects_list[$object['name']] = $object['label'];
   }
 
-  // Now make duplicate labels be unique
+  // Now make duplicate labels be unique.
   if (!empty($dupes)) {
     foreach ($objects_list as $object_name => $object_label) {
       if (in_array($object_label, $dupes)) {

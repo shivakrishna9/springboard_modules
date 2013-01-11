@@ -15,7 +15,7 @@
  */
 function salesforce_genmap_entity_info() {
   return array(
-    // Maps Salesforce objects and fields to components of Drupal
+    // Maps Salesforce objects and fields to components of Drupal.
     'salesforce_genmap_map' => array(
       'label' => t('Salesforce Map'),
       'entity class' => 'Entity',
@@ -28,7 +28,7 @@ function salesforce_genmap_entity_info() {
       'exportable' => TRUE,
       'module' => 'salesforce_genmap',
     ),
-    // Maps Salesforce records to Drupal records
+    // Maps Salesforce records to Drupal records.
     'salesforce_genmap_record_map' => array(
       'label' => t('Salesforce Record Map'),
       'entity class' => 'Entity',
@@ -138,17 +138,17 @@ function salesforce_genmap_node_delete($node) {
  */
 
 /**
- * Helper function to place an object, given a nod, oid, object with a map and queue.
+ * Helper function to place object, given a node, oid, object with a map.
  *
- * @param $module
+ * @param string $module
  *   Module calling this function, so we can map fields correctly.
- * @param $op
+ * @param string $op
  *   Type of operation.
- * @param $node
+ * @param object $node
  *   Associated node for map.
- * @param $oid
+ * @param int $oid
  *   Object id to be mapped.
- * @param Object $drupal_object
+ * @param object $drupal_object
  *   Object to be mapped.
  */
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object) {
@@ -179,16 +179,18 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
 /**
  * Map the drupal object to a Salesforce object.
  *
- * @param $module
- *   Calling module for this map, makes sure fields are mapped by correct handler.
+ * @param string $module
+ *   Calling module for this map, makes sure fields are mapped by correct
+ *   handler
  * @param stdClass $object
- *   A drupal object.
+ *   A drupal object
  * @param Entity $map
- *   A Salesforce map.
- * @param $node
- *   Associated map node.
- * @return $sObject
- *   A Salesforce Object that has Salesforce fields with the object field values.
+ *   A Salesforce map
+ * @param object $node
+ *   Associated map node
+ *
+ * @return object
+ *   A Salesforce Object that has Salesforce fields with the object field values
  */
 function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $node) {
   // Gather the fields for this object from their handler modules.
@@ -204,17 +206,17 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
   // Give other modules a chance to alter the object's field values.
   drupal_alter('salesforce_genmap_map_fields', $fields, $context);
 
-  // Create the Salesforce object
-  $sObject = new stdClass();
-  $sObject->fields = $fields;
-  $sObject->type = $map->salesforce_object_type;
+  // Create the Salesforce object.
+  $sobject = new stdClass();
+  $sobject->fields = $fields;
+  $sobject->type = $map->salesforce_object_type;
   if (!empty($map->salesforce_record_type)) {
-    $sObject->record = $map->salesforce_record_type;
+    $sobject->record = $map->salesforce_record_type;
   }
 
   // Let other modules modify it.
-  drupal_alter('salesforce_genmap_map_object', $sObject);
-  return $sObject;
+  drupal_alter('salesforce_genmap_map_object', $sobject);
+  return $sobject;
 }
 
 /**
@@ -225,19 +227,19 @@ function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $n
 /**
  * Creates and saves a Salesforce map.
  *
- * @param $map
+ * @param mixed $map
  *   Can be an array of values or a salesforce_genmap_map entity object
- * @param $module
+ * @param string $module
  *   Handler module for the mapping object
  *
- * @return
+ * @return bool
  *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
  *   FALSE is returned if the map could not be saved.
  */
 function salesforce_genmap_save_map($map, $module = 'salesforce_genmap') {
   if (is_array($map)) {
     $map['map_handler'] = $module;
-    // Allow sending an array and updating an existing entity with the values
+    // Allow sending an array and updating an existing entity with the values.
     $entity = salesforce_genmap_load_map($map['nid'], $module);
     if ($entity) {
       foreach ($map as $key => $value) {
@@ -246,7 +248,7 @@ function salesforce_genmap_save_map($map, $module = 'salesforce_genmap') {
       $map = $entity;
     }
     else {
-      // Create a new entity object, but does not yet add to the database
+      // Create a new entity object, but does not yet add to the database.
       $map = entity_create('salesforce_genmap_map', $map);
     }
   }
@@ -260,14 +262,14 @@ function salesforce_genmap_save_map($map, $module = 'salesforce_genmap') {
 }
 
 /**
- * Retreives a Salesforce map
+ * Retreives a Salesforce map.
  *
- * @param $nid
+ * @param int $nid
  *   The nid of the object of whose map we want to load.
- * @param $module
+ * @param string $module
  *   Handler module for the mapping object
  *
- * @return
+ * @return bool
  *   The entity object you requested
  */
 function salesforce_genmap_load_map($nid, $module = 'salesforce_genmap') {
@@ -282,14 +284,14 @@ function salesforce_genmap_load_map($nid, $module = 'salesforce_genmap') {
 }
 
 /**
- * Deletes a Salesforce map
+ * Deletes a Salesforce map.
  *
- * @param $nid
+ * @param int $nid
  *   The nid of the object of whose map we're deleting.
- * @param $module
+ * @param string $module
  *   Handler module for the mapping object
  *
- * @return
+ * @return bool
  *   TRUE if the delete performed as expected, FALSE if the delete could not
  *   work as expected.
  */
@@ -298,7 +300,7 @@ function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
   if (!empty($mid)) {
     $result = entity_delete('salesforce_genmap_map', $mid);
     if ($result === FALSE) {
-      // entity_delete() only returns FALSE. Otherwise it has no return value
+      // entity_delete() only returns FALSE. Otherwise it has no return value.
       return FALSE;
     }
     return TRUE;
@@ -308,16 +310,16 @@ function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
 /**
  * Creates and saves a Salesforce record map.
  *
- * @param $record
+ * @param mixed $record
  *   Can be an array of values or a salesforce_genmap_record_map entity object
  *
- * @return
+ * @return bool
  *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
  *   FALSE is returned if the record could not be saved.
  */
 function salesforce_genmap_save_record_map($record) {
   if (is_array($record)) {
-    // Allow sending an array and updating an existing entity with the values
+    // Allow sending an array and updating an existing entity with the values.
     $entity = salesforce_genmap_load_record_map($record);
     if ($entity) {
       foreach ($record as $key => $value) {
@@ -326,7 +328,7 @@ function salesforce_genmap_save_record_map($record) {
       $record = $entity;
     }
     else {
-      // Create a new entity object, but does not yet add to the database
+      // Create a new entity object, but does not yet add to the database.
       $record = entity_create('salesforce_genmap_record_map', $record);
     }
   }
@@ -338,12 +340,12 @@ function salesforce_genmap_save_record_map($record) {
 }
 
 /**
- * Retreives a Salesforce record map
+ * Retreives a Salesforce record map.
  *
- * @param $record
+ * @param mixed $record
  *   Can be an array of values or a salesforce_genmap_record_map entity object
  *
- * @return
+ * @return bool
  *   The entity object you requested
  */
 function salesforce_genmap_load_record_map($record) {
@@ -358,12 +360,12 @@ function salesforce_genmap_load_record_map($record) {
 }
 
 /**
- * Deletes a Salesforce record map
+ * Deletes a Salesforce record map.
  *
- * @param $record
+ * @param mixed $record
  *   Can be an array of values or a salesforce_genmap_record_map entity object
  *
- * @return
+ * @return bool
  *   TRUE if the delete performed as expected, FALSE if the delete could not
  *   work as expected.
  */
@@ -372,7 +374,7 @@ function salesforce_genmap_delete_record_map($record) {
   if (!empty($rmid)) {
     $result = entity_delete('salesforce_genmap_record_map', $rmid);
     if ($result === FALSE) {
-      // entity_delete() only returns FALSE. Otherwise it has no return value
+      // entity_delete() only returns FALSE. Otherwise it has no return value.
       return FALSE;
     }
     return TRUE;
@@ -393,7 +395,7 @@ function salesforce_genmap_delete_record_map($record) {
  * Implements hook_salesforce_queue_create_item_alter().
  */
 function salesforce_genmap_salesforce_queue_create_item_alter(&$item) {
-  // When adding queue items, ensure that the sfid is in the sobject
+  // When adding queue items, ensure that the sfid is in the sobject.
   if (($item['operation'] == 'UPDATE' || $item['operation'] == 'DELETE') && !isset($item['sobject']->Id)) {
     $record = salesforce_genmap_load_record_map($item);
     if (!empty($record) && isset($record->sfid)) {
@@ -414,13 +416,13 @@ function salesforce_genmap_salesforce_queue_process_pass_item($item, $result, $q
     'salesforce_type' => $item->salesforce_type,
   );
   switch ($item->operation) {
-    // Create record maps on new items
+    // Create record maps on new items.
     case 'CREATE':
     case 'UPSERT':
       salesforce_genmap_save_record_map($record);
       break;
 
-    // Delete record maps on removed items
+    // Delete record maps on removed items.
     case 'DELETE':
       salesforce_genmap_delete_record_map($record);
       break;
@@ -433,8 +435,7 @@ function salesforce_genmap_salesforce_queue_process_pass_item($item, $result, $q
 
 
 /**
- * Helper function.
- * Return a list of handler modules, or information on a specific one.
+ * Helper to return a list of handler modules, or information on a specific one.
  */
 function salesforce_genmap_info($module = NULL) {
   static $modules;
@@ -450,11 +451,11 @@ function salesforce_genmap_info($module = NULL) {
 }
 
 /**
- * DB function.
- * Return map id given node and module id.
+ * DB function to return map id given node and module id.
  */
 function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'salesforce_genmap') {
-  // TODO: Find out if entity will handle two value primary keys, if so, use that instead.
+  // @TODO: Find out if entity will handle two value primary keys, if so, use
+  // that instead.
   return db_select('salesforce_genmap_map', 'm')
     ->fields('m', array('mid'))
     ->condition('nid', $nid)
@@ -464,7 +465,7 @@ function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'sales
 }
 
 /**
- * Helper to grab the record id of a map
+ * Helper to grab the record id of a map.
  */
 function _salesforce_genmap_get_rmid($item) {
   if (is_object($item)) {
@@ -476,7 +477,7 @@ function _salesforce_genmap_get_rmid($item) {
   if (isset($record->rmid) && !empty($record->rmid)) {
     return $record->rmid;
   }
-  else if (isset($record['sobject']->Id)) {
+  elseif (isset($record['sobject']->Id)) {
     return db_select('salesforce_genmap_record_map', 'm')
       ->fields('m', array('rmid'))
       ->condition('sfid', $record['sobject']->Id)

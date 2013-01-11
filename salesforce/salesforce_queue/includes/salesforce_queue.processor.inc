@@ -6,88 +6,88 @@
  */
 
 /**
- * Processes items from SalesforceQueue
+ * Processes items from SalesforceQueue.
  */
 class SalesforceQueueProcessor {
 
   /**
-   * SalesforceQueue object
+   * SalesforceQueue object.
    *
    * @var object
    */
   protected $queue;
 
   /**
-   * Name of the SalesforceQueue this processor is processing
+   * Name of the SalesforceQueue this processor is processing.
    *
    * @var string
    */
-  public $queue_name;
+  public $queueName;
 
   /**
-   * Batch of items from the queue that need to be processed
+   * Batch of items from the queue that need to be processed.
    *
    * @var array
    */
   protected $items = array();
 
   /**
-   * Array of groups of items that can be sent to Salesforce simultaneously
+   * Array of groups of items that can be sent to Salesforce simultaneously.
    *
    * @var array
    */
   protected $batches = array();
 
   /**
-   *  A running log of the new records created in Salesforce
+   *  A running log of the new records created in Salesforce.
    *
    * @var array
    */
-  public $new_sf_records = array();
+  public $newSfRecords = array();
 
   /**
-   * A running log of all the Ids of Salesforce records that have been processed
+   * Running log of all the Ids of Salesforce records that have been processed.
    *
    * @var array
    */
-  public $processed_item_ids = array();
+  public $processedItemIds = array();
 
   /**
-   * The configured maximum number of items that can be processed at once
+   * The configured maximum number of items that can be processed at once.
    *
    * This depends upon the system resources
    *
    * @var int
    */
-  protected $max_items = 1000;
+  protected $maxItems = 1000;
 
   /**
-   * The configured default time the queue will be leased to our process
+   * The configured default time the queue will be leased to our process.
    *
    * @var int
    */
-  protected $lease_time = 3600;
+  protected $leaseTime = 3600;
 
   /**
-   * The time at which the current claim on the queue will expire
+   * The time at which the current claim on the queue will expire.
    *
    * @var int
    */
-  protected $lease_expire = 0;
+  protected $leaseExpire = 0;
 
   /**
-   * Unique identifier that allows this process to unlock the lease on the queue
+   * Unique identifier that allows unlocking the lease on the queue.
    *
    * @var string
    */
-  protected $lease_key;
+  protected $leaseKey;
 
-   /**
-   * The maximum number of items that can be sent to Salesforce in one call
+  /**
+   * The maximum number of items that can be sent to Salesforce in one call.
    *
    * @var int
    */
-  protected $salesforce_max = 200;
+  protected $salesforceMax = 200;
 
   /**
    * Salesforce object to connect with
@@ -97,21 +97,21 @@ class SalesforceQueueProcessor {
   protected $sfapi;
 
   /**
-   * SalesforceSoapPartner object to connect to Salesforce via SOAP
+   * SalesforceSoapPartner object to connect to Salesforce via SOAP.
    *
    * @var SalesforceSoapPartner
    */
   protected $soap;
 
   /**
-   * Defines a default response to the end of the processing
+   * Defines a default response to the end of the processing.
    *
    * @var int
    */
-  protected $end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
+  protected $endStatus = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
 
   /**
-   * A processor object for the given queue
+   * A processor object for the given queue.
    *
    * @param SalesforceQueue $queue
    *   The desired queue to process against, or NULL to process against the
@@ -127,26 +127,29 @@ class SalesforceQueueProcessor {
   }
 
   /**
+   * Construct the object.
+   *
    * @param SalesforceQueue $queue
+   *   SalesforceQueue object
    */
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
-    $this->queue_name = $queue->queue_name;
-    $this->max_items = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
-    $this->lease_time = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
-    $this->salesforce_max = variable_get('salesforce_queue_salesforce_max', SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT);
+    $this->queueName = $queue->queueName;
+    $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
+    $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
+    $this->salesforceMax = variable_get('salesforce_queue_salesforce_max', SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT);
     $this->sfapi = salesforce_get_api();
     $this->soap = new SalesforceSoapPartner($this->sfapi);
   }
 
   /**
-   * Kicks off processing up-to the maximum allowed items from the given queue
+   * Kicks off processing up-to the maximum allowed items from the given queue.
    */
   public function process() {
     // Invokes hook_salesforce_queue_preprocess_queue().
     module_invoke_all('salesforce_queue_preprocess_queue', $this->queue);
 
-    // Gather items to process
+    // Gather items to process.
     // Because processor is run on cron, and an error is issued if Salesforce
     // cannot connect, first check to see if there are any items in the queue.
     // Cron may be run on numerous occasions before the site administrator
@@ -154,28 +157,29 @@ class SalesforceQueueProcessor {
     // errors only if there are actually any queue items to process.
     $this->claimItems();
     if (!empty($this->items)) {
-      // Check Salesforce connection
-      // The extra check is for simpletests, which may require a specific $sfapi
+      // Check Salesforce connection.
+      // This extra check is for simpletests and drushwhich require a specific
+      // $sfapi in certain instances.
       $this->sfapi = $this->sfapi->isAuthorized() ? $this->sfapi : salesforce_get_api();
       if (!$this->sfapi->isAuthorized()) {
-        // Cannot connect to Salesforce
+        // Cannot connect to Salesforce.
         watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
           . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
-        $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
+        $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
       }
 
-      // Continue only if there is a Salesforce connection
+      // Continue only if there is a Salesforce connection.
       else {
         // Invokes hook_salesforce_queue_process_items_alter().
         drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
 
         // Sort the items into a set of logical batches that can be sent off to
-        // Salesforce
+        // Salesforce.
         $this->createBatches();
         if (empty($this->batches)) {
           // If there were items in the queue, but no batches, then that means
           // no claimed items were valid.
-          $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS;
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS;
         }
         else {
           $this->processBatches();
@@ -183,12 +187,12 @@ class SalesforceQueueProcessor {
       }
     }
 
-    if ($this->end_status == SALESFORCE_QUEUE_PROCESS_NOT_STARTED) {
+    if ($this->endStatus == SALESFORCE_QUEUE_PROCESS_NOT_STARTED) {
       // We got to the end without anyone else reporting anything!
       $end_status = SALESFORCE_QUEUE_PROCESS_COMPLETE;
     }
     else {
-      $end_status = $this->end_status;
+      $end_status = $this->endStatus;
     }
 
     $this->resetInternalState();
@@ -200,19 +204,19 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Claim a batch of items to process
+   * Claim a batch of items to process.
    */
   public function claimItems() {
-    // If there are still unprocessed items, lets finish those first
+    // If there are still unprocessed items, lets finish those first.
     if (empty($this->items)) {
-      // Make sure we don't have a claim on the queue by releasing it
+      // Make sure we don't have a claim on the queue by releasing it.
       $this->releaseQueue();
 
-      // Claim some items
-      $items = $this->queue->claimBatch($this->max_items, $this->lease_time);
+      // Claim some items.
+      $items = $this->queue->claimBatch($this->maxItems, $this->leaseTime);
 
       // SalesforceQueue::claimBatch() returns FALSE if there are no more items
-      // or when the queue is currently leased
+      // or when the queue is currently leased.
       if (empty($items)) {
         // Is the queue leased?
         if ($this->queue->queueIsLeased()) {
@@ -225,46 +229,46 @@ class SalesforceQueueProcessor {
             . 'items because the queue was leased. This could be a minor issue '
             . 'or more severe issue so it would warrant you looking into this.';
           $severity = WATCHDOG_ERROR;
-          $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED;
         }
-        else if ($this->queue->numberOfItems(TRUE) < 1) {
+        elseif ($this->queue->numberOfItems(TRUE) < 1) {
           // No items are in the queue.  Pretty minor issue.
           $message = 'SalesforceQueueProcess was run, but no items were found '
             . 'in the queue to process.  Not much for you to worry about.';
           $severity = WATCHDOG_DEBUG;
-          $this->end_status = SALESFORCE_QUEUE_PROCESS_NO_ITEMS;
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_NO_ITEMS;
         }
         else {
-          // If we get here, then we're really clueless as to what is going on
+          // If we get here, then we're really clueless as to what is going on.
           $message = 'SalesforceQueueProcess was run, but we could not claim '
             . 'items for an unknown reason.  Eeps.';
           $severity = WATCHDOG_ALERT;
-          $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS;
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS;
         }
         watchdog('salesforce_queue', $message, array(), $severity);
       }
       else {
-        $this->lease_key = $items[0]->lease_key;
+        $this->leaseKey = $items[0]->leaseKey;
         $this->items = $items;
-        $this->lease_expire = variable_get('salesforce_queue_' . $this->queue_name . '_lease_expire', 0);
+        $this->leaseExpire = variable_get('salesforce_queue_' . $this->queueName . '_lease_expire', 0);
       }
     }
     return $this->items;
   }
 
   /**
-   * Releases this processor's claim on the queue
+   * Releases this processor's claim on the queue.
    */
   public function releaseQueue() {
-    $current_lease_key = variable_get('salesforce_queue_' . $this->queue_name . '_lease_key', NULL);
-    if (!empty($this->lease_key) && $this->lease_key == $current_lease_key) {
-      $this->queue->releaseBatch($this->lease_key);
-      $this->lease_key = NULL;
+    $current_lease_key = variable_get('salesforce_queue_' . $this->queueName . '_lease_key', NULL);
+    if (!empty($this->leaseKey) && $this->leaseKey == $current_lease_key) {
+      $this->queue->releaseBatch($this->leaseKey);
+      $this->leaseKey = NULL;
     }
   }
 
   /**
-   * Group the items into batches that can be sent to Salesforce in one call
+   * Group the items into batches that can be sent to Salesforce in one call.
    *
    * A batch of items are defined as items that can be sent to Salesforce in
    * one call. They can if they match the following requirements:
@@ -280,21 +284,21 @@ class SalesforceQueueProcessor {
    *       value when sending to Salesforce
    */
   public function createBatches() {
-    // The goal is to have one loop through the items
+    // The goal is to have one loop through the items.
     $batch_groups = array();
     $count = count($this->items);
     while ($count > 0) {
       $item = array_shift($this->items);
       $count--;
 
-      // Adjust just in case an UPSERT command falls through without a dedupe
+      // Adjust just in case an UPSERT command falls through without a dedupe.
       if ($item->operation == 'UPSERT' && empty($item->dedupe_field)) {
         $item->operation = 'CREATE';
       }
 
-      // Test the item for validity and fail it if it does not pass
+      // Test the item for validity and fail it if it does not pass.
       if ($this->isValidItem($item)) {
-        // Slot the item into a Object->Operation->Dedupe batch group
+        // Slot the item into a Object->Operation->Dedupe batch group.
         $this->addItemToBatchGroups($item, $batch_groups);
       }
       else {
@@ -303,16 +307,16 @@ class SalesforceQueueProcessor {
     }
 
     // Grab all the batches from the groups and put them in a linear order by
-    // how it has been configured
+    // how it has been configured.
     $batches = $this->sortBatches($batch_groups);
 
-    // All done! Add the new set of batches to the end of the current set
+    // All done! Add the new set of batches to the end of the current set.
     $this->batches = array_merge($this->batches, $batches);
     return $this->batches;
   }
 
   /**
-   * Slot the given item into a Object->Operation->Dedupe batch group
+   * Slot the given item into a Object->Operation->Dedupe batch group.
    *
    * @param object $item
    *   A queue item
@@ -320,8 +324,8 @@ class SalesforceQueueProcessor {
    *   Temporary holder that categorizes all of the items and places them in
    *   group no larger than salesforce_max
    */
-  private function addItemToBatchGroups($item, &$batch_groups) {
-    // Set up our brevity vars
+  protected function addItemToBatchGroups($item, &$batch_groups) {
+    // Set up our brevity vars.
     $op = $item->operation;
     $object = $item->salesforce_type;
     $dedupe = $item->dedupe_field;
@@ -333,17 +337,17 @@ class SalesforceQueueProcessor {
       'sobjects' => array(),
     );
 
-    // Declare batch_group levels this item will be sorted under
+    // Declare batch_group levels this item will be sorted under.
     $lvl1 = ($op == 'DELETE') ? 'DELETE' : $object;
     $lvl2 = ($op == 'DELETE') ? NULL : $op;
     $lvl3 = ($op == 'UPSERT') ? $dedupe : NULL;
 
     // Find the batch_group for this item, while creating missing batch_groups
-    // along the way
+    // along the way.
     if (!isset($batch_groups[$lvl1])) {
       $batch_groups[$lvl1] = array();
     }
-    // DELETE
+    // DELETE.
     if (is_null($lvl2)) {
       $batch_group = &$batch_groups[$lvl1];
     }
@@ -351,12 +355,12 @@ class SalesforceQueueProcessor {
       if (!isset($batch_groups[$lvl1][$lvl2])) {
         $batch_groups[$lvl1][$lvl2] = array();
       }
-      // CREATE and UPDATE
+      // CREATE and UPDATE.
       if (is_null($lvl3)) {
         $batch_group = &$batch_groups[$lvl1][$lvl2];
       }
       else {
-        // UPSERT
+        // UPSERT.
         if (!isset($batch_groups[$lvl1][$lvl2][$lvl3])) {
           $batch_groups[$lvl1][$lvl2][$lvl3] = array();
         }
@@ -369,19 +373,20 @@ class SalesforceQueueProcessor {
     end($batch_group);
     $last_key = key($batch_group);
     reset($batch_group);
-    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->salesforce_max) {
-      // Create a new batch
+    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->salesforceMax) {
+      // Create a new batch.
       $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
       if ($op == 'DELETE') {
-        unset($batch['object']); // unneeded for DELETE
+        // Unneeded for DELETE.
+        unset($batch['object']);
       }
       if ($op == 'UPSERT') {
         $batch['dedupe'] = $dedupe;
       }
     }
     else {
-      // Use current batch
+      // Use current batch.
       $batch_key = $last_key;
       $batch = $batch_group[$batch_key];
     }
@@ -390,14 +395,18 @@ class SalesforceQueueProcessor {
     // processes we need the items.  To prevent looping through the items
     // once again, we'll store a copy of each.
     $batch['items'][] = $item;
-    $batch['sobjects'][] = ($op == 'DELETE') ? $item->sobject->Id : $item->sobject; // Because DELETE has to be weird like that
+    // Because DELETE has to be weird like that.
+    $batch['sobjects'][] = ($op == 'DELETE') ? $item->sobject->Id : $item->sobject;
     $batch['count']++;
-    $batch_group[$batch_key] = $batch; // $batch_groups referred by reference
+    // $batch_groups referred by reference.
+    $batch_group[$batch_key] = $batch;
   }
 
   /**
+   * Sort batch groups into a linear order.
+   *
    * Grab all the batches from the groups and sort them in a linear order by how
-   * it has been configured for this site
+   * it has been configured for this site.
    *
    * @param array $batch_groups
    *   The temporary holder of queue items as created from addItemToBatchGroups
@@ -405,18 +414,19 @@ class SalesforceQueueProcessor {
    * @return array
    *   Array of batches that can be processed by processBatches and processBatch
    */
-  private function sortBatches($batch_groups) {
+  protected function sortBatches($batch_groups) {
     $batches = array();
 
-    // Remove the DELETE operation so we can place it at the end later
+    // Remove the DELETE operation so we can place it at the end later.
     if (isset($batch_groups['DELETE'])) {
       $delete_batches = $batch_groups['DELETE'];
       unset($batch_groups['DELETE']);
     }
 
     // Move all of the batch items into the batches list in the configured order
-    // @TODO set default object order
-    $object_order = variable_get('salesforce_queue_object_order', array('Account', 'Contact', 'Opportunity'));
+    // @TODO set default object order.
+    $default_object_order = array('Account', 'Contact', 'Opportunity');
+    $object_order = variable_get('salesforce_queue_object_order', $default_object_order);
     $op_order = array('CREATE', 'UPSERT', 'UPDATE');
     foreach ($object_order as $object) {
       if (isset($batch_groups[$object])) {
@@ -442,7 +452,7 @@ class SalesforceQueueProcessor {
     }
 
     // Lastly, If any Salesforce objects were not configured for a specific
-    // order, append those to the end of the batch list
+    // order, append those to the end of the batch list.
     foreach ($batch_groups as $object => $operations) {
       foreach ($op_order as $op) {
         if (isset($batch_groups[$object][$op])) {
@@ -458,7 +468,7 @@ class SalesforceQueueProcessor {
       }
     }
 
-    // Append the DELETE batches to the end
+    // Append the DELETE batches to the end.
     if (isset($delete_batches)) {
       $batches = array_merge($batches, $delete_batches);
     }
@@ -467,39 +477,45 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Check to see if the item can be sent to Salesforce as-is
+   * Check to see if the item can be sent to Salesforce as-is.
    *
    * @param object $item
    *   Queue item
+   *
    * @return boolean
    *   TRUE if the item is valid and can be sent to Salesforce with the given
    *   operation.  FALSE if the item cannot be sent to Salesforce with the
    *   given operation and provided information.
    */
-  private function isValidItem($item) {
+  protected function isValidItem($item) {
     $op = $item->operation;
     $sobject = $item->sobject;
     switch ($op) {
       case 'CREATE':
-        // Cannot have an Id field, requires salesforce type and fields
+        // Cannot have an Id field, requires salesforce type and fields.
         if (!isset($sobject->Id) && isset($sobject->type) && isset($sobject->fields)) {
           return TRUE;
         }
         break;
+
       case 'UPSERT':
-        // Cannot have an Id field, requires dedupe field, salesforce type and fields
+        // Cannot have an Id field, requires dedupe field, salesforce type and
+        // fields.
         if (!isset($sobject->Id) && !empty($item->dedupe_field) && isset($sobject->type) && isset($sobject->fields)) {
           return TRUE;
         }
         break;
+
       case 'UPDATE':
-        // Requires Id field, salesforce type and either fields or fields to null
+        // Requires Id field, salesforce type and either fields or fields to
+        // null.
         if (isset($sobject->Id) && isset($sobject->type) && (isset($sobject->fields) || isset($sobject->fieldsToNull))) {
           return TRUE;
         }
         break;
+
       case 'DELETE':
-        // Only requires Id
+        // Only requires Id.
         if (isset($sobject->Id)) {
           return TRUE;
         }
@@ -508,7 +524,7 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Wrapper for processBatch() to process all batches ready for processing
+   * Wrapper for processBatch() to process all batches ready for processing.
    *
    * @return array
    *   Array of result objects provided by Salesforce
@@ -525,7 +541,7 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Processes the next batch in line for processing
+   * Processes the next batch in line for processing.
    *
    * @return array
    *   Array of result objects provided by Salesforce
@@ -544,33 +560,36 @@ class SalesforceQueueProcessor {
     // our lease expires. We do not want to risk the chance of items getting
     // sent to Salesforce twice, so we will not send items outside our lease or
     // when it is leased to someone else.
-    $current_lease_key = variable_get('salesforce_queue_' . $this->queue_name . '_lease_key', NULL);
-    if ($this->lease_expire < time() && $current_lease_key == $this->lease_key) {
-      // Lease expired, fail
-      $this->end_status = SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED;
+    $current_lease_key = variable_get('salesforce_queue_' . $this->queueName . '_lease_key', NULL);
+    if ($this->leaseExpire < time() && $current_lease_key == $this->leaseKey) {
+      // Lease expired, fail.
+      $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED;
       $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED);
     }
     else {
-      // Woot, lease active. Send this baby off to Salesforce
+      // Woot, lease active. Send this baby off to Salesforce.
       try {
         switch ($batch['operation']) {
           case 'CREATE':
-            // Whole sobject
+            // Whole sobject.
             $results = $this->soap->create($batch['sobjects']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE;
             break;
+
           case 'UPSERT':
-            // Whole sobject + dedupe field
+            // Whole sobject + dedupe field.
             $results = $this->soap->upsert($batch['dedupe'], $batch['sobjects']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT;
             break;
+
           case 'UPDATE':
-            // ID + fields to overwrite + fields to null
+            // ID + fields to overwrite + fields to null.
             $results = $this->soap->update($batch['sobjects']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE;
             break;
+
           case 'DELETE':
-            // Require just ID of the object
+            // Require just ID of the object.
             $results = $this->soap->delete($batch['sobjects']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE;
             break;
@@ -580,14 +599,14 @@ class SalesforceQueueProcessor {
         $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH, $error);
       }
 
-      // Respond to responses
+      // Respond to responses.
       foreach ($results as $key => $result) {
         $item = $batch['items'][$key];
         if ($result->success) {
           $this->passItem($item, $result);
         }
         else {
-          // Mark items with errors as failed
+          // Mark items with errors as failed.
           $this->failItem($item, $error, $result);
         }
       }
@@ -600,20 +619,21 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Marks an item has having succeeded processing
+   * Marks an item has having succeeded processing.
    *
    * @param object $item
+   *   Queue item
    */
-  private function passItem($item, $result) {
-    // Remove successful items from the queue
+  protected function passItem($item, $result) {
+    // Remove successful items from the queue.
     $this->queue->deleteItem($item);
 
-    // Keep a log of newly created items
+    // Keep a log of newly created items.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
       $item->sobject->Id = $result->id;
-      $this->new_sf_records[] = $item;
+      $this->newSfRecords[] = $item;
       $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
-      $this->processed_item_ids[$item->salesforce_type][$id_key] = $result->id;
+      $this->processedItemIds[$item->salesforce_type][$id_key] = $result->id;
     }
 
     // Invokes hook_salesforce_queue_process_pass_item().
@@ -621,75 +641,76 @@ class SalesforceQueueProcessor {
   }
 
   /**
-   * Marks an item has having failed
+   * Marks an item has having failed.
    *
    * @param object $item
+   *   Queue item
    * @param int $reason
    *   The reason the item failed
    * @param object $result
    *   Salesforce result if the item had received a result from salesforce
    */
-  private function failItem($item, $reason, $result = NULL) {
+  protected function failItem($item, $reason, $result = NULL) {
     // Invokes hook_salesforce_queue_process_fail_item().
     module_invoke_all('salesforce_queue_process_fail_item', $item, $reason, $result, $this->queue);
   }
 
   /**
-   * Wrapper for failItem() so that every item in a batch is failed
+   * Wrapper for failItem() so that every item in a batch is failed.
    *
-   * @param array $items
-   *   Array of items as provided in a batch
+   * @param array $batch
+   *   Batch array as set up for processBatch() for execute
    * @param int $reason
    *   The reason the batch failed
    * @param object $result
-   *   Salesforce result if the item had received a result from salesforce
+   *   Salesforce result if the batch had received a result from salesforce
    */
-  private function failBatch($batch, $reason, $result = NULL) {
+  protected function failBatch($batch, $reason, $result = NULL) {
     foreach ($batch['items'] as $item) {
       $this->failItem($item, $reason, $result);
     }
   }
 
   /**
-   * Eat yum yums
+   * Eat yum yums.
    */
-  private function eatBatch() {
-    // nom nom nom
+  protected function eatBatch() {
+    // Nom nom nom.
   }
 
   /**
-   * Release our claim on the queue and reset our internal state
+   * Release our claim on the queue and reset our internal state.
    */
-  private function resetInternalState() {
+  protected function resetInternalState() {
     $this->items = array();
     $this->batches = array();
-    $this->end_status = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
+    $this->endStatus = SALESFORCE_QUEUE_PROCESS_NOT_STARTED;
     return $this->releaseQueue();
   }
 
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function _setSalesforceApi(Salesforce $sfapi) {
+  public function setSalesforceApi(Salesforce $sfapi) {
     $this->sfapi = $sfapi;
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function _setSalesforceSoap($soap) {
+  public function setSalesforceSoap($soap) {
     $this->soap = $soap;
   }
 
   /**
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
-  public function _deleteNewSfRecords() {
-    if (empty($this->new_sf_records)) {
+  public function deleteNewSfRecords() {
+    if (empty($this->newSfRecords)) {
       return;
     }
-    $batches = array_chunk($this->new_sf_records, $this->salesforce_max);
-    $this->new_sf_records = array();
+    $batches = array_chunk($this->newSfRecords, $this->salesforceMax);
+    $this->newSfRecords = array();
     foreach ($batches as $batch) {
       $sobjects = array();
       foreach ($batch as $key => $item) {

@@ -6,23 +6,23 @@
  */
 
 /**
- * @defgroup salesforce_queue_var_default Default variables from Salesforce Queue
+ * @defgroup salesforce_queue_var_default Default variables for Salesforce Queue
  * @{
  */
 
-// Maximum items that can be claimed from the queue
+// Maximum items that can be claimed from the queue.
 define('SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT', 1000);
 
-// Length of time the queue can be leased to a process
+// Length of time the queue can be leased to a process.
 define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
 
-// The maximum amount of items that can be sent to Salesforce in one call
+// The maximum amount of items that can be sent to Salesforce in one call.
 define('SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT', 200);
 
-// Maximum retries an item will go through before moving to the 'fail' queue
+// Maximum retries an item will go through before moving to the 'fail' queue.
 define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 
-// Minimum frequency the processor can be run when cron is run
+// Minimum frequency the processor can be run when cron is run.
 define('SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT', 60);
 
 /**
@@ -37,28 +37,28 @@ define('SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT', 60);
  * processing of a batch of queue items.
  */
 
-// The process completed as expected
+// The process completed as expected.
 define('SALESFORCE_QUEUE_PROCESS_COMPLETE', 10);
 
-// No items were retreived from the queue
+// No items were retreived from the queue.
 define('SALESFORCE_QUEUE_PROCESS_NO_ITEMS', 1);
 
-// The process has never been initiated
+// The process has never been initiated.
 define('SALESFORCE_QUEUE_PROCESS_NOT_STARTED', 0);
 
-// Items cannot be claimed because the queue is leased
+// Items cannot be claimed because the queue is leased.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_QUEUE_LEASED', -1);
 
-// The lease expired before all batches could be completed
+// The lease expired before all batches could be completed.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED', -2);
 
-// Although items were claimed from the queue, none of them passed validation
+// Although items were claimed from the queue, none of them passed validation.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_NO_VALID_ITEMS', -3);
 
-// Cannnot connect to Salesforce
+// Cannnot connect to Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
 
-// Items cannot be claimed for an unknown reason
+// Items cannot be claimed for an unknown reason.
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 
 /**
@@ -73,26 +73,26 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
  * failure.
  */
 
-// The item could not reach processing because the lease on the queue expired
+// The item could not reach processing because the lease on the queue expired.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED', 0);
 
-// Item failed when it was attempted to be created in Salesforce
+// Item failed when it was attempted to be created in Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE', -1);
 
-// Item failed when it attempted an upsert in Salesforce
+// Item failed when it attempted an upsert in Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT', -2);
 
-// Item failed when it attempted an update in Salesforce
+// Item failed when it attempted an update in Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE', -3);
 
-// Item failed when it was attempted to be deleted in Salesforce
+// Item failed when it was attempted to be deleted in Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE', -4);
 
 // Item failed validation. It does not have the proper properties nessisary to
-// be sent to Salesforce for the operation associated with it
+// be sent to Salesforce for the operation associated with it.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
 
-// The entire batch failed to be processed due to some error with Salesforce
+// The entire batch failed to be processed due to some error with Salesforce.
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
 
 /**
@@ -104,8 +104,9 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {
-  // Remove overly restrictive validation routine. Ideally the current monolithic
-  // validation handler be broken down into 3 separate validation routines:
+  // Remove overly restrictive validation routine. Ideally the current
+  // monolithic validation handler be broken down into 3 separate validation
+  // routines:
   // - Check for existence of duplicate map
   // - Field type validation (this is still too strict IMHO)
   // - Dedupe field (SOAP API has different limitations)
@@ -122,7 +123,7 @@ function salesforce_queue_menu() {
     'description' => 'Configuration settings for the Salesforce queue.',
     'page callback' => 'salesforce_queue_admin_page',
     'access arguments' => array('configure salesforce queue'),
-    'type' => MENU_LOCAL_TASK, // Under the salesforce module
+    'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.admin.inc',
   );
   $items['admin/config/services/salesforce/salesforce-queue/config'] = $items['admin/config/services/salesforce/salesforce-queue'];
@@ -181,16 +182,16 @@ function salesforce_queue_node_delete($node) {
 }
 
 /**
- * Implementation of hook_salesforce_queue_process_fail_item().
+ * Implements hook_salesforce_queue_process_fail_item().
  */
 function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
-  // Mark items for retry if they have not exceeded the maximum
+  // Mark items for retry if they have not exceeded the maximum.
   $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
   if ($max_retries > $item->retries) {
     $item->retries++;
     $item->queue = 'retry';
   }
-  // When the retry maximum is exceeded, put the item in the fail queue
+  // When the retry maximum is exceeded, put the item in the fail queue.
   else {
     $item->queue = 'fail';
   }
@@ -199,7 +200,7 @@ function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $re
 }
 
 /**
- * Wrapper to load a SalesforceQueue object
+ * Wrapper to load a SalesforceQueue object.
  *
  * @param string $queue_name
  *   Name of the queue to load.  The default queues are 'new', 'retry' and
@@ -208,6 +209,7 @@ function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $re
  *   default to 'all'.
  *
  * @return SalesforceQueue
+ *   SalesforceQueue object
  */
 function salesforce_queue_load($queue_name = 'all') {
   return SalesforceQueue::get($queue_name);
@@ -232,12 +234,12 @@ function salesforce_queue_process_queue($queue_name = 'all') {
  * Implements hook_cron().
  */
 function salesforce_queue_cron() {
-  // Limit the running of the processor to a configured frequency
+  // Limit the running of the processor to a configured frequency.
   $cron_frequency = variable_get('salesforce_queue_cron_frequency', SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT);
   $cron_last = variable_get('salesforce_queue_cron_last', 0);
   if (($cron_last + $cron_frequency) < REQUEST_TIME) {
     salesforce_queue_process_queue();
-    // Set cron_last after process has completed
+    // Set cron_last after process has completed.
     variable_set('salesforce_queue_cron_last', time());
   }
 }

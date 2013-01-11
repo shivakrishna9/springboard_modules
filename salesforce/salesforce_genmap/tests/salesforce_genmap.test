@@ -6,7 +6,7 @@
  */
 
 /**
- * Tests basic set up for mapping salesforce objects to webforms
+ * Tests basic set up for mapping salesforce objects to webforms.
  */
 class SalesforceGenmapTestCase extends DrupalWebTestCase {
 
@@ -32,7 +32,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
     );
     parent::setUp($modules);
 
-    // Create an admin user
+    // Create an admin user.
     $permissions = array(
       'access content',
       'administer site configuration',
@@ -43,10 +43,10 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work
+    // in to work.
     $this->drupalLogin($this->admin_user);
 
-    // Create an example map
+    // Create an example map.
     $this->example_map = array(
       'nid' => 3,
       'map_handler' => 'salesforce_genmap',
@@ -64,7 +64,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
       'status' => TRUE,
     );
 
-    // Create an example record
+    // Create an example record.
     $this->example_record = array(
       'mid' => 3,
       'sfid' => uniqid(),
@@ -84,125 +84,125 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Map and queue testing will need to be done by the dependant modules
+   * Map testing will need to be done by the dependant modules.
    */
 
   /**
-   * Test the salesforce_genmap_map entity
+   * Test the salesforce_genmap_map entity.
    */
   public function testObjectEntity() {
     $nid = $this->example_map['nid'];
 
-    // Map entity type exists
+    // Map entity type exists.
     $entity_info = entity_get_info('salesforce_genmap_map');
     $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
     $this->assertEqual('Salesforce Map', $entity_info['label'], 'Entity has expected label.');
 
-    // Create a salesforce_genmap_map entity object
+    // Create a salesforce_genmap_map entity object.
     $test_map = entity_create('salesforce_genmap_map', $this->example_map);
     $this->assertEqual('salesforce_genmap_map', $test_map->entityType(), 'Creating a new entity object works as expected.');
 
-    // Save the entity to the database
+    // Save the entity to the database.
     entity_save('salesforce_genmap_map', $test_map);
     $new_map_id = _salesforce_genmap_get_map_id_by_nid_module($nid, 'salesforce_genmap');
     $test_map_db = entity_load('salesforce_genmap_map', array($new_map_id));
     $this->assertEqual('bar', $test_map_db[$new_map_id]->salesforce_object_type, 'Newly created entity has the correct object type.');
 
-    // Save the entity again and see it be updated
+    // Save the entity again and see it be updated.
     $result = entity_save('salesforce_genmap_map', $test_map);
     $this->assertEqual(SAVED_UPDATED, $result, 'Re-saved entity saved as updated.');
 
-    // Delete the entity from the database
+    // Delete the entity from the database.
     entity_delete('salesforce_genmap_map', $new_map_id);
     $all_entities = entity_load('salesforce_genmap_map');
     $this->assertTrue(empty($all_entities));
   }
 
   /**
-   * Tests for salesforce_genmap_crud objects
+   * Tests for salesforce_genmap_crud objects.
    */
   public function testObjectMapCrud() {
     $nid = $this->example_map['nid'];
 
-    // salesforce_genmap_save_map() new
+    // salesforce_genmap_save_map() new.
     $result = salesforce_genmap_save_map($this->example_map);
     $this->assertEqual(SAVED_NEW, $result, 'New map saved as expected.');
 
-    // salesforce_genmap_load_map()
+    // salesforce_genmap_load_map().
     $map = salesforce_genmap_load_map($nid);
     $this->assertEqual('bar', $map->salesforce_object_type, 'Newly created map has the correct object type.');
 
-    // salesforce_genmap_save_map() update entity
+    // salesforce_genmap_save_map() update entity.
     $result = salesforce_genmap_save_map($map);
     $this->assertEqual(SAVED_UPDATED, $result, 'Re-saved map entity saved as updated.');
 
-    // salesforce_genmap_save_map() update array
+    // salesforce_genmap_save_map() update array.
     $result = salesforce_genmap_save_map($this->example_map);
     $this->assertEqual(SAVED_UPDATED, $result, 'Re-saved map array saved as updated.');
 
-    // salesforce_genmap_delete_map()
+    // salesforce_genmap_delete_map().
     $this->assertTrue(salesforce_genmap_delete_map($nid), 'Delete command processed as expected.');
     $this->assertFalse(salesforce_genmap_load_map($nid), 'The deleted map cannot be found in the table.');
   }
 
   /**
-   * Test the salesforce_genmap_record_map entity
+   * Test the salesforce_genmap_record_map entity.
    */
   public function testRecordEntity() {
-    // Map entity type exists
+    // Map entity type exists.
     $entity_info = entity_get_info('salesforce_genmap_record_map');
     $this->assertTrue(isset($entity_info['label']), 'Entity has a label');
     $this->assertEqual('Salesforce Record Map', $entity_info['label'], 'Entity has expected label.');
 
-    // Create a salesforce_genmap_map entity object
+    // Create a salesforce_genmap_map entity object.
     $test_map = entity_create('salesforce_genmap_record_map', $this->example_record);
     $this->assertEqual('salesforce_genmap_record_map', $test_map->entityType(), 'Creating a new entity record works as expected.');
 
-    // Save the entity to the database
+    // Save the entity to the database.
     entity_save('salesforce_genmap_record_map', $test_map);
     $new_map_id = _salesforce_genmap_get_rmid($test_map);
     $test_map_db = entity_load('salesforce_genmap_record_map', array($new_map_id));
     $this->assertEqual($test_map->sfid, $test_map_db[$new_map_id]->sfid, 'Newly created record entity has the correct Salesforce id.');
 
-    // Delete the entity from the database
+    // Delete the entity from the database.
     entity_delete('salesforce_genmap_record_map', $new_map_id);
     $all_entities = entity_load('salesforce_genmap_record_map');
     $this->assertTrue(empty($all_entities));
   }
 
   /**
-   * Tests for salesforce_genmap_crud records
+   * Tests for salesforce_genmap_crud records.
    */
   public function testRecordMapCrud() {
-    // salesforce_genmap_save_record_map() new
+    // salesforce_genmap_save_record_map() new.
     $result = salesforce_genmap_save_record_map($this->example_record);
     $this->assertEqual(SAVED_NEW, $result, 'New record map saved as expected.');
 
-    // salesforce_genmap_load_record_map()
+    // salesforce_genmap_load_record_map().
     $record = salesforce_genmap_load_record_map($this->example_record);
     $this->assertEqual($this->example_record['sfid'], $record->sfid, 'The retreived record is the same as the example record.');
 
-    // salesforce_genmap_save_record_map() update entity
+    // salesforce_genmap_save_record_map() update entity.
     $result = salesforce_genmap_save_record_map($record);
     $this->assertEqual(SAVED_UPDATED, $result, 'Record map entity updated as expected.');
 
-    // salesforce_genmap_save_record_map() update array
+    // salesforce_genmap_save_record_map() update array.
     $result = salesforce_genmap_save_record_map($this->example_record);
     $this->assertEqual(SAVED_UPDATED, $result, 'Record map array updated as expected.');
 
-    // salesforce_genmap_delete_record_map()
+    // salesforce_genmap_delete_record_map().
     $this->assertTrue(salesforce_genmap_delete_record_map($record), 'Delete command processed as expected.');
     $this->assertFalse(salesforce_genmap_load_record_map($this->example_record), 'The deleted record cannot be found in the table.');
   }
 
   /**
-   * Grabs the Salesforce connection information from the live db and authenticates
+   * Grabs Salesforce connection information from the live db and authenticates.
    *
    * @return Object
    *   Salesforce Object
    */
   public function salesforceConnect() {
-    // Steal the Salesforce configuration from the live database
+    // Steal the Salesforce configuration from the live database.
     global $db_prefix;
     $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
     $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
@@ -211,7 +211,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
       variable_set($record->name, unserialize($record->value));
     }
 
-    // Test the connection
+    // Test the connection.
     $salesforce = salesforce_get_api();
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
     return $salesforce;

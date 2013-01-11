@@ -39,7 +39,9 @@ function salesforce_donation_permission() {
  * Implements hook_salesforce_genmap_map_help().
  */
 function salesforce_donation_salesforce_genmap_map_help() {
-  return array( 'salesforce_donation' => t('Salesforce donation provides a way to map donation values to Salesforce objects.') );
+  return array(
+    'salesforce_donation' => t('Salesforce donation provides a way to map donation values to Salesforce objects.'),
+  );
 }
 
 /**
@@ -58,7 +60,7 @@ function salesforce_donation_salesforce_genmap_info() {
  * Implements hook_salesforce_genmap_info_alter().
  */
 function salesforce_donation_salesforce_genmap_info_alter(&$items) {
-  // IIF salesforce_donation exists.
+  // If salesforce_donation exists.
   if (module_exists('salesforce_webform')) {
     $items['salesforce_webform']['access callback'] = 'salesforce_donation_webform_map_page_access';
   }
@@ -71,12 +73,13 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
  *   A donation object
  * @param Entity $map
  *   A Salesforce map entity
- * @return $fields
+ *
+ * @return array
  *   A set of fields mapped to value.
  */
 function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node) {
   $fields = array();
-  // Donation properties map
+  // Donation properties map.
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['did'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['did'];
@@ -95,8 +98,9 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $fields[$sf_field] = $donation->status;
     }
   }
-  // Donation fields map
-  $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
+  // Donation fields map.
+  // Grab the regular set of donation fields first.
+  $donation_fields = _fundraiser_get_field_fields();
   foreach ($donation_fields as $form_key => $donation_field) {
     if (isset($map->field_map['salesforce_donation_map'][$form_key])) {
       if (isset($donation->donation[$form_key])) {
@@ -105,7 +109,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
     }
   }
-  // Salesforce webform map
+  // Salesforce webform map.
   if (isset($donation->submission_data)) {
     foreach ($donation->submission_data as $form_key => $submission_value) {
       if (isset($map->field_map['salesforce_webform_map'][$form_key])) {
@@ -114,7 +118,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       }
     }
   }
-  // Node properties map
+  // Node properties map.
   if (isset($map->field_map['salesforce_node_map'])) {
     if (isset($map->field_map['salesforce_node_map']['nid'])) {
       $sf_field = $map->field_map['salesforce_node_map']['nid'];
@@ -125,7 +129,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $fields[$sf_field] = $donation->node->title;
     }
   }
-  // User properties map
+  // User properties map.
   if (isset($map->field_map['salesforce_user_map'])) {
     if (isset($map->field_map['salesforce_user_map']['uid'])) {
       $sf_field = $map->field_map['salesforce_user_map']['uid'];
@@ -140,11 +144,12 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $fields[$sf_field] = $donation->user->email;
     }
   }
-  // Submission properties map
+  // Submission properties map.
   if (isset($map->field_map['salesforce_submission_map'])) {
     if (isset($map->field_map['salesforce_submission_map']['sid'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['sid'];
-      $fields[$sf_field] = $donation->sid; // If sid = 0, then no submission id. (may be created by sustainer)
+      // If sid = 0, then no submission id (may be created by sustainer).
+      $fields[$sf_field] = $donation->sid;
     }
     if (isset($map->field_map['salesforce_submission_map']['date'])) {
       $sf_field = $map->field_map['salesforce_submission_map']['date'];
@@ -159,7 +164,8 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
  *
  * @param stdClass $node
  *   Provide a node object
- * @return $fields
+ *
+ * @return array
  *   A set of fields to be used in mapping form.
  */
 function salesforce_donation_salesforce_genmap_map_field_info($node) {
@@ -174,11 +180,12 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       'did' => t('Donation ID'),
       'gateway' => t('Gateway ID'),
       'txn_id' => t('Transaction ID'),
-      'status' =>  t('Payment Status'),
+      'status' => t('Payment Status'),
     ),
   );
   // Additional donation fields.
-  $donation_fields = _fundraiser_get_field_fields(); // Grab the regular set of donation fields.
+  // Grab the regular set of donation fields.
+  $donation_fields = _fundraiser_get_field_fields();
   foreach ($donation_fields as $form_key => $donation_field) {
     // Skip if this is a fieldset type.
     if ($donation_field['#type'] != 'fieldset') {
@@ -192,7 +199,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       '#type' => 'webform',
       '#label' => t('Webform Componant'),
       '#dedupe' => FALSE,
-      '#fields' => array()
+      '#fields' => array(),
     );
     $wf_components = $node->webform['components'];
     $donation_field_keys = array_keys($donation_fields);
@@ -244,7 +251,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
  */
 
 /**
- * Access callback to reach the mapping page
+ * Access callback to reach the mapping page.
  */
 function salesforce_donation_map_page_access($node) {
   if ($node !== FALSE
@@ -257,11 +264,14 @@ function salesforce_donation_map_page_access($node) {
 }
 
 /**
- * Access callback to reach the mapping page for salesforce webforms, to avoid complicated UI.
- * Only let trained users use these two systems together.
+ * Access callback for mapping page for salesforce webforms.
+ *
+ * This avoids a complicated UI, so only let trained users use these two systems
+ * together.
  */
 function salesforce_donation_webform_map_page_access($node) {
-  if ($node !== FALSE // %webform_menu returns FALSE if not valid
+  // %webform_menu returns FALSE if not valid.
+  if ($node !== FALSE
     && fundraiser_is_donation_type($node->type)
     && user_access('map salesforce to webform')
     && user_access('map salesforce to webform on donation')
@@ -275,27 +285,7 @@ function salesforce_donation_webform_map_page_access($node) {
  * Implements hook_fundraiser_donation_success().
  */
 function salesforce_donation_fundraiser_donation_success($donation) {
-  // Reload the donation to get everything we need from submission table then call.
+  // Reload donation to get everything we need from submission table then call.
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
 }
-
-/**
- * Implements hook_fundraiser_donation_update().
- *
-function salesforce_donation_fundraiser_donation_update($donation) {
-  // Reload the donation to get everything we need.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
-}
-//*/
-
-/**
- * Implements hook_fundraiser_donation_delete().
- *
-function salesforce_donation_fundraiser_donation_delete($donation) {
-  // Reload the donation to get everything we need.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('insert', $donation->node, $donation->did, $donation);
-}
-//*/

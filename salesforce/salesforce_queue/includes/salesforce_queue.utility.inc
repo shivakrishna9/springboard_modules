@@ -25,7 +25,7 @@ function salesforce_queue_object_verification_form() {
   $form['dedupe_field'] = array(
     '#type' => 'textfield',
     '#title' => 'Dedupe field',
-    '#description' => 'Required for UPSERT operations.'
+    '#description' => 'Required for UPSERT operations.',
   );
 
   $form['submit'] = array(

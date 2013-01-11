@@ -17,24 +17,24 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *
    * @var string
    */
-  public $queue_name;
+  public $queueName;
 
   /**
-   * The queues that the 'all' queue manages
+   * The queues that the 'all' queue manages.
    *
    * @var array
    */
-  protected $tracked_queues;
+  protected $trackedQueues;
 
   /**
-   * Expire times for the leases on the various sub queues
+   * Expire times for the leases on the various sub queues.
    *
    * @var array
    */
   protected $leases = array();
 
   /**
-   * A queue object for the given queue
+   * A queue object for the given queue.
    *
    * @param string $queue_name
    *   Arbitrary string to name a subset of a queue.  Standard queues are 'new',
@@ -53,19 +53,21 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
 
   /**
+   * Construct object.
+   *
    * @param string $queue_name
    *   Declare which queue subset you are working with.  Use 'all' to work with
    *   all items in the entire queue.
    */
   public function __construct($queue_name) {
-    $this->queue_name = $queue_name;
+    $this->queueName = $queue_name;
 
-    // Tracked queues are those the 'all' queue manages
-    $this->tracked_queues = variable_get('salesforce_queue_tracked_queues', array('new', 'retry'));
+    // Tracked queues are those the 'all' queue manages.
+    $this->trackedQueues = variable_get('salesforce_queue_tracked_queues', array('new', 'retry'));
   }
 
   /**
-   * Add an item to the queue
+   * Add an item to the queue.
    *
    * If an item with identical values for drupal_id, module, delta and
    * salesforce_type is already in the queue, the item in the queue will be
@@ -93,12 +95,12 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     if ($this->itemInQueue($data)) {
       // If this item is in the queue, replace the original.
       // With drupal_write_record, replacement is just a matter of filling in
-      // the $keys array
+      // the $keys array.
       $keys = array('drupal_id', 'module', 'delta', 'salesforce_type');
     }
     else {
-      // As a new record, fill in all the new fields
-      $data['queue'] = $this->queue_name == 'all' ? 'new' : $this->queue_name;
+      // As a new record, fill in all the new fields.
+      $data['queue'] = $this->queueName == 'all' ? 'new' : $this->queueName;
 
       // We cannot rely on REQUEST_TIME because many items might be created
       // by a single request which takes longer than 1 second.
@@ -108,7 +110,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     // Invoke hook_salesforce_queue_create_item_alter().
     drupal_alter('salesforce_queue_create_item', $data);
 
-    // Insert this baby
+    // Insert this baby.
     $data['sobject'] = json_encode($data['sobject']);
     $result = drupal_write_record('salesforce_queue', $data, $keys);
 
@@ -119,7 +121,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Quantity of items in the queue you have initialized
+   * Quantity of items in the queue you have initialized.
    *
    * @param bool $only_tracked_queues
    *   Whether or not the 'all' queue should count all items in the queue or
@@ -127,15 +129,16 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   it will count all items in the queue by default.
    *
    * @return int
+   *   Quanity of items found
    */
   public function numberOfItems($only_tracked_queues = FALSE) {
     $query = db_select('salesforce_queue', 'q')
       ->fields('q', array('item_id'));
-    if ($this->queue_name != 'all') {
-      $query->condition('queue', $this->queue_name);
+    if ($this->queueName != 'all') {
+      $query->condition('queue', $this->queueName);
     }
-    else if ($only_tracked_queues) {
-      $query->condition('queue', $this->tracked_queues, 'IN');
+    elseif ($only_tracked_queues) {
+      $query->condition('queue', $this->trackedQueues, 'IN');
     }
     return $query
       ->countQuery()
@@ -144,7 +147,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Wrapper for claimBatch() to claim just a single item from the queue
+   * Wrapper for claimBatch() to claim just a single item from the queue.
    *
    * @param int $lease_time
    *   The amount of time you believe it will take to process the item.  If your
@@ -162,7 +165,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Wrapper for releaseBatch() which will release the queue
+   * Wrapper for releaseBatch() which will release the queue.
    *
    * @param object $item
    *   The original queue item as given to you in claimItem()
@@ -173,13 +176,13 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function releaseItem($item) {
     if (is_object($item)) {
-      return $this->releaseBatch($item->lease_key);
+      return $this->releaseBatch($item->leaseKey);
     }
     return FALSE;
   }
 
   /**
-   * Remove an item from the queue
+   * Remove an item from the queue.
    *
    * @param object $item
    *   The original queue item as given to you in claimItem()
@@ -189,7 +192,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function deleteItem($item) {
     if (!is_object($item)) {
-      // Cannot delete from this kind of item
+      // Cannot delete from this kind of item.
       return FALSE;
     }
 
@@ -207,7 +210,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Create a new queue
+   * Create a new queue.
    */
   public function createQueue() {
     // All tasks are stored in a single database table (which is created when
@@ -216,16 +219,17 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Delete all queued items in the initiated queue
+   * Delete all queued items in the initiated queue.
    *
    * @return bool
    *   TRUE on successful delete, FALSE if the delete could not be performed
    */
   public function deleteQueue() {
-    $this->releaseBatch(NULL, TRUE); // Can't hold a lease on nothing
+    // Can't hold a lease on nothing, so force the release of the queue.
+    $this->releaseBatch(NULL, TRUE);
     $query = db_delete('salesforce_queue');
-    if ($this->queue_name != 'all') {
-      $query->condition('queue', $this->queue_name);
+    if ($this->queueName != 'all') {
+      $query->condition('queue', $this->queueName);
     }
     return $query->execute();
   }
@@ -235,7 +239,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
 
   /**
-   * Helper method to open an item after it has been retreived from the database
+   * Helper to open an item after it has been retreived from the database.
    *
    * @param object $item
    *   A record as retreived from the database
@@ -243,31 +247,31 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    * @return object
    *   The record formatted for general use
    */
-  private function unfoldItem($item) {
+  protected function unfoldItem($item) {
     if (is_object($item)) {
       $item->sobject = json_decode($item->sobject);
       if (isset($item->sobject->fields)) {
-        $item->sobject->fields = (array)$item->sobject->fields;
+        $item->sobject->fields = (array) $item->sobject->fields;
       }
     }
     return $item;
   }
 
   /**
-   * Helper method to refresh current leases before refering to them
+   * Helper method to refresh current leases before refering to them.
    */
-  private function retreiveLeases() {
+  protected function retreiveLeases() {
     // Gather up the expire times for the leases of the various sub queues we
-    // could be working with
+    // could be working with.
     $this->leases['all'] = variable_get('salesforce_queue_all_lease_expire', 0);
-    foreach ($this->tracked_queues as $queue) {
+    foreach ($this->trackedQueues as $queue) {
       $this->leases[$queue] = variable_get('salesforce_queue_' . $queue . '_lease_expire', 0);
     }
-    $this->leases[$this->queue_name] = variable_get('salesforce_queue_' . $this->queue_name . '_lease_expire', 0);
+    $this->leases[$this->queueName] = variable_get('salesforce_queue_' . $this->queueName . '_lease_expire', 0);
   }
 
   /**
-   * Grab a batch of items from the queue and inform the queue is leased
+   * Grab a batch of items from the queue and inform the queue is leased.
    *
    * DrupalQueue first selects a row and then tries to update the row, and
    * will try again if the update fails because another worker took it in the
@@ -279,8 +283,6 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    * a dependant Account could be processed earlier).  We do not nead to lock
    * any items in the queue but merely state that we've got a lease on the
    * entire table.
-   *
-   * @TODO Figure out best default lease time
    *
    * @param int $quantity
    *   The maximum number of items to retreive from the queue.  If the queue
@@ -296,35 +298,35 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function claimBatch($quantity = 1000, $lease_time = 3600) {
     // Don't claim any items if a current process has claimed a lease on the
-    // rights to process this queue
+    // rights to process this queue.
     $items = array();
     $key = $this->leaseQueue($lease_time);
     if ($key) {
       $query = db_select('salesforce_queue', 'q')
         ->fields('q')
         ->range(0, $quantity)
-        ->orderBy('created', 'ASC'); // always oldest first regardless of status
-      if ($this->queue_name == 'all') {
-        // The 'all' queue manages across multiple queues
+        // Always oldest first regardless of status.
+        ->orderBy('created', 'ASC');
+      if ($this->queueName == 'all') {
+        // The 'all' queue manages across multiple queues.
         // NOTE: Prior version added items from the 'retry' queue only after all
-        //       items from the 'new' queue have been processed. But, due to
-        //       dependency issues when creating Salesforce objects, I am going
-        //       to always process older items first regardless of status.  The
-        //       'failed' queue, though, is not a tracked queue so they would
-        //       not be included.
-        $query->condition('queue', $this->tracked_queues, 'IN');
+        // items from the 'new' queue have been processed. But, due to
+        // dependency issues when creating Salesforce objects, I am going to
+        // always process older items first regardless of status.  The 'failed'
+        // queue, though, is not a tracked queue so they would  not be included.
+        $query->condition('queue', $this->trackedQueues, 'IN');
       }
       else {
-        $query->condition('queue', $this->queue_name);
+        $query->condition('queue', $this->queueName);
       }
       $result = $query->execute();
       foreach ($result as $record) {
         $item = $this->unfoldItem($record);
-        $item->lease_key = $key;
+        $item->leaseKey = $key;
         $items[] = $item;
       }
       if (empty($items)) {
-        // Nothing there. Release the lease
+        // Nothing there. Release the lease.
         $this->releaseBatch($key);
       }
     }
@@ -335,7 +337,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Release the queue so another batch can be started
+   * Release the queue so another batch can be started.
    *
    * @param string $key
    *   Unique identifier of the process that leased the queue
@@ -350,7 +352,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   granted because the wrong key was granted.
    */
   public function releaseBatch($key, $force = FALSE) {
-    $prefix = 'salesforce_queue_' . $this->queue_name . '_lease_';
+    $prefix = 'salesforce_queue_' . $this->queueName . '_lease_';
     $key_var = $prefix . 'key';
     $current_key = variable_get($key_var, NULL);
     if ($key == $current_key || is_null($current_key) || $force == TRUE) {
@@ -362,7 +364,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Claim a lease on the queue
+   * Claim a lease on the queue.
    *
    * @param int $lease_time
    *   The amount of time the queue will be leased to you before it will be
@@ -374,11 +376,11 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    */
   public function leaseQueue($lease_time) {
     if ($this->queueIsLeased()) {
-      // Queue is leased, I cannot lease it
+      // Queue is leased, I cannot lease it.
       return FALSE;
     }
     else {
-      $prefix = 'salesforce_queue_' . $this->queue_name . '_lease_';
+      $prefix = 'salesforce_queue_' . $this->queueName . '_lease_';
       $lease_var = $prefix . 'expire';
       $key_var = $prefix . 'key';
 
@@ -403,7 +405,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Discover if the queue can be leased to you or not
+   * Discover if the queue can be leased to you or not.
    *
    * @return boolean
    *   TRUE if the queue is leased, FALSE if the queue is not leased
@@ -412,38 +414,39 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
     $this->retreiveLeases();
 
     // If the 'all' queue has a lease, the queues the 'all' queue manages cannot
-    // get a lease
-    $queues_can_block_all = $this->tracked_queues;
+    // get a lease.
+    $queues_can_block_all = $this->trackedQueues;
     $queues_can_block_all[] = 'all';
-    if ($this->leases['all'] > REQUEST_TIME && in_array($this->queue_name, $queues_can_block_all)) {
-      // The current queue is tracked by 'all' and 'all' is leased
+    if ($this->leases['all'] > REQUEST_TIME && in_array($this->queueName, $queues_can_block_all)) {
+      // The current queue is tracked by 'all' and 'all' is leased.
       return TRUE;
     }
 
     // If a queue is not a tracked queue, or 'all' is not leased, then all
-    // we have to do is check that queue's lease time
-    if ($this->queue_name != 'all') {
-      if ($this->leases[$this->queue_name] < REQUEST_TIME) {
-        // Current queue is not leased
+    // we have to do is check that queue's lease time.
+    if ($this->queueName != 'all') {
+      if ($this->leases[$this->queueName] < REQUEST_TIME) {
+        // Current queue is not leased.
         return FALSE;
       }
-      // Current queue is leased
+      // Current queue is leased.
       return TRUE;
     }
 
-    // The 'all' queue cannot be leased when any of its tracked queues are leased
-    foreach ($this->tracked_queues as $queue) {
+    // The 'all' queue cannot be leased when any of its tracked queues are
+    // leased.
+    foreach ($this->trackedQueues as $queue) {
       if ($this->leases[$queue] > REQUEST_TIME) {
-        // This queue is leased
+        // This queue is leased.
         return TRUE;
       }
     }
-    // None of the tracked queues is leased, there's no lease to worry about
+    // None of the tracked queues is leased, there's no lease to worry about.
     return FALSE;
   }
 
   /**
-   * Check to see if a given item is already in the queue
+   * Check to see if a given item is already in the queue.
    *
    * @param array $data
    *   An array of data that is typically used in createItem() to send to queue.
@@ -471,7 +474,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
   }
 
   /**
-   * Retreive an item from the queue
+   * Retreive an item from the queue.
    *
    * Do NOT use this to process an item. 'Get' does not lease the queue and
    * merely provides you the information about the queue item.  In order to

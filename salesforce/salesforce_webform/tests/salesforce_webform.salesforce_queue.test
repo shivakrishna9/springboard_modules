@@ -1,13 +1,14 @@
 <?php
-include_once(dirname(__FILE__) . '/salesforce_webform.test');
 
 /**
  * @file
  * Tests for includes/salesforce_webform.queue.inc.
  */
 
+include_once dirname(__FILE__) . '/salesforce_webform.test';
+
 /**
- * Tests mapping Salesforce objects onto webforms
+ * Tests mapping Salesforce objects onto webforms.
  */
 class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase {
 
@@ -32,11 +33,11 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     );
     parent::setUp($modules);
 
-    // Create webforms
-    $this->webform1 = $this->swCreateWebform(); // No dedupe field
-    $this->webform2 = $this->swCreateWebform(); // Will have dedupe field
+    // Create webforms.
+    $this->webform1 = $this->swCreateWebform();
+    $this->webform2 = $this->swCreateWebform();
 
-    // Map some Salesforce fields to the webforms
+    // Map some Salesforce fields to the webforms.
     $this->swMapWebform($this->webform1->nid);
     $this->swMapWebform($this->webform2->nid, TRUE);
   }
@@ -45,7 +46,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Implementation of tearDown().
    */
   public function tearDown() {
-    // Delete the webform node
+    // Delete the webform node.
     node_delete($this->webform2->nid);
     node_delete($this->webform1->nid);
 
@@ -53,7 +54,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
-   * Tests that information was sent to the queue properly
+   * Tests that information was sent to the queue properly.
    */
   public function testQueueSystem() {
     $path = 'node/' . $this->webform1->nid;
@@ -64,7 +65,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       'submitted[email]' => 'example@email.com',
     );
 
-    // Test the submissions for each state
+    // Test the submissions for each state.
     $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
     foreach ($ops as $op) {
       switch ($op) {
@@ -74,21 +75,24 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
           $op_edit = $edit;
           $op_button = 'Submit';
           break;
+
         case 'CREATE':
           $op_path = $path;
           $assert_text = 'your submission has been received';
           $op_edit = $edit;
           $op_button = 'Submit';
           break;
+
         case 'UPDATE':
-          // Refers to previous loop's $item
+          // Refers to previous loop's $item.
           $op_path = $path . '/submission/' . $item['drupal_id'] . '/edit';
           $assert_text = 'Submission updated';
           $op_edit = $edit;
           $op_button = 'Submit';
           break;
+
         case 'DELETE':
-          // Refers to previous loop's $item
+          // Refers to previous loop's $item.
           $op_path = $path . '/submission/' . $item['drupal_id'] . '/delete';
           $assert_text = 'Submission deleted';
           $op_edit = array();
@@ -99,12 +103,13 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       $this->assertText($assert_text, 'There was not an obvious error submitting ' . $op . '.');
       $item = $this->fetchQueueItem();
       $this->compareSubmissionQueueItem($edit, $item, $op);
-      $this->deleteQueueItem($item); // Simulate processed item
+      // Simulate processed item.
+      $this->deleteQueueItem($item);
     }
   }
 
   /**
-   * Test dequeuing submissions when the webform has been deleted for Salesforce Queue
+   * Test dequeuing when the webform has been deleted for Salesforce Queue.
    */
   public function testNodeDeleteDequeue() {
     $this->generateSubmissions($this->webform1->nid);
@@ -123,10 +128,10 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
-   * Helper that will test that sync options are obeyed for the controlling queue
+   * Helper tests sync options are obeyed for the controlling queue.
    */
   public function testSyncOptions() {
-    // Set up a webform
+    // Set up a webform.
     $this->swSalesforceConnect();
     $webform = $this->swCreateWebform();
     $path = 'node/' . $webform->nid;
@@ -135,32 +140,56 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $this->drupalPost(NULL, array(), 'Save');
 
     // testQueueSystem() tests when all are selected.  Lets run through the
-    // tests when different combinations are selected
+    // tests when different combinations are selected.
     $edit = array(
       'submitted[first_name]' => 'ExampleFirstName',
       'submitted[last_name]' => 'ExampleLastName',
       'submitted[email]' => 'example@email.com',
     );
     $combinations = array(
-      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => FALSE),
-      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => FALSE),
-      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
-      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => FALSE),
-      array('map_config[sync_options][insert]' => FALSE, 'map_config[sync_options][update]' => TRUE, 'map_config[sync_options][delete]' => TRUE),
-      array('map_config[sync_options][insert]' => TRUE, 'map_config[sync_options][update]' => FALSE, 'map_config[sync_options][delete]' => TRUE),
+      array(
+        'map_config[sync_options][insert]' => TRUE,
+        'map_config[sync_options][update]' => FALSE,
+        'map_config[sync_options][delete]' => FALSE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => FALSE,
+        'map_config[sync_options][update]' => TRUE,
+        'map_config[sync_options][delete]' => FALSE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => FALSE,
+        'map_config[sync_options][update]' => FALSE,
+        'map_config[sync_options][delete]' => TRUE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => TRUE,
+        'map_config[sync_options][update]' => TRUE,
+        'map_config[sync_options][delete]' => FALSE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => FALSE,
+        'map_config[sync_options][update]' => TRUE,
+        'map_config[sync_options][delete]' => TRUE,
+      ),
+      array(
+        'map_config[sync_options][insert]' => TRUE,
+        'map_config[sync_options][update]' => FALSE,
+        'map_config[sync_options][delete]' => TRUE,
+      ),
     );
     $queue = salesforce_queue_load();
     foreach ($combinations as $sync_config) {
       $this->drupalGet($path . '/salesforce/salesforce_webform');
       $this->drupalPost(NULL, $sync_config, 'Save');
 
-      // Create submission
+      // Create submission.
       $this->drupalGet($path);
       $this->drupalPost(NULL, $edit, 'Submit');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][insert]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on insert was sent to queue.');
-        // Simulate processed item
+        // Simulate processed item.
         $queue->releaseItem($queue_item);
         $queue->deleteItem($queue_item);
       }
@@ -168,18 +197,18 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
         $this->assertFalse($queue_item, 'Submission not configured to sync on insert was not sent to the queue.');
       }
 
-      // Get the SID of the new submission
+      // Get the SID of the new submission.
       $matches = array();
       preg_match('/sid=([0-9]+)/', $this->getUrl(), $matches);
       $sid = $matches[1];
 
-      // Update submission
+      // Update submission.
       $this->drupalGet($path . '/submission/' . $sid . '/edit');
       $this->drupalPost(NULL, array(), 'Submit');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][update]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on update was not sent to queue.');
-        // Simulate processed item
+        // Simulate processed item.
         $queue->releaseItem($queue_item);
         $queue->deleteItem($queue_item);
       }
@@ -187,13 +216,13 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
         $this->assertFalse($queue_item, 'Submission not configured to sync on update was sent to the queue.');
       }
 
-      // Delete submission
+      // Delete submission.
       $this->drupalGet($path . '/submission/' . $sid . '/delete');
       $this->drupalPost(NULL, array(), 'Delete');
       $queue_item = $queue->claimItem();
       if ($sync_config['map_config[sync_options][delete]']) {
         $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was not sent to queue.');
-        // Simulate processed item
+        // Simulate processed item.
         $queue->releaseItem($queue_item);
         $queue->deleteItem($queue_item);
       }
@@ -218,7 +247,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
-   * Helper to delete a queue item
+   * Helper to delete a queue item.
    */
   public function deleteQueueItem($item) {
     if (empty($item)) {
@@ -231,25 +260,25 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
-   * Make different queue items have the same format
+   * Make different queue items have the same format.
    */
   public function formatQueueItem($item) {
     $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
     if (is_object($item)) {
-      $item = (array)$item;
+      $item = (array) $item;
       return $item;
     }
     return array();
   }
 
   /**
-   * Helper to compare what was submitted to what was sent to the queue
+   * Helper to compare what was submitted to what was sent to the queue.
    */
   public function compareSubmissionQueueItem($edit, $item, $operation) {
     if (!empty($item)) {
       $this->assertTrue(isset($item['operation']), 'Operation not set in SalesforceQueue queue item.');
       if (isset($item['operation'])) {
-        $this->assertEqual($item['operation'], $operation, 'The ' . $item['operation'] . ' operation was sent to SalesforceQueue when '. $operation .' was expected.');
+        $this->assertEqual($item['operation'], $operation, 'The ' . $item['operation'] . ' operation was sent to SalesforceQueue when ' . $operation . ' was expected.');
       }
       $this->assertTrue((isset($item['sobject']) && is_object($item['sobject'])), 'sObject not built properly in SalesforceQueue queue item.');
       if (isset($item['sobject']) && is_object($item['sobject'])) {
@@ -262,7 +291,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
-   * Helper to generate random submissions for a given webform
+   * Helper to generate random submissions for a given webform.
    */
   public function generateSubmissions($nid, $count = 25) {
     $i = 0;

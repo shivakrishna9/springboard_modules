@@ -6,7 +6,7 @@
  */
 
 /**
- * Tests basic set up for mapping salesforce objects to webforms
+ * Tests basic set up for mapping salesforce objects to webforms.
  */
 class SalesforceWebformTestCase extends DrupalWebTestCase {
 
@@ -35,7 +35,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
     );
     parent::setUp($modules);
 
-    // Create an admin user
+    // Create an admin user.
     $permissions = array(
       'access content',
       'administer site configuration',
@@ -54,7 +54,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work
+    // in to work.
     $this->drupalLogin($this->admin_user);
   }
 
@@ -67,13 +67,13 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Creates a simple webform of first name, last name and email address
+   * Creates a simple webform of first name, last name and email address.
    *
    * @return Object
    *   Node object of the webform
    */
   public function swCreateWebform($with_components = TRUE) {
-    // Create a webform and add a few components
+    // Create a webform and add a few components.
     $settings = array(
       'type' => 'webform',
       'title' => 'Webform Example',
@@ -117,7 +117,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Map a webform all at once
+   * Map a webform all at once.
    *
    * Using swFormMapField() broke in setUp() when map stop being loaded on the
    * node. But thats OK in the setUp() context because we don't need to test the
@@ -127,13 +127,13 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
     $this->swSalesforceConnect();
     $this->drupalGet('node/' . $nid . '/salesforce/salesforce_webform');
 
-    // AJAX select the object type so the mapping fields show up
+    // AJAX select the object type so the mapping fields show up.
     $edit = array(
       'salesforce_object_info[salesforce_object_type]' => 'Contact',
     );
     $this->drupalPostAjax(NULL, $edit, 'salesforce_object_info[salesforce_object_type]');
 
-    // Map the fields and save
+    // Map the fields and save.
     $edit += array(
       'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
       'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
@@ -142,7 +142,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
     $this->drupalPost(NULL, $edit, 'Save');
 
     if ($dedupe) {
-      // Dedupe field only shows up after the fields have been mapped and posted
+      // Dedupe field only shows up after fields have been mapped and posted.
       $edit += array(
         'salesforce_dedupe_field' => 'Email',
       );
@@ -151,14 +151,9 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Map a webform component to a Salesforce field
+   * Map a webform component to a Salesforce field.
    *
    * You must first $this->drupalGet() the mapping form
-   *
-   * @param String $drupal_field
-   * @param String $sf_field
-   * @param String $group
-   * @param Bool $dedupe
    */
   public function swFormMapField($drupal_field, $sf_field, $group, $dedupe = FALSE) {
     if (!isset($this->_swfEdit)) {
@@ -173,11 +168,11 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       $name_dedupe = 'field_map[' . $group . '][' . $drupal_field . '][dedupe]';
     }
 
-    // Check the field is there, and set the value
+    // Check the field is there, and set the value.
     $this->assertFieldByName($name, NULL, 'Mapping field ' . $name . ' exists.');
     $this->_swfEdit[$name] = $sf_field;
 
-    // Check that dedupe is hidden for unmapped fields
+    // Check that dedupe is hidden for unmapped fields.
     if ($group == 'salesforce_webform_map' || $group == 'salesforce_object_info') {
       if ($group == 'salesforce_webform_map') {
         $empty_dedupe_field = '<input type="hidden" name="' . $name_dedupe . '">';
@@ -186,7 +181,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
 
       $this->drupalPostAjax(NULL, $this->_swfEdit, $name);
 
-      // Check that the dedupe field was properly changed
+      // Check that the dedupe field was properly changed.
       if ($dedupe) {
         $dedupe_field = '<input name="salesforce_dedupe_field" type="radio" id="salesforce-dedupe-' . $drupal_field . '" value="' . $sf_field . '" class="form-radio">';
         $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for ' . $sf_field);
@@ -197,18 +192,18 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       }
     }
     else {
-      // no need to do an drupalPostAjax
+      // No need to do an drupalPostAjax.
     }
   }
 
   /**
-   * Grabs the Salesforce connection information from the live db and authenticates
+   * Grabs Salesforce connection information from the live db and authenticates.
    *
    * @return Object
    *   Salesforce Object
    */
   public function swSalesforceConnect() {
-    // Steal the Salesforce configuration from the live database
+    // Steal the Salesforce configuration from the live database.
     global $db_prefix;
     $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
     $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
@@ -217,7 +212,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       variable_set($record->name, unserialize($record->value));
     }
 
-    // Test the connection
+    // Test the connection.
     $salesforce = salesforce_get_api();
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
     return $salesforce;
