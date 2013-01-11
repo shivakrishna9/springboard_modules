@@ -196,39 +196,23 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   $element = _webform_render_select($component, $value, $filter);
   // Add custom post render function before the final form render
   $element['#post_render'] = array('_fundraiser_component_payment_method_post_render');
-
-  // If there is only one payment method on this node this field becomes a value
-  if (count($node->gateway_manager['payment_methods']) == 1) {
-    $method = array_keys($node->gateway_manager['payment_methods']);
-    $element['#type'] = 'value';
-    $element['#value'] = $method[0];
-    $element['#theme_wrappers'] = array();
-  }
-  else {
-    $element['#options'] =_fundraiser_component_payment_method_options($node); 
-  }
-
-  return $element;
-}
-
-/**
- * Create the options array from the nodes payment methods array
- */
-function _fundraiser_component_payment_method_options($node) {
   $options = array();
-  if (empty($node->gateway_manager['payment_methods'])) {
-    return $options;  
+  $default = 'credit';
+  // Grab the available gateways per type as configured on the payment_method settings.
+  foreach ($component['extra']['payment_methods'] as $key => $payment_method) {
+    if ($key == '_default_method' && !empty($payment_method)) {
+      $default = $payment_method;
+    }
+    else {
+      // Only include if a gateway_instance is mapped.
+      if (!empty($payment_method['gateway_instance'])) {
+        $options[ $payment_method['method'] ] = !empty($payment_method['label']) ? $payment_method['label'] :
+          (!empty($payment_method['gateway_instance']) ? $payment_method['gateway_instance'] : $payment_method['method']);
+      }
+    }
   }
-
-  foreach ($node->gateway_manager['payment_methods'] as $payment_method) {
-    // Load up the instance
-    $gateway_instance = gateway_manager_method_load($payment_method->method, $payment_method->gateway_instance);
-
-    // Set the option label as the custom label or the hard-coded label from the gateway
-    $options[$payment_method->method] = !empty($payment_method->label) ? $payment_method->label :
-      (!empty($gateway_instance['label']) ? $gateway_instance['label'] : $payment_method->method);
-  }
-  return $options; 
+  $element['#options'] = $options; 
+  return $element;
 }
 
 /**
