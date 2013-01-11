@@ -99,6 +99,9 @@ function salesforce_genmap_schema() {
       ),
     ),
     'primary key' => array('mid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
   );
 
   $schema['salesforce_genmap_record_map'] = array(
@@ -162,7 +165,12 @@ function salesforce_genmap_schema() {
     ),
     'primary key' => array('rmid'),
     'indexes' => array(
-      'drupal_id' => array('module', 'delta', 'drupal_id'),
+      'drupal_index' => array(
+        'drupal_id',
+        'module',
+        'delta',
+        'salesforce_type',
+      ),
     ),
   );
 
