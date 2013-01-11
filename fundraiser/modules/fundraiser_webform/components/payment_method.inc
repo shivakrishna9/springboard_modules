@@ -121,30 +121,70 @@ function _webform_edit_payment_method($component) {
       '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
       '#attributes' => array('class' => array('fundraiser-webform-payment-methods-weight')),
     );
-    // Create a radio group for selecting the default
-    if (!isset($fieldset['_default_method'])) {
-      $fieldset['_default_method'] = array(
-        '#type' => 'radios',
-        '#title' => t('Default'),
-        '#options' => array(),
-      );
-    }
-    $fieldset['_default_method']['#options'][$method_key] = '';
+    $fieldset[$method_key]['_default'] = array(
+      '#type' => 'radio',
+      '#title' => t('Default'),
+      '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
+      '#return_value' => $method_key,
+      '#name' => 'extra[payment_methods][_default]',
+      '#parents' => array('extra', 'payment_methods', '_default'),
+    );
   }
-  // Set the default value on the default select
-  if (!empty($field_payment_methods['_default_method'])) {
-    $fieldset['_default_method']['#default_value'] = $field_payment_methods['_default_method'];
-  }
+
   $form['extra']['payment_methods'] = $fieldset;
+  // add a validate callback.
+  $form['#validate'][] = '_fundraiser_webform_payment_method_validate';
   return $form;
 }
 
 /**
- * Helper function, sort payment methods by weight on the node form.
+ * Sort payment methods by weight on the node form.
  */
 function _fundraiser_webform_payment_method_weight_compare($a, $b) {
   $weight = $a['#weight'] - $b['#weight'];
   return $weight;
+}
+
+function _fundraiser_webform_payment_method_validate($form, &$form_state) {
+  $values = $form_state['values']['extra']['payment_methods'];
+
+  // Capture the default method and unset that value
+  $default_method = $values['_default'];
+  unset($form_state['values']['extra']['payment_methods']['_default']);
+
+  // Filter the values array to just enabled methods.
+  $enabled_methods = array_filter($values, '_fundraiser_webform_payment_method_weight_validate_filter_enabled');
+
+  // Check that there is at least one method enabled
+  if (empty($enabled_methods)) {
+    form_set_error('payment_methods', t('At least one payment method must be enabled.'));
+  }
+  else {
+    // Check whether the default method is one of the enabled methods.
+    if (!isset($enabled_methods[$default_method])) {
+      if (count($enabled_methods) == 1) {
+        // If there's only one enabled method, skip validating _default_method
+        // and just change the value. Stop wasting people's time.
+        $default_method = key($enabled_methods);
+        $form_state['values']['extra']['payment_methods'][$default_method]['default'] = 1;
+      }
+      else {
+        form_set_error('extra[payment_methods][_default', t('Default method must be one of the enabled methods.'));
+      }
+    }
+    else {
+      // Set the default value to the appropriate method
+      // Having to do this here since a submit handler fires after the componenet is saved
+      $form_state['values']['extra']['payment_methods'][$default_method]['default'] = 1;
+    }
+  }
+}
+
+/**
+ * Array_filter callback for filtering by method status.
+ */
+function _fundraiser_webform_payment_method_weight_validate_filter_enabled($method_settings) {
+  return !empty($method_settings['status']);
 }
 
 /**
@@ -154,13 +194,12 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
   $fieldset = $variables['form'];
   $header = array();
   $rows = array();
-  $default_method = $fieldset['_default_method'];
-  unset($fieldset['_default_method']);
 
   foreach (element_children($fieldset) as $i) {
     $row = array();
     foreach (element_children($fieldset[$i]) as $field) {
       $this_element = $fieldset[$i][$field];
+
       if ($this_element['#type'] != 'value') {
         if (!isset($header[$field])) {
           $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
@@ -169,17 +208,16 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
         $row[$field] = drupal_render($this_element);
       }
     }
-    if (!isset($header['_default_method'])) {
-      $header['_default_method'] = isset($default_method['#title']) ? $default_method['#title'] : '';
-    }
-    $row['_default_method'] = drupal_render($default_method[$i]);
+
     $rows[] = array(
       'data' => $row,
       'class' => array('draggable'),
     );
   }
+
   // Adding tabledrag support to this table.
   drupal_add_tabledrag('fundraiser-webform-payment-methods', 'order', 'sibling', 'fundraiser-webform-payment-methods-weight');
+
   return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'fundraiser-webform-payment-methods')));
 }
 
@@ -187,28 +225,42 @@ function theme_fundraiser_webform_component_payment_methods($variables) {
  * Implements _webform_render_component().
  */
 function _webform_render_payment_method($component, $value = NULL, $filter = TRUE) {
-  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
   // Use the default select list function to build the element
   $element = _webform_render_select($component, $value, $filter);
   // Add custom post render function before the final form render
   $element['#post_render'] = array('_fundraiser_component_payment_method_post_render');
-  $options = array();
-  $default = 'credit';
-  // Grab the available gateways per type as configured on the payment_method settings.
-  foreach ($component['extra']['payment_methods'] as $key => $payment_method) {
-    if ($key == '_default_method' && !empty($payment_method)) {
-      $default = $payment_method;
-    }
-    else {
-      // Only include if a gateway_instance is mapped.
-      if (!empty($payment_method['gateway_instance'])) {
-        $options[ $payment_method['method'] ] = !empty($payment_method['label']) ? $payment_method['label'] :
-          (!empty($payment_method['gateway_instance']) ? $payment_method['gateway_instance'] : $payment_method['method']);
-      }
-    }
+
+  // If there is only one payment method on this node this field becomes a value
+  if (count($component['payment_methods']) == 1) {
+    $method = array_keys($node->gateway_manager['payment_methods']);
+    $element['#type'] = 'value';
+    $element['#value'] = $method[0];
+    $element['#theme_wrappers'] = array();
   }
-  $element['#options'] = $options; 
+  else {
+    $element['#options'] =_fundraiser_component_payment_method_options($component); 
+  }
+
   return $element;
+}
+
+/**
+ * Create the options array from the nodes payment methods array
+ */
+function _fundraiser_component_payment_method_options($component) {
+  $options = array();
+  if (empty($component['payment_methods'])) {
+    return $options;  
+  }
+
+  foreach ($component['payment_methods'] as $payment_method) {
+    // Load up the instance
+    //$gateway_instance = gateway_manager_method_load($payment_method['method'], $payment_method->gateway_instance);
+
+    // Set the option label as the custom label or the hard-coded label from the gateway
+    $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : (!empty($instance['label']) ? $instance['label'] : $payment_method['method']);
+  }
+  return $options; 
 }
 
 /**
