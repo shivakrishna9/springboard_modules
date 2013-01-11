@@ -149,19 +149,6 @@ function salesforce_genmap_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'status' => array(
-        'description' => 'The exportable status of the entity.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0x01,
-      ),
-      'module' => array(
-        'description' => 'The name of the providing module if the entity has been defined in code.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
     ),
     'primary key' => array('rmid'),
     'indexes' => array(

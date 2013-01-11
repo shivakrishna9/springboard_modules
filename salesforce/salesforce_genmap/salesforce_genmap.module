@@ -32,13 +32,13 @@ function salesforce_genmap_entity_info() {
     'salesforce_genmap_record_map' => array(
       'label' => t('Salesforce Record Map'),
       'entity class' => 'Entity',
-      'controller class' => 'EntityAPIControllerExportable',
+      'controller class' => 'EntityAPIController',
       'base table' => 'salesforce_genmap_record_map',
       'entity keys' => array(
         'id' => 'rmid',
       ),
       'fieldable' => FALSE,
-      'exportable' => TRUE,
+      'exportable' => FALSE,
       'module' => 'salesforce_genmap',
     ),
   );
