@@ -35,7 +35,6 @@ function salesforce_genmap_schema() {
         'type' => 'varchar',
         'length' => '100',
         'not null' => TRUE,
-        'default' => '',
       ),
       'salesforce_record_type' => array(
         'description' => 'The Salesforce record type for this mapping.',
@@ -55,14 +54,14 @@ function salesforce_genmap_schema() {
         'description' => 'A serialized object that stores the field mappings.',
         'type' => 'text',
         'size' => 'big',
-        'not null' => FALSE,
+        'not null' => TRUE,
         'serialize' => TRUE,
       ),
       'sync_options' => array(
         'description' => 'A serialized array describing the map\'s syncing options.',
         'type' => 'text',
         'size' => 'big',
-        'not null' => FALSE,
+        'not null' => TRUE,
         'serialize' => TRUE,
       ),
       'created' => array(
@@ -147,7 +146,6 @@ function salesforce_genmap_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => TRUE,
-        'default' => '',
       ),
     ),
     'primary key' => array('rmid'),

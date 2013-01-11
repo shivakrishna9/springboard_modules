@@ -60,7 +60,11 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
         ),
         'hello' => 'world',
       ),
-      'locked' => FALSE,
+      'sync_options' => array(
+        'insert' => TRUE,
+        'update' => FALSE,
+        'delete' => FALSE,
+      ),
       'status' => TRUE,
     );
 
