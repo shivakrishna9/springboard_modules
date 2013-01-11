@@ -104,8 +104,6 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
     // Allow other modules to alter the fields before adding to form.
     drupal_alter('payment_method_fields', $element[$payment_method], $payment_method);
   }
-
-  $element['#validate_callback'] = '_gateway_manager_donation_form_validate_required';
   return $element;
 }
 
