@@ -231,16 +231,20 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   $element['#post_render'] = array('_fundraiser_component_payment_method_post_render');
 
   // If there is only one payment method on this node this field becomes a value
-  if (count($component['payment_methods']) == 1) {
-    $method = array_keys($node->gateway_manager['payment_methods']);
-    $element['#type'] = 'value';
-    $element['#value'] = $method[0];
-    $element['#theme_wrappers'] = array();
+  if ( !empty($component['payment_methods']) ) {
+    if (count($component['payment_methods']) == 1) {
+      $method = array_keys($node->gateway_manager['payment_methods']);
+      $element['#type'] = 'value';
+      $element['#value'] = $method[0];
+      $element['#theme_wrappers'] = array();
+    }
+    else {
+      $element['#options'] =_fundraiser_component_payment_method_options($component); 
+    }
   }
   else {
-    $element['#options'] =_fundraiser_component_payment_method_options($component); 
+    drupal_set_message(t('No gateways are configured on this form.'), 'error');
   }
-
   return $element;
 }
 
