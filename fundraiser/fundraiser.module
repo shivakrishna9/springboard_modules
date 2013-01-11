@@ -194,8 +194,9 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     $data['user'] = isset($donation->user->uid) ? $donation->user->uid : '';
     // Specific changes.
     // TODO Adjust this tokening to account for the new changed in donation fields.
-    //$data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
-    //$data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
+    // Make sure to hide routing numbers as needed.
+    $data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
+    $data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
   }
   // Replace the given tokens.
   $replacements = array();
@@ -360,6 +361,8 @@ function fundraiser_node_presave($node) {
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
     $node->minimum_donation_amount = $node->amount_wrapper['minimum_donation_amount'];
+    // Temporarily setting gateway, we're removing this from the fundraiser node storage.
+    $node->gateway = 'none';
     unset($node->amount_wrapper);
   }
 }
@@ -482,6 +485,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
   );
+/*
+  // TODO Replace this with an interface to set the webform components, like how we do amounts.
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
   foreach ($gateways as $gateway) {
@@ -506,6 +511,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#prefix' => '<div id="gateway">',
     '#suffix' => '</div>',
   );
+*/
   // Add specific CSS settings for IE support. Pending http://drupal.org/node/1015798 being resolved,
   // and UC Store accounting for that update. (Should be block not inline-block).
   $style = '.vertical-tabs fieldset fieldset legend {display: block;}';
@@ -1187,7 +1193,7 @@ function _fundraiser_refund($form, &$form_state, $did) {
   );
 
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
-  $gateway = $donation->node->gateway; // Set during fundraiser_donation_get_donation().
+  $gateway = $donation->gateway; // Set during fundraiser_donation_get_donation().
   $can_refund = isset($gateway['refund_function']) ? $gateway['refund_function'] : NULL;
   if (!$can_refund || !isset($donation->payment)) {
     // They've made a payment, but it cannot be refunded
@@ -1390,11 +1396,14 @@ function fundraiser_donation_create($donation) {
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
-  $fundraiser_node = node_load($donation->nid);
-  if (is_array($fundraiser_node->gateway)) {
-    $fundraiser_node->gateway = !empty($fundraiser_node->gateway['id']) ? $fundraiser_node->gateway['id'] : '';
-  }
-  $donation->gateway = $fundraiser_node->gateway;
+
+  // TODO Select the gateway from the donation->donation->payment_method selected.
+  // The gateway is selected by the user, 
+  //$fundraiser_node = node_load($donation->nid);
+  //if (is_array($fundraiser_node->gateway)) {
+  //  $fundraiser_node->gateway = !empty($fundraiser_node->gateway['id']) ? $fundraiser_node->gateway['id'] : '';
+  //}
+  $donation->gateway = 'none'; // TODO - fix this
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
@@ -1597,7 +1606,7 @@ function fundraiser_donation_refund($refund) {
     return; // Not a valid amount to refund.
   }
   // Grab the gateway from the fundraiser configured gateway.
-  $info = _fundraiser_gateway_info($refund->node->gateway['id']);
+  $info = _fundraiser_gateway_info($refund->gateway['id']);
   // Check for the charge function to be defined.
   $refund_function = isset($info['refund_function']) ? $info['refund_function'] : '';
   if (empty($refund_function)) {
@@ -1664,7 +1673,6 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $gateway = _fundraiser_get_donation_gateway($did);
   if (isset($gateway['id'] )) {
     $donation->gateway = $gateway;
-    $donation->node->gateway = $gateway;
   }
   // Grab the transaction id if it exists, add it here.
   $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
@@ -2103,12 +2111,6 @@ function _fundraiser_get_donation_gateway($did) {
   // First check the donation table. It trumps the fundraiser table in case the FR has changed since.
   $found_gateway = db_query('SELECT d.gateway FROM {fundraiser_donation} d ' .
     'WHERE d.did = :did', array(':did' => $did))->fetchField();
-  // Then fall back to the gateway on the original fundraiser.
-  if (!isset($found_gateway) || empty($found_gateway)) {
-    $found_gateway = db_query('SELECT f.gateway FROM {fundraiser} f ' .
-      'LEFT JOIN {fundraiser_donation} d ON f.nid = d.nid ' .
-      'WHERE d.did = :did', array(':did' => $did))->fetchField();
-  }
   // Now ask if any other module wants to override this result.
   module_invoke('fundraiser_get_donation_gateway_alter', $did, $found_gateway);
   // Now translate that into something we can use by getting the rest of the dateway info.

@@ -532,7 +532,7 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
 
   // If using the gateway manager, store the gateway that was used to make the payment
   if (module_exists('gateway_manager')) {
-    $order->data['gateway'] = $node->gateway;
+    $order->data['gateway'] = $donation->gateway;
   }
 
   // Add additional order data field information.  
