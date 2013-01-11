@@ -201,6 +201,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       case 'commerce_cheque':
         $this_gateway['payment_method'] = array('check');
       break;
+      case 'commerce_ogone':
+        $this_gateway['payment_method'] = array('credit', 'paypal');
+      break;
       default:
         $this_gateway['payment_method'] = array('credit');
       break;
