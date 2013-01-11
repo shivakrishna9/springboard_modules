@@ -24,12 +24,6 @@ function fundraiser_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'gateway' => array(
-        'description' => 'The payment gateway the donation form uses to process credit cards.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-      ),
       'receipt_email_from' => array(
         'description' => 'The name that will appear in the from line in the receipt email.',
         'type' => 'varchar',
