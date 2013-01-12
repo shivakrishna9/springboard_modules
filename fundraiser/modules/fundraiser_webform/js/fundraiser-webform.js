@@ -28,7 +28,7 @@ Drupal.fundraiserWebform.fundraiserPaymentSelect = function(context) {
       });
     });
     // And trigger the change so the default fields are the ones that show.
-    $('#' + selectElement + ' input:first').triggerHandler('change');
+    $('#' + selectElement + ' input:checked').triggerHandler('change');
 
   }
 }
