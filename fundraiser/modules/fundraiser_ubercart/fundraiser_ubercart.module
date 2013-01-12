@@ -277,24 +277,24 @@ function fundraiser_ubercart_fundraiser_field_info_alter(&$fields) {
 }
 
 /**
- * Validation callback for field card_number.
+ * Validation callback for field payment_fields.
  */
 function _fundraiser_ubercart_payment_fields_validate($form, $form_state, $submission_fields, $value) {
   // Assume all ubercart submissions are credit cards, but we still need to validate them.
   $payment_method = $submission_fields['payment_method'];
   if ($payment_method == 'credit') {
-    $number = $submission_fields['card_number'];
+    $number = $value['credit']['card_number'];
     $valid = _uc_credit_valid_card_number($number);
     if (!$valid || !ctype_digit($number) || drupal_strlen($number) < 10) {
       return t('You have entered an invalid credit card number.');
     }
-    $cvv = $submission_fields['card_cvv'];
+    $cvv = $value['credit']['card_cvv'];
     $valid =_uc_credit_valid_cvv($cvv);
     if (!$valid && !empty($cvv)) {
       return t('You have entered an invalid CVV number.');
     }
-    $cc_expiration_month = $submission_fields['card_expiration_month'];
-    $cc_expiration_year = $submission_fields['card_expiration_year'];
+    $cc_expiration_month = $value['credit']['card_expiration_month'];
+    $cc_expiration_year = $value['credit']['card_expiration_year'];
     $valid = _uc_credit_valid_card_expiration($cc_expiration_month, $cc_expiration_year);
     if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
       return t('The credit card you entered has expired.');
@@ -434,11 +434,12 @@ function fundraiser_ubercart_fundraiser_donation_get_donation($donation) {
 
   // For ubercart these are the only values that will exist. We don't support any others.
   $donation->donation['payment_method'] = 'credit';
-  $donation->donation['card_number'] = $order->payment_details['cc_number'];
-  $donation->donation['card_expiration_month'] = $order->payment_details['cc_exp_month'];
-  $donation->donation['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
-  $donation->donation['card_cvv'] = isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  $donation->donation['card_type'] = $order->payment_details['cc_type'];
+  $donation->donation['payment_fields']['credit']['card_number'] = $order->payment_details['cc_number'];
+  $donation->donation['payment_fields']['credit']['card_expiration_month'] = $order->payment_details['cc_exp_month'];
+  $donation->donation['payment_fields']['credit']['card_expiration_year'] =  $order->payment_details['cc_exp_year'];
+  $donation->donation['payment_fields']['credit']['card_cvv'] = isset($order->payment_details['card_cvv']) ?
+    $order->payment_details['card_cvv'] : '';
+  $donation->donation['payment_fields']['credit']['card_type'] = $order->payment_details['cc_type'];
 
   // Add the order status data.
   // Translate the status according to UC label.
@@ -516,15 +517,16 @@ function fundraiser_ubercart_fundraiser_donation_create($donation) {
   // Card properties.
   $order->payment_method = 'credit'; //TODO check on this for possible US support later.
   $order->payment_details = array(
-    'cc_type' => _fundraiser_ubercart_get_cc_type($donation->donation['card_number']),
+    'cc_type' => _fundraiser_ubercart_get_cc_type($donation->donation['payment_fields']['credit']['card_number']),
     'cc_owner' => '',
-    'cc_number' => $donation->donation['card_number'],
+    'cc_number' => $donation->donation['payment_fields']['credit']['card_number'],
     'cc_start_month' => '',
     'cc_start_year' => '',
-    'cc_exp_month' => $donation->donation['card_expiration_month'],
-    'cc_exp_year' => $donation->donation['card_expiration_year'],
+    'cc_exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
+    'cc_exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
     'cc_issue' => '',
-    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+    'cc_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+      $donation->donation['payment_fields']['credit']['card_cvv'] : '',
     // cc_cvv is unset on order save for PCI compliance.
     'cc_bank' => '',
   );
@@ -667,13 +669,14 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
   $order->payment_method = 'credit';
   $order->payment_details = array(
     'cc_owner' => isset($order->payment_details['cc_type']) ? $order->payment_details['cc_type'] : '',
-    'cc_number' => $donation->donation['card_number'],
+    'cc_number' => $donation->donation['payment_fields']['credit']['card_number'],
     'cc_start_month' => isset($order->payment_details['cc_start_month']) ? $order->payment_details['cc_start_month'] : '',
     'cc_start_year' => isset($order->payment_details['cc_start_year']) ? $order->payment_details['cc_start_year'] : '',
-    'cc_exp_month' => $donation->donation['card_expiration_month'],
-    'cc_exp_year' => $donation->donation['card_expiration_year'],
+    'cc_exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
+    'cc_exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
     'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
-    'cc_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+    'cc_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+      $donation->donation['payment_fields']['credit']['card_cvv'] : '',
     'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
   );
 
@@ -724,12 +727,13 @@ function fundraiser_ubercart_fundraiser_donation_update($donation) {
          'state' => fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']),
          'zipcode' => $donation->donation['zip'],
          'country' => fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']),
-         'card_number' => $donation->donation['card_number'],
+         'card_number' => $donation->donation['payment_fields']['credit']['card_number'],
          'card_exp_date' => array(
-           'year' => $donation->donation['card_expiration_year'],
-           'month' => $donation->donation['card_expiration_month'],
+           'year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
+           'month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
          ),
-         'card_cvv' => isset($donation->donation['card_cvv']) ? $donation->donation['card_cvv'] : '',
+         'card_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+           $donation->donation['payment_fields']['credit']['card_cvv'] : '',
       );
       $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
     }

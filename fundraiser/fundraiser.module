@@ -135,21 +135,36 @@ function fundraiser_token_info() {
     'description' => t('The user account the donation came from.'),
     'type' => 'user',
   );
-  // Modify given fields.
-  /*
-  if (isset($info['tokens']['donation']['card_number'])) {
-    $info['tokens']['donation']['card_number'] = array(
-      'name' => t('Ending Card Number'),
-      'description' => t('The last four digits of the credit card used for the donation.'),
+  // Modify given for payment fields.
+  if (isset($info['tokens']['donation']['payment_fields'])) {
+    $payment_methods = array(
+      'credit' => array(
+        'card_number' => t('Credit card number'),
+        'card_expiration_month' => t('Card expiration month'),
+        'card_expiration_year' => t('Card expiration year'),
+        'card_cvv' => t('Credit card CVV'),
+        'card_type' => t('Credit card type'),
+      ),
+      'paypal' => array(
+        'paypal_email' => t('Paypal email'),
+      ),
+      'debit' => array(
+        'debit_routing' => t('Debit bank routing number'),
+        'debit_account' => t('Debit bank account number'),
+      ),
     );
+    foreach ($payment_methods as $payment_method => $payment_fields) {
+      foreach ($payment_fields as $key => $title) {
+        $info['tokens']['donation'][$key] = array(
+          'name' => $title,
+          'description' => t('A payment method field for the @method payment method.', array('@method' => $payment_method)),
+        );
+      }
+    }
+    $info['tokens']['donation']['card_number']['description'] = t('The last four digits of the credit card used for the donation.');
+    $info['tokens']['donation']['card_type']['description'] = t('The credit card type used for the donation.');
+    unset($info['tokens']['donation']['payment_fields']);
   }
-  // Add an extra one from charge modules.
-  $info['tokens']['donation']['card_type'] = array(
-    'name' => t('Card Type'),
-    'description' => t('The credit card type used for the donation.'),
-  );
-  */
-  // TODO Adjust this tokening to account for the new changed in donation fields.
   return $info;
 }
 
@@ -192,11 +207,34 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     $data['did'] = isset($donation->did) ? $donation->did : '';
     $data['node'] = isset($donation->node->nid) ? $donation->node->nid : '';
     $data['user'] = isset($donation->user->uid) ? $donation->user->uid : '';
-    // Specific changes.
-    // TODO Adjust this tokening to account for the new changed in donation fields.
-    // Make sure to hide routing numbers as needed.
-    $data['card_number'] = isset($donation->donation['card_number']) ? drupal_substr($donation->donation['card_number'], -4) : 'unk';
-    $data['card_type'] = isset($donation->donation['cc_type']) ? drupal_ucfirst($donation->donation['cc_type']) : 'unk';
+    // Specific changes for payment fields.
+    if (isset($data['payment_fields'])) {
+      $payment_methods = array(
+        'credit' => array(
+          'card_number' => t('Credit card number'),
+          'card_expiration_month' => t('Card expiration month'),
+          'card_expiration_year' => t('Card expiration year'),
+          'card_cvv' => t('Credit card CVV'),
+          'card_type' => t('Credit card type'),
+        ),
+        'paypal' => array(
+          'paypal_email' => t('Paypal email'),
+        ),
+        'debit' => array(
+          'debit_routing' => t('Debit bank routing number'),
+          'debit_account' => t('Debit bank account number'),
+        ),
+      );
+      foreach ($payment_methods as $payment_method => $payment_fields) {
+        foreach ($payment_fields as $key => $title) {
+          $data[$key] = $data['payment_fields'][$payment_method][$key];
+        }
+      }
+      // Make sure to hide routing numbers as needed.
+      $data['card_number'] = isset($data['card_number']) ? drupal_substr($data['card_number'], -4) : '';
+      $data['card_type'] = isset($data['card_type']) ? drupal_ucfirst($data['card_type']) : '';
+      unset($data['payment_fields']);
+    }
   }
   // Replace the given tokens.
   $replacements = array();
@@ -792,12 +830,26 @@ function fundraiser_fundraiser_field_info() {
     '#title' => t('Payment Details'),
     '#type' => 'payment_fields',
     '#required' => 0,
-    // Instead of returning the value of this field it's treated more like a variable fieldset.
-    // The values returned are dependant on the value returned by payment method.
-    // For credit cards: 'card_number', 'card_expiration_month', 'card_expiration_year', 'card_cvv', 'card_type'
-    // Debit -> 'debit_routing', 'debit_account'
-    // Paypal -> 'paypal_email'
-    // Check -> nothing added under $donation->donation
+    /**
+     * Instead of returning the value of this field it's treated more like a variable fieldset.
+     * The values returned are dependant on the value returned by payment method.
+     * In the format:
+     * 'payment_fields' => array(
+     *   'credit' => array(
+     *     'card_number' => '',
+     *     'card_expiration_month' => '',
+     *     'card_expiration_year' => '',
+     *     'card_cvv' => '',
+     *   )
+     *   'paypal' => array(
+     *     'paypal_email' => '',
+     *   )
+     *   'debit' => array(
+     *     'debit_routing' => '',
+     *     'debit_account' => '', 
+     *   )
+     * );
+     */
   );
   return $fields;
 }
@@ -1391,19 +1443,12 @@ function fundraiser_donation_failed_validation($errors) {
  * Donation processing, a donation needs to be created prior to processing.
  */
 function fundraiser_donation_create($donation) {
+  // The gateway is selected by the user, was set during submission. Same as nid, uid, sid etc.
   // Call hooks to create the donation. The glue module handles everything else once handed fundraisers info.
   // This is a good location to update $donation->data for processing.
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
-
-  // TODO Select the gateway from the donation->donation->payment_method selected.
-  // The gateway is selected by the user, 
-  //$fundraiser_node = node_load($donation->nid);
-  //if (is_array($fundraiser_node->gateway)) {
-  //  $fundraiser_node->gateway = !empty($fundraiser_node->gateway['id']) ? $fundraiser_node->gateway['id'] : '';
-  //}
-  $donation->gateway = 'none'; // TODO - fix this
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.

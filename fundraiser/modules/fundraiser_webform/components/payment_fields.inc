@@ -43,7 +43,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
   $element = _webform_render_fieldset($component, $value, $filter);
   $element['#pre_render'][] = '_fundraiser_component_payment_fields_pre_render';
 
-  // Loop through the payment methods and add the fields for each
+  // Loop through the payment methods and add the fields for each type. Unsupported will be hidden.
   $payment_methods = array('none', 'credit', 'paypal', 'debit', 'check');
   foreach ($payment_methods as $payment_method) {
     // Load up the instance

@@ -169,7 +169,7 @@ function _fundraiser_webform_payment_method_validate($form, &$form_state) {
     }
     else {
       // Set the default value to the appropriate method
-      // Having to do this here since a submit handler fires after the componenet is saved
+      // Having to do this here since a submit handler fires after the component is saved
       $form_state['values']['extra']['payment_methods'][$default_method]['default'] = 1;
     }
   }

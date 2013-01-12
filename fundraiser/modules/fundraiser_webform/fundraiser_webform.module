@@ -115,7 +115,7 @@ function fundraiser_webform_webform_submission_presave($node, &$submission) {
   unset($submission->data['']);
   // Remove senstive form data before the submission is saved to the database.
   if (fundraiser_is_donation_type($node->type)) { // From fundraiser.module.
-    $results = _fundraiser_webform_get_components_by_keys($node->nid, array('card_number', 'card_cvv', 'card_expiration_date'));
+    $results = _fundraiser_webform_get_components_by_keys($node->nid, array('payment_fields'));
     foreach ($results as $result) {
       // Set sensitive info to NULL.
       $submission->data[$result->cid]['value'][0] = NULL;
@@ -427,71 +427,12 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
 
-/*
-  // Combine expiration month and year into a single component.
-  $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
-  $cc_exp_year_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_year']);
-  $cc_info_field =& _fundraiser_webform_find_field($form, $component_hierarchy['credit_card_information']);
-  $cc_exp_month_field['#default_value'] = date('n');
-  $cc_exp_year_field['#default_value'] = date('Y');
-
-  // Make sure the year field always has a good range of years.
-  $this_year = date('Y');
-  $years = array($this_year => $this_year);
-  for ($i = 1; $i <= 10; $i++) { // Up to 10 years out.
-    $years[$this_year + $i] = $this_year + $i;
-  }
-  $cc_exp_year_field['#options'] = $years;
-
-  // Check to see if the credit card information fieldset still exists because it may have been removed.
-  if (is_array($cc_info_field)) {
-    $cc_info_field['expiration_date'] = array();
-    $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-    $cc_info_field['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-    $cc_info_field['expiration_date']['#weight'] = isset($cc_exp_month_field['#weight']) ? $cc_exp_month_field['#weight'] : 0;
-    $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-  }
-  else {
-    // Add the new expiration_date directly to the form with the same weight as the cc_exp_month field.
-    $form['expiration_date'] = array();
-    $form['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-    $form['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-    $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
-    $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-  }
-  // Remove old fields from form layout after moving them to their new location.
-  $cc_exp_month_field = NULL;
-  $cc_exp_year_field = NULL;
-*/
   // And lastly add a user facing message for submit.
   $form['submit']['#suffix'] = '<div class="fundraiser_submit_message">' .
     theme('image', array('path' =>  drupal_get_path('module', 'fundraiser_webform') . '/images/padlock.gif' )) .
     t('By clicking SUBMIT DONATION your credit card will be securely processed.') .
     '</div>';
-
-  // Add a submit handler in advance of the webform_client_form_submit to cleanup after our move.
-  // This handler moves the expiration date stuff back where webform expects it to be.
-  // Important: It needs to run before webform runs, so it's getting put at the front of the array.
-  array_unshift($form['#submit'], '_fundraiser_webform_pre_submit_cleanup');
   return $form;
-}
-
-/**
- * Submit callback, this moves the expiration month and year back into the structure where they
- * are expected, and removes 'expiration_date' from the list. If 'expiration_date' remained in the
- * submission, webform will try to look up a cid for it and reference it as if the component exists.
- * (Aka: there's no check to make sure a cid was recieved before acting on it.
- * So: We put everything back after we're done so that webform never knows the difference.
- */
-function _fundraiser_webform_pre_submit_cleanup($form, &$form_state) {
-/*
-  $form_state['values']['submitted']['credit_card_information']['card_expiration_month'] =
-      $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_month'];
-  $form_state['values']['submitted']['credit_card_information']['card_expiration_year'] =
-      $form_state['values']['submitted']['credit_card_information']['expiration_date']['card_expiration_year'];
-  // Remove 'expiration_date' so webform doesn't get confused when it tries to process.
-  unset($form_state['values']['submitted']['credit_card_information']['expiration_date']);
-*/
 }
 
 /**
@@ -520,10 +461,10 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
     // SCRUB DATA. We do not want to save these in the error watchdog message.
     // We can be sure these fields are in the set, since they're declared in fundraiser.
-//    $submission_fields['card_number'] = substr_replace($submission_fields['card_number'],
-//      str_repeat('*', drupal_strlen($submission_fields['card_number'])), 0);
-//    $submission_fields['card_cvv'] = substr_replace($submission_fields['card_cvv'],
-//      str_repeat('*', drupal_strlen($submission_fields['card_cvv'])), 0);
+    $submission_fields['payment_fields']['credit']['card_number'] = substr_replace($submission_fields['payment_fields']['credit']['card_number'],
+      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_number'])), 0);
+    $submission_fields['payment_fields']['credit']['card_cvv'] = substr_replace($submission_fields['payment_fields']['credit']['card_cvv'],
+      str_repeat('*', drupal_strlen($submission_fields['payment_fields']['credit']['card_cvv'])), 0);
 
     $message .= "\n\nSubmitted Values:\n\n";
     foreach ($submission_fields as $key => $value) {
@@ -546,9 +487,11 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
-// TODO Move payment method fields to the correct places for return to the rest of the system for processing.
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
+  // Figure out which gateway it is that this selection indicates for this node.
+  $field =& _fundraiser_webform_find_field($form, _fundraiser_webform_parse_component($form['#node']->nid, 'payment_method'));
+  $donation->gateway = $field['#webform_component']['extra']['payment_methods'][ $submission_fields['payment_method'] ]['id'];
 }
 
 /**
@@ -560,9 +503,9 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     // Tell webform we're not done and rebuild the form.
     unset($form_state['values']['details']['sid']);
     if (!isset($donation->result['message']) || empty($donation->result['message'])) {
-      $donation->result['message'] = t('Your card has been denied. Please try another.');
+      $donation->result['message'] = t('Your payment method has been denied. Please try another.');
     }
-    form_set_error('card_number', $donation->result['message']);
+    form_set_error('payment_fields', $donation->result['message']);
     $form_state['values']['details']['finished'] = 0;
     $form_state['rebuild'] = TRUE;
   }

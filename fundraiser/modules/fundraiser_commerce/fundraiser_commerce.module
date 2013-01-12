@@ -272,25 +272,25 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
 
 
 /**
- * Validation callback for field card_number.
+ * Validation callback for field payment_fields.
  */
 function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
   // Assume all ubercart submissions are credit cards, but we still need to validate them.
   $payment_method = $submission_fields['payment_method'];
   if ($payment_method == 'credit') {
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
-    $number = $submission_fields['card_number'];
+    $number = $value['credit']['card_number'];
     $valid = commerce_payment_validate_credit_card_number($number);
     if (!$valid || !ctype_digit($number) || drupal_strlen($number) < 10) {
       return t('You have entered an invalid credit card number.');
     }
-    $cvv = $submission_fields['card_cvv'];
-    $valid = commerce_payment_validate_credit_card_security_code($cvv, $value);
+    $cvv = $value['credit']['card_cvv'];
+    $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
     if (!$valid && !empty($cvv)) {
       return t('You have entered an invalid CVV number.');
     }
-    $cc_expiration_month = $submission_fields['card_expiration_month'];
-    $cc_expiration_year = $submission_fields['card_expiration_year'];
+    $cc_expiration_month = $value['credit']['card_expiration_month'];
+    $cc_expiration_year = $value['credit']['card_expiration_year'];
     $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
     if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
       return t('The credit card you entered has expired.');
@@ -433,11 +433,12 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
   // Not an issue on initial submit (set during user input phase), but CRITICAL for sustainer charges.
   $donation->donation['payment_method'] = 'credit'; // $order->payment_details['cc_number'];
-  $donation->donation['card_number'] = ''; // $order->payment_details['cc_number'];
-  $donation->donation['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
-  $donation->donation['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
-  $donation->donation['card_cvv'] =''; // isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  $donation->donation['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['card_number']); // $order->payment_details['cc_type'];
+  $donation->donation['payment_fields']['credit']['card_number'] = ''; // $order->payment_details['cc_number'];
+  $donation->donation['payment_fields']['credit']['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
+  $donation->donation['payment_fields']['credit']['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
+  $donation->donation['payment_fields']['credit']['card_cvv'] =''; // isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
+  $donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type(
+    $donation->donation['payment_fields']['credit']['card_number']); // $order->payment_details['cc_type'];
 
   // Add specific order data. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
   //$donation->data = isset($order->data) ? $order->data : array();
@@ -639,7 +640,6 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
  */
 function fundraiser_commerce_fundraiser_donation_success($donation) {
   // Mark as complete.
-drupal_set_message('fundraiser_commerce_fundraiser_donation_success');
   _fundraiser_commerce_update_order_status('payment_received', $donation->did);
   $donation->status_label = _fundraiser_commerce_get_label_by_status('payment_received');
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status('payment_received');

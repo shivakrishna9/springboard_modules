@@ -14,7 +14,7 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
   $name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   // Use 0000000000000000 to test a failed payment, anything else for a good one.
-  if ($donation->donation['card_number'] == '0000000000000000') {
+  if ($donation->donation['payment_fields']['credit']['card_number'] == '0000000000000000') {
     $success = FALSE;
   }
   else {
