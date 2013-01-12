@@ -21,13 +21,15 @@ Drupal.fundraiserWebform.fundraiserPaymentSelect = function(context) {
     var selectElement = Drupal.settings.fundraiserWebform.components.payment_method.id,
       fieldsElement = Drupal.settings.fundraiserWebform.components.payment_fields.id;
 
-    $('#' + fieldsElement + ' fieldset.fundraiser-payment-method:not(:first)').hide();
     $.each(Drupal.settings.fundraiserWebform.active_methods, function(key, field) {
       $('#' + selectElement + '-' + key).change(function() {
         $('#' + fieldsElement + ' fieldset.fundraiser-payment-method').hide();
         $('#' + fieldsElement + ' fieldset#fundraiser-payment-method-' + field).show();
       });
     });
+    // And trigger the change so the default fields are the ones that show.
+    $('#' + selectElement + ' input:first').triggerHandler('change');
+
   }
 }
 
