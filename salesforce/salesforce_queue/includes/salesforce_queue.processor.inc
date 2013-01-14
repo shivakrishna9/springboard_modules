@@ -378,7 +378,7 @@ class SalesforceQueueProcessor {
       $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
       if ($op == 'DELETE') {
-        // Unneeded for DELETE.
+        // DELETE is object agnostic.
         unset($batch['object']);
       }
       if ($op == 'UPSERT') {

@@ -110,9 +110,11 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
   }
   // Donation payment fields map.
-  // Depending on the payment method any number of additional fields may exist. So we need to add them here.
-  // Since which fields have values is completely dependant on the individual user's choice at time of
-  // donation we can't anticipate which one will have a value and which one won't. So add them all for mapping.
+  // Depending on the payment method any number of additional fields may exist.
+  // So we need to add them here. Since which fields have values is completely
+  // dependant on the individual user's choice at time of donation we can't
+  // anticipate which one will have a value and which one won't. So add them all
+  // for mapping.
   $payment_methods = array(
     'credit' => array(
       'card_number' => t('Credit card number'),
@@ -223,9 +225,11 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
         ' (' . $donation_field['#type'] . ')';
     }
   }
-  // Depending on the payment method any number of additional fields may exist. So we need to add them here.
-  // Since which fields have values is completely dependant on the individual user's choice at time of
-  // donation we can't anticipate which one will have a value and which one won't. So add them all for mapping.
+  // Depending on the payment method any number of additional fields may exist.
+  // So we need to add them here. Since which fields have values is completely
+  // dependant on the individual user's choice at time of donation we can't
+  // anticipate which one will have a value and which one won't. So add them all
+  // for mapping.
   $payment_methods = array(
     'credit' => array(
       'card_number' => t('Credit card number'),
