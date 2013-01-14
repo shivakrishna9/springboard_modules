@@ -595,8 +595,8 @@ class SalesforceQueueProcessor {
             break;
         }
       }
-      catch (Exception $error) {
-        $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH, $error);
+      catch (Exception $sf_error) {
+        $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH, $sf_error);
       }
 
       // Respond to responses.
