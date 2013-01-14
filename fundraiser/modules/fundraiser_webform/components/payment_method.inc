@@ -82,11 +82,13 @@ function _webform_edit_payment_method($component) {
 
   // Loop through each method
   foreach ($all_payment_methods as $method_key => $method) {
+    // Remove the weight value
+    unset($method['weight']);
     $field_method_settings = isset($field_payment_methods[$method_key]) ? $field_payment_methods[$method_key] : array();
-    // Build the #options array for gateways supporting this payment method.
-    $gateway_options = array(NULL => '- ' . t('select') . ' -');
+    // Build the #options array for the payment processors supporting this payment method.
+    $processor_options = array(NULL => '- ' . t('select') . ' -');
     foreach (element_children($method) as $key) {
-      $gateway_options[$method[$key]['id']] = $method[$key]['title'];
+      $processor_options[$method[$key]['id']] = $method[$key]['title'];
     }
     $fieldset[$method_key] = array('#tree' => TRUE);
     $fieldset[$method_key]['status'] = array(
@@ -105,7 +107,7 @@ function _webform_edit_payment_method($component) {
     $fieldset[$method_key]['id'] = array(
       '#type' => 'select',
       '#title' => t('Payment Processor'),
-      '#options' => $gateway_options,
+      '#options' => $processor_options,
       '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
     );
     $fieldset[$method_key]['label'] = array(

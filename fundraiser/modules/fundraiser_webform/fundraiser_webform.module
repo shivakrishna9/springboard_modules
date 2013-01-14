@@ -21,14 +21,13 @@ function fundraiser_webform_webform_component_info() {
     'file' => 'components/payment_method.inc'
   );
   $components['payment_fields'] = array(
-    'label' => t('Payment Gateway Fields'),
-    'description' => t('Container for the display of the payment gateway fields.'),
+    'label' => t('Payment Fields'),
+    'description' => t('Container for the display of the payment fields.'),
     'features' => array(
       'required' => FALSE,
       'csv' => FALSE,
       'description' => FALSE,
       'default_value' => FALSE,
-      'group' => TRUE,
     ),
     'file' => 'components/payment_fields.inc'
   );
@@ -581,7 +580,7 @@ function fundraiser_webform_fundraiser_update_fundraiser_alter($fundraiser) {
  */
 function fundraiser_webform_fundraiser_field_info_alter($fields) {
   $email_map = array('amount', 'other_amount', 'first_name', 'last_name', 'mail', 'address', 'address_line_2',
-    'city', 'zip', 'country', 'state', 'payment_fields', 'payment_methods');
+    'city', 'zip', 'country', 'state', 'payment_fields', 'payment_method');
   foreach (element_children($fields) as $key) {
     $fields[$key] = _fundraiser_webform_fundraiser_field_info_alter($key, $fields[$key], $email_map);
   }
