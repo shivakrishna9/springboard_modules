@@ -17,7 +17,7 @@ define('SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT', 1000);
 define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
 
 // The maximum amount of items that can be sent to Salesforce in one call.
-define('SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT', 200);
+define('SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT', 200);
 
 // Maximum retries an item will go through before moving to the 'fail' queue.
 define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);

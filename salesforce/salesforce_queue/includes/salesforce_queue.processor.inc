@@ -87,7 +87,7 @@ class SalesforceQueueProcessor {
    *
    * @var int
    */
-  protected $salesforceMax = 200;
+  protected $sfMaxBatchSize = 200;
 
   /**
    * Salesforce object to connect with
@@ -137,7 +137,7 @@ class SalesforceQueueProcessor {
     $this->queueName = $queue->queueName;
     $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
     $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
-    $this->salesforceMax = variable_get('salesforce_queue_salesforce_max', SALESFORCE_QUEUE_SALESFORCE_MAX_DEFAULT);
+    $this->sfMaxBatchSize = variable_get('salesforce_queue_sf_max_batch_size', SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT);
     $this->sfapi = salesforce_get_api();
     $this->soap = new SalesforceSoapPartner($this->sfapi);
   }
@@ -276,7 +276,7 @@ class SalesforceQueueProcessor {
    *     - If operation is DELETE, object type doesn't matter
    *   - Same operation
    *     - If operation is UPSERT, they have the same dedupe field
-   *   - No more than 200 items ($salesforce_max)
+   *   - No more than 200 items ($sfMaxBatchSize)
    *
    * @NOTE There may be an additional complication when considering row-by-row
    *       comparision.  A field map may have individual fields check against
@@ -322,7 +322,7 @@ class SalesforceQueueProcessor {
    *   A queue item
    * @param array $batch_groups
    *   Temporary holder that categorizes all of the items and places them in
-   *   group no larger than salesforce_max
+   *   group no larger than $sfMaxBatchSize
    */
   protected function addItemToBatchGroups($item, &$batch_groups) {
     // Set up our brevity vars.
@@ -373,7 +373,7 @@ class SalesforceQueueProcessor {
     end($batch_group);
     $last_key = key($batch_group);
     reset($batch_group);
-    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->salesforceMax) {
+    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->sfMaxBatchSize) {
       // Create a new batch.
       $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
@@ -709,7 +709,7 @@ class SalesforceQueueProcessor {
     if (empty($this->newSfRecords)) {
       return;
     }
-    $batches = array_chunk($this->newSfRecords, $this->salesforceMax);
+    $batches = array_chunk($this->newSfRecords, $this->sfMaxBatchSize);
     $this->newSfRecords = array();
     foreach ($batches as $batch) {
       $sobjects = array();

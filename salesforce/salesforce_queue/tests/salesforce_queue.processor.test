@@ -147,7 +147,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   public function testCreateBatches() {
     // Batch size is user configurable.  Lets say the user configured the batch
     // size to be 10 items.
-    variable_set('salesforce_queue_salesforce_max', 10);
+    variable_set('salesforce_queue_sf_max_batch_size', 10);
 
     // Lets create and claim 200 items so that the randomness factor will ensure
     // that will will get more than 10 items for each type of batch.
