@@ -9,10 +9,6 @@
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
 function commerce_ogone_fundraiser_commerce_execute_gateway($payment_method, $donation) {
-  dpm($payment_method, 'payment_method');
-  dpm($donation, 'donation');
-  $order = commerce_order_load($donation->did);
-  dpm($order, 'order');
   drupal_goto('fundraiser-commerce/redirect/' . $donation->did);
   // Set feedback URLs
     
