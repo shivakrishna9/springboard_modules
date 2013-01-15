@@ -9,6 +9,9 @@ Drupal.behaviors.fundraiserCheckCode = {
   $('#edit-submitted-credit-card-information-card-cvv').numeric();
   $('#edit-submitted-credit-card-information-card-expiration-date-day').hide();
 
+  // Add novalidate to all email input types to turn off HTML5 validation
+  $('form').attr('novalidate','novalidate');
+
   // If quantity changes, update the total. Where needed.
   $('#edit-submitted-donation-quantity').change(function() {
     $('#total').empty();
