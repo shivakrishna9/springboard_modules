@@ -186,6 +186,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
     $this_gateway['description'] = $method_instance['description'];
     $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
     $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
+    $this_gateway['allow_recurring'] = FALSE;
     // Add the gateway type, usually credit. Could be: 'credit', 'debit', 'paypal', 'check'
     // Override for specific gateways we support that we know aren't credit.
     switch ($method_instance['module']) {
@@ -205,6 +206,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
         $this_gateway['payment_method'] = array('credit', 'paypal');
       break;
       default:
+        $this_gateway['allow_recurring'] = TRUE;
         $this_gateway['payment_method'] = array('credit');
       break;
     }

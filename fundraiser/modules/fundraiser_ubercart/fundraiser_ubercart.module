@@ -192,6 +192,8 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $this_gateway['gateway_details'] = $uc_gateway;
       // ALL currently supported ubercart systems are Credit Card Only.
       $this_gateway['payment_method'] = array('credit');
+      // ALL currently supported ubercart gateways allow for recurring.
+      $this_gateway['allow_recurring'] = TRUE;
       $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }
