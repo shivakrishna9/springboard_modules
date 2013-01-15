@@ -269,4 +269,7 @@ function fundraiser_update_7000() {
   db_drop_index('fundraiser_refund', 'refund_order_id');
   db_change_field('fundraiser_refund', 'order_id', 'did', $did_field);
   db_add_index('fundraiser_refund', 'refund_did', array('did'));
+  
+  // Drop the gateway field on fundraisers.
+  db_drop_field('fundraiser', 'gateway');
 }
