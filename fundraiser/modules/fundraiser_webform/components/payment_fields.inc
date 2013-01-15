@@ -93,12 +93,31 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
           '#type' => 'textfield',
           '#title' => t('Credit card number'),
         );
+        $months = "1|January\n";
+        $months .= "2|February\n";
+        $months .= "3|March\n";
+        $months .= "4|April\n";
+        $months .= "5|May\n";
+        $months .= "6|June\n";
+        $months .= "7|July\n";
+        $months .= "8|August\n";
+        $months .= "9|September\n";
+        $months .= "10|October\n";
+        $months .= "11|November\n";
+        $months .= "12|December\n";
         $element[$payment_method]['card_expiration_month'] = array(
-          '#type' => 'textfield',
+          '#type' => 'select',
+          '#options' => $months,
           '#title' => t('Expiration month'),
         );
+        $this_year = date('Y');
+        $years = $this_year . "\n";
+        for ($i = 1; $i <= 15; $i++) {
+          $years .= ($this_year + $i) . "\n";
+        }
         $element[$payment_method]['card_expiration_year'] = array(
-          '#type' => 'textfield',
+          '#type' => 'select',
+          '#options' => $years,
           '#title' => t('Expiration year'),
         );
         $element[$payment_method]['card_cvv'] = array(
