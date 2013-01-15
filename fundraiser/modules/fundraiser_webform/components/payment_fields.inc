@@ -89,7 +89,8 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
       break;
       case 'credit':
       default:
-        $element[$payment_method]['card_number'] = array(
+        $element[$payment_method]['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
+        $element[$payment_method]['expiration_date']['card_number'] = array(
           '#type' => 'textfield',
           '#title' => t('Credit card number'),
         );
@@ -105,10 +106,11 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         $months[10] = 'October';
         $months[11] = 'November';
         $months[12] = 'December';
-        $element[$payment_method]['card_expiration_month'] = array(
+        $element[$payment_method]['expiration_date']['card_expiration_month'] = array(
           '#type' => 'select',
           '#options' => $months,
           '#title' => t('Expiration month'),
+          '#default_value' => date('n'),
         );
         $this_year = date('Y');
         $years[$this_year] = $this_year;
@@ -119,40 +121,8 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
           '#type' => 'select',
           '#options' => $years,
           '#title' => t('Expiration year'),
+          '#default_value' => date('Y'),
         );
-/*
-  // Combine expiration month and year into a single component.
-  $cc_exp_month_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_month']);
-  $cc_exp_year_field =& _fundraiser_webform_find_field($form, $component_hierarchy['card_expiration_year']);
-  $cc_info_field =& _fundraiser_webform_find_field($form, $component_hierarchy['credit_card_information']);
-  $cc_exp_month_field['#default_value'] = date('n');
-  $cc_exp_year_field['#default_value'] = date('Y');
-
-  // Make sure the year field always has a good range of years.
-  $this_year = date('Y');
-  $years = array($this_year => $this_year);
-  for ($i = 1; $i <= 10; $i++) { // Up to 10 years out.
-    $years[$this_year + $i] = $this_year + $i;
-  }
-  $cc_exp_year_field['#options'] = $years;
-
-  // Check to see if the credit card information fieldset still exists because it may have been removed.
-  if (is_array($cc_info_field)) {
-    $cc_info_field['expiration_date'] = array();
-    $cc_info_field['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-    $cc_info_field['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-    $cc_info_field['expiration_date']['#weight'] = isset($cc_exp_month_field['#weight']) ? $cc_exp_month_field['#weight'] : 0;
-    $cc_info_field['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-  }
-  else {
-    // Add the new expiration_date directly to the form with the same weight as the cc_exp_month field.
-    $form['expiration_date'] = array();
-    $form['expiration_date']['card_expiration_month'] = $cc_exp_month_field;
-    $form['expiration_date']['card_expiration_year'] = $cc_exp_year_field;
-    $form['expiration_date']['#weight'] = $cc_exp_month_field['#weight'];
-    $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-  }
-*/
         $element[$payment_method]['card_cvv'] = array(
           '#type' => 'textfield',
           '#title' => t('CVV'),
