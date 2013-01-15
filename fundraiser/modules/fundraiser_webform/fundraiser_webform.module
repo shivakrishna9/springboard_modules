@@ -446,6 +446,18 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
+  // Move expiration date values up in the array.
+  if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
+    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
+      $submission_fields['payment_fields']['credit']['card_expiration_month'] =
+        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+    }
+    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'])) {
+      $submission_fields['payment_fields']['credit']['card_expiration_year'] =
+        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+    }
+    unset($submission_fields['payment_fields']['credit']['expiration_date']);
+  }
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
   // Create watchdog entry on validation errors.

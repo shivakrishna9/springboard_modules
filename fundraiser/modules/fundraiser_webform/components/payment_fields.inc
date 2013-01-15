@@ -92,6 +92,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         $element[$payment_method]['card_number'] = array(
           '#type' => 'textfield',
           '#title' => t('Credit card number'),
+          '#size' => 20,
         );
         $element[$payment_method]['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
         $months[1] = 'January';
@@ -126,6 +127,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         $element[$payment_method]['card_cvv'] = array(
           '#type' => 'textfield',
           '#title' => t('CVV'),
+          '#size' => 6,
         );
       break;
     }
