@@ -227,7 +227,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       );
       foreach ($payment_methods as $payment_method => $payment_fields) {
         foreach ($payment_fields as $key => $title) {
-          $data[$key] = $data['payment_fields'][$payment_method][$key];
+          $data[$key] = isset($data['payment_fields'][$payment_method][$key]) ? $data['payment_fields'][$payment_method][$key] : '';
         }
       }
       // Make sure to hide routing numbers as needed.
