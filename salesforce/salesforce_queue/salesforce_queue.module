@@ -26,7 +26,7 @@ define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 define('SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT', 60);
 
 /**
- * @}
+ * @} salesforce_queue_var_default
  */
 
 
@@ -62,7 +62,7 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 
 /**
- * @}
+ * @} salesforce_queue_processor_statuses
  */
 
 
@@ -96,7 +96,7 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
 
 /**
- * @}
+ * @} salesforce_queue_process_item_fail_responces
  */
 
 
