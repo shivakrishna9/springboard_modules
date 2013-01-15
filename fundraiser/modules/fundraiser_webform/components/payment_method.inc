@@ -228,13 +228,7 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   $element['#post_render'] = array('_fundraiser_webform_component_payment_method_post_render');
 
   // If there is only one payment method on this node this field becomes a value
-  if (count($component['extra']['payment_methods']) == 1) {
-    $method = array_keys($node->gateway_manager['payment_methods']);
-    $element['#type'] = 'value';
-    $element['#value'] = $method[0];
-    $element['#theme_wrappers'] = array();
-  }
-  elseif (!empty($component['extra']['payment_methods'])) {
+  if (!empty($component['extra']['payment_methods'])) {
     // Sort all payment methods by weight.
     uasort($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_weight_compare');
     // Loop through the payment methods to create our options and find the default
