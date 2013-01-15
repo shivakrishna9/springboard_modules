@@ -15,6 +15,19 @@
 // To delete the donation on order delete.
 
 /**
+ * Implements hook_menu
+ */
+function fundraiser_commerce_menu() {
+  $items = array();
+  $items['fundraiser-commerce/redirect/%'] = array(
+    'page callback' => 'fundraiser_commerce_payment_redirect',
+    'page arguments' => array(2),
+    'access arguments' => TRUE,
+  );
+  return $items;
+}
+
+/**
  * Implements hook_entity_view().
  */
 function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) {
@@ -833,3 +846,97 @@ function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
   return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
 }
  */
+
+/**
+ * Callback for processing an offsite payment processor
+ */
+function fundraiser_commerce_payment_redirect($did) {
+  $form = array();
+  $donation = _fundraiser_get_donation_by_did($did);
+  $order = commerce_order_load($donation->did);
+
+  // First load the order's specified payment method instance.
+  if (!empty($donation->gateway)) {
+    $payment_method = commerce_payment_method_instance_load($donation->gateway);
+  }
+  else {
+    $payment_method = FALSE;
+  }
+
+  // If the payment method doesn't exist or does not require a redirect...
+  if (!$payment_method || !$payment_method['offsite']) {
+    if (!$payment_method) {
+      $log = t('Customer skipped the Payment page because no payment was required.');
+    }
+    else {
+      $log = t('Customer skipped the Payment page because payment was already submitted.');
+    }
+    print 'no redirect because of missing payment method or not redirectable';
+    //drupal_goto(); send them somewheree
+  }
+
+  // Load up the include for this payment method
+  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
+
+  // If the user came to the cancel URL...
+  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
+    // Send the customer tsomewhere
+    //drupal_goto();
+  }
+
+  // If the user came to the return URL...
+  if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
+    // Check for a validate handler on return.
+    $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');
+ 
+    // If there is no validate handler or if there is and it isn't FALSE...
+    if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
+      // Perform any submit functions if necessary.
+      if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
+        $callback($order, $payment_method);
+      }
+
+      // Success, need to update the donation
+      //drupal_goto();
+      return 'success';
+    }
+    else {
+      // Otherwise display the failure message and send the customer back.
+      drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
+
+      //drupal_goto();
+      return 'not successful';
+    }
+  }
+
+  // If the function to build the redirect form exists...
+  if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {
+    // If a function has been setup to override the default callback, use that
+    if (function_exists($payment_method['module'] . '_fundraiser_commerce_redirect_form')) {
+      $callback = $payment_method['module'] . '_fundraiser_commerce_redirect_form';
+    }
+
+    // Generate a key to use in the return URL from the redirected service.
+    $order->data['payment_redirect_key'] = drupal_hash_base64(time());
+    commerce_order_save($order);
+
+    // If the payment method has the 'offsite_autoredirect' option enabled, add
+    // the redirection behavior.
+    //if (!empty($payment_method['offsite_autoredirect'])) {
+    //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
+     // $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+    //}
+
+    // Merge the new form into the current form array, preserving the help text
+    // if it exists. We also add a wrapper so the form can be easily submitted.
+    $form += drupal_get_form($callback, $donation, $order, $payment_method);
+
+    $form['#prefix'] = '<div class="payment-redirect-form">';
+    $form['#suffix'] = '</div>';
+  }
+  else {
+    // Alert the administrator that the module does not provide a required form.
+    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
+  }
+  return $form;
+}
