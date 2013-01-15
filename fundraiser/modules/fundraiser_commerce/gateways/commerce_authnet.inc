@@ -22,9 +22,30 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
       'code' => $donation->donation['payment_fields']['credit']['card_cvv'],
     ),
   );
-
-  // Customer data for authnet pulls from the customer profile given on the order, so we can ignore that.
-  // If the charge fails, returns false, else nothing.
+  // Account for any CIM if stored on file, we have everything we need here - no need to pull out
+  // of the donation object or habitually load this value from the donation. This may need to be
+  // revised later, but for now I don't think we need to pull sustainer data with the donation.
+  // Commerce needs to execute billing update to call into the gateway to update on asociated CIMs.
+  // As a result, sustainer has NO NEED for cim to be loaded into the donation object. Those tokens Go Away.
+  // If possible at least.
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile'])) {
+    $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
+    $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
+    // Filter out expired cards.
+    foreach ($stored_cards as $card_id => $card_data) {
+      if ($card_data['card_exp_year'] < date('Y') ||
+        $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+        unset($stored_cards[$card_id]);
+      }
+    }
+    if (!empty($stored_cards)) {
+      // Then grab the first one.
+      foreach ($stored_cards as $card_id => $card_data) {
+        $pane_values['cardonfile'] =  $card_id;
+      }
+    }
+  }
+  // Execute call to commerce_authnet, be it CIM or other, it'll come back with the correct response.
   $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
   if ($result !== FALSE) {
