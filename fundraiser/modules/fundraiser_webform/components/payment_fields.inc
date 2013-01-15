@@ -89,11 +89,11 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
       break;
       case 'credit':
       default:
-        $element[$payment_method]['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-        $element[$payment_method]['expiration_date']['card_number'] = array(
+        $element[$payment_method]['card_number'] = array(
           '#type' => 'textfield',
           '#title' => t('Credit card number'),
         );
+        $element[$payment_method]['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
         $months[1] = 'January';
         $months[2] = 'February';
         $months[3] = 'March';
@@ -117,7 +117,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         for ($i = 1; $i <= 15; $i++) {
           $years[$this_year + $i] = $this_year + $i;
         }
-        $element[$payment_method]['card_expiration_year'] = array(
+        $element[$payment_method]['expiration_date']['card_expiration_year'] = array(
           '#type' => 'select',
           '#options' => $years,
           '#title' => t('Expiration year'),
