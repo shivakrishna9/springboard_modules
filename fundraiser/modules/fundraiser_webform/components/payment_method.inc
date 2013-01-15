@@ -274,7 +274,6 @@ function _webform_display_payment_method($component, $value, $format = 'html') {
   return array(
     '#title' => $component['name'],
     '#weight' => $component['weight'],
-    '#theme' => 'webform_display_payment_method',
     '#theme_wrappers' => $format == 'html' ? array('webform_element', 'webform_element_wrapper') : array('webform_element_text'),
     '#post_render' => array('webform_element_wrapper'),
     '#format' => $format,
