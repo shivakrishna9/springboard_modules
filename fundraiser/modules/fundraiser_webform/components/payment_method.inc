@@ -226,8 +226,6 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   $element = _webform_render_select($component, $value, $filter);
   // Add custom post render function before the final form render
   $element['#post_render'] = array('_fundraiser_webform_component_payment_method_post_render');
-
-  // If there is only one payment method on this node this field becomes a value
   if (!empty($component['extra']['payment_methods'])) {
     // Sort all payment methods by weight.
     uasort($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_weight_compare');
