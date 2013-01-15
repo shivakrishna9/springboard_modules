@@ -227,7 +227,7 @@ function webform_confirmations_node_insert($node) {
   // Set confirmation page title from the original. Not saved as part of node, cause it's not a node table.
   if (isset($node->clone_from_original_nid)) {
     $confirmation = (array) _webform_confirmations_get_by_nid($node->clone_from_original_nid);
-    if (isset($confirmation['nid']) {
+    if (isset($confirmation['nid'])) {
       $confirmation['nid'] = $node->nid;
       _webform_confirmations_update($confirmation);
     }
