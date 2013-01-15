@@ -21,6 +21,7 @@ function _webform_defaults_payment_fields() {
       'collapsible' => 0,
       'collapsed' => 0,
       'description' => '',
+      'title_display' => 0,
     ),
   );
 }
