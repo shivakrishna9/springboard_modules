@@ -8,7 +8,8 @@
 /**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
-function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_paypal_wps_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+  drupal_goto('fundraiser-commerce/redirect/' . $donation->did);
 /*
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
@@ -51,4 +52,22 @@ function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $d
   return $result;
 */
 // Paypal has two payment methods and one of them is a outsource and redirect. This is more complicated, and needs work.
+}
+
+/**
+ * Implements hook_fundraiser_commerce_redirect_form().
+ */
+function commerce_paypal_wps_fundraiser_commerce_redirect_form($form, &$form_state, $order, $payment_method) {
+  $settings = array(
+    // Return to the previous page when payment is canceled
+    'cancel_return' => url('fundraiser-commerce/redirect/' . $order->order_id . '/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => url('fundraiser-commerce/redirect/' . $order->order_id . '/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Specify the current payment method instance ID in the notify_url
+    'payment_method' => $payment_method['instance_id'],
+  );
+
+  return commerce_paypal_wps_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
 }
