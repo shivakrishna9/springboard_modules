@@ -192,10 +192,13 @@ function fundraiser_commerce_fundraiser_gateway_info() {
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
     $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
+    list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
+    // Load the rule configuration
+    $rule_config = rules_config_load($rule_name);
     $this_gateway['id'] = $method_instance['instance_id'];
     $this_gateway['module'] = 'fundraiser_commerce';
     $this_gateway['module_name'] = t('Commerce');
-    $this_gateway['title'] = $method_instance['title'];
+    $this_gateway['title'] = $rule_config->label;
     $this_gateway['description'] = $method_instance['description'];
     $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
     $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
