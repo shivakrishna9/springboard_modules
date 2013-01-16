@@ -200,17 +200,24 @@ function _fundraiser_get_start_date($order_id) {
 function _fundraiser_expand_date($element) {
   // Default to current date
   if (empty($element['#value'])) {
-    $element['#value'] = array('day' => format_date(time(), 'custom', 'j'),
-                            'month' => format_date(time(), 'custom', 'n'),
-                            'year' => format_date(time(), 'custom', 'Y'));
+    $element['#value'] = array(
+      'day' => 1,
+      'month' => format_date(time(), 'custom', 'n'),
+      'year' => format_date(time(), 'custom', 'Y')
+    );
   }
 
   $element['#tree'] = TRUE;
 
-  // Determine the order of day, month, year in the site's chosen date format.
+  // Setup the day field as a hidden value since it never needs to display for charge dates
+  $element['day'] = array(
+    '#type' => 'hidden',
+    '#value' => 1,
+  );
+
+  // Determine the order of month, year in the site's chosen date format.
   $format = variable_get('date_format_short', 'm/d/Y - H:i');
   $sort = array();
-  $sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
   $sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
   $sort['year'] = strpos($format, 'Y');
   asort($sort);
@@ -221,9 +228,6 @@ function _fundraiser_expand_date($element) {
   // Output multi-selector for date.
   foreach ($order as $type) {
     switch ($type) {
-      case 'day':
-        $options = drupal_map_assoc(range(1, 31));
-        break;
       case 'month':
         $options = drupal_map_assoc(range(1, 12), 'map_month');
         break;

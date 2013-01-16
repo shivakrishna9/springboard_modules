@@ -1,3 +1,7 @@
+2012-12-21  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+  * market_source.module (_market_source_validate_cid) - IRC #572 - In market_source campaign validation, allow the use of 15-character campaign IDs. This is accomplished by passing the $val through the salesforce_management_api_get_sfid18() function, if it is available. Note: If the 15-character campaign ID passes validation (after being converted to the 18-character version), the 15-character campaign ID will remain in the webform submission records and will be present in the sync object. Salesforce appears to handle this gracefully.
+
 2012-12-11  Ben Clark  <benjamin.clark@jacksonriver.com>
 
   * market_source.module (_market_source_validate_cid) - IFAW #1133 - Fixing a bug where the campaign ID validation in market_source would fail every time due to a non-existent constant value.

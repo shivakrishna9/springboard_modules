@@ -1,3 +1,7 @@
+2013-01-08 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.sustainer.inc (_fundraiser_expand_date): Setting day field to hidden value
+
 2012-09-10 Allen Freeman <allen.freeman@jacksonriver.com>
 
     * fundraiser.module (fundraiser_update_node): added code to prevent arbitrary node properties from being overwritten
