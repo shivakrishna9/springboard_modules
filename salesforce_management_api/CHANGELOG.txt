@@ -1,3 +1,12 @@
+2012-12-18  Ron Northcutt  <rlnorthcutt@gmail.com>
+
+    * salesforce_management.class.inc (login function): Fixed a bug where IF you
+    can't connect to Salesforce with your credentials, it gives a WSOD and you 
+    have to remove the variables manually to retry. We have removed the offending
+    method call (which is just trying to send info to watchdog), as the existing
+    exception provided is adequate. Now, if the login credentials OR setup fail,
+    it won't kill portions of the site. Credit goes to Ben for helping me track it down.
+
 2012-12-28  Ben Clark  <benjamin.clark@jacksonriver.com>
 
     * salesforce_management_api.module (salesforce_management_api_get_campaigns) - $cid was undefined in cache_set(), which caused a record to be added to the cache table with a blank cid column. This essentially invalidates the use of cache here, since the cache_get() call uses the string literal 'salesforce_campaigns' for cid.
