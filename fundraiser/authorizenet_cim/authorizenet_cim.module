@@ -90,7 +90,7 @@ function authorizenet_cim_profile_get($profile_id) {
   $xml = _uc_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _uc_authorizenet_array_to_xml($request));
 
   // Parse the response.
-  $response = gm_authorizenet_xml_api($server, $xml);
+  $response = uc_authorizenet_xml_api($server, $xml);
   $response = str_replace('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"', '', $response);
   $xml_raw = strstr($response, '<getCustomerProfileResponse');
 
@@ -172,7 +172,7 @@ function authorizenet_cim_update_payment_profile($profile_id, $payment_profile_i
   $response = uc_authorizenet_xml_api($server, $xml);
   //$response = _authorizenet_cim_strip_namespace($response);
   $xml_raw = strstr($response, '<updateCustomerPaymentProfileResponse');
-  return _gm_authorizenet_cim_parse_response($xml_raw);
+  return _uc_authorizenet_cim_parse_response($xml_raw);
 }
 
 function _authorizenet_cim_strip_namespace($xml) {
