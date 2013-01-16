@@ -1139,21 +1139,8 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation->donation)) {
-    // Create the donation to process, allows other modules to modify results by hooks.
-    fundraiser_donation_create($donation);
-    // The created donation information should be at at $donation->donation, ready to process.
-    fundraiser_donation_process($donation);
-    if (!isset($donation->result['message'])) {
-      $donation->result['message'] = '';
-    }
-    // The results should be at $donation->result, ready to respond to the aftermath.
-    if (isset($donation->result['success']) && $donation->result['success']) {
-      fundraiser_donation_success($donation);
-    }
-    else {
-      $donation->result['success'] = FALSE;
-      fundraiser_donation_decline($donation);
-    }
+    _fundraiser_donation_submit_to_process($donation);
+    _fundraiser_donation_submit_after_process($donation);
   }
   else {
     // No submission was able to be found. So we really have nothing to go on.
@@ -1162,6 +1149,35 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   }
   // Add the donation and result info to the form_state so we can reference it later.
   $form_state['#donation'] = $donation;
+}
+
+/**
+ * Helper function, given a donation object, central function to create, process, and manage results.
+ * Provided for other modules to use as needed for redirection style processes.
+ */
+function _fundraiser_donation_submit_to_process($donation) {
+  // Create the donation to process, allows other modules to modify results by hooks.
+  fundraiser_donation_create($donation);
+  // The created donation information should be at at $donation->donation, ready to process.
+  fundraiser_donation_process($donation);
+}
+
+/**
+ * Helper function, given a donation object, central function to create, process, and manage results.
+ * Provided for other modules to use as needed for redirection style processes.
+ */
+function _fundraiser_donation_submit_after_process($donation) {
+  if (!isset($donation->result['message'])) {
+    $donation->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($donation->result['success']) && $donation->result['success']) {
+    fundraiser_donation_success($donation);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    fundraiser_donation_decline($donation);
+  }
 }
 
 /**
