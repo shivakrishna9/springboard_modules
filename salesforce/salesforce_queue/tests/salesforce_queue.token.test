@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * Simpletests for SalesforceQueueTokenScanner class.
+ */
+
+/**
+ * Tests finding and replacing relationship tokens in queue batches.
+ */
+class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'SalesforceQueueTokenScanner',
+      'description' => 'Tests finding and replacing relationship tokens in queue batches.',
+      'group' => 'Salesforce Queue',
+    );
+  }
+
+  public function setUp($modules = array()) {
+    $modules = $modules + array(
+      'libraries',
+      'salesforce',
+      'salesforce_soap',
+      'salesforce_queue',
+    );
+    parent::setUp($modules);
+  }
+
+  public function testTokenParser() {
+    $tokenValueCache = array();
+
+    $tokenScanner = new SalesforceQueueTokenScanner($tokenValueCache);
+
+    // Create an array of valid tokens.
+    $object = new stdClass();
+    $object->fields = array(
+      'FirstName' => 'John',
+      'LastName' => 'Doe',
+      'AccountId' => '[Account:User:User:1]',
+    );
+
+    $tokens = $tokenScanner->findTokens($object);
+    $this->assertEqual(1, count($tokens), 'Token found in object fields.');
+
+    // Create an array of invalid tokens.
+  }
+
+  /**
+   * Returns an array of token replacement values for testing.
+   */
+  protected function getTokenValueCache() {
+    return array(
+      'Contact' => array(
+        'salesforce_webform-106-42' => '003400000109WfQAAU',
+        'User-User-1' => '003400000109WfQABU',
+      ),
+      'Account' => array(
+        'User-User-1' => '003400000109WfQACU',
+      ),
+      'Opportunity' => array(
+        'Donation-100-23' => '003400000109WfQADU',
+      ),
+      'Action__c' => array(
+
+      ),
+    );
+  }
+
+}
