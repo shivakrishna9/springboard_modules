@@ -875,9 +875,6 @@ function fundraiser_commerce_payment_redirect($did) {
     //drupal_goto(); send them somewheree
   }
 
-  // Load up the include for this payment method
-  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
-
   // If the user came to the cancel URL...
   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
     // Send the customer tsomewhere
@@ -887,12 +884,12 @@ function fundraiser_commerce_payment_redirect($did) {
   // If the user came to the return URL...
   if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
     // Check for a validate handler on return.
-    $validate_callback = commerce_payment_method_callback($payment_method, 'redirect_form_validate');
+    $validate_callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_validate');
  
     // If there is no validate handler or if there is and it isn't FALSE...
     if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
       // Perform any submit functions if necessary.
-      if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
+      if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
         $callback($order, $payment_method);
       }
 
@@ -910,12 +907,7 @@ function fundraiser_commerce_payment_redirect($did) {
   }
 
   // If the function to build the redirect form exists...
-  if ($callback = commerce_payment_method_callback($payment_method, 'redirect_form')) {
-    // If a function has been setup to override the default callback, use that
-    if (function_exists($payment_method['module'] . '_fundraiser_commerce_redirect_form')) {
-      $callback = $payment_method['module'] . '_fundraiser_commerce_redirect_form';
-    }
-
+  if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form')) {
     // Generate a key to use in the return URL from the redirected service.
     $order->data['payment_redirect_key'] = drupal_hash_base64(time());
     commerce_order_save($order);
@@ -929,7 +921,7 @@ function fundraiser_commerce_payment_redirect($did) {
 
     // Merge the new form into the current form array, preserving the help text
     // if it exists. We also add a wrapper so the form can be easily submitted.
-    $form += drupal_get_form($callback, $donation, $order, $payment_method);
+    $form += drupal_get_form($callback, $order, $payment_method);
 
     $form['#prefix'] = '<div class="payment-redirect-form">';
     $form['#suffix'] = '</div>';
@@ -939,4 +931,22 @@ function fundraiser_commerce_payment_redirect($did) {
     drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
   }
   return $form;
+}
+
+/**
+ * Returns the callback function for a payment method
+ *
+ * First checks our include files for the callback and then pass it off to commerce if none is found
+ */
+function fundraiser_commerce_payment_method_callback($payment_method, $callback) {
+  // Include our payment method file
+  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
+
+  // If the specified callback function exists, return it.
+  if (function_exists($payment_method['module'] . '_fundraiser_commerce_' . $callback)) {
+    return $payment_method['module'] . '_fundraiser_commerce_' . $callback;
+  }
+
+  // Otherwise pass it to commerce's callback getter   
+  return commerce_payment_method_callback($payment_method, $callback);
 }

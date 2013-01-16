@@ -59,14 +59,14 @@ function commerce_ogone_fundraiser_commerce_execute_gateway($payment_method, $do
 /**
  * Implements hook_fundraiser_commerce_redirect_form().
  */
-function commerce_ogone_fundraiser_commerce_redirect_form($form, &$form_state, $donation, $order, $payment_method) {
+function commerce_ogone_fundraiser_commerce_redirect_form($form, &$form_state, $order, $payment_method) {
   // Set feedback URLs
   $settings = array(
     // Return to the previous page when payment is canceled
-    'cancel_return' => url('fundraiser-commerce/redirect/' . $donation->did . '/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+    'cancel_return' => url('fundraiser-commerce/redirect/' . $order->order_id . '/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
 
     // Return to the payment redirect page for processing successful payments
-    'return' => url('fundraiser-commerce/redirect/' . $donation->did . '/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+    'return' => url('fundraiser-commerce/redirect/' . $order->order_id . '/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
 
     // Specify the current payment method instance ID in the notify_url
     'payment_method' => $payment_method['instance_id'],
