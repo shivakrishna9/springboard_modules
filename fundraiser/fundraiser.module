@@ -2353,6 +2353,7 @@ function fundraiser_process_recurring_donations() {
         }
         else {
           // log this failure
+          module_invoke_all('final_payment_failure', $order_id);
           watchdog('fundraiser', t('Payment for recurring donation !id has failed !attempts times. It will be processed again in 1 day. Gateway message: !message', array('!id' => $order->order_id, '!attempts' => $attempt_count, '!message' => $result['message'])), NULL, WATCHDOG_DEBUG);
         }
 

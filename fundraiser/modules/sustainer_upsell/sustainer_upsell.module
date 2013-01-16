@@ -107,8 +107,10 @@ function _sustainer_upsell_popup_iframe($node, $sid) {
  * Implements hook_form_alter().
  */
 function sustainer_upsell_form_alter(&$form, $form_state, $form_id) {
-  $donation_node = fundraiser_is_donation_type($form['#node']->type);
-  if (isset($form['#node']) && $donation_node && substr($form_id, -10) == '_node_form') {
+  if (isset($form['#node'])) {
+    $donation_node = fundraiser_is_donation_type($form['#node']->type);
+  }
+  if (!empty($donation_node) && substr($form_id, -10) == '_node_form') {
     sustainer_upsell_node_settings($form, $form_state, $form['#node']);
   }
 }
