@@ -23,7 +23,7 @@ function springboard_admin_settings() {
     );
     $form['springboard_config']['settings']['order_handling'] = array(
       '#type' => 'select',
-      '#options' => options(
+      '#options' => array(
         'ubercart' => t('Ubercart'),
         'commerce' => t('Commerce'),
       ),
