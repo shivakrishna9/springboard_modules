@@ -19,17 +19,7 @@ function webform_token_selector_menu() {
 	return $items;
 }
 
-/**
- * Implementation of hook_preprocess_page().
- *
- * Use a different page template for token list selector page.
- */
-function webform_token_selector_preprocess_page(&$vars) {
-  if (arg(1) == 'confirmation-token-list') {
-    dsm($vars);
-    $vars['theme_hook_suggestions'][] = 'page_confirmation_token_list';
-  }
-}
+
 
 /**
  * Implementation of hook_theme().
@@ -39,10 +29,6 @@ function webform_token_selector_theme() {
     'confirmation_token_list' => array(
       'arguments' => array('tokens' => NULL),
       'template' => 'templates/confirmation-token-list',
-    ),
-    'page_confirmation_token_list' => array(
-      'file' => 'templates/page-confirmation-token-list.tpl.php',
-      'render element' => 'page'
     ),
   );
 }
@@ -83,7 +69,7 @@ function webform_token_selector_token_list($nid) {
   // make sure we have a node
   if ($node) {
     $all_tokens['webform'] = array();
- 
+
     // 3rd party modules (like Fundraiser) use webform components to track sensitive data like
     // credit card details that should not be surfaced lightly. In cases like this it is
     // desirable to remove these components from the list of available components.
@@ -109,6 +95,7 @@ function webform_token_selector_token_list($nid) {
   $tokens = array_merge($webform_tokens, $module_tokens);
   // theme the output
   $output = theme('confirmation_token_list', array('tokens' => $tokens));
-  return $output;
+  print $output;
+  exit(0);
 }
 

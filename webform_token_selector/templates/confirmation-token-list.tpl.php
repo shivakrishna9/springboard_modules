@@ -14,35 +14,27 @@
     margin: 20px;
     padding: 10px;
   }
-  
+
   #fundraiser-confirmation-tokens select {
     width: 350px;
   }
-  
+
   #fundraiser-confirmation-tokens h2 {
     margin-top: 10px;
   }
-  
+
   #fundraiser-confirmation-tokens em {
     font-size: .8em;
   }
 </style>
 
 <script type="text/javascript">
-  (function ($) {
 
-  Drupal.behaviors.wts_token_list = {
-      attach: function (context, settings) {
- 
-    <?php foreach($tokens as $token_type => $token_list) : ?>
-      $("#<?php print trim($token_type) . '-tokens'; ?>").change(function(e) {
-        window.returnValue = $(this).val(); 
-        window.close();
-      });
-    <?php endforeach; ?>
-      }
-    };
-  })(jQuery);
+ function responseVal(e) {
+   window.returnValue = e.value;
+   window.close();
+ }
+
 </script>
 
 <div id="fundraiser-confirmation-tokens">
@@ -50,14 +42,14 @@
   <p>Select the token you wish to insert into the confirmation message.</p>
   <?php foreach($tokens as $token_type => $token_list) : ?>
     <h2><?php print ucfirst($token_type); ?> Tokens</h2>
-    <select id="<?php print $token_type . '-tokens'; ?>">
+    <select id="<?php print $token_type . '-tokens'; ?>" onchange="responseVal(this)">
       <option value="">-- Select --</option>
       <?php foreach($token_list as $k => $v) : ?>
         <option value="<?php print $k;?>"><?php print $v;?></option>
       <?php endforeach; ?>
     </select>
-  <?php endforeach; ?>   
-  
+  <?php endforeach; ?>
+
   <p><em>After you make your selection this dialog window will close and the token will be inserted at the cursor's current position.</em></p>
 </div>
 
