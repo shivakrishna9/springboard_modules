@@ -1139,18 +1139,8 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation->donation)) {
-    $did = $donation->did;
-    // Caching form values are provided ONLY for the purpose of handling redirect submissions.
-    // It is intended to allow redirects to pick back up with form submission after returning to site.
-    // TODO - cache calling may be dependant on IFF the gateway selected is a redirect one.
-    // This is info should be added on gateway info hooks.
-    cache_set($did . '-form', $form, 'fundraiser_donation_form_cache', time() + 60*60);
-    cache_set($did . '-form-state', $form_state, 'fundraiser_donation_form_cache', time() + 60*60);
     _fundraiser_donation_submit_to_process($donation);
     _fundraiser_donation_submit_after_process($donation);
-    // We can remove the form from the cache if we hit this page, we won't need it further.
-    cache_clear_all($did . '-form', 'fundraiser_donation_form_cache');
-    cache_clear_all($did . '-form-state', 'fundraiser_donation_form_cache');
   }
   else {
     // No submission was able to be found. So we really have nothing to go on.
@@ -1168,8 +1158,18 @@ function fundraiser_donation_submit(&$form, &$form_state) {
 function _fundraiser_donation_submit_to_process($donation) {
   // Create the donation to process, allows other modules to modify results by hooks.
   fundraiser_donation_create($donation);
+  $did = $donation->did;
+  // Caching form values are provided ONLY for the purpose of handling redirect submissions.
+  // It is intended to allow redirects to pick back up with form submission after returning to site.
+  // TODO - cache calling may be dependant on IFF the gateway selected is a redirect one.
+  // This is info should be added on gateway info hooks.
+  cache_set($did . '-form', $form, 'fundraiser_donation_form_cache', time() + 60*60);
+  cache_set($did . '-form-state', $form_state, 'fundraiser_donation_form_cache', time() + 60*60);
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_process($donation);
+  // We can remove the form from the cache if we hit this page, we won't need it further.
+  cache_clear_all($did . '-form', 'fundraiser_donation_form_cache');
+  cache_clear_all($did . '-form-state', 'fundraiser_donation_form_cache');
 }
 
 /**
