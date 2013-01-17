@@ -44,9 +44,16 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
   $element = _webform_render_fieldset($component, $value, $filter);
   $element['#pre_render'][] = '_fundraiser_component_payment_fields_pre_render';
 
-  // Loop through the payment methods and add the fields for each type. Unsupported will be hidden.
-  $payment_methods = array('none', 'credit', 'paypal', 'debit', 'check');
-  foreach ($payment_methods as $payment_method) {
+  // Find the payment methods component
+  $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
+  $payment_method_field = $node->webform['components'][$payment_method_component->cid];
+  // Use the enabled payment methods to create the payment fields
+  if (!empty($payment_method_field['extra']['payment_methods'])) {
+    $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
+  }
+
+  // Loop through the payment methods and add fields for each type.
+  foreach ($payment_methods as $payment_method => $config) {
     // Load up the instance
     $element[$payment_method] = array(
       '#type' => 'fieldset',
@@ -132,7 +139,7 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
       break;
     }
     // Allow other modules to alter the fields before adding to form.
-    drupal_alter('payment_method_fields', $element[$payment_method], $payment_method);
+    drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $config, $node);
   }
   return $element;
 }

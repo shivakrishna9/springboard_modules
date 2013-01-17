@@ -988,3 +988,10 @@ function fundraiser_webform_get_submission($sid) {
   }
   return $data;
 }
+
+/**
+ * Array_filter callback for filtering by method status.
+ */
+function _fundraiser_webform_payment_method_array_filter_enabled($method_settings) {
+  return !empty($method_settings['status']);
+}

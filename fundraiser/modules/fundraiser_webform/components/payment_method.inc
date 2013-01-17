@@ -150,7 +150,7 @@ function _fundraiser_webform_payment_method_validate($form, &$form_state) {
   unset($form_state['values']['extra']['payment_methods']['_default']);
 
   // Filter the values array to just enabled methods.
-  $enabled_methods = array_filter($values, '_fundraiser_webform_payment_method_weight_validate_filter_enabled');
+  $enabled_methods = array_filter($values, '_fundraiser_webform_payment_method_array_filter_enabled');
 
   // Check that there is at least one method enabled
   if (empty($enabled_methods)) {
@@ -175,13 +175,6 @@ function _fundraiser_webform_payment_method_validate($form, &$form_state) {
       $form_state['values']['extra']['payment_methods'][$default_method]['default'] = 1;
     }
   }
-}
-
-/**
- * Array_filter callback for filtering by method status.
- */
-function _fundraiser_webform_payment_method_weight_validate_filter_enabled($method_settings) {
-  return !empty($method_settings['status']);
 }
 
 /**
@@ -227,11 +220,13 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   // Add custom post render function before the final form render
   $element['#post_render'] = array('_fundraiser_webform_component_payment_method_post_render');
   if (!empty($component['extra']['payment_methods'])) {
+    // Use the enabled methods
+    $payment_methods = array_filter($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
     // Sort all payment methods by weight.
-    uasort($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_weight_compare');
+    uasort($payment_methods, '_fundraiser_webform_payment_method_weight_compare');
     // Loop through the payment methods to create our options and find the default
     $default = NULL;
-    foreach ($component['extra']['payment_methods'] as $payment_method) {
+    foreach ($payment_methods as $payment_method) {
       // Set the option label as the custom label or the hard-coded label
       $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : $payment_method['method'];
       $default = !empty($payment_method['default']) ? $payment_method['method'] : $default;
