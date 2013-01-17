@@ -90,6 +90,13 @@ class SalesforceQueueProcessor {
   protected $sfMaxBatchSize = 200;
 
   /**
+   * Maximum length a query can be to Salesforce before it is rejected.
+   *
+   * @var int
+   */
+  protected $sfMaxQueryLength = 10000;
+
+  /**
    * Salesforce object to connect with
    *
    * @var Salesforce
@@ -138,6 +145,7 @@ class SalesforceQueueProcessor {
     $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
     $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
     $this->sfMaxBatchSize = variable_get('salesforce_queue_sf_max_batch_size', SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT);
+    $this->sfMaxBatchSize = variable_get('salesforce_queue_sf_max_query_length', SALESFORCE_QUEUE_SF_MAX_QUERY_LENGTH_DEFAULT);
     $this->sfapi = salesforce_get_api();
     $this->soap = new SalesforceSoapPartner($this->sfapi);
   }
@@ -384,6 +392,16 @@ class SalesforceQueueProcessor {
       }
       if ($op == 'UPSERT') {
         $batch['dedupe'] = $dedupe;
+        $batch['sync_rules'] = array(
+          'fields' => array(),
+          'dedupe_values' => array(),
+        );
+      }
+      elseif ($op == 'UPDATE') {
+        $batch['sync_rules'] = array(
+          'fields' => array(),
+          'ids' => array(),
+        );
       }
     }
     else {
@@ -406,8 +424,54 @@ class SalesforceQueueProcessor {
       $batch['sobjects'][$count] = &$batch['items'][$count]->sobject;
     }
     $batch['count']++;
+
+    // UPSERT and UPDATE items need to have their sync_rules checked.  Add the
+    // information needed to process their sync rules to the batch.
+    if ($this->itemNeedsToCheckSalesforce($item)) {
+      // UPDATE items need to store all the fields and object Ids.
+      if ($op == 'UPDATE') {
+        $batch['sync_rules']['ids'][$item->sobject->Id] = $item->sobject->Id;
+        foreach ($item->sobject->fields as $field => $value) {
+          $batch['sync_rules']['fields'][$field] = $field;
+        }
+      }
+
+      // UPSERT items need to store all their fields and the values they have
+      // set for the given dedupe field.
+      elseif ($op == 'UPSERT') {
+        $batch['sync_rules']['dedupe_values'][$item->sobject->fields[$item->dedupe_field]] = $item->sobject->fields[$item->dedupe_field];
+        foreach ($item->sobject->fields as $field => $value) {
+          $batch['sync_rules']['fields'][$field] = $field;
+        }
+      }
+    }
+
     // $batch_groups referred by reference.
     $batch_group[$batch_key] = $batch;
+  }
+
+  /**
+   * Check if the item needs to check Salesforce records before sending data.
+   *
+   * @param object $item
+   *   Queue item
+   *
+   * @return boolean
+   *   TRUE if the item needs to check the record on Salesforce before sending
+   *   its data to Salesforce, and FALSE if it can just go ahead and send its
+   *   data to Salesforce as-is.
+   */
+  protected function itemNeedsToCheckSalesforce($item) {
+    if (($item->operation == 'UPSERT' || $item->operation == 'UPDATE') && isset($item->sync_rules) && !empty($item->sync_rules)) {
+      foreach ($item->sync_rules as $rule) {
+        // There is no need to pull down the Salesforce record if all the rules
+        // are to always replace the Salesforce value.
+        if ($rule != SALESFORCE_QUEUE_SYNC_RULE_ALWAYS) {
+          return TRUE;
+        }
+      }
+    }
+    return FALSE;
   }
 
   /**
@@ -564,6 +628,9 @@ class SalesforceQueueProcessor {
     // Invokes hook_salesforce_queue_process_batch_alter().
     drupal_alter('salesforce_queue_batch', $batch, $this->queue, $this);
 
+    // Apply the Salesforce sync rules to the items in this batch.
+    $this->applySyncRules($batch);
+
     // Make sure we have enough time to send these items to Salesforce before
     // our lease expires. We do not want to risk the chance of items getting
     // sent to Salesforce twice, so we will not send items outside our lease or
@@ -624,6 +691,184 @@ class SalesforceQueueProcessor {
     module_invoke_all('salesforce_queue_postprocess_batch', $batch, $results, $this->queue);
 
     return $results;
+  }
+
+  /**
+   * Takes sync rules of the batch and applies them to the items.
+   *
+   * @param array $batch
+   *   Batch of items to be sent to Salesforce
+   */
+  protected function applySyncRules(&$batch) {
+    if (!isset($batch['sync_rules']) || empty($batch['sync_rules']['fields'])) {
+      // This batch does not have anything special to be concerned with.
+      return;
+    }
+
+    // Retreive records from salesforce about the items in this batch.
+    $sf_records = array();
+    if ($batch['operation'] == 'UPDATE') {
+      // UPDATE merely requires retreiving the Ids of all items.
+      $fields = implode(', ', $batch['sync_rules']['fields']);
+      // Needs to be an unassociated array or Salesforce will reject it.
+      $ids = array_values($batch['sync_rules']['ids']);
+      // The actual retreive will be done below.  Both UPSERT and UPDATE will
+      // end up with the same output to to put into the same retreive query.
+    }
+    elseif ($batch['operation'] == 'UPSERT') {
+      // UPSERT is more involved and requires a query of all records of the
+      // object type that have a value of the given dedupe field of one of the
+      // values that all of the items have.  Plus, max query length. Fun.
+      $object = $batch['object'];
+      $dedupe = $batch['dedupe'];
+      $dedupe_values = "'" . implode("', '", $batch['sync_rules']['dedupe_values']) . "'";
+      $query = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($dedupe_values)";
+
+      // Verify the query string does not exceed sfMaxQueryLength.  If it
+      // does, chunk up the dedupe values until it does not.  Salesforce
+      // cannot handle it when the query is too long.
+      $queries = array($query);
+      if (strlen($query) > $this->sfMaxQueryLength) {
+        $split = 2;
+        while (strlen($query) > $this->sfMaxQueryLength) {
+          $chunk_size = $batch['count'] / $split;
+          $chunks = array_chunk($dedupe_values, $chunk_size);
+          $dedupe_values = "'" . implode("', '", $chunks[0]) . "'";
+          $query = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($dedupe_values)";
+          $split++;
+        }
+        $queries = array();
+        foreach ($chunks as $chunk) {
+          $dedupe_values = "'" . implode("', '", $chunk) . "'";
+          $queries = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($chunk)";
+        }
+      }
+
+      // Query will always been in a multiple queries array in order to
+      // support the case for if the query has become too long.
+      $ids = array();
+      $upsert_ids = array();
+      foreach ($queries as $query) {
+        try {
+          $response = $this->soap->query($query);
+          if ($response->size > 0) {
+            // Store in array keyed by dedupe value.
+            foreach ($response->records as $record) {
+              // Partner API requests are formatted incorrectly, so we are
+              // reciving the Id as an array, and the fields are not retreived
+              // in a structured format. Because of this, we are grabbing only
+              // the Ids from this query, then passing them on to the retreive
+              // request below.  Once the bug is fixed, remove this work around
+              // and retreive the records directly from this query.
+              // @see http://goo.gl/Xv8k7
+              $ids[] = $record->Id[0];
+              $search = array(
+                '<sf:' . $dedupe . '>',
+                '</sf:' . $dedupe . '>',
+              );
+              $replace = array('', '');
+              $dedupe_value = trim(str_replace($search, $replace, $record->any));
+              $upsert_ids[$dedupe_value] = $record->Id[0];
+            }
+          }
+        }
+        catch (Exception $error) {
+          // Log message for later investigation.
+          watchdog('salesforce_queue', 'Could not fetch UPSERT records for sync rules: !faultstring', array('!faultstring' => $error->faultstring), WATCHDOG_DEBUG);
+        }
+      }
+    }
+
+    // Retreive the records for the gathered Ids.
+    if (empty($ids)) {
+      // If there are no Ids to fetch, there is nothing left to do here.
+      // UPSERTs can leave us with zero records existing in Salesforce.
+      return;
+    }
+    else {
+      $fields = implode(', ', $batch['sync_rules']['fields']);
+      try {
+        $response = $this->soap->retrieve($fields, $batch['object'], $ids);
+        // Store in array keyed by Salesforce Id.
+        foreach ($response as $record) {
+          $sf_records[$record->Id] = $record->fields;
+        }
+      }
+      catch (Exception $error) {
+        // Log message for later investigation.
+        watchdog('salesforce_queue', 'Could not retreive records for sync rules: !faultstring', array('!faultstring' => $error->faultstring), WATCHDOG_DEBUG);
+      }
+    }
+
+    // Go through the items and apply the sync rules based upon the information
+    // just retreived from Salesforce.
+    foreach ($batch['items'] as $key => $item) {
+      // Make sure the item was actually found in Salesforce before continuing.
+      $id = ($item->operation == 'UPDATE') ? $item->sobject->Id : (isset($upsert_ids[$item->sobject->fields[$dedupe]]) ? $upsert_ids[$item->sobject->fields[$dedupe]] : NULL);
+      if (isset($sf_records[$id])) {
+        $sf_record = $sf_records[$id];
+        foreach ($item->sync_rules as $field => $rule) {
+          switch ($rule) {
+            case SALESFORCE_QUEUE_SYNC_RULE_ALWAYS:
+              // Leave the field as is.
+              break;
+
+            case SALESFORCE_QUEUE_SYNC_RULE_BLANK:
+              // Check to see if Salesforce version is blank, unset otherwise.
+              if (isset($sf_record->$field) && strlen($sf_record->$field) > 0) {
+                if (isset($dedupe) && $field == $dedupe) {
+                  // If this is the dedupe field, make sure the value does not
+                  // change.
+                  $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
+                }
+                else {
+                  // Otherwise, just do not send this value to Salesforce.
+                  unset($batch['items'][$key]->sobject->fields[$field]);
+                }
+              }
+              break;
+
+            case SALESFORCE_QUEUE_SYNC_RULE_APPEND:
+              // When the Salesforce version is not blank, add value from
+              // Salesforce to the begining of the item's value.
+              if (isset($sf_record->$field) && !empty($sf_record->$field)) {
+                $joined_value = $sf_record->$field . ' ' . $item->sobject->fields[$field];
+                $batch['items'][$key]->sobject->fields[$field] = $joined_value;
+              }
+              break;
+
+            case SALESFORCE_QUEUE_SYNC_RULE_NEVER:
+              if (isset($dedupe) && $field == $dedupe) {
+                // If this is the dedupe field, make sure the value does not
+                // change.
+                $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
+              }
+              else {
+                // Otherwise, just do not send this value to Salesforce.
+                unset($batch['items'][$key]->sobject->fields[$field]);
+              }
+              break;
+          }
+        }
+
+        // The 'blank' and 'never' sync rules will unset fields, which can cause
+        // the case where an item will have no fields left to send to
+        // Salesforce. Remove items that have nothing left to send.
+        if (empty($batch['items'][$key]->sobject->fields) && (!isset($batch['items'][$key]->sobject->fieldsToNull) || (isset($batch['items'][$key]->sobject->fieldsToNull) && empty($batch['items'][$key]->sobject->fieldsToNull)))) {
+          $resort = TRUE;
+          unset($batch['items'][$key]);
+          unset($batch['sobjects'][$key]);
+        }
+      }
+    }
+
+    // If an item was removed from the batch because all of its fields were
+    // unset, then the keys will need to be put back into straight numeric
+    // order.
+    if (isset($resort) && $resort) {
+      $batch['items'] = array_values($batch['items']);
+      $batch['sobjects'] = array_values($batch['sobjects']);
+    }
   }
 
   /**

@@ -61,7 +61,13 @@ function salesforce_queue_schema() {
         'type' => 'text',
         'size' => 'big',
         'not null' => TRUE,
+      ),
+      'sync_rules' => array(
+        'description' => 'A serialized array that stores the sync rules for each field in the sObject.',
+        'type' => 'text',
+        'size' => 'big',
         'not null' => FALSE,
+        'serialize' => TRUE,
       ),
       'queue' => array(
         'description' => 'The name of the processing queue this item is within.',

@@ -107,6 +107,12 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       $data['created'] = time();
     }
 
+    // If sync_rules hasn't been set, add an empty array to make the database
+    // happy and make it slightly easier on the developer to not be required.
+    if (!isset($data['sync_rules'])) {
+      $data['sync_rules'] = array();
+    }
+
     // Invoke hook_salesforce_queue_create_item_alter().
     drupal_alter('salesforce_queue_create_item', $data);
 
@@ -253,6 +259,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       if (isset($item->sobject->fields)) {
         $item->sobject->fields = (array) $item->sobject->fields;
       }
+      $item->sync_rules = unserialize($item->sync_rules);
     }
     return $item;
   }

@@ -19,6 +19,9 @@ define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
 // The maximum amount of items that can be sent to Salesforce in one call.
 define('SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT', 200);
 
+// The maximum length of a query string that can be sent to Salesforce.
+define('SALESFORCE_QUEUE_SF_MAX_QUERY_LENGTH_DEFAULT', 10000);
+
 // Maximum retries an item will go through before moving to the 'fail' queue.
 define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 
@@ -99,6 +102,30 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
  * @} salesforce_queue_process_item_fail_responces
  */
 
+
+/**
+ * @defgroup salesforce_queue_sync_rules Sync Rule Options with Salesforce
+ * @{
+ */
+
+// Always replace the recipient record, or record's field, with the incoming
+// data.
+define('SALESFORCE_QUEUE_SYNC_RULE_ALWAYS', 3);
+
+// Only insert the incoming data if the recipient record, or record's field, has
+// no data.
+define('SALESFORCE_QUEUE_SYNC_RULE_BLANK', 2);
+
+// Add the incoming data to the end of the current recipient record, or record's
+// field.
+define('SALESFORCE_QUEUE_SYNC_RULE_APPEND', 1);
+
+// Never place the incoming data in the recipient record, or record's field.
+define('SALESFORCE_QUEUE_SYNC_RULE_NEVER', 0);
+
+/**
+ * @} salesforce_queue_sync_rules
+ */
 
 /**
  * Implements hook_form_FORM_ID_alter().
