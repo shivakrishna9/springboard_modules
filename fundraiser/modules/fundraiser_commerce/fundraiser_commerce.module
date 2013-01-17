@@ -594,6 +594,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
     return; // Return the failure.
   }
+  // Pass the result up the chain.
+  $donation->result = $result;
   fundraiser_commerce_fundraiser_donation_after_process($donation);
 }
 
@@ -602,8 +604,6 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
  * Pulled out to make it easier for redirect processes to update the donation on return.
  */
 function fundraiser_commerce_fundraiser_donation_after_process($donation) {
-  // Pass the result up the chain.
-  $donation->result = $result;
   if (isset($donation->result['success']) && $donation->result['success']) {
     // Set the values donation needs for the rest of the system.
     $order = commerce_order_load($donation->did);
