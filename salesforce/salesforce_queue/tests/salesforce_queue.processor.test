@@ -336,9 +336,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       // Before sending the batch out to processing, map all of the
       // Opportunities to an Account Id we had created earlier.
       if ($object == 'Opportunity') {
-        foreach ($batch['sobjects'] as $item) {
+        foreach ($batch['items'] as $item) {
           $rand_account = array_rand($records['Account']);
-          $item->fields['AccountId'] = $records['Account'][$rand_account]->sobject->Id;
+          $item->sobject->fields['AccountId'] = $records['Account'][$rand_account]->sobject->Id;
         }
       }
 

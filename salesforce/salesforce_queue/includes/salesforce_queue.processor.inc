@@ -330,11 +330,9 @@ class SalesforceQueueProcessor {
     $object = $item->salesforce_type;
     $dedupe = $item->dedupe_field;
     $batch_template = array(
-      'object' => $object,
       'operation' => $op,
       'count' => 0,
       'items' => array(),
-      'sobjects' => array(),
     );
 
     // Declare batch_group levels this item will be sorted under.
@@ -378,8 +376,11 @@ class SalesforceQueueProcessor {
       $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
       if ($op == 'DELETE') {
-        // DELETE is object agnostic.
-        unset($batch['object']);
+        $batch['ids'] = array();
+      }
+      else {
+        $batch['object'] = $object;
+        $batch['sobjects'] = array();
       }
       if ($op == 'UPSERT') {
         $batch['dedupe'] = $dedupe;
@@ -393,10 +394,17 @@ class SalesforceQueueProcessor {
 
     // When sending to Salesforce we just need the sobject, but in other
     // processes we need the items.  To prevent looping through the items
-    // once again, we'll store a copy of each.
-    $batch['items'][] = $item;
-    // Because DELETE has to be weird like that.
-    $batch['sobjects'][] = ($op == 'DELETE') ? $item->sobject->Id : $item->sobject;
+    // once again, we'll store a link to the sobject.
+    $count = $batch['count'];
+    $batch['items'][$count] = $item;
+    if ($op == 'DELETE') {
+      // Because DELETE has to be special like that.
+      $batch['ids'][$count] = &$item->sobject->Id;
+    }
+    else {
+      // Link to the sobject in the item so editing one edits the other.
+      $batch['sobjects'][$count] = &$batch['items'][$count]->sobject;
+    }
     $batch['count']++;
     // $batch_groups referred by reference.
     $batch_group[$batch_key] = $batch;
@@ -590,7 +598,7 @@ class SalesforceQueueProcessor {
 
           case 'DELETE':
             // Require just ID of the object.
-            $results = $this->soap->delete($batch['sobjects']);
+            $results = $this->soap->delete($batch['ids']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE;
             break;
         }
@@ -712,15 +720,16 @@ class SalesforceQueueProcessor {
     $batches = array_chunk($this->newSfRecords, $this->sfMaxBatchSize);
     $this->newSfRecords = array();
     foreach ($batches as $batch) {
-      $sobjects = array();
+      $ids = array();
       foreach ($batch as $key => $item) {
         $batch[$key]->operation = 'DELETE';
-        $sobjects[] = $item->sobject->Id;
+        $ids[] = $item->sobject->Id;
       }
       $this->batches[] = array(
         'operation' => 'DELETE',
+        'count' => count($batch),
         'items' => $batch,
-        'sobjects' => $sobjects,
+        'ids' => $ids,
       );
     }
     $this->processBatches();
