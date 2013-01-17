@@ -21,14 +21,22 @@ function springboard_admin_settings() {
       '#type' => 'fieldset',
       '#title' => t('Springboard settings'),
     );
+    $form['springboard_config']['settings']['order_handling'] = array(
+      '#type' => 'select',
+      '#options' => options(
+        'ubercart' => t('Ubercart'),
+        'commerce' => t('Commerce'),
+      ),
+      '#title' => t('Select order processing system'),
+    );
     $form['springboard_config']['settings']['sf_enable'] = array(
-      '#title' => 'Enable Salesforce Integration?',
+      '#title' => t('Enable Salesforce Integration?'),
       '#type' => 'checkbox',
       '#description' => t('If your organization has a Salesforce org and plans on synching information between Drupal ' .
         'and Salesforce you should enable integration.'),
     );
     $form['springboard_config']['settings']['sf'] = array(
-      '#title' => t("Salesforce Integration Settings"),
+      '#title' => t('Salesforce Integration Settings'),
       '#type' => 'fieldset',
     );
     $form['springboard_config']['settings']['sf']['sf_user'] = array(
@@ -146,6 +154,7 @@ function springboard_admin_config(&$form, $form_state) {
   springboard_admin_config_springboard($form, $form_state);
   springboard_admin_config_profile($form, $form_state);
   springboard_admin_config_ubercart($form, $form_state);
+  springboard_admin_config_commerce($form, $form_state);
   springboard_admin_config_donation_form_type($form, $form_state);
   springboard_admin_config_donation_form_add($form, $form_state);
   // Clear all caches to pick up themed elements.
@@ -288,6 +297,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
       'type' => 'text_textfield',
     ),
   );
+  //TODO clear out uc dependancy here for commerce configs.
   // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
   // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
   $zones = array();
