@@ -28,19 +28,19 @@ function springboard_admin_settings() {
         'and Salesforce you should enable integration.'),
     );
     $form['springboard_config']['settings']['sf'] = array(
-      '#title' => st("Salesforce Integration Settings"),
+      '#title' => t("Salesforce Integration Settings"),
       '#type' => 'fieldset',
     );
     $form['springboard_config']['settings']['sf']['sf_user'] = array(
-      '#title' => st('Enable Salesforce User Integration'),
+      '#title' => t('Enable Salesforce User Integration'),
       '#type' => 'checkbox',
     );
     $form['springboard_config']['settings']['sf']['sf_donation'] = array(
-      '#title' => st('Enable Salesforce Donation Integration'),
+      '#title' => t('Enable Salesforce Donation Integration'),
       '#type' => 'checkbox',
     );
     $form['springboard_config']['settings']['sf']['sf_webform'] = array(
-      '#title' => st('Enable Salesforce Webform Integration'),
+      '#title' => t('Enable Salesforce Webform Integration'),
       '#type' => 'checkbox',
     );
     $form['springboard_config']['configure'] = array(
