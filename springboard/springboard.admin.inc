@@ -323,7 +323,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
         'type' => 'options_select',
       ),
     );
-  };
+  }
   else {
     $profile_fields[] = array(
       'label' => t('State/Province'),
