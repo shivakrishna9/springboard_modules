@@ -917,7 +917,8 @@ function fundraiser_commerce_payment_redirect($did) {
   }
   else {
     // Alert the administrator that the module does not provide a required form.
-    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.',
+    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary ' .
+      'form to process the redirect.',
       array('%title' => $payment_method['title'])), 'error');
     return array();
   }
@@ -932,8 +933,8 @@ function fundraiser_commerce_payment_redirect($did) {
   // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
   // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
   // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
-  // Q: Would a restarted form submit and/or rebuild correctly?
   if (!empty($form['#submit'])) {
+    // Remove validations, we don't need them.
     $form['#validate'] = array();
     // On a failure we pick back up with the form submits.
     $submit_handlers = $form['#submit'];
