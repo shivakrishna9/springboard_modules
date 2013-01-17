@@ -924,18 +924,11 @@ function fundraiser_commerce_payment_redirect($did) {
 
   // If we're down to this point, we've returned from a submit. In that case, we redirect the form based on success or failure.
   // We can also remove the form from the cache, we won't need it further.
-  $form = cache_set($did . '-form', 'fundraiser_donation_form_cache');
-  $form_state = cache_set($did . '-form-state', 'fundraiser_donation_form_cache');
-  cache_clear_all($did . '-form', 'fundraiser_donation_form_cache');
-  cache_clear_all($did . '-form-state', 'fundraiser_donation_form_cache');
-// TODO - see if we can use 
-/*
-     if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
-        cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
-        cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
-      }
-and just cache the form id to the donation id to retrival?
-*/
+  $form_build_id = cache_get('fundraiser-' . $did . '-form', 'cache');
+  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
+  // Given the form build id, get the rest from the form cache.
+  $form = cache_get('form_' . $form_build_id , 'cache_form');
+  $form_state = cache_get('form_state_' . $form_build_id , 'cache_form');
   // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
   // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
   // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
