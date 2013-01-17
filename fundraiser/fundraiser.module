@@ -1139,7 +1139,7 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation->donation)) {
-    _fundraiser_donation_submit_to_process($donation);
+    _fundraiser_donation_submit_to_process($form, $form_state, $donation);
     _fundraiser_donation_submit_after_process($donation);
   }
   else {
@@ -1155,7 +1155,7 @@ function fundraiser_donation_submit(&$form, &$form_state) {
  * Helper function, given a donation object, central function to create, process, and manage results.
  * Provided for other modules to use as needed for redirection style processes.
  */
-function _fundraiser_donation_submit_to_process($donation) {
+function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
   // Create the donation to process, allows other modules to modify results by hooks.
   fundraiser_donation_create($donation);
   $did = $donation->did;
