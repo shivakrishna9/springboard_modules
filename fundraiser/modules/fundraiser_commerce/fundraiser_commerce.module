@@ -15,7 +15,7 @@ function fundraiser_commerce_menu() {
   $items['fundraiser-commerce/redirect/%'] = array(
     'page callback' => 'fundraiser_commerce_payment_redirect',
     'page arguments' => array(2),
-    'access arguments' => TRUE,
+    'access callback' => TRUE,
   );
   return $items;
 }
