@@ -181,11 +181,11 @@ function springboard_admin_config_modules(&$form, $form_state) {
     'market_source',
     'webform_user',
     'springboard_views',
-    'uc_credit', // CC payment.
-    'test_gateway', // CC payment.
   );
   if ($form_state['values']['order_handling'] == 'ubercart') {
     $modules[] = 'fundraiser_ubercart';
+    $modules[] = 'uc_credit';
+    $modules[] = 'test_gateway';
   }
   else {
     $modules[] = 'fundraiser_commerce';
