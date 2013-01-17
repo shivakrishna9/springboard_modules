@@ -5,14 +5,7 @@
  * Commerce based hook implementations for the fundraiser module donations.
  */
 
-// Commerce does not automatically come with a UI for orders, we'll handle that later
-// Since all orders are Views based, we can add some default views here to replicate the interface
-// we want, and map data back to webform nodes via Donation.
-
 // Commerce mail rules can / should be turned off on installation, so no need to implement hook_mail_alter().
-
-// TODO locate equilv. of hook_uc_order.
-// To delete the donation on order delete.
 
 /**
  * Implements hook_menu
@@ -238,6 +231,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
         break;
       }
     }
+    // TODO add another swithc to mark IFF gateway is a redirect type gateways.
     // Include all details for use by other modules.
     $this_gateway['gateway_details'] = $method_instance;
     $fundraiser_gateways[] = $this_gateway; 
@@ -299,7 +293,6 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   $fields['payment_information']['payment_fields']['#validate_callback'] = '_fundraiser_commerce_payment_fields_validate';
   return $fields;
 }
-
 
 /**
  * Validation callback for field payment_fields.
@@ -426,7 +419,6 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
   $donation->donation['amount'] = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
-
   // Data from profile.
   if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
     $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
@@ -449,42 +441,24 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       }
     }
   }
-
   // Time of last update / charge.
   $donation->last_changed = $order->changed;
-
   // Add the order status data.
   $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
   if (!empty($order->status)) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
   }
-
   // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
-  // Not an issue on initial submit (set during user input phase), but CRITICAL for sustainer charges.
+  // Not an issue on initial submit, but tricky for tokens and SF integration as these values won't be set.
+  // We are using http://drupal.org/project/commerce_cardonfile for end user profiles.
+  // Therefore these values are simply Not Available at this point.
   $donation->donation['payment_method'] = 'credit'; // $order->payment_details['cc_number'];
-  $donation->donation['payment_fields']['credit']['card_number'] = ''; // $order->payment_details['cc_number'];
-  $donation->donation['payment_fields']['credit']['card_expiration_month'] = ''; // $order->payment_details['cc_exp_month'];
-  $donation->donation['payment_fields']['credit']['card_expiration_year'] = ''; // $order->payment_details['cc_exp_year'];
-  $donation->donation['payment_fields']['credit']['card_cvv'] =''; // isset($order->payment_details['card_cvv']) ? $order->payment_details['card_cvv'] : '';
-  $donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type(
-    $donation->donation['payment_fields']['credit']['card_number']); // $order->payment_details['cc_type'];
-
-  // Add specific order data. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
-  //$donation->data = isset($order->data) ? $order->data : array();
-  //$data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
-  //if (isset($order->data['cc_txns']['references'])) {
-  //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
-  //  $donation->donation['reference_id'] = $ref_id;
-  //  $data = array(
-  //    'txn_type' => 'reference_txn', // Reference if it does.
-  //    'ref_id' => $ref_id,
-  //  );
-  //}
-  // We may need to use http://drupal.org/project/commerce_cardonfile
-  // commerce_cardonfile_data_save
-  // TODO figure this out.
-  //$donation->data = array_merge($donation->data, $data);
+  $donation->donation['payment_fields']['credit']['card_number'] = '';
+  $donation->donation['payment_fields']['credit']['card_expiration_month'] = '';
+  $donation->donation['payment_fields']['credit']['card_expiration_year'] = '';
+  $donation->donation['payment_fields']['credit']['card_cvv'] ='';
+  $donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['payment_fields']['credit']['card_number']);
 }
 
 /**
@@ -506,7 +480,6 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
   commerce_order_save($order);
   $order->email = $donation->donation['mail'];
-
   // Create a line item for this order. Contains order amount info.
   $line_item = commerce_line_item_new('donation', $order->order_id);
   $line_item->line_item_label = t('Donation');
@@ -601,13 +574,11 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     See: http://dcorgdev.devcloud.acquia-sites.com/developer-guide/core-architecture/info-hooks/payment-info-hooks
     The Rules configuration for a specific gateway instance contains all of the additional configuration needed.
     Essentially Commerce replicates the behavior of Gateway Manager.
-    
     The problem is when you do this programatically - you don't have a predictable map of values in the form to use.
     Each gateway has a custom form, and so we need to add a plugin to Fundraiser Commerce to wrap donation submissions
     per gateway supported. To avoid module proloferation, we'll use plugins here based on the type of gateway.
     The gateway module itself should handle transaction creation and order updates as if the form were actually submitted.
    */
-
   // Now execute the custom charge, keeping in mind for Commerce, the charge function is a submit handler.
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
@@ -623,6 +594,14 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
     return; // Return the failure.
   }
+  fundraiser_commerce_fundraiser_donation_after_process($donation);
+}
+
+/**
+ * Helper function, after process for redirected processes to update status etc in one line.
+ * Pulled out to make it easier for redirect processes to update the donation on return.
+ */
+function fundraiser_commerce_fundraiser_donation_after_process($donation) {
   // Pass the result up the chain.
   $donation->result = $result;
   if (isset($donation->result['success']) && $donation->result['success']) {
@@ -631,21 +610,6 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // If a user was created in the midst of that it should be on the order object. If so, add here.
     $donation->uid = $order->uid;
     $donation->user = user_load($order->uid);
-    // Add any additional data for the order.
-    //$donation->data = isset($order->data) ? $order->data : array();
-    //if (isset($order->data['cc_txns']['references'])) {
-    //  $ref_id = array_shift(array_keys($order->data['cc_txns']['references']));
-    //  $donation->donation['reference_id'] = $ref_id;
-    //  $data = array(
-    //    'txn_type' => 'reference_txn', // Reference if it does.
-    //    'ref_id' => $ref_id,
-    //  );
-    //  $donation->data = array_merge($donation->data, $data);
-    //}
-    // If no charge default set, use auth_charge
-    if (!isset($donation->data['txn_type'])) {
-      $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
-    }
     // Add the status data.
     $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
     if (!empty($order->order_status)) {
@@ -841,75 +805,96 @@ function _fundraiser_commerce_get_charged_by_status($status) {
 }
 
 /**
- * Implements hook_fundraiser_get_credit_encryption_path().
- * This is called by modules that need to check for processing availablity outside of normal.
- * Such as sustainer.
-
-function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
-  return variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
-}
- */
-
-/**
  * Callback for processing an offsite payment processor
  */
 function fundraiser_commerce_payment_redirect($did) {
-  $form = array();
+  // Load up additional data as needed for this donation, from Fundraiser and Commerce.
   $donation = _fundraiser_get_donation_by_did($did);
   $order = commerce_order_load($donation->did);
-
-  // First load the order's specified payment method instance.
+  $payment_method = FALSE;
   if (!empty($donation->gateway)) {
     $payment_method = commerce_payment_method_instance_load($donation->gateway);
   }
-  else {
-    $payment_method = FALSE;
-  }
 
-  // If the payment method doesn't exist or does not require a redirect...
+  // Error check, if the payment method doesn't exist or does not require a redirect.
   if (!$payment_method || !$payment_method['offsite']) {
     if (!$payment_method) {
-      $log = t('Customer skipped the Payment page because no payment was required.');
+      $log = t('Customer skipped the redirected Payment page because no payment was required.');
+      $donation->result = array(
+        'success' => TRUE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => '',
+      );
     }
     else {
       $log = t('Customer skipped the Payment page because payment was already submitted.');
+      // No addtional result needed in this case. The donation has already been kicked off.
     }
-    print 'no redirect because of missing payment method or not redirectable';
-    //drupal_goto(); send them somewheree
+    fundraiser_commerce_fundraiser_donation_process($donation);
+    _fundraiser_donation_submit_after_process($donation);
   }
 
-  // If the user came to the cancel URL...
+  // Check for on return values first.
+  // On return, the the user came to the cancel page - they canceled at the gateway.
   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
-    // Send the customer tsomewhere
-    //drupal_goto();
+    $log = t('Customer canceled the redirected payment at the gateway.');
+    $donation->result = array(
+      'success' => FALSE,
+      'comment' => $log,
+      'message' => $log,
+      'uid' => $order->uid,
+      'data' => array(),
+      'error type' => 'billing',
+    );
+    fundraiser_commerce_fundraiser_donation_process($donation);
+    _fundraiser_donation_submit_after_process($donation);
   }
 
-  // If the user came to the return URL...
+  // Check for on return values first.
+  // On return, the user came back to the payment page - they paid at the gateway.
   if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
     // Check for a validate handler on return.
     $validate_callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_validate');
- 
-    // If there is no validate handler or if there is and it isn't FALSE...
     if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
       // Perform any submit functions if necessary.
       if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
         $callback($order, $payment_method);
       }
-
-      // Success, need to update the donation
-      //drupal_goto();
-      return 'success';
+      $log = t('Customer successfully paid the redirected payment at the gateway.');
+      $donation->result = array(
+        'success' => TRUE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => '',
+      );
+      fundraiser_commerce_fundraiser_donation_process($donation);
+      _fundraiser_donation_submit_after_process($donation);
     }
     else {
       // Otherwise display the failure message and send the customer back.
       drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
-
-      //drupal_goto();
-      return 'not successful';
+      $log = t('Customer failed to pay the redirected payment at the gateway.');
+      $donation->result = array(
+        'success' => FALSE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => 'billing',
+      );
+      fundraiser_commerce_fundraiser_donation_process($donation);
+      _fundraiser_donation_submit_after_process($donation);
     }
   }
 
-  // If the function to build the redirect form exists...
+  // If not a returning value, then we're directing outwards. Provide a form in case the natural redirect stalls out.
+  // We get to this point after a redirect from the gateway's own implementation during processing.
+  // If the function to build the redirect form exists. 
   if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form')) {
     // Generate a key to use in the return URL from the redirected service.
     $order->data['payment_redirect_key'] = drupal_hash_base64(time());
@@ -919,21 +904,60 @@ function fundraiser_commerce_payment_redirect($did) {
     // the redirection behavior.
     //if (!empty($payment_method['offsite_autoredirect'])) {
     //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
-     // $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+    //  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
+    //    'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
     //}
 
     // Merge the new form into the current form array, preserving the help text
     // if it exists. We also add a wrapper so the form can be easily submitted.
-    $form += drupal_get_form($callback, $order, $payment_method);
-
+    $form = drupal_get_form($callback, $order, $payment_method);
     $form['#prefix'] = '<div class="payment-redirect-form">';
     $form['#suffix'] = '</div>';
+    return $form;
   }
   else {
     // Alert the administrator that the module does not provide a required form.
-    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
+    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.',
+      array('%title' => $payment_method['title'])), 'error');
+    return array();
   }
-  return $form;
+
+  // If we're down to this point, we've returned from a submit. In that case, we redirect the form based on success or failure.
+  // We can also remove the form from the cache, we won't need it further.
+  $form = cache_set($did . '-form', 'fundraiser_donation_form_cache');
+  $form_state = cache_set($did . '-form-state', 'fundraiser_donation_form_cache');
+  cache_clear_all($did . '-form', 'fundraiser_donation_form_cache');
+  cache_clear_all($did . '-form-state', 'fundraiser_donation_form_cache');
+// TODO - see if we can use 
+/*
+     if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+        cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+        cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+      }
+and just cache the form id to the donation id to retrival?
+*/
+  // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
+  // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
+  // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
+  // Q: Would a restarted form submit and/or rebuild correctly?
+  if (!empty($form['#submit'])) {
+    $form['#validate'] = array();
+    // On a failure we pick back up with the form submits.
+    $submit_handlers = $form['#submit'];
+    $start = FALSE;
+    foreach ($submit_handlers as $index => $submit_handler) {
+      // Skip handlers until we get to post submit.
+      if ($submit_handler == 'fundraiser_donation_post_submit') {
+        $start == TRUE;
+      }
+      if (!$start) {
+        unset($form['#submit'][$index]);
+      }
+    }   
+    // With the correct set of submit handlers in place, we need to pick up processing again.
+    $form_id = $form['#build_id'];
+    drupal_process_form($form_id, $form, $form_state);
+  }
 }
 
 /**
@@ -944,12 +968,10 @@ function fundraiser_commerce_payment_redirect($did) {
 function fundraiser_commerce_payment_method_callback($payment_method, $callback) {
   // Include our payment method file
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
-
   // If the specified callback function exists, return it.
   if (function_exists($payment_method['module'] . '_fundraiser_commerce_' . $callback)) {
     return $payment_method['module'] . '_fundraiser_commerce_' . $callback;
   }
-
   // Otherwise pass it to commerce's callback getter   
   return commerce_payment_method_callback($payment_method, $callback);
 }
