@@ -1139,6 +1139,7 @@ function fundraiser_donation_submit(&$form, &$form_state) {
   // Once we have a submission we can get to the real meat of things and attempt to create it.
   // This calls our set of functions to process the donation from there.
   if (!empty($donation->donation)) {
+    $did = $donation->did;
     // Caching form values are provided ONLY for the purpose of handling redirect submissions.
     // It is intended to allow redirects to pick back up with form submission after returning to site.
     // TODO - cache calling may be dependant on IFF the gateway selected is a redirect one.
