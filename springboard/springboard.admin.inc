@@ -153,8 +153,12 @@ function springboard_admin_config(&$form, $form_state) {
   // Set up module specific things.
   springboard_admin_config_springboard($form, $form_state);
   springboard_admin_config_profile($form, $form_state);
-  springboard_admin_config_ubercart($form, $form_state);
-  springboard_admin_config_commerce($form, $form_state);
+  if ($form_state['values']['order_handling'] == 'ubercart') {
+    springboard_admin_config_ubercart($form, $form_state);
+  }
+  else {
+    springboard_admin_config_commerce($form, $form_state);
+  }
   springboard_admin_config_donation_form_type($form, $form_state);
   springboard_admin_config_donation_form_add($form, $form_state);
   // Clear all caches to pick up themed elements.
@@ -170,7 +174,6 @@ function springboard_admin_config_modules(&$form, $form_state) {
   // Enable does recursion so we don't need to dig deeper.
   $modules = array(
     'fundraiser',
-    'fundraiser_ubercart',
     'fundraiser_webform',
     'fundraiser_sustainers',
     'fundraiser_triggers',
@@ -181,6 +184,12 @@ function springboard_admin_config_modules(&$form, $form_state) {
     'uc_credit', // CC payment.
     'test_gateway', // CC payment.
   );
+  if ($form_state['values']['order_handling'] == 'ubercart') {
+    $modules[] = 'fundraiser_ubercart';
+  }
+  else {
+    $modules[] = 'fundraiser_commerce';
+  }
   module_enable($modules);
   drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
   // Optional Salesforce modules.
@@ -258,7 +267,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
   // Add profile fields
   $profile_fields = array();
   $profile_fields[] = array(
-    'label' => st('First name'),
+    'label' => t('First name'),
     'field_name' => 'profile_first_field_name',
     'type' => 'text',
     'widget' => array(
@@ -266,7 +275,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Last name'),
+    'label' => t('Last name'),
     'field_name' => 'profile_last_field_name',
     'type' => 'text',
     'widget' => array(
@@ -274,7 +283,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Address'),
+    'label' => t('Address'),
     'field_name' => 'profile_address',
     'type' => 'text',
     'widget' => array(
@@ -282,7 +291,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Address Line 2'),
+    'label' => t('Address Line 2'),
     'field_name' => 'profile_address_line_2',
     'type' => 'text',
     'widget' => array(
@@ -290,32 +299,43 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   ); 
   $profile_fields[] = array(
-    'label' => st('City'),
+    'label' => t('City'),
     'field_name' => 'profile_city',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
     ),
   );
-  //TODO clear out uc dependancy here for commerce configs.
-  // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
-  // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
-  $zones = array();
-  $results = db_query('SELECT zone_code FROM {uc_zones} ORDER BY zone_country_id, zone_code');
-  foreach ($results as $result) {
-     $zones[] = $result->zone_code;
+  if ($form_state['values']['order_handling'] == 'ubercart') {
+    // Default options loaded from {uc_zones} On the assumption we are using Ubercart here.
+    // Load State/Province options from {uc_zones}, UC default is zone codes for US & Canada.
+    $zones = array();
+    $results = db_query('SELECT zone_code FROM {uc_zones} ORDER BY zone_country_id, zone_code');
+    foreach ($results as $result) {
+       $zones[] = $result->zone_code;
+    }
+    $zones = implode("\n", $zones);
+    $profile_fields[] = array(
+      'label' => t('State/Province'),
+      'field_name' => 'profile_state',
+      'type' => 'list_text',
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+  };
+  else {
+    $profile_fields[] = array(
+      'label' => t('State/Province'),
+      'field_name' => 'profile_state',
+      'type' => 'text',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    );
   }
-  $zones = implode("\n", $zones);
   $profile_fields[] = array(
-    'label' => st('State/Province'),
-    'field_name' => 'profile_state',
-    'type' => 'list_text',
-    'widget' => array(
-      'type' => 'options_select',
-    ),
-  );
-  $profile_fields[] = array(
-    'label' => st('Postal Code'),
+    'label' => t('Postal Code'),
     'field_name' => 'profile_zip',
     'type' => 'text',
     'widget' => array(
@@ -323,7 +343,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Country'),
+    'label' => t('Country'),
     'field_name' => 'profile_country',
     'type' => 'text',
     'widget' => array(
@@ -331,7 +351,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Campaign ID'),
+    'label' => t('Campaign ID'),
     'field_name' => 'profile_cid',
     'type' => 'text',
     'widget' => array(
@@ -345,7 +365,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Market Source'),
+    'label' => t('Market Source'),
     'field_name' => 'profile_ms',
     'type' => 'text',
     'widget' => array(
@@ -359,7 +379,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Referrer'),
+    'label' => t('Referrer'),
     'field_name' => 'profile_referrer',
     'type' => 'text',
     'widget' => array(
@@ -373,7 +393,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Initial Referrer'),
+    'label' => t('Initial Referrer'),
     'field_name' => 'profile_initial_referrer',
     'type' => 'text',
     'widget' => array(
@@ -387,7 +407,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Salesforce Account Id'),
+    'label' => t('Salesforce Account Id'),
     'field_name' => 'profile_salesforce_account_id',
     'type' => 'text',
     'widget' => array(
@@ -401,7 +421,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     ),
   );
   $profile_fields[] = array(
-    'label' => st('Salesforce Contact Id'),
+    'label' => t('Salesforce Contact Id'),
     'field_name' => 'profile_salesforce_contact_id',
     'type' => 'text',
     'widget' => array(
@@ -456,6 +476,13 @@ function springboard_admin_config_profile(&$form, $form_state) {
 function springboard_admin_config_ubercart(&$form, $form_state) {
   // Enable the test payment gateway by default.
   variable_set('uc_pg_test_gateway_enabled', 1);
+}
+
+/**
+ * Configure Fundraiser Commerce.
+ */
+function springboard_admin_config_commerce(&$form, $form_state) {
+  // Add things as we need to.
 }
 
 /**
