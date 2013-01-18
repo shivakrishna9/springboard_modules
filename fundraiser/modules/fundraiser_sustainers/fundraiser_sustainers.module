@@ -1012,7 +1012,16 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
       // This created donation is the master, so passing it in to create the set.
-      _fundraiser_sustainers_create_future_orders($donation, $donation->donation['card_expiration_month'], $donation->donation['card_expiration_year']);
+      // We can't predict the form key for these values, so ask the gateway to provide.
+      if (isset($donation->gateway['form expiration callback'])) {
+        $expiration_func = $donation->gateway['form expiration callback'];
+        if (function_exists($expiration_func)) {
+          $expires = $expiration_func($submission_fields);
+          if (isset($expires['month']) && isset($expires['year'])) {
+            _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+          }
+        }
+      }
     }
   }
   else {
