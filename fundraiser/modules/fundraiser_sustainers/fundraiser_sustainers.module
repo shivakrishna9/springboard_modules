@@ -348,7 +348,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
     '#type' => 'select',
     '#required' => 0,
     '#extra' => array(
-      'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
+      'description' => t('Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.'),
       'items' => 'recurs|Yes',
       'multiple' => 'Y',
     ),
@@ -624,6 +624,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
     '#type' => 'submit',
      '#value' => t('Update donation amount'),
   );
+  $form['#donation'] = $donation;
   return $form;
 }
 
@@ -691,25 +692,25 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   }
 
   // CC info.
-  $form['credit_card_information'] = array(
+  $form['payment_fields'] = array(
     '#type' => 'fieldset',
-    '#title' => 'Credit Card Information',
+    '#title' => 'Payment Information',
     '#attributes' => array('id' => 'credit-card-info'),
   );
-  $cc_fields = $field_info['credit_card_information'];
-  foreach (element_children($cc_fields) as $field_key) {
-    $field = $cc_fields[$field_key];
-    $form['credit_card_information'][$field_key] = _fundraiser_sustainers_create_field_from_info($donation, $field_key, $field);
-  }
-  // Unset CC number values.
-  unset($form['credit_card_information']['card_number']['#default_value']);
-  unset($form['credit_card_information']['card_expiration_month']['#default_value']);
-  unset($form['credit_card_information']['card_expiration_year']['#default_value']);
-  unset($form['credit_card_information']['card_cvv']['#default_value']);
-
-  // Unset the recurring donation option if it exists. We don't want it here.
-  if (isset($form['credit_card_information']['recurs_monthly'])) {
-    unset($form['credit_card_information']['recurs_monthly']);
+  // TODO add markups here
+  $form['payment_fields'][$donation->donation['payment_method']] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Payment Information',
+    '#attributes' => array('id' => 'credit-card-info'),
+  );
+  // Pull the gateway form from the donation gateway.
+  // Once set a gateway CANNOT be changed on a donation series.
+  // Check against the gateway config for a specific form to go with this payment gateway.
+  if (isset($donation->gateway['form callback'])) {
+    $form_func = $donation->gateway['form callback'];
+    if (function_exists($form_func)) {
+      $form['payment_fields'][$donation->donation['payment_method']] += $form_func($donation->donation['payment_method']);
+    }
   }
 
   // And add a submit button.
@@ -717,6 +718,8 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#type' => 'submit',
     '#value' => t('Save changes'),
   );
+  $form['#donation'] = $donation;
+
   // Modify form displays according to callback settings.
   // This allows any other systems to modify the available options with callbacks.
   $form['#calling_module'] = 'fundraiser_sustainers';
@@ -760,6 +763,14 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   // Select only the ones we want to validate with fundraiser.
   $submission_fields = $form_state['values'];
+  $donation = $form['#donation'];
+  // Clean up the gateway information as needed on validation.
+  if (isset($donation->gateway['form validate callback'])) {
+    $validate_cleanup_func = $donation->gateway['form validate callback'];
+    if (function_exists($validate_cleanup_func)) {
+      $submission_fields = $validate_cleanup_func($submission_fields);
+    }
+  }
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
   if ($errors) {
     // We've set a form_error by now.
@@ -774,15 +785,24 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
   // We only update donations to come, not ones already processed.
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  $submitted_values = $form_state['values'];
+  $submission_fields = $form_state['values'];
+  // Clean up the gateway information as needed on validation.
+  if (isset($donation->gateway['form validate callback'])) {
+    $validate_cleanup_func = $donation->gateway['form validate callback'];
+    if (function_exists($validate_cleanup_func)) {
+      $submission_fields = $validate_cleanup_func($submission_fields);
+    }
+  }
+
+drupal_set_message(print_r($submission_fields,1));
   // Remove unnessecary values.
-  unset($submitted_values['master_did']);
-  unset($submitted_values['uid']);
+  unset($submission_fields['master_did']);
+  unset($submission_fields['uid']);
   foreach ($donations as $donation) {
     // Get the original donation.
     $donation = fundraiser_donation_get_donation($donation->did);
     // Update it.
-    $donation->donation = array_merge($donation->donation, $submitted_values);
+    $donation->donation = array_merge($donation->donation, $submission_fields);
     // Mark the billing information as needing to be updated.
     $donation->update_billing = TRUE;
     // Save each donation.
@@ -798,7 +818,7 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
   // Update this donation (don't save it) so we have the right parentage with the new billing.
-  $master_donation->donation = array_merge($master_donation->donation, $submitted_values);
+  $master_donation->donation = array_merge($master_donation->donation, $submission_fields);
   // Create new orders based on expiration date as needed.
   _fundraiser_sustainers_create_future_orders($master_donation, $form_state['values']['card_expiration_month'],
     $form_state['values']['card_expiration_year']);
@@ -888,6 +908,7 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
     '#type' => 'submit',
     '#value' => t('Cancel all future payments'),
   );
+  $form['#donation'] = $donation;
   return $form;
 }
 
