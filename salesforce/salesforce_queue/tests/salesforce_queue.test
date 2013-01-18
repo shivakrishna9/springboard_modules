@@ -11,6 +11,18 @@
 class SalesforceQueueTestCase extends DrupalWebTestCase {
 
   /**
+   * List of all sync rules.
+   *
+   * @var array
+   */
+  public $syncRules = array(
+    SALESFORCE_QUEUE_SYNC_RULE_ALWAYS,
+    SALESFORCE_QUEUE_SYNC_RULE_BLANK,
+    SALESFORCE_QUEUE_SYNC_RULE_APPEND,
+    SALESFORCE_QUEUE_SYNC_RULE_NEVER,
+  );
+
+  /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
@@ -201,6 +213,20 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       );
     }
 
+    // If UPSERT is the only operation, then remove all objects that do not have
+    // a dedupe field.
+    if (count($ops) == 1 && in_array('UPSERT', $ops) && isset($objects['Account'])) {
+      foreach ($objects as $object => $info) {
+        $remove = TRUE;
+        foreach ($info['fields'] as $dedupe_status) {
+          $remove = $dedupe_status ? FALSE : $remove;
+        }
+        if ($remove) {
+          unset($objects[$object]);
+        }
+      }
+    }
+
     $i = 0;
     while ($i < $num) {
       $i++;
@@ -224,7 +250,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       $sobject->fields = array();
       foreach ($objects[$object_rand]['fields'] as $field => $dedupe) {
         if ($field == 'Email') {
-          $sobject->fields[$field] = $this->randomName() . '@' . $this->randomName() . '.com';
+          $sobject->fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
         }
         elseif ($field == 'Amount') {
           $sobject->fields[$field] = rand(1, 10000);
@@ -253,6 +279,29 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       // If the operation is UPDATE or DELETE add in a fake Id field.
       if ($data['operation'] == 'UPDATE' || $data['operation'] == 'DELETE') {
         $sobject->Id = $this->randomName();
+      }
+
+      // If the operation is UPDATE or UPSERT add in fake sync rules for a
+      // random quantity of the number of fields.
+      if ($data['operation'] == 'UPDATE' || $data['operation'] == 'UPSERT') {
+        $data['sync_rules'] = array();
+        $fields = array_keys($sobject->fields);
+        shuffle($fields);
+        $field_count = count($sobject->fields);
+        $rand_count = rand(0, $field_count);
+        while ($rand_count > 0) {
+          $field = array_shift($fields);
+          $sync_rule_rand = array_rand($this->syncRules);
+          $sync_rule = $this->syncRules[$sync_rule_rand];
+          // Append can cause problems for certain fields, so fall back to
+          // always.
+          $special_fields = array('Email', 'Amount', 'CloseDate');
+          if ($sync_rule == SALESFORCE_QUEUE_SYNC_RULE_APPEND && in_array($field, $special_fields)) {
+            $sync_rule = SALESFORCE_QUEUE_SYNC_RULE_ALWAYS;
+          }
+          $data['sync_rules'][$field] = $this->syncRules[$sync_rule_rand];
+          $rand_count--;
+        }
       }
 
       $data['salesforce_type'] = $sobject->type;

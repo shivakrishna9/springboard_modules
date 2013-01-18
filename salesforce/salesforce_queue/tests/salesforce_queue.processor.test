@@ -244,9 +244,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   }
 
   /**
-   * Test for SalesforceQueueProcessor::processBatch().
+   * Test for SalesforceQueueProcessor::processBatch(), focusing on operations.
    */
-  public function testProcessBatch() {
+  public function testProcessOperations() {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
@@ -336,9 +336,9 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       // Before sending the batch out to processing, map all of the
       // Opportunities to an Account Id we had created earlier.
       if ($object == 'Opportunity') {
-        foreach ($batch['sobjects'] as $item) {
+        foreach ($batch['items'] as $item) {
           $rand_account = array_rand($records['Account']);
-          $item->fields['AccountId'] = $records['Account'][$rand_account]->sobject->Id;
+          $item->sobject->fields['AccountId'] = $records['Account'][$rand_account]->sobject->Id;
         }
       }
 
@@ -398,5 +398,359 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->assertTrue(empty($batches), 'No batches remain after processing.');
     $items = $this->processor->claimItems();
     $this->assertTrue(empty($items), count($items) . ' items retreived from queue after processing.');
+  }
+
+  /**
+   * Test for SalesforceQueueProcessor::processBatch(), focusing on sync rules.
+   */
+  public function testProcessSyncRules() {
+    // Set up the processor's Salesforce connection.
+    // This is special for simpletest due to the access token being stored in
+    // the session.
+    $sfapi = $this->salesforceConnect();
+    $this->processor->setSalesforceApi($sfapi);
+    $soap = new SalesforceSoapPartner($sfapi);
+    $this->processor->setSalesforceSoap($soap);
+
+    // Create a bunch of items to work with and process 'em.
+    $create_quantity_1 = 100;
+    $create_quantity_2 = 35;
+    $this->createQueueItems($this->queue, $create_quantity_1, array('CREATE'), array('Opportunity'));
+    $this->processor->process();
+    $record_count = count($this->processor->newSfRecords);
+    $this->assertEqual($create_quantity_1, $record_count, 'Found ' . $record_count . ' newly created records out of ' . $create_quantity_1 . ' expected records.');
+
+    // Modify the records, give them sync rules, and queue them up.
+    $original_fields = array();
+    foreach ($this->processor->newSfRecords as $item) {
+      // Build list of the original records keyed by Salesforce Id so we can
+      // refer to them easily later.
+      $original_fields[$item->sobject->Id] = $item->sobject->fields;
+
+      // Build a queue item.
+      $data = array(
+        'drupal_id' => $item->drupal_id,
+        'module' => $item->module,
+        'delta' => $item->delta,
+        'salesforce_type' => $item->salesforce_type,
+        'sobject' => clone($item->sobject),
+      );
+
+      // Remove the 'any' field from the sobject that Salesforce auto added when
+      // the record was originally created.
+      unset($data['sobject']->any);
+
+      // Only Contact has a dedupe field, so we're going to make 75% of them
+      // have UPSERT operations, the rest will be UPDATE.
+      $data['operation'] = 'UPDATE';
+      if ($item->salesforce_type == 'Contact' && (rand(1, 4) < 4)) {
+        $data['operation'] = 'UPSERT';
+        $data['dedupe_field'] = 'Email';
+        unset($data['sobject']->Id);
+      }
+
+      // Change all of the field values to the name of the field so we can test
+      // what happens when the field values are modified.
+      foreach ($data['sobject']->fields as $field => $value) {
+        // Can't change the value of the dedupe field.
+        if (!isset($data['dedupe_field']) || $data['dedupe_field'] != $field) {
+          if ($field == 'Email') {
+            // Email value needs to be formatted as a proper email.
+            $data['sobject']->fields[$field] = 'email@foobar.com';
+          }
+          else {
+            $data['sobject']->fields[$field] = $field;
+          }
+        }
+      }
+
+      // Adding a new field so we can test the 'blank' sync rule.
+      if ($data['salesforce_type'] == 'Contact') {
+        $data['sobject']->fields['MailingCity'] = 'MailingCity';
+      }
+      else {
+        $data['sobject']->fields['ShippingCity'] = 'ShippingCity';
+      }
+
+      // Build sync options. Gather which fields will need sync rules.
+      $sync_rules = array();
+      $rule_quantity = array('none', 'many', 'all');
+      $rule_quantity_rand = array_rand($rule_quantity);
+      switch ($rule_quantity[$rule_quantity_rand]) {
+        case 'none':
+          // Tests having an item with no sync rules.
+          break;
+
+        case 'many':
+          // Tests having an item with sync rules that is anywhere between 1 and
+          // minus 1 of its number of fields.  This will randomly pick a
+          // quantity of fields within this range and a random set of fields.
+          $fields = array_keys($data['sobject']->fields);
+          shuffle($fields);
+          $field_max = count($data['sobject']->fields) - 1;
+          $rand_count = rand(1, $field_max);
+          while ($rand_count > 0) {
+            $field = array_shift($fields);
+            $sync_rules[$field] = NULL;
+            $rand_count--;
+          }
+          break;
+
+        case 'all':
+          // Tests having each field with a sync rule.
+          foreach ($data['sobject']->fields as $field => $value) {
+            $sync_rules[$field] = NULL;
+          }
+          break;
+      }
+
+      // Apply a sync rule to each field.
+      // A random test case is chosen for this item. The first sets test having
+      // every field with the same sync rule.  The last test has each field with
+      // a different sync rule.
+      $tests = $this->syncRules + array('random');
+      $tests_rand = array_rand($tests);
+      $test = $tests[$tests_rand];
+      foreach ($sync_rules as $field => $value) {
+        $rule = $test;
+        if ($test == 'random') {
+          // Since this test is 'random', pick a random sync rule.
+          $rule_rand = array_rand($this->syncRules);
+          $rule = $this->syncRules[$rule_rand];
+        }
+        if ($field == 'Email' && $rule == SALESFORCE_QUEUE_SYNC_RULE_APPEND) {
+          // The email field cannot have 'append' rule because it would break
+          // validation on Salesforce's side.  Just fallback to make 'append'
+          // rules for Email fields be 'always' instead.
+          $sync_rules[$field] = SALESFORCE_QUEUE_SYNC_RULE_ALWAYS;
+        }
+        else {
+          $sync_rules[$field] = $rule;
+        }
+      }
+
+      // No matter what, the dedupe field needs to be set to blank.
+      if (!empty($data['dedupe_field']) && isset($sync_rules[$data['dedupe_field']])) {
+        $sync_rules[$data['dedupe_field']] = SALESFORCE_QUEUE_SYNC_RULE_BLANK;
+      }
+
+      // All done! Queue it.
+      $data['sync_rules'] = $sync_rules;
+      $this->queue->createItem($data);
+    }
+
+    // Create a bunch of new UPSERT items that will create new records to mingle
+    // with the UPSERT items that will update existing records.
+    $this->createQueueItems($this->queue, $create_quantity_2, array('UPSERT'), array('Opportunity'));
+
+    // Make sure all of the desired items made it into the queue.
+    $total_created = $create_quantity_1 + $create_quantity_2;
+    $items = $this->processor->claimItems();
+    $queued_items_count = count($items);
+    $this->assertEqual($total_created, $queued_items_count, 'Found ' . $queued_items_count  . ' items in the queue out of an expected ' . $total_created . ' items.');
+
+    // Update the modified data in Salesforce with the sync rules applied.
+    $batches = $this->processor->createBatches();
+    $processed_item_count = 0;
+    $processed_item_success_count = 0;
+    $fetch_update_records = array();
+    $modified_items = array();
+    foreach ($batches as $batch) {
+      $results = $this->processor->processBatch();
+      foreach ($results as $key => $result) {
+        $processed_item_count++;
+        $item = $batch['items'][$key];
+        $this->assertTrue($result->success, 'Item passed processing.');
+        if ($result->success) {
+          $processed_item_success_count++;
+          $modified_items[$result->id] = $item;
+          $fetch_update_records[$item->salesforce_type]['ids'][] = $result->id;
+          foreach ($item->sobject->fields as $field => $value) {
+            $fetch_update_records[$item->salesforce_type]['fields'][$field] = $field;
+          }
+        }
+      }
+    }
+    $this->assertEqual($total_created, $processed_item_count, 'Processed ' . $processed_item_count . ' items out of an expected ' . $total_created . ' items.');
+    $this->assertEqual($total_created, $processed_item_success_count, 'Processed ' . $processed_item_success_count . ' successful items out of an expected ' . $total_created . ' items.');
+
+    // Pull down the updated records from Salesforce and compare against them.
+    $updated_fields = array();
+    $salesforce_record_count = 0;
+    foreach ($fetch_update_records as $object => $data) {
+      $fields = implode(', ', $data['fields']);
+      try {
+        $response = $soap->retrieve($fields, $object, $data['ids']);
+        foreach ($response as $record) {
+          $salesforce_record_count++;
+          unset($record->fields->Id);
+          $updated_fields[$record->Id] = $record->fields;
+        }
+      }
+      catch (Exception $error) {
+        $this->assertEmpty(empty($error->faultstring), $error->faultstring);
+      }
+    }
+    $this->assertEqual($total_created, $salesforce_record_count, 'Found ' . $salesforce_record_count . ' records of the ' . $total_created . ' items sent to Salesforce.');
+
+    // Compare against the original records.
+    $encountered_rules = array(
+      'always' => array('pass' => 0, 'fail' => 0),
+      'blank' => array(
+        'is_blank' => array('pass' => 0, 'fail' => 0),
+        'not_blank' => array('pass' => 0, 'fail' => 0),
+      ),
+      'append' => array(
+        'is_empty' => array('pass' => 0, 'fail' => 0),
+        'not_empty' => array('pass' => 0, 'fail' => 0),
+      ),
+      'never' => array('pass' => 0, 'fail' => 0),
+      'no_rule' => array(
+        'is_dedupe' => array('pass' => 0, 'fail' => 0),
+        'not_dedupe' => array('pass' => 0, 'fail' => 0),
+      ),
+    );
+    $compared_item_count = 0;
+    $not_compared_item_count = 0;
+    foreach ($updated_fields as $sfid => $fields) {
+      if (isset($original_fields[$sfid])) {
+        $compared_item_count++;
+        foreach ($fields as $field => $updated_value) {
+          $original_value = isset($original_fields[$sfid][$field]) ? $original_fields[$sfid][$field] : NULL;
+          $modified_value = isset($modified_items[$sfid]->sobject->fields[$field]) ? $modified_items[$sfid]->sobject->fields[$field] : NULL;
+          if ($field == 'Email') {
+            // Salesforce changes the value of the Email field to lowercase.
+            $original_value = strtolower($original_value);
+            $modified_value = strtolower($modified_value);
+          }
+          if (isset($modified_items[$sfid]->sync_rules[$field])) {
+            $sync_rule = $modified_items[$sfid]->sync_rules[$field];
+            switch ($sync_rule) {
+              case SALESFORCE_QUEUE_SYNC_RULE_ALWAYS:
+                // Field's value will be the modified value.
+                $result = ($modified_value == $updated_value) ? 'pass' : 'fail';
+                $encountered_rules['always'][$result]++;
+                $this->assertEqual($modified_value, $updated_value, 'The modified value is updated when sync rule is set to "always".');
+                break;
+
+              case SALESFORCE_QUEUE_SYNC_RULE_BLANK:
+                // If the original is blank, then the value will be the modified
+                // value, otherwise it will be the original value.
+                if (strlen($original_value) > 0) {
+                  $result = ($original_value == $updated_value) ? 'pass' : 'fail';
+                  $encountered_rules['blank']['not_blank'][$result]++;
+                  $this->assertEqual($original_value, $updated_value, 'The modified value is not set when sync rule is "blank" and Salesforce record is not empty.');
+                }
+                else {
+                  $result = ($modified_value == $updated_value) ? 'pass' : 'fail';
+                  $encountered_rules['blank']['is_blank'][$result]++;
+                  $this->assertEqual($modified_value, $updated_value, 'The modified value is set when sync rule is "blank" and Salesforce record is empty.');
+                }
+                break;
+
+              case SALESFORCE_QUEUE_SYNC_RULE_APPEND:
+                // The modified value will be appended to the end of the
+                // original value.
+                // The $modified_value var will already be appended so we'll
+                // have to assume the original modification which was to change
+                // the value of all the fields to their field's name.
+                if (empty($original_value)) {
+                  $result = ($field == $updated_value) ? 'pass' : 'fail';
+                  $encountered_rules['append']['is_empty'][$result]++;
+                  $this->assertEqual($modified_value, $updated_value, 'The modified value is set when sync rule is "append" and Salesforce record is empty.');
+                }
+                else {
+                  $joined_value = $original_value . ' ' . $field;
+                  $result = ($joined_value == $updated_value) ? 'pass' : 'fail';
+                  $encountered_rules['append']['not_empty'][$result]++;
+                  $this->assertEqual($joined_value, $updated_value, 'The modified value added to the end of the field when the sync rule is "append" and the Salesforce record is not empty.');
+                }
+                break;
+
+              case SALESFORCE_QUEUE_SYNC_RULE_NEVER:
+                // The field's value will always be the original value.
+                $result = ($original_value == $updated_value) ? 'pass' : 'fail';
+                $encountered_rules['never'][$result]++;
+                $this->assertEqual($original_value, $updated_value, 'The modified value is not set when sync rule is "never".');
+                break;
+            }
+          }
+          elseif ($field == $modified_items[$sfid]->dedupe_field) {
+            // This is not a test for the application of sync rules, but for the
+            // formation of the test itself.  It is improper set up for anyone
+            // to really allow an 'updated' UPSERT to modify the value of the
+            // dedupe field.
+            $result = ($original_value == $updated_value) ? 'pass' : 'fail';
+            $encountered_rules['no_rule']['is_dedupe'][$result]++;
+            $this->assertEqual($original_value, $updated_value, 'The modified value is not updated when no sync rule is set and the field is the dedupe field.');
+          }
+          else {
+            // When the field does not have a sync rule, the field's value will
+            // be the same as the modified value.
+            $result = ($modified_value == $updated_value) ? 'pass' : 'fail';
+            $encountered_rules['no_rule']['not_dedupe'][$result]++;
+            $this->assertEqual($modified_value, $updated_value, 'The modified value is updated when no sync rule is set.');
+          }
+        }
+        unset($original_fields[$sfid]);
+      }
+      else {
+        $not_compared_item_count++;
+      }
+    }
+
+    // Make sure we encountered all of the originally created items.
+    $this->assertTrue(empty($original_fields), 'Retreived all records that were originally created in Salesforce.');
+    $this->assertEqual($compared_item_count, $create_quantity_1, 'Compared ' . $compared_item_count . ' items out of the ' . $create_quantity_1 . ' items originally created and modified.');
+    $this->assertEqual($not_compared_item_count, $create_quantity_2, 'Ignored ' . $not_compared_item_count . ' items out of the ' . $create_quantity_2 . ' items created to mix in with the modified items.');
+
+    // Make sure we encountered all of the sync rules and possible states of the
+    // sync rules, and that they passed.
+    foreach ($encountered_rules as $rule => $results) {
+      switch ($rule) {
+        case 'always':
+        case 'never':
+          $this->assertFalse(empty($results['pass']), 'At least some fields passed the "' . $rule . '" sync rule.');
+          $this->assertTrue(empty($results['fail']), 'No fields failed the "' . $rule . '" sync rule.');
+          $this->assertFalse((empty($results['pass']) && empty($results['fail'])), 'Testing the "' . $rule . '" sync rule was not bypassed.');
+          break;
+
+        case 'blank':
+          // is_blank
+          $this->assertFalse(empty($results['is_blank']['pass']), 'At least some fields passed the "blank" sync rule when Salesforce value was blank.');
+          $this->assertTrue(empty($results['is_blank']['fail']), 'No fields failed the "blank" sync rule when Salesforce value was blank.');
+          $this->assertFalse((empty($results['is_blank']['pass']) && empty($results['is_blank']['fail'])), 'Testing the "blank" sync rule was not bypassed when Salesforce value was blank.');
+
+          // not_blank
+          $this->assertFalse(empty($results['not_blank']['pass']), 'At least some fields passed the "blank" sync rule when Salesforce value was not blank.');
+          $this->assertTrue(empty($results['not_blank']['fail']), 'No fields failed the "blank" sync rule when Salesforce value was not blank.');
+          $this->assertFalse((empty($results['not_blank']['pass']) && empty($results['not_blank']['fail'])), 'Testing the "blank" sync rule was not bypassed when Salesforce value was not blank.');
+          break;
+
+        case 'append':
+          // is_empty
+          $this->assertFalse(empty($results['is_empty']['pass']), 'At least some fields passed the "append" sync rule when Salesforce value was blank.');
+          $this->assertTrue(empty($results['is_empty']['fail']), 'No fields failed the "append" sync rule when Salesforce value was blank.');
+          $this->assertFalse((empty($results['is_empty']['pass']) && empty($results['is_empty']['fail'])), 'Testing the "blank" sync rule was not bypassed when Salesforce value was blank.');
+
+          // not_empty
+          $this->assertFalse(empty($results['not_empty']['pass']), 'At least some fields passed the "append" sync rule when Salesforce value was not empty.');
+          $this->assertTrue(empty($results['not_empty']['fail']), 'No items failed the "append" sync rule when Salesforce value was not empty.');
+          $this->assertFalse((empty($results['not_empty']['pass']) && empty($results['not_empty']['fail'])), 'Testing the "append" sync rule was not bypassed when Salesforce value was not empty.');
+          break;
+
+        case 'no_rule':
+          // is_dedupe
+          $this->assertFalse(empty($results['is_dedupe']['pass']), 'At least some dedupe fields passed updating correctly when there was no sync rule.');
+          $this->assertTrue(empty($results['is_dedupe']['fail']), 'No dedupe fields failed to update when there was no sync rule.');
+          $this->assertFalse((empty($results['is_dedupe']['pass']) && empty($results['is_empty']['fail'])), 'Testing the update of a dedupe field without a sync rule was not bypassed.');
+
+          // not_dedupe
+          $this->assertFalse(empty($results['not_dedupe']['pass']), 'At least some non-dedupe fields passed updating correctly when there was no sync rule.');
+          $this->assertTrue(empty($results['not_dedupe']['fail']), 'No non-dedupe fields failed to update when there was no sync rule.');
+          $this->assertFalse((empty($results['not_dedupe']['pass']) && empty($results['not_dedupe']['fail'])), 'Testing the update of a non-dedupe field without a sync rule was not bypassed.');
+          break;
+      }
+    }
   }
 }

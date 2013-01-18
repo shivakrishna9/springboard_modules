@@ -19,6 +19,9 @@ define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
 // The maximum amount of items that can be sent to Salesforce in one call.
 define('SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT', 200);
 
+// The maximum length of a query string that can be sent to Salesforce.
+define('SALESFORCE_QUEUE_SF_MAX_QUERY_LENGTH_DEFAULT', 10000);
+
 // Maximum retries an item will go through before moving to the 'fail' queue.
 define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 
@@ -26,7 +29,7 @@ define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 define('SALESFORCE_QUEUE_CRON_FREQUENCY_DEFAULT', 60);
 
 /**
- * @}
+ * @} salesforce_queue_var_default
  */
 
 
@@ -62,7 +65,7 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT', -9);
 define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 
 /**
- * @}
+ * @} salesforce_queue_processor_statuses
  */
 
 
@@ -96,9 +99,33 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
 define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
 
 /**
- * @}
+ * @} salesforce_queue_process_item_fail_responces
  */
 
+
+/**
+ * @defgroup salesforce_queue_sync_rules Sync Rule Options with Salesforce
+ * @{
+ */
+
+// Always replace the recipient record, or record's field, with the incoming
+// data.
+define('SALESFORCE_QUEUE_SYNC_RULE_ALWAYS', 3);
+
+// Only insert the incoming data if the recipient record, or record's field, has
+// no data.
+define('SALESFORCE_QUEUE_SYNC_RULE_BLANK', 2);
+
+// Add the incoming data to the end of the current recipient record, or record's
+// field.
+define('SALESFORCE_QUEUE_SYNC_RULE_APPEND', 1);
+
+// Never place the incoming data in the recipient record, or record's field.
+define('SALESFORCE_QUEUE_SYNC_RULE_NEVER', 0);
+
+/**
+ * @} salesforce_queue_sync_rules
+ */
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -182,24 +209,6 @@ function salesforce_queue_node_delete($node) {
 }
 
 /**
- * Implements hook_salesforce_queue_process_fail_item().
- */
-function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
-  // Mark items for retry if they have not exceeded the maximum.
-  $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
-  if ($max_retries > $item->retries) {
-    $item->retries++;
-    $item->queue = 'retry';
-  }
-  // When the retry maximum is exceeded, put the item in the fail queue.
-  else {
-    $item->queue = 'fail';
-  }
-  $item->sobject = json_encode($item->sobject);
-  drupal_write_record('salesforce_queue', $item, array('item_id'));
-}
-
-/**
  * Wrapper to load a SalesforceQueue object.
  *
  * @param string $queue_name
@@ -242,6 +251,24 @@ function salesforce_queue_cron() {
     // Set cron_last after process has completed.
     variable_set('salesforce_queue_cron_last', time());
   }
+}
+
+/**
+ * Implements hook_salesforce_queue_process_fail_item().
+ */
+function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
+  // Mark items for retry if they have not exceeded the maximum.
+  $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
+  if ($max_retries > $item->retries) {
+    $item->retries++;
+    $item->queue = 'retry';
+  }
+  // When the retry maximum is exceeded, put the item in the fail queue.
+  else {
+    $item->queue = 'fail';
+  }
+  $item->sobject = json_encode($item->sobject);
+  drupal_write_record('salesforce_queue', $item, array('item_id'));
 }
 
 /**
