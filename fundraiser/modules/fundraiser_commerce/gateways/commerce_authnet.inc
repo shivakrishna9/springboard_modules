@@ -14,7 +14,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'allow_recurring' => TRUE,
     // ALL currently supported ubercart gateways use the same field set.
     'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
-    //$this_gateway['form validate callback'] = '',
+    'form validate callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
   );
 }

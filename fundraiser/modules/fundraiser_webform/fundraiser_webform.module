@@ -457,17 +457,12 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
 
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
-  // Move expiration date values up in the array.
-  if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_month'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+  // Check against the gateway config for this donation for a submission cleanup.
+  if (isset($donation->gateway['form validate callback'])) {
+    $submit_cleanup_func = $donation->gateway['form validate callback'];
+    if (function_exists($submit_cleanup_func)) {
+      $submission_fields = $submit_cleanup_func($submission_fields);
     }
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_year'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'];
-    }
-    unset($submission_fields['payment_fields']['credit']['expiration_date']);
   }
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
 
