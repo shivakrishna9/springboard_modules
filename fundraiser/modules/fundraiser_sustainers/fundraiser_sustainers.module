@@ -606,7 +606,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   );
   $form['min_amount'] = array(
     '#type' => 'hidden',
-    '#value' => $donation->node->minimum_donation_amount,
+    '#value' => isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0,
   );
   $form['fee_amount'] = array(
     '#type' => 'textfield',
@@ -616,7 +616,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
     '#description' => t('Your current donation amount is %amount. Minimum donation %minimum.',
       array(
         '%amount' => money_format('%i', $next_donation->donation['amount']),
-        '%minimum' => money_format('%i', $donation->node->minimum_donation_amount))
+        '%minimum' => money_format('%i', isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0))
       ),
     '#field_prefix' => '$',
   );
