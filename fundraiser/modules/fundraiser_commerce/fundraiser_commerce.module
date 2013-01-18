@@ -187,54 +187,22 @@ function fundraiser_commerce_fundraiser_gateway_info() {
     $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
     list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
     // Load the rule configuration
-    $rule_config = rules_config_load($rule_name);
-    $this_gateway['id'] = $method_instance['instance_id'];
-    $this_gateway['module'] = 'fundraiser_commerce';
-    $this_gateway['module_name'] = t('Commerce');
-    $this_gateway['title'] = $rule_config->label;
-    $this_gateway['description'] = $method_instance['description'];
-    $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
-    $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
-    $this_gateway['payment_method'] = array('none');
-    $this_gateway['allow_recurring'] = FALSE;
-    // Add the gateway type, usually credit. Could be: 'credit', 'debit', 'paypal', 'check'
-    // Override for specific gateways we support that we know aren't credit.
-    switch ($method_instance['module']) {
-      case 'commerce_no_payment':
-        $this_gateway['payment_method'] = array('none');
-      break;
-      //case '':
-      //  $this_gateway['payment_method'] = array('debit');
-      //break;
-      case 'commerce_paypal_wps':
-        $this_gateway['payment_method'] = array('paypal');
-      break;
-      case 'commerce_cheque':
-        $this_gateway['payment_method'] = array('check');
-      break;
-      case 'commerce_ogone':
-        $this_gateway['payment_method'] = array('credit', 'paypal');
-      break;
-      default:
-        $this_gateway['payment_method'] = array('credit');
-      break;
+    if (!empty($method_id) && !empty($rule_name)) {
+      $rule_config = rules_config_load($rule_name);
+      $this_gateway['id'] = $method_instance['instance_id'];
+      $this_gateway['module'] = 'fundraiser_commerce';
+      $this_gateway['module_name'] = t('Commerce');
+      $this_gateway['title'] = $rule_config->label;
+      $this_gateway['description'] = $method_instance['description'];
+      $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
+      $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
+      // Gather additional details per our specific implementation.
+      // Re: type of fieldset, and available recurring features.
+      module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+      $this_gateway += module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
+      $this_gateway['gateway_details'] = $method_instance;
+      $fundraiser_gateways[] = $this_gateway; 
     }
-    // Add if the gateway supports cardonfile, without this recurring charges aren't supported.
-    if (module_exists('commerce_cardonfile')) {
-      switch ($method_instance['module']) {
-        case 'commerce_authnet':
-          if (!empty($method_instance['settings']['cim_cardonfile'])) {
-            $this_gateway['allow_recurring'] = TRUE;
-          }
-        break;
-        default:
-        break;
-      }
-    }
-    // TODO add another swithc to mark IFF gateway is a redirect type gateways.
-    // Include all details for use by other modules.
-    $this_gateway['gateway_details'] = $method_instance;
-    $fundraiser_gateways[] = $this_gateway; 
   }
   return $fundraiser_gateways;
 }

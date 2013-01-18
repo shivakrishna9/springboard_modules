@@ -6,6 +6,29 @@
  */
 
 /**
+ * Implements hook_fundraiser_commerce_fundraiser_gateway_info().
+ */
+function commerce_paypal_wpp_fundraiser_commerce_fundraiser_gateway_info() {
+  return array(
+    'payment_method' => array('paypal'),
+    'allow_recurring' => FALSE,
+    'form callback' => 'commerce_paypal_wpp_fundraiser_commerce_paypal_form',
+    //$this_gateway['form validate callback'] = '',
+    //$this_gateway['form submit callback'] = '',
+  );
+}
+
+/**
+ * Callback function, use this form for the given gateway.
+ */
+function commerce_paypal_wpp_fundraiser_commerce_paypal_form($payment_method) {
+  $form['paypal_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Paypal email'),
+  );
+  return $form;
+}
+/**
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
 function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $donation) {

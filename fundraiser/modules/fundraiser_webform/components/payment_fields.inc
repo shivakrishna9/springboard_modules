@@ -67,76 +67,14 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         ),
       ),
     );
-    switch ($payment_method) {
-      case 'none':
-        $element[$payment_method]['none_message'] = array(
-          '#markup' => '<div class="payment-method-message">' . t('Enjoy your free stuff.') . '</div>',
-        );
-      break;
-      case 'debit':
-        $element[$payment_method]['debit_routing'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Bank routing number'),
-        );
-        $element[$payment_method]['debit_account'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Bank account number'),
-        );
-      break;
-      case 'paypal':
-        $element[$payment_method]['paypal_email'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Paypal email'),
-        );
-      break;
-      case 'check':
-        $element[$payment_method]['check_message'] = array(
-          '#markup' => '<div class="payment-method-message">' . t('Please remember to mail your check in.') . '</div>',
-        );
-      break;
-      case 'credit':
-      default:
-        $element[$payment_method]['card_number'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Credit card number'),
-          '#size' => 20,
-        );
-        $element[$payment_method]['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
-        $months[1] = 'January';
-        $months[2] = 'February';
-        $months[3] = 'March';
-        $months[4] = 'April';
-        $months[5] = 'May';
-        $months[6] = 'June';
-        $months[7] = 'July';
-        $months[8] = 'August';
-        $months[9] = 'September';
-        $months[10] = 'October';
-        $months[11] = 'November';
-        $months[12] = 'December';
-        $element[$payment_method]['expiration_date']['card_expiration_month'] = array(
-          '#type' => 'select',
-          '#options' => $months,
-          '#title' => t('Expiration month'),
-          '#default_value' => date('n'),
-        );
-        $this_year = date('Y');
-        $years[$this_year] = $this_year;
-        for ($i = 1; $i <= 15; $i++) {
-          $years[$this_year + $i] = $this_year + $i;
-        }
-        $element[$payment_method]['expiration_date']['card_expiration_year'] = array(
-          '#type' => 'select',
-          '#options' => $years,
-          '#title' => t('Expiration year'),
-          '#default_value' => date('Y'),
-        );
-        $element[$payment_method]['card_cvv'] = array(
-          '#type' => 'textfield',
-          '#title' => t('CVV'),
-          '#size' => 6,
-        );
-      break;
+    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+    $gateway_info = _fundraiser_gateway_info($config['id']);
+    // Check against the gateway config for a specific form to go with this payment gateway.
+    if (isset($gateway_info['form callback'])) {
+      $form_func = $gateway_info['form callback'];
+      if (function_exists($form_func)) {
+        $element[$payment_method] += $form_func($payment_method);
+      }
     }
     // Allow other modules to alter the fields before adding to form.
     drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $config, $node);
