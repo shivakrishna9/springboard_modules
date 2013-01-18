@@ -51,33 +51,37 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
   if (!empty($payment_method_field['extra']['payment_methods'])) {
     $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
   }
-
-  // Loop through the payment methods and add fields for each type.
-  foreach ($payment_methods as $payment_method => $config) {
-    // Load up the instance
-    $element[$payment_method] = array(
-      '#type' => 'fieldset',
-      '#attributes' => array(
-        'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method),
-        'class' => array('fundraiser-payment-method'),
+  if (!empty($payment_methods)) {
+    // Loop through the payment methods and add fields for each type.
+    foreach ($payment_methods as $payment_method => $config) {
+      // Load up the instance
+      $element[$payment_method] = array(
+        '#type' => 'fieldset',
+        '#attributes' => array(
+          'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method),
+          'class' => array('fundraiser-payment-method'),
+          ),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="submitted[payment_information][payment_method]"]' => array('value' => $payment_method),
+          ),
         ),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="submitted[payment_information][payment_method]"]' => array('value' => $payment_method),
-        ),
-      ),
-    );
-    // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
-    $gateway_info = _fundraiser_gateway_info($config['id']);
-    // Check against the gateway config for a specific form to go with this payment gateway.
-    if (isset($gateway_info['form callback'])) {
-      $form_func = $gateway_info['form callback'];
-      if (function_exists($form_func)) {
-        $element[$payment_method] += $form_func($payment_method);
+      );
+      // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+      $gateway_info = _fundraiser_gateway_info($config['id']);
+      // Check against the gateway config for a specific form to go with this payment gateway.
+      if (isset($gateway_info['form callback'])) {
+        $form_func = $gateway_info['form callback'];
+        if (function_exists($form_func)) {
+          $element[$payment_method] += $form_func($payment_method);
+        }
       }
+      // Allow other modules to alter the fields before adding to form.
+      drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $config, $node);
     }
-    // Allow other modules to alter the fields before adding to form.
-    drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $config, $node);
+  }
+  else {
+    drupal_set_message(t('Payment method gateways have not been configured on this form. Please configure them.'), 'error');
   }
   return $element;
 }
