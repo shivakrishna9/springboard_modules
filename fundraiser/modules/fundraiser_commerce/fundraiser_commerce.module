@@ -556,7 +556,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   $order->data = $donation->data = array(
     'payment_method' => $donation->donation['payment_method'],
     'payment_fields' => $donation->donation['payment_fields'],
-    'gateway_data' => $result->data,
+    'gateway_data' => isset($result->data) ? $result->data : '',
   );
   // Save the order again to update its line item reference field.
   commerce_order_save($order);
