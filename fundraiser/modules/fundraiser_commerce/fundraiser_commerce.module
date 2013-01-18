@@ -267,7 +267,6 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
  * Validation callback for field payment_fields.
  */
 function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
-  // Assume all ubercart submissions are credit cards, but we still need to validate them.
   // TODO this should probably be driven down to the gateway level.
   $payment_method = $submission_fields['payment_method'];
   if ($payment_method == 'credit') {
@@ -450,6 +449,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order = commerce_order_new($user->uid, 'pending', 'commerce_order');
   commerce_order_save($order);
   $order->email = $donation->donation['mail'];
+
   // Create a line item for this order. Contains order amount info.
   $line_item = commerce_line_item_new('donation', $order->order_id);
   $line_item->line_item_label = t('Donation');
@@ -471,9 +471,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   );
   commerce_line_item_save($line_item);
   // Add the line item to the order.
-  $order->commerce_line_items[LANGUAGE_NONE][0] = array(
-    'line_item_id' => $line_item->line_item_id,
-  );
+  $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
 
   // Save the customer information. Contains billing info.
   // Look up the profile by user id or email, then if not found make a new profile.
@@ -531,7 +529,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',
       array('@id' => $donation->did, '@nid' => $donation->nid), WATCHDOG_CRITICAL);
-    watchdog('fundraiser_ubercart', 'Charge function :function is empty.', array(':function' => $charge_function));
+    watchdog('fundraiser_commerce', 'Charge function :function is empty.', array(':function' => $charge_function));
     $donation->result = array('success' => FALSE, 'message' => 'Cannot determine the payment gateway for this donation.');
     return; // Return the failure.
   }
@@ -593,108 +591,100 @@ function fundraiser_commerce_fundraiser_donation_after_process($donation) {
  * Implements hook_fundraiser_donation_update().
  */
 function fundraiser_commerce_fundraiser_donation_update($donation) {
+  // Get basic information from the donation node.
+  $user = $donation->user;
+  $node = $donation->node;
+  // Pick out the values we need to generate an order.
+  if ($donation->donation['amount'] == 'other') {
+    $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
+  }
+  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : 'USD';
+  // Determine quantity and data from donation values.
+  $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
+
   // Get the original order.
   $order = commerce_order_load($donation->did);
-  // Update some things based on the new data submitted with the donation.
-  // This means updating customer profile for the most part in the donation as needed.
-  // TODO all this parts as mimic of fundraiser_ubercart_fundraiser_donation_update()
-  /*
 
-  // Load the order with new data.
-  $old_amount = $order->order_total;
-  $order->order_total = $donation->donation['amount'];
-  // Update the existing product (by id).
-  // Do Not add a new one.
-  foreach ($order->products as $delta => $product) {
-    $order->products[ $delta ]->price = $donation->donation['amount'];
+  // Update the existing line item(s) with the new value.
+  $found = commerce_line_item_load_multiple(array(), array('order_id' => $order->order_id));
+  $line_item_id = -1;
+  foreach($found as $id => $found) {
+    $line_item_id = $id;
   }
-
-  // Billing information.
-  $order->primary_email = $donation->donation['mail'];
-  $order->billing_first_name = $donation->donation['first_name'];
-  $order->billing_last_name = $donation->donation['last_name'];
-  $order->billing_city = $donation->donation['city'];
-  $order->billing_street1 = $donation->donation['address'];
-  $order->billing_street2 = $donation->donation['address_line_2'];
-  $order->billing_postal_code = $donation->donation['zip'];
-  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
-  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
-
-  // Card information.
-  $order->payment_method = 'credit';
-  $order->payment_details = array(
-    'cc_owner' => isset($order->payment_details['cc_type']) ? $order->payment_details['cc_type'] : '',
-    'cc_number' => $donation->donation['payment_fields']['credit']['card_number'],
-    'cc_start_month' => isset($order->payment_details['cc_start_month']) ? $order->payment_details['cc_start_month'] : '',
-    'cc_start_year' => isset($order->payment_details['cc_start_year']) ? $order->payment_details['cc_start_year'] : '',
-    'cc_exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
-    'cc_exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
-    'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
-    'cc_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
-      $donation->donation['payment_fields']['credit']['card_cvv'] : '',
-    'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
+  if ($line_item_id != -1) {
+    $line_item = commerce_line_item_load($line_item_id);
+  }
+  else {
+    $line_item = commerce_line_item_new('donation', $order->order_id);
+  }
+  // Update line item with the new amount information as needed.
+  $line_item->line_item_label = t('Donation');
+  $line_item->quantity = $quantity;
+  $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
+    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']), 
+    'currency_code' => $donation->donation['currency'],
   );
+  // Make sure the line item will be included in the update for order total.
+  $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data'] = commerce_price_component_add(
+    $line_item->commerce_unit_price[LANGUAGE_NONE][0],
+    'base_price',
+    array(
+      'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
+      'currency_code' => $donation->donation['currency'],
+      'data' => array(),
+    ),
+    TRUE
+  );
+  commerce_line_item_save($line_item);
+  // Add the line item to the order.
+  $order->commerce_line_items[LANGUAGE_NONE][0]['line_item_id'] = $line_item->line_item_id;
 
-  // Update the card type based on given card number.
-  $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
-
-  // Update the donation status.
-  if (isset($order->status) && isset($donation->status) && $order->status != $donation->status) {
-    $order->status = $donation->status;
+  // Update the customer profile with new info.
+  $found = commerce_customer_profile_load_multiple(array(), array('uid' => $user->uid));
+  $profile_id = -1;
+  foreach($found as $id => $found) {
+    $profile_id = $id;
   }
+  if ($profile_id != -1) {
+    $profile = commerce_customer_profile_load($profile_id);
+  }
+  else {
+    $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
+  }
+  // Update profile with the billing information.
+  $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
+  $profile->commerce_customer_address[LANGUAGE_NONE][0]['postal_code'] = $donation->donation['zip'];
+  commerce_customer_profile_save($profile);
+  $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
-  // Save the updated order.
-  uc_credit_cache('save', $order->payment_details, FALSE);
-  uc_order_save($order);
-  uc_credit_cache('clear');
+  // Save the order again to update its line item reference field.
+  commerce_order_save($order);
 
-  // Add the order status data.
-  // Translate the status according to UC label.
+  // Add the status data.
   $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
   if (!empty($order->order_status)) {
-    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
-    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
-  }
-  
-  // Update the gateway billing if applicable.
-  // To do later: Makeing the detection of dirty billing data internal.
-  if (!empty($donation->update_billing) && $donation->update_billing) {   
-    // Grab the gateway configuration from fundraisers data.
-    $info = _fundraiser_get_donation_gateway($donation->did);
-    // Check for the billing function to be defined.
-    $billing_update_function = isset($info['billing_update_function']) ? $info['billing_update_function'] : '';
-    if (!empty($donation->donation['reference_id']) && !empty($billing_update_function) && function_exists($billing_update_function)) {
-      // Create the charge information.
-      $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
-      $donation->data = (array) $donation->data;
-      $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
-      $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
-      // If no charge default set, use auth_charge
-      if (!isset($donation->data['txn_type'])) {
-        $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
-      }
-      // Create billing information to update gateways with.
-      $billing_info = array(
-         'first_name' => $donation->donation['first_name'],
-         'last_name' => $donation->donation['last_name'],
-         'address' => $donation->donation['address'],
-         'city' => $donation->donation['city'],
-         'state' => fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']),
-         'zipcode' => $donation->donation['zip'],
-         'country' => fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']),
-         'card_number' => $donation->donation['payment_fields']['credit']['card_number'],
-         'card_exp_date' => array(
-           'year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
-           'month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
-         ),
-         'card_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
-           $donation->donation['payment_fields']['credit']['card_cvv'] : '',
-      );
-      $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
-    }
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
   }
 
-  */
+  // Update the gateway's stored profile.
+  // Only relevant for gateways that allow recurring donations.
+  if (!empty($donation->update_billing) && $donation->update_billing) {
+    // Grab the gateway configuration from fundraisers data.
+    $info = _fundraiser_get_donation_gateway($donation->did);
+    $method_instance = commerce_payment_method_instance_load($info['id']);
+    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+    $result = module_invoke($method_instance['module'], 'fundraiser_commerce_update_gateway', $method_instance, $donation);
+  }
+
 }
 
 /**

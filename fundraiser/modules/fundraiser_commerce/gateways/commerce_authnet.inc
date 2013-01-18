@@ -12,12 +12,19 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => TRUE,
+    'billing_update_function' => 'commerce_authnet_billing_update_function',
     // ALL currently supported ubercart gateways use the same field set.
     'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_authnet_fundraiser_commerce_credit_card_expiration_form',
   );
+}
+
+/**
+ * Only relevant for gateways that allow recurring values.
+ */
+function commerce_authnet_billing_update_function() {
 }
 
 /**
@@ -165,4 +172,11 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
     'error type' => ($success) ? '' : 'billing',
   );
   return $result;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_update_gateway().
+ */
+function commerce_authnet_fundraiser_commerce_update_gateway($payment_method, $donation) {
+// TODO fill in how commerce_authnet will update the user's gateway card on file for this donation.
 }
