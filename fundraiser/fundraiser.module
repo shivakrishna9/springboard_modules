@@ -831,8 +831,6 @@ function fundraiser_fundraiser_field_info() {
     '#title' => t('Payment Method'),
     '#type' => 'payment_method',
     '#required' => 1,
-    // Acceptable values for this field to return from display are:
-    // 'none', 'credit', 'debit', 'paypal', 'check'
   );
   $fields['payment_information']['payment_fields'] = array(
     '#title' => t('Payment Details'),
@@ -840,7 +838,7 @@ function fundraiser_fundraiser_field_info() {
     '#required' => 0,
     /**
      * Instead of returning the value of this field it's treated more like a variable fieldset.
-     * The values returned are dependant on the value returned by payment method.
+     * The values returned are dependant on the value returned by payment method by gateway.
      * In the format:
      * 'payment_fields' => array(
      *   'credit' => array(

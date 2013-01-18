@@ -343,7 +343,7 @@ function fundraiser_sustainers_order($op, &$arg1, $arg2) {
  * Implements hook_fundraiser_field_info().
  */
 function fundraiser_sustainers_fundraiser_field_info() {
-  $fields['credit_card_information']['recurs_monthly'] = array(
+  $fields['payment_information']['recurs_monthly'] = array(
     '#title' => 'Recurring Payment',
     '#type' => 'select',
     '#required' => 0,

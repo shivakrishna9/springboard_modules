@@ -819,7 +819,7 @@ function _fundraiser_webform_update_component($fundraiser, $field_key, $field, $
     return;
   }
   if (!isset($field['#type'])) {
-    drupal_set_message(t('Error in creating component: %field', array('%field' => print_r($field, TRUE))));
+    drupal_set_message(t('Error in creating component: %field', array('%field' => print_r($field, TRUE))), 'error');
     return;
   }
   // Check if empty.
