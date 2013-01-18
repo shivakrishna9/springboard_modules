@@ -299,7 +299,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
  */
 function _salesforce_donation_get_form_fields($form, $fields = array()) {    
   foreach (element_children($form) as $field_name) {
-    if ($form[$field_name]['#type'] != 'fieldset')
+    if ($form[$field_name]['#type'] != 'fieldset') {
         $fields[$field_name] = $form[$field_name]['#title'];
     }
     else {
