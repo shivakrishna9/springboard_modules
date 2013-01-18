@@ -68,7 +68,7 @@ function _webform_edit_payment_method($component) {
     return $form; 
   }
   foreach($temp_gateways as $temp_gateway) {
-    $types = isset($temp_gateway['payment_method']) ? $temp_gateway['payment_method'] : array('credit');
+    $types = isset($temp_gateway['payment_method']) ? $temp_gateway['payment_method'] : array();
     foreach ($types as $type) {
       $all_payment_methods[$type][] = $temp_gateway;
     }
