@@ -14,7 +14,7 @@ function commerce_ogone_fundraiser_commerce_fundraiser_gateway_info() {
     'allow_recurring' => FALSE,
     // ALL currently supported ubercart gateways use the same field set.
     'form callback' => 'commerce_ogone_fundraiser_commerce_paypal_form',
-    //$this_gateway['form validate callback'] = '',
+    'form validate callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
   );
 }

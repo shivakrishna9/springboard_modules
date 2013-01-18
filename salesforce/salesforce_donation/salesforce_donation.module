@@ -113,34 +113,18 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   // Depending on the payment method any number of additional fields may exist.
   // So we need to add them here. Since which fields have values is completely
   // dependant on the individual user's choice at time of donation we can't
-  // anticipate which one will have a value and which one won't. So add them all
-  // for mapping.
-  $payment_methods = array(
-    'credit' => array(
-      'card_number' => t('Credit card number'),
-      'card_expiration_month' => t('Card expiration month'),
-      'card_expiration_year' => t('Card expiration year'),
-      'card_cvv' => t('Credit card CVV'),
-      'card_type' => t('Credit card type'),
-    ),
-    'paypal' => array(
-      'paypal_email' => t('Paypal email'),
-    ),
-    'debit' => array(
-      'debit_routing' => t('Debit bank routing number'),
-      'debit_account' => t('Debit bank account number'),
-    ),
-  );
-  foreach ($payment_methods as $payment_method => $payment_fields) {
-    foreach ($payment_fields as $key => $title) {
+  // anticipate which one will have a value and which one won't.
+  // So we need to check for all type that MAY be configured at any point based on
+  // available methods. Methods are defined within the associated active gateways.
+  foreach ($donation->donation['payment_fields'] as $payment_method => $payment_fields) {
+    foreach ($payment_fields as $key => $value) {
       if (isset($map->field_map['salesforce_donation_map'][$key])) {
-        if (isset($donation->donation[$key])) {
-          $sf_field = $map->field_map['salesforce_donation_map'][$key];
-          $fields[$sf_field] = $donation->donation[$key];
-        }
+        $sf_field = $map->field_map['salesforce_donation_map'][$key];
+        $fields[$sf_field] = $value;
       }
     }
   }
+
   // Salesforce webform map.
   if (isset($donation->submission_data)) {
     foreach ($donation->submission_data as $form_key => $submission_value) {
@@ -228,28 +212,32 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // Depending on the payment method any number of additional fields may exist.
   // So we need to add them here. Since which fields have values is completely
   // dependant on the individual user's choice at time of donation we can't
-  // anticipate which one will have a value and which one won't. So add them all
-  // for mapping.
-  $payment_methods = array(
-    'credit' => array(
-      'card_number' => t('Credit card number'),
-      'card_expiration_month' => t('Card expiration month'),
-      'card_expiration_year' => t('Card expiration year'),
-      'card_cvv' => t('Credit card CVV'),
-      'card_type' => t('Credit card type'),
-    ),
-    'paypal' => array(
-      'paypal_email' => t('Paypal email'),
-    ),
-    'debit' => array(
-      'debit_routing' => t('Debit bank routing number'),
-      'debit_account' => t('Debit bank account number'),
-    ),
-  );
-  foreach ($payment_methods as $payment_method => $payment_fields) {
-    foreach ($payment_fields as $key => $title) {
-      $fields['salesforce_donation_map']['#fields'][$key] = $title .
-        ' (' . t('Payment field') . ')';
+  // anticipate which one will have a value and which one won't.
+  // So we need to check for all type that MAY be configured at any point based on
+  // available methods. Methods are defined within the associated active gateways.
+  if (module_exists('fundraiser_webform')) {
+  // Find the payment methods component
+    $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
+    $payment_method_field = $node->webform['components'][$payment_method_component->cid];
+    // Use the enabled payment methods to create the payment fields
+    if (!empty($payment_method_field['extra']['payment_methods'])) {
+      $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
+    }
+    // Loop through the payment methods and add fields for each type.
+    foreach ($payment_methods as $payment_method => $config) {
+      // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+      $gateway_info = _fundraiser_gateway_info($config['id']);
+      // Check against the gateway config for a specific form to go with this payment gateway.
+      if (isset($gateway_info['form callback'])) {
+        $form_func = $gateway_info['form callback'];
+        if (function_exists($form_func)) {
+          $gateway_form = $form_func($payment_method);
+        }
+      }
+      $field_set = _salesforce_donation_get_form_fields($gateway_form);
+      foreach ($field_set as $field_key => $field_title) {
+        $fields['salesforce_donation_map']['#fields'][$field_key] = $field_title . ' (' . t('Payment field') . ')';
+      }
     }
   }
 
@@ -266,8 +254,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     foreach ($wf_components as $cid => $component) {
       if ($component['type'] != 'fieldset' && !in_array($component['form_key'], $donation_field_keys)) {
         $form_key = $component['form_key'];
-        $fields['salesforce_webform_map']['#fields'][$form_key] = $component['name'] .
-          ' (' . $component['type'] . ')';
+        $fields['salesforce_webform_map']['#fields'][$form_key] = $component['name'] . ' (' . $component['type'] . ')';
       }
     }
   }
@@ -303,6 +290,22 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     ),
   );
   // And return the fields for the map to generate the form.
+  return $fields;
+}
+
+/**
+ * Helper function, given a form, get all submission values NOT fieldset.
+ * WARNING: Recursion here.
+ */
+function _salesforce_donation_get_form_fields($form, $fields = array()) {    
+  foreach (element_children($form) as $field_name) {
+    if ($form[$field_name]['#type'] != 'fieldset')
+        $fields[$field_name] = $form[$field_name]['#title'];
+    }
+    else {
+      $fields = _salesforce_donation_get_form_fields($form[$field_name], $fields);
+    }
+  }
   return $fields;
 }
 

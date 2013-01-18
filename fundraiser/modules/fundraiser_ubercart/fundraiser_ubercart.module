@@ -195,9 +195,9 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       // ALL currently supported ubercart gateways allow for recurring.
       $this_gateway['allow_recurring'] = TRUE;
       // ALL currently supported ubercart gateways use the same field set.
-      $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form',
-      //$this_gateway['form validate callback'] = '',
-      $this_gateway['form submit callback'] = 'fundraiser_ubercart_credit_card_submit_form',
+      $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form';
+      $this_gateway['form validate callback'] = 'fundraiser_ubercart_credit_card_submit_form';
+      $this_gateway['form submit callback'] = 'fundraiser_ubercart_credit_card_submit_form';
       $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }
