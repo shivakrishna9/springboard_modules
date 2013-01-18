@@ -181,6 +181,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
   $uc_gateways = _uc_payment_gateway_list('', TRUE);
   $fundraiser_gateways = array();
   foreach ($uc_gateways as $uc_gateway) {
+    $this_gateway = array();
     if ($uc_gateway['enabled'] == 1) {
       $this_gateway['id'] = $uc_gateway['id'];
       $this_gateway['module'] = 'fundraiser_ubercart';
