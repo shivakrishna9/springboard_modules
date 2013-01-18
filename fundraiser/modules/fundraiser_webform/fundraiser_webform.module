@@ -459,9 +459,9 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   // Check against the gateway config for this donation for a submission cleanup.
   if (isset($donation->gateway['form validate callback'])) {
-    $submit_cleanup_func = $donation->gateway['form validate callback'];
-    if (function_exists($submit_cleanup_func)) {
-      $submission_fields = $submit_cleanup_func($submission_fields);
+    $validate_cleanup_func = $donation->gateway['form validate callback'];
+    if (function_exists($validate_cleanup_func)) {
+      $submission_fields = $validate_cleanup_func($submission_fields);
     }
   }
   $errors = fundraiser_validate_form_fields($form, $form_state, $submission_fields); // From fundraiser.module.
