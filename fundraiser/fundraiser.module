@@ -1454,8 +1454,14 @@ function fundraiser_donation_information_table($did) {
   $donation = fundraiser_donation_get_donation($did);
   $rows[] = array('Fundraiser user', t('#@uid - !name',
     array('@uid' => $donation->uid, '!name' => l($donation->user->name, 'user/' . $donation->user->uid))));
-  $rows[] = array('Fundraiser node', t('#@nid - !title',
-    array('@nid' => $donation->nid, '!title' => l($donation->node->title, 'node/' . $donation->node->nid))));
+  if (isset($donation->node->nid)) {
+    $rows[] = array('Fundraiser node', t('#@nid - !title',
+      array('@nid' => $donation->nid, '!title' => l($donation->node->title, 'node/' . $donation->node->nid))));
+  }
+  else {
+    $rows[] = array('Fundraiser node', t('#@nid - !title',
+      array('@nid' => '---', '!title' => t('No fundraiser node found.'))));
+  }
   $variables = array('header' => array(), 'rows' => $rows);
   drupal_alter('fundraiser_donation_information_table', $variables, $donation);
   return theme('table', $variables);
