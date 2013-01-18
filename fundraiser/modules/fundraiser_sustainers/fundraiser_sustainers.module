@@ -822,13 +822,16 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Update this donation (don't save it) so we have the right parentage with the new billing.
   $master_donation->donation = array_merge($master_donation->donation, $submission_fields);
   // Create new orders based on expiration date as needed.
-  // TODO: we need to retrieve the month / year values from the submitted form element.
-  // WHERE WE DON'T KNOW WHAT STANDS FOR WHAT. Great.
-  if (isset($form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'])
-    && isset($form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year'])) {
-    _fundraiser_sustainers_create_future_orders($master_donation,
-      $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'], // TODO this will work for now, but ultimately - no.
-      $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year']);
+  // But we need to retrieve the month / year values from gateway form.
+  // We can't predict the form key for these values, so ask the gateway to provide.
+  if (isset($form['#donation']->gateway['form expiration callback'])) {
+    $expiration_func = $form['#donation']->gateway['form expiration callback'];
+    if (function_exists($expiration_func)) {
+      $expires = $expiration_func($submission_fields);
+      if (isset($expires['month']) && isset($expires['year'])) {
+        _fundraiser_sustainers_create_future_orders($master_donation, $expires['month'], $expires['year']);
+      }
+    }
   }
   drupal_set_message(t('Billing information successfully updated'));
 }

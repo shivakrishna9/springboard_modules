@@ -164,6 +164,7 @@ function gateway_manager_fundraiser_ubercart_gateway_info() {
       $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form';
       $this_gateway['form validate callback'] = 'fundraiser_ubercart_credit_card_submit_form';
       $this_gateway['form submit callback'] = 'fundraiser_ubercart_credit_card_submit_form';
+      $this_gateway['form expiration callback'] = 'fundraiser_ubercart_credit_card_expiration_form';
       $gateway_info[$id] = $this_gateway;
     }
   }

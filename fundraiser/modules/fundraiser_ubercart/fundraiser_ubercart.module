@@ -199,6 +199,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form';
       $this_gateway['form validate callback'] = 'fundraiser_ubercart_credit_card_submit_form';
       $this_gateway['form submit callback'] = 'fundraiser_ubercart_credit_card_submit_form';
+      $this_gateway['form expiration callback'] = 'fundraiser_ubercart_credit_card_expiration_form';
       $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }
@@ -274,6 +275,20 @@ function fundraiser_ubercart_credit_card_submit_form($submission_fields) {
     unset($submission_fields['payment_fields']['credit']['expiration_date']);
   }
   return $submission_fields;
+}
+
+/**
+ * Callback function, return the user entered experation dates for this submission.
+ */
+function fundraiser_ubercart_credit_card_expiration_form($submission_fields) {
+  $expires = array();
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+  }
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_year'])) {
+    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  }
+  return $expires;
 }
 
 /**

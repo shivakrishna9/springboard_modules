@@ -16,6 +16,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
     'form callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
+    'form expiration callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_expiration_form',
   );
 }
 
@@ -83,6 +84,20 @@ function commerce_payment_example_fundraiser_commerce_credit_card_submit_form($s
     unset($submission_fields['payment_fields']['credit']['expiration_date']);
   }
   return $submission_fields;
+}
+
+/**
+ * Callback function, return the user entered experation dates for this submission.
+ */
+function commerce_payment_example_fundraiser_commerce_credit_card_expiration_form($submission_fields) {
+  $expires = array();
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+  }
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_year'])) {
+    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  }
+  return $expires;
 }
 
 /**
