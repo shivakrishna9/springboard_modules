@@ -73,6 +73,7 @@ function _webform_edit_payment_method($component) {
       $all_payment_methods[$type][] = $temp_gateway;
     }
   }
+  // Sort the payment gateways from the existing settings of the field.
   $field_payment_methods = !empty($component['extra']['payment_methods']) ? $component['extra']['payment_methods'] : array();
   foreach (array_keys($all_payment_methods) as $method_key) {
     $all_payment_methods[$method_key]['weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
