@@ -124,6 +124,7 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
       'code' => $donation->donation['payment_fields']['credit']['card_cvv'],
     ),
   );
+
   // Account for any CIM if stored on file, we have everything we need here - no need to pull out
   // of the donation object or habitually load this value from the donation. This may need to be
   // revised later, but for now I don't think we need to pull sustainer data with the donation.
@@ -171,6 +172,14 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
     'data' => array('txn_id' => $txn_id),
     'error type' => ($success) ? '' : 'billing',
   );
+  // Scrub sensitive donation fields if they exists.
+  if (isset($donation->donation['payment_fields']['credit']['card_number'])) {
+    $donation->donation['payment_fields']['credit']['card_number'] = substr(
+      $donation->donation['payment_fields']['credit']['card_number'], -4);
+  }
+  if (isset($donation->donation['payment_fields']['credit']['card_cvv'])) {
+    $donation->donation['payment_fields']['credit']['card_number'] = '';
+  }
   return $result;
 }
 

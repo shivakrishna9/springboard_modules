@@ -421,18 +421,10 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
   }
-  // We MUST gather payment method information from some source. Maybe there's a gen 'data' to put it in?
+  // This order data was stored during processing, and scrubbed by the gateway.
   $donation->donation['payment_method'] = $order->data['payment_method'];
-
-  // Gather CC information. NOT CURRENTLY AVAILABLE. This data is not stored anywhere in Commerce.
-  // Not an issue on initial submit, but tricky for tokens and SF integration as these values won't be set.
-  // We are using http://drupal.org/project/commerce_cardonfile for end user profiles.
-  // Therefore these values are simply Not Available at this point.
-  //$donation->donation['payment_fields']['credit']['card_number'] = '';
-  //$donation->donation['payment_fields']['credit']['card_expiration_month'] = '';
-  //$donation->donation['payment_fields']['credit']['card_expiration_year'] = '';
-  //$donation->donation['payment_fields']['credit']['card_cvv'] ='';
-  //$donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['payment_fields']['credit']['card_number']);
+  $donation->donation['payment_fields']['credit'] =  $order->data['payment_fields'];
+  $donation->data => $order->data['gateway_data'];
 }
 
 /**
@@ -505,11 +497,6 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   commerce_customer_profile_save($profile);
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
-  // Save us some spare information, cause we will need it later.
-  $order->data = array(
-    'payment_method' => $donation->donation['payment_method'],
-  );
-
   // Save the order again to update its line item reference field.
   commerce_order_save($order);
   // Set the order id to the donation to carry forward.
@@ -562,6 +549,17 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // A specific gateway may implement more than one form of charging (credit and PP for example) so leave that choice
   // to the execution function. All the information needed is on the donation object.
   $result = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation);
+  // Load the order object so we can save additional data post submit.
+  $order = commerce_order_load($donation->did);
+  // NOTE: The gateway is responsible for scrubbing sensitive data from the payment fields.
+  // Also, let's save some critical information to the order object so we can make use of it later.
+  $order->data = $donation->data = array(
+    'payment_method' => $donation->donation['payment_method'],
+    'payment_fields' => $donation->donation['payment_fields'],
+    'gateway_data' => $result->data,
+  );
+  // Save the order again to update its line item reference field.
+  commerce_order_save($order);
   // If no result then presume a failure or no hook installed for this gateway type.
   if (empty($result)) {
     $donation->result = array('success' => FALSE, 'message' => 'This payment gateway is not supported by Fundraiser Commerce.');
