@@ -824,9 +824,12 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Create new orders based on expiration date as needed.
   // TODO: we need to retrieve the month / year values from the submitted form element.
   // WHERE WE DON'T KNOW WHAT STANDS FOR WHAT. Great.
-  _fundraiser_sustainers_create_future_orders($master_donation,
-    $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'], // TODO this will work for now, but ultimately - no.
-    $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year']);
+  if (isset($form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'])
+    && isset($form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year'])) {
+    _fundraiser_sustainers_create_future_orders($master_donation,
+      $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'], // TODO this will work for now, but ultimately - no.
+      $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year']);
+  }
   drupal_set_message(t('Billing information successfully updated'));
 }
 
