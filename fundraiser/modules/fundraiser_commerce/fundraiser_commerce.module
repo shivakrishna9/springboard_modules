@@ -424,7 +424,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // This order data was stored during processing, and scrubbed by the gateway.
   $donation->donation['payment_method'] = $order->data['payment_method'];
   $donation->donation['payment_fields']['credit'] =  $order->data['payment_fields'];
-  $donation->data => $order->data['gateway_data'];
+  $donation->data = order->data['gateway_data'];
 }
 
 /**
