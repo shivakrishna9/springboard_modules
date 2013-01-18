@@ -199,8 +199,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
-      $this_gateway += module_invoke($method_instance['module'], 
-       'fundraiser_commerce_fundraiser_gateway_info', $method_instance, $donation);
+      $this_gateway += module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
       $this_gateway['gateway_details'] = $method_instance;
       $fundraiser_gateways[] = $this_gateway; 
     }

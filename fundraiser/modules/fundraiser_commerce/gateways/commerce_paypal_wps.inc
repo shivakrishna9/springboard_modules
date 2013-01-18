@@ -12,7 +12,22 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('paypal'),
     'allow_recurring' => FALSE,
+    // ALL currently supported ubercart gateways use the same field set.
+    'form callback' => 'commerce_paypal_wps_fundraiser_commerce_paypal_form',
+    //$this_gateway['form validate callback'] = '',
+    //$this_gateway['form submit callback'] = '',
   );
+}
+
+/**
+ * Callback function, use this form for the given gateway.
+ */
+function commerce_paypal_wps_fundraiser_commerce_paypal_form($payment_method) {
+  $form['paypal_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Paypal email'),
+  );
+  return $form;
 }
 
 /**

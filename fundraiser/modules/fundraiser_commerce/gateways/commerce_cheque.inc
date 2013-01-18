@@ -12,7 +12,22 @@ function commerce_cheque_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('check'),
     'allow_recurring' => FALSE,
+    'form callback' => 'commerce_cheque_fundraiser_commerce_paypal_form',
+    //$this_gateway['form validate callback'] = '',
+    //$this_gateway['form submit callback'] = '',
   );
+}
+
+/**
+ * Callback function, use this form for the given gateway.
+ */
+function commerce_cheque_fundraiser_commerce_paypal_form($payment_method) {
+  $form['check_message'] = array(
+    '#markup' => '<div class="payment-method-message">' .
+      t('Please remember to mail your check in.') .
+      '</div>',
+  );
+  return $form;
 }
 
 /**

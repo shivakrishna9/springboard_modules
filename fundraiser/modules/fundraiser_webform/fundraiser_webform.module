@@ -509,18 +509,14 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // And we prevent those values from being overwritten, we can pass the results as an automatic map between the two.
   // Other modules will have to be more particular.
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
-  // Move expiration date values up in the array.
-  if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_month'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+  // Check against the gateway config for this donation for a submission cleanup.
+  if (isset($donation->gateway['form submit callback'])) {
+    $submit_cleanup_func = $donation->gateway['form submit callback'];
+    if (function_exists($submit_cleanup_func)) {
+      $submission_fields = $submit_cleanup_func($submission_fields);
     }
-    if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'])) {
-      $submission_fields['payment_fields']['credit']['card_expiration_year'] =
-        $submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_year'];
-    }
-    unset($submission_fields['payment_fields']['credit']['expiration_date']);
   }
+  // Add submission to the donation.
   $donation->donation = $submission_fields;
   $donation->sid = $form_state['values']['details']['sid'];
   // Figure out which gateway it is that this selection indicates for this node.
