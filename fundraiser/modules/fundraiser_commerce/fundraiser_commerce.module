@@ -268,6 +268,7 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
  */
 function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submission_fields, $value) {
   // Assume all ubercart submissions are credit cards, but we still need to validate them.
+  // TODO this should probably be driven down to the gateway level.
   $payment_method = $submission_fields['payment_method'];
   if ($payment_method == 'credit') {
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
@@ -422,12 +423,12 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Not an issue on initial submit, but tricky for tokens and SF integration as these values won't be set.
   // We are using http://drupal.org/project/commerce_cardonfile for end user profiles.
   // Therefore these values are simply Not Available at this point.
-  $donation->donation['payment_method'] = 'credit'; // $order->payment_details['cc_number'];
-  $donation->donation['payment_fields']['credit']['card_number'] = '';
-  $donation->donation['payment_fields']['credit']['card_expiration_month'] = '';
-  $donation->donation['payment_fields']['credit']['card_expiration_year'] = '';
-  $donation->donation['payment_fields']['credit']['card_cvv'] ='';
-  $donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['payment_fields']['credit']['card_number']);
+  //$donation->donation['payment_method'] = 'credit'; // $order->payment_details['cc_number'];
+  //$donation->donation['payment_fields']['credit']['card_number'] = '';
+  //$donation->donation['payment_fields']['credit']['card_expiration_month'] = '';
+  //$donation->donation['payment_fields']['credit']['card_expiration_year'] = '';
+  //$donation->donation['payment_fields']['credit']['card_cvv'] ='';
+  //$donation->donation['payment_fields']['credit']['card_type'] = _fundraiser_commerce_get_cc_type($donation->donation['payment_fields']['credit']['card_number']);
 }
 
 /**
@@ -594,8 +595,106 @@ function fundraiser_commerce_fundraiser_donation_after_process($donation) {
 function fundraiser_commerce_fundraiser_donation_update($donation) {
   // Get the original order.
   $order = commerce_order_load($donation->did);
-  // Updte some things based on the new data submitted with the donation.
-  // This means updating customer profile for the most part.
+  // Update some things based on the new data submitted with the donation.
+  // This means updating customer profile for the most part in the donation as needed.
+  // TODO all this parts as mimic of fundraiser_ubercart_fundraiser_donation_update()
+  /*
+
+  // Load the order with new data.
+  $old_amount = $order->order_total;
+  $order->order_total = $donation->donation['amount'];
+  // Update the existing product (by id).
+  // Do Not add a new one.
+  foreach ($order->products as $delta => $product) {
+    $order->products[ $delta ]->price = $donation->donation['amount'];
+  }
+
+  // Billing information.
+  $order->primary_email = $donation->donation['mail'];
+  $order->billing_first_name = $donation->donation['first_name'];
+  $order->billing_last_name = $donation->donation['last_name'];
+  $order->billing_city = $donation->donation['city'];
+  $order->billing_street1 = $donation->donation['address'];
+  $order->billing_street2 = $donation->donation['address_line_2'];
+  $order->billing_postal_code = $donation->donation['zip'];
+  $order->billing_zone = fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']);
+  $order->billing_country = fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']);
+
+  // Card information.
+  $order->payment_method = 'credit';
+  $order->payment_details = array(
+    'cc_owner' => isset($order->payment_details['cc_type']) ? $order->payment_details['cc_type'] : '',
+    'cc_number' => $donation->donation['payment_fields']['credit']['card_number'],
+    'cc_start_month' => isset($order->payment_details['cc_start_month']) ? $order->payment_details['cc_start_month'] : '',
+    'cc_start_year' => isset($order->payment_details['cc_start_year']) ? $order->payment_details['cc_start_year'] : '',
+    'cc_exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
+    'cc_exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
+    'cc_issue' => isset($order->payment_details['cc_issue']) ? $order->payment_details['cc_issue'] : '',
+    'cc_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+      $donation->donation['payment_fields']['credit']['card_cvv'] : '',
+    'cc_bank' => isset($v->payment_details['cc_bank']) ? $order->payment_details['cc_bank'] : '',
+  );
+
+  // Update the card type based on given card number.
+  $order->payment_details['cc_type'] = _fundraiser_ubercart_get_cc_type($order->payment_details['cc_number']);
+
+  // Update the donation status.
+  if (isset($order->status) && isset($donation->status) && $order->status != $donation->status) {
+    $order->status = $donation->status;
+  }
+
+  // Save the updated order.
+  uc_credit_cache('save', $order->payment_details, FALSE);
+  uc_order_save($order);
+  uc_credit_cache('clear');
+
+  // Add the order status data.
+  // Translate the status according to UC label.
+  $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
+  if (!empty($order->order_status)) {
+    $donation->status_label = _fundraiser_ubercart_get_label_by_status($order->order_status);
+    $donation->status_charged = _fundraiser_ubercart_get_charged_by_status($order->order_status);
+  }
+  
+  // Update the gateway billing if applicable.
+  // To do later: Makeing the detection of dirty billing data internal.
+  if (!empty($donation->update_billing) && $donation->update_billing) {   
+    // Grab the gateway configuration from fundraisers data.
+    $info = _fundraiser_get_donation_gateway($donation->did);
+    // Check for the billing function to be defined.
+    $billing_update_function = isset($info['billing_update_function']) ? $info['billing_update_function'] : '';
+    if (!empty($donation->donation['reference_id']) && !empty($billing_update_function) && function_exists($billing_update_function)) {
+      // Create the charge information.
+      $config = isset($info['gateway_details']['config']) ? unserialize($info['gateway_details']['config']) : array();
+      $donation->data = (array) $donation->data;
+      $donation_config = isset($donation->data['config']) ? $donation->data['config'] : array();
+      $donation->data['config'] = array_merge((array) $donation_config, (array) $config);
+      // If no charge default set, use auth_charge
+      if (!isset($donation->data['txn_type'])) {
+        $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
+      }
+      // Create billing information to update gateways with.
+      $billing_info = array(
+         'first_name' => $donation->donation['first_name'],
+         'last_name' => $donation->donation['last_name'],
+         'address' => $donation->donation['address'],
+         'city' => $donation->donation['city'],
+         'state' => fundraiser_ubercart_get_zone_id_by_code($donation->donation['state']),
+         'zipcode' => $donation->donation['zip'],
+         'country' => fundraiser_ubercart_get_country_id_by_iso2($donation->donation['country']),
+         'card_number' => $donation->donation['payment_fields']['credit']['card_number'],
+         'card_exp_date' => array(
+           'year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
+           'month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
+         ),
+         'card_cvv' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+           $donation->donation['payment_fields']['credit']['card_cvv'] : '',
+      );
+      $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
+    }
+  }
+
+  */
 }
 
 /**
