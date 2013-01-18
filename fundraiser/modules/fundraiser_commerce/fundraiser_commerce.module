@@ -184,6 +184,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
   rules_invoke_all('commerce_payment_methods', $methods);
   $fundraiser_gateways = array();
   foreach ($methods->payment_methods as $id => $info) {
+    $this_gateway = array();
     $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
     list($method_id, $rule_name) = explode('|', $method_instance['instance_id']);
     // Load the rule configuration
