@@ -137,7 +137,9 @@ function fundraiser_token_info() {
   );
   // Modify given for payment fields.
   if (isset($info['tokens']['donation']['payment_fields'])) {
-    $payment_methods = array(
+    // TODO payments are no longer tokenizable.
+    /*
+      $payment_methods = array(
       'credit' => array(
         'card_number' => t('Credit card number'),
         'card_expiration_month' => t('Card expiration month'),
@@ -163,6 +165,8 @@ function fundraiser_token_info() {
     }
     $info['tokens']['donation']['card_number']['description'] = t('The last four digits of the credit card used for the donation.');
     $info['tokens']['donation']['card_type']['description'] = t('The credit card type used for the donation.');
+    unset($info['tokens']['donation']['payment_fields']);
+    */
     unset($info['tokens']['donation']['payment_fields']);
   }
   return $info;
@@ -209,7 +213,9 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
     $data['user'] = isset($donation->user->uid) ? $donation->user->uid : '';
     // Specific changes for payment fields.
     if (isset($data['payment_fields'])) {
-      $payment_methods = array(
+      // TODO payments are no longer tokenizable.
+      /*
+        $payment_methods = array(
         'credit' => array(
           'card_number' => t('Credit card number'),
           'card_expiration_month' => t('Card expiration month'),
@@ -233,6 +239,8 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       // Make sure to hide routing numbers as needed.
       $data['card_number'] = isset($data['card_number']) ? drupal_substr($data['card_number'], -4) : '';
       $data['card_type'] = isset($data['card_type']) ? drupal_ucfirst($data['card_type']) : '';
+      unset($data['payment_fields']);
+      */
       unset($data['payment_fields']);
     }
   }
