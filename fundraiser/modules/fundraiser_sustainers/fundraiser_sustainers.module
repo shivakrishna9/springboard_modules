@@ -768,8 +768,8 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
   // Select only the ones we want to validate with fundraiser.
   $submission_fields = $form_state['values'];
   // Clean up the gateway information as needed on validation.
-  if (isset($donation->gateway['form validate callback'])) {
-    $validate_cleanup_func = $donation->gateway['form validate callback'];
+  if (isset($form['#donation']->gateway['form validate callback'])) {
+    $validate_cleanup_func = $form['#donation']->gateway['form validate callback'];
     if (function_exists($validate_cleanup_func)) {
       $submission_fields = $validate_cleanup_func($submission_fields);
     }
@@ -786,13 +786,12 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
  */
 function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
-  $donation = $form['#donation'];
   // We only update donations to come, not ones already processed.
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   $submission_fields = $form_state['values'];
   // Clean up the gateway information as needed on validation.
-  if (isset($donation->gateway['form submit callback'])) {
-    $validate_cleanup_func = $donation->gateway['form submit callback'];
+  if (isset($form['#donation']->gateway['form submit callback'])) {
+    $validate_cleanup_func = $form['#donation']->gateway['form submit callback'];
     if (function_exists($validate_cleanup_func)) {
       $submission_fields = $validate_cleanup_func($submission_fields);
     }
@@ -823,8 +822,11 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Update this donation (don't save it) so we have the right parentage with the new billing.
   $master_donation->donation = array_merge($master_donation->donation, $submission_fields);
   // Create new orders based on expiration date as needed.
-  _fundraiser_sustainers_create_future_orders($master_donation, $form_state['values']['card_expiration_month'],
-    $form_state['values']['card_expiration_year']);
+  // TODO: we need to retrieve the month / year values from the submitted form element.
+  // WHERE WE DON'T KNOW WHAT STANDS FOR WHAT. Great.
+  _fundraiser_sustainers_create_future_orders($master_donation,
+    $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_month'], // TODO this will work for now, but ultimately - no.
+    $form_state['values']['payment_fields'][ $form['#donation']->donation['payment_method'] ]['card_expiration_year']);
   drupal_set_message(t('Billing information successfully updated'));
 }
 
