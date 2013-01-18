@@ -73,6 +73,7 @@ function _webform_edit_payment_method($component) {
       $all_payment_methods[$type][] = $temp_gateway;
     }
   }
+  // Sort the payment gateways from the existing settings of the field.
   $field_payment_methods = !empty($component['extra']['payment_methods']) ? $component['extra']['payment_methods'] : array();
   foreach (array_keys($all_payment_methods) as $method_key) {
     $all_payment_methods[$method_key]['weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
@@ -226,13 +227,23 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
     uasort($payment_methods, '_fundraiser_webform_payment_method_weight_compare');
     // Loop through the payment methods to create our options and find the default
     $default = NULL;
-    foreach ($payment_methods as $payment_method) {
-      // Set the option label as the custom label or the hard-coded label
-      $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : $payment_method['method'];
-      $default = !empty($payment_method['default']) ? $payment_method['method'] : $default;
+    // If there is only one method this field is hidden
+    if (count($payment_methods) == 1) {
+      $element['#type'] = 'hidden';
+      $element['#value'] = key($payment_methods);
+      // Remove the radio theme function and title
+      $element['#theme_wrappers'] = array();
+      $element['#title'] = '';
     }
-    $element['#options'] = $options;
-    $element['#default_value'] = $default;
+    else {
+      foreach ($payment_methods as $payment_method) {
+        // Set the option label as the custom label or the hard-coded label
+        $options[$payment_method['method']] = !empty($payment_method['label']) ? $payment_method['label'] : $payment_method['method'];
+        $default = !empty($payment_method['default']) ? $payment_method['method'] : $default;
+        $element['#options'] = $options;
+        $element['#default_value'] = $default;
+      }
+    }
   }
 
   return $element;
