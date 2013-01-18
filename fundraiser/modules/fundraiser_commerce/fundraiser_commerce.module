@@ -387,7 +387,10 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   $order = commerce_order_load($donation->did);
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
-  $donation->donation['amount'] = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
+  // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
+  // So we have the correct decimaled value.
+  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
+    $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
   // Data from profile.
   if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
     $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
