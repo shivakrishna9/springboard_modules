@@ -692,15 +692,18 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   }
 
   // CC info.
+  $form['payment_method'] = array(
+    '#type' => 'hidden',
+    '#value' => $donation->donation['payment_method'],
+  );
   $form['payment_fields'] = array(
     '#type' => 'fieldset',
     '#title' => 'Payment Information',
     '#attributes' => array('id' => 'credit-card-info'),
+    '#tree' => TRUE,
   );
-  // TODO add markups here
-  $form['payment_fields'][$donation->donation['payment_method']] = array(
+  $form['payment_fields'][ $donation->donation['payment_method'] ] = array(
     '#type' => 'fieldset',
-    '#title' => 'Payment Information',
     '#attributes' => array('id' => 'credit-card-info'),
   );
   // Pull the gateway form from the donation gateway.
@@ -709,7 +712,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   if (isset($donation->gateway['form callback'])) {
     $form_func = $donation->gateway['form callback'];
     if (function_exists($form_func)) {
-      $form['payment_fields'][$donation->donation['payment_method']] += $form_func($donation->donation['payment_method']);
+      $form['payment_fields'][ $donation->donation['payment_method'] ] += $form_func($donation->donation['payment_method']);
     }
   }
 
@@ -760,10 +763,10 @@ function _fundraiser_sustainers_create_field_from_info($donation, $field_key, $f
  * Form validation handler for billing address update form.
  */
 function fundraiser_sustainers_billing_update_form_validate($form, &$form_state) {
+  $donation = $form['#donation'];
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   // Select only the ones we want to validate with fundraiser.
   $submission_fields = $form_state['values'];
-  $donation = $form['#donation'];
   // Clean up the gateway information as needed on validation.
   if (isset($donation->gateway['form validate callback'])) {
     $validate_cleanup_func = $donation->gateway['form validate callback'];
@@ -783,18 +786,18 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
  */
 function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   $master_did = $form_state['values']['master_did'];
+  $donation = $form['#donation'];
   // We only update donations to come, not ones already processed.
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   $submission_fields = $form_state['values'];
   // Clean up the gateway information as needed on validation.
-  if (isset($donation->gateway['form validate callback'])) {
-    $validate_cleanup_func = $donation->gateway['form validate callback'];
+  if (isset($donation->gateway['form submit callback'])) {
+    $validate_cleanup_func = $donation->gateway['form submit callback'];
     if (function_exists($validate_cleanup_func)) {
       $submission_fields = $validate_cleanup_func($submission_fields);
     }
   }
 
-drupal_set_message(print_r($submission_fields,1));
   // Remove unnessecary values.
   unset($submission_fields['master_did']);
   unset($submission_fields['uid']);
