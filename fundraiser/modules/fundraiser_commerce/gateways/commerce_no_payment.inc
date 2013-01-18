@@ -6,6 +6,16 @@
  */
 
 /**
+ * Implements hook_fundraiser_commerce_fundraiser_gateway_info().
+ */
+function commerce_no_payment_fundraiser_commerce_fundraiser_gateway_info() {
+  return array(
+    'payment_method' => array('none'),
+    'allow_recurring' => FALSE,
+  );
+}
+
+/**
  * Implements commerce_no_payment().
  */
 function commerce_no_payment_fundraiser_commerce_execute_gateway($payment_method, $donation) {

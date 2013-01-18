@@ -6,6 +6,16 @@
  */
 
 /**
+ * Implements hook_fundraiser_commerce_fundraiser_gateway_info().
+ */
+function commerce_cheque_fundraiser_commerce_fundraiser_gateway_info() {
+  return array(
+    'payment_method' => array('check'),
+    'allow_recurring' => FALSE,
+  );
+}
+
+/**
  * Implements commerce_cheque().
  */
 function commerce_cheque_fundraiser_commerce_execute_gateway($payment_method, $donation) {
