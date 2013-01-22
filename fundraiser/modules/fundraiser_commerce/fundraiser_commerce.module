@@ -991,8 +991,8 @@ function fundraiser_commerce_payment_redirect($did) {
   if (!empty($form_build_id)) {
     $form_build_id = $form_build_id->data;
     // Given the form build id, get the rest from the form cache.
-    $form = cache_get('fundraiser-form-' . $did , 'cache_form');
-    $form_state = cache_get('fundraiser-form-state-' . $did  , 'cache_form');
+    $form = cache_get('fundraiser-form-' . $did, 'cache_form');
+    $form_state = cache_get('fundraiser-form-state-' . $did, 'cache_form');
     if (!empty($form) && !empty($form_state)) {
       $form = $form->data;
       $form_state = $form_state->data;
@@ -1014,20 +1014,27 @@ function fundraiser_commerce_payment_redirect($did) {
         // Handle the rest of the submit handlers.
         form_execute_handlers('submit', $form, $form_state);
         // Clean caches out entirely.
-        //if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
-        //  cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
-        //  cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
-        //}
-        // Process batches as needed.
-        if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
-          $batch['form_state'] = $form_state;
+        if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+          // Clear the form cache.
+          cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+          cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+          // Clear OUR form cache.
+          cache_clear_all('fundraiser-form-id-' . $did, 'cache');
+          cache_clear_all('fundraiser-form-' . $did, 'cache_form');
+          cache_clear_all('fundraiser-form-state-' . $did , 'cache_form');
         }
-        else {
-          $batch['form_state'] = array_intersect_key($form_state, array_flip(array('programmed', 'rebuild', 'storage', 'no_redirect', 'redirect')));
+        // Process batches as neededdd.i
+        if ($batch = & batch_get() && !isset($batch['current_set'])) {
+          if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
+            $batch['form_state'] = $form_state;
+          }
+          else {
+            $batch['form_state'] = array_intersect_key($form_state,
+              array_flip(array('programmed', 'rebuild', 'storage', 'no_redirect', 'redirect')));
+          }
+          $batch['progressive'] = !$form_state['programmed'];
+          batch_process();
         }
-        
-        $batch['progressive'] = !$form_state['programmed'];
-        batch_process();
         // Set flag.
         $form_state['executed'] = TRUE;
         // Redirect the form based on values in $form_state.
@@ -1035,9 +1042,8 @@ function fundraiser_commerce_payment_redirect($did) {
         // This will interupt further processing like a return would.
         drupal_redirect_form($form_state);
         // But if we aren't redirecting, something went wrong and so we continue.
-        return array(
-          '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . ': Error encountered/div>',
-        );
+        // This does mean we will not rebuild a form in the even of a post-submission error.
+        // That's ok though, something went critically wrong if we got to this point.
       }
     }
   }
