@@ -870,11 +870,11 @@ function _fundraiser_commerce_get_charged_by_status($status) {
  */
 function fundraiser_commerce_payment_redirect($did) {
   // Load up additional data as needed for this donation, from Fundraiser and Commerce.
-  $donation = _fundraiser_get_donation_by_did($did);
+  $donation = fundraiser_donation_get_donation($did);
   $order = commerce_order_load($donation->did);
   $payment_method = FALSE;
   if (!empty($donation->gateway)) {
-    $payment_method = commerce_payment_method_instance_load($donation->gateway);
+    $payment_method = commerce_payment_method_instance_load($donation->gateway['id']);
   }
 
   // Error check, if the payment method doesn't exist or does not require a redirect.
@@ -932,6 +932,10 @@ function fundraiser_commerce_payment_redirect($did) {
     }
   }
 
+  $log = t('Customer arrived after redirect.');
+  // We can also remove the form from the cache, we won't need it further.
+  $form_build_id = cache_get('fundraiser-' . $did . '-form', 'cache');
+  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
   // On return, the the user came to the cancel page - they canceled at the gateway.
   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
     $log = t('Customer canceled the redirected payment at the gateway.');
@@ -986,11 +990,8 @@ function fundraiser_commerce_payment_redirect($did) {
   }
 
   // If we're down to this point, we've returned from a submit redirect. In that case, we redirect the form based on success or failure.
-  // We can also remove the form from the cache, we won't need it further.
-  $form_build_id = cache_get('fundraiser-' . $did . '-form', 'cache');
   if (!empty($form_build_id)) {
     $form_build_id = $form_build_id->data;
-    cache_clear_all('fundraiser-' . $did . '-form', 'cache');
     // Given the form build id, get the rest from the form cache.
     $form = cache_get('form_' . $form_build_id , 'cache_form');
     $form_state = cache_get('form_state_' . $form_build_id , 'cache_form');
