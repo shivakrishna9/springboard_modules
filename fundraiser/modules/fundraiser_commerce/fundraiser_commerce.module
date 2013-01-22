@@ -995,34 +995,36 @@ function fundraiser_commerce_payment_redirect($did) {
     // Given the form build id, get the rest from the form cache.
     $form = cache_get('form_' . $form_build_id , 'cache_form');
     $form_state = cache_get('form_state_' . $form_build_id , 'cache_form');
-    // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
-    // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
-    // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
-    if (!empty($form['#submit'])) {
-      // Remove validations, we don't need them.
-      $form['#validate'] = array();
-      // On a failure we pick back up with the form submits.
-      $submit_handlers = $form['#submit'];
-      $start = FALSE;
-      foreach ($submit_handlers as $index => $submit_handler) {
-        // Skip handlers until we get to post submit.
-        if ($submit_handler == 'fundraiser_donation_post_submit') {
-          $start == TRUE;
-        }
-        if (!$start) {
-          unset($form['#submit'][$index]);
-        }
-      }   
-      // With the correct set of submit handlers in place, we need to pick up processing again.
-      $form_id = $form['#build_id'];
-      drupal_process_form($form_id, $form, $form_state);
+    if (!empty($form) && !empty($form_state)) {
+      $form = $form->data;
+      $form_state = $form_state->data;
+      // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
+      // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
+      // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
+      if (!empty($form['#submit'])) {
+        // Remove validations, we don't need them.
+        $form['#validate'] = array();
+        // On a failure we pick back up with the form submits.
+        $submit_handlers = $form['#submit'];
+        $start = FALSE;
+        foreach ($submit_handlers as $index => $submit_handler) {
+          // Skip handlers until we get to post submit.
+          if ($submit_handler == 'fundraiser_donation_post_submit') {
+            $start == TRUE;
+          }
+          if (!$start) {
+            unset($form['#submit'][$index]);
+          }
+        }   
+        // With the correct set of submit handlers in place, we need to pick up processing again.
+        $form_id = $form['#build_id'];
+        drupal_process_form($form_id, $form, $form_state);
+      }
     }
   }
-  else {
-    return array(
-      '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
-    );
-  }
+  return array(
+    '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
+  );
 }
 
 /**
