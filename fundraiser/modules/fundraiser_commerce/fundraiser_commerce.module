@@ -933,8 +933,6 @@ function fundraiser_commerce_payment_redirect($did) {
   }
 
   $log = t('Customer arrived after redirect.');
-  // We can also remove the form from the cache, we won't need it further.
-  $form_build_id = cache_get('fundraiser-' . $did . '-form', 'cache');
   // On return, the the user came to the cancel page - they canceled at the gateway.
   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
     $log = t('Customer canceled the redirected payment at the gateway.');
@@ -989,11 +987,12 @@ function fundraiser_commerce_payment_redirect($did) {
   }
 
   // If we're down to this point, we've returned from a submit redirect. In that case, we redirect the form based on success or failure.
+  $form_build_id = cache_get('fundraiser-form-id-' . $did, 'cache');
   if (!empty($form_build_id)) {
     $form_build_id = $form_build_id->data;
     // Given the form build id, get the rest from the form cache.
-    $form = cache_get('form_' . $form_build_id , 'cache_form');
-    $form_state = cache_get('form_state_' . $form_build_id , 'cache_form');
+    $form = cache_get('fundraiser-form-' . $did , 'cache_form');
+    $form_state = cache_get('fundraiser-form-state-' . $did  , 'cache_form');
     if (!empty($form) && !empty($form_state)) {
       $form = $form->data;
       $form_state = $form_state->data;
@@ -1001,42 +1000,32 @@ function fundraiser_commerce_payment_redirect($did) {
       // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
       // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
       if (!empty($form['#submit'])) {
-        // Remove validations, we don't need them.
-        $form['#validate'] = array();
         // On a failure we pick back up with the form submits.
-        $submit_handlers = $form['#submit'];
         $start = FALSE;
-        foreach ($submit_handlers as $index => $submit_handler) {
+        foreach ($form['#submit'] as $index => $submit_handler) {
           // Skip handlers until we get to post submit.
           if ($submit_handler == 'fundraiser_donation_post_submit') {
-            $start == TRUE;
-          }
-          if (!$start) {
             unset($form['#submit'][$index]);
           }
-        }   
+        }
         // With the correct set of submit handlers in place, we need to pick up processing again.
         $form_id = $form['#build_id'];
+        $form_state['process_input'] = TRUE; // For process form, // Only process the input if we have a correct form submission.
         $form_state['method'] = 'post';
         $form_state['rebuild'] = FALSE;
         $form_state['executed'] = TRUE;
         $form_state['submitted'] = TRUE;
         $form_state['webform_completed'] = TRUE;
         drupal_process_form($form_id, $form, $form_state);
-        return array();
+        return array(
+          '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . ' FORM PROCESS ATTEMPTED TO REDIRECT</div>',
+        );
       }
     }
-    else {
-      return array(
-        '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
-      );
-    }
   }
-  else {
-    return array(
-      '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
-    );
-  }
+  return array(
+    '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
+  );
 }
 
 /**
