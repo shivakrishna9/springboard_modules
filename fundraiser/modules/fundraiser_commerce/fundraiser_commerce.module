@@ -1021,10 +1021,17 @@ function fundraiser_commerce_payment_redirect($did) {
         drupal_process_form($form_id, $form, $form_state);
       }
     }
+    else {
+      return array(
+        '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
+      );
+    }
   }
-  return array(
-    '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
-  );
+  else {
+    return array(
+      '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
+    );
+  }
 }
 
 /**
