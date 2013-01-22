@@ -1005,6 +1005,9 @@ function fundraiser_commerce_payment_redirect($did) {
         foreach ($form['#submit'] as $index => $submit_handler) {
           // Skip handlers until we get to post submit.
           if ($submit_handler == 'fundraiser_donation_post_submit') {
+            $start = TRUE;
+          }
+          if (!$start) {
             unset($form['#submit'][$index]);
           }
         }
