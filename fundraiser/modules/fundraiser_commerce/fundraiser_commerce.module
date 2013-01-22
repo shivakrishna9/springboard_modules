@@ -1018,6 +1018,7 @@ function fundraiser_commerce_payment_redirect($did) {
         // Handle the rest of the submit handlers.
         form_execute_handlers('submit', $form, $form_state);
         // Clean caches out entirely.
+        // All caches have an expire on them, so wil be cleaned up with cron.
         //if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
         //  // Clear the form cache.
         //  cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
