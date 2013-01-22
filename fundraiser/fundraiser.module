@@ -1115,7 +1115,7 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
   // It is intended to allow redirects to pick back up with form submission after returning to site.
   // TODO - cache calling may be dependant on IFF the gateway selected is a redirect one.
   // This is info should be added on gateway info hooks.
-  cache_set('fundraiser-' . $did . '-form', $form_state['values']['form_build_id'], 'cache');
+  cache_set('fundraiser-' . $did . '-form', $form_state['values']['form_build_id'], 'cache', strtotime('+1 hour'));
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_process($donation);
 }
@@ -1136,8 +1136,6 @@ function _fundraiser_donation_submit_after_process($donation) {
     $donation->result['success'] = FALSE;
     fundraiser_donation_decline($donation);
   }
-  // We can remove the form from the cache if we hit this page, we won't need it further.
-  cache_clear_all('fundraiser-' . $donation->did . '-form', 'cache');
 }
 
 /**

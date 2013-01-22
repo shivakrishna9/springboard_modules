@@ -935,7 +935,6 @@ function fundraiser_commerce_payment_redirect($did) {
   $log = t('Customer arrived after redirect.');
   // We can also remove the form from the cache, we won't need it further.
   $form_build_id = cache_get('fundraiser-' . $did . '-form', 'cache');
-  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
   // On return, the the user came to the cancel page - they canceled at the gateway.
   if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
     $log = t('Customer canceled the redirected payment at the gateway.');
@@ -1022,6 +1021,7 @@ function fundraiser_commerce_payment_redirect($did) {
         $form_state['rebuild'] = FALSE;
         $form_state['executed'] = TRUE;
         $form_state['submitted'] = TRUE;
+        $form_state['webform_completed'] = TRUE;
         drupal_process_form($form_id, $form, $form_state);
         return array();
       }
