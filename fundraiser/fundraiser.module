@@ -1118,8 +1118,6 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
   cache_set('fundraiser-' . $did . '-form', $form_state['values']['form_build_id'], 'cache');
   // The created donation information should be at at $donation->donation, ready to process.
   fundraiser_donation_process($donation);
-  // We can remove the form from the cache if we hit this page, we won't need it further.
-  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
 }
 
 /**
@@ -1138,6 +1136,8 @@ function _fundraiser_donation_submit_after_process($donation) {
     $donation->result['success'] = FALSE;
     fundraiser_donation_decline($donation);
   }
+  // We can remove the form from the cache if we hit this page, we won't need it further.
+  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
 }
 
 /**
