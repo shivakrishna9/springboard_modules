@@ -1018,15 +1018,15 @@ function fundraiser_commerce_payment_redirect($did) {
         // Handle the rest of the submit handlers.
         form_execute_handlers('submit', $form, $form_state);
         // Clean caches out entirely.
-        if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
-          // Clear the form cache.
-          cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
-          cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
-          // Clear OUR form cache.
-          cache_clear_all('fundraiser-form-id-' . $did, 'cache');
-          cache_clear_all('fundraiser-form-' . $did, 'cache_form');
-          cache_clear_all('fundraiser-form-state-' . $did , 'cache_form');
-        }
+        //if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+        //  // Clear the form cache.
+        //  cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+        //  cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+        //  // Clear OUR form cache.
+        //  cache_clear_all('fundraiser-form-id-' . $did, 'cache');
+        //  cache_clear_all('fundraiser-form-' . $did, 'cache_form');
+        //  cache_clear_all('fundraiser-form-state-' . $did , 'cache_form');
+        //}
         // Process batches as neededdd.i
         if ($batch = & batch_get() && !isset($batch['current_set'])) {
           if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
