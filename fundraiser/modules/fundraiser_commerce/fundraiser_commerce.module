@@ -1009,16 +1009,34 @@ function fundraiser_commerce_payment_redirect($did) {
           }
         }
         // With the correct set of submit handlers in place, we need to pick up processing again.
+        // From as if we were inside of drupal_process_form, since our goto interrupted execution.
         $form_id = $form['#build_id'];
-        $form_state['process_input'] = TRUE; // For process form, // Only process the input if we have a correct form submission.
-        $form_state['method'] = 'post';
-        $form_state['rebuild'] = FALSE;
+        // Handle the rest of the submit handlers.
+        form_execute_handlers('submit', $form, $form_state);
+        // Clean caches out entirely.
+        //if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+        //  cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+        //  cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+        //}
+        // Process batches as needed.
+        if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
+          $batch['form_state'] = $form_state;
+        }
+        else {
+          $batch['form_state'] = array_intersect_key($form_state, array_flip(array('programmed', 'rebuild', 'storage', 'no_redirect', 'redirect')));
+        }
+        
+        $batch['progressive'] = !$form_state['programmed'];
+        batch_process();
+        // Set flag.
         $form_state['executed'] = TRUE;
-        $form_state['submitted'] = TRUE;
-        $form_state['webform_completed'] = TRUE;
-        drupal_process_form($form_id, $form, $form_state);
+        // Redirect the form based on values in $form_state.
+        // This will forward us to another page with a drupal goto if set.
+        // This will interupt further processing like a return would.
+        drupal_redirect_form($form_state);
+        // But if we aren't redirecting, something went wrong and so we continue.
         return array(
-          '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . ' FORM PROCESS ATTEMPTED TO REDIRECT</div>',
+          '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . ': Error encountered/div>',
         );
       }
     }
