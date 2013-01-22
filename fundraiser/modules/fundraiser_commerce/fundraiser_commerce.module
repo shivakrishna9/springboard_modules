@@ -1020,8 +1020,10 @@ function fundraiser_commerce_payment_redirect($did) {
         $form_id = $form['#build_id'];
         $form_state['method'] = 'post';
         $form_state['rebuild'] = FALSE;
+        $form_state['executed'] = TRUE;
         $form_state['submitted'] = TRUE;
         drupal_process_form($form_id, $form, $form_state);
+        return array();
       }
     }
     else {
