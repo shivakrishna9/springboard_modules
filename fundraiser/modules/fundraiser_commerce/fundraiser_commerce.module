@@ -1014,6 +1014,7 @@ function fundraiser_commerce_payment_redirect($did) {
         // With the correct set of submit handlers in place, we need to pick up processing again.
         // From as if we were inside of drupal_process_form, since our goto interrupted execution.
         $form_id = $form['#build_id'];
+        $form_state['#donation'] = $donation;
         // Handle the rest of the submit handlers.
         form_execute_handlers('submit', $form, $form_state);
         // Clean caches out entirely.
