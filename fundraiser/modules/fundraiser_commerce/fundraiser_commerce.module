@@ -1018,6 +1018,9 @@ function fundraiser_commerce_payment_redirect($did) {
         }   
         // With the correct set of submit handlers in place, we need to pick up processing again.
         $form_id = $form['#build_id'];
+        $form_state['method'] = 'post';
+        $form_state['rebuild'] = FALSE;
+        $form_state['submitted'] = TRUE;
         drupal_process_form($form_id, $form, $form_state);
       }
     }
