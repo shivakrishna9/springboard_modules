@@ -1137,7 +1137,7 @@ function _fundraiser_donation_submit_after_process($donation) {
     fundraiser_donation_decline($donation);
   }
   // We can remove the form from the cache if we hit this page, we won't need it further.
-  cache_clear_all('fundraiser-' . $did . '-form', 'cache');
+  cache_clear_all('fundraiser-' . $donation->did . '-form', 'cache');
 }
 
 /**
