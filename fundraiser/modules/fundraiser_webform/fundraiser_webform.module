@@ -476,10 +476,12 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
     // TODO there may be a cleaner way to do this.
     $gateway_info = _fundraiser_gateway_info($config['id']);
     // Check against the gateway config for this donation for a submission cleanup.
-    if ( in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['form validate callback'])) {
-      $validate_cleanup_func = $gateway_info['form validate callback'];
-      if (function_exists($validate_cleanup_func)) {
-        $submission_fields = $validate_cleanup_func($submission_fields);
+    if (isset($submission_fields['payment_method'])) {
+      if ( in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['form validate callback'])) {
+        $validate_cleanup_func = $gateway_info['form validate callback'];
+        if (function_exists($validate_cleanup_func)) {
+          $submission_fields = $validate_cleanup_func($submission_fields);
+        }
       }
     }
   }
@@ -534,13 +536,14 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
   // Loop through the payment methods and add fields for each type.
   foreach ($payment_methods as $payment_method => $config) {
     // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
-    // TODO there may be a cleaner way to do this.
     $gateway_info = _fundraiser_gateway_info($config['id']);
     // Check against the gateway config for this donation for a submission cleanup.
-    if ( in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['form validate callback'])) {
-      $validate_cleanup_func = $gateway_info['form validate callback'];
-      if (function_exists($validate_cleanup_func)) {
-        $submission_fields = $validate_cleanup_func($submission_fields);
+    if (isset($submission_fields['payment_method'])) {
+      if (in_array($submission_fields['payment_method'], $gateway_info['payment_method']) && isset($gateway_info['form submit callback'])) {
+        $submit_cleanup_func = $gateway_info['form submit callback'];
+        if (function_exists($submit_cleanup_func)) {
+          $submission_fields = $submit_cleanup_func($submission_fields);
+        }
       }
     }
   }
