@@ -1,0 +1,6 @@
+name = Salesforce Sync
+description = Synchronization controller for Salesforce.
+package = Salesforce
+core = 7.x
+
+dependencies[] = salesforce
