@@ -894,7 +894,7 @@ function fundraiser_commerce_payment_redirect($did) {
       $log = t('Customer skipped the Payment page because payment was already submitted.');
       // No addtional result needed in this case. The donation has already been kicked off.
     }
-    fundraiser_commerce_fundraiser_donation_process($donation);
+    fundraiser_commerce_fundraiser_donation_after_process($donation);
     _fundraiser_donation_submit_after_process($donation);
   }
 
@@ -947,7 +947,7 @@ function fundraiser_commerce_payment_redirect($did) {
       'data' => array(),
       'error type' => 'billing',
     );
-    fundraiser_commerce_fundraiser_donation_process($donation);
+    fundraiser_commerce_fundraiser_donation_after_process($donation);
     _fundraiser_donation_submit_after_process($donation);
   }
 
@@ -969,7 +969,7 @@ function fundraiser_commerce_payment_redirect($did) {
         'data' => array(),
         'error type' => '',
       );
-      fundraiser_commerce_fundraiser_donation_process($donation);
+      fundraiser_commerce_fundraiser_donation_after_process($donation);
       _fundraiser_donation_submit_after_process($donation);
     }
     else {
@@ -984,7 +984,7 @@ function fundraiser_commerce_payment_redirect($did) {
         'data' => array(),
         'error type' => 'billing',
       );
-      fundraiser_commerce_fundraiser_donation_process($donation);
+      fundraiser_commerce_fundraiser_donation_after_process($donation);
       _fundraiser_donation_submit_after_process($donation);
     }
   }
