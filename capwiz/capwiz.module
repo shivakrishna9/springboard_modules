@@ -178,6 +178,9 @@ function capwiz_add_account($capwiz_account) {
       }
     }
 
+    // Call a hook so that other modules can respond to the account being added.
+    module_invoke_all('capwiz_account_insert', $drupal_account);
+
     // If Salesforce integration modules are enabled:
     if (function_exists('sf_queue_insert')) {
       sf_queue_insert($drupal_account->uid, 'user', 'upsert');

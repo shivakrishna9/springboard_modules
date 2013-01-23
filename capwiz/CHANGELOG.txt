@@ -1,0 +1,4 @@
+2013-01-23 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+    * capwiz.module (capwiz_add_account): invoking hook capwiz_account_insert to allow
+      other modules to act when a user is created by the capwiz module
