@@ -36,6 +36,15 @@ function salesforce_donation_permission() {
  */
 
 /**
+ * Implements hook_fundraiser_donation_success().
+ */
+function salesforce_donation_fundraiser_donation_success($donation) {
+  // Reload donation to be sure to get everything we need from submission table then send to queue.
+  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+}
+
+/**
  * Implements hook_salesforce_genmap_map_help().
  */
 function salesforce_donation_salesforce_genmap_map_help() {
@@ -122,6 +131,45 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         $sf_field = $map->field_map['salesforce_donation_map'][$key];
         $fields[$sf_field] = $value;
       }
+    }
+  }
+
+  // And lastly, the reconstructed data fields. Information derived from the current fields.
+  if (isset($map->field_map['salesforce_donation_map'])) {
+    if (isset($map->field_map['salesforce_donation_map']['close_date'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['close_date'];
+      // TODO fill this in.
+      $fields[$sf_field] = '';
+    }
+    if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
+      // TODO fill this in.
+      $fields[$sf_field] = '';
+    }
+    if (isset($map->field_map['salesforce_donation_map']['form_URL'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['form_URL'];
+      // TODO fill this in.
+      $fields[$sf_field] = '';
+    }
+    if (isset($map->field_map['salesforce_donation_map']['probability'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['probability'];
+      $probability = 100;
+      //if ($recurring and not charged) { TODO: fill this in.
+        $probability = 50;
+      //}
+      $fields[$sf_field] = $probability;
+    }
+    if (isset($map->field_map['salesforce_donation_map']['stage'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['stage'];
+      $fields[$sf_field] = '';
+    }
+    if (isset($map->field_map['salesforce_donation_map']['user_salesforce_account_id'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_account_id'];
+      $fields[$sf_field] = '[Account:User:User:uid]';
+    }
+    if (isset($map->field_map['salesforce_donation_map']['user_salesforce_contact_id'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_contact_id'];
+      $fields[$sf_field] = '[Contact:User:User:uid]';
     }
   }
 
@@ -221,7 +269,8 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     $payment_method_field = $node->webform['components'][$payment_method_component->cid];
     // Use the enabled payment methods to create the payment fields
     if (!empty($payment_method_field['extra']['payment_methods'])) {
-      $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
+      $payment_methods = array_filter($payment_method_field['extra']['payment_methods'], 
+        '_fundraiser_webform_payment_method_array_filter_enabled');
     }
     // Loop through the payment methods and add fields for each type.
     foreach ($payment_methods as $payment_method => $config) {
@@ -240,6 +289,15 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       }
     }
   }
+
+  // And lastly, the reconstructed data fields. Information derived from the current fields.
+  $fields['salesforce_donation_map']['#fields']['close_date'] = t('Close date');
+  $fields['salesforce_donation_map']['#fields']['transaction_date'] = t('Transaction date');
+  $fields['salesforce_donation_map']['#fields']['form_URL'] = t('Form URL');
+  $fields['salesforce_donation_map']['#fields']['probability'] = t('Probability');
+  $fields['salesforce_donation_map']['#fields']['stage'] = t('Stage');
+  $fields['salesforce_donation_map']['#fields']['user_salesforce_account_id'] = t('User Salesforce Account ID');
+  $fields['salesforce_donation_map']['#fields']['user_salesforce_contact_id'] = t('User Salesforce Contact ID');
 
   // Webform component fields.
   if (module_exists('fundraiser_webform')) {
@@ -342,13 +400,4 @@ function salesforce_donation_webform_map_page_access($node) {
     return TRUE;
   }
   return FALSE;
-}
-
-/**
- * Implements hook_fundraiser_donation_success().
- */
-function salesforce_donation_fundraiser_donation_success($donation) {
-  // Reload donation to get everything we need from submission table then call.
-  $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
 }
