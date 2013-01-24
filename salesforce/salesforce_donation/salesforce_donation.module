@@ -27,6 +27,29 @@ function salesforce_donation_permission() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function salesforce_genmap_menu() {
+  $items['admin/config/salesforce/salesforce-donation'] = array(
+    'title' => 'Salesforce donation',
+    'description' => 'Configure how the Salesforce integration will work with donation objects.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_donation_settings'),
+    'access arguments' => array('administer salesforce'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Menu callback. Configure salesforce_donation module.
+ */
+function salesforce_donation_settings($form, &$form_state) {
+  // Build a default fieldmap.
+  return system_settings_form($form);
+}
+
+/**
  * @} core_drupal_hooks
  */
 

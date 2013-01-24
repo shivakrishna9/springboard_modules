@@ -58,7 +58,7 @@ function fundraiser_menu() {
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
-    'access arguments' => array("administer fundraiser"),
+    'access arguments' => array('administer fundraiser'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fundraiser.admin.inc',
   );
@@ -67,7 +67,7 @@ function fundraiser_menu() {
     'description' => 'Configurations for the Fundraiser system.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_admin_settings'),
-    'access arguments' => array("administer fundraiser"),
+    'access arguments' => array('administer fundraiser'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
