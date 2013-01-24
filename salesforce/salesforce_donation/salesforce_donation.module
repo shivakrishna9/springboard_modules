@@ -34,7 +34,7 @@ function salesforce_donation_permission() {
  * @name salesforce_genmap_hooks
  * @{
  */
-
+// TODO review these, we may need to act on create instead of success
 /**
  * Implements hook_fundraiser_donation_success().
  */
