@@ -161,7 +161,13 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
-      $fields[$sf_field] = '';
+      $stage = 'Posted';
+      //if ($recurring and not charged) { TODO: fill this in.
+        $stage = 'Pledged';
+      //}
+      // TODO add mapping to donation order status feature - implement order stage gathering
+      // as hook in commerce and ubercart.
+      $fields[$sf_field] = $stage;
     }
     if (isset($map->field_map['salesforce_donation_map']['user_salesforce_account_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_account_id'];
