@@ -29,7 +29,7 @@ function salesforce_donation_permission() {
 /**
  * Implements hook_menu().
  */
-function salesforce_genmap_menu() {
+function salesforce_donation_menu() {
   $items['admin/config/salesforce/salesforce-donation'] = array(
     'title' => 'Salesforce donation',
     'description' => 'Configure how the Salesforce integration will work with donation objects.',
@@ -46,7 +46,20 @@ function salesforce_genmap_menu() {
  */
 function salesforce_donation_settings($form, &$form_state) {
   // Build a default fieldmap.
-  return system_settings_form($form);
+  $node->nid = -1; // Dummy value, no real node here.
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  $form_state['build_info']['args'][0] = $node;
+  $form = salesforce_genmap_map_form($form, $form_state, $node, 'salesforce_donation');
+  if (isset($form['submit'])) {
+    $form['#submit'] = array('salesforce_donation_settings_submit');
+  }
+  return $form;
+}
+
+function salesforce_donation_settings_submit($form, &$form_state) {
+  drupal_set_message('execute salesforce_donation_settings_submit');
+  // TODO from here, we gather the set values and stash it in a variable_get/set array.
+  // We can then reuse this for nodes as they are created, plugging the default map in place.
 }
 
 /**
@@ -292,7 +305,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // anticipate which one will have a value and which one won't.
   // So we need to check for all type that MAY be configured at any point based on
   // available methods. Methods are defined within the associated active gateways.
-  if (module_exists('fundraiser_webform')) {
+  if (module_exists('fundraiser_webform') && $node->nid != -1) {
   // Find the payment methods component
     $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
     $payment_method_field = $node->webform['components'][$payment_method_component->cid];
@@ -329,7 +342,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   $fields['salesforce_donation_map']['#fields']['user_salesforce_contact_id'] = t('User Salesforce Contact ID');
 
   // Webform component fields.
-  if (module_exists('fundraiser_webform')) {
+  if (module_exists('fundraiser_webform') && $node->nid != -1) {
     $fields['salesforce_webform_map'] = array(
       '#type' => 'webform',
       '#label' => t('Webform Componant'),
@@ -345,6 +358,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
       }
     }
   }
+
   // Node fields.
   $fields['salesforce_node_map'] = array(
     '#type' => 'node',
