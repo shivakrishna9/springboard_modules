@@ -1,3 +1,12 @@
+2013-01-24 Ben Clark <benjamin.clark@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_extend_future_orders): Refactoring fundraiser_extend_future_orders()
+      to properly extend future orders and not create orders in the past.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+    * fundraiser.sustainer.forms.inc (fundraiser_billing_update_form_validate): Adding validation to
+      ensure the expiration date is at least next month.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+
 2013-01-08 Jeremy Isett <jeremy.isett@jacksonriver.com>
 
     * fundraiser.sustainer.inc (_fundraiser_expand_date): Setting day field to hidden value
