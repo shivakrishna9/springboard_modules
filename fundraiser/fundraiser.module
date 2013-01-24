@@ -553,7 +553,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
         '#title' => t('Default'),
         '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
         '#return_value' => $method_key,
-        '#name' => 'extra[payment_methods][_default]',
+        '#parents' => array('gateways', '_default'),
       );
     }
     $form['fundraiser_settings']['gateways'] = $fieldset;
@@ -694,7 +694,7 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
         $form_state['values']['gateways'][$default_method]['default'] = 1;
       }
       else {
-        form_set_error('extra[payment_methods][_default', t('Default method must be one of the enabled methods.'));
+        form_set_error('fundraiser_settings][gateways][_default', t('Default method must be one of the enabled methods.'));
       }
     }
     else {
