@@ -353,8 +353,6 @@ function fundraiser_node_presave($node) {
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
     $node->minimum_donation_amount = $node->amount_wrapper['minimum_donation_amount'];
-    // Temporarily setting gateway, we're removing this from the fundraiser node storage.
-    $node->gateway = 'none';
     unset($node->amount_wrapper);
   }
 }
@@ -477,33 +475,92 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
   );
-/*
-  // TODO Replace this with an interface to set the webform components, like how we do amounts.
+  // Get avaiable gateways and provide an interface on the fundraiser settings to edit the payment_method fields later.
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
-  foreach ($gateways as $gateway) {
-    if (isset($gateway['module_name'])) {
-      $gateway_options[ $gateway['module_name'] ][ $gateway['id'] ] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
-    }
-    else {
-      $gateway_options[ $gateway['id'] ] = isset($gateway['title']) ? $gateway['title'] : $gateway['id'];
-    }
+  if (empty($gateways)) {
+    $form['fundraiser_settings']['gateways'] = array(
+      '#markup' => '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>',
+    );
   }
-  if (empty($gateway_options)) {
-    $gateway_options[-1] = t('No gateways are available. Please configure one.');
+  else {
+    $fieldset = array(
+      '#type' => 'fieldset',
+      '#title' => t('Payment methods'),
+      '#description' => t('Enable donation form payment methods and their corresponding gateways.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      '#theme' => 'fundraiser_form_payment_methods',
+    );
+    foreach($gateways as $gateway) {
+      $types = isset($gateway['payment_method']) ? $gateway['payment_method'] : array();
+      foreach ($types as $type) {
+        $all_payment_methods[$type][] = $gateway;
+      }
+    }
+    $field_payment_methods = !empty($component['extra']['payment_methods']) ? $component['extra']['payment_methods'] : array();
+    foreach (array_keys($all_payment_methods) as $method_key) {
+      $all_payment_methods[$method_key]['weight'] = isset($field_payment_methods[$method_key]['weight']) ? $field_payment_methods[$method_key]['weight'] : 0;
+    }
+    // Sort all payment methods by weight.
+    uasort($all_payment_methods, '_fundraiser_payment_method_weight_compare');
+    // Loop through each method, comparing to those set on this node.
+    foreach ($all_payment_methods as $method_key => $method) {
+      // Remove the weight value
+      unset($method['weight']);
+      $field_method_settings = isset($node->gateways[$method_key]) ? $node->gateways[$method_key] : array();
+      // Build the #options array for the payment processors supporting this payment method.
+      $processor_options = array(NULL => '- ' . t('select') . ' -');
+      foreach (element_children($method) as $key) {
+        $processor_options[$method[$key]['id']] = $method[$key]['title'];
+      }
+      $fieldset[$method_key] = array('#tree' => TRUE);
+      $fieldset[$method_key]['status'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => isset($field_method_settings['status']) ? $field_method_settings['status'] : 0,
+      );
+      $fieldset[$method_key]['_status'] = array(
+        '#type' => 'markup',
+        '#title' => t('Method'),
+        '#markup' => $method_key, // Could use a pretty name here
+      );
+      $fieldset[$method_key]['method'] = array(
+        '#type' => 'value',
+        '#value' => $method_key,
+      );
+      $fieldset[$method_key]['id'] = array(
+        '#type' => 'select',
+        '#title' => t('Payment Processor'),
+        '#options' => $processor_options,
+        '#default_value' => isset($field_method_settings['id']) ? $field_method_settings['id'] : NULL,
+      );
+      $fieldset[$method_key]['label'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Label'),
+        '#size' => 20,
+        '#default_value' => isset($field_method_settings['label']) ? $field_method_settings['label'] : NULL,
+      );
+      $fieldset[$method_key]['weight'] = array(
+        '#type' => 'weight',
+        '#title' => t('Weight'),
+        '#delta' => 25,
+        '#default_value' => isset($field_method_settings['weight']) ? $field_method_settings['weight'] : 0,
+        '#attributes' => array('class' => array('fundraiser-payment-methods-weight')),
+      );
+      $fieldset[$method_key]['_default'] = array(
+        '#type' => 'radio',
+        '#title' => t('Default'),
+        '#default_value' => !empty($field_method_settings['default']) ? $method_key : NULL,
+        '#return_value' => $method_key,
+        '#name' => 'extra[payment_methods][_default]',
+      );
+    }
+    $form['fundraiser_settings']['gateways'] = $fieldset;
+    // add a validate callback.
+    $form['#validate'][] = '_fundraiser_form_payment_method_validate';
   }
-  $form['fundraiser_settings']['gateway'] = array(
-    '#type' => 'select',
-    '#title' => t('Payment Gateway'),
-    '#options' => $gateway_options,
-    '#weight' => -5,
-    '#description' => t('The payment gateway that will be used to process payments for this donation form.'),
-    '#default_value' =>  isset($node->gateway) ? $node->gateway : '',
-    '#required' => TRUE,
-    '#prefix' => '<div id="gateway">',
-    '#suffix' => '</div>',
-  );
-*/
+
   // Add specific CSS settings for IE support. Pending http://drupal.org/node/1015798 being resolved,
   // and UC Store accounting for that update. (Should be block not inline-block).
   $style = '.vertical-tabs fieldset fieldset legend {display: block;}';
@@ -616,6 +673,49 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
   //$form['#after_build'][] = '_fundraiser_validation_includes';
+}
+
+/**
+ * Validate handler for our component, also sets the default value
+ */
+function _fundraiser_form_payment_method_validate($form, &$form_state) {
+  $values = $form_state['values']['gateways'];
+  $default_method = isset($values['_default']) ? $values['_default'] : '';
+  unset($form_state['values']['gateways']['_default']);
+  $enabled_methods = array_filter($values, '_fundraiser_payment_method_array_filter_enabled');
+  // Check that there is at least one method enabled
+  if (empty($enabled_methods)) {
+    form_set_error('payment_methods', t('At least one payment method must be enabled.'));
+  }
+  else {
+    if (!isset($enabled_methods[$default_method])) {
+      if (count($enabled_methods) == 1) {
+        $default_method = key($enabled_methods);
+        $form_state['values']['gateways'][$default_method]['default'] = 1;
+      }
+      else {
+        form_set_error('extra[payment_methods][_default', t('Default method must be one of the enabled methods.'));
+      }
+    }
+    else {
+      $form_state['values']['gateways'][$default_method]['default'] = 1;
+    }
+  }
+}
+
+/**
+ * Array_filter callback for filtering by method status.
+ */
+function _fundraiser_payment_method_array_filter_enabled($method_settings) {
+  return !empty($method_settings['status']);
+}
+
+/**
+ * Sort payment methods by weight
+ */
+function _fundraiser_payment_method_weight_compare($a, $b) {
+  $weight = $a['weight'] - $b['weight'];
+  return $weight;
 }
 
 /**
@@ -777,6 +877,8 @@ function fundraiser_fundraiser_field_info() {
     '#title' => t('Payment Method'),
     '#type' => 'payment_method',
     '#required' => 1,
+    '#allow_update' => 1,
+    '#create_callback' => '_fundraiser_payment_method_field_create',
   );
   $fields['payment_information']['payment_fields'] = array(
     '#title' => t('Payment Details'),
@@ -812,7 +914,7 @@ function fundraiser_fundraiser_field_info() {
 function _fundraiser_amount_field_create($fundraiser, $field) {
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
-    // show the minimum amount when only displaying an amount text box
+    // Show the minimum amount when only displaying an amount text box.
     $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
     return $field;
   }
@@ -868,25 +970,21 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Validation callback for field other_amount. Called during form validation.
  */
 function _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-
 	// Check for confusing selection.
 	if (!empty($submission_fields['amount']) && $submission_fields['amount'] != "other" && !empty($submission_fields['other_amount'])) {
     return t('You have entered a custom amount and selected a set amount. Please clarify which amount you ' .
       'intend to give, if you want to give the amount that appears in the other box, please select Other from ' .
       'the radio buttons.');
 	}
-
   $value = $submission_fields['amount'];
   // Look for other amount if set.
   if ($submission_fields['amount'] == "other") {
     $value = $submission_fields['other_amount'];
   }
-
   // Check for valid value.
   if (!preg_match('/^\d*(\.\d*)?$/', $value)) {
     return t('Donation amount must be in a valid number format. No commas and only one decimal point.');
   }
-
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
   $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
@@ -904,6 +1002,25 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
   if (!_fundraiser_validate_email($value)) {
     return t('You must enter a valid email address.');
   }
+}
+
+/**
+ * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
+ */
+function _fundraiser_payment_method_field_create($fundraiser, $field) {
+  // If donation amounts don't exist, use amount as is.
+  if (empty($fundraiser->gateways) || !is_array($fundraiser->gateways)) {
+    // Leave it alone, do nothing else, don't overwrite existing values.
+    $field['#allow_update'] = 0;
+    return $field;
+  }
+  // Set all the fields for the gateways based on the configuration.
+  if (is_array($fundraiser->gateways)) {
+    $field['#extra'] = array(
+      'payment_methods' => $fundraiser->gateways,
+    );
+  }
+  return $field;
 }
 
 /**
@@ -1900,8 +2017,10 @@ function _fundraiser_create_fundraiser($fundraiser) {
       $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
-    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
+    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    // Serialize for storage, our configured gateway values for storage in components.
+    $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     // After the node is created, add additional data to fundraiser.
     $record = array(
       'receipt_email_from' => variable_get('site_name', ''),
@@ -1934,6 +2053,8 @@ function _fundraiser_get_fundraiser_by_nid($nid) {
       $exploded_amounts[] = explode('|', $donation_amount);
     }
     $fundraiser->donation_amounts = $exploded_amounts;
+    // Get the unserialized gateway configurations.
+    $fundraiser->gateways = unserialize($fundraiser->gateways);
     // Get values from other modules for additional information.
     module_invoke_all('fundraiser_get_fundraiser_alter', $fundraiser);
   }
@@ -1960,8 +2081,10 @@ function _fundraiser_update_fundraiser($fundraiser) {
       $imploded_amounts[] = implode('|', $donation_amount);
     }
     $imploded_amounts = array_unique($imploded_amounts);
-    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
     // On getting fundraiser this will be exploded into the correct values.
+    $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
+    // Serialize for storage, our configured gateway values for storage in components.
+    $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     $record = $fundraiser;
     drupal_write_record('fundraiser', $record, 'nid');
     // And invoke the hooks for all the other modules to respond.

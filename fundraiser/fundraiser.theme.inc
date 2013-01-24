@@ -28,6 +28,10 @@ function fundraiser_theme($existing, $type, $theme, $path) {
       'template' => 'templates/fundraiser-confirmation',
       'pattern' => 'fundraiser_confirmation_[0-9]+',
     ),
+    // Add a theme function for the gateway configure fields.
+    'fundraiser_form_payment_methods' => array(
+      'render element' => 'form',
+    )
   );
 }
 
@@ -112,4 +116,33 @@ function theme_fundraiser_ask_amounts($element) {
 //    $rows[] = array($amount, $label);
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
+}
+
+/**
+ * Theme function for the payment methods table on the component edit form.
+ */
+function theme_fundraiser_form_payment_methods($variables) {
+  $fieldset = $variables['form'];
+  $header = array();
+  $rows = array();
+  foreach (element_children($fieldset) as $i) {
+    $row = array();
+    foreach (element_children($fieldset[$i]) as $field) {
+      $this_element = $fieldset[$i][$field];
+
+      if ($this_element['#type'] != 'value') {
+        if (!isset($header[$field])) {
+          $header[$field] = isset($this_element['#title']) ? $this_element['#title'] : '';
+        }
+        unset($this_element['#title']);
+        $row[$field] = drupal_render($this_element);
+      }
+    }
+    $rows[] = array(
+      'data' => $row,
+      'class' => array('draggable'),
+    );
+  }
+  drupal_add_tabledrag('fundraiser-webform-payment-methods', 'order', 'sibling', 'fundraiser-webform-payment-methods-weight');
+  return theme('table', array('rows' => $rows, 'header' => $header, 'attributes' => array('id' => 'fundraiser-webform-payment-methods')));
 }

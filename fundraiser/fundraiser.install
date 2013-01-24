@@ -67,6 +67,11 @@ function fundraiser_schema() {
         'precision' => '15',
         'scale' => '3',
       ),
+      'gateways' => array(
+        'description' => 'The gateway configurations the donation form will accept.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
       'internal_name' => array(
         'description' => 'Another name for the donation form that will not be displayed to end users.',
         'type' => 'varchar',
