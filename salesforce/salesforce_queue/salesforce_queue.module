@@ -104,30 +104,6 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
 
 
 /**
- * @defgroup salesforce_queue_sync_rules Sync Rule Options with Salesforce
- * @{
- */
-
-// Always replace the recipient record, or record's field, with the incoming
-// data.
-define('SALESFORCE_QUEUE_SYNC_RULE_ALWAYS', 3);
-
-// Only insert the incoming data if the recipient record, or record's field, has
-// no data.
-define('SALESFORCE_QUEUE_SYNC_RULE_BLANK', 2);
-
-// Add the incoming data to the end of the current recipient record, or record's
-// field.
-define('SALESFORCE_QUEUE_SYNC_RULE_APPEND', 1);
-
-// Never place the incoming data in the recipient record, or record's field.
-define('SALESFORCE_QUEUE_SYNC_RULE_NEVER', 0);
-
-/**
- * @} salesforce_queue_sync_rules
- */
-
-/**
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_state) {

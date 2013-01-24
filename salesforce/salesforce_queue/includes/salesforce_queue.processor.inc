@@ -466,7 +466,7 @@ class SalesforceQueueProcessor {
       foreach ($item->sync_rules as $rule) {
         // There is no need to pull down the Salesforce record if all the rules
         // are to always replace the Salesforce value.
-        if ($rule != SALESFORCE_QUEUE_SYNC_RULE_ALWAYS) {
+        if ($rule != SALESFORCE_SYNC_RULE_ALWAYS) {
           return TRUE;
         }
       }
@@ -809,11 +809,11 @@ class SalesforceQueueProcessor {
         $sf_record = $sf_records[$id];
         foreach ($item->sync_rules as $field => $rule) {
           switch ($rule) {
-            case SALESFORCE_QUEUE_SYNC_RULE_ALWAYS:
+            case SALESFORCE_SYNC_RULE_ALWAYS:
               // Leave the field as is.
               break;
 
-            case SALESFORCE_QUEUE_SYNC_RULE_BLANK:
+            case SALESFORCE_SYNC_RULE_BLANK:
               // Check to see if Salesforce version is blank, unset otherwise.
               if (isset($sf_record->$field) && strlen($sf_record->$field) > 0) {
                 if (isset($dedupe_field) && $field == $dedupe_field) {
@@ -828,7 +828,7 @@ class SalesforceQueueProcessor {
               }
               break;
 
-            case SALESFORCE_QUEUE_SYNC_RULE_APPEND:
+            case SALESFORCE_SYNC_RULE_APPEND:
               // When the Salesforce version is not blank, add value from
               // Salesforce to the begining of the item's value.
               if (isset($sf_record->$field) && !empty($sf_record->$field)) {
@@ -837,7 +837,7 @@ class SalesforceQueueProcessor {
               }
               break;
 
-            case SALESFORCE_QUEUE_SYNC_RULE_NEVER:
+            case SALESFORCE_SYNC_RULE_NEVER:
               if (isset($dedupe_field) && $field == $dedupe_field) {
                 // If this is the dedupe field, make sure the value does not
                 // change.

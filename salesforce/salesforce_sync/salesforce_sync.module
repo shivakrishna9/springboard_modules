@@ -4,3 +4,28 @@
  * @file
  * Focuses on synchronization controls for Salesforce integration.
  */
+
+
+/**
+ * @defgroup salesforce_sync_rules Sync Rule Options with Salesforce
+ * @{
+ */
+
+// Always replace the recipient record, or record's field, with the incoming
+// data.
+define('SALESFORCE_SYNC_RULE_ALWAYS', 'always');
+
+// Only insert the incoming data if the recipient record, or record's field, has
+// no data.
+define('SALESFORCE_SYNC_RULE_BLANK', 'blank');
+
+// Add the incoming data to the end of the current recipient record, or record's
+// field.
+define('SALESFORCE_SYNC_RULE_APPEND', 'append');
+
+// Never place the incoming data in the recipient record, or record's field.
+define('SALESFORCE_SYNC_RULE_NEVER', 'never');
+
+/**
+ * @} salesforce_queue_sync_rules
+ */

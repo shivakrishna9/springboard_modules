@@ -16,10 +16,10 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    * @var array
    */
   public $syncRules = array(
-    SALESFORCE_QUEUE_SYNC_RULE_ALWAYS,
-    SALESFORCE_QUEUE_SYNC_RULE_BLANK,
-    SALESFORCE_QUEUE_SYNC_RULE_APPEND,
-    SALESFORCE_QUEUE_SYNC_RULE_NEVER,
+    SALESFORCE_SYNC_RULE_ALWAYS,
+    SALESFORCE_SYNC_RULE_BLANK,
+    SALESFORCE_SYNC_RULE_APPEND,
+    SALESFORCE_SYNC_RULE_NEVER,
   );
 
   /**
@@ -296,8 +296,8 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
           // Append can cause problems for certain fields, so fall back to
           // always.
           $special_fields = array('Email', 'Amount', 'CloseDate');
-          if ($sync_rule == SALESFORCE_QUEUE_SYNC_RULE_APPEND && in_array($field, $special_fields)) {
-            $sync_rule = SALESFORCE_QUEUE_SYNC_RULE_ALWAYS;
+          if ($sync_rule == SALESFORCE_SYNC_RULE_APPEND && in_array($field, $special_fields)) {
+            $sync_rule = SALESFORCE_SYNC_RULE_ALWAYS;
           }
           $data['sync_rules'][$field] = $this->syncRules[$sync_rule_rand];
           $rand_count--;

@@ -518,11 +518,11 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
           $rule_rand = array_rand($this->syncRules);
           $rule = $this->syncRules[$rule_rand];
         }
-        if ($field == 'Email' && $rule == SALESFORCE_QUEUE_SYNC_RULE_APPEND) {
+        if ($field == 'Email' && $rule == SALESFORCE_SYNC_RULE_APPEND) {
           // The email field cannot have 'append' rule because it would break
           // validation on Salesforce's side.  Just fallback to make 'append'
           // rules for Email fields be 'always' instead.
-          $sync_rules[$field] = SALESFORCE_QUEUE_SYNC_RULE_ALWAYS;
+          $sync_rules[$field] = SALESFORCE_SYNC_RULE_ALWAYS;
         }
         else {
           $sync_rules[$field] = $rule;
@@ -531,7 +531,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
       // No matter what, the dedupe field needs to be set to blank.
       if (!empty($data['dedupe_field']) && isset($sync_rules[$data['dedupe_field']])) {
-        $sync_rules[$data['dedupe_field']] = SALESFORCE_QUEUE_SYNC_RULE_BLANK;
+        $sync_rules[$data['dedupe_field']] = SALESFORCE_SYNC_RULE_BLANK;
       }
 
       // All done! Queue it.
@@ -626,14 +626,14 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
           if (isset($modified_items[$sfid]->sync_rules[$field])) {
             $sync_rule = $modified_items[$sfid]->sync_rules[$field];
             switch ($sync_rule) {
-              case SALESFORCE_QUEUE_SYNC_RULE_ALWAYS:
+              case SALESFORCE_SYNC_RULE_ALWAYS:
                 // Field's value will be the modified value.
                 $result = ($modified_value == $updated_value) ? 'pass' : 'fail';
                 $encountered_rules['always'][$result]++;
                 $this->assertEqual($modified_value, $updated_value, 'The modified value is updated when sync rule is set to "always".');
                 break;
 
-              case SALESFORCE_QUEUE_SYNC_RULE_BLANK:
+              case SALESFORCE_SYNC_RULE_BLANK:
                 // If the original is blank, then the value will be the modified
                 // value, otherwise it will be the original value.
                 if (strlen($original_value) > 0) {
@@ -648,7 +648,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
                 }
                 break;
 
-              case SALESFORCE_QUEUE_SYNC_RULE_APPEND:
+              case SALESFORCE_SYNC_RULE_APPEND:
                 // The modified value will be appended to the end of the
                 // original value.
                 // The $modified_value var will already be appended so we'll
@@ -667,7 +667,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
                 }
                 break;
 
-              case SALESFORCE_QUEUE_SYNC_RULE_NEVER:
+              case SALESFORCE_SYNC_RULE_NEVER:
                 // The field's value will always be the original value.
                 $result = ($original_value == $updated_value) ? 'pass' : 'fail';
                 $encountered_rules['never'][$result]++;
