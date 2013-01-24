@@ -16,7 +16,6 @@ function gateway_manager_list() {
     $this_gateway = array();
     $this_gateway['name'] = l($gateway['name'], 'admin/config/system/fundraiser/gateways/' . $gateway['id'] . '/edit');
     $this_gateway['type'] = $gateway_types[ $gateway['type'] ]['title'];
-    $this_gateway['form_count'] = _gateway_manager_form_count($gateway['id']);
     $user = user_load($gateway['uid']);
     $this_gateway['user'] = $user->name;
     $this_gateway['created'] = $gateway['created'];
@@ -25,7 +24,7 @@ function gateway_manager_list() {
     $data[] = $this_gateway;
   }
   $output = '';
-  $output .= theme('table', array('header' => array('Name', 'Provider', '# of Forms', 'User', 'Created', 'Updated', 'Status'), 'rows' => $data));
+  $output .= theme('table', array('header' => array('Name', 'Provider', 'User', 'Created', 'Updated', 'Status'), 'rows' => $data));
   return $output;
 }
 

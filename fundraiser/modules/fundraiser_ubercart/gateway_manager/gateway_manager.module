@@ -182,11 +182,10 @@ function gateway_manager_fundraiser_ubercart_gateway_info() {
 function gateway_manager_is_deleteable($gateway) {
   $id = is_object($gateway) ? $gateway->id : $gateway;
   $has_access = user_access('delete any payment gateway');
-  $form_count = _gateway_manager_form_count($id);
   $donation_count = _gateway_manager_pending_donation_count($id);
   // If either count is greater than 0, the gateway is in use.
   $in_use = FALSE;
-  if ($form_count > 0 || $donation_count > 0) {
+  if ($donation_count > 0) {
     $in_use = TRUE;
   }
   // Check that the user has the correct permission, and that the gateway is not in use.
@@ -303,31 +302,6 @@ function gateway_manager_load_gateways($status = 1) {
     }
   }
   return $gateways;
-}
-
-/**
- * DB function. Returns the number of forms that are currently assigned the given payment gateway.
- */
-function _gateway_manager_form_count($id) {
-  $cid = 'gateway_manager_form_count';
-  $gateway_stats = array();
-  if ($cached = cache_get($cid, 'cache')) {
-    // If the stats are cached, pull them from there
-    $gateway_stats = $cached->data;
-  }
-  else {
-    // Else, build an array of gateway stats and cache them
-    $results = db_query('SELECT gateway, COUNT(nid) as count FROM {fundraiser} GROUP BY gateway');
-    foreach ($results as $result) {
-      $gateway_stats[$result->gateway] = $result->count;
-    }
-    cache_set($cid, $gateway_stats, 'cache', REQUEST_TIME + (60 * 60 * 24));
-  }
-  // Check the value and return it.
-  if (array_key_exists($id, $gateway_stats)) {
-    return $gateway_stats[$id];
-  }
-  return 0;
 }
 
 /**
