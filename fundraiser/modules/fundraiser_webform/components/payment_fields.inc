@@ -54,20 +54,21 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
   if (!empty($payment_methods)) {
     // Loop through the payment methods and add fields for each type.
     foreach ($payment_methods as $payment_method => $config) {
-      // Load up the instance
+      // Setup the fieldset
       $element[$payment_method] = array(
         '#type' => 'fieldset',
         '#attributes' => array(
-          'id' => 'fundraiser-payment-method-' . str_replace('_', '-', $payment_method),
-          'class' => array('fundraiser-payment-method'),
-          ),
+          'class' => array('fundraiser-payment-fields'),
+        ),
+        // Show/hide this fieldset dependent on the payment methods field
         '#states' => array(
           'visible' => array(
-            ':input[name="submitted[payment_information][payment_method]"]' => array('value' => $payment_method),
+            '.fundraiser-payment-methods input[type="radio"]' => array('value' => $payment_method),
           ),
         ),
       );
-      // Find the given gateway idea for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
+
+      // Find the given gateway id for this, pull from _fundraiser_gateway_info($gateway_id) for fields.
       $gateway_info = _fundraiser_gateway_info($config['id']);
       // Check against the gateway config for a specific form to go with this payment gateway.
       if (isset($gateway_info['form callback'])) {
@@ -90,8 +91,6 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
  * Pre-render function to add our id to the js settings
  */
 function _fundraiser_component_payment_fields_pre_render($element) {
-  $node = isset($element['#webform_component']['nid']) ? node_load($element['#webform_component']['nid']) : NULL;
-
   // Add the id of the outer fieldset to the js settings
   drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_fields' => array('id' => $element['#attributes']['id'])))), 'setting');
   return $element;

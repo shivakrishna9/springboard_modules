@@ -220,6 +220,10 @@ function _webform_render_payment_method($component, $value = NULL, $filter = TRU
   $element = _webform_render_select($component, $value, $filter);
   // Add custom post render function before the final form render
   $element['#post_render'] = array('_fundraiser_webform_component_payment_method_post_render');
+  // Add a class for states interaction with payment fields
+  $element['#attributes'] = array(
+    'class' => array('fundraiser-payment-methods'),
+  );
   if (!empty($component['extra']['payment_methods'])) {
     // Use the enabled methods
     $payment_methods = array_filter($component['extra']['payment_methods'], '_fundraiser_webform_payment_method_array_filter_enabled');
@@ -261,7 +265,7 @@ function _fundraiser_webform_payment_method_weight_compare($a, $b) {
  * Post-render function to add the id and active payment methods to the js settings
  */
 function _fundraiser_webform_component_payment_method_post_render($content, $element) {
-  // Add the field id to the js settings]
+  // Add the field id to the js settings
   drupal_add_js(array('fundraiserWebform' => array('components' => array('payment_method' => array('id' => $element['#id'])))), 'setting');
   // Add the active methods to js settings
   $delta = 1;

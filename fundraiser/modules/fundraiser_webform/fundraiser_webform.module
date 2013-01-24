@@ -421,13 +421,6 @@ function fundraiser_webform_fundraiser_donation_form($form, $form_state) {
   $components = $node->webform['components'];
   $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $components);
 
-  // Add js and css as needed.
-  $base = drupal_get_path('module', 'fundraiser_webform');
-  drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
-  drupal_add_js( $base . '/js/fundraiser.js', 'file');
-  drupal_add_js( $base . '/js/fundraiser-webform.js', 'file');
-  drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
-
   // Modify form displays according to callback settings.
   $form['#calling_module'] = 'fundraiser_webform';
   fundraiser_display_form_fields('fundraiser_webform', $form, $form_state);
@@ -446,7 +439,6 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
   $base = drupal_get_path('module', 'fundraiser_webform');
   drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
   drupal_add_js( $base . '/js/fundraiser.js', 'file');
-  drupal_add_js( $base . '/js/fundraiser-webform.js', 'file');
   drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
   return $form;
 }
@@ -455,12 +447,6 @@ function fundraiser_webform_fundraiser_donation_form_after_build($form, $form_st
  * Implements hook_fundraiser_donation_validate().
  */
 function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
-  // Add js and css as needed.
-  $base = drupal_get_path('module', 'fundraiser_webform');
-  drupal_add_js( $base . '/js/jquery.alphanumeric.js', 'file');
-  drupal_add_js( $base . '/js/fundraiser.js', 'file');
-  drupal_add_css( $base . '/css/fundraiser-donation-form.css', 'file');
-
   // Submission fields are keyed according to the fields in fundraiser_field_info().
   $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   // Get the gateway that goes with this payment method.
