@@ -2197,29 +2197,40 @@ function fundraiser_create_profile_values_map($nid, $sid) {
 /**
  * Extends a current recurring donation series out to a new credit card expiration date.
  */
-function fundraiser_extend_future_orders($order_id, $exp_month, $exp_year) {
-  // determine the date of the last order, and the number of orders to create out to the new expiration date
-  $exp = $exp_year . sprintf("%02d", $exp_month)  ;
-  $result = db_query("SELECT max(order_id) as last_order_id, max(next_charge) as last_charge_date, period_diff(%d, date_format(from_unixtime(max(next_charge)),  '%Y%m')) as new_order_count FROM {fundraiser_recurring} WHERE master_order_id = %d", $exp, $order_id);
-
-  while ($data = db_fetch_object($result)) {
+function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year) {
+  // Determine the date of the last order.
+  $result = db_query("SELECT MAX(order_id) AS last_order_id, MAX(next_charge) AS last_charge_date FROM {fundraiser_recurring} WHERE master_order_id = %d", $master_order_id);
+  if ($data = db_fetch_object($result)) {
     $last_order_id = $data->last_order_id;
     $last_charge_date = $data->last_charge_date;
-    $new_order_count = $data->new_order_count;
   }
 
-  // load up the last order since it will have the most recent changes
+  // If the last_charge_date is in the past, set to current timestamp.
+  // Otherwise, fundraiser will extend all orders from that date through the
+  // expiration date, which may cause unwanted credit card charges.
+  if ($last_charge_date < time()) {
+    $last_charge_date = time();
+  }
+
+  // Load up the last order since it will have the most recent changes.
   $order = uc_order_load($last_order_id);
   $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
-  for ($i = 1; $i <= $new_order_count; $i++) {
+
+  // Build $exp_date as a timestamp. Use day, hour, minute and second from
+  // $last_charge_date.
+  $exp_date = getdate($last_charge_date);
+  $exp_date_ts = strtotime("$exp_month/{$exp_date['mday']}/$exp_year {$exp_date['hours']}:{$exp_date['minutes']}:{$exp_date['seconds']}");
+
+  // Create orders until $charge_date reaches $exp_date_ts.
+  $charge_date = $last_charge_date;
+  while (($charge_date = strtotime("+1 month", $charge_date)) <= $exp_date_ts) {
     $new_order_id = fundraiser_clone_order($order);
-    $charge_date = strtotime("+$i months", $last_charge_date);
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $order_id, $new_order_id, $charge_date, $gateway);
+    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $master_order_id, $new_order_id, $charge_date, $gateway);
     uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
-    // add these new orders to the queue
+    // Add these new orders to the queue.
     if (module_exists('sf_donation') && module_exists('queue_api')) {
       sf_queue_insert($new_order_id, FUNDRAISER_SINGLE_DONATION_TYPE, 'create');
-      sf_queue_insert($order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'update');
+      sf_queue_insert($master_order_id, FUNDRAISER_RECURRING_DONATION_TYPE, 'update');
     }
   }
 }
