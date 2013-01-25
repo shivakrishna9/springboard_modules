@@ -566,6 +566,7 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
   // Get the webform data for this node. This overrides the saved amount values in fundraiser itself.
   // Add the amount_values for the fundraiser information on load.
   if (is_numeric($fundraiser->nid)) {
+    // Grab amounts to pass up to fundraiser to keep values in sync.
     $amounts = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'amount');
     if (isset($amounts['items'])) {
       $amounts = preg_split('/\n/', trim($amounts['items']));
@@ -575,6 +576,11 @@ function fundraiser_webform_fundraiser_get_fundraiser_alter($fundraiser) {
         $donation_amounts[] = explode('|', $amounts[$i]);
       }
       $fundraiser->donation_amounts = $donation_amounts;
+    }
+    // Grab payment gateway information.
+    $payment_method = _fundraiser_webform_get_extra_by_key($fundraiser->nid, 'payment_method');
+    if (isset($payment_method['payment_methods'])) {
+      $fundraiser->gateways = $payment_method['payment_methods'];
     }
   }
 }
