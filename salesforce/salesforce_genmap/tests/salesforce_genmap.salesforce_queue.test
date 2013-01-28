@@ -79,7 +79,7 @@ class SalesforceGenmapSalesforceQueueTestCase extends SalesforceQueueTestCase {
         'drupal_id' => $item->drupal_id,
         'module' => $item->module,
         'delta' => $item->delta,
-        'salesforce_type' => $item->salesforce_type,
+        'object_type' => $item->object_type,
         'operation' => $op,
         'dedupe_field' => $item->dedupe_field,
         'sobject' => $item->sobject,

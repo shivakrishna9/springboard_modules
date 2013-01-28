@@ -141,7 +141,7 @@ function salesforce_genmap_schema() {
         'length' => '255',
         'not null' => TRUE,
       ),
-      'salesforce_type' => array(
+      'object_type' => array(
         'description' => 'The Salesforce object type.',
         'type' => 'varchar',
         'length' => '255',
@@ -154,7 +154,7 @@ function salesforce_genmap_schema() {
         'drupal_id',
         'module',
         'delta',
-        'salesforce_type',
+        'object_type',
       ),
     ),
   );

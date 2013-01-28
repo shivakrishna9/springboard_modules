@@ -70,7 +70,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    * Add an item to the queue.
    *
    * If an item with identical values for drupal_id, module, delta and
-   * salesforce_type is already in the queue, the item in the queue will be
+   * object_type is already in the queue, the item in the queue will be
    * updated with the data provided rather than another queue item created.
    *
    * @param array $data
@@ -79,7 +79,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *         entity ID
    *     - module: Module implementing the data type
    *     - delta: Name or id of the subtype
-   *     - salesforce_type: Salesforce object type
+   *     - object_type: Salesforce object type
    *     - operation: Action to take on Salesforce, CREATE, UPDATE, UPSERT, or
    *         DELETE
    *     - dedupe_field: Salesforce field to dedupe on during UPSERT operations
@@ -96,7 +96,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       // If this item is in the queue, replace the original.
       // With drupal_write_record, replacement is just a matter of filling in
       // the $keys array.
-      $keys = array('drupal_id', 'module', 'delta', 'salesforce_type');
+      $keys = array('drupal_id', 'module', 'delta', 'object_type');
     }
     else {
       // As a new record, fill in all the new fields.
@@ -209,7 +209,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->condition('drupal_id', $item->drupal_id)
       ->condition('module', $item->module)
       ->condition('delta', $item->delta)
-      ->condition('salesforce_type', $item->salesforce_type)
+      ->condition('object_type', $item->object_type)
       ->execute();
 
     return $result;
@@ -462,7 +462,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *         entity ID
    *     - module: Module implementing the data type
    *     - delta: Name or id of the subtype
-   *     - salesforce_type: Salesforce object type
+   *     - object_type: Salesforce object type
    *
    * @return bool
    *   TRUE if the item is in the queue, FALSE if the item is not
@@ -473,7 +473,7 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
       ->condition('drupal_id', $data['drupal_id'])
       ->condition('module', $data['module'])
       ->condition('delta', $data['delta'])
-      ->condition('salesforce_type', $data['salesforce_type'])
+      ->condition('object_type', $data['object_type'])
       ->countQuery()
       ->execute()
       ->fetchField();
@@ -493,19 +493,19 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   Module implementing the data type
    * @param varchar $delta
    *   Name or id of the subtype
-   * @param string $salesforce_type
+   * @param string $object_type
    *   Salesforce object type
    *
    * @return object
    *   The queue item you requested, or FALSE if the item is not there
    */
-  public function getItem($drupal_id, $module, $delta, $salesforce_type) {
+  public function getItem($drupal_id, $module, $delta, $object_type) {
     $item = db_select('salesforce_queue', 'q')
       ->fields('q')
       ->condition('drupal_id', $drupal_id)
       ->condition('module', $module)
       ->condition('delta', $delta)
-      ->condition('salesforce_type', $salesforce_type)
+      ->condition('object_type', $object_type)
       ->execute()
       ->fetchObject();
     $item = $this->unfoldItem($item);

@@ -75,7 +75,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
       'module' => 'foo_bar',
       'delta' => 'baz',
       'drupal_id' => 8,
-      'salesforce_type' => 'Account',
+      'object_type' => 'Account',
     );
   }
 

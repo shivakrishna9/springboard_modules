@@ -162,7 +162,7 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
       'drupal_id' => $oid,
       'module' => $module,
       'delta' => $module . ':' . $node->nid,
-      'salesforce_type' => $sobject->type,
+      'object_type' => $sobject->type,
       'operation' => $operation,
       'dedupe_field' => $map->salesforce_dedupe_field,
       'sobject' => $sobject,
@@ -413,7 +413,7 @@ function salesforce_genmap_salesforce_queue_process_pass_item($item, $result, $q
     'module' => $item->module,
     'delta' => $item->delta,
     'drupal_id' => $item->drupal_id,
-    'salesforce_type' => $item->salesforce_type,
+    'object_type' => $item->object_type,
   );
   switch ($item->operation) {
     // Create record maps on new items.
@@ -490,7 +490,7 @@ function _salesforce_genmap_get_rmid($item) {
       ->condition('module', $record['module'])
       ->condition('delta', $record['delta'])
       ->condition('drupal_id', $record['drupal_id'])
-      ->condition('salesforce_type', $record['salesforce_type'])
+      ->condition('object_type', $record['object_type'])
       ->execute()
       ->fetchField();
   }

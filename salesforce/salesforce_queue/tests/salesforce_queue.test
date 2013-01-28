@@ -83,7 +83,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     salesforce_queue_process_queue();
 
     // Verify the item has been marked to retry.
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->salesforce_type);
+    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
     $this->assertEqual('retry', $record->queue, 'Failed item placed into the retry queue.');
     $this->assertEqual(1, $record->retries, 'Failed item marked as having one retry.');
 
@@ -92,10 +92,10 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     $max_retries = variable_get('salesforce_queue_max_retries', 5);
     while ($max_retries > $record->retries) {
       salesforce_queue_process_queue();
-      $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->salesforce_type);
+      $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
     }
     salesforce_queue_process_queue();
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->salesforce_type);
+    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
     $this->assertEqual('fail', $record->queue, 'After maximum retries, item placed into fail queue');
   }
 
@@ -304,7 +304,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
         }
       }
 
-      $data['salesforce_type'] = $sobject->type;
+      $data['object_type'] = $sobject->type;
       $data['sobject'] = $sobject;
 
       // Create the queue item.

@@ -138,7 +138,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
 
     // claimItem() and its queue item update ability
     // If you create an item with the same primary keys [drupal_id, module,
-    // delta, salesforce_type] as another item already in the queue, then that
+    // delta, object_type] as another item already in the queue, then that
     // item will be replaced with the new data instead of a new queue item being
     // created. Lets re-create an item we just fetched and see it merge.
     $data = (array) $whole_queue_item;
@@ -147,7 +147,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
       'drupal_id',
       'module',
       'delta',
-      'salesforce_type',
+      'object_type',
       'operation',
       'dedupe_field',
       'sobject',
@@ -221,7 +221,7 @@ class SalesforceQueueQueueTestCase extends SalesforceQueueTestCase {
     $data = (array) $items[4];
     $this->assertTrue($whole_queue->itemInQueue($data), 'The claimed item is in queue.');
     // Now lets change just one trait and ensure it fails.
-    $keys = array('drupal_id', 'module', 'delta', 'salesforce_type');
+    $keys = array('drupal_id', 'module', 'delta', 'object_type');
     foreach ($keys as $num => $key) {
       $data = (array) $items[$num];
       $data[$key] = 'foo';

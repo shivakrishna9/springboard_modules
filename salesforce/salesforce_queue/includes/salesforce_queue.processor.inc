@@ -335,7 +335,7 @@ class SalesforceQueueProcessor {
   protected function addItemToBatchGroups($item, &$batch_groups) {
     // Set up our brevity vars.
     $op = $item->operation;
-    $object = $item->salesforce_type;
+    $object_type = $item->object_type;
     $dedupe = $item->dedupe_field;
     $batch_template = array(
       'operation' => $op,
@@ -344,7 +344,7 @@ class SalesforceQueueProcessor {
     );
 
     // Declare batch_group levels this item will be sorted under.
-    $lvl1 = ($op == 'DELETE') ? 'DELETE' : $object;
+    $lvl1 = ($op == 'DELETE') ? 'DELETE' : $object_type;
     $lvl2 = ($op == 'DELETE') ? NULL : $op;
     $lvl3 = ($op == 'UPSERT') ? $dedupe : NULL;
 
@@ -387,7 +387,7 @@ class SalesforceQueueProcessor {
         $batch['ids'] = array();
       }
       else {
-        $batch['object'] = $object;
+        $batch['object_type'] = $object_type;
         $batch['sobjects'] = array();
       }
       if ($op == 'UPSERT') {
@@ -500,41 +500,41 @@ class SalesforceQueueProcessor {
     $default_object_order = array('Account', 'Contact', 'Opportunity');
     $object_order = variable_get('salesforce_queue_object_order', $default_object_order);
     $op_order = array('CREATE', 'UPSERT', 'UPDATE');
-    foreach ($object_order as $object) {
-      if (isset($batch_groups[$object])) {
+    foreach ($object_order as $object_type) {
+      if (isset($batch_groups[$object_type])) {
         foreach ($op_order as $op) {
-          if (isset($batch_groups[$object][$op])) {
+          if (isset($batch_groups[$object_type][$op])) {
             if ($op == 'UPSERT') {
-              foreach ($batch_groups[$object][$op] as $field => $field_batches) {
-                $batches = array_merge($batches, $batch_groups[$object][$op][$field]);
-                unset($batch_groups[$object][$op][$field]);
+              foreach ($batch_groups[$object_type][$op] as $field => $field_batches) {
+                $batches = array_merge($batches, $batch_groups[$object_type][$op][$field]);
+                unset($batch_groups[$object_type][$op][$field]);
               }
-              unset($batch_groups[$object][$op]);
+              unset($batch_groups[$object_type][$op]);
             }
             else {
-              $batches = array_merge($batches, $batch_groups[$object][$op]);
-              unset($batch_groups[$object][$op]);
+              $batches = array_merge($batches, $batch_groups[$object_type][$op]);
+              unset($batch_groups[$object_type][$op]);
             }
           }
         }
-        if (empty($batch_groups[$object])) {
-          unset($batch_groups[$object]);
+        if (empty($batch_groups[$object_type])) {
+          unset($batch_groups[$object_type]);
         }
       }
     }
 
     // Lastly, If any Salesforce objects were not configured for a specific
     // order, append those to the end of the batch list.
-    foreach ($batch_groups as $object => $operations) {
+    foreach ($batch_groups as $object_type => $operations) {
       foreach ($op_order as $op) {
-        if (isset($batch_groups[$object][$op])) {
+        if (isset($batch_groups[$object_type][$op])) {
           if ($op == 'UPSERT') {
-            foreach ($batch_groups[$object][$op] as $field => $batches) {
-              $batches = array_merge($batches, $batch_groups[$object][$op][$field]);
+            foreach ($batch_groups[$object_type][$op] as $field => $batches) {
+              $batches = array_merge($batches, $batch_groups[$object_type][$op][$field]);
             }
           }
           else {
-            $batches = array_merge($batches, $batch_groups[$object][$op]);
+            $batches = array_merge($batches, $batch_groups[$object_type][$op]);
           }
         }
       }
@@ -886,7 +886,7 @@ class SalesforceQueueProcessor {
       $item->sobject->Id = $result->id;
       $this->newSfRecords[] = $item;
       $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
-      $this->processedItemIds[$item->salesforce_type][$id_key] = $result->id;
+      $this->processedItemIds[$item->object_type][$id_key] = $result->id;
     }
 
     // Invokes hook_salesforce_queue_process_pass_item().
