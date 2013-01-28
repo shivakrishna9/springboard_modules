@@ -72,61 +72,6 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test for hook_salesforce_queue_process_fail_item().
-   */
-  public function testProcessFailItem() {
-    $this->salesforceConnect();
-
-    // Queue up an Opportunity which will automatically fail.
-    $queue = SalesforceQueue::get();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Account', 'Contact'));
-    $item = $queue->claimItem();
-    $queue->releaseItem($item);
-    salesforce_queue_process_queue();
-
-    // Verify the item has been marked to retry.
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    $this->assertEqual('retry', $record->queue, 'Failed item placed into the retry queue.');
-    $this->assertEqual(1, $record->retries, 'Failed item marked as having one retry.');
-
-    // Do this until we hit maximum retries and make sure it is placed in the
-    // fail queue.
-    $max_retries = variable_get('salesforce_queue_max_retries', 5);
-    while ($max_retries > $record->retries) {
-      salesforce_queue_process_queue();
-      $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    }
-    salesforce_queue_process_queue();
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    $this->assertEqual('fail', $record->queue, 'After maximum retries, item placed into fail queue');
-  }
-
-  /**
-   * Test for salesforce_queue_cron().
-   */
-  public function testCron() {
-    $this->salesforceConnect();
-
-    // Set cron frequency to 0 so it doesn't get in our way.
-    variable_set('salesforce_queue_cron_frequency', 0);
-
-    // Add item to queue and ensure it is there.
-    $queue = SalesforceQueue::get();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
-    $items = $queue->claimBatch();
-    $queue->releaseBatch($items[0]->leaseKey);
-    $this->assertFalse(empty($items), 'Queued up an item to test with.');
-
-    // Kick off cron, then verify the item is not there.
-    $this->cronRun();
-    $items = $queue->claimBatch();
-    $this->assertTrue(empty($items), 'Cron processed queued item.');
-
-    // Delete the variable to put us back to normal.
-    variable_del('salesforce_queue_cron_frequency');
-  }
-
-  /**
    * Grabs the Salesforce connection info from the live db and authenticates.
    *
    * @return Object
