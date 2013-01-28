@@ -1,0 +1,10 @@
+name = Salesforce Entity
+description = Salesforce Queue integration for the Entity API
+package = Salesforce
+core = 7.x
+
+files[] = tests/salesforce_entity.test
+
+dependencies[] = entity
+dependencies[] = salesforce_mapping
+dependencies[] = salesforce_sync
