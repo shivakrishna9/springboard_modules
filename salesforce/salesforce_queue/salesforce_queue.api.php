@@ -123,51 +123,6 @@ function hook_salesforce_queue_process_batch_alter(&$batch, SalesforceQueue $que
 }
 
 /**
- * Fire off behavior when an item succeeds processing.
- *
- * @param object $item
- *   Queue item
- * @param varchar $result
- *   The Salesforce response after the call was made
- * @param SalesforceQueue $queue
- *   SalesforceQueue object
- */
-function hook_salesforce_queue_process_pass_item($item, $result, SalesforceQueue $queue) {
-
-}
-
-/**
- * Fire off behavior when an item fails processing.
- *
- * @param object $item
- *   Queue item
- * @param int $reason
- *   The status of the item when it failed processing.  Possible reasons are:
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED: The item could not
- *         reach processing because the lease on the queue expired
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE: Item failed when it was
- *         attempted to be created in Salesforce
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT: Item failed when it
- *         attempted an upsert in Salesforce
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE: Item failed when it
- *         attempted an update in Salesforce
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE: Item failed when it was
- *         attempted to be deleted in Salesforce
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID: Item failed validation.
- *         It does not have the proper properties nessisary to be sent to
- *         Salesforce for the operation associated with it
- *     - SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH: The entire batch failed to be
- *         processed due to some error with Salesforce
- * @param mixed $result
- *   Information about the result, likely a Salesforce result object
- * @param SalesforceQueue $queue
- *   SalesforceQueue object
- */
-function hook_salesforce_queue_process_fail_item($item, $reason, $result, SalesforceQueue $queue) {
-
-}
-
-/**
  * Fire off behavior after a batch is processed.
  *
  * @param array $batch

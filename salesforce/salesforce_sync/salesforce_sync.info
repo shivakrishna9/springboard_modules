@@ -3,4 +3,14 @@ description = Synchronization controller for Salesforce.
 package = Salesforce
 core = 7.x
 
+files[] = includes/salesforce_sync.item.inc
+files[] = includes/salesforce_sync.sync.inc
+
+files[] = tests/salesforce_sync.admin.test
+files[] = tests/salesforce_sync.sync.test
+files[] = tests/salesforce_sync.test
+
 dependencies[] = salesforce
+dependencies[] = salesforce_soap
+
+configure = admin/config/services/salesforce/salesforce-sync

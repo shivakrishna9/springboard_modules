@@ -41,17 +41,6 @@ function salesforce_queue_admin_form($form, &$form_state) {
     '#default_value' => _sfq_get_value('max_items', $form_state),
   );
 
-  // Variable salesforce_queue_sf_max_batch_size.
-  $form['sf_max_batch_size'] = array(
-    '#id' => 'salesforce-queue-salesforce-max',
-    '#title' => t('Maximum Salesforce Batch Size'),
-    '#description' => t('The maximum number of items that can be sent to
-      Salesforce in a single batch.'),
-    '#type' => 'textfield',
-    '#size' => 6,
-    '#default_value' => _sfq_get_value('sf_max_batch_size', $form_state),
-  );
-
   // Variable salesforce_queue_max_retries.
   $form['max_retries'] = array(
     '#id' => 'salesforce-queue-max-retries',
@@ -212,7 +201,6 @@ function salesforce_queue_admin_form_validate($form, &$form_state) {
       case 'lease_time':
       case 'cron_frequency':
       case 'max_items':
-      case 'sf_max_batch_size':
       case 'max_retries':
         $title = $form[$var]['#title'];
         if (!is_numeric($value)) {
@@ -246,7 +234,6 @@ function salesforce_queue_admin_form_submit($form, &$form_state) {
       case 'max_items':
       case 'max_retries':
       case 'object_order':
-      case 'sf_max_batch_size':
       case 'tracked_queues':
         $converted_value = _sfq_get_value($var, $form_state);
         variable_set('salesforce_queue_' . $var, $converted_value);
@@ -329,10 +316,6 @@ function _sfq_get_value($field, $form_state) {
       case 'object_order':
         $default_order = array('Account', 'Contact', 'Opportunity');
         $value = variable_get('salesforce_queue_object_order', $default_order);
-        break;
-
-      case 'sf_max_batch_size':
-        $value = variable_get('salesforce_queue_sf_max_batch_size', SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT);
         break;
 
       case 'tracked_queues':

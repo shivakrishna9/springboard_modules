@@ -52,7 +52,7 @@ function drush_salesforce_queue_process($queue = 'salesforce_queue') {
   $processor = SalesforceQueueProcessor::get($queue);
   $processor->process();
 
-  drush_print(print_r($processor->newSfRecords, TRUE));
+  drush_print(print_r($processor->getNewSfRecords(), TRUE));
 
   // Log to the command line with an OK status.
   drush_log('Running salesforce-queue-process', 'ok');

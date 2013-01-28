@@ -25,6 +25,13 @@ class SalesforceQueueProcessor {
   public $queueName;
 
   /**
+   * SalesforceSync object that controls synchronization tasks with Salesforce.
+   *
+   * @var SalesforceSync
+   */
+  protected $salesforceSync;
+
+  /**
    * Batch of items from the queue that need to be processed.
    *
    * @var array
@@ -37,20 +44,6 @@ class SalesforceQueueProcessor {
    * @var array
    */
   protected $batches = array();
-
-  /**
-   *  A running log of the new records created in Salesforce.
-   *
-   * @var array
-   */
-  public $newSfRecords = array();
-
-  /**
-   * Running log of all the Ids of Salesforce records that have been processed.
-   *
-   * @var array
-   */
-  public $processedItemIds = array();
 
   /**
    * The configured maximum number of items that can be processed at once.
@@ -87,14 +80,7 @@ class SalesforceQueueProcessor {
    *
    * @var int
    */
-  protected $sfMaxBatchSize = 200;
-
-  /**
-   * Maximum length a query can be to Salesforce before it is rejected.
-   *
-   * @var int
-   */
-  protected $sfMaxQueryLength = 10000;
+  protected $maxBatchSize = 200;
 
   /**
    * Salesforce object to connect with
@@ -142,12 +128,12 @@ class SalesforceQueueProcessor {
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
     $this->queueName = $queue->queueName;
-    $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
-    $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
-    $this->sfMaxBatchSize = variable_get('salesforce_queue_sf_max_batch_size', SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT);
-    $this->sfMaxBatchSize = variable_get('salesforce_queue_sf_max_query_length', SALESFORCE_QUEUE_SF_MAX_QUERY_LENGTH_DEFAULT);
     $this->sfapi = salesforce_get_api();
     $this->soap = new SalesforceSoapPartner($this->sfapi);
+    $this->salesforceSync = new SalesforceSync($this->sfapi, $this->soap);
+    $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
+    $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
+    $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
   }
 
   /**
@@ -284,7 +270,7 @@ class SalesforceQueueProcessor {
    *     - If operation is DELETE, object type doesn't matter
    *   - Same operation
    *     - If operation is UPSERT, they have the same dedupe field
-   *   - No more than 200 items ($sfMaxBatchSize)
+   *   - No more than 200 items ($maxBatchSize)
    *
    * @NOTE There may be an additional complication when considering row-by-row
    *       comparision.  A field map may have individual fields check against
@@ -310,7 +296,7 @@ class SalesforceQueueProcessor {
         $this->addItemToBatchGroups($item, $batch_groups);
       }
       else {
-        $this->failItem($item, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID);
+        $this->salesforceSync->failItem($item, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID);
       }
     }
 
@@ -330,7 +316,7 @@ class SalesforceQueueProcessor {
    *   A queue item
    * @param array $batch_groups
    *   Temporary holder that categorizes all of the items and places them in
-   *   group no larger than $sfMaxBatchSize
+   *   group no larger than $maxBatchSize
    */
   protected function addItemToBatchGroups($item, &$batch_groups) {
     // Set up our brevity vars.
@@ -379,7 +365,7 @@ class SalesforceQueueProcessor {
     end($batch_group);
     $last_key = key($batch_group);
     reset($batch_group);
-    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->sfMaxBatchSize) {
+    if (empty($batch_group) || $batch_group[$last_key]['count'] >= $this->maxBatchSize) {
       // Create a new batch.
       $batch_key = is_numeric($last_key) ? $last_key + 1 : 0;
       $batch = $batch_template;
@@ -628,8 +614,10 @@ class SalesforceQueueProcessor {
     // Invokes hook_salesforce_queue_process_batch_alter().
     drupal_alter('salesforce_queue_batch', $batch, $this->queue, $this);
 
-    // Apply the Salesforce sync rules to the items in this batch.
-    $this->applySyncRules($batch);
+    // Prepare the batch before checking the lease expiration to minimize time
+    // delay between checking and sending.  This is to ensure the minimal risk
+    // of two overlapping writes to Salesforce.
+    $this->salesforceSync->sendBatchPrepare($batch);
 
     // Make sure we have enough time to send these items to Salesforce before
     // our lease expires. We do not want to risk the chance of items getting
@@ -639,289 +627,17 @@ class SalesforceQueueProcessor {
     if ($this->endStatus == SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED || ($this->leaseExpire < time() && $current_lease_key == $this->leaseKey)) {
       // Lease expired, fail.
       $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_LEASE_EXPIRED;
-      $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED);
+      $this->salesforceSync->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED);
     }
     else {
       // Woot, lease active. Send this baby off to Salesforce.
-      try {
-        switch ($batch['operation']) {
-          case 'CREATE':
-            // Whole sobject.
-            $results = $this->soap->create($batch['sobjects']);
-            $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE;
-            break;
-
-          case 'UPSERT':
-            // Whole sobject + dedupe field.
-            $results = $this->soap->upsert($batch['dedupe_field'], $batch['sobjects']);
-            $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT;
-            break;
-
-          case 'UPDATE':
-            // ID + fields to overwrite + fields to null.
-            $results = $this->soap->update($batch['sobjects']);
-            $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE;
-            break;
-
-          case 'DELETE':
-            // Require just ID of the object.
-            $results = $this->soap->delete($batch['ids']);
-            $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE;
-            break;
-        }
-      }
-      catch (Exception $sf_error) {
-        $this->failBatch($batch, SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH, $sf_error);
-      }
-
-      // Respond to responses.
-      foreach ($results as $key => $result) {
-        $item = $batch['items'][$key];
-        if ($result->success) {
-          $this->passItem($item, $result);
-        }
-        else {
-          // Mark items with errors as failed.
-          $this->failItem($item, $error, $result);
-        }
-      }
+      $results = $this->salesforceSync->sendBatch($batch);
     }
 
     // Invokes hook_salesforce_queue_postprocess_batch().
     module_invoke_all('salesforce_queue_postprocess_batch', $batch, $results, $this->queue);
 
     return $results;
-  }
-
-  /**
-   * Takes sync rules of the batch and applies them to the items.
-   *
-   * @param array $batch
-   *   Batch of items to be sent to Salesforce
-   */
-  protected function applySyncRules(&$batch) {
-    if (!isset($batch['sync_rules']) || empty($batch['sync_rules']['fields'])) {
-      // This batch does not have anything special to be concerned with.
-      return;
-    }
-
-    // Retreive records from salesforce about the items in this batch.
-    $sf_records = array();
-    if ($batch['operation'] == 'UPDATE') {
-      // UPDATE merely requires retreiving the Ids of all items.
-      $fields = implode(', ', $batch['sync_rules']['fields']);
-      // Needs to be an unassociated array or Salesforce will reject it.
-      $ids = array_values($batch['sync_rules']['ids']);
-      // The actual retreive will be done below.  Both UPSERT and UPDATE will
-      // end up with the same output to to put into the same retreive query.
-    }
-    elseif ($batch['operation'] == 'UPSERT') {
-      // UPSERT is more involved and requires a query of all records of the
-      // object type that have a value of the given dedupe field of one of the
-      // values that all of the items have.  Plus, max query length. Fun.
-      $object = $batch['object'];
-      $dedupe_field = $batch['dedupe_field'];
-      $dedupe_values = "'" . implode("', '", $batch['sync_rules']['dedupe_values']) . "'";
-      $query = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($dedupe_values)";
-
-      // Verify the query string does not exceed sfMaxQueryLength.  If it
-      // does, chunk up the dedupe values until it does not.  Salesforce
-      // cannot handle it when the query is too long.
-      $queries = array($query);
-      if (strlen($query) > $this->sfMaxQueryLength) {
-        $split = 2;
-        while (strlen($query) > $this->sfMaxQueryLength) {
-          $chunk_size = $batch['count'] / $split;
-          $chunks = array_chunk($dedupe_values, $chunk_size);
-          $dedupe_values = "'" . implode("', '", $chunks[0]) . "'";
-          $query = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($dedupe_values)";
-          $split++;
-        }
-        $queries = array();
-        foreach ($chunks as $chunk) {
-          $dedupe_values = "'" . implode("', '", $chunk) . "'";
-          $queries = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($chunk)";
-        }
-      }
-
-      // Query will always been in a multiple queries array in order to
-      // support the case for if the query has become too long.
-      $ids = array();
-      $upsert_ids = array();
-      foreach ($queries as $query) {
-        try {
-          $response = $this->soap->query($query);
-          if ($response->size > 0) {
-            // Store in array keyed by dedupe value.
-            foreach ($response->records as $record) {
-              // Partner API requests are formatted incorrectly, so we are
-              // reciving the Id as an array, and the fields are not retreived
-              // in a structured format. Because of this, we are grabbing only
-              // the Ids from this query, then passing them on to the retreive
-              // request below.  Once the bug is fixed, remove this work around
-              // and retreive the records directly from this query.
-              // @see http://goo.gl/Xv8k7
-              $ids[] = $record->Id[0];
-              $search = array(
-                '<sf:' . $dedupe_field . '>',
-                '</sf:' . $dedupe_field . '>',
-              );
-              $replace = array('', '');
-              $dedupe_value = trim(str_replace($search, $replace, $record->any));
-              $upsert_ids[$dedupe_value] = $record->Id[0];
-            }
-          }
-        }
-        catch (Exception $error) {
-          // Log message for later investigation.
-          watchdog('salesforce_queue', 'Could not fetch UPSERT records for sync rules: !faultstring', array('!faultstring' => $error->faultstring), WATCHDOG_DEBUG);
-        }
-      }
-    }
-
-    // Retreive the records for the gathered Ids.
-    if (empty($ids)) {
-      // If there are no Ids to fetch, there is nothing left to do here.
-      // UPSERTs can leave us with zero records existing in Salesforce.
-      return;
-    }
-    else {
-      $fields = implode(', ', $batch['sync_rules']['fields']);
-      try {
-        $response = $this->soap->retrieve($fields, $batch['object'], $ids);
-        // Store in array keyed by Salesforce Id.
-        foreach ($response as $record) {
-          $sf_records[$record->Id] = $record->fields;
-        }
-      }
-      catch (Exception $error) {
-        // Log message for later investigation.
-        watchdog('salesforce_queue', 'Could not retreive records for sync rules: !faultstring', array('!faultstring' => $error->faultstring), WATCHDOG_DEBUG);
-      }
-    }
-
-    // Go through the items and apply the sync rules based upon the information
-    // just retreived from Salesforce.
-    foreach ($batch['items'] as $key => $item) {
-      // Make sure the item was actually found in Salesforce before continuing.
-      $id = ($item->operation == 'UPDATE') ? $item->sobject->Id : (isset($upsert_ids[$item->sobject->fields[$dedupe_field]]) ? $upsert_ids[$item->sobject->fields[$dedupe_field]] : NULL);
-      if (isset($sf_records[$id])) {
-        $sf_record = $sf_records[$id];
-        foreach ($item->sync_rules as $field => $rule) {
-          switch ($rule) {
-            case SALESFORCE_SYNC_RULE_ALWAYS:
-              // Leave the field as is.
-              break;
-
-            case SALESFORCE_SYNC_RULE_BLANK:
-              // Check to see if Salesforce version is blank, unset otherwise.
-              if (isset($sf_record->$field) && strlen($sf_record->$field) > 0) {
-                if (isset($dedupe_field) && $field == $dedupe_field) {
-                  // If this is the dedupe field, make sure the value does not
-                  // change.
-                  $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
-                }
-                else {
-                  // Otherwise, just do not send this value to Salesforce.
-                  unset($batch['items'][$key]->sobject->fields[$field]);
-                }
-              }
-              break;
-
-            case SALESFORCE_SYNC_RULE_APPEND:
-              // When the Salesforce version is not blank, add value from
-              // Salesforce to the begining of the item's value.
-              if (isset($sf_record->$field) && !empty($sf_record->$field)) {
-                $joined_value = $sf_record->$field . ' ' . $item->sobject->fields[$field];
-                $batch['items'][$key]->sobject->fields[$field] = $joined_value;
-              }
-              break;
-
-            case SALESFORCE_SYNC_RULE_NEVER:
-              if (isset($dedupe_field) && $field == $dedupe_field) {
-                // If this is the dedupe field, make sure the value does not
-                // change.
-                $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
-              }
-              else {
-                // Otherwise, just do not send this value to Salesforce.
-                unset($batch['items'][$key]->sobject->fields[$field]);
-              }
-              break;
-          }
-        }
-
-        // The 'blank' and 'never' sync rules will unset fields, which can cause
-        // the case where an item will have no fields left to send to
-        // Salesforce. Remove items that have nothing left to send.
-        if (empty($batch['items'][$key]->sobject->fields) && (!isset($batch['items'][$key]->sobject->fieldsToNull) || (isset($batch['items'][$key]->sobject->fieldsToNull) && empty($batch['items'][$key]->sobject->fieldsToNull)))) {
-          $resort = TRUE;
-          unset($batch['items'][$key]);
-          unset($batch['sobjects'][$key]);
-        }
-      }
-    }
-
-    // If an item was removed from the batch because all of its fields were
-    // unset, then the keys will need to be put back into straight numeric
-    // order.
-    if (isset($resort) && $resort) {
-      $batch['items'] = array_values($batch['items']);
-      $batch['sobjects'] = array_values($batch['sobjects']);
-    }
-  }
-
-  /**
-   * Marks an item has having succeeded processing.
-   *
-   * @param object $item
-   *   Queue item
-   */
-  protected function passItem($item, $result) {
-    // Remove successful items from the queue.
-    $this->queue->deleteItem($item);
-
-    // Keep a log of newly created items.
-    if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
-      $item->sobject->Id = $result->id;
-      $this->newSfRecords[] = $item;
-      $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
-      $this->processedItemIds[$item->object_type][$id_key] = $result->id;
-    }
-
-    // Invokes hook_salesforce_queue_process_pass_item().
-    module_invoke_all('salesforce_queue_process_pass_item', $item, $result, $this->queue);
-  }
-
-  /**
-   * Marks an item has having failed.
-   *
-   * @param object $item
-   *   Queue item
-   * @param int $reason
-   *   The reason the item failed
-   * @param object $result
-   *   Salesforce result if the item had received a result from salesforce
-   */
-  protected function failItem($item, $reason, $result = NULL) {
-    // Invokes hook_salesforce_queue_process_fail_item().
-    module_invoke_all('salesforce_queue_process_fail_item', $item, $reason, $result, $this->queue);
-  }
-
-  /**
-   * Wrapper for failItem() so that every item in a batch is failed.
-   *
-   * @param array $batch
-   *   Batch array as set up for processBatch() for execute
-   * @param int $reason
-   *   The reason the batch failed
-   * @param object $result
-   *   Salesforce result if the batch had received a result from salesforce
-   */
-  protected function failBatch($batch, $reason, $result = NULL) {
-    foreach ($batch['items'] as $item) {
-      $this->failItem($item, $reason, $result);
-    }
   }
 
   /**
@@ -942,10 +658,31 @@ class SalesforceQueueProcessor {
   }
 
   /**
+   * Helper to get all records created by this SalesforceProcessor.
+   *
+   * @return array
+   *   Records that have been created.
+   */
+  public function getNewSfRecords() {
+    return $this->salesforceSync->newSfRecords;
+  }
+
+  /**
+   * Helper to get all item Ids processed by this SalesforceProcessor.
+   *
+   * @return array
+   *   Ids of items that have been processed keyed by their unique identifier.
+   */
+  public function getProcessedItemIds() {
+    return $this->salesforceSync->getProcessedItemIds;
+  }
+
+  /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
   public function setSalesforceApi(Salesforce $sfapi) {
     $this->sfapi = $sfapi;
+    $this->salesforceSync->setSalesforceApi($sfapi);
   }
 
   /**
@@ -953,30 +690,13 @@ class SalesforceQueueProcessor {
    */
   public function setSalesforceSoap($soap) {
     $this->soap = $soap;
+    $this->salesforceSync->setSalesforceSoap($soap);
   }
 
   /**
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
   public function deleteNewSfRecords() {
-    if (empty($this->newSfRecords)) {
-      return;
-    }
-    $batches = array_chunk($this->newSfRecords, $this->sfMaxBatchSize);
-    $this->newSfRecords = array();
-    foreach ($batches as $batch) {
-      $ids = array();
-      foreach ($batch as $key => $item) {
-        $batch[$key]->operation = 'DELETE';
-        $ids[] = $item->sobject->Id;
-      }
-      $this->batches[] = array(
-        'operation' => 'DELETE',
-        'count' => count($batch),
-        'items' => $batch,
-        'ids' => $ids,
-      );
-    }
-    $this->processBatches();
+    $this->salesforceSync->deleteNewSfRecords();
   }
 }

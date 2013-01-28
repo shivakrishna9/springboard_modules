@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Simpletests for salesforce_queue
+ * Simpletests for salesforce_sync
  */
 
 /**
- * Tests basic set up for queueing data for Salesforce and sending it.
+ * Tests basic set up for syncing data between Salesforce and Drupal.
  */
-class SalesforceQueueTestCase extends DrupalWebTestCase {
+class SalesforceSyncTestCase extends DrupalWebTestCase {
 
   /**
    * List of all sync rules.
@@ -23,13 +23,25 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   );
 
   /**
+   * List of all operations.
+   *
+   * @var array
+   */
+  public $operations = array(
+    'CREATE',
+    'UPSERT',
+    'UPDATE',
+    'DELETE',
+  );
+
+  /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
     return array(
-      'name' => 'General API for Salesforce Queue Tests',
-      'description' => 'Ensure that the salesforce_queue module functions properly.',
-      'group' => 'Salesforce Queue',
+      'name' => 'Salesforce Sync',
+      'description' => 'Ensure that the salesforce_sync module functions properly.',
+      'group' => 'Salesforce Sync',
     );
   }
 
@@ -42,7 +54,6 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       'salesforce',
       'salesforce_soap',
       'salesforce_sync',
-      'salesforce_queue',
     );
     parent::setUp($modules);
 
@@ -55,7 +66,6 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       'administer users',
       'administer salesforce',
       'administer salesforce sync',
-      'administer salesforce queue',
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
@@ -69,61 +79,6 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   public function tearDown() {
     user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
-  }
-
-  /**
-   * Test for hook_salesforce_queue_process_fail_item().
-   */
-  public function testProcessFailItem() {
-    $this->salesforceConnect();
-
-    // Queue up an Opportunity which will automatically fail.
-    $queue = SalesforceQueue::get();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Account', 'Contact'));
-    $item = $queue->claimItem();
-    $queue->releaseItem($item);
-    salesforce_queue_process_queue();
-
-    // Verify the item has been marked to retry.
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    $this->assertEqual('retry', $record->queue, 'Failed item placed into the retry queue.');
-    $this->assertEqual(1, $record->retries, 'Failed item marked as having one retry.');
-
-    // Do this until we hit maximum retries and make sure it is placed in the
-    // fail queue.
-    $max_retries = variable_get('salesforce_queue_max_retries', 5);
-    while ($max_retries > $record->retries) {
-      salesforce_queue_process_queue();
-      $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    }
-    salesforce_queue_process_queue();
-    $record = $queue->getItem($item->drupal_id, $item->module, $item->delta, $item->object_type);
-    $this->assertEqual('fail', $record->queue, 'After maximum retries, item placed into fail queue');
-  }
-
-  /**
-   * Test for salesforce_queue_cron().
-   */
-  public function testCron() {
-    $this->salesforceConnect();
-
-    // Set cron frequency to 0 so it doesn't get in our way.
-    variable_set('salesforce_queue_cron_frequency', 0);
-
-    // Add item to queue and ensure it is there.
-    $queue = SalesforceQueue::get();
-    $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
-    $items = $queue->claimBatch();
-    $queue->releaseBatch($items[0]->leaseKey);
-    $this->assertFalse(empty($items), 'Queued up an item to test with.');
-
-    // Kick off cron, then verify the item is not there.
-    $this->cronRun();
-    $items = $queue->claimBatch();
-    $this->assertTrue(empty($items), 'Cron processed queued item.');
-
-    // Delete the variable to put us back to normal.
-    variable_del('salesforce_queue_cron_frequency');
   }
 
   /**
@@ -157,14 +112,16 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Creates a random bunch of items to send to the given queue.
+   * Creates a random bunch of items.
    *
-   * @param SalesforceQueue $queue
-   *   Queue to send items to
    * @param int $num
    *   Number of items to create
+   * @param array $ops
+   *   Operations to restrict to.  If empty, all operations will be used.
+   * @param array $exempt_objects
+   *   Object types to not include.  If empty, all object types will be used.
    */
-  public function createQueueItems(SalesforceQueue $queue, $num = 5, $ops = array(), $exempt_objects = array()) {
+  public function createItems($num = 5, $ops = array(), $exempt_objects = array()) {
     // Define objects.
     $objects = array(
       'Account' => array(
@@ -230,63 +187,59 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     }
 
     $i = 0;
+    $items = array();
     while ($i < $num) {
       $i++;
 
-      // Set up the data array.
+      // Create base item.
       $ops_rand = array_rand($ops);
-      $data = array(
-        'drupal_id' => rand(1, $num * 100),
-        'module' => $this->randomName(),
-        'delta' => $this->randomName() . ':' . rand(1, $num * 100),
-        'operation' => $ops[$ops_rand],
-        'dedupe_field' => NULL,
-      );
+      $operation = $ops[$ops_rand];
+      $object_rand = array_rand($objects);
+      $object_type = $objects[$object_rand]['type'];
+      $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
+      $record_type = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
+      $item = new SalesforceSyncItem($object_type, $operation);
 
       // Create the Salesforce object.
-      $object_rand = array_rand($objects);
-      $record_rand = empty($objects[$object_rand]['records']) ? NULL : array_rand($objects[$object_rand]['records']);
-      $sobject = new stdClass();
-      $sobject->type = $objects[$object_rand]['type'];
-      $sobject->record = is_null($record_rand) ? NULL : $objects[$object_rand]['records'][$record_rand];
-      $sobject->fields = array();
-      foreach ($objects[$object_rand]['fields'] as $field => $dedupe) {
+      $fields = array();
+      foreach ($objects[$object_rand]['fields'] as $field => $can_dedupe) {
         if ($field == 'Email') {
-          $sobject->fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
+          $fields[$field] = strtolower($this->randomName()) . '@' . strtolower($this->randomName()) . '.com';
         }
         elseif ($field == 'Amount') {
-          $sobject->fields[$field] = rand(1, 10000);
+          $fields[$field] = rand(1, 10000);
         }
         elseif ($field == 'CloseDate') {
-          $sobject->fields[$field] = date('c', REQUEST_TIME);
+          $fields[$field] = date('c', REQUEST_TIME);
         }
         else {
-          $sobject->fields[$field] = $this->randomName();
+          $fields[$field] = $this->randomName();
         }
 
         // If this field can be used for dedupe, give it a 50% chance of it
         // being set.  Unless, of course, the operation is UPSERT, then it needs
         // to be set.
-        if ($dedupe && (rand(0, 1) || $data['operation'] == 'UPSERT')) {
-          $data['dedupe_field'] = $field;
+        if ($can_dedupe && (rand(0, 1) || $operation == 'UPSERT')) {
+          $item->dedupe_field = $field;
         }
       }
+      $sobject = new SalesforceObject($fields, $object_type, $record_type);
 
       // If the operation is UPSERT, and there is no dedupe field, change the
       // operation to CREATE.
-      if ($data['operation'] == 'UPSERT' && empty($data['dedupe_field'])) {
-        $data['operation'] = 'CREATE';
+      if ($operation == 'UPSERT' && empty($item->dedupe_field)) {
+        $item->operation = 'CREATE';
       }
 
       // If the operation is UPDATE or DELETE add in a fake Id field.
-      if ($data['operation'] == 'UPDATE' || $data['operation'] == 'DELETE') {
+      if ($operation == 'UPDATE' || $operation == 'DELETE') {
         $sobject->Id = $this->randomName();
       }
 
       // If the operation is UPDATE or UPSERT add in fake sync rules for a
       // random quantity of the number of fields.
-      if ($data['operation'] == 'UPDATE' || $data['operation'] == 'UPSERT') {
-        $data['sync_rules'] = array();
+      if ($operation == 'UPDATE' || $operation == 'UPSERT') {
+        $item->sync_rules = array();
         $fields = array_keys($sobject->fields);
         shuffle($fields);
         $field_count = count($sobject->fields);
@@ -301,17 +254,54 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
           if ($sync_rule == SALESFORCE_SYNC_RULE_APPEND && in_array($field, $special_fields)) {
             $sync_rule = SALESFORCE_SYNC_RULE_ALWAYS;
           }
-          $data['sync_rules'][$field] = $this->syncRules[$sync_rule_rand];
+          $item->sync_rules[$field] = $this->syncRules[$sync_rule_rand];
           $rand_count--;
         }
       }
 
-      $data['object_type'] = $sobject->type;
-      $data['sobject'] = $sobject;
-
-      // Create the queue item.
-      $result = $queue->createItem($data);
-      $this->assertTrue($result, 'Created a queue item.');
+      $item->sobject = $sobject;
+      $items[] = $item;
     }
+    return $items;
+  }
+
+  /**
+   * Helper to create batches from a list of items.
+   */
+  public function createBatches($items, $batch_prepared = FALSE) {
+    $batches = array();
+    foreach ($items as $item) {
+      if ($item->operation == 'UPSERT') {
+        $key = $item->object_type . '-' . $item->operation . '-' . $item->dedupe_field;
+      }
+      else {
+        $key = $item->object_type . '-' . $item->operation;
+      }
+      $batches[$key]['object_type'] = $item->object_type;
+      $batches[$key]['operation'] = $item->operation;
+      $batches[$key]['items'][] = $item;
+      $batches[$key]['sobjects'][] = &$item->sobject;
+      $batches[$key]['batch_prepared'] = $batch_prepared;
+      if (isset($item->sobject->Id)) {
+        $batches[$key]['ids'][] = &$item->sobject->Id;
+      }
+
+      // Add this item's sync rules.
+      if (($item->operation == 'UPSERT' || $item->operation == 'UPDATE') && isset($item->sync_rules) && !empty($item->sync_rules)) {
+        if ($item->operation == 'UPSERT') {
+          $batches[$key]['dedupe_field'] = $item->dedupe_field;
+          $dedupe_value = $item->sobject->fields[$item->dedupe_field];
+          $batches[$key]['sync_rules']['dedupe_values'][$dedupe_value] = $dedupe_value;
+        }
+        elseif ($item->operation == 'UPDATE') {
+          $id = $item->sobject->Id;
+          $batches[$key]['sync_rules']['ids'][$id] = $id;
+        }
+        foreach ($item->sync_rules as $field => $sync_rule) {
+          $batches[$key]['sync_rules']['fields'][$field] = $field;
+        }
+      }
+    }
+    return $batches;
   }
 }

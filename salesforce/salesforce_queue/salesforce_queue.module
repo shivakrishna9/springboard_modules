@@ -16,12 +16,6 @@ define('SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT', 1000);
 // Length of time the queue can be leased to a process.
 define('SALESFORCE_QUEUE_LEASE_TIME_DEFAULT', 3600);
 
-// The maximum amount of items that can be sent to Salesforce in one call.
-define('SALESFORCE_QUEUE_SF_MAX_BATCH_SIZE_DEFAULT', 200);
-
-// The maximum length of a query string that can be sent to Salesforce.
-define('SALESFORCE_QUEUE_SF_MAX_QUERY_LENGTH_DEFAULT', 10000);
-
 // Maximum retries an item will go through before moving to the 'fail' queue.
 define('SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT', 5);
 
@@ -70,36 +64,19 @@ define('SALESFORCE_QUEUE_PROCESS_FAIL_CLAIM_ITEMS', -10);
 
 
 /**
- * @defgroup salesforce_queue_process_item_fail_responses Item fail responses
+ * @addtogroup salesforce_sync_item_fail_responses
  * @{
- * When a queue item fails, it will give one of the following reasons for its
- * failure.
  */
 
 // The item could not reach processing because the lease on the queue expired.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED', 0);
-
-// Item failed when it was attempted to be created in Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_CREATE', -1);
-
-// Item failed when it attempted an upsert in Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT', -2);
-
-// Item failed when it attempted an update in Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPDATE', -3);
-
-// Item failed when it was attempted to be deleted in Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_DELETE', -4);
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_LEASE_EXPIRED', 'Lease expired before batch could be processed.');
 
 // Item failed validation. It does not have the proper properties nessisary to
 // be sent to Salesforce for the operation associated with it.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', -5);
-
-// The entire batch failed to be processed due to some error with Salesforce.
-define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_BATCH', -10);
+define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', 'Item failed validation.');
 
 /**
- * @} salesforce_queue_process_item_fail_responces
+ * @} salesforce_sync_item_fail_responses
  */
 
 
@@ -121,24 +98,21 @@ function salesforce_queue_form_salesforce_mapping_form_alter(&$form, &$form_stat
  * Implements hook_menu().
  */
 function salesforce_queue_menu() {
-  $items['admin/config/services/salesforce/salesforce-queue'] = array(
-    'title' => 'Salesforce Queue',
+  $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue'] = array(
+    'title' => 'Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
     'page callback' => 'salesforce_queue_admin_page',
     'access arguments' => array('administer salesforce queue'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.admin.inc',
   );
-  $items['admin/config/services/salesforce/salesforce-queue/config'] = $items['admin/config/services/salesforce/salesforce-queue'];
-  $items['admin/config/services/salesforce/salesforce-queue/config']['title'] = 'Settings';
-  $items['admin/config/services/salesforce/salesforce-queue/config']['type'] = MENU_DEFAULT_LOCAL_TASK;
 
-  $items['admin/config/services/salesforce/salesforce-queue/salesforce-queue-object-verify'] = array(
-    'title' => 'Object Verify',
+  $items['admin/config/services/salesforce/salesforce-sync/salesforce-queue-object-verify'] = array(
+    'title' => 'Debug',
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_queue_object_verification_form'),
-    'access arguments' => array('administer salesforce queue'),
+    'access arguments' => array('administer salesforce sync'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
@@ -230,21 +204,34 @@ function salesforce_queue_cron() {
 }
 
 /**
- * Implements hook_salesforce_queue_process_fail_item().
+ * Implements hook_salesforce_sync_pass_item().
  */
-function salesforce_queue_salesforce_queue_process_fail_item($item, $reason, $result, $queue) {
-  // Mark items for retry if they have not exceeded the maximum.
-  $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
-  if ($max_retries > $item->retries) {
-    $item->retries++;
-    $item->queue = 'retry';
+function salesforce_queue_salesforce_sync_pass_item($item, $result) {
+  if (isset($item->queue) && !empty($item->queue)) {
+    // Remove successful items from the queue.
+    $queue = SalesforceQueue::get();
+    $queue->deleteItem($item);
   }
-  // When the retry maximum is exceeded, put the item in the fail queue.
-  else {
-    $item->queue = 'fail';
+}
+
+/**
+ * Implements hook_salesforce_sync_fail_item().
+ */
+function salesforce_queue_salesforce_sync_fail_item($item, $result) {
+  if (isset($item->queue) && isset($item->item_id) && !empty($item->queue) && !empty($item->item_id)) {
+    // Mark items for retry if they have not exceeded the maximum.
+    $max_retries = variable_get('salesforce_queue_max_retries', SALESFORCE_QUEUE_MAX_RETRIES_DEFAULT);
+    if ($max_retries > $item->retries) {
+      $item->retries++;
+      $item->queue = 'retry';
+    }
+    // When the retry maximum is exceeded, put the item in the fail queue.
+    else {
+      $item->queue = 'fail';
+    }
+    $item->sobject = json_encode($item->sobject);
+    drupal_write_record('salesforce_queue', $item, array('item_id'));
   }
-  $item->sobject = json_encode($item->sobject);
-  drupal_write_record('salesforce_queue', $item, array('item_id'));
 }
 
 /**

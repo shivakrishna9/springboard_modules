@@ -14,5 +14,6 @@ files[] = tests/salesforce_queue.test
 dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
+dependencies[] = salesforce_sync
 
-configure = admin/config/services/salesforce/salesforce-queue
+configure = admin/config/services/salesforce/salesforce-sync/salesforce-queue

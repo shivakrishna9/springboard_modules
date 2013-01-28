@@ -407,7 +407,7 @@ function salesforce_genmap_salesforce_queue_create_item_alter(&$item) {
 /**
  * Implements hook_salesforce_queue_process_pass_item().
  */
-function salesforce_genmap_salesforce_queue_process_pass_item($item, $result, $queue) {
+function salesforce_genmap_salesforce_sync_pass_item($item, $result) {
   $record = array(
     'sfid' => $result->id,
     'module' => $item->module,

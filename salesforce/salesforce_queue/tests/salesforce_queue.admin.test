@@ -31,7 +31,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Path to config page.
-    $this->path = 'admin/config/services/salesforce/salesforce-queue';
+    $this->path = 'admin/config/services/salesforce/salesforce-sync/salesforce-queue';
 
     // Connect to Salesforce.
     $this->salesforceConnect();
@@ -57,8 +57,6 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertFieldByName('cron_frequency', 1, 'Cron Frequency field has the correct default value.');
     $this->assertFieldByName('max_items', '', 'Max Items field exists.');
     $this->assertFieldByName('max_items', 1000, 'Max Items field has the correct default value.');
-    $this->assertFieldByName('sf_max_batch_size', '', 'Salesforce Max field exists.');
-    $this->assertFieldByName('sf_max_batch_size', 200, 'Salesforce Max field has the correct default value.');
     $this->assertFieldByName('max_retries', '', 'Max Retries field exists.');
     $this->assertFieldByName('max_retries', 5, 'Max Retries field has the correct default value.');
     $this->assertNoText('Tracked Queues of the Multi-Queue Processor', 'Tracked queues field does not show up by default');
@@ -108,7 +106,6 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
       'lease_time',
       'cron_frequency',
       'max_items',
-      'sf_max_batch_size',
       'max_retries',
     );
     foreach ($fields as $field) {
@@ -145,7 +142,6 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
       'lease_time' => 11,
       'cron_frequency' => 12,
       'max_items' => 13,
-      'sf_max_batch_size' => 14,
       'max_retries' => 15,
       'tracked_queues[fail]' => TRUE,
       'tracked_queues[new]' => FALSE,
@@ -163,8 +159,6 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(NULL, variable_get('salesforce_queue_cron_frequency', NULL), 'Cron Frequency value did not save after cancelling form.');
     $this->assertFieldByName('max_items', 1000, 'Max Items value did not change after cancelling form.');
     $this->assertEqual(NULL, variable_get('salesforce_queue_max_items', NULL), 'Max Items value did not save after cancelling form.');
-    $this->assertFieldByName('sf_max_batch_size', 200, 'Salesforce Max value did not change after cancelling form.');
-    $this->assertEqual(NULL, variable_get('salesforce_queue_sf_max_batch_size', NULL), 'Salesforce Max value did not save after cancelling form.');
     $this->assertFieldByName('max_retries', 5, 'Max Retries value did not change after cancelling form.');
     $this->assertEqual(NULL, variable_get('salesforce_queue_max_retries', NULL), 'Max Retries value did not save after cancelling form.');
     $this->assertNoFieldChecked('edit-tracked-queues-fail', 'Fail queue did not get selected after cancelling form.');
@@ -183,8 +177,6 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertEqual(720, variable_get('salesforce_queue_cron_frequency', NULL), 'Cron Frequency value saved after saving form.');
     $this->assertFieldByName('max_items', 13, 'Max Items value changed after saving form.');
     $this->assertEqual(13, variable_get('salesforce_queue_max_items', NULL), 'Max Items value saved after saving form.');
-    $this->assertFieldByName('sf_max_batch_size', 14, 'Salesforce Max value changed after saving form.');
-    $this->assertEqual(14, variable_get('salesforce_queue_sf_max_batch_size', NULL), 'Salesforce Max value saved after saving form.');
     $this->assertFieldByName('max_retries', 15, 'Max Retries value changed after saving form.');
     $this->assertEqual(15, variable_get('salesforce_queue_max_retries', NULL), 'Max Retries value saved after saving form.');
     $this->assertFieldChecked('edit-tracked-queues-fail', 'Fail queue was selected after saving form.');

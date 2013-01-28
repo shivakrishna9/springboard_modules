@@ -88,7 +88,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Take all of the items we created and try to create them again.  They will
     // not pass validation, giving us no valid items error.
-    foreach ($this->processor->newSfRecords as $item) {
+    foreach ($this->processor->getNewSfRecords() as $item) {
       $data = array(
         'drupal_id' => $item->drupal_id,
         'module' => $item->module,
@@ -147,7 +147,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   public function testCreateBatches() {
     // Batch size is user configurable.  Lets say the user configured the batch
     // size to be 10 items.
-    variable_set('salesforce_queue_sf_max_batch_size', 10);
+    variable_set('salesforce_sync_max_batch_size', 10);
 
     // Lets create and claim 200 items so that the randomness factor will ensure
     // that will will get more than 10 items for each type of batch.
@@ -417,12 +417,12 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $create_quantity_2 = 35;
     $this->createQueueItems($this->queue, $create_quantity_1, array('CREATE'), array('Opportunity'));
     $this->processor->process();
-    $record_count = count($this->processor->newSfRecords);
+    $record_count = count($this->processor->getNewSfRecords());
     $this->assertEqual($create_quantity_1, $record_count, 'Found ' . $record_count . ' newly created records out of ' . $create_quantity_1 . ' expected records.');
 
     // Modify the records, give them sync rules, and queue them up.
     $original_fields = array();
-    foreach ($this->processor->newSfRecords as $item) {
+    foreach ($this->processor->getNewSfRecords() as $item) {
       // Build list of the original records keyed by Salesforce Id so we can
       // refer to them easily later.
       $original_fields[$item->sobject->Id] = $item->sobject->fields;
