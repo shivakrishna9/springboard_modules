@@ -199,19 +199,21 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     if (isset($map->field_map['salesforce_donation_map']['probability'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['probability'];
       $probability = 100;
-      // @TODO: if ($recurring and not charged) { fill this in.
-      $probability = 50;
-      // @TODO: } end.
+      if ($donation->donation['recurs_monthly'] == TRUE) {
+        // @TODO: if ($recurring and not charged) { fill this in.
+        $probability = 50;
+      }
       $fields[$sf_field] = $probability;
     }
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       $stage = 'Posted';
-      // @TODO: if ($recurring and not charged) { fill this in.
-      $stage = 'Pledged';
-      // @TODO: } end.
+      if ($donation->donation['recurs_monthly'] == TRUE) {
+        // @TODO: if ($recurring and not charged) { fill this in.
+        $stage = 'Pledged';
+      }
       // @TODO: add mapping to donation order status feature - implement order
-      // stage gathering as hook in commerce and ubercart.
+      // stage gathering as hook in commerce and ubercart.s
       $fields[$sf_field] = $stage;
     }
     if (isset($map->field_map['salesforce_donation_map']['user_salesforce_account_id'])) {
@@ -344,8 +346,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     }
   }
 
-  // And lastly, the reconstructed data fields. Information derived from the
-  // current fields.
+  // And lastly, the additional data fields. Information that comes from donation circumstances.
   $fields['salesforce_donation_map']['#fields']['close_date'] = t('Close date');
   $fields['salesforce_donation_map']['#fields']['transaction_date'] = t('Transaction date');
   $fields['salesforce_donation_map']['#fields']['form_URL'] = t('Form URL');
