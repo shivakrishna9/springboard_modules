@@ -222,7 +222,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
           $this->assertEqual($object_type, $item->object_type, 'Batch item object matches batch object.');
         }
         if ($operation == 'UPSERT') {
-          $this->assertEqual($batch['dedupe'], $item->dedupe_field, 'Batch dedupe_field matches batch dedupe.');
+          $this->assertEqual($batch['dedupe_field'], $item->dedupe_field, 'Batch dedupe_field matches batch dedupe_field.');
         }
       }
     }

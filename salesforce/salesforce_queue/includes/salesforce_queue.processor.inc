@@ -336,7 +336,7 @@ class SalesforceQueueProcessor {
     // Set up our brevity vars.
     $op = $item->operation;
     $object_type = $item->object_type;
-    $dedupe = $item->dedupe_field;
+    $dedupe_field = $item->dedupe_field;
     $batch_template = array(
       'operation' => $op,
       'count' => 0,
@@ -346,7 +346,7 @@ class SalesforceQueueProcessor {
     // Declare batch_group levels this item will be sorted under.
     $lvl1 = ($op == 'DELETE') ? 'DELETE' : $object_type;
     $lvl2 = ($op == 'DELETE') ? NULL : $op;
-    $lvl3 = ($op == 'UPSERT') ? $dedupe : NULL;
+    $lvl3 = ($op == 'UPSERT') ? $dedupe_field : NULL;
 
     // Find the batch_group for this item, while creating missing batch_groups
     // along the way.
@@ -391,7 +391,7 @@ class SalesforceQueueProcessor {
         $batch['sobjects'] = array();
       }
       if ($op == 'UPSERT') {
-        $batch['dedupe'] = $dedupe;
+        $batch['dedupe_field'] = $dedupe_field;
         $batch['sync_rules'] = array(
           'fields' => array(),
           'dedupe_values' => array(),
@@ -653,7 +653,7 @@ class SalesforceQueueProcessor {
 
           case 'UPSERT':
             // Whole sobject + dedupe field.
-            $results = $this->soap->upsert($batch['dedupe'], $batch['sobjects']);
+            $results = $this->soap->upsert($batch['dedupe_field'], $batch['sobjects']);
             $error = SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_UPSERT;
             break;
 
@@ -720,9 +720,9 @@ class SalesforceQueueProcessor {
       // object type that have a value of the given dedupe field of one of the
       // values that all of the items have.  Plus, max query length. Fun.
       $object = $batch['object'];
-      $dedupe = $batch['dedupe'];
+      $dedupe_field = $batch['dedupe_field'];
       $dedupe_values = "'" . implode("', '", $batch['sync_rules']['dedupe_values']) . "'";
-      $query = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($dedupe_values)";
+      $query = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($dedupe_values)";
 
       // Verify the query string does not exceed sfMaxQueryLength.  If it
       // does, chunk up the dedupe values until it does not.  Salesforce
@@ -734,13 +734,13 @@ class SalesforceQueueProcessor {
           $chunk_size = $batch['count'] / $split;
           $chunks = array_chunk($dedupe_values, $chunk_size);
           $dedupe_values = "'" . implode("', '", $chunks[0]) . "'";
-          $query = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($dedupe_values)";
+          $query = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($dedupe_values)";
           $split++;
         }
         $queries = array();
         foreach ($chunks as $chunk) {
           $dedupe_values = "'" . implode("', '", $chunk) . "'";
-          $queries = "SELECT Id, $dedupe FROM $object WHERE $dedupe IN ($chunk)";
+          $queries = "SELECT Id, $dedupe_field FROM $object WHERE $dedupe_field IN ($chunk)";
         }
       }
 
@@ -763,8 +763,8 @@ class SalesforceQueueProcessor {
               // @see http://goo.gl/Xv8k7
               $ids[] = $record->Id[0];
               $search = array(
-                '<sf:' . $dedupe . '>',
-                '</sf:' . $dedupe . '>',
+                '<sf:' . $dedupe_field . '>',
+                '</sf:' . $dedupe_field . '>',
               );
               $replace = array('', '');
               $dedupe_value = trim(str_replace($search, $replace, $record->any));
@@ -804,7 +804,7 @@ class SalesforceQueueProcessor {
     // just retreived from Salesforce.
     foreach ($batch['items'] as $key => $item) {
       // Make sure the item was actually found in Salesforce before continuing.
-      $id = ($item->operation == 'UPDATE') ? $item->sobject->Id : (isset($upsert_ids[$item->sobject->fields[$dedupe]]) ? $upsert_ids[$item->sobject->fields[$dedupe]] : NULL);
+      $id = ($item->operation == 'UPDATE') ? $item->sobject->Id : (isset($upsert_ids[$item->sobject->fields[$dedupe_field]]) ? $upsert_ids[$item->sobject->fields[$dedupe_field]] : NULL);
       if (isset($sf_records[$id])) {
         $sf_record = $sf_records[$id];
         foreach ($item->sync_rules as $field => $rule) {
@@ -816,7 +816,7 @@ class SalesforceQueueProcessor {
             case SALESFORCE_QUEUE_SYNC_RULE_BLANK:
               // Check to see if Salesforce version is blank, unset otherwise.
               if (isset($sf_record->$field) && strlen($sf_record->$field) > 0) {
-                if (isset($dedupe) && $field == $dedupe) {
+                if (isset($dedupe_field) && $field == $dedupe_field) {
                   // If this is the dedupe field, make sure the value does not
                   // change.
                   $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
@@ -838,7 +838,7 @@ class SalesforceQueueProcessor {
               break;
 
             case SALESFORCE_QUEUE_SYNC_RULE_NEVER:
-              if (isset($dedupe) && $field == $dedupe) {
+              if (isset($dedupe_field) && $field == $dedupe_field) {
                 // If this is the dedupe field, make sure the value does not
                 // change.
                 $batch['items'][$key]->sobject->fields[$field] = $sf_record->$field;
