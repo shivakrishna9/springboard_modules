@@ -10,6 +10,8 @@ files[] = tests/salesforce_sync.admin.test
 files[] = tests/salesforce_sync.sync.test
 files[] = tests/salesforce_sync.test
 
+extended_modules[] = salesforce_mapping
+
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
 

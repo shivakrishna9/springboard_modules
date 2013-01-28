@@ -77,6 +77,17 @@ define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch caused Salesforce to throw exce
 
 
 /**
+ * Implements hook_init().
+ */
+function salesforce_sync_init() {
+  // Load extended modules include files.
+  $modules = system_list('module_enabled');
+  foreach ($modules['salesforce_sync']->info['extended_modules'] as $module) {
+    module_load_include('inc', 'salesforce_sync', 'includes/modules/' . $module);
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function salesforce_sync_menu() {
@@ -107,4 +118,20 @@ function salesforce_sync_permission() {
       'restrict access' => TRUE,
     ),
   );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function salesforce_sync_theme($existing, $type, $theme, $path) {
+  $settings = array();
+  $modules = array(
+    'salesforce_mapping',
+  );
+  foreach ($modules as $module) {
+    $theme_func = 'sfsync_' . $module . '_theme';
+    $module_settings = $theme_func($existing, $type, $theme, $path);
+    $settings = array_merge($settings, $module_settings);
+  }
+  return $settings;
 }

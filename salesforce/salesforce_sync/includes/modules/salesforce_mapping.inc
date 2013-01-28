@@ -2,25 +2,25 @@
 
 /**
  * @file
- * Provides batch processing functionality for Salesforce integration.
+ * Extends salesforce_mapping functionality to work with salesforce_sync.
  */
 
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function salesforce_entity_form_salesforce_mapping_form_alter(&$form, &$form_state) {
+function salesforce_sync_form_salesforce_mapping_form_alter(&$form, &$form_state) {
   // Override validate and submit logic.
   $index = array_search('salesforce_mapping_form_validate', $form['#validate']);
   if ($index !== FALSE) {
-    $form['#validate'] = array_replace($form['#validate'], array($index => 'salesforce_entity_salesforce_mapping_form_validate'));
+    $form['#validate'] = array_replace($form['#validate'], array($index => 'sfsync_salesforce_mapping_salesforce_mapping_form_validate'));
   }
   $index = array_search('salesforce_mapping_form_submit', $form['#submit']);
   if ($index !== FALSE) {
-    $form['#submit'] = array_replace($form['#submit'], array($index => 'salesforce_entity_salesforce_mapping_form_submit'));
+    $form['#submit'] = array_replace($form['#submit'], array($index => 'sfsync_salesforce_mapping_salesforce_mapping_form_submit'));
   }
 
   // Add overwrite column.
-  $form['salesforce_field_mappings_wrapper']['salesforce_field_mappings']['#theme'] = 'salesforce_entity_fieldmap_form_table';
+  $form['salesforce_field_mappings_wrapper']['salesforce_field_mappings']['#theme'] = 'sfsync_salesforce_mapping_fieldmap_form_table';
   $mappings = is_object($form_state['salesforce_mapping']) ? $form_state['salesforce_mapping']->field_mappings : FALSE;
   $options = array(
     SALESFORCE_SYNC_RULE_NEVER => t('Never'),
@@ -40,7 +40,7 @@ function salesforce_entity_form_salesforce_mapping_form_alter(&$form, &$form_sta
 /**
  * Validate callback salesforce_mapping_form().
  */
-function salesforce_entity_salesforce_mapping_form_validate($form, &$form_state) {
+function sfsync_salesforce_mapping_salesforce_mapping_form_validate($form, &$form_state) {
   $values = $form_state['values'];
   $mapping = $form_state['salesforce_mapping'];
 
@@ -90,7 +90,7 @@ function salesforce_entity_salesforce_mapping_form_validate($form, &$form_state)
 /**
  * Submit handler for salesforce_mapping_form().
  */
-function salesforce_entity_salesforce_mapping_form_submit($form, &$form_state) {
+function sfsync_salesforce_mapping_salesforce_mapping_form_submit($form, &$form_state) {
   $values = $form_state['values'];
   $mappings = array();
   if (isset($values['key'])) {
@@ -160,9 +160,9 @@ function salesforce_entity_salesforce_mapping_form_submit($form, &$form_state) {
 /**
  * Implements hook_theme().
  */
-function salesforce_entity_theme($existing, $type, $theme, $path) {
+function sfsync_salesforce_mapping_theme($existing, $type, $theme, $path) {
   return array(
-    'salesforce_entity_fieldmap_form_table' => array(
+    'sfsync_salesforce_mapping_fieldmap_form_table' => array(
       'render element' => 'elements',
     ),
   );
@@ -171,7 +171,7 @@ function salesforce_entity_theme($existing, $type, $theme, $path) {
 /**
  * Themes the field associations on a fieldmap edit form into a table.
  */
-function theme_salesforce_entity_fieldmap_form_table($variables) {
+function theme_sfsync_salesforce_mapping_fieldmap_form_table($variables) {
   $elements = $variables['elements'];
 
   // Build the header array.
