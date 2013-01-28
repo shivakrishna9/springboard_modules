@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Administration page callbacks for the salesforce queue module.
+ * Administration page callbacks for the salesforce sync module.
  */
 
 /**
@@ -113,7 +113,6 @@ function salesforce_sync_admin_form_submit($form, &$form_state) {
 function _sfq_get_value($field, $form_state) {
   $value = NULL;
   if (isset($form_state['input'][$field])) {
-    // Convert the user contributed value into an expected format.
     $value = $form_state['input'][$field];
   }
   else {
