@@ -10,14 +10,14 @@ module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 /**
  * Ensure salesforce_genmap integrations salesforce_queue properly.
  */
-class SalesforceGenmapSalesforceQueueTestCase extends SalesforceQueueTestCase {
+class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
 
   /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
     return array(
-      'name' => 'Salesforce Genmap Salesforce Queue tests',
+      'name' => 'Queue Integration',
       'description' => 'Ensure that the salesforce_genmap integration with salesforce_queue functions properly.',
       'group' => 'Salesforce Generic Mapping',
     );
