@@ -149,7 +149,7 @@ function salesforce_queue_menu() {
     'title' => 'Salesforce Queue',
     'description' => 'Configuration settings for the Salesforce queue.',
     'page callback' => 'salesforce_queue_admin_page',
-    'access arguments' => array('configure salesforce queue'),
+    'access arguments' => array('administer salesforce queue'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.admin.inc',
   );
@@ -162,7 +162,7 @@ function salesforce_queue_menu() {
     'description' => 'Utility for verifying the format of Salesforce objects.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_queue_object_verification_form'),
-    'access arguments' => array('configure salesforce queue'),
+    'access arguments' => array('administer salesforce queue'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_queue.utility.inc',
     'weight' => 10,
@@ -176,7 +176,7 @@ function salesforce_queue_menu() {
  */
 function salesforce_queue_permission() {
   return array(
-    'configure salesforce queue' => array(
+    'administer salesforce queue' => array(
       'description' => t('Configure settings for the Salesforce queue.'),
       'title' => t('Configure Salesforce queue'),
       'restrict access' => TRUE,

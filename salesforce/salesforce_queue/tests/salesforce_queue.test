@@ -53,7 +53,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
       'administer nodes',
       'administer users',
       'administer salesforce',
-      'configure salesforce queue',
+      'administer salesforce queue',
     );
     $this->admin_user = $this->drupalCreateUser($permissions);
     // Don't forget, need to pass --uri in drush command in order for logging
