@@ -1228,8 +1228,6 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
   $did = $donation->did;
   // Caching form values are provided ONLY for the purpose of handling redirect submissions.
   // It is intended to allow redirects to pick back up with form submission after returning to site.
-  // TODO - cache calling may be dependant on IFF the gateway selected is a redirect one.
-  // This is info should be added on gateway info hooks.
   cache_set('fundraiser-form-id-' . $did, $form_state['values']['form_build_id'], 'cache', strtotime('+15 minutes'));
   // Cache the CURRENT version of the forms as well, as they have been processed up to this point.
   cache_set('fundraiser-form-' . $did, $form, 'cache_form', strtotime('+15 minutes'));
@@ -1243,6 +1241,12 @@ function _fundraiser_donation_submit_to_process($form, $form_state, $donation) {
  * Provided for other modules to use as needed for redirection style processes.
  */
 function _fundraiser_donation_submit_after_process($donation) {
+  // Clear caches.
+  cache_clear_all('fundraiser-form-id-' . $donation->did);
+  cache_clear_all('fundraiser-form-' . $donation->did);
+  cache_clear_all('fundraiser-form-state-' . $donation->did);
+
+  // Finish donation processing.
   if (!isset($donation->result['message'])) {
     $donation->result['message'] = '';
   }

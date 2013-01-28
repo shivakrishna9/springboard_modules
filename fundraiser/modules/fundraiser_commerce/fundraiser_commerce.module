@@ -877,7 +877,15 @@ function fundraiser_commerce_payment_redirect($did) {
     $payment_method = commerce_payment_method_instance_load($donation->gateway['id']);
   }
 
-  // Error check, if the payment method doesn't exist or does not require a redirect.
+  // Grab data if it exists from the caches.
+  $form_build_id = cache_get('fundraiser-form-id-' . $did, 'cache');
+  if (!empty($form_build_id)) {
+    // Given the form build id, get the rest from the form cache.
+    $form = cache_get('fundraiser-form-' . $did, 'cache_form');
+    $form_state = cache_get('fundraiser-form-state-' . $did, 'cache_form');
+  }
+
+  // Check if we're in the wrong spot.
   if (!$payment_method || !$payment_method['offsite']) {
     if (!$payment_method) {
       $log = t('Customer skipped the redirected Payment page because no payment was required.');
@@ -987,12 +995,7 @@ function fundraiser_commerce_payment_redirect($did) {
   }
 
   // If we're down to this point, we've returned from a submit redirect. In that case, we redirect the form based on success or failure.
-  $form_build_id = cache_get('fundraiser-form-id-' . $did, 'cache');
   if (!empty($form_build_id)) {
-    $form_build_id = $form_build_id->data;
-    // Given the form build id, get the rest from the form cache.
-    $form = cache_get('fundraiser-form-' . $did, 'cache_form');
-    $form_state = cache_get('fundraiser-form-state-' . $did, 'cache_form');
     if (!empty($form) && !empty($form_state)) {
       $form = $form->data;
       $form_state = $form_state->data;
@@ -1013,22 +1016,17 @@ function fundraiser_commerce_payment_redirect($did) {
         }
         // With the correct set of submit handlers in place, we need to pick up processing again.
         // From as if we were inside of drupal_process_form, since our goto interrupted execution.
+        // The following code is from drupal_process_form().
         $form_id = $form['#build_id'];
         $form_state['#donation'] = $donation;
         // Handle the rest of the submit handlers.
         form_execute_handlers('submit', $form, $form_state);
         // Clean caches out entirely.
-        // All caches have an expire on them, so wil be cleaned up with cron.
-        //if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
-        //  // Clear the form cache.
-        //  cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
-        //  cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
-        //  // Clear OUR form cache.
-        //  cache_clear_all('fundraiser-form-id-' . $did, 'cache');
-        //  cache_clear_all('fundraiser-form-' . $did, 'cache_form');
-        //  cache_clear_all('fundraiser-form-state-' . $did , 'cache_form');
-        //}
-        // Process batches as neededdd.i
+        if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+          cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+          cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+        }
+        // Process batches as needed.
         if ($batch = & batch_get() && !isset($batch['current_set'])) {
           if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
             $batch['form_state'] = $form_state;
