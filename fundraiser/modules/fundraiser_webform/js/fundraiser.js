@@ -33,15 +33,15 @@ Drupal.behaviors.fundraiserCheckCode = {
   // Make sure the user picks one or the other.
   $('#webform-component-donation--amount input[name="submitted[donation][amount]"]').change(function() {
     var other_amount = $('#edit-submitted-donation-other-amount').val();
+    $('#fundraiser-amount-error').remove(); // Always hide, then decide if we want to show again.
     if ($(this).val() != 'other' && other_amount !== 'undefined' &&  other_amount.length > 0) {
+      // Clear the other amount field. (pending approval)
+      // $('#edit-submitted-donation-other-amount').val('');
       // Throw up a message.
       $(this).parents('#webform-component-donation--amount').after('<div id="fundraiser-amount-error" class="messages error">' +
-        'You have entered a custom amount and selected a set amount. Please choose the "Other" button if you ' +
-        'intend to donate a custom amount, or clear the "Other Amount" text field to give a set amount.' +
-        '</div>');
-    }
-    else {
-      $('#fundraiser-amount-error').remove();
+      'You have entered a custom amount and selected a set amount. Please choose the "Other" button if you ' +
+      'intend to donate a custom amount, or clear the "Other Amount" text field to give a set amount.' +
+      '</div>');
     }
   });
 
