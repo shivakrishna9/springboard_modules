@@ -352,8 +352,40 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'items' => 'recurs|Yes',
       'multiple' => 'Y',
     ),
+    '#display_callback' => '_fundraiser_sustainers_recurs_monthly_field_display',
+     // Display callback, hide this field if the gateway Currently selected by the user is not supportive of recurring.
   );
+  // Add a display callback for the gateways, to make sure the selected one is flagged for gateway support or not.
   return $fields;
+}
+
+function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state, $field) {
+  // Supporting gateway types from the gateway on the node.
+  $supporting_gateways = array();
+  foreach ($form['#node']->gateways as $type => $gateway) { 
+    $this_gateway = _fundraiser_gateway_info($gateway['id']);
+    if (isset($this_gateway['allow_recurring']) && $this_gateway['allow_recurring'] == TRUE) {
+      $supporting_gateways[] = $type;
+    }
+  }
+  // Generate the right selector for the field type.
+  $selector = '.fundraiser-payment-methods input[type="radio"]';
+  if (count($form['#node']->gateways) == 1) { // If only one is set, then the hidden field should be used.
+    $selector = '.fundraiser-payment-methods';
+  }
+  // Set the states.
+  $field['#states'] = array(
+    'visible' => array(),
+  );
+  if (!empty($supporting_gateways)) {
+    foreach ($supporting_gateways as $supporting_gateway) {
+      $field['#states']['visible'][$selector][] = array('value' => $supporting_gateway); // See: http://drupal.org/node/735528
+    }
+  }
+  else {
+    $field = array(); // Else, remove the field from display entirely.
+  }
+  return $field;
 }
 
 /**
@@ -1020,28 +1052,37 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   if (!isset($donation->recurring->master_did)) {
     // If this is in fact a recurring donation, then we act.
     if ($donation->donation['recurs_monthly'] == TRUE) {
-      $donation->recurring->master_did = $donation->did;
-      // Add the master to the recurring table.
-      $recurring_donation = array(
-        'did' => $donation->did,
-        'master_did' => $donation->did,
-        'next_charge' => strtotime('now'),
-        'gateway_resp' => 'success',
-        'attempts' => 1,
-      );
-      // Update the recurring table.
-      _fundraiser_sustainers_create_recurring($recurring_donation);
-      $info = _fundraiser_get_donation_gateway($donation->did);
-      // This created donation is the master, so passing it in to create the set.
-      // We can't predict the form key for these values, so ask the gateway to provide.
-      if (isset($info['form expiration callback'])) {
-        $expiration_func = $info['form expiration callback'];
-        if (function_exists($expiration_func)) {
-          $expires = $expiration_func($donation->donation);
-          if (isset($expires['month']) && isset($expires['year'])) {
-            _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+      if (isset($donation->gateway['allow_recurring']) && $donation->gateway['allow_recurring'] == TRUE) {
+        $donation->recurring->master_did = $donation->did;
+        // Add the master to the recurring table.
+        $recurring_donation = array(
+          'did' => $donation->did,
+          'master_did' => $donation->did,
+          'next_charge' => strtotime('now'),
+          'gateway_resp' => 'success',
+          'attempts' => 1,
+        );
+        // Update the recurring table.
+        _fundraiser_sustainers_create_recurring($recurring_donation);
+        $info = _fundraiser_get_donation_gateway($donation->did);
+        // This created donation is the master, so passing it in to create the set.
+        // We can't predict the form key for these values, so ask the gateway to provide.
+        if (isset($info['form expiration callback'])) {
+          $expiration_func = $info['form expiration callback'];
+          if (function_exists($expiration_func)) {
+            $expires = $expiration_func($donation->donation);
+            if (isset($expires['month']) && isset($expires['year'])) {
+              _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+            }
           }
         }
+      }
+      else {
+        // ALERT: This gateway does not support recurring stuff, so we skipped it here.
+        // But we should probably tell someone this was attempted. We have protections on the form, but they
+        // are JS based to hide the form element, so we check server side too.
+        watchdog('fundraiser_sustainers', 'A recurring donation for a non-recurring gateway was attempted, for master donation id #@nid',
+          array('@nid'=> $donation->nid));
       }
     }
   }
