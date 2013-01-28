@@ -53,6 +53,7 @@ function gm_authorizenet_gateway_manager_gateway_info() {
     'credit_refund' => 'gm_authorizenet_refund',
     'billing_update' => 'gm_authorizenet_billing_update',
     'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
+    'allow_recurring' => TRUE,
   );
   return $gateways;
 }

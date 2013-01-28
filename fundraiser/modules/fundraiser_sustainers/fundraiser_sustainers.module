@@ -600,6 +600,16 @@ function fundraiser_sustainers_edit_form($did) {
  * Creates a form for donation amount update.
  */
 function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donation, $next_donation) {
+  // Abort if the gateway does not support recurring.
+  if (!isset($donation->gateway['allow_recurring']) || $donation->gateway['allow_recurring'] == FALSE) {
+    $form['fundraiser-sustainer-billing'] = array(
+      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
+        t('This payment gteway does not support recurring donations and cannot be updated.') .
+        '</div>',
+    );
+    return $form;
+  }
+
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_did,
@@ -668,6 +678,16 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  * Creates form for billing address update.
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Abort if the gateway does not support recurring.
+  if (!isset($donation->gateway['allow_recurring']) || $donation->gateway['allow_recurring'] == FALSE) {
+    $form['fundraiser-sustainer-billing'] = array(
+      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
+        t('This payment gteway does not support recurring donations and cannot be updated.') .
+        '</div>',
+    );
+    return $form;
+  }
+
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $donation->recurring->master_did,

@@ -15,6 +15,7 @@ function gm_test_gateway_gateway_manager_gateway_info() {
     'title' => t('Test Gateway'),
     'description' => t('Process credit card payments through the Test Gateway.'),
     'credit' => 'gm_test_gateway_charge',
+    'allow_recurring' => TRUE,
   );
   return $gateways;
 }
