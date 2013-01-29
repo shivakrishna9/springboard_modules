@@ -131,7 +131,8 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
   // Commerce needs to execute billing update to call into the gateway to update on asociated CIMs.
   // As a result, sustainer has NO NEED for cim to be loaded into the donation object. Those tokens Go Away.
   // If possible at least.
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile'])) {
+  if (module_exists('commerce_cardonfile')) {
+    $payment_method['settings']['cim_cardonfile'] = TRUE;
     $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
     $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
     // Filter out expired cards.
@@ -147,6 +148,9 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
         $pane_values['cardonfile'] =  $card_id;
       }
     }
+  }
+  else {
+    $payment_method['settings']['cim_cardonfile'] = FALSE;
   }
   // Execute call to commerce_authnet, be it CIM or other, it'll come back with the correct response.
   $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
