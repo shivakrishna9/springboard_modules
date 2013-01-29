@@ -11,7 +11,7 @@
 function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
-    'allow_recurring' => FALSE,
+    'allow_recurring' => TRUE,
     // ALL currently supported ubercart gateways use the same field set.
     'form callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
