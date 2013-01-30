@@ -118,10 +118,14 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
   $pane_values = array(
     'credit_card' => array(
-      'number' => $donation->donation['payment_fields']['credit']['card_number'],
-      'exp_month' => $donation->donation['payment_fields']['credit']['card_expiration_month'],
-      'exp_year' => $donation->donation['payment_fields']['credit']['card_expiration_year'],
-      'code' => $donation->donation['payment_fields']['credit']['card_cvv'],
+      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+        $donation->donation['payment_fields']['credit']['card_number'] : '',
+      'exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
+        $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
+      'exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
+        $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
+      'code' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+        $donation->donation['payment_fields']['credit']['card_cvv'] : '',
     ),
   );
 
