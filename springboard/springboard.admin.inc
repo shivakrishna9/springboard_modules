@@ -189,6 +189,7 @@ function springboard_admin_config_modules(&$form, $form_state) {
   }
   else {
     $modules[] = 'fundraiser_commerce';
+    $modules[] = 'commerce_payment_example';
   }
   module_enable($modules);
   drupal_set_message(t('Modules %modules have been enabled.', array('%modules' =>implode(', ', $modules))));
@@ -325,6 +326,7 @@ function springboard_admin_config_profile(&$form, $form_state) {
     );
   }
   else {
+    // For Commerce or others for now.
     $profile_fields[] = array(
       'label' => t('State/Province'),
       'field_name' => 'profile_state',
