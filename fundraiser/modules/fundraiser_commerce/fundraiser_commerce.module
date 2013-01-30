@@ -41,6 +41,37 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ * Adds the admin form to fundraiser's admin form.
+ */
+function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
+  // Turn on option to process sustainer donations on own cron.
+  $form['fundraiser_commerce'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser commerce'),
+    '#description' => t('Configure fundraiser sustainers settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secure key path'),
+    '#description' => t('The card type, expiration date and last four digits of the card number are encrypted and ' .
+      'stored temporarily while the customer is in the process of checking out. <b>You must enable encryption</b> ' .
+      'by following the <a href="!url">encryption instructions</a> in order to accept credit card payments. In ' .
+      'short, you must enter the path of a directory outside of your document root where the encryption key may be ' .
+      'stored. Relative paths will be resolved relative to the Drupal installation directory. Once this ' .
+      'directory is set, you should not change it.', array('!url' => 'http://drupal.org/node/1309226')),
+    '#default_value' => variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.')),
+  );
+  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Encryption seed'),
+    '#default_value' => variable_get('fundraiser_commerce_encryption_iv', '00000'),
+  }
+}
+
+/**
  * Implements hook_commerce_line_item_type_info().
  */
 function fundraiser_commerce_commerce_line_item_type_info() {
@@ -290,6 +321,7 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
     }
   }
 }
+
 /**
  * Display callback for field country. Set the defaults if the country has it.
  */
@@ -381,6 +413,15 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
 }
 
 /**
+ * Implements hook_fundraiser_get_credit_encryption_path().
+ * This is called by modules that need to check for processing availablity outside of normal.
+ * Such as sustainer.
+ */
+function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
+  return variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
+}
+
+/**
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
@@ -422,10 +463,11 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
   }
-  // This order data was stored during processing, and scrubbed by the gateway.
-  $donation->donation['payment_method'] = isset($order->data['payment_method']) ? $order->data['payment_method'] : '';
-  $donation->donation['payment_fields']['credit'] = isset($order->data['payment_fields']) ? $order->data['payment_fields'] : '';
-  $donation->data = isset($order->data['gateway_data']) ? $order->data['gateway_data'] : '';
+  // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
+  $data = unserialize(_fundraiser_commerce_decrypt($order->data));
+  $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
+  $donation->donation['payment_fields']['credit'] = isset($data['payment_fields']) ? $data['payment_fields'] : '';
+  $donation->data = isset($order->data['gateway_data']) ? $data['gateway_data'] : '';
 }
 
 /**
@@ -499,6 +541,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
   // Save the order again to update its line item reference field.
+  // TODO look to here to save submittion data in ->data ?
   commerce_order_save($order);
   // Set the order id to the donation to carry forward.
   $donation->did = $order->order_id;
@@ -559,6 +602,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     'payment_fields' => $donation->donation['payment_fields'],
     'gateway_data' => isset($result->data) ? $result->data : '',
   );
+  // Encrypt it for storage.
+  $order->data = _fundraiser_commerce_encrypt(serialize($order->data));
   // Save the order again to update its line item reference field.
   commerce_order_save($order);
   // If no result then presume a failure or no hook installed for this gateway type.
@@ -569,6 +614,196 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Pass the result up the chain.
   $donation->result = $result;
   fundraiser_commerce_fundraiser_donation_after_process($donation);
+}
+
+/**
+ * Callback for processing an offsite payment processor
+ */
+function fundraiser_commerce_payment_redirect($did) {
+  // Load up additional data as needed for this donation, from Fundraiser and Commerce.
+  $donation = fundraiser_donation_get_donation($did);
+  $order = commerce_order_load($donation->did);
+  $payment_method = FALSE;
+  if (!empty($donation->gateway)) {
+    $payment_method = commerce_payment_method_instance_load($donation->gateway['id']);
+  }
+
+  // Grab data if it exists from the caches.
+  $form_build_id = cache_get('fundraiser-form-id-' . $did, 'cache');
+  if (!empty($form_build_id)) {
+    // Given the form build id, get the rest from the form cache.
+    $form = cache_get('fundraiser-form-' . $did, 'cache_form');
+    $form_state = cache_get('fundraiser-form-state-' . $did, 'cache_form');
+  }
+
+  // Check if we're in the wrong spot.
+  if (!$payment_method || !$payment_method['offsite']) {
+    if (!$payment_method) {
+      $log = t('Customer skipped the redirected Payment page because no payment was required.');
+      $donation->result = array(
+        'success' => TRUE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => '',
+      );
+    }
+    else {
+      $log = t('Customer skipped the Payment page because payment was already submitted.');
+      // No addtional result needed in this case. The donation has already been kicked off.
+    }
+    fundraiser_commerce_fundraiser_donation_after_process($donation);
+    _fundraiser_donation_submit_after_process($donation);
+  }
+
+  // If not a returning value, then we're directing outwards. Provide a form in case the natural redirect stalls out.
+  // We get to this point after a redirect from the gateway's own implementation during processing.
+  // If the function to build the redirect form exists. 
+  $arg3 = arg(3);
+  if (empty($arg3)) {
+    if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form')) {
+      // Generate a key to use in the return URL from the redirected service.
+      $order->data['payment_redirect_key'] = drupal_hash_base64(time());
+      commerce_order_save($order);
+  
+      // If the payment method has the 'offsite_autoredirect' option enabled, add
+      // the redirection behavior.
+      //if (!empty($payment_method['offsite_autoredirect'])) {
+      //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
+      //  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
+      //    'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
+      //}
+  
+      // Merge the new form into the current form array, preserving the help text
+      // if it exists. We also add a wrapper so the form can be easily submitted.
+      $form = drupal_get_form($callback, $order, $payment_method);
+      $form['#prefix'] = '<div class="payment-redirect-form">';
+      $form['#suffix'] = '</div>';
+      return $form;
+    }
+    else {
+      // Alert the administrator that the module does not provide a required form.
+      drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary ' .
+        'form to process the redirect.',
+        array('%title' => $payment_method['title'])), 'error');
+      return array();
+    }
+  }
+
+  $log = t('Customer arrived after redirect.');
+  // On return, the the user came to the cancel page - they canceled at the gateway.
+  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
+    $log = t('Customer canceled the redirected payment at the gateway.');
+    $donation->result = array(
+      'success' => FALSE,
+      'comment' => $log,
+      'message' => $log,
+      'uid' => $order->uid,
+      'data' => array(),
+      'error type' => 'billing',
+    );
+    fundraiser_commerce_fundraiser_donation_after_process($donation);
+    _fundraiser_donation_submit_after_process($donation);
+  }
+
+  // On return, the user came back to the payment page - they paid at the gateway.
+  if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
+    // Check for a validate handler on return.
+    $validate_callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_validate');
+    if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
+      // Perform any submit functions if necessary.
+      if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
+        $callback($order, $payment_method);
+      }
+      $log = t('Customer successfully paid the redirected payment at the gateway.');
+      $donation->result = array(
+        'success' => TRUE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => '',
+      );
+      fundraiser_commerce_fundraiser_donation_after_process($donation);
+      _fundraiser_donation_submit_after_process($donation);
+    }
+    else {
+      // Otherwise display the failure message and send the customer back.
+      drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
+      $log = t('Customer failed to pay the redirected payment at the gateway.');
+      $donation->result = array(
+        'success' => FALSE,
+        'comment' => $log,
+        'message' => $log,
+        'uid' => $order->uid,
+        'data' => array(),
+        'error type' => 'billing',
+      );
+      fundraiser_commerce_fundraiser_donation_after_process($donation);
+      _fundraiser_donation_submit_after_process($donation);
+    }
+  }
+
+  // If we're down to this point, we've returned from a submit redirect. In that case, we redirect the form based on success or failure.
+  if (!empty($form_build_id)) {
+    if (!empty($form) && !empty($form_state)) {
+      $form = $form->data;
+      $form_state = $form_state->data;
+      // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
+      // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
+      // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
+      if (!empty($form['#submit'])) {
+        // On a failure we pick back up with the form submits.
+        $start = FALSE;
+        foreach ($form['#submit'] as $index => $submit_handler) {
+          // Skip handlers until we get to post submit.
+          if ($submit_handler == 'fundraiser_donation_post_submit') {
+            $start = TRUE;
+          }
+          if (!$start) {
+            unset($form['#submit'][$index]);
+          }
+        }
+        // With the correct set of submit handlers in place, we need to pick up processing again.
+        // From as if we were inside of drupal_process_form, since our goto interrupted execution.
+        // The following code is from drupal_process_form().
+        $form_id = $form['#build_id'];
+        $form_state['#donation'] = $donation;
+        // Handle the rest of the submit handlers.
+        form_execute_handlers('submit', $form, $form_state);
+        // Clean caches out entirely.
+        if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
+          cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
+          cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
+        }
+        // Process batches as needed.
+        if ($batch = & batch_get() && !isset($batch['current_set'])) {
+          if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
+            $batch['form_state'] = $form_state;
+          }
+          else {
+            $batch['form_state'] = array_intersect_key($form_state,
+              array_flip(array('programmed', 'rebuild', 'storage', 'no_redirect', 'redirect')));
+          }
+          $batch['progressive'] = !$form_state['programmed'];
+          batch_process();
+        }
+        // Set flag.
+        $form_state['executed'] = TRUE;
+        // Redirect the form based on values in $form_state.
+        // This will forward us to another page with a drupal goto if set.
+        // This will interupt further processing like a return would.
+        drupal_redirect_form($form_state);
+        // But if we aren't redirecting, something went wrong and so we continue.
+        // This does mean we will not rebuild a form in the even of a post-submission error.
+        // That's ok though, something went critically wrong if we got to this point.
+      }
+    }
+  }
+  return array(
+    '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
+  );
 }
 
 /**
@@ -589,6 +824,21 @@ function fundraiser_commerce_fundraiser_donation_after_process($donation) {
       $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->order_status);
     }
   }
+}
+
+/**
+ * Helper function, Returns the callback function for a payment method
+ * First checks our include files for the callback and then pass it off to commerce if none is found
+ */
+function fundraiser_commerce_payment_method_callback($payment_method, $callback) {
+  // Include our payment method file
+  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
+  // If the specified callback function exists, return it.
+  if (function_exists($payment_method['module'] . '_fundraiser_commerce_' . $callback)) {
+    return $payment_method['module'] . '_fundraiser_commerce_' . $callback;
+  }
+  // Otherwise pass it to commerce's callback getter   
+  return commerce_payment_method_callback($payment_method, $callback);
 }
 
 /**
@@ -866,243 +1116,84 @@ function _fundraiser_commerce_get_charged_by_status($status) {
   return TRUE;
 }
 
+
 /**
- * Callback for processing an offsite payment processor
+ * Helper function, get the key from the file. This key is not set via admin pages.
  */
-function fundraiser_commerce_payment_redirect($did) {
-  // Load up additional data as needed for this donation, from Fundraiser and Commerce.
-  $donation = fundraiser_donation_get_donation($did);
-  $order = commerce_order_load($donation->did);
-  $payment_method = FALSE;
-  if (!empty($donation->gateway)) {
-    $payment_method = commerce_payment_method_instance_load($donation->gateway['id']);
-  }
-
-  // Grab data if it exists from the caches.
-  $form_build_id = cache_get('fundraiser-form-id-' . $did, 'cache');
-  if (!empty($form_build_id)) {
-    // Given the form build id, get the rest from the form cache.
-    $form = cache_get('fundraiser-form-' . $did, 'cache_form');
-    $form_state = cache_get('fundraiser-form-state-' . $did, 'cache_form');
-  }
-
-  // Check if we're in the wrong spot.
-  if (!$payment_method || !$payment_method['offsite']) {
-    if (!$payment_method) {
-      $log = t('Customer skipped the redirected Payment page because no payment was required.');
-      $donation->result = array(
-        'success' => TRUE,
-        'comment' => $log,
-        'message' => $log,
-        'uid' => $order->uid,
-        'data' => array(),
-        'error type' => '',
-      );
+function _fundraiser_commerce_get_encrypt_key() {
+  $key = '';
+  $key_setting = variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
+  if ($key_setting != t('Not configured, see below.')) {
+    $path = $key_setting . '/commerce.key';
+    if (is_file($path) && is_readable($path)) {
+      $key = file_get_contents($path);
     }
     else {
-      $log = t('Customer skipped the Payment page because payment was already submitted.');
-      // No addtional result needed in this case. The donation has already been kicked off.
-    }
-    fundraiser_commerce_fundraiser_donation_after_process($donation);
-    _fundraiser_donation_submit_after_process($donation);
-  }
-
-  // If not a returning value, then we're directing outwards. Provide a form in case the natural redirect stalls out.
-  // We get to this point after a redirect from the gateway's own implementation during processing.
-  // If the function to build the redirect form exists. 
-  $arg3 = arg(3);
-  if (empty($arg3)) {
-    if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form')) {
-      // Generate a key to use in the return URL from the redirected service.
-      $order->data['payment_redirect_key'] = drupal_hash_base64(time());
-      commerce_order_save($order);
-  
-      // If the payment method has the 'offsite_autoredirect' option enabled, add
-      // the redirection behavior.
-      //if (!empty($payment_method['offsite_autoredirect'])) {
-      //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
-      //  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
-      //    'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
-      //}
-  
-      // Merge the new form into the current form array, preserving the help text
-      // if it exists. We also add a wrapper so the form can be easily submitted.
-      $form = drupal_get_form($callback, $order, $payment_method);
-      $form['#prefix'] = '<div class="payment-redirect-form">';
-      $form['#suffix'] = '</div>';
-      return $form;
-    }
-    else {
-      // Alert the administrator that the module does not provide a required form.
-      drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary ' .
-        'form to process the redirect.',
-        array('%title' => $payment_method['title'])), 'error');
-      return array();
+      drupal_set_message(t('No encryption file found or readable set for Fundraiser Commerce.'), 'error');
     }
   }
-
-  $log = t('Customer arrived after redirect.');
-  // On return, the the user came to the cancel page - they canceled at the gateway.
-  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
-    $log = t('Customer canceled the redirected payment at the gateway.');
-    $donation->result = array(
-      'success' => FALSE,
-      'comment' => $log,
-      'message' => $log,
-      'uid' => $order->uid,
-      'data' => array(),
-      'error type' => 'billing',
-    );
-    fundraiser_commerce_fundraiser_donation_after_process($donation);
-    _fundraiser_donation_submit_after_process($donation);
+  else {
+    drupal_set_message(t('No encryption path set for Fundraiser Commerce. Please set one.'), 'error');
   }
-
-  // On return, the user came back to the payment page - they paid at the gateway.
-  if (arg(3) == 'return' && arg(4) == $order->data['payment_redirect_key']) {
-    // Check for a validate handler on return.
-    $validate_callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_validate');
-    if (!$validate_callback || $validate_callback($order, $payment_method) !== FALSE) {
-      // Perform any submit functions if necessary.
-      if ($callback = fundraiser_commerce_payment_method_callback($payment_method, 'redirect_form_submit')) {
-        $callback($order, $payment_method);
-      }
-      $log = t('Customer successfully paid the redirected payment at the gateway.');
-      $donation->result = array(
-        'success' => TRUE,
-        'comment' => $log,
-        'message' => $log,
-        'uid' => $order->uid,
-        'data' => array(),
-        'error type' => '',
-      );
-      fundraiser_commerce_fundraiser_donation_after_process($donation);
-      _fundraiser_donation_submit_after_process($donation);
-    }
-    else {
-      // Otherwise display the failure message and send the customer back.
-      drupal_set_message(t('Payment failed at the payment server. Please review your information and try again.'), 'error');
-      $log = t('Customer failed to pay the redirected payment at the gateway.');
-      $donation->result = array(
-        'success' => FALSE,
-        'comment' => $log,
-        'message' => $log,
-        'uid' => $order->uid,
-        'data' => array(),
-        'error type' => 'billing',
-      );
-      fundraiser_commerce_fundraiser_donation_after_process($donation);
-      _fundraiser_donation_submit_after_process($donation);
-    }
-  }
-
-  // If we're down to this point, we've returned from a submit redirect. In that case, we redirect the form based on success or failure.
-  if (!empty($form_build_id)) {
-    if (!empty($form) && !empty($form_state)) {
-      $form = $form->data;
-      $form_state = $form_state->data;
-      // Now that we have the form and form_state as they were when we started this redirection, we can hop back in to the flow.
-      // Restarting form submission on return is the only good way to make sure all form submits (including webform ones)
-      // get kicked off. B/c of the redirects involved we can't pass $form, $form_state along - we need to have it in caches.
-      if (!empty($form['#submit'])) {
-        // On a failure we pick back up with the form submits.
-        $start = FALSE;
-        foreach ($form['#submit'] as $index => $submit_handler) {
-          // Skip handlers until we get to post submit.
-          if ($submit_handler == 'fundraiser_donation_post_submit') {
-            $start = TRUE;
-          }
-          if (!$start) {
-            unset($form['#submit'][$index]);
-          }
-        }
-        // With the correct set of submit handlers in place, we need to pick up processing again.
-        // From as if we were inside of drupal_process_form, since our goto interrupted execution.
-        // The following code is from drupal_process_form().
-        $form_id = $form['#build_id'];
-        $form_state['#donation'] = $donation;
-        // Handle the rest of the submit handlers.
-        form_execute_handlers('submit', $form, $form_state);
-        // Clean caches out entirely.
-        if (!variable_get('cache', 0) && !empty($form_state['values']['form_build_id'])) {
-          cache_clear_all('form_' . $form_state['values']['form_build_id'], 'cache_form');
-          cache_clear_all('form_state_' . $form_state['values']['form_build_id'], 'cache_form');
-        }
-        // Process batches as needed.
-        if ($batch = & batch_get() && !isset($batch['current_set'])) {
-          if ($batch['has_form_submits'] || !empty($form_state['rebuild'])) {
-            $batch['form_state'] = $form_state;
-          }
-          else {
-            $batch['form_state'] = array_intersect_key($form_state,
-              array_flip(array('programmed', 'rebuild', 'storage', 'no_redirect', 'redirect')));
-          }
-          $batch['progressive'] = !$form_state['programmed'];
-          batch_process();
-        }
-        // Set flag.
-        $form_state['executed'] = TRUE;
-        // Redirect the form based on values in $form_state.
-        // This will forward us to another page with a drupal goto if set.
-        // This will interupt further processing like a return would.
-        drupal_redirect_form($form_state);
-        // But if we aren't redirecting, something went wrong and so we continue.
-        // This does mean we will not rebuild a form in the even of a post-submission error.
-        // That's ok though, something went critically wrong if we got to this point.
-      }
-    }
-  }
-  return array(
-    '#markup' => '<div class="fundraiser-commerce-failed-to-redirect">' . $log . '</div>',
-  );
+  return $key;
 }
 
 /**
- * Returns the callback function for a payment method
+ * Helper function, Encrypt an input string (128 bit AES) using the specified key and initialization vector.
  *
- * First checks our include files for the callback and then pass it off to commerce if none is found
+ * @param $input
+ *   The string to encrypt.
+ * @param $key
+ *   The 128 bit key to use to encrypt the string.
+ * @iv
+ *   The initialization vector to use to encrypt the string.
  */
-function fundraiser_commerce_payment_method_callback($payment_method, $callback) {
-  // Include our payment method file
-  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $payment_method['module']);
-  // If the specified callback function exists, return it.
-  if (function_exists($payment_method['module'] . '_fundraiser_commerce_' . $callback)) {
-    return $payment_method['module'] . '_fundraiser_commerce_' . $callback;
+function _fundraiser_commerce_encrypt($input) {
+  // Check settings.
+  $key = _fundraiser_commerce_get_encrypt_key();
+  if (!empty($key)) {
+    $iv = variable_get('fundraiser_commerce_encryption_iv', '00000');
+    // Handle encryption.
+    $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+    $input = pkcs5_pad($input, $size);
+    $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+    mcrypt_generic_init($descriptor, $key, $iv);
+    $cipher = mcrypt_generic($descriptor, $input);
+    mcrypt_generic_deinit($descriptor);
+    mcrypt_module_close($descriptor);
+    $cipher = base64_encode($cipher);
+    $cipher = urlencode($cipher);
+    return $cipher;
   }
-  // Otherwise pass it to commerce's callback getter   
-  return commerce_payment_method_callback($payment_method, $callback);
+  return $input;
 }
 
 /**
- * Implements hook_fundraiser_get_credit_encryption_path().
- * This is called by modules that need to check for processing availablity outside of normal.
- * Such as sustainer.
+ * Helper function, Decrypts AES encrypted data.
+ *
+ * @param $cipher
+ *   The encrypted data to decrypt.
+ * @param $key
+ *   The 128 bit key to use to decrypt the string.
+ * @iv
+ *   The initialization vector to use to decrypt the string.
  */
-function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
-  return variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- * Adds the admin form for crons to the fundraiser settings form.
- */
-function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
-  // Turn on option to process sustainer donations on own cron.
-  $form['fundraiser_commerce'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Fundraiser commerce'),
-    '#description' => t('Configure fundraiser sustainers settings.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Secure key path'),
-    '#description' => t('The card type, expiration date and last four digits of the card number are encrypted and ' .
-      'stored temporarily while the customer is in the process of checking out. <b>You must enable encryption</b> ' .
-      'by following the <a href="!url">encryption instructions</a> in order to accept credit card payments. In ' .
-      'short, you must enter the path of a directory outside of your document root where the encryption key may be ' .
-      'stored. Relative paths will be resolved relative to the Drupal installation directory. Once this ' .
-      'directory is set, you should not change it.', array('!url' => 'http://drupal.org/node/1309226')),
-    '#default_value' => variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.')),
-  );
+function _fundraiser_commerce_decrypt($cipher) {
+  // Check settings.
+  $key = _fundraiser_commerce_get_encrypt_key();
+  if (!empty($key)) {
+    $iv = variable_get('fundraiser_commerce_encryption_iv', '00000');
+    // Handle encryption.
+    $cipher = base64_decode($cipher);
+    $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+    mcrypt_generic_init($descriptor, $key, $iv);
+    $decrypted_data = mdecrypt_generic($descriptor, $cipher);
+    mcrypt_generic_deinit($descriptor);
+    mcrypt_module_close($descriptor);
+    // Account for some PHP AES shortcomings
+    $decrypted_data = pkcs5_unpad($decrypted_data);
+    $decrypted_data = rtrim($decrypted_data);
+    return $decrypted_data;
+  }
+  return $cipher;
 }
