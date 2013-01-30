@@ -1070,3 +1070,38 @@ function fundraiser_commerce_payment_method_callback($payment_method, $callback)
   // Otherwise pass it to commerce's callback getter   
   return commerce_payment_method_callback($payment_method, $callback);
 }
+
+/**
+ * Implements hook_fundraiser_get_credit_encryption_path().
+ * This is called by modules that need to check for processing availablity outside of normal.
+ * Such as sustainer.
+ */
+function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
+  return variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Adds the admin form for crons to the fundraiser settings form.
+ */
+function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
+  // Turn on option to process sustainer donations on own cron.
+  $form['fundraiser_commerce'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser commerce'),
+    '#description' => t('Configure fundraiser sustainers settings.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secure key path'),
+    '#description' => t('The card type, expiration date and last four digits of the card number are encrypted and ' .
+      'stored temporarily while the customer is in the process of checking out. <b>You must enable encryption</b> ' .
+      'by following the <a href="!url">encryption instructions</a> in order to accept credit card payments. In ' .
+      'short, you must enter the path of a directory outside of your document root where the encryption key may be ' .
+      'stored. Relative paths will be resolved relative to the Drupal installation directory. Once this ' .
+      'directory is set, you should not change it.', array('!url' => 'http://drupal.org/node/1309226')),
+    '#default_value' => variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.')),
+  );
+}
