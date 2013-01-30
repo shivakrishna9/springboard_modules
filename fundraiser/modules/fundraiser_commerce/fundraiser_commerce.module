@@ -1158,7 +1158,7 @@ function _fundraiser_commerce_encrypt($input) {
     $iv = variable_get('fundraiser_commerce_encryption_iv', '00000');
     // Handle encryption.
     $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-    $input = pkcs5_pad($input, $size);
+    $input = _fundraiser_commerce_pkcs5_pad($input, $size);
     $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
     mcrypt_generic_init($descriptor, $key, $iv);
     $cipher = mcrypt_generic($descriptor, $input);
@@ -1194,9 +1194,38 @@ function _fundraiser_commerce_decrypt($cipher) {
     mcrypt_generic_deinit($descriptor);
     mcrypt_module_close($descriptor);
     // Account for some PHP AES shortcomings
-    $decrypted_data = pkcs5_unpad($decrypted_data);
+    $decrypted_data = _fundraiser_commerce_pkcs5_unpad($decrypted_data);
     $decrypted_data = rtrim($decrypted_data);
     return $decrypted_data;
   }
   return $cipher;
 }
+
+
+/**
+ * Helper function, for padding text to PKCS5 specification.
+ *
+ * @param $text
+ *   The text to pad.
+ * @param $blocksize
+ *   The size of the PKCS5 blocksize to use.
+ */
+function _fundraiser_commerce_pkcs5_pad($text, $blocksize) {
+  $pad = $blocksize - (drupal_strlen($text) % $blocksize);
+  return $text . str_repeat(chr($pad), $pad);
+}
+
+/**
+ * Helper function, to unpad PKCS5 padded text.
+ *
+ * @param $text
+ *   The text to unpad.
+ */
+function _fundraiser_commerce_pkcs5_unpad($text) {
+  $pad = ord($text{strlen($text) -1});
+  if ($pad > drupal_strlen($text)) {
+    return FALSE;
+  }
+  return drupal_substr($text, 0, -1 * $pad);
+}
+
