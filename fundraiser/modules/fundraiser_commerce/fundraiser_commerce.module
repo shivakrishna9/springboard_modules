@@ -67,7 +67,8 @@ function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form
   $form['fundraiser_commerce']['fundraiser_commerce_encryption_iv'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption seed'),
-    '#default_value' => variable_get('fundraiser_commerce_encryption_iv', '00000'),
+    '#description' => t('The seed (aka IV) needs to be 16 characters long.'),
+    '#default_value' => variable_get('fundraiser_commerce_encryption_iv', '0000000000000000'),
   );
 }
 
@@ -1155,7 +1156,7 @@ function _fundraiser_commerce_encrypt($input) {
   // Check settings.
   $key = _fundraiser_commerce_get_encrypt_key();
   if (!empty($key)) {
-    $iv = variable_get('fundraiser_commerce_encryption_iv', '00000');
+    $iv = variable_get('fundraiser_commerce_encryption_iv', '0000000000000000');
     // Handle encryption.
     $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
     $input = _fundraiser_commerce_pkcs5_pad($input, $size);
@@ -1185,7 +1186,7 @@ function _fundraiser_commerce_decrypt($cipher) {
   // Check settings.
   $key = _fundraiser_commerce_get_encrypt_key();
   if (!empty($key)) {
-    $iv = variable_get('fundraiser_commerce_encryption_iv', '00000');
+    $iv = variable_get('fundraiser_commerce_encryption_iv', '0000000000000000');
     // Handle encryption.
     $cipher = base64_decode($cipher);
     $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
