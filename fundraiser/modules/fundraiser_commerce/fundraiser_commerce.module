@@ -64,7 +64,7 @@ function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form
       'directory is set, you should not change it.', array('!url' => 'http://drupal.org/node/1309226')),
     '#default_value' => variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.')),
   );
-  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
+  $form['fundraiser_commerce']['fundraiser_commerce_encryption_iv'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption seed'),
     '#default_value' => variable_get('fundraiser_commerce_encryption_iv', '00000'),
