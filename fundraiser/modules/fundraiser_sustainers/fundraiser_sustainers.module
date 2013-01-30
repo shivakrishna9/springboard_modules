@@ -360,6 +360,9 @@ function fundraiser_sustainers_fundraiser_field_info() {
 }
 
 function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state, $field) {
+  if (!isset($form['#node'])) {
+    return $field;
+  }
   // Supporting gateway types from the gateway on the node.
   $supporting_gateways = array();
   foreach ($form['#node']->gateways as $type => $gateway) { 
@@ -379,7 +382,8 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
   );
   if (!empty($supporting_gateways)) {
     foreach ($supporting_gateways as $supporting_gateway) {
-      $field['#states']['visible'][$selector][] = array('value' => $supporting_gateway); // See: http://drupal.org/node/735528
+      $field['#states']['visible'][$selector][] = array('value' => $supporting_gateway);
+      // See: http://drupal.org/node/735528
     }
   }
   else {
