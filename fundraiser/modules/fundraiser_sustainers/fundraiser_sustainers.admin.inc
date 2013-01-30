@@ -71,6 +71,8 @@ function fundraiser_sustainers_admin_view($did) {
  */
 function fundraiser_sustainers_admin_edit($did) {
   if (is_numeric($did)) {
-    return fundraiser_sustainers_edit_form($did);
+    // Get the master did and return the form for that.
+    $sustainer_info = _fundraiser_sustainers_get_recurring_by_did($did);
+    return fundraiser_sustainers_edit_form($sustainer_info->master_did);
   }
 }
