@@ -466,7 +466,10 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
   $data = unserialize(_fundraiser_commerce_decrypt($order->data));
   $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
-  $donation->donation['payment_fields']['credit'] = isset($data['payment_fields']) ? $data['payment_fields'] : '';
+  if (!empty($donation->donation['payment_method'])) {
+    $donation->donation['payment_fields'][ $donation->donation['payment_method'] ] = isset($data['payment_fields']) ?
+      $data['payment_fields'] : '';
+  }
   $donation->data = isset($order->data['gateway_data']) ? $data['gateway_data'] : '';
 }
 

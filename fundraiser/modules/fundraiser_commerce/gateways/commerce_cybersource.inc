@@ -148,7 +148,7 @@ function commerce_cybersource_fundraiser_commerce_execute_gateway($payment_metho
       $donation->donation['payment_fields']['credit']['card_number'], -4);
   }
   if (isset($donation->donation['payment_fields']['credit']['card_cvv'])) {
-    $donation->donation['payment_fields']['credit']['card_number'] = '';
+    unset($donation->donation['payment_fields']['credit']['card_cvv']);
   }
   return $result;
 }
