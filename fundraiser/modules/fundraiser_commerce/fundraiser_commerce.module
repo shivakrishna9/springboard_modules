@@ -465,13 +465,15 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
   }
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
-  $data = unserialize(_fundraiser_commerce_decrypt($order->data));
-  $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
-  if (!empty($donation->donation['payment_method'])) {
-    $donation->donation['payment_fields'][ $donation->donation['payment_method'] ] = isset($data['payment_fields']) ?
-      $data['payment_fields'] : '';
+  if (!empty($order->data)) {
+    $data = unserialize(_fundraiser_commerce_decrypt($order->data));
+    $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
+    if (!empty($donation->donation['payment_method'])) {
+      $donation->donation['payment_fields'][ $donation->donation['payment_method'] ] = isset($data['payment_fields']) ?
+        $data['payment_fields'] : '';
+    }
+    $donation->data['gateway_data'] = isset($data['gateway_data']) ? $data['gateway_data'] : '';
   }
-  $donation->data = isset($order->data['gateway_data']) ? $data['gateway_data'] : '';
 }
 
 /**
