@@ -133,6 +133,36 @@ function fundraiser_sustainers_menu() {
       'type' => MENU_LOCAL_TASK,
     );
   }
+  // If Commerce exists. Show these as a tab there as well.
+  if (module_exists('commerce')) {
+    $items['admin/commerce/orders/%/recurring'] = array(
+      'title' => 'Recurring donation set',
+      'page callback' => 'fundraiser_sustainers_admin_view',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access',
+      'access arguments' => array(3),
+      'type' => MENU_LOCAL_TASK,
+      'file' => 'fundraiser_sustainers.admin.inc',
+    );
+    $items['admin/commerce/orders/%/recurring/recurring'] = array(
+      'title' => 'View donation set',
+      'page callback' => 'fundraiser_sustainers_admin_view',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access',
+      'access arguments' => array(3),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'file' => 'fundraiser_sustainers.admin.inc',
+    );
+    $items['admin/commerce/orders/%/recurring/edit'] = array(
+      'title' => 'Edit donation set',
+      'page callback' => 'fundraiser_sustainers_admin_edit',
+      'page arguments' => array(3),
+      'access callback' => 'fundraiser_sustainers_check_access',
+      'access arguments' => array(3),
+      'file' => 'fundraiser_sustainers.admin.inc',
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
   return $items;
 }
 

@@ -68,7 +68,8 @@ function fundraiser_commerce_commerce_line_item_type_info() {
  */
 function commerce_donation_line_item_title($line_item) {
   $donation = fundraiser_donation_get_donation($line_item->order_id);
-  return t('Donation for Fundraiser #%nid %title', array('%nid' => $donation->nid, '%title' => $donation->node->title));
+  return t('Donation for Fundraiser #%nid %title', array('%nid' => $donation->nid,
+    '%title' => isset($donation->node->title) ? $donation->node->title : ''));
 }
 
 /**
