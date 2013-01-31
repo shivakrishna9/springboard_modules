@@ -538,9 +538,20 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   commerce_customer_profile_save($profile);
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
-  // Save the order again to update its line item reference field.
-  // TODO look to here to save submittion data in ->data ?
+  // Gather the payment fields for storage, and scrub them.
+  $method_instance = commerce_payment_method_instance_load($donation->gateway);
+  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+  $scrubbed_fields = module_invoke($method_instance['module'], 'fundraiser_commerce_scrub_payment_fields', $method_instance, $donation->donation['payment_fields']);
+  $order->data = $donation->data = array(
+    'payment_method' => $donation->donation['payment_method'],
+    'payment_fields' => $scrubbed_fields,
+    'gateway_data' => '',
+  );
+  $order->data = _fundraiser_commerce_encrypt(serialize($order->data));
+
+  // Save the order.
   commerce_order_save($order);
+
   // Set the order id to the donation to carry forward.
   $donation->did = $order->order_id;
   // Set the order status to fundraiser_commerce's status.
@@ -597,7 +608,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Also, let's save some critical information to the order object so we can make use of it later.
   $order->data = $donation->data = array(
     'payment_method' => $donation->donation['payment_method'],
-    'payment_fields' => $donation->donation['payment_fields'],
+    'payment_fields' => module_invoke($method_instance['module'], 'fundraiser_commerce_scrub_payment_fields', $method_instance, $donation->donation['payment_fields']),
     'gateway_data' => isset($result->data) ? $result->data : '',
   );
   // Encrypt it for storage.

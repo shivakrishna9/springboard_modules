@@ -137,3 +137,18 @@ function commerce_ogone_fundraiser_commerce_redirect_form($form, &$form_state, $
 
   return commerce_ogone_build_redirect_form($form, $form_state, $order, $payment_method['settings'] + $settings);
 }
+
+/**
+ * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ */
+function commerce_ogone_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
+  // Scrub sensitive donation fields if they exists.
+  if (isset($fields['credit']['card_number'])) {
+    $fields['credit']['card_number'] = substr(
+      $fields['credit']['card_number'], -4);
+  }
+  if (isset($fields['credit']['card_cvv'])) {
+    $fields['credit']['card_cvv'] = '';
+  }
+  return $fields;
+}

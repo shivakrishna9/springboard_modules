@@ -129,13 +129,20 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
     'data' => array('txn_id' => 'TEST-TXNID-001'),
     'error type' => ($success) ? '' : 'billing',
   );
-  // Scrub sensitive donation fields if they exists.
-  if (isset($donation->donation['payment_fields']['credit']['card_number'])) {
-    $donation->donation['payment_fields']['credit']['card_number'] = substr(
-      $donation->donation['payment_fields']['credit']['card_number'], -4);
-  }
-  if (isset($donation->donation['payment_fields']['credit']['card_cvv'])) {
-    $donation->donation['payment_fields']['credit']['card_cvv'] = '';
-  }
   return $result;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ */
+function commerce_payment_example_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
+  // Scrub sensitive donation fields if they exists.
+  if (isset($fields['credit']['card_number'])) {
+    $fields['credit']['card_number'] = substr(
+      $fields['credit']['card_number'], -4);
+  }
+  if (isset($fields['credit']['card_cvv'])) {
+    $fields['credit']['card_cvv'] = '';
+  }
+  return $fields;
 }

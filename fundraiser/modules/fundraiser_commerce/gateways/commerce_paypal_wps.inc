@@ -55,3 +55,10 @@ function commerce_paypal_wps_fundraiser_commerce_redirect_form($form, &$form_sta
 
   return commerce_paypal_wps_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
 }
+
+/**
+ * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ */
+function commerce_paypal_wps_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
+  return $fields;
+}
