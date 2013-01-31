@@ -160,6 +160,9 @@ function fundraiser_billing_update_form_validate($form, &$form_state) {
   if (!_valid_card_expiration($cc_expiration_month, $cc_expiration_year)) {
     form_set_error('cc_info][card_exp_date', t('The credit card you entered has expired.'));
   }
+  elseif ($cc_expiration_year == date('Y') && $cc_expiration_month <= date('n')) {
+    form_set_error('cc_info][card_exp_date', t('You must provide a credit card that expires next month or after.'));
+  }
 
   // Validate the CVV Number
   if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_cvv)) {
