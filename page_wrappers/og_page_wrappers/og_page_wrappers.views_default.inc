@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 function og_page_wrappers_views_default_views() {
   $view = new view;
   $view = new view;
@@ -355,7 +358,7 @@ function og_page_wrappers_views_default_views() {
     'name' => 'navigation',
   ));
 
-  // 
+  //
   $views[$view->name] = $view;
   return $views;
 }

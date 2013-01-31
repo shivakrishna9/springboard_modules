@@ -30,7 +30,7 @@ class FundraiserGoalsUITestCase extends FundraiserTestCase {
   function tearDown() {
     parent::tearDown();
   }
-  
+
   /**
    * Tests that a donation form edit screen includes goals UI.
    */
@@ -38,7 +38,7 @@ class FundraiserGoalsUITestCase extends FundraiserTestCase {
     $this->fundraiserReset();
     // login the user and load their profile
     $this->drupalLogin($this->_user);
-    
+
     // Add settings for goals fields.
     $args['settings'] = array(
         'fundraiser_goal_delta' => 'basic',
@@ -51,10 +51,10 @@ class FundraiserGoalsUITestCase extends FundraiserTestCase {
         'fundraiser_goal' => array('goals_wrapper' => array('template' => 0)),
         'fundraiser_goal_default_message' => 'test: ##starter_message',
     );
-    
+
     // Create donation form
     $node = $this->testFundraiserForm($args);
-    
+
     // Set basic goal block visibility
     $this->drupalGet('admin/build/block/list');
     $this->drupalPost('admin/build/block/list', array(), t('Save blocks'));
@@ -62,8 +62,8 @@ class FundraiserGoalsUITestCase extends FundraiserTestCase {
     $this->assertNotNull($bid, t('Basic block is in database.'));
     db_query('UPDATE {blocks} SET region = "left", status = 1 WHERE bid = %d', $bid);
 
-    
-    $this->drupalGet('node/' . $node->nid . '/edit'); 
+
+    $this->drupalGet('node/' . $node->nid . '/edit');
     $this->assertFieldById('edit-fundraiser-goal-type', '', 'Goal type present.');
     $this->assertFieldById('edit-fundraiser-goal-target', $args['settings']['fundraiser_goal_target'], 'Target field present, data saving as expected.');
     $this->assertFieldById('edit-fundraiser-goal-template', $args['settings']['fundraiser_goal_template'], 'Template field present, data saving as expected.');
@@ -73,15 +73,15 @@ class FundraiserGoalsUITestCase extends FundraiserTestCase {
     // Confirm basic block visibility
     $this->drupalGet('node/' . $node->nid);
     $this->assertText('Goal value: 50000', t('Goal value token replacement.'));
-    $this->assertText('Goal value formatted: 50,000', t('Goal value formatted token replacement')); 
-    $this->assertText('calculated value: 0', t('Calculated value token replacement')); 
+    $this->assertText('Goal value formatted: 50,000', t('Goal value formatted token replacement'));
+    $this->assertText('calculated value: 0', t('Calculated value token replacement'));
     $this->assertText('calculated value formatted: 0', t('Calculated value formatted token replacement'));
-    $this->pass(var_export($this->drupalGetContent(), TRUE)); 
+    $this->pass(var_export($this->drupalGetContent(), TRUE));
     // Confirm token replacement
-    
-    
-  }
-  
 
-  
+
+  }
+
+
+
 }

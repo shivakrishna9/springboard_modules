@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 require_once ('SforceMetaObject.php');
 
 class SforceMetadataClient {
@@ -88,19 +91,19 @@ class SforceMetadataClient {
 
   public function create($obj) {
     $encodedObj->metadata = new SoapVar($obj, SOAP_ENC_OBJECT, 'CustomObject', $this->namespace);
-     
+
     return $this->sforce->create($encodedObj);
   }
-  
+
   public function delete($obj) {
     $encodedObj->metadata = new SoapVar($obj, SOAP_ENC_OBJECT, 'CustomObject', $this->namespace);
-     
+
     return $this->sforce->delete($encodedObj);
-  }  
-  
+  }
+
   public function checkStatus($ids) {
     return $this->sforce->checkStatus($ids);
-  }  
+  }
 
   public function getLastRequest() {
     return $this->sforce->__getLastRequest();

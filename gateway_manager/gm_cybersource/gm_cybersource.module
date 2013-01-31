@@ -63,10 +63,6 @@ function gm_cybersource_payment_gateway_settings_submit($form, &$form_state) {
   }
 }
 
-/*******************************************************************************
- * Hook Functions (Ubercart)
- ******************************************************************************/
-
 /**
  * Implementation of hook_payment_gateway_managed().
  */
@@ -93,7 +89,7 @@ function gm_cybersource_receipt() {
 function gm_cybersource_settings_form($config = array()) {
   // Check for the HOP.php for Silent Order POST.
   if ($config['gm_cybersource_method'] == 'post' &&
-      !file_exists(drupal_get_path('module', 'gm_cybersource') .'/HOP.php')) {
+      !file_exists(drupal_get_path('module', 'gm_cybersource') . '/HOP.php')) {
     drupal_set_message(t('You must download the security script from your CyberSource account (found in Tools & Settings > Hosted Order Page > Security) and place it in the springboard/gateway_manager/gm_cybersource directory to use the Silent Order POST. Remember to open it and replace instances of L( with csL(.'), 'error');
   }
 
@@ -271,7 +267,7 @@ function gm_cybersource_charge($order_id, $amount, $data) {
     case 'post':
       return _gm_cybersource_post_charge($order, $amount, $data, $cc_type, $country);
 
-    // Support for the SOAP Toolkit API.
+      // Support for the SOAP Toolkit API.
     case 'soap':
       // TODO: Refactor to use separate function for each API type.
       // - i.e. _gm_cybersource_charge_request_soap($order, $amount, $data);
@@ -292,8 +288,8 @@ function gm_cybersource_charge($order_id, $amount, $data) {
       $request['purchaseTotals_currency'] = 'USD';
       $request['purchaseTotals_grandTotalAmount'] = $amount;
 
-      drupal_set_message('<pre>'. print_r($config, TRUE) .'</pre>');
-      drupal_set_message('<pre>'. print_r($request, TRUE) .'</pre>');
+      drupal_set_message('<pre>' . print_r($config, TRUE) . '</pre>');
+      drupal_set_message('<pre>' . print_r($request, TRUE) . '</pre>');
 
       break;
   }
@@ -301,7 +297,7 @@ function gm_cybersource_charge($order_id, $amount, $data) {
 
 function _gm_cybersource_post_charge($order, $amount, $data, $cc_type, $country) {
   // Include the HOP.php per the module instructions.
-  $hop = drupal_get_path('module', 'gm_cybersource') .'/HOP.php';
+  $hop = drupal_get_path('module', 'gm_cybersource') . '/HOP.php';
   if (!file_exists($hop)) {
     drupal_set_message(t('Silent Order POST requires the HOP.php provided by CyberSource.'));
     return array('success' => FALSE);
@@ -348,7 +344,7 @@ function _gm_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
 
   $data = '';
   while (list($key, $value) = each($request)) {
-    $data .= $key .'='. urlencode(str_replace(',', '', $value)) .'&';
+    $data .= $key . '=' . urlencode(str_replace(',', '', $value)) . '&';
   }
   $data = substr($data, 0, -1);
 
@@ -427,7 +423,7 @@ function _gm_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
 // Handles the SOAP charge request and Ubercart order save.
 function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country) {
   // Include the SOAP helper file.
-  require_once(drupal_get_path('module', 'gm_cybersource') .'/gm_cybersource.soap.inc');
+  require_once(drupal_get_path('module', 'gm_cybersource') . '/gm_cybersource.soap.inc');
   global $user;
 
   // Set the URL for the CyberSource SOAP Toolkit API WSDL.
@@ -445,7 +441,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
   else {
     $currency = !empty($data['config']['gm_cybersource_currency']) ? $data['config']['gm_cybersource_currency'] : 'usd';
   }
-  
+
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
 
@@ -585,7 +581,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
           $obj->productName = $line_item['title'];
           $obj->unitPrice = $line_item['amount'];
           $obj->quantity = 1;
-          $obj->productSKU = $line_item['type'] .'_'. $line_item['line_item_id'];
+          $obj->productSKU = $line_item['type'] . '_' . $line_item['line_item_id'];
           $obj->id = $counter;
 
           $counter++;
@@ -597,7 +593,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     $business = new stdClass();
     $business->ignoreAVSResult = $data['config']['gm_cybersource_avs'] == 'true' ? 'false' : 'true';
     $request->businessRules = $business;
-    
+
     // Send the request to CyberSource and get the reply.
     $reply = $soapClient->runTransaction($request);
   }
@@ -620,11 +616,11 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     $p_comment = t('<b>@type:</b><br />@id<br />@decision, Reason: !reason', array('@type' => $types[$data['txn_type']], '@id' => $reply->requestID, '@decision' => $reply->decision, '!reason' => $reply->reasonCode));
 
     if (!empty($reply->ccAuthReply->avsCode)) {
-      $o_comment .= '<br />'. t('<b>AVS:</b> @avs', array('@avs' => _gm_cybersource_parse_cs_avs_code($reply->ccAuthReply->avsCode)));
+      $o_comment .= '<br />' . t('<b>AVS:</b> @avs', array('@avs' => _gm_cybersource_parse_cs_avs_code($reply->ccAuthReply->avsCode)));
       $p_comment .= t(', AVS: @avs', array('@avs' => $reply->ccAuthReply->avsCode));
     }
     if (!empty($reply->ccAuthReply->cvCode)) {
-      $o_comment .= '<br />'. t('<b>CVV:</b> @cvv', array('@cvv' => _gm_cybersource_parse_cs_cvv_code($reply->ccAuthReply->cvCode)));
+      $o_comment .= '<br />' . t('<b>CVV:</b> @cvv', array('@cvv' => _gm_cybersource_parse_cs_cvv_code($reply->ccAuthReply->cvCode)));
       $p_comment .= t(', CVV: @cvv', array('@cvv' => $reply->ccAuthReply->cvCode));
     }
     uc_order_comment_save($order->order_id, $user->uid, $o_comment, 'admin');
@@ -651,7 +647,11 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
         'comment' => $p_comment,
         'message' => $o_comment,
         'uid' => $user->uid,
-        'data' => array('module' => 'gm_cybersource', 'txn_type' => UC_CREDIT_AUTH_CAPTURE, 'txn_id' => $reply->ccCaptureReply->reconciliationID),
+        'data' => array(
+          'module' => 'gm_cybersource',
+          'txn_type' => UC_CREDIT_AUTH_CAPTURE,
+          'txn_id' => $reply->ccCaptureReply->reconciliationID,
+        ),
       );
 
       // If this was an authorization only transaction...
@@ -675,7 +675,7 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
           'requestToken' => $reply->requestToken,
         );
         // Save the updated data array to the database.
-        db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);   
+        db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);
       }
     }
     else {
@@ -707,8 +707,8 @@ function _gm_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
  */
 function gm_cybersource_refund($order_id, $amount, $data) {
   global $user;
-  
-  require_once(drupal_get_path('module', 'gm_cybersource') .'/gm_cybersource.soap.inc');
+
+  require_once(drupal_get_path('module', 'gm_cybersource') . '/gm_cybersource.soap.inc');
 
   // Set the URL for the CyberSource SOAP Toolkit API WSDL.
   if ($data['config']['gm_cybersource_server'] == 'test') {
@@ -717,15 +717,15 @@ function gm_cybersource_refund($order_id, $amount, $data) {
   else {
     $url = 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.38.wsdl';
   }
-  
+
   // Get some original order's requestId and requestToken
   $credit = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
   $credit = unserialize($credit);
-  
+
   // Get the requestId and token from the order
   $requestId = $credit['cybersource']['credit']['requestId'];
   $requestToken = $credit['cybersource']['credit']['requestToken'];
-  
+
   // Determine this order's currency
   if (!empty($data['currency'])) {
     $currency = strtolower($data['currency']);
@@ -733,12 +733,12 @@ function gm_cybersource_refund($order_id, $amount, $data) {
   else {
     $currency = !empty($data['config']['gm_cybersource_currency']) ? $data['config']['gm_cybersource_currency'] : 'usd';
   }
-  
+
   // Only continue if we have both pieces of information
   if (!empty($requestId) && !empty($requestToken)) {
     $login = _gm_cybersource_soap_login_data($data['config']);
     $soapClient = new CyberSourceSoapClient($url, array('merchant_id' => $login['merchant_id'], 'transaction_key' => $login['transaction_key']));
-    
+
     // Create the request with some meta data.
     $request = new stdClass();
     $request->merchantID = $login['merchant_id'];
@@ -748,7 +748,7 @@ function gm_cybersource_refund($order_id, $amount, $data) {
     $ccCreditService->run = 'true';
     $ccCreditService->captureRequestID = $requestId;
     $request->ccCreditService = $ccCreditService;
-    
+
     // Add the order total information.
     $purchaseTotals = new stdClass();
     $purchaseTotals->currency = $currency;
@@ -765,30 +765,34 @@ function gm_cybersource_refund($order_id, $amount, $data) {
           'success' => TRUE,
           'comment' => $message,
           'message' => $message,
-          'data' => array('module' => 'gm_cybersource', 'txn_type' => UC_CREDIT_CREDIT, 'txn_id' => $reply->ccCreditReply->reconciliationID),
+          'data' => array(
+            'module' => 'gm_cybersource',
+            'txn_type' => UC_CREDIT_CREDIT,
+            'txn_id' => $reply->ccCreditReply->reconciliationID,
+          ),
           'uid' => $user->uid,
         );
-        
+
         return $result;
       }
       elseif (isset($reply) && $reply->decision == 'REJECT') {
         $result = array(
           'message' => t('The refund was rejected by Cybersource. Reason code: @code.', array('@code' => $reply->reasonCode)),
         );
-        
+
         return $result;
       }
-    } 
-    catch (SoapFault $exception) { 
+    }
+    catch (SoapFault $exception) {
       $result = array(
         'message' => t('A SOAP FAULT occurred while attempting to refund the order. Details: @details', array('@details' => $exception->getMessage())),
       );
-      
+
       return $result;
     }
   }
-  
-  return FALSE; 
+
+  return FALSE;
 }
 
 // Displays the taxes for an order.
@@ -838,7 +842,7 @@ function gm_cybersource_calculate_tax($order) {
   }
 
   // Include the SOAP helper file.
-  require_once(drupal_get_path('module', 'gm_cybersource') .'/gm_cybersource.soap.inc');
+  require_once(drupal_get_path('module', 'gm_cybersource') . '/gm_cybersource.soap.inc');
   global $user;
 
   // Set the URL for the CyberSource SOAP Toolkit API WSDL.
@@ -1019,7 +1023,7 @@ function gm_cybersource_calculate_tax($order) {
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
-        watchdog('gm_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_price($reply->taxReply->totalTaxAmount, $context), '@dump' => '<pre>'. print_r($result, TRUE) .'</pre>'), WATCHDOG_ERROR);
+        watchdog('gm_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_price($reply->taxReply->totalTaxAmount, $context), '@dump' => '<pre>' . print_r($result, TRUE) . '</pre>'), WATCHDOG_ERROR);
 
         $result = array(
           array(
@@ -1105,20 +1109,20 @@ function _gm_cybersource_card_type($cc_number) {
   switch (substr(strval($cc_number), 0, 1)) {
     case '3':
       if (strlen($cc_number) == 14) {
-        return '005';  // Diners Club
+        return '005'; // Diners Club
       }
       elseif (strlen($cc_number) == 15) {
-        return '003';  // AmEx
+        return '003'; // AmEx
       }
       else {
-        return '007';  // JCB
+        return '007'; // JCB
       }
     case '4':
-      return '001';  // Visa
+      return '001'; // Visa
     case '5':
-      return '002';  // MasterCard
+      return '002'; // MasterCard
     case '6':
-      return '004';  // Discover
+      return '004'; // Discover
   }
 
   return FALSE;

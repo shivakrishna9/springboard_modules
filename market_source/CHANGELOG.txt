@@ -1,3 +1,16 @@
+2012-12-21  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+  * market_source.module (_market_source_validate_cid) - IRC #572 - In market_source campaign validation, allow the use of 15-character campaign IDs. This is accomplished by passing the $val through the salesforce_management_api_get_sfid18() function, if it is available. Note: If the 15-character campaign ID passes validation (after being converted to the 18-character version), the 15-character campaign ID will remain in the webform submission records and will be present in the sync object. Salesforce appears to handle this gracefully.
+
+2012-12-11  Ben Clark  <benjamin.clark@jacksonriver.com>
+
+  * market_source.module (_market_source_validate_cid) - IFAW #1133 - Fixing a bug where the campaign ID validation in market_source would fail every time due to a non-existent constant value.
+
+2012-10-10  Sheena Donnelly  <sheena.donnelly@jacksonriver.com>
+
+  * market_source.admin.inc (misc): ACLU #495 - Added "persistence" checkbox to Market Source admin for custom fields and added value to Drupal variable array for that value. Added list of default fields to Market Source admin with configurable "persistence" checkbox and created new Drupal variable to save the results of the configuration for default fields. Updated the qa_keys variable that is sent to javascript to include an array with two values for each field: "value" and "persistence". Updated javascript to account for this variable changed. Added conditional to javascript to check that "persistence" = true before setting cookies. All persistence options default to TRUE to maintain original functionality when updating existing sites.
+
 2012-08-20  Sarah Hood  <sarah.hood@jacksonriver.com>
-		
-	* market_source.admin.inc (market_source_admin_settings_form_validate): Emilyslist #467 - Adding special characters allowed for webform default values to support defaults as described here: http://drupal.org/node/296453
+
+= Update 6001 =
+Webform has altered how hidden components are rendered. Existing Market Source components need their configuration updated so they are rendered as hidden form components instead of Form API values. See Assembla #453 (ACLU space) for more details.

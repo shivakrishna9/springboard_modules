@@ -53,10 +53,10 @@ function market_source_init() {
   }
   // Add other variables to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'qs_keys' => _market_source_build_qs_keys(),
-    'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
-    'cookie_domain' => $market_source_cookie_domain,
-  )), 'setting');
+      'qs_keys' => _market_source_build_qs_keys(),
+      'maxlength' => MARKET_SOURCE_VALUE_MAXLENGTH,
+      'cookie_domain' => $market_source_cookie_domain,
+    )), 'setting');
 }
 
 /**
@@ -107,10 +107,10 @@ function market_source_user_register_after_build($form, &$form_state) {
 
   // Add form_keys to the JS settings array.
   drupal_add_js(array('market_source' => array(
-    'form_keys' => array(
-      $form['#id'] => $form_keys,
-    ),
-  )), 'setting');
+      'form_keys' => array(
+        $form['#id'] => $form_keys,
+      ),
+    )), 'setting');
 
   // Mandatory return value for #after_build callbacks.
   return $form;
@@ -237,16 +237,28 @@ function _market_source_build_qs_keys() {
   if (empty($qs_keys)) {
     // Initial keys.
     $qs_keys = array(
-      'initial_referrer' => NULL,
-      'referrer' => NULL,
-      'ms' => NULL,
-      'cid' => NULL,
+      'initial_referrer' => array('value' => NULL),
+      'referrer' => array('value' => NULL),
+      'ms' => array('value' => NULL),
+      'cid' => array('value' => NULL),
     );
+
+    //remove keys for fields not set to persist
+    $default_field_settings = variable_get('market_source_default_fields', array());
+    $default_field_settings['ms'] = isset($default_field_settings['market_source']) ? $default_field_settings['market_source'] : array();
+    $default_field_settings['cid'] = isset($default_field_settings['campaign']) ? $default_field_settings['campaign'] : array();
+    foreach ($qs_keys as $key => $values) {
+      $qs_keys[$key]['persistence'] = isset($default_field_settings[$key]['persistence']) ? $default_field_settings[$key]['persistence'] : TRUE;
+    }
+
     // Add any custom fields.
     $custom_fields = variable_get('market_source_custom_fields', array());
     if (is_array($custom_fields)) {
       foreach ($custom_fields as $field) {
-        $qs_keys[$field['key']] = NULL;
+        $qs_keys[$field['key']] = array(
+          'value' => NULL,
+          'persistence' => isset($field['persistence']) ? $field['persistence'] : TRUE,
+        );
       }
     }
   }
@@ -320,7 +332,12 @@ function _market_source_validate_cid($val) {
   $val = trim($val);
   if (!empty($val)) {
     if (preg_match('/^[a-zA-Z0-9_+-]+$/', $val)) {
-      if (strlen($val) <= MARKET_SOURCE_CID_MAX_LENGTH) {
+      if (strlen($val) <= MARKET_SOURCE_VALUE_MAXLENGTH) {
+        // The $val string might be 15 characters in length.
+        if ((strlen($val) == 15) && function_exists('salesforce_management_api_get_sfid18')) {
+          // Convert to 18 character format.
+          $val = salesforce_management_api_get_sfid18($val);
+        }
         if (variable_get('market_source_validate_sf_campaigns', FALSE)) {
           $campaigns = salesforce_management_api_get_campaigns();
           if (is_array($campaigns) && array_key_exists($val, $campaigns)) {
@@ -361,8 +378,8 @@ function market_source_nodeapi(&$node, $op) {
             }
           }
         }
-     }
-     break;
+      }
+      break;
   }
 }
 
@@ -393,7 +410,7 @@ function market_source_user($op, &$edit, &$account, $category = NULL) {
  */
 function market_source_create_standard_components($nid, $default_campaign = NULL) {
   module_load_include('inc', 'webform', 'includes/webform.components');
-  
+
   // array to hold all the components that need to be created.
   $components = array();
 
@@ -431,11 +448,11 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_cid',
   );
-  
+
   // referrer
   $components['referrer'] = array(
     'nid' => $nid,
-    'pid' => 0 ,
+    'pid' => 0,
     'value' => '',
     'form_key' => 'referrer',
     'name' => t('Referrer'),
@@ -449,7 +466,7 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
     'email' => 1,
     'maps_to' => 'profile_referrer',
   );
-	
+
   // initial referrer
   $components['initial_referrer'] = array(
     'nid' => $nid,
@@ -485,13 +502,13 @@ function market_source_create_standard_components($nid, $default_campaign = NULL
  */
 function market_source_fundraiser_create_webform_components($nid) {
   // if the sf_donation is installed, try to get the default campaign
-	$default_campaign = '';
-	if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
-		$default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
-	}
-	
-	// create the standard components
-	return market_source_create_standard_components($nid, $default_campaign);
+  $default_campaign = '';
+  if (variable_get('fundraiser_salesforce_integration', 0) && module_exists('sf_donation')) {
+    $default_campaign = variable_get('sf_donation_default_campaign', 'default_cid');
+  }
+
+  // create the standard components
+  return market_source_create_standard_components($nid, $default_campaign);
 }
 
 /**
@@ -510,19 +527,19 @@ function market_source_fundraiser_create_webform_components($nid) {
 function market_source_create_webform_component($custom_field, $nid) {
   $component = array(
     'nid' => $nid,
-  	'pid' => 0,
-  	'value' => $custom_field['default'],
-  	'form_key' => $custom_field['key'],
-  	'name' => $custom_field['name'],
-  	'type' => 'hidden',
-  	'extra' => array(
+    'pid' => 0,
+    'value' => $custom_field['default'],
+    'form_key' => $custom_field['key'],
+    'name' => $custom_field['name'],
+    'type' => 'hidden',
+    'extra' => array(
       'description' => '',
       'hidden_type' => 'hidden',
     ),
-  	'mandatory' => 0,
-  	'weight' => 23,
-  	'email' => 1,
-  	'maps_to' => '',
+    'mandatory' => 0,
+    'weight' => 23,
+    'email' => 1,
+    'maps_to' => '',
   );
   return $component;
 }

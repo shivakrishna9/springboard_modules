@@ -1,11 +1,10 @@
 name = Test Gateway Managed
 description = Process payments using a test gateway.
+package = Jackson River Springboard - payment
+php = 5.0
+core = 6.x
+version = 6.x-3.3
 dependencies[] = fundraiser
 dependencies[] = gateway_manager
 ;dependencies[] = uc_payment
 ;dependencies[] = uc_credit
-
-package = Jackson River Springboard - payment
-core = 6.x
-php = 5.0
-version =  6.x-3.2

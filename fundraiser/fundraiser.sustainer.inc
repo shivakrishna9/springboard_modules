@@ -24,7 +24,7 @@ function fundraiser_recurring_user_overview($uid) {
  * Loads a specific order for the my recurring payments tab.
  */
 function fundraiser_recurring_user_edit_forms($uid, $order_id) {
-  
+
   $base = drupal_get_path('module', 'fundraiser');
   drupal_add_js($base . '/sustainer.js');
   drupal_add_css($base . '/sustainer.css');
@@ -32,20 +32,20 @@ function fundraiser_recurring_user_edit_forms($uid, $order_id) {
   $orders = _fundraiser_get_recurring_orders($uid);
   $order = _fundraiser_get_unprocessed_order($order_id);
   $nid = $order->products[0]->nid;
-  
+
   $cancelled = _fundraiser_recurring_payment_cancelled($order_id);
   $billing_info = _fundraiser_get_billing_information($order_id, $order);
   $payment_info = _fundraiser_get_payment_information($order_id, $order);
-  
+
   // get full payment schedule
   $payment_schedule = _fundraiser_recurring_payment_schedule($order_id);
-  
+
   // get forms
   include_once('fundraiser.sustainer.forms.inc');
   $donation_amount_form = drupal_get_form('fundraiser_donation_amount_form', $order_id, $nid, $payment_info['donation_amount']);
   $billing_update_form = drupal_get_form('fundraiser_billing_update_form', $order_id, $order);
   $cancel_form = drupal_get_form('fundraiser_cancel_form', $order_id);
-  
+
   $output = theme('sustainer_management_page', $order_id, $orders, $payment_info, $billing_info, $donation_amount_form, $billing_update_form, $cancel_form, $payment_schedule, $cancelled);
   return $output;
 }
@@ -55,12 +55,12 @@ function fundraiser_recurring_user_edit_forms($uid, $order_id) {
  */
 function _fundraiser_get_recurring_orders(&$user) {
   $orders = array();
-  $result = db_query("SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id  WHERE recurring_status != %d AND u.uid = %d", DONATION_NON_RECURRING, $user->uid);
+  $result = db_query("SELECT f.order_id, f.recurring_status FROM {fundraiser_webform_order} f INNER JOIN {uc_orders} u ON u.order_id = f.order_id  WHERE recurring_status <> %d AND u.uid = %d", DONATION_NON_RECURRING, $user->uid);
   while ($data = db_fetch_object($result)) {
     $created = _fundraiser_get_start_date($data->order_id);
     $next_charge = _fundraiser_get_next_charge_date($data->order_id);
     $last_charge = _fundraiser_get_last_charge_date($data->order_id);
-    $amount = _fundraiser_get_current_donation_amount($data->order_id);  
+    $amount = _fundraiser_get_current_donation_amount($data->order_id);
     $orders[$data->order_id] = array(
       'amount' => $amount,
       'start_date' => $created,
@@ -82,7 +82,7 @@ function _fundraiser_get_payment_information($order_id, &$order) {
     'orders_processed' => _fundraiser_processed_recurring_charge_count($order_id),
     'donation_amount' => $order->order_total
   );
-  return $payment_info; 
+  return $payment_info;
 }
 
 /**
@@ -117,38 +117,38 @@ function _fundraiser_get_unprocessed_order($master_order_id) {
  * Counts the number of processed recurring orders.
  */
 function _fundraiser_processed_recurring_charge_count($order_id) {
-	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-		and gateway_resp = 'success'", $order_id));
+  return db_result(db_query("SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d
+    AND gateway_resp = 'success'", $order_id));
 }
 
 /**
  * Counts the number of unprocessed orders remaining.
  */
 function _fundraiser_remaining_recurring_charge_count($order_id) {
-	return db_result(db_query("select count(order_id) from {fundraiser_recurring} where master_order_id = %d
-		and (gateway_resp IS NULL or gateway_resp = 'failed')", $order_id));
+  return db_result(db_query("SELECT COUNT(order_id) FROM {fundraiser_recurring} WHERE master_order_id = %d
+    AND (gateway_resp IS NULL OR gateway_resp = 'failed')", $order_id));
 }
 
 /**
  * Returns the entire payment schedule for a recurring donation series.
  */
 function _fundraiser_recurring_payment_schedule($master_order_id) {
-	$orders = array();
-	
+  $orders = array();
+
   $result = db_query(
   "
     SELECT u.order_total as amount, f.next_charge as charge_date, f.gateway_resp as status
-		FROM {fundraiser_recurring} f
-		INNER JOIN {uc_orders} u ON u.order_id = f.order_id
-		WHERE f.master_order_id = %d
-		ORDER BY f.next_charge asc
+    FROM {fundraiser_recurring} f
+    INNER JOIN {uc_orders} u ON u.order_id = f.order_id
+    WHERE f.master_order_id = %d
+    ORDER BY f.next_charge asc
   ",
-	$master_order_id
-	);
-	
-	while ($data = db_fetch_array($result)) {
+  $master_order_id
+  );
+
+  while ($data = db_fetch_array($result)) {
     $orders[] = $data;
-	}
+  }
   return $orders;
 }
 
@@ -200,17 +200,24 @@ function _fundraiser_get_start_date($order_id) {
 function _fundraiser_expand_date($element) {
   // Default to current date
   if (empty($element['#value'])) {
-    $element['#value'] = array('day' => format_date(time(), 'custom', 'j'),
-                            'month' => format_date(time(), 'custom', 'n'),
-                            'year' => format_date(time(), 'custom', 'Y'));
+    $element['#value'] = array(
+      'day' => 1,
+      'month' => format_date(time(), 'custom', 'n'),
+      'year' => format_date(time(), 'custom', 'Y')
+    );
   }
 
   $element['#tree'] = TRUE;
 
-  // Determine the order of day, month, year in the site's chosen date format.
+  // Setup the day field as a hidden value since it never needs to display for charge dates
+  $element['day'] = array(
+    '#type' => 'hidden',
+    '#value' => 1,
+  );
+
+  // Determine the order of month, year in the site's chosen date format.
   $format = variable_get('date_format_short', 'm/d/Y - H:i');
   $sort = array();
-  $sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
   $sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
   $sort['year'] = strpos($format, 'Y');
   asort($sort);
@@ -221,9 +228,6 @@ function _fundraiser_expand_date($element) {
   // Output multi-selector for date.
   foreach ($order as $type) {
     switch ($type) {
-      case 'day':
-        $options = drupal_map_assoc(range(1, 31));
-        break;
       case 'month':
         $options = drupal_map_assoc(range(1, 12), 'map_month');
         break;

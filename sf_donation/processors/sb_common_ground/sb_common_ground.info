@@ -1,7 +1,6 @@
 name = Common Ground Integration
 description = Processes donations using the Common Ground Salesforce Package
-core = 6.x
 package = Jackson River Springboard
+core = 6.x
+version = 6.x-3.3
 dependencies[] = sf_donation
-
-version = 6.x-3.2

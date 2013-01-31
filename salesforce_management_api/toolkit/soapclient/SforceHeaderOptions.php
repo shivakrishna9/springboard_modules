@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 /*
  * Copyright (c) 2007, salesforce.com, inc.
  * All rights reserved.
@@ -32,13 +35,13 @@
 
 
 class CallOptions {
-	public $client;
-	public $defaultNamespace;
+  public $client;
+  public $defaultNamespace;
 
-	public function __construct($client, $defaultNamespace=NULL) {
-		$this->client = $client;
-		$this->defaultNamespace = $defaultNamespace;
-	}
+  public function __construct($client, $defaultNamespace=NULL) {
+    $this->client = $client;
+    $this->defaultNamespace = $defaultNamespace;
+  }
 }
 
 
@@ -50,25 +53,25 @@ class CallOptions {
  * @package SalesforceSoapClient
  */
 class AssignmentRuleHeader {
-	// int
-	public $assignmentRuleId;
-	// boolean
-	public $useDefaultRuleFlag;
+  // int
+  public $assignmentRuleId;
+  // boolean
+  public $useDefaultRuleFlag;
 
-	/**
-	 * Constructor.  Only one param can be set.
-	 *
-	 * @param int $id  AssignmentRuleId
-	 * @param boolean $flag  UseDefaultRule flag
-	 */
-	public function __construct($id = NULL, $flag = NULL) {
-		if ($id != NULL) {
-			$this->assignmentRuleId = $id;
-		}
-		if ($flag != NULL) {
-			$this->useDefaultRuleFlag = $flag;
-		}
-	}
+  /**
+   * Constructor.  Only one param can be set.
+   *
+   * @param int $id  AssignmentRuleId
+   * @param boolean $flag  UseDefaultRule flag
+   */
+  public function __construct($id = NULL, $flag = NULL) {
+    if ($id != NULL) {
+      $this->assignmentRuleId = $id;
+    }
+    if ($flag != NULL) {
+      $this->useDefaultRuleFlag = $flag;
+    }
+  }
 }
 
 /**
@@ -77,12 +80,12 @@ class AssignmentRuleHeader {
  * @package SalesforceSoapClient
  */
 class MruHeader {
-	// boolean that Indicates whether to update the list of most recently used items (True) or not (False).
-	public $updateMruFlag;
+  // boolean that Indicates whether to update the list of most recently used items (True) or not (False).
+  public $updateMruFlag;
 
-	public function __construct($bool) {
-		$this->updateMruFlag = $bool;
-	}
+  public function __construct($bool) {
+    $this->updateMruFlag = $bool;
+  }
 }
 
 /**
@@ -107,36 +110,36 @@ class LoginScopeHeader {
  * @package SalesforceSoapClient
  */
 class QueryOptions {
-	// int - Batch size for the number of records returned in a query or queryMore call. The default is 500; the minimum is 200, and the maximum is 2,000.
-	public $batchSize;
+  // int - Batch size for the number of records returned in a query or queryMore call. The default is 500; the minimum is 200, and the maximum is 2,000.
+  public $batchSize;
 
-	/**
-	 * Constructor
-	 *
-	 * @param int $limit  Batch size
-	 */
-	public function __construct($limit) {
-		$this->batchSize = $limit;
-	}
+  /**
+   * Constructor
+   *
+   * @param int $limit  Batch size
+   */
+  public function __construct($limit) {
+    $this->batchSize = $limit;
+  }
 }
 
 class EmailHeader {
-	public $triggerAutoResponseEmail;
-	public $triggerOtherEmail;
-	public $triggerUserEmail;
+  public $triggerAutoResponseEmail;
+  public $triggerOtherEmail;
+  public $triggerUserEmail;
 
-	public function __construct($triggerAutoResponseEmail = false, $triggerOtherEmail = false, $triggerUserEmail = false) {
-		$this->triggerAutoResponseEmail = $triggerAutoResponseEmail;
-		$this->triggerOtherEmail = $triggerOtherEmail;
-		$this->triggerUserEmail = $triggerUserEmail;
-	}
+  public function __construct($triggerAutoResponseEmail = false, $triggerOtherEmail = false, $triggerUserEmail = false) {
+    $this->triggerAutoResponseEmail = $triggerAutoResponseEmail;
+    $this->triggerOtherEmail = $triggerOtherEmail;
+    $this->triggerUserEmail = $triggerUserEmail;
+  }
 }
 
 class UserTerritoryDeleteHeader {
-	public $transferToUserId;
+  public $transferToUserId;
 
-	public function __construct($transferToUserId) {
-		$this->transferToUserId = $transferToUserId;
-	}
+  public function __construct($transferToUserId) {
+    $this->transferToUserId = $transferToUserId;
+  }
 }
 ?>

@@ -6,7 +6,7 @@
  */
 
 // Include the Salesforce Enterprise Client included in the PHP Toolkit.
-require(SALESFORCE_DIR_SOAPCLIENT .'/SforceEnterpriseClient.php');
+require(SALESFORCE_DIR_SOAPCLIENT . '/SforceEnterpriseClient.php');
 
 /**
  * Defines the DrupalSalesforce class used to interact with the server.
@@ -50,11 +50,11 @@ class DrupalSalesforce {
    */
   function login() {
     // Default to the WSDL downloaded from the user account if available.
-    $wsdl = SALESFORCE_DIR_WSDL .'/enterprise.wsdl.xml';
+    $wsdl = SALESFORCE_DIR_WSDL . '/enterprise.wsdl.xml';
 
     // Otherwise fall back to the one included with the Toolkit.
     if (!file_exists($wsdl)) {
-      $wsdl = SALESFORCE_DIR_SOAPCLIENT .'/enterprise.wsdl.xml';
+      $wsdl = SALESFORCE_DIR_SOAPCLIENT . '/enterprise.wsdl.xml';
     }
 
     // Connect to the server and login, logging any failures to the watchdog.
@@ -70,12 +70,10 @@ class DrupalSalesforce {
     }
     catch (Exception $e) {
       // Log the error message.
-      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') . 
-        '<br>Request: <pre>'. check_plain($this->client->getLastRequest()) .'</pre><br>' .
-        'Error: <pre>'. check_plain($e->faultstring) .'</pre>', WATCHDOG_ERROR);
-
+      $this->watchdog(SALESFORCE_LOG_SOME, t('Could not login to Salesforce.') .
+        'Error: <pre>' . check_plain($e->faultstring) . '</pre>', WATCHDOG_ERROR);
       // Indicate the failed login.
-      return $e->getMessage();
+      return FALSE;
     }
 
     // Indicate the successful login.
@@ -123,8 +121,8 @@ class DrupalSalesforce {
    *   An array of Salesforce IDs for the objects to retrieve.
    * @param $fieldmap
    *   The fieldmap through which to filter the data.
-	 * @param $extra_fields
-	 *	 An array of extra fields to retreive that are not part of the fieldmap
+   * @param $extra_fields
+   *   An array of extra fields to retreive that are not part of the fieldmap
    * @return
    *   The single matching Salesforce objects or an array of all the objects
    *     if more than one are returned.
@@ -136,15 +134,15 @@ class DrupalSalesforce {
     $object = salesforce_management_api_fieldmap_objects_load('salesforce', $map['salesforce']);
 
     $fields = array_keys($object['fields']);
-		
-		// apend extra fields if available
-		if (!empty($extra_fields)) {
-			foreach($extra_fields as $field) {
-				if (!in_array($field, $fields)) {
-					$fields[] = $field;
-				}
-			}
-		}
+
+    // apend extra fields if available
+    if (!empty($extra_fields)) {
+      foreach ($extra_fields as $field) {
+        if (!in_array($field, $fields)) {
+          $fields[] = $field;
+        }
+      }
+    }
 
     return $this->client->retrieve(implode(', ', $fields), $map['salesforce'], $ids);
   }

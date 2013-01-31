@@ -1,0 +1,87 @@
+<?php
+/**
+ * Implementation of hook_install().
+ */
+function sustainer_upsell_install() {
+  drupal_install_schema('sustainer_upsell');
+  db_query("UPDATE {system} SET weight = 5 WHERE name = 'sustainer_upsell'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sustainer_upsell_uninstall() {
+  // TODO: ditch admin settings vars
+  drupal_uninstall_schema('sustainer_upsell');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function sustainer_upsell_schema() {
+
+  $schema['sustainer_upsell_form_settings'] = array(
+    'description' => t('Stores data for sustainer_upsell donation form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The node id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sustainer_upsell_enabled' => array(
+        'description' => t('Upsell enabled for node'),
+        'type' => 'int',
+        'length' => '1',
+        'not null' => TRUE,
+      ),
+      'sustainer_upsell_content' => array(
+        'description' => t('Node specific upsell content'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
+  $schema['sustainer_upsell_secure'] = array(
+    'description' => t('Tracks upsell display for a particular sid'),
+    'fields' => array(
+      'sid' => array(
+        'description' => t('The sid'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+
+  $schema['sustainer_upsell_future_orders'] = array(
+    'description' => t('Stores data for sustainer_upsell donation form nodes.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The node id of the primary donation form'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'master_order_id' => array(
+        'description' => t('The order id for the base submission'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'order_id' => array(
+        'description' => t('The recurrance order id'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('order_id'),
+  );
+  
+  return $schema;
+}
+

@@ -21,7 +21,7 @@ function webform_dupe_cop_settings_form() {
     '#title' => t('Intercept submission'),
     '#default_value' => variable_get('webform_dupe_cop_toggle', 'TRUE'),
     '#description' => t('Toggle interception of duplicated forms. Uncheck this to just log the incident.'),
-  );  
+  );
   $form['webform_dupe_cop_message'] = array(
     '#type' => 'textarea',
     '#rows' => 3,
@@ -31,8 +31,8 @@ function webform_dupe_cop_settings_form() {
     '#description' => t('Optional. Message  to display on dupe submission. You can use %date, %time, %webform_id, %user_id to substitute ' .
       'the date and time of the original submission.'),
   );
-	$form['#validate'][] = 'webform_dupe_cop_settings_form_validate';
-	return system_settings_form($form);
+  $form['#validate'][] = 'webform_dupe_cop_settings_form_validate';
+  return system_settings_form($form);
 }
 
 /**

@@ -1,3 +1,7 @@
+2013-01-10  Benjamin Clark  <benjamin.clark@jacksonriver.com>
+
+    * page_wrappers.info - Fixing typo in page_wrappers.info file that was preventing the module from being enabled.
+
 2012-11-06  Phillip Cave  <phillip.cave@jacksonriver.com>
 
     * page_wrappers.module (_page_wrappers_apply_wrapper) - Add page wrapper javascript file the correct Drupal way.

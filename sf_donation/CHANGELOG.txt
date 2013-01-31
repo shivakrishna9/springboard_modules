@@ -1,14 +1,18 @@
+2013-01-04  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * donation.php Added a default map array to the Common Ground donation integration
+
 2012-08-13  Phillip Cave  <phillip.cave@jacksonriver.com>
-    
+
     * sf_donation.module (sf_donation_export_opportunity_contact_roles): Don't attempt to export
     opportunity object role objects without a contact id.
 
 2012-07-25  Phillip Cave  <phillip.cave@jacksonriver.com>
-  
-  	* Load the donation_form_url property from the value stored in the database.    
+
+    * Load the donation_form_url property from the value stored in the database.
 
 2012-07-24  Phillip Cave  <phillip.cave@jacksonriver.com>
 
     * sf_donation.install: Added update hook to convert version 2 donation fieldmaps to version 3.
-    
+
 

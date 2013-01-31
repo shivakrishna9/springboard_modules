@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ */
+
 function webform_user_install() {
   drupal_install_schema('webform_user');
 }
@@ -28,42 +32,42 @@ function webform_user_disable() {
 
 function webform_user_schema() {
   $schema['webform_user'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'is_webform_user' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'related_object' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '10',
-	      'not null' => FALSE,
-	    ),
-	    'foreign_key_field' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'send_new_user_email' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'confirmation_page_title' => array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'is_webform_user' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'related_object' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => FALSE,
+      ),
+      'foreign_key_field' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'send_new_user_email' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'confirmation_page_title' => array(
         'description' => t('TODO: please describe this field!'),
         'type' => 'varchar',
         'length' => '255',
@@ -75,39 +79,39 @@ function webform_user_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
-	  ),
-	  'primary key' => array('nid'),
-	  'indexes' => array(
-	    'nid' => array('nid'),
-	  ),
-	);
-	
-	$schema['webform_user_component_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'nid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'cid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'map_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => TRUE,
-	    ),
-	  ),
-	  'primary key' => array('nid', 'cid'),
-	);
-	
-	
+    ),
+    'primary key' => array('nid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+  );
+
+  $schema['webform_user_component_map'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'map_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+
+
   return $schema;
 }
 
@@ -120,43 +124,43 @@ function webform_user_update_6101() {
 
   db_add_field($updates, 'webform_user', 'send_new_user_email', array('type' => 'int', 'length' => 11, 'not null' => TRUE, 'default' => 0));
   return $updates;
-  
+
 }
 
 /**
  * Update 6102: Add webform_user_component_map
  */
 function webform_user_update_6102() {
-  // add webform_user_component_map	
-	db_query(
-	 "
-	   CREATE TABLE `webform_user_component_map` (
-	   `nid` int(10) unsigned NOT NULL,
-	   `cid` int(10) unsigned NOT NULL,
-	   `map_id` varchar(100) NOT NULL,
-	   PRIMARY KEY (`nid`,`cid`))
-	 "
-	);
-	
-	// load up profile fields
-	$fields_array = array();
-	$result = db_query("SELECT name FROM {profile_fields}");
-	while ($data = db_fetch_object($result)) {
-  	$fields_array[] = $data->name;
-	}
-	
-	// troll through existing webform_user forms and add a map record
-	$result = db_query("SELECT nid FROM {webform_user} WHERE is_webform_user = 1");
-	while ($data = db_fetch_object($result)) {
-  	// update the form key for profile_postal_code to profile_zip
-  	db_query("UPDATE {webform_component} SET form_key = 'profile_zip' WHERE form_key = 'profile_postal_code' AND nid = %d", $data->nid);
-  	// get the components for each webform
-  	$component_query = db_query("SELECT cid, form_key FROM {webform_component} WHERE nid = %d", $data->nid);
+  // add webform_user_component_map
+  db_query(
+   "
+     CREATE TABLE `webform_user_component_map` (
+     `nid` int(10) unsigned NOT NULL,
+     `cid` int(10) unsigned NOT NULL,
+     `map_id` varchar(100) NOT NULL,
+     PRIMARY KEY (`nid`,`cid`))
+   "
+  );
+
+  // load up profile fields
+  $fields_array = array();
+  $result = db_query("SELECT name FROM {profile_fields}");
+  while ($data = db_fetch_object($result)) {
+    $fields_array[] = $data->name;
+  }
+
+  // troll through existing webform_user forms and add a map record
+  $result = db_query("SELECT nid FROM {webform_user} WHERE is_webform_user = 1");
+  while ($data = db_fetch_object($result)) {
+    // update the form key for profile_postal_code to profile_zip
+    db_query("UPDATE {webform_component} SET form_key = 'profile_zip' WHERE form_key = 'profile_postal_code' AND nid = %d", $data->nid);
+    // get the components for each webform
+    $component_query = db_query("SELECT cid, form_key FROM {webform_component} WHERE nid = %d", $data->nid);
     while ($component = db_fetch_object($component_query)) {
       if (in_array($component->form_key, $fields_array)) {
         db_query(
           "
-            INSERT INTO {webform_user_component_map} 
+            INSERT INTO {webform_user_component_map}
             (nid, cid, map_id)
             VALUES
             (%d, %d, '%s')
@@ -168,7 +172,7 @@ function webform_user_update_6102() {
       if ($component->form_key == 'mail') {
         db_query(
           "
-            INSERT INTO {webform_user_component_map} 
+            INSERT INTO {webform_user_component_map}
             (nid, cid, map_id)
             VALUES
             (%d, %d, '%s')
@@ -184,12 +188,12 @@ function webform_user_update_6102() {
  * Update 6103: Rename 'initial referrer' form keys to 'initial_referrer'
  */
 function webform_user_update_6103() {
-	$updates = array();
-	
-	$sql = "update webform_component SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
-	$updates[] = update_sql($sql);
-	
-	return $updates;
+  $updates = array();
+
+  $sql = "UPDATE {webform_component} SET form_key = 'initial_referrer' WHERE form_key  = 'initial referrer'";
+  $updates[] = update_sql($sql);
+
+  return $updates;
 }
 
 /**
@@ -207,7 +211,7 @@ function webform_user_update_6104() {
  */
 function webform_user_update_6105() {
   $updates = array();
-  
+
   db_add_field($updates, 'webform_user', 'email_field', array('type' => 'varchar', 'length' => 255, 'not null' => FALSE));
   return $updates;
 }

@@ -5,7 +5,7 @@
  *
  * Provides interfaces and API methods for searching Salesforce data
  */
- 
+
 /**
  * Implementation of hook_menu().
  */
@@ -16,7 +16,7 @@ function sf_search_menu() {
     'title' => t('Search settings'),
     'description' => t('Salesforce search settings'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('sf_search_settings_form'), 
+    'page arguments' => array('sf_search_settings_form'),
     'access arguments' => array('administer salesforce search'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/sf_search.admin.inc',
@@ -29,26 +29,26 @@ function sf_search_menu() {
     'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   $items['js/salesforce-search/lookup/%/%'] = array(
     'title' => 'Contact lookup',
     'page callback' => 'sf_search_lookup',
     'page arguments' => array(3, 4),
     'access arguments' => array('Find contacts in Salesforce'),
   );
-  
+
   $items['js/salesforce-search/find/%/%'] = array(
     'title' => 'Contact find',
     'page callback' => 'sf_search_sosl',
     'page arguments' => array(3, 4),
     'access arguments' => array('Find contacts in Salesforce'),
   );
-  
+
   return $items;
 }
 
 /**
- * Implmentation of hook_perm().
+ * Implementation of hook_perm().
  */
 function sf_search_perm() {
   return array(
@@ -63,19 +63,19 @@ function sf_search_perm() {
  * @param $query
  *   The value to search for.
  */
-function sf_search_sosl($nid, $query) {   // get a data structure that maps Salesforce contact properties to form field keys
+function sf_search_sosl($nid, $query) { // get a data structure that maps Salesforce contact properties to form field keys
   if ($map = sf_search_create_form_map($nid)) {
     $donor_id_field = variable_get('sf_search_donor_id_field', NULL);
     $sosl = _sf_search_create_search_query($query, $map);
     $data = _sf_search_run_search($sosl);
-    
+
     // adjust results because salesforce doesn't return a field if it's empty
     _sf_search_restore_properties($data, $map);
-    
+
     // return a json data structure
     return drupal_json($data);
   }
-  
+
   // TODO: return a structured json response with error message
   return FALSE;
 }
@@ -93,11 +93,11 @@ function sf_search_lookup($nid, $donor_id) {
     $donor_id_field = variable_get('sf_search_donor_id_field', NULL);
     $soql = _sf_search_create_lookup_query($donor_id_field, 'string', $donor_id, $map);
     $data = _sf_search_run_soql_select($soql);
-    
+
     // return a json data structure
     return drupal_json($data);
   }
-  
+
   // TODO: return a structured json response with error message
   return FALSE;
 }
@@ -121,7 +121,7 @@ function _sf_search_create_lookup_query($lookup_field, $field_type, $value, $map
     case 'double':
       return sprintf("SELECT %s FROM Contact WHERE %s = %d", implode(', ', array_keys($map)), $lookup_field, $value);
       break;
-    default: 
+    default:
       return sprintf("SELECT %s FROM Contact WHERE %s = '%s'", implode(', ', array_keys($map)), $lookup_field, $value);
   }
 }
@@ -153,10 +153,10 @@ function _sf_search_create_search_query($query, $map) {
  *   The SOQL string to run.
  */
 function _sf_search_run_soql_select($soql) {
-  $data = array();  
+  $data = array();
   $continue = TRUE;
   $sf = salesforce_management_api_connect();
-  
+
   // make sure we've got a good connection
   if (is_object($sf)) {
     $query = $sf->client->query($soql);
@@ -170,9 +170,9 @@ function _sf_search_run_soql_select($soql) {
       else {
         $query = $sf->client->queryMore($query->queryLocator);
       }
-    }   
+    }
   }
-  
+
   return $data;
 }
 
@@ -200,7 +200,7 @@ function _sf_search_run_search($sosl) {
       }
     }
   }
-  
+
   return $data;
 }
 
@@ -237,7 +237,7 @@ function _sf_search_fieldmap_field_list($reset = FALSE) {
     $fieldmap = _sf_search_get_user_fieldmap();
     $fields = array_keys($fieldmap['fields']);
   }
-  
+
   return $fields;
 }
 
@@ -257,7 +257,7 @@ function _sf_search_get_user_fieldmap() {
       return $user_fieldmap;
     }
   }
-  
+
   return $user_fieldmap->data;
 }
 
@@ -267,13 +267,13 @@ function _sf_search_get_user_fieldmap() {
 function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
 
   // operate in offline mode only and with salesforce working only.
-  if (module_exists('salesforce_management_api') && variable_get('salesforce_management_api_wsdl_updated', '')) {
+  if (module_exists('salesforce_management_api')) {
     $sf = salesforce_management_api_connect();
   }
   if (is_object($sf)) {
     // add in client side scripts
     _sf_search_add_scripts();
-    
+
     // get the user fieldmap
     $user_fieldmap = _sf_search_get_user_fieldmap();
 
@@ -286,13 +286,13 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
       '#type' => 'hidden',
       '#value' => $nid,
     );
-    
+
     $form['fid'] = array(
       '#type' => 'hidden',
       '#value' => $fid,
     );
 
-    // get the metadata of the mapped object so we can extract some nice field labels  
+    // get the metadata of the mapped object so we can extract some nice field labels
     $saleforce_metadata = salesforce_management_api_fieldmap_objects_load('salesforce', $user_fieldmap['salesforce']);
 
     // grab the fields that are configured to display in a search resultset
@@ -303,13 +303,13 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
 
     // create a variable to hold the client-side field map
     $donor_id_field = variable_get('sf_search_donor_id_field', NULL);
-    
+
     // get a list of countries to store client-side
     $countries = _sf_search_countries();
-    
+
     // get a list of zones to store client-side
     $zones = _sf_search_zones();
-      
+
     // create a data structure to hold client-side settings
     $sf_search_settings = array(
       'sf_search' => array(
@@ -321,7 +321,7 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
         'zones' => $zones,
       ),
     );
-  
+
     /**
      * iterate over the form map and create some settings to pass over to the client side
      *
@@ -329,16 +329,16 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
      * display_columns: the columns that should display in search results
      * donor_id_field: the field that represents the unique id of the donor
      * nid: the node of the form we're altering
-    */
+     */
     $component_hierarchy = array();
-    foreach($form['#node']->webform['components'] as $cid => $component) {
+    foreach ($form['#node']->webform['components'] as $cid => $component) {
       $component_path_array = fundraiser_walk_component_hierarchy($form['#node']->nid, $cid);
       $field_id = str_ireplace('_', '-', implode('-', $component_path_array));
       $component_hierarchy[$component['form_key']]['field_id'] = 'edit-submitted-' . $field_id;
     }
     $form['#component_hierarchy'] = $component_hierarchy;
 
-    foreach($form_map as $key => $field) {
+    foreach ($form_map as $key => $field) {
       if (array_key_exists($field, $form['#component_hierarchy'])) {
         $component_path_array = fundraiser_walk_component_hierarchy($nid, $field);
         $field_id = str_ireplace('_', '-', implode('-', $component_path_array));
@@ -346,14 +346,14 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
       }
     }
 
-    foreach($display_fields as $key => $field) {
+    foreach ($display_fields as $key => $field) {
       if (array_key_exists($key, $saleforce_metadata['fields'])) {
         if (array_key_exists($key, $display_fields) && $display_fields[$key]) {
           $sf_search_settings['sf_search']['display_columns'][$key] = $saleforce_metadata['fields'][$key]['label'];
         }
       }
     }
-    
+
     // add the donor id field, because it won't be mapped
     $sf_search_settings['sf_search']['display_columns'] = array($donor_id_field => 'Donor Id') + $sf_search_settings['sf_search']['display_columns'];
 
@@ -371,7 +371,10 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
     );
     $form['sf_search']['sf_search_type'] = array(
       '#type' => 'radios',
-      '#options' => array('lookup' => 'Donor Id', 'search' => 'Search'),
+      '#options' => array(
+        'lookup' => 'Donor Id',
+        'search' => 'Search',
+      ),
       '#default_value' => 'lookup',
     );
     $form['sf_search']['sf_search_query'] = array(
@@ -398,22 +401,22 @@ function sf_search_form_fundraiser_offline_form_alter(&$form, &$form_state) {
  */
 function sf_search_create_form_map($nid) {
   // get the donation form -> profile fieldmap
-  if ($donation_form_fieldmap = _sf_search_form_user_maps($nid)) {  
+  if ($donation_form_fieldmap = _sf_search_form_user_maps($nid)) {
     $donation_form_fieldmap = array_flip($donation_form_fieldmap);
-    
+
     // get the user -> saleforce fieldmap
     $user_fieldmap = _sf_search_get_user_fieldmap();
-    
+
     // array to hold the resulting map
     $salesforce_formkey_map = array();
-    
+
     // create a new map that denotes which salesforce fields should populate which form fields
     foreach ($user_fieldmap['fields'] as $salesforce_field => $profile_field) {
       if (array_key_exists($profile_field, $donation_form_fieldmap)) {
         $salesforce_formkey_map[$salesforce_field] = $donation_form_fieldmap[$profile_field];
       }
     }
-    
+
     // add in any display fields that aren't actually mapped
     $display_fields = variable_get('sf_search_result_display_fields', array());
     foreach ($display_fields as $key => $value) {
@@ -421,16 +424,16 @@ function sf_search_create_form_map($nid) {
         $salesforce_formkey_map[$key] = NULL;
       }
     }
-    
+
     // if donor id field isn't mapped, add it
     $donor_id_field = variable_get('sf_search_donor_id_field', NULL);
     if (!array_key_exists($donor_id_field, $salesforce_formkey_map)) {
-      $salesforce_formkey_map[$donor_id_field] = NULL; 
+      $salesforce_formkey_map[$donor_id_field] = NULL;
     }
-    
+
     return $salesforce_formkey_map;
   }
-  
+
   return FALSE;
 }
 
@@ -442,20 +445,20 @@ function sf_search_create_form_map($nid) {
  */
 function _sf_search_form_user_maps($nid) {
   $maps = cache_get('sf_search_donation_profile_maps');
-  
+
   if (!$maps || !$maps->data || !array_key_exists($nid, $maps->data)) {
     $map = fundraiser_user_map($nid);
     $maps = $maps->data;
     $maps[$nid] = $map;
-    cache_set('sf_search_donation_profile_maps', $maps, 'cache', time() + 360);  
+    cache_set('sf_search_donation_profile_maps', $maps, 'cache', time() + 360);
     return $map;
   }
-  
+
   // return the cached map for this node
   if (!empty($maps->data[$nid])) {
     return $maps->data[$nid];
   }
-  
+
   return FALSE;
 }
 
@@ -465,18 +468,18 @@ function _sf_search_form_user_maps($nid) {
 function _sf_search_countries() {
   $countries = cache_get('sf_search_countries');
 
-  if (!$countries) { 
+  if (!$countries) {
     $countries = array();
     $result = db_query("SELECT country_id, country_iso_code_2 FROM {uc_countries}");
     while ($data = db_fetch_object($result)) {
       $countries[$data->country_iso_code_2] = $data->country_id;
     }
-    
+
     cache_set('sf_search_countries', $countries, 'cache', time() + 360);
     // return hot version
     return $countries;
   }
-  
+
   // return cached version
   return $countries->data;
 }
@@ -486,18 +489,18 @@ function _sf_search_countries() {
  */
 function _sf_search_zones() {
   $zones = cache_get('sf_search_zones');
-  
+
   if (!$zones) {
     $zones = array();
     $result = db_query("SELECT zone_id, zone_code FROM {uc_zones}");
     while ($data = db_fetch_object($result)) {
       $zones[$data->zone_code] = $data->zone_id;
     }
-    cache_set('sf_search_zones', $zones, 'cache', time() + 360); 
-    // return hot version 
+    cache_set('sf_search_zones', $zones, 'cache', time() + 360);
+    // return hot version
     return $zones;
   }
-  
+
   // return cached version
   return $zones->data;
 }

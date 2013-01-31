@@ -5,7 +5,7 @@
  *
  * Admin functions for the fundraiser purge module.
  */
- 
+
 /**
  * Fundraiser purge settings form.
  */
@@ -17,7 +17,7 @@ function fundraiser_purge_settings_form() {
     '#description' => t('Enter the number of days that posted donations should remain in the system. Posted donations older then the number of days configured here will be permanently deleted from the system. Enter 0 for never purge.'),
     '#size' => 5,
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -28,8 +28,8 @@ function fundraiser_purge_settings_form() {
  */
 function fundraiser_purge_settings_form_validate($form, &$form_state) {
   $purge_age = $form_state['values']['fundraiser_purge_age'];
-  
-  if (!is_numeric($purge_age) || !((int)($purge_age) == $purge_age) || (int)$purge_age < 0) {
+
+  if (!is_numeric($purge_age) || !((int) ($purge_age) == $purge_age) || (int) $purge_age < 0) {
     form_set_error('fundraiser_purge_age', 'Purge age must be a positive integer');
   }
 }

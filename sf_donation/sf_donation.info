@@ -1,11 +1,10 @@
 name = SF Donation Integration
 description = Integrates donations with the Salesforce API.
+package = Jackson River Springboard
+core = 6.x
+version = 6.x-3.3
 dependencies[] = salesforce_management_api
 dependencies[] = webform
 dependencies[] = fundraiser
 dependencies[] = trigger
 dependencies[] = sb_npsp
-
-package= Jackson River Springboard
-core = 6.x
-version =  6.x-3.2

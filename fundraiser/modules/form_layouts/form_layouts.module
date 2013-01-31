@@ -8,12 +8,12 @@
 function form_layouts_theme() {
   $theme = array();
   $templates = _form_layouts_template_list();
-  
+
   foreach ($templates as $template) {
     $theme[$template['theme']] = array(
       'arguments' => array('form' => NULL),
       'template' => $template['template'],
-      'pattern' => $template['pattern'],  
+      'pattern' => $template['pattern'],
     );
   }
 
@@ -21,7 +21,7 @@ function form_layouts_theme() {
 }
 
 /**
- * Implemenation of hook_theme_registry_alter().
+ * Implementation of hook_theme_registry_alter().
  *
  * Add in a special preprocess function for all donation forms.
  */
@@ -50,31 +50,31 @@ function form_layouts_preprocess_two_column(&$vars) {
     #donation-form-column-wrapper #left fieldset {
       margin-right: 10px;
     }
-    
+
     #donation-form-column-wrapper .form-text {
       width: 250px;
     }
-    
+
     #donation-form-column-wrapper {
       width: 100%;
     }
-    
+
     #donation-form-column-wrapper #right {
       float: right;
       width: 50%;
     }
-    
+
     #donation-form-column-wrapper #left {
       float: left;
       width: 50%;
     }
-    
+
     #donation-form-column-wrapper #donation-form-footer {
       clear: both;
     }
     </style>
 CSS;
-  
+
   // add in some default css for 2 columns
   drupal_set_html_head($css);
 }
@@ -91,17 +91,17 @@ function form_layouts_form_alter(&$form, $form_state, $form_id) {
       $form['#theme'] = array($theme . '_' . $node->nid, $theme);
     }
   }
-  
+
   // add a dropdown for the user to pick the layout
   if (fundraiser_is_donation_edit_form($form_id, $form)) {
     $nid = $form['#node']->nid;
-    
+
     // get the available template files and doctor it up for a select list
     $files = _form_layouts_template_list();
     $options = array();
-    foreach($files as $file) {
+    foreach ($files as $file) {
       $options[$file['theme']] = $file['name'];
-    } 
+    }
     $theme = _form_layouts_theme_template($nid);
     $form['fundraiser_settings']['layout'] = array(
       '#type' => 'select',
@@ -140,15 +140,14 @@ function form_layouts_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
 /**
  * Implements hook_fundraiser_clone_donation_form().
- * 
+ *
  * Cloned donation forms will inherit the same form layout as the parent form.
  */
 function form_layouts_fundraiser_clone_donation_form($old_nid, $new_nid) {
-   $variable_name = _form_layouts_variable_name($old_nid);
-   $parent_value = variable_get($variable_name, '');
-
-   $variable_name = _form_layouts_variable_name($new_nid);
-   variable_set($variable_name, $parent_value);
+  $variable_name = _form_layouts_variable_name($old_nid);
+  $parent_value = variable_get($variable_name, '');
+  $variable_name = _form_layouts_variable_name($new_nid);
+  variable_set($variable_name, $parent_value);
 }
 
 /**
@@ -186,12 +185,12 @@ function _form_layouts_template_list() {
   // get all .tpl.php files in the /templates directory
   $files = file_scan_directory($path, '.tpl.php');
   $templates = array();
-  
+
   // loop over each file and create an array of theme registry entries
-  foreach($files as $file) {
+  foreach ($files as $file) {
     $name = str_replace('.tpl', '', $file->name);
     $name_no_underscores = str_replace('-', '_', $name);
-    
+
     $templates[$name] = array(
       'name' => ucfirst(str_replace('-', ' ', $name)),
       'theme' => $name_no_underscores,

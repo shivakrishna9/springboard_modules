@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_fundraiser_gateway
+ * Implementation of hook_fundraiser_gateway().
  */
 function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
   $uc_gateways = _fundraiser_uc_gateway_payment_gateway_list();
@@ -54,13 +54,13 @@ function fundraiser_uc_gateway_fundraiser_gateway($op, $arg) {
  */
 function _fundraiser_uc_gateway_payment_gateway_list() {
   $uc_gateways = _payment_gateway_list('', TRUE);
-   // Allow other modules to alter the payment gateways.
+  // Allow other modules to alter the payment gateways.
   drupal_alter('uc_payment_gateway', $uc_gateways);
   return $uc_gateways;
 }
 
 /**
- * Implementation of hook_form_form_id_alter
+ * Implementation of hook_form_form_id_alter().
  *
  * Add our convert buttons to the Ubercart payment gateway form
  */
@@ -130,9 +130,9 @@ function fundraiser_uc_gateway_settings_copy(&$form, $name, $type, $terms, $stat
   module_invoke_all('gateway_manager_gateway_create', $record, $config);
 
   // Update all the tables where the old gateway was referenced
-  db_query("UPDATE fundraiser SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
-  db_query("UPDATE fundraiser_webform_order SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
-  db_query("UPDATE fundraiser_recurring SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+  db_query("UPDATE {fundraiser} SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+  db_query("UPDATE {fundraiser_webform_order} SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
+  db_query("UPDATE {fundraiser_recurring} SET gateway = %d WHERE gateway = '%s'", $record->id, $old_type);
 
   drupal_set_message('The settings have been copied over and the fundraiser tables updated.');
   drupal_set_message('The Ubercart Authorize.net settings remain. If they are no longer needed please disable the UC Authorize.net module.');

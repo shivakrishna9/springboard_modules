@@ -1,7 +1,6 @@
 name = Salesforce Importer
-description = Import objects from Salesforce based on criteria entered by the user 
+description = Import objects from Salesforce based on criteria entered by the user
 package = Jackson River Springboard
 core = 6.x
-
+version = 6.x-3.3
 dependencies[] = salesforce_management_api
-version =  6.x-3.2

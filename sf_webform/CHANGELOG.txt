@@ -1,0 +1,2 @@
+2012-10-15  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+    *  sf_webform.module - added functionality to queue webform submissions through VBO integration

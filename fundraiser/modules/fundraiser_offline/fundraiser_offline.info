@@ -1,6 +1,6 @@
 name = Fundraiser Offline
 description = Provides offline features for Fundraiser.
-core = 6.x
 package = Jackson River Springboard
+core = 6.x
+version = 6.x-3.3
 dependencies[] = fundraiser
-version =  6.x-3.0-dev

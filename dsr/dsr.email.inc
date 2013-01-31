@@ -1,23 +1,27 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_mail().
  */
 function dsr_create_multipart_email($params) {
   $stats = $params['stats'];
   $start_date = $params['start_date'];
   $end_date = $params['end_date'];
-  
+
   // To make the HTML email work, implement all our own headers
-  $boundary = '----=_NextPart_'.md5(uniqid());
-  
+  $boundary = '----=_NextPart_' . md5(uniqid());
+
   $headers = array(
-   'MIME-Version' => '1.0',
-   'Content-Type' => 'multipart/alternative; boundary="'.$boundary.'"',
-   'Content-Transfer-Encoding' => '8Bit',
-   'X-Mailer' => 'Drupal',
+    'MIME-Version' => '1.0',
+    'Content-Type' => 'multipart/alternative; boundary="' . $boundary . '"',
+    'Content-Transfer-Encoding' => '8Bit',
+    'X-Mailer' => 'Drupal',
   );
-  
+
   if (!empty($params['bcc_address'])) {
     $headers['Bcc'] = $params['bcc_address'];
   }
@@ -51,7 +55,7 @@ $body_html
 
   $email['body'] = $multi_body;
   $email['headers'] = $headers;
-  
+
   return $email;
 }
 
@@ -66,27 +70,27 @@ function dsr_create_text_email($start_date, $end_date, $stats) {
   $posted_types = _dsr_text_results('posted', $stats);
   $refunded_types = _dsr_text_results('refunded', $stats);
   $partially_refunded_types = _dsr_text_results('partially_refunded', $stats);
-  
+
   $links = '';
   $notification = t('No discrepancies detected');
-  
+
   if ($stats['posted_discrepancy']) {
     $links .= dsr_email_report_link('posted', $start_date, $end_date);
     $notification = t('Discrepancies detected');
   }
-  
+
   if ($$stats['refunded_discrepancy']) {
     $links .= dsr_email_report_link('refunded', $start_date, $end_date);
     $notification = t('Discrepancies detected');
   }
-  
+
   if ($stats['partially_refunded_discrepancy']) {
     $links .= dsr_email_report_link('partially_refunded', $start_date, $end_date);
     $notification = t('Discrepancies detected');
   }
-  
+
   $email = <<<EOT
-  
+
 $notification
 
 ***** Posted Transactions *****
@@ -111,9 +115,9 @@ $links
 Summary processed on server {$_SERVER['SERVER_ADDR']}
 
 EOT;
-  
+
   return $email;
-  
+
 }
 
 function dsr_email_report_link($type, $start_date, $end_date) {

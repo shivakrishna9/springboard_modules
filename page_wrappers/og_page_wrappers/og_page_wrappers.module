@@ -2,10 +2,10 @@
 
 /**
  * @file
- * This module allows page wrappers to be assigned to organic groups. 
- * 
+ * This module allows page wrappers to be assigned to organic groups.
+ *
  */
- 
+
 /**
  * Implementation of hook_views_api().
  */
@@ -18,7 +18,7 @@ function og_page_wrappers_views_api() {
 /**
  * Implementation of hook_views_pre_execute().
  *
- * Alters the page wrapper admin view by restricting access to wrappers 
+ * Alters the page wrapper admin view by restricting access to wrappers
  * assigned to the current user's groups.
  */
 function og_page_wrappers_views_pre_execute(&$view) {
@@ -43,15 +43,15 @@ function og_page_wrappers_perm() {
  */
 function og_available_page_wrappers_alter(&$wrappers) {
   global $user;
-  
-  foreach($wrappers as $nid => $title) {
+
+  foreach ($wrappers as $nid => $title) {
     if ($nid) {
       $groups = _og_page_wrappers_groups($nid);
       if (count($groups)) {
         // see if the page wrapper and user have any groups in common
         $intersect = array_intersect_key($groups, $user->og_groups);
         if (count($intersect) == 0) {
-          unset($wrappers[$nid]);  
+          unset($wrappers[$nid]);
         }
       }
       else {
@@ -76,10 +76,10 @@ function _og_page_wrappers_groups($nid) {
 
   return $groups;
 }
- 
- 
+
+
 /**
- * Implmentation of hook_form_alter().
+ * Implementation of hook_form_alter().
  */
 function og_page_wrappers_form_alter(&$form, &$form_state, $form_id) {
   global $user;

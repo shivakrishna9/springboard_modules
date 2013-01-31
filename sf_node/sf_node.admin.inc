@@ -7,7 +7,7 @@
 // Displays the Salesforce synchronization form.
 function sf_node_salesforce_management_form(&$form_state, $nid) {
   $node = node_load($nid);
-  
+
   // Fail out if the node didn't exist!
   if (!$node->nid) {
     drupal_not_found();
@@ -32,13 +32,13 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
     );
 
     // Get an array of fieldmaps that export nodes of this type to Salesforce.
-    $options = salesforce_management_api_fieldmap_options('node_'. $node->type);
+    $options = salesforce_management_api_fieldmap_options('node_' . $node->type);
 
     // If no corresponding fieldmaps were found...
     if (count($options) == 0) {
       // Display a message appropriate to the user's permissions.
       if (user_access('administer salesforce management')) {
-        $form['export']['#description'] = t('To export this node you must first <a href="!url">add a fieldmap</a> and then set <a href="!dedupeurl">dedupe key</a> that exports @type nodes.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS .'/add'), '@type' => $node->type,'!dedupeurl' => url(SALESFORCE_PATH_FIELDMAPS .'')));
+        $form['export']['#description'] = t('To export this node you must first <a href="!url">add a fieldmap</a> and then set <a href="!dedupeurl">dedupe key</a> that exports @type nodes.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS . '/add'), '@type' => $node->type, '!dedupeurl' => url(SALESFORCE_PATH_FIELDMAPS . '')));
       }
       else {
         $form['export']['#description'] = t('Please contact a site administrator to add a fieldmap that exports @type nodes.', array('@type' => $node->type));
@@ -68,13 +68,13 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
       '#type' => 'value',
       '#value' => $node->salesforce['fieldmap'],
     );
- 	
-    
-	// Retrieve the object from Salesforce.
+
+
+    // Retrieve the object from Salesforce.
     $sf = salesforce_management_api_connect();
     $data = $sf->retrieve(array($node->salesforce['sfid']), $node->salesforce['fieldmap']);
-	
-	 // Load the fieldmap data.
+
+    // Load the fieldmap data.
     $map = salesforce_management_api_fieldmap_load($node->salesforce['fieldmap']);
 
     // Load the object definitions.
@@ -105,7 +105,7 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
     $form['mapped'] = array(
       '#type' => 'fieldset',
       '#title' => t('Mapped field values'),
-      '#description' => t('These fields have been mapped through <a href="!url">fieldmap @index</a>.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS .'/'. $node->salesforce['fieldmap'] .'/edit'), '@index' => $node->salesforce['fieldmap'])),
+      '#description' => t('These fields have been mapped through <a href="!url">fieldmap @index</a>.', array('!url' => url(SALESFORCE_PATH_FIELDMAPS . '/' . $node->salesforce['fieldmap'] . '/edit'), '@index' => $node->salesforce['fieldmap'])),
     );
     $form['mapped']['fieldmap_values'] = array(
       '#value' => theme('table', $header, $rows),
@@ -162,7 +162,7 @@ function sf_node_salesforce_management_form(&$form_state, $nid) {
       '#collapsed' => TRUE,
     );
     $form['raw']['data'] = array(
-      '#value' => '<pre>'. print_r($data, TRUE) .'</pre>',
+      '#value' => '<pre>' . print_r($data, TRUE) . '</pre>',
     );
   }
 

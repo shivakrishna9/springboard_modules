@@ -1,0 +1,4 @@
+2012-12-01  Jeremy Isett  <jeremy.isett@jacksonriver.com>
+
+    * webform_token_selector.module - added CCK plugin code.
+    * plugin.js - refactored code.

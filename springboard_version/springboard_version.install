@@ -5,7 +5,17 @@
  * Provides on install, enable, and update hook: Hashes Springbaord supported module dirs to detect hacked code.
  */
 
+/**
+ * Implements hook_install().
+ */
 function springboard_version_install() {
+  _springboard_version_hash_modules();
+}
+
+/**
+ * Implements hook_update_N(). Springboard Release 6.x-3.3.
+ */
+function springboard_version_update_6033() {
   _springboard_version_hash_modules();
 }
 
@@ -14,6 +24,8 @@ function springboard_version_install() {
  * NOTE: ALWAYS RUN THIS AS PART OF UPDATE HOOKS.
  */
 function _springboard_version_hash_modules() {
+  // Include the module so we have what we need.
+  module_load_include('module', 'springboard_version', 'springboard_version');
   $springboard_tracked = springboard_version_info();
   $hashes = '';
   foreach ($springboard_tracked as $module => $version) {

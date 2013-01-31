@@ -4,12 +4,12 @@
  * @file
  * Provide a handler for the Batch ID
  */
-class queue_api_handler_field_batch_id extends views_handler_field {  
+class queue_api_handler_field_batch_id extends views_handler_field {
   function option_definition() {
     $options = parent::option_definition();
-   
+
     $options['queue_api_batch_id_items_link'] = array('default' => 1);
-   
+
     return $options;
   }
 
@@ -27,10 +27,10 @@ class queue_api_handler_field_batch_id extends views_handler_field {
 
   function render($values) {
     if ($this->options['queue_api_batch_id_items_link']) {
-      $output = l($values->{$this->field_alias}, 'admin/reports/salesforce/batch/' . $values->{$this->field_alias});  
+      $output = l($values->{$this->field_alias}, 'admin/reports/salesforce/batch/' . $values->{$this->field_alias});
     }
     else {
-      $output = $values->{$this->field_alias}; 
+      $output = $values->{$this->field_alias};
     }
     return $output;
   }

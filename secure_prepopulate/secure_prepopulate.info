@@ -1,7 +1,7 @@
 name = Secure Pre-populate
 description = Uses an encrypted url string to pre-populate form fields.
-core = 6.x
 package = Jackson River Springboard - extras
+core = 6.x
+version = 6.x-3.3
 dependencies[] = webform
 dependencies[] = encrypt
-version =  6.x-3.2

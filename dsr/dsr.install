@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_install().
+ */
+function dsr_install() {
+  // Selects
+  $select_posted = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Order_ID__c != NULL";
+  $select_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded'";
+  $select_partially_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded'";
+
+  // Aggregates
+  $aggregate_posted = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name";
+  $aggregate_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name";
+  $aggregate_partially_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name";
+
+  variable_set('dsr_posted_select_s', $select_posted);
+  variable_set('dsr_refunded_select_s', $select_refunded);
+  variable_set('dsr_partially_refunded_select_s', $select_partially_refunded);
+  variable_set('dsr_posted_aggregate_s', $aggregate_posted);
+  variable_set('dsr_refunded_aggregate_s', $aggregate_refunded);
+  variable_set('dsr_partially_refunded_aggregate_s', $aggregate_partially_refunded);
+}
+
+/**
+ *
+ */
+function dsr_uninstall() {
+  variable_del('dsr_posted_select_s');
+  variable_del('dsr_refunded_select_s');
+  variable_del('dsr_partially_refunded_select_s');
+  variable_del('dsr_posted_aggregate_s');
+  variable_del('dsr_refunded_aggregate_s');
+  variable_del('dsr_partially_refunded_aggregate_s');
+}
+
+/**
+ * Implements hook_update_n().
+ *
+ * Set variable defaults for Salesforce report SOQL queries.
+ */
+function dsr_update_6001() {
+
+  $select_posted = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Order_ID__c != NULL";
+  $select_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded'";
+  $select_partially_refunded = "SELECT Id, Name, Amount, Order_Id__c FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded'";
+
+  // Aggregates
+  $aggregate_posted = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Posted' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s Group By RecordType.Name";
+  $aggregate_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Refunded' Group By RecordType.Name";
+  $aggregate_partially_refunded = "SELECT SUM(AMOUNT) total_amount, COUNT(AMOUNT) total_count, RecordType.Name record_type FROM Opportunity WHERE StageName = 'Refunded' AND Transaction_Date_Time__c > %s AND Transaction_Date_Time__c < %s AND Parent_Donation__r.StageName = 'Partially Refunded' Group By RecordType.Name";
+
+  variable_set('dsr_posted_select_s', $select_posted);
+  variable_set('dsr_refunded_select_s', $select_refunded);
+  variable_set('dsr_partially_refunded_select_s', $select_partially_refunded);
+  variable_set('dsr_posted_aggregate_s', $aggregate_posted);
+  variable_set('dsr_refunded_aggregate_s', $aggregate_refunded);
+  variable_set('dsr_partially_refunded_aggregate_s', $aggregate_partially_refunded);
+
+}

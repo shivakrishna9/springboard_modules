@@ -11,10 +11,10 @@ Drupal.behaviors.SfSearchSetup = function(context) {
     if (query != '') {
       // hide any current search results
       $('#sf-search-panel').slideUp('fast');
-      if ($('#edit-sf-search-type-lookup').is(':checked')) { 
+      if ($('#edit-sf-search-type-lookup').is(':checked')) {
         contactLookup(query, nid, fid);
       }
-      else if ($('#edit-sf-search-type-search').is(':checked')) { 
+      else if ($('#edit-sf-search-type-search').is(':checked')) {
         contactSearch(query, nid, fid);
       }
     }
@@ -84,7 +84,7 @@ function displayResults(data) {
       "bDestroy": true
     });
     // Add close button to search panel at top.
-    $('#sf-search-panel').prepend('<div id="sf-contacts_close"><span id="sf-close_text">Close Search</span></div>');    
+    $('#sf-search-panel').prepend('<div id="sf-contacts_close"><span id="sf-close_text">Close Search</span></div>');
     $('#sf-search-panel').slideDown('slow');
   }
   else {
@@ -122,7 +122,7 @@ function populateContactInfo(contact) {
     // there has to be a better solution for these state/country conversions
     if (field == 'MailingState') {
       contact[field] = Drupal.settings.sf_search.zones[contact[field]];
-    }   
+    }
     if (field == 'MailingCountry') {
       contact[field] = Drupal.settings.sf_search.countries[contact[field]];
     }

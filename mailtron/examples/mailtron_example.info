@@ -3,4 +3,4 @@ description = Working example module useful for getting a feel for working with 
 core = 6.x
 package = Other
 dependencies[] = mailtron
-version =  6.x-1.0-dev
+version = 6.x-1.0-dev

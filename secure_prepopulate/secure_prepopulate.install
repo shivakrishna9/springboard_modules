@@ -9,12 +9,12 @@
  */
 function secure_prepopulate_requirements($phase) {
   $severity = REQUIREMENT_ERROR;
-  
+
   // check for mcrypt extension
   if (extension_loaded("mcrypt")) {
     $severity = REQUIREMENT_OK;
   }
-  
+
   $requirements = array(
     array(
       'title' => 'Secure pre-populate',
@@ -22,7 +22,7 @@ function secure_prepopulate_requirements($phase) {
       'severity' => $severity,
     ),
   );
-  
+
   return $requirements;
 }
 
@@ -45,7 +45,7 @@ function secure_prepopulate_uninstall() {
  */
 function secure_prepopulate_schema() {
   $schema = array();
-  
+
   $schema['secure_prepopulate_expired'] = array(
     'description' => t('TODO: please describe this table!'),
     'fields' => array(
@@ -62,13 +62,13 @@ function secure_prepopulate_schema() {
       ),
     ),
   );
-  
+
   return $schema;
 }
 
 /**
  * Implements hook_update().
- * 
+ *
  * Encrypt sensitive settings in the variable table.
  * @see http://drupal.org/project/encrypt
  */

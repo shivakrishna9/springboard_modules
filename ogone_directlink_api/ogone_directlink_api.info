@@ -1,7 +1,6 @@
 name = Ogone DirectLink API
 description = "Provides functions to interact with Ogone DirectLink method."
 package = Jackson River Springboard - payment
-
-core = 6.x
 php = 5.0
-version =  6.x-3.2
+core = 6.x
+version = 6.x-3.3

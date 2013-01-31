@@ -1,7 +1,10 @@
 <?php
+/**
+ * @file
+ */
 
 /**
- * Implements hook_install(). 
+ * Implements hook_install().
  */
 function springboard_api_install() {
 
@@ -55,7 +58,10 @@ function springboard_api_schema() {
       ),
     ),
     'primary key' => array('kid'),
-    'indexes' => array('privkey' => array('privkey'), 'pubkey' => array('pubkey')),
+    'indexes' => array(
+      'privkey' => array('privkey'),
+      'pubkey' => array('pubkey'),
+    ),
   );
   return $schema;
 }

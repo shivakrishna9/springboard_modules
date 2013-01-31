@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ */
+/**
  * Implementation of hook_views_data().
  */
 function springboard_views_fundraiser_views_data() {
@@ -403,7 +406,7 @@ function springboard_views_fundraiser_views_data() {
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
-     ),
+    ),
     'filter' => array(
       'handler' => 'views_handler_filter_date',
     ),

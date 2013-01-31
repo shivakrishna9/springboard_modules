@@ -1,3 +1,23 @@
+2013-01-24 Ben Clark <benjamin.clark@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_extend_future_orders): Refactoring fundraiser_extend_future_orders()
+      to properly extend future orders and not create orders in the past.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+    * fundraiser.sustainer.forms.inc (fundraiser_billing_update_form_validate): Adding validation to
+      ensure the expiration date is at least next month.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+
+2013-01-16 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.fields.inc (_fundraiser_update_amount_webform_component): altered test so ask amount component defaults
+        are only overwritten if they are numeric and not in the array of valid ask amounts. This change prevents
+        webform tokens or other nonstandard custom default values from being overwritten whenever the node is saved.
+
+
+2013-01-08 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+    * fundraiser.sustainer.inc (_fundraiser_expand_date): Setting day field to hidden value
+
 2012-09-10 Allen Freeman <allen.freeman@jacksonriver.com>
 
     * fundraiser.module (fundraiser_update_node): added code to prevent arbitrary node properties from being overwritten
@@ -32,19 +52,19 @@
 2012-08-10  Allen Freeman <allen.freeman@jacksonriver.com>
 
     * fundraiser.install, fundraiser_schema(): added definition for {fundraiser_secure} table.
-    
+
     * fundraiser.install, fundraiser_schema(): added update hook to add {fundraiser_secure} table.
-    
+
     * fundraiser.module, fundraiser_menu(): changed access callback for confirmations page, removed access arguments.
-    
+
     * fundraiser.module, fundraiser_preprocess_fundraiser_confirmation(): added function call to flag sid as viewed.
-  
+
     * fundraiser.module, fundraiser_access_confirmation(): added function.
-  
+
     * fundraiser.module, fundraiser_secure_confirmation(): added function.
-  
+
     * fundraiser.module, fundraiser_secure_confirmation_flag(): added function.
-    
+
 2012-08-20  Jeremy Isett  <jeremy.isett@jacksonriver.com>
 
     * fundraiser.module: Improved gateway management. See pull request
@@ -54,8 +74,8 @@
 
     * fundraiser.module (fundraiser_get_country_zones): ordering zones from UC by zone code instead of name.
       Supports non-roman alphabetical orders in cases such as Japanese, Russian, Chinese or Korean.
-    
-2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com> 
+
+2012-09-15  Sarah Hood  <sarah.hood@jacksonriver.com>
 
     * fundraiser.module: Added lock feature when processing recursing tables to avoid re-queuing donations.
     See: https://www.assembla.com/spaces/jr-springboard/tickets/347
@@ -71,8 +91,8 @@
     * fundraiser.module:  Prevent anonymous user from recieving incorrect country code
 
 2012-09-30 Sarah Hood <sarah.hood@jacksonriver.com>
-	
-    * fundraiser_form.js: Make sure if there is already a value in the internal title it doesn't get overwritten 
+
+    * fundraiser_form.js: Make sure if there is already a value in the internal title it doesn't get overwritten
       when the title is changed. Backported feature from the D7 port.
 
 2012-10-02  Phillip Cave  <phillip.cave@jacksonriver.com>
@@ -84,7 +104,7 @@
     billing update operation succeeded. Added logging for failed updates.
 
 2012-10-03  Sarah Hood  <sarah.hood@jacksonriver.com>
-	
+
     * fundraiser.js: Disable auto complete on CC and CVV fields for fundraiser forms.
 
 2012-10-24  Sarah Hood  <sarah.hood@jacksonriver.com>
@@ -106,3 +126,10 @@
 
     * fundraiser.js ($('#edit-submitted-donation-other-amount').change() - added error event & message handling
 
+08-10-2012 Allen Freeman <allen.freeman@jacksonriver.com>
+---------------------------------------------------------
+  * fundraiser.module, fundraiser_form_alter(): added tests to prevent country/state default values from being manipulated when the current user
+    is not authenticated (uid 0).
+
+  * fundraiser.module, fundraiser_form_alter(): reordered country/state default handling code to only set defaults from the user profile
+    if the current user is authenticated.

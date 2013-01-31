@@ -1,14 +1,9 @@
 name = SF User Integration
 description = Integrates the core user object and profile module with the Salesforce API.
+package = Jackson River Springboard
+project = "salesforce_management"
+core = 6.x
+version = 6.x-3.3
 dependencies[] = salesforce_management_api
 dependencies[] = queue_processor
 dependencies[] = profile
-package = Jackson River Springboard
-core = 6.x
-
-; Information added by drupal.org packaging script on 2009-05-30
-version = 6.x-3.2
-core = "6.x"
-project = "salesforce_management"
-datestamp = "1243642894"
-version =  6.x-3.2

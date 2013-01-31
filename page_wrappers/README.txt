@@ -3,7 +3,7 @@
 
 Page Wrappers are a quick way to modify the look and feel of select webforms on your site without resorting to complex changes to your site
 theme. This module implements the "page wrapper" content type, which lets you define the markup, styles and JavaScript used to render one or more
-webforms on your site. 
+webforms on your site.
 
 
 
@@ -29,12 +29,12 @@ Once the module is enabled, you may create as many page wrapper nodes as you nee
 
 -- TROUBLESHOOTING --
 
-* Webform not rendering correctly, missing CSS or JavaScript: 
+* Webform not rendering correctly, missing CSS or JavaScript:
 
 Check the file permissions on your files folder. During installation Page Wrapper attempts to create multiple folders:
 
 - files/page_wrappers/css : uploaded stylesheets
-- files/page_wrappers/js : uploaded JavaScript files 
+- files/page_wrappers/js : uploaded JavaScript files
 - files/page_wrappers/tpl : contains .tpl (template) files
 
 If one or more of these folders is missing or Drupal is unable to write to them, this will lead to broken page wrappers and incorrectly themed webforms.

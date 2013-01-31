@@ -18,7 +18,7 @@ function mailtron_example_menu() {
 
 /**
  * An example mail configuration form. Typical use case for this is setting up an admin-configurable
- * mail template on one or more module settings pages. 
+ * mail template on one or more module settings pages.
  */
 function mailtron_example_test_form() {
   // pull in the required include file to get access to mailtron helper functions.
@@ -34,8 +34,8 @@ function mailtron_example_test_form() {
   //
   // - send_callback is another optional callback function that your module implements. It is invoked after an email is sent.
   //   The $mail object used to generate the email and any additional parameters you pass into mailtron_send_mail() via $params are passed as arguments
-  //   to your callback function. 
-   
+  //   to your callback function.
+
   $params = array(
     'name' => 'test_form',
     'module' => 'mailtron_example',
@@ -53,7 +53,7 @@ function mailtron_example_test_form() {
     '#executes_submit_callback' => TRUE,
     '#submit' => array('mailtron_example_send'),
   );
-  return $form; 
+  return $form;
 }
 
 /**

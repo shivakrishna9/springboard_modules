@@ -1,28 +1,27 @@
 <?php
 /**
  * @file
- * Install file for the gateway manager module. 
- * 
+ * Install file for the gateway manager module.
  */
 
 /**
  * Implementation of hook_install().
  */
 function gateway_manager_install() {
-	drupal_install_schema('gateway_manager');
+  drupal_install_schema('gateway_manager');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function gateway_manager_uninstall() {
-	drupal_uninstall_schema('gateway_manager');
+  drupal_uninstall_schema('gateway_manager');
   $vid = variable_get('gateway_manager_vocabulary', '');
   taxonomy_del_vocabulary($vid);
 }
 
 /**
- * Implemenation of hook_enable().
+ * Implementation of hook_enable().
  */
 function gateway_manager_enable() {
   $vid = variable_get('gateway_manager_vocabulary', '');
@@ -96,7 +95,7 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('id'),
   );
-  
+
   $schema['term_gateway'] = array(
     'description' => t('Table to store gateway related terms.'),
     'fields' => array(
@@ -115,7 +114,7 @@ function gateway_manager_schema() {
     ),
     'primary key' => array('gid', 'tid'),
   );
-  
+
   return $schema;
 }
 
@@ -125,11 +124,11 @@ function gateway_manager_schema() {
 function gateway_manager_update_6301() {
   $ret = array();
   db_add_field($ret, 'gateway_manager_gateways', 'status', array(
-        'description' => t('Active or inactive toggle for this gateway.'),
-        'type' => 'int',
-        'default' => 1,
-        'not null' => FALSE,
-      ));
+    'description' => t('Active or inactive toggle for this gateway.'),
+    'type' => 'int',
+    'default' => 1,
+    'not null' => FALSE,
+  ));
   db_query('UPDATE {gateway_manager_gateways} SET status = 1');
   return $ret;
 }

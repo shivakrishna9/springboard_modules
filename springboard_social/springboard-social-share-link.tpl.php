@@ -1,4 +1,9 @@
-<script src="http://connect.facebook.net/en_US/all.js"></script> 
+<?php
+/**
+ * @file
+ */
+?>
+<script src="http://connect.facebook.net/en_US/all.js"></script>
 <script>
 FB.init({
  appId  : '<?php print $app_id ?>',

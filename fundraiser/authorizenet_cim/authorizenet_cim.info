@@ -1,8 +1,7 @@
 name = Authorize.net CIM Management
 description = Provides CIM management functionality for Authorize.net CIM profiles
-core = 6.x
 package = Jackson River Springboard
+core = 6.x
+version = 6.x-3.3
 dependencies[] = fundraiser
 dependencies[] = uc_authorizenet
-
-version = 6.x-3.2

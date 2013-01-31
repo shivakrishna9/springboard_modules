@@ -66,92 +66,92 @@ function salesforce_management_api_schema() {
     'primary key' => array('drupal_type', 'oid'),
   );
   $schema['salesforce_management_field_map'] = array(
-	  'description' => t('TODO: please describe this table!'),
-	  'fields' => array(
-	    'fieldmap' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'serial',
-	      'unsigned' => TRUE,
-	      'not null' => TRUE,
-	    ),
-	    'name' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '100',
-	      'not null' => FALSE,
-	    ),
-	    'drupal' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'salesforce' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'action' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => TRUE,
-	      'default' => '',
-	    ),
-	    'automatic' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'unsigned' => TRUE,
-	      'size' => 'tiny',
-	      'not null' => TRUE,
-	      'default' => 0,
-	    ),
-	    'fields' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'business' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'businessSD' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => TRUE,
-	    ),
-	    'dedupe_key' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '64',
-	      'not null' => FALSE,
-	      'default' => '',
-	    ),
-	    'rid' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'int',
-	      'not null' => FALSE,
-	    ),
-	    'recordtype_id' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'varchar',
-	      'length' => '32',
-	      'not null' => FALSE,
-	    ),
-	    'validation' => array(
-	      'description' => t('TODO: please describe this field!'),
-	      'type' => 'text',
-	      'not null' => FALSE,
-	    ),
-	  ),
-	  'primary key' => array('fieldmap'),
-	);
-  
-   $schema['salesforce_management_api_error'] = array(
+    'description' => t('TODO: please describe this table!'),
+    'fields' => array(
+      'fieldmap' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '100',
+        'not null' => FALSE,
+      ),
+      'drupal' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'salesforce' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'action' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'automatic' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'fields' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'business' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'businessSD' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'dedupe_key' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'rid' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'recordtype_id' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => FALSE,
+      ),
+      'validation' => array(
+        'description' => t('TODO: please describe this field!'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('fieldmap'),
+  );
+
+  $schema['salesforce_management_api_error'] = array(
     'description' => t('Drupal to Salesforce error reporting table'),
     'fields' => array(
       'drupal_type' => array(
@@ -180,13 +180,13 @@ function salesforce_management_api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-	  'error_time' => array(
-          'type' => 'datetime',
-          'not null' => true,
-       ),
+      'error_time' => array(
+        'type' => 'datetime',
+        'not null' => true,
+      ),
     ),
-   );
-   return $schema;
+  );
+  return $schema;
 }
 
 /**
@@ -197,7 +197,7 @@ function salesforce_management_api_update_6101() {
   $updates = array();
 
   db_change_field($updates, 'salesforce_management_object_map', 'oid', 'oid', array('type' => 'varchar', 'length' => 32, 'default' => '0', 'not null' => TRUE));
-  db_change_field($updates, 'salesforce_management_api_error',  'did', 'did', array('type' => 'varchar', 'length' => 32, 'default' => '0', 'not null' => TRUE));
+  db_change_field($updates, 'salesforce_management_api_error',   'did', 'did', array('type' => 'varchar', 'length' => 32, 'default' => '0', 'not null' => TRUE));
 
   return $updates;
 }
@@ -216,20 +216,32 @@ function salesforce_management_api_update_6300() {
 
   if ($username) {
     variable_set('salesforce_management_api_username', encrypt($username));
-    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management API Username has been encrypted.');
+    $ret[] = array(
+      'success' => TRUE,
+      'query' => 'The Salesforce Management API Username has been encrypted.',
+    );
   }
   if ($password) {
     variable_set('salesforce_management_api_password', encrypt($password));
-    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management API Password has been encyrpted.');
+    $ret[] = array(
+      'success' => TRUE,
+      'query' => 'The Salesforce Management API Password has been encyrpted.',
+    );
   }
   if ($token) {
     variable_set('salesforce_management_api_token', encrypt($token));
-    $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management Token has been encyrpted.');
+    $ret[] = array(
+      'success' => TRUE,
+      'query' => 'The Salesforce Management Token has been encyrpted.',
+    );
   }
 
   // Set the WSDL path variable
   variable_set('salesforce_management_api_wsdl_file_path', drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient');
-  $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management WSDL path has been set to the module path.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'The Salesforce Management WSDL path has been set to the module path.',
+  );
 
   return $ret;
 }
@@ -241,7 +253,10 @@ function salesforce_management_api_update_6301() {
   $ret = array();
 
   variable_set('salesforce_management_api_wsdl_file_path', drupal_get_path('module', 'salesforce_management_api') . '/toolkit/soapclient');
-  $ret[] = array('success' => TRUE, 'query' => 'The Salesforce Management WSDL path has been set to the module path.');
+  $ret[] = array(
+    'success' => TRUE,
+    'query' => 'The Salesforce Management WSDL path has been set to the module path.',
+  );
 
   return $ret;
 }

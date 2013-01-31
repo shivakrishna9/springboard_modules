@@ -165,7 +165,7 @@ function gm_sage_refund($order_id, $amount, $data) {
     if (!empty($ref_id)) {
       $data['txn_type'] = UC_CREDIT_CREDIT;
       $data['ref_id'] = $ref_id;
-      return gm_sage_charge($order_id, $amount, $data);  
+      return gm_sage_charge($order_id, $amount, $data);
     }
     else {
       return array(
@@ -629,7 +629,7 @@ function _gm_sage_post_data_from_order($order, $amount) {
 function _gm_sage_order_post_data($order, $amount, $data) {
   $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
   $shipping_country = uc_get_country_data(array('country_id' => $order->shipping_country));
-  
+
   $context = array(
     'revision' => 'formatted-original',
     'location' => 'sage-charge',

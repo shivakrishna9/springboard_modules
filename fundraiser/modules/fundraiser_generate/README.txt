@@ -1,7 +1,7 @@
 
 -- SUMMARY --
 
-Automatically generate test donations via the Devel module. 
+Automatically generate test donations via the Devel module.
 
 -- REQUIREMENTS --
 

@@ -1,19 +1,16 @@
 (function($) {
   var callback = {
     exec:function(editor) {
-      // get the current location so we can pass in the path
-      var url = $(location).attr('href');
-      url = url.replace('http://', ''); // strip off http bs
-      var parts = url.split('/');
+      var parts = location.pathname.split('/');
       if (parts[1] == 'node' && parts[3] == 'webform') {
-        var token = window.showModalDialog("/webform/confirmation-token-list/"+parts[2],null,"dialogWidth:450px;dialogHeight:320px;center:yes; resizable: yes; help: no");  
+        var token = window.showModalDialog("/webform/confirmation-token-list/"+parts[2],null,"dialogWidth:450px;dialogHeight:320px;center:yes; resizable: yes; help: no");
         if (token != false && token != null) {
-          editor.insertHtml(token);    
+          editor.insertHtml(token);
         }
       }
       else {
         alert('This only works for fundraiser confirmations');
-      }  
+      }
     }
   },
 
@@ -33,13 +30,9 @@
   buttonName = 'webform-tokens';
   CKEDITOR.plugins.add(buttonName, {
     init: function (editor) {
-      // Create a new CKEditor style to add <pre> tags.
-      //var buttonName = b;
-      
-
       // Add the command and the button to the editor.
       editor.addCommand(buttonName, callback);
-      editor.ui.addButton(buttonName, {
+      editor.ui.addButton('webformTokens', {
         label: Drupal.t('Confirmation page tokens'),
         icon: this.path + 'webform-tokens.png',
         command: buttonName

@@ -1,4 +1,7 @@
 <?php
+/**
+ * @file
+ */
 
 /**
  * Page callback for admin/settings/springboard_api.
@@ -24,7 +27,7 @@ function springboard_api_admin() {
     $row[] = _springboard_api_links($keyset->kid);
     $rows[] = $row;
   }
-  
+
   $form['api_keysets'] = array(
     '#type' => 'fieldset',
     '#title' => t('API key sets'),
@@ -48,7 +51,7 @@ function springboard_api_admin() {
   $form['new']['user'] = array(
     '#type' => 'textfield',
     '#title' => t('User'),
-    '#autocomplete_path' => 'user/autocomplete', 
+    '#autocomplete_path' => 'user/autocomplete',
     '#description' => t('Select a user account to associate with this app. Service calls made by this app will use the permissionsa assigned to this account for purposes of access checking.'),
   );
   $form['new']['submit'] = array(
@@ -106,7 +109,7 @@ function springboard_api_edit_keyset($form, $edit) {
 }
 
 function springboard_api_edit_submit($form, $form_state) {
-   $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
+  $uid = db_result(db_query("SELECT uid FROM {users} WHERE name='%s'", $form_state['values']['user']));
   db_query("UPDATE {springboard_api} SET uid = %d, name = '%s' WHERE kid = %d", $uid, $form_state['values']['name'], $form_state['values']['kid']);
   drupal_set_message('Settings saved.');
   drupal_goto('admin/settings/springboard_api');
@@ -137,7 +140,7 @@ function springboard_api_delete_keyset($form, $edit) {
 }
 
 /**
- * 
+ *
  */
 function springboard_api_delete_submit($form, $form_state) {
   global $user;
@@ -149,7 +152,7 @@ function springboard_api_delete_submit($form, $form_state) {
 }
 
 /**
- * 
+ *
  */
 function springboard_api_test_client($form = array()) {
   $results = db_query('SELECT kid, name FROM {springboard_api}');
@@ -164,7 +167,11 @@ function springboard_api_test_client($form = array()) {
   $form['resource'] = array(
     '#type' => 'select',
     '#title' => t('Service resource'),
-    '#options' => array('index' => 'index', 'retrieve' => 'retrieve', 'submit' => 'submit'),
+    '#options' => array(
+      'index' => 'index',
+      'retrieve' => 'retrieve',
+      'submit' => 'submit',
+    ),
   );
   $form['keyset'] = array(
     '#type' => 'select',
@@ -190,7 +197,7 @@ function springboard_api_test_client_submit(&$form, $form_state) {
     $url = $form_state['values']['url'];
     $data = _springboard_api_pack_test_data($keyset->pubkey, $keyset->privkey, $form_state['values']['data'], $form_state['values']['resource']);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     if ($form_state['values']['resource'] == 'submit') {
       curl_setopt($ch, CURLOPT_POST, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -198,9 +205,9 @@ function springboard_api_test_client_submit(&$form, $form_state) {
     else {
       $url .= '&key=' . $data['pubkey'] . '&time=' . $data['timestamp'] . '&checksum=' . $data['checksum'];
     }
-    curl_setopt($ch, CURLOPT_URL,$url);
-    $result['contents']=curl_exec($ch);
-    $result['info']=curl_getinfo($ch);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    $result['contents'] = curl_exec($ch);
+    $result['info'] = curl_getinfo($ch);
     drupal_set_message('result:' . print_r($result, TRUE));
     curl_close($ch);
   }
@@ -223,7 +230,7 @@ function _springboard_api_get_users($string = '') {
   $users['anonymous'] = 'Anonymous';
 
   if ($string) {
-    
+
     $results = db_query_range("SELECT uid, name FROM {users} WHERE uid > 1 AND LOWER(name) LIKE LOWER('%s%%')", $string, 0, 10);
 
     while ($user = db_fetch_object($results)) {

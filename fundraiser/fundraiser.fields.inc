@@ -5,7 +5,7 @@
  * Field management functions for the fundraiser module
  *
  */
- 
+
 /**
  * Creates all donation specific webform components
  *
@@ -22,385 +22,385 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
   module_load_include('inc', 'webform', 'includes/webform.components');
   // create an array to hold all of the created components
   $components = array();
-	
-	// donation amount
-	$donation = array();
-	$donation['nid'] = $nid;
-	$donation['pid'] = 0;
-	$donation['form_key'] = 'donation';
-	$donation['name'] = 'Donation';
-	$donation['type'] = 'fieldset';
-	$donation['extra'] = array(
-		'description' => '',
-	);
-	$donation['mandatory'] = 0;
-	$donation['weight'] = 0;
-	$donation['email'] = 0;
-	
-	$pid = webform_component_insert($donation);
-	$components[$pid] = $donation;
 
-	// determine the type of amount field to output
-	if ($donation_amounts) {
-		ksort($donation_amounts, SORT_NUMERIC);
-		$formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
-		
-		if ($show_other_amount) {
-			// other amount
-		    $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
-			$components[$component['id']] = $component['other_amount'];
-		}
+  // donation amount
+  $donation = array();
+  $donation['nid'] = $nid;
+  $donation['pid'] = 0;
+  $donation['form_key'] = 'donation';
+  $donation['name'] = 'Donation';
+  $donation['type'] = 'fieldset';
+  $donation['extra'] = array(
+    'description' => '',
+  );
+  $donation['mandatory'] = 0;
+  $donation['weight'] = 0;
+  $donation['email'] = 0;
 
-		// ask amounts
-		$component = _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
-		$components[$component['id']] = $component['amount'];
-	}
-	else { // plain old textbox for donation amount
-		$amount = array();
-		$amount['nid'] = $nid;
-		$amount['pid'] = $pid;
-		$amount['form_key'] = 'amount';
-		$amount['name'] = 'Amount';
-		$amount['type'] = 'textfield';
-		$amount['extra'] = array(
-			'description' => '',
-			'width' => 10,
-			'field_prefix' => '$',
-		);
-		$amount['mandatory'] = 1;
-		$amount['weight'] = 0;
-		$amount['email'] = 1;
+  $pid = webform_component_insert($donation);
+  $components[$pid] = $donation;
 
-		$id = webform_component_insert($amount);
-		$components[$id] = $amount;
-	}
-	
-	// donor information
-	$donor_information = array();
-	$donor_information['nid'] = $nid;
-	$donor_information['pid'] = 0;
-	$donor_information['form_key'] = 'donor_information';
-	$donor_information['name'] = 'Your Information';
-	$donor_information['type'] = 'fieldset';
-	$donor_information['extra'] = array(
-		'description' => '',
-	);
-	$donor_information['mandatory'] = 0;
-	$donor_information['weight'] = 1;
-	$donor_information['email'] = 0;
-	
-	$pid = webform_component_insert($donor_information);
-	$components[$pid] = $donor_information;
-	
-	// first name
-	$first_name = array();
-	$first_name['nid'] = $nid;
-	$first_name['pid'] = $pid;
-	$first_name['form_key'] = 'first_name';
-	$first_name['name'] = 'First Name';
-	$first_name['type'] = 'textfield';
-	$first_name['extra'] = array(
-		'description' => '',
-	);
-	$first_name['mandatory'] = 1;
-	$first_name['weight'] = 0;
-	$first_name['email'] = 1;
-	$first_name['maps_to'] = 'profile_first_name';
-	
-	$id = webform_component_insert($first_name);
-	$components[$id] = $first_name;
-	
-	// last name
-	$last_name = array();
-	$last_name['nid'] = $nid;
-	$last_name['pid'] = $pid;
-	$last_name['form_key'] = 'last_name';
-	$last_name['name'] = 'Last Name';
-	$last_name['type'] = 'textfield';
-	$last_name['extra'] = array(
-		'description' => '',
-	);
-	$last_name['mandatory'] = 1;
-	$last_name['weight'] = 1;
-	$last_name['email'] = 1;
-	$last_name['maps_to'] = 'profile_last_name';
-	
-	$id = webform_component_insert($last_name);
-	$components[$id] = $last_name;
+  // determine the type of amount field to output
+  if ($donation_amounts) {
+    ksort($donation_amounts, SORT_NUMERIC);
+    $formatted_amounts = _fundraiser_create_amount_options($donation_amounts, $show_other_amount);
 
-	// email
-	$email = array();
-	$email['nid'] = $nid;
-	$email['pid'] = $pid;
-	$email['form_key'] = 'email';
-	$email['name'] = 'Email';
-	$email['type'] = 'textfield';
-	$email['extra'] = array(
-		'description' => '',
-	);
-	$email['mandatory'] = 1;
-	$email['weight'] = 2;
-	$email['email'] = 1;
-	$email['maps_to'] = 'mail';
-	
-	$id = webform_component_insert($email);
-	$components[$id] = $email;
-	
-	// billing
-	$billing_information = array();
-	$billing_information['nid'] = $nid;
-	$billing_information['pid'] = 0;
-	$billing_information['form_key'] = 'billing_information';
-	$billing_information['name'] = 'Credit Card Billing Information';
-	$billing_information['type'] = 'fieldset';
-	$billing_information['extra'] = array(
-		'description' => '',
-	);
-	$billing_information['mandatory'] = 0;
-	$billing_information['weight'] = 3;
-	$billing_information['email'] = 0;
-	
-	$pid = webform_component_insert($billing_information);
-	$components[$pid] = $billing_information;
-	
-	// billing address
-	$billing_address = array();
-	$billing_address['nid'] = $nid;
-	$billing_address['pid'] = $pid;
-	$billing_address['form_key'] = 'address';
-	$billing_address['name'] = 'Address';
-	$billing_address['type'] = 'textfield';
-	$billing_address['extra'] = array(
-		'description' => '',
-	);
-	$billing_address['mandatory'] = 1;
-	$billing_address['weight'] = 3;
-	$billing_address['email'] = 1;
-	$billing_address['maps_to'] = 'profile_address';
-	
-	$id = webform_component_insert($billing_address);
-	$components[$id] = $billing_address;
+    if ($show_other_amount) {
+      // other amount
+      $component = _fundraiser_insert_other_amount_component($nid, $pid, $min_donation_amount);
+      $components[$component['id']] = $component['other_amount'];
+    }
 
-	// billing address 2
-	$billing_address_2 = array();
-	$billing_address_2['nid'] = $nid;
-	$billing_address_2['pid'] = $pid;
-	$billing_address_2['form_key'] = 'address_line_2';
-	$billing_address_2['name'] = 'Address Line 2';
-	$billing_address_2['type'] = 'textfield';
-	$billing_address_2['extra'] = array(
-		'description' => '',
-	);
-	$billing_address_2['mandatory'] = 0;
-	$billing_address_2['weight'] = 4;
-	$billing_address_2['email'] = 1;
-	$billing_address_2['maps_to'] = 'profile_address_line_2';
-	
-	$id = webform_component_insert($billing_address_2);
-	$components[$id] = $billing_address_2;
+    // ask amounts
+    $component = _fundraiser_insert_amount_component($nid, $pid, $donation_amounts, $show_other_amount);
+    $components[$component['id']] = $component['amount'];
+  }
+  else { // plain old textbox for donation amount
+    $amount = array();
+    $amount['nid'] = $nid;
+    $amount['pid'] = $pid;
+    $amount['form_key'] = 'amount';
+    $amount['name'] = 'Amount';
+    $amount['type'] = 'textfield';
+    $amount['extra'] = array(
+      'description' => '',
+      'width' => 10,
+      'field_prefix' => '$',
+    );
+    $amount['mandatory'] = 1;
+    $amount['weight'] = 0;
+    $amount['email'] = 1;
 
-	// city
-	$billing_city = array();
-	$billing_city['nid'] = $nid;
-	$billing_city['pid'] = $pid;
-	$billing_city['form_key'] = 'city';
-	$billing_city['name'] = 'City';
-	$billing_city['type'] = 'textfield';
-	$billing_city['extra'] = array(
-		'description' => '',
-	);
-	$billing_city['mandatory'] = 1;
-	$billing_city['weight'] = 5;
-	$billing_city['email'] = 1;
-	$billing_city['maps_to'] = 'profile_city';
-	
-	$id = webform_component_insert($billing_city);
-	$components[$id] = $billing_city;
+    $id = webform_component_insert($amount);
+    $components[$id] = $amount;
+  }
 
-	$us = 840;
-	$ca = 124;
+  // donor information
+  $donor_information = array();
+  $donor_information['nid'] = $nid;
+  $donor_information['pid'] = 0;
+  $donor_information['form_key'] = 'donor_information';
+  $donor_information['name'] = 'Your Information';
+  $donor_information['type'] = 'fieldset';
+  $donor_information['extra'] = array(
+    'description' => '',
+  );
+  $donor_information['mandatory'] = 0;
+  $donor_information['weight'] = 1;
+  $donor_information['email'] = 0;
 
-	$include_all_countries = variable_get('fundraiser_all_countries', 0);
-	
-	// country
-	$countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
-	
-	// build option string for countries
-	$options = '';
-	if ($include_all_countries) {
-		foreach($countries['#options'] as $key => $value) {
-			$options .= $key .'|'. $value . "\n";
-		}
-	}
-	else {
-		foreach($countries['#options'] as $key => $value) {
-			if ($key == $us || $key == $ca) {
-				$options .= $key .'|'. $value . "\n";
-			}
-		}
-	}
-	
-	$billing_country = array();
-	$billing_country['nid'] = $nid;
-	$billing_country['pid'] = $pid;
-	$billing_country['form_key'] = 'country';
-	$billing_country['name'] = 'Country';
-	$billing_country['type'] = 'select';
-	$billing_country['extra'] = array(
-		'description' => '',
-		'items' => $options,
-		'multiple' => 0,
-		'aslist' => 'Y',
-	);
-        $billing_country['value'] = variable_get('fundraiser_default_country', '');
-	$billing_country['mandatory'] = 1;
-	$billing_country['weight'] = 6;
-	$billing_country['email'] = 1;
-	$billing_country['maps_to'] = 'profile_country';
-	
-	$id = webform_component_insert($billing_country);
-	$components[$id] = $billing_country;
+  $pid = webform_component_insert($donor_information);
+  $components[$pid] = $donor_information;
 
-	// state
-	$zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $us, 'name', uc_address_field_required('zone'));
-	
-	// build option string for states
-	$options = '';
-	foreach($zones['#options'] as $key => $value) {
-		$options .= $key .'|'. $value . "\n";
-	}
-	
-	$billing_state = array();
-	$billing_state['nid'] = $nid;
-	$billing_state['pid'] = $pid;
-	$billing_state['form_key'] = 'state';
-	$billing_state['name'] = 'State/Province';
-	$billing_state['type'] = 'select';
-	$billing_state['extra'] = array(
-		'description' => '',
-		'items' => $options,
-		'multiple' => 0,
-		'aslist' => 'Y',
-	);
-	$billing_state['mandatory'] = 1;
-	$billing_state['weight'] = 7;
-	$billing_state['email'] = 1;
-	$billing_state['maps_to'] = 'profile_state';
-	
-	$id = webform_component_insert($billing_state);
-	$components[$id] = $billing_state;
-	
-	// zip code
-	$billing_zipcode = array();
-	$billing_zipcode['nid'] = $nid;
-	$billing_zipcode['pid']= $pid;
-	$billing_zipcode['form_key'] = 'zip';
-	$billing_zipcode['name'] = 'ZIP/Postal Code';
-	$billing_zipcode['type'] = 'textfield';
-	$billing_zipcode['extra'] = array(
-		'description' => '',
-		'width' => 10,
-		'maxlength' => 5,
-	);
-	$billing_zipcode['mandatory'] = 1;
-	$billing_zipcode['weight'] = 8;
-	$billing_zipcode['email'] = 1;
-	$billing_zipcode['maps_to'] = 'profile_zip';
-	
-	$id = webform_component_insert($billing_zipcode);
-	$components[$id] = $billing_zipcode;
-	
-	// credit card information
-	$credit_card_information = array();
-	$credit_card_information['nid'] = $nid;
-	$credit_card_information['pid'] = 0;
-	$credit_card_information['form_key'] = 'credit_card_information';
-	$credit_card_information['name'] = 'Credit Card Information';
-	$credit_card_information['type'] = 'fieldset';
-	$credit_card_information['extra'] = array(
-		'description' => '',
-	);
-	$credit_card_information['mandatory'] = 0;
-	$credit_card_information['weight'] = 5;
-	$credit_card_information['email'] = 0;
-	
-	$pid = webform_component_insert($credit_card_information);
-	$components[$pid] = $credit_card_information;
+  // first name
+  $first_name = array();
+  $first_name['nid'] = $nid;
+  $first_name['pid'] = $pid;
+  $first_name['form_key'] = 'first_name';
+  $first_name['name'] = 'First Name';
+  $first_name['type'] = 'textfield';
+  $first_name['extra'] = array(
+    'description' => '',
+  );
+  $first_name['mandatory'] = 1;
+  $first_name['weight'] = 0;
+  $first_name['email'] = 1;
+  $first_name['maps_to'] = 'profile_first_name';
 
-	// credit card number
-	$card_number = array();
-	$card_number['nid'] = $nid;
-	$card_number['pid'] = $pid;
-	$card_number['form_key'] = 'card_number';
-	$card_number['name'] = 'Card Number';
-	$card_number['type'] = 'textfield';
-	$card_number['extra'] = array(
-		'description' => '',
-		'width' => 20,
-	);
-	$card_number['mandatory'] = 1;
-	$card_number['weight'] = 0;
-	$card_number['email'] = 0;
-	
-	$id = webform_component_insert($card_number);
-	$components[$id] = $card_number;
-	
-	// expiration month
-	$expiration_month = fundraiser_create_month_field($nid, $pid);
-	$id = webform_component_insert($expiration_month);
-	$components[$id] = $expiration_month;
-	
-	// expiration year
-	$expiration_year = fundraiser_create_year_field($nid, $pid);
-	$id = webform_component_insert($expiration_year);
-	$components[$id] = $expiration_year;
+  $id = webform_component_insert($first_name);
+  $components[$id] = $first_name;
 
-	// cvv
-	$card_cvv = array();
-	$card_cvv['nid'] = $nid;
-	$card_cvv['pid']= $pid;
-	$card_cvv['form_key'] = 'card_cvv';
-	$card_cvv['name'] = 'Card Security Code';
-	$card_cvv['type'] = 'textfield';
-	$card_cvv['extra'] = array(
-		'description' => '',
-		'maxlength' => 4,
-		'width' => 5,
-	);
-	$card_cvv['mandatory'] = 1;
-	$card_cvv['weight'] = 3;
-	$card_cvv['email'] = 0;
-	
-	$id = webform_component_insert($card_cvv);
-	$components[$id] = $card_cvv;
+  // last name
+  $last_name = array();
+  $last_name['nid'] = $nid;
+  $last_name['pid'] = $pid;
+  $last_name['form_key'] = 'last_name';
+  $last_name['name'] = 'Last Name';
+  $last_name['type'] = 'textfield';
+  $last_name['extra'] = array(
+    'description' => '',
+  );
+  $last_name['mandatory'] = 1;
+  $last_name['weight'] = 1;
+  $last_name['email'] = 1;
+  $last_name['maps_to'] = 'profile_last_name';
 
-	// recurring donation
-	$recurs = array();
-	$recurs['nid'] = $nid;
-	$recurs['pid']= $pid;
-	$recurs['form_key'] = 'recurs_monthly';
-	$recurs['name'] = 'Recurring Payment';
-	$recurs['type'] = 'select';
-	$recurs['extra'] = array(
-		'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
-		'items' => 'recurs|Yes',
-		'multiple' => 'Y',
-	);
-	$recurs['mandatory'] = 0;
-	$recurs['weight'] = 4;
-	$recurs['email'] = 0;
-	
-	$id = webform_component_insert($recurs);
-	$components[$id] = $recurs;
-	
-	// Invoke hook_fundraiser_create_webform_components
-	//
-	$contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
-	foreach ($contrib_components as $component) {
-	  $id = webform_component_insert($component);
-	  $components[$id] = $component;
-	}
-	return $components;
+  $id = webform_component_insert($last_name);
+  $components[$id] = $last_name;
+
+  // email
+  $email = array();
+  $email['nid'] = $nid;
+  $email['pid'] = $pid;
+  $email['form_key'] = 'email';
+  $email['name'] = 'Email';
+  $email['type'] = 'textfield';
+  $email['extra'] = array(
+    'description' => '',
+  );
+  $email['mandatory'] = 1;
+  $email['weight'] = 2;
+  $email['email'] = 1;
+  $email['maps_to'] = 'mail';
+
+  $id = webform_component_insert($email);
+  $components[$id] = $email;
+
+  // billing
+  $billing_information = array();
+  $billing_information['nid'] = $nid;
+  $billing_information['pid'] = 0;
+  $billing_information['form_key'] = 'billing_information';
+  $billing_information['name'] = 'Credit Card Billing Information';
+  $billing_information['type'] = 'fieldset';
+  $billing_information['extra'] = array(
+    'description' => '',
+  );
+  $billing_information['mandatory'] = 0;
+  $billing_information['weight'] = 3;
+  $billing_information['email'] = 0;
+
+  $pid = webform_component_insert($billing_information);
+  $components[$pid] = $billing_information;
+
+  // billing address
+  $billing_address = array();
+  $billing_address['nid'] = $nid;
+  $billing_address['pid'] = $pid;
+  $billing_address['form_key'] = 'address';
+  $billing_address['name'] = 'Address';
+  $billing_address['type'] = 'textfield';
+  $billing_address['extra'] = array(
+    'description' => '',
+  );
+  $billing_address['mandatory'] = 1;
+  $billing_address['weight'] = 3;
+  $billing_address['email'] = 1;
+  $billing_address['maps_to'] = 'profile_address';
+
+  $id = webform_component_insert($billing_address);
+  $components[$id] = $billing_address;
+
+  // billing address 2
+  $billing_address_2 = array();
+  $billing_address_2['nid'] = $nid;
+  $billing_address_2['pid'] = $pid;
+  $billing_address_2['form_key'] = 'address_line_2';
+  $billing_address_2['name'] = 'Address Line 2';
+  $billing_address_2['type'] = 'textfield';
+  $billing_address_2['extra'] = array(
+    'description' => '',
+  );
+  $billing_address_2['mandatory'] = 0;
+  $billing_address_2['weight'] = 4;
+  $billing_address_2['email'] = 1;
+  $billing_address_2['maps_to'] = 'profile_address_line_2';
+
+  $id = webform_component_insert($billing_address_2);
+  $components[$id] = $billing_address_2;
+
+  // city
+  $billing_city = array();
+  $billing_city['nid'] = $nid;
+  $billing_city['pid'] = $pid;
+  $billing_city['form_key'] = 'city';
+  $billing_city['name'] = 'City';
+  $billing_city['type'] = 'textfield';
+  $billing_city['extra'] = array(
+    'description' => '',
+  );
+  $billing_city['mandatory'] = 1;
+  $billing_city['weight'] = 5;
+  $billing_city['email'] = 1;
+  $billing_city['maps_to'] = 'profile_city';
+
+  $id = webform_component_insert($billing_city);
+  $components[$id] = $billing_city;
+
+  $us = 840;
+  $ca = 124;
+
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
+
+  // country
+  $countries = uc_country_select(uc_get_field_name('country'), $us, NULL, 'name', uc_address_field_required('country'));
+
+  // build option string for countries
+  $options = '';
+  if ($include_all_countries) {
+    foreach ($countries['#options'] as $key => $value) {
+      $options .= $key . '|' . $value . "\n";
+    }
+  }
+  else {
+    foreach ($countries['#options'] as $key => $value) {
+      if ($key == $us || $key == $ca) {
+        $options .= $key . '|' . $value . "\n";
+      }
+    }
+  }
+
+  $billing_country = array();
+  $billing_country['nid'] = $nid;
+  $billing_country['pid'] = $pid;
+  $billing_country['form_key'] = 'country';
+  $billing_country['name'] = 'Country';
+  $billing_country['type'] = 'select';
+  $billing_country['extra'] = array(
+    'description' => '',
+    'items' => $options,
+    'multiple' => 0,
+    'aslist' => 'Y',
+  );
+  $billing_country['value'] = variable_get('fundraiser_default_country', '');
+  $billing_country['mandatory'] = 1;
+  $billing_country['weight'] = 6;
+  $billing_country['email'] = 1;
+  $billing_country['maps_to'] = 'profile_country';
+
+  $id = webform_component_insert($billing_country);
+  $components[$id] = $billing_country;
+
+  // state
+  $zones = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $us, 'name', uc_address_field_required('zone'));
+
+  // build option string for states
+  $options = '';
+  foreach ($zones['#options'] as $key => $value) {
+    $options .= $key . '|' . $value . "\n";
+  }
+
+  $billing_state = array();
+  $billing_state['nid'] = $nid;
+  $billing_state['pid'] = $pid;
+  $billing_state['form_key'] = 'state';
+  $billing_state['name'] = 'State/Province';
+  $billing_state['type'] = 'select';
+  $billing_state['extra'] = array(
+    'description' => '',
+    'items' => $options,
+    'multiple' => 0,
+    'aslist' => 'Y',
+  );
+  $billing_state['mandatory'] = 1;
+  $billing_state['weight'] = 7;
+  $billing_state['email'] = 1;
+  $billing_state['maps_to'] = 'profile_state';
+
+  $id = webform_component_insert($billing_state);
+  $components[$id] = $billing_state;
+
+  // zip code
+  $billing_zipcode = array();
+  $billing_zipcode['nid'] = $nid;
+  $billing_zipcode['pid'] = $pid;
+  $billing_zipcode['form_key'] = 'zip';
+  $billing_zipcode['name'] = 'ZIP/Postal Code';
+  $billing_zipcode['type'] = 'textfield';
+  $billing_zipcode['extra'] = array(
+    'description' => '',
+    'width' => 10,
+    'maxlength' => 5,
+  );
+  $billing_zipcode['mandatory'] = 1;
+  $billing_zipcode['weight'] = 8;
+  $billing_zipcode['email'] = 1;
+  $billing_zipcode['maps_to'] = 'profile_zip';
+
+  $id = webform_component_insert($billing_zipcode);
+  $components[$id] = $billing_zipcode;
+
+  // credit card information
+  $credit_card_information = array();
+  $credit_card_information['nid'] = $nid;
+  $credit_card_information['pid'] = 0;
+  $credit_card_information['form_key'] = 'credit_card_information';
+  $credit_card_information['name'] = 'Credit Card Information';
+  $credit_card_information['type'] = 'fieldset';
+  $credit_card_information['extra'] = array(
+    'description' => '',
+  );
+  $credit_card_information['mandatory'] = 0;
+  $credit_card_information['weight'] = 5;
+  $credit_card_information['email'] = 0;
+
+  $pid = webform_component_insert($credit_card_information);
+  $components[$pid] = $credit_card_information;
+
+  // credit card number
+  $card_number = array();
+  $card_number['nid'] = $nid;
+  $card_number['pid'] = $pid;
+  $card_number['form_key'] = 'card_number';
+  $card_number['name'] = 'Card Number';
+  $card_number['type'] = 'textfield';
+  $card_number['extra'] = array(
+    'description' => '',
+    'width' => 20,
+  );
+  $card_number['mandatory'] = 1;
+  $card_number['weight'] = 0;
+  $card_number['email'] = 0;
+
+  $id = webform_component_insert($card_number);
+  $components[$id] = $card_number;
+
+  // expiration month
+  $expiration_month = fundraiser_create_month_field($nid, $pid);
+  $id = webform_component_insert($expiration_month);
+  $components[$id] = $expiration_month;
+
+  // expiration year
+  $expiration_year = fundraiser_create_year_field($nid, $pid);
+  $id = webform_component_insert($expiration_year);
+  $components[$id] = $expiration_year;
+
+  // cvv
+  $card_cvv = array();
+  $card_cvv['nid'] = $nid;
+  $card_cvv['pid'] = $pid;
+  $card_cvv['form_key'] = 'card_cvv';
+  $card_cvv['name'] = 'Card Security Code';
+  $card_cvv['type'] = 'textfield';
+  $card_cvv['extra'] = array(
+    'description' => '',
+    'maxlength' => 4,
+    'width' => 5,
+  );
+  $card_cvv['mandatory'] = 1;
+  $card_cvv['weight'] = 3;
+  $card_cvv['email'] = 0;
+
+  $id = webform_component_insert($card_cvv);
+  $components[$id] = $card_cvv;
+
+  // recurring donation
+  $recurs = array();
+  $recurs['nid'] = $nid;
+  $recurs['pid'] = $pid;
+  $recurs['form_key'] = 'recurs_monthly';
+  $recurs['name'] = 'Recurring Payment';
+  $recurs['type'] = 'select';
+  $recurs['extra'] = array(
+    'description' => 'Selecting "Yes" will cause your credit card to be charged once per month until its expiration date.',
+    'items' => 'recurs|Yes',
+    'multiple' => 'Y',
+  );
+  $recurs['mandatory'] = 0;
+  $recurs['weight'] = 4;
+  $recurs['email'] = 0;
+
+  $id = webform_component_insert($recurs);
+  $components[$id] = $recurs;
+
+  // Invoke hook_fundraiser_create_webform_components
+  //
+  $contrib_components = module_invoke_all('fundraiser_create_webform_components', $nid);
+  foreach ($contrib_components as $component) {
+    $id = webform_component_insert($component);
+    $components[$id] = $component;
+  }
+  return $components;
 }
 
 /**
@@ -409,28 +409,28 @@ function fundraiser_create_webform_components($nid, $donation_amounts, $show_oth
 function fundraiser_create_year_field($nid, $pid) {
   $this_year = date('Y');
   $cc_exp_year_range = variable_get('fundraiser_cc_exp_year_range', 10);
-	$years = $this_year . "\n";
-	for ($i = 1; $i <= $cc_exp_year_range; $i++) {
+  $years = $this_year . "\n";
+  for ($i = 1; $i <= $cc_exp_year_range; $i++) {
     $years .= ($this_year + $i) . "\n";
   }
-	
-	// expiration date
-	$expiration_year = array();
-	$expiration_year['nid'] = $nid;
-	$expiration_year['pid'] = $pid;
-	$expiration_year['form_key'] = 'card_expiration_year';
-	$expiration_year['name'] = 'Expiration Year';
-	$expiration_year['type'] = 'select';
-	$expiration_year['extra'] = array(
-		'description' => '',
-		'items' => $years,
-		'multiple' => 0,
-		'aslist' => 'Y',
+
+  // expiration date
+  $expiration_year = array();
+  $expiration_year['nid'] = $nid;
+  $expiration_year['pid'] = $pid;
+  $expiration_year['form_key'] = 'card_expiration_year';
+  $expiration_year['name'] = 'Expiration Year';
+  $expiration_year['type'] = 'select';
+  $expiration_year['extra'] = array(
+    'description' => '',
+    'items' => $years,
+    'multiple' => 0,
+    'aslist' => 'Y',
   );
-	$expiration_year['mandatory'] = 1;
-	$expiration_year['weight'] = 2;
-	$expiration_year['email'] = 0;
-	return $expiration_year;
+  $expiration_year['mandatory'] = 1;
+  $expiration_year['weight'] = 2;
+  $expiration_year['email'] = 0;
+  return $expiration_year;
 }
 
 /**
@@ -440,33 +440,33 @@ function fundraiser_create_month_field($nid, $pid) {
   // expiration month
   $months = "1|January\n";
   $months .= "2|February\n";
-	$months .= "3|March\n";
-	$months .= "4|April\n";
-	$months .= "5|May\n";
-	$months .= "6|June\n";
-	$months .= "7|July\n";
-	$months .= "8|August\n";
-	$months .= "9|September\n";
-	$months .= "10|October\n";
-	$months .= "11|November\n";
-	$months .= "12|December\n";
-	
-	$expiration_month = array();
-	$expiration_month['nid'] = $nid;
-	$expiration_month['pid'] = $pid;
-	$expiration_month['form_key'] = 'card_expiration_month';
-	$expiration_month['name'] = 'Expiration Month';
-	$expiration_month['type'] = 'select';
-	$expiration_month['extra'] = array(
-		'description' => '',
-		'items' => $months,
-		'multiple' => 0,
-		'aslist' => 'Y',
+  $months .= "3|March\n";
+  $months .= "4|April\n";
+  $months .= "5|May\n";
+  $months .= "6|June\n";
+  $months .= "7|July\n";
+  $months .= "8|August\n";
+  $months .= "9|September\n";
+  $months .= "10|October\n";
+  $months .= "11|November\n";
+  $months .= "12|December\n";
+
+  $expiration_month = array();
+  $expiration_month['nid'] = $nid;
+  $expiration_month['pid'] = $pid;
+  $expiration_month['form_key'] = 'card_expiration_month';
+  $expiration_month['name'] = 'Expiration Month';
+  $expiration_month['type'] = 'select';
+  $expiration_month['extra'] = array(
+    'description' => '',
+    'items' => $months,
+    'multiple' => 0,
+    'aslist' => 'Y',
   );
-	$expiration_month['mandatory'] = 1;
-	$expiration_month['weight'] = 1;
-	$expiration_month['email'] = 0;
-	return $expiration_month;
+  $expiration_month['mandatory'] = 1;
+  $expiration_month['weight'] = 1;
+  $expiration_month['email'] = 0;
+  return $expiration_month;
 }
 
 function fundraiser_required_fields() {
@@ -531,7 +531,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
   else {
     $formatted_amounts =  _fundraiser_create_amount_options($donation_amounts, $node->show_other_amount);
     $field = db_fetch_object(db_query('SELECT cid, type, extra FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid));
-    
+
     // If the current component is a select update with current donation amount values.
     if (!strcmp($field->type, 'select')) {
       $old_value = $node->webform['components'][$field->cid]['value'];
@@ -545,12 +545,13 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       if (isset($current_extra['title_display'])) {
         $extra['title_display'] = $current_extra['title_display'];
       }
-      
+
       $data = serialize($extra);
 
-      // if the original default value of the webform component isn't a valid option we want to update it with defaults.
-      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default.
-      if ($old_value && !in_array($old_value, $donation_amounts)) {
+      // if the original default value of the webform component is numeric and isn't a valid option we want to update it with defaults.
+      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default or %get[amount]
+      // to set the default from the query string.
+      if (is_numeric($old_value) && !in_array($old_value, $donation_amounts)) {
         db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
       }
       else {
@@ -560,7 +561,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       $message = t('The @node_title donation form has been updated.', array('@node_title' => $node->title));
       $result = db_result(db_query('SELECT extra FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
     }
-    
+
     // Since we have donation amounts we need to convert the amount component from textfield to select
     else {
       db_query('DELETE FROM {webform_component} WHERE nid = %d AND form_key = "amount"', $node->nid);
@@ -568,7 +569,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       webform_component_insert($amount['amount']);
     }
   }
-  
+
   $result = db_result(db_query('SELECT 1 FROM {webform_component} WHERE nid = %d AND form_key = "other_amount"', $node->nid));
   if ($node->show_other_amount) {
     // Pre-existing entry in the DB for this form component and it's still enabled so we update.
@@ -581,7 +582,7 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
       db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid=%d AND form_key = 'other_amount'", serialize($extra), $node->nid);
       $message .= t('Other donation amount options have been updated.');
     }
-    
+
     // Other amount has been enabled so we need to add the component data to the DB.
     else {
       _fundraiser_insert_other_amount_component($node->nid, $pid, $node->minimum_donation_amount);
@@ -738,10 +739,10 @@ function _fundraiser_update_profile_location($submission, $update_user = NULL) {
   // get the ids of the country and state webform components for node
   $country_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'country'", $submission->nid));
   $state_cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE nid = %d AND form_key = 'state'", $submission->nid));
-  
+
   $country_code = $submission->data[$country_cid]['value'][0];
   $state_code = $submission->data[$state_cid]['value'][0];
-  
+
   if ($fids['country']) {
     $country_name = db_result(db_query('SELECT country_iso_code_2 FROM {uc_countries} WHERE country_id = %d', $country_code));
     $has_country = db_result(db_query('SELECT 1 FROM {profile_values} WHERE uid = %d AND fid = %d', $update_user->uid, $fids['country']));
