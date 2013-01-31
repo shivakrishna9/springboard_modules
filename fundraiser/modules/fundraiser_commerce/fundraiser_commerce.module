@@ -64,12 +64,6 @@ function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form
       'directory is set, you should not change it.', array('!url' => 'http://drupal.org/node/1309226')),
     '#default_value' => variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.')),
   );
-  $form['fundraiser_commerce']['fundraiser_commerce_encryption_iv'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Encryption seed'),
-    '#description' => t('The seed (aka IV) needs to be 16 characters long.'),
-    '#default_value' => variable_get('fundraiser_commerce_encryption_iv', '0000000000000000'),
-  );
 }
 
 /**
@@ -466,11 +460,13 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   }
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
   if (!empty($order->data)) {
-    $data = unserialize(_fundraiser_commerce_decrypt($order->data));
+    $data = _fundraiser_commerce_decrypt($order->data);
+    $data = unserialize($data);
     $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : array();
     $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();
     $donation->data = $data;
   }
+drupal_set_message(print_r($donation,1));
 }
 
 /**
@@ -1119,28 +1115,6 @@ function _fundraiser_commerce_get_charged_by_status($status) {
   return TRUE;
 }
 
-
-/**
- * Helper function, get the key from the file. This key is not set via admin pages.
- */
-function _fundraiser_commerce_get_encrypt_key() {
-  $key = '';
-  $key_setting = variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
-  if ($key_setting != t('Not configured, see below.')) {
-    $path = $key_setting . '/commerce.key';
-    if (is_file($path) && is_readable($path)) {
-      $key = file_get_contents($path);
-    }
-    else {
-      drupal_set_message(t('No encryption file found or readable set for Fundraiser Commerce.'), 'error');
-    }
-  }
-  else {
-    drupal_set_message(t('No encryption path set for Fundraiser Commerce. Please set one.'), 'error');
-  }
-  return $key;
-}
-
 /**
  * Helper function, Encrypt an input string (128 bit AES) using the specified key and initialization vector.
  *
@@ -1155,7 +1129,8 @@ function _fundraiser_commerce_encrypt($input) {
   // Check settings.
   $key = _fundraiser_commerce_get_encrypt_key();
   if (!empty($key)) {
-    $iv = variable_get('fundraiser_commerce_encryption_iv', '0000000000000000');
+    // Get an IV for this encryption, IV's are unique to the cipher.
+    $iv = _fundraiser_commerce_generate_encryption_iv();
     // Handle encryption.
     $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
     $input = _fundraiser_commerce_pkcs5_pad($input, $size);
@@ -1164,11 +1139,16 @@ function _fundraiser_commerce_encrypt($input) {
     $cipher = mcrypt_generic($descriptor, $input);
     mcrypt_generic_deinit($descriptor);
     mcrypt_module_close($descriptor);
+    // Prepare for DB storage.
     $cipher = base64_encode($cipher);
-    $cipher = urlencode($cipher);
-    return $cipher;
+    $iv = base64_encode($iv);
+    return array(
+      'cipher' => $cipher,
+      'iv' => $iv,
+      'success' => TRUE,
+    );
   }
-  return $input;
+  return array('cipher' => $input, 'success' => FALSE);
 }
 
 /**
@@ -1184,10 +1164,11 @@ function _fundraiser_commerce_encrypt($input) {
 function _fundraiser_commerce_decrypt($cipher) {
   // Check settings.
   $key = _fundraiser_commerce_get_encrypt_key();
-  if (!empty($key)) {
-    $iv = variable_get('fundraiser_commerce_encryption_iv', '0000000000000000');
+  if ($cipher['success'] == TRUE && !empty($key)) {
+    $iv = $cipher['iv'];
+    $iv = base64_decode($iv);
     // Handle encryption.
-    $cipher = base64_decode($cipher);
+    $cipher = base64_decode($cipher['cipher']);
     $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
     mcrypt_generic_init($descriptor, $key, $iv);
     $decrypted_data = mdecrypt_generic($descriptor, $cipher);
@@ -1198,9 +1179,8 @@ function _fundraiser_commerce_decrypt($cipher) {
     $decrypted_data = rtrim($decrypted_data);
     return $decrypted_data;
   }
-  return $cipher;
+  return $cipher['cipher'];
 }
-
 
 /**
  * Helper function, for padding text to PKCS5 specification.
@@ -1211,7 +1191,11 @@ function _fundraiser_commerce_decrypt($cipher) {
  *   The size of the PKCS5 blocksize to use.
  */
 function _fundraiser_commerce_pkcs5_pad($text, $blocksize) {
+  // Use the pad character to tell unpad how long the pad is.
   $pad = $blocksize - (drupal_strlen($text) % $blocksize);
+  //if ($pad == 0) {
+  //  $pad = $blocksize; // Make sure we add something to avoid the edge case.
+  //}
   return $text . str_repeat(chr($pad), $pad);
 }
 
@@ -1222,10 +1206,43 @@ function _fundraiser_commerce_pkcs5_pad($text, $blocksize) {
  *   The text to unpad.
  */
 function _fundraiser_commerce_pkcs5_unpad($text) {
+  // Grab the end of the string for the pad length to remove.
   $pad = ord($text{strlen($text) -1});
   if ($pad > drupal_strlen($text)) {
     return FALSE;
   }
   return drupal_substr($text, 0, -1 * $pad);
+}
+
+/**
+ * Helper function, get the key from the file. This key is not set via admin pages.
+ */
+function _fundraiser_commerce_get_encrypt_key() {
+  $key = '';
+  $key_setting = variable_get('fundraiser_commerce_encryption_path', t('Not configured, see below.'));
+  if ($key_setting != t('Not configured, see below.')) {
+    $path = $key_setting . '/commerce.key';
+    if (is_file($path) && is_readable($path)) {
+      $key = file_get_contents($path);
+    }
+    else {
+      drupal_set_message(t('No encryption file found or readable set for Fundraiser Commerce.'), 'error');
+      watchdog('fundraiser_commerce', 'No encryption file found or readable set for Fundraiser Commerce.');
+    }
+  }
+  else {
+    drupal_set_message(t('No encryption path set for Fundraiser Commerce. Please set one.'), 'error');
+    watchdog('fundraiser_commerce', 'No encryption path set for Fundraiser Commerce. Please set one.');
+  }
+  return $key;
+}
+
+/**
+ * Helper function, generate a new IV.
+ */
+function _fundraiser_commerce_generate_encryption_iv() {
+  $size = mcrypt_get_iv_size(MCRYPT_CAST_256, MCRYPT_MODE_CFB);
+  $iv = mcrypt_create_iv($size, MCRYPT_DEV_RANDOM);
+  return $iv;
 }
 

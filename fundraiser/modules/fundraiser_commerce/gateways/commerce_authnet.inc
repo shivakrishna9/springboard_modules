@@ -186,7 +186,7 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
       $donation->donation['payment_fields']['credit']['card_number'], -4);
   }
   if (isset($donation->donation['payment_fields']['credit']['card_cvv'])) {
-    unset($donation->donation['payment_fields']['credit']['card_cvv']);
+    $donation->donation['payment_fields']['credit']['card_cvv'] = '';
   }
   return $result;
 }
