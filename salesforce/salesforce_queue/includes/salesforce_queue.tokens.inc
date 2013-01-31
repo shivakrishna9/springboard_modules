@@ -51,7 +51,7 @@ class SalesforceQueueTokenScanner {
 
     // If we've got tokens, replace them.
     if (!empty($tokens)) {
-      $object = $this->tokenReplace($object, $tokens);
+      $this->tokenReplace($object, $tokens);
     }
   }
 
@@ -64,18 +64,17 @@ class SalesforceQueueTokenScanner {
    * @param array $tokens
    *   An array of tokenized fields.
    */
-  protected function tokenReplace(&$object, $tokens) {
-    // Use the $this->queue->processedItems() array for replacements.
+  public function tokenReplace(&$object, $tokens) {
     foreach ($tokens as $field => $token) {
       if ($value = $this->getTokenValueFromCache($token)) {
-        $object[$field] = $value;
+        $object->fields[$field] = $value;
       }
       else if ($value = $this->getTokenValueFromDB($token)) {
-        $object[$field] = $value;
+        $object->fields[$field] = $value;
       }
       else {
         // What do we do here? No token found, bummer! This will cause the object to fail.
-        $object[$field] = $token;
+        $object->fields[$field] = $token;
       }
     }
   }
@@ -87,7 +86,16 @@ class SalesforceQueueTokenScanner {
    *   The token to replace.
    */
   protected function getTokenValueFromCache($token) {
-    // TODO: Implement function, look in $this->tokenValueCache.
+    // Split token into something useful for cache lookup
+    $token = $this->splitToken($token);
+    // TODO: Optimize this! isset() perhaps?
+    if (array_key_exists($token['sf_type'], $this->tokenValueCache)
+      && array_key_exists($token['drupal_type'], $this->tokenValueCache[$token['sf_type']])
+      && array_key_exists($token['drupal_id'], $this->tokenValueCache[$token['sf_type']][$token['drupal_type']])) {
+
+      return $this->tokenValueCache[$token['sf_type']][$token['drupal_type']][$token['drupal_id']];
+    }
+
     return FALSE;
   }
 
@@ -98,8 +106,38 @@ class SalesforceQueueTokenScanner {
    *   The token to replace.
    */
   protected function getTokenValueFromDB($token) {
-    // TODO: Implement function
-    return FALSE;
+    // Split token into something useful for database lookup
+    $token = $this->splitToken($token);
+
+    // Look for Id in object mapping db2_tables(connection)
+    $sfid = db_select('salesforce_genmap_record_map', 'm')
+      ->fields('m', array('sfid'))
+      ->condition('salesforce_type', $token['sf_type'])
+      ->condition('module', $token['drupal_type'])
+      ->condition('drupal_id', $token['drupal_id'])
+      ->execute()
+      ->fetchField();
+
+    return !empty($sfid) ? $sfid : FALSE;
+  }
+
+  /**
+   * Splits a token into it's 3 respective parts.
+   *
+   * @param string $token
+   *   The token to split.
+   */
+  public function splitToken($token) {
+    // Remove [ and ]
+    $token = substr($token, 1, -1);
+    $token_pieces = explode(':', $token);
+
+    // Convert to something more friendly
+    return array(
+      'sf_type' => $token_pieces[0],
+      'drupal_type' => $token_pieces[1],
+      'drupal_id' => $token_pieces[2],
+    );
   }
 
   /**
@@ -114,8 +152,6 @@ class SalesforceQueueTokenScanner {
       ([^\s\[\]:]*)  # match salesforce type not containing whitespace : [ or ]
       :              # : - separator
       ([^\s\[\]:]*)  # match module not containing whitespace : [ or ]
-      :              # : - separator
-      ([^\s\[\]:]*)   # match delta not containing whitespace : [ or ]
       :              # : - separator
       ([^\s\[\]:]*)   # match module not containing whitespace : [ or ]
       \]             # ] - pattern end

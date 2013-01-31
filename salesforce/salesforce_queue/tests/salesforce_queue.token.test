@@ -27,13 +27,35 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
       'salesforce',
       'salesforce_soap',
       'salesforce_queue',
+      'salesforce_genmap'
     );
     parent::setUp($modules);
+
+    $this->createObjectMapRecords();
   }
 
-  public function testTokenParser() {
-    $tokenValueCache = array();
+  public function testTokenSyntax() {
+    $tokenScanner = new SalesforceQueueTokenScanner(NULL);
+    $object = new stdClass();
+    $object->fields = array(
+      'FirstName' => 'John',
+      'LastName' => 'Doe',
+      'AccountId' => '[Account:User:1]',
+    );
 
+    // Finds valid token
+    $tokens = $tokenScanner->findTokens($object);
+    $this->assertEqual(1, count($tokens), 'Valid token detected');
+
+    // Does not find invalid token
+    $object->fields['AccountId'] = '[Account:1]';
+    $tokens = $tokenScanner->findTokens($object);
+    $this->assertEqual(0, count($tokens), 'Invalid token not detected');
+  }
+
+  public function testTokenReplacementFromCache() {
+    // Create a mock token value cache
+    $tokenValueCache = $this->getTokenValueCache();
     $tokenScanner = new SalesforceQueueTokenScanner($tokenValueCache);
 
     // Create an array of valid tokens.
@@ -41,34 +63,173 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
     $object->fields = array(
       'FirstName' => 'John',
       'LastName' => 'Doe',
-      'AccountId' => '[Account:User:User:1]',
+      'AccountId' => '[Account:User:1]',
     );
 
     $tokens = $tokenScanner->findTokens($object);
-    $this->assertEqual(1, count($tokens), 'Token found in object fields.');
 
-    // Create an array of invalid tokens.
+    // Token replacement via cache
+    $tokenScanner->tokenReplace($object, $tokens);
+    $this->assertEqual('003400000109WfQAAU', $object->fields['AccountId'], 'Token replaced from cache');
+  }
+
+  public function testTokenReplacementFromDb() {
+    // Create a mock token value cache
+    $tokenValueCache = $this->getTokenValueCache();
+    $tokenScanner = new SalesforceQueueTokenScanner($tokenValueCache);
+
+    // Create an array of valid tokens.
+    $object = new stdClass();
+    $object->fields = array(
+      'FirstName' => 'John',
+      'LastName' => 'Doe',
+      'ContactId' => '[Contact:User:500]',
+    );
+
+    $tokens = $tokenScanner->findTokens($object);
+
+    // Token replacement via cache
+    $tokenScanner->tokenReplace($object, $tokens);
+    $this->assertEqual('003400000109WfQAAP', $object->fields['ContactId'], 'Token replaced from database');
+  }
+
+  public function testTokenReplacementMiss() {
+    // Create a mock token value cache
+    $tokenValueCache = $this->getTokenValueCache();
+    $tokenScanner = new SalesforceQueueTokenScanner($tokenValueCache);
+
+    // Create an array of valid tokens.
+    $object = new stdClass();
+    $object->fields = array(
+      'FirstName' => 'John',
+      'LastName' => 'Doe',
+      'ContactId' => '[Contact:User:400]',
+    );
+
+    $tokens = $tokenScanner->findTokens($object);
+
+    $tokenScanner->tokenReplace($object, $tokens);
+    $this->assertEqual('[Contact:User:400]', $object->fields['ContactId'], 'Token miss not replaced');
+  }
+
+  public function testBatchTokenReplacement() {
+    // Create a mock token value cache
+    $tokenValueCache = $this->getTokenValueCache();
+    $tokenScanner = new SalesforceQueueTokenScanner($tokenValueCache);
+    $batch = array();
+
+    // Create 200 sample objects
+    $objects = array();
+    for ($i = 0; $i < 200; $i++) {
+      $object = new stdClass();
+      $object->fields = array(
+        'FirstName' => 'John',
+        'LastName' => 'Doe',
+        'ContactId' => '[Contact:User:101]',
+      );
+      $objects[$i] = $object;
+    }
+
+    $batch['sobjects'] = $objects;
+
+       // Pick out a random object and make sure the token was replaced
+    $index = rand(0, 199);
+
+    //debug($batch['sobjects'][$index]);
+
+
+
+    $tokenScanner->batchTokenReplace($batch);
+
+
+    $this->assertEqual('003400000109WfQAAU', $batch['sobjects'][$index]->fields['ContactId'], 'Batch tokens replaced');
+  }
+
+  protected function createObjectMapRecords() {
+    $tokens = $this->getTokenValueCache();
+
+    foreach ($tokens as $sf_type => $drupal_type) {
+      foreach ($drupal_type as $drupal_id => $sfid) {
+        $record = array(
+          'sfid' => $sfid,
+          'module' => $drupal_type,
+          'delta' => NULL,
+          'drupal_id' => $drupal_id,
+          'salesforce_type' => $sf_type,
+        );
+
+        drupal_write_record('salesforce_genmap_record_map', $record);
+
+        // Insert some records that will not be in the cache
+        $record = array(
+          'sfid' => '003400000109WfQAAP',
+          'module' => 'User',
+          'delta' => NULL,
+          'drupal_id' => 500,
+          'salesforce_type' => 'Contact',
+        );
+
+        drupal_write_record('salesforce_genmap_record_map', $record);
+      }
+    }
   }
 
   /**
    * Returns an array of token replacement values for testing.
    */
   protected function getTokenValueCache() {
+    $sf_types = array('Contact', 'Account', 'Opportunity', 'Action__c');
+    $drupal_types = array('User', 'Contact', 'Donation', 'Webform_submission');
+    $token_cache = array();
+
+    foreach ($sf_types as $sf_type) {
+      $token_cache[$sf_type] = array();
+      foreach ($drupal_types as $drupal_type) {
+        $token_cache[$sf_type][$drupal_type] = array();
+        for ($i = 1; $i < 100; $i++) {
+          $token_cache[$sf_type][$drupal_type][$i] = '003400000109WfQAAU';
+        }
+      }
+    }
+
+    return $token_cache;
+    /*
     return array(
       'Contact' => array(
-        'salesforce_webform-106-42' => '003400000109WfQAAU',
-        'User-User-1' => '003400000109WfQABU',
+        'User' => array(
+          '1' => '003400000109WfQAAU',
+          '2' => '003400000109WfQABU',
+          '3' => '003400000109WfQACU',
+          '4' => '003400000109WfQADU',
+        ),
+        'Contact' => array(
+          '5' => '003400000109WfQAEU',
+          '10' => '003400000109WfQAFU',
+        ),
       ),
       'Account' => array(
-        'User-User-1' => '003400000109WfQACU',
+        'User' => array(
+          '1' => '003400000109WfQAAU',
+          '2' => '003400000109WfQABU',
+        ),
       ),
       'Opportunity' => array(
-        'Donation-100-23' => '003400000109WfQADU',
+        'Donation' => array(
+          '343' => '003400000109WfQABU',
+          '423' => '003400000109WfQABU',
+          '500' => '003400000109WfQABU',
+        ),
       ),
       'Action__c' => array(
-
+        'webform_submission' => array(
+          '1' => '',
+          '2532' => '',
+          '34' => '',
+          '2'=> '',
+        ),
       ),
     );
+    */
   }
 
 }
