@@ -2,4 +2,4 @@ name = Springboard Version
 description = Tracks Springboard module dependancies against installed Springboard
 package = Jackson River Springboard
 core = 6.x
-version = 6.x-1.0
+version = 6.x-3.3

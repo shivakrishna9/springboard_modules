@@ -1,3 +1,5 @@
+;This module always matches the releaase number of Springboard
+springboard_version = 6.x-3.3
 ;Springboard modules
 capwiz = 6.x-3.3
 capwiz_connect = 6.x-3.3
@@ -45,7 +47,6 @@ springboard = 6.x-3.3
 springboard_api = 6.x-3.3
 springboard_compliance = 6.x-3.3
 springboard_social = 6.x-3.3
-springboard_version = 6.x-1.0
 springboard_views = 6.x-3.3
 sustainer_upsell = 6.x-3.3
 webform_addtoall = 6.x-3.3
