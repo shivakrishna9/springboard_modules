@@ -2216,6 +2216,9 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
   $order = uc_order_load($last_order_id);
   $gateway = db_result(db_query("SELECT gateway FROM {fundraiser_recurring} WHERE order_id = %d", $last_order_id));
 
+  // Get the form URL from the last order (for the fundraiser_recurring table).
+  $form_url = !empty($order->products[0]->nid) ? _fundraiser_donation_form_path($order->products[0]->nid) : '';
+
   // Build $exp_date as a timestamp. Use day, hour, minute and second from
   // $last_charge_date.
   $exp_date = getdate($last_charge_date);
@@ -2225,7 +2228,7 @@ function fundraiser_extend_future_orders($master_order_id, $exp_month, $exp_year
   $charge_date = $last_charge_date;
   while (($charge_date = strtotime("+1 month", $charge_date)) <= $exp_date_ts) {
     $new_order_id = fundraiser_clone_order($order);
-    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway) VALUES (%d, %d, '%s', '%s')", $master_order_id, $new_order_id, $charge_date, $gateway);
+    db_query("INSERT INTO {fundraiser_recurring} (master_order_id, order_id, next_charge, gateway, form_url) VALUES (%d, %d, '%s', '%s', '%s')", $master_order_id, $new_order_id, $charge_date, $gateway, $form_url);
     uc_order_comment_save($new_order_id, 0, t('Payment will be processed on !date.', array('!date' => date('n/j/Y', $charge_date))), 'admin');
     // Add these new orders to the queue.
     if (module_exists('sf_donation') && module_exists('queue_api')) {
