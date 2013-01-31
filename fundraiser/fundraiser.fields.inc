@@ -548,9 +548,10 @@ function _fundraiser_update_amount_webform_component($node, $donation_amounts = 
 
       $data = serialize($extra);
 
-      // if the original default value of the webform component isn't a valid option we want to update it with defaults.
-      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default.
-      if ($old_value && !in_array($old_value, $donation_amounts)) {
+      // if the original default value of the webform component is numeric and isn't a valid option we want to update it with defaults.
+      // Otherwise ignore it since clients may customize this. A common example is setting it to 0 or NULL for no default or %get[amount]
+      // to set the default from the query string.
+      if (is_numeric($old_value) && !in_array($old_value, $donation_amounts)) {
         db_query("UPDATE {webform_component} SET extra = '%s', value = %d WHERE nid = %d AND form_key = 'amount'", $data, $value, $node->nid);
       }
       else {

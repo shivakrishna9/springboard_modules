@@ -1,3 +1,19 @@
+2013-01-24 Ben Clark <benjamin.clark@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_extend_future_orders): Refactoring fundraiser_extend_future_orders()
+      to properly extend future orders and not create orders in the past.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+    * fundraiser.sustainer.forms.inc (fundraiser_billing_update_form_validate): Adding validation to
+      ensure the expiration date is at least next month.
+      See https://github.com/JacksonRiver/springboard_modules/pull/213.
+
+2013-01-16 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.fields.inc (_fundraiser_update_amount_webform_component): altered test so ask amount component defaults
+        are only overwritten if they are numeric and not in the array of valid ask amounts. This change prevents
+        webform tokens or other nonstandard custom default values from being overwritten whenever the node is saved.
+
+
 2013-01-08 Jeremy Isett <jeremy.isett@jacksonriver.com>
 
     * fundraiser.sustainer.inc (_fundraiser_expand_date): Setting day field to hidden value
