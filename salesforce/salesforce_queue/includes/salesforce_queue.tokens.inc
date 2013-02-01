@@ -18,10 +18,20 @@ class SalesforceQueueTokenScanner {
   protected $tokenValueCache;
 
   /**
+   * Setter for tokenValueCache property.
+   *
+   * @param array $tokenValueCache
+   *   An array of Salesforce ids to use for token replacement.
+   */
+  public function setTokenValueCache($tokenValueCache) {
+    $this->tokenValueCache = $tokenValueCache;
+  }
+
+  /**
    * Construct the object.
    *
    * @param array $tokenValueCache
-   *   Any array of Salesforce ids to use for token replacement.
+   *   An array of Salesforce ids to use for token replacement.
    */
   public function __construct($tokenValueCache) {
     $this->tokenValueCache = $tokenValueCache;
@@ -66,7 +76,8 @@ class SalesforceQueueTokenScanner {
    */
   public function tokenReplace(&$object, $tokens) {
     foreach ($tokens as $field => $token) {
-      if ($value = $this->getTokenValueFromCache($token)) {
+      // If the token cache is populated, attempt to get value from cache
+      if ($this->cachePopulated() && $value = $this->getTokenValueFromCache($token)) {
         $object->fields[$field] = $value;
       }
       else if ($value = $this->getTokenValueFromDB($token)) {
@@ -158,5 +169,8 @@ class SalesforceQueueTokenScanner {
       /x', $object->fields);
   }
 
+  private function cachePopulated() {
+    return !empty($this->tokenValueCache);
+  }
 
 }
