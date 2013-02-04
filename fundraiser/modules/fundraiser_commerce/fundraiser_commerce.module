@@ -483,8 +483,8 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
    * So for our needs, we need to make out own user and add him to the donation on a success.
    */
   // Check by email, see if this account is already in existance.
-  $new_user = user_load(array('mail' => $donation->donation['mail']));
-  if (!$new_user) {
+  $user = user_load(array('mail' => $donation->donation['mail']));
+  if (!$user) {
     // If not, create a new user account, and add it to the donation.
     $fields = array(
       'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
@@ -494,14 +494,13 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
       'roles' => array(),
       'status' => 1,
     );
-    $new_user = user_save('', $fields);
+    $user = user_save('', $fields);
   }
   // Set the new information on the donation.
-  $donation->user = $new_user;
-  $donation->uid = $new_user->uid;
-  // Set the given user for order creation.
-  $user = $new_user;
+  $donation->user = $user;
+  $donation->uid = $user->uid;
 
+  // Set the node.
   $node = $donation->node;
   // Pick out the values we need to generate an order.
   if ($donation->donation['amount'] == 'other') {
