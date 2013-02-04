@@ -474,6 +474,37 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
 function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Get basic information from the donation node.
   $user = $donation->user;
+
+  /**
+   * Commerce checkout is usually what creates an account.
+   * If we don't have that turned on (and there's no other reason to)
+   * Then WE are responsible for linking the user id to the correct submitted account.
+   * If commerce_checkout is enabled, then:
+   * Creating the new user comes as part of the checkout rules.
+   * Which is set to the end of the checkout process, and sets the order->uid to the new account.
+   * And is triggered on form submission of the checkout panel. This means: It doesn't get run.
+   * So for our needs, we need to make out own user and add him to the donation on a success.
+   */
+  // Check by email, see if this account is already in existance.
+  $new_user = user_load(array('mail' => $donation->donation['mail']));
+  if (!$new_user) {
+    // If not, create a new user account, and add it to the donation.
+    $fields = array(
+      'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
+      'mail' => $donation->donation['mail'],
+      'init' => $donation->donation['mail'],
+      'pass' => user_password(12),
+      'roles' => array(),
+      'status' => 1,
+    );
+    $new_user = user_save('', $fields);
+  }
+  // Set the new information on the donation.
+  $donation->user = $new_user;
+  $donation->uid = $new_user->uid;
+  // Set the given user for order creation.
+  $user = $new_user;
+
   $node = $donation->node;
   // Pick out the values we need to generate an order.
   if ($donation->donation['amount'] == 'other') {
@@ -613,37 +644,6 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   );
   // Encrypt it for storage.
   $order->data = _fundraiser_commerce_encrypt(serialize($order->data));
-  /**
-   * Commerce checkout is usually what creates an account.
-   * If we don't have that turned on (and there's no other reason to)
-   * Then WE are responsible for linking the user id to the correct submitted account.
-   * If commerce_checkout is enabled, check to see if we found and created an account.
-   * Creating the new user comes as part of the checkout rules.
-   * Which is set to the end of the checkout process, and sets the order->uid to the new account.
-   * And is triggered on form submission of the checkout panel. This means: It doesn't get run.
-   * So for this pattern, we need to make out own user and add him to the donation on a success.
-   */
-  if ($result['success'] == TRUE) {
-    // Check by email, see if this account is already in existance.
-    $new_user = user_load(array('mail' => $donation->donation['mail']));
-    if (!$new_user) {
-      // If not, create a new user account, and add it to the donation.
-      $fields = array(
-        'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
-        'mail' => $donation->donation['mail'],
-        'init' => $donation->donation['mail'],
-        'pass' => user_password(12),
-        'roles' => array(),
-        'status' => 1,
-      );
-      $new_user = user_save('', $fields);
-    }
-    // Set the new information on the donation.
-    $donation->user = $new_user;
-    $donation->uid = $new_user->uid;
-    // Set the new information on the order.
-    $order->uid = $new_user->uid;
-  }
   // Save the order again to update its line item reference field and user.
   commerce_order_save($order);
   // If no result then presume a failure or no hook installed for this gateway type.
