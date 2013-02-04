@@ -484,7 +484,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
    */
   // Check by email, see if this account is already in existance.
   $user = user_load(array('mail' => $donation->donation['mail']));
-  if (!$user) {
+  if (empty($user->uid)) {
     // If not, create a new user account, and add it to the donation.
     $fields = array(
       'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
@@ -1040,7 +1040,7 @@ function _fundraiser_commerce_email_to_username($email) {
   $name = preg_replace('/[^A-Za-z0-9_.-]/', '', $name);
   $name = trim(substr($name, 0, USERNAME_MAX_LENGTH - 4));
   // Make sure we don't hand out a duplicate username.
-  while (db_query("SELECT COUNT(uid) FROM {users} WHERE name LIKE :name", array(':name' => $name))->fetchField() > 0) {
+  while (db_query('SELECT COUNT(uid) FROM {users} WHERE name LIKE :name', array(':name' => $name))->fetchField() > 0) {
     if (strlen($name) == USERNAME_MAX_LENGTH) {
       $name = substr($name, 0, USERNAME_MAX_LENGTH - 4);
     }
