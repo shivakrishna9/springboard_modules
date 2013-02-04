@@ -482,8 +482,9 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
    * And is triggered on form submission of the checkout panel. This means: It doesn't get run.
    * So for our needs, we need to make out own user and add him to the donation on a success.
    */
+
   // Check by email, see if this account is already in existance.
-  $user = user_load(array('mail' => $donation->donation['mail']));
+  $user = user_load_by_mail( $donation->donation['mail'] );
   if (empty($user->uid)) {
     // If not, create a new user account, and add it to the donation.
     $fields = array(
