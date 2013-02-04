@@ -577,6 +577,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order->data = _fundraiser_commerce_encrypt(serialize($order->data));
 
   // Save the order.
+  $order->uid = $user->uid; // Make sure we have the right user. The one we want.
   commerce_order_save($order);
 
   // Set the order id to the donation to carry forward.
