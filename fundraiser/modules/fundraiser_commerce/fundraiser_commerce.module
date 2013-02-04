@@ -472,9 +472,6 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
  * Implements hook_fundraiser_donation_create().
  */
 function fundraiser_commerce_fundraiser_donation_create($donation) {
-  // Get basic information from the donation node.
-  $user = $donation->user;
-
   /**
    * Commerce checkout is usually what creates an account.
    * If we don't have that turned on (and there's no other reason to)
