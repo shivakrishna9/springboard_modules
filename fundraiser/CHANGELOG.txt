@@ -1,3 +1,8 @@
+2013-02-05 Allen Freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser.module (fundraiser_form): changed input type form key from "filter" to "format". WYSIWYG
+      expects the "format" key and will not attach to the body textarea if it's named something else.
+
 2013-01-24 Ben Clark <benjamin.clark@jacksonriver.com>
 
     * fundraiser.module (fundraiser_extend_future_orders): Refactoring fundraiser_extend_future_orders()
