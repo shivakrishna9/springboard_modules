@@ -68,6 +68,32 @@ function fundraiser_webform_webform_confirmations_token_replace_alter(&$tokens, 
 }
 
 /**
+ * Implements hook_confirmation_page_tokens().
+ *
+ * 
+ */
+function fundraiser_webform_confirmation_page_tokens($node_type) {
+  static $token_list = array();
+  if (!count($token_list)) {
+    if (fundraiser_is_donation_type($node_type)) {
+      $tokens = _token_build_tree('donation', array('depth' => 2));
+      foreach ($tokens as $key => $value) {
+        if (isset($value['children'])) {
+          foreach ($value['children'] as $child_key => $child_value) {
+            $type = $value['type'] == 'user' ? 'Donating User' : 'Fundraiser Node';  
+            $token_list[$type][$child_key] = $child_value['name'] . ' -- ' . $child_value['description'];
+          }
+        }
+        else {
+          $token_list['donation'][$key] = $value['name'];
+        }
+      }
+    }
+  }
+  return $token_list;
+}
+
+/**
  * Implements fundraiser_donation_information_table_alter().
  */
 function fundraiser_webform_fundraiser_donation_information_table_alter(&$variables, $donation) {
