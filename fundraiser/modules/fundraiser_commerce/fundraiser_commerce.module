@@ -570,12 +570,12 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $method_instance = commerce_payment_method_instance_load($donation->gateway);
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   $scrubbed_fields = module_invoke($method_instance['module'], 'fundraiser_commerce_scrub_payment_fields', $method_instance, $donation->donation['payment_fields']);
-  $order->data = $donation->data = array(
+  $donation->data = array(
     'payment_method' => $donation->donation['payment_method'],
     'payment_fields' => $scrubbed_fields,
     'gateway_data' => '',
   );
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($order->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
 
   // Save the order.
   $order->uid = $user->uid; // Make sure we have the right user. The one we want.
@@ -635,13 +635,13 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   $order = commerce_order_load($donation->did);
   // NOTE: The gateway is responsible for scrubbing sensitive data from the payment fields.
   // Also, let's save some critical information to the order object so we can make use of it later.
-  $order->data = $donation->data = array(
+  $donation->data = array(
     'payment_method' => $donation->donation['payment_method'],
     'payment_fields' => module_invoke($method_instance['module'], 'fundraiser_commerce_scrub_payment_fields', $method_instance, $donation->donation['payment_fields']),
     'gateway_data' => isset($result->data) ? $result->data : '',
   );
   // Encrypt it for storage.
-  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($order->data));
+  $order->data['fundraiser_commerce'] = _fundraiser_commerce_encrypt(serialize($donation->data));
   // Save the order again to update its line item reference field and user.
   commerce_order_save($order);
   // If no result then presume a failure or no hook installed for this gateway type.
