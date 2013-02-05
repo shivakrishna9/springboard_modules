@@ -457,7 +457,8 @@ function fundraiser_form($node, $edit = NULL) {
     '#weight' => -4.98,
     '#required' => FALSE,
   );
-  $form['body_filter']['filter'] = filter_form($node->format);
+  // "format" key is required for WYSIWYG compatibility
+  $form['body_filter']['format'] = filter_form($node->format);
 
   return $form;
 }
