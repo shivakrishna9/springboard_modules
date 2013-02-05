@@ -14,9 +14,9 @@ function webform_token_selector_menu() {
     'page arguments' => array(2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-	);
+  );
 
-	return $items;
+  return $items;
 }
 
 
@@ -32,7 +32,6 @@ function webform_token_selector_theme() {
     ),
   );
 }
-
 
 
 /**
@@ -67,7 +66,7 @@ function webform_token_selector_token_list($nid) {
   $webform_tokens = array();
 
   // make sure we have a node
-  if ($node) {
+  if (isset($node->type)) {
     $all_tokens['webform'] = array();
 
     // 3rd party modules (like Fundraiser) use webform components to track sensitive data like
@@ -75,7 +74,7 @@ function webform_token_selector_token_list($nid) {
     // desirable to remove these components from the list of available components.
     $token_blacklist = array();
     drupal_alter('webform_token_selector_blacklist', $token_blacklist);
-
+    
     foreach($node->webform['components'] as $component) {
 
       if ($component['type'] != 'hidden' && $component['type'] != 'fieldset' && !in_array($component['form_key'], $token_blacklist)) {
@@ -87,15 +86,13 @@ function webform_token_selector_token_list($nid) {
         $webform_tokens['webform']['%value[' . implode('][', $parents) . ']'] = $component['name'];
       }
     }
+    // allow other modules to add more tokens
+    $module_tokens = module_invoke_all('confirmation_page_tokens', $node->type);
+    $tokens = array_merge($webform_tokens, $module_tokens);
+    // theme the output
+    $output = theme('confirmation_token_list', array('tokens' => $tokens));
+    print $output;
+    drupal_exit();
   }
-
-  // allow other modules to add more tokens
-  $module_tokens = module_invoke_all('confirmation_page_tokens', $node->type);
-
-  $tokens = array_merge($webform_tokens, $module_tokens);
-  // theme the output
-  $output = theme('confirmation_token_list', array('tokens' => $tokens));
-  print $output;
-  exit(0);
 }
 
