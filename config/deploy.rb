@@ -38,6 +38,6 @@ namespace :deploy do
 
   task :after_deploy do
     cleanup
-  endß
+  end
 
 end
