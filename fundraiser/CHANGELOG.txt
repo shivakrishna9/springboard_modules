@@ -1,3 +1,8 @@
+2013-02-05 Allen freeman <allen.freeman@jacksonriver.com>
+
+    * fundraiser_components.inc (fundraiser_mapping_form): added form elements to display if a webform component is mandatory.
+    * fundraiser.module (theme_fundraiser_mapping_form): altered theme function to support additional "mandatory" column.
+
 2013-02-05 Allen Freeman <allen.freeman@jacksonriver.com>
 
     * fundraiser.module (fundraiser_form): changed input type form key from "filter" to "format". WYSIWYG

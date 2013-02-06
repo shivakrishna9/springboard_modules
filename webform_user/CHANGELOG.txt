@@ -1,5 +1,10 @@
 CHANGELOG
 ---------
+2013-02-05  Allen Freeman  <allen.freeman@jacksonriver.com>
+
+  * webform_user.module (theme_webform_user_mapping_form): added code to support additional "mandatory" column in mapping form display.
+  * webform_user.module (webform_user_mapping_form): added form components to display if a component is mandatory.
+
 2012-12-01  Allen Freeman  <allen.freeman@jacksonriver.com>
 
   * webform_user.module (hook_menu) - changed access callback for user mapping form.

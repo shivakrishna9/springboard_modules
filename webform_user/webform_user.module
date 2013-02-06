@@ -406,6 +406,7 @@ function theme_webform_user_mapping_form($form) {
       if (is_numeric($key)) {
         $row = array();
         $row[] = drupal_render($form['mapping']['cid'][$key]);
+        $row[] = drupal_render($form['mapping']['mandatory'][$key]);
         $row[] = drupal_render($form['mapping']['type'][$key]);
         $rows[] = $row;
       }
@@ -413,9 +414,10 @@ function theme_webform_user_mapping_form($form) {
     $row = array();
     $row[] = drupal_render($form['submit']);
     $row[] = '&nbsp;';
+    $row[] = '&nbsp;';
     $rows[] = $row;
 
-    $header = array("Webform Component", "Profile Field");
+    $header = array("Webform Component", "Mandatory", "Profile Field");
     $output = drupal_render($form['info']);
     $output .= theme('table', $header, $rows, array('id' => 'fundraiser_mapping_form'));
     $output .= drupal_render($form);
@@ -454,7 +456,11 @@ function webform_user_mapping_form($form_state, $node) {
         '#type' => 'item',
         '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
-
+      
+      $form['mapping']['mandatory'][$cid] = array(
+        '#type' => 'item',
+        '#description' => $component['mandatory'] ? '<span class="form-required">*</span>' . t('required') :'',
+      );
       $options = array('' => '--Select One--');
 
       if (module_exists('profile')) {
