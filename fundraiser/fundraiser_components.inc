@@ -33,6 +33,11 @@ function fundraiser_mapping_form($form_state, $node) {
       '#description' => t($component['name'] . " - (" . $component['type'] . ")"),
       );
 
+      $form['mapping']['mandatory'][$cid] = array(
+        '#type' => 'item',
+        '#description' => $component['mandatory'] ? '<span class="form-required" title="This field is required.">*</span>' . t('required') : '',
+      );
+
       $options = array('' => '--Select One--');
 
       if (module_exists('profile')) {
