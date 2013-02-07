@@ -483,19 +483,23 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
    * So for our needs, we need to make out own user and add him to the donation on a success.
    */
 
-  // Check by email, see if this account is already in existance.
-  $user = user_load_by_mail( $donation->donation['mail'] );
-  if (empty($user->uid)) {
-    // If not, create a new user account, and add it to the donation.
-    $fields = array(
-      'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
-      'mail' => $donation->donation['mail'],
-      'init' => $donation->donation['mail'],
-      'pass' => user_password(12),
-      'roles' => array(),
-      'status' => 1,
-    );
-    $user = user_save('', $fields);
+  // Go by the logged in user first, unless user is anon or not set.
+  $user = $donation->user;
+  if ($user->uid < 1) {
+    // Check by email, see if this account is already in existance.
+    $user = user_load_by_mail( $donation->donation['mail'] );
+    if (empty($user->uid)) {
+      // If not, create a new user account, and add it to the donation.
+      $fields = array(
+        'name' => _fundraiser_commerce_email_to_username($donation->donation['mail']),
+        'mail' => $donation->donation['mail'],
+        'init' => $donation->donation['mail'],
+        'pass' => user_password(12),
+        'roles' => array(),
+        'status' => 1,
+      );
+      $user = user_save('', $fields);
+    }
   }
   // Set the new information on the donation.
   $donation->user = $user;
