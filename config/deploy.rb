@@ -1,11 +1,17 @@
 set :domain,  "jacksonriverdev.com"
-set :user,    "admin"
 
 # name this the same thing as the directory on your server
 set :application, "springboard-7.x"
 set :repository, "https://github.com/JacksonRiver/springboard_modules.git"
 
-server "#{domain}", :app, :web, :db, :primary => true
+# add a role for each environment
+role :jrdev, 'jacksonriverdev.com', {
+  :user => 'admin'
+}
+
+role :aspca_varnish, 'aspca-varnish.jacksonriverdev.com', {
+  :user => 'ec2-user'
+}
 
 set :deploy_via, :remote_cache
 set :copy_exclude, [".git", ".DS_Store"]
