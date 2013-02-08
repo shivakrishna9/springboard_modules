@@ -346,7 +346,8 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
     }
   }
 
-  // And lastly, the additional data fields. Information that comes from donation circumstances.
+  // And lastly, the additional data fields. Information that comes from
+  // donation circumstances.
   $fields['salesforce_donation_map']['#fields']['close_date'] = t('Close date');
   $fields['salesforce_donation_map']['#fields']['transaction_date'] = t('Transaction date');
   $fields['salesforce_donation_map']['#fields']['form_URL'] = t('Form URL');

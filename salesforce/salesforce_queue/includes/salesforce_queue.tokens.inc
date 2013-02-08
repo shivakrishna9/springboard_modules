@@ -20,21 +20,21 @@ class SalesforceQueueTokenScanner {
   /**
    * Setter for tokenValueCache property.
    *
-   * @param array $tokenValueCache
+   * @param array $token_value_cache
    *   An array of Salesforce ids to use for token replacement.
    */
-  public function setTokenValueCache($tokenValueCache) {
-    $this->tokenValueCache = $tokenValueCache;
+  public function setTokenValueCache($token_value_cache) {
+    $this->tokenValueCache = $token_value_cache;
   }
 
   /**
    * Construct the object.
    *
-   * @param array $tokenValueCache
+   * @param array $token_value_cache
    *   An array of Salesforce ids to use for token replacement.
    */
-  public function __construct($tokenValueCache) {
-    $this->tokenValueCache = $tokenValueCache;
+  public function __construct($token_value_cache) {
+    $this->tokenValueCache = $token_value_cache;
   }
 
   /**
@@ -44,7 +44,7 @@ class SalesforceQueueTokenScanner {
    *   A populated queue processor batch.
    */
   public function batchTokenReplace(&$batch) {
-    foreach($batch['sobjects'] as &$object) {
+    foreach ($batch['sobjects'] as &$object) {
       $this->objectTokenReplace($object);
     }
   }
@@ -66,8 +66,7 @@ class SalesforceQueueTokenScanner {
   }
 
   /**
-   * Attempts to replace each tokenized field value with a SFID from
-   * the tokenValueCache or the database.
+   * Replace each tokenized field SFID from tokenValueCache or database.
    *
    * @param object $object
    *   The object whose tokenized field values need to be replaced.
@@ -76,15 +75,16 @@ class SalesforceQueueTokenScanner {
    */
   public function tokenReplace(&$object, $tokens) {
     foreach ($tokens as $field => $token) {
-      // If the token cache is populated, attempt to get value from cache
+      // If the token cache is populated, attempt to get value from cache.
       if ($this->cachePopulated() && $value = $this->getTokenValueFromCache($token)) {
         $object->fields[$field] = $value;
       }
-      else if ($value = $this->getTokenValueFromDB($token)) {
+      elseif ($value = $this->getTokenValueFromDB($token)) {
         $object->fields[$field] = $value;
       }
       else {
-        // What do we do here? No token found, bummer! This will cause the object to fail.
+        // What do we do here? No token found, bummer! This will cause the
+        // object to fail.
         $object->fields[$field] = $token;
       }
     }
@@ -97,7 +97,7 @@ class SalesforceQueueTokenScanner {
    *   The token to replace.
    */
   protected function getTokenValueFromCache($token) {
-    // Split token into something useful for cache lookup
+    // Split token into something useful for cache lookup.
     $token = $this->splitToken($token);
     // TODO: Optimize this! isset() perhaps?
     if (array_key_exists($token['sf_type'], $this->tokenValueCache)
@@ -117,7 +117,7 @@ class SalesforceQueueTokenScanner {
    *   The token to replace.
    */
   protected function getTokenValueFromDB($token) {
-    // Split token into something useful for database lookup
+    // Split token into something useful for database lookup.
     $token = $this->splitToken($token);
 
     // Look for Id in object mapping db2_tables(connection)
@@ -143,7 +143,7 @@ class SalesforceQueueTokenScanner {
     $token = substr($token, 1, -1);
     $token_pieces = explode(':', $token);
 
-    // Convert to something more friendly
+    // Convert to something more friendly.
     return array(
       'sf_type' => $token_pieces[0],
       'drupal_type' => $token_pieces[1],
@@ -169,7 +169,10 @@ class SalesforceQueueTokenScanner {
       /x', $object->fields);
   }
 
-  private function cachePopulated() {
+  /**
+   * Check if the cache is populated.
+   */
+  protected function cachePopulated() {
     return !empty($this->tokenValueCache);
   }
 
