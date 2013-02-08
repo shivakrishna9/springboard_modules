@@ -508,15 +508,15 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
       // A random test case is chosen for this item. The first sets test having
       // every field with the same sync rule.  The last test has each field with
       // a different sync rule.
-      $tests = $this->syncRules + array('random');
+      $tests = $this->sync_rules + array('random');
       $tests_rand = array_rand($tests);
       $test = $tests[$tests_rand];
       foreach ($sync_rules as $field => $value) {
         $rule = $test;
         if ($test == 'random') {
           // Since this test is 'random', pick a random sync rule.
-          $rule_rand = array_rand($this->syncRules);
-          $rule = $this->syncRules[$rule_rand];
+          $rule_rand = array_rand($this->sync_rules);
+          $rule = $this->sync_rules[$rule_rand];
         }
         if ($field == 'Email' && $rule == SALESFORCE_SYNC_RULE_APPEND) {
           // The email field cannot have 'append' rule because it would break

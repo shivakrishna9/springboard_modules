@@ -11,18 +11,6 @@
 class SalesforceQueueTestCase extends DrupalWebTestCase {
 
   /**
-   * List of all sync rules.
-   *
-   * @var array
-   */
-  public $syncRules = array(
-    SALESFORCE_SYNC_RULE_ALWAYS,
-    SALESFORCE_SYNC_RULE_BLANK,
-    SALESFORCE_SYNC_RULE_APPEND,
-    SALESFORCE_SYNC_RULE_NEVER,
-  );
-
-  /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
@@ -61,6 +49,14 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
     // Don't forget, need to pass --uri in drush command in order for logging
     // in to work.
     $this->drupalLogin($this->admin_user);
+
+    // Provide a list of sync rules.
+    $this->sync_rules = array(
+      SALESFORCE_SYNC_RULE_ALWAYS,
+      SALESFORCE_SYNC_RULE_BLANK,
+      SALESFORCE_SYNC_RULE_APPEND,
+      SALESFORCE_SYNC_RULE_NEVER,
+    );
   }
 
   /**
@@ -238,15 +234,15 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
         $rand_count = rand(0, $field_count);
         while ($rand_count > 0) {
           $field = array_shift($fields);
-          $sync_rule_rand = array_rand($this->syncRules);
-          $sync_rule = $this->syncRules[$sync_rule_rand];
+          $sync_rule_rand = array_rand($this->sync_rules);
+          $sync_rule = $this->sync_rules[$sync_rule_rand];
           // Append can cause problems for certain fields, so fall back to
           // always.
           $special_fields = array('Email', 'Amount', 'CloseDate');
           if ($sync_rule == SALESFORCE_SYNC_RULE_APPEND && in_array($field, $special_fields)) {
             $sync_rule = SALESFORCE_SYNC_RULE_ALWAYS;
           }
-          $data['sync_rules'][$field] = $this->syncRules[$sync_rule_rand];
+          $data['sync_rules'][$field] = $this->sync_rules[$sync_rule_rand];
           $rand_count--;
         }
       }
