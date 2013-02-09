@@ -11,8 +11,6 @@
 function commerce_sagepay_direct_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
-    'allow_recurring' => FALSE,
-    // ALL currently supported ubercart gateways use the same field set.
     'form callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
@@ -132,25 +130,7 @@ function commerce_sagepay_direct_fundraiser_commerce_execute_gateway($payment_me
   if ($result !== FALSE) {
     $success = TRUE;
   }
-  // Transactions are made even for failures.
-  // Grab the transaction information so we can return the transaction id.
-  // Use the last one in the list cause it's the last one we processed.
-  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $order->order_id));
-  foreach ($transactions as $transaction) {
-    $txn_id = $transaction->remote_id;
-    $message = $transaction->message;
-  }
-
-  // And update the result array success field.
-  $result = array(
-    'success' => $success,
-    'comment' => t('Card charged, resolution code: ' . $message),
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
-    'uid' => $order->uid,
-    'data' => array('txn_id' => $txn_id),
-    'error type' => ($success) ? '' : 'billing',
-  );
-  return $result;
+  return $success;
 }
 
 /**

@@ -11,11 +11,13 @@
 function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
-    'allow_recurring' => TRUE,
-    // ALL currently supported ubercart gateways use the same field set.
+    'allow_recurring' => array('credit'),
+    // Provide the form for display.
     'form callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_form',
+    // Massage data as needed to be in the right format.
     'form validate callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
+    // Retrieve expiration info from form submissions.
     'form expiration callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_expiration_form',
   );
 }
@@ -111,6 +113,7 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
   // Use 0000000000000000 to test a failed payment, anything else for a good one.
   if ($donation->donation['payment_fields']['credit']['card_number'] == '0000000000000000') {
     $success = FALSE;
+    // TODO Place a false transaction on the transaction set.
   }
   else {
     $success = TRUE;
@@ -118,18 +121,7 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
     // so we can directly call it as follows:
     commerce_payment_example_transaction($payment_method, $order, $charge, $name);
   }
-  // If a user is created in this process, make sure to map the order ownership.
-  // If a transaction, make sure to map those values into result array.
-  // And update the result array success field.
-  $result = array(
-    'success' => $success,
-    'comment' => t('Card charged, resolution code: 0022548315'),
-    'message' => $success ? t('Credit card payment processed successfully.') : t('Credit card charge failed.'),
-    'uid' => $order->uid,
-    'data' => array('txn_id' => 'TEST-TXNID-001'),
-    'error type' => ($success) ? '' : 'billing',
-  );
-  return $result;
+  return $success;
 }
 
 /**
