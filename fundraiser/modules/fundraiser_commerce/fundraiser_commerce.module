@@ -232,7 +232,6 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['charge callback'] = $method_instance['callbacks']['submit_form_submit']; // TODO - charge functions aren't actually called.
       $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
