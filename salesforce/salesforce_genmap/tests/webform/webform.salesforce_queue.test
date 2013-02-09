@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Tests for includes/salesforce_webform.queue.inc.
+ * Tests for mapping webform integration with queuing.
  */
 
-include_once dirname(__FILE__) . '/salesforce_webform.test';
+module_load_include('test', 'salesforce_genmap', 'tests/webform/webform');
 
 /**
- * Tests mapping Salesforce objects onto webforms.
+ * Tests integrating webform mapping into queuing.
  */
 class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase {
 
@@ -17,9 +17,9 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    */
   public static function getInfo() {
     return array(
-      'name' => 'Queuing',
-      'description' => 'Ensure that the salesforce_webform.queue componant functions properly.',
-      'group' => 'Salesforce Webform',
+      'name' => 'Webform Map Queuing',
+      'description' => 'Ensure that the webform queue componant functions properly.',
+      'group' => 'Salesforce Generic Mapping',
     );
   }
 
@@ -27,19 +27,20 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Implementation of setUp().
    */
   public function setUp($modules = array()) {
-    $modules = $modules + array(
+    $modules = array_merge($modules, array(
+      'salesforce_sync',
       'salesforce_soap',
       'salesforce_queue',
-    );
+    ));
     parent::setUp($modules);
 
     // Create webforms.
-    $this->webform1 = $this->swCreateWebform();
-    $this->webform2 = $this->swCreateWebform();
+    $this->webform1 = $this->createWebform();
+    $this->webform2 = $this->createWebform();
 
     // Map some Salesforce fields to the webforms.
-    $this->swMapWebform($this->webform1->nid);
-    $this->swMapWebform($this->webform2->nid, TRUE);
+    $this->mapWebform($this->webform1->nid);
+    $this->mapWebform($this->webform2->nid, TRUE);
   }
 
   /**
@@ -117,12 +118,12 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     node_delete($this->webform1->nid);
     $query = db_select('salesforce_queue', 'sq')
       ->fields('sq')
-      ->condition('module', 'salesforce_webform')
+      ->condition('module', 'webform')
       ->condition('delta', 'webform:' . $this->webform1->nid);
     $result = $query->execute();
     $unexpected_records = array();
     foreach ($result as $record) {
-      $unexpected_records[] = $record->id;
+      $unexpected_records[] = $record->item_id;
     }
     $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted node worked on Salesforce Queue.');
   }
@@ -132,10 +133,10 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    */
   public function testSyncOptions() {
     // Set up a webform.
-    $this->swSalesforceConnect();
-    $webform = $this->swCreateWebform();
+    $this->salesforceConnect();
+    $webform = $this->createWebform();
     $path = 'node/' . $webform->nid;
-    $this->drupalGet($path . '/salesforce/salesforce_webform');
+    $this->drupalGet($path . '/salesforce/webform');
     $this->drupalPostAjax(NULL, array('salesforce_object_info[salesforce_object_type]' => 'Contact'), 'salesforce_object_info[salesforce_object_type]');
     $this->drupalPost(NULL, array(), 'Save');
 
@@ -180,7 +181,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     );
     $queue = salesforce_queue_load();
     foreach ($combinations as $sync_config) {
-      $this->drupalGet($path . '/salesforce/salesforce_webform');
+      $this->drupalGet($path . '/salesforce/webform');
       $this->drupalPost(NULL, $sync_config, 'Save');
 
       // Create submission.
