@@ -203,7 +203,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       // ALL currently supported ubercart gateways use the same field set.
       $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form';
       $this_gateway['cleanup callback'] = 'fundraiser_ubercart_credit_card_submit_form';
-      $this_gateway['form expiration callback'] = 'fundraiser_ubercart_credit_card_expiration_form';
+      $this_gateway['expire callback'] = 'fundraiser_ubercart_credit_card_expiration_form';
       $this_gateway['gateway_details'] = $uc_gateway;
       $fundraiser_gateways[] = $this_gateway;
     }

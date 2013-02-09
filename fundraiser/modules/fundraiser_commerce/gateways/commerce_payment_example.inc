@@ -19,7 +19,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
     // Massage data as needed to be in the right format.
     'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
     // Retrieve expiration info from form submissions.
-    'form expiration callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_expiration_form',
+    'expire callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_expiration_form',
   );
 }
 

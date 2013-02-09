@@ -15,7 +15,7 @@ function commerce_cybersource_fundraiser_commerce_fundraiser_gateway_info() {
     'scrub callback' => 'commerce_cybersource_fundraiser_commerce_scrub_payment_fields',
     'charge callback' => 'commerce_cybersource_fundraiser_commerce_execute_gateway',
     'cleanup callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_submit_form',
-    'form expiration callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_expiration_form',
+    'expire callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_expiration_form',
   );
 }
 

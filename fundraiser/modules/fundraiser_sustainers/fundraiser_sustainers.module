@@ -913,8 +913,8 @@ function fundraiser_sustainers_billing_update_form_submit($form, &$form_state) {
   // Create new orders based on expiration date as needed.
   // But we need to retrieve the month / year values from gateway form.
   // We can't predict the form key for these values, so ask the gateway to provide.
-  if (isset($form['#donation']->gateway['form expiration callback'])) {
-    $expiration_func = $form['#donation']->gateway['form expiration callback'];
+  if (isset($form['#donation']->gateway['expire callback'])) {
+    $expiration_func = $form['#donation']->gateway['expire callback'];
     if (function_exists($expiration_func)) {
       $expires = $expiration_func($submission_fields);
       if (isset($expires['month']) && isset($expires['year'])) {
@@ -1104,8 +1104,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         $info = _fundraiser_get_donation_gateway($donation->did);
         // This created donation is the master, so passing it in to create the set.
         // We can't predict the form key for these values, so ask the gateway to provide.
-        if (isset($info['form expiration callback'])) {
-          $expiration_func = $info['form expiration callback'];
+        if (isset($info['expire callback'])) {
+          $expiration_func = $info['expire callback'];
           if (function_exists($expiration_func)) {
             $expires = $expiration_func($donation->donation);
             if (isset($expires['month']) && isset($expires['year'])) {
