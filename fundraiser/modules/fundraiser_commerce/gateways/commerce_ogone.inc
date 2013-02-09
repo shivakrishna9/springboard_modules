@@ -111,14 +111,6 @@ function commerce_ogone_fundraiser_commerce_credit_card_expiration_form($submiss
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect().
- */
-function commerce_ogone_fundraiser_commerce_execute_redirect($payment_method, $donation, $order, $settings) {
-  return drupal_get_form('commerce_ogone_build_redirect_form', $order, $payment_method['settings'] + $settings);
-}
-
-
-/**
  * Implements hook_fundraiser_commerce_scrub_payment_fields().
  */
 function commerce_ogone_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
@@ -131,4 +123,32 @@ function commerce_ogone_fundraiser_commerce_scrub_payment_fields($payment_method
     $fields['credit']['card_cvv'] = '';
   }
   return $fields;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_execute_redirect().
+ */
+function commerce_ogone_fundraiser_commerce_execute_redirect($payment_method, $donation, $order, $settings) {
+  return drupal_get_form('commerce_ogone_build_redirect_form', $order, $payment_method['settings'] + $settings);
+}
+
+/**
+ * Implements hook_fundraiser_commerce_execute_redirect_validate().
+ */
+function commerce_ogone_fundraiser_commerce_execute_redirect_validate($method_instance, $donation, $order) {
+  $result = FALSE;// commerce_paypal_wps_redirect_form_validate($order, $method_instance);
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_execute_redirect_submit().
+ */
+function commerce_ogone_fundraiser_commerce_execute_redirect_submit($method_instance, $donation, $order) {
+  // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID. 
+  // Therefore no additional transaction work occurs here.
+  return TRUE;
 }
