@@ -236,6 +236,8 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
+      // By including the plugin code here, we insure that all available functions are available for all other code.
+      // When referencing gateway info gathered under gateway_info hooks.
       module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
       $this_gateway += module_invoke($method_instance['module'], 'fundraiser_commerce_fundraiser_gateway_info');
       // Make sure defaults are in place if not set in the plugin.
@@ -594,7 +596,6 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
 
   // Gather the payment fields for storage, and scrub them.
   $method_instance = commerce_payment_method_instance_load($donation->gateway);
-  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
@@ -643,8 +644,6 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // If external processing, we cannot execute a recurring charge against it. So we're ok.
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
-    // Here we make sure we include the hook implementation.
-    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
     // If the function to build the redirect form exists. 
     if (!module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect')) {
       // Alert the administrator that the module does not provide a required form.
@@ -721,8 +720,6 @@ function _fundraiser_commerce_fundraiser_donation_process_internal($donation, $i
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
   // Since the plugin is only relevant in one situation, and then it's Not optional, no need to make it a module.
-  // Here we make sure we include the hook implementation.
-  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   // Call the function with donation, this will handle internal translation for the specific gateway.
   // A specific gateway may implement more than one form of charging (credit and PP for example) so leave that choice
   // to the execution function. All the information needed is on the donation object.
@@ -739,8 +736,6 @@ function _fundraiser_commerce_fundraiser_donation_process_internal($donation, $i
 function _fundraiser_commerce_fundraiser_donation_process_external($donation, $info) {
   // Load up additional data as needed for this donation, from Fundraiser and Commerce.
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
-  // Here we make sure we include the hook implementation.
-  module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
   // Generate a key to use in the return URL from the redirected service.
   $order = commerce_order_load($donation->did);
   $order->data['payment_redirect_key'] = drupal_hash_base64(time());
@@ -773,8 +768,6 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       }
     }
     // Present the form, or start the JS redirect as needed.
-    // Here we make sure we include the hook implementation.
-    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
     // If the function to build the redirect form exists. 
     if (module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect')) {
       // Merge the new form into the current form array, preserving the help text
@@ -875,7 +868,6 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_return($
       'data' => array(),
     );
     // Check for a validate handler on return.
-    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
     $valid = TRUE;
     if ( module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect_validate') ) {
       $valid = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_redirect_validate', $method_instance, $donation, $order);
@@ -1132,7 +1124,6 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Grab the gateway configuration from fundraisers data.
     $info = _fundraiser_get_donation_gateway($donation->did);
     $method_instance = commerce_payment_method_instance_load($info['id']);
-    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
     $result = module_invoke($method_instance['module'], 'fundraiser_commerce_update_gateway', $method_instance, $donation);
   }
 
