@@ -14,8 +14,7 @@ function commerce_ogone_fundraiser_commerce_fundraiser_gateway_info() {
     'offsite_processing' => array('paypal'),
     'form callback' => 'commerce_ogone_fundraiser_commerce_paypal_form',
     'scrub callback' => 'commerce_ogone_fundraiser_commerce_scrub_payment_fields',
-    'form validate callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
-    'form submit callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
+    'cleanup callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_ogone_fundraiser_commerce_credit_card_expiration_form',
   );
 }

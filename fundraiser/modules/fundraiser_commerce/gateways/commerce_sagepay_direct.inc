@@ -14,8 +14,7 @@ function commerce_sagepay_direct_fundraiser_commerce_fundraiser_gateway_info() {
     'charge callback' => 'commerce_sagepay_direct_fundraiser_commerce_execute_gateway',
     'scrub callback' => 'commerce_sagepay_direct_fundraiser_commerce_scrub_payment_fields',
     'form callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_form',
-    'form validate callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
-    'form submit callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
+    'cleanup callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_expiration_form',
   );
 }
