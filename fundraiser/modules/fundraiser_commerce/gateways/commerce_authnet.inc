@@ -12,18 +12,12 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
-    'billing_update_function' => 'commerce_authnet_billing_update_function',
+    'billing_update_function' => 'commerce_authnet_fundraiser_commerce_update_gateway',
     'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_authnet_fundraiser_commerce_credit_card_expiration_form',
   );
-}
-
-/**
- * Only relevant for gateways that allow recurring values.
- */
-function commerce_authnet_billing_update_function() {
 }
 
 /**
@@ -75,6 +69,21 @@ function commerce_authnet_fundraiser_commerce_credit_card_form($payment_method) 
 }
 
 /**
+ * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ */
+function commerce_authnet_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
+  // Scrub sensitive donation fields if they exists.
+  if (isset($fields['credit']['card_number'])) {
+    $fields['credit']['card_number'] = substr(
+      $fields['credit']['card_number'], -4);
+  }
+  if (isset($fields['credit']['card_cvv'])) {
+    $fields['credit']['card_cvv'] = '';
+  }
+  return $fields;
+}
+
+/**
  * Callback function, clean up the submission results after submission before they are returned to fundraiser.
  */
 function commerce_authnet_fundraiser_commerce_credit_card_submit_form($submission_fields) {
@@ -110,6 +119,12 @@ function commerce_authnet_fundraiser_commerce_credit_card_expiration_form($submi
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
 function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+  // Thit gateway allows recurring data.
+  // Based on that - presume that we will need to use the 'card on file' features provided
+  // by commerce_authnet. In the course of this, we need to set and return a data key for the
+  // customers profile id. We would use actual card on file but for lack of encryption on that
+  // table. Look for the profile id in $donation->data[];
+
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
@@ -165,23 +180,8 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
 }
 
 /**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ * Only relevant for gateways that allow recurring values.
  */
-function commerce_authnet_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  // Scrub sensitive donation fields if they exists.
-  if (isset($fields['credit']['card_number'])) {
-    $fields['credit']['card_number'] = substr(
-      $fields['credit']['card_number'], -4);
-  }
-  if (isset($fields['credit']['card_cvv'])) {
-    $fields['credit']['card_cvv'] = '';
-  }
-  return $fields;
-}
-
-/**
- * Implements hook_fundraiser_commerce_update_gateway().
- */
-function commerce_authnet_fundraiser_commerce_update_gateway($payment_method, $donation) {
+function commerce_authnet_fundraiser_commerce_update_gateway() {
 // TODO fill in how commerce_authnet will update the user's gateway card on file for this donation.
 }

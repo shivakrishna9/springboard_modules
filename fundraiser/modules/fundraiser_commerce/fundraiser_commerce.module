@@ -232,7 +232,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit'];
+      $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit']; // TODO - charge functions aren't actually called.
       $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
@@ -939,6 +939,8 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
       'status' => $status, // Local status.
       'remote_status' => $remote_status, // Handler's status.
     ),
+    // If a profile was created on this, it's stored in
+    //'customer_profile_id' => '',
   );
   $data = $result['data'];
   // There may be information already in the donation->data.
