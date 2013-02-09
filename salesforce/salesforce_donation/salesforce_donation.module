@@ -178,8 +178,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
   }
 
-  // And lastly, the reconstructed data fields. Information derived from the
-  // current fields.
+  // And lastly, the reconstructed data fields. Information derived from the current fields.
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['close_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['close_date'];
@@ -316,7 +315,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // anticipate which one will have a value and which one won't.
   // So we need to check for all type that MAY be configured at any point based
   // on available methods. Methods are defined within the associated active
-  // gateways.
+  // gateways. So, we looks up each form and field per form.
   if (module_exists('fundraiser_webform') && $node->nid != -1) {
     // Find the payment methods component.
     $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
