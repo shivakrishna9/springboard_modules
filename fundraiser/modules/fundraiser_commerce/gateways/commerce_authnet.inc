@@ -12,7 +12,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
-    'billing_update_function' => 'commerce_authnet_fundraiser_commerce_update_gateway',
+    'update callback' => 'commerce_authnet_fundraiser_commerce_update_gateway',
     'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
     'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub_payment_fields',
     'charge callback' => 'commerce_authnet_fundraiser_commerce_execute_gateway',
