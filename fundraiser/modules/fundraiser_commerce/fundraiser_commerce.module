@@ -232,7 +232,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Commerce');
       $this_gateway['title'] = $rule_config->label;
       $this_gateway['description'] = $method_instance['description'];
-      $this_gateway['charge_function'] = $method_instance['callbacks']['submit_form_submit']; // TODO - charge functions aren't actually called.
+      $this_gateway['charge callback'] = $method_instance['callbacks']['submit_form_submit']; // TODO - charge functions aren't actually called.
       $this_gateway['refund_function'] = $method_instance['callbacks']['submit_form_submit'];
       // Gather additional details per our specific implementation.
       // Re: type of fieldset, and available recurring features.
@@ -662,7 +662,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   else {
     // If internal processing, then it may be a sustainer charge or newly declared.
     // The gateway is responsible for that call.
-    $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+    $charge_function = isset($info['charge callback']) ? $info['charge callback'] : '';
     if (empty($charge_function)) {
       // Alert the administrator that the module does not provide a required form.
       drupal_set_message(t('The %title payment method does not provide a gateway charge function.',
@@ -723,7 +723,10 @@ function _fundraiser_commerce_fundraiser_donation_process_internal($donation, $i
   // Call the function with donation, this will handle internal translation for the specific gateway.
   // A specific gateway may implement more than one form of charging (credit and PP for example) so leave that choice
   // to the execution function. All the information needed is on the donation object.
-  $success = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_gateway', $method_instance, $donation);
+  if (function_exists($info['charge callback'])) {
+    $charge_function = $info['charge callback'];
+    $success = $charge_function($method_instance, $donation);
+  }
   // Update the donation and order data and result values based on the success.
   _fundraiser_commerce_update_donation_result_data($donation, $success);
   // Finish up any last cleanup for this transaction.

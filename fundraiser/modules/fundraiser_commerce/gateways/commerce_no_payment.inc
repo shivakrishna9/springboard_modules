@@ -12,6 +12,7 @@ function commerce_no_payment_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('none'),
     'form callback' => 'commerce_no_payment_fundraiser_commerce_paypal_form',
+    'charge callback' => 'commerce_no_payment_fundraiser_commerce_execute_gateway',
   );
 }
 

@@ -15,6 +15,7 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
     // Provide the form for display.
     'form callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_form',
     'scrub callback' => 'commerce_payment_example_fundraiser_commerce_scrub_payment_fields',
+    'charge callback' => 'commerce_payment_example_fundraiser_commerce_execute_gateway',
     // Massage data as needed to be in the right format.
     'form validate callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',

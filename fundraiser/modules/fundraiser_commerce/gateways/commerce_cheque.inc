@@ -12,6 +12,7 @@ function commerce_cheque_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('check'),
     'form callback' => 'commerce_cheque_fundraiser_commerce_paypal_form',
+    'charge callback' => 'commerce_cheque_fundraiser_commerce_execute_gateway',
   );
 }
 

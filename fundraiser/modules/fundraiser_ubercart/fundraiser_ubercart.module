@@ -172,7 +172,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
    *     [id] =&gt; test_gateway
    *     [title] =&gt; Test Gateway
    *     [description] =&gt; Process credit card payments through the Test Gateway.
-   *     [charge_function] =&gt; charge_function
+   *     [charge callback] =&gt; charge_function
    *     [refund_function] =&gt; refund_function
    *     [gateway_details] => Array(Previous gateway details)
    *   )
@@ -188,7 +188,7 @@ function fundraiser_ubercart_fundraiser_gateway_info() {
       $this_gateway['module_name'] = t('Ubercart');
       $this_gateway['title'] = $uc_gateway['title'];
       $this_gateway['description'] = $uc_gateway['description'];
-      $this_gateway['charge_function'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
+      $this_gateway['charge callback'] = isset($uc_gateway['credit']) ? $uc_gateway['credit'] : '';
       $this_gateway['refund_function'] = isset($uc_gateway['credit_refund']) ? $uc_gateway['credit_refund'] : $uc_gateway['credit'];
       $this_gateway['gateway_details'] = $uc_gateway;
       // ALL currently supported ubercart systems are Credit Card Only.
@@ -674,7 +674,7 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundraisers data.
   $info = _fundraiser_get_donation_gateway($donation->did);
   // Check for the charge function to be defined.
-  $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
+  $charge_function = isset($info['charge callback']) ? $info['charge callback'] : '';
   if (empty($charge_function)) {
     // We can't find the gateway and we should tell someone about it.
     watchdog('fundraiser', 'Cannot determine the payment gateway for donation @id. Node id of donation form is @nid',

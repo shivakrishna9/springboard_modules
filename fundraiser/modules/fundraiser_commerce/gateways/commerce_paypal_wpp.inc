@@ -11,6 +11,7 @@
 function commerce_paypal_wpp_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('paypal'),
+    'charge callback' => 'commerce_paypal_fundraiser_commerce_execute_gateway',
     'form callback' => 'commerce_paypal_wpp_fundraiser_commerce_paypal_form',
   );
 }
@@ -30,28 +31,5 @@ function commerce_paypal_wpp_fundraiser_commerce_paypal_form($payment_method) {
  * Implements hook_fundraiser_commerce_execute_gateway().
  */
 function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $donation) {
-/*
-  // Translate from donation settings to the correct values for the plugin.
-  $order = commerce_order_load($donation->did);
-  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  $pane_form = array(); // Spare, no values here used during submission. Ignore.
-  $pane_values = array(
-    'credit_card' => array(
-      'number' => $donation->donation['card_number'],
-      'exp_month' => $donation->donation['card_expiration_month'],
-      'exp_year' => $donation->donation['card_expiration_year'],
-      'code' => $donation->donation['card_cvv'],
-    ),
-  );
-
-  // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
-  // If the charge fails, returns false, else nothing.
-  $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
-  $success = FALSE;
-  if ($result !== FALSE) {
-    $success = TRUE;
-  }
-  return $success;
-*/
 // Paypal has two payment methods and one of them is a outsource and redirect. This is more complicated, and needs work.
 }
