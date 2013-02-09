@@ -156,10 +156,13 @@ function gateway_manager_fundraiser_ubercart_gateway_info() {
       $this_gateway['gateway_details'] = isset($gateway) ? $gateway : array();
       // ALL currently supported ubercart systems are Credit Card Only.
       $this_gateway['payment_method'] = array('credit');
-      // ALL currently supported ubercart systems are Credit Card Only.
-      $this_gateway['payment_method'] = array('credit');
       // If the gateway doesn't explicitly support recurring, then return FALSE.
       $this_gateway['allow_recurring'] = isset($gateway['allow_recurring']) ? $gateway['allow_recurring'] : FALSE;
+      if ($this_gateway['allow_recurring'] == TRUE) {
+        $this_gateway['allow_recurring'] = array('credit');
+      }
+      // No offline processing for this system.
+      $this_gateway['offsite_processing'] = array();
       // ALL currently supported ubercart gateways use the same field set.
       $this_gateway['form callback'] = 'fundraiser_ubercart_credit_card_form';
       $this_gateway['form validate callback'] = 'fundraiser_ubercart_credit_card_submit_form';
