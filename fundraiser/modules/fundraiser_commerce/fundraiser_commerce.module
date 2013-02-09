@@ -644,7 +644,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
     // If the function to build the redirect form exists. 
-    if (!module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect')) {
+    $redirect_function = isset($info['redirect callback']) ? $info['redirect callback'] : '';
+    if (empty($redirect_function)) {
       // Alert the administrator that the module does not provide a required form.
       drupal_set_message(t('The %title payment method indicates it is offsite but does not define the form to process the redirect.',
         array('%title' => $method_instance['title'])), 'error');
@@ -770,8 +771,9 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       }
     }
     // Present the form, or start the JS redirect as needed.
-    // If the function to build the redirect form exists. 
-    if (module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect')) {
+    // If the function to build the redirect form exists.  
+    $redirect_function = isset($info['redirect callback']) ? $info['redirect callback'] : '';
+    if (!empty($redirect_function)) {
       // Merge the new form into the current form array, preserving the help text
       // if it exists. We also add a wrapper so the form can be easily submitted.
       // Provide common settings, the redirect function can modify these as needed before sending onwards.
@@ -786,7 +788,7 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
         ),
         'payment_method' => $method_instance['instance_id'],
       );
-      $form = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_redirect', $method_instance, $donation, $order, $settings);
+      $form = $redirect_function($method_instance, $donation, $order, $settings);
   
       // If the payment method has the 'offsite_autoredirect' option enabled, add the redirection behavior.
       //if (!empty($payment_method['offsite_autoredirect'])) {

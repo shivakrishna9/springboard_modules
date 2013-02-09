@@ -13,6 +13,7 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array('paypal'),
     'offsite_processing' => array('paypal'),
     'form callback' => 'commerce_paypal_wps_fundraiser_commerce_paypal_form',
+    'redirect callback' => 'commerce_paypal_wps_fundraiser_commerce_execute_redirect',
   );
 }
 

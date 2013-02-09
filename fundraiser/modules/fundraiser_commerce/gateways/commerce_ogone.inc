@@ -16,6 +16,7 @@ function commerce_ogone_fundraiser_commerce_fundraiser_gateway_info() {
     'scrub callback' => 'commerce_ogone_fundraiser_commerce_scrub_payment_fields',
     'cleanup callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_ogone_fundraiser_commerce_credit_card_expiration_form',
+    'redirect callback' => 'commerce_ogone_fundraiser_commerce_execute_redirect',
   );
 }
 
