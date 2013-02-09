@@ -29,14 +29,14 @@ function commerce_paypal_wps_fundraiser_commerce_paypal_form($payment_method) {
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect().
+ * Callback function, handle the redirect form.
  */
 function commerce_paypal_wps_fundraiser_commerce_execute_redirect($method_instance, $donation, $order, $settings) {
   return drupal_get_form('commerce_paypal_wps_order_form', $order, $method_instance['settings'] + $settings);
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect_validate().
+ * Callback function, validate after redirect.
  */
 function commerce_paypal_wps_fundraiser_commerce_execute_redirect_validate($method_instance, $donation, $order) {
   $result = commerce_paypal_wps_redirect_form_validate($order, $method_instance);

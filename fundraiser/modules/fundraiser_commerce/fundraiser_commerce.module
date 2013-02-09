@@ -644,8 +644,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
     // If the function to build the redirect form exists. 
-    $redirect_function = isset($info['redirect callback']) ? $info['redirect callback'] : '';
-    if (empty($redirect_function)) {
+    if (empty($info['redirect callback'])) {
       // Alert the administrator that the module does not provide a required form.
       drupal_set_message(t('The %title payment method indicates it is offsite but does not define the form to process the redirect.',
         array('%title' => $method_instance['title'])), 'error');
@@ -662,8 +661,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   else {
     // If internal processing, then it may be a sustainer charge or newly declared.
     // The gateway is responsible for that call.
-    $charge_function = isset($info['charge callback']) ? $info['charge callback'] : '';
-    if (empty($charge_function)) {
+    if (empty($info['charge callback'])) {
       // Alert the administrator that the module does not provide a required form.
       drupal_set_message(t('The %title payment method does not provide a gateway charge function.',
         array('%title' => $method_instance['title'])), 'error');
@@ -771,9 +769,9 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
       }
     }
     // Present the form, or start the JS redirect as needed.
-    // If the function to build the redirect form exists.  
-    $redirect_function = isset($info['redirect callback']) ? $info['redirect callback'] : '';
-    if (!empty($redirect_function)) {
+    // If the function to build the redirect form exists.
+    if (function_exists($info['redirect callback'])) {
+      $redirect_function = $info['redirect callback'];
       // Merge the new form into the current form array, preserving the help text
       // if it exists. We also add a wrapper so the form can be easily submitted.
       // Provide common settings, the redirect function can modify these as needed before sending onwards.
@@ -873,13 +871,15 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_return($
     );
     // Check for a validate handler on return.
     $valid = TRUE;
-    if ( module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect_validate') ) {
-      $valid = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_redirect_validate', $method_instance, $donation, $order);
+    if (function_exists($info['redirect callback'] . '_validate')) {
+      $validation_function = $info['redirect callback'] . '_validate';
+      $valid = $validation_function($method_instance, $donation, $order);
     }
     if ($valid) {
-      if (module_hook($method_instance['module'], 'fundraiser_commerce_execute_redirect_submit')) {
+      if (function_exists($info['redirect callback'] . '_submit')) {
+        $submit_function = $info['redirect callback'] . '_submit';
         // Perform any submit functions if necessary.
-        $success = module_invoke($method_instance['module'], 'fundraiser_commerce_execute_redirect_submit', $method_instance, $donation, $order);
+        $success = $submit_function($method_instance, $donation, $order);
         // After a callback, we need to get transaction data into order->data, donation->data for storage.
         _fundraiser_commerce_update_donation_result_data($donation, $success);
         if ($success) {
@@ -1134,7 +1134,6 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
 //      $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
     }
   }
-
 }
 
 /**
