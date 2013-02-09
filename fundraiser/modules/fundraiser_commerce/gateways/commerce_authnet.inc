@@ -12,19 +12,19 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
-    'update callback' => 'commerce_authnet_fundraiser_commerce_update_gateway',
-    'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
-    'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub_payment_fields',
-    'charge callback' => 'commerce_authnet_fundraiser_commerce_execute_gateway',
-    'cleanup callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
-    'expire callback' => 'commerce_authnet_fundraiser_commerce_credit_card_expiration_form',
+    'form callback' => 'commerce_authnet_fundraiser_commerce_form',
+    'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
+    'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
+    'expire callback' => 'commerce_authnet_fundraiser_commerce_expire',
+    'charge callback' => 'commerce_authnet_fundraiser_commerce_charge',
+    'update callback' => 'commerce_authnet_fundraiser_commerce_update',
   );
 }
 
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_authnet_fundraiser_commerce_credit_card_form($payment_method) {
+function commerce_authnet_fundraiser_commerce_form($payment_method) {
   // Move expiration date values up in the array. ONLY relevant for the default credit card fields.
   $form['card_number'] = array(
     '#type' => 'textfield',
@@ -70,24 +70,9 @@ function commerce_authnet_fundraiser_commerce_credit_card_form($payment_method) 
 }
 
 /**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_authnet_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  // Scrub sensitive donation fields if they exists.
-  if (isset($fields['credit']['card_number'])) {
-    $fields['credit']['card_number'] = substr(
-      $fields['credit']['card_number'], -4);
-  }
-  if (isset($fields['credit']['card_cvv'])) {
-    $fields['credit']['card_cvv'] = '';
-  }
-  return $fields;
-}
-
-/**
  * Callback function, clean up the submission results after submission before they are returned to fundraiser.
  */
-function commerce_authnet_fundraiser_commerce_credit_card_submit_form($submission_fields) {
+function commerce_authnet_fundraiser_commerce_cleanup($submission_fields) {
   if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
     if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
       $submission_fields['payment_fields']['credit']['card_expiration_month'] =
@@ -103,9 +88,24 @@ function commerce_authnet_fundraiser_commerce_credit_card_submit_form($submissio
 }
 
 /**
+ * Callback function, scrub the data before saving.
+ */
+function commerce_authnet_fundraiser_commerce_scrub($payment_method, $fields) {
+  // Scrub sensitive donation fields if they exists.
+  if (isset($fields['credit']['card_number'])) {
+    $fields['credit']['card_number'] = substr(
+      $fields['credit']['card_number'], -4);
+  }
+  if (isset($fields['credit']['card_cvv'])) {
+    $fields['credit']['card_cvv'] = '';
+  }
+  return $fields;
+}
+
+/**
  * Callback function, return the user entered experation dates for this submission.
  */
-function commerce_authnet_fundraiser_commerce_credit_card_expiration_form($submission_fields) {
+function commerce_authnet_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
   if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
     $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
@@ -117,9 +117,9 @@ function commerce_authnet_fundraiser_commerce_credit_card_expiration_form($submi
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_gateway().
+ * Callback function, charge gateway.
  */
-function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation) {
   // Thit gateway allows recurring data.
   // Based on that - presume that we will need to use the 'card on file' features provided
   // by commerce_authnet. In the course of this, we need to set and return a data key for the
@@ -181,8 +181,8 @@ function commerce_authnet_fundraiser_commerce_execute_gateway($payment_method, $
 }
 
 /**
- * Only relevant for gateways that allow recurring values.
+ * Callback function, update data stored at the gateway.
  */
-function commerce_authnet_fundraiser_commerce_update_gateway() {
+function commerce_authnet_fundraiser_commerce_update() {
 // TODO fill in how commerce_authnet will update the user's gateway card on file for this donation.
 }

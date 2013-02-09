@@ -12,18 +12,20 @@ function commerce_ogone_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit', 'paypal'),
     'offsite_processing' => array('paypal'),
-    'form callback' => 'commerce_ogone_fundraiser_commerce_paypal_form',
-    'scrub callback' => 'commerce_ogone_fundraiser_commerce_scrub_payment_fields',
-    'cleanup callback' => 'commerce_ogone_fundraiser_commerce_credit_card_submit_form',
-    'expire callback' => 'commerce_ogone_fundraiser_commerce_credit_card_expiration_form',
-    'redirect callback' => 'commerce_ogone_fundraiser_commerce_execute_redirect',
+    'form callback' => 'commerce_ogone_fundraiser_commerce_form',
+    'cleanup callback' => 'commerce_ogone_fundraiser_commerce_cleanup',
+    'scrub callback' => 'commerce_ogone_fundraiser_commerce_scrub',
+    'expire callback' => 'commerce_ogone_fundraiser_commerce_expire',
+    'redirect callback' => 'commerce_ogone_fundraiser_commerce_redirect',
+    // Validation call is commerce_ogone_fundraiser_commerce_redirect_validate
+    // Submit call is commerce_ogone_fundraiser_commerce_redirect_submit
   );
 }
 
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_ogone_fundraiser_commerce_paypal_form($payment_method) {
+function commerce_ogone_fundraiser_commerce_form($payment_method) {
   switch ($payment_method) {
     case 'paypal':
       $form['paypal_email'] = array(
@@ -82,7 +84,7 @@ function commerce_ogone_fundraiser_commerce_paypal_form($payment_method) {
 /**
  * Callback function, clean up the submission results after submission before they are returned to fundraiser.
  */
-function commerce_ogone_fundraiser_commerce_credit_card_submit_form($submission_fields) {
+function commerce_ogone_fundraiser_commerce_cleanup($submission_fields) {
   if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
     if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
       $submission_fields['payment_fields']['credit']['card_expiration_month'] =
@@ -98,23 +100,9 @@ function commerce_ogone_fundraiser_commerce_credit_card_submit_form($submission_
 }
 
 /**
- * Callback function, return the user entered experation dates for this submission.
+ * Callback function, scrub data.
  */
-function commerce_ogone_fundraiser_commerce_credit_card_expiration_form($submission_fields) {
-  $expires = array();
-  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
-    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
-  }
-  if (isset($submission_fields['payment_fields']['credit']['card_expiration_year'])) {
-    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
-  }
-  return $expires;
-}
-
-/**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_ogone_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
+function commerce_ogone_fundraiser_commerce_scrub($payment_method, $fields) {
   // Scrub sensitive donation fields if they exists.
   if (isset($fields['credit']['card_number'])) {
     $fields['credit']['card_number'] = substr(
@@ -127,16 +115,30 @@ function commerce_ogone_fundraiser_commerce_scrub_payment_fields($payment_method
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect().
+ * Callback function, return the user entered experation dates for this submission.
  */
-function commerce_ogone_fundraiser_commerce_execute_redirect($payment_method, $donation, $order, $settings) {
+function commerce_ogone_fundraiser_commerce_expire($submission_fields) {
+  $expires = array();
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+  }
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_year'])) {
+    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  }
+  return $expires;
+}
+
+/**
+ * Callback function, redirection form.
+ */
+function commerce_ogone_fundraiser_commerce_redirect($payment_method, $donation, $order, $settings) {
   return drupal_get_form('commerce_ogone_build_redirect_form', $order, $payment_method['settings'] + $settings);
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect_validate().
+ * Callback function, validate results on return from redirection form.
  */
-function commerce_ogone_fundraiser_commerce_execute_redirect_validate($method_instance, $donation, $order) {
+function commerce_ogone_fundraiser_commerce_redirect_validate($method_instance, $donation, $order) {
   $result = FALSE;// commerce_paypal_wps_redirect_form_validate($order, $method_instance);
   $success = FALSE;
   if ($result !== FALSE) {
@@ -146,9 +148,9 @@ function commerce_ogone_fundraiser_commerce_execute_redirect_validate($method_in
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_redirect_submit().
+ * Callback function, submit results on return from redirection form.
  */
-function commerce_ogone_fundraiser_commerce_execute_redirect_submit($method_instance, $donation, $order) {
+function commerce_ogone_fundraiser_commerce_redirect_submit($method_instance, $donation, $order) {
   // IMPORTANT: Transaction handling for Paypal is handled on a differnt URL, when Paypal returns the IPN tracsaction ID. 
   // Therefore no additional transaction work occurs here.
   return TRUE;

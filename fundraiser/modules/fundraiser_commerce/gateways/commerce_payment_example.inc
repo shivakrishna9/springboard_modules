@@ -12,21 +12,18 @@ function commerce_payment_example_fundraiser_commerce_fundraiser_gateway_info() 
   return array(
     'payment_method' => array('credit'),
     'allow_recurring' => array('credit'),
-    // Provide the form for display.
-    'form callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_form',
-    'scrub callback' => 'commerce_payment_example_fundraiser_commerce_scrub_payment_fields',
-    'charge callback' => 'commerce_payment_example_fundraiser_commerce_execute_gateway',
-    // Massage data as needed to be in the right format.
-    'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_submit_form',
-    // Retrieve expiration info from form submissions.
-    'expire callback' => 'commerce_payment_example_fundraiser_commerce_credit_card_expiration_form',
+    'form callback' => 'commerce_payment_example_fundraiser_commerce_form',
+    'cleanup callback' => 'commerce_payment_example_fundraiser_commerce_cleanup',
+    'scrub callback' => 'commerce_payment_example_fundraiser_commerce_scrub',
+    'expire callback' => 'commerce_payment_example_fundraiser_commerce_expire',
+    'charge callback' => 'commerce_payment_example_fundraiser_commerce_charge',
   );
 }
 
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_payment_example_fundraiser_commerce_credit_card_form($payment_method) {
+function commerce_payment_example_fundraiser_commerce_form($payment_method) {
   // Move expiration date values up in the array. ONLY relevant for the default credit card fields.
   $form['card_number'] = array(
     '#type' => 'textfield',
@@ -74,7 +71,7 @@ function commerce_payment_example_fundraiser_commerce_credit_card_form($payment_
 /**
  * Callback function, clean up the submission results after submission before they are returned to fundraiser.
  */
-function commerce_payment_example_fundraiser_commerce_credit_card_submit_form($submission_fields) {
+function commerce_payment_example_fundraiser_commerce_cleanup($submission_fields) {
   if (isset($submission_fields['payment_fields']['credit']['expiration_date'])) {
     if (isset($submission_fields['payment_fields']['credit']['expiration_date']['card_expiration_month'])) {
       $submission_fields['payment_fields']['credit']['card_expiration_month'] =
@@ -90,9 +87,24 @@ function commerce_payment_example_fundraiser_commerce_credit_card_submit_form($s
 }
 
 /**
+ * Callback function, scrub the fields before they get saved.
+ */
+function commerce_payment_example_fundraiser_commerce_scrub($payment_method, $fields) {
+  // Scrub sensitive donation fields if they exists.
+  if (isset($fields['credit']['card_number'])) {
+    $fields['credit']['card_number'] = substr(
+      $fields['credit']['card_number'], -4);
+  }
+  if (isset($fields['credit']['card_cvv'])) {
+    $fields['credit']['card_cvv'] = '';
+  }
+  return $fields;
+}
+
+/**
  * Callback function, return the user entered experation dates for this submission.
  */
-function commerce_payment_example_fundraiser_commerce_credit_card_expiration_form($submission_fields) {
+function commerce_payment_example_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
   if (isset($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
     $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
@@ -104,9 +116,9 @@ function commerce_payment_example_fundraiser_commerce_credit_card_expiration_for
 }
 
 /**
- * Implements hook_fundraiser_commerce_execute_gateway().
+ * Callback function, charge the gateway.
  */
-function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_method, $donation) {
+function commerce_payment_example_fundraiser_commerce_charge($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
@@ -123,19 +135,4 @@ function commerce_payment_example_fundraiser_commerce_execute_gateway($payment_m
     commerce_payment_example_transaction($payment_method, $order, $charge, $name);
   }
   return $success;
-}
-
-/**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_payment_example_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  // Scrub sensitive donation fields if they exists.
-  if (isset($fields['credit']['card_number'])) {
-    $fields['credit']['card_number'] = substr(
-      $fields['credit']['card_number'], -4);
-  }
-  if (isset($fields['credit']['card_cvv'])) {
-    $fields['credit']['card_cvv'] = '';
-  }
-  return $fields;
 }
