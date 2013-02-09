@@ -11,6 +11,7 @@
 function commerce_sagepay_direct_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
+    'scrub callback' => 'commerce_sagepay_direct_fundraiser_commerce_scrub_payment_fields',
     'form callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_form',
     'form validate callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_sagepay_fundraiser_commerce_credit_card_submit_form',
@@ -134,7 +135,7 @@ function commerce_sagepay_direct_fundraiser_commerce_execute_gateway($payment_me
 }
 
 /**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
+ * Callback, scrubs the fields for a given payment method.
  */
 function commerce_sagepay_direct_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
   // Scrub sensitive donation fields if they exists.

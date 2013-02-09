@@ -14,6 +14,7 @@ function commerce_authnet_fundraiser_commerce_fundraiser_gateway_info() {
     'allow_recurring' => array('credit'),
     'billing_update_function' => 'commerce_authnet_fundraiser_commerce_update_gateway',
     'form callback' => 'commerce_authnet_fundraiser_commerce_credit_card_form',
+    'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub_payment_fields',
     'form validate callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_authnet_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_authnet_fundraiser_commerce_credit_card_expiration_form',

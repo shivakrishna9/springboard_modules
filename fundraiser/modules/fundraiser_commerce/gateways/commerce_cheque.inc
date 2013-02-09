@@ -37,10 +37,3 @@ function commerce_cheque_fundraiser_commerce_execute_gateway($payment_method, $d
   $result = commerce_cheque_transaction($payment_method, $order, $charge);
   return TRUE;
 }
-
-/**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_cheque_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  return $fields;
-}

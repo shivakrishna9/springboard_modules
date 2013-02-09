@@ -55,10 +55,3 @@ function commerce_paypal_fundraiser_commerce_execute_gateway($payment_method, $d
 */
 // Paypal has two payment methods and one of them is a outsource and redirect. This is more complicated, and needs work.
 }
-
-/**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_paypal_wpp_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  return $fields;
-}

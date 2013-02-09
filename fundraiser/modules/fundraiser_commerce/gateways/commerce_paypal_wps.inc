@@ -28,13 +28,6 @@ function commerce_paypal_wps_fundraiser_commerce_paypal_form($payment_method) {
 }
 
 /**
- * Implements hook_fundraiser_commerce_scrub_payment_fields().
- */
-function commerce_paypal_wps_fundraiser_commerce_scrub_payment_fields($payment_method, $fields) {
-  return $fields;
-}
-
-/**
  * Implements hook_fundraiser_commerce_execute_redirect().
  */
 function commerce_paypal_wps_fundraiser_commerce_execute_redirect($method_instance, $donation, $order, $settings) {

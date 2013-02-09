@@ -595,12 +595,16 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Gather the payment fields for storage, and scrub them.
   $method_instance = commerce_payment_method_instance_load($donation->gateway);
   module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
-  $scrubbed_fields = module_invoke($method_instance['module'], 'fundraiser_commerce_scrub_payment_fields',
-    $method_instance, $donation->donation['payment_fields']);
+  $scrubbed_fields = $donation->donation['payment_fields'];
+  if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
+    $callback = $method_instance['scrub callback'];
+    $scrubbed_fields = $callback($method_instance, $scrubbed_fields);
+  }
   $data = array(
     'payment_method' => $donation->donation['payment_method'],
     'payment_fields' => $scrubbed_fields,
   );
+
   // There may be information already in the donation->data in the case of sustainer duplication.
   // We want to make sure this information propogates if it's available on the donation object already.
   if (isset($donation->data) && is_array($donation->data) && !empty($donation->data)) {

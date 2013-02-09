@@ -12,6 +12,7 @@ function commerce_cybersource_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('credit'),
     'form callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_form',
+    'scrub callback' => 'commerce_cybersource_fundraiser_commerce_scrub_payment_fields',
     'form validate callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_submit_form',
     'form submit callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_submit_form',
     'form expiration callback' => 'commerce_cybersource_fundraiser_commerce_credit_card_expiration_form',
