@@ -724,6 +724,8 @@ function fundraiser_ubercart_fundraiser_donation_process($donation) {
     if (!isset($donation->data['txn_type'])) {
       $donation->data['txn_type'] = 'auth_capture'; // Auth capture if no transaction reference exists.
     }
+    // Save the transaction id.
+    $donation->txn_id = $ref_id; 
     // Add the order status data.
     $donation->status = $donation->status_label = isset($order->order_status) ? $order->order_status : 'unknown';
     if (!empty($order->order_status)) {
