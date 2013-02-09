@@ -2,47 +2,36 @@
 
 /**
  * @file
- * Simple tests for salesforce_webform
+ * Simple tests for webform salesforce mapping
  */
+
+module_load_include('test', 'salesforce_genmap', 'tests/salesforce_genmap');
 
 /**
  * Tests basic set up for mapping salesforce objects to webforms.
  */
-class SalesforceWebformTestCase extends DrupalWebTestCase {
+class SalesforceWebformTestCase extends SalesforceGenmapTestCase {
 
   /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
     return array(
-      'name' => 'General Salesforce Webform Tests',
-      'description' => 'Ensure that the salesforce_webform module functions properly.',
-      'group' => 'Salesforce Webform',
+      'name' => 'Webform Mapping API',
+      'description' => 'Ensure that the webform module functions properly.',
+      'group' => 'Salesforce Generic Mapping',
     );
   }
 
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    $modules = $modules + array(
-      'entity',
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
       'libraries',
-      'salesforce',
-      'salesforce_genmap',
       'webform',
-      'salesforce_webform',
-    );
-    parent::setUp($modules);
-
-    // Create an admin user.
-    $permissions = array(
-      'access content',
-      'administer site configuration',
-      'administer content types',
-      'administer nodes',
-      'administer users',
-      'administer salesforce',
+    ));
+    $permissions = $permissions + array(
       'access all webform results',
       'access own webform results',
       'edit all webform submissions',
@@ -52,17 +41,13 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
       'delete own webform submissions',
       'map salesforce to webform',
     );
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    // Don't forget, need to pass --uri in drush command in order for logging
-    // in to work.
-    $this->drupalLogin($this->admin_user);
+    parent::setUp($modules, $permissions);
   }
 
   /**
    * Implementation of tearDown().
    */
   public function tearDown() {
-    user_cancel(array(), $this->admin_user->uid, 'user_cancel_delete');
     parent::tearDown();
   }
 
@@ -72,7 +57,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
    * @return Object
    *   Node object of the webform
    */
-  public function swCreateWebform($with_components = TRUE) {
+  public function createWebform($with_components = TRUE) {
     // Create a webform and add a few components.
     $settings = array(
       'type' => 'webform',
@@ -119,13 +104,13 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
   /**
    * Map a webform all at once.
    *
-   * Using swFormMapField() broke in setUp() when map stop being loaded on the
+   * Using formMapField() broke in setUp() when map stop being loaded on the
    * node. But thats OK in the setUp() context because we don't need to test the
    * mapping of the form.
    */
-  public function swMapWebform($nid, $dedupe = FALSE) {
-    $this->swSalesforceConnect();
-    $this->drupalGet('node/' . $nid . '/salesforce/salesforce_webform');
+  public function mapWebform($nid, $dedupe = FALSE) {
+    $this->salesforceConnect();
+    $this->drupalGet('node/' . $nid . '/salesforce/webform');
 
     // AJAX select the object type so the mapping fields show up.
     $edit = array(
@@ -135,9 +120,9 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
 
     // Map the fields and save.
     $edit += array(
-      'field_map[salesforce_webform_map][first_name][sf_field]' => 'FirstName',
-      'field_map[salesforce_webform_map][last_name][sf_field]' => 'LastName',
-      'field_map[salesforce_webform_map][email][sf_field]' => 'Email',
+      'field_map[webform_map][first_name][sf_field]' => 'FirstName',
+      'field_map[webform_map][last_name][sf_field]' => 'LastName',
+      'field_map[webform_map][email][sf_field]' => 'Email',
     );
     $this->drupalPost(NULL, $edit, 'Save');
 
@@ -155,7 +140,7 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
    *
    * You must first $this->drupalGet() the mapping form
    */
-  public function swFormMapField($drupal_field, $sf_field, $group, $dedupe = FALSE) {
+  public function formMapField($drupal_field, $sf_field, $group, $dedupe = FALSE) {
     if (!isset($this->_swfEdit)) {
       $this->_swfEdit = array();
     }
@@ -173,8 +158,8 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
     $this->_swfEdit[$name] = $sf_field;
 
     // Check that dedupe is hidden for unmapped fields.
-    if ($group == 'salesforce_webform_map' || $group == 'salesforce_object_info') {
-      if ($group == 'salesforce_webform_map') {
+    if ($group == 'webform_map' || $group == 'salesforce_object_info') {
+      if ($group == 'webform_map') {
         $empty_dedupe_field = '<input type="hidden" name="' . $name_dedupe . '">';
         $this->assertRaw($empty_dedupe_field, 'Dedupe field appropriately does not show up for an unmapped field.');
       }
@@ -187,34 +172,12 @@ class SalesforceWebformTestCase extends DrupalWebTestCase {
         $this->assertNoRaw($empty_dedupe_field, 'Empty dedupe field did not show up for ' . $sf_field);
         $this->assertRaw($dedupe_field, 'Dedupe radio showed up for ' . $sf_field);
       }
-      elseif ($group == 'salesforce_webform_map') {
+      elseif ($group == 'webform_map') {
         $this->assertRaw($empty_dedupe_field, 'Dedupe radio appropriately hidden for ' . $sf_field);
       }
     }
     else {
       // No need to do an drupalPostAjax.
     }
-  }
-
-  /**
-   * Grabs Salesforce connection information from the live db and authenticates.
-   *
-   * @return Object
-   *   Salesforce Object
-   */
-  public function swSalesforceConnect() {
-    // Steal the Salesforce configuration from the live database.
-    global $db_prefix;
-    $table = empty($db_prefix) ? 'variable' : $db_prefix . '_variable';
-    $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
-    $result = db_query($sql);
-    foreach ($result as $record) {
-      variable_set($record->name, unserialize($record->value));
-    }
-
-    // Test the connection.
-    $salesforce = salesforce_get_api();
-    $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
-    return $salesforce;
   }
 }

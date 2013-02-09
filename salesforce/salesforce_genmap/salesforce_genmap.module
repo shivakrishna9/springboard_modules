@@ -5,6 +5,10 @@
  * Manages generic case Salesforce mappings.
  */
 
+
+// Load extended modules include files.
+_salesforce_genmap_load_extended_modules();
+
 /**
  * @name core_drupal_hooks
  * @{
@@ -117,12 +121,20 @@ function salesforce_genmap_admin_paths() {
  * Implements hook_permission().
  */
 function salesforce_genmap_permission() {
-  return array(
+  $permissions = array(
     'map salesforce objects' => array(
       'title' => t('Map Salesforce objects'),
       'description' => t('Configure the mapping of Salesforce objects.'),
     ),
   );
+  $extended_modules = _salesforce_genmap_get_extended_modules_list();
+  foreach ($extended_modules as $module) {
+    $module_perms = module_invoke($module, 'salesforce_genmap_permission');
+    if (!empty($module_perms) && is_array($module_perms)) {
+      $permissions += $module_perms;
+    }
+  }
+  return $permissions;
 }
 
 /**
@@ -131,6 +143,10 @@ function salesforce_genmap_permission() {
 function salesforce_genmap_node_delete($node) {
   // Delete all salesforce_genmap_map entities.
   salesforce_genmap_delete_map($node->nid);
+  $extended_modules = _salesforce_genmap_get_extended_modules_list();
+  foreach ($extended_modules as $module) {
+    salesforce_genmap_delete_map($node->nid, $module);
+  }
 }
 
 /**
@@ -303,6 +319,9 @@ function salesforce_genmap_delete_map($nid, $module = 'salesforce_genmap') {
       // entity_delete() only returns FALSE. Otherwise it has no return value.
       return FALSE;
     }
+
+    // Invokes hook_salesforce_genmap_delete_map().
+    module_invoke($module, 'salesforce_genmap_delete_map', $nid, $module);
     return TRUE;
   }
 }
@@ -493,5 +512,45 @@ function _salesforce_genmap_get_rmid($item) {
       ->condition('object_type', $record['object_type'])
       ->execute()
       ->fetchField();
+  }
+}
+
+/**
+ * Helper to get list of modules being extended.
+ */
+function _salesforce_genmap_get_extended_modules_list() {
+  // Drupal function file_scan_directory() uses the opendir() approach which
+  // does not work if the path contains symlinks.  Using scandir() to be more
+  // flexible.
+  $cache = cache_get('salesforce_genmap_extended_modules');
+  if (empty($cache)) {
+    $path = drupal_get_path('module', 'salesforce_genmap') . '/includes/modules';
+    $files = scandir($path);
+    $modules = array();
+    foreach ($files as $file) {
+      if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
+        $modules[] = substr($file, 0, -4);
+      }
+    }
+    cache_set('salesforce_genmap_extended_modules', $modules);
+  }
+  else {
+    $modules = $cache->data;
+  }
+  return $modules;
+}
+
+/**
+ * Helper to load the include files for the modules we extend.
+ */
+function _salesforce_genmap_load_extended_modules($module = '') {
+  if (empty($module)) {
+    $modules = _salesforce_genmap_get_extended_modules_list();
+  }
+  else {
+    $modules = array($module);
+  }
+  foreach ($modules as $module) {
+    module_load_include('inc', 'salesforce_genmap', 'includes/modules/' . $module);
   }
 }
