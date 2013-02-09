@@ -245,6 +245,9 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       if (empty($this_gateway['offsite_processing'])) {
         $this_gateway['offsite_processing'] = array();
       }
+      // Error check, disallow members of recurring that are in processing.
+      $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
+      // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
       $fundraiser_gateways[] = $this_gateway; 
     }
@@ -631,8 +634,9 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
 function fundraiser_commerce_fundraiser_donation_process($donation) {
   // Grab the gateway configuration from fundraisers data.
   $info = _fundraiser_get_donation_gateway($donation->did);
-  // If internal processing.
+  // Choose which of two ways to process this.
   if (in_array($donation->donation['payment_method'], $info['offsite_processing'])) {
+    // If external processing, we cannot execute a recurring charge against it. So we're ok.
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
     // Here we make sure we include the hook implementation.
@@ -653,7 +657,8 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     _fundraiser_commerce_fundraiser_donation_process_external($donation, $info);
   }
   else {
-    // Check for the charge function to be defined.
+    // If internal processing, then it may be a sustainer charge or newly declared.
+    // The gateway is responsible for that call.
     $charge_function = isset($info['charge_function']) ? $info['charge_function'] : '';
     if (empty($charge_function)) {
       // Alert the administrator that the module does not provide a required form.
