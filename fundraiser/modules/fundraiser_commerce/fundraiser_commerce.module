@@ -930,9 +930,10 @@ function _fundraiser_commerce_update_donation_result_data($donation, $success) {
   // And update the result array success field.
   $result = array(
     'success' => $success,
-    'message' => $message,
+    'message' => $success ? t('Donation was successfully processed.') : t('Donation transaction failed.'), // Shown to user.
     // Additional data for the order record to store.
     'data' => array(
+      'message' => $message, // Official message from gateway.
       'txn_id' => $remote_id,
       'remote_id' => $remote_id, // The handler ID.
       'transaction_id' => $transaction_id, // The Drupal ID.
