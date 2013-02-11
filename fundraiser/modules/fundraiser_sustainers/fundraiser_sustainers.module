@@ -670,7 +670,8 @@ function fundraiser_sustainers_edit_form($did) {
  */
 function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donation, $next_donation) {
   // Abort if the gateway does not support recurring.
-  if (!_fundraiser_sustainers_supports_recurring($donation->gateway['allow_recurring'], $donation->donation['payment_method'])) {
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
     $form['fundraiser-sustainer-billing'] = array(
       '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
         t('This payment gteway does not support recurring donations and cannot be updated.') .
@@ -748,7 +749,8 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
   // Abort if the gateway does not support recurring.
-  if (!_fundraiser_sustainers_supports_recurring($donation->gateway['allow_recurring'], $donation->donation['payment_method'])) {
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
     $form['fundraiser-sustainer-billing'] = array(
       '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' .
         t('This payment gteway does not support recurring donations and cannot be updated.') .
@@ -1089,7 +1091,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
   if (!isset($donation->recurring->master_did)) {
     // If this is in fact a recurring donation, then we act.
     if ($donation->donation['recurs_monthly'] == TRUE) {
-      if (_fundraiser_sustainers_supports_recurring($donation->gateway['allow_recurring'], $donation->donation['payment_method'])) {
+      $info = _fundraiser_get_donation_gateway($donation->did);
+      if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
         $donation->recurring->master_did = $donation->did;
         // Add the master to the recurring table.
         $recurring_donation = array(
@@ -1229,7 +1232,7 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
  * Helper function, given a gateway determine if the gateway supports recurring donations.
  */
 function _fundraiser_sustainers_supports_recurring($allow_recurring, $payment_method) {
-  if (isset($allow_recurring) && !empty($allow_recurring) && in_array($payment_method,array_values($allow_recurring))) {
+  if (isset($allow_recurring) && !empty($allow_recurring) && in_array($payment_method, $allow_recurring)) {
     return TRUE;
   }
   return FALSE;
