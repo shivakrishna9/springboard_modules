@@ -23,14 +23,14 @@
 
 <div id="donation-form-column-wrapper">
   <div id="left">
-    <? print drupal_render($form['submitted']['donation']); ?>
-    <? print drupal_render($form['submitted']['donor_information']); ?>
-    <? print drupal_render($form['submitted']['billing_information']); ?>
+    <?php print drupal_render($form['submitted']['donation']); ?>
+    <?php print drupal_render($form['submitted']['donor_information']); ?>
+    <?php print drupal_render($form['submitted']['billing_information']); ?>
   </div>
   <div id="right">
-    <? print drupal_render($form['submitted']['credit_card_information']); ?>
+    <?php print drupal_render($form['submitted']['credit_card_information']); ?>
   </div>
   <div id="donation-form-footer">
-    <? print drupal_render($form); ?>
+    <?php print drupal_render($form); ?>
   </div>
 </div>
