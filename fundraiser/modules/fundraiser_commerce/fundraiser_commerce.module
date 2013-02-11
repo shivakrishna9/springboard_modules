@@ -1130,9 +1130,10 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $info = _fundraiser_get_donation_gateway($donation->did);
     // Check for the billing function to be defined.
     if (isset($info['update callback']) && function_exists($info['update callback'])) {
-      $billing_update_function = $info['update callback'];
-// TODO pass the update stuff to the gateway to work with.
-//      $result = $billing_update_function($donation->donation['reference_id'], $billing_info, $donation->data);
+      $info = _fundraiser_get_donation_gateway($donation->did);
+      $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
+      $update_function = $info['update callback'];
+      $result = $update_function($method_instance, $donation);
     }
   }
 }

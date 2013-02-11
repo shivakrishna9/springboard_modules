@@ -120,12 +120,26 @@ function commerce_authnet_fundraiser_commerce_expire($submission_fields) {
  * Callback function, charge gateway.
  */
 function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation) {
-  // Thit gateway allows recurring data.
-  // Based on that - presume that we will need to use the 'card on file' features provided
-  // by commerce_authnet. In the course of this, we need to set and return a data key for the
-  // customers profile id. We would use actual card on file but for lack of encryption on that
-  // table. Look for the profile id in $donation->data[];
+  // This gateway allows recurring data.
+  // Based on that - presume that we would normally to use the 'card on file' features provided
+  // by commerce_authnet.
+  // But card on file does not encrypt things as we need it to, so we're going to need to track our
+  // own data and charge systems here. It's a bit of a pain and means we can't readily use the standard
+  // submission anymore. But that's as things go.
+  // The commerce_authnet module needs to be extensively refactored to allow for automatic posts.
+  // TODO: do this as a patch and submit to maintainer.
+  if (module_exists('commerce_cardonfile')) {
+    return _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, $donation);
+  }
+  else {
+    return _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_method, $donation);
+  }
+}
 
+/**
+ * Easy mode, submit to Authnet without CIM.
+ */
+function _commerce_authnet_fundraiser_commerce_charge_without_cim($payment_method, $donation) {
   // Translate from donation settings to the correct values for the plugin.
   $order = commerce_order_load($donation->did);
   $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
@@ -143,36 +157,68 @@ function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation)
         $donation->donation['payment_fields']['credit']['card_cvv'] : '',
     ),
   );
+  $payment_method['settings']['cim_cardonfile'] = FALSE;
+  // Execute call to commerce_authnet, without CIM enabled (in case card on file is turned on).
+  $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
+}
 
+/**
+ * Hard mode, without card on file, we need to replicate the work of it in order to re-use the same values
+ * from regular CIM. For now those, let's just use CIM to establish the behavior before we replicate.
+ */
+function _commerce_authnet_fundraiser_commerce_charge_with_cim($payment_method, $donation) {
+  // Translate from donation settings to the correct values for the plugin.
+  $order = commerce_order_load($donation->did);
+  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
+  // Call to commerce_authnet_aim_submit_form_submit() based on instance callbacks.
+  $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
+  $pane_values = array(
+    'credit_card' => array(
+      'number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+        $donation->donation['payment_fields']['credit']['card_number'] : '',
+      'exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
+        $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
+      'exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
+        $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
+      'code' => isset($donation->donation['payment_fields']['credit']['card_cvv']) ?
+        $donation->donation['payment_fields']['credit']['card_cvv'] : '',
+    ),
+  );
+  if (strlen($pane_values['credit_card']['exp_month']) == 1) {
+    $pane_values['credit_card']['exp_month'] = '0' . $pane_values['credit_card']['exp_month'];
+  }
   // Account for any CIM if stored on file, we have everything we need here - no need to pull out
   // of the donation object or habitually load this value from the donation. This may need to be
   // revised later, but for now I don't think we need to pull sustainer data with the donation.
   // Commerce needs to execute billing update to call into the gateway to update on asociated CIMs.
   // As a result, sustainer has NO NEED for cim to be loaded into the donation object. Those tokens Go Away.
   // If possible at least.
-  if (module_exists('commerce_cardonfile')) {
-    $payment_method['settings']['cim_cardonfile'] = TRUE;
-    $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
-    $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
-    // Filter out expired cards.
+  // TODO - add encryption?
+  $payment_method['settings']['cim_cardonfile'] = TRUE; // Card on file,
+  $pane_values['credit_card']['cardonfile_store'] = TRUE; // And store it please.
+  $pane_values['cardonfile'] = 'new'; // Make a new CIM unless we already have one on record.
+  $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
+  // Filter out expired cards.
+  foreach ($stored_cards as $card_id => $card_data) {
+    if ($card_data['card_exp_year'] < date('Y') ||
+      $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+      unset($stored_cards[$card_id]);
+    }
+  }
+  if (!empty($stored_cards)) {
+    // Then grab the first one.
     foreach ($stored_cards as $card_id => $card_data) {
-      if ($card_data['card_exp_year'] < date('Y') ||
-        $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
-        unset($stored_cards[$card_id]);
-      }
-    }
-    if (!empty($stored_cards)) {
-      // Then grab the first one.
-      foreach ($stored_cards as $card_id => $card_data) {
-        $pane_values['cardonfile'] =  $card_id;
-      }
+      $pane_values['cardonfile'] =  $card_id;
     }
   }
-  else {
-    $payment_method['settings']['cim_cardonfile'] = FALSE;
-  }
-  // Execute call to commerce_authnet, be it CIM or other, it'll come back with the correct response.
+  // Gathered pane values now submit.
   $result = commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  // At this point the card has been saved on the user profile.
   $success = FALSE;
   if ($result !== FALSE) {
     $success = TRUE;
@@ -183,6 +229,41 @@ function commerce_authnet_fundraiser_commerce_charge($payment_method, $donation)
 /**
  * Callback function, update data stored at the gateway.
  */
-function commerce_authnet_fundraiser_commerce_update() {
-// TODO fill in how commerce_authnet will update the user's gateway card on file for this donation.
+function commerce_authnet_fundraiser_commerce_update($payment_method, $donation) {
+  // Get the card.
+  $stored_cards = commerce_cardonfile_data_load_multiple($donation->uid, $payment_method['instance_id']);
+  // Filter out expired cards.
+  foreach ($stored_cards as $card_id => $card_data) {
+    if ($card_data['card_exp_year'] < date('Y') ||
+      $card_data['card_exp_year'] == date('Y') && $card_data['card_exp_month'] < date('m')) {
+      unset($stored_cards[$card_id]);
+    }
+  }
+  $card_data = '';
+  if (!empty($stored_cards)) {
+    // Then grab the first one.
+    foreach ($stored_cards as $card_id => $this_card) {
+      $card_data = $this_card;
+    }
+  }
+  // Donation card data.
+  $additional_data = array(
+  'card_number' => isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+    $donation->donation['payment_fields']['credit']['card_number'] : '',
+  'card_exp_month' => isset($donation->donation['payment_fields']['credit']['card_expiration_month']) ?
+    $donation->donation['payment_fields']['credit']['card_expiration_month'] : '',
+  'card_exp_year' => isset($donation->donation['payment_fields']['credit']['card_expiration_year']) ?
+    $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
+  );
+  $card_data = array_merge($card_data, $additional_data);
+  // Set additional values.
+  $form['credit_card']['number']['#default_value'] = '';
+  $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ? 
+    $donation->donation['payment_fields']['credit']['card_number'] : '';
+  $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
+  $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
+
+  if (!empty($card_id)) {
+    commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+  }
 }
