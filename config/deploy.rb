@@ -13,6 +13,10 @@ role :aspca_varnish, 'aspca-varnish.jacksonriverdev.com', {
   :user => 'ec2-user'
 }
 
+role :sbqa, 'sb4qa.com', {
+  :user => 'admin'
+}
+
 set :deploy_via, :remote_cache
 set :copy_exclude, [".git", ".DS_Store"]
 set :scm, :git
