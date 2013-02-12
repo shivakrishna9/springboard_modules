@@ -594,8 +594,13 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
   // Gather the payment fields for storage, and scrub them.
-  $info = _fundraiser_get_donation_gateway($donation->did);
-  $method_instance = commerce_payment_method_instance_load($info['id']);
+  if (isset($donation->did)) {
+    $info = _fundraiser_get_donation_gateway($donation->did);
+    $method_instance = commerce_payment_method_instance_load($info['id']);
+  }
+  else {
+    $method_instance = commerce_payment_method_instance_load($donation->gateway);
+  }
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
