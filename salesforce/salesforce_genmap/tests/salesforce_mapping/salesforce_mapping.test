@@ -1,0 +1,146 @@
+<?php
+
+/**
+ * @file
+ * Simple tests for salesforce_mapping
+ */
+
+module_load_include('test', 'salesforce_mapping', 'tests/salesforce_mapping');
+
+/**
+ * Tests basic set up for mapping salesforce objects.
+ */
+class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'SalesforceMappingAlter API',
+      'description' => 'Ensure the modifications to salesforce_mapping function correctly.',
+      'group' => 'Salesforce Mapping',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'salesforce_sync',
+      'salesforce_genmap',
+    ));
+    parent::setUp($modules, $permissions);
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Submits a salesforce mapping form of your configuration or a default one.
+   *
+   * @param string $label
+   *   Desired lable for the mapping.
+   * @param string $machine_name
+   *   Desired machine name of the mapping.  If none is provided, one will be
+   *   automatically generated from the label.
+   * @param array $config
+   *   Desired mapping configuration.  If none is provided, a default mapping
+   *   configuration will be generated.
+   */
+  protected function createSalesforceMapping($label, $machine_name = NULL, $config = array()) {
+    // Give a default configuration if one is not provided for us.
+    if (empty($config)) {
+      $config = array(
+        'drupal_entity_type' => 'user',
+        'drupal_bundle' => 'user',
+        'salesforce_object_type' => 'Contact',
+        'key' => 'mail',
+        'mapping' => array(
+          'name' => array(
+            'salesforce_field' => 'Name',
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          ),
+          'mail' => array(
+            'salesforce_field' => 'Email',
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          ),
+          'created' => array(
+            'salesforce_field' => 'CreatedDate',
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+          ),
+        ),
+        'sync_triggers' => array(
+          '1' => TRUE,
+          '2' => TRUE,
+          '4' => TRUE,
+          '8' => TRUE,
+          '16' => TRUE,
+          '32' => TRUE,
+        ),
+        'push_async' => TRUE,
+      );
+    }
+
+    $edit = array();
+    $machine_name = is_null($machine_name) ? str_replace(' ', '_', strtolower($label)) : $machine_name;
+    $this->drupalGet($this->addMapPath);
+    $this->assertNoText('You are not authorized to access this page.', 'Able to access the create map page.');
+
+    // Get all of the AJAX behaviors out of the way.
+    $edit['drupal_entity_type'] = $config['drupal_entity_type'];
+    $this->drupalPostAjax(NULL, $edit, 'drupal_entity_type');
+    unset($config['drupal_entity_type']);
+    $edit['drupal_bundle'] = $config['drupal_bundle'];
+    $this->drupalPostAjax(NULL, $edit, 'drupal_bundle');
+    unset($config['drupal_bundle']);
+    $edit['salesforce_object_type'] = $config['salesforce_object_type'];
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_object_type');
+    unset($config['salesforce_object_type']);
+    foreach ($config['mapping'] as $delta => $map) {
+      $sf_field_name = 'salesforce_field_mappings[' . $delta . '][salesforce_field]';
+      $edit[$sf_field_name] = $map['salesforce_field'];
+      $this->drupalPostAjax(NULL, $edit, $sf_field_name);
+      unset($config['mapping'][$delta]['salesforce_field']);
+    }
+
+    // Fill out the rest of the form.
+    $edit['label'] = $label;
+    $edit['name'] = $machine_name;
+    foreach ($config as $key => $data) {
+      switch ($key) {
+        case 'mapping':
+          foreach ($data as $delta => $fields) {
+            foreach ($fields as $field => $value) {
+              $edit['salesforce_field_mappings[' . $delta . '][' . $field . ']'] = $value;
+            }
+          }
+          break;
+
+        case 'sync_triggers':
+          foreach ($data as $value => $flag) {
+            $edit['sync_triggers[' . $value . ']'] = $flag;
+          }
+          break;
+
+        default:
+          $edit[$key] = $data;
+      }
+    }
+
+    // Submit form.
+    $this->drupalPost(NULL, $edit, 'Save mapping');
+    $this->assertText('Salesforce field mapping saved.', 'Form posted as expected.');
+    $this->assertRaw('id="salesforce-mapping-overview-form"', 'Redirected to the mappings overview table.');
+    $this->assertRaw('(Machine name: ' . $machine_name . ')', 'New map successfully appears on overview page.');
+    $this->assertLink($label, 0, 'Link to edit new map appears.');
+  }
+}
