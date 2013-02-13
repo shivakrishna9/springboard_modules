@@ -1,0 +1,10 @@
+name = Salesforce Log
+description =  Log batch processing of Salesforce data.
+package = Salesforce
+core = 7.x
+
+dependencies[] = salesforce_queue
+dependencies[] = salesforce_sync
+dependencies[] = views
+
+configure = admin/config/services/salesforce/salesforce-sync/salesforce-log

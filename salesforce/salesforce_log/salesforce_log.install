@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the Salesforce Log module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function salesforce_log_schema() {
+  $schema['salesforce_log_batch'] = array(
+    'description' => t('Logs data for the Salesforce Sync.'),
+    'fields' => array(
+      'bid' => array(
+        'description' => 'Unique id of this batch.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'start' => array(
+        'description' => 'Timestamp of when this batch started.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'end' => array(
+        'description' => 'Timestamp of when this batch finished.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'count' => array(
+        'description' => 'Total amount of items in this batch.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'successes' => array(
+        'description' => 'Count of successfully synced items.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'failures' => array(
+        'description' => 'Count of failed items.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'module' => array(
+        'description' => 'Name of the module that implements the Drupal type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'delta' => array(
+        'description' => 'Name or id of the Drupal sub-type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'object_type' => array(
+        'description' => 'The Salesforce object type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'operation' => array(
+        'description' => 'The action to take in Salesforce.',
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('bid'),
+    'indexes' => array(
+      'drupal_index' => array(
+        'module',
+        'delta',
+        'object_type',
+      ),
+    ),
+  );
+
+  $schema['salesforce_log_item'] = array(
+    'description' => t('Logs data on individual items for the Salesforce Sync.'),
+    'fields' => array(
+      'lid' => array(
+        'description' => 'Unique id of this item.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'item_id' => array(
+        'description' => 'Queue id of this item.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'bid' => array(
+        'description' => 'The id of the batch containing this item.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Flag for success or failure.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'sobject' => array(
+        'description' => 'The Salesforce sObject in json format.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('lid', 'item_id', 'bid'),
+  );
+
+  return $schema;
+}
+    
