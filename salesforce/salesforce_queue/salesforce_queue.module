@@ -160,6 +160,23 @@ function salesforce_queue_load($queue_name = 'all') {
   return SalesforceQueue::get($queue_name);
 }
 
+/**
+ * Wrapper to load SalesforceQueueProcessor object for a given SalesforceQueue.
+ *
+ * @param mixed $queue
+ *   Provide a string of the name of the queue to load a processor for, or the
+ *   SalesforceQueue object itself.
+ *
+ * @return SalesforceQueueProcessor
+ *   Processor for the given SalesforceQueue.
+ */
+function salesforce_queue_load_processor($queue = '') {
+  if (is_string($queue)) {
+    $queue = salesforce_queue_load($queue);
+  }
+  return SalesforceQueueProcessor::get($queue);
+}
+
 
 /**
  * @name salesforce_queue_process  Group for behaviors processing the queue
@@ -170,8 +187,7 @@ function salesforce_queue_load($queue_name = 'all') {
  * Processes the data in the Salesforce queue.
  */
 function salesforce_queue_process_queue($queue_name = 'all') {
-  $queue = salesforce_queue_load($queue_name);
-  $processor = SalesforceQueueProcessor::get($queue);
+  $processor = salesforce_queue_load_processor($queue_name);
   return $processor->process();
 }
 
@@ -195,7 +211,7 @@ function salesforce_queue_cron() {
 function salesforce_queue_salesforce_sync_pass_item($item, $result) {
   if (isset($item->queue) && !empty($item->queue)) {
     // Remove successful items from the queue.
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $queue->deleteItem($item);
   }
 }

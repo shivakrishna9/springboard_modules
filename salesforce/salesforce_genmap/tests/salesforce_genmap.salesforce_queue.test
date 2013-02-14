@@ -34,7 +34,7 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
 
     // Initiate a queue and processor.
     $this->queue = SalesforceQueue::get();
-    $this->processor = SalesforceQueueProcessor::get($this->queue);
+    $this->processor = salesforce_queue_load_processor($this->queue);
 
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
