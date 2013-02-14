@@ -1,0 +1,78 @@
+<?php
+
+/**
+ * @file
+ * Provides logging of the batch processing of the Salesforce integration.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_log_menu() {
+  // Reports landing page. The actual report pages are handled by views
+  $items['admin/reports/salesforce'] = array(
+    'title' => 'Salesforce',
+    'description' => 'View salesforce reports, updates, and errors.',
+    'page callback' => 'salesforce_log_admin_menu_block_page',
+    'access arguments' => array('access site reports'),
+    'weight' => 5,
+    'position' => 'left',
+    'file' => 'includes/salesforce_log.admin.inc',
+  );
+
+  // Settings form
+  $items['admin/config/services/salesforce/salesforce-sync/logs'] = array(
+    'title' => 'Log',
+    'description' => 'Configuration settings for the Salesforce batch log.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_log_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_log.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function salesforce_log_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'salesforce_log') . '/includes',
+  );
+}
+
+/*
+ * Implements hook_salesforce_queue_preprocess_batch
+ */
+function salesforce_log_salesforce_queue_preprocess_batch($batch, $queue) {
+  $batch['start'] = time();
+  $batch['module'] = $batch['items'][0]->module;
+  $batch['delta'] = $batch['items'][0]->delta;
+  drupal_write_record('salesforce_log_batch', $batch);
+  foreach ($batch['items'] as &$item) {
+    $item->bid = $batch['bid'];
+    drupal_write_record('salesforce_log_item', $item);
+  }
+}
+
+/**
+ * Invokes hook_salesforce_sync_fail_item
+ *
+ * @param object $item
+ *   Queue item
+ * @param string $message
+ *   Message explaining why the item failed.
+ * @param mixed $result
+ *   Information about the failure, likely a Salesforce result object
+ */
+function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
+  //print 'item ' . print_r($item, 1);
+  //print 'message ' . print_r($message, 1);
+  //print 'result ' . print_r($result, 1);
+  $item->status = 'failed';
+  $item->message = $result->faultstring;
+  drupal_write_record('salesforce_log_item', $item, array('lid', 'item_id', 'bid'));
+}
