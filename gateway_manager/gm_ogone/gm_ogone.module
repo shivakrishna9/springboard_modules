@@ -671,8 +671,7 @@ function gm_ogone_billing_update($alias_id, $billing_info, $data) {
   $next_order = uc_order_load($next_order_id);
 
   $references = array_keys($next_order->data['cc_txns']['references']);
-  $alias_id = (int) array_shift($references);
-
+  $alias_id = array_shift($references);
 
   // Build array of charge details
   $charge_details = array(
@@ -717,10 +716,10 @@ function gm_ogone_fundraiser_billing_update_alter(&$order, $billing_update_resul
   if ($gateway_details['billing_update'] == 'gm_ogone_billing_update') {
     // Find the current alias
     $references = array_keys($order->data['cc_txns']['references']);
-    $old_alias_id = (int) array_shift($references);
+    $old_alias_id = array_shift($references);
 
     // Get the new alias from the billing update feedback
-    $new_alias_id = (int) $billing_update_result['ALIAS'];
+    $new_alias_id = $billing_update_result['ALIAS'];
 
     // If the alias has changed, update the order
     if ($new_alias_id != $old_alias_id) {
