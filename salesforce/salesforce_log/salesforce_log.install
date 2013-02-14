@@ -99,17 +99,24 @@ function salesforce_log_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'sobject' => array(
+        'description' => 'The Salesforce sObject in json format.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'serialize' => TRUE
+      ),
       'status' => array(
         'description' => 'Flag for success or failure.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
-      'sobject' => array(
-        'description' => 'The Salesforce sObject in json format.',
+      'message' => array(
+        'description' => 'Message from Salesforce.',
         'type' => 'text',
         'size' => 'big',
-        'not null' => TRUE,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('lid', 'item_id', 'bid'),
