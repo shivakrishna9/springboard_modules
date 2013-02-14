@@ -33,7 +33,7 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Initiate a queue and processor.
-    $this->queue = SalesforceQueue::get();
+    $this->queue = salesforce_queue_load();
     $this->processor = salesforce_queue_load_processor($this->queue);
 
     // Set up the processor's Salesforce connection.

@@ -30,7 +30,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Initiate a processor.
-    $this->queue = SalesforceQueue::get();
+    $this->queue = salesforce_queue_load();
     $this->processor = salesforce_queue_load_processor($this->queue);
 
     // Predeclare reusable reference lists.
@@ -761,7 +761,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->salesforceConnect();
 
     // Queue up an Opportunity which will automatically fail.
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Account', 'Contact'));
     $item = $queue->claimItem();
     $queue->releaseItem($item);
@@ -794,7 +794,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     variable_set('salesforce_queue_cron_frequency', 0);
 
     // Add item to queue and ensure it is there.
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
     $items = $queue->claimBatch();
     $queue->releaseBatch($items[0]->leaseKey);
