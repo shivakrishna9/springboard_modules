@@ -24,7 +24,7 @@ function springboard_admin_settings() {
     $form['springboard_config']['settings']['order_handling'] = array(
       '#type' => 'select',
       '#options' => array(
-        'ubercart' => t('Ubercart'),
+//        'ubercart' => t('Ubercart'),
         'commerce' => t('Commerce'),
       ),
       '#title' => t('Select order processing system'),
