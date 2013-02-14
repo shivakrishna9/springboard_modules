@@ -8,3 +8,9 @@ dependencies[] = salesforce_sync
 dependencies[] = views
 
 configure = admin/config/services/salesforce/salesforce-sync/salesforce-log
+
+; Views handlers
+files[] = includes/salesforce_log_handler_filter_operation.inc
+files[] = includes/salesforce_log_handler_filter_queue.inc
+files[] = includes/salesforce_log_handler_filter_module.inc
+files[] = includes/salesforce_log_handler_filter_object_type.inc
