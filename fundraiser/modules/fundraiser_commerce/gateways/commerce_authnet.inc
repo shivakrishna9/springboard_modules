@@ -256,6 +256,9 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
     $donation->donation['payment_fields']['credit']['card_expiration_year'] : '',
   );
   $card_data = array_merge($card_data, $additional_data);
+  if (strlen($card_data['card_exp_month']) == 1) {
+    $card_data['card_exp_month'] = '0' . $card_data['card_exp_month']; // Format the date value.
+  }
   // Set additional values.
   $form['credit_card']['number']['#default_value'] = '';
   $form_state['values']['credit_card']['number'] = isset($donation->donation['payment_fields']['credit']['card_number']) ? 
@@ -263,7 +266,9 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
   $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
   $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
 
-  if (!empty($card_id)) {
+  if (!empty($card_data)) {
+    // Calling commerce_authnet_cim_cardonfile_update.
+    drupal_set_message('calleing commerce_authnet_cim_cardonfile_update');
     commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
   }
 }
