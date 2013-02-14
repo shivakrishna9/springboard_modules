@@ -13,6 +13,7 @@ files[] = tests/salesforce_queue.queue.test
 files[] = tests/salesforce_queue.test
 files[] = tests/salesforce_queue.token.test
 
+dependencies[] = entity
 dependencies[] = libraries
 dependencies[] = salesforce
 dependencies[] = salesforce_soap

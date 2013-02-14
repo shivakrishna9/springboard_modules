@@ -26,6 +26,7 @@ class SalesforceQueueTestCase extends DrupalWebTestCase {
    */
   public function setUp($modules = array()) {
     $modules = $modules + array(
+      'entity',
       'libraries',
       'salesforce',
       'salesforce_soap',

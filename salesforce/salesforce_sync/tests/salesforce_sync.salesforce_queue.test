@@ -2,15 +2,15 @@
 
 /**
  * @file
- * Simple tests for salesforce_genmap salesforce_queue hooks
+ * Simple tests for salesforce_sync salesforce_queue hooks
  */
 
 module_load_include('test', 'salesforce_queue', 'tests/salesforce_queue');
 
 /**
- * Ensure salesforce_genmap integrations salesforce_queue properly.
+ * Ensure salesforce_sync integrates with salesforce_queue properly.
  */
-class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
+class SalesforceSyncQueueTestCase extends SalesforceQueueTestCase {
 
   /**
    * Implementation of getInfo().
@@ -18,8 +18,8 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
   public static function getInfo() {
     return array(
       'name' => 'Queue Integration',
-      'description' => 'Ensure that the salesforce_genmap integration with salesforce_queue functions properly.',
-      'group' => 'Salesforce Generic Mapping',
+      'description' => 'Ensure that the salesforce_sync integration with salesforce_queue functions properly.',
+      'group' => 'Salesforce Sync',
     );
   }
 
@@ -27,9 +27,6 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
    * Implementation of setUp().
    */
   public function setUp($modules = array()) {
-    $modules = $modules + array(
-      'salesforce_genmap',
-    );
     parent::setUp($modules);
 
     // Initiate a queue and processor.
@@ -67,7 +64,7 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
     // Items added to Salesforce will have their records mapped to their
     // Salesforce Ids.  Retreive records and verify record maps were created.
     $this->processor->process();
-    $records = entity_load('salesforce_genmap_record_map');
+    $records = entity_load('salesforce_sync_map');
     $this->assertEqual(5, count($records), 'Mapped ' . count($records) . ' records out of 5 queued.');
 
     // Updated and deleted items will automatically have their sfid added when
@@ -98,7 +95,7 @@ class SalesforceGenmapQueueTestCase extends SalesforceQueueTestCase {
 
     // Remove the items that were created and verify the record maps deleted.
     $this->processor->deleteNewSfRecords();
-    $records = entity_load('salesforce_genmap_record_map');
+    $records = entity_load('salesforce_sync_map');
     $this->assertEqual(0, count($records), count($records) . ' records remained after deleting all newly created Salesforce records.');
   }
 }
