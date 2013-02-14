@@ -119,7 +119,13 @@ function salesforce_log_schema() {
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('lid', 'item_id', 'bid'),
+    'primary key' => array('lid'),
+    'indexes' => array(
+      'item_id_bid' => array(
+        'item_id',
+        'bid',
+      ),
+    ),
   );
 
   return $schema;

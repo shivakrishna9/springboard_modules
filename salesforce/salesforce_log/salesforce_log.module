@@ -14,7 +14,7 @@ function salesforce_log_menu() {
     'title' => 'Salesforce',
     'description' => 'View salesforce reports, updates, and errors.',
     'page callback' => 'salesforce_log_admin_menu_block_page',
-    'access arguments' => array('access site reports'),
+    'access arguments' => array('view salesforce batch logs'),
     'weight' => 5,
     'position' => 'left',
     'file' => 'includes/salesforce_log.admin.inc',
@@ -26,7 +26,7 @@ function salesforce_log_menu() {
     'description' => 'Configuration settings for the Salesforce batch log.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_log_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('view salesforce batch logs'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/salesforce_log.admin.inc',
   );
@@ -35,12 +35,24 @@ function salesforce_log_menu() {
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_views_api().
  */
 function salesforce_log_views_api() {
   return array(
     'api' => 3,
     'path' => drupal_get_path('module', 'salesforce_log') . '/includes',
+  );
+}
+
+/**
+ * Implement hook_permission().
+ */
+function salesforce_log_permission() {
+  return array(
+    'view salesforce batch logs' => array(
+      'title' => t('View Salesforce logs'),
+      'description' => t('View the Salesforce logs.'),
+    ),
   );
 }
 
@@ -69,10 +81,7 @@ function salesforce_log_salesforce_queue_preprocess_batch($batch, $queue) {
  *   Information about the failure, likely a Salesforce result object
  */
 function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
-  //print 'item ' . print_r($item, 1);
-  //print 'message ' . print_r($message, 1);
-  //print 'result ' . print_r($result, 1);
   $item->status = 'failed';
   $item->message = $result->faultstring;
-  drupal_write_record('salesforce_log_item', $item, array('lid', 'item_id', 'bid'));
+  drupal_write_record('salesforce_log_item', $item, array('lid'));
 }
