@@ -45,6 +45,7 @@ class NPSPDonation extends Donation {
       'pending_future_payment' => 'Pledged',
       'partially_refunded' => 'Partially Refunded',
       'refunded' => 'Refunded',
+      'failed' => 'Declined',
     );
   }
 
