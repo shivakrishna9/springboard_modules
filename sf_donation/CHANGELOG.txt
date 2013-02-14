@@ -1,3 +1,7 @@
+2013-02-14 Jeremy Isett <jeremy.isett@jacksonriver.com>
+
+   * donation.php: Added failed status to NPSP stage maps
+
 2013-02-06  Jeremy Isett  <jeremy.isett@jacksonriver.com>
 
     * donation.php Added failed and canceled to Common Ground donation integration
