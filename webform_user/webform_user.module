@@ -778,16 +778,25 @@ function _webform_user_create_webform_components(&$node) {
         case 'hidden':
           $item['extra']['private'] = 0; // Allow to be changed by JS.
           break;
+        // Special no-equilivent types.
+        case 'image':
+          // There is no webform image field.
+          //$item['type'] = 'hidden';
+          //$item['extra']['private'] = 0;
+          $item = array();
+          break;
       }
-      // Add the component to the Webform.
-      $cid = webform_component_insert($item);
-      // Add the component mapping record
-      $map = array(
-        'nid' => $node->nid,
-        'cid' => $cid,
-        'map_id' => $field['name'],
-      );
-      drupal_write_record('webform_user_component_map', $map);
+      if (!empty($item)) {
+        // Add the component to the Webform.
+        $cid = webform_component_insert($item);
+        // Add the component mapping record
+        $map = array(
+          'nid' => $node->nid,
+          'cid' => $cid,
+          'map_id' => $field['name'],
+        );
+        drupal_write_record('webform_user_component_map', $map);
+      }
     }
   } // End foreach field.
   drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
