@@ -123,7 +123,6 @@ function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $qu
  * Array filter callback to find the count of successfully synced batch items
  */
 function _salesforce_log_array_filter_batch_successes($item) {
-  print print_r($item, 1);
   if (!empty($item->sobject)) {
     return TRUE;
   }
