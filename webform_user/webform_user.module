@@ -774,16 +774,29 @@ function _webform_user_create_webform_components(&$node) {
         case 'datestamp':
           $item['type'] = 'date'; // TODO this is partial, dates MAY also have times, and we need to make second component.
           break;
+        // Special hidden types.
+        case 'hidden':
+          $item['extra']['private'] = 0; // Allow to be changed by JS.
+          break;
+        // Special no-equilivent types.
+        case 'image':
+          // There is no webform image field.
+          //$item['type'] = 'hidden';
+          //$item['extra']['private'] = 0;
+          $item = array();
+          break;
       }
-      // Add the component to the Webform.
-      $cid = webform_component_insert($item);
-      // Add the component mapping record
-      $map = array(
-        'nid' => $node->nid,
-        'cid' => $cid,
-        'map_id' => $field['name'],
-      );
-      drupal_write_record('webform_user_component_map', $map);
+      if (!empty($item)) {
+        // Add the component to the Webform.
+        $cid = webform_component_insert($item);
+        // Add the component mapping record
+        $map = array(
+          'nid' => $node->nid,
+          'cid' => $cid,
+          'map_id' => $field['name'],
+        );
+        drupal_write_record('webform_user_component_map', $map);
+      }
     }
   } // End foreach field.
   drupal_set_message(t('User profile fields have been mapped to webform components, use the "User Map" tab to edit the map.'));
@@ -922,7 +935,7 @@ function _webform_user_save_profile_map($uid, &$map) {
  */
 
 /**
- * Database function, fetch an array of user profile fields.
+ * Database/helper function, fetch an array of user profile fields.
  */
 function _webform_user_get_profile_fields() {
   /**
@@ -951,6 +964,7 @@ function _webform_user_get_profile_fields() {
   $fields[] = $mail_field;
 
   // Grab settings from profile2 module AND from fields manually added on profile.
+  // These are standard fields types.
   $entity_types = array('user');
   if (module_exists('profile2')) {
     $entity_types[] = 'profile2'; // Add profile2 values.
@@ -966,8 +980,12 @@ function _webform_user_get_profile_fields() {
     $result->extra = unserialize($result->extra);
     $field['name'] = $result->field_name;
     $field['title'] = $result->data['label'];
-    $field['type'] = $result->type;
     // TODO Map types to types webform understands.
+    $field['type'] = $result->type;
+    // UNLESS the display is hidden. Then we need to override this to HIDE the field.
+    if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
+      $field['type'] = 'hidden';
+    }
     $field['mandatory'] = $result->data['required'] ? $result->data['required'] : 0;
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
@@ -999,7 +1017,6 @@ function _webform_user_get_profile_fields() {
       }
     }
   }
-
   return $fields;
 }
 
