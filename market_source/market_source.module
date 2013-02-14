@@ -114,7 +114,6 @@ function market_source_form_alter(&$form, &$form_state, $form_id) {
   elseif ($form_id == 'user_register_form') {
     // Replaces hook_user() register op.
     // Add the qs_keys as hidden fields on the user registration form.
-    $form = array();
     $qs_keys = _market_source_build_qs_keys();
     foreach (array_keys($qs_keys) as $key) {
       $form['profile_' . $key] = array(
