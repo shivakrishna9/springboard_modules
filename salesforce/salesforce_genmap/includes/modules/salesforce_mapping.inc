@@ -6,6 +6,11 @@
  */
 
 /**
+ * @name salesforce_mapping_alter_form Modifications to the mapping form
+ * @{
+ */
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_state) {
@@ -210,6 +215,16 @@ function salesforce_mapping_form_alter_submit($form, &$form_state) {
 }
 
 /**
+ * @} salesforce_mapping_alter_form
+ */
+
+
+/**
+ * @name salesforce_mapping_alter_api Helper API the extension
+ * @{
+ */
+
+/**
  * Wrapper for _sfm_get_default_value() to compensate for delta differences.
  *
  * @param string $field
@@ -277,3 +292,7 @@ function _sfm_salesforce_field_can_idlookup($field, $salesforce_object_type, $fo
     }
   }
 }
+
+/**
+ * @} salesforce_mapping_alter_api
+ */
