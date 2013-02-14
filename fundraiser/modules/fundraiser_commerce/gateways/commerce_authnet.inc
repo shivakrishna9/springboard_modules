@@ -265,10 +265,87 @@ function commerce_authnet_fundraiser_commerce_update($payment_method, $donation)
     $donation->donation['payment_fields']['credit']['card_number'] : '';
   $form_state['values']['credit_card']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
   $form_state['values']['credit_card']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
+  // Additional fields.
+  $form_state['values']['credit_card']['address'] = isset($donation->donation['address']) ? $donation->donation['address'] : '';
+  $form_state['values']['credit_card']['address'] .= isset($donation->donation['address_line_2']) ? ' ' . $donation->donation['address_line_2'] : '';
+  $form_state['values']['credit_card']['city'] = isset($donation->donation['city']) ? $donation->donation['city'] : '';
+  $form_state['values']['credit_card']['state'] = isset($donation->donation['state']) ? $donation->donation['state'] : '';
+  $form_state['values']['credit_card']['zip'] = isset($donation->donation['zip']) ? $donation->donation['zip'] : '';
+  $form_state['values']['credit_card']['country'] = isset($donation->donation['country']) ? $donation->donation['country'] : '';
 
   if (!empty($card_data)) {
     // Calling commerce_authnet_cim_cardonfile_update.
-    drupal_set_message('calleing commerce_authnet_cim_cardonfile_update');
-    commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
+    _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
   }
+}
+
+/**
+ * COPY: commerce_authnet_cim_cardonfile_update
+ * Card on file callback: updates the associated customer payment profile.
+ *
+ * The original function at commerce_authnet_cim_cardonfile_update(), doesn't update the user
+ * address fields - instead referencing the cim values saved, so not even updating the customer profile
+ * in advance would do it. So we need to copy this over and make the changes we need for fall through.
+ */
+function _commerce_authnet_fundraiser_commerce_authnet_cim_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+  // Extract the Customer Profile and Payment Profile IDs from the remote_id.
+  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
+
+  if ($form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
+    $number = $form_state['values']['credit_card']['number'];
+  }
+  else {
+    $number = 'XXXX' . $card_data['card_number'];
+  }
+
+  // Load the payment profile so that billTo can be updated.
+  $payment_profile_xml = commerce_authnet_cim_get_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id);
+  $billto = $payment_profile_xml->paymentProfile->billTo;
+  $first_name = (string) $billto->firstName;
+  $last_name = (string) $billto->lastName;
+  $address = (string) $billto->address;
+  $city = (string) $billto->city;
+  $state = (string) $billto->state;
+  $zip = (string) $billto->zip;
+  $country = (string) $billto->country;
+
+  // Extract the first and last name from form values.
+  if (!empty($form_state['values']['credit_card']['owner'])) {
+    $name_parts = explode(' ', $form_state['values']['credit_card']['owner']);
+    $first_name = array_shift($name_parts);
+    $last_name = implode(' ', $name_parts);
+    $address = $form_state['values']['credit_card']['address'];
+    $city = $form_state['values']['credit_card']['city'];
+    $state = $form_state['values']['credit_card']['state'];
+    $zip = $form_state['values']['credit_card']['zip'];
+    $country = $form_state['values']['credit_card']['country'];
+  }
+
+  // Build the base profile update data.
+  $api_request_data = array(
+    'customerProfileId' => $cim_customer_profile_id,
+    'paymentProfile' => array(
+      'billTo' => array(
+        'firstName' =>  substr($first_name, 0, 50),
+        'lastName' => substr($last_name, 0, 50),
+        'company' => (string) $billto->company,
+        'address' => $address,
+        'city' => $city,
+        'state' => $state,
+        'zip' => $zip,
+        'country' => $country,
+      ),
+      'payment' => array(
+        'creditCard' => array(
+          'cardNumber' => $number,
+          'expirationDate' => $card_data['card_exp_year'] . '-' . $card_data['card_exp_month'],
+        ),
+      ),
+      'customerPaymentProfileId' => $cim_payment_profile_id,
+    ),
+  );
+
+  // Fetch the response from the API server and let Card on File know if the update was successful.
+  $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
+  return (string) $xml_response->messages->message->code == 'I00001';
 }
