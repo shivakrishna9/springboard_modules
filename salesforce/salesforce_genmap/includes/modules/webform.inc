@@ -196,21 +196,21 @@ function webform_map_page_access($node) {
 /**
  * Implements hook_webform_submission_insert().
  */
-function webform_webform_submission_insert($node, $submission) {
+function salesforce_genmap_webform_submission_insert($node, $submission) {
   salesforce_genmap_send_object_to_queue('webform', 'insert', $node, $submission->sid, $submission);
 }
 
 /**
  * Implements hook_webform_submission_update().
  */
-function webform_webform_submission_update($node, $submission) {
+function salesforce_genmap_webform_submission_update($node, $submission) {
   salesforce_genmap_send_object_to_queue('webform', 'update', $node, $submission->sid, $submission);
 }
 
 /**
  * Implements hook_webform_submission_delete().
  */
-function webform_webform_submission_delete($node, $submission) {
+function salesforce_genmap_webform_submission_delete($node, $submission) {
   salesforce_genmap_send_object_to_queue('webform', 'delete', $node, $submission->sid, $submission);
 }
 
