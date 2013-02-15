@@ -1,0 +1,261 @@
+<?php
+
+/**
+ * @file
+ * Tests for mapping salesforce_mapping integration with queuing.
+ */
+
+module_load_include('test', 'salesforce_genmap', 'tests/salesforce_mapping/salesforce_mapping');
+
+/**
+ * Tests integrating salesforce_mapping into queuing.
+ */
+class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlterTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Salesforce Mapping Queuing',
+      'description' => 'Ensure that the salesforce mapping queue componant functions properly.',
+      'group' => 'Salesforce Mapping',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  public function setUp($modules = array(), $permissions = array()) {
+    $modules = array_merge($modules, array(
+      'salesforce_soap',
+      'salesforce_queue',
+      'devel',
+    ));
+    parent::setUp($modules, $permissions);
+
+    // Create salesforce_mapping.
+    $this->salesforceConnect();
+    $this->createSalesforceMapping('foo', 'foobar');
+  }
+
+  /**
+   * Implementation of tearDown().
+   */
+  public function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Tests that information was sent to the queue properly.
+   */
+  public function testQueueSystem() {
+    // Create a new user.  The entity map has already been configured with a
+    // dedupe field so this should be queued as an UPSERT.
+    $user1 = $this->drupalCreateUser();
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user1, $item, 'UPSERT');
+    $this->deleteQueueItem($item);
+
+    // Modify user entity map to not have a dedupe field so so it will queue the
+    // new user as CREATE.
+    $edit = array('key' => 'none');
+    $this->drupalPost($this->manageMapPrefix . 'foobar', $edit, 'Save mapping');
+    entity_get_controller('salesforce_mapping')->resetCache();
+    $user2 = $this->drupalCreateUser();
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'CREATE');
+    $this->deleteQueueItem($item);
+
+    // Modify the user and ensure a queue item with UPDATE op was created.
+    user_save($user2, array('mail' => 'newmail@example.com'));
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'UPDATE');
+    $this->deleteQueueItem($item);
+
+    // Delete the user and ensure a queue item with DELETE op was created.
+    user_delete($user2->uid);
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'DELETE');
+    $this->deleteQueueItem($item);
+  }
+
+  /**
+   * Test dequeuing when the entity has been deleted.
+   */
+  public function testDequeue() {
+    // Disable queueing on delete or else every time we delete we'll just end up
+    // requeueing.
+    $this->drupalPost($this->manageMapPrefix . 'foobar', array('sync_triggers[4]' => FALSE), 'Save mapping');
+
+    // Create a bunch of users.
+    $count = 10;
+    $users = array();
+    while ($count > 0) {
+      $users[] = $this->drupalCreateUser();
+      $count--;
+    }
+
+    // Verify what is in the queue now.
+    $queue = salesforce_queue_load();
+    $this->assertEqual(10, $queue->numberOfItems(), 'Found correct number of items in the queue.');
+
+    // Delete a user.
+    user_delete($users[5]->uid);
+    $query = db_select('salesforce_queue', 'sq')
+      ->fields('sq')
+      ->condition('module', 'user')
+      ->condition('delta', 'user')
+      ->condition('drupal_id', $users[5]->uid);
+    $result = $query->execute();
+    $unexpected_records = array();
+    foreach ($result as $record) {
+      $unexpected_records[] = $record->item_id;
+    }
+    $this->assertTrue(empty($unexpected_records), 'Dequeuing all items from a deleted entities worked on Salesforce Queue.');
+    $this->assertEqual(9, $queue->numberOfItems(), 'Found correct number of items in the queue after deleting a user.');
+  }
+
+  /**
+   * Helper tests sync options are obeyed for the controlling queue.
+   */
+  public function testSyncOptions() {
+    // testQueueSystem() tests when all are selected.  Lets run through the
+    // tests when different combinations are selected.
+    $combinations = array(
+      array(
+        'sync_triggers[1]' => TRUE,
+        'sync_triggers[2]' => FALSE,
+        'sync_triggers[4]' => FALSE,
+      ),
+      array(
+        'sync_triggers[1]' => FALSE,
+        'sync_triggers[2]' => TRUE,
+        'sync_triggers[4]' => FALSE,
+      ),
+      array(
+        'sync_triggers[1]' => FALSE,
+        'sync_triggers[2]' => FALSE,
+        'sync_triggers[4]' => TRUE,
+      ),
+      array(
+        'sync_triggers[1]' => TRUE,
+        'sync_triggers[2]' => TRUE,
+        'sync_triggers[4]' => FALSE,
+      ),
+      array(
+        'sync_triggers[1]' => FALSE,
+        'sync_triggers[2]' => TRUE,
+        'sync_triggers[4]' => TRUE,
+      ),
+      array(
+        'sync_triggers[1]' => TRUE,
+        'sync_triggers[2]' => FALSE,
+        'sync_triggers[4]' => TRUE,
+      ),
+    );
+    $queue = salesforce_queue_load();
+    foreach ($combinations as $sync_config) {
+      $this->drupalGet($this->manageMapPrefix . 'foobar');
+      $this->drupalPost(NULL, $sync_config, 'Save mapping');
+      entity_get_controller('salesforce_mapping')->resetCache();
+
+      // Create new user.
+      $user1 = $this->drupalCreateUser();
+      $queue_item = $queue->claimItem();
+      if ($sync_config['sync_triggers[1]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on insert was sent to queue.');
+        // Simulate processed item.
+        $queue->releaseItem($queue_item);
+        $queue->deleteItem($queue_item);
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on insert was not sent to the queue.');
+      }
+
+      // Update user.
+      user_save($user1, array('mail' => $this->randomString() . '@example.com'));
+      $queue_item = $queue->claimItem();
+      if ($sync_config['sync_triggers[2]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on update was sent to queue.');
+        // Simulate processed item.
+        $queue->releaseItem($queue_item);
+        $queue->deleteItem($queue_item);
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on update was not sent to the queue.');
+      }
+
+      // Delete submission.
+      user_delete($user1->uid);
+      $queue_item = $queue->claimItem();
+      if ($sync_config['sync_triggers[4]']) {
+        $this->assertTrue(is_object($queue_item), 'Submission configured to sync on delete was sent to queue.');
+        // Simulate processed item.
+        $queue->releaseItem($queue_item);
+        $queue->deleteItem($queue_item);
+      }
+      else {
+        $this->assertFalse($queue_item, 'Submission not configured to sync on delete was not sent to the queue.');
+      }
+    }
+  }
+
+  /**
+   * Helper to return the last queued item.
+   */
+  public function fetchQueueItem() {
+    $queue = salesforce_queue_load();
+    $item = $queue->claimItem();
+    $this->assertFalse(empty($item), 'Data was received from the queue.');
+    if (empty($item)) {
+      return array();
+    }
+    $queue->releaseItem($item);
+    return $this->formatQueueItem($item);
+  }
+
+  /**
+   * Helper to delete a queue item.
+   */
+  public function deleteQueueItem($item) {
+    if (empty($item)) {
+      return;
+    }
+    db_delete('salesforce_queue')
+    ->condition('item_id', $item['item_id'])
+    ->execute();
+    return;
+  }
+
+  /**
+   * Make different queue items have the same format.
+   */
+  public function formatQueueItem($item) {
+    $this->assertTrue(is_object($item->sobject), 'Received an expected queue item for Salesforce Queue.');
+    if (is_object($item)) {
+      $item = (array) $item;
+      return $item;
+    }
+    return array();
+  }
+
+  /**
+   * Helper to compare what was submitted to what was sent to the queue.
+   */
+  public function compareSubmissionQueueItem($user, $item, $operation) {
+    if (!empty($item)) {
+      $this->assertTrue(isset($item['operation']), 'Operation not set in SalesforceQueue queue item.');
+      if (isset($item['operation'])) {
+        $this->assertEqual($item['operation'], $operation, 'The ' . $item['operation'] . ' operation was sent to SalesforceQueue when ' . $operation . ' was expected.');
+      }
+      $this->assertTrue((isset($item['sobject']) && is_object($item['sobject'])), 'sObject not built properly in SalesforceQueue queue item.');
+      if (isset($item['sobject']) && is_object($item['sobject'])) {
+        $fields = $item['sobject']->fields;
+        $this->assertEqual($fields['Name'], $user->name, 'Name SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['Email'], $user->mail, 'Email SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['CreatedDate'], $user->created, 'CreatedDate SalesforceQueue data matches submitted data.');
+      }
+    }
+  }
+}

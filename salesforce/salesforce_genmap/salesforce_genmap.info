@@ -7,6 +7,7 @@ dependencies[] = salesforce
 files[] = includes/salesforce_genmap.map.inc
 files[] = tests/salesforce_mapping/salesforce_mapping.entities.test
 files[] = tests/salesforce_mapping/salesforce_mapping.map.test
+files[] = tests/salesforce_mapping/salesforce_mapping.salesforce_queue.test
 files[] = tests/salesforce_mapping/salesforce_mapping.test
 files[] = tests/webform/webform.map.test
 files[] = tests/webform/webform.salesforce_queue.test
