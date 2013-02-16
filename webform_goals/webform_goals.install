@@ -1,110 +1,151 @@
 <?php
 
 /**
+ * @file install/uninstall hooks and schema declaration.
+ */
+
+/**
  * Implements hook_install().
  */
-function fundraiser_goals_install() {
-  drupal_install_schema('fundraiser_goals');
-}
+function webform_goals_install() {
 
+}
 
 /**
  * Implements hook_uninstall().
  */
-function fundraiser_goals_uninstall() {
-  db_query('DELETE FROM {blocks} WHERE module = "fundraiser_goals"');
-  drupal_uninstall_schema('fundraiser_goals');
+function webform_goals_uninstall() {
+
 }
 
 /**
  * Implements hook_schema().
  */
-function fundraiser_goals_schema() {
-
-  $schema = array();
-  $schema['fundraiser_goals'] = array(
-    'description' => t('Stores data for webform submission goals.'),
+function webform_goals_schema() {
+  $schema['webform_goals'] = array(
+    'description' => 'Stores goal configuration data.',
     'fields' => array(
-      'pid' => array(
-        'description' => t('Parent id, nid for webforms, Salesforce campaign id for campaigns'),
-        'type' => 'text',
+      'gid' => array(
+        'description' => 'Goal id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'delta' => array(
-        'description' => t('Goal delta, required to separate advanced block goal settings and basic goal settings without duplicating tables.'),
+      'name' => array(
+        'description' => 'Human-readable goal name',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
-      'type' => array(
-        'description' => t('Goal type.'),
+      'context' => array(
+        'description' => 'selected goal context',
         'type' => 'varchar',
-        'length' => 255,
+        'length' => 65,
         'not null' => TRUE,
+        'default' => '',
       ),
-      'target' => array(
-        'description' => t('Goal target, ex. number of submissions or amount donated'),
+      'metric' => array(
+        'description' => 'selected goal context',
+        'type' => 'varchar',
+        'length' => 65,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'seed' => array(
+        'description' => '# applied to goal progress',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
+      ),
+      'target_value' => array(
+        'description' => 'Goal target',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'display_threshold' => array(
-        'description' => t('Tracker value above which the goal displays.'),
+        'description' => 'minimum metric required for progress visibility',
         'type' => 'int',
         'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'starter_message' => array(
+        'description' => 'content to display if display threshold has not been reached',
+        'type' => 'text',
+      ),
+      'starter_message_format' => array(
+        'description' => 'input filter selected for the starter message',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'start_date' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'end_date' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'auto_expire' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'template' => array(
-        'description' => t('block body markup, including tokens.'),
+        'description' => 'goal template markup',
         'type' => 'text',
       ),
       'template_format' => array(
-        'descrption' => t('Input filter selected for the template.'),
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'description' => 'input filter selected for the goal template',
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
-      'default_message' => array(
-        'description' => t('Message to display if no progress has been made toward goal.'),
+      'extra' => array(
+        'description' => 'optional configuration data',
         'type' => 'text',
       ),
     ),
+    'primary key' => array('gid'),
   );
-  $schema['fundraiser_goals_blocks'] = array(
-    'description' => t('Stores data for webform submission goals.'),
+  $schema['webform_goals_widget'] = array(
+    'description' => 'Stores goal configuration data.',
     'fields' => array(
-      'bid' => array(
-        'description' => t('block ID'),
+      'gid' => array(
+        'description' => 'Goal id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
-      'info' => array(
-        'description' => t('Block description'),
-        'type' => 'varchar',
-        'length' => 255,
+      'nid' => array(
+        'description' => 'Node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'widget' => array(
+        'description' => 'rendered values to return when widget is called',
+        'type' => 'text',
       ),
     ),
-    'primary_key' => array('bid'),
+    'primary key' => array('gid', 'nid'),
   );
   return $schema;
 }
 
-/**
- * Implements hook_update().
- *
- * Removes "custom" goal type.
- *
- * Convert custom goals to # of submissions, update total donation goals type to
- * reflect the new type number (was 3, now 2).
- */
-function fundraiser_goals_update_6001() {
-  $ret = array();
 
-  // Update goal types to reflect change.
-  $ret[] = update_sql('UPDATE {fundraiser_goals} SET type = 1 WHERE type = 2');
-  $ret[] = update_sql('UPDATE {fundraiser_goals} SET type = 2 WHERE type = 3');
-
-  // Remove target_cid column.
-  $ret[] = update_sql('ALTER TABLE {fundraiser_goals} DROP target_cid');
-  return $ret;
-}

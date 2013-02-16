@@ -1,9 +1,9 @@
 name = Webform Goals
-description = Manage activity goals for your webforms and display goal progress. 
-package = Webform Extra
-dependencies[] = 'webform'
-version =  7.x-dev
-
-files[] = webform_goals.module
-files[] = webform_goals.admin.inc
-;files[] = tests/webform_goals.test
+description = Assign and track goals on forms and questionnaires.
+core = 7.x
+package = Webform
+configure = admin/config/content/webform_goals
+version = "7.x-1.0-dev"
+project = "webform"
+dependencies[] = webform
+dependencies[] = date_api

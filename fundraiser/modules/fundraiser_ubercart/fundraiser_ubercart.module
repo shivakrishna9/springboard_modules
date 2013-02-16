@@ -1057,3 +1057,20 @@ function fundraiser_ubercart_fundraiser_decrypt_credit($data) {
   return $cc_data;
 }
  */
+
+/**
+ * Implements hook_fundraiser_get_total_donations_by_nid().
+ */
+function fundraiser_ubercart_fundraiser_get_total_donations_by_nid($nid) {
+  drupal_set_message('nid:' . $nid);
+  $result = db_query('
+    SELECT SUM(u.order_total)
+    FROM {uc_orders} u
+    INNER JOIN {fundraiser_donation} f
+      ON f.did = u.order_id
+    WHERE
+      f.nid = :nid
+      AND u.order_status = :status
+      ', array(':nid' => $nid, ':status' => 'payment_received'));
+  return number_format($result->fetchField(), 2);
+}

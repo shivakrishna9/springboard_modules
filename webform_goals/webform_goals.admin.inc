@@ -1,293 +1,68 @@
-<?php
+i<?php
 
 /**
- * @file
- * Admin settings forms and associated helper functions.
+ * @file Admin screens.
  */
 
+function webform_goals_admin($form, $form_state = array()) {
+  $goals = webform_goal_load_multiple();
+  $rows = array();
+  foreach ($goals as $goal) {
+    // get progress
+    $data = webform_goals_track_metric($goal);
 
-function webform_goals_block_admin($edit = array(), $configure = FALSE) {
-
-  // TODO: add module check, disable campaign radio and associated UI if salesforce integration isn't enabled?
-  // TODO: get saved visibility values displaying on block configuration form
-
-  module_load_include('inc', 'block', 'block.admin');
-  $block_form = block_admin_configure($edit);
-  $form['user_vis_settings'] = $block_form['user_vis_settings'];
-  $form['user_vis_settings']['custom']['#default_value'] = $edit['values']['custom'];
-  $form['page_vis_settings'] = $block_form['page_vis_settings'];
-  $form['page_vis_settings']['pages']['#default_value'] = $edit['values']['pages'];
-  $form['page_vis_settings']['visibility']['#default_value'] = $edit['values']['visibility'];
-  $form['role_vis_settings'] = $block_form['role_vis_settings'];
-
-  unset($block_form);
-
-  $form['configure'] = array(
-    '#type' => 'value',
-    '#value' => $configure,
-  );
-  $form['block_settings']['block_title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Block Title'),
-    '#default_value' => $edit['values']['block_title'],
-  );
-  $form['block_settings']['block_description'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Block Description'),
-    '#default_value' => $edit['values']['block_description'],
-    '#required' => TRUE,
-  );
-  $form['block_settings']['fundraiser_goal_delta'] = array(
-     '#type' => 'textfield',
-     '#title' => t('Machine Name'),
-     '#required' => TRUE,
-     '#default_value' => $edit['values']['fundraiser_goal_delta'],
-  );
-  $form['submissions_wrapper'] = array(
-    '#prefix' => '<div id="goal-submission-settings">',
-    '#suffix' => '</div>',
-    '#theme' => 'webform_goals',
-  );
-  $form['submissions_wrapper']['submissions'] = array(
-    '#type' => 'radios',
-    '#title' => t('Submissions'),
-    '#description' => t('Submission scope'),
-    '#options' => array('0' => 'Webform', 1 => 'Campaign'),
-    '#required' => TRUE,
-    '#ahah' => array(
-      'path' => 'webform_goals_admin/js',
-      'wrapper' => 'goal-submission-settings',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-    '#default_value' => isset($edit['post']['submissions']) ? $edit['post']['submissions'] : $edit['values']['submissions'],
-  );
-  if ((!isset($edit['post']['submissions']) && $edit['values']['submissions'] == 0) || (isset($edit['post']['submissions']) && (int) $edit['post']['submissions'] == 0)) {
-
-    $select_title = t('Target Webform');
-    // get list of webforms, construct options array
-    $select_options = array(0 => t('- select -'));
-    $types = variable_get('webform_node_types', array());
-    $types = implode("','", $types);
-    $results = db_query(sprintf("SELECT nid, title FROM {node} WHERE type IN ('%s')", $types));
-
-    while ($result = db_fetch_object($results)) {
-      $select_options[$result->nid] = $result->title;
-    }
-  }
-  else {
-    // TODO: if (module_exists()), check campaigns even exist before providing radio button.
-    $select_title = t('Target Campaign');
-    // get list of campaigns, construct options array
-    $select_options = array(0 => t('- select -'));
-    $campaigns = salesforce_management_api_get_campaigns();
-    $select_options = array_merge($select_options, $campaigns);
-  }
-  $form['submissions_wrapper']['fundraiser_goal_parent_item'] = array(
-    '#type' => 'select',
-    '#title' => $select_title,
-    '#options' => $select_options,
-    '#required' => TRUE,
-    '#ahah' => array(
-      'path' => 'webform_goals_admin/js',
-      'wrapper' => 'goal-submission-settings',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-    '#default_value' => isset($edit['post']['fundraiser_goal_parent_item']) ? $edit['post']['fundraiser_goal_parent_item'] : $edit['values']['fundraiser_goal_parent_item'],
-  );
-
-  $goal_type = 1;
-
-  // We have a posted webform node id, act accordingly.
-  if (is_numeric((string) $edit['post']['fundraiser_goal_parent_item']) && $edit['post']['fundraiser_goal_parent_item'] ) {
-    $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['post']['fundraiser_goal_parent_item']));
-    // If it's a donation form set type to total donations.
-    if ($type == 'donation_form') {
-      $goal_type = 2;
-    }
-  }
-  // Intial form build with data from db.
-  elseif (!isset($edit['post']['fundraiser_goal_parent_item']) && is_numeric((string) $edit['values']['fundraiser_goal_parent_item']) && $edit['values']['fundraiser_goal_parent_item']) {
-    // get type
-    $type = db_result(db_query('SELECT type FROM {node} WHERE nid=%d', $edit['values']['fundraiser_goal_parent_item']));
-    // if it's a donation form add max donation as an option
-    if ($type == 'donation_form') {
-
-      $goal_type = 2;
-    }
+    $row = array();
+    $row[] = $goal['name'];
+    $row[] = $goal['context'];
+    $row[] = $goal['target_value']; //TODO: for single context add link to parent node or node title
+    $row[] = $data['count']; // TODO amount: circle back once metrics tracking code is in play.
+    $row[] = $data['progress']; // TODO percentage: circle back once metrics tracking code is in play.
+    $row[] = _webform_goals_actions($goal);
+    $rows[] = $row;
   }
 
-  $form['submissions_wrapper']['fundraiser_goal_type'] = array(
-    '#type' => 'value',
-    '#value' => $goal_type,
-  );
-
-  $form['submissions_wrapper']['fundraiser_goal_target'] = array(
-    '#type' => 'textfield',
-    '#title' => ($goal_type == 2) ? t('Target total donations') : t('Target # of submissions'),
-    '#default_value' => $edit['values']['fundraiser_goal_target'],
-    '#required' => TRUE,
-  );
-  $form['submissions_wrapper']['fundraiser_goal_display_threshold'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Display Threshold'),
-    '#description' => t('The goal block will not show up on a page until this value is reached.'),
-    '#default_value' => $edit['values']['fundraiser_goal_display_threshold'] ? $edit['values']['fundraiser_goal_display_threshold'] : 0,
-  );
-  $form['submissions_wrapper']['fundraiser_goal_default_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Starter message'),
-    '#description' => t('This is an optional message to show users if no form submission has been made. Note: if display threshold is set users will not see this message.'),
-    '#default_value' => $edit['values']['fundraiser_goal_default_message'],
-  );
-
-  // Block body template and associated cruft.
-  $form['submissions_wrapper']['template'] = array(
+  $form['goal_filters'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Goal template'),
-    '#collapsible' => TRUE,
+    '#title' => t('Filters'),
   );
-  $form['submissions_wrapper']['template']['fundraiser_goal_template'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Template'),
-    '#description' => t('Markup appearing for this goal.'),
-    '#default_value' => $edit['values']['fundraiser_goal_template'],
+  // TODO: add filtering?
+  $header = array(
+    t('Name'),
+    t('Context'),
+    t('Goal'),
+    t('Amount'),
+    t('Progress'),
+    t('Actions'),
   );
-  $form['submissions_wrapper']['template']['goal_tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available goal tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#weight' => 11,
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array(),
+    'colgroups' => array(),
+    'caption' => '',
+    'sticky' => FALSE,
+    'empty' => '',
   );
-  $filter = $edit['values']['submissions_wrapper']['template'] ? $edit['values']['submissions_wrapper']['template']  : 2;
-  $form['submissions_wrapper']['template']['fundraiser_goal_template_format'] =  filter_form($filter, 12, array('webform_goals', 'goals_wrapper', 'template'));
-  $form['submissions_wrapper']['template']['goal_tokens']['help'] = array(
-    '#value' => theme('token_tree', array('goal')),
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-    '#weight' => 12,
-  );
-  // Shove display settings to the bottom of the form where they belong.
-  $form['user_vis_settings']['#weight'] = 11;
-  $form['page_vis_settings']['#weight'] = 11;
-  $form['role_vis_settings']['#weight'] = 11;
 
-  $form['#validate'] = array('webform_goals_admin_validate');
-  $form['#submit'] = array('webform_goals_admin_submit');
+  $form['goal_list'] = array(
+    '#type' => 'markup',
+    '#markup' => theme_table($vars),
+  );
+  $form['add'] = array(
+    '#type' => 'button',
+    '#value' => t('Add a goal'),
+  );
   return $form;
 }
 
-/**
- * Admin validate callback.
- */
-function webform_goals_admin_validate(&$form, &$form_state) {
-  $form_state['values']['title'] = $form_state['values']['fundraiser_goal_delta'];
-  if (!$form_state['values']['configure'] && db_result(db_query("SELECT 1 FROM {webform_goals} WHERE delta='%s'", $form_state['values']['fundraiser_goal_delta']))) {
-    form_set_error('webform_goals_delta', t('Machine Name must be unique. %delta is already taken.', array('%delta' => $form_state['values']['fundraiser_goal_delta'])));
+function _webform_goals_actions($goal) {
+  $output = '';
+  $links[] = l(t('Edit'), 'admin/config/content/webform_goals/' . $goal['gid'] . '/edit');
+  $links[] = l(t('Delete'), 'admin/config/content/webform_goals/' . $goal['gid'] . '/delete');
+  $links[] = l(t('Embed code'), 'admin/config/content/webform_goals/' . $goal['gid'] . '/embed');
+
+  foreach ($links as $link) {
+    $output .= $link . '&nbsp;&nbsp;'; // lame
   }
-}
-
-/**
- * Admin submit callback.
- */
-function webform_goals_admin_submit($form, &$form_state) {
-
-  $object = (object) $form_state['values'];
-  if (!$form_state['values']['configure']) {
-    $object->pid = $object->fundraiser_goal_parent_item;
-    _webform_goals_save_goal($object);
-
-  }
-  else {
-    _webform_goals_update_goal($object);
-  }
-  $form_state['redirect'] = 'admin/build/block';
-  return;
-}
-
-/**
- * Delete block.
- */
-function webform_goals_block_admin_delete(&$form_state, $delta = 0) {
-
-  $title = db_result(db_query("SELECT title FROM {blocks} WHERE module = 'webform_goals' AND delta = '%s'", $delta));
-  $form = array();
-  $form['delta'] = array('#type' => 'hidden', '#value' => $delta);
-  return confirm_form($form, t('Are you sure you want to delete the "%name" block?', array('%name' => $title)), 'admin/build/block', NULL, t('Delete'), t('Cancel'));
-}
-
-/**
- * Submit handler for delete block form.
- */
-function webform_goals_block_admin_delete_submit($form, &$form_state) {
-  global $user;
-  db_query("DELETE FROM {webform_goals} WHERE delta = '%s'", $form_state['values']['delta']);
-  $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'webform_goals' AND delta = '%s'", $form_state['values']['delta']));
-  $info = db_result(db_query('SELECT info FROM {webform_goals_blocks} WHERE bid=%d', $bid));
-  db_query('DELETE FROM {blocks} WHERE bid = %d', $bid);
-  db_query("DELETE FROM {blocks_roles} WHERE module = 'webform_goals' AND delta = '%s'", $form_state['values']['delta']);
-  db_query('DELETE FROM {webform_goals_blocks} WHERE bid = %d', $bid);
-  watchdog('webform_goals', 'The @info advanced goal block has been deleted by @user.', array('@info' => $info, '@user' => $user->name));
-  $form_state['redirect'] = 'admin/build/block';
-  return;
-}
-
-function webform_goals_block_admin_configure($edit, $delta = 0) {
-
-  $goal = db_fetch_object(db_query("SELECT * FROM {webform_goals} WHERE delta = '%s'", $delta));
-  $block_info = db_fetch_object(db_query("SELECT b.title, b.custom, b.visibility, b.pages, fb.info FROM {blocks} b INNER JOIN {webform_goals_blocks} fb ON b.bid = fb.bid WHERE b.module = 'webform_goals' AND b.delta = '%s'", $delta));
-
-  $edit['values'] = array(
-        'block_title' => $block_info->title,
-        'visibility' => $block_info->visibility,
-        'pages' => $block_info->pages,
-        'block_description' => $block_info->info,
-        'fundraiser_goal_parent_item' => $goal->pid,
-        'fundraiser_goal_delta' => $goal->delta,
-        'fundraiser_goal_type' => $goal->type,
-        'fundraiser_goal_target' => $goal->target,
-        'fundraiser_goal_display_threshold' => $goal->display_threshold,
-        'fundraiser_goal_template' => $goal->template,
-        'fundraise_goal' => array('goals_wrapper' => array('template' => $goal->template_format)),
-        'fundraiser_goal_default_message' => $goal->default_message,
-        'custom' => $block_info->custom,
-        'visibility' => $block_info->visibility,
-      );
-  $edit['values']['submissions'] = is_numeric((string) $goal->pid) ? 0 : 1;
-  return webform_goals_block_admin($edit, TRUE);
-}
-/**
- * #AHAH callback for blck admin form.
- */
-function webform_goals_admin_ahah() {
-  module_load_include('module', 'fundraiser');
-
-  $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
-  $form_build_id = $_POST['form_build_id'];
-  $form = form_get_cache($form_build_id, $form_state);
-
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-
-  // Disable validation
-  $form['#validate'] = NULL;
-  $form_state['validate_handlers'] = NULL;
-  fundraiser_ahah_helper_disable_validation($form);
-
-  drupal_process_form($form_id, $form, $form_state);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $goal_form = $form['submissions_wrapper'];
-  unset($goal_form['#prefix'], $amount_form['#suffix']);
-
-  $output = theme('status_messages') . drupal_render($goal_form);
-
-  $form_state = array('submitted' => FALSE);
-  $form_build_id = $_POST['form_build_id'];
-  drupal_json(array('status' => TRUE, 'data' => $output));
+  return $output;
 }

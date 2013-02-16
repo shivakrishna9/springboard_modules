@@ -1348,3 +1348,23 @@ function _fundraiser_commerce_encrypt($input) {
 function _fundraiser_commerce_decrypt($input) {
   return decrypt($input);    
 }
+
+/**
+ * Implements hook_fundraiser_get_total_donations_by_nid().
+ */
+function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid) {
+
+  $query = db_query('
+    SELECT SUM(f.commerce_order_total_amount)
+    FROM {field_data_commerce_order_total} f
+    INNER JOIN {commerce_order} c
+      ON c.order_id = f.entity_id
+    INNER JOIN {fundraiser_donation} fd
+      ON fd.did = c.order_id
+    WHERE
+      fd.nid = :nid
+      AND c.status = :status', array(':nid' => $nid, ':status' => 'payment_received'));
+  $data = $query->fetchField();
+  $total = $data * .01; // convert from pennies.
+  return $total;
+}

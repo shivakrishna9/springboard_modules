@@ -2369,3 +2369,19 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
   );
   $tokens = array_merge($fundraiser_blacklist, $tokens);
 }
+
+/**
+ * ecommerce-agnostic lookup of total dollar amount donated via a single
+ * donation form.
+ *
+ * @param type $nid
+ * Node ID
+ *
+ * @return total successful donations or FALSE if none found.
+ */
+function fundraiser_get_total_donations_by_nid($nid) {
+  $node = node_load($nid);
+  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid);
+  return $total_donations[0];
+}
+
