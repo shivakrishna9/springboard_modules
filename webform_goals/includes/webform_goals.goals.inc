@@ -97,12 +97,7 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
         'id' => 'custom_field',
         'name' => t('Custom field '),
         'description' => t('Goal progress will be calculated based on the total number of times this webform has been submitted.'),
-        'progress_callback' => '',
         'settings_callback' => 'webform_goals_single_custom_fields',
-        'threshold_prefix' => t('Do not display the goal progress until the selected field has a total of'),
-        'threshold_suffix' => t(' values.'),
-        'seed_prefix' => t('Add an initial '),
-        'seed_suffix' => t(' to the goal'),
         'child_elements' => $elements,
       );
     case 'group':
@@ -111,11 +106,6 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
         'id' => 'submission_count',
         'name' => t('Number of form submissions'),
         'description' => t('Goal progress will be calculated based on the total number of times this webform has been submitted.'),
-        'progress_callback' => '',
-        'threshold_prefix' => t('Do not display the goal progress until the form has been submitted '),
-        'threshold_suffix' => t(' times'),
-        'seed_prefix' => t('Add an initial '),
-        'seed_suffix' => t(' to the goal'),
       );
   }
   return $metrics;

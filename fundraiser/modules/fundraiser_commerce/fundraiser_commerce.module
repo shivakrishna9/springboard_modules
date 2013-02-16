@@ -78,11 +78,11 @@ function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form
 function fundraiser_commerce_commerce_line_item_type_info() {
   $line_item_types = array();
   $line_item_types['donation'] = array(
-    'type' => 'donation', 
-    'name' => t('Donation'), 
-    'description' => t('A donation charge, no product referenced here just the amount.'), 
-    'product' => FALSE, 
-    'add_form_submit_value' => t('Add donation'), 
+    'type' => 'donation',
+    'name' => t('Donation'),
+    'description' => t('A donation charge, no product referenced here just the amount.'),
+    'product' => FALSE,
+    'add_form_submit_value' => t('Add donation'),
     'base' => 'commerce_donation_line_item',
   );
   return $line_item_types;
@@ -153,7 +153,7 @@ function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$fo
     $line_item->line_item_label = t('Donation');
     $line_item->quantity = 1;
     $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-      'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']), 
+      'amount' => commerce_currency_decimal_to_amount($values['amount']['#value'], $values['currency']['#value']),
       'currency_code' => $values['currency']['#value'],
     );
     // Make sure the line item will be included in the update for order total.
@@ -246,7 +246,7 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
       // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
-      $fundraiser_gateways[] = $this_gateway; 
+      $fundraiser_gateways[] = $this_gateway;
     }
   }
   return $fundraiser_gateways;
@@ -544,7 +544,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $line_item->line_item_label = t('Donation');
   $line_item->quantity = $quantity;
   $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']), 
+    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
     'currency_code' => $donation->donation['currency'],
   );
   // Make sure the line item will be included in the update for order total.
@@ -645,7 +645,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     // If external processing, we cannot execute a recurring charge against it. So we're ok.
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
-    // If the function to build the redirect form exists. 
+    // If the function to build the redirect form exists.
     if (empty($info['redirect callback'])) {
       // Alert the administrator that the module does not provide a required form.
       drupal_set_message(t('The %title payment method indicates it is offsite but does not define the form to process the redirect.',
@@ -676,7 +676,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
     }
     // And process.
     _fundraiser_commerce_fundraiser_donation_process_internal($donation, $info);
-  }  
+  }
 }
 
 /**
@@ -792,14 +792,14 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form($form, $
         'payment_method' => $method_instance['instance_id'],
       );
       $form = $redirect_function($method_instance, $donation, $order, $settings);
-  
+
       // If the payment method has the 'offsite_autoredirect' option enabled, add the redirection behavior.
       //if (!empty($payment_method['offsite_autoredirect'])) {
       //  $form['#attached']['js'][] = drupal_get_path('module', 'commerce_payment') . '/commerce_payment.js';
       //  $form['help']['#markup'] = '<div class="checkout-help">' . t('Please wait while you are redirected to the payment server. ' .
       //    'If nothing happens within 10 seconds, please click on the button below.') . '</div>';
       //}
-  
+
       $form['#prefix'] = '<div class="payment-redirect-form">';
       $form['#suffix'] = '</div>';
       return $form;
@@ -1074,7 +1074,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   $line_item->line_item_label = t('Donation');
   $line_item->quantity = $quantity;
   $line_item->commerce_unit_price[LANGUAGE_NONE][0] = array(
-    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']), 
+    'amount' => commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']),
     'currency_code' => $donation->donation['currency'],
   );
   // Make sure the line item will be included in the update for order total.
@@ -1339,32 +1339,36 @@ function _fundraiser_commerce_get_charged_by_status($status) {
  * Helper function, wrapper for encrypt function.
  */
 function _fundraiser_commerce_encrypt($input) {
-  return encrypt($input);    
+  return encrypt($input);
 }
 
 /**
  * Helper function, wrapper for decrypt function.
  */
 function _fundraiser_commerce_decrypt($input) {
-  return decrypt($input);    
+  return decrypt($input);
 }
 
 /**
  * Implements hook_fundraiser_get_total_donations_by_nid().
  */
-function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid) {
-
-  $query = db_query('
-    SELECT SUM(f.commerce_order_total_amount)
-    FROM {field_data_commerce_order_total} f
-    INNER JOIN {commerce_order} c
-      ON c.order_id = f.entity_id
-    INNER JOIN {fundraiser_donation} fd
-      ON fd.did = c.order_id
-    WHERE
-      fd.nid = :nid
-      AND c.status = :status', array(':nid' => $nid, ':status' => 'payment_received'));
-  $data = $query->fetchField();
-  $total = $data * .01; // convert from pennies.
-  return $total;
+function fundraiser_commerce_fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
+  static $totals = array();
+  if (empty($totals[$nid])) {
+    $query = db_select('field_data_commerce_order_total', 'f');
+    $query->join('commerce_order', 'c', 'c.order_id = f.entity_id');
+    $query->join('fundraiser_donation', 'fd', 'fd.did = c.order_id');
+    $query->addExpression('SUM(f.commerce_order_total_amount)', 'total');
+    $query->condition('fd.nid', $nid, '=');
+    $query->condition('c.status', 'payment_received', '=');
+    if ($start) {
+      $query->condition('o.created', $start, '>=');
+    }
+    if ($end) {
+      $query->condition('o.created', $end, '<=');
+    }
+    $data = $query->execute()->fetchField();
+    $totals[$nid] = $data * .01; // convert from pennies.
+  }
+  return $totals[$nid];
 }

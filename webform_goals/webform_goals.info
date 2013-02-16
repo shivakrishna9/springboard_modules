@@ -6,4 +6,5 @@ configure = admin/config/content/webform_goals
 version = "7.x-1.0-dev"
 project = "webform"
 dependencies[] = webform
+dependencies[] = token
 dependencies[] = date_api

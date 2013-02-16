@@ -8,6 +8,8 @@
  * (Use this module to model behavior and actions for peer-to-peer and other fundraiser types.)
  */
 
+require_once('includes/fundraiser_sustainers.goals.inc');
+
 /**
  * Implements hook_cron().
  */
@@ -56,7 +58,7 @@ function fundraiser_sustainers_menu() {
     'title' => 'My recurring donations',
     'page callback' => 'fundraiser_sustainers_user_overview',
     'page arguments' => array(1),
-    'access callback' => 'user_edit_access', 
+    'access callback' => 'user_edit_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
@@ -398,7 +400,7 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
   }
   // Supporting gateway types from the gateway on the node.
   $supporting_gateways = array();
-  foreach ($form['#node']->gateways as $type => $gateway) { 
+  foreach ($form['#node']->gateways as $type => $gateway) {
     $this_gateway = _fundraiser_gateway_info($gateway['id']);
     if (isset($this_gateway['allow_recurring']) && _fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $type)) {
       $supporting_gateways[] = $type;
@@ -1456,4 +1458,46 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 1000) {
     'ORDER BY r.next_charge ASC ', 0, $limit,
     array(':now' => $now))->fetchAll();
   return $donations;
+}
+
+/**
+ * Get total sustainer count by wdonation form node id.
+ * @param int $nid
+ *
+ * @return
+ * Count of distinct sustainer series for this donation form
+ */
+function _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $start = FALSE, $end = FALSE) {
+  static $data = array();
+  if (module_exists('fundraiser_commerce')) {
+    if (empty($data[$nid])) {
+      // SELECT COUNT(DISTINCT(s.master_did))
+      // FROM fundraiser_sustainers s
+      // JOIN fundraiser_donations d
+      //   ON s.master_did = d.did
+      // JOIN commerce_orders c         // optional
+      //   ON c.order_id = s.master_did // optional
+      // WHERE d.nid = :nid
+      //   AND o.created >= :start      // optional
+      //   AND 0.created >= :end;       // optional
+      $query = db_select('fundraiser_sustainers', 's');
+      $query->join('fundraiser_donation', 'd', 'd.did = s.master_did');
+      if ($start || $end) {
+        $query->join('commerce_order', 'o', 'o.order_id = s.master_did');
+      }
+      $query->addExpression('COUNT(DISTINCT(s.master_did))', 'count');
+      $query->condition('d.nid', $nid, '=');
+      // add conditionals for start/end date
+      if ($start) {
+        $query->condition('o.created', $start, '>=');
+      }
+      if ($end) {
+        $query->condition('o.created', $end, '<=');
+      }
+      $data[$nid] = $query->execute()->fetchField();
+    }
+    return $data[$nid];
+  }
+
+  // TODO: add accompanying query for fundraiser_ubercart
 }

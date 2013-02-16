@@ -902,7 +902,7 @@ function fundraiser_fundraiser_field_info() {
      *   )
      *   'debit' => array(
      *     'debit_routing' => '',
-     *     'debit_account' => '', 
+     *     'debit_account' => '',
      *   )
      * );
      */
@@ -1148,10 +1148,10 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // We add these first to make sure they're available for the hook call.
     $form['#validate'][] = 'fundraiser_donation_validate';
     $form['#submit'][] = 'fundraiser_donation_submit';
-  
+
     // When confirmations are moved, this goes elsewhere.
     $form['#submit'][] = 'fundraiser_donation_post_submit';
-  
+
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
     // Node objects (common on webform objs) flag as recursive warnings.
@@ -2379,9 +2379,9 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  *
  * @return total successful donations or FALSE if none found.
  */
-function fundraiser_get_total_donations_by_nid($nid) {
+function fundraiser_get_total_donations_by_nid($nid, $start = FALSE, $end = FALSE) {
   $node = node_load($nid);
-  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid);
+  $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nid', $nid, $start, $end);
   return $total_donations[0];
 }
 

@@ -8,7 +8,7 @@
  * Add a goal.
  */
 function webform_goals_add($form, $form_state, $goal = array()) {
-  dsm($goal, 'test');
+
   drupal_add_css(drupal_get_path('module', 'webform_goals') . '/styles/webform_goals.admin.css');
   ctools_include('plugins');
 
@@ -138,37 +138,40 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#description' => t('This tells us what your goal is shooting for.'),
     '#default_value' => !empty($goal['target_value']) ? $goal['target_value'] : '',
   );
-
+  $form['goal_wrapper']['seed'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Add this much to the initial goal progress'),
+    '#size' => 8,
+    '#attributes' => array('name' => 'seed'),
+    '#default_value' => !empty($goal['seed']) ? $goal['seed'] : '',
+  );
 
   // selection-specific minimum display limit, start with value associated with the "Default" option above.
   // Attach js event to onchange or similar to conditionally show starter message ui
-  $form['display_threshold'] = array(
+  $form['goal_wrapper']['display_threshold'] = array(
     '#type' => 'textfield',
+    '#title' => t('Progress bar display threshold'),
+    '#description' => t('The starter message will be displayed until goal progress meets this minimum.'),
     '#size' => 8,
     '#id' => 'edit-display_threshold',
     '#attributes' => array('name' => 'display_threshold', 'class' => array('container-inline')),
-    '#default_value' => !empty($goal['display_threshold']) ? $goal['display_threshold'] : '',
+    '#default_value' => !empty($goal['display_threshold']) ? $goal['display_threshold'] : 0,
   );
-  $form['display_threshold_wrapper'] = array(
-    '#type' => 'markup',
-    '#markup' => '<p>' . $selected_metric['threshold_prefix'] . render($form['display_threshold']) . $selected_metric['threshold_suffix'] . '</p>',
-    '#prefix' => '<div id="context-threshold">',
-    '#suffix' => '</div>',
-  );
+
   // starter message ui, initially hidden with CSS or JS unless threshold is set.
   // TODO: handling for input formats.
-  $form['starter_message'] = array(
+  $form['goal_wrapper']['starter_message'] = array(
     '#type' => 'text_format',
     '#title' => t('Starter message'),
   );
   if (!empty($goal['starter_message'])) {
-    $form['starter_message']['#default_value'] = $goal['starter_message'];
-    $form['starter_message']['#format'] = $goal['starter_message_format'];
+    $form['goal_wrapper']['starter_message']['#default_value'] = $goal['starter_message'];
+    $form['goal_wrapper']['starter_message']['#format'] = $goal['starter_message_format'];
   }
   else {
-    $form['starter_message']['#attributes'] = array('placeholder' => t('Enter your personal starter message here.'));
+    $form['goal_wrapper']['starter_message']['#attributes'] = array('placeholder' => t('Enter your personal starter message here.'));
   }
-  $form['starter_message']['token_tree'] = array(
+  $form['goal_wrapper']['starter_message']['token_tree'] = array(
 	  '#type' => 'fieldset',
 	  '#title' => t('Replacement patterns'),
 	  '#collapsible' => TRUE,
@@ -176,21 +179,6 @@ function webform_goals_add($form, $form_state, $goal = array()) {
 	  '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
 	  '#weight' => 10,
 	);
-
-  // seed UI, descriptive text provided by selected metric.
-  $form['seed'] = array(
-    '#type' => 'textfield',
-    '#size' => 8,
-    '#id' => 'edit-seed',
-    '#default_value' => !empty($goal['ssed']) ? $goal['seed'] : '',
-  );
-  $form['seed_wrapper'] = array(
-    '#type' => 'markup',
-    '#markup' => '<p>' . $selected_metric['seed_prefix'] . render($form['seed']) . $selected_metric['seed_suffix'] . '</p>',
-    '#prefix' => '<div id="context-seed">',
-    '#suffix' => '</div>',
-  );
-
 
   // goal timeframe fieldset & date select fields
   $form['timeframe'] = array(
@@ -255,6 +243,7 @@ function webform_goals_add_validate(&$form, &$form_state) {
  * Submission handler for goal add/edit form.
  */
 function webform_goals_add_submit($form, $form_state) {
+
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
     'name' => $form_state['values']['name'],
@@ -324,7 +313,7 @@ function webform_goals_single_custom_metrics_fields() {
 
 function _webform_goals_add_date_defaults($element) {
   $keys = array('month', 'day', 'year');
-  dsm($element, 'element');
+
   foreach ($keys as $key) {
     $element[$key]['#empty_value'] = 0;
     $element[$key]['#empty_option'] = t(ucwords($key));

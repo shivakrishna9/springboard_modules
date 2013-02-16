@@ -166,8 +166,24 @@ function _webform_goals_field_list($nid) {
   return $fields;
 }
 
+/**
+ * Get metric progress (total and percentage of goal met)
+ * @param type $goal
+ * @return array
+ * Returned value:
+ *  array(
+ *   'count' => total metric count
+ *   'progress' => percentage of goal met
+ *  );
+ */
 function webform_goals_track_metric($goal) {
+
   $data = module_invoke_all('webform_goals_track_metric', $goal);
+  // apply seed
+  if (!empty($goal['seed'])) {
+    $data['count'] +=  $goal['seed'];
+    $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
+  }
   return $data;
 }
 
@@ -231,7 +247,7 @@ function webform_goals_token_info() {
  * Implements hook_tokens().
  */
 function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
-  dsm($data, 'token replacement data');
+
   if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
     $goal_progress = webform_goals_track_metric($data['webform_goal']);
 
@@ -241,7 +257,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
         $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
       }
     }
-    dsm($tokens, 'tokens in replace');
+
     foreach($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
@@ -251,9 +267,6 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $replacements[$token] = date('m-d-Y', $data['webform_goal']['end_date']);
           break;
         case 'progress':
-          dsm($tokens, 'tokenszz');
-          drupal_set_message('key:' . $key);
-          drupal_set_message('token:' . $tokens[$key]);
           $replacements[$token] = $goal_progress['progress'];
           break;
         case 'target':
@@ -271,7 +284,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
       $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
     }
   }
-  dsm($replacements, 'replacements');
+
   return $replacements;
 }
 
@@ -337,8 +350,8 @@ function theme_webform_goals_widget($vars) {
 
 
 function webform_goals_test_page() {
-  $gid = !empty($_GET['gid']) ? $_GET['gid'] : 5;
-  $nid = !empty($_GET['nid']) ? $_GET['nid'] : 22;
+  $gid = !empty($_GET['gid']) ? $_GET['gid'] : 1;
+  $nid = !empty($_GET['nid']) ? $_GET['nid'] : 2;
   $goal = webform_goal_load($gid);
   $vars['goal'] = $goal;
   $vars['nid'] = $nid;
