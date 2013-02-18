@@ -120,6 +120,12 @@ function fundraiser_schema() {
         'length' => '55',
         'not null' => FALSE,
       ),
+      'form_url' => array(
+        'description' => 'The full url of the donation form that the order was created from.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
       //TODO add transaction information here with the gateway.
     ),
     'primary key' => array('did'),

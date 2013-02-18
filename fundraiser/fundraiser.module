@@ -1553,6 +1553,16 @@ function fundraiser_donation_create($donation) {
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
+  // Grab the submission path, if there is no alias, use the standard node path.
+  global $base_url;
+  $alias = drupal_lookup_path('alias', $_GET['q']);
+  $form_url = '';
+  if (!empty($alias)) {
+    $form_url = $base_url . '/' . $alias;
+  }
+  else {
+    $form_url = $base_url . '/node/' . $nid;
+  }
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
@@ -1560,6 +1570,7 @@ function fundraiser_donation_create($donation) {
     'sid' => $donation->sid,  // Submission id.
     'gateway' => $donation->gateway,
     'txn_id' => '',
+    'form_url' => $form_url,
   );
   _fundraiser_create_donation($donation_record);
   // Add a comment.
@@ -1598,6 +1609,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   }
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;
+  }
+  if (isset($donation->form_url) && !empty($donation->form_url)) {
+    $donation_record['form_url'] = $donation->form_url;
   }
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -1817,6 +1831,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
   $donation->sid = $donation_record->sid;
+  $donation->form_url = $donation_record->form_url;
 
   // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);
