@@ -921,7 +921,7 @@ function fundraiser_ubercart_salesforce_donation_statuses() {
   $available_statuses = array();
   $order_statuses = uc_order_state_list();
   foreach ($order_statuses as $name => $order_status) {
-    $available_statuses[$name] => $order_status['title'] . ' (' . t('Ubercart') . ')';
+    $available_statuses[$name] = $order_status['title'] . ' (' . t('Ubercart') . ')';
   }
   return $available_statuses;
 }
