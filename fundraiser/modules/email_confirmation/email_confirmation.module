@@ -713,7 +713,7 @@ function _email_confirmation_one_time_login($object) {
   $account = user_load(array('uid' => $object->uid));
   // nonsensical to provide a login url for anon.
   if ($account->uid) {
-    return l('Log in to manage your account settings.', user_pass_reset_url($account));
+    return l(t('Log in to manage your account settings.'), user_pass_reset_url($account));
   }
   return '';
 }
