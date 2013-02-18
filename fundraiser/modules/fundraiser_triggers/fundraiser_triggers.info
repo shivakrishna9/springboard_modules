@@ -1,4 +1,4 @@
-name = Fundraiser triggers
+name = Fundraiser Triggers
 description = Implement striggers for Fundraiser.
 core = 7.x
 package = Jackson River Springboard
