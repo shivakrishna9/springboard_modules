@@ -182,24 +182,22 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['close_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['close_date'];
-      // @TODO: fill this in.
-      $fields[$sf_field] = '';
+      // Set by charging module or by next_charge in recurring module.
+      $fields[$sf_field] = isset($donation->close_date) ? $donation->close_date : '';
     }
     if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
-      // @TODO: fill this in.
-      $fields[$sf_field] = '';
+      // Set by charging module, else not set - so empty.
+      $fields[$sf_field] = isset($donation->transaction_date) ? $donation->transaction_date : '';
     }
-    if (isset($map->field_map['salesforce_donation_map']['form_URL'])) {
-      $sf_field = $map->field_map['salesforce_donation_map']['form_URL'];
-      // @TODO: fill this in.
-      $fields[$sf_field] = '';
+    if (isset($map->field_map['salesforce_donation_map']['form_url'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['form_url'];
+      $fields[$sf_field] = $donation->form_url;
     }
     if (isset($map->field_map['salesforce_donation_map']['probability'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['probability'];
       $probability = 100;
-      if ($donation->donation['recurs_monthly'] == TRUE) {
-        // @TODO: if ($recurring and not charged) { fill this in.
+      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
         $probability = 50;
       }
       $fields[$sf_field] = $probability;
@@ -207,11 +205,14 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       $stage = 'Posted';
-      if ($donation->donation['recurs_monthly'] == TRUE) {
-        // @TODO: if ($recurring and not charged) { fill this in.
+      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
         $stage = 'Pledged';
       }
+      // Current state information is in:  $donation->status_label
+      // We will need to prsent a hook to SF_donation to allow mapping of this setting to occur here,
+      // That lists status values available in the charging module.
       // @TODO: add mapping to donation order status feature - implement order
+      // "Stages can be mapped to order statuses. See the _get_stages() method of the NPSPDonation class in D6."
       // stage gathering as hook in commerce and ubercart.s
       $fields[$sf_field] = $stage;
     }
