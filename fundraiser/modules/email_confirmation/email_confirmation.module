@@ -1024,10 +1024,10 @@ function email_confirmation_webform_send_mail($form, $form_state) {
 
     $user_email = $form_state['values']['submitted'][$mail_cid];
     $account = user_load(array('mail' => $user_email));
-    if ($account->uid) {
-      // stuff an extra value to pass into token_replace.
-      $node->email_confirmation_uid = $account->uid;
-    }
+
+    // stuff an extra value to pass into token_replace.
+    $node->email_confirmation_uid = $account->uid;
+
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
     $template_html = check_markup($result->body, $result->format, FALSE);
 
