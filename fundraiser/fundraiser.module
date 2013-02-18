@@ -2042,7 +2042,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
     // Serialize for storage, our configured gateway values for storage in components.
-    $fundraiser['gateways'] = serialize($fundraiser['gateways']);
+    $fundraiser['gateways'] = isset($fundraiser['gateways']) ? serialize($fundraiser['gateways']) : serialize('');
     // After the node is created, add additional data to fundraiser.
     $record = array(
       'receipt_email_from' => variable_get('site_name', ''),
