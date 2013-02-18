@@ -78,6 +78,28 @@ define('SALESFORCE_SYNC_ITEM_FAIL_BATCH', 'Batch caused Salesforce to throw exce
  * @} salesforce_sync_item_fail_responces
  */
 
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_sync_entity_info() {
+  return array(
+    // Maps Salesforce records to Drupal records.
+    'salesforce_sync_map' => array(
+      'label' => t('Salesforce Record Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'salesforce_sync_map',
+      'entity keys' => array(
+        'id' => 'rmid',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_sync',
+    ),
+  );
+}
+
 /**
  * Implements hook_menu().
  */
@@ -118,6 +140,164 @@ function salesforce_sync_permission() {
   }
   return $permissions;
 }
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter().
+ */
+function salesforce_sync_salesforce_queue_create_item_alter(&$item) {
+  // When adding queue items, ensure that the sfid is in the sobject.
+  if (($item['operation'] == 'UPDATE' || $item['operation'] == 'DELETE') && !isset($item['sobject']->Id)) {
+    $record = salesforce_sync_load_map($item);
+    if (!empty($record) && isset($record->sfid)) {
+      $item['sobject']->Id = $record->sfid;
+    }
+  }
+}
+
+/**
+ * Implements hook_salesforce_sync_pass_item().
+ */
+function salesforce_sync_salesforce_sync_pass_item($item, $result) {
+  // If data was sent to Salesforce directly related to a specific Drupal
+  // record, map the Drupal record to the Salesforce record.
+  if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
+    $record = array(
+      'sfid' => $result->id,
+      'module' => $item->module,
+      'delta' => $item->delta,
+      'drupal_id' => $item->drupal_id,
+      'object_type' => $item->object_type,
+    );
+    switch ($item->operation) {
+      // Create record maps on new items.
+      case 'CREATE':
+      case 'UPSERT':
+        salesforce_sync_save_map($record);
+        break;
+
+      // Delete record maps on removed items.
+      case 'DELETE':
+        salesforce_sync_delete_map($record);
+        break;
+    }
+  }
+}
+
+
+/**
+ * @defgroup salesforce_sync_map_crud CRUD API for Record Mapping
+ * @{
+ */
+
+/**
+ * Creates and saves a Salesforce record map.
+ *
+ * @param mixed $record
+ *   Can be an array of values or a salesforce_sync_map entity object
+ *
+ * @return bool
+ *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
+ *   FALSE is returned if the record could not be saved.
+ */
+function salesforce_sync_save_map($record) {
+  if (is_array($record)) {
+    // Allow sending an array and updating an existing entity with the values.
+    $entity = salesforce_sync_load_map($record);
+    if ($entity) {
+      foreach ($record as $key => $value) {
+        $entity->$key = $value;
+      }
+      $record = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database.
+      $record = entity_create('salesforce_sync_map', $record);
+    }
+  }
+  if ($record->entityType() == 'salesforce_sync_map') {
+    // Adds the data to the database.
+    return entity_save('salesforce_sync_map', $record);
+  }
+  return FALSE;
+}
+
+/**
+ * Retreives a Salesforce record map.
+ *
+ * @param mixed $record
+ *   Can be an array of values or a salesforce_sync_map entity object
+ *
+ * @return bool
+ *   The entity object you requested
+ */
+function salesforce_sync_load_map($record) {
+  $rmid = _salesforce_sync_get_rmid($record);
+  if (!empty($rmid)) {
+    $entities = entity_load('salesforce_sync_map', array($rmid));
+    if (isset($entities[$rmid])) {
+      return $entities[$rmid];
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Deletes a Salesforce record map.
+ *
+ * @param mixed $record
+ *   Can be an array of values or a salesforce_sync_map entity object
+ *
+ * @return bool
+ *   TRUE if the delete performed as expected, FALSE if the delete could not
+ *   work as expected.
+ */
+function salesforce_sync_delete_map($record) {
+  $rmid = _salesforce_sync_get_rmid($record);
+  if (!empty($rmid)) {
+    $result = entity_delete('salesforce_sync_map', $rmid);
+    if ($result === FALSE) {
+      // entity_delete() only returns FALSE. Otherwise it has no return value.
+      return FALSE;
+    }
+    return TRUE;
+  }
+}
+
+/**
+ * Helper to grab the record id of a map.
+ */
+function _salesforce_sync_get_rmid($item) {
+  if (is_object($item)) {
+    $record = (array) clone($item);
+  }
+  else {
+    $record = $item;
+  }
+  if (isset($record->rmid) && !empty($record->rmid)) {
+    return $record->rmid;
+  }
+  elseif (isset($record['sobject']->Id)) {
+    return db_select('salesforce_sync_map', 'm')
+      ->fields('m', array('rmid'))
+      ->condition('sfid', $record['sobject']->Id)
+      ->execute()
+      ->fetchField();
+  }
+  else {
+    return db_select('salesforce_sync_map', 'm')
+      ->fields('m', array('rmid'))
+      ->condition('module', $record['module'])
+      ->condition('delta', $record['delta'])
+      ->condition('drupal_id', $record['drupal_id'])
+      ->condition('object_type', $record['object_type'])
+      ->execute()
+      ->fetchField();
+  }
+}
+
+/**
+ * @} salesforce_sync_map_crud
+ */
 
 /**
  * Helper to get list of modules being extended.

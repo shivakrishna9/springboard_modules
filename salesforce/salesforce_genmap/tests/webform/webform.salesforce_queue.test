@@ -237,7 +237,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Helper to return the last queued item.
    */
   public function fetchQueueItem() {
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $item = $queue->claimItem();
     $this->assertFalse(empty($item), 'Data was received from the queue.');
     if (empty($item)) {

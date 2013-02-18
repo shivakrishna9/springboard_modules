@@ -118,6 +118,12 @@ function salesforce_log_schema() {
         'size' => 'big',
         'not null' => FALSE,
       ),
+      'sfid' => array(
+        'description' => 'The Salesforce Id.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('lid'),
     'indexes' => array(

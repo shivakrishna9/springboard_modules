@@ -30,8 +30,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Initiate a processor.
-    $this->queue = SalesforceQueue::get();
-    $this->processor = SalesforceQueueProcessor::get($this->queue);
+    $this->queue = salesforce_queue_load();
+    $this->processor = salesforce_queue_load_processor($this->queue);
 
     // Predeclare reusable reference lists.
     $this->operations = array(
@@ -131,7 +131,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
 
     // Claim items, and we should get 10.
     // Create new processor for our new settings.
-    $this->processor = SalesforceQueueProcessor::get($this->queue);
+    $this->processor = salesforce_queue_load_processor($this->queue);
     $items = $this->processor->claimItems();
     $count = count($items);
     $this->assertEqual(10, $count, 'Retreived ' . $count . ' items when we expected 10 items.');
@@ -153,7 +153,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     // that will will get more than 10 items for each type of batch.
     $this->createQueueItems($this->queue, 200);
     // Create new processor for our new settings.
-    $this->processor = SalesforceQueueProcessor::get($this->queue);
+    $this->processor = salesforce_queue_load_processor($this->queue);
     $this->processor->claimItems();
     $batches = $this->processor->createBatches();
     $this->assertFalse(empty($batches), 'Returned items after processing batches.');
@@ -761,7 +761,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     $this->salesforceConnect();
 
     // Queue up an Opportunity which will automatically fail.
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Account', 'Contact'));
     $item = $queue->claimItem();
     $queue->releaseItem($item);
@@ -794,7 +794,7 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
     variable_set('salesforce_queue_cron_frequency', 0);
 
     // Add item to queue and ensure it is there.
-    $queue = SalesforceQueue::get();
+    $queue = salesforce_queue_load();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
     $items = $queue->claimBatch();
     $queue->releaseBatch($items[0]->leaseKey);

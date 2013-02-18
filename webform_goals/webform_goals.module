@@ -1,602 +1,360 @@
 <?php
 
 /**
- * Implements hook_perm().
+ * @file module code & core hooks
  */
-function webform_goals_permission() {
-  return array(
-    'administer webform goals' => array(
-      'title' => t('Administer Webform Goals'),
-      'description' => t('Manage administration tasks for Webform Goals.'),
-    ),
-  );
-}
+
+require_once('includes/webform_goals.goals.inc');
 
 /**
  * Implements hook_menu().
  */
 function webform_goals_menu() {
-  $items = array();
-  $items['admin/build/block/add_goal'] = array(
-    'title' => 'Add Goal Block',
-    'description' => 'Add a new goal block',
+  $items['admin/config/content/webform_goals'] = array(
+    'title' => 'Configure goal settings',
+    'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_goals_block_admin'),
-    'access arguments' => array('administer fundraiser goals'),
+    'page arguments' => array('webform_goals_admin'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_goals.admin.inc',
+  );
+  $items['admin/config/content/webform_goals/add'] = array(
+    'title' => 'Add a goal',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_add'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'webform_goals.forms.inc',
+  );
+  $items['admin/config/content/webform_goals/%webform_goal/edit'] = array(
+    'title' => 'Edit goal',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_add', 4),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'webform_goals.forms.inc',
+  );
+  $items['admin/config/content/webform_goals/%webform_goal/delete'] = array(
+    'title' => 'Delete goal',
+    'description' => '',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_delete', 4),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'webform_goals.forms.inc',
+  );
+  $items['node/%webform_menu/webform/goals'] = array(
+    'title' => 'Goals',
+    'description' => t('Configure goal settings for this webform'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_settings'),
+    'access callback' => TRUE,
     'type' => MENU_LOCAL_TASK,
-    'file' => 'webform_goals.admin.inc',
+    'file' => 'includes/webform_goals.forms.inc',
   );
-  // TODO: add title & description callbacks?
-  $items['admin/build/block/delete-goal-block'] = array(
-    'title' => 'Delete block',
-    'description' => '',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_goals_block_admin_delete'),
-    'access arguments' => array('administer fundraiser goals'),
-    'type' => MENU_CALLBACK,
-    'file' => 'webform_goals.admin.inc',
-  );
-  $items['admin/build/block/configure-goal-block'] = array(
-    'title' => 'Configure block',
-    'description' => '',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_goals_block_admin_configure'),
-    'access arguments' => array('administer fundraiser goals'),
-    'type' => MENU_CALLBACK,
-    'file' => 'webform_goals.admin.inc',
-  );
-  // #ahah callbacks
-  $items['webform_goals/js'] = array(
-    'page callback' => 'webform_goals_ahah',
+  $items['webform_goals'] = array(
+    'title' => 'webform goals test page',
+    'page callback' => 'webform_goals_test_page',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['webform_goals_admin/js'] = array(
-    'page callback' => 'webform_goals_admin_ahah',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-    'file' => 'webform_goals.admin.inc',
-  );
+  // TODO: declare api endpoint?
   return $items;
 }
 
 /**
- * Implements hook_form_alter().
+ * Load a goal from the db.
+ * @param int $gid
+ * Goal id
+ *
+ * @return array
+ * Returns an associative array containing goal settings.
  */
-function webform_goals_form_alter(&$form, &$form_state, $form_id) {
-  // add delete link to advanced blocks
-  if ($form_id == 'block_admin_display_form') {
-    $results = db_query('SELECT delta FROM {webform_goals} WHERE delta <> "basic" AND delta IS NOT NULL AND delta != ""');
-    while ($delta = db_result($results)) {
-      if (isset($form['webform_goals_' . $delta])) {
-        /* Form elements added to block configuration page get stripped of wrappers or other non-active elements.
-         * This means #ahah breaks if it's added via the "configure" op in hook_block. To work around this we
-         * replace the configure link on the block list page with a link pointing to a form we control.
-         *
-         * Since blocks implemented via hook_block don't get a delete link on the block administration page we also add one
-         * and have it point to a form we control.
-         */
-        $form['webform_goals_' . $delta]['configure'] = array('#value' => l(t('configure'), 'admin/build/block/configure-goal-block/' . $delta));
-        $form['webform_goals_' . $delta]['delete'] = array('#value' => l(t('delete'), 'admin/build/block/delete-goal-block/' . $delta));
-      }
+function webform_goal_load($gid) {
+  $result = db_query('
+    SELECT
+      gid,
+      name,
+      context,
+      metric,
+      target_value,
+      seed,
+      display_threshold,
+      starter_message,
+      starter_message_format,
+      start_date,
+      end_date,
+      auto_expire,
+      template,
+      template_format,
+      extra
+    FROM {webform_goals}
+    WHERE gid = :gid
+  ', array(':gid' => $gid));
+  $goal = $result->fetchAssoc();
+  if (!empty($goal['extra'])) {
+    $goal['extra'] = unserialize($goal['extra']);
+  }
+  // TODO: convert timestamps?
+  return $goal;
+}
+
+function webform_goal_load_multiple() {
+  static $goals = array();
+  if (!count($goals)) {
+    $result = db_query('
+      SELECT
+        gid,
+        name,
+        context,
+        metric,
+        seed,
+        target_value,
+        display_threshold,
+        starter_message,
+        starter_message_format,
+        start_date,
+        end_date,
+        auto_expire,
+        template,
+        template_format,
+        extra
+      FROM {webform_goals}
+    ');
+    while ($goal = $result->fetchAssoc()) {
+      $goal['extra'] = unserialize($goal['extra']);
+      $goals[] = $goal;
     }
   }
-
-  // add goal form elements to webform nodes
-  $types = variable_get('webform_node_types', array());
-  foreach ($types as $type) {
-    if (!strcmp($type . '_node_form', $form_id)) {
-      // #AHAH bugfix
-      $form['#cache'] = TRUE;
-
-      if ($form['nid']['#value'] > 0) {
-        $edit_path = url('node/' . $form['nid']['#value'] . '/edit', array('absolute' => TRUE));
-      }
-      else {
-        $type_url_str = str_replace('_', '-', $type);
-        $edit_path = url('node/add/' . $type_url_str, array('absolute' => TRUE));
-      }
-      if ($form['#action'] != $edit_path) {
-        $form['#action'] = $edit_path;
-      }
-
-      $node = $form['#node'];
-      if (!is_object($node)) {
-        $node = new stdClass;
-      }
-
-      if ($form_state['values']['webform_goal_type']) {
-        $node->webform_goal_type = $form_state['values']['webform_goal_type'];
-      }
-      else {
-        $defaults = db_fetch_object(db_query('SELECT * FROM {webform_goals} WHERE pid = %d AND delta = "basic"', $form_state['values']['nid']));
-      }
-
-      // Set goal type based on form type.
-      (!strcmp('donation_form_node_form', $form_id)) ? $goal_type = 2 : $goal_type = 1;
-
-      $form['fundraiser_settings']['webform_goals'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Goal settings'),
-        '#description' => t('Set a specific goal for this donation form.'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['fundraiser_settings']['webform_goals']['webform_goal_delta'] = array(
-        '#type' => 'value',
-        '#value' => 'basic',
-      );
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper'] = array(
-        '#prefix' => '<div id="donation-goals">',
-        '#suffix' => '</div>',
-        '#theme' => 'webform_goals',
-      );
+  return $goals;
+}
 
 
-      // Preserve user input through form rebuilts
-      // $goal_type = (isset($form_state['values']['webform_goal_type'])) ? $form_state['values']['webform_goal_type'] : $node->webform_goal_type;
-      $goal_target = (isset($form_state['values']['webform_goal_target'])) ? $form_state['values']['webform_goal_target'] : $node->webform_goal_target;
-      $goal_template = (isset($form_state['values']['webform_goal_template'])) ? $form_state['values']['webform_goal_template'] : $node->webform_goal_template;
-      $default_message = (isset($form_state['values']['webform_goal_default_message'])) ? $form_state['values']['webform_goal_default_message'] : $node->webform_goal_default_message;
-      $target_cid = (isset($form_state['values']['webform_goal_target_cid'])) ? $form_state['values']['webform_goal_target_cid'] : $node->webform_goal_target_cid;
-      $display_threshold = (isset($form_state['values']['webform_goal_display_threshold'])) ? $form_state['values']['webform_goal_display_threshold'] : $node->webform_goal_display_threshold;
-
-      // drupal_set_message('$form_state:' . print_r($form_state['values'], TRUE));
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['webform_goal_type'] = array(
-        '#type' => 'value',
-        '#value' => $goal_type,
-      );
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['webform_goal_target'] = array(
-        '#type' => 'textfield',
-        '#title' => ($goal_type == 2) ? t('Target total donations') : t('Target # of submissions'),
-        '#description' => t('Set the target number (petition submissions, total donations, etc) for the goal.'),
-        '#default_value' => is_numeric($goal_target) ? $goal_target : 0,
-      );
-      $form['fundraiser_settings']['webform_goals']['goal_wrapper']['webform_goal_display_threshold'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Display Threshold'),
-        '#description' => t('Sets the number of submissions (or donation total) that must be reached before this goal is visible.'),
-        '#default_value' => $display_threshold ? $displa_threshold : 0,
-      );
-      $form['fundraiser_settings']['webform_goals']['goal_wrapper']['webform_goal_default_message'] = array(
-        '#type' => 'textarea',
-        '#title' => t('Starter message'),
-        '#description' => t('This is an optional message to show users if no form submission has been made. Note: if display threshold is set users will not see this message.'),
-        '#default_value' => $default_message,
-      );
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['template'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Goal template'),
-        '#collapsible' => TRUE,
-      );
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['template']['webform_goal_template'] = array(
-        '#type' => 'textarea',
-        '#title' => t('Template'),
-        '#description' => t('Markup appearing for this goal.'),
-        '#default_value' => $goal_template,
-      );
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['template']['goal_tokens'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Available goal tokens'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#weight' => 11,
-      );
-      $filter = $node->fundraiser_settings['webform_goals']['goals_wrapper']['template'] ? $node->fundraiser_settings['webform_goals']['goals_wrapper']['template'] : 2;
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['template']['webform_goal_template_format'] =  filter_form($filter, 12, array('fundraiser_settings', 'webform_goals', 'goals_wrapper', 'template'));
-      $form['fundraiser_settings']['webform_goals']['goals_wrapper']['template']['goal_tokens']['help'] = array(
-        '#value' => theme('token_tree', array('goal')),
-      );
-
-      $form['#validate'][] = 'webform_goals_validate';
-      $form['#submit'][] = 'webform_goals_submit';
+function _webform_goals_list_webforms() {
+  static $nodes = array();
+  if (!count($nodes)) {
+    $types = webform_variable_get('webform_node_types');
+    $results = db_query('
+      SELECT nid, title, type FROM {node} WHERE type IN(:types)
+    ', array(':types' => $types));
+    while ($result = $results->fetchAssoc()) {
+      $nodes[$result['type']][$result['nid']] = $result['title'];
     }
   }
+  return count($nodes) ? $nodes : FALSE;
 }
 
-/**
- * Validation handler for goal form elements.
- */
-function webform_goals_validate(&$form, $form_state) {
-  // We dislike non-numeric target values.
-  if ($form_state['values']['webform_goal_type'] && !is_numeric($form_state['values']['webform_goal_target'])) {
-    form_set_error('webform_goal_target', t('The goal target number should be numeric.'));
+function _webform_goals_field_list($nid) {
+  $fields = array();
+  $results = db_query('
+    SELECT
+      form_key,
+      name
+    FROM {webform_component}
+    WHERE
+      nid = :nid
+    AND
+      type NOT IN (:types)
+  ', array(':nid' => $nid, ':types' => array('hidden', 'fieldset')));
+
+  while ($result = $results->fetchAssoc()) {
+    $fields[$result['form_key']] = $result['name'];
   }
+  return $fields;
+}
 
-  // Setting the threshold at or above the target is also pretty lame.
-  if ($form_state['values']['webform_goal_display_threshold'] > 0 && ($form_state['values']['webform_goal_display_threshold'] >= $form_state['values']['webform_goal_target'])) {
-    form_set_error('webform_goal_display_threshold', t('Setting the display threshold at or above the goal target means the goal will never be displayed.'));
+/**
+ * Get metric progress (total and percentage of goal met)
+ * @param type $goal
+ * @return array
+ * Returned value:
+ *  array(
+ *   'count' => total metric count
+ *   'progress' => percentage of goal met
+ *  );
+ */
+function webform_goals_track_metric($goal) {
+
+  $data = module_invoke_all('webform_goals_track_metric', $goal);
+  // apply seed
+  if (!empty($goal['seed'])) {
+    $data['count'] +=  $goal['seed'];
+    $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
   }
+  return $data;
 }
 
 /**
- * Submit handler for goal form elements.
+ * Implements hook_token_info().
  */
-function webform_goals_submit($form, &$form_state) {
-  unset($form_state['storage']);
+function webform_goals_token_info() {
+
+  $info['types']['webform_goal'] = array(
+    'name' => t('Current goal'),
+    'description' => t('Tokens related to specific webform goals.'),
+    'needs-data' => 'donation',
+  );
+
+  $info['tokens']['webform_goal']['gid'] = array(
+    'name' => t('Goal ID'),
+    'description' => t('The unique ID of the goal.'),
+  );
+  $info['tokens']['webform_goal']['name'] = array(
+    'name' => t('Goal name'),
+    'description' => t('The goal name.'),
+  );
+  $info['tokens']['webform_goal']['starter_message'] = array(
+    'name' => t('Goal starter message'),
+    'description' => t('The started message to display for this goal if the display threshold has not been met.'),
+  );
+  $info['tokens']['webform_goal']['display_threshold'] = array(
+    'name' => t('Goal display threshold'),
+    'description' => t('The minimum progress towards goal required to display a progress bar.'),
+  );
+  $info['tokens']['webform_goal']['start_date'] = array(
+    'name' => t('Goal start date'),
+    'description' => t('Goal progress is calculated starting on this date.'),
+  );
+  $info['tokens']['webform_goal']['end_date'] = array(
+    'name' => t('Goal end date'),
+    'description' => t('Goal progress calculation ends on this date.'),
+  );
+  $info['tokens']['webform_goal']['progress'] = array(
+    'name' => t('Goal progress raw'),
+    'description' => t('Unfortmatted percentage of goal currently met.'),
+  );
+  $info['tokens']['webform_goal']['target'] = array(
+    'name' => t('Goal target'),
+    'description' => t('The goal target number.'),
+  );
+  $info['tokens']['webform_goal']['total'] = array(
+    'name' => t('Total raw'),
+    'description' => t('Unformatted total progress towards goal.'),
+  );
+  $info['tokens']['webform_goal']['node'] = array(
+    'name' => t('Webform Node'),
+    'description' => t('The webform node the goal is being processed for.'),
+    'type' => 'node',
+  );
+
+  return $info;
 }
 
 /**
- * Implements hook_nodeapi().
+ * Implements hook_tokens().
  */
-function webform_goals_nodeapi(&$node, $op) {
-  $types = variable_get('webform_node_types', array());
+function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
 
-  if (in_array($node->type, $types)) {
-    $node->webform_goal_parent_item = $node->nid;
-    switch ($op) {
-      case 'load':
-        $goal = db_fetch_object(db_query('SELECT * FROM {webform_goals} WHERE pid=%d and delta="basic"', $node->nid));
-        $node->webform_goal_delta = $goal->delta;
-        $node->webform_goal_type = $goal->type;
-        $node->webform_goal_target = $goal->target;
-        $node->webform_goal_template = $goal->template;
-        $node->webform_goal_display_threshold = $goal->display_threshold;
-        $node->fundraiser_settings['webform_goals']['goals_wrapper']['template'] = $goal->template_format;
-        $node->webform_goal_default_message = $goal->default_message;
+  if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
+    $goal_progress = webform_goals_track_metric($data['webform_goal']);
 
-        break;
-      case 'insert':
-        $node->pid = $node->nid;
-        _webform_goals_save_goal($node);
-
-        break;
-      case 'update':
-        $node->pid = $node->nid;
-        if (db_result(db_query("SELECT 1 FROM {webform_goals} WHERE pid = %d AND delta = 'basic'", $node->nid))) {
-          _webform_goals_update_goal($node);
-        }
-        else {
-          _webform_goals_save_goal($node);
-        }
-        break;
-      case 'delete':
-        db_query('DELETE FROM {webform_goals} WHERE pid=%d', $node->nid);
-        break;
-      default:
-        break;
+    $standard_tokens = array('gid', 'name', 'starter_message', 'display_threshold');
+    foreach($standard_tokens as $standard) {
+      if (isset($tokens[$standard])) {
+        $replacements[$tokens[$standard]]= $data['webform_goal'][$standard];
+      }
     }
 
-  }
-}
-
-/**
- * Implements hook_block().
- */
-function webform_goals_block($op = 'list', $delta = 0, $edit = array()) {
-
-  switch ($op) {
-    // TODO: add stash for advanced block titles
-    case 'list':
-      $blocks = array();
-      $results = db_query('SELECT b.bid, b.delta, fb.info FROM {blocks} b INNER JOIN {webform_goals_blocks} fb ON fb.bid = b.bid WHERE b.module = "webform_goals" AND b.delta <> "webform_goals_basic"');
-      while ($block = db_fetch_object($results)) {
-        $blocks[$block->delta] = array(
-          'info' => $block->info,
-          'cache' => BLOCK_NO_CACHE,
-        );
-      }
-
-      $blocks['webform_goals_basic'] = array(
-        'info' => t('Fundraiser Goals'),
-      );
-      return $blocks;
-      break;
-    case 'view':
-      switch ($delta) {
-        case   'webform_goals_basic':
-          if (arg(0) == 'node' && is_numeric(arg(1))) {
-            $node = node_load(arg(1));
-            $types = variable_get('webform_node_types', array());
-            if (in_array($node->type, $types)) {
-              // TODO: replace all instances of this query with a get function.
-              $goal = db_fetch_object(db_query('SELECT * FROM {webform_goals} WHERE pid = %d AND delta = "basic"', arg(1)));
-              $goal->goal_progress = webform_goals_current_goal_progress($node->nid, $goal, FALSE);
-              $block = array();
-              $block['subject'] = webform_goals_block_title($goal, NULL);
-              $block['content'] = webform_goals_block_content($goal, $node);
-              return $block;
-            }
-          }
+    foreach($tokens as $key => $token) {
+      switch ($key) {
+        case 'start_date':
+          $replacements[$token] = date('m-d-Y', $data['webform_goal']['start_date']);
           break;
-        default:
-          $goal = db_fetch_object(db_query("SELECT * FROM {webform_goals} WHERE delta = '%s'", $delta));
-          $goal->goal_progress = webform_goals_current_goal_progress($goal->pid, $goal, FALSE);
-          if ($goal->pid) {
-            $block['subject'] = webform_goals_block_title($goal, $delta);
-            $block['content'] = webform_goals_block_content($goal);
-            return $block;
-          }
+        case 'end_date':
+          $replacements[$token] = date('m-d-Y', $data['webform_goal']['end_date']);
           break;
+        case 'progress':
+          $replacements[$token] = $goal_progress['progress'];
+          break;
+        case 'target':
+          $replacements[$token] = $data['webform_goal']['target_value'];
+          break;
+        case 'total':
+          $replacements[$token] = $goal_progress['count'];
       }
-      break;
-  }
-}
+    }
 
-// TODO: this might be redundant.
-/**
- * Generates block title for basic goal block.
- *
- * @param $goal
- * Goal object containing values for the current node from {webform_goals}
- */
-function webform_goals_block_title($goal, $delta = NULL) {
-  // Basic block doesn't supply delta
-  if (!$delta) {
-    if (isset($goal->type) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
-      // TODO: check spec, beef this up.
-      $title = t('Goals');
+
+
+
+    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
     }
   }
-  else {
-    $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='webform_goals' AND delta='%s'", $delta));
-  }
-  return $title;
+
+  return $replacements;
+}
+
+function webform_goals_update_widget($goal, $nid, $update = array()) {
+  $settings = array(
+    'gid' => $goal['gid'],
+    'nid' => $nid,
+    'widget' => theme('webform_goals_widget', $goal, $nid),
+  );
+  drupal_write_record($settings, $update);
 }
 
 /**
- * Generates block content for basic goal block.
+ * Delete widget records by node id or goal id.
  *
- * @param $goal
- * Goal object containing values for the current node from {webform_goals}
+ * @param array $params
+ * Options:
+ * 'nid' - node id
+ * 'gid' - goal id
  */
-function webform_goals_block_content($goal, $node = NULL) {
-  if (isset($goal->template) && (!$goal->display_threshold || $goal->display_threshold <= $goal->goal_progress)) {
-    $output = $goal->template;
-
-    if (!$goal->goal_progress && $goal->default_message) {
-      $output .= $goal->default_message;
-    }
-    // Dividing by zero is awesome. Where do you think the platypus came from?
-    if ($goal->goal_progress && $goal->target) {
-      $goal->goal_percentage = round($goal->goal_progress / $goal->target * 100);
-    }
-    else {
-      $goal->goal_percentage = 0;
-    }
+function webform_goals_purge_widgets($params) {
+  if (empty($params['nid']) && empty($params['gid'])) {
+    return FALSE;
   }
-  if (is_object($node) && is_numeric($node->fundraiser_settings['webform_goals']['goals_wrapper']['template'])) {
-    $output = check_markup($output, $node->fundraiser_settings['webform_goals']['goals_wrapper']['template'], FALSE);
+  $query = db_delete('webform_goals_widget');
+  if (isset($params['nid'])) {
+    $query->condition('nid', $params['nid'], '=');
   }
-  $output = token_replace($output, 'goal', $goal);
-  return $output;
+  if (isset($params['gid'])) {
+    $query->condition('gid', $params['gid'], '=');
+  }
+  $query->execute();
 }
 
 /**
- * Returns advanced goal block title.
- *
- * @param $delta
- * Block delta for the current block.
- *
- * @return
- * Returns block title from {blocks}.
+ * Implements hook_theme().
  */
-function webform_goals_advanced_block_title($delta) {
-  $title = db_result(db_query("SELECT title FROM {blocks} WHERE module='webform_goals' AND delta='%s'", $delta));
-  return $title;
-}
-
-/**
- * #ahah callback for goals UI
- */
-function webform_goals_ahah() {
-  module_load_include('inc', 'node', 'node.pages');
-  $form_state = array('storage' => NULL, 'submitted' => FALSE, 'rebuild' => TRUE);
-  $form_build_id = $_POST['form_build_id'];
-  $form = form_get_cache($form_build_id, $form_state);
-
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-
-  // Disable validation
-  $form['#validate'] = NULL;
-  $form_state['validate_handlers'] = NULL;
-  webform_goals_ahah_helper_disable_validation($form);
-
-  drupal_process_form($form_id, $form, $form_state);
-  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-  $goal_form = $form['fundraiser_settings']['webform_goals']['goals_wrapper'];
-  unset($goal_form['#prefix'], $amount_form['#suffix']);
-
-  $output = theme('status_messages') . drupal_render($goal_form);
-
-  $form_state = array('submitted' => FALSE);
-  $form_build_id = $_POST['form_build_id'];
-  drupal_json(array('status' => TRUE, 'data' => $output));
-}
-
-/**
- * Calculate the current progress towards a webform goal.
- *
- * @param pid
- * Parent item id, node id in the case of a webform, Salesforce campaign id if campaign is selected.
- *
- * @param $goal
- * Object containing the goal settings for this webform.
- *
- * @param $unique
- * Boolean, TRUE if you want the total number of unique (filtered by UID) submissions.
- *
- * @return
- * Returns an integer value representing the current progress towards the goal. In the case of a donation form
- * this would be the total amount donated. In all other cases the number of webform submissions is returned.
- */
-function webform_goals_current_goal_progress($pid, $goal, $unique = FALSE) {
-
-  switch ($goal->type) {
-
-    // # of submissions
-    case 1:
-      // Unique webform
-      if ($unique && is_numeric($pid)) {
-        $progress = db_result(db_query('SELECT COUNT(DISTINCT uid) FROM {webform_submissions} WHERE nid = %d', $pid));
-      }
-      // Non-unique webform.
-      elseif (is_numeric($pid)) {
-        $progress = db_result(db_query('SELECT COUNT(nid) FROM {webform_submissions} WHERE nid = %d', $pid));
-      }
-      // if pid isn't numeric that should mean we have a salesforce campaign id.
-      else {
-        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
-        $progress = db_result(db_query("SELECT count(sid) FROM {webform_submitted_data} WHERE cid = %d AND data = '%s'", $cid->$pid));
-      }
-
-      break;
-
-      // Donation amount
-    case 2:
-      // Webform node
-      if (is_numeric($pid)) {
-        $progress = db_result(db_query('SELECT sum(uc.order_total) FROM {uc_orders} uc
-          INNER JOIN {fundraiser_webform_donation} f ON f.did = uc.order_id
-          WHERE f.webform_nid = %d AND uc.order_status = "payment_received"',
-          $pid));
-      }
-      // Campaign
-      else {
-        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE form_key = 'cid'"));
-        $progress = db_result(db_query("SELECT SUM(uo.order_total) FROM {uc_orders} uo
-          INNER JOIN {fundraiser_webform_donation} fwo
-            ON fwo.did = uo.order_id
-          INNER JOIN {webform_submitted_data} wsd
-            ON wsd.sid = fwo.sid
-          WHERE wsd.cid = %d
-            AND uo.order_status = 'payment_received'
-            AND wsd.data = '%s'", $cid, $pid));
-      }
-      break;
-  }
-  return $progress;
-}
-
-/**
- * Implements hook_token_list().
- */
-function webform_goals_token_list($type = 'all') {
-  if ($type == 'goal' || $type == 'all') {
-    $tokens['goal']['goal-value']  = t('Unformatted value from the goal target field.');
-    $tokens['goal']['goal-value-formatted'] = t('Same value as above, formatted as currency for donations, or as a whole integer otherwise.');
-    $tokens['goal']['calculated-value'] = t('Calculated progress towards the current goal.');
-    $tokens['goal']['calculated-value-formatted'] = t('Calculated progress, formatted as currency if donations ($xxx,xxx.xx), else a whole integer (xxx,xxx)');
-    $tokens['goal']['calculated-value-percentage'] = t('Percentage of current goal reached.');
-    $tokens['goal']['goal-thermometer'] = t('Inserts default markup and css  to power a thermometer.');
-  }
-  return $tokens;
-}
-
-/**
- * Implements hook_token_values().
- */
-function webform_goals_token_values($type, $goal = NULL) {
-
-  $values = array();
-  switch ($type) {
-    case 'goal':
-      $values['goal-value'] = $goal->target; // support cc debug mode
-      $values['calculated-value'] = $goal->goal_progress;
-      if ($goal->type == 3) {
-        // Cash!
-        $values['calculated-value-formatted'] = money_format('%.2n', $goal->goal_progress);
-        $values['goal-value-formatted'] = money_format('%.2n', $goal->target);
-      }
-      else {
-        // Prizes!
-        $values['calculated-value-formatted'] = number_format($goal->goal_progress);
-        $values['goal-value-formatted'] = number_format($goal->target);
-      }
-      $values['goal-thermometer'] = theme('webform_goal_thermometer', $goal);
-      $values['calculated-value-percentage'] = $goal->goal_percentage;
-      break;
-  }
-  return $values;
-}
-
-function webform_goals_theme() {
+function webform_goals_theme($existing, $type, $theme, $path) {
   return array(
-    'webform_goal_thermometer' => array(
-      'arguments' => array('goal' => NULL),
-      'template' => 'fundraiser-goal-thermometer',
+    'webform_goals_widget' => array(
+      'arguments' => array(
+        'goal' => NULL,
+        'nid' => NULL,
+      ),
+    ),
+    'webform_goals_default_template' => array(
+      'arguments' => array(
+        'goal' => NULL,
+      ),
+      'template' => 'templates/webform_goals.default',
     ),
   );
 }
 
-/**
- * Save a goal.
- */
-function _webform_goals_save_goal($object) {
-
-  if (!$object->nid) {
-    $theme = variable_get('theme_default', '');
-    // Save the bulk of the block settings
-    db_query("INSERT INTO {blocks}
-    (module, delta, status, theme, custom, visibility, pages, title)
-    VALUES ('webform_goals', '%s', 0, '%s', 1, %d, '%s', '%s')",
-    $object->webform_goal_delta,
-    $theme,
-    $object->visibility,
-    $object->pages,
-    $object->block_title);
-
-    // Circle back and save the block description (why the hell is this not in {blocks})?
-    $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'webform_goals' AND delta = '%s'", $object->webform_goal_delta));
-    db_query("INSERT INTO {webform_goals_blocks} (bid, info) VALUES (%d, '%s')", $bid, $object->block_description);
-
-    // One more run at the db to stash the role visibility settings.
-    if (is_array($objects->roles)) {
-      foreach ($object->roles as $key => $value) {
-        if ($value) {
-          db_query("INSERT INTO {blocks_roles} VALUES ('webform_goals', '%s', %d)", $object->webform_goal_delta, $value);
-        }
-      }
-    }
-  }
-  if ($object->webform_goal_type) {
-    db_query("INSERT INTO {webform_goals}
-      (pid, delta, type, target, template, display_threshold, template_format, default_message)
-      VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, '%s')",
-        $object->pid,
-        $object->webform_goal_delta,
-        $object->webform_goal_type,
-        $object->webform_goal_target,
-        $object->webform_goal_template,
-        $object->webform_goal_display_threshold,
-        $object->fundraiser_settings['webform_goals']['goals_wrapper']['template'],
-        $object->webform_goal_default_message);
-
-  }
+function theme_webform_goals_widget($vars) {
+  $goal = $vars['goal'];
+  $nid = $vars['nid'];
+  $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
+  drupal_set_message('template:' . $template);
+  $template_filtered = check_markup($template, $goal['template_format']);
+  return $template_filtered;
 }
 
-/**
- *
- */
-function _webform_goals_update_goal($object) {
-  db_query("UPDATE {webform_goals}
-             SET
-               type = '%s',
-               target = %d,
-               template = '%s',
-               display_threshold = %d,
-               template_format = %d,
-               default_message = '%s'
-             WHERE
-               delta = '%s'
-               AND pid = %d",
-             $object->webform_goal_type,
-             $object->webform_goal_target,
-             $object->webform_goal_template,
-             $object->webform_goal_display_threshold,
-             $object->fundraiser_settings['webform_goals']['goals_wrapper']['template'],
-             $object->webform_goal_default_message,
-             $object->webform_goal_delta,
-             $object->webform_goal_parent_item
- );
 
-  $bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = 'webform_goals' AND delta = '%s'", $object->webform_goal_delta));
-
-  db_query("UPDATE {blocks} SET delta = '%s', visibility = %d, pages = '%s', title = '%s' WHERE bid = %d", $object->webform_goal_delta, $object->visibility, $object->pages, $object->block_title, $bid);
-  db_query("UPDATE {webform_goals_blocks} SET info = '%s' WHERE bid = %d", $object->block_description, $bid);
-
-  // TODO: update role settings.
+function webform_goals_test_page() {
+  $gid = !empty($_GET['gid']) ? $_GET['gid'] : 1;
+  $nid = !empty($_GET['nid']) ? $_GET['nid'] : 2;
+  $goal = webform_goal_load($gid);
+  $vars['goal'] = $goal;
+  $vars['nid'] = $nid;
+  $output = theme('webform_goals_widget', $vars);
+  return $output;
 }

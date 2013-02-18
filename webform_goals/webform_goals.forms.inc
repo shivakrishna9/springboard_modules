@@ -1,0 +1,357 @@
+<?php
+
+/**
+ * @file Goals UI forms.
+ */
+
+/**
+ * Add a goal.
+ */
+function webform_goals_add($form, $form_state, $goal = array()) {
+
+  drupal_add_css(drupal_get_path('module', 'webform_goals') . '/styles/webform_goals.admin.css');
+  ctools_include('plugins');
+
+  if (!empty($goal['gid'])) {
+    $form['gid'] = array(
+      '#type' => 'value',
+      '#value' => $goal['gid'],
+    );
+  }
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Goal name'),
+    '#default_value' => isset($goal['name']) ? $goal['name'] : '',
+  );
+
+  $contexts = module_invoke_all('webform_goals_list_context');
+  if (!empty($form_state['values']['context'])) {
+    $selected_context = $contexts[$form_state['values']['context']];
+  }
+  elseif (!empty($goal['context'])) {
+    $selected_context = $contexts[$goal['context']];
+  }
+  else {
+    $selected_context = $contexts['single'];
+  }
+
+  $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
+  if (!empty($form_state['values']['metrics'])) {
+    $selected_metric = $metrics[$form_state['values']['metrics']];
+  }
+  elseif (!empty($goal['metric'])) {
+    $selected_metric = $metrics[$goal['metric']];
+  }
+  else {
+    $selected_metric = $metrics['submission_count'];
+  }
+  //$selected_metric = !empty($form_state['values']['metrics']) ? $metrics[$form_state['values']['metrics']] : $metrics['submission_count'];
+  foreach ($contexts as $key => $context) {
+    $context_options[$key] = $context['name'];
+  }
+  $form['context_container'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Goal context'),
+  );
+  $form['context_container']['context'] = array(
+    '#type' => 'radios',
+    '#title' => t(''),
+    '#options' => $context_options,
+    '#default_value' => isset($selected_context['id']) ? $selected_context['id'] : '',
+    '#ajax' => array(
+      'callback' => 'webform_goals_context_callback',
+      'wrapper' => 'context-options',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  $form['context_container']['context_description'] = array(
+    '#type' => 'markup',
+    '#markup' => !empty($selected_context['description']) ? $selected_context['description'] : '',
+    '#prefix' => '<div id="context-description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['context_container']['options_wrapper'] = array(
+    '#type' => 'item',
+    '#value' => '',
+    '#prefix' => '<div id="context-options">',
+    '#suffix' => '</div>',
+  );
+
+  if (!empty($selected_context['settings_callback'])) {
+    $form['context_container']['options_wrapper']['options'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Additional settings',
+      '#description' => t('The selected context requires the following additional settings:'),
+    );
+    $func = $selected_context['settings_callback'];
+    $func($form['context_container']['options_wrapper']['options'], $goal);
+
+  }
+
+  // SF Webform should add the Salesforce context.
+
+  // Metrics radios (standard + plugin architecture)
+
+  foreach ($metrics as $key => $metric) {
+    $metrics_options[$key] = $metric['name'];
+
+  }
+
+  // #AJAX enable so minimum display limit UI can be swapped.
+  $form['metrics_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('What do you want to track?'),
+    '#prefix' => '<div id="context-metrics">',
+    '#suffix' => '</div>',
+  );
+  $form['metrics_wrapper']['metrics'] = array(
+    '#type' => 'radios',
+    '#title' => '',
+    '#options' => $metrics_options, // Get valid options from plugin
+    '#default_value' => $selected_metric['id'],
+    '#ajax' => array(
+      'callback' => 'webform_goals_metrics_callback',
+      'wrapper' => 'context-metrics',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+  // Unpack custom form elements associated with the current metric.
+  if (!empty($selected_metric['child_elements'])) {
+    foreach ($selected_metric['child_elements'] as $key => $element) {
+      $form['metrics_wrapper']['metrics_children'][$key] = $element;
+    }
+  }
+
+  // Goal
+  $form['goal_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Goal'),
+  );
+  $form['goal_wrapper']['target_value'] = array(
+    '#type' => 'textfield',
+    '#size' => 8,
+    '#title' => t('Set a target number for your goal'),
+    '#description' => t('This tells us what your goal is shooting for.'),
+    '#default_value' => !empty($goal['target_value']) ? $goal['target_value'] : '',
+  );
+  $form['goal_wrapper']['seed'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Add this much to the initial goal progress'),
+    '#size' => 8,
+    '#attributes' => array('name' => 'seed'),
+    '#default_value' => !empty($goal['seed']) ? $goal['seed'] : '',
+  );
+
+  // selection-specific minimum display limit, start with value associated with the "Default" option above.
+  // Attach js event to onchange or similar to conditionally show starter message ui
+  $form['goal_wrapper']['display_threshold'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Progress bar display threshold'),
+    '#description' => t('The starter message will be displayed until goal progress meets this minimum.'),
+    '#size' => 8,
+    '#id' => 'edit-display_threshold',
+    '#attributes' => array('name' => 'display_threshold', 'class' => array('container-inline')),
+    '#default_value' => !empty($goal['display_threshold']) ? $goal['display_threshold'] : 0,
+  );
+
+  // starter message ui, initially hidden with CSS or JS unless threshold is set.
+  // TODO: handling for input formats.
+  $form['goal_wrapper']['starter_message'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Starter message'),
+  );
+  if (!empty($goal['starter_message'])) {
+    $form['goal_wrapper']['starter_message']['#default_value'] = $goal['starter_message'];
+    $form['goal_wrapper']['starter_message']['#format'] = $goal['starter_message_format'];
+  }
+  else {
+    $form['goal_wrapper']['starter_message']['#attributes'] = array('placeholder' => t('Enter your personal starter message here.'));
+  }
+  $form['goal_wrapper']['starter_message']['token_tree'] = array(
+	  '#type' => 'fieldset',
+	  '#title' => t('Replacement patterns'),
+	  '#collapsible' => TRUE,
+	  '#collapsed' => TRUE,
+	  '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
+	  '#weight' => 10,
+	);
+
+  // goal timeframe fieldset & date select fields
+  $form['timeframe'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Goal timeframe'),
+  );
+  $format = 'm-d-Y';
+  $form['timeframe']['start_date'] = array(
+    '#type' => 'date_select',
+    '#title' => t('Start date'),
+    '#date_format' => $format,
+    '#date_year_range' => '-3:+3',
+    '#date_label_position' => 'within',
+    '#default_value' => !empty($goal['start_date']) ? date('m-d-Y', $goal['start_date']) : NULL,
+  );
+  $form['timeframe']['end_date'] = array(
+    '#type' => 'date_select',
+    '#title' => t('End date'),
+    '#date_format' => $format,
+    '#date_year_range' => '-3:+3',
+    '#date_label_position' => 'within',
+    '#default_value' => !empty($goal['end_date']) ? date('m-d-Y', $goal['end_date']) : NULL,
+  );
+  $form['timeframe']['auto_expire'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Auto expire'),
+    '#description' => t('Stop displaying goal progress after the end date has been reached.'),
+    '#default_value' => !empty($goal['auto_expire']) ? $goal['auto_expire'] : 0,
+  );
+  // configurable goal template, start with "default" template.
+  $form['template'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Goal template'),
+    '#description' => t(''),
+    '#default_value' => !empty($goal['template']) ? $goal['template'] : theme('webform_goals_default_template'), //TODO: theme function to output default template
+  );
+  if (!empty($goal['template_format'])) {
+    $form['template']['#format'] = $goal['template_format'];
+  }
+   $form['template']['token_tree'] = array(
+	  '#type' => 'fieldset',
+	  '#title' => t('Replacement patterns'),
+	  '#collapsible' => TRUE,
+	  '#collapsed' => TRUE,
+	  '#description' => theme('token_tree', array('token_types' => array('webform_goal'))),
+	  '#weight' => 10,
+	);
+  // Add token UI for goal tokens.
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['#validate'][] = 'webform_goals_add_validate';
+  $form['#submit'][] = 'webform_goals_add_submit';
+
+  return $form;
+}
+
+
+function webform_goals_add_validate(&$form, &$form_state) {
+
+}
+
+/**
+ * Submission handler for goal add/edit form.
+ */
+function webform_goals_add_submit($form, $form_state) {
+
+  $settings = array(
+    'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
+    'name' => $form_state['values']['name'],
+    'context' => $form_state['values']['context'],
+    'metric' => $form_state['values']['metrics'],
+    'extra' => array(),
+    'display_threshold' => $form_state['values']['display_threshold'],
+    'seed' => $form_state['values']['seed'],
+    'target_value' => $form_state['values']['target_value'],
+    'starter_message' => $form_state['values']['starter_message']['value'],
+    'starter_message_format' => $form_state['values']['starter_message']['format'],
+    'start_date' => !empty($form_state['values']['start_date']) ? strtotime($form_state['values']['start_date']) : 0,
+    'end_date' => !empty($form_state['values']['end_date']) ? strtotime($form_state['values']['end_date']) : 0,
+    'template' => $form_state['values']['template']['value'],
+    'template_format' => $form_state['values']['template']['format'],
+  );
+
+  $settings = module_invoke_all('webform_goals_save_goal', $settings, $form_state);
+  $update = $settings['gid'] ? 'gid' : array();
+
+  $settings['extra'] = serialize($settings['extra']);
+  drupal_write_record('webform_goals', $settings, $update);
+}
+
+/**
+ * AJAX callback for context radios.
+ */
+function webform_goals_context_callback($form, $form_state) {
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#context-description', render($form['context_container']['context_description'])),
+      ajax_command_replace("#context-options", render($form['context_container']['options_wrapper'])),
+      ajax_command_replace("#context-metrics", theme_status_messages() . render($form['metrics_wrapper']))
+    )
+  );
+}
+
+/**
+ * AJAX callback for extra settings.
+ */
+function webform_goals_extra_callback($form, $form_state) {
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace("#context-metrics", theme_status_messages() . render($form['metrics_wrapper']))
+    )
+  );
+}
+/**
+ * AJAX callback for metrics radios.
+ */
+function webform_goals_metrics_callback($form, $form_state) {
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_replace('#context-metrics', render($form['metrics_wrapper'])),
+      ajax_command_replace("#context-threshold", render($form['display_threshold_wrapper'])),
+      ajax_command_replace('#context-seed', theme_status_messages() . render($form['seed_wrapper'])),
+    )
+  );
+}
+
+function webform_goals_single_custom_metrics_fields() {
+
+}
+
+function _webform_goals_add_date_defaults($element) {
+  $keys = array('month', 'day', 'year');
+
+  foreach ($keys as $key) {
+    $element[$key]['#empty_value'] = 0;
+    $element[$key]['#empty_option'] = t(ucwords($key));
+    unset($element[$key]['#value']);
+    $element[$key] = form_process_select($element[$key]);
+  }
+
+  return $element;
+}
+
+/**
+ * Goal deletion form.
+ *
+ */
+function webform_goals_delete($form, $form_state, $goal = array()) {
+  $form['confirmation_text'] = array(
+    '#markup' => t('Are you sure you want to unrecoverably delete this goal?'),
+  );
+  $form['gid'] = array(
+    '#type' => 'value',
+    '#value' => !empty($goal['gid']) ? $goal['gid'] : NULL,
+  );
+   $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+  );
+  $form['actions']['cancel'] = array(
+    '#markup' => l(t('Cancel'), 'foo/bar'),
+  );
+  $form['#submit'][] = 'webform_goals_delete_submit';
+  return $form;
+}
+
+function webform_goals_delete_submit($form, $form_state) {
+  if (is_numeric($form_state['values']['gid']) && $form_state['values']['gid']) {
+    db_query('DELETE FROM {webform_goals WHERE gid = :gid', array(':gid' => $form_state['values']['gid']));
+    drupal_set_message('Goal has been deleted');
+    drupal_goto('admin/config/content/webform_goals');
+  }
+}

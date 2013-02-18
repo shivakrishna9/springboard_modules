@@ -6,6 +6,11 @@
  */
 
 /**
+ * @name salesforce_mapping_alter_form Modifications to the mapping form
+ * @{
+ */
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_state) {
@@ -207,7 +212,220 @@ function salesforce_mapping_form_alter_submit($form, &$form_state) {
     $mapping->field_mappings[$delta]['drupal_sf'] = _sfm_alter_get_default_value('drupal_sf', $form_state, $field_map['drupal_field']['fieldmap_value']);
   }
   $mapping->save();
+
+  // Clear the cache so all newly created and modified entities will
+  // automatically get the new settings.
+  entity_get_controller('salesforce_mapping')->resetCache();
 }
+
+/**
+ * @} salesforce_mapping_alter_form
+ */
+
+
+/**
+ * @name salesforce_mapping_alter_queue Sending entity mapping to Queue
+ * @{
+ */
+
+/**
+ * Implements hook_entity_insert().
+ */
+function salesforce_genmap_entity_insert($entity, $entity_type) {
+  salesforce_mapping_send_entity_to_queue($entity, $entity_type, 'CREATE');
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function salesforce_genmap_entity_update($entity, $entity_type) {
+  salesforce_mapping_send_entity_to_queue($entity, $entity_type, 'UPDATE');
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function salesforce_genmap_entity_delete($entity, $entity_type) {
+  // Dequeue anything previous this entity may have sent to the queue.
+  salesforce_mapping_dequeue_entity($entity, $entity_type);
+
+  // If the entity needs to queue up its delete state, then queue its delete.
+  salesforce_mapping_send_entity_to_queue($entity, $entity_type, 'DELETE');
+}
+
+/**
+ * Send a given entity to a queue for a given operation.
+ *
+ * @param object $entity
+ *   Entity to queue.
+ * @param string $entity_type
+ *   Type of entity being queued.
+ * @param string $op
+ *   Salesforce operation to be performed.
+ *
+ * @return bool
+ *   TRUE if the item was successfully queued.  FALSE if the item could not be
+ *   queued, or if the item was not supposed to be queued.
+ */
+function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
+  // Information specific to this entity.
+  list($entity_id, , $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // Associate Salesforce operations with sync triggers.
+  $op_sync = array(
+    'CREATE' => SALESFORCE_MAPPING_SYNC_DRUPAL_CREATE,
+    'UPDATE' => SALESFORCE_MAPPING_SYNC_DRUPAL_UPDATE,
+    'DELETE' => SALESFORCE_MAPPING_SYNC_DRUPAL_DELETE,
+  );
+
+  // Grab the map for this particular entity.
+  $mappings = salesforce_mapping_load_multiple(array(
+    'drupal_entity_type' => $entity_type,
+    'drupal_bundle' => $bundle,
+  ));
+
+  $map = NULL;
+  $queue_item = FALSE;
+  if (is_array($mappings)) {
+    foreach ($mappings as $mapping) {
+      // Check if this operation is configured to trigger a sync to Salesforce.
+      if ($mapping->sync_triggers & $op_sync[$op]) {
+        $queue_item = TRUE;
+        $map = $mapping;
+      }
+    }
+  }
+
+  // Not all entities need to be queued, and this happens to be one of them.
+  if (is_null($map) || !$queue_item) {
+    return FALSE;
+  }
+
+  // Find the dedupe field.
+  $dedupe_field = NULL;
+  foreach ($map->field_mappings as $delta => $field_map) {
+    if ($field_map['key']) {
+      $dedupe_field = $field_map['salesforce_field']['name'];
+    }
+  }
+
+  // When there is a dedupe field set and the action is to create a new record,
+  // the operation needs to be UPSERT.
+  $op = ($op == 'CREATE' && !is_null($dedupe_field)) ? 'UPSERT' : $op;
+
+  // Create the queue item and queue it.
+  $mapped_entity = salesforce_mapping_map_entity($entity, $entity_type, $map);
+  $item = array(
+    'drupal_id' => $entity_id,
+    'module' => $entity_type,
+    'delta' => $bundle,
+    'object_type' => $map->salesforce_object_type,
+    'operation' => $op,
+    'dedupe_field' => $dedupe_field,
+    'sobject' => $mapped_entity['sobject'],
+    'sync_rules' => $mapped_entity['sync_rules'],
+  );
+  $queue = salesforce_queue_load();
+  $result = $queue->createItem($item);
+  if (!$result) {
+    // @TODO Send an error to admin that submission didn't go to queue
+    drupal_set_message(t('The submission was not sent to Salesforce.'), 'error');
+  }
+}
+
+/**
+ * Map an entity to a sobject and sync rules.
+ *
+ * @param object $entity
+ *   Entity to queue.
+ * @param string $entity_type
+ *   Type of entity being queued.
+ * @param object $map
+ *   SalesforceMapping object of the entity that provides instructions of how
+ *   to map to the Salesforce object.
+ *
+ * @return array
+ *   An array keyed with 'sobject' containing an sobject and 'sync_rules' with
+ *   an array of sync rules.
+ */
+function salesforce_mapping_map_entity($entity, $entity_type, $map) {
+  $entity_wrapper = entity_metadata_wrapper($entity_type, $entity);
+  $fields = array();
+  $sync_rules = array();
+  foreach ($map->field_mappings as $field_map) {
+    // Skip fields that aren't being pushed to Salesforce.
+    if (!in_array($field_map['direction'], array(SALESFORCE_MAPPING_DIRECTION_DRUPAL_SF, SALESFORCE_MAPPING_DIRECTION_SYNC))) {
+      continue;
+    }
+    $drupal_field_type = $field_map['drupal_field']['fieldmap_type'];
+    $sf_field = $field_map['salesforce_field']['name'];
+
+    $fieldmap_type = salesforce_mapping_get_fieldmap_types($drupal_field_type);
+    $value = call_user_func($fieldmap_type['push_value_callback'], $field_map, $entity_wrapper);
+    $fields[$sf_field] = $value;
+    $sync_rules[$sf_field] = $field_map['drupal_sf'];
+  }
+
+  $sobject = new stdClass();
+  $sobject->type = $map->salesforce_object_type;
+  $sobject->record = ($map->salesforce_record_type == 'default') ? NULL : $map->salesforce_record_type;
+  $sobject->fields = $fields;
+  return array(
+    'sobject' => $sobject,
+    'sync_rules' => $sync_rules,
+  );
+}
+
+/**
+ * Remove an entity's items from the queue.
+ *
+ * @param object $entity
+ *   Entity to queue.
+ * @param string $entity_type
+ *   Type of entity being queued.
+ *
+ * @return boolean
+ *   TRUE if there are no items for the entity in the queue, FALSE if the delete
+ *   process failed.
+ */
+function salesforce_mapping_dequeue_entity($entity, $entity_type) {
+  // Information specific to this entity.
+  list($entity_id, , $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // Grab the map for this particular entity.
+  $mappings = salesforce_mapping_load_multiple(array(
+    'drupal_entity_type' => $entity_type,
+    'drupal_bundle' => $bundle,
+  ));
+
+  $map = NULL;
+  if (is_array($mappings)) {
+    foreach ($mappings as $mapping) {
+      $map = $mapping;
+    }
+  }
+  if (is_null($map)) {
+    return TRUE;
+  }
+
+  $item = new stdClass();
+  $item->drupal_id = $entity_id;
+  $item->module = $entity_type;
+  $item->delta = $bundle;
+  $item->object_type = $map->salesforce_object_type;
+  $queue = salesforce_queue_load();
+  return $queue->deleteItem($item);
+}
+
+/**
+ * @} salesforce_mapping_alter_queue
+ */
+
+
+/**
+ * @name salesforce_mapping_alter_api Helper API the extension
+ * @{
+ */
 
 /**
  * Wrapper for _sfm_get_default_value() to compensate for delta differences.
@@ -277,3 +495,7 @@ function _sfm_salesforce_field_can_idlookup($field, $salesforce_object_type, $fo
     }
   }
 }
+
+/**
+ * @} salesforce_mapping_alter_api
+ */

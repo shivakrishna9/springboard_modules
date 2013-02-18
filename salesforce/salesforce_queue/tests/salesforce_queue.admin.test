@@ -87,7 +87,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     // Add more queues for tracked queue options to find and see if they show
     // up.
     variable_set('salesforce_queue_foo_lease_expire', 3600);
-    $bar_queue = SalesforceQueue::get('bar');
+    $bar_queue = salesforce_queue_load('bar');
     $this->createQueueItems($bar_queue);
     $this->drupalGet($this->path);
     $this->assertFieldById('edit-tracked-queues-foo', '', 'Foo queue showed up for tracked queues.');
@@ -134,7 +134,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     // Make the tracked queues and extra queues show up.
     variable_set('salesforce_queue_tracked_queues_show_config', TRUE);
     variable_set('salesforce_queue_foo_lease_expire', 3600);
-    $bar_queue = SalesforceQueue::get('bar');
+    $bar_queue = salesforce_queue_load('bar');
     $this->createQueueItems($bar_queue);
 
     // Set values.

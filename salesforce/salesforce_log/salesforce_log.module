@@ -57,21 +57,30 @@ function salesforce_log_permission() {
 }
 
 /*
- * Implements hook_salesforce_queue_preprocess_batch
+ * Implements hook_salesforce_queue_batch_alter
+ *
+ * Add our log related data to the batch object and items
+ *
+ * @param array $batch
+ *   Array of instructions that are used to formulate the API call to Salesforce
+ * @param SalesforceQueue $queue
+ *   SalesforceQueue object
+ * @param SalesforceQueueProcessor $processor
+ *   SalesforceQueueProcessor object
  */
-function salesforce_log_salesforce_queue_preprocess_batch($batch, $queue) {
+function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor) {
   $batch['start'] = time();
   $batch['module'] = $batch['items'][0]->module;
   $batch['delta'] = $batch['items'][0]->delta;
   drupal_write_record('salesforce_log_batch', $batch);
-  foreach ($batch['items'] as &$item) {
+  foreach ($batch['items'] as $item) {
     $item->bid = $batch['bid'];
     drupal_write_record('salesforce_log_item', $item);
   }
 }
 
 /**
- * Invokes hook_salesforce_sync_fail_item
+ * Implements hook_salesforce_sync_fail_item
  *
  * @param object $item
  *   Queue item
@@ -84,4 +93,37 @@ function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
   $item->status = 'failed';
   $item->message = $result->faultstring;
   drupal_write_record('salesforce_log_item', $item, array('lid'));
+}
+
+/**
+ * Implements hook_salesforce_sync_pass_item
+ *
+ * @param object $item
+ *   Queue item
+ * @param varchar $result
+ *   The Salesforce response after the call was made
+ */
+function salesforce_log_salesforce_sync_pass_item($item, $result) {
+  $item->status = 'synced';
+  $item->sfid = $result->id;
+  drupal_write_record('salesforce_log_item', $item, array('lid'));
+}
+
+/*
+ * Implements hook_salesforce_queue_postprocess_batch
+ */
+function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $queue) {
+  $batch['end'] = time();
+  $batch['successes'] = count(array_filter($batch['items'], '_salesforce_log_array_filter_batch_successes'));
+  $batch['failures'] = $batch['count'] - $batch['successes'];
+  drupal_write_record('salesforce_log_batch', $batch, array('bid'));
+}
+
+/*
+ * Array filter callback to find the count of successfully synced batch items
+ */
+function _salesforce_log_array_filter_batch_successes($item) {
+  if (!empty($item->sobject)) {
+    return TRUE;
+  }
 }

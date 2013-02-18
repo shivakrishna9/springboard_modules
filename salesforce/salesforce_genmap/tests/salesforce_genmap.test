@@ -28,6 +28,7 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
     $modules = array_merge($modules, array(
       'entity',
       'salesforce',
+      'salesforce_mapping',
       'salesforce_genmap',
     ));
     parent::setUp($modules);

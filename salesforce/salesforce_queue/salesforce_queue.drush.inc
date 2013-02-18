@@ -49,7 +49,7 @@ function drush_salesforce_queue_process($queue = 'salesforce_queue') {
   }
 
   $queue = salesforce_queue_load();
-  $processor = SalesforceQueueProcessor::get($queue);
+  $processor = salesforce_queue_load_processor($queue);
   $processor->process();
 
   drush_print(print_r($processor->getNewSfRecords(), TRUE));

@@ -7,9 +7,12 @@ files[] = includes/salesforce_sync.item.inc
 files[] = includes/salesforce_sync.sync.inc
 
 files[] = tests/salesforce_sync.admin.test
+files[] = tests/salesforce_sync.entities.test
+files[] = tests/salesforce_sync.salesforce_queue.test
 files[] = tests/salesforce_sync.sync.test
 files[] = tests/salesforce_sync.test
 
+dependencies[] = entity
 dependencies[] = salesforce
 dependencies[] = salesforce_soap
 

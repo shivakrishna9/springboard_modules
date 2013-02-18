@@ -12,11 +12,214 @@ function salesforce_log_views_default_views() {
   $views = array();
 
   $view = new view();
-  $view->name = 'batch';
+  $view->name = 'salesforce log_item';
+  $view->description = '';
+  $view->tag = 'salesforce log';
+  $view->base_table = 'salesforce_log_item';
+  $view->human_name = 'Salesforce batch items';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Item log';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'view salesforce batch logs';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['query']['options']['distinct'] = TRUE;
+  $handler->display->display_options['query']['options']['pure_distinct'] = TRUE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '50';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'lid' => 'lid',
+    'item_id' => 'item_id',
+    'bid' => 'bid',
+    'start' => 'start',
+    'status' => 'status',
+    'message' => 'message',
+  );
+  $handler->display->display_options['style_options']['default'] = 'bid';
+  $handler->display->display_options['style_options']['info'] = array(
+    'lid' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'item_id' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'bid' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'start' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'status' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'message' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['style_options']['sticky'] = TRUE;
+  /* Relationship: Salesforce logs: Batch */
+  $handler->display->display_options['relationships']['bid']['id'] = 'bid';
+  $handler->display->display_options['relationships']['bid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['relationships']['bid']['field'] = 'bid';
+  /* Relationship: Salesforce logs: Queue item */
+  $handler->display->display_options['relationships']['item_id']['id'] = 'item_id';
+  $handler->display->display_options['relationships']['item_id']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['relationships']['item_id']['field'] = 'item_id';
+  /* Field: Salesforce logs: Log Item ID */
+  $handler->display->display_options['fields']['lid']['id'] = 'lid';
+  $handler->display->display_options['fields']['lid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['lid']['field'] = 'lid';
+  $handler->display->display_options['fields']['lid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['lid']['separator'] = '';
+  /* Field: Salesforce logs: Item Queue ID */
+  $handler->display->display_options['fields']['item_id']['id'] = 'item_id';
+  $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['fields']['item_id']['label'] = 'Queue ID';
+  $handler->display->display_options['fields']['item_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['item_id']['separator'] = '';
+  /* Field: Salesforce logs: Item Batch ID */
+  $handler->display->display_options['fields']['bid']['id'] = 'bid';
+  $handler->display->display_options['fields']['bid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['bid']['field'] = 'bid';
+  $handler->display->display_options['fields']['bid']['label'] = 'Batch ID';
+  $handler->display->display_options['fields']['bid']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['bid']['separator'] = '';
+  /* Field: Salesforce logs: Start Timestamp */
+  $handler->display->display_options['fields']['start']['id'] = 'start';
+  $handler->display->display_options['fields']['start']['table'] = 'salesforce_log_batch';
+  $handler->display->display_options['fields']['start']['field'] = 'start';
+  $handler->display->display_options['fields']['start']['relationship'] = 'bid';
+  $handler->display->display_options['fields']['start']['label'] = 'Date';
+  $handler->display->display_options['fields']['start']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['start']['date_format'] = 'short';
+  /* Field: Salesforce logs: Status */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
+  /* Field: Salesforce logs: Message */
+  $handler->display->display_options['fields']['message']['id'] = 'message';
+  $handler->display->display_options['fields']['message']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['message']['field'] = 'message';
+  $handler->display->display_options['fields']['message']['element_label_colon'] = FALSE;
+  /* Field: Salesforce logs: Salesforce id */
+  $handler->display->display_options['fields']['sfid']['id'] = 'sfid';
+  $handler->display->display_options['fields']['sfid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['sfid']['field'] = 'sfid';
+  $handler->display->display_options['fields']['sfid']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Queue */
+  $handler->display->display_options['fields']['queue']['id'] = 'queue';
+  $handler->display->display_options['fields']['queue']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['queue']['field'] = 'queue';
+  $handler->display->display_options['fields']['queue']['relationship'] = 'item_id';
+  $handler->display->display_options['fields']['queue']['label'] = 'Current queue';
+  $handler->display->display_options['fields']['queue']['empty'] = 'Removed from queue';
+  $handler->display->display_options['fields']['queue']['empty_zero'] = TRUE;
+  /* Field: Salesforce queue: Retries */
+  $handler->display->display_options['fields']['retries']['id'] = 'retries';
+  $handler->display->display_options['fields']['retries']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['retries']['field'] = 'retries';
+  $handler->display->display_options['fields']['retries']['relationship'] = 'item_id';
+  $handler->display->display_options['fields']['retries']['label'] = 'Current retries';
+  $handler->display->display_options['fields']['retries']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['retries']['empty'] = 'N/A';
+  $handler->display->display_options['fields']['retries']['empty_zero'] = TRUE;
+  $handler->display->display_options['fields']['retries']['separator'] = '';
+  /* Sort criterion: Salesforce logs: Batch Item ID */
+  $handler->display->display_options['sorts']['bid']['id'] = 'bid';
+  $handler->display->display_options['sorts']['bid']['table'] = 'salesforce_log_batch';
+  $handler->display->display_options['sorts']['bid']['field'] = 'bid';
+  $handler->display->display_options['sorts']['bid']['relationship'] = 'bid';
+  $handler->display->display_options['sorts']['bid']['order'] = 'DESC';
+  /* Filter criterion: Salesforce logs: Item Batch ID */
+  $handler->display->display_options['filters']['bid']['id'] = 'bid';
+  $handler->display->display_options['filters']['bid']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['filters']['bid']['field'] = 'bid';
+  $handler->display->display_options['filters']['bid']['relationship'] = 'bid';
+  $handler->display->display_options['filters']['bid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['bid']['expose']['operator_id'] = 'bid_op';
+  $handler->display->display_options['filters']['bid']['expose']['label'] = 'Batch ID';
+  $handler->display->display_options['filters']['bid']['expose']['operator'] = 'bid_op';
+  $handler->display->display_options['filters']['bid']['expose']['identifier'] = 'bid';
+  $handler->display->display_options['filters']['bid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  $handler->display->display_options['filters']['bid']['group_info']['label'] = 'Batch ID';
+  $handler->display->display_options['filters']['bid']['group_info']['identifier'] = 'bid';
+  $handler->display->display_options['filters']['bid']['group_info']['remember'] = FALSE;
+  $handler->display->display_options['filters']['bid']['group_info']['group_items'] = array(
+    1 => array(),
+    2 => array(),
+    3 => array(),
+  );
+  /* Filter criterion: Salesforce logs: Item Queue ID */
+  $handler->display->display_options['filters']['item_id']['id'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['filters']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['item_id']['expose']['operator_id'] = 'item_id_op';
+  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Queue Item ID';
+  $handler->display->display_options['filters']['item_id']['expose']['operator'] = 'item_id_op';
+  $handler->display->display_options['filters']['item_id']['expose']['identifier'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
+  $handler->display->display_options['path'] = 'admin/reports/salesforce/item';
+  $handler->display->display_options['menu']['type'] = 'normal';
+  $handler->display->display_options['menu']['title'] = 'Item log';
+  $handler->display->display_options['menu']['description'] = 'Log of individual objects synced to Salesforce';
+  $handler->display->display_options['menu']['weight'] = '1';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $views['salesforce log_item'] = $view;
+
+  $view = new view();
+  $view->name = 'salesforce_log_batch';
   $view->description = '';
   $view->tag = 'salesforce log';
   $view->base_table = 'salesforce_log_batch';
-  $view->human_name = 'Batch';
+  $view->human_name = 'Salesforce batches';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -186,7 +389,7 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['sorts']['bid']['table'] = 'salesforce_log_batch';
   $handler->display->display_options['sorts']['bid']['field'] = 'bid';
   $handler->display->display_options['sorts']['bid']['order'] = 'DESC';
-  /* Filter criterion: Salesforce logs: Batch ID */
+  /* Filter criterion: Salesforce logs: Item Batch ID */
   $handler->display->display_options['filters']['bid']['id'] = 'bid';
   $handler->display->display_options['filters']['bid']['table'] = 'salesforce_log_item';
   $handler->display->display_options['filters']['bid']['field'] = 'bid';
@@ -289,21 +492,21 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $views['batch'] = $view;
+  $views['salesforce_log_batch'] = $view;
 
   $view = new view();
-  $view->name = 'batch_items';
+  $view->name = 'salesforce_queue';
   $view->description = '';
   $view->tag = 'salesforce log';
-  $view->base_table = 'salesforce_log_item';
-  $view->human_name = 'Batch items';
+  $view->base_table = 'salesforce_queue';
+  $view->human_name = 'Salesforce queue';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Item log';
+  $handler->display->display_options['title'] = 'Queue';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'view salesforce batch logs';
@@ -314,22 +517,18 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '50';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'lid' => 'lid',
     'item_id' => 'item_id',
-    'bid' => 'bid',
-    'start' => 'start',
-    'status' => 'status',
-    'message' => 'message',
+    'module' => 'module',
+    'drupal_id' => 'drupal_id',
+    'delta' => 'delta',
+    'object_type' => 'object_type',
+    'operation' => 'operation',
+    'queue' => 'queue',
+    'retries' => 'retries',
+    'created' => 'created',
   );
-  $handler->display->display_options['style_options']['default'] = 'bid';
+  $handler->display->display_options['style_options']['default'] = 'item_id';
   $handler->display->display_options['style_options']['info'] = array(
-    'lid' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'desc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
     'item_id' => array(
       'sortable' => 1,
       'default_sort_order' => 'desc',
@@ -337,116 +536,219 @@ function salesforce_log_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'bid' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'desc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'start' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'desc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'status' => array(
+    'module' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
-    'message' => array(
-      'sortable' => 0,
+    'drupal_id' => array(
+      'sortable' => 1,
       'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'delta' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'object_type' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'operation' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'queue' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'retries' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
   );
   $handler->display->display_options['style_options']['sticky'] = TRUE;
-  /* Relationship: Salesforce logs: Batch */
-  $handler->display->display_options['relationships']['bid']['id'] = 'bid';
-  $handler->display->display_options['relationships']['bid']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['relationships']['bid']['field'] = 'bid';
-  $handler->display->display_options['relationships']['bid']['required'] = TRUE;
-  /* Field: Salesforce logs: Log Item ID */
-  $handler->display->display_options['fields']['lid']['id'] = 'lid';
-  $handler->display->display_options['fields']['lid']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['lid']['field'] = 'lid';
-  $handler->display->display_options['fields']['lid']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['lid']['separator'] = '';
-  /* Field: Salesforce logs: Queue Item ID */
+  /* Field: Salesforce queue: Queue ID */
   $handler->display->display_options['fields']['item_id']['id'] = 'item_id';
-  $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_log_item';
+  $handler->display->display_options['fields']['item_id']['table'] = 'salesforce_queue';
   $handler->display->display_options['fields']['item_id']['field'] = 'item_id';
-  $handler->display->display_options['fields']['item_id']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['item_id']['separator'] = '';
-  /* Field: Salesforce logs: Batch ID */
-  $handler->display->display_options['fields']['bid']['id'] = 'bid';
-  $handler->display->display_options['fields']['bid']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['bid']['field'] = 'bid';
-  $handler->display->display_options['fields']['bid']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['bid']['separator'] = '';
-  /* Field: Salesforce logs: Start Timestamp */
-  $handler->display->display_options['fields']['start']['id'] = 'start';
-  $handler->display->display_options['fields']['start']['table'] = 'salesforce_log_batch';
-  $handler->display->display_options['fields']['start']['field'] = 'start';
-  $handler->display->display_options['fields']['start']['relationship'] = 'bid';
-  $handler->display->display_options['fields']['start']['label'] = 'Date';
-  $handler->display->display_options['fields']['start']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['start']['date_format'] = 'short';
-  /* Field: Salesforce logs: Status */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
-  /* Field: Salesforce logs: Message */
-  $handler->display->display_options['fields']['message']['id'] = 'message';
-  $handler->display->display_options['fields']['message']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['fields']['message']['field'] = 'message';
-  $handler->display->display_options['fields']['message']['element_label_colon'] = FALSE;
-  /* Sort criterion: Salesforce logs: Batch Item ID */
-  $handler->display->display_options['sorts']['bid']['id'] = 'bid';
-  $handler->display->display_options['sorts']['bid']['table'] = 'salesforce_log_batch';
-  $handler->display->display_options['sorts']['bid']['field'] = 'bid';
-  $handler->display->display_options['sorts']['bid']['relationship'] = 'bid';
-  $handler->display->display_options['sorts']['bid']['order'] = 'DESC';
-  /* Filter criterion: Salesforce logs: Batch ID */
-  $handler->display->display_options['filters']['bid']['id'] = 'bid';
-  $handler->display->display_options['filters']['bid']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['filters']['bid']['field'] = 'bid';
-  $handler->display->display_options['filters']['bid']['relationship'] = 'bid';
-  $handler->display->display_options['filters']['bid']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['bid']['expose']['operator_id'] = 'bid_op';
-  $handler->display->display_options['filters']['bid']['expose']['label'] = 'Batch ID';
-  $handler->display->display_options['filters']['bid']['expose']['operator'] = 'bid_op';
-  $handler->display->display_options['filters']['bid']['expose']['identifier'] = 'bid';
-  $handler->display->display_options['filters']['bid']['expose']['remember_roles'] = array(
+  /* Field: Salesforce queue: Module */
+  $handler->display->display_options['fields']['module']['id'] = 'module';
+  $handler->display->display_options['fields']['module']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['module']['field'] = 'module';
+  $handler->display->display_options['fields']['module']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Drupal ID */
+  $handler->display->display_options['fields']['drupal_id']['id'] = 'drupal_id';
+  $handler->display->display_options['fields']['drupal_id']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['drupal_id']['field'] = 'drupal_id';
+  $handler->display->display_options['fields']['drupal_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['drupal_id']['separator'] = '';
+  /* Field: Salesforce queue: Delta */
+  $handler->display->display_options['fields']['delta']['id'] = 'delta';
+  $handler->display->display_options['fields']['delta']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['delta']['field'] = 'delta';
+  $handler->display->display_options['fields']['delta']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Object type */
+  $handler->display->display_options['fields']['object_type']['id'] = 'object_type';
+  $handler->display->display_options['fields']['object_type']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['object_type']['field'] = 'object_type';
+  $handler->display->display_options['fields']['object_type']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Operation */
+  $handler->display->display_options['fields']['operation']['id'] = 'operation';
+  $handler->display->display_options['fields']['operation']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['operation']['field'] = 'operation';
+  $handler->display->display_options['fields']['operation']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Queue */
+  $handler->display->display_options['fields']['queue']['id'] = 'queue';
+  $handler->display->display_options['fields']['queue']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['queue']['field'] = 'queue';
+  $handler->display->display_options['fields']['queue']['element_label_colon'] = FALSE;
+  /* Field: Salesforce queue: Retries */
+  $handler->display->display_options['fields']['retries']['id'] = 'retries';
+  $handler->display->display_options['fields']['retries']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['retries']['field'] = 'retries';
+  $handler->display->display_options['fields']['retries']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['retries']['separator'] = '';
+  /* Field: Salesforce queue: Created Timestamp */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'salesforce_queue';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Created';
+  $handler->display->display_options['fields']['created']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['created']['date_format'] = 'short';
+  /* Sort criterion: Salesforce queue: Queue ID */
+  $handler->display->display_options['sorts']['item_id']['id'] = 'item_id';
+  $handler->display->display_options['sorts']['item_id']['table'] = 'salesforce_queue';
+  $handler->display->display_options['sorts']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['sorts']['item_id']['order'] = 'DESC';
+  /* Filter criterion: Salesforce queue: Queue ID */
+  $handler->display->display_options['filters']['item_id']['id'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['item_id']['field'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['group'] = 1;
+  $handler->display->display_options['filters']['item_id']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['item_id']['expose']['operator_id'] = 'item_id_op';
+  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Queue ID';
+  $handler->display->display_options['filters']['item_id']['expose']['operator'] = 'item_id_op';
+  $handler->display->display_options['filters']['item_id']['expose']['identifier'] = 'item_id';
+  $handler->display->display_options['filters']['item_id']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
   );
-  $handler->display->display_options['filters']['bid']['group_info']['label'] = 'Batch ID';
-  $handler->display->display_options['filters']['bid']['group_info']['identifier'] = 'bid';
-  $handler->display->display_options['filters']['bid']['group_info']['remember'] = FALSE;
-  $handler->display->display_options['filters']['bid']['group_info']['group_items'] = array(
-    1 => array(),
-    2 => array(),
-    3 => array(),
+  /* Filter criterion: Salesforce queue: Module */
+  $handler->display->display_options['filters']['module']['id'] = 'module';
+  $handler->display->display_options['filters']['module']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['module']['field'] = 'module';
+  $handler->display->display_options['filters']['module']['group'] = 1;
+  $handler->display->display_options['filters']['module']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['module']['expose']['operator_id'] = 'module_op';
+  $handler->display->display_options['filters']['module']['expose']['label'] = 'Module';
+  $handler->display->display_options['filters']['module']['expose']['operator'] = 'module_op';
+  $handler->display->display_options['filters']['module']['expose']['identifier'] = 'module';
+  $handler->display->display_options['filters']['module']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
   );
-  /* Filter criterion: Salesforce logs: Queue Item ID */
-  $handler->display->display_options['filters']['item_id']['id'] = 'item_id';
-  $handler->display->display_options['filters']['item_id']['table'] = 'salesforce_log_item';
-  $handler->display->display_options['filters']['item_id']['field'] = 'item_id';
-  $handler->display->display_options['filters']['item_id']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['item_id']['expose']['operator_id'] = 'item_id_op';
-  $handler->display->display_options['filters']['item_id']['expose']['label'] = 'Queue Item ID';
-  $handler->display->display_options['filters']['item_id']['expose']['operator'] = 'item_id_op';
-  $handler->display->display_options['filters']['item_id']['expose']['identifier'] = 'item_id';
-  $handler->display->display_options['filters']['item_id']['expose']['remember_roles'] = array(
+  /* Filter criterion: Salesforce queue: Drupal ID */
+  $handler->display->display_options['filters']['drupal_id']['id'] = 'drupal_id';
+  $handler->display->display_options['filters']['drupal_id']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['drupal_id']['field'] = 'drupal_id';
+  $handler->display->display_options['filters']['drupal_id']['group'] = 1;
+  $handler->display->display_options['filters']['drupal_id']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['drupal_id']['expose']['operator_id'] = 'drupal_id_op';
+  $handler->display->display_options['filters']['drupal_id']['expose']['label'] = 'Drupal ID';
+  $handler->display->display_options['filters']['drupal_id']['expose']['operator'] = 'drupal_id_op';
+  $handler->display->display_options['filters']['drupal_id']['expose']['identifier'] = 'drupal_id';
+  $handler->display->display_options['filters']['drupal_id']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Salesforce queue: Object type */
+  $handler->display->display_options['filters']['object_type_1']['id'] = 'object_type_1';
+  $handler->display->display_options['filters']['object_type_1']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['object_type_1']['field'] = 'object_type';
+  $handler->display->display_options['filters']['object_type_1']['group'] = 1;
+  $handler->display->display_options['filters']['object_type_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['object_type_1']['expose']['operator_id'] = 'object_type_1_op';
+  $handler->display->display_options['filters']['object_type_1']['expose']['label'] = 'Object type';
+  $handler->display->display_options['filters']['object_type_1']['expose']['operator'] = 'object_type_1_op';
+  $handler->display->display_options['filters']['object_type_1']['expose']['identifier'] = 'object_type_1';
+  $handler->display->display_options['filters']['object_type_1']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Salesforce queue: Operation */
+  $handler->display->display_options['filters']['operation']['id'] = 'operation';
+  $handler->display->display_options['filters']['operation']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['operation']['field'] = 'operation';
+  $handler->display->display_options['filters']['operation']['group'] = 1;
+  $handler->display->display_options['filters']['operation']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['operation']['expose']['operator_id'] = 'operation_op';
+  $handler->display->display_options['filters']['operation']['expose']['label'] = 'Operation';
+  $handler->display->display_options['filters']['operation']['expose']['operator'] = 'operation_op';
+  $handler->display->display_options['filters']['operation']['expose']['identifier'] = 'operation';
+  $handler->display->display_options['filters']['operation']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Salesforce queue: Queue */
+  $handler->display->display_options['filters']['queue']['id'] = 'queue';
+  $handler->display->display_options['filters']['queue']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['queue']['field'] = 'queue';
+  $handler->display->display_options['filters']['queue']['group'] = 1;
+  $handler->display->display_options['filters']['queue']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['queue']['expose']['operator_id'] = 'queue_op';
+  $handler->display->display_options['filters']['queue']['expose']['label'] = 'Queue';
+  $handler->display->display_options['filters']['queue']['expose']['operator'] = 'queue_op';
+  $handler->display->display_options['filters']['queue']['expose']['identifier'] = 'queue';
+  $handler->display->display_options['filters']['queue']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+  );
+  /* Filter criterion: Salesforce queue: Created Timestamp */
+  $handler->display->display_options['filters']['created']['id'] = 'created';
+  $handler->display->display_options['filters']['created']['table'] = 'salesforce_queue';
+  $handler->display->display_options['filters']['created']['field'] = 'created';
+  $handler->display->display_options['filters']['created']['operator'] = 'between';
+  $handler->display->display_options['filters']['created']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['created']['expose']['operator_id'] = 'created_op';
+  $handler->display->display_options['filters']['created']['expose']['label'] = 'Created';
+  $handler->display->display_options['filters']['created']['expose']['description'] = 'A date in any machine readable format. CCYY-MM-DD HH:MM:SS is preferred.';
+  $handler->display->display_options['filters']['created']['expose']['operator'] = 'created_op';
+  $handler->display->display_options['filters']['created']['expose']['identifier'] = 'created';
+  $handler->display->display_options['filters']['created']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
@@ -455,14 +757,14 @@ function salesforce_log_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
-  $handler->display->display_options['path'] = 'admin/reports/salesforce/item';
+  $handler->display->display_options['path'] = 'admin/reports/salesforce/queue';
   $handler->display->display_options['menu']['type'] = 'normal';
-  $handler->display->display_options['menu']['title'] = 'Item log';
-  $handler->display->display_options['menu']['description'] = 'Log of individual objects synced to Salesforce';
-  $handler->display->display_options['menu']['weight'] = '1';
+  $handler->display->display_options['menu']['title'] = 'Queue';
+  $handler->display->display_options['menu']['description'] = 'The active Salesforce queue';
+  $handler->display->display_options['menu']['weight'] = '2';
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
-  $views['batch_items'] = $view;
+  $views['salesforce_queue'] = $view;
 
   return $views;
 }
