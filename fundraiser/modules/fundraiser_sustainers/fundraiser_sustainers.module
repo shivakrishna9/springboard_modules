@@ -1060,10 +1060,10 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
         $donation->submission_data = $master_donation->submission_data;
       }
       $donation->sid = $master_donation->sid;
+      $donation->master_did = $master_donation->did;
     }
-    $donation->master_did = $master_donation->did;
     if (empty($donation->close_date)) {
-      $donation->close_date = date('Y-m-d', $donation->next_charge);
+      $donation->close_date = date('Y-m-d', $donation->recurring->next_charge);
     }
     $donation->donation['recurs_monthly'] = TRUE;
   }
