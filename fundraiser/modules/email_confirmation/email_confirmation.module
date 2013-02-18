@@ -686,8 +686,8 @@ function email_confirmation_token_values($type, $object = NULL) {
     // added to the submission record in the event of an anonymous submission.
     // Also, the node object is passed instead of a donation object since no donation
     // has taken place.
-    if (isset($object->webform_user_uid)) {
-      $uid = $object->webform_user_uid;
+    if (isset($object->email_confirmation_uid)) {
+      $uid = $object->email_confirmation_uid;
     }
     else {
       $uid = $object->uid;
@@ -1026,7 +1026,7 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $account = user_load(array('mail' => $user_email));
     if ($account->uid) {
       // stuff an extra value to pass into token_replace.
-      $node->webform_user_uid = $account->uid;
+      $node->email_confirmation_uid = $account->uid;
     }
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
     $template_html = check_markup($result->body, $result->format, FALSE);
