@@ -685,8 +685,9 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
 function _fundraiser_form_payment_method_validate($form, &$form_state) {
   $values = $form_state['values']['gateways'];
   $default_method = isset($values['_default']) ? $values['_default'] : '';
-  unset($form_state['values']['gateways']['_default']);
   $enabled_methods = array_filter($values, '_fundraiser_payment_method_array_filter_enabled');
+  unset($form_state['values']['gateways']['_default']);
+  unset($enabled_methods['_default']);
   // Check that there is at least one method enabled
   if (empty($enabled_methods)) {
     form_set_error('payment_methods', t('At least one payment method must be enabled.'));
