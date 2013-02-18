@@ -726,10 +726,13 @@ function email_confirmation_token_values($type, $object = NULL) {
  */
 function _email_confirmation_one_time_login($uid) {
   if (is_numeric($uid) && $uid > 1) {
+
     $account = user_load(array('uid' => $uid));
     // nonsensical to provide a login url for anon.
     if ($account->uid) {
-      return l(t('Log in to manage your account settings.'), user_pass_reset_url($account));
+     $link =  l(t('Log in to manage your account settings.'), user_pass_reset_url($account));
+
+     return $link;
     }
   }
   // if we don't have a valid uid strip the one-time-login token with bare output.
@@ -1034,12 +1037,12 @@ function email_confirmation_webform_user_webform_submit($account, $node, $form_s
     $account = user_load(array('mail' => $user_email));
     // if account is empty and this is a webform_user node, go ahead and save the user
     // so we have a uid to work with.
-    if (empty($account->uid) || $account->uid == 0) {
+    if (empty($account->uid) || $account->uid == 0 && $user_email) {
       if ($node->is_webform_user) {
         $user_fields = array(
-          'name' => $fields['mail'],
-          'mail' => $fields['mail'],
-          'init' => $fields['mail'],
+          'name' => $user_email,
+          'mail' => $user_email,
+          'init' => $user_email,
           'pass' => user_password(8),
           'status' => 1,
         );
