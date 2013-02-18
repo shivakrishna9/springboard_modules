@@ -914,6 +914,19 @@ function fundraiser_ubercart_fundraiser_get_credit_encryption_path() {
 }
 
 /**
+ * Implements hook_salesforce_donation_statuses().
+ */
+function fundraiser_ubercart_salesforce_donation_statuses() {
+  // Get a list of available statuses, and return that list to salesforce donation.
+  $available_statuses = array();
+  $order_statuses = uc_order_state_list();
+  foreach ($order_statuses as $name => $order_status) {
+    $available_statuses[$name] => $order_status['title'] . ' (' . t('Ubercart') . ')';
+  }
+  return $available_statuses;
+}
+
+/**
  * Helper function, given a card number return likely type.
  */
 function _fundraiser_ubercart_get_cc_type($cardnumber) {
