@@ -476,7 +476,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
     if ($donation->status_charged) {
       $donation->close_date = date('Y-m-d', $donation->last_changed);
-      $donation->transaction_date = date('Y-m-d', $donation->modified);
+      $donation->transaction_date = date('Y-m-d', $donation->last_changed);
     }
   }
   // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
