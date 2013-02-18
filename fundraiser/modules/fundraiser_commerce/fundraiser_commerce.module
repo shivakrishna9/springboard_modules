@@ -317,18 +317,18 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
     module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card'); // Include the file with the validation info.
     $number = $value['credit']['card_number'];
     $valid = commerce_payment_validate_credit_card_number($number);
-    if (!$valid || !ctype_digit($number) || drupal_strlen($number) < 10) {
+    if ($valid !== TRUE || !ctype_digit($number) || drupal_strlen($number) < 10) {
       return t('You have entered an invalid credit card number.');
     }
     $cvv = $value['credit']['card_cvv'];
     $valid = commerce_payment_validate_credit_card_security_code($number, $cvv);
-    if (!$valid && !empty($cvv)) {
+    if ($valid !== TRUE && !empty($cvv)) {
       return t('You have entered an invalid CVV number.');
     }
     $cc_expiration_month = $value['credit']['card_expiration_month'];
     $cc_expiration_year = $value['credit']['card_expiration_year'];
     $valid = commerce_payment_validate_credit_card_exp_date($cc_expiration_month, $cc_expiration_year);
-    if (!$valid && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
+    if ($valid !== TRUE && !empty($cc_expiration_month) && !empty($cc_expiration_year)) {
       return t('The credit card you entered has expired.');
     }
   }
