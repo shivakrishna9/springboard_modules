@@ -671,6 +671,7 @@ function email_confirmation_token_list($type = 'all') {
     $tokens['order']['confirmation-message-text'] = t('The text version of the donation confirmation message.');
     $tokens['order']['confirmation-message-html'] = t('The HTML version of the donation confirmation message.');
     $tokens['order']['order-node-title'] = t('Title property of the parent webform node.');
+    $tokens['order']['one-time-login'] = t('One-time login link.');
   }
   return $tokens;
 }
@@ -681,7 +682,6 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
-
     // $object contains UC order values on donation forms and the node object on webforms.
     $nid = $object->products[0]->nid ? $object->products[0]->nid : $object->nid;
     $node = node_load($nid);
@@ -700,8 +700,22 @@ function email_confirmation_token_values($type, $object = NULL) {
       $values['confirmation-message-html'] = $data->html_message;
     }
     $values['order-node-title'] = check_plain($node->title);
+    $values['one-time-login'] = _email_confirmation_one_time_login($object);
     return $values;
   }
+}
+
+/**
+ * Generate a one-time login link based on the UID associated with the webform submission.
+ */
+function _email_confirmation_one_time_login($object) {
+
+  $account = user_load(array('uid' => $object->uid));
+  // nonsensical to provide a login url for anon.
+  if ($account->uid) {
+    return user_pass_reset_url($account);
+  }
+  return '';
 }
 
 /**
