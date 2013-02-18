@@ -515,7 +515,8 @@ function _email_confirmation_template_ahah() {
 /**
  * Implements hook_fundraiser_order_success().
  */
-function email_confirmation_fundraiser_order_success($order) {
+function email_confirmation_fundraiser_order_success_complete($order) {
+
   // Check if this is an offlien order. If so, short circuit sending an email.
   $webform = db_fetch_object(db_query("SELECT * FROM {fundraiser_webform_order} WHERE order_id = %d", $order->order_id));
   if ($webform->offline == TRUE) {
@@ -542,6 +543,7 @@ function email_confirmation_fundraiser_order_success($order) {
         'WHERE order_id = %d',
         $order->order_id));
       $submission = webform_get_submission($node->nid, $sid);
+
       $result = db_fetch_object(db_query(
         'SELECT body, format FROM {node_revisions} nr ' .
         'INNER JOIN {node} n ' .
@@ -564,13 +566,10 @@ function email_confirmation_fundraiser_order_success($order) {
       // Perform token replacements for "order" tokens and "all" tokens.
       // token replacement on the template, adds html_message to the message body via token replacement.
       $message['html_body'] = token_replace($template_html, 'order', $order);
-
       // 2nd pass performs order token replacement on combined template + message
       $message['html_body'] = token_replace($message['html_body'], 'order', $order);
-
       // 3rd pass replaces generic "all" tokens
       $message['html_body'] = token_replace($message['html_body']);
-
       // final pass attempts to replace webform token values
       $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, FALSE);
 
@@ -682,6 +681,18 @@ function email_confirmation_token_list($type = 'all') {
 function email_confirmation_token_values($type, $object = NULL) {
   // Limit the replacement to hook invocations that pass a viable order object.
   if ($type == 'order' || $type == 'all') {
+    // This should only be set in the context of a webform user webform submission.
+    // During webform user submission, at this point in execution the UID has not yet been
+    // added to the submission record in the event of an anonymous submission.
+    // Also, the node object is passed instead of a donation object since no donation
+    // has taken place.
+    if (isset($object->webform_user_uid)) {
+      $uid = $object->webform_user_uid;
+    }
+    else {
+      $uid = $object->uid;
+    }
+
     // $object contains UC order values on donation forms and the node object on webforms.
     $nid = $object->products[0]->nid ? $object->products[0]->nid : $object->nid;
     $node = node_load($nid);
@@ -700,7 +711,7 @@ function email_confirmation_token_values($type, $object = NULL) {
       $values['confirmation-message-html'] = $data->html_message;
     }
     $values['order-node-title'] = check_plain($node->title);
-    $values['one-time-login'] = _email_confirmation_one_time_login($object);
+    $values['one-time-login'] = _email_confirmation_one_time_login($uid);
     return $values;
   }
 }
@@ -708,9 +719,9 @@ function email_confirmation_token_values($type, $object = NULL) {
 /**
  * Generate a one-time login link based on the UID associated with the webform submission.
  */
-function _email_confirmation_one_time_login($object) {
+function _email_confirmation_one_time_login($uid) {
 
-  $account = user_load(array('uid' => $object->uid));
+  $account = user_load(array('uid' => $uid));
   // nonsensical to provide a login url for anon.
   if ($account->uid) {
     return l(t('Log in to manage your account settings.'), user_pass_reset_url($account));
@@ -1012,7 +1023,11 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     }
 
     $user_email = $form_state['values']['submitted'][$mail_cid];
-
+    $account = user_load(array('mail' => $user_email));
+    if ($account->uid) {
+      // stuff an extra value to pass into token_replace.
+      $node->webform_user_uid = $account->uid;
+    }
     $result = db_fetch_object(db_query('SELECT body, format FROM {node_revisions} nr INNER JOIN {node} n WHERE n.vid = nr.vid AND nr.nid = %d', $settings->tid));
     $template_html = check_markup($result->body, $result->format, FALSE);
 

@@ -1942,7 +1942,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
 
   // complete the sale
   uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
-
+ 
   // enter the payment
   uc_payment_enter($order_id, 'fundraiser', $order->order_total, 0, NULL, t('Payment processed by the fundraiser module.'));
 
@@ -1983,6 +1983,7 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
   if ($display_message) {
     drupal_set_message($message);
   }
+  module_invoke_all('fundraiser_order_success_complete', $order);
 }
 
 /**
