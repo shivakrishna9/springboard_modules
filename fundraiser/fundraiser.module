@@ -354,7 +354,8 @@ function fundraiser_node_presave($node) {
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
-    $node->minimum_donation_amount = $node->amount_wrapper['minimum_donation_amount'];
+    $node->minimum_donation_amount = is_numeric($node->amount_wrapper['minimum_donation_amount']) ?
+      $node->amount_wrapper['minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
     unset($node->amount_wrapper);
   }
 }
@@ -653,7 +654,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
-    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00, 2)),
+    '#default_value' => isset($node->minimum_donation_amount) ?
+      number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
 
   // TODO this should probably go on a different table, not here.
@@ -989,7 +991,8 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
   }
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
-  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
+  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ?
+    $fundraiser->minimum_donation_amount :  variable_get('fundraiser_default_minimum', 10.00);
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
   if ($value < $minimum_donation_amount) {
     return t('Your donation amount must be greater than or equal to @min_amount.',
