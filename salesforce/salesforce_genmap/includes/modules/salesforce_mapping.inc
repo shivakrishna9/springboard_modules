@@ -28,12 +28,10 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
         'key' => t('Dedupe'),
 
         // Add columns for field-by-field sync rules.
-        'sf_drupal' => t('Overwrite rule when importing into Drupal'),
         'drupal_sf' => t('Overwrite rule when exporting to Salesforce'),
+        'sf_drupal' => t('Overwrite rule when importing into Drupal'),
 
-        // Column 'direction' is hidden to enforce the value 'sync'.
-        'direction' => '',
-
+        // Column 'direction' removed.
         // Column 'delete_field_maping' removed.
       ),
       '#attributes' => array(
@@ -125,7 +123,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       }
 
       // Add field-by-field sync rule columns.
-      $row['sf_drupal'] = $row['drupal_sf'] = array(
+      $row['drupal_sf'] = $row['sf_drupal'] = array(
         '#type' => 'radios',
         '#options' => array(
           SALESFORCE_SYNC_RULE_NEVER => t('Never'),
@@ -144,7 +142,7 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       // Hide direction column.
       $row['direction'] = array(
         '#type' => 'hidden',
-        '#value' => 'sync',
+        '#value' => 'drupal_sf',
       );
     }
 
@@ -194,22 +192,63 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
     unset($form['salesforce_field_mappings_wrapper']['salesforce_add_field']);
   }
 
+  // The need to manipulate the form causes a need to manipulate the storage
+  // of data. Appending a "prevalidate" callback to shift around all of the data
+  // so the original validation callback will function properly.
+  array_unshift($form['#validate'], 'salesforce_mapping_form_prevalidate');
+
+  // Same as with the need for a "prevalidate" callback, calling another submit
+  // callback to add back in the additional data we need that the original
+  // submit callback is filtering out.
   $form['#submit'][] = 'salesforce_mapping_form_alter_submit';
+}
+
+/**
+ * Prevalidation callback for the altered mapping form.
+ */
+function salesforce_mapping_form_prevalidate($form, &$form_state) {
+  $field_maps = &$form_state['values']['salesforce_field_mappings'];
+  if (!is_array($field_maps)) {
+    return;
+  }
+  $key = _sfm_alter_get_default_value('key', $form_state);
+  foreach ($field_maps as $delta => $field_map) {
+    // Two rows need to be created for every one row submitted.  The one that is
+    // shown to the user is the "Drupal to Salesforce" configuration, and the
+    // "ghost" configuration we're simultating here is the "Salesforce to
+    // Drupal" configuration.
+    if (is_string($delta)) {
+      // If the direction is set to never sync, do not set the row so it doesn't
+      // go through and subsequently fail validation.
+      if ($field_map['drupal_sf'] != SALESFORCE_SYNC_RULE_NEVER) {
+        $field_map['key'] = ($key == $field_map['drupal_field']['fieldmap_value']);
+        $field_map['direction'] = 'drupal_sf';
+        $field_maps[] = $field_map;
+      }
+      if ($field_map['sf_drupal'] != SALESFORCE_SYNC_RULE_NEVER) {
+        $field_map['key'] = $field_map['drupal_sf'] == SALESFORCE_SYNC_RULE_NEVER ? ($key == $field_map['drupal_field']['fieldmap_value']) : FALSE;
+        $field_map['direction'] = 'sf_drupal';
+        $field_maps[] = $field_map;
+      }
+      unset($field_maps[$delta]);
+    }
+  }
 }
 
 /**
  * Submit callback to handle extra data from the altered mapping form.
  */
 function salesforce_mapping_form_alter_submit($form, &$form_state) {
-  // The original callback, salesforce_mapping_form_submit(), has already saved
-  // the entity, so we'll reload it and save it again adding in our new values.
+  // The original callback, salesforce_mapping_form_submit(), saved the entity
+  // and removed our additional data in the process so we'll have to reload it
+  // and save it again adding in our new values.
   $machine_name = _sfm_alter_get_default_value('name', $form_state);
   $mapping = salesforce_mapping_load($machine_name);
   $key = _sfm_alter_get_default_value('key', $form_state);
   foreach ($mapping->field_mappings as $delta => $field_map) {
     $mapping->field_mappings[$delta]['key'] = ($key == $field_map['drupal_field']['fieldmap_value']);
-    $mapping->field_mappings[$delta]['sf_drupal'] = _sfm_alter_get_default_value('sf_drupal', $form_state, $field_map['drupal_field']['fieldmap_value']);
     $mapping->field_mappings[$delta]['drupal_sf'] = _sfm_alter_get_default_value('drupal_sf', $form_state, $field_map['drupal_field']['fieldmap_value']);
+    $mapping->field_mappings[$delta]['sf_drupal'] = _sfm_alter_get_default_value('sf_drupal', $form_state, $field_map['drupal_field']['fieldmap_value']);
   }
   $mapping->save();
 

@@ -62,20 +62,25 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
         'salesforce_object_type' => 'Contact',
         'key' => 'mail',
         'mapping' => array(
+          'uid' => array(
+            'salesforce_field' => 'Drupal_User_ID__c',
+            'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'sf_drupal' => SALESFORCE_SYNC_RULE_NEVER,
+          ),
           'name' => array(
             'salesforce_field' => 'Name',
-            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
             'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
           'mail' => array(
             'salesforce_field' => 'Email',
-            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
             'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
           'created' => array(
             'salesforce_field' => 'CreatedDate',
-            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
             'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
+            'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
         ),
         'sync_triggers' => array(

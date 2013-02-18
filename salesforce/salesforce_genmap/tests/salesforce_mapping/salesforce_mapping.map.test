@@ -106,7 +106,7 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertRaw('<input type="hidden" name="salesforce_field_mappings[uid][key]" value="">', 'Dedupe radio for UID is hidden.');
     $this->assertFieldByName('salesforce_field_mappings[uid][sf_drupal]', '', 'Import to Drupal for UID options have appeared.');
     $this->assertFieldByName('salesforce_field_mappings[uid][drupal_sf]', '', 'Export to Salesforce for UID options have appeared.');
-    $this->assertFieldById('edit-key-none', '', 'No dedupe option has appeared.');
+    $this->assertFieldById('edit-key-none', '', 'A dedupe "none" option has appeared.');
 
     // Unselect the Salesforce object type.
     $edit['salesforce_object_type'] = '';
@@ -227,52 +227,116 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->createSalesforceMapping('foo', 'foobar');
 
     // Verify salesforce_mapping_property_validation().
+    // Using Drupal fields that are not set during createSalesforceMapping() or
+    // else the field's id will have '--2' appended to the end when ajax
+    // replaces the field's row and mess up finding the field by id.
     $property_tests = array(
-      'sync' => array(
+      // Direction: Drupal to Salesforce.
+      'drupal_sf' => array(
+        // Salesforce datatype: Datetime.
         'datetime' => array(
           'sf_value' => 'CreatedDate',
           'drupal_value' => array(
-            'integer' => 'uid',
-            'text' => 'name',
-            'uri' => 'url',
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: Email.
         'email' => array(
           'sf_value' => 'Email',
           'drupal_value' => array(
-            'date' => 'created',
-            'integer' => 'uid',
-            'uri' => 'url',
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: Id.
         'id' => array(
           'sf_value' => 'Id',
           'drupal_value' => array(
-            'date' => 'created',
-            'text' => 'name',
-            'uri' => 'url',
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: String.
         'string' => array(
           'sf_value' => 'LastName',
           'drupal_value' => array(
-            'date' => 'created',
-            'integer' => 'uid',
-            'uri' => 'url',
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', TRUE),
+          ),
+        ),
+      ),
+      // Direction: Salesforce to Drupal.
+      'sf_drupal' => array(
+        // Salesforce datatype: Datetime.
+        'datetime' => array(
+          'sf_value' => 'CreatedDate',
+          'drupal_value' => array(
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: Email.
+        'email' => array(
+          'sf_value' => 'Email',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: Id.
+        'id' => array(
+          'sf_value' => 'Id',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: String.
+        'string' => array(
+          'sf_value' => 'LastName',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
           ),
         ),
       ),
     );
-    $this->drupalGet($this->manageMapPrefix . 'foobar');
     foreach ($property_tests as $direction => $sf_field_types) {
       foreach ($sf_field_types as $sf_field_type => $data) {
         $sf_field = $data['sf_value'];
-        foreach ($data['drupal_value'] as $drupal_field_type => $drupal_field) {
+        foreach ($data['drupal_value'] as $drupal_field_type => $drupal) {
+          $drupal_field = $drupal[0];
+          $compatible = $drupal[1];
           $sf_field_name = 'salesforce_field_mappings[' . $drupal_field . '][salesforce_field]';
+          $this->drupalGet($this->manageMapPrefix . 'foobar');
           $edit = array($sf_field_name => $sf_field);
           $this->drupalPostAjax(NULL, $edit, $sf_field_name);
+          $edit['salesforce_field_mappings[' . $drupal_field . '][' . $direction . ']'] = SALESFORCE_SYNC_RULE_ALWAYS;
           $this->drupalPost(NULL, $edit, 'Save mapping');
-          $this->assertText('and cannot be mapped in the ' . $direction . ' direction', 'Validation failed when direction is "' . $direction . '", salesforce field type is "' . $sf_field_type . '" and drupal field type is "' . $drupal_field_type . '".');
+          $assert_message = 'direction is "' . $direction . '", salesforce field type is "' . $sf_field_type . '" and drupal field type is "' . $drupal_field_type . '".';
+          if ($compatible) {
+            $this->assertText('Salesforce field mapping saved.', 'Validation succeeded as expected when ' . $assert_message);
+          }
+          else {
+            $this->assertText('and cannot be mapped in the ' . $direction . ' direction', 'Validation failed as expected when ' . $assert_message);
+          }
         }
       }
     }
