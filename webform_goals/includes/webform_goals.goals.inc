@@ -136,7 +136,6 @@ function webform_goals_webform_goals_save_goal($settings, $form_state) {
  * Implements hook_webform_goals_track_metric().
  */
 function webform_goals_webform_goals_track_metric($goal, $params = array()) {
-
   if ($goal['metric'] === 'submission_count') {
     if ($goal['context'] == 'single') {
       $data['count'] = _webform_goals_count_submissions($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
@@ -144,6 +143,7 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
     }
     // TODO: add case for global with provided nid.
     else {
+      // TODO: calculate submissions across group.
       $data['count'] = 'N/A multiple';
       $data['progress'] = 'N/A multiple';
     }
@@ -151,6 +151,7 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
   }
 
   if ($goal['metric'] === 'custom_field') {
+    // this shouldn't be possible. custom field should be single webform only.
     if (empty($goal['extra']['selected_form_id'])) {
       $data['count'] = 'N/A';
       $data['progress'] = 'N/A';
@@ -178,6 +179,9 @@ function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
   return $num_rows;
 }
 
+/**
+ * Running total of all values submitted to a given webform component.
+ */
 function _webform_goals_total_component_values($nid, $form_key, $start = FALSE, $end = FALSE) {
   // SELECT SUM(wsd.data)
   // FROM webform_submitted_data wsd
@@ -188,15 +192,19 @@ function _webform_goals_total_component_values($nid, $form_key, $start = FALSE, 
   //   AND wc.form_key = 'amount';
   $query = db_select('webform_submitted_data', 'wsd');
   $query->join('webform_component', 'wc', 'wsd.nid = wc.nid AND wsd.cid = wc.cid');
+  if ($start || $end) {
+    $query->join('webform_submissions', 'ws', 'ws.sid = wsd.sid');
+  }
   $query->addExpression('SUM(data)', 'data');
   $query->condition('wsd.nid', $nid, '=');
   $query->condition('wc.form_key', $form_key, '=');
   // add conditionals for start/end date
+
   if ($start) {
-    $query->condition('submitted', $start, '>=');
+    $query->condition('ws.submitted', $start, '>=');
   }
   if ($end) {
-    $query->condition('submitted', $end, '<=');
+    $query->condition('ws.submitted', $end, '<=');
   }
   return $query->execute()->fetchField();
 }

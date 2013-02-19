@@ -22,10 +22,6 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
         'name' => t('Total donation amount'),
         'description' => t('Goal progress will be calculated based on the total donations received.'),
         'settings_callback' => '',
-        'threshold_prefix' => t('Do not display the goal progress until a minimum of $'),
-        'threshold_suffix' => t(' in donations has been received.'),
-        'seed_prefix' => t('Add an initial $'),
-        'seed_suffix' => t(' to the donation progress.'),
       );
       return $metrics;
     }
@@ -48,7 +44,7 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
     }
     // Bet the database loves this.
     elseif (!empty($goal['extra']['selected_node_type'])) {
-      $nids = _fundraiser_goals_nids_by_type($goal['extra']['selected_node_type']);
+      $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
       if (is_array($nids)) {
         foreach($nids as $nid) {
           $donations = fundraiser_get_total_donations_by_nid($nid);
@@ -62,25 +58,6 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
     }
     return $data;
   }
-}
-
-/**
- * retrieve a list of nids by node type without invoking entity_load().
- */
-function _fundraiser_goals_nids_by_type($type) {
-  static $nids = array();
-  if (empty($nids[$type])) {
-    $results = db_query('
-      SELECT
-        nid
-      FROM {node}
-      WHERE type = :type
-    ', array(':type' => $type));
-    while ($nid = $results->fetchField()) {
-      $nids[$type][] = $nid;
-    }
-  }
-  return $nids[$type];
 }
 
 function fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal = array()) {

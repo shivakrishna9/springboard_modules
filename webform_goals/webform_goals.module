@@ -11,12 +11,30 @@ require_once('includes/webform_goals.goals.inc');
  */
 function webform_goals_menu() {
   $items['admin/config/content/webform_goals'] = array(
-    'title' => 'Configure goal settings',
+    'title' => 'Webform Goals',
     'description' => 'Assign and track goals on webforms',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_goals_admin'),
+    'page arguments' => array('webform_goals_admin_list'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_goals.admin.inc',
+  );
+  $items['admin/config/content/webform_goals/list'] = array(
+    'title' => 'List',
+    'description' => 'Assign and track goals on webforms',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_admin_list'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'webform_goals.admin.inc',
+  );
+  $items['admin/config/content/webform_goals/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Assign and track goals on webforms',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_goals_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
     'file' => 'webform_goals.admin.inc',
   );
   $items['admin/config/content/webform_goals/add'] = array(
@@ -45,7 +63,7 @@ function webform_goals_menu() {
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,
     'file' => 'webform_goals.forms.inc',
-  );
+  );/*
   $items['node/%webform_menu/webform/goals'] = array(
     'title' => 'Goals',
     'description' => t('Configure goal settings for this webform'),
@@ -54,12 +72,38 @@ function webform_goals_menu() {
     'access callback' => TRUE,
     'type' => MENU_LOCAL_TASK,
     'file' => 'includes/webform_goals.forms.inc',
-  );
+  );*/
+  // TODO: remove. debugging code.
+  // BUG: remove. debugging code.
   $items['webform_goals'] = array(
     'title' => 'webform goals test page',
     'page callback' => 'webform_goals_test_page',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
+  );
+  $items['webform_goals/%webform_goal/embed'] = array(
+    'title' => 'Embeddable widget code',
+    'description' => '',
+    'page callback' => 'webform_goals_widget_display_embed',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/webform_goals.widget.inc',
+  );
+  $items['webform_goals_widget/%webform_goals_widget'] = array(
+    'title' => 'widget service',
+    'page callback' => 'webform_goals_serve_widget',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/webform_goals.widget.inc',
+  );
+  $items['webform_goals_cron'] = array(
+    'title' => 'widget rebuild callback',
+    'page callback' => 'webform_goals_rebuild_widgets',
+    'access callback' => TRUE, // TODO: secure?
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/webform_goals.widget.inc',
   );
   // TODO: declare api endpoint?
   return $items;
@@ -102,36 +146,44 @@ function webform_goal_load($gid) {
   return $goal;
 }
 
-function webform_goal_load_multiple() {
+/**
+ *
+ * @staticvar array $goals
+ * @param int $nid
+ * Node id.
+ *
+ * @return array()
+ * An array of goals.
+ */
+function webform_goal_load_multiple($nid = FALSE) {
   static $goals = array();
-  if (!count($goals)) {
-    $result = db_query('
-      SELECT
-        gid,
-        name,
-        context,
-        metric,
-        seed,
-        target_value,
-        display_threshold,
-        starter_message,
-        starter_message_format,
-        start_date,
-        end_date,
-        auto_expire,
-        template,
-        template_format,
-        extra
-      FROM {webform_goals}
-    ');
+
+  if (($nid && empty($goals[$nid])) || empty($goals)) {
+    $query = db_select('webform_goals', 'w');
+
+    if (!empty($nid)) {
+      $query->join('webform_goals_node', 'n', 'w.gid = n.gid');
+      $query->condition('n.nid', $nid, '=');
+    }
+    $query->fields('w');
+    $result = $query->execute();
     while ($goal = $result->fetchAssoc()) {
       $goal['extra'] = unserialize($goal['extra']);
-      $goals[] = $goal;
+      if ($nid) {
+        $goals[$nid][] = $goal;
+      }
+      else {
+        $goals[] = $goal;
+      }
     }
   }
-  return $goals;
+  return $nid ? $goals[$nid] : $goals;
 }
 
+function webform_goals_widget_load($gid) {
+  $widget = db_query('SELECT widget FROM {webform_goals_widget} WHERE gid = :gid', array(':gid' => $gid));
+  return $widget->fetchField();
+}
 
 function _webform_goals_list_webforms() {
   static $nodes = array();
@@ -271,14 +323,11 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
-          break;
+          break;http://www.smbc-comics.com/index.php?db=comics&id=2887#comic
         case 'total':
           $replacements[$token] = $goal_progress['count'];
       }
     }
-
-
-
 
     if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
       $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
@@ -288,13 +337,23 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
   return $replacements;
 }
 
-function webform_goals_update_widget($goal, $nid, $update = array()) {
+/**
+ * Re-render widget markup with up-to-date progress data.
+ * @param array $goal
+ * Goal array.
+ *
+ * @param $update
+ * 'gid' if updating an existing record or array() if inserting new.
+ */
+function webform_goals_update_widget($goal, $update = array()) {
+  require_once('includes/webform_goals.files.inc');
+
   $settings = array(
     'gid' => $goal['gid'],
-    'nid' => $nid,
-    'widget' => theme('webform_goals_widget', $goal, $nid),
+    'widget' => theme('webform_goals_widget', $goal),
   );
-  drupal_write_record($settings, $update);
+  _webform_goals_file_insert($goal, $settings['widget']);
+  drupal_write_record('webform_goals_widget', $settings, $update);
 }
 
 /**
@@ -320,6 +379,20 @@ function webform_goals_purge_widgets($params) {
 }
 
 /**
+ * Implements hook_webform_submission_insert().
+ *
+ * When a submission is inserted we check for goals assigned to this node and
+ * update stored widget markup in response to the submission.
+ */
+function webform_goals_webform_submission_insert($node, $submission) {
+  $gids = webform_goals_get_goals_by_nid($node->nid);
+
+  if (count($gids)) {
+    _webform_goals_flag_goal_updates($gids);
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function webform_goals_theme($existing, $type, $theme, $path) {
@@ -336,25 +409,160 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       ),
       'template' => 'templates/webform_goals.default',
     ),
+    'webform_goals_widget_loader' => array(
+      'arguments' => array(
+        'goal' => NULL,
+      ),
+      'template' => 'templates/webform_goals.widget_loader',
+    ),
   );
 }
 
-function theme_webform_goals_widget($vars) {
-  $goal = $vars['goal'];
-  $nid = $vars['nid'];
+function theme_webform_goals_widget($goal) {
+  $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
   $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
-  drupal_set_message('template:' . $template);
   $template_filtered = check_markup($template, $goal['template_format']);
   return $template_filtered;
 }
 
+function template_preprocess_webform_goals_widget_loader(&$vars) {
+  $uri = 'webform_goals/template-' . $vars['gid'] . '.html';
+  $file_uri = file_create_url(file_build_uri($uri));
+  $vars['file_url'] = $file_uri;
+}
 
 function webform_goals_test_page() {
   $gid = !empty($_GET['gid']) ? $_GET['gid'] : 1;
   $nid = !empty($_GET['nid']) ? $_GET['nid'] : 2;
   $goal = webform_goal_load($gid);
   $vars['goal'] = $goal;
-  $vars['nid'] = $nid;
   $output = theme('webform_goals_widget', $vars);
   return $output;
+}
+
+/**
+ * Is the current goal expired?
+ */
+function webform_goals_goal_status($goal) {
+
+  if ($goal['end_date'] && $goal['end_date'] < time()) {
+
+    return $goal['auto_expire'] ? t('expired') : t('ended');
+  }
+  return t('active');
+}
+
+/**
+ * Retrieve full context info based on form submission or current goal.
+ */
+function _webform_goals_get_selected_context($form_state, $goal = array()) {
+  $contexts = module_invoke_all('webform_goals_list_context');
+  $selected_context = $contexts['single'];
+  // current selection trumps goal settings in a form context.
+  // this prevents existing settings from overwriting new user
+  // selections when editing a goal.
+  if (!empty($form_state['values']['context'])) {
+    $selected_context = $contexts[$form_state['values']['context']];
+  }
+  elseif (!empty($goal['context'])) {
+    $selected_context = $contexts[$goal['context']];
+  }
+  return $selected_context;
+}
+
+/**
+ * Figure out what webform nodes are impacted based on goal settings.
+ * @param type $group
+ * @return array of nids
+ */
+function _webform_goals_calculate_nids_for_goal($goal) {
+  if ($goal['context'] == 'single') {
+
+    return (array) $goal['extra']['selected_form_id'];
+  }
+
+  if ($goal['context'] == 'group') {
+    $node_type = $goal['extra']['selected_node_type'];
+    return _webform_goals_nids_by_type($node_type);
+  }
+}
+
+/**
+ * Retrieve full metric info based on form submission or current goal.
+ */
+function _webform_goals_get_selected_metric($selected_context, $form_state, $goal = array()) {
+  $metrics = webform_goals_list_metrics($selected_context, $form_state, $goal);
+  $selected_metric = $metrics['submission_count'];
+  // as with context we defer to form submission values to
+  // prevent existing settings interfering with edit form behavior.
+  if (!empty($form_state['values']['metrics'])) {
+    $selected_metric = $metrics[$form_state['values']['metrics']];
+  }
+  elseif (!empty($goal['metric'])) {
+    $selected_metric = $metrics[$goal['metric']];
+  }
+  return $selected_metric;
+}
+
+/**
+ * Retrieve an array of goals that are tracking a given node.
+ */
+function webform_goals_get_goals_by_nid($nid) {
+  $gids = array();
+  $results = db_query('SELECT gid FROM {webform_goals_node} WHERE nid = :nid', array(':nid' => $nid));
+  while ($gid = $results->fetchField()) {
+    $gids[] = $gid;
+  }
+  return $gids;
+}
+
+/**
+ * List available context.
+ */
+function webform_goals_list_context() {
+  static $contexts = array();
+  if (empty($context)) {
+    $contexts = module_invoke_all('webform_goals_list_context');
+  }
+  return $contexts;
+}
+
+function webform_goals_list_metrics($selected_context, $form_state = array(), $goal = array()) {
+  static $metrics = array();
+  if (empty($metrics)) {
+    $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
+  }
+  return $metrics;
+}
+
+/**
+ * retrieve a list of nids by node type without invoking entity_load().
+ */
+function _webform_goals_nids_by_type($type) {
+  static $nids = array();
+  if (empty($nids[$type])) {
+    $results = db_query('
+      SELECT
+        nid
+      FROM {node}
+      WHERE type = :type
+    ', array(':type' => $type));
+    while ($nid = $results->fetchField()) {
+      $nids[$type][] = $nid;
+    }
+  }
+  return $nids[$type];
+}
+
+/**
+ * Set db flag for goals that need widget rebuild when cron runs.
+ */
+function _webform_goals_flag_goal_updates($gids = array()) {
+
+  if (count($gids)) {
+    db_query('
+      UPDATE {webform_goals}
+      SET update_on_cron = 1
+      WHERE gid IN (:gids)', array(':gids' => $gids));
+  }
 }

@@ -23,28 +23,10 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#title' => t('Goal name'),
     '#default_value' => isset($goal['name']) ? $goal['name'] : '',
   );
-
-  $contexts = module_invoke_all('webform_goals_list_context');
-  if (!empty($form_state['values']['context'])) {
-    $selected_context = $contexts[$form_state['values']['context']];
-  }
-  elseif (!empty($goal['context'])) {
-    $selected_context = $contexts[$goal['context']];
-  }
-  else {
-    $selected_context = $contexts['single'];
-  }
-
-  $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
-  if (!empty($form_state['values']['metrics'])) {
-    $selected_metric = $metrics[$form_state['values']['metrics']];
-  }
-  elseif (!empty($goal['metric'])) {
-    $selected_metric = $metrics[$goal['metric']];
-  }
-  else {
-    $selected_metric = $metrics['submission_count'];
-  }
+  $contexts = webform_goals_list_context();
+  $selected_context = _webform_goals_get_selected_context($form_state, $goal);
+  $metrics = webform_goals_list_metrics($selected_context, $form_state, $goal);
+  $selected_metric = _webform_goals_get_selected_metric($selected_context, $form_state, $goal);
   //$selected_metric = !empty($form_state['values']['metrics']) ? $metrics[$form_state['values']['metrics']] : $metrics['submission_count'];
   foreach ($contexts as $key => $context) {
     $context_options[$key] = $context['name'];
@@ -263,9 +245,31 @@ function webform_goals_add_submit($form, $form_state) {
 
   $settings = module_invoke_all('webform_goals_save_goal', $settings, $form_state);
   $update = $settings['gid'] ? 'gid' : array();
+  $extra = $settings['extra'];
+  $settings['extra'] = serialize($extra);
+  $save = drupal_write_record('webform_goals', $settings, $update);
 
-  $settings['extra'] = serialize($settings['extra']);
-  drupal_write_record('webform_goals', $settings, $update);
+  $widget = array(
+    'gid' => $settings['gid'],
+    'widget' => theme('webform_goals_widget', array('goal' => $settings)),
+  );
+ 
+  drupal_write_record('webform_goals_widget', $widget, $update);
+
+  if ($save == SAVED_NEW) {
+
+    $settings['extra'] = $extra;
+    $nids = _webform_goals_calculate_nids_for_goal($settings);
+
+    foreach ($nids as $nid) {
+      $node_settings = array(
+        'gid' => $settings['gid'],
+        'nid' => $nid,
+      );
+      // TODO: optimize this as a bulk insert?
+      drupal_write_record('webform_goals_node', $node_settings);
+    }
+  }
 }
 
 /**

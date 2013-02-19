@@ -118,6 +118,13 @@ function webform_goals_schema() {
         'description' => 'optional configuration data',
         'type' => 'text',
       ),
+      'update_on_cron' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('gid'),
   );
@@ -131,16 +138,29 @@ function webform_goals_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'nid' => array(
-        'description' => 'Node id.',
+      'widget' => array(
+        'description' => 'rendered values to return when widget is called',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('gid'),
+  );
+  $schema['webform_goals_node'] = array(
+    'description' => 'node id lookup table by group',
+    'fields' => array(
+      'gid' => array(
+        'description' => 'Goal id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
-      'widget' => array(
-        'description' => 'rendered values to return when widget is called',
-        'type' => 'text',
+      'nid' => array(
+        'description' => 'node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
       ),
     ),
     'primary key' => array('gid', 'nid'),

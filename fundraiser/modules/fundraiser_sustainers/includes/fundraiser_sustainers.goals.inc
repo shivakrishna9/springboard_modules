@@ -32,7 +32,6 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
   );
 
   if ($goal['metric'] === 'fundraiser_sustainer_count') {
-          drupal_set_message('nid:' . $nid . ' sustainers:' . $sustainers);
     if (!empty($goal['extra']['selected_form_id'])) {
       $data['count'] = _fundraiser_sustainers_get_total_sustainers_by_nid($goal['extra']['selected_form_id'], $goal['start_date'], $goal['end_date']);
       $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
@@ -40,7 +39,7 @@ function fundraiser_sustainers_webform_goals_track_metric($goal, $params = array
     // group goal handling. since we have multiple nodes we query the db for each.
     // Bet the database loves this. Can this be improved?
     elseif (!empty($goal['extra']['selected_node_type'])) {
-      $nids = _fundraiser_goals_nids_by_type($goal['extra']['selected_node_type']);
+      $nids = _webform_goals_nids_by_type($goal['extra']['selected_node_type']);
       if (is_array($nids)) {
         foreach($nids as $nid) {
           $sustainers = _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $goal['start_date'], $goal['end_date']);
