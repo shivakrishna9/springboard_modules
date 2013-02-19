@@ -72,10 +72,8 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
   $batch['start'] = time();
   $batch['module'] = $batch['items'][0]->module;
   $batch['delta'] = $batch['items'][0]->delta;
-  print 'batch batch' . print_r($batch, 1);
   drupal_write_record('salesforce_log_batch', $batch);
   foreach ($batch['items'] as $item) {
-  print 'batch item' . print_r($item, 1);
     $record = _salesforce_log_prepare_item_record($item);
     $record->bid = $batch['bid'];
     $record->status = 'enqueued';
