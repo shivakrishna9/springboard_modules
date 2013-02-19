@@ -7,6 +7,47 @@ require_once('includes/fundraiser_webform.goals.inc');
  */
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_webform_menu_alter(&$items) {
+  // Override webform's original submission, to filter out donation content.
+  // Submissions listing.
+  $items['admin/content/webform'] = array(
+    'title' => 'Webforms',
+    'page callback' => 'fundraiser_webform_admin_content',
+    'access callback' => 'user_access',
+    'access arguments' => array('access all webform results'),
+    'description' => 'View and edit all the available webforms on your site.',
+    'type' => MENU_LOCAL_TASK,
+  );
+}
+
+/**
+ * Menu callback for admin/content/webform. Displays all webforms on the site.
+ * EXCEPT: for donation types.
+ */
+function fundraiser_webform_admin_content() {
+  $webform_types = webform_variable_get('webform_node_types');
+  // Filter for donation types.
+  $donation_types = fundraiser_get_donation_types();
+  $types = array();
+  foreach ($webform_types as $webform_type) {
+    if (!isset($donation_types[$webform_type]) || $donation_types[$webform_type] !== 1) {
+      $types[] = $webform_type;
+    } 
+  }
+  $nodes = array();
+  if ($types) {
+    $nodes = db_select('node', 'n')
+      ->fields('n')
+      ->condition('n.type', $types, 'IN')
+      ->execute()
+      ->fetchAllAssoc('nid');
+  }
+  return theme('webform_admin_content', array('nodes' => $nodes));
+}
+
+/**
  * Implements hook_webform_component_info
  */
 function fundraiser_webform_webform_component_info() {

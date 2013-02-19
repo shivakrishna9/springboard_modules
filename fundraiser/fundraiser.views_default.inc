@@ -240,7 +240,7 @@ $handler->display->display_options['filters']['type']['group'] = 0;
 $handler = $view->new_display('page', 'Page', 'page');
 $handler->display->display_options['path'] = 'admin/content/donation-forms';
 $handler->display->display_options['menu']['type'] = 'tab';
-$handler->display->display_options['menu']['title'] = 'Donation Content';
+$handler->display->display_options['menu']['title'] = 'Donations';
 $handler->display->display_options['menu']['weight'] = '0';
 $handler->display->display_options['menu']['name'] = 'management';
 

@@ -104,9 +104,10 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertRaw('<label>User ID</label>', 'UID label has appeared.');
     $this->assertFieldById('edit-salesforce-field-uid', '', 'Salesforce Field for UID map has appeared.');
     $this->assertRaw('<input type="hidden" name="salesforce_field_mappings[uid][key]" value="">', 'Dedupe radio for UID is hidden.');
-    $this->assertFieldByName('salesforce_field_mappings[uid][sf_drupal]', '', 'Import to Drupal for UID options have appeared.');
-    $this->assertFieldByName('salesforce_field_mappings[uid][drupal_sf]', '', 'Export to Salesforce for UID options have appeared.');
-    $this->assertFieldById('edit-key-none', '', 'No dedupe option has appeared.');
+    $this->assertText('Select Salesforce field.', 'Sync rules request that Salesforce field be selected.');
+    $this->assertNoFieldByName('salesforce_field_mappings[uid][sf_drupal]', '', 'Import to Drupal for UID options have not appeared.');
+    $this->assertNoFieldByName('salesforce_field_mappings[uid][drupal_sf]', '', 'Export to Salesforce for UID options have not appeared.');
+    $this->assertFieldById('edit-key-none', '', 'A dedupe "none" option has appeared.');
 
     // Unselect the Salesforce object type.
     $edit['salesforce_object_type'] = '';
@@ -121,16 +122,63 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertRaw('<input type="hidden" name="salesforce_record_type" value="default">', 'Salesforce record type his hidden for a salesforce object without records.');
     $this->assertRaw('<table id="edit-salesforce-field-mappings"', 'Field map table has appeared.');
 
-    // Select field map's Salesforce field and check the dedupe radio reaction.
+    // Select field map's Salesforce field and check the dedupe and sync rule
+    // radio reactions.
+    $edit['salesforce_field_mappings[uid][salesforce_field]'] = 'Drupal_User_ID__c';
+    $this->drupalPostAjax(NULL, $edit, 'salesforce_field_mappings[uid][salesforce_field]');
+    $this->assertRaw('<input type="radio" id="edit-key-uid" name="key" value="uid" class="form-radio">', 'UID field has the dedupe radio appear when selecting a idLookup field.');
+    $this->assertFieldByName('salesforce_field_mappings[uid][drupal_sf]', '', 'Export to Salesforce for UID options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-uid-drupal-sf-never', '', 'UID sync rules has "never" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-uid-drupal-sf-blank', '', 'UID sync rules has "blank" option when exporting to Salesforce.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-uid-drupal-sf-append', '', 'UID sync rules does not have "append" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-uid-drupal-sf-always', '', 'UID sync rules has "always" option when exporting to Salesforce.');
+    $this->assertFieldByName('salesforce_field_mappings[uid][sf_drupal]', '', 'Import to Drupal for UID options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-uid-sf-drupal-never', '', 'UID sync rules has "never" option when importing into Drupal.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-uid-sf-drupal-blank', '', 'UID sync rules does not have "blank" option when importing into Drupal.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-uid-sf-drupal-append', '', 'UID sync rules does not have "append" option when importing into Drupal.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-uid-sf-drupal-always', '', 'UID sync rules does not have "always" option when importing into Drupal.');
+
     $edit['salesforce_field_mappings[name][salesforce_field]'] = 'Name';
     $this->drupalPostAjax(NULL, $edit, 'salesforce_field_mappings[name][salesforce_field]');
     $this->assertRaw('<input type="hidden" name="salesforce_field_mappings[name][key]" value="">', 'Name field still has the dedupe radio hidden when selecting a non-idLookup field.');
+    $this->assertFieldByName('salesforce_field_mappings[name][drupal_sf]', '', 'Export to Salesforce for Name options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-drupal-sf-never', '', 'Name sync rules has "never" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-drupal-sf-blank', '', 'Name sync rules has "blank" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-drupal-sf-append', '', 'Name sync rules has "append" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-drupal-sf-always', '', 'Name sync rules has "always" option when exporting to Salesforce.');
+    $this->assertFieldByName('salesforce_field_mappings[name][sf_drupal]', '', 'Import to Drupal for Name options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-sf-drupal-never', '', 'Name sync rules has "never" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-sf-drupal-blank', '', 'Name sync rules has "blank" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-sf-drupal-append', '', 'Name sync rules has "append" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-name-sf-drupal-always', '', 'Name sync rules has "always" option when importing into Drupal.');
+
     $edit['salesforce_field_mappings[mail][salesforce_field]'] = 'Email';
     $this->drupalPostAjax(NULL, $edit, 'salesforce_field_mappings[mail][salesforce_field]');
     $this->assertRaw('<input type="radio" id="edit-key-mail" name="key" value="mail" class="form-radio">', 'Email field has the dedupe radio appear when selecting a idLookup field.');
+    $this->assertFieldByName('salesforce_field_mappings[mail][drupal_sf]', '', 'Export to Salesforce for Email options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-never', '', 'Email sync rules has "never" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-blank', '', 'Email sync rules has "blank" option when exporting to Salesforce.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-mail-drupal-sf-append', '', 'Email sync rules does not have "append" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-always', '', 'Email sync rules has "always" option when exporting to Salesforce.');
+    $this->assertFieldByName('salesforce_field_mappings[mail][sf_drupal]', '', 'Import to Drupal for Email options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-never', '', 'Email sync rules has "never" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-blank', '', 'Email sync rules has "blank" option when importing into Drupal.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-mail-sf-drupal-append', '', 'Email sync rules does not have "append" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-always', '', 'Email sync rules has "always" option when importing into Drupal.');
+
     $edit['salesforce_field_mappings[mail][salesforce_field]'] = 'npe01__AlternateEmail__c';
     $this->drupalPostAjax(NULL, $edit, 'salesforce_field_mappings[mail][salesforce_field]');
     $this->assertRaw('<input type="hidden" name="salesforce_field_mappings[mail][key]" value="">', 'Email field hid the dedupe radio after changing to a non-idLookup field');
+    $this->assertFieldByName('salesforce_field_mappings[mail][drupal_sf]', '', 'Export to Salesforce for Alternate Email options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-never--2', '', 'Alternate Email sync rules has "never" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-blank--2', '', 'Alternate Email sync rules has "blank" option when exporting to Salesforce.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-mail-drupal-sf-append--2', '', 'Alternate Email sync rules does not have "append" option when exporting to Salesforce.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-drupal-sf-always--2', '', 'Alternate Email sync rules has "always" option when exporting to Salesforce.');
+    $this->assertFieldByName('salesforce_field_mappings[mail][sf_drupal]', '', 'Import to Drupal for Alternate Email options have appeared.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-never--2', '', 'Alternate Email sync rules has "never" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-blank--2', '', 'Alternate Email sync rules has "blank" option when importing into Drupal.');
+    $this->assertNoFieldById('edit-salesforce-field-mappings-mail-sf-drupal-append--2', '', 'Alternate Email sync rules does not have "append" option when importing into Drupal.');
+    $this->assertFieldById('edit-salesforce-field-mappings-mail-sf-drupal-always--2', '', 'Alternate Email sync rules has "always" option when importing into Drupal.');
 
     // Map label and name interaction is done by javascript, not by ajax, and
     // cannot be tested here.  There is a known interaction failure where if you
@@ -227,52 +275,116 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->createSalesforceMapping('foo', 'foobar');
 
     // Verify salesforce_mapping_property_validation().
+    // Using Drupal fields that are not set during createSalesforceMapping() or
+    // else the field's id will have '--2' appended to the end when ajax
+    // replaces the field's row and mess up finding the field by id.
     $property_tests = array(
-      'sync' => array(
+      // Direction: Drupal to Salesforce.
+      'drupal_sf' => array(
+        // Salesforce datatype: Datetime.
         'datetime' => array(
           'sf_value' => 'CreatedDate',
           'drupal_value' => array(
-            'integer' => 'uid',
-            'text' => 'name',
-            'uri' => 'url',
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: Email.
         'email' => array(
           'sf_value' => 'Email',
           'drupal_value' => array(
-            'date' => 'created',
-            'integer' => 'uid',
-            'uri' => 'url',
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: Id.
         'id' => array(
           'sf_value' => 'Id',
           'drupal_value' => array(
-            'date' => 'created',
-            'text' => 'name',
-            'uri' => 'url',
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
           ),
         ),
+        // Salesforce datatype: String.
         'string' => array(
           'sf_value' => 'LastName',
           'drupal_value' => array(
-            'date' => 'created',
-            'integer' => 'uid',
-            'uri' => 'url',
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', TRUE),
+          ),
+        ),
+      ),
+      // Direction: Salesforce to Drupal.
+      'sf_drupal' => array(
+        // Salesforce datatype: Datetime.
+        'datetime' => array(
+          'sf_value' => 'CreatedDate',
+          'drupal_value' => array(
+            'date' => array('last_login', TRUE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: Email.
+        'email' => array(
+          'sf_value' => 'Email',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: Id.
+        'id' => array(
+          'sf_value' => 'Id',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', TRUE),
+            'text' => array('theme', FALSE),
+            'uri' => array('url', FALSE),
+          ),
+        ),
+        // Salesforce datatype: String.
+        'string' => array(
+          'sf_value' => 'LastName',
+          'drupal_value' => array(
+            'date' => array('last_login', FALSE),
+            'integer' => array('status', FALSE),
+            'text' => array('theme', TRUE),
+            'uri' => array('url', FALSE),
           ),
         ),
       ),
     );
-    $this->drupalGet($this->manageMapPrefix . 'foobar');
     foreach ($property_tests as $direction => $sf_field_types) {
       foreach ($sf_field_types as $sf_field_type => $data) {
         $sf_field = $data['sf_value'];
-        foreach ($data['drupal_value'] as $drupal_field_type => $drupal_field) {
+        foreach ($data['drupal_value'] as $drupal_field_type => $drupal) {
+          $drupal_field = $drupal[0];
+          $compatible = $drupal[1];
           $sf_field_name = 'salesforce_field_mappings[' . $drupal_field . '][salesforce_field]';
+          $this->drupalGet($this->manageMapPrefix . 'foobar');
           $edit = array($sf_field_name => $sf_field);
           $this->drupalPostAjax(NULL, $edit, $sf_field_name);
-          $this->drupalPost(NULL, $edit, 'Save mapping');
-          $this->assertText('and cannot be mapped in the ' . $direction . ' direction', 'Validation failed when direction is "' . $direction . '", salesforce field type is "' . $sf_field_type . '" and drupal field type is "' . $drupal_field_type . '".');
+          $assert_message = 'direction is "' . $direction . '", salesforce field type is "' . $sf_field_type . '" and drupal field type is "' . $drupal_field_type . '".';
+          $field_id = 'edit-salesforce-field-mappings-' . str_replace('_', '-', $drupal_field) . '-' . str_replace('_', '-', $direction);
+          $this->assertFieldById($field_id . '-never', '', 'Sync rules appeared when ' . $assert_message);
+          if ($compatible) {
+            $this->assertFieldById($field_id . '-always', '', 'Syncing compatible when ' . $assert_message);
+          }
+          else {
+            $this->assertNoFieldById($field_id . '-always', '', 'Syncing incompatible when ' . $assert_message);
+          }
         }
       }
     }

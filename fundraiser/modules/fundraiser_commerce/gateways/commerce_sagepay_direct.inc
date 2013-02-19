@@ -28,6 +28,7 @@ function commerce_sagepay_direct_fundraiser_commerce_form($payment_method) {
     '#type' => 'textfield',
     '#title' => t('Credit card number'),
     '#size' => 20,
+    '#required' => TRUE,
   );
   $form['expiration_date']['#theme'] = 'fundraiser_credit_card_expiration_date';
   $months[1] = 'January';
@@ -47,6 +48,7 @@ function commerce_sagepay_direct_fundraiser_commerce_form($payment_method) {
     '#options' => $months,
     '#title' => t('Expiration month'),
     '#default_value' => date('n'),
+    '#required' => TRUE,
   );
   $this_year = date('Y');
   $years[$this_year] = $this_year;
@@ -58,11 +60,13 @@ function commerce_sagepay_direct_fundraiser_commerce_form($payment_method) {
     '#options' => $years,
     '#title' => t('Expiration year'),
     '#default_value' => date('Y'),
+    '#required' => TRUE,
   );
   $form['card_cvv'] = array(
     '#type' => 'textfield',
     '#title' => t('CVV'),
     '#size' => 6,
+    '#required' => TRUE,
   );
   return $form;
 }

@@ -71,22 +71,6 @@ function fundraiser_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'fundraiser.admin.inc',
   );
-  $items['admin/config/system/fundraiser/donations'] = array(
-    'title' => 'Donations',
-    'page callback' => 'fundraiser_donations_admin',
-    'access arguments' => array('administer fundraiser'),
-    'file' => 'fundraiser.donations.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items['admin/config/system/fundraiser/donations/%'] = array(
-    'title' => 'View donation',
-    'page callback' => 'fundraiser_donations_admin_view',
-    'page arguments' => array(5),
-    'access arguments' => array('administer fundraiser'),
-    'type' => MENU_CALLBACK,
-    'tab_parent' => 'admin/config/system/fundraiser/donations',
-    'file' => 'fundraiser.donations.inc',
-  );
   return $items;
 }
 
@@ -354,7 +338,8 @@ function fundraiser_node_presave($node) {
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
-    $node->minimum_donation_amount = $node->amount_wrapper['minimum_donation_amount'];
+    $node->minimum_donation_amount = is_numeric($node->amount_wrapper['minimum_donation_amount']) ?
+      $node->amount_wrapper['minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
     unset($node->amount_wrapper);
   }
 }
@@ -653,7 +638,8 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Minimum donation amount'),
     '#description' => t('The minimum acceptable donation amount.'),
-    '#default_value' => isset($node->minimum_donation_amount) ? number_format($node->minimum_donation_amount, 2) : number_format(variable_get('fundraiser_default_minimum', 10.00, 2)),
+    '#default_value' => isset($node->minimum_donation_amount) ?
+      number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
 
   // TODO this should probably go on a different table, not here.
@@ -683,8 +669,9 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
 function _fundraiser_form_payment_method_validate($form, &$form_state) {
   $values = $form_state['values']['gateways'];
   $default_method = isset($values['_default']) ? $values['_default'] : '';
-  unset($form_state['values']['gateways']['_default']);
   $enabled_methods = array_filter($values, '_fundraiser_payment_method_array_filter_enabled');
+  unset($form_state['values']['gateways']['_default']);
+  unset($enabled_methods['_default']);
   // Check that there is at least one method enabled
   if (empty($enabled_methods)) {
     form_set_error('payment_methods', t('At least one payment method must be enabled.'));
@@ -989,7 +976,8 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
   }
   // Check for minimum amount.
   $fundraiser = _fundraiser_get_fundraiser_by_nid($form['#node']->nid);
-  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ? $fundraiser->minimum_donation_amount : 10;
+  $minimum_donation_amount = isset($fundraiser->minimum_donation_amount) ?
+    $fundraiser->minimum_donation_amount :  variable_get('fundraiser_default_minimum', 10.00);
   $minimum_donation_amount = number_format($minimum_donation_amount, 2);
   if ($value < $minimum_donation_amount) {
     return t('Your donation amount must be greater than or equal to @min_amount.',
@@ -1553,6 +1541,16 @@ function fundraiser_donation_create($donation) {
   module_invoke_all('fundraiser_donation_create', $donation);
   // For now, our creation system is responsible for creating a did.
   // Track the did, nid, uid internally so we can keep things in order.
+  // Grab the submission path, if there is no alias, use the standard node path.
+  global $base_url;
+  $alias = drupal_lookup_path('alias', $_GET['q']);
+  $form_url = '';
+  if (!empty($alias)) {
+    $form_url = $base_url . '/' . $alias;
+  }
+  else {
+    $form_url = $base_url . '/node/' . $nid;
+  }
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
@@ -1560,6 +1558,7 @@ function fundraiser_donation_create($donation) {
     'sid' => $donation->sid,  // Submission id.
     'gateway' => $donation->gateway,
     'txn_id' => '',
+    'form_url' => $form_url,
   );
   _fundraiser_create_donation($donation_record);
   // Add a comment.
@@ -1598,6 +1597,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   }
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;
+  }
+  if (isset($donation->form_url) && !empty($donation->form_url)) {
+    $donation_record['form_url'] = $donation->form_url;
   }
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -1817,6 +1819,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   $donation->uid = $donation_record->uid;
   $donation->user = user_load($donation_record->uid);
   $donation->sid = $donation_record->sid;
+  $donation->form_url = $donation_record->form_url;
 
   // Grab gateway information and replace it in the node too if found.
   $gateway = _fundraiser_get_donation_gateway($did);
@@ -2024,7 +2027,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
     // On getting fundraiser this will be exploded into the correct values.
     $fundraiser['donation_amounts'] = implode(',', $imploded_amounts);
     // Serialize for storage, our configured gateway values for storage in components.
-    $fundraiser['gateways'] = serialize($fundraiser['gateways']);
+    $fundraiser['gateways'] = isset($fundraiser['gateways']) ? serialize($fundraiser['gateways']) : serialize('');
     // After the node is created, add additional data to fundraiser.
     $record = array(
       'receipt_email_from' => variable_get('site_name', ''),
