@@ -679,6 +679,16 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
     form_set_error('payment_methods', t('At least one payment method must be enabled.'));
   }
   else {
+    // Check that the marked payment type actually have selected gateways to match.
+    foreach ($enabled_methods as $method => $enabled_method) {
+      if (empty($enabled_method['id'])) {
+        form_set_error('gateways][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
+      }
+      if (empty($enabled_method['label'])) {
+        form_set_error('gateways][' . $method .'][label', t('All enabled payment methods must set a label.'));
+      }
+    }
+    // Check that a default has been set.
     if (!isset($enabled_methods[$default_method])) {
       if (count($enabled_methods) == 1) {
         $default_method = key($enabled_methods);
