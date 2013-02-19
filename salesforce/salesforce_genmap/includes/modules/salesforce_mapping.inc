@@ -41,7 +41,8 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
 
     $salesforce_object_type = _sfm_alter_get_default_value('salesforce_object_type', $form_state);
     $property_info = salesforce_mapping_get_fieldmap_types('property');
-    $entity_fields = call_user_func($property_info['options_callback'], _sfm_alter_get_default_value('drupal_entity_type', $form_state));
+    $entity_type = _sfm_alter_get_default_value('drupal_entity_type', $form_state);
+    $entity_fields = call_user_func($property_info['options_callback'], $entity_type);
     unset($entity_fields['']);
     $sf_fields = _sfm_get_salesforce_field_options($salesforce_object_type, $form_state);
     $dedupe_isset = FALSE;
@@ -123,27 +124,33 @@ function salesforce_mapping_form_salesforce_mapping_form_alter(&$form, &$form_st
       }
 
       // Add field-by-field sync rule columns.
-      $row['drupal_sf'] = $row['sf_drupal'] = array(
-        '#type' => 'radios',
-        '#options' => array(
-          SALESFORCE_SYNC_RULE_NEVER => t('Never'),
-          SALESFORCE_SYNC_RULE_BLANK => t('When blank'),
-          SALESFORCE_SYNC_RULE_APPEND => t('Merge values'),
-          SALESFORCE_SYNC_RULE_ALWAYS => t('Always'),
-        ),
-      );
-      $sf_drupal_value = _sfm_alter_get_default_value('sf_drupal', $form_state, $delta);
-      $drupal_sf_value = _sfm_alter_get_default_value('drupal_sf', $form_state, $delta);
-      $row['sf_drupal']['#id'] = 'edit-sf-drupal-' . $delta;
-      $row['drupal_sf']['#id'] = 'edit-drupal-sf-' . $delta;
-      $row['sf_drupal']['#default_value'] = empty($sf_drupal_value) ? SALESFORCE_SYNC_RULE_NEVER : $sf_drupal_value;
-      $row['drupal_sf']['#default_value'] = empty($drupal_sf_value) ? SALESFORCE_SYNC_RULE_NEVER : $drupal_sf_value;
-
-      // Hide direction column.
-      $row['direction'] = array(
-        '#type' => 'hidden',
-        '#value' => 'drupal_sf',
-      );
+      $row['drupal_sf'] = array('#id' => 'edit-drupal-sf-' . $delta);
+      $row['sf_drupal'] = array('#id' => 'edit-sf-drupal-' . $delta);
+      if (empty($salesforce_field)) {
+        $row['drupal_sf'] += array(
+          '#markup' => '<label class="description">' . t('Select Salesforce field.') . '</label>',
+          '#attributes' => array(
+            'class' => array('form-item form-disabled'),
+          ),
+        );
+      }
+      else {
+        $row['drupal_sf'] += $row['sf_drupal'] += array(
+          '#type' => 'radios',
+        );
+        $drupal_sf_value = _sfm_alter_get_default_value('drupal_sf', $form_state, $delta);
+        $sf_drupal_value = _sfm_alter_get_default_value('sf_drupal', $form_state, $delta);
+        $row['drupal_sf']['#options'] = _sfm_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'drupal_sf', $form_state);
+        $row['sf_drupal']['#options'] = _sfm_get_sync_rule_options($entity_type, $drupal_field_name, $salesforce_object_type, $salesforce_field, 'sf_drupal', $form_state);
+        // Must verify the default value is in the options before setting it or
+        // receive a illegal action error.
+        if (array_key_exists($drupal_sf_value, $row['drupal_sf']['#options'])) {
+          $row['drupal_sf']['#default_value'] = $drupal_sf_value;
+        }
+        if (array_key_exists($sf_drupal_value, $row['sf_drupal']['#options'])) {
+          $row['sf_drupal']['#default_value'] = $sf_drupal_value;
+        }
+      }
     }
 
     // Add a "none" option for the dedupe field and some help text.
@@ -220,12 +227,12 @@ function salesforce_mapping_form_prevalidate($form, &$form_state) {
     if (is_string($delta)) {
       // If the direction is set to never sync, do not set the row so it doesn't
       // go through and subsequently fail validation.
-      if ($field_map['drupal_sf'] != SALESFORCE_SYNC_RULE_NEVER) {
+      if (isset($field_map['drupal_sf']) && $field_map['drupal_sf'] != SALESFORCE_SYNC_RULE_NEVER) {
         $field_map['key'] = ($key == $field_map['drupal_field']['fieldmap_value']);
         $field_map['direction'] = 'drupal_sf';
         $field_maps[] = $field_map;
       }
-      if ($field_map['sf_drupal'] != SALESFORCE_SYNC_RULE_NEVER) {
+      if (isset($field_map['sf_drupal']) && $field_map['sf_drupal'] != SALESFORCE_SYNC_RULE_NEVER) {
         $field_map['key'] = $field_map['drupal_sf'] == SALESFORCE_SYNC_RULE_NEVER ? ($key == $field_map['drupal_field']['fieldmap_value']) : FALSE;
         $field_map['direction'] = 'sf_drupal';
         $field_maps[] = $field_map;
@@ -502,6 +509,9 @@ function _sfm_alter_get_default_value($field, &$form_state, $delta = NULL) {
       }
     }
   }
+  if (in_array($field, array('sf_drupal', 'drupal_sf'))) {
+    $value = empty($value) ? SALESFORCE_SYNC_RULE_NEVER : $value;
+  }
   return $value;
 }
 
@@ -532,6 +542,174 @@ function _sfm_salesforce_field_can_idlookup($field, $salesforce_object_type, $fo
     if ($field_info['name'] == $field) {
       return $field_info['idLookup'];
     }
+  }
+}
+
+/**
+ * Get sync rule options compatible with the given Drupal and Salesforce fields.
+ *
+ * @param string $entity_type
+ *   Type of entity being checked.
+ * @param string $drupal_field
+ *   Field of the entity whose datatype is to be compared.
+ * @param string $salesforce_object_type
+ *   Type of Salesforce object being checked.
+ * @param string $salesforce_field
+ *   Field of the Salesforce object whose datatype is to be compared.
+ * @param string $direction
+ *   The direction the data will be flowing to, either from Drupal to
+ *   Salesforce, "drupal_sf", or Salesforce to Drupal, "sf_drupal".
+ * @param array $form_state
+ *   The current state of the form, used for storage and retreival of data.
+ *
+ * @return array
+ *   Array of sync rule options that can be used for #options in a form.
+ */
+function _sfm_get_sync_rule_options($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $form_state) {
+  $options = array(
+    SALESFORCE_SYNC_RULE_NEVER => t('Never'),
+    SALESFORCE_SYNC_RULE_BLANK => t('When blank'),
+    SALESFORCE_SYNC_RULE_APPEND => t('Merge values'),
+    SALESFORCE_SYNC_RULE_ALWAYS => t('Always'),
+  );
+
+  $allowed_options = array();
+  foreach ($options as $sync_rule => $label) {
+    $allowed = _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, $form_state);
+    if ($allowed) {
+      $allowed_options[$sync_rule] = $label;
+    }
+  }
+  return $allowed_options;
+}
+
+/**
+ * Checks to see if the given Drupal field and Salesforce field can sync.
+ *
+ * @param string $entity_type
+ *   Type of entity being checked.
+ * @param string $drupal_field
+ *   Field of the entity whose datatype is to be compared.
+ * @param string $salesforce_object_type
+ *   Type of Salesforce object being checked.
+ * @param string $salesforce_field
+ *   Field of the Salesforce object whose datatype is to be compared.
+ * @param string $direction
+ *   The direction the data will be flowing to, either from Drupal to
+ *   Salesforce, "drupal_sf", or Salesforce to Drupal, "sf_drupal".
+ * @param string $sync_rule
+ *   The sync rule being applied, SALESFORCE_SYNC_RULE_ALWAYS,
+ *   SALESFORCE_SYNC_RULE_BLANK, SALESFORCE_SYNC_RULE_APPEND, or
+ *   SALESFORCE_SYNC_RULE_NEVER.
+ * @param array $form_state
+ *   The current state of the form, used for storage and retreival of data.
+ *
+ * @return boolean
+ *   TRUE if they can sync and FALSE if they cannot.
+ */
+function _sfm_datatype_can_sync($entity_type, $drupal_field, $salesforce_object_type, $salesforce_field, $direction, $sync_rule, &$form_state) {
+  // We're being lenient here because we can very likely be passing no values in
+  // the form because the user hasn't yet selected a value for some of these
+  // vars.
+  if (empty($entity_type) || empty($drupal_field) || empty($salesforce_object_type) || empty($salesforce_field) || empty($direction) || empty($sync_rule)) {
+    return FALSE;
+  }
+
+  // The 'never' sync rule always passes because there is never any actual data
+  // being passed around in this case.
+  if ($sync_rule == SALESFORCE_SYNC_RULE_NEVER) {
+    return TRUE;
+  }
+
+  // Find the datatype for the Drupal field.
+  if (isset($form_state['sfm_storage']) && isset($form_state['sfm_storage']['drupal_datatype']) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type]) && isset($form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field])) {
+    $drupal_datatype = $form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field];
+  }
+  else {
+    $entity_properties = entity_get_all_property_info($entity_type);
+    $drupal_field_info = $entity_properties[$drupal_field];
+    $drupal_datatype = isset($drupal_field_info['type']) ? $drupal_field_info['type'] : 'text';
+    $form_state['sfm_storage']['drupal_datatype'][$entity_type][$drupal_field] = $drupal_datatype;
+  }
+
+  // Find the datatype for the Salesforce field.
+  if (isset($form_state['sfm_storage']) && isset($form_state['sfm_storage']['salesforce_datatype']) && isset($form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type]) && isset($form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type][$salesforce_field])) {
+    $salesforce_datatype = $form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type][$salesforce_field];
+  }
+  else {
+    $sfobject = _sfm_get_salesforce_object($salesforce_object_type, $form_state);
+    foreach ($sfobject['fields'] as $field_info) {
+      $form_state['sfm_storage']['salesforce_datatype'][$salesforce_object_type][$field_info['name']] = $field_info['type'];
+      if ($field_info['name'] == $salesforce_field) {
+        $salesforce_datatype = $field_info['type'];
+        break;
+      }
+    }
+  }
+
+  // This is taken straight from salesforce_mapping_property_validation().
+  $verify_array = array(
+    'sync' => array(
+      'string' => array('text', 'list<text>', 'uri'),
+      'int' => array('integer'),
+      'id' => array('integer'),
+      'datetime' => array('date'),
+      'email' => array('text'),
+    ),
+    'drupal_sf' => array(
+      'string' => array(),
+      'int' => array('integer'),
+      'id' => array('integer'),
+      'datetime' => array('date'),
+      'email' => array('text'),
+    ),
+    'sf_drupal' => array(
+      'string' => array('text', 'int', 'list<text>'),
+      'int' => array('integer'),
+      'id' => array('integer'),
+      'datetime' => array('date'),
+      'email' => array('text'),
+    ),
+  );
+
+  // The datatypes are compatible if the Drupal datatype is in the array for the
+  // given direction and Salesforce datatype, or is assumed to be compatible if
+  // there is not a rule or when the ruleset is empty.
+  if (
+       !isset($verify_array[$direction][$salesforce_datatype])
+       || empty($verify_array[$direction][$salesforce_datatype])
+       || in_array($drupal_datatype, $verify_array[$direction][$salesforce_datatype])
+     ) {
+    // These two datatypes can sync.  Now see if the the sync rule is compatible
+    // with this set.
+    $sync_restrictions = array(
+      SALESFORCE_SYNC_RULE_ALWAYS => array(),
+      SALESFORCE_SYNC_RULE_APPEND => array(
+        'drupal' => array(
+          'text',
+          'list<text>',
+        ),
+        'salesforce' => array(
+          'string',
+        ),
+      ),
+      SALESFORCE_SYNC_RULE_BLANK => array(),
+      // The 'never' sync rule returned TRUE in the very begining.
+    );
+    if (empty($sync_restrictions[$sync_rule])) {
+      // No rules mean no restrictions.
+      return TRUE;
+    }
+    else {
+      return (
+        in_array($drupal_datatype, $sync_restrictions[$sync_rule]['drupal'])
+        && in_array($salesforce_datatype, $sync_restrictions[$sync_rule]['salesforce'])
+      );
+    }
+  }
+  else {
+    // These two datatypes cannot sync.
+    return FALSE;
   }
 }
 
