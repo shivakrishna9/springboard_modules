@@ -25,6 +25,13 @@ class SalesforceSync {
   protected $soap;
 
   /**
+   * SalesforceSyncTokenScanner object used to do token replacements in batches.
+   *
+   * @var $tokenScanner
+   */
+  protected $tokenScanner;
+
+  /**
    * The maximum number of items that can be sent to Salesforce in one call.
    *
    * @var int
@@ -67,6 +74,7 @@ class SalesforceSync {
     $this->soap = is_null($soap) ? new SalesforceSoapPartner($this->sfapi) : $soap;
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
+    $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
   }
 
   /**
@@ -166,6 +174,8 @@ class SalesforceSync {
    */
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
+
+    debug($batch['object_type']);
     try {
       switch ($batch['operation']) {
         case 'CREATE':
@@ -293,8 +303,34 @@ class SalesforceSync {
       // No use continuing if this batch is already prepared.
       return;
     }
+    $this->batchReplaceTokens($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $batch['batch_prepared'] = TRUE;
+  }
+
+  /**
+   * Uses a SalesforceSyncTokenScanner instance to search for and replace 
+   * relationship tokens in a batch of items.
+   *
+   * @param array $batch
+   *   An array of instructions to send to Salesforce.  The array is structured
+   *   as follows:
+   *   <code>
+   *     $batch = array(
+   *       'operation' => 'UPSERT',
+   *       'dedupe_field' => 'Email',
+   *       'items' => array(
+   *         array of items...
+   *       ),
+   *       'sobjects' => array(
+   *         array of sobjects...
+   *       ),
+   *     );
+   *   </code>
+   */
+  public function batchReplaceTokens(&$batch) {
+    $this->tokenScanner->batchTokenReplace($batch);
+    //throw new Exception("TODO: Implement token replacement routine", 1);
   }
 
   /**
@@ -510,12 +546,16 @@ class SalesforceSync {
    */
   public function passItem($item, $result) {
     // Keep a log of newly created items.
+    // TODO: Include updates
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
       $item->sobject->Id = $result->id;
       $this->newSfRecords[] = $item;
       if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
         $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
         $this->processedItemIds[$item->object_type][$id_key] = $result->id;
+        // Pass the item to the token scanner's internal cache so it doesn't have
+        // to go to the db as often.
+        $this->tokenScanner->addItemToTokenCache($item, $result->id);
       }
     }
 
@@ -695,7 +735,7 @@ class SalesforceSync {
    *   Ids of items that have been processed keyed by their unique identifier.
    */
   public function getProcessedItemIds() {
-    return $this->getProcessedItemIds;
+    return $this->processedItemIds;
   }
 
   /**

@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Contains SalesforceQueueTokenScanner
+ * Contains SalesforceSyncTokenScanner
  */
 
 /**
  * Functionality for finding and replacing Salesforce relationship tokens.
  */
-class SalesforceQueueTokenScanner {
+class SalesforceSyncTokenScanner {
 
   /**
    * An array of processed Salesforce items.
@@ -96,7 +96,7 @@ class SalesforceQueueTokenScanner {
    * @param string $token
    *   The token to replace.
    */
-  protected function getTokenValueFromCache($token) {
+  public function getTokenValueFromCache($token) {
     // Split token into something useful for cache lookup.
     $token = $this->splitToken($token);
     // TODO: Optimize this! isset() perhaps?
@@ -116,15 +116,15 @@ class SalesforceQueueTokenScanner {
    * @param string $token
    *   The token to replace.
    */
-  protected function getTokenValueFromDB($token) {
+  public function getTokenValueFromDB($token) {
     // Split token into something useful for database lookup.
     $token = $this->splitToken($token);
 
     // Look for Id in object mapping db2_tables(connection)
-    $sfid = db_select('salesforce_genmap_record_map', 'm')
+    $sfid = db_select('salesforce_sync_map', 'm')
       ->fields('m', array('sfid'))
-      ->condition('salesforce_type', $token['sf_type'])
-      ->condition('module', $token['drupal_type'])
+      ->condition('object_type', $token['sf_type'])
+      ->condition('delta', $token['drupal_type'])
       ->condition('drupal_id', $token['drupal_id'])
       ->execute()
       ->fetchField();
@@ -170,9 +170,19 @@ class SalesforceQueueTokenScanner {
   }
 
   /**
+   * Adds an item to the token value cache.
+   *
+   * @param $item
+   *   The item to add to the cache.
+   */
+  public function addItemToTokenCache($item, $sfid) {
+    $this->tokenValueCache[$item->object_type][$item->delta][$item->drupal_id] = $sfid;
+  }
+
+  /**
    * Check if the cache is populated.
    */
-  protected function cachePopulated() {
+  public function cachePopulated() {
     return !empty($this->tokenValueCache);
   }
 

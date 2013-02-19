@@ -2,22 +2,22 @@
 
 /**
  * @file
- * Simpletests for SalesforceQueueTokenScanner class.
+ * Simpletests for SalesforceSyncTokenScanner class.
  */
 
 /**
  * Tests finding and replacing relationship tokens in queue batches.
  */
-class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
+class SalesforceSyncTokenTestCase extends DrupalWebTestCase {
 
   /**
    * Implementation of getInfo().
    */
   public static function getInfo() {
     return array(
-      'name' => 'SalesforceQueueTokenScanner',
+      'name' => 'Salesforce Sync Token Scanner',
       'description' => 'Tests finding and replacing relationship tokens in queue batches.',
-      'group' => 'Salesforce Queue',
+      'group' => 'Salesforce Sync',
     );
   }
 
@@ -30,7 +30,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
       'salesforce',
       'salesforce_soap',
       'salesforce_queue',
-      'salesforce_genmap',
+      'salesforce_sync',
     );
     parent::setUp($modules);
 
@@ -41,7 +41,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
    * Tests the token syntax.
    */
   public function testTokenSyntax() {
-    $token_scanner = new SalesforceQueueTokenScanner(NULL);
+    $token_scanner = new SalesforceSyncTokenScanner(NULL);
     $object = new stdClass();
     $object->fields = array(
       'FirstName' => 'John',
@@ -60,12 +60,32 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Tests adding new items to the token value cache.
+   */
+  public function testCacheAdditions() {
+    // Create an instance of the token scanner w/ no default cache.
+    $token_scanner = new SalesforceSyncTokenScanner(NULL);
+    $item = new stdClass();
+    $item->module = 'user';
+    $item->delta = 'user';
+    $item->object_type = 'Contact';
+    $item->drupal_id = '5';
+    
+    $token_scanner->addItemToTokenCache($item, '003400000109WfQAAP');
+
+    $this->assertEqual(TRUE, $token_scanner->cachePopulated(), 'Token cache is populated.');
+
+    $sfid = $token_scanner->getTokenValueFromCache('[Contact:user:5]');
+    $this->assertEqual('003400000109WfQAAP', $sfid, 'Correct value returned from cache.');
+  }
+
+  /**
    * Tests correct token replacement from the token cache.
    */
   public function testTokenReplacementFromCache() {
     // Create a mock token value cache.
     $token_value_cache = $this->getTokenValueCache();
-    $token_scanner = new SalesforceQueueTokenScanner($token_value_cache);
+    $token_scanner = new SalesforceSyncTokenScanner($token_value_cache);
 
     // Create an array of valid tokens.
     $object = new stdClass();
@@ -88,7 +108,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
   public function testTokenReplacementFromDb() {
     // Create a mock token value cache.
     $token_value_cache = $this->getTokenValueCache();
-    $token_scanner = new SalesforceQueueTokenScanner($token_value_cache);
+    $token_scanner = new SalesforceSyncTokenScanner($token_value_cache);
 
     // Create an array of valid tokens.
     $object = new stdClass();
@@ -111,7 +131,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
   public function testTokenReplacementMiss() {
     // Create a mock token value cache.
     $token_value_cache = $this->getTokenValueCache();
-    $token_scanner = new SalesforceQueueTokenScanner($token_value_cache);
+    $token_scanner = new SalesforceSyncTokenScanner($token_value_cache);
 
     // Create an array of valid tokens.
     $object = new stdClass();
@@ -133,7 +153,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
   public function testBatchTokenReplacementFromCache() {
     // Create a mock token value cache.
     $token_value_cache = $this->getTokenValueCache();
-    $token_scanner = new SalesforceQueueTokenScanner($token_value_cache);
+    $token_scanner = new SalesforceSyncTokenScanner($token_value_cache);
     $batch = $this->createBatch(200);
 
     // Time the operation.
@@ -155,7 +175,7 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
    */
   public function testBatchTokenReplacementFromDb() {
     $this->createObjectMapRecords();
-    $token_scanner = new SalesforceQueueTokenScanner(NULL);
+    $token_scanner = new SalesforceSyncTokenScanner(NULL);
     $batch = $this->createBatch(200);
 
     // Time the operation.
@@ -184,11 +204,11 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
           $record = array(
             'sfid' => $sfid,
             'module' => $type,
-            'delta' => NULL,
+            'delta' => $type,
             'drupal_id' => $drupal_id,
-            'salesforce_type' => $sf_type,
+            'object_type' => $sf_type,
           );
-          drupal_write_record('salesforce_genmap_record_map', $record);
+          drupal_write_record('salesforce_sync_map', $record);
         }
       }
     }
@@ -197,11 +217,11 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
     $record = array(
       'sfid' => '003400000109WfQAAP',
       'module' => 'User',
-      'delta' => NULL,
+      'delta' => 'User',
       'drupal_id' => 500,
-      'salesforce_type' => 'Contact',
+      'object_type' => 'Contact',
     );
-    drupal_write_record('salesforce_genmap_record_map', $record);
+    drupal_write_record('salesforce_sync_map', $record);
   }
 
   /**
@@ -221,6 +241,8 @@ class SalesforceQueueTokenTestCase extends DrupalWebTestCase {
         }
       }
     }
+
+    return $token_cache;
   }
 
   /**
