@@ -642,6 +642,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
   );
 
+  $form['#validate'][] = '_fundraiser_form_amounts_validate';
   // TODO this should probably go on a different table, not here.
   /* Hidden fields. These are set later on other forms, included here to prevent overwrite during saves. */
   $form['receipt_email_from'] = array(
@@ -667,6 +668,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
  * Validate handler for our component, also sets the default value
  */
 function _fundraiser_form_payment_method_validate($form, &$form_state) {
+  // Check the set payment methods.
   $values = $form_state['values']['gateways'];
   $default_method = isset($values['_default']) ? $values['_default'] : '';
   $enabled_methods = array_filter($values, '_fundraiser_payment_method_array_filter_enabled');
@@ -677,6 +679,16 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
     form_set_error('payment_methods', t('At least one payment method must be enabled.'));
   }
   else {
+    // Check that the marked payment type actually have selected gateways to match.
+    foreach ($enabled_methods as $method => $enabled_method) {
+      if (empty($enabled_method['id'])) {
+        form_set_error('gateways][' . $method .'][id', t('All enabled payment methods must select a gateway.'));
+      }
+      if (empty($enabled_method['label'])) {
+        form_set_error('gateways][' . $method .'][label', t('All enabled payment methods must set a label.'));
+      }
+    }
+    // Check that a default has been set.
     if (!isset($enabled_methods[$default_method])) {
       if (count($enabled_methods) == 1) {
         $default_method = key($enabled_methods);
@@ -689,6 +701,16 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
     else {
       $form_state['values']['gateways'][$default_method]['default'] = 1;
     }
+  }
+}
+
+/**
+ * Validate handler for amounts configuration.
+ */
+function _fundraiser_form_amounts_validate($form, &$form_state) {
+  $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
+  if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
+    form_set_error('minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
   }
 }
 
