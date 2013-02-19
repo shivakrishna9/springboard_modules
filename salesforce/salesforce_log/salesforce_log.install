@@ -99,15 +99,38 @@ function salesforce_log_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'drupal_id' => array(
+        'description' => 'The id of the Drupal object.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+      ),
+      'module' => array(
+        'description' => 'Name of the module that implements the Drupal type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'delta' => array(
+        'description' => 'Name or id of the Drupal sub-type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
       'sobject' => array(
         'description' => 'The Salesforce sObject in json format.',
         'type' => 'text',
         'size' => 'big',
         'not null' => TRUE,
-        'serialize' => TRUE
       ),
       'status' => array(
         'description' => 'Flag for success or failure.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'error_code' => array(
+        'description' => 'Error ID from Salesforce.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,

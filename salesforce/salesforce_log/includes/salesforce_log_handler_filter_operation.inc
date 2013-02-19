@@ -12,12 +12,10 @@
  */
 class salesforce_log_handler_filter_operation extends views_handler_filter_in_operator {
   function get_value_options() {
-    if (!isset($this->value_options)) {
-      $this->value_options = array(
-        'CREATE' => 'Create',
-        'UPDATE' => 'Update',
-        'UPSERT' => 'Upsert',
-      );
-    }
+    $this->value_options = array(
+      'CREATE' => 'Create',
+      'UPDATE' => 'Update',
+      'UPSERT' => 'Upsert',
+    );
   }
 }
