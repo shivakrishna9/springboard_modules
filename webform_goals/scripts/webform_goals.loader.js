@@ -1,5 +1,4 @@
 jQuery(document).ready(function() {
-
   var ids = [];
   items = jQuery('.wg-goal').map(function(){
     ids.push(jQuery(this).data('gid'));
@@ -11,7 +10,7 @@ jQuery(document).ready(function() {
     data: 'goal_ids=' + goal_ids,
     jsonp: 'jsonp_callback',
     // replace this url with the correct path for your site.
-    url: 'http://d7-springboard/sites/default/files/webform_goals/webform_goals.jsonp.php',
+    url: 'http://<your domain here>/<path to weform goals>/webform_goals/webform_goals.jsonp.php',
     success: function (data) {
       // unpack data and place accordingly.
       //  data format:
