@@ -710,7 +710,7 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
 function _fundraiser_form_amounts_validate($form, &$form_state) {
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
   if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
-    form_set_error('minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
+    form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
   }
 }
 
