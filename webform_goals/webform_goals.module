@@ -277,11 +277,6 @@ function webform_goals_token_info() {
     'name' => t('Total raw'),
     'description' => t('Unformatted total progress towards goal.'),
   );
-  $info['tokens']['webform_goal']['node'] = array(
-    'name' => t('Webform Node'),
-    'description' => t('The webform node the goal is being processed for.'),
-    'type' => 'node',
-  );
 
   return $info;
 }
@@ -305,16 +300,16 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
     foreach($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
-          $replacements[$token] = date('m-d-Y', $data['webform_goal']['start_date']);
+          $replacements[$token] = date('m-d-Y', $goal['start_date']);
           break;
         case 'end_date':
-          $replacements[$token] = date('m-d-Y', $data['webform_goal']['end_date']);
+          $replacements[$token] = date('m-d-Y', $goal['end_date']);
           break;
         case 'progress-raw':
           $replacements[$token] = $goal_progress['progress'];
           break;
         case 'progress-bar':
-          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal_gid, 'goal_progress' => $goal_progress['progress']));
+          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $goal_progress['progress']));
           break;
         case 'starter-message':
           $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
@@ -336,12 +331,8 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $replacements[$token] = $goal_progress['count'];
       }
     }
-
-    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
-    }
+    return $replacements;
   }
-  return $replacements;
 }
 
 /**
@@ -564,10 +555,7 @@ function webform_goals_list_context() {
 }
 
 function webform_goals_list_metrics($selected_context, $form_state = array(), $goal = array()) {
-  static $metrics = array();
-  if (empty($metrics)) {
-    $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
-  }
+  $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
   return $metrics;
 }
 
