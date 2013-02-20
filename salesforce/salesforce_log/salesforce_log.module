@@ -74,8 +74,11 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
   $batch['delta'] = $batch['items'][0]->delta;
   drupal_write_record('salesforce_log_batch', $batch);
   foreach ($batch['items'] as $item) {
-    $item->bid = $batch['bid'];
-    drupal_write_record('salesforce_log_item', $item);
+    $record = _salesforce_log_prepare_item_record($item);
+    $record->bid = $batch['bid'];
+    $record->status = 'enqueued';
+    drupal_write_record('salesforce_log_item', $record);
+    $item->lid = $record->lid;
   }
 }
 
@@ -90,9 +93,11 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
  *   Information about the failure, likely a Salesforce result object
  */
 function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
-  $item->status = 'failed';
-  $item->message = $result->faultstring;
-  drupal_write_record('salesforce_log_item', $item, array('lid'));
+  $record = _salesforce_log_prepare_item_record($item);
+  $record->status = 'failed';
+  $record->error_code = !empty($result->faultcode) ? $result->faultcode : $result->errors[0]->statusCode;
+  $record->message = !empty($result->faultstring) ? $result->faultstring : $result->errors[0]->message;
+  drupal_write_record('salesforce_log_item', $record, array('lid'));
 }
 
 /**
@@ -104,9 +109,10 @@ function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
  *   The Salesforce response after the call was made
  */
 function salesforce_log_salesforce_sync_pass_item($item, $result) {
-  $item->status = 'synced';
-  $item->sfid = $result->id;
-  drupal_write_record('salesforce_log_item', $item, array('lid'));
+  $record = _salesforce_log_prepare_item_record($item);
+  $record->status = 'synced';
+  $record->sfid = $result->id;
+  drupal_write_record('salesforce_log_item', $record, array('lid'));
 }
 
 /*
@@ -114,16 +120,126 @@ function salesforce_log_salesforce_sync_pass_item($item, $result) {
  */
 function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $queue) {
   $batch['end'] = time();
-  $batch['successes'] = count(array_filter($batch['items'], '_salesforce_log_array_filter_batch_successes'));
-  $batch['failures'] = $batch['count'] - $batch['successes'];
+  // In a soapfault there are no results, all have failed
+  if (!empty($results)) {
+    $batch['successes'] = count(array_filter($results, '_salesforce_log_array_filter_batch_successes'));
+    $batch['failures'] = $batch['count'] - $batch['successes'];
+  }
+  else {
+    $batch['successes'] = 0;
+    $batch['failures'] = $batch['count'];
+  }
   drupal_write_record('salesforce_log_batch', $batch, array('bid'));
 }
 
 /*
  * Array filter callback to find the count of successfully synced batch items
  */
-function _salesforce_log_array_filter_batch_successes($item) {
-  if (!empty($item->sobject)) {
+function _salesforce_log_array_filter_batch_successes($result) {
+  if ($result->success === 1) {
+    return TRUE;
+  }
+}
+
+/**
+ * Prepare an item for being written to the log table
+ * 
+ * @param object $item
+ *   Queue item
+ * @param varchar $record
+ *   An object ready to be passed to drupal_write_record
+ */
+function _salesforce_log_prepare_item_record($item) {
+  $record = new stdClass();
+  // Values from the queue
+  $record->item_id = $item->item_id;
+  $record->drupal_id = $item->drupal_id;
+  $record->module = $item->module;
+  $record->delta = $item->delta;
+  $record->object_type = $item->object_type;
+  $record->operation = $item->operation;
+  $record->dedupe_field = $item->dedupe_field;
+  $record->retries = $item->retries;
+  $record->queue = $item->queue;
+  $record->sobject = json_encode($item->sobject);
+
+  // Values from the log process
+  if (!empty($item->lid)) {
+    $record->lid = $item->lid;
+  }
+  if (!empty($item->bid)) {
+    $record->bid = $item->bid;
+  }
+
+  return $record;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_log_entity_info() {
+  return array(
+    // Maps Salesforce objects and fields to components of Drupal.
+    'salesforce_log_item' => array(
+      'label' => t('Salesforce log item'),
+      'entity class' => 'Entity',
+      'base table' => 'salesforce_log_item',
+      'entity keys' => array(
+        'id' => 'lid',
+        'label' => 'item_id',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_log',
+      'deletion callback' => 'salesforce_log_item_entity_delete',
+    ),
+  );
+}
+
+/**
+ * Callback to delete a log item
+ */
+function salesforce_log_item_entity_delete($lid) {
+  db_delete('salesforce_log_item')
+    ->condition('lid', $lid)
+    ->execute();
+}
+
+/**
+ * Implementation of hook_action_info().
+ */
+function salesforce_log_action_info() {
+  return array(
+    'salesforce_log_salesforce_log_item_requeue_action' => array(
+      'description' => t('Requeue'),
+      'label' => t('Requeue Salesforce log item'),
+      'type' => 'salesforce_log_item',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+/**
+ * Requeue log item action
+ */
+function salesforce_log_salesforce_log_item_requeue_action($item) {
+  $new = array();
+  $values = array(
+    'drupal_id',
+    'module',
+    'delta',
+    'object_type',
+    'operation',
+    'dedupe_field',
+  );
+  foreach ($values as $value) {
+    $new[$value] = $item->{$value};
+  }
+  $new['sobject'] = json_decode($item->sobject);
+  $queue = salesforce_queue_load();
+  $result = $queue->createItem($new);
+  if ($result) {
     return TRUE;
   }
 }

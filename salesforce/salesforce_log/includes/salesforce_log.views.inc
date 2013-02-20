@@ -13,7 +13,7 @@ function salesforce_log_views_data() {
 
   // Define the base group of this table. Fields that don't
   // have a group defined will go into this field by default.
-  $data['salesforce_log_batch']['table']['group']  = t('Salesforce logs');
+  $data['salesforce_log_batch']['table']['group']  = t('Salesforce batch log');
 
   // Advertise this table as a possible base table
   $data['salesforce_log_batch']['table']['base'] = array(
@@ -212,7 +212,7 @@ function salesforce_log_views_data() {
 
   // Define the base group of this table. Fields that don't
   // have a group defined will go into this field by default.
-  $data['salesforce_log_item']['table']['group']  = t('Salesforce logs');
+  $data['salesforce_log_item']['table']['group']  = t('Salesforce item log');
 
   // Advertise this table as a possible base table
   $data['salesforce_log_item']['table']['base'] = array(
@@ -309,12 +309,148 @@ function salesforce_log_views_data() {
     ),
   );
 
+  // Drupal id
+  $data['salesforce_log_item']['drupal_id'] = array(
+    'title' => t('Drupal ID'), 
+    'help' => t('The Drupal ID of this item.'), 
+    'field' => array(
+      'handler' => 'views_handler_field_numeric', 
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric', 
+      'numeric' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ), 
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+
+  // module
+  $data['salesforce_log_item']['module'] = array(
+    'title' => t('Module'),
+    'help' => t('The module linked to the item.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'salesforce_log_handler_filter_module',
+    ),
+  );
+
+  // delta
+  $data['salesforce_log_item']['delta'] = array(
+    'title' => t('Delta'),
+    'help' => t('The delta of the item.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
+  // queue
+  $data['salesforce_log_item']['queue'] = array(
+    'title' => t('Queue'),
+    'help' => t('The name of the processing queue this item was within.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'salesforce_log_handler_filter_queue',
+    ),
+  );
+
+  // retries
+  $data['salesforce_log_item']['retries'] = array(
+    'title' => t('Retries'),
+    'help' => t('Number of times this item has failed attempts to be processed.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ), 
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+      'numeric' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+
+  // object_type
+  $data['salesforce_log_item']['object_type'] = array(
+    'title' => t('Object type'),
+    'help' => t('The Salesforce object of the items in this batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field', 
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'salesforce_log_handler_filter_object_type',
+    ),
+  );
+
+  // operation
+  $data['salesforce_log_item']['operation'] = array(
+    'title' => t('Operation'),
+    'help' => t('The sync operation of this batch.'),
+    'field' => array(
+      'handler' => 'views_handler_field', 
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'salesforce_log_handler_filter_operation',
+    ),
+  );
+
+  // dedupe field
+  $data['salesforce_log_item']['dedupe_field'] = array(
+    'title' => t('Dedupe field'),
+    'help' => t('The Salesforce field to dedupe on during UPSERT operations.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
   // status
   $data['salesforce_log_item']['status'] = array(
     'title' => t('Status'),
     'help' => t('The status of this item after it was synced.'),
     'field' => array(
-      'handler' => 'views_handler_field', 
+      'handler' => 'views_handler_field',
       'click sortable' => TRUE,
     ),
     'sort' => array(
@@ -326,9 +462,25 @@ function salesforce_log_views_data() {
   );
 
   // message
+  $data['salesforce_log_item']['error_code'] = array(
+    'title' => t('Error code'),
+    'help' => t('The error code returned from salesforce if this item failed to sync.'),
+    'field' => array(
+      'handler' => 'views_handler_field', 
+      'click sortable' => TRUE,
+    ), 
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
+  // message
   $data['salesforce_log_item']['message'] = array(
     'title' => t('Message'),
-    'help' => t('The message returned from salesforce when this item was synced.'),
+    'help' => t('The message returned from salesforce if this item failed to sync.'),
     'field' => array(
       'handler' => 'views_handler_field', 
       'click sortable' => TRUE,
