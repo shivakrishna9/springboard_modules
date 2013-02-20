@@ -45,6 +45,26 @@ function salesforce_log_views_api() {
 }
 
 /**
+ * Implements hook_views_pre_view().
+ *
+ * Adding our js files for our views
+ * @param $view
+ *   The view object about to be processed.
+ * @param $display_id
+ *   The machine name of the active display.
+ * @param $args
+ *   An array of arguments passed into the view.
+ */
+function salesforce_log_views_pre_view(&$view, &$display_id, &$args) {
+  $views = array('salesforce_log_item', 'salesforce_log_batch', 'salesforce_queue');
+  if (in_array($view->name, $views)) {
+    $path = drupal_get_path('module', 'salesforce_log');
+    drupal_add_js($path . '/js/jquery.expander.min.js');
+    drupal_add_js($path . '/js/salesforce-log.admin.js');
+  }
+}
+
+/**
  * Implement hook_permission().
  */
 function salesforce_log_permission() {

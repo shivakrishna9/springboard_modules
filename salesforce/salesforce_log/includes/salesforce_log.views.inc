@@ -429,6 +429,22 @@ function salesforce_log_views_data() {
     ),
   );
 
+  // sobject
+  $data['salesforce_log_item']['sobject'] = array(
+    'title' => t('Salesforce sObject'),
+    'help' => t('The Salesforce sObject in json format.'),
+    'field' => array(
+      'handler' => 'salesforce_log_handler_field_sobject', 
+      'click sortable' => FALSE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
   // dedupe field
   $data['salesforce_log_item']['dedupe_field'] = array(
     'title' => t('Dedupe field'),
@@ -461,7 +477,7 @@ function salesforce_log_views_data() {
     ),
   );
 
-  // message
+  // error code
   $data['salesforce_log_item']['error_code'] = array(
     'title' => t('Error code'),
     'help' => t('The error code returned from salesforce if this item failed to sync.'),
@@ -651,8 +667,8 @@ function salesforce_log_views_data() {
     'title' => t('Salesforce sObject'),
     'help' => t('The Salesforce sObject in json format.'),
     'field' => array(
-      'handler' => 'views_handler_field', 
-      'click sortable' => TRUE,
+      'handler' => 'salesforce_log_handler_field_sobject', 
+      'click sortable' => FALSE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
