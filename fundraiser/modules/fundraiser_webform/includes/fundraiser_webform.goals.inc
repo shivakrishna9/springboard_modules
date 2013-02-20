@@ -66,7 +66,7 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
             $data['count'] += $donations;
           }
         }
-        $data['count'] = number_format($data['count'], 2); // Alligator wrestling to keep format identical with single values.
+        $data['count'] = number_format((float) $data['count'], 2); // Alligator wrestling to keep format identical with single values.
         $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
       }
     }
