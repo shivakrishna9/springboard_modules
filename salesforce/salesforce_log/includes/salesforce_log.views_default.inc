@@ -12,7 +12,7 @@ function salesforce_log_views_default_views() {
   $views = array();
 
   $view = new view();
-  $view->name = 'salesforce log_item';
+  $view->name = 'salesforce_log_item';
   $view->description = '';
   $view->tag = 'salesforce log';
   $view->base_table = 'salesforce_log_item';
@@ -247,6 +247,7 @@ function salesforce_log_views_default_views() {
   $handler->display->display_options['fields']['message']['id'] = 'message';
   $handler->display->display_options['fields']['message']['table'] = 'salesforce_log_item';
   $handler->display->display_options['fields']['message']['field'] = 'message';
+  $handler->display->display_options['fields']['message']['element_class'] = 'expander';
   $handler->display->display_options['fields']['message']['element_label_colon'] = FALSE;
   /* Field: Salesforce item log: Salesforce id */
   $handler->display->display_options['fields']['sfid']['id'] = 'sfid';

@@ -708,6 +708,25 @@ function _fundraiser_form_payment_method_validate($form, &$form_state) {
  * Validate handler for amounts configuration.
  */
 function _fundraiser_form_amounts_validate($form, &$form_state) {
+  // Check the ask amounts, if we have a label and we dong have an amount, throw a fit.
+  // If we have neither, assume it's meant to be empty and leave it be (it will be removed).
+  $amounts = $form_state['values']['amount_wrapper']['donation_amounts'];
+  foreach ($amounts as $index => $amount_set) {
+    if (!empty($amount_set['amount']) && empty($amount_set['label'])) {
+      form_set_error('amount_wrapper][donation_amounts][' . $index . '][label',
+        t('The label cannot be empty when an amount is set.'));
+    }
+    if (empty($amount_set['amount']) && !empty($amount_set['label'])) {
+      form_set_error('amount_wrapper][donation_amounts][' . $index . '][amount',
+        t('The amount cannot be empty when a label is set.'));
+    }
+    if (!is_numeric($amount_set['amount'])) {
+      form_set_error('amount_wrapper][donation_amounts][' . $index . '][amount',
+        t('The amount must be a number.'));
+    }
+  }
+
+  // Checking the minimum amount.
   $minimum_donation_amount = $form_state['values']['amount_wrapper']['minimum_donation_amount'];
   if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
     form_set_error('amount_wrapper][minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
