@@ -22,6 +22,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#type' => 'textfield',
     '#title' => t('Goal name'),
     '#default_value' => isset($goal['name']) ? $goal['name'] : '',
+    '#required' => TRUE,
   );
   $contexts = webform_goals_list_context();
   $selected_context = _webform_goals_get_selected_context($form_state, $goal);
@@ -112,17 +113,21 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   $form['goal_wrapper'] = array(
     '#type' => 'fieldset',
     '#title' => t('Goal'),
+    '#prefix' => '<div id="options-goal-settings">',
+    '#suffix' => '</div>',
   );
   $form['goal_wrapper']['target_value'] = array(
     '#type' => 'textfield',
     '#size' => 8,
-    '#title' => t('Set a target number for your goal'),
-    '#description' => t('This tells us what your goal is shooting for.'),
+    '#title' => !empty($selected_metric['form_text']['target_value']['title']) ? $selected_metric['form_text']['target_value']['title'] : t('Set a target number for your goal'),
+    '#description' => !empty($selected_metric['form_text']['target_value']['description']) ? $selected_metric['form_text']['target_value']['description'] : t('This tells us what your goal is shooting for.'),
     '#default_value' => !empty($goal['target_value']) ? $goal['target_value'] : '',
+    '#required' => TRUE,
   );
   $form['goal_wrapper']['seed'] = array(
     '#type' => 'textfield',
-    '#title' => t('Add this much to the initial goal progress'),
+    '#title' => !empty($selected_metric['form_text']['seed']['title']) ? $selected_metric['form_text']['seed']['title'] : t('Add this much to the initial goal progress'),
+    '#description' => !empty($selected_metric['form_text']['seed']['description']) ? $selected_metric['form_text']['seed']['description'] : t(''),
     '#size' => 8,
     '#attributes' => array('name' => 'seed'),
     '#default_value' => !empty($goal['seed']) ? $goal['seed'] : '',
@@ -132,8 +137,8 @@ function webform_goals_add($form, $form_state, $goal = array()) {
   // Attach js event to onchange or similar to conditionally show starter message ui
   $form['goal_wrapper']['display_threshold'] = array(
     '#type' => 'textfield',
-    '#title' => t('Progress bar display threshold'),
-    '#description' => t('The starter message will be displayed until goal progress meets this minimum.'),
+    '#title' => !empty($selected_metric['form_text']['display_threshold']['title']) ? $selected_metric['form_text']['display_threshold']['title'] : t('Progress bar display threshold'),
+    '#description' => !empty($selected_metric['form_text']['display_threshold']['description']) ? $selected_metric['form_text']['display_threshold']['description'] : t('The starter message will be displayed until goal progress meets this minimum.'),
     '#size' => 8,
     '#id' => 'edit-display_threshold',
     '#attributes' => array('name' => 'display_threshold', 'class' => array('container-inline')),
@@ -174,7 +179,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#date_format' => $format,
     '#date_year_range' => '-3:+3',
     '#date_label_position' => 'within',
-    '#default_value' => !empty($goal['start_date']) ? date('m-d-Y', $goal['start_date']) : NULL,
+    '#default_value' => !empty($goal['start_date']) ? date('Y-m-d h:i:s', $goal['start_date']) : NULL,
   );
   $form['timeframe']['end_date'] = array(
     '#type' => 'date_select',
@@ -182,7 +187,7 @@ function webform_goals_add($form, $form_state, $goal = array()) {
     '#date_format' => $format,
     '#date_year_range' => '-3:+3',
     '#date_label_position' => 'within',
-    '#default_value' => !empty($goal['end_date']) ? date('m-d-Y', $goal['end_date']) : NULL,
+    '#default_value' => !empty($goal['end_date']) ? date('Y-m-d h:i:s', $goal['end_date']) : NULL,
   );
   $form['timeframe']['auto_expire'] = array(
     '#type' => 'checkbox',
@@ -224,7 +229,8 @@ function webform_goals_add_validate(&$form, &$form_state) {
 /**
  * Submission handler for goal add/edit form.
  */
-function webform_goals_add_submit($form, $form_state) {
+function webform_goals_add_submit($form, &$form_state) {
+  require_once('includes/webform_goals.files.inc');
 
   $settings = array(
     'gid' => !empty($form_state['values']['gid']) ? $form_state['values']['gid'] : '',
@@ -248,14 +254,15 @@ function webform_goals_add_submit($form, $form_state) {
   $extra = $settings['extra'];
   $settings['extra'] = serialize($extra);
   $save = drupal_write_record('webform_goals', $settings, $update);
-
+  $settings['extra'] = $extra;
+  $nid = !empty($extra['selected_form_id']) ? $extra['selected_form_id'] : 0;
   $widget = array(
     'gid' => $settings['gid'],
-    'widget' => theme('webform_goals_widget', array('goal' => $settings)),
+    'widget' => theme('webform_goals_widget', array('webform_goal' => $settings, 'nid' => $nid)),
   );
- 
-  drupal_write_record('webform_goals_widget', $widget, $update);
 
+  drupal_write_record('webform_goals_widget', $widget, $update);
+  _webform_goals_file_insert($settings, $widget['widget']);
   if ($save == SAVED_NEW) {
 
     $settings['extra'] = $extra;
@@ -270,6 +277,7 @@ function webform_goals_add_submit($form, $form_state) {
       drupal_write_record('webform_goals_node', $node_settings);
     }
   }
+  $form_state['redirect'] = array('admin/config/content/webform_goals');
 }
 
 /**
@@ -305,7 +313,7 @@ function webform_goals_metrics_callback($form, $form_state) {
     '#type' => 'ajax',
     '#commands' => array(
       ajax_command_replace('#context-metrics', render($form['metrics_wrapper'])),
-      ajax_command_replace("#context-threshold", render($form['display_threshold_wrapper'])),
+      ajax_command_replace("#options-goal-settings", render($form['goal_wrapper'])),
       ajax_command_replace('#context-seed', theme_status_messages() . render($form['seed_wrapper'])),
     )
   );

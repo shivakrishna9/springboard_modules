@@ -63,23 +63,6 @@ function webform_goals_menu() {
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,
     'file' => 'webform_goals.forms.inc',
-  );/*
-  $items['node/%webform_menu/webform/goals'] = array(
-    'title' => 'Goals',
-    'description' => t('Configure goal settings for this webform'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('webform_goals_settings'),
-    'access callback' => TRUE,
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'includes/webform_goals.forms.inc',
-  );*/
-  // TODO: remove. debugging code.
-  // BUG: remove. debugging code.
-  $items['webform_goals'] = array(
-    'title' => 'webform goals test page',
-    'page callback' => 'webform_goals_test_page',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
   );
   $items['webform_goals/%webform_goal/embed'] = array(
     'title' => 'Embeddable widget code',
@@ -105,7 +88,7 @@ function webform_goals_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/webform_goals.widget.inc',
   );
-  // TODO: declare api endpoint?
+
   return $items;
 }
 
@@ -274,9 +257,17 @@ function webform_goals_token_info() {
     'name' => t('Goal end date'),
     'description' => t('Goal progress calculation ends on this date.'),
   );
-  $info['tokens']['webform_goal']['progress'] = array(
+  $info['tokens']['webform_goal']['progress-raw'] = array(
     'name' => t('Goal progress raw'),
     'description' => t('Unfortmatted percentage of goal currently met.'),
+  );
+  $info['tokens']['webform_goal']['progress-bar'] = array(
+    'name' => t('CSS driven progress bar'),
+    'description' => t('Themed progress bar showing goal progress percentage'),
+  );
+  $info['tokens']['webform_goal']['progress-starter'] = array(
+    'name' => t('Progress bar/starter message'),
+    'description' => t('Displayes themed progress bar or starter message if display threshold has not been met.'),
   );
   $info['tokens']['webform_goal']['target'] = array(
     'name' => t('Goal target'),
@@ -285,11 +276,6 @@ function webform_goals_token_info() {
   $info['tokens']['webform_goal']['total'] = array(
     'name' => t('Total raw'),
     'description' => t('Unformatted total progress towards goal.'),
-  );
-  $info['tokens']['webform_goal']['node'] = array(
-    'name' => t('Webform Node'),
-    'description' => t('The webform node the goal is being processed for.'),
-    'type' => 'node',
   );
 
   return $info;
@@ -301,8 +287,9 @@ function webform_goals_token_info() {
 function webform_goals_tokens($type, $tokens, $data = array(), $options = array()) {
 
   if ($type = 'webform_goal' && !empty($data['webform_goal'])) {
-    $goal_progress = webform_goals_track_metric($data['webform_goal']);
 
+    $goal_progress = webform_goals_track_metric($data['webform_goal']);
+    $goal = $data['webform_goal'];
     $standard_tokens = array('gid', 'name', 'starter_message', 'display_threshold');
     foreach($standard_tokens as $standard) {
       if (isset($tokens[$standard])) {
@@ -313,13 +300,29 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
     foreach($tokens as $key => $token) {
       switch ($key) {
         case 'start_date':
-          $replacements[$token] = date('m-d-Y', $data['webform_goal']['start_date']);
+          $replacements[$token] = date('m-d-Y', $goal['start_date']);
           break;
         case 'end_date':
-          $replacements[$token] = date('m-d-Y', $data['webform_goal']['end_date']);
+          $replacements[$token] = date('m-d-Y', $goal['end_date']);
           break;
-        case 'progress':
+        case 'progress-raw':
           $replacements[$token] = $goal_progress['progress'];
+          break;
+        case 'progress-bar':
+          $replacements[$token] = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $goal_progress['progress']));
+          break;
+        case 'starter-message':
+          $replacements[$token] = check_markup($goal['starter_message'], $goal['starter_message_format']);
+          break;
+        case 'progress-starter':
+          $output = '';
+          if ($goal_progress['progress'] >= $data['webform_goal']['display_threshold']) {
+            $output = theme('webform_goals_progress_bar', $goal['gid'], $goal_progress['progress']);
+          }
+          elseif (!empty($goal['starter_message'])) {
+            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
+          }
+          $replacements[$token] = $output;
           break;
         case 'target':
           $replacements[$token] = $data['webform_goal']['target_value'];
@@ -328,13 +331,8 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $replacements[$token] = $goal_progress['count'];
       }
     }
-
-    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
-    }
+    return $replacements;
   }
-
-  return $replacements;
 }
 
 /**
@@ -345,9 +343,10 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
  * @param $update
  * 'gid' if updating an existing record or array() if inserting new.
  */
-function webform_goals_update_widget($goal, $update = array()) {
+function webform_goals_update_widget($args, $update = array()) {
   require_once('includes/webform_goals.files.inc');
-
+  $goal = $args['webform_goal'];
+  $nid = !empty($args['nid']) ? $args['nid'] : 0;
   $settings = array(
     'gid' => $goal['gid'],
     'widget' => theme('webform_goals_widget', $goal),
@@ -415,39 +414,67 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       ),
       'template' => 'templates/webform_goals.widget_loader',
     ),
+    'webform_goals_progress_bar' => array(
+      'variables' => array(
+        'goal_id' => NULL,
+        'goal_progress' => NULL,
+      ),
+      'template' => 'templates/webform_goals.progress_bar',
+    ),
   );
 }
 
-function theme_webform_goals_widget($goal) {
+/**
+ * Implements theme_hook().
+ *
+ * Applies appropriate template filtering and token replacement to
+ * goal templates when rendering a widget.
+ */
+function theme_webform_goals_widget($args) { //$goal) {
+  $goal = $args['webform_goal'];
   $nid = isset($goal['extra']['selected_form_id']) ? $goal['extra']['selected_form_id'] : 0;
   $template = token_replace($goal['template'], array('webform_goal' => $goal, 'nid' => $nid));
   $template_filtered = check_markup($template, $goal['template_format']);
-  return $template_filtered;
+  $data['markup'] = $template_filtered;
+  $data['tokens'] = _webform_goals_pack_tokens($goal, $nid);
+  return serialize($data);
 }
 
+function  _webform_goals_pack_tokens($goal, $nid) {
+  $tokens = webform_goals_token_info();
+  foreach ($tokens['tokens']['webform_goal'] as $key => $value) {
+    // I had this nifty idea where I packed all the tokens down with json_encode and then
+    // replaced them in one go. Unfortunately the markup tokens screw up the decode.
+    $tokens_replaced["[webform_goal:$key]"] = token_replace("[webform_goal:$key]", array('webform_goal' => $goal, 'nid' => $nid));
+  }
+
+  return $tokens_replaced;
+}
+
+/**
+ * Implements template_preprocess_hook().
+ *
+ * Set up template variables for the widget loader template.
+ */
 function template_preprocess_webform_goals_widget_loader(&$vars) {
   $uri = 'webform_goals/template-' . $vars['gid'] . '.html';
   $file_uri = file_create_url(file_build_uri($uri));
   $vars['file_url'] = $file_uri;
 }
 
-function webform_goals_test_page() {
-  $gid = !empty($_GET['gid']) ? $_GET['gid'] : 1;
-  $nid = !empty($_GET['nid']) ? $_GET['nid'] : 2;
-  $goal = webform_goal_load($gid);
-  $vars['goal'] = $goal;
-  $output = theme('webform_goals_widget', $vars);
-  return $output;
-}
 
 /**
- * Is the current goal expired?
+ * Goal status, used by admin display.
  */
 function webform_goals_goal_status($goal) {
+
 
   if ($goal['end_date'] && $goal['end_date'] < time()) {
 
     return $goal['auto_expire'] ? t('expired') : t('ended');
+  }
+  if ($goal['start_date'] > time()) {
+    return t('pending');
   }
   return t('active');
 }
@@ -528,10 +555,7 @@ function webform_goals_list_context() {
 }
 
 function webform_goals_list_metrics($selected_context, $form_state = array(), $goal = array()) {
-  static $metrics = array();
-  if (empty($metrics)) {
-    $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
-  }
+  $metrics = module_invoke_all('webform_goals_list_metrics', $selected_context, $form_state, $goal);
   return $metrics;
 }
 

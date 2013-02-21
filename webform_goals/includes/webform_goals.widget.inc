@@ -5,14 +5,6 @@
  */
 
 /**
- * Retrieve goal from db and serve widget markup.
- */
-function webform_goals_serve_widget($widget) {
-  print $widget;
-  exit();
-}
-
-/**
  * Rebuild widget markup for goals flagged for update.
  */
 function webform_goals_rebuild_widgets() {
@@ -43,7 +35,7 @@ function webform_goals_widget_display_embed($goal) {
   ctools_include('modal');
   ctools_include('ajax');
   $embed = theme('webform_goals_widget_loader', $goal);
-  $output = '<h1>' . t('') . '</h1>';
+  $output = '<p>' . t('copy and paste this code to embed your goal') . '</p>';
   $output .= '<pre><code>' . htmlentities($embed) . '</code></pre>';
   return ctools_modal_render('Embeddable', $output);
 }
