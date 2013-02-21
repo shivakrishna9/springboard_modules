@@ -12,7 +12,6 @@
  */
 class salesforce_log_handler_field_sobject extends views_handler_field {
   function render($values) {
-    dpm('here');
     $value = $values->{$this->field_alias};
 
     return '<pre>' . check_plain(print_r(json_decode($value), TRUE)) . '</pre>';
