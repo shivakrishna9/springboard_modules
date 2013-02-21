@@ -96,9 +96,23 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
       $metrics['custom_field'] = array(
         'id' => 'custom_field',
         'name' => t('Custom field '),
-        'description' => t('Goal progress will be calculated based on the total number of times this webform has been submitted.'),
+        'description' => t('Goal progress will be calculated based on the sum of values submitted by this field.'),
         'settings_callback' => 'webform_goals_single_custom_fields',
-        'child_elements' => $elements,
+        'child_elements' => $elements, // TODO: replace with callback.
+        'form_text' => array(
+          'target_value' => array(
+            'title' => t('What is the total field value required to meet this goal?'),
+            'description' => t('Goal progress represents the sum of all values submitted to the selected field as a percentage of this number.'),
+          ),
+          'seed' => array(
+            'title' => t('Seed goal progress with this value'),
+            'description' => t('Add this number to the current total when calculating goal progress.'),
+          ),
+          'display_threshold' => array(
+            'title' => t('Minimum total values required to show progress'),
+            'description' => t('The goal progress bar will be hidden until the total values in the selected field reach this number.'),
+          ),
+        ),
       );
     case 'group':
     default:
@@ -106,6 +120,20 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
         'id' => 'submission_count',
         'name' => t('Number of form submissions'),
         'description' => t('Goal progress will be calculated based on the total number of times this webform has been submitted.'),
+        'form_text' => array(
+          'target_value' => array(
+            'title' => t('How many submissions are required to meet this goal?'),
+            'description' => t('Goal progress represents the total number of submissions for the selected form as a percentage of this number.'),
+          ),
+          'seed' => array(
+            'title' => t('Seed goal progress with submissions'),
+            'description' => t('Add this number to the current submissions when calculating goal progress.'),
+          ),
+          'display_threshold' => array(
+            'title' => t('Minimum submissions required to show progress.'),
+            'description' => t('The goal progress bar will be hidden until this number of submissions have been made to the selected webform.'),
+          ),
+        ),
       );
   }
   return $metrics;
@@ -144,8 +172,8 @@ function webform_goals_webform_goals_track_metric($goal, $params = array()) {
     // TODO: add case for global with provided nid.
     else {
       // TODO: calculate submissions across group.
-      $data['count'] = 'N/A multiple';
-      $data['progress'] = 'N/A multiple';
+      $data['count'] = _webform_goals_total_submissions($goal['extra']['selected_node_type']);
+      $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
     }
     return $data;
   }
@@ -177,6 +205,25 @@ function _webform_goals_count_submissions($nid, $start = FALSE, $end = FALSE) {
   $num_rows = $query->countQuery()->execute()->fetchField();
 
   return $num_rows;
+}
+
+function _webform_goals_total_submissions($node_type, $start = FALSE, $end = FALSE) {
+  // SELECT COUNT(ws.sid)
+  // FROM webform_submissions ws
+  // INNER JOIN {node} n
+  //   ON ws.nid = n.nid
+  // WHERE n.type = :type
+  $query = db_select('webform_submissions', 'ws');
+  $query->join('node', 'n', 'ws.nid = n.nid');
+  $query->addExpression('COUNT(ws.sid)');
+  $query->condition('n.type', $node_type, '=');
+  if ($start) {
+    $query->condition('ws.submitted', $start, '>=');
+  }
+  if ($end) {
+    $query->condition('ws.submitted', $end, '<=');
+  }
+  return $query->execute()->fetchField();
 }
 
 /**

@@ -16,6 +16,20 @@ function fundraiser_sustainers_webform_goals_list_metrics($selected_context, $fo
         'id' => 'fundraiser_sustainer_count',
         'name' => t('Number of sustainer coversions'),
         'description' => t('Goal progress will be calculated based on the number of sustainer conversions.'),
+        'form_text' => array(
+          'target_value' => array(
+            'title' => t('Total number of sustainer conversions required to meet this goal?'),
+            'description' => t('Goal progress represents the total number of sustainer conversions as a percentage of this number.'),
+          ),
+          'seed' => array(
+            'title' => t('Seed goal progress with this value'),
+            'description' => t('Add this number to the current total sustainer conversions when calculating goal progress.'),
+          ),
+          'display_threshold' => array(
+            'title' => t('Minimum total sustainer conversions required to show progress'),
+            'description' => t('The goal progress bar will be hidden until the total sustainer conversions reach this number.'),
+          ),
+        ),
       );
       return $metrics;
     }

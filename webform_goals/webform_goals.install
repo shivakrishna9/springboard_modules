@@ -5,9 +5,40 @@
  */
 
 /**
+ * Implements hook_requirements().
+ */
+function webform_goals_requirements($phase) {
+  if ($phase === 'runtime' || $phase == 'update') {
+    $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
+    $directory_exists = file_prepare_directory($path, FILE_CREATE_DIRECTORY) ? TRUE : FALSE;
+    $file_exists = file_exists($path . '/webform_goals.jsonp.php');
+    return array(
+      array(
+        'title' => 'Webform Goals',
+        'value' => 'The webform_goals subdirectory has been created and is writeable',
+        'description' => 'Webform Goals files subdirectory exists',
+        'severity' => $directory_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      ),
+      array(
+        'title' => 'Webform Goals',
+        'value' => 'The widget loader script has been copied to files/webform_goals',
+        'description' => 'widget loader copied',
+        'severity' => $directory_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      ),
+    );
+  }
+}
+
+/**
  * Implements hook_install().
  */
 function webform_goals_install() {
+ // create subdir in files
+ if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+   // copy jsonp widget loader to subdir.
+   $data = file_get_contents('webform_goals.jsonp.php');
+   file_unmanaged_save_data($data, 'public://webform_goals/webform_goals.jsonp.php');
+ }
 
 }
 
@@ -15,7 +46,9 @@ function webform_goals_install() {
  * Implements hook_uninstall().
  */
 function webform_goals_uninstall() {
-
+  $path = drupal_realpath(file_default_scheme() . '://') . '/webform_goals';
+  file_unmanaged_delete_recursive($path);
+  variable_del('webform_goals_widget_update_limit');
 }
 
 /**
