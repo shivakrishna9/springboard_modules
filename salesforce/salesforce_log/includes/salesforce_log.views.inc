@@ -314,7 +314,7 @@ function salesforce_log_views_data() {
     'title' => t('Drupal ID'), 
     'help' => t('The Drupal ID of this item.'), 
     'field' => array(
-      'handler' => 'views_handler_field_numeric', 
+      'handler' => 'salesforce_log_handler_field_drupal_id', 
       'click sortable' => TRUE,
     ),
     'argument' => array(
@@ -567,7 +567,7 @@ function salesforce_log_views_data() {
     'title' => t('Drupal ID'), 
     'help' => t('The Drupal ID of this item.'), 
     'field' => array(
-      'handler' => 'views_handler_field_numeric', 
+      'handler' => 'salesforce_log_handler_field_drupal_id', 
       'click sortable' => TRUE,
     ),
     'argument' => array(
