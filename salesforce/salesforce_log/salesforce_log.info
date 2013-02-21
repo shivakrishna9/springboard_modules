@@ -15,3 +15,4 @@ files[] = includes/salesforce_log_handler_filter_queue.inc
 files[] = includes/salesforce_log_handler_filter_module.inc
 files[] = includes/salesforce_log_handler_filter_object_type.inc
 files[] = includes/salesforce_log_handler_field_sobject.inc
+files[] = includes/salesforce_log_handler_field_drupal_id.inc

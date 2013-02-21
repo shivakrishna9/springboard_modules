@@ -6,6 +6,32 @@
  */
 
 /**
+ * @name core_drupal_hooks
+ * @{
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_log_entity_info() {
+  return array(
+    'salesforce_log_item' => array(
+      'label' => t('Salesforce log item'),
+      'entity class' => 'Entity',
+      'base table' => 'salesforce_log_item',
+      'entity keys' => array(
+        'id' => 'lid',
+        'label' => 'item_id',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_log',
+      'deletion callback' => 'salesforce_log_item_entity_delete',
+    ),
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function salesforce_log_menu() {
@@ -35,6 +61,22 @@ function salesforce_log_menu() {
 }
 
 /**
+ * Implement hook_permission().
+ */
+function salesforce_log_permission() {
+  return array(
+    'view salesforce batch logs' => array(
+      'title' => t('View Salesforce logs'),
+      'description' => t('View the Salesforce logs.'),
+    ),
+  );
+}
+
+/**
+ * @} core_drupal_hooks
+ */
+
+/**
  * Implements hook_views_api().
  */
 function salesforce_log_views_api() {
@@ -62,18 +104,6 @@ function salesforce_log_views_pre_view(&$view, &$display_id, &$args) {
     drupal_add_js($path . '/js/jquery.expander.min.js');
     drupal_add_js($path . '/js/salesforce-log.admin.js');
   }
-}
-
-/**
- * Implement hook_permission().
- */
-function salesforce_log_permission() {
-  return array(
-    'view salesforce batch logs' => array(
-      'title' => t('View Salesforce logs'),
-      'description' => t('View the Salesforce logs.'),
-    ),
-  );
 }
 
 /*
@@ -156,7 +186,7 @@ function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $qu
  * Array filter callback to find the count of successfully synced batch items
  */
 function _salesforce_log_array_filter_batch_successes($result) {
-  if ($result->success === 1) {
+  if ((int)$result->success === 1) {
     return TRUE;
   }
 }
@@ -195,71 +225,10 @@ function _salesforce_log_prepare_item_record($item) {
 }
 
 /**
- * Implements hook_entity_info().
- */
-function salesforce_log_entity_info() {
-  return array(
-    // Maps Salesforce objects and fields to components of Drupal.
-    'salesforce_log_item' => array(
-      'label' => t('Salesforce log item'),
-      'entity class' => 'Entity',
-      'base table' => 'salesforce_log_item',
-      'entity keys' => array(
-        'id' => 'lid',
-        'label' => 'item_id',
-      ),
-      'fieldable' => FALSE,
-      'exportable' => FALSE,
-      'module' => 'salesforce_log',
-      'deletion callback' => 'salesforce_log_item_entity_delete',
-    ),
-  );
-}
-
-/**
- * Callback to delete a log item
+ * Delete function for the log item entity
  */
 function salesforce_log_item_entity_delete($lid) {
   db_delete('salesforce_log_item')
     ->condition('lid', $lid)
     ->execute();
-}
-
-/**
- * Implementation of hook_action_info().
- */
-function salesforce_log_action_info() {
-  return array(
-    'salesforce_log_salesforce_log_item_requeue_action' => array(
-      'description' => t('Requeue'),
-      'label' => t('Requeue Salesforce log item'),
-      'type' => 'salesforce_log_item',
-      'configurable' => FALSE,
-      'triggers' => array('any'),
-    ),
-  );
-}
-
-/**
- * Requeue log item action
- */
-function salesforce_log_salesforce_log_item_requeue_action($item) {
-  $new = array();
-  $values = array(
-    'drupal_id',
-    'module',
-    'delta',
-    'object_type',
-    'operation',
-    'dedupe_field',
-  );
-  foreach ($values as $value) {
-    $new[$value] = $item->{$value};
-  }
-  $new['sobject'] = json_decode($item->sobject);
-  $queue = salesforce_queue_load();
-  $result = $queue->createItem($new);
-  if ($result) {
-    return TRUE;
-  }
 }
