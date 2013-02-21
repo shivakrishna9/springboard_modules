@@ -79,6 +79,25 @@ define('SALESFORCE_QUEUE_PROCESS_ITEM_FAIL_NOT_VALID', 'Item failed validation.'
  * @} salesforce_sync_item_fail_responses
  */
 
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_queue_entity_info() {
+  return array(
+    'salesforce_queue_item' => array(
+      'label' => t('Salesforce queue item'),
+      'entity class' => 'Entity',
+      'base table' => 'salesforce_queue',
+      'entity keys' => array(
+        'id' => 'item_id',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_queue',
+      'deletion callback' => 'salesforce_queue_item_entity_delete',
+    ),
+  );
+}
 
 /**
  * Implements hook_menu().
@@ -142,6 +161,21 @@ function salesforce_queue_node_delete($node) {
     ->condition('module', 'node')
     ->condition('delta', $node->type)
     ->execute();
+}
+
+/**
+ * Implements hook_action_info().
+ */
+function salesforce_queue_action_info() {
+  return array(
+    'salesforce_queue_salesforce_queue_item_requeue_action' => array(
+      'description' => t('Requeue'),
+      'label' => t('Requeue failed item'),
+      'type' => 'salesforce_queue_item',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+  );
 }
 
 /**
@@ -239,3 +273,42 @@ function salesforce_queue_salesforce_sync_fail_item($item, $result) {
 /**
  * @} salesforce_queue_process
  */
+
+/**
+ * Delete function for the queue item entity
+ */
+function salesforce_queue_item_entity_delete($item_id) {
+  $items = entity_load('salesforce_queue_item', array($item_id));
+  if (!empty($items[$item_id])) {
+    $queue = salesforce_queue_load();
+    $queue->deleteItem($items[$item_id]);
+  }
+}
+
+/**
+ * Requeue queue item action
+ */
+function salesforce_queue_salesforce_queue_item_requeue_action($item) {
+  // Only requeue items that have failed
+  if ($item->queue != 'fail') {
+    return;
+  }
+
+  $queue = salesforce_queue_load();
+  $queue->deleteItem($item);
+  $new = array();
+  $values = array(
+    'drupal_id',
+    'module',
+    'delta',
+    'object_type',
+    'operation',
+    'dedupe_field',
+  );
+  foreach ($values as $value) {
+    $new[$value] = $item->{$value};
+  }
+  $new['sobject'] = json_decode($item->sobject);
+  $queue = salesforce_queue_load();
+  $queue->createItem($new);
+}
