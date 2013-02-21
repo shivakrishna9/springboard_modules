@@ -720,7 +720,7 @@ function _fundraiser_form_amounts_validate($form, &$form_state) {
       form_set_error('amount_wrapper][donation_amounts][' . $index . '][amount',
         t('The amount cannot be empty when a label is set.'));
     }
-    if (!is_numeric($amount_set['amount'])) {
+    if (!is_numeric($amount_set['amount']) && !empty($amount_set['amount'])) {
       form_set_error('amount_wrapper][donation_amounts][' . $index . '][amount',
         t('The amount must be a number.'));
     }
