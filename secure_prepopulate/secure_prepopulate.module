@@ -17,6 +17,22 @@ function secure_prepopulate_menu() {
     'page arguments' => array('secure_prepopulate_admin_settings'),
     'access arguments' => array('administer secure pre-populate'),
     'file' => 'secure_prepopulate.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/settings/secure-prepopulate/settings'] = array(
+    'title' => t('Settings'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/settings/secure-prepopulate/test'] = array(
+    'title' => t('Test String'),
+    'description' => t('Preview the contents of encrypted strings for testing'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_prepopulate_preview'),
+    'access arguments' => array('administer secure pre-populate'),
+    'file' => 'secure_prepopulate.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
   );
 
   $items['secure-prepopulate/not-me/%'] = array(

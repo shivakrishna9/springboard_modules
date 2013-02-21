@@ -57,3 +57,48 @@ function secure_prepopulate_admin_settings_validate(&$form, &$form_state) {
     $form_state['values']['secure_prepopulate_iv'] = encrypt($form_state['values']['secure_prepopulate_iv']);
   }
 }
+
+/**
+ * Test string previewer
+ */
+function secure_prepopulate_preview(&$form_state) {
+  if ($encrypted = $form_state['values']['encrypted']) {
+    $decrypted = urldecode($encrypted);
+    $decrypted = secure_prepopulate_decrypt($decrypted);
+  }
+  
+  $form = array();
+  if (!$encrypted) {
+    $form['intro'] = array(
+      '#type' => 'markup',
+      '#value' => t('To verify the contents of a Secure Prepopulate string produced by Salesforce, enter it below exactly as it would be appended to a URL.'),
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+    );
+  }
+  $form['encrypted'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Encrypted'),
+    '#rows' => 3,
+    '#required' => TRUE,
+    '#default_value' => $encrypted,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Preview'),
+  );
+  $form['string_output'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Decrypted'),
+    '#rows' => 6,
+    '#attributes' => array('readonly' => '1'),
+    '#value' => print_r($decrypted,true),
+  );
+  return $form;
+}
+
+function secure_prepopulate_preview_submit(&$form, &$form_state) {
+  $is_expired = secure_prepopulate_is_expired($encrypted);
+  drupal_set_message($is_expired ? t('String is expired') : t('String is not expired'));
+  $form_state['rebuild'] = TRUE;
+}
