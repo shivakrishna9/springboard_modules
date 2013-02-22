@@ -50,7 +50,13 @@ function salesforce_donation_settings($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Map Salesforce Stages to Donation States'),
   );
-  $stages = array('Posted', 'Withdrawn', 'Pledged', 'Partially Refunded', 'Refunded');
+  $stages = array(
+    'Posted',
+    'Withdrawn',
+    'Pledged',
+    'Partially Refunded',
+    'Refunded',
+  );
   $available_statuses = module_invoke_all('salesforce_donation_statuses');
   if (empty($available_statuses)) {
     $available_statuses = array();
@@ -80,7 +86,13 @@ function salesforce_donation_settings($form, &$form_state) {
  * Submit callback for settings form.
  */
 function salesforce_donation_settings_submit($form, &$form_state) {
-  $stages = array('Posted', 'Withdrawn', 'Pledged', 'Partially Refunded', 'Refunded');
+  $stages = array(
+    'Posted',
+    'Withdrawn',
+    'Pledged',
+    'Partially Refunded',
+    'Refunded',
+  );
   $mapped_stages = array();
   foreach ($stages as $stage) {
     $mapped_stages[$stage] = isset($form_state['values']['sf_donation_' . $stage]) ? $form_state['values']['sf_donation_' . $stage] : '';
@@ -204,7 +216,8 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
   }
 
-  // And lastly, the reconstructed data fields. Information derived from the current fields.
+  // And lastly, the reconstructed data fields. Information derived from the
+  // current fields.
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['close_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['close_date'];

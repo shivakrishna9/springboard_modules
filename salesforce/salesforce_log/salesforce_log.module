@@ -35,7 +35,7 @@ function salesforce_log_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_log_menu() {
-  // Reports landing page. The actual report pages are handled by views
+  // Reports landing page. The actual report pages are handled by views.
   $items['admin/reports/salesforce'] = array(
     'title' => 'Salesforce',
     'description' => 'View salesforce reports, updates, and errors.',
@@ -46,7 +46,7 @@ function salesforce_log_menu() {
     'file' => 'includes/salesforce_log.admin.inc',
   );
 
-  // Settings form
+  // Settings form.
   $items['admin/config/services/salesforce/salesforce-sync/logs'] = array(
     'title' => 'Log',
     'description' => 'Configuration settings for the Salesforce batch log.',
@@ -61,7 +61,7 @@ function salesforce_log_menu() {
 }
 
 /**
- * Implement hook_permission().
+ * Implements hook_permission().
  */
 function salesforce_log_permission() {
   return array(
@@ -89,16 +89,14 @@ function salesforce_log_views_api() {
 /**
  * Implements hook_views_pre_view().
  *
- * Adding our js files for our views
- * @param $view
- *   The view object about to be processed.
- * @param $display_id
- *   The machine name of the active display.
- * @param $args
- *   An array of arguments passed into the view.
+ * Adding our js files for our views.
  */
 function salesforce_log_views_pre_view(&$view, &$display_id, &$args) {
-  $views = array('salesforce_log_item', 'salesforce_log_batch', 'salesforce_queue');
+  $views = array(
+    'salesforce_log_item',
+    'salesforce_log_batch',
+    'salesforce_queue',
+  );
   if (in_array($view->name, $views)) {
     $path = drupal_get_path('module', 'salesforce_log');
     drupal_add_js($path . '/js/jquery.expander.min.js');
@@ -106,17 +104,10 @@ function salesforce_log_views_pre_view(&$view, &$display_id, &$args) {
   }
 }
 
-/*
- * Implements hook_salesforce_queue_batch_alter
+/**
+ * Implements hook_salesforce_queue_batch_alter().
  *
- * Add our log related data to the batch object and items
- *
- * @param array $batch
- *   Array of instructions that are used to formulate the API call to Salesforce
- * @param SalesforceQueue $queue
- *   SalesforceQueue object
- * @param SalesforceQueueProcessor $processor
- *   SalesforceQueueProcessor object
+ * Add our log related data to the batch object and items.
  */
 function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor) {
   $batch['start'] = time();
@@ -133,14 +124,7 @@ function salesforce_log_salesforce_queue_batch_alter(&$batch, $queue, $processor
 }
 
 /**
- * Implements hook_salesforce_sync_fail_item
- *
- * @param object $item
- *   Queue item
- * @param string $message
- *   Message explaining why the item failed.
- * @param mixed $result
- *   Information about the failure, likely a Salesforce result object
+ * Implements hook_salesforce_sync_fail_item().
  */
 function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
   $record = _salesforce_log_prepare_item_record($item);
@@ -151,12 +135,7 @@ function salesforce_log_salesforce_sync_fail_item($item, $message, $result) {
 }
 
 /**
- * Implements hook_salesforce_sync_pass_item
- *
- * @param object $item
- *   Queue item
- * @param varchar $result
- *   The Salesforce response after the call was made
+ * Implements hook_salesforce_sync_pass_item().
  */
 function salesforce_log_salesforce_sync_pass_item($item, $result) {
   $record = _salesforce_log_prepare_item_record($item);
@@ -165,12 +144,12 @@ function salesforce_log_salesforce_sync_pass_item($item, $result) {
   drupal_write_record('salesforce_log_item', $record, array('lid'));
 }
 
-/*
- * Implements hook_salesforce_queue_postprocess_batch
+/**
+ * Implements hook_salesforce_queue_postprocess_batch().
  */
 function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $queue) {
   $batch['end'] = time();
-  // In a soapfault there are no results, all have failed
+  // In a soapfault there are no results, all have failed.
   if (!empty($results)) {
     $batch['successes'] = count(array_filter($results, '_salesforce_log_array_filter_batch_successes'));
     $batch['failures'] = $batch['count'] - $batch['successes'];
@@ -182,26 +161,24 @@ function salesforce_log_salesforce_queue_postprocess_batch($batch, $results, $qu
   drupal_write_record('salesforce_log_batch', $batch, array('bid'));
 }
 
-/*
- * Array filter callback to find the count of successfully synced batch items
+/**
+ * Array filter callback to find the count of successfully synced batch items.
  */
 function _salesforce_log_array_filter_batch_successes($result) {
-  if ((int)$result->success === 1) {
+  if ((int) $result->success === 1) {
     return TRUE;
   }
 }
 
 /**
- * Prepare an item for being written to the log table
- * 
+ * Prepare an item for being written to the log table.
+ *
  * @param object $item
- *   Queue item
- * @param varchar $record
- *   An object ready to be passed to drupal_write_record
+ *   Queue item.
  */
 function _salesforce_log_prepare_item_record($item) {
   $record = new stdClass();
-  // Values from the queue
+  // Values from the queue.
   $record->item_id = $item->item_id;
   $record->drupal_id = $item->drupal_id;
   $record->module = $item->module;
@@ -213,7 +190,7 @@ function _salesforce_log_prepare_item_record($item) {
   $record->queue = $item->queue;
   $record->sobject = json_encode($item->sobject);
 
-  // Values from the log process
+  // Values from the log process.
   if (!empty($item->lid)) {
     $record->lid = $item->lid;
   }
@@ -225,7 +202,7 @@ function _salesforce_log_prepare_item_record($item) {
 }
 
 /**
- * Delete function for the log item entity
+ * Delete function for the log item entity.
  */
 function salesforce_log_item_entity_delete($lid) {
   db_delete('salesforce_log_item')

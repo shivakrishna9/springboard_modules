@@ -2,16 +2,20 @@
 
 /**
  * @file
- * Definition of views_handler_filter_node_type.
- */ 
+ * Definition of salesforce_log_handler_field_sobject.
+ */
 
 /**
- * Filter by node type.
+ * Filter by sObject.
  *
  * @ingroup views_filter_handlers
  */
 class salesforce_log_handler_field_sobject extends views_handler_field {
-  function render($values) {
+
+  /**
+   * Render sObject.
+   */
+  public function render($values) {
     $value = $values->{$this->field_alias};
 
     return '<pre>' . check_plain(print_r(json_decode($value), TRUE)) . '</pre>';
