@@ -2,16 +2,20 @@
 
 /**
  * @file
- * Definition of views_handler_filter_node_type.
+ * Definition of salesforce_log_handler_filter_module.
  */
 
 /**
- * Filter by node type.
+ * Filter by module.
  *
  * @ingroup views_filter_handlers
  */
 class salesforce_log_handler_filter_module extends views_handler_filter_in_operator {
-  function get_value_options() {
+
+  /**
+   * List of possible modules.
+   */
+  public function get_value_options() {
     if (!isset($this->value_options)) {
       $result = db_query("SELECT distinct(module) FROM " . $this->view->base_table);
       if ($result->rowCount()) {

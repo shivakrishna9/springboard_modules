@@ -275,7 +275,7 @@ function salesforce_queue_salesforce_sync_fail_item($item, $result) {
  */
 
 /**
- * Delete function for the queue item entity
+ * Delete function for the queue item entity.
  */
 function salesforce_queue_item_entity_delete($item_id) {
   $items = entity_load('salesforce_queue_item', array($item_id));
@@ -286,10 +286,10 @@ function salesforce_queue_item_entity_delete($item_id) {
 }
 
 /**
- * Requeue queue item action
+ * Requeue queue item action.
  */
 function salesforce_queue_salesforce_queue_item_requeue_action($item) {
-  // Only requeue items that have failed
+  // Only requeue items that have failed.
   if ($item->queue != 'fail') {
     return;
   }

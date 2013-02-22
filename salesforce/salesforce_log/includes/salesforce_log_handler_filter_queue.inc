@@ -2,16 +2,20 @@
 
 /**
  * @file
- * Definition of views_handler_filter_node_type.
+ * Definition of salesforce_log_handler_filter_queue.
  */
 
 /**
- * Filter by node type.
+ * Filter by queue.
  *
  * @ingroup views_filter_handlers
  */
 class salesforce_log_handler_filter_queue extends views_handler_filter_in_operator {
-  function get_value_options() {
+
+  /**
+   * List of possible queues.
+   */
+  public function get_value_options() {
     $this->value_options = array(
       'new' => 'New',
       'retry' => 'Retry',
