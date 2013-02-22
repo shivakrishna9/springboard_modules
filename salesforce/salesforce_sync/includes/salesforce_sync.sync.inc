@@ -174,8 +174,6 @@ class SalesforceSync {
    */
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
-
-    debug($batch['object_type']);
     try {
       switch ($batch['operation']) {
         case 'CREATE':

@@ -163,7 +163,6 @@ class SalesforceSyncTokenTestCase extends DrupalWebTestCase {
 
     $end_time = $this->getTimer();
     $total_time = ($end_time - $start_time);
-    debug($total_time . ' ms to scan a 200 item batch using cache.');
 
     // Pick out a random object and make sure the token was replaced.
     $index = rand(0, 199);
@@ -185,7 +184,6 @@ class SalesforceSyncTokenTestCase extends DrupalWebTestCase {
 
     $end_time = $this->getTimer();
     $total_time = ($end_time - $start_time);
-    debug($total_time . ' ms to scan a 200 item batch using database.');
 
     // Pick out a random object and make sure the token was replaced.
     $index = rand(0, 199);

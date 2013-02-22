@@ -29,7 +29,6 @@ function salesforce_queue_example_menu() {
 function salesforce_queue_example_add_high_score_to_queue($id) {
 	$high_score = salesforce_queue_example_load_high_score($id);
 	$sobject = salesforce_queue_example_create_high_score_object($high_score);
-	dsm($sobject);
 
 	$item = array(
     'drupal_id' => $id,
