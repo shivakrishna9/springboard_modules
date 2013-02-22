@@ -12,7 +12,13 @@ function webform_goals_admin_list($form, $form_state = array()) {
     $selected_context = _webform_goals_get_selected_context($form_state, $goal);
     $selected_metric = _webform_goals_get_selected_metric($selected_context, $form_state, $goal);
     $data = webform_goals_track_metric($goal);
-
+    if ($selected_context['id'] == 'single') {
+      $node = node_load($goal['extra']['selected_form_id']);
+      $selected_context['name'] .= ' : ' . l($node->title, 'node/' . $node->nid);
+    }
+    elseif ($selected_context['id'] == 'group') {
+      $selected_context['name'] .= ' : ' . $goal['extra']['selected_node_type'];
+    }
     $row = array();
     $row[] = $goal['name'];
     $row[] = $selected_context['name'];
@@ -89,9 +95,10 @@ function _webform_goals_actions($goal) {
 }
 
 function webform_goals_admin_settings($form, $form_state) {
+  $default_template = theme('webform_goals_default_template', array());
   $form['cron'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Cron settings'),
+    '#title' => t('Update settings'),
   );
   $form['cron']['webform_goals_widget_update_limit'] = array(
     '#type' => 'textfield',

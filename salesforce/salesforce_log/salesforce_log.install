@@ -10,7 +10,7 @@
  */
 function salesforce_log_schema() {
   $schema['salesforce_log_batch'] = array(
-    'description' => t('Logs data for the Salesforce Sync.'),
+    'description' => 'Logs data for the Salesforce Sync.',
     'fields' => array(
       'bid' => array(
         'description' => 'Unique id of this batch.',
@@ -80,7 +80,7 @@ function salesforce_log_schema() {
   );
 
   $schema['salesforce_log_item'] = array(
-    'description' => t('Logs data on individual items for the Salesforce Sync.'),
+    'description' => 'Logs data on individual items for the Salesforce Sync.',
     'fields' => array(
       'lid' => array(
         'description' => 'Unique id of this item.',
@@ -192,4 +192,3 @@ function salesforce_log_schema() {
 
   return $schema;
 }
-    

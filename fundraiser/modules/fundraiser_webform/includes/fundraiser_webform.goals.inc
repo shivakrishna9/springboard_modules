@@ -22,6 +22,20 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
         'name' => t('Total donation amount'),
         'description' => t('Goal progress will be calculated based on the total donations received.'),
         'settings_callback' => '',
+        'form_text' => array(
+          'target_value' => array(
+            'title' => t('Total donations required to meet this goal'),
+            'description' => t('Goal progress represents the sum of all successful donations as a percentage of this number.'),
+          ),
+          'seed' => array(
+            'title' => t('Seed goal progress with this amount'),
+            'description' => t('Add this number to the current total donations when calculating goal progress.'),
+          ),
+          'display_threshold' => array(
+            'title' => t('Minimum total donations required to show progress'),
+            'description' => t('The goal progress bar will be hidden until total donations reach this number.'),
+          ),
+        ),
       );
       return $metrics;
     }
@@ -52,7 +66,7 @@ function fundraiser_webform_webform_goals_track_metric($goal, $params = array())
             $data['count'] += $donations;
           }
         }
-        $data['count'] = number_format($data['count'], 2); // Alligator wrestling to keep format identical with single values.
+        $data['count'] = number_format((float) $data['count'], 2); // Alligator wrestling to keep format identical with single values.
         $data['progress'] = ($data['count'] / $goal['target_value']) * 100;
       }
     }
