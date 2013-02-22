@@ -16,10 +16,6 @@ class salesforce_log_handler_filter_queue extends views_handler_filter_in_operat
    * List of possible queues.
    */
   public function get_value_options() {
-    $this->value_options = array(
-      'new' => 'New',
-      'retry' => 'Retry',
-      'fail' => 'Fail',
-    );
+    $this->value_options = salesforce_queue_get_queue_names();
   }
 }

@@ -81,7 +81,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
 
     // Ensure there are no other tracked queue options.
     module_load_include('inc', 'salesforce_queue', 'includes/salesforce_queue.admin');
-    $queue_count = count(_sfq_get_queue_names());
+    $queue_count = count(salesforce_queue_get_queue_names());
     $this->assertEqual(3, $queue_count, 'There are ' . $queue_count . ' of 3 known queues.');
 
     // Add more queues for tracked queue options to find and see if they show
@@ -94,7 +94,7 @@ class SalesforceQueueAdminTestCase extends SalesforceQueueTestCase {
     $this->assertNoFieldChecked('edit-tracked-queues-foo', 'Foo queue is not checked by default.');
     $this->assertFieldById('edit-tracked-queues-bar', '', 'Bar queue showed up for tracked queues.');
     $this->assertNoFieldChecked('edit-tracked-queues-bar', 'Bar queue is not checked by default.');
-    $queue_count = count(_sfq_get_queue_names());
+    $queue_count = count(salesforce_queue_get_queue_names());
     $this->assertEqual(5, $queue_count, 'There are ' . $queue_count . ' of 5 known queues.');
   }
 
