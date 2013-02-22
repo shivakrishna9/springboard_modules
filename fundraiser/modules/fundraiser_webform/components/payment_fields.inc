@@ -81,7 +81,11 @@ function _webform_render_payment_fields($component, $value = NULL, $filter = TRU
         }
       }
       // Allow other modules to alter the fields before adding to form.
-      drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $config, $node);
+      $context = array(
+        'config' => $config,
+        'node' => $node,
+      );
+      drupal_alter('payment_method_fields', $element[$payment_method], $payment_method, $context);
     }
   }
   else {
