@@ -6,6 +6,7 @@ core = 7.x
 dependencies[] = salesforce_queue
 dependencies[] = salesforce_sync
 dependencies[] = views
+dependencies[] = views_bulk_operations
 
 configure = admin/config/services/salesforce/salesforce-sync/salesforce-log
 
