@@ -27,14 +27,6 @@ function fundraiser_webform_install() {
 }
 
 /**
- * Implements hook_uninstall().
- */
-function fundraiser_webform_uninstall() {
-  db_query("DROP VIEW {fundraiser_webform_data}");
-  db_query("DROP VIEW {fundraiser_webform_recurring_order}"); //TODO rename this view.
-}
-
-/**
  * Implements hook_enable().
  */
 function fundraiser_webform_enable() {
