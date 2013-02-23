@@ -176,8 +176,10 @@ class SalesforceSyncTokenScanner {
   /**
    * Adds an item to the token value cache.
    *
-   * @param $item
+   * @param object $item
    *   The item to add to the cache.
+   * @param string $sfid
+   *   Salesforce ID of the item.
    */
   public function addItemToTokenCache($item, $sfid) {
     $this->tokenValueCache[$item->object_type][$item->delta][$item->drupal_id] = $sfid;

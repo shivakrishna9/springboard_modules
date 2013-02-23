@@ -70,7 +70,7 @@ class SalesforceSyncTokenTestCase extends DrupalWebTestCase {
     $item->delta = 'user';
     $item->object_type = 'Contact';
     $item->drupal_id = '5';
-    
+
     $token_scanner->addItemToTokenCache($item, '003400000109WfQAAP');
 
     $this->assertEqual(TRUE, $token_scanner->cachePopulated(), 'Token cache is populated.');

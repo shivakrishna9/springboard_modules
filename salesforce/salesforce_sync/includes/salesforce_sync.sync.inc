@@ -308,7 +308,9 @@ class SalesforceSync {
   }
 
   /**
-   * Uses a SalesforceSyncTokenScanner instance to search for and replace 
+   * Search and replace tokens in a batch of items.
+   *
+   * Uses a SalesforceSyncTokenScanner instance to search for and replace
    * relationship tokens in a batch of items.
    *
    * @param array $batch
@@ -329,7 +331,6 @@ class SalesforceSync {
    */
   public function batchReplaceTokens(&$batch) {
     $this->tokenScanner->batchTokenReplace($batch);
-    //throw new Exception("TODO: Implement token replacement routine", 1);
   }
 
   /**
@@ -676,15 +677,15 @@ class SalesforceSync {
    */
   public function passItem($item, $result) {
     // Keep a log of newly created items.
-    // TODO: Include updates
+    // @TODO: Include updates.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
       $item->sobject->Id = $result->id;
       $this->newSfRecords[] = $item;
       if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
         $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
         $this->processedItemIds[$item->object_type][$id_key] = $result->id;
-        // Pass the item to the token scanner's internal cache so it doesn't have
-        // to go to the db as often.
+        // Pass the item to the token scanner's internal cache so it doesn't
+        // have to go to the db as often.
         $this->tokenScanner->addItemToTokenCache($item, $result->id);
       }
     }
