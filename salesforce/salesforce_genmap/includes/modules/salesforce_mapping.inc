@@ -355,11 +355,7 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
     }
   }
 
-  // When there is a dedupe field set and the action is to create a new record,
-  // the operation needs to be UPSERT.
-  $op = ($op == 'CREATE' && !is_null($dedupe_field)) ? 'UPSERT' : $op;
-
-  // Create the queue item and queue it.
+  // Create the queue item.
   $mapped_entity = salesforce_mapping_map_entity($entity, $entity_type, $map);
   $item = array(
     'drupal_id' => $entity_id,
@@ -371,6 +367,28 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
     'sobject' => $mapped_entity['sobject'],
     'sync_rules' => $mapped_entity['sync_rules'],
   );
+
+  // An item may be set to UPDATE when it has not yet been made in Salesforce.
+  if ($op == 'UPDATE') {
+    $record_map = salesfoce_sync_load_map($item);
+    if (!$record_map) {
+      if (is_null($dedupe_field)) {
+        $item['operation'] = 'CREATE';
+      }
+      else {
+        // Since a dedupe field is available, this item could be sent as an
+        // UPSERT which will help us avoid potential duplicate record conflicts.
+        $item['operation'] = 'UPSERT';
+      }
+    }
+  }
+  // When there is a dedupe field set and the action is to create a new record,
+  // the operation needs to be UPSERT.
+  elseif ($op == 'CREATE' && !is_null($dedupe_field)) {
+    $item['operation'] = 'UPSERT';
+  }
+
+  // Send to queue.
   $queue = salesforce_queue_load();
   $result = $queue->createItem($item);
   if (!$result) {
