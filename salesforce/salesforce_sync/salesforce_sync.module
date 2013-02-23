@@ -267,16 +267,16 @@ function salesforce_sync_delete_map($record) {
  * Helper to grab the record id of a map.
  */
 function _salesforce_sync_get_rmid($item) {
+  if (isset($item->rmid) && !empty($item->rmid)) {
+    return $item->rmid;
+  }
   if (is_object($item)) {
     $record = (array) clone($item);
   }
   else {
     $record = $item;
   }
-  if (isset($record->rmid) && !empty($record->rmid)) {
-    return $record->rmid;
-  }
-  elseif (isset($record['sobject']->Id)) {
+  if (isset($record['sobject']->Id)) {
     return db_select('salesforce_sync_map', 'm')
       ->fields('m', array('rmid'))
       ->condition('sfid', $record['sobject']->Id)
