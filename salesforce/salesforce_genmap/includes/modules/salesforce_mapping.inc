@@ -349,7 +349,7 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
 
   // Find the dedupe field.
   $dedupe_field = NULL;
-  foreach ($map->field_mappings as $delta => $field_map) {
+  foreach ($map->field_mappings as $field_map) {
     if ($field_map['key']) {
       $dedupe_field = $field_map['salesforce_field']['name'];
     }
