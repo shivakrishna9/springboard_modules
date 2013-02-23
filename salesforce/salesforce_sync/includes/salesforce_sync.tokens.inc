@@ -44,6 +44,10 @@ class SalesforceSyncTokenScanner {
    *   A populated queue processor batch.
    */
   public function batchTokenReplace(&$batch) {
+    if (!isset($batch['sobjects'])) {
+      // Some batches do not have sobjects, such as delete.
+      return;
+    }
     foreach ($batch['sobjects'] as &$object) {
       $this->objectTokenReplace($object);
     }
