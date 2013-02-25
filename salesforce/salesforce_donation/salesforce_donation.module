@@ -242,7 +242,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       // Set by charging module or by next_charge in recurring module.
       $fields[$sf_field] = isset($donation->close_date) ? $donation->close_date : '';
       if (!empty($fields[$sf_field])) {
-        $fields[$sf_field] = strtotime(date('H:i:s d-M-Y T', $fields[$sf_field]));
+        $fields[$sf_field] = gmdate('c', $fields[$sf_field]);
       }
     }
     if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
@@ -250,7 +250,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       // Set by charging module, else not set - so empty.
       $fields[$sf_field] = isset($donation->transaction_date) ? $donation->transaction_date : '';
       if (!empty($fields[$sf_field])) {
-        $fields[$sf_field] = strtotime(date('H:i:s d-M-Y T', $fields[$sf_field]));
+        $fields[$sf_field] = gmdate('c', $fields[$sf_field]);
       }
     }
     if (isset($map->field_map['salesforce_donation_map']['form_url'])) {
