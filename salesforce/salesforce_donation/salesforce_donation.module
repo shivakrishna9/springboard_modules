@@ -411,7 +411,8 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   $donation_fields = _fundraiser_get_field_fields();
   foreach ($donation_fields as $form_key => $donation_field) {
     // Skip if this is a fieldset type.
-    if ($donation_field['#type'] != 'fieldset') {
+    // Payment fields are individualized below, so don't include here.
+    if ($donation_field['#type'] != 'fieldset' && $donation_field['#type'] != 'payment_fields') {
       $fields['salesforce_donation_map']['#fields'][$form_key] = $donation_field['#title'] .
         ' (' . $donation_field['#type'] . ')';
     }
@@ -423,6 +424,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   // So we need to check for all type that MAY be configured at any point based
   // on available methods. Methods are defined within the associated active
   // gateways. So, we looks up each form and field per form.
+  // If node is -1, then we're working with default. No webform comps.
   if (module_exists('fundraiser_webform') && $node->nid != -1) {
     // Find the payment methods component.
     $payment_method_component = _fundraiser_webform_get_component_by_nid_key($node->nid, array('payment_method'));
@@ -463,6 +465,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   $fields['salesforce_donation_map']['#fields']['user_salesforce_contact_id'] = t('User Salesforce Contact ID');
 
   // Webform component fields.
+  // If node is -1, then we're working with default. No webform comps.
   if (module_exists('fundraiser_webform') && $node->nid != -1) {
     $fields['salesforce_webform_map'] = array(
       '#type' => 'webform',
