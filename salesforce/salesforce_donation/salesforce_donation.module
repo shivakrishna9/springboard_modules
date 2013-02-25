@@ -107,10 +107,23 @@ function salesforce_donation_settings_submit($form, &$form_state) {
  * Implements hook_fundraiser_donation_success().
  */
 function salesforce_donation_fundraiser_donation_success($donation) {
-  // Reload donation to be sure to get everything we need from submission table
-  // then send to queue.
+  // Reload donation to be sure to get everything we need from submission table then send to queue.
+  // TODO check if we want to grab SF donation data on failures as well as success
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+}
+
+/**
+ * Implements hook_fundraiser_donation_post_create().
+ */
+function salesforce_donation_fundraiser_donation_post_create($donation) {
+  // When / where to pick up recurring donations?
+  // Recurring donations only go through success when they are completed. So we need to do this on Create.
+  // If part of a recurring set, AND not the master did (handed during success).
+  if ($donation->donation['recurs_monthly'] == TRUE && $donation->master_did != $donation->did) {
+    $donation = fundraiser_donation_get_donation($donation->did, TRUE); // Refresh our data.
+    salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+  }
 }
 
 /**
@@ -165,7 +178,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['gateway'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['gateway'];
-      $fields[$sf_field] = $donation->gateway;
+      $fields[$sf_field] = $donation->gateway['id'];
     }
     if (isset($map->field_map['salesforce_donation_map']['txn_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['txn_id'];
@@ -210,11 +223,17 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       $sf_field = $map->field_map['salesforce_donation_map']['close_date'];
       // Set by charging module or by next_charge in recurring module.
       $fields[$sf_field] = isset($donation->close_date) ? $donation->close_date : '';
+      if (!empty($fields[$sf_field])) {
+        $fields[$sf_field] = strtotime(date('H:i:s d-M-Y T', $fields[$sf_field]));
+      }
     }
     if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
       // Set by charging module, else not set - so empty.
       $fields[$sf_field] = isset($donation->transaction_date) ? $donation->transaction_date : '';
+      if (!empty($fields[$sf_field])) {
+        $fields[$sf_field] = strtotime(date('H:i:s d-M-Y T', $fields[$sf_field]));
+      }
     }
     if (isset($map->field_map['salesforce_donation_map']['form_url'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['form_url'];
@@ -245,11 +264,11 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['user_salesforce_account_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_account_id'];
-      $fields[$sf_field] = '[Account:User:User:uid]';
+      $fields[$sf_field] = '[Account:user:' . $donation->uid . ']';
     }
     if (isset($map->field_map['salesforce_donation_map']['user_salesforce_contact_id'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['user_salesforce_contact_id'];
-      $fields[$sf_field] = '[Contact:User:User:uid]';
+      $fields[$sf_field] = '[Contact:user:' . $donation->uid . ']';
     }
   }
 
