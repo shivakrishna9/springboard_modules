@@ -25,6 +25,13 @@ class SalesforceSync {
   protected $soap;
 
   /**
+   * SalesforceSyncTokenScanner object used to do token replacements in batches.
+   *
+   * @var $tokenScanner
+   */
+  protected $tokenScanner;
+
+  /**
    * The maximum number of items that can be sent to Salesforce in one call.
    *
    * @var int
@@ -67,6 +74,7 @@ class SalesforceSync {
     $this->soap = is_null($soap) ? new SalesforceSoapPartner($this->sfapi) : $soap;
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
+    $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
   }
 
   /**
@@ -293,8 +301,36 @@ class SalesforceSync {
       // No use continuing if this batch is already prepared.
       return;
     }
+    $this->batchReplaceTokens($batch);
+    $this->batchConvertToSalesforceFormat($batch);
     $this->batchApplySalesforceSyncRules($batch);
     $batch['batch_prepared'] = TRUE;
+  }
+
+  /**
+   * Search and replace tokens in a batch of items.
+   *
+   * Uses a SalesforceSyncTokenScanner instance to search for and replace
+   * relationship tokens in a batch of items.
+   *
+   * @param array $batch
+   *   An array of instructions to send to Salesforce.  The array is structured
+   *   as follows:
+   *   <code>
+   *     $batch = array(
+   *       'operation' => 'UPSERT',
+   *       'dedupe_field' => 'Email',
+   *       'items' => array(
+   *         array of items...
+   *       ),
+   *       'sobjects' => array(
+   *         array of sobjects...
+   *       ),
+   *     );
+   *   </code>
+   */
+  public function batchReplaceTokens(&$batch) {
+    $this->tokenScanner->batchTokenReplace($batch);
   }
 
   /**
@@ -395,6 +431,100 @@ class SalesforceSync {
   }
 
   /**
+   * Applies the Salesforce format conversion to all items in the batch.
+   *
+   * @param array $batch
+   *   An array of instructions to send to Salesforce.  The array is structured
+   *   as follows:
+   *   <code>
+   *     $batch = array(
+   *       'operation' => 'UPSERT',
+   *       'dedupe_field' => 'Email',
+   *       'items' => array(
+   *         array of items...
+   *       ),
+   *       'sobjects' => array(
+   *         array of sobjects...
+   *       ),
+   *     );
+   *   </code>
+   *   Only UPSERT requires the 'dedupe_field' key.  For the 'DELETE' operation,
+   *   instead of an 'sobjects' key, it requires an 'ids' key that is an array
+   *   of Salesforce Ids of the items to delete.  The 'items' key is not
+   *   required but recommended so that full information can be provided to
+   *   modules that hook into the send processes.
+   */
+  public function batchConvertToSalesforceFormat(&$batch) {
+    if (isset($batch['converted_to_salesforce_format']) && $batch['converted_to_salesforce_format']) {
+      // Skip because this batch has already had its items formats converted.
+      return;
+    }
+
+    // Convert each item.
+    foreach ($batch['items'] as $item) {
+      $this->convertToSalesforceFormat($item);
+    }
+
+    // Mark the batch as converted.
+    $batch['converted_to_salesforce_format'] = TRUE;
+  }
+
+  /**
+   * Convert the mapped values into a format compatible to send to Salesforce.
+   *
+   * @param object $item
+   *   An individual representation of a record and instructions of how that
+   *   record will be consumed by the recipient.
+   */
+  public function convertToSalesforceFormat(&$item) {
+    if (isset($item->converted_to_salesforce_format) && $item->converted_to_salesforce_format) {
+      // Skip because this item has already had its formats converted.
+      return;
+    }
+
+    // Find the data types of all the Salesforce fields and store it in a means
+    // so that we can attempt to reduce the number of times we have to search
+    // for this information.
+    $sfapi = salesforce_get_api();
+    $sfobject = $sfapi->objectDescribe($item->object_type);
+    $field_datatypes = &drupal_static(__FUNCTION__);
+    $field_missing = FALSE;
+    foreach ($item->sobject->fields as $field_name => $value) {
+      if (!isset($field_datatypes) || !isset($field_datatypes[$field_name])) {
+        $field_missing = TRUE;
+      }
+    }
+    $count = count($item->sobject->fields);
+    if (!isset($field_datatypes) || $field_missing) {
+      foreach ($sfobject['fields'] as $field) {
+        if (array_key_exists($field['name'], $item->sobject->fields)) {
+          $field_datatypes[$field['name']] = $field['type'];
+          $count--;
+          if ($count == 0) {
+            break;
+          }
+        }
+      }
+    }
+
+    // Perform the actual conversion.
+    foreach ($item->sobject->fields as $field_name => $value) {
+      switch ($field_datatypes[$field_name]) {
+        case 'datetime':
+          // Salesforce requires ISO 8601 format for dates.
+          $item->sobject->fields[$field_name] = date('c', strtotime($value));
+          break;
+
+        default:
+          // Do nothing.
+      }
+    }
+
+    // Mark the item as converted.
+    $item->converted_to_salesforce_format = TRUE;
+  }
+
+  /**
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
   public function deleteNewSfRecords() {
@@ -467,6 +597,7 @@ class SalesforceSync {
       // No use continuing if this batch is already prepared.
       return;
     }
+    $this->batchConvertToDrupalFormat($batch);
     $this->batchApplyDrupalSyncRules($batch);
     $batch['batch_prepared'] = TRUE;
   }
@@ -491,6 +622,42 @@ class SalesforceSync {
   }
 
   /**
+   * Applies the Drupal format conversion to all items in the batch.
+   *
+   * @param array $batch
+   *   It is unknown at this time if Drupal batches will be formatted
+   *   differently from the Salesforce batches.
+   */
+  public function batchConvertToDrupalFormat($batch) {
+    if (isset($batch['converted_to_drupal_format']) && $batch['converted_to_drupal_format']) {
+      // Skip because this batch has already had its items formats converted.
+      return;
+    }
+
+    // @TODO: Convert each item.
+    // Mark the batch as converted.
+    $batch['converted_to_salesforce_format'] = TRUE;
+  }
+
+  /**
+   * Convert the mapped values into a format compatible to import into Drupal.
+   *
+   * @param object $item
+   *   It is unknown at this time if Drupal items will be formatted differently
+   *   from the Salesforce items.
+   */
+  public function convertToDrupalFormat($item) {
+    if (isset($item->converted_to_drupal_format) && $item->converted_to_drupal_format) {
+      // Skip because this item has already had its formats converted.
+      return;
+    }
+
+    // @TODO: Convert each field.
+    // Mark the item as converted.
+    $item->converted_to_drupal_format = TRUE;
+  }
+
+  /**
    * @} salesforce_sync_salesforce_to_drupal
    */
 
@@ -510,12 +677,16 @@ class SalesforceSync {
    */
   public function passItem($item, $result) {
     // Keep a log of newly created items.
+    // @TODO: Include updates.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
       $item->sobject->Id = $result->id;
       $this->newSfRecords[] = $item;
       if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
         $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
         $this->processedItemIds[$item->object_type][$id_key] = $result->id;
+        // Pass the item to the token scanner's internal cache so it doesn't
+        // have to go to the db as often.
+        $this->tokenScanner->addItemToTokenCache($item, $result->id);
       }
     }
 
@@ -695,7 +866,7 @@ class SalesforceSync {
    *   Ids of items that have been processed keyed by their unique identifier.
    */
   public function getProcessedItemIds() {
-    return $this->getProcessedItemIds;
+    return $this->processedItemIds;
   }
 
   /**

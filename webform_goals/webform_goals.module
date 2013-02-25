@@ -409,8 +409,8 @@ function webform_goals_theme($existing, $type, $theme, $path) {
       'template' => 'templates/webform_goals.default',
     ),
     'webform_goals_widget_loader' => array(
-      'arguments' => array(
-        'goal' => NULL,
+      'variables' => array(
+        'goal_id' => NULL,
       ),
       'template' => 'templates/webform_goals.widget_loader',
     ),

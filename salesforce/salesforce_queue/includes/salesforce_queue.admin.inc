@@ -94,7 +94,7 @@ function salesforce_queue_admin_form($form, &$form_state) {
         the multi-queue processor.'),
       '#type' => 'checkboxes',
       '#default_value' => _sfq_get_value('tracked_queues', $form_state),
-      '#options' => _sfq_get_queue_names(),
+      '#options' => salesforce_queue_get_queue_names(),
       '#required' => TRUE,
     );
   }
@@ -325,49 +325,6 @@ function _sfq_get_value($field, $form_state) {
     }
   }
   return $value;
-}
-
-/**
- * Helper to find queue names that have been used in the system.
- *
- * We really have no idea what queues have been used so we're just going to have
- * to search around.
- */
-function _sfq_get_queue_names() {
-  // Defaults.
-  $default_queues = array(
-    'new' => 'new',
-    'retry' => 'retry',
-    'fail' => 'fail',
-  );
-
-  // Start with the current tracked queues.
-  $tracked_queues = variable_get('salesforce_queue_tracked_queues', $default_queues);
-  // Merge in the defaults in case someone messed with the variable outside of
-  // the configuration page.
-  $queue_names = $default_queues + $tracked_queues;
-
-  // Find queue names from the variables table.
-  $sql = "SELECT * FROM {variable} v WHERE v.name LIKE 'salesforce_queue_%_lease_expire'";
-  $result = db_query($sql);
-  foreach ($result as $record) {
-    $name = trim(str_replace(array('salesforce_queue_', '_lease_expire'), array('', ''), $record->name));
-    if ($name != 'all') {
-      $queue_names[$name] = $name;
-    }
-  }
-
-  // Find queue names from the queue.
-  $result = db_select('salesforce_queue', 'q')
-    ->fields('q', array('queue'))
-    ->distinct()
-    ->execute();
-  foreach ($result as $record) {
-    $queue_names[$record->queue] = $record->queue;
-  }
-
-  ksort($queue_names);
-  return $queue_names;
 }
 
 /**

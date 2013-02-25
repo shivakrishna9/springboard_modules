@@ -790,18 +790,22 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   public function testCron() {
     $this->salesforceConnect();
 
-    // Set cron frequency to 0 so it doesn't get in our way.
+    // Set cron frequency to 0 and unset the last cron run so it doesn't get in
+    // our way.
     variable_set('salesforce_queue_cron_frequency', 0);
+    variable_del('salesforce_queue_cron_last');
 
     // Add item to queue and ensure it is there.
     $queue = salesforce_queue_load();
     $this->createQueueItems($queue, 1, array('CREATE'), array('Opportunity'));
+    $this->assertEqual(1, $queue->numberOfItems(), 'Count 1 item after creating one item.');
     $items = $queue->claimBatch();
     $queue->releaseBatch($items[0]->leaseKey);
     $this->assertFalse(empty($items), 'Queued up an item to test with.');
 
     // Kick off cron, then verify the item is not there.
-    $this->cronRun();
+    drupal_cron_run();
+    $this->assertEqual(0, $queue->numberOfItems(), 'Count 0 items after running cron.');
     $items = $queue->claimBatch();
     $this->assertTrue(empty($items), 'Cron processed queued item.');
 
