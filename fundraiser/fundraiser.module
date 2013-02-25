@@ -1607,6 +1607,9 @@ function fundraiser_donation_create($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was created on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // Respond after the creation of a donation. (Insert essentially)
+  // At this point an order has been created by the charging module and etc.
+  module_invoke_all('fundraiser_donation_post_create', $donation);
 }
 
 /**
@@ -1652,6 +1655,8 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     fundraiser_donation_comment($donation, 'This donation was updated on @date by @username.',
       array('@date' => format_date(strtotime('now')), '@username' => $username));
   }
+  // Respond after the update of a donation.
+  module_invoke_all('fundraiser_donation_post_update', $donation);
 }
 
 /**
@@ -1663,6 +1668,8 @@ function fundraiser_donation_process($donation) {
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
+  // Respond after the update of a donation.
+  module_invoke_all('fundraiser_donation_post_process', $donation);
 }
 
 /**
