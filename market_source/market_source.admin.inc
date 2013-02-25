@@ -66,7 +66,15 @@ function market_source_admin_settings_form($form, &$form_state) {
     $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
   }
   //set up fields to loop through
-  $default_fields_list = array('market_source' => 'Market Source', 'campaign' => 'Campaign ID', 'referrer' => 'Referrer', 'initial_referrer' => 'Initial Referrer');
+  $default_fields_list = array(
+    'market_source' => t('Market Source'), 
+    'campaign' => t('Campaign ID'), 
+    'referrer' => t('Referrer'), 
+    'initial_referrer' => t('Initial Referrer'),
+    'search_engine' => t('Search Engine'),
+    'search_string' => t('Search String'),
+    'user_agent' => t('User Agent'),
+  );
   //shortcut
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
   

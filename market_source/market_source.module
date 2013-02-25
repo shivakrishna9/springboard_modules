@@ -274,6 +274,9 @@ function _market_source_build_qs_keys() {
       'cid' => isset($default_fields['campaign']) ? $default_fields['campaign'] : array(),
       'referrer' => isset($default_fields['referrer']) ? $default_fields['referrer'] : array(),
       'initial_referrer' => isset($default_fields['initial_referrer']) ? $default_fields['initial_referrer'] : array(),
+      'search_engine' => isset($default_fields['search_engine']) ? $default_fields['search_engine'] : array(),
+      'search_string' => isset($default_fields['search_string']) ? $default_fields['search_string'] : array(),
+      'user_agent' => isset($default_fields['user_agent']) ? $default_fields['user_agent'] : array(),
     );
     foreach ($custom_fields as $custom_field) {
       $field_settings[ $custom_field['key'] ] = $custom_field;
@@ -427,6 +430,33 @@ function market_source_market_source_field_info() {
   );
   $fields['initial_referrer'] = array(
     '#title' => t('Initial Referrer'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['search_engine'] = array(
+    '#title' => t('Search Engine'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['search_string'] = array(
+    '#title' => t('Search String'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['user_agent'] = array(
+    '#title' => t('User Agent'),
     '#type' => 'hidden',
     '#required' => 1,
     '#extra' => array(

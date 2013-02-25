@@ -85,7 +85,7 @@ Drupal.behaviors.marketSourceInit = {
     if (referrer == '') {
       referrer = '(none)';
     }
-    if (typeof qs_keys['initial_referrer']['value'] !== 'undefined') {
+    if ((typeof qs_keys['initial_referrer']['value'] !== 'undefined') && qs_keys['referrer']['persistence'] != false) {
       var cookie = getCookie('initial_referrer');
       if (cookie == false || cookie == null || cookie == '') {
         // Store the referrer value in our qs_keys.
@@ -100,7 +100,7 @@ Drupal.behaviors.marketSourceInit = {
       // Set the referrer cookie for backwards compat.
       setCookie('referrer', qs_keys['referrer']['value']);
     }
-
+    
   }).addClass('marketsource-processed');
 
   })(jQuery); }
@@ -124,7 +124,65 @@ Drupal.behaviors.marketSourceFormPopulate = {
     maxlength = Drupal.settings.market_source.maxlength;
   }
 
+  // add search engine, search string, and user agent fields to qs_keys
   var qs_keys = Drupal.settings.market_source.qs_keys;
+  if (typeof qs_keys['initial_referrer'] !== 'undefined' && typeof qs_keys['search_engine'] !== 'undefined' 
+    && qs_keys['search_engine']['value'] == null
+  ) {
+    if (/http(s?)\:\/\/www\.google\./.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Google';
+    }
+    else if (/http(s?)\:\/\/search\.msn/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'MSN';
+    }
+    else if (/http(s?)\:\/\/search\.yahoo/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Yahoo!';
+    }
+    else if (/http(s?)\:\/\/www\.bing/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Bing';
+    }
+    else if (/http(s?)\:\/\/msxml\.excite\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Excite';
+    }
+    else if (/http(s?)\:\/\/search\.lycos\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Lycos';
+    }
+    else if (/http(s?)\:\/\/www\.alltheweb\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'All The Web';
+    }
+    else if (/http(s?)\:\/\/search\.aol\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'AOL';
+    }
+    else if (/http(s?)\:\/\/(www)?\.ask\.co/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Ask.com';
+    }
+    else if (/http(s?)\:\/\/www\.hotbot\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'HotBot';
+    }
+    else if (/http(s?)\:\/\/www\.metacrawler\.com/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Metacrawler';
+    }
+    else if (/http(s?)\:\/\/search\.earthlink\.net/.test(qs_keys['initial_referrer']['value'])) {
+      qs_keys['search_engine']['value'] = 'Earthlink';
+    }
+  }
+  if (typeof qs_keys['initial_referrer'] !== 'undefined' && typeof qs_keys['search_string'] !== 'undefined'
+    && qs_keys['search_string']['value'] == null
+  ) {
+    // just Bing and Yahoo!. Google hides its search strings behind a redirect these days.
+    if (/http(s?)\:\/\/search\.yahoo/.test(qs_keys['initial_referrer']['value'])) {
+      var matches = /(\?|\&)p\=([^\&]+)/.exec(qs_keys['initial_referrer']['value']);
+      qs_keys['search_string']['value'] = decodeURIComponent(matches[2].replace(/\+/g, '%20'));
+    }
+    else if (/http(s?)\:\/\/www\.bing/.test(qs_keys['initial_referrer']['value'])) {
+      var matches = /(\?|\&)q\=([^\&]+)/.exec(qs_keys['initial_referrer']['value']);
+      qs_keys['search_string']['value'] = decodeURIComponent(matches[2].replace(/\+/g, '%20'));
+    }
+  }
+  if (typeof qs_keys['user_agent'] !== 'undefined') {
+    qs_keys['user_agent']['value'] = navigator.userAgent;
+  }
+  
   // Iterate across all webforms on the page.
   for (var form_id in Drupal.settings.market_source.form_keys) {
     // Iterate across all form keys in this webform.
