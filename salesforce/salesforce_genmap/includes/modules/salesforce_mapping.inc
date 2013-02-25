@@ -370,7 +370,7 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
 
   // An item may be set to UPDATE when it has not yet been made in Salesforce.
   if ($op == 'UPDATE') {
-    $record_map = salesfoce_sync_load_map($item);
+    $record_map = salesforce_sync_load_map($item);
     if (!$record_map) {
       if (is_null($dedupe_field)) {
         $item['operation'] = 'CREATE';
