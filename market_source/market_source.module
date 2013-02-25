@@ -266,10 +266,30 @@ function market_source_generic_form_cid_validate($form, &$form_state) {
 function _market_source_build_qs_keys() {
   static $qs_keys = array();
   if (empty($qs_keys)) {
+    // collate custom and default field settings
+    $default_fields = variable_get('market_source_default_fields', array());
+    $custom_fields = variable_get('market_source_custom_fields', array());
+    $field_settings = array(
+      'ms' => isset($default_fields['market_source']) ? $default_fields['market_source'] : array(),
+      'cid' => isset($default_fields['campaign']) ? $default_fields['campaign'] : array(),
+      'referrer' => isset($default_fields['referrer']) ? $default_fields['referrer'] : array(),
+      'initial_referrer' => isset($default_fields['initial_referrer']) ? $default_fields['initial_referrer'] : array(),
+      'search_engine' => isset($default_fields['search_engine']) ? $default_fields['search_engine'] : array(),
+      'search_string' => isset($default_fields['search_string']) ? $default_fields['search_string'] : array(),
+      'user_agent' => isset($default_fields['user_agent']) ? $default_fields['user_agent'] : array(),
+    );
+    foreach ($custom_fields as $custom_field) {
+      $field_settings[ $custom_field['key'] ] = $custom_field;
+    }
+    
+    // create keys with null values and persistence settings
     $ms_keys = _market_source_get_field_keys();
     if (is_array($ms_keys)) {
       foreach ($ms_keys as $ms_key) {
-        $qs_keys[ $ms_key ] = NULL;
+        $qs_keys[ $ms_key ] = array(
+          'value' => NULL,
+          'persistence' => isset($field_settings[$ms_key]['persistence']) ? $field_settings[$ms_key]['persistence'] : TRUE,
+        );
       }
     }
   }
@@ -410,6 +430,33 @@ function market_source_market_source_field_info() {
   );
   $fields['initial_referrer'] = array(
     '#title' => t('Initial Referrer'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['search_engine'] = array(
+    '#title' => t('Search Engine'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['search_string'] = array(
+    '#title' => t('Search String'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['user_agent'] = array(
+    '#title' => t('User Agent'),
     '#type' => 'hidden',
     '#required' => 1,
     '#extra' => array(

@@ -45,7 +45,62 @@ function market_source_admin_settings_form($form, &$form_state) {
       'registration form. Enter the internal Drupal form ID, one per line.'),
     '#default_value' => implode("\n", $additional_forms),
   );
- // Custom global fields.
+  
+  // Default global field settings.
+  $form['market_source_default_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Webform Default Global Fields'),
+    '#description' => t('Customize certain aspects of the default webform fields.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+  $form['market_source_default_fields']['default_fields_wrapper'] = array(
+    '#prefix' => '<div id="marketsource-default-fields">',
+    '#suffix' => '</div>',
+    '#theme' => 'market_source_admin_global_fields_table',
+  );
+  
+  // Get current settings for these fields.
+  if (!isset($form_state['values']['market_source_default_fields']['default_fields_wrapper'])) {
+    $form_state['values']['market_source_default_fields']['default_fields_wrapper'] = variable_get('market_source_default_fields', NULL);
+  }
+  //set up fields to loop through
+  $default_fields_list = array(
+    'market_source' => t('Market Source'), 
+    'campaign' => t('Campaign ID'), 
+    'referrer' => t('Referrer'), 
+    'initial_referrer' => t('Initial Referrer'),
+    'search_engine' => t('Search Engine'),
+    'search_string' => t('Search String'),
+    'user_agent' => t('User Agent'),
+  );
+  //shortcut
+  $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
+  
+  foreach($default_fields_list as $key=>$field_name) {
+    $form['market_source_default_fields']['default_fields_wrapper'][$key] = array(
+      'persistence' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Persistent'),
+        '#description' => t('Enables caching of field value per user session.'),
+        '#default_value' => isset($default_fields_values[$key]['persistence']) ? $default_fields_values[$key]['persistence'] : TRUE,
+        '#size' => 20,
+      ),
+      'name' => array(
+        '#type' => 'item',
+        '#title' => t('Human-readable field name'),
+        '#markup' => $field_name,
+      ),
+      'key' => array(
+        '#type' => 'item',
+        '#title' => t('Unique field key'),
+        '#markup' => $key,
+      ),
+    );
+  }
+  
+  // Custom global fields.
   $form['market_source_global_fields'] = array(
     '#type' => 'fieldset',
     '#title' => t('Webform Custom Global Fields'),
@@ -70,6 +125,13 @@ function market_source_admin_settings_form($form, &$form_state) {
   $custom_field_values[] = array();
   foreach ($custom_field_values as $i => $field_value) {
     $custom_fields[$i] = array();
+    $custom_fields[$i]['persistence'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Persistent'),
+      '#description' => t('Enables caching of field value per user session.'),
+      '#default_value' => isset($field_value['persistence']) ? $field_value['persistence'] : TRUE,
+      '#size' => 20,
+    );
     $custom_fields[$i]['name'] = array(
       '#type' => 'textfield',
       '#title' => t('Human-readable field name'),
@@ -228,12 +290,23 @@ function market_source_admin_settings_form_submit($form, &$form_state) {
     $val = trim($val);
   }
   variable_set('market_source_additional_forms', array_filter($additional_forms));
+  // Save default field settings.
+  $default_fields = array();
+  if (!empty($values['market_source_default_fields']['default_fields_wrapper'])) {
+    foreach ($values['market_source_default_fields']['default_fields_wrapper'] as $key => $default_values) {
+      $default_fields[$key] = array(
+        'persistence' => $default_values['persistence'],
+      );
+    }
+  }
+  variable_set('market_source_default_fields', $default_fields);
   // Save all the custom fields.
   $custom_fields = array();
   if (!empty($values['market_source_global_fields']['custom_fields_wrapper'])) {
     foreach ($values['market_source_global_fields']['custom_fields_wrapper'] as $i => $field) {
       if (!empty($field['key']) && !empty($field['name'])) {
         $custom_fields[] = array(
+          'persistence' => $field['persistence'],
           'key' => $field['key'],
           'name' => $field['name'],
           'default' => $field['default'],
