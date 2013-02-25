@@ -123,6 +123,10 @@ function salesforce_donation_fundraiser_donation_success($donation) {
   // TODO check if we want to grab SF donation data on failures as well as success
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+  // Here is where, if we were going to offload recurring creation elsewhere,
+  // That we would. We can detect it here, set the recurring objects
+  // Creating new objects would be short circuited in sustainters, so we wouldn't
+  // hit that point there
 }
 
 /**
@@ -132,7 +136,8 @@ function salesforce_donation_fundraiser_donation_post_create($donation) {
   // When / where to pick up recurring donations?
   // Recurring donations only go through success when they are completed. So we need to do this on Create.
   // If part of a recurring set, AND not the master did (handed during success).
-  if ($donation->donation['recurs_monthly'] == TRUE && $donation->master_did != $donation->did) {
+  // Which means this is being created by the sustainer code.
+  if ($donation->donation['recurs_monthly'] == TRUE && isset($donation->master_did) && $donation->master_did != $donation->did) {
     $donation = fundraiser_donation_get_donation($donation->did, TRUE); // Refresh our data.
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
   }
