@@ -448,6 +448,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
           $gateway_form = $form_func($payment_method);
         }
       }
+      // Note: fields can be nested down.
       $field_set = _salesforce_donation_get_form_fields($gateway_form);
       foreach ($field_set as $field_key => $field_title) {
         $fields['salesforce_donation_map']['#fields'][$field_key] = $field_title . ' (' . t('Payment field') . ')';
@@ -516,7 +517,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
  */
 function _salesforce_donation_get_form_fields($form, $fields = array()) {
   foreach (element_children($form) as $field_name) {
-    if (!isset($form[$field_name]['#type']) || $form[$field_name]['#type'] != 'fieldset') {
+    if (isset($form[$field_name]['#type']) && $form[$field_name]['#type'] != 'fieldset') {
       $fields[$field_name] = isset($form[$field_name]['#title']) ? $form[$field_name]['#title'] : $field_name;
     }
     else {
