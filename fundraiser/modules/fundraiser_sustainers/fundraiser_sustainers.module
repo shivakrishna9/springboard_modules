@@ -506,9 +506,11 @@ function _fundraiser_sustainers_recurs_monthly_field_display($form, $form_state,
   // Supporting gateway types from the gateway on the node.
   $supporting_gateways = array();
   foreach ($form['#node']->gateways as $type => $gateway) {
-    $this_gateway = _fundraiser_gateway_info($gateway['id']);
-    if (isset($this_gateway['allow_recurring']) && _fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $type)) {
-      $supporting_gateways[] = $type;
+    if (!empty($gateway['id'])) {
+      $this_gateway = _fundraiser_gateway_info($gateway['id']);
+      if (isset($this_gateway['allow_recurring']) && _fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $type)) {
+        $supporting_gateways[] = $type;
+      }
     }
   }
   // Generate the right selector for the field type.
