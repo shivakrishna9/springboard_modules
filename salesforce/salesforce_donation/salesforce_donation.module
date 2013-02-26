@@ -162,7 +162,9 @@ function salesforce_donation_node_insert($node) {
 function salesforce_donation_fundraiser_donation_success($donation) {
   // Reload donation to be sure to get everything we need from submission table then send to queue.
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
-  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+  // Since this is called at the end of a standalone processing,
+  // or after a recurring donation is processed: upsert
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'upsert', $donation->node, $donation->did, $donation);
 }
 
 /**
