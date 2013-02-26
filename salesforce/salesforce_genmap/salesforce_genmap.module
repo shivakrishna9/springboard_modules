@@ -352,17 +352,20 @@ function _salesforce_genmap_get_map_id_by_nid_module($nid, $map_handler = 'sales
  * Helper to get list of modules being extended.
  */
 function _salesforce_genmap_get_extended_modules_list() {
+  $modules = array();
+
   // Drupal function file_scan_directory() uses the opendir() approach which
   // does not work if the path contains symlinks.  Using scandir() to be more
   // flexible.
   $cache = cache_get('salesforce_genmap_extended_modules');
   if (empty($cache)) {
     $path = drupal_get_path('module', 'salesforce_genmap') . '/includes/modules';
-    $files = scandir($path);
-    $modules = array();
-    foreach ($files as $file) {
-      if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
-        $modules[] = substr($file, 0, -4);
+    if (is_dir($path)) {
+      $files = scandir($path);
+      foreach ($files as $file) {
+        if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
+          $modules[] = substr($file, 0, -4);
+        }
       }
     }
     cache_set('salesforce_genmap_extended_modules', $modules);

@@ -303,17 +303,20 @@ function _salesforce_sync_get_rmid($item) {
  * Helper to get list of modules being extended.
  */
 function _salesforce_sync_get_extended_modules_list() {
+  $modules = array();
+
   // Drupal function file_scan_directory() uses the opendir() approach which
   // does not work if the path contains symlinks.  Using scandir() to be more
   // flexible.
   $cache = cache_get('salesforce_sync_extended_modules');
   if (empty($cache)) {
     $path = drupal_get_path('module', 'salesforce_sync') . '/includes/modules';
-    $files = scandir($path);
-    $modules = array();
-    foreach ($files as $file) {
-      if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
-        $modules[] = substr($file, 0, -4);
+    if (is_dir($path)) {
+      $files = scandir($path);
+      foreach ($files as $file) {
+        if (!in_array($file, array('.', '..')) && substr($file, -4) == '.inc') {
+          $modules[] = substr($file, 0, -4);
+        }
       }
     }
     cache_set('salesforce_sync_extended_modules', $modules);
