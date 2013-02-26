@@ -204,7 +204,8 @@ ISO 8601 format.  More conversions can be added to the
 
 ## Misc helpers
 
-**Get records:**
+### Get records
+
 The `SalesforceSync` object will keep track of all records that have been
 processed by that object allowing you to retrieve those specific records and
 perform additional actions upon them.
@@ -222,8 +223,11 @@ perform additional actions upon them.
   $salesforce_sync->deleteNewSfRecords();
 ```
 
-**Fetch from Salesforce:** If you need to, you can use `salesforce_sync` to
-fetch records directly from Salesforce.
+
+### Fetch from Salesforce
+
+If you need to, you can use `salesforce_sync` to fetch records directly from
+Salesforce.
 
 ```php
 <?php
