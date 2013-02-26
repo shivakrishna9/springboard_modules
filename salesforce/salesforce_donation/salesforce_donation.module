@@ -50,8 +50,7 @@ function salesforce_donation_settings($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Map Salesforce Stages to Donation States'),
     '#description' => t('Donations in particular states can be mapped to specific Salesforce stages. ' .
-      'By default donations that have been successfully processed are mapped to Stage Posted, donations ' .
-      'that have been scheduled (recurring donations), but not yet charges are mapped to Pledged. If ' .
+      'By default donations that have been successfully processed are mapped to Stage Posted. If ' .
       'those settings are all you need, then you do not need to map additional stages.'),
   );
   $stages = array(
@@ -162,7 +161,6 @@ function salesforce_donation_node_insert($node) {
  */
 function salesforce_donation_fundraiser_donation_success($donation) {
   // Reload donation to be sure to get everything we need from submission table then send to queue.
-  // TODO check if we want to grab SF donation data on failures as well as success
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
 }
@@ -236,7 +234,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
   if (isset($map->field_map['salesforce_donation_map'])) {
     if (isset($map->field_map['salesforce_donation_map']['close_date'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['close_date'];
-      // Set by charging module or by next_charge in recurring module.
+      // Set by charging module.
       $fields[$sf_field] = isset($donation->close_date) ? $donation->close_date : '';
       if (!empty($fields[$sf_field])) {
         $fields[$sf_field] = gmdate('c', strtotime($fields[$sf_field]));
@@ -256,18 +254,11 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['probability'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['probability'];
-      $probability = 100;
-      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
-        $probability = 50;
-      }
-      $fields[$sf_field] = $probability;
+      $fields[$sf_field] = 100;
     }
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       $stage = 'Posted';
-      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
-        $stage = 'Pledged';
-      }
       $mapped_stages = variable_get('salesforce_donation_mapped_stages', array());
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
