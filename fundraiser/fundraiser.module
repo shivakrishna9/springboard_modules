@@ -1828,7 +1828,7 @@ function fundraiser_donation_refund_success($refund) {
   $record->did = $refund->refunded_donation_did;
   $record->receipt_id = $refund->did;
   $record->amount = $refund->donation['refund_amount'];
-  $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : ''; // TODO, make sure this pattern holds between here and UC and COMMERCE
+  $record->txn_id = isset($refund->result['data']['txn_id']) ? $refund->result['data']['txn_id'] : ''; 
   $record->reason = $refund->donation['refund_reason'];
   _fundraiser_create_refund($record);
   $refund->refund = $record;
