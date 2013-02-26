@@ -261,6 +261,110 @@ function fundraiser_sustainers_mail($key, &$message, $params) {
 }
 
 /**
+ * Salesforce hooks and integrations.
+ */
+
+/**
+ * Implements hook_salesforce_genmap_map_fields().
+ */
+function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node) {
+  // Donation properties map.
+  if (isset($map->field_map['fundraiser_sustainers_map'])) {
+    if (isset($map->field_map['fundraiser_sustainers_map']['full_name'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['full_name'];
+      $fields[$sf_field] =  t('Recurring Donation - !first !last (!date)',
+        array('!first' => $donation->donation['first_name'], '!last' => $donation->donation['last_name'],
+        '!date' => gmdate('Y-m-d H:i:s\Z', $donation->transaction_date)));
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['amount'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['amount'];
+      $fields[$sf_field] = ''; // amount
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['contact'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['contact'];
+      $fields[$sf_field] = '[Contact:user:' . $donation->uid . ']';
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['installment_period'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['installment_period'];
+      $fields[$sf_field] = 'Monthly';
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['schedule_type'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['schedule_type'];
+      $fields[$sf_field] = 'Multiply By';
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['installments'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['installments'];
+      $fields[$sf_field] = ''; // Count of records in fundraiser_sustainer for this series
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['last_payment_date'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['last_payment_date'];
+      $fields[$sf_field] = ''; // Payment date of first order in series in 'Y-m-d' format
+    }
+    if (isset($map->field_map['fundraiser_sustainers_map']['next_payment_date'])) {
+      $sf_field = $map->field_map['fundraiser_sustainers_map']['next_payment_date'];
+      $fields[$sf_field] = ''; // Payment date of next order in series in 'Y-m-d'
+    }
+  }
+  return $fields;
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // Alter donations based on recurring status.
+  if ($context['module'] == 'salesforce_donation') {
+    $donation = $context['object'];
+    $map = $context['map'];
+    if (isset($map->field_map['salesforce_donation_map']['probability'])) {
+      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+        $sf_field = $map->field_map['salesforce_donation_map']['probability'];
+        $fields[$sf_field] = 50;
+      }
+    }
+    if (isset($map->field_map['salesforce_donation_map']['stage'])) {
+      if ($fields[$sf_field] == 'Posted' && $donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+        $sf_field = $map->field_map['salesforce_donation_map']['stage'];
+        $fields[$sf_field] = 'Pledged';
+      }
+    }
+    // Lastly, add a field iff recurring object, not yet charged.
+    if ($donation->donation['recurs_monthly'] == TRUE &&
+      !empty($donation->master_did) && $donation->did != $donation->master_did) {
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:' . $donation->master_did . ']';
+    }
+  }
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_help().
+ */
+function fundraiser_sustainers_salesforce_genmap_map_help() {
+  return array(
+    'fundraiser_sustainers' => t('Fundraiser sustainers includes Salesforce integration, there is no need ' .
+      'to map fields (all recurring donation objects are the same), so no admin interface is provided.'),
+  );
+}
+
+/**
+ * Implements hook_node_insert().
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function fundraiser_sustainers_node_insert($node) {
+  // If node is a donation type.
+  if (fundraiser_is_donation_type($node->type)) {
+    // And if we have a default map.
+    $map = salesforce_genmap_load_map(-1, 'fundraiser_sustainers');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'fundraiser_sustainers');
+    }
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_delete().
  */
 function fundraiser_sustainers_fundraiser_donation_delete($donation) {
@@ -972,6 +1076,12 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year) {
       );
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
+      // Load the newly created individual donation into salesforce_donation.
+      if (function_exists('salesforce_genmap_send_object_to_queue')) {
+        $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
+          $sf_donation->node, $sf_donation->did, $sf_donation);
+      }
     }
     else {
       // Unset this from the existing recurring.
@@ -1115,6 +1225,12 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         );
         // Update the recurring table.
         _fundraiser_sustainers_create_recurring($recurring_donation);
+        // Load the newly created recurring donation into salesforce.
+        if (function_exists('salesforce_genmap_send_object_to_queue')) {
+          $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+          salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
+            $sf_donation->node, $sf_donation->did, $sf_donation);
+        }
         $info = _fundraiser_get_donation_gateway($donation->did);
         // This created donation is the master, so passing it in to create the set.
         // We can't predict the form key for these values, so ask the gateway to provide.
