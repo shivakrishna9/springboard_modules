@@ -212,7 +212,7 @@ rules to an item:
 
 ## Token values
 
-@TODO
+@TODO: Phillip
 
 
 ## Format conversions
@@ -223,6 +223,22 @@ Currently it supports the instance where Salesforce expects all dates to be in
 ISO 8601 format.  More conversions can be added to the
 `convertToSalesforceFormat()` and `convertToDrupalFormat()` methods of the
 `SalesforceSync` class.
+
+
+### Support to expand modules
+
+The `salesforce_sync` module will allow you to expand existing module for the
+purpose of adding Salesforce sync support into those modules.  Since
+`salesforce_sync` does not currently have any expanded modules, refer to
+`salesforce_genmap` for an example of how this system works and why you would
+use it.
+
+To expand a module, add an include file to the `includes/modules` directory that
+has the filename structure of `my_module.inc`.  For example, if the module you
+wished to expand was `views_bulk_operation` you would name the file
+`views_bulk_operation.inc`.  The include file will only be loaded if the
+original module is enabled.  The list of expanded modules is cached, so clear
+the cache if the include file is not loading properly.
 
 
 ## Misc helpers
@@ -276,3 +292,22 @@ Salesforce.
   );
   $records = $salesforce_sync->fetchByField('Contact', $fields, 'Email', $key_field_values);
 ```
+
+
+## Patch
+
+This patch to the `salesforce` module is required in order for `salesforce_sync`
+to work properly.
+
+_Patch is automatically applied when a `springboard` instance is built using
+[Springboard Build](https://github.com/JacksonRiver/Springboard-Build)._
+
+**Fix SOAP Identity:**
+  * http://drupal.org/files/salesforce-add-identity_0_10.patch
+
+The `salesforce_soap` module has a bug that prevents the ability to use the
+UPSERT operation.  Another bug is caused by separate timeouts between the OAuth
+connection and the SOAP authentication, where the SOAP authentication will
+expire much sooner than the OAuth connection, and currently the
+`salesforce_soap` module provides no way to reestablish a SOAP authentication
+when that occurs.  The following patch fixes these problems.
