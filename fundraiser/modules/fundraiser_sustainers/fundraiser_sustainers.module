@@ -323,6 +323,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
       }
     }
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['stage'];
       if ($fields[$sf_field] == 'Posted' && $donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
         $sf_field = $map->field_map['salesforce_donation_map']['stage'];
         $fields[$sf_field] = 'Pledged';
@@ -1227,7 +1228,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         _fundraiser_sustainers_create_recurring($recurring_donation);
         // Load the newly created recurring donation into salesforce.
         if (function_exists('salesforce_genmap_send_object_to_queue')) {
-          $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+          $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);
           salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
             $sf_donation->node, $sf_donation->did, $sf_donation);
         }
