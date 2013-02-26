@@ -100,4 +100,32 @@ function fundraiser_sustainers_install() {
       variable_det('fundraiser_port_recurring_done');
     }
   }
+  // Create default SF map insert into table.
+  $map = array();
+  $map = entity_create('salesforce_genmap_map', $map);
+  $map->nid = -1;
+  $map->map_handler = 'fundraiser_sustainers';
+  $map->salesforce_object_type = 'npe03__Recurring_Donation__c';
+  //$map->salesforce_record_type = '012G00000016UraIAE';
+  $map->salesforce_dedupe_field = 'Order_ID__c';
+  $map->field_map = array(
+    'fundraiser_sustainers_map' => array(
+      'full_name' => 'Name',
+      'amount' => 'npe03__Amount__c',
+      'contact' => 'npe03__Contact__c',
+      'installment_period' => 'npe03__Installment_Period__c',
+      'schedule_type' => 'npe03__Schedule_Type__c',
+      'installments' => 'npe03__Installments__c',
+      'last_payment_date' => 'npe03__Last_Payment_Date__c',
+      'next_payment_date' => 'npe03__Next_Payment_Date__c',
+    ),
+  );
+  $map->sync_options = array(
+    'insert' => 'insert',
+    'update' => 'update',
+    'delete' => 'delete',
+  );
+  $map->status = 1;
+  $map->module = 'fundraiser_sustainers';
+  salesforce_genmap_save_map($map, 'fundraiser_sustainers');
 }
