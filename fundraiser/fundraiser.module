@@ -1590,7 +1590,7 @@ function fundraiser_donation_create($donation) {
     $form_url = $base_url . '/' . $alias;
   }
   else {
-    $form_url = $base_url . '/node/' . $nid;
+    $form_url = $base_url . '/node/' . $donation->nid;
   }
   $donation_record = array(
     'did' => $donation->did, // Donation id.
