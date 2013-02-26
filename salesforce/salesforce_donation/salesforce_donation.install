@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Manages webform to Salesforce mappings.
+ */
+
+function salesforce_donation_install() {
+  // Create default SF map insert into table.
+  $map = array();
+  $map = entity_create('salesforce_genmap_map', $map);
+  $map->nid = -1;
+  $map->map_handler = 'salesforce_donation';
+  $map->salesforce_object_type = 'Opportunity';
+  $map->salesforce_record_type = '012G00000016UraIAE';
+  $map->salesforce_dedupe_field = 'Order_ID__c';
+  $map->field_map = array(
+    'salesforce_donation_map' => array(
+      'did' => 'Order_ID__c',
+      'gateway' => 'Payment_Gateway__c',
+      'txn_id' => 'Gateway_Reference__c',
+      'close_date' => 'CloseDate',
+      'transaction_date' => 'Transaction_Date_Time__c',
+      'form_URL' => 'Donation_Form_URL__c',
+      'probability' => 'Probability',
+      'stage' => 'StageName',
+      'user_salesforce_account_id' => 'AccountId',
+      'full_name' => 'Name',
+      'amount' => 'Amount',
+      'address' => 'Billing_Street__c',
+      'address_line_2' => 'Billing_Street_Line_2__c',
+      'city' => 'Billing_City__c',
+      'country' => 'Billing_Country__c',
+      'state' => 'Billing_State__c',
+      'zip' => 'Billing_Zip__c',
+    ),
+    'salesforce_node_map' => array(
+      'title' => 'Donation_Form_Name__c',
+    ),
+  );
+  $map->sync_options = array(
+    'insert' => 'insert',
+    'update' => 'update',
+    'delete' => 'delete',
+  );
+  $map->status = 1;
+  $map->module = 'salesforce_donation';
+  salesforce_genmap_save_map($map, 'salesforce_donation');
+}
