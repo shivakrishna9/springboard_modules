@@ -1,4 +1,4 @@
-# Salesforce Suite General Documentation
+# Springboard Salesforce Suite
 
 Provides an overview of the relationship between the modules provided in the
 Drupal contributed `salesforce` module and those provided in the salesforce
@@ -33,7 +33,7 @@ _Patch is automatically applied when a `springboard` instance is built using
 [Springboard Build](https://github.com/JacksonRiver/Springboard-Build)._
 
 **Fix SOAP Identity:**
- * http://drupal.org/files/salesforce-add-identity_0_10.patch
+  * http://drupal.org/files/salesforce-add-identity_0_10.patch
 
 The `salesforce_soap` module has a bug that prevents the ability to use the
 UPSERT operation.  Another bug is caused by separate timeouts between the OAuth
@@ -124,7 +124,7 @@ _All patches are automatically applied when a `springboard` instance is built
 using [Springboard Build](https://github.com/JacksonRiver/Springboard-Build)._
 
 **Add caching to Salesforce information requests:**
- * http://drupal.org/files/1867156-salesforce_cache_objects_0.patch
+  * http://drupal.org/files/1867156-salesforce_cache_objects_0.patch
 
 Information from Salesforce is frequently requested on forms and that
 information is currently not stored in order to prevent requests from occurring
@@ -133,19 +133,19 @@ situations.
 
 
 **Misc bug fixes:**
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0001-code-sniffer-adhearance.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0002-Fix-instances-of-ocassional-PHP-notices.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0003-Fix-bug-where-mapping-name-length-was-not-being-vali.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0004-Fix-issue-if-key-is-set-to-first-row.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0005-Fix-issue-where-key-form-error-would-target-first-ro.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0001-code-sniffer-adhearance.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0002-Fix-instances-of-ocassional-PHP-notices.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0003-Fix-bug-where-mapping-name-length-was-not-being-vali.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0004-Fix-issue-if-key-is-set-to-first-row.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0005-Fix-issue-where-key-form-error-would-target-first-ro.patch
 
 Most of these are minor, however, patch 0004 could prevent validation when it
 was necessary.
 
 
 **Fix ajax validation issue:**
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0001-Extract-logic-for-finding-default-form-field-value-i.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0002-Fix-issue-with-form-validation-caused-by-ajax-calls.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0001-Extract-logic-for-finding-default-form-field-value-i.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0002-Fix-issue-with-form-validation-caused-by-ajax-calls.patch
 
 This is considered a critical issue because the issue prevented the ability to
 build tests on the form. The issue was caused by having each ajax request
@@ -153,9 +153,9 @@ validate the entire form, which would cause simpletest to abort.
 
 
 **Salesforce Mapping form enhancements:**
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0001-Change-key-requirement-from-externalId-to-idLookup.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0002-Make-mapping-table-easier-to-alter.patch
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0003-Make-select-options-more-descriptive.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0001-Change-key-requirement-from-externalId-to-idLookup.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0002-Make-mapping-table-easier-to-alter.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0003-Make-select-options-more-descriptive.patch
 
 These are not strictly considered bugs, however, 0001 is considered required
 because the usage of `externalId` is too restrictive, and 0002 allows an easier
@@ -163,7 +163,7 @@ ability to modify the form through the use of hook_alters.
 
 
 **Add simpletests to Salesforce Mapping:**
- * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-tests-v3/0001-Add-tests-for-entity-mapping.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-tests-v3/0001-Add-tests-for-entity-mapping.patch
 
 This is considered critical in order to provide a streamlined development
 environment.
