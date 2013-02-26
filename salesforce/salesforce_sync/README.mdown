@@ -186,6 +186,29 @@ The following sync rules are supported:
     sync in one direction and not the other, or in the cases of not wanting to
     sync the value of a dedupe field.
 
+Sync rules are applied as an associated array to the individual item providing
+instructions for how to sync the record.  The key is the name of the field and
+the value is the sync rule.  The following is an example of how to set sync
+rules to an item:
+
+```php
+<?php
+  // Provide the rules as an associative array.
+  $sync_rules = array(
+    'FirstName' => SALESFORCE_SYNC_RULE_ALWAYS,
+    'LastName' => SALESFORCE_SYNC_RULE_ALWAYS,
+    'Email' => SALESFORCE_SYNC_RULE_BLANK,
+  );
+
+  // Sync rules can be manually set to a sync instructions item.
+  $item = new stdClass();
+  $item->sync_rules = $sync_rules;
+
+  // Or the sync rules can be provided when a sync instructions item is built
+  // using the `SalsforceSyncItem` class.
+  $item = new SalesforceSyncItem('Contact', 'UPSERT', $sync_rules, 'Email');
+```
+
 
 ## Token values
 
@@ -231,6 +254,9 @@ Salesforce.
 
 ```php
 <?php
+  // The fields listed here will be the fields of the returned records.  You
+  // must explicitly state all fields to retrieve or else no data for the record
+  // will be retrieved.
   $fields = array(
     'FirstName',
     'LastName',
