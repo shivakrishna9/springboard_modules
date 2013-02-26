@@ -596,10 +596,10 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   // Gather the payment fields for storage, and scrub them.
   if (isset($donation->did)) {
     $info = _fundraiser_get_donation_gateway($donation->did);
-    $method_instance = commerce_payment_method_instance_load($info['id']);
+    $method_instance = _fundraiser_gateway_info($info['id']);
   }
   else {
-    $method_instance = commerce_payment_method_instance_load($donation->gateway);
+    $method_instance = _fundraiser_gateway_info($donation->gateway);
   }
   $scrubbed_fields = $donation->donation['payment_fields'];
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
