@@ -104,6 +104,9 @@ class SalesforceObject {
   /**
    * Constructs a sObject.
    *
+   * @param string $object_type
+   *   The type of object the item is as it lives in Salesforce, such as
+   *   'Contact' or 'Opportunity'.
    * @param array $fields
    *   An array of field names and values of the names for this record.  It is
    *   formatted as follows:
@@ -114,13 +117,10 @@ class SalesforceObject {
    *       'Email' => 'john.doe@example.com',
    *     );
    *   </code>
-   * @param string $object_type
-   *   The type of object the item is as it lives in Salesforce, such as
-   *   'Contact' or 'Opportunity'.
    * @param string $record
    *   Subtype of the object type.
    */
-  public function __construct($fields = array(), $object_type = '', $record = NULL) {
+  public function __construct($object_type = '', $fields = array(), $record = NULL) {
     $this->type = $object_type;
     $this->record = $record;
     $this->fields = $fields;
