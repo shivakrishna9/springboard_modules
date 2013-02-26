@@ -278,9 +278,16 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
     if (isset($map->field_map['salesforce_donation_map']['full_name'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['full_name'];
+      $date = isset($donation->transaction_date) ? strtotime($donation->transaction_date) : '';
+      if (empty($date)) {
+        $date = isset($donation->close_date) ? strtotime($donation->close_date) : '';
+      }
+      if (empty($date)) {
+        $date = strtotime('now');
+      }
       $fields[$sf_field] = t('Donation - !first !last (!date)',
         array('!first' => $donation->donation['first_name'], '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $donation->transaction_date)));
+        '!date' => gmdate('Y-m-d H:i:s\Z', $date)));
     }
   }
 
