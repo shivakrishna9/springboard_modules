@@ -676,18 +676,20 @@ class SalesforceSync {
    *   Result of the item's processing from Salesforce.
    */
   public function passItem($item, $result) {
+    $item->sobject->Id = $result->id;
+
     // Keep a log of newly created items.
-    // @TODO: Include updates.
     if ($item->operation == 'CREATE' || $item->operation == 'UPSERT') {
-      $item->sobject->Id = $result->id;
       $this->newSfRecords[] = $item;
-      if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
-        $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
-        $this->processedItemIds[$item->object_type][$id_key] = $result->id;
-        // Pass the item to the token scanner's internal cache so it doesn't
-        // have to go to the db as often.
-        $this->tokenScanner->addItemToTokenCache($item, $result->id);
-      }
+    }
+
+    // Keep a log of all items processed.
+    if (isset($item->module) && isset($item->delta) && isset($item->drupal_id)) {
+      $id_key = $item->module . '-' . $item->delta . '-' . $item->drupal_id;
+      $this->processedItemIds[$item->object_type][$id_key] = $result->id;
+      // Pass the item to the token scanner's internal cache so it doesn't
+      // have to go to the db as often.
+      $this->tokenScanner->addItemToTokenCache($item, $result->id);
     }
 
     // Invokes hook_salesforce_sync_pass_item().

@@ -220,7 +220,7 @@ class SalesforceSyncTestCase extends DrupalWebTestCase {
           $item->dedupe_field = $field;
         }
       }
-      $sobject = new SalesforceObject($fields, $object_type, $record_type);
+      $sobject = new SalesforceObject($object_type, $fields, $record_type);
 
       // If the operation is UPSERT, and there is no dedupe field, change the
       // operation to CREATE.
