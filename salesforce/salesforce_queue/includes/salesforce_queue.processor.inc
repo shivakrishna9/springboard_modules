@@ -674,7 +674,7 @@ class SalesforceQueueProcessor {
    *   Ids of items that have been processed keyed by their unique identifier.
    */
   public function getProcessedItemIds() {
-    return $this->salesforceSync->getProcessedItemIds;
+    return $this->salesforceSync->getProcessedItemIds();
   }
 
   /**
