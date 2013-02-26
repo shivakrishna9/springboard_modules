@@ -24,6 +24,7 @@ function webform_user_clone($node) {
     $node->files = array();
     $node->title = t('Clone of !title', array('!title' => $node->title));
     $node->is_being_cloned = TRUE;
+    $node->clone_from_original_nid = $original_node->nid;
 
     if (variable_get('clone_reset_' . $node->type, FALSE)) {
       $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
