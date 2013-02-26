@@ -12,7 +12,19 @@ function salesforce_donation_install() {
   $map->nid = -1;
   $map->map_handler = 'salesforce_donation';
   $map->salesforce_object_type = 'Opportunity';
-  $map->salesforce_record_type = '012G00000016UraIAE';
+  $object_type = '';
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  if (function_exists('salesforce_get_api')) {
+    $sfapi = salesforce_get_api();
+    if ($sfapi->isAuthorized()) {
+      if (function_exists('_sfw_salesforce_record_type_list')) {
+        $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Opportunity');
+        $sf_records = array_flip($sf_records);
+        $object_type = $sf_records['Donation'];
+      }
+    }
+  }
+  $map->salesforce_record_type = $object_type;
   $map->salesforce_dedupe_field = 'Order_ID__c';
   $map->field_map = array(
     'salesforce_donation_map' => array(
