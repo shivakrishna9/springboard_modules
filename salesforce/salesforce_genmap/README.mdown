@@ -1,0 +1,102 @@
+# Salesforce Generic Mapping
+
+Provides tools to make it easier for modules to create mapping interfaces and
+store the created maps for their custom data objects.
+
+In the future, the goal is to merge `salesforce_mapping` and `salesforce_genmap`
+into one module `salesforce_map` that would provide extentions for the `webform`
+and `entity` modules.
+
+
+## Configuration
+
+Config page: admin/config/salesforce/salesforce-generic
+
+@TODO: There appear to be no configuration options
+
+
+## How to map a custom data object
+
+@TODO: Sarah
+
+
+## Support to expand modules
+
+The `salesforce_genmap` module will allow you to expand an existing module for the
+purpose of adding mapping support into those modules.  For example, the
+`webform` module does not come with support for mapping its submissions so we
+have provided it through the extended modules system.  Using the same system,
+the `salesforce_mapping` module has been modified to streamline its interface
+for the `springboard` workflow.
+
+To expand a module, add an include file to the `includes/modules` directory that
+has the filename structure of `my_module.inc`.  For example, if the module you
+wished to expand was `views_bulk_operation` you would name the file
+`views_bulk_operation.inc`.  The include file will only be loaded if the
+original module is enabled.  The list of expanded modules is cached, so clear
+the cache if the include file is not loading properly.
+
+
+### Salesforce Mapping
+
+@TODO: Kathleen
+
+
+### Webform
+
+@TODO: Kathleen or Sarah
+
+
+## Patches
+
+These patches to the `salesforce` module are required in order for the
+`salesforce_mapping` extension of the `salesforce_genmap` module to work
+correctly.
+
+_All patches are automatically applied when a `springboard` instance is built
+using [Springboard Build](https://github.com/JacksonRiver/Springboard-Build)._
+
+**Add caching to Salesforce information requests:**
+  * http://drupal.org/files/1867156-salesforce_cache_objects_0.patch
+
+Information from Salesforce is frequently requested on forms and that
+information is currently not stored in order to prevent requests from occurring
+again.  The goal is to minimize calls during rapid-succession request
+situations.
+
+
+**Misc bug fixes:**
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0001-code-sniffer-adhearance.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0002-Fix-instances-of-ocassional-PHP-notices.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0003-Fix-bug-where-mapping-name-length-was-not-being-vali.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0004-Fix-issue-if-key-is-set-to-first-row.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-bug_fixes-v1/0005-Fix-issue-where-key-form-error-would-target-first-ro.patch
+
+Most of these are minor, however, patch 0004 could prevent validation when it
+was necessary.
+
+
+**Fix ajax validation issue:**
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0001-Extract-logic-for-finding-default-form-field-value-i.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-fix_ajax_validation-v3/0002-Fix-issue-with-form-validation-caused-by-ajax-calls.patch
+
+This is considered a critical issue because the issue prevented the ability to
+build tests on the form. The issue was caused by having each ajax request
+validate the entire form, which would cause simpletest to abort.
+
+
+**Salesforce Mapping form enhancements:**
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0001-Change-key-requirement-from-externalId-to-idLookup.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0002-Make-mapping-table-easier-to-alter.patch
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-enhancements-v1/0003-Make-select-options-more-descriptive.patch
+
+These are not strictly considered bugs, however, 0001 is considered required
+because the usage of `externalId` is too restrictive, and 0002 allows an easier
+ability to modify the form through the use of hook_alters.
+
+
+**Add simpletests to Salesforce Mapping:**
+  * https://raw.github.com/wiki/JacksonRiver/Springboard-Build/patches/salesforce-tests-v3/0001-Add-tests-for-entity-mapping.patch
+
+This is considered critical in order to provide a streamlined development
+environment.
