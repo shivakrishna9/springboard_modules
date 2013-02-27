@@ -262,9 +262,13 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
   $include_all_countries = variable_get('fundraiser_all_countries', 0);
   $default_available = array('US', 'CA');
   $options = '';
+  $included_countries = array();
   if ($include_all_countries) {
     foreach ($countries->countries as $country_id => $country) {
-      $options .= $country->iso . '|' . $country->country_name . "\n";
+      if (!in_array($country->iso, $included_countries) && !empty($country->iso)) {
+        $options .= $country->iso . '|' . $country->country_name . "\n";
+        $included_countries[] = $country->iso;
+      }
     }
   }
   else {
@@ -287,8 +291,12 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     '#display_callback' => '_fundraiser_commerce_country_field_display',
   );
   $options = '';
+  $included_zones = array();
   foreach ($countries->zones as $zone_id => $zone) {
-    $options .= $zone->iso . '|' . $zone->zone_name . "\n";
+    if (!in_array($zone->iso, $included_zones) && !empty($zone->iso)) {
+      $options .= $zone->iso . '|' . $zone->zone_name . "\n";
+      $included_zones[] = $zone->iso;
+    }
   }
   $fields['billing_information']['state'] = array(
     '#title' => t('State/Province'),
