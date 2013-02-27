@@ -474,7 +474,7 @@ function salesforce_donation_salesforce_genmap_map_field_info($node) {
   if (module_exists('fundraiser_webform') && $node->nid != -1) {
     $fields['salesforce_webform_map'] = array(
       '#type' => 'webform',
-      '#label' => t('Webform Componant'),
+      '#label' => t('Webform Component'),
       '#dedupe' => FALSE,
       '#fields' => array(),
     );
