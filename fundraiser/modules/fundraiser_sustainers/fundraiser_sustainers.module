@@ -272,9 +272,13 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
   if (isset($map->field_map['fundraiser_sustainers_map'])) {
     if (isset($map->field_map['fundraiser_sustainers_map']['full_name'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['full_name'];
+      $date = strtotime('now');
+      if (!empty($donation->transaction_date)) {
+        $date = strtotime($donation->transaction_date);
+      }
       $fields[$sf_field] =  t('Recurring Donation - !first !last (!date)',
         array('!first' => $donation->donation['first_name'], '!last' => $donation->donation['last_name'],
-        '!date' => gmdate('Y-m-d H:i:s\Z', $donation->transaction_date)));
+        '!date' => gmdate('Y-m-d H:i:s\Z', $date)));
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['amount'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['amount'];
