@@ -120,7 +120,6 @@ function fundraiser_sustainers_install() {
   //}
   // There seems to be no subtype record type for recurring donations, so leaving this out.
   $map->salesforce_record_type = $object_type;
-  $map->salesforce_dedupe_field = 'Order_ID__c';
   $map->field_map = array(
     'fundraiser_sustainers_map' => array(
       'full_name' => 'Name',
