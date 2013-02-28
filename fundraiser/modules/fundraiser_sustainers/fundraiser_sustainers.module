@@ -319,11 +319,11 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['last_payment_date'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['last_payment_date'];
-      $fields[$sf_field] = date('Y-m-d');
+      $fields[$sf_field] = date('Y-m-d H:i:s');
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['next_payment_date'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['next_payment_date'];
-      $fields[$sf_field] = date('Y-m-d', $donation->recurring->next_charge);
+      $fields[$sf_field] = date('Y-m-d H:i:s', $donation->recurring->next_charge);
     }
   }
   return $fields;
