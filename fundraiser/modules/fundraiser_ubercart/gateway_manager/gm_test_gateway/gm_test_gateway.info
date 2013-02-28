@@ -1,5 +1,0 @@
-name = Test Gateway Managed
-description = Process payments using a test gateway.
-dependencies[] = gateway_manager
-package = Jackson River Springboard - payment
-core = 7.x

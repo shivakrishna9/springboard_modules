@@ -1,4 +1,0 @@
-
-fundraiser_ubercart 7.x-3.0, 2012-03-30
-------------------------------
-Initial creation as part of fundraiser D7 port.

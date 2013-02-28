@@ -1,9 +1,0 @@
-name = Ogone Managed Payment Gateway
-description = Process payments using Ogone's e-Commerce and DirectLink methods.
-dependencies[] = fundraiser
-dependencies[] = gateway_manager
-dependencies[] = ogone_directlink_api
-
-package = Jackson River Springboard - payment
-core = 7.x
-php = 5.0

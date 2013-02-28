@@ -1,6 +1,0 @@
-name = Authorize.net Managed
-description = Process payments using Authorize.net.
-dependencies[] = gateway_manager
-package = Jackson River Springboard - payment
-core = 7.x
-php = 5.0
