@@ -164,7 +164,7 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
     $item = array(
       'drupal_id' => $oid,
       'module' => $module,
-      'delta' => $module . ':' . $node->nid,
+      'delta' => $module,
       'object_type' => $sobject->type,
       'operation' => $operation,
       'dedupe_field' => $map->salesforce_dedupe_field,
