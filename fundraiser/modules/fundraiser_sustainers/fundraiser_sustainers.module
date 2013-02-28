@@ -278,7 +278,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['amount'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['amount'];
-      $fields[$sf_field] = ''; // amount
+      $fields[$sf_field] = $donation->donation['amount']; 
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['contact'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['contact'];
@@ -293,16 +293,32 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
       $fields[$sf_field] = 'Multiply By';
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['installments'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['installments'];
-      $fields[$sf_field] = ''; // Count of records in fundraiser_sustainer for this series
+      $info = _fundraiser_get_donation_gateway($donation->did);
+      // This created donation is the master, so passing it in to create the set.
+      // We can't predict the form key for these values, so ask the gateway to provide.
+      if (isset($info['expire callback'])) {
+        $expiration_func = $info['expire callback'];
+        $expires = $expiration_func($donation->donation);
+        $month = $expires['month'];
+        $year = $expires['year'];
+        $start = strtotime("now");
+        $stop = mktime(0, 0, 0, $month, 1, $year);
+        $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
+        $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
+        if ($months > $create_limit) {
+          $months = $create_limit;
+        }
+        $sf_field = $map->field_map['fundraiser_sustainers_map']['installments'];
+        $fields[$sf_field] = $months;
+      }
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['last_payment_date'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['last_payment_date'];
-      $fields[$sf_field] = ''; // Payment date of first order in series in 'Y-m-d' format
+      $fields[$sf_field] = date('Y-m-d');
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['next_payment_date'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['next_payment_date'];
-      $fields[$sf_field] = ''; // Payment date of next order in series in 'Y-m-d'
+      $fields[$sf_field] = date('Y-m-d', $donation->recurring->next_charge);
     }
   }
   return $fields;
