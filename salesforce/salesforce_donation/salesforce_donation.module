@@ -261,8 +261,8 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         $fields[$sf_field] = gmdate('c', strtotime($fields[$sf_field]));
       }
     }
-    if (isset($map->field_map['salesforce_donation_map']['form_url'])) {
-      $sf_field = $map->field_map['salesforce_donation_map']['form_url'];
+    if (isset($map->field_map['salesforce_donation_map']['form_URL'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['form_URL'];
       $fields[$sf_field] = $donation->form_url;
     }
     if (isset($map->field_map['salesforce_donation_map']['probability'])) {
