@@ -300,21 +300,22 @@ function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, 
       $info = _fundraiser_get_donation_gateway($donation->did);
       // This created donation is the master, so passing it in to create the set.
       // We can't predict the form key for these values, so ask the gateway to provide.
-      if (isset($info['expire callback'])) {
-        $expiration_func = $info['expire callback'];
-        $expires = $expiration_func($donation->donation);
-        $month = $expires['month'];
-        $year = $expires['year'];
-        $start = strtotime("now");
-        $stop = mktime(0, 0, 0, $month, 1, $year);
-        $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
-        $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
-        if ($months > $create_limit) {
-          $months = $create_limit;
-        }
+      //if (isset($info['expire callback'])) {
+      //  $expiration_func = $info['expire callback'];
+      //  $expires = $expiration_func($donation->donation);
+      //  $month = $expires['month'];
+      //  $year = $expires['year'];
+      //  $start = strtotime("now");
+      //  $stop = mktime(0, 0, 0, $month, 1, $year);
+      //  $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
+      //  $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
+      //  if ($months > $create_limit) {
+      //    $months = $create_limit;
+      //  }
+      // Commented out per ticket 252
         $sf_field = $map->field_map['fundraiser_sustainers_map']['installments'];
-        $fields[$sf_field] = $months;
-      }
+        $fields[$sf_field] = 0; //$months;
+      //}
     }
     if (isset($map->field_map['fundraiser_sustainers_map']['last_payment_date'])) {
       $sf_field = $map->field_map['fundraiser_sustainers_map']['last_payment_date'];
