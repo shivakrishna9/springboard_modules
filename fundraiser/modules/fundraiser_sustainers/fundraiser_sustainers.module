@@ -350,10 +350,13 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         $fields[$sf_field] = 'Pledged';
       }
     }
-    // Lastly, add a field iff recurring object, not yet charged.
-    if ($donation->donation['recurs_monthly'] == TRUE &&
-      !empty($donation->master_did) && $donation->did != $donation->master_did) {
+    // Lastly, add a field iff recurring object.
+    if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
       $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
+    }
+    // Lastly, add a field iff recurring object.
+    if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
     }
   }
 }
