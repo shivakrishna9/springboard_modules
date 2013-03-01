@@ -163,7 +163,8 @@ function springboard_version_info() {
   // Allow other modules to modify version information.
   drupal_alter('springboard_version_info', $modules);
   // Get hash information. Generated on install or last update hook.
-  $hashes_file = drupal_get_path('module', 'springboard_version') . '/springboard_version.hashes';
+  $directory = file_default_scheme() . '://springboard_version';
+  $hashes_file = drupal_realpath( $directory . '/springboard_version.hashes' );
   if (is_file($hashes_file) && is_readable($hashes_file)) {
     $hashes = drupal_parse_info_file($hashes_file);
     foreach ($hashes as $module_name => $springboard_hash) {
