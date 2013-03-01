@@ -32,6 +32,10 @@ function _springboard_version_hash_modules() {
     $hashes .= $module . '=' . _springboard_version_hash_module($module) . "\n";
   }
   // Write hashes to file.
-  $filename = drupal_get_path('module', 'springboard_version') . '/springboard_version.hashes';
-  file_put_contents($filename, $hashes);
+  file_create_path('springboard_version');
+  $filename = file_directory_path() . '/springboard_version';
+  if (file_check_directory($filename)) {
+    $filename .= '/springboard_version.hashes';
+    file_put_contents($filename, $hashes);
+  }
 }
