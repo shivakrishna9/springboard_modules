@@ -1,0 +1,8 @@
+name = Salesforce Namespace
+description = Applies a namespace to every external id field so that multiple sites can integrate with a single Salesforce org.
+package = Salesforce
+core = 7.x
+
+dependencies[] = salesforce_queue
+
+configure = admin/config/services/salesforce/salesforce-namespace
