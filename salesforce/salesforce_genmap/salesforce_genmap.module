@@ -159,17 +159,17 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
   if (!empty($map) && !empty($map->sync_options[$op])) {
     $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node);
     $op = strtoupper($op);
-    $operation = $op == 'INSERT' ? (empty($map->salesforce_dedupe_field) ? 'CREATE' : 'UPSERT') : $op;
     // Add to the queue.
     $item = array(
       'drupal_id' => $oid,
       'module' => $module,
       'delta' => $module,
       'object_type' => $sobject->type,
-      'operation' => $operation,
+      'operation' => $op,
       'dedupe_field' => $map->salesforce_dedupe_field,
       'sobject' => $sobject,
     );
+    _salesforce_genmap_alter_operation($item);
     $queue = salesforce_queue_load();
     $result = $queue->createItem($item);
     if (!$result) {
@@ -389,4 +389,39 @@ function _salesforce_genmap_load_extended_modules($module = '') {
   foreach ($modules as $module) {
     module_load_include('inc', 'salesforce_genmap', 'includes/modules/' . $module);
   }
+}
+
+/**
+ * Helper to figure out the appropriate operation when queuing.
+ */
+function _salesforce_genmap_alter_operation(&$item, $op = NULL) {
+  $op = is_null($op) ? (isset($item['operation']) ? $item['operation'] : '') : $op;
+
+  // Sometimes the name of the hook is sent to us, so lets support that.
+  if ($op == 'INSERT') {
+    $op = 'CREATE';
+  }
+
+  // An item may be set to UPDATE when it has not yet been made in Salesforce.
+  if ($op == 'UPDATE') {
+    $record_map = salesforce_sync_load_map($item);
+    if (!$record_map) {
+      if (!isset($item['dedupe_field']) || empty($item['dedupe_field'])) {
+        $op = 'CREATE';
+      }
+      else {
+        // Since a dedupe field is available, this item could be sent as an
+        // UPSERT which will help us avoid potential duplicate record conflicts.
+        $op = 'UPSERT';
+      }
+    }
+  }
+  // When there is a dedupe field set and the action is to create a new record,
+  // the operation needs to be UPSERT.
+  elseif ($op == 'CREATE' && isset($item['dedupe_field']) && !empty($item['dedupe_field'])) {
+    $op = 'UPSERT';
+  }
+
+  $item['operation'] = $op;
+  return $op;
 }

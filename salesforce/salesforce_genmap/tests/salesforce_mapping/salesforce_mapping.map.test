@@ -138,7 +138,7 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertNoFieldById('edit-salesforce-field-mappings-uid-sf-drupal-append', '', 'UID sync rules does not have "append" option when importing into Drupal.');
     $this->assertNoFieldById('edit-salesforce-field-mappings-uid-sf-drupal-always', '', 'UID sync rules does not have "always" option when importing into Drupal.');
 
-    $edit['salesforce_field_mappings[name][salesforce_field]'] = 'Name';
+    $edit['salesforce_field_mappings[name][salesforce_field]'] = 'LastName';
     $this->drupalPostAjax(NULL, $edit, 'salesforce_field_mappings[name][salesforce_field]');
     $this->assertRaw('<input type="hidden" name="salesforce_field_mappings[name][key]" value="">', 'Name field still has the dedupe radio hidden when selecting a non-idLookup field.');
     $this->assertFieldByName('salesforce_field_mappings[name][drupal_sf]', '', 'Export to Salesforce for Name options have appeared.');
@@ -201,9 +201,9 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertOptionSelected('edit-drupal-bundle', 'user', 'Drupal bundle has correct value.');
     $this->assertOptionSelected('edit-salesforce-object-type', 'Contact', 'Salesforce object has correct value.');
     $this->assertFieldByName('salesforce_record_type', 'default', 'Salesforce record type has correct value.');
-    $this->assertOptionSelected('edit-salesforce-field-name', 'Name', 'Name Salesforce field has correct value.');
+    $this->assertOptionSelected('edit-salesforce-field-name', 'LastName', 'Name Salesforce field has correct value.');
     $this->assertOptionSelected('edit-salesforce-field-mail', 'Email', 'Mail Salesforce field has correct value.');
-    $this->assertOptionSelected('edit-salesforce-field-created', 'CreatedDate', 'Created Salesforce field has correct value.');
+    $this->assertOptionSelected('edit-salesforce-field-created', 'Birthdate', 'Created Salesforce field has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[name][sf_drupal]', SALESFORCE_SYNC_RULE_ALWAYS, 'Name import sync rule has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[mail][sf_drupal]', SALESFORCE_SYNC_RULE_ALWAYS, 'Mail import sync rule has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[created][sf_drupal]', SALESFORCE_SYNC_RULE_ALWAYS, 'Created import sync rule has correct value.');
@@ -245,9 +245,9 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
     $this->assertOptionSelected('edit-salesforce-object-type', 'Contact', 'Salesforce object has correct value.');
     $this->assertFieldByName('salesforce_record_type', 'default', 'Salesforce record type has correct value.');
     $this->assertOptionSelected('edit-salesforce-field-uid', 'Id', 'UID Salesforce field has correct value.');
-    $this->assertOptionSelected('edit-salesforce-field-name', 'Name', 'Name Salesforce field has correct value.');
+    $this->assertOptionSelected('edit-salesforce-field-name', 'LastName', 'Name Salesforce field has correct value.');
     $this->assertOptionSelected('edit-salesforce-field-mail', 'npe01__WorkEmail__c', 'Mail Salesforce field has correct value.');
-    $this->assertOptionSelected('edit-salesforce-field-created', 'CreatedDate', 'Created Salesforce field has correct value.');
+    $this->assertOptionSelected('edit-salesforce-field-created', 'Birthdate', 'Created Salesforce field has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[uid][sf_drupal]', SALESFORCE_SYNC_RULE_NEVER, 'UID import sync rule has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[name][sf_drupal]', SALESFORCE_SYNC_RULE_ALWAYS, 'Name import sync rule has correct value.');
     $this->assertFieldByName('salesforce_field_mappings[mail][sf_drupal]', SALESFORCE_SYNC_RULE_ALWAYS, 'Mail import sync rule has correct value.');
@@ -283,7 +283,7 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
       'drupal_sf' => array(
         // Salesforce datatype: Datetime.
         'datetime' => array(
-          'sf_value' => 'CreatedDate',
+          'sf_value' => 'Birthdate',
           'drupal_value' => array(
             'date' => array('last_login', TRUE),
             'integer' => array('status', FALSE),
@@ -326,7 +326,7 @@ class SalesforceMappingAlterMapTestCase extends SalesforceMappingAlterTestCase {
       'sf_drupal' => array(
         // Salesforce datatype: Datetime.
         'datetime' => array(
-          'sf_value' => 'CreatedDate',
+          'sf_value' => 'Birthdate',
           'drupal_value' => array(
             'date' => array('last_login', TRUE),
             'integer' => array('status', FALSE),

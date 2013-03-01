@@ -68,7 +68,7 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
             'sf_drupal' => SALESFORCE_SYNC_RULE_NEVER,
           ),
           'name' => array(
-            'salesforce_field' => 'Name',
+            'salesforce_field' => 'LastName',
             'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
             'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
@@ -78,7 +78,7 @@ class SalesforceMappingAlterTestCase extends SalesforceMappingTestCase {
             'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
           'created' => array(
-            'salesforce_field' => 'CreatedDate',
+            'salesforce_field' => 'Birthdate',
             'drupal_sf' => SALESFORCE_SYNC_RULE_ALWAYS,
             'sf_drupal' => SALESFORCE_SYNC_RULE_ALWAYS,
           ),
