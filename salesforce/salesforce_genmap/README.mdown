@@ -17,8 +17,24 @@ Config page: admin/config/salesforce/salesforce-generic
 
 ## How to map a custom data object
 
-@TODO: Sarah
+There are hooks provided to allow for mapping of custom objects. The following hook
+must be implemented matching a map stored on the genmap table.
 
+hook_salesforce_genmap_map_fields(), returning a keyed array of values for the map.
+
+This hook is the one that does the heavy lifting the match values to fields in the
+Salesforce object. An object that never varies in it's mapping could implement this
+hook and be set, provided that a means of setting the map in the genmap table.
+
+In addition, to provide a default administrative interface, the following hooks may
+be implemented,
+
+salesforce_donation_salesforce_genmap_info(), providing a default tab for mapping.
+salesforce_donation_salesforce_genmap_map_field_info($node), returning a keyed array
+of fields, and the labels to go with them.
+
+This is an optional, though recommended, approach to handling administrative needs
+for a map. It is possible to provide a map with custom (or non-existent) administration.
 
 ## Support to expand modules
 
@@ -44,8 +60,10 @@ the cache if the include file is not loading properly.
 
 ### Webform
 
-@TODO: Kathleen or Sarah
-
+Webform mapping takes the standard recommended route as described under 'How to map a
+custom data object'. It implements hook_salesforce_genmap_map_fields(), 
+salesforce_donation_salesforce_genmap_info(), and
+salesforce_donation_salesforce_genmap_map_field_info().
 
 ## Patches
 
