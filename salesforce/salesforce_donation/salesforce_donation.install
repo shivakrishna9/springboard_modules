@@ -25,7 +25,7 @@ function salesforce_donation_install() {
     }
   }
   $map->salesforce_record_type = $object_type;
-  $map->salesforce_dedupe_field = 'Order_ID__c';
+  //$map->salesforce_dedupe_field = 'Order_ID__c';
   $map->field_map = array(
     'salesforce_donation_map' => array(
       'did' => 'Order_ID__c',
