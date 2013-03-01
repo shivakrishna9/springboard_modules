@@ -106,8 +106,8 @@ function springboard_version_requirements($phase) {
       $error_modules = array_merge($out_of_version, $out_of_hash);
       $requirement['value'] = t('The following modules need to be reviewed: %module_list', array('%module_list' => implode(', ', $error_modules)));
     }
-    $requirement['springboard_version'] = $requirement;
-    return $requirement;
+    $requirements['springboard_version'] = $requirement;
+    return $requirements;
   }
 }
 
