@@ -25,17 +25,26 @@ function salesforce_npsp_user_load($users) {
  * Implements hook_user_view().
  */
 function salesforce_npsp_user_view($account) {
-  $account->content['summary']['salesforce_contact_id'] = array(
-    '#type' => 'user_profile_item',
-    '#title' => t('Salesforce Contact Id'),
-    '#markup' => $account->salesforce_contact_id,
-  );
+  if (!empty($account->salesforce_contact_id) && !empty($account->salesforce_account_id)) {
+    $account->content['summary']['salesforce_contact_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => t('Salesforce Contact Id'),
+      '#markup' => $account->salesforce_contact_id,
+    );
 
-  $account->content['summary']['salesforce_account_id'] = array(
-    '#type' => 'user_profile_item',
-    '#title' => t('Salesforce Account Id'),
-    '#markup' => $account->salesforce_account_id,
-  );
+    $account->content['summary']['salesforce_account_id'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => t('Salesforce Account Id'),
+      '#markup' => $account->salesforce_account_id,
+    );
+  }
+  else {
+    $account->content['summary']['salesforce_not_exported'] = array(
+      '#type' => 'user_profile_item',
+      '#title' => t('Salesforce'),
+      '#markup' => t('User not exported to Salesforce'),
+    );
+  }
 }
 
 /**
