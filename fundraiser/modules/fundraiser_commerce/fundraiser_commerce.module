@@ -1266,6 +1266,7 @@ function _fundraiser_commerce_get_cc_type($cardnumber) {
 function fundraiser_commerce_get_countries() {
   $countries = array();
   $zones = array();
+  $return_data = new stdClass();
   // Gather an array of countries.
   $found_countries = _fundraiser_commerce_get_countries();
   foreach ($found_countries as $found_country) {
