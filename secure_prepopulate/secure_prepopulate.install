@@ -9,15 +9,18 @@
  */
 function secure_prepopulate_requirements($phase) {
   $severity = REQUIREMENT_ERROR;
+  $status = 'missing';
   // check for mcrypt extension
   if (extension_loaded("mcrypt")) {
     $severity = REQUIREMENT_OK;
+    $status = 'installed';
   }
   $requirements = array(
     array(
       'title' => 'Secure Pre-populate',
       'description' => t('Secure Pre-populate requires that PHP Mcrypt extension be installed on the web server.'),
       'severity' => $severity,
+      'value' => 'PHP Mcrypt extension ' . $status,
     ),
   );
   return $requirements;
