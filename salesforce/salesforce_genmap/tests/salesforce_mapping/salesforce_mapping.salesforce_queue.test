@@ -30,7 +30,6 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
     $modules = array_merge($modules, array(
       'salesforce_soap',
       'salesforce_queue',
-      'devel',
     ));
     parent::setUp($modules, $permissions);
 
