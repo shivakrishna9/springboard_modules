@@ -157,7 +157,7 @@ function salesforce_genmap_node_delete($node) {
 function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object) {
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
-    $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node);
+    $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node, $op);
     $op = strtoupper($op);
     // Add to the queue.
     $item = array(
@@ -195,16 +195,17 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
  * @return object
  *   A Salesforce Object that has Salesforce fields with the object field values
  */
-function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $node) {
+function salesforce_genmap_map_object($module, stdClass $object, Entity $map, $node, $op) {
   // Gather the fields for this object from their handler modules.
   $fields = array();
-  $fields = module_invoke($module, 'salesforce_genmap_map_fields', $object, $map, $node);
+  $fields = module_invoke($module, 'salesforce_genmap_map_fields', $object, $map, $node, $op);
 
   $context = array(
     'module' => $module,
     'object' => $object,
     'map' => $map,
     'node' => $node,
+    'op' => $op,
   );
   // Give other modules a chance to alter the object's field values.
   drupal_alter('salesforce_genmap_map_fields', $fields, $context);

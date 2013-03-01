@@ -67,7 +67,7 @@ function webform_salesforce_genmap_map_fields_alter(&$fields, $context) {
 /**
  * Implements hook_salesforce_genmap_map_fields().
  */
-function webform_salesforce_genmap_map_fields(stdClass $submission, Entity $map, $node) {
+function webform_salesforce_genmap_map_fields(stdClass $submission, Entity $map, $node, $op) {
   $fields = array();
   // Salesforce webform map.
   foreach ($submission->data as $cid => $values) {

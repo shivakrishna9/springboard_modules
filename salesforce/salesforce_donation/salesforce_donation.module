@@ -220,7 +220,7 @@ function salesforce_donation_salesforce_genmap_info_alter(&$items) {
  * @return array
  *   A set of fields mapped to value.
  */
-function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node) {
+function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node, $op) {
   $fields = array();
   // Donation properties map.
   if (isset($map->field_map['salesforce_donation_map'])) {

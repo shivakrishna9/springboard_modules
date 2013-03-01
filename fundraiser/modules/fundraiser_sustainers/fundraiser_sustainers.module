@@ -267,7 +267,7 @@ function fundraiser_sustainers_mail($key, &$message, $params) {
 /**
  * Implements hook_salesforce_genmap_map_fields().
  */
-function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node) {
+function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node, $op) {
   // Donation properties map.
   if (isset($map->field_map['fundraiser_sustainers_map'])) {
     if (isset($map->field_map['fundraiser_sustainers_map']['full_name'])) {
@@ -387,6 +387,38 @@ function fundraiser_sustainers_node_insert($node) {
       salesforce_genmap_save_map($map, 'fundraiser_sustainers');
     }
   }
+}
+
+/**
+ * Implements hook_salesforce_queue_postprocess_batch().
+ */
+function fundraiser_sustainers_salesforce_queue_postprocess_batch($batch, $results, $queue) {
+  // Look for the recurring donation object as it comes back. Now
+  // that it has been created, we need to put it back... with updated values.
+  // For # of installments as an update.
+  if (!isset($batch['sobjects'])) {
+    return;
+  }
+  $module = $batch['items'][0]->module;
+  $delta = $batch['items'][0]->delta;
+  $object_type = $batch['items'][0]->object_type;
+  $operation = $batch['operation'];
+  if ($object_type == 'npe03__Recurring_Donation__c'  && $delta == 'fundraiser_sustainers' && $operation == 'create') {
+    $count = count($results);
+    $drupal_ids = array();
+    for ($i = 0; $i < $count; $i++) {
+      if ($results[$i]->success) {
+        $drupal_ids[] = $results[$i]->id;
+      }
+    }
+    // For each result, requeue the items.
+    foreach ($drupal_ids as $drupal_id) {
+      $sf_donation = fundraiser_donation_get_donation($drupal_id, TRUE);
+      salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
+        $sf_donation->node, $sf_donation->did, $sf_donation);
+    }
+  }
+  
 }
 
 /**
