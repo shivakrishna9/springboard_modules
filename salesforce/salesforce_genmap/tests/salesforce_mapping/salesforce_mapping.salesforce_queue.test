@@ -30,7 +30,6 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
     $modules = array_merge($modules, array(
       'salesforce_soap',
       'salesforce_queue',
-      'devel',
     ));
     parent::setUp($modules, $permissions);
 
@@ -57,27 +56,52 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
     $this->compareSubmissionQueueItem($user1, $item, 'UPSERT');
     $this->deleteQueueItem($item);
 
-    // Modify user entity map to not have a dedupe field so so it will queue the
-    // new user as CREATE.
+    // Modify user entity map to not have a dedupe field.
     $edit = array('key' => 'none');
     $this->drupalPost($this->manageMapPrefix . 'foobar', $edit, 'Save mapping');
     entity_get_controller('salesforce_mapping')->resetCache();
+
+    // Create a new user.  With the dedupe field removed it should end up queued
+    // as CREATE.  We will not delete the item after this test in order to test
+    // having the item while still in the queue.
     $user2 = $this->drupalCreateUser();
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'CREATE');
+
+    // Modify the newly created user.  Because the original queue item is still
+    // in the queue, this should end up queued as CREATE.
+    $user2 = user_save($user2, array('mail' => 'newmail1@example.com'));
     $item = $this->fetchQueueItem();
     $this->compareSubmissionQueueItem($user2, $item, 'CREATE');
     $this->deleteQueueItem($item);
 
-    // Modify the user and ensure a queue item with UPDATE op was created.
-    user_save($user2, array('mail' => 'newmail@example.com'));
+    // Modify the user again after the queue item has been manually removed from
+    // the queue.  Because there is not an associated mapped record in
+    // Salesforce nor a dedupe field, this should end up queued as CREATE.
+    $user2 = user_save($user2, array('mail' => 'newmail2@example.com'));
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'CREATE');
+
+    // Process this queue item so a real record is created in Salesforce.
+    $this->salesforceConnect();
+    $processor = salesforce_queue_load_processor();
+    $processor->process();
+
+    // Modify the submission a third time.  Now that there is a map to
+    // Salesforce and not a dedupe field, this should end up queued as UPDATE.
+    $user2 = user_save($user2, array('mail' => 'newmail3@example.com'));
     $item = $this->fetchQueueItem();
     $this->compareSubmissionQueueItem($user2, $item, 'UPDATE');
     $this->deleteQueueItem($item);
 
-    // Delete the user and ensure a queue item with DELETE op was created.
+    // Delete user and it should end up queued as DELETE.
     user_delete($user2->uid);
     $item = $this->fetchQueueItem();
     $this->compareSubmissionQueueItem($user2, $item, 'DELETE');
     $this->deleteQueueItem($item);
+
+    // Remove the new record from Salesforce.
+    $processor->deleteNewSfRecords();
   }
 
   /**
@@ -252,9 +276,9 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
       $this->assertTrue((isset($item['sobject']) && is_object($item['sobject'])), 'sObject not built properly in SalesforceQueue queue item.');
       if (isset($item['sobject']) && is_object($item['sobject'])) {
         $fields = $item['sobject']->fields;
-        $this->assertEqual($fields['Name'], $user->name, 'Name SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['LastName'], $user->name, 'Name SalesforceQueue data matches submitted data.');
         $this->assertEqual($fields['Email'], $user->mail, 'Email SalesforceQueue data matches submitted data.');
-        $this->assertEqual($fields['CreatedDate'], $user->created, 'CreatedDate SalesforceQueue data matches submitted data.');
+        $this->assertEqual($fields['Birthdate'], date('c', $user->created), 'Birthdate SalesforceQueue data matches submitted data.');
       }
     }
   }

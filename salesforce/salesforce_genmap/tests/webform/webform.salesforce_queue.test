@@ -58,55 +58,74 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
    * Tests that information was sent to the queue properly.
    */
   public function testQueueSystem() {
-    $path = 'node/' . $this->webform1->nid;
-    $path2 = 'node/' . $this->webform2->nid;
     $edit = array(
       'submitted[first_name]' => 'ExampleFirstName',
       'submitted[last_name]' => 'ExampleLastName',
-      'submitted[email]' => 'example@email.com',
+      'submitted[email]' => 'webform2@email.com',
     );
 
-    // Test the submissions for each state.
-    $ops = array('UPSERT', 'CREATE', 'UPDATE', 'DELETE');
-    foreach ($ops as $op) {
-      switch ($op) {
-        case 'UPSERT':
-          $op_path = $path2;
-          $assert_text = 'your submission has been received';
-          $op_edit = $edit;
-          $op_button = 'Submit';
-          break;
+    // Create a new submission.  The webform2 map has already been configured
+    // with a dedupe field so this should end up queued as an UPSERT.
+    $this->drupalPost('node/' . $this->webform2->nid, $edit, 'Submit');
+    $this->assertText('your submission has been received', 'There was not an obvious error submitting UPSERT.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'UPSERT');
+    $this->deleteQueueItem($item);
 
-        case 'CREATE':
-          $op_path = $path;
-          $assert_text = 'your submission has been received';
-          $op_edit = $edit;
-          $op_button = 'Submit';
-          break;
+    // Create a new submission using webform1, whose map does not have a dedupe
+    // field so so it should end up queued as CREATE.  We will not delete the
+    // item after this test in order to test having the item while still in the
+    // queue.
+    $edit['submitted[email]'] = 'webform1@email.com';
+    $this->drupalPost('node/' . $this->webform1->nid, $edit, 'Submit');
+    $this->assertText('your submission has been received', 'There was not an obvious error submitting CREATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'CREATE');
 
-        case 'UPDATE':
-          // Refers to previous loop's $item.
-          $op_path = $path . '/submission/' . $item['drupal_id'] . '/edit';
-          $assert_text = 'Submission updated';
-          $op_edit = $edit;
-          $op_button = 'Submit';
-          break;
+    // Modify the newly created submission.  Because the original submission was
+    // not processed and sent to Salesforce, this should end up queued as
+    // CREATE.
+    $edit['submitted[email]'] = 'webform1.update1@email.com';
+    $edit_path = 'node/' . $this->webform1->nid . '/submission/' . $item['drupal_id'] . '/edit';
+    $this->drupalPost($edit_path, $edit, 'Submit');
+    $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'CREATE');
+    $this->deleteQueueItem($item);
 
-        case 'DELETE':
-          // Refers to previous loop's $item.
-          $op_path = $path . '/submission/' . $item['drupal_id'] . '/delete';
-          $assert_text = 'Submission deleted';
-          $op_edit = array();
-          $op_button = 'Delete';
-          break;
-      }
-      $this->drupalPost($op_path, $op_edit, $op_button);
-      $this->assertText($assert_text, 'There was not an obvious error submitting ' . $op . '.');
-      $item = $this->fetchQueueItem();
-      $this->compareSubmissionQueueItem($edit, $item, $op);
-      // Simulate processed item.
-      $this->deleteQueueItem($item);
-    }
+    // Modify the submission after the queue item has been removed from the
+    // queue.  Because there is not an associated mapped record in Salesforce
+    // nor a dedupe field, this should end up queued as CREATE.
+    $edit['submitted[email]'] = 'webform1.update2@email.com';
+    $this->drupalPost($edit_path, $edit, 'Submit');
+    $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'CREATE');
+
+    // Process this queue item so a real record is created in Salesforce.
+    $this->salesforceConnect();
+    $processor = salesforce_queue_load_processor();
+    $processor->process();
+
+    // Modify the submission.  Now that there is a map to Salesforce and not a
+    // dedupe field, this should end up queued as UPDATE.
+    $edit['submitted[email]'] = 'webform1.update3@email.com';
+    $this->drupalPost($edit_path, $edit, 'Submit');
+    $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'UPDATE');
+    $this->deleteQueueItem($item);
+
+    // Delete the submission and it should end up queued as DELETE.
+    $edit_path = 'node/' . $this->webform1->nid . '/submission/' . $item['drupal_id'] . '/delete';
+    $this->drupalPost($edit_path, array(), 'Delete');
+    $this->assertText('Submission deleted', 'There was not an obvious error submitting DELETE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'DELETE');
+    $this->deleteQueueItem($item);
+
+    // Remove the new record from Salesforce.
+    $processor->deleteNewSfRecords();
   }
 
   /**

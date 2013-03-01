@@ -69,12 +69,20 @@ class SalesforceGenmapTestCase extends DrupalWebTestCase {
     $sql = "SELECT * FROM $table v WHERE v.name LIKE 'salesforce_%'";
     $result = db_query($sql);
     foreach ($result as $record) {
-      variable_set($record->name, unserialize($record->value));
+      if (!strstr($record->name, 'salesforce_queue')) {
+        variable_set($record->name, unserialize($record->value));
+      }
     }
 
     // Test the connection.
     $salesforce = salesforce_get_api();
     $this->assertTrue($salesforce->isAuthorized(), 'Connected to Salesforce');
+
+    // Make a call to Salesforce that will do nothing just so we can get an
+    // access token into our session.  This is dumb, but I can't think of any
+    // other way to get an access token.
+    $salesforce->apiCall('');
+
     return $salesforce;
   }
 }

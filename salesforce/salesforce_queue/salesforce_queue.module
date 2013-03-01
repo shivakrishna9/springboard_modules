@@ -204,7 +204,7 @@ function salesforce_queue_load($queue_name = 'all') {
  * @return SalesforceQueueProcessor
  *   Processor for the given SalesforceQueue.
  */
-function salesforce_queue_load_processor($queue = '') {
+function salesforce_queue_load_processor($queue = 'all') {
   if (is_string($queue)) {
     $queue = salesforce_queue_load($queue);
   }

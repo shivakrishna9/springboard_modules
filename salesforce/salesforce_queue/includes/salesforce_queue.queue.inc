@@ -43,6 +43,8 @@ class SalesforceQueue implements DrupalReliableQueueInterface {
    *   subset they are in.
    */
   public static function get($queue_name = 'all') {
+    $queue_name = empty($queue_name) ? 'all' : $queue_name;
+
     // Use the advanced drupal_static() pattern, since this can end up being
     // called repeatedly during queue batch processing.
     static $drupal_static_fast;
