@@ -515,6 +515,17 @@ class SalesforceSync {
           $item->sobject->fields[$field_name] = date('c', strtotime($value));
           break;
 
+        case 'date':
+          // Drupal dates come in all flavors. Check to see if it's a unix
+          // timestamp. If it is we can skip strtotime().
+          if ($this->isValidTimestamp($value)) {
+            $item->sobject->fields[$field_name] = date('Y-m-d', $value);
+          }
+          else {
+            $item->sobject->fields[$field_name] = date('Y-m-d', strtotime($value));
+          }
+          break;
+
         default:
           // Do nothing.
       }
@@ -883,5 +894,21 @@ class SalesforceSync {
    */
   public function setSalesforceSoap($soap) {
     $this->soap = $soap;
+  }
+
+  /**
+   * Helper to determine if a date is unix timestamp.
+   *
+   * @param $date
+   *   The date to examine.
+   */
+  protected function isValidTimestamp($date) {
+    for ($i = 0; $i < 5; $i++) {
+      if (!is_numeric(substr($date, $i, 1))) {
+        return FALSE;
+      }
+    }
+
+    return TRUE;
   }
 }
