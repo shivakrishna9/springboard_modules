@@ -65,6 +65,9 @@ class SalesforceSyncTokenScanner {
 
     // If we've got tokens, replace them.
     if (!empty($tokens)) {
+      // Invoke hook_salesforce_sync_tokens_alter() so that other modules
+      // can change the tokens before replacement.
+      drupal_alter('salesforce_sync_tokens', $tokens, $object);
       $this->tokenReplace($object, $tokens);
     }
   }
