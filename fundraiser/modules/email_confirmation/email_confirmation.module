@@ -1010,8 +1010,13 @@ function email_confirmation_webform_send_mail($form, $form_state) {
     $message['subject'] = $settings->subject;
 
     // Perform token replacements for "order" tokens and "all" tokens.
+    $sid = $form_state['values']['details']['sid'];
+    $submission = webform_get_submission($node->nid, $sid);
+     
     $message['html_body'] = token_replace($template_html, 'order', $node);
     $message['html_body'] = token_replace($message['html_body'], 'order', $node);
+    $message['html_body'] = token_replace($message['html_body']);
+    $message['html_body'] = _webform_filter_values($message['html_body'], $node, $submission, NULL, FALSE, TRUE);
 
     // Same as above, with check_plain() included to insure final output is plain text.
     $message['text_body'] = token_replace($template_text, 'all', $node);
