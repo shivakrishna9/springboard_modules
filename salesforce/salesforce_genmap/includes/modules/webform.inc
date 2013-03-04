@@ -58,7 +58,6 @@ function webform_salesforce_genmap_map_fields_alter(&$fields, $context) {
       $foreign_key_field = $webform_user_reference_fields[$context['node']->nid];
       // Insert a token that contains the uid of the use that submitted the
       // webform.
-      // @TODO: finalize token format.
       $fields[$foreign_key_field] = sprintf('[Contact:user:%d]', $context['object']->uid);
     }
   }
