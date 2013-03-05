@@ -160,7 +160,6 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
     $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node, $op);
-    $op = strtoupper($op);
     // Add to the queue.
     $item = array(
       'drupal_id' => $oid,
@@ -398,7 +397,7 @@ function _salesforce_genmap_load_extended_modules($module = '') {
  * Helper to figure out the appropriate operation when queuing.
  */
 function _salesforce_genmap_alter_operation(&$item, $op = NULL) {
-  $op = is_null($op) ? (isset($item['operation']) ? $item['operation'] : '') : $op;
+  $op = is_null($op) ? (isset($item['operation']) ? strtoupper($item['operation']) : '') : strtoupper($op);
 
   // Sometimes the name of the hook is sent to us, so lets support that.
   if ($op == 'INSERT') {
