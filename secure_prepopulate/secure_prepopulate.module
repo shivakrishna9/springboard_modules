@@ -4,6 +4,8 @@
  * @file
  * This module provides functionality for pre-popluating forms from an ecrypted query string parameter.
  */
+require_once('secure_prepopulate.synonyms.inc');
+
 
 /**
  * Implmentation of hook_menu().
@@ -35,6 +37,28 @@ function secure_prepopulate_menu() {
     'access arguments' => array('administer secure pre-populate'),
     'file' => 'secure_prepopulate.admin.inc',
     'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/secure-prepopulate/synonyms'] = array(
+    'title' => 'Token Synonyms',
+    'description' => 'Configure relationships between token properties and form keys.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_prepopulate_synonyms'),
+    'access arguments' => array('administer secure pre-populate'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/secure-prepopulate/synonyms/%secure_prepopulate_synonym/edit'] = array(
+    'title' => 'Edit synonym',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_prepopulate_edit_synonym', 5),
+    'access arguments' => array('administer secure pre-populate'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/config/system/secure-prepopulate/synonyms/%secure_prepopulate_synonym/delete'] = array(
+    'title' => 'Edit synonym',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('secure_prepopulate_delete_synonym_form', 5),
+    'access arguments' => array('administer secure pre-populate'),
+    'type' => MENU_CALLBACK,
   );
   $items['secure-prepopulate/not-me/%'] = array(
     'title' => 'Not me',
@@ -91,6 +115,20 @@ function secure_prepopulate_init() {
     if (!secure_prepopulate_is_expired($qs)) {
       // Run af param through decryption routine.
       if ($fields = secure_prepopulate_decrypt($af)) {
+        // check for synonyms and set extra fields if found.
+        $synonyms = secure_prepopulate_load_synonyms();
+        if (count($synonyms)) {
+          $synonym_keys = array_keys($synonyms);
+          $field_keys = array_keys($fields);
+          foreach ($field_keys as $field_key) {
+            if (in_array($field_key, $synonym_keys)) {
+              foreach ($synonyms[$field_key] as $synonym) {
+                $fields[$synonym] = $fields[$field_key];
+              }
+            }
+          }
+        }
+        // TODO: replace with default synonym?
         if (isset($fields['email']) && !isset($fields['mail'])) {
           $fields['mail'] = $fields['email'];
         }
@@ -200,7 +238,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
                 $countries = fundraiser_ubercart_get_countries();
 
                 foreach ($countries->countries as $id => $country) {
-                  
+
                   if ($country->country_iso_code_2 == $prepopulate_data['country']) {
                     $zones = $country->zones;
                     break;
@@ -214,7 +252,7 @@ function secure_prepopulate_after_build($form, &$form_state) {
                 $field['#default_value'] = $value;
               }
             }
-            
+
           }
           break;
         case 'radios':

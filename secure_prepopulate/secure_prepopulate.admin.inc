@@ -52,7 +52,7 @@ function secure_prepopulate_admin_settings_validate(&$form, $form_state) {
  * Token Generator form.
  */
 function secure_prepopulate_token_generator($form, $form_state) {
-  
+
   $default_country = isset($form_state['values']['country']) ? $form_state['values']['country'] : 'US';
   $state_options = array();
 
@@ -63,7 +63,7 @@ function secure_prepopulate_token_generator($form, $form_state) {
     '#collapsed' => TRUE,
   );
   // TODO: add user select box to import settings from existing user account.
-  
+
   $form['secure_prepopulate']['first_name'] = array(
     '#type' => 'textfield',
     '#title' => t('First name'),
@@ -110,7 +110,7 @@ function secure_prepopulate_token_generator($form, $form_state) {
         }
       }
     }
-    
+
     $form['secure_prepopulate']['country'] = array(
       '#type' => 'select',
       '#title' => t('Country'),
@@ -131,7 +131,7 @@ function secure_prepopulate_token_generator($form, $form_state) {
     '#title' => t('Postal code'),
     '#size' => 10,
   );
-  
+
   if (module_exists('dynamic_gift_strings')) {
     $form['dynamic_gift_strings'] = array(
       '#type' => 'fieldset',
@@ -174,6 +174,7 @@ function secure_prepopulate_token_generator_submit($form, $form_state) {
     }
   }
 }
+
 
 /**
  * Generate an af query string based on values submitted by the token generator form.
