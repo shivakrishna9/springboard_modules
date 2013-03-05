@@ -29,7 +29,7 @@ class SalesforceQueueProcessor {
    *
    * @var SalesforceSync
    */
-  protected $salesforceSync;
+  public $salesforceSync;
 
   /**
    * Batch of items from the queue that need to be processed.
@@ -83,20 +83,6 @@ class SalesforceQueueProcessor {
   protected $maxBatchSize = 200;
 
   /**
-   * Salesforce object to connect with
-   *
-   * @var Salesforce
-   */
-  protected $sfapi;
-
-  /**
-   * SalesforceSoapPartner object to connect to Salesforce via SOAP.
-   *
-   * @var SalesforceSoapPartner
-   */
-  protected $soap;
-
-  /**
    * Defines a default response to the end of the processing.
    *
    * @var int
@@ -128,9 +114,9 @@ class SalesforceQueueProcessor {
   public function __construct(SalesforceQueue $queue) {
     $this->queue = $queue;
     $this->queueName = $queue->queueName;
-    $this->sfapi = salesforce_get_api();
-    $this->soap = new SalesforceSoapPartner($this->sfapi);
-    $this->salesforceSync = new SalesforceSync($this->sfapi, $this->soap);
+    $this->salesforceSync = new SalesforceSync();
+    $this->setSalesforceApi();
+    $this->setSalesforceSoap();
     $this->maxItems = variable_get('salesforce_queue_max_items', SALESFORCE_QUEUE_MAX_ITEMS_DEFAULT);
     $this->leaseTime = variable_get('salesforce_queue_lease_time', SALESFORCE_QUEUE_LEASE_TIME_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
@@ -152,18 +138,33 @@ class SalesforceQueueProcessor {
     $this->claimItems();
     if (!empty($this->items)) {
       // Check Salesforce connection.
-      // This extra check is for simpletests and drushwhich require a specific
+      // This extra check is for simpletests and drush which require a specific
       // $sfapi in certain instances.
-      $this->sfapi = $this->sfapi->isAuthorized() ? $this->sfapi : salesforce_get_api();
-      if (!$this->sfapi->isAuthorized()) {
-        // Cannot connect to Salesforce.
+      $this->setSalesforceApi();
+      $sfapi_passed = TRUE;
+      if (!is_object($this->salesforceSync->sfapi)) {
+        $sfapi_passed = FALSE;
         watchdog('salesforce_queue', 'Could not process SalesforceQueue because '
           . 'I cannot connect to Salesforce.', array(), WATCHDOG_ALERT);
         $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_CONNECT;
       }
 
-      // Continue only if there is a Salesforce connection.
-      else {
+      // After Salesforce connection is successful, test the soap connection.
+      $soap_passed = FALSE;
+      if ($sfapi_passed) {
+        $this->setSalesforceSoap();
+        $soap_passed = TRUE;
+        if (!is_object($this->salesforceSync->soap)) {
+          $soap_passed = FALSE;
+          watchdog('salesforce', '!id QueueProcessor failed, cannot use SOAP '
+            . 'connection.',
+            array('!id' => '[queue-04'), WATCHDOG_ALERT);
+          $this->endStatus = SALESFORCE_QUEUE_PROCESS_FAIL_SOAP;
+        }
+      }
+
+      // Continue only if there is a verified connection to Salesforce.
+      if ($soap_passed) {
         // Invokes hook_salesforce_queue_process_items_alter().
         drupal_alter('salesforce_queue_process_items', $this->items, $this->queue);
 
@@ -680,16 +681,14 @@ class SalesforceQueueProcessor {
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function setSalesforceApi(Salesforce $sfapi) {
-    $this->sfapi = $sfapi;
+  public function setSalesforceApi(Salesforce $sfapi = NULL) {
     $this->salesforceSync->setSalesforceApi($sfapi);
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function setSalesforceSoap($soap) {
-    $this->soap = $soap;
+  public function setSalesforceSoap(SalesforceSoapPartner $soap = NULL) {
     $this->salesforceSync->setSalesforceSoap($soap);
   }
 
@@ -697,6 +696,6 @@ class SalesforceQueueProcessor {
    * Helper to remove newly created items from Salesforce. Used for simpletests.
    */
   public function deleteNewSfRecords() {
-    $this->salesforceSync->deleteNewSfRecords();
+    return $this->salesforceSync->deleteNewSfRecords();
   }
 }

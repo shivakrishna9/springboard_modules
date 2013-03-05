@@ -36,10 +36,8 @@ class SalesforceSyncQueueTokenTestCase extends SalesforceQueueTestCase {
     // Set up the processor's Salesforce connection.
     // This is special for simpletest due to the access token being stored in
     // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $this->soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($this->soap);
+    $this->processor->setSalesforceApi($this->salesforceConnect());
+    $this->processor->setSalesforceSoap();
   }
 
   /**

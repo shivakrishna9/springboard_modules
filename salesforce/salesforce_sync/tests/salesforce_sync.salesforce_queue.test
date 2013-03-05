@@ -30,16 +30,9 @@ class SalesforceSyncQueueTestCase extends SalesforceQueueTestCase {
     parent::setUp($modules);
 
     // Initiate a queue and processor.
+    $this->salesforceConnect();
     $this->queue = salesforce_queue_load();
     $this->processor = salesforce_queue_load_processor($this->queue);
-
-    // Set up the processor's Salesforce connection.
-    // This is special for simpletest due to the access token being stored in
-    // the session.
-    $sfapi = $this->salesforceConnect();
-    $this->processor->setSalesforceApi($sfapi);
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->processor->setSalesforceSoap($soap);
   }
 
   /**

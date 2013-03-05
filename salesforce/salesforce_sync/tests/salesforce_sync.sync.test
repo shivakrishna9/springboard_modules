@@ -31,9 +31,7 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
 
     // Set up the processor's Salesforce connection. This is special for
     // simpletest due to the access token being stored in the session.
-    $sfapi = $this->salesforceConnect();
-    $soap = new SalesforceSoapPartner($sfapi);
-    $this->salesforceSync = new SalesforceSync($sfapi, $soap);
+    $this->salesforceSync = new SalesforceSync($this->salesforceConnect());
   }
 
   /**

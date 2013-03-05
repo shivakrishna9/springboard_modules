@@ -15,14 +15,14 @@ class SalesforceSync {
    *
    * @var Salesforce
    */
-  protected $sfapi;
+  public $sfapi;
 
   /**
    * SalesforceSoapPartner object to connect to Salesforce via SOAP.
    *
    * @var SalesforceSoapPartner
    */
-  protected $soap;
+  public $soap;
 
   /**
    * SalesforceSyncTokenScanner object used to do token replacements in batches.
@@ -70,8 +70,8 @@ class SalesforceSync {
    *   will be used.
    */
   public function __construct(Salesforce $sfapi = NULL, SalesforceSoapPartner $soap = NULL) {
-    $this->sfapi = is_null($sfapi) ? salesforce_get_api() : $sfapi;
-    $this->soap = is_null($soap) ? new SalesforceSoapPartner($this->sfapi) : $soap;
+    $this->setSalesforceApi($sfapi);
+    $this->setSalesforceSoap($soap);
     $this->maxQueryLength = variable_get('salesforce_sync_max_query_length', SALESFORCE_SYNC_MAX_QUERY_LENGTH_DEFAULT);
     $this->maxBatchSize = variable_get('salesforce_sync_max_batch_size', SALESFORCE_SYNC_MAX_BATCH_SIZE_DEFAULT);
     $this->tokenScanner = new SalesforceSyncTokenScanner($this->getProcessedItemIds());
@@ -174,6 +174,14 @@ class SalesforceSync {
    */
   public function sendBatch($batch) {
     $this->sendBatchPrepare($batch);
+
+    // Soap connection to Salesforce could never be established.
+    if (!is_object($this->soap)) {
+      $this->failBatch($batch, SALESFORCE_SYNC_ITEM_FAIL_SOAP);
+      return FALSE;
+    }
+
+    // Send away.
     try {
       switch ($batch['operation']) {
         case 'CREATE':
@@ -304,6 +312,10 @@ class SalesforceSync {
     if (isset($batch['batch_prepared']) && $batch['batch_prepared']) {
       // No use continuing if this batch is already prepared.
       return;
+    }
+    // Last attempt to see if there is hope of getting a connection.
+    if (!is_object($this->soap)) {
+      $this->setSalesforceSoap();
     }
     $this->batchReplaceTokens($batch);
     $this->batchConvertToSalesforceFormat($batch);
@@ -889,15 +901,62 @@ class SalesforceSync {
   /**
    * Helper to externally set the Salesforce API. Used for simpletests.
    */
-  public function setSalesforceApi(Salesforce $sfapi) {
+  public function setSalesforceApi(Salesforce $sfapi = NULL) {
+    // Reload the api if the current one isn't authorized. This extra check is
+    // for simpletests and drush.
+    $sfapi = (!is_object($sfapi) || !$sfapi->isAuthorized()) ? salesforce_get_api() : $sfapi;
+    if (!$sfapi->isAuthorized()) {
+      watchdog('salesforce', '!id SalesforceSync received a non-authorized '
+        . 'SalesforceAPI.',
+        array('!id' => '[sync-05]'), WATCHDOG_NOTICE);
+      $sfapi = NULL;
+    }
     $this->sfapi = $sfapi;
+    return $sfapi;
   }
 
   /**
    * Helper to externally set the Salesforce SOAP Partner. Used for simpletests.
    */
-  public function setSalesforceSoap($soap) {
+  public function setSalesforceSoap(SalesforceSoapPartner $soap = NULL) {
+    // Create a SalesforceSoapPartner if we weren't provided one.
+    if (!is_object($soap)) {
+      // Create SalesforceApi if it hasn't be created yet.
+      if (!is_object($this->sfapi)) {
+        $this->setSalesforceApi();
+      }
+      // Do not create soap if we cannot get sfapi functioning.
+      if (is_object($this->sfapi)) {
+        $soap = new SalesforceSoapPartner($this->sfapi);
+      }
+      else {
+        $soap = NULL;
+        $message = 'SalesforceAPI is not authorized.';
+      }
+    }
+
+    // If a SalesforceSoapPartner has been created, test the connection.
+    if (is_object($soap)) {
+      try {
+        $soap->getUserInfo();
+      }
+      catch (Exception $e) {
+        $soap = NULL;
+        $message = '(' . $e->faultcode . ') ' . $e->getMessage();
+      }
+    }
+
+    // Send a fail message.
+    if (!is_object($soap)) {
+      watchdog('salesforce', '!id SalesforceSync received an unusable '
+        . 'SalesforceSoapPartner: !message',
+        array(
+          '!id' => '[sync-06]',
+          '!message' => $message,
+        ), WATCHDOG_NOTICE);
+    }
     $this->soap = $soap;
+    return $soap;
   }
 
   /**

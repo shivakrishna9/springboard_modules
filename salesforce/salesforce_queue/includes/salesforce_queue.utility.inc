@@ -53,36 +53,15 @@ function salesforce_queue_object_verification_form_validate($form, &$form_state)
  * Submits salesforce_queue_object_verification_form.
  */
 function salesforce_queue_object_verification_form_submit($form, &$form_state) {
-  module_load_include('inc', 'salesforce_soap');
-  $soap = new SalesforceSoapPartner(salesforce_get_api());
-
-  $operation = $form_state['values']['operation'];
-  $object = json_decode($form_state['values']['object']);
-  $dedupe_field = $form_state['values']['dedupe_field'];
-  $results = NULL;
-
-  try {
-    switch ($operation) {
-      case 'UPSERT':
-        $results = $soap->upsert($dedupe_field, array($object));
-        break;
-
-      case 'UPDATE':
-        drupal_set_message('DELETE not implemented');
-        break;
-
-      case 'CREATE':
-        $results = $soap->create(array($object));
-        break;
-
-      case 'DELETE':
-        drupal_set_message('DELETE not implemented');
-        break;
-    }
-  }
-  catch (Exception $e) {
-    drupal_set_message($e->getMessage());
-  }
-
+  $sobject = json_decode($form_state['values']['object']);
+  $item = array(
+    'object_type' => $sobject->type,
+    'operation' => $form_state['values']['operation'],
+    'dedupe_field' => $form_state['values']['dedupe_field'],
+    'sobject' => $sobject,
+  );
+  $item = (object) $item;
+  $sync = new SalesforceSync();
+  $results = $sync->sendItem($item);
   drupal_set_message(print_r($results, TRUE));
 }
