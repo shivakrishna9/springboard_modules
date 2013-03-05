@@ -352,6 +352,13 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         $fields[$sf_field] = 'Pledged';
       }
     }
+    if (isset($map->field_map['salesforce_donation_map']['transaction_date'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
+      if ($donation->donation['recurs_monthly'] == TRUE && $donation->status_charged != 1) {
+        $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
+        $fields[$sf_field] = '';
+      }
+    }
     // Lastly, add a field iff recurring object.
     if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
       $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
