@@ -288,7 +288,6 @@ function salesforce_genmap_entity_update($entity, $entity_type) {
   // Updating the mapping entity will require having all of the queue items
   // regenerated so the new mapping configuration can be applied to them.
   if ($entity_type == 'salesforce_mapping') {
-    $queue = salesforce_queue_load();
     $result = db_select('salesforce_queue', 'q')
       ->fields('q')
       ->condition('module', $entity->drupal_entity_type)
@@ -296,9 +295,6 @@ function salesforce_genmap_entity_update($entity, $entity_type) {
       ->condition('object_type', $entity->salesforce_object_type)
       ->execute();
     foreach ($result as $item) {
-      // Remove the item from the queue in case the sync triggers changed.
-      $queue->deleteItem($item);
-
       // Get the original entity and requeue it.
       $item_entity = entity_load($item->module, array($item->drupal_id));
       $op = ($item->operation == 'UPSERT') ? 'UPDATE' : $item->operation;

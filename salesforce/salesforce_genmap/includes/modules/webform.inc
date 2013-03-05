@@ -221,7 +221,6 @@ function webform_entity_update($entity, $type) {
   // regenerated so the new mapping configuration can be applied to them.
   if ($type == 'salesforce_genmap_map' && $entity->map_handler == 'webform') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $queue = salesforce_queue_load();
     $result = db_select('salesforce_queue', 'q')
       ->fields('q')
       ->condition('module', 'webform')
