@@ -164,7 +164,7 @@ function salesforce_donation_fundraiser_donation_success($donation) {
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   // Since this is called at the end of a standalone processing,
   // or after a recurring donation is processed: upsert
-  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
 }
 
 /**
@@ -175,7 +175,7 @@ function salesforce_donation_fundraiser_donation_refund_success($donation) {
   $donation = fundraiser_donation_get_donation($donation->did, TRUE);
   // Since this is called at the end of a standalone processing,
   // or after a recurring donation is processed: upsert
-  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation);
+  salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
 }
 
 /**
