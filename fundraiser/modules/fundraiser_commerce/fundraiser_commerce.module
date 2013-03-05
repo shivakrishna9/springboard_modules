@@ -55,20 +55,18 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
  * Adds the admin form to fundraiser's admin form.
  */
 function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
-  // Turn on option to process sustainer donations on own cron.
-  $form['fundraiser_commerce'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Fundraiser commerce'),
-    '#description' => t('Configure fundraiser sustainers settings.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
   // Use the Encrypt module if we have it.
-  $form['fundraiser_commerce']['fundraiser_commerce_encryption_path'] = array(
-    '#type' => 'item',
-    '#title' => t('Secure key path'),
-    '#markup' => t('Encryption of sensitive card data is handled by the Encrypt module. ' .
-      'See the configurations for Encrypt for details.'),
+  $countries = _fundraiser_commerce_get_countries();
+  $options = array('' => t('-- No default --'));
+  foreach ($countries as $country) {
+    $options[$country->country_id] = $country->country_name;
+  }
+  $form['fundraiser']['fundraiser_default_country'] = array(
+    '#type' => 'select',
+    '#title' => t('Default country'),
+    '#options' => $options,
+    '#default_value' => variable_get('fundraiser_default_country', 'US'),
+    '#description' => t('Enter the default initial country to be used on donation forms.'),
   );
 }
 
@@ -346,12 +344,19 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
  * Display callback for field country. Set the defaults if the country has it.
  */
 function _fundraiser_commerce_country_field_display($form, $form_state, $field) {
+  // Set the default to a global default if set.
+  $global_default = variable_get('fundraiser_default_country', 'US');
+  if (!empty($global_default)) {
+    $field['#default_value'] = $global_default;
+  }
+  // Set the default to a user default if set.
   // Flatten form state array so we can get the user selection easier.
   $fields = _fundraiser_commerce_submission_flatten($form_state);
   // Set the default country if form_state has it.
   if (array_key_exists('country', $fields)) {
     $field['#default_value'] = $fields['country'];
   }
+  // Add interface elements to the field display.
   $field['#ajax'] = array(
     'callback' => '_fundraiser_commerce_client_state_ajax_submit',
     'wrapper' => 'zone-select-wrapper',
