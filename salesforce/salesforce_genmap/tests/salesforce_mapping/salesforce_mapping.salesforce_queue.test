@@ -94,6 +94,19 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
     $this->compareSubmissionQueueItem($user2, $item, 'UPDATE');
     $this->deleteQueueItem($item);
 
+    // Modify user entity map to have a dedupe field.
+    $edit = array('key' => 'mail');
+    $this->drupalPost($this->manageMapPrefix . 'foobar', $edit, 'Save mapping');
+    entity_get_controller('salesforce_mapping')->resetCache();
+
+    // Modify the submission a fourth time.  Although there is a dedupe field,
+    // this should end up queued as UPDATE because there is an existing map to a
+    // Salesforce record.
+    $user2 = user_save($user2, array('mail' => 'newmail4@example.com'));
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($user2, $item, 'UPDATE');
+    $this->deleteQueueItem($item);
+
     // Delete user and it should end up queued as DELETE.
     user_delete($user2->uid);
     $item = $this->fetchQueueItem();

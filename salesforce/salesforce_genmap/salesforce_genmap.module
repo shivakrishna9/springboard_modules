@@ -405,23 +405,32 @@ function _salesforce_genmap_alter_operation(&$item, $op = NULL) {
     $op = 'CREATE';
   }
 
-  // An item may be set to UPDATE when it has not yet been made in Salesforce.
-  if ($op == 'UPDATE') {
+  // Verify if we have a record map of this item yet.  Don't bother checking if
+  // it is an UPDATE that has an Id set because we can be confident that this
+  // item is correctly configured and doesn't need automated help.
+  if (($op == 'UPDATE' && !isset($item['sobject']->Id)) || $op == 'UPSERT') {
     $record_map = salesforce_sync_load_map($item);
-    if (!$record_map) {
-      if (!isset($item['dedupe_field']) || empty($item['dedupe_field'])) {
-        $op = 'CREATE';
-      }
-      else {
-        // Since a dedupe field is available, this item could be sent as an
-        // UPSERT which will help us avoid potential duplicate record conflicts.
-        $op = 'UPSERT';
+    if ($record_map) {
+      // Since we already know which record this item should update in
+      // Salesforce, let us make sure this item will update that specific
+      // record.  This will override the UPSERT operation, which we want because
+      // the UPDATE operation is much cheaper.
+      $op = 'UPDATE';
+      if (!isset($item['sobject']->Id)) {
+        $item['sobject']->Id = $record_map->sfid;
       }
     }
+    else {
+      // Since we do not have a map of this item, this is actually a new item
+      // and cannot be updated.
+      $op = 'CREATE';
+    }
   }
-  // When there is a dedupe field set and the action is to create a new record,
-  // the operation needs to be UPSERT.
-  elseif ($op == 'CREATE' && isset($item['dedupe_field']) && !empty($item['dedupe_field'])) {
+
+  // Check to see if a dedupe field is available.  When it is, new items should
+  // be sent as UPSERT which will help avoid potential duplicate record
+  // conflicts.
+  if ($op == 'CREATE' && isset($item['dedupe_field']) && !empty($item['dedupe_field'])) {
     $op = 'UPSERT';
   }
 

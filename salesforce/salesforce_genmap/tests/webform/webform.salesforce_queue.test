@@ -124,6 +124,29 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
     $this->compareSubmissionQueueItem($edit, $item, 'DELETE');
     $this->deleteQueueItem($item);
 
+    // Go back to the webform with the dedupe field.  Create and modify an item.
+    // This should end up queued as UPSERT.
+    $this->drupalPost('node/' . $this->webform2->nid, $edit, 'Submit');
+    $this->assertText('your submission has been received', 'There was not an obvious error submitting UPSERT.');
+    $item = $this->fetchQueueItem();
+    $edit_path = 'node/' . $this->webform2->nid . '/submission/' . $item['drupal_id'] . '/edit';
+    $edit['submitted[email]'] = 'webform2.update1@email.com';
+    $this->drupalPost($edit_path, $edit, 'Submit');
+    $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'UPSERT');
+
+    // Process this queue item so a real record is created in Salesforce.
+    $processor->process();
+
+    // Modify the submission.  Now that there is a map to Salesforce it should
+    // be queued as UPDATE even thought there is a dedupe field.
+    $edit['submitted[email]'] = 'webform2.update2@email.com';
+    $this->drupalPost($edit_path, $edit, 'Submit');
+    $this->assertText('Submission updated', 'There was not an obvious error submitting UPDATE.');
+    $item = $this->fetchQueueItem();
+    $this->compareSubmissionQueueItem($edit, $item, 'UPDATE');
+
     // Remove the new record from Salesforce.
     $processor->deleteNewSfRecords();
   }
