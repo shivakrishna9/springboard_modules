@@ -55,7 +55,6 @@ function fundraiser_commerce_entity_view($entity, $type, $view_mode, $langcode) 
  * Adds the admin form to fundraiser's admin form.
  */
 function fundraiser_commerce_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
-  // Use the Encrypt module if we have it.
   $countries = _fundraiser_commerce_get_countries();
   $options = array('' => t('-- No default --'));
   foreach ($countries as $country) {
@@ -276,6 +275,8 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
       }
     }
   }
+
+  // Set the default to a global default if set.
   $fields['billing_information']['country'] = array(
     '#title' => t('Country'),
     '#type' => 'select',
@@ -288,6 +289,10 @@ function fundraiser_commerce_fundraiser_field_info_alter(&$fields) {
     ),
     '#display_callback' => '_fundraiser_commerce_country_field_display',
   );
+  $default_country = variable_get('fundraiser_default_country', 'US');
+  if (!empty($default_country)) {
+    $fields['billing_information']['country']['#value'] = $default_country;
+  }
   $options = '';
   $included_zones = array();
   foreach ($countries->zones as $zone_id => $zone) {
@@ -344,11 +349,6 @@ function _fundraiser_commerce_payment_fields_validate($form, $form_state, $submi
  * Display callback for field country. Set the defaults if the country has it.
  */
 function _fundraiser_commerce_country_field_display($form, $form_state, $field) {
-  // Set the default to a global default if set.
-  $global_default = variable_get('fundraiser_default_country', 'US');
-  if (!empty($global_default)) {
-    $field['#default_value'] = $global_default;
-  }
   // Set the default to a user default if set.
   // Flatten form state array so we can get the user selection easier.
   $fields = _fundraiser_commerce_submission_flatten($form_state);
