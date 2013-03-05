@@ -899,7 +899,7 @@ class SalesforceSync {
   /**
    * Helper to determine if a date is unix timestamp.
    *
-   * @param $date
+   * @param int $date
    *   The date to examine.
    */
   protected function isValidTimestamp($date) {
