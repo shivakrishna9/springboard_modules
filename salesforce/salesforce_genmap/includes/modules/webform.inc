@@ -221,6 +221,7 @@ function webform_entity_update($entity, $type) {
   // regenerated so the new mapping configuration can be applied to them.
   if ($type == 'salesforce_genmap_map' && $entity->map_handler == 'webform') {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $node = node_load($entity->nid);
     $result = db_select('salesforce_queue', 'q')
       ->fields('q')
       ->condition('module', 'webform')
@@ -229,7 +230,6 @@ function webform_entity_update($entity, $type) {
       ->execute();
     foreach ($result as $item) {
       // Get the original submission and requeue it.
-      $node = node_load($item->delta);
       $submission = webform_get_submission($node->nid, $item->drupal_id);
       $op = '';
       if (in_array($item->operation, array('UPSERT', 'UPDATE'))) {
