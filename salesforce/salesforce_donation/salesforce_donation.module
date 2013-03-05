@@ -147,6 +147,17 @@ function salesforce_donation_node_insert($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function salesforce_donation_node_delete($node) {
+  // If node is a donation type.
+  if (fundraiser_is_donation_type($node->type)) {
+    salesforce_genmap_delete_map($node->nid, 'salesforce_donation');
+  }
+}
+
+/**
  * @} core_drupal_hooks
  */
 

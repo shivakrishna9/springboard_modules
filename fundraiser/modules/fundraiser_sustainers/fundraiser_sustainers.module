@@ -416,6 +416,17 @@ function fundraiser_sustainers_node_insert($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function salesforce_donation_node_delete($node) {
+  // If node is a donation type.
+  if (fundraiser_is_donation_type($node->type) && function_exists('salesforce_genmap_delete_map')) {
+    salesforce_genmap_delete_map($node->nid, 'fundraiser_sustainers');
+  }
+}
+
+/**
  * Implements hook_salesforce_sync_pass_item().
  * Acts when the queue returns a success.
  */
