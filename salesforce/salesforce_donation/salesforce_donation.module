@@ -179,6 +179,7 @@ function salesforce_donation_fundraiser_donation_refund_success($donation) {
     && !empty($donation->master_did) && $donation->did != $donation->master_did) {
     // This is part of a recurring set, already sent up once - update now.
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+  }
   else {
     // This is standalone, or the first in a recurring set.
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $donation->node, $donation->did, $donation, 'donation');
@@ -580,4 +581,37 @@ function salesforce_donation_webform_map_page_access($node) {
     return TRUE;
   }
   return FALSE;
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function salesforce_donation_entity_update($entity, $type) {
+  // Updating the mapping entity will require having all of the queue items
+  // regenerated so the new mapping configuration can be applied to them.
+  if ($type == 'salesforce_genmap_map' && $entity->map_handler == 'salesforce_donation') {
+    $queue = salesforce_queue_load();
+    $result = db_select('salesforce_queue', 'q')
+      ->join('fundraiser_donation', 'fd', 'q.drupal_id = fd.did') // Map dids, to drupal id to get access to donation nids.
+      ->fields('q')
+      ->condition('q.module', 'salesforce_donation')
+      ->condition('fd.nid', $entity->nid) // Limit to the donation nids matching this node.
+      ->condition('q.object_type', $entity->salesforce_object_type)
+      ->execute();
+    foreach ($result as $item) {
+      // Get the original submission and requeue it.
+      $donation = fundraiser_donation_get_donation($item->drupal_id, TRUE);
+      $op = '';
+      if (in_array($item->operation, array('UPSERT', 'UPDATE'))) {
+        $op = 'update';
+      }
+      elseif ($item->operation == 'CREATE') {
+        $op = 'insert';
+      }
+      elseif ($item->operation == 'DELETE') {
+        $op = 'delete';
+      }
+      salesforce_genmap_send_object_to_queue('salesforce_donation', $op, $donation->node, $donation->did, $donation, 'donation');
+    }
+  }
 }
