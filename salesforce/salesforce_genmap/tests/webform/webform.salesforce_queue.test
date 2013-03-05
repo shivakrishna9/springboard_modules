@@ -253,6 +253,61 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   }
 
   /**
+   * Test the requeuing of associated queue items when the map is updated.
+   */
+  public function testUpdateMapUpdateQueue() {
+    // Create several submissions.
+    $submission_count = 2;
+    $count = $submission_count;
+    while ($count > 0) {
+      $count--;
+      $edit = array(
+        'submitted[first_name]' => $this->randomName(),
+        'submitted[last_name]' => $this->randomName(),
+        'submitted[email]' => $this->randomName() . '@email.com',
+      );
+      $this->drupalGet('node/' . $this->webform2->nid);
+      $this->drupalPost(NULL, $edit, 'Submit');
+      $this->assertText('your submission has been received', 'There was not an obvious error making a submission.');
+    }
+
+    // Verify what is in the queue before updating the map.
+    $queue = salesforce_queue_load();
+    $original_items = $queue->claimBatch();
+    $queue->releaseBatch($original_items[0]->leaseKey);
+    $this->assertEqual($submission_count, $queue->numberOfItems(), 'Found correct number of items in the queue before updating the map.');
+
+    // Update the map.
+    $edit = array('salesforce_dedupe_field' => 'none');
+    $this->drupalGet('node/' . $this->webform2->nid . '/salesforce/webform');
+    $this->drupalPost(NULL, $edit, 'Save');
+    $this->assertText('The map was saved successfully.', 'Saving posted correctly.');
+
+    // Verify what is in the queue after updating the map.
+    $updated_items = $queue->claimBatch();
+    $queue->releaseBatch($updated_items[0]->leaseKey);
+    $this->assertEqual($submission_count, $queue->numberOfItems(), 'Found correct number of items in the queue after updating the map.');
+
+    // Make the item_id the key of the items.
+    $original = array();
+    $updated = array();
+    foreach ($original_items as $key => $item) {
+      $original[$item->item_id] = $item;
+      $updated[$updated_items[$key]->item_id] = $updated_items[$key];
+    }
+
+    // Compare items.
+    foreach ($original as $item_id => $item) {
+      $new_item = $updated[$item_id];
+      $this->assertEqual('UPSERT', $item->operation, 'Original item had correct operation.');
+      $this->assertEqual('CREATE', $new_item->operation, 'New item has correct operation.');
+      $this->assertEqual('Email', $item->dedupe_field, 'Original item had correct dedupe_field');
+      $this->assertTrue(empty($new_item->dedupe_field), 'New item has correct dedupe_field');
+      $this->assertEqual($item->sobject->fields['Email'], $new_item->sobject->fields['Email'], 'The original and queue items are identical.');
+    }
+  }
+
+  /**
    * Helper to return the last queued item.
    */
   public function fetchQueueItem() {

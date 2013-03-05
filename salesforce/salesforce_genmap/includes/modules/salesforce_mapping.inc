@@ -285,7 +285,29 @@ function salesforce_genmap_entity_insert($entity, $entity_type) {
  * Implements hook_entity_update().
  */
 function salesforce_genmap_entity_update($entity, $entity_type) {
-  salesforce_mapping_send_entity_to_queue($entity, $entity_type, 'UPDATE');
+  // Updating the mapping entity will require having all of the queue items
+  // regenerated so the new mapping configuration can be applied to them.
+  if ($entity_type == 'salesforce_mapping') {
+    $queue = salesforce_queue_load();
+    $result = db_select('salesforce_queue', 'q')
+      ->fields('q')
+      ->condition('module', $entity->drupal_entity_type)
+      ->condition('delta', $entity->drupal_bundle)
+      ->condition('object_type', $entity->salesforce_object_type)
+      ->execute();
+    foreach ($result as $item) {
+      // Remove the item from the queue in case the sync triggers changed.
+      $queue->deleteItem($item);
+
+      // Get the original entity and requeue it.
+      $item_entity = entity_load($item->module, array($item->drupal_id));
+      $op = ($item->operation == 'UPSERT') ? 'UPDATE' : $item->operation;
+      salesforce_mapping_send_entity_to_queue($item_entity[$item->drupal_id], $item->module, $op);
+    }
+  }
+  else {
+    salesforce_mapping_send_entity_to_queue($entity, $entity_type, 'UPDATE');
+  }
 }
 
 /**
@@ -408,7 +430,7 @@ function salesforce_mapping_map_entity($entity, $entity_type, $map) {
     $fieldmap_type = salesforce_mapping_get_fieldmap_types($drupal_field_type);
     $value = call_user_func($fieldmap_type['push_value_callback'], $field_map, $entity_wrapper);
     $fields[$sf_field] = $value;
-    $sync_rules[$sf_field] = $field_map['drupal_sf'];
+    $sync_rules[$sf_field] = isset($field_map['drupal_sf']) ? isset($field_map['drupal_sf']) : SALESFORCE_SYNC_RULE_ALWAYS;
   }
 
   $sobject = new stdClass();

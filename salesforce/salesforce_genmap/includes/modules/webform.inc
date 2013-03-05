@@ -196,21 +196,55 @@ function webform_map_page_access($node) {
  * Implements hook_webform_submission_insert().
  */
 function salesforce_genmap_webform_submission_insert($node, $submission) {
-  salesforce_genmap_send_object_to_queue('webform', 'insert', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('webform', 'insert', $node, $submission->sid, $submission, $node->nid);
 }
 
 /**
  * Implements hook_webform_submission_update().
  */
 function salesforce_genmap_webform_submission_update($node, $submission) {
-  salesforce_genmap_send_object_to_queue('webform', 'update', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('webform', 'update', $node, $submission->sid, $submission, $node->nid);
 }
 
 /**
  * Implements hook_webform_submission_delete().
  */
 function salesforce_genmap_webform_submission_delete($node, $submission) {
-  salesforce_genmap_send_object_to_queue('webform', 'delete', $node, $submission->sid, $submission);
+  salesforce_genmap_send_object_to_queue('webform', 'delete', $node, $submission->sid, $submission, $node->nid);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function webform_entity_update($entity, $type) {
+  // Updating the mapping entity will require having all of the queue items
+  // regenerated so the new mapping configuration can be applied to them.
+  if ($type == 'salesforce_genmap_map' && $entity->map_handler == 'webform') {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $queue = salesforce_queue_load();
+    $result = db_select('salesforce_queue', 'q')
+      ->fields('q')
+      ->condition('module', 'webform')
+      ->condition('delta', $entity->nid)
+      ->condition('object_type', $entity->salesforce_object_type)
+      ->execute();
+    foreach ($result as $item) {
+      // Get the original submission and requeue it.
+      $node = node_load($item->delta);
+      $submission = webform_get_submission($node->nid, $item->drupal_id);
+      $op = '';
+      if (in_array($item->operation, array('UPSERT', 'UPDATE'))) {
+        $op = 'update';
+      }
+      elseif ($item->operation == 'CREATE') {
+        $op = 'insert';
+      }
+      elseif ($item->operation == 'DELETE') {
+        $op = 'delete';
+      }
+      salesforce_genmap_send_object_to_queue('webform', $op, $node, $item->drupal_id, $submission, $node->nid);
+    }
+  }
 }
 
 /**

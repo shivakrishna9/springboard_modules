@@ -153,8 +153,10 @@ function salesforce_genmap_node_delete($node) {
  *   Object id to be mapped.
  * @param object $drupal_object
  *   Object to be mapped.
+ * @param string $delta
+ *   Optional.  Delta of the item to be queued.
  */
-function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object) {
+function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drupal_object, $delta = NULL) {
   $map = salesforce_genmap_load_map($node->nid, $module);
   if (!empty($map) && !empty($map->sync_options[$op])) {
     $sobject = salesforce_genmap_map_object($module, $drupal_object, $map, $node, $op);
@@ -163,7 +165,7 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
     $item = array(
       'drupal_id' => $oid,
       'module' => $module,
-      'delta' => $module,
+      'delta' => (is_null($delta) ? $module : $delta),
       'object_type' => $sobject->type,
       'operation' => $op,
       'dedupe_field' => $map->salesforce_dedupe_field,

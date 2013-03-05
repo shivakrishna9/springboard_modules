@@ -226,6 +226,54 @@ class SalesforceMappingAlterSalesforceQueueTestCase extends SalesforceMappingAlt
   }
 
   /**
+   * Test the requeuing of associated queue items when the map is updated.
+   */
+  public function testUpdateMapUpdateQueue() {
+    // Create several users.
+    $user_count = 10;
+    $count = $user_count;
+    $users = array();
+    while ($count > 0) {
+      $users[] = $this->drupalCreateUser();
+      $count--;
+    }
+
+    // Verify what is in the queue before updating the map.
+    $queue = salesforce_queue_load();
+    $original_items = $queue->claimBatch();
+    $queue->releaseBatch($original_items[0]->leaseKey);
+    $this->assertEqual($user_count, $queue->numberOfItems(), 'Found correct number of items in the queue before updating the map.');
+
+    // Update the map.
+    $this->drupalGet($this->manageMapPrefix . 'foobar');
+    $edit = array('key' => 'none');
+    $this->drupalPost(NULL, $edit, 'Save mapping');
+
+    // Verify what is in the queue after updating the map.
+    $updated_items = $queue->claimBatch();
+    $queue->releaseBatch($updated_items[0]->leaseKey);
+    $this->assertEqual($user_count, $queue->numberOfItems(), 'Found correct number of items in the queue after updating the map.');
+
+    // Make the item_id the key of the items.
+    $original = array();
+    $updated = array();
+    foreach ($original_items as $key => $item) {
+      $original[$item->item_id] = $item;
+      $updated[$updated_items[$key]->item_id] = $updated_items[$key];
+    }
+
+    // Compare items.
+    foreach ($original as $item_id => $item) {
+      $new_item = $updated[$item_id];
+      $this->assertEqual('UPSERT', $item->operation, 'Original item had correct operation.');
+      $this->assertEqual('CREATE', $new_item->operation, 'New item has correct operation.');
+      $this->assertEqual('Email', $item->dedupe_field, 'Original item had correct dedupe_field');
+      $this->assertTrue(empty($new_item->dedupe_field), 'New item has correct dedupe_field');
+      $this->assertEqual($item->sobject->fields['Email'], $new_item->sobject->fields['Email'], 'The original and queue items are identical.');
+    }
+  }
+
+  /**
    * Helper to return the last queued item.
    */
   public function fetchQueueItem() {
